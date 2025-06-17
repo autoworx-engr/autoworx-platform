@@ -1,3 +1,4 @@
+'use client'
 import { Appointment } from "@prisma/client";
 import { LuCalendar, LuCalendarCheck } from "react-icons/lu";
 

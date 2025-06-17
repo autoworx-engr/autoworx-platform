@@ -3,20 +3,36 @@ import { db } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import PaymentBarChartContainer from "./chart/PaymentBarChartContainer";
 import PaymentPieChartContainer from "./chart/PaymentPieChartContainer";
+import moment from "moment";
 
 const paymentMethods = ["CARD", "CHECK", "CASH", "OTHER"];
 
-export default async function Analytics() {
-    const session = await getServerSession(authOptions);
-  // let last30Days = moment().subtract(30, "days");
-  // let today = moment();
+type AnalyticsProps = {
+  startDate?: string;
+  endDate?: string;
+};
 
-  // let formattedToday = today.format("YYYY-MM-DD");
-  // let formattedLast30Days = last30Days.format("YYYY-MM-DD");
-
+export default async function Analytics({ startDate, endDate }: AnalyticsProps) {
+  const session = await getServerSession(authOptions);
+  
+  // Use provided dates or default to all time
+  let dateFilter = {};
+  
+  if (startDate && endDate) {
+    const formattedStartDate = moment(decodeURIComponent(startDate), "MM-DD-YYYY").format("YYYY-MM-DD");
+    const formattedEndDate = moment(decodeURIComponent(endDate), "MM-DD-YYYY").format("YYYY-MM-DD");
+    
+    dateFilter = {
+      createdAt: {
+        gte: new Date(`${formattedStartDate}T00:00:00.000Z`),
+        lte: new Date(`${formattedEndDate}T23:59:59.999Z`),
+      },
+    };
+  }
   const invoices = await db.invoice.findMany({
     where: {
       companyId: session?.user?.companyId,
+      ...dateFilter,
     },
     select: {
       grandTotal: true,
@@ -25,6 +41,7 @@ export default async function Analytics() {
   const payments = await db.payment.findMany({
     where: {
       companyId: session?.user?.companyId,
+      ...dateFilter,
     },
     select: {
       amount: true,

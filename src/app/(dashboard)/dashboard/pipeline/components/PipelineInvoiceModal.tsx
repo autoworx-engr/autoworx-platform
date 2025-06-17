@@ -17,6 +17,7 @@ export default function PipelineInvoiceModal({ invoiceId }: TProps) {
           alt="draftEstimateDone"
           width={14}
           height={14}
+          className="mt-1.5"
         />
       </DialogTrigger>
 

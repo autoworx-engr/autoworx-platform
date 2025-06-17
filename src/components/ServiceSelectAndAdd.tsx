@@ -15,15 +15,15 @@ export interface Option {
 }
 
 export interface SelectorWithAddProps {
-  value: string | { id: string | number; title: string; }
-  onChange: (value: string | { id: string | number; title: string }) => void
+  value: string | { id: string | number; title: string };
+  onChange: (value: string | { id: string | number; title: string }) => void;
 }
 
 const ServiceSelectAndAdd = ({ value, onChange }: SelectorWithAddProps) => {
   const [options, setOptions] = useState<Option[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   // Handle adding new service
   const handleAddNew = async (newItem: string, category?: Category) => {
     if (!category?.id) {
@@ -49,18 +49,17 @@ const ServiceSelectAndAdd = ({ value, onChange }: SelectorWithAddProps) => {
 
         const newData = {
           id: res.data.id,
-          title: res.data.name
-        }
+          title: res.data.name,
+        };
         // Update form data immediately
         onChange(newData);
-       
+      } else {
+        errorToast(res.message || "Failed to create new service");
       }
     } catch (error) {
       console.log("error", error);
     }
   };
-
- 
 
   // Update listsStore when services/categories change
   useEffect(() => {
@@ -92,14 +91,13 @@ const ServiceSelectAndAdd = ({ value, onChange }: SelectorWithAddProps) => {
         ]);
         setServices(servicesRes);
         setCategories(categoriesRes);
-        
+
         console.log("Services:", servicesRes);
       } catch (err) {
         console.error("Failed to fetch data", err);
-        
       } finally {
-      setIsLoading(false); 
-    }
+        setIsLoading(false);
+      }
     };
 
     fetchData();

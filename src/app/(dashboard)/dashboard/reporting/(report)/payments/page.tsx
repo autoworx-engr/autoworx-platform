@@ -121,6 +121,7 @@ export default async function PaymentReportPage({ searchParams }: TProps) {
     0,
   );
 
+  
   const averageValue =
     totalAmount && paymentInfo.length ? totalAmount / paymentInfo.length : 0;
 
@@ -130,6 +131,7 @@ export default async function PaymentReportPage({ searchParams }: TProps) {
     0,
   );
 
+  
   return (
     <div className="space-y-5">
       {/* filter section */}
@@ -144,12 +146,13 @@ export default async function PaymentReportPage({ searchParams }: TProps) {
         <Calculation content="REFUND RATE" amount={0} />
       </div>
       {/* Replace the existing table and mobile card sections with: */}
-      <PaymentDisplay paymentInfo={paymentInfo} timezone={timezone} />
-
-      {/* Keep the Analytics section */}
+      <PaymentDisplay paymentInfo={paymentInfo} timezone={timezone} />      {/* Keep the Analytics section */}
       <Suspense fallback="loading...">
         <AnalyticsVisibility>
-          <Analytics />
+          <Analytics 
+            startDate={searchParams.startDate}
+            endDate={searchParams.endDate}
+          />
         </AnalyticsVisibility>
       </Suspense>
     </div>

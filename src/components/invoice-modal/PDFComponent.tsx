@@ -358,9 +358,13 @@ const PDFComponent = function PDF({
           <View style={styles.textRight}>
             <Text style={styles.boldText}>Contact Information:</Text>
             <Text>
-              {" "}
-              {companyDetails?.address}, {companyDetails?.city},{" "}
-              {companyDetails?.state}, {companyDetails?.zip}
+              {companyDetails?.address && `${companyDetails.address}`}
+              {companyDetails?.address && companyDetails?.city && ", "}
+              {companyDetails?.city && `${companyDetails.city}`}
+              {companyDetails?.city && companyDetails?.state && ", "}
+              {companyDetails?.state && `${companyDetails.state}`}
+              {companyDetails?.state && companyDetails?.zip && ", "}
+              {companyDetails?.zip && `${companyDetails.zip}`}
             </Text>
             <Text>{companyDetails?.phone}</Text>
             <Text>{companyDetails?.email}</Text>

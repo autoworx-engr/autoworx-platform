@@ -1,29 +1,15 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import Selector from "./Selector";
-import {
-  TextField,
-  Box,
-  FormControlLabel,
-  Radio,
-  RadioGroup,
-  Paper,
-  Typography,
-  IconButton,
-  Switch,
-  Chip,
-} from "@mui/material";
-import {
-  AttachFile as AttachFileIcon,
-  Close as CloseIcon,
-  Add as AddIcon,
-} from "@mui/icons-material";
+import { Box, Paper, Typography, Switch } from "@mui/material";
 import { SlimInput } from "@/components/SlimInput";
 import TemplateVariable from "./TemplateVariable";
 import ActiveTemplate from "./ActiveTemplate";
 import { timeDelays } from "./constants";
 import { errorToast } from "@/lib/toast";
-
+import { TAttachments } from "@/types/automation";
+import { handleFileAttachmentUtils } from "@/utils/handleFileAttachment";
+import CustomRadioGroup from "./CustomRadioGroup";
 type RuleFormProps = {
   initialData?: Rule;
   mode: "create" | "edit" | undefined;
@@ -39,10 +25,9 @@ export type Rule = {
   payment: string;
   communicationType: "SMS" | "EMAIL" | "BOTH";
   templateType: "SMS" | "EMAIL";
-  attachments?: File[];
+  attachments?: TAttachments | [];
   subject?: string;
   body: string;
-
 };
 
 // Template variables
@@ -106,9 +91,9 @@ const InvoiceRuleForm: React.FC<RuleFormProps> = ({
       payment: "",
       communicationType: "SMS",
       templateType: "SMS",
-       attachments: [],
-      subject:"",
-      body:""
+      attachments: [],
+      subject: "",
+      body: "",
     },
   );
   const [activeTemplate, setActiveTemplate] = useState<"SMS" | "EMAIL">("SMS");
@@ -136,41 +121,38 @@ const InvoiceRuleForm: React.FC<RuleFormProps> = ({
   const handleTemplateToggle = (template: "SMS" | "EMAIL") => {
     setActiveTemplate(template);
 
-    setFormData((prev)=>({
+    setFormData((prev) => ({
       ...prev,
-      templateType:template
-    }))
+      templateType: template,
+    }));
   };
 
   // Handle file attachment
-  const handleFileAttachment = (
+  const handleFileAttachment = async (
     event: React.ChangeEvent<HTMLInputElement>,
     type: string,
   ) => {
-    if (event.target.files) {
-      const file = event.target.files;
-       const fileArray = Array.from(file);
-      if (type === "SMS") {
-        handleChange("attachments", fileArray);
-      } else {
-        handleChange("attachments", fileArray);
-      }
-    }
+    handleFileAttachmentUtils({
+      event: event,
+      formData,
+      setFormData,
+    });
   };
 
   // Handle form submission
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
 
-    const errors: string[] = []
+    const errors: string[] = [];
 
-    if(!formData.title || !formData.title.trim()) errors.push("Title is required")
+    if (!formData.title || !formData.title.trim())
+      errors.push("Title is required");
 
-    if(!formData.status) errors.push("Invoice status is required")
- if (formData.timeDelay === null) errors.push("Time delay is required.");
- if (!formData.payment) errors.push("Payment is required.");
+    if (!formData.status) errors.push("Invoice status is required");
+    if (formData.timeDelay === null) errors.push("Time delay is required.");
+    if (!formData.payment) errors.push("Payment is required.");
 
-  if (!formData.templateType) errors.push("Template type is required.");
+    if (!formData.templateType) errors.push("Template type is required.");
     if (!formData.communicationType)
       errors.push("Communication type is required.");
     if (formData.templateType === "EMAIL") {
@@ -180,23 +162,19 @@ const InvoiceRuleForm: React.FC<RuleFormProps> = ({
     }
 
     if (errors.length > 0) {
-          errors.forEach((err) => errorToast(err));
-          return;
-        }
+      errors.forEach((err) => errorToast(err));
+      return;
+    }
 
-        console.log("Form Data", formData)
-
+    console.log("Form Data", formData);
   };
 
-   const handleTemplateChange = (name: string, value: any) => {
+  const handleTemplateChange = (name: string, value: any) => {
     // This cast is safe because we're only passing valid keys from the ActiveTemplate component
     handleChange(name as keyof Rule, value);
   };
   return (
     <div>
-      <h2 className="mb-6 text-lg font-semibold text-gray-800 md:text-xl">
-        {mode == "create" ? "New Rule" : "Edit Rule"}
-      </h2>
       <div className="rounded-md border bg-white p-4 shadow-sm md:p-6">
         <Paper elevation={0} className="mx-auto max-w-lg rounded-lg">
           <form onSubmit={handleSubmit}>
@@ -239,26 +217,17 @@ const InvoiceRuleForm: React.FC<RuleFormProps> = ({
             />
 
             {/* Communication Type */}
-            <Box className="my-4">
-              <RadioGroup
-                row
-                name="communication-type"
-                value={formData.communicationType}
-                onChange={handleCommunicationTypeChange}
-              >
-                <FormControlLabel value="SMS" control={<Radio />} label="SMS" />
-                <FormControlLabel
-                  value="Email"
-                  control={<Radio />}
-                  label="Email"
-                />
-                <FormControlLabel
-                  value="Both"
-                  control={<Radio />}
-                  label="Both"
-                />
-              </RadioGroup>
-            </Box>
+            <CustomRadioGroup
+              name="communicationType"
+              label="Select Communication Type"
+              value={formData.communicationType}
+              onChange={handleCommunicationTypeChange}
+              options={[
+                { label: "SMS", value: "SMS" },
+                { label: "Email", value: "EMAIL" },
+                { label: "Both", value: "BOTH" },
+              ]}
+            />
 
             {/* Templates */}
             <Box className="my-4">
@@ -284,56 +253,20 @@ const InvoiceRuleForm: React.FC<RuleFormProps> = ({
                 <Box
                   className={`mb-4 ${activeTemplate !== "SMS" ? "hidden" : ""}`}
                 >
-                  {/* <TextField
-                    multiline
-                    rows={4}
-                    fullWidth
-                    placeholder="Enter SMS template here..."
-                    value={formData.smsTemplate}
-                    onChange={(e) =>
-                      handleChange("smsTemplate", e.target.value)
-                    }
-                    InputProps={{
-                      endAdornment: (
-                        <IconButton
-                          component="label"
-                          size="small"
-                          className="absolute -bottom-5 right-1"
-                        >
-                          <AttachFileIcon />
-                          <input
-                            type="file"
-                            hidden
-                            onChange={(e) => handleFileAttachment(e, "sms")}
-                          />
-                        </IconButton>
-                      ),
-                    }}
-                  />
-                  {formData.smsAttachment && (
-                    <Box className="mt-2 flex items-center">
-                      <Chip
-                        label={formData.smsAttachment.name}
-                        onDelete={() => handleChange("smsAttachment", null)}
-                        deleteIcon={<CloseIcon />}
-                        variant="outlined"
-                      />
-                    </Box>
-                  )} */}
-
                   <ActiveTemplate
-                                      activeTemplate="SMS"
-                                      rows={4}
-                                      name="body"
-                                      value={formData.body!}
-                                      iconBtnClassName="absolute -bottom-9 right-0"
-                                      attachment={formData.attachments!}
-                                      attachmentName="attachments"
-                                      placeholder="Enter SMS template here..."
-                                      handleChange={handleTemplateChange}
-                                      handleFileAttachment={handleFileAttachment}
-                                      attachmentType="sms"
-                                    />
+                    activeTemplate="SMS"
+                    rows={4}
+                    name="body"
+                    setFormData={setFormData}
+                    value={formData.body!}
+                    iconBtnClassName="absolute -bottom-9 right-0"
+                    attachments={formData.attachments}
+                    attachmentName="attachments"
+                    placeholder="Enter SMS template here..."
+                    handleChange={handleTemplateChange}
+                    handleFileAttachment={handleFileAttachment}
+                    attachmentType="sms"
+                  />
                 </Box>
               )}
 
@@ -342,67 +275,22 @@ const InvoiceRuleForm: React.FC<RuleFormProps> = ({
                 <Box
                   className={`mb-4 ${activeTemplate !== "EMAIL" ? "hidden" : ""}`}
                 >
-                  {/* <input
-                    name="emailSubject"
-                    type="text"
-                    value={formData.emailSubject}
-                    placeholder="subject"
-                    className="w-full rounded-sm border border-slate-400 bg-background px-2 py-0.5 leading-6 outline-none"
-                    onChange={(e) =>
-                      handleChange("emailSubject", e.target.value)
-                    }
-                    required
-                  />
-                  <TextField
-                    multiline
-                    rows={6}
-                    fullWidth
-                    placeholder="Enter email body here..."
-                    value={formData.emailBody}
-                    onChange={(e) => handleChange("emailBody", e.target.value)}
-                    InputProps={{
-                      endAdornment: (
-                        <IconButton
-                          component="label"
-                          size="small"
-                          className="absolute -bottom-5 right-1"
-                        >
-                          <AttachFileIcon />
-                          <input
-                            type="file"
-                            hidden
-                            onChange={(e) => handleFileAttachment(e, "email")}
-                          />
-                        </IconButton>
-                      ),
-                    }}
-                  />
-                  {formData.emailAttachment && (
-                    <Box className="mt-10 flex items-center">
-                      <Chip
-                        label={formData.emailAttachment.name}
-                        onDelete={() => handleChange("emailAttachment", null)}
-                        deleteIcon={<CloseIcon />}
-                        variant="outlined"
-                      />
-                    </Box>
-                  )} */}
-
                   <ActiveTemplate
-                                      activeTemplate="EMAIL"
-                                      rows={6}
-                                      subjectName="subject"
-                                      name="body"
-                                      subjectValue={formData.subject!}
-                                      value={formData.body!}
-                                      iconBtnClassName="absolute -bottom-16 right-0"
-                                      attachment={formData.attachments!}
-                                      attachmentName="emailAttachment"
-                                      placeholder="Enter email body here..."
-                                      handleChange={handleTemplateChange}
-                                      handleFileAttachment={handleFileAttachment}
-                                      attachmentType="email"
-                                    />
+                    activeTemplate="EMAIL"
+                    rows={6}
+                    subjectName="subject"
+                    name="body"
+                    setFormData={setFormData}
+                    subjectValue={formData.subject!}
+                    value={formData.body!}
+                    iconBtnClassName="absolute -bottom-16 right-0"
+                    attachments={formData.attachments}
+                    attachmentName="emailAttachment"
+                    placeholder="Enter email body here..."
+                    handleChange={handleTemplateChange}
+                    handleFileAttachment={handleFileAttachment}
+                    attachmentType="email"
+                  />
                 </Box>
               )}
 

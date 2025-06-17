@@ -17,16 +17,18 @@ export const createMarketingAutomationRule = async (payload: any) => {
       "/marketing-automation-rules",
       payload,
     );
-    console.log(response.data);
+
     return response.data;
   } catch (error) {
     throw error;
   }
 };
 
-export const AllMarketingAutomationRules = async () => {
+export const AllMarketingAutomationRules = async (companyId: number) => {
   try {
-    const response = await axiosInstance.get(`/marketing-automation-rules`);
+    const response = await axiosInstance.get(
+      `/marketing-automation-rules?companyId=${companyId}`,
+    );
     return response.data;
   } catch (error) {
     throw error;
@@ -50,6 +52,7 @@ export const updateMarketingAutomationRule = async (id: string, data: any) => {
       `/marketing-automation-rules/${id}`,
       data,
     );
+
     return response.data;
   } catch (error) {
     throw error;

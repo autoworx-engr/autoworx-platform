@@ -72,7 +72,7 @@ export async function addEmployee({
 
     // check if the user already created
     const user = await db.user.findUnique({
-      where: { email, companyId },
+      where: { email },
     });
 
     if (user) {

@@ -15,9 +15,14 @@ export const useCreateServiceMaintenanceAutomationRule = () => {
         queryKey: ["service-maintenance-automation"],
       });
     },
-    onError(error) {
-      errorToast("Field to create service-maintenance automation rule!");
-      console.error(error);
+    onError(error: any) {
+      if (error?.response?.status == 406) {
+        errorToast(
+          "You can only create a maximum of 3 service automation rules per company!",
+        );
+      } else {
+        errorToast("Failed to create service maintenance automation rule!");
+      }
     },
   });
 };

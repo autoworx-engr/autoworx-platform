@@ -1,7 +1,7 @@
 "use client";
 import React, { ChangeEvent } from "react";
 import { Close as CloseIcon } from "@mui/icons-material";
-import { Box, Chip, IconButton, TextField } from "@mui/material";
+import { Box, IconButton, Skeleton, TextField } from "@mui/material";
 import { ImAttachment } from "react-icons/im";
 
 type TemplateProps = {
@@ -17,11 +17,14 @@ type TemplateProps = {
     type: string,
   ) => void;
   label?: string;
-  attachment?: File[];
+  attachments?: { fileUrl: string; id: number; isLocal?: boolean }[];
+  setFormData: any;
   attachmentName: string;
   attachmentType: string;
   subjectName?: string;
   subjectValue?: string;
+  error?: string;
+  subjectError?: string;
 };
 
 const ActiveTemplate = ({
@@ -34,19 +37,29 @@ const ActiveTemplate = ({
   iconBtnClassName,
   handleFileAttachment,
   label,
-  attachment = [],
+  attachments = [],
   attachmentName,
   attachmentType,
   subjectName,
   subjectValue,
+  setFormData,
+  error,
+  subjectError,
 }: TemplateProps) => {
-  const handleDeleteAttachment = (fileToRemove: File) => {
+  const handleDeleteAttachment = (
+    e: React.MouseEvent<HTMLButtonElement>,
+    fileToRemove: { fileUrl: string },
+  ) => {
+    e.stopPropagation();
     const updatedAttachments =
-      attachment?.filter((file) => file !== fileToRemove) || [];
-    handleChange(
-      attachmentName,
-      updatedAttachments.length ? updatedAttachments : null,
-    );
+      attachments?.filter((file) => file.fileUrl !== fileToRemove.fileUrl) ||
+      [];
+
+    // Use the attachmentName prop to correctly update the specific attachment field
+    setFormData((prev: any) => ({
+      ...prev,
+      attachments: updatedAttachments,
+    }));
   };
 
   return (
@@ -57,11 +70,10 @@ const ActiveTemplate = ({
           type="text"
           value={subjectValue || ""}
           placeholder="Subject"
-          className="w-full rounded-sm border border-slate-400 bg-background px-2 py-0.5 leading-6 outline-none"
+          className={`mb-1 w-full rounded-sm border bg-background px-2 py-0.5 leading-6 outline-none ${subjectError ? "border-red-500 focus:border-red-500" : "border-slate-400"}`}
           onChange={(e) =>
             subjectName && handleChange(subjectName, e.target.value)
           }
-          // required
         />
       )}
 
@@ -70,6 +82,8 @@ const ActiveTemplate = ({
           multiline
           rows={rows}
           fullWidth
+          error={Boolean(error)}
+          helperText={error || ""}
           placeholder={placeholder}
           value={value}
           onChange={(e) => handleChange(name, e.target.value)}
@@ -86,6 +100,7 @@ const ActiveTemplate = ({
                   hidden
                   onChange={(e) => handleFileAttachment(e, attachmentType)}
                   multiple
+                  accept="image/*"
                 />
               </IconButton>
             ),
@@ -93,16 +108,29 @@ const ActiveTemplate = ({
         />
       </Box>
 
-      {attachment && attachment.length > 0 && (
-        <Box className="mt-4 flex flex-wrap gap-2">
-          {attachment.map((file, index) => (
-            <Chip
+      {attachments && attachments.length > 0 && (
+        <Box className="mt-4 flex flex-wrap gap-4">
+          {attachments.map((file, index) => (
+            <Box
               key={index}
-              label={file.name}
-              onDelete={() => handleDeleteAttachment(file)}
-              deleteIcon={<CloseIcon />}
-              variant="outlined"
-            />
+              className={`relative h-24 w-24 overflow-hidden rounded border ${
+                file.isLocal ? "border-blue-400" : "border-gray-300"
+              }`}
+            >
+              <img
+                src={file.fileUrl}
+                alt={`attachment-${index}`}
+                className="h-full w-full object-cover"
+              />
+
+              <button
+                type="button"
+                onClick={(e) => handleDeleteAttachment(e, file)}
+                className="absolute right-0 top-0 bg-white"
+              >
+                <CloseIcon className="text-red-500" />
+              </button>
+            </Box>
           ))}
         </Box>
       )}

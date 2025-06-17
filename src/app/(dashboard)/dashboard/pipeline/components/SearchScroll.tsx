@@ -81,9 +81,14 @@ export default function SearchScroll({
       //       .getLeadsKey(column.id!)
       //       .concat(searchTerm ?? ""),
       //   ) || [];
-      if (!isSalesPipeline) {
-        column.leads?.forEach((lead, leadIndex) => {
-          if (lead.name.toLowerCase().includes(searchTerm.toLowerCase())) {
+      if (!isSalesPipeline) {        column.leads?.forEach((lead, leadIndex) => {
+          // Search by client name
+          const nameMatch = lead.name.toLowerCase().includes(searchTerm.toLowerCase());
+          
+          // Search by vehicle information (year, make, model)
+          const vehicleMatch = lead.vehicle && lead.vehicle.toLowerCase().includes(searchTerm.toLowerCase());
+          
+          if (nameMatch || vehicleMatch) {
             results.push({ columnIndex, leadIndex });
           }
         });
@@ -171,7 +176,7 @@ export default function SearchScroll({
             handleSearchChange(value);
             setSearchTerm(value);
           }}
-          placeholder="Search by client name..."
+          placeholder="Search by client name or vehicle..."
           className="h-full w-[510px] flex-grow border-none bg-transparent text-sm outline-none"
         />
         {searchTerm && (

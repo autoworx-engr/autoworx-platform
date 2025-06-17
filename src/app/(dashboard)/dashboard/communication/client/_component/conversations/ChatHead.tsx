@@ -1,5 +1,6 @@
 "use client";
 import { pusher } from "@/lib/pusher/client";
+import { errorToast } from "@/lib/toast";
 import { useClientCommunicationStore } from "@/stores/client-store";
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
 import { Client, ClientConversationTrack } from "@prisma/client";
@@ -10,6 +11,7 @@ import { useEffect, useState } from "react";
 import { FaSms } from "react-icons/fa";
 import { IoCall } from "react-icons/io5";
 import { MdAlternateEmail } from "react-icons/md";
+import { PremiumModal } from "../phone/PremiumCallModal";
 
 type TClient =
   | (Client & {
@@ -20,13 +22,16 @@ type TClient =
 type TProps = {
   selectedConversation?: string;
   client?: TClient;
+  companyId: number;
 };
 
 export default function ChatHead({
   client: initialClient,
   selectedConversation = "SMS",
+  companyId,
 }: TProps) {
   const [selected, setSelected] = useState<string>(selectedConversation);
+  const [showPremiumModal, setShowPremiumModal] = useState(false);
   // const [client, setClient] = useState<TClient | undefined>(initialClient);
   const user = useGetCurrentUser();
   const pathname = usePathname();
@@ -34,6 +39,13 @@ export default function ChatHead({
   const searchParams = useSearchParams();
 
   const handleTabChange = (tab: string) => {
+    const allowedCompanyForCalling = [4, 14];
+    if (tab === "PHONE" && !allowedCompanyForCalling.includes(companyId)) {
+      setShowPremiumModal(true);
+
+      return;
+    }
+
     setSelected(tab);
     if (searchParams) {
       const updatedParams = new URLSearchParams(searchParams);
@@ -130,6 +142,11 @@ export default function ChatHead({
         <IoCall className="text-xl text-white" />
         {/* <Image src="/icons/Phone.png" alt="phone" width={20} height={20} /> */}
       </button>
+      <PremiumModal
+        open={showPremiumModal}
+        onClose={() => setShowPremiumModal(false)}
+        featureName="calling feature"
+      />
     </div>
   );
 }

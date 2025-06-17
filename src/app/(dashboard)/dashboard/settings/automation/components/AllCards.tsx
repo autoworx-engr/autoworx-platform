@@ -6,6 +6,9 @@ import { FiInbox } from "react-icons/fi";
 import { useAllPipelineAutomationRules } from "@/hooks/pipeline-automation/useAllPipelineAutomationRules";
 import { Skeleton } from "@mui/material";
 import { useAllCommunicationAutomationRules } from "@/hooks/communication-automation/useAllCommunicationAutomationRules";
+import { useAllMarketingAutomationRules } from "@/hooks/marketing-automation/useAllMarketingAutomationRules";
+import { useAllServiceMaintenanceAutomationRules } from "@/hooks/service-maintenance-automation/useAllServiceMaintenanceAutomationRules";
+import { Company, TwilioCredentials } from "@prisma/client";
 // Lazy load form components
 const CommunicationRuleForm = dynamic(() => import("./CommunicationRuleForm"));
 const PipelineRuleForm = dynamic(() => import("./PipelineRuleForm"));
@@ -28,10 +31,14 @@ export default function AllCards({
   type,
   companyId,
   user,
+  company,
+  twilio,
 }: {
   type: string;
   companyId: any;
   user: any;
+  company: Company
+  twilio: TwilioCredentials
 }) {
   const [isEdit, setIsEdit] = useState(false);
   const [isCreate, setIsCreate] = useState(false);
@@ -48,41 +55,31 @@ export default function AllCards({
     isLoading: communicationIsLoading,
     isFetching: communicationIsFetching,
   } = useAllCommunicationAutomationRules(companyId);
+  const {
+    data: allMarketingRules,
+    isLoading: marketingIsLoading,
+    isFetching: marketingIsFetching,
+  } = useAllMarketingAutomationRules(companyId);
+  const {
+    data: allServiceAutomation,
+    isLoading: serviceAutomationIsLoading,
+    isFetching: serviceAutomationIsFetching,
+  } = useAllServiceMaintenanceAutomationRules(companyId);
   const mode = isEdit ? "edit" : "create";
 
   useEffect(() => {
-    const loadData = async () => {
-      if (type === "marketing") {
-        setCampaigns([
-          {
-            id: "0",
-            title: "Campaign 0",
-            tag: { type: "start", date: "30th April 2024" },
-          },
-          {
-            id: "1",
-            title: "Campaign 1",
-            tag: { type: "end", date: "30th April 2024" },
-          },
-        ]);
-      } else {
-        setCampaigns([
-          {
-            id: "0",
-            title: "Follow up",
-          },
-          {
-            id: "1",
-            title: "First message",
-          },
-        ]);
-      }
-
-      setIsCreate(false);
-      setIsEdit(false);
-    };
-
-    loadData();
+    setCampaigns([
+      {
+        id: "0",
+        title: "Follow up",
+      },
+      {
+        id: "1",
+        title: "First message",
+      },
+    ]);
+    setIsCreate(false);
+    setIsEdit(false);
   }, [type]);
 
   const items =
@@ -90,7 +87,16 @@ export default function AllCards({
       ? allPipelineRules?.data
       : type == "communication"
         ? allCommunicationRules?.data
-        : campaigns;
+        : type == "marketing"
+          ? allMarketingRules?.data
+          : type === 'service-maintenance' ? allServiceAutomation : campaigns;
+
+      
+          useEffect(()=>{
+            if(items?.length>=3){
+              setIsCreate(false)
+            }
+          }, [items])
 
   const FormComponent = formComponents[type];
 
@@ -98,6 +104,11 @@ export default function AllCards({
     setIsCreate(true);
     setIsEdit(false);
     setId(null);
+  };
+
+  const handleClose = () => {
+    setIsEdit(false);
+    setIsCreate(false);
   };
 
   return (
@@ -140,7 +151,7 @@ export default function AllCards({
               </div>
             ) : (
               <div className="h-[450px] space-y-5 overflow-y-auto py-3">
-                {items?.map((item: any) => (
+                {items?.map((item: any,  index: any) => (
                   <div key={item.id}>
                     <AutomationCard
                       item={item}
@@ -149,6 +160,9 @@ export default function AllCards({
                       setId={setId}
                       type={type}
                       companyId={companyId}
+                      index={index}
+                   
+                      
                     />
                   </div>
                 ))}
@@ -157,9 +171,14 @@ export default function AllCards({
 
             <button
               onClick={handleSetIsCreate}
-              className="mt-4 w-full rounded-md bg-indigo-500 py-2 font-semibold text-white transition hover:bg-indigo-600"
+              disabled={items?.length >=3}
+              className={`mt-4 w-full rounded-md  py-2 font-semibold text-white transition  ${items?.length >=3 ? 'cursor-not-allowed bg-gray-500': 'bg-indigo-500 hover:bg-indigo-600' }`}
             >
-              + {type == "marketing" ? "Add New Campaign" : "Add New Rules"}
+             {items?.length >= 3
+  ? "You have already reached your limit!"
+  : type === "marketing"
+  ? "+ Add New Campaign"
+  : "+ Add New Rules"} 
             </button>
           </div>
         </div>
@@ -167,13 +186,29 @@ export default function AllCards({
 
       <div className="w-1/2">
         {FormComponent && (isCreate || isEdit) && (
-          <FormComponent
-            isEdit={isEdit}
-            mode={mode}
-            id={id}
-            companyId={companyId}
-            user={user}
-          />
+          <>
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-800 md:text-xl">
+                {mode == "create" ? "New Rule" : "Edit Rule"}
+              </h2>
+              <button
+                onClick={handleClose}
+                className="rounded-md bg-red-500 px-4 py-2 text-sm font-medium text-white hover:bg-red-600"
+              >
+                Close
+              </button>
+            </div>
+
+            <FormComponent
+              isEdit={isEdit}
+              mode={mode}
+              id={id}
+              companyId={companyId}
+              user={user}
+              company={company}
+              twilio={twilio}
+            />
+          </>
         )}
       </div>
     </div>

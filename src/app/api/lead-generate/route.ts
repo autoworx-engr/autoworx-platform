@@ -1,3 +1,5 @@
+import { updateCommunicationAutomationTrigger } from "@/actions/automation/communication/triggerCommunicationAutomation";
+import { updatePipelineAutomationTrigger } from "@/actions/automation/pipeline/triggerPipelineAutomation";
 import { initialCreateClientChatTrack } from "@/actions/communication/client/chat-track";
 import { db } from "@/lib/db";
 import { sendNewLeadNotification } from "@/lib/notification/pipeline-notify";
@@ -149,6 +151,32 @@ export async function POST(request: NextRequest) {
       companyId: company.id,
       leadClientName: newLead.clientName,
     });
+
+    try {
+      if (newLead) {
+        console.log("ESCD");
+
+        await updatePipelineAutomationTrigger({
+          companyId: newClient.companyId,
+          condition: "TIME_DELAY",
+          leadId: newLead.id,
+          columnId: +(newLead?.columnId ?? 0),
+        });
+      }
+    } catch (error) {}
+
+    // communication automation trigger
+    try {
+      if (newLead) {
+        console.log("ESCD");
+
+        await updateCommunicationAutomationTrigger({
+          companyId: newClient.companyId,
+          leadId: newLead.id,
+          columnId: +(newLead?.columnId ?? 0),
+        });
+      }
+    } catch (error) {}
 
     // return success response
     return Response.json(

@@ -14,9 +14,15 @@ import { SlimInput } from "@/components/SlimInput";
 import Submit from "@/components/Submit";
 import { useFormErrorStore } from "@/stores/form-error";
 import { Vehicle, VehicleColor } from "@prisma/client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { addVehicle } from "../../actions/vehicle/addVehicle";
 import ColorSelector from "@/components/ColorSelector";
+import {
+  useGetAllYears,
+  useGetMake,
+  useGetModelsByYearAndMake,
+} from "@/hooks/useCarData";
+import SelectorWithSearch from "./SelectorWithSearch";
 
 type TProps = {
   newButton?: React.ReactNode;
@@ -28,11 +34,68 @@ export default function NewVehicle({ newButton, onAdd, clientId }: TProps) {
   const [open, setOpen] = useState(false);
   const { showError, clearError } = useFormErrorStore();
   const [selectedColor, setSelectedColor] = useState<VehicleColor | null>(null);
+  const [formData, setFormData] = useState({
+    vehicleYear: null,
+    vehicleMake: null,
+    vehicleModel: null,
+  });
+
+  useEffect(() => {
+    setFormData({
+      vehicleYear: null,
+      vehicleMake: null,
+      vehicleModel: null,
+    });
+  }, [open]);
+
+  const { data: years }: any = useGetAllYears();
+  const { data: makes }: any = useGetMake();
+  const { data: models }: any = useGetModelsByYearAndMake(
+    formData.vehicleYear!,
+    formData.vehicleMake!,
+  );
+
+  const vehicleOptions = makes?.data?.map((vehicle: any) => ({
+    title: vehicle.name ?? "Unknown",
+    id: vehicle.name,
+  }));
+  const vehicleModelOptions = models?.data?.map((vehicle: any) => ({
+    title: vehicle.name ?? "Unknown",
+    id: vehicle.name,
+  }));
+
+  const handleInputChange = (name: string, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
 
   async function handleSubmit(data: FormData) {
-    const year = +(data.get("year") ?? 0) as number;
-    const make = data.get("make") as string;
-    const model = data.get("model") as string;
+    if (
+      !formData.vehicleYear ||
+      !formData.vehicleMake ||
+      !formData.vehicleModel
+    ) {
+      showError({
+        field: !formData.vehicleYear
+          ? "year"
+          : !formData.vehicleMake
+            ? "make"
+            : "model",
+        errorSource: [],
+        message: !formData.vehicleYear
+          ? "Vehicle year is required!"
+          : !formData.vehicleMake
+            ? "Vehicle make is required"
+            : "Vehicle model is required",
+      });
+      return;
+    }
+
+    const year = +(formData.vehicleYear ?? 0) as number;
+    const make = formData.vehicleMake! as string;
+    const model = formData.vehicleModel! as string;
     const submodel = data.get("submodel") as string;
     const type = data.get("type") as string;
     const transmission = data.get("transmission") as string;
@@ -91,9 +154,49 @@ export default function NewVehicle({ newButton, onAdd, clientId }: TProps) {
         <div>
           <FormError />
           <div className="grid gap-2 overflow-y-auto sm:grid-cols-2">
-            <SlimInput name="year" type="number" required={false} />
+            {/* <SlimInput name="year" type="number" required={false} />
             <SlimInput name="make" required={false} />
-            <SlimInput name="model" required={false} />
+            <SlimInput name="model" required={false} /> */}
+
+            {/* Year */}
+            <SelectorWithSearch
+              name="year"
+              label="Vehicle Year"
+              options={years?.data}
+              rootClassName=""
+              value={formData.vehicleYear! || ""}
+              onChange={(value: any) => handleInputChange("vehicleYear", value)}
+              isSearch={true}
+              required={true}
+            />
+
+            {/* Vehicle Make */}
+            <SelectorWithSearch
+              name="make"
+              label="Vehicle Make"
+              options={vehicleOptions || []}
+              rootClassName=""
+              value={formData.vehicleMake!}
+              onChange={(value: string) =>
+                handleInputChange("vehicleMake", value)
+              }
+              isSearch={true}
+              required={true}
+            />
+            {/* Vehicle Model */}
+            <SelectorWithSearch
+              name="model"
+              label="Vehicle Model"
+              options={vehicleModelOptions}
+              rootClassName=""
+              value={formData.vehicleModel!}
+              onChange={(value: string) =>
+                handleInputChange("vehicleModel", value)
+              }
+              required={true}
+              isSearch={true}
+              disabled={!formData.vehicleMake} // Disable if vehicle brand is not selected
+            />
             <SlimInput name="submodel" required={false} label="Sub Model" />
             <SlimInput name="type" required={false} />
 

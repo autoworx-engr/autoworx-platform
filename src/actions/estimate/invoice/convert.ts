@@ -137,7 +137,7 @@ export async function convertInvoice(
 
       const clientName = invoice.client?.firstName || "Client";
 
-      if (updatedInvoiceData.type === "Invoice") {
+      if (updatedInvoiceData.type == "Invoice") {
         // send invoice converted notification to all admins and managers or sales
         sendInvoiceConvertedNotification({
           clientName,

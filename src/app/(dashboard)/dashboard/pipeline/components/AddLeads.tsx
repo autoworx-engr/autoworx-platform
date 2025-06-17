@@ -5,8 +5,16 @@ import { Dialog, DialogContent, DialogTrigger } from "@/components/Dialog";
 
 import { Company } from "@prisma/client";
 import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import ServiceSelectAndAdd from "@/components/ServiceSelectAndAdd";
+import {
+  useGetAllYears,
+  useGetMake,
+  useGetModelsByYearAndMake,
+} from "@/hooks/useCarData";
+import Selector from "../../settings/automation/components/Selector";
+import { salesPipelineKeyStr } from "@/utils/enums/query-key-constant";
 
 const AddLeads = ({
   buttonChild,
@@ -15,6 +23,7 @@ const AddLeads = ({
   buttonChild: React.ReactNode;
   onClose?: () => void;
 }) => {
+  const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -28,28 +37,39 @@ const AddLeads = ({
     token: "",
   });
 
-  const [selectedService, setSelectedService] = useState<{ id: string | number; title: string } | null>(null)
+  const [selectedService, setSelectedService] = useState<{
+    id: string | number;
+    title: string;
+  } | null>(null);
   const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({
     phone: "",
   });
+  const { data: years, isLoading: isYearsLoading }: any = useGetAllYears();
+  const { data: makes, isLoading: isMakeLoading }: any = useGetMake();
+  const { data: models }: any = useGetModelsByYearAndMake(
+    formData.vehicle_year!,
+    formData.vehicle_make!,
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formStatus, setFormStatus] = useState<FormStatus>({
     message: "",
     type: null,
   });
 
-  const handleServiceChange = (value: string | { id: string | number; title: string }) => {
+  const handleServiceChange = (
+    value: string | { id: string | number; title: string },
+  ) => {
     if (typeof value === "object") {
       // Store the full object separately
-      setSelectedService(value)
+      setSelectedService(value);
       // Store only the ID in formData
-      setFormData((prev) => ({ ...prev, service: value.id.toString() }))
+      setFormData((prev) => ({ ...prev, service: value.id.toString() }));
     } else {
       // If it's just a string (ID), store it directly
-      setSelectedService(null)
-      setFormData((prev) => ({ ...prev, service: value }))
+      setSelectedService(null);
+      setFormData((prev) => ({ ...prev, service: value }));
     }
-  }
+  };
 
   // Extract source and token from URL on component mount
   useEffect(() => {
@@ -116,11 +136,10 @@ const AddLeads = ({
     setFormStatus({ message: "", type: null });
 
     try {
-      const serviceTitle = selectedService?.title || formData.service
+      const serviceTitle = selectedService?.title || formData.service;
       // Construct the opportunity source string in the required format
       const opportunitySource = `(${formData.source}) ${formData.vehicle_year} ${formData.vehicle_make} ${formData.vehicle_model} | ${serviceTitle}`;
 
-      console.log(opportunitySource, "from line 123")
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_APP_URL}/api/lead-generate`,
         {
@@ -138,13 +157,24 @@ const AddLeads = ({
           }),
         },
       );
-console.log("response from 141", response)
+     
       if (response.ok) {
         setFormStatus({
           message: "Lead created successfully!",
           type: "success",
         });
+        
+        // Invalidate and refetch pipeline data
+        await queryClient.invalidateQueries({
+          queryKey: [salesPipelineKeyStr.salesPipeline],
+        });
+        await queryClient.invalidateQueries({
+          queryKey: [salesPipelineKeyStr.salesPipelineCount],
+        });
+        
         onClose?.();
+        setOpen(false); // Close the dialog
+        
         // Reset form fields except source and token
         setFormData({
           ...formData,
@@ -173,7 +203,15 @@ console.log("response from 141", response)
     }
   };
 
-  console.log("formData console::::", formData)
+  const vehicleOptions = makes?.data?.map((vehicle: any) => ({
+    title: vehicle.name ?? "Unknown",
+    id: vehicle.name,
+  }));
+  const vehicleModelOptions = models?.data?.map((vehicle: any) => ({
+    title: vehicle.name ?? "Unknown",
+    id: vehicle.name,
+  }));
+  
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{buttonChild}</DialogTrigger>
@@ -249,63 +287,45 @@ console.log("response from 141", response)
             </h3>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
-            <div className="space-y-2">
-              <label
-                htmlFor="vehicle_year"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Year
-              </label>
-              <input
-                id="vehicle_year"
-                type="text"
-                name="vehicle_year"
-                placeholder="2019"
-                value={formData.vehicle_year}
-                onChange={handleChange}
-                required
-                className="w-full rounded-sm border border-slate-400 bg-background px-2 py-0.5 leading-6 outline-none"
-              />
-            </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <Selector
+              name="vehicle_year"
+              label="Year"
+              placeholder="Select year"
+              options={years?.data}
+              value={formData.vehicle_year || ""}
+              onChange={(value) =>
+                setFormData((prev) => ({ ...prev, vehicle_year: value }))
+              }
+              isSearch={true}
+              isClear={true}
+            />
+            <Selector
+              name="vehicle_make"
+              label="Make"
+              placeholder="Select make"
+              options={vehicleOptions || []}
+              value={formData.vehicle_make || ""}
+              onChange={(value) =>
+                setFormData((prev) => ({ ...prev, vehicle_make: value }))
+              }
+              isSearch={true}
+              isClear={true}
+            />
 
-            <div className="space-y-2">
-              <label
-                htmlFor="vehicle_make"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Make
-              </label>
-              <input
-                id="vehicle_make"
-                type="text"
-                name="vehicle_make"
-                placeholder="Honda"
-                value={formData.vehicle_make}
-                onChange={handleChange}
-                required
-                className="w-full rounded-sm border border-slate-400 bg-background px-2 py-0.5 leading-6 outline-none"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label
-                htmlFor="vehicle_model"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Model
-              </label>
-              <input
-                id="vehicle_model"
-                type="text"
-                name="vehicle_model"
-                placeholder="Civic"
-                value={formData.vehicle_model}
-                onChange={handleChange}
-                required
-                className="w-full rounded-sm border border-slate-400 bg-background px-2 py-0.5 leading-6 outline-none"
-              />
-            </div>
+            <Selector
+              name="vehicle_model"
+              label="Model"
+              placeholder="Select model"
+              options={vehicleModelOptions || []}
+              // rootClassName="w-1/3"
+              value={formData.vehicle_make || ""}
+              onChange={(value) =>
+                setFormData((prev) => ({ ...prev, vehicle_model: value }))
+              }
+              isSearch={true}
+              isClear={true}
+            />
           </div>
 
           <div className="space-y-2">

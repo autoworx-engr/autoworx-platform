@@ -1,4 +1,3 @@
-"use server";
 import PayoutCard from "./PayoutCard";
 import { getDateRanges, growthRate } from "@/actions/dashboard/data/lib";
 import { getCompanyId } from "@/lib/companyId";

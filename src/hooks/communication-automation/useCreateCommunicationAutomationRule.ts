@@ -14,7 +14,7 @@ export const useCreateCommunicationAutomationRule = () => {
       queryClient.invalidateQueries({ queryKey: ["communication-automation"] });
     },
     onError(error) {
-      errorToast("Field to create communication automation rule!");
+      errorToast("Failed to create communication automation rule!");
       console.error(error);
     },
   });

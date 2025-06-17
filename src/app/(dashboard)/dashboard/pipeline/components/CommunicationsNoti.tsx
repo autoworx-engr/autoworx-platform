@@ -1,21 +1,25 @@
+"use client";
 // import { getClientMessageCount } from "@/actions/pipelines/getClinetMessageCount";
 import { pusher } from "@/lib/pusher/client";
-import { SalesLead } from "@/types/invoiceLead";
+import { LeadWithSalesUser } from "@/types/invoiceLead";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import { PiWechatLogoLight } from "react-icons/pi";
 
 type TProps = {
-  lead: SalesLead;
+  lead: {
+    clientId: number;
+    totalMessage: number;
+  };
 };
 
 export default function CommunicationsNoti({ lead }: TProps) {
   const [totalClientMessage, setTotalClientMessage] = useState(
-    lead.totalClientMessage,
+    lead.totalMessage ?? 0,
   );
 
   useEffect(() => {
-    const clientId = lead.client?.id;
+    const clientId = lead.clientId;
     pusher
       .subscribe(`message-${clientId}`)
       .bind("client", (data: { count: number }) => {
@@ -31,7 +35,7 @@ export default function CommunicationsNoti({ lead }: TProps) {
   const isShowTaskCount = (totalClientMessage ?? 0) > 0;
   return (
     <Link
-      href={`/dashboard/communication/client/${lead?.client?.id}?source=lead&chat=true`}
+      href={`/dashboard/communication/client/${lead?.clientId}?source=lead&chat=true`}
       className="group relative"
       prefetch={false}
     >

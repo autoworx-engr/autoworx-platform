@@ -48,23 +48,22 @@ export const timeDelays = [
   "3 year",
 ];
 
-
 export const targetOptions = [
   { id: "ALL_CLIENTS", title: "All clients" },
   { id: "WITH_ESTIMATE", title: "With an estimate" },
-  { id: " WITH_INVOICE", title: "With an invoice" },
-  { id: "WITHOUT_AN_ESTIMATE_AND_INVOICE", title: "Without an estimate" },
+  { id: "WITH_INVOICE", title: "With an invoice" },
+  { id: "WITHOUT_AN_ESTIMATE", title: "Without an estimate" },
   { id: "INVOICE", title: "Invoice" },
 ];
 
 export const targetConditions = [
-  {id:"ALL_CLIENTS_THIS_MONTH",title:"All clients this month"},
-  {id: "ALL_CLIENTS_THIS_YEAR",title:"All clients this year"},
-  {id: " ALL_CLIENTS_FROM_1_MONTH",title:"All clients from 1 month"},
-  {id: "ALL_CLIENTS_FROM_2_MONTHS",title:"All clients from 2 months"},
-  {id:"ALL_CLIENTS_FROM_3_MONTHS",title:"All clients from 3 months"},
-  {id: " ALL_CLIENTS_FROM_6_MONTHS",title:"All clients from 6 months"},
- { id:"ALL_CLIENTS_FROM_LAST_YEAR", title:"All clients from last year"}
+  { id: "ALL_CLIENTS_THIS_MONTH", title: "All clients this month" },
+  { id: "ALL_CLIENTS_THIS_YEAR", title: "All clients this year" },
+  { id: "ALL_CLIENTS_FROM_1_MONTH", title: "All clients from 1 month" },
+  { id: "ALL_CLIENTS_FROM_2_MONTHS", title: "All clients from 2 months" },
+  { id: "ALL_CLIENTS_FROM_3_MONTHS", title: "All clients from 3 months" },
+  { id: "ALL_CLIENTS_FROM_6_MONTHS", title: "All clients from 6 months" },
+  { id: "ALL_CLIENTS_FROM_LAST_YEAR", title: "All clients from last year" },
 ];
 export type AutomationType =
   | "PIPELINE"
@@ -76,3 +75,10 @@ export type AutomationType =
   | "REPORTING";
 
 export type CommunicationType = "SMS" | "EMAIL" | "BOTH";
+
+export function getTitleById(
+  id: string,
+  targetOptions: any,
+): string | undefined {
+  return targetOptions.find((option: any) => option.id === id)?.title;
+}

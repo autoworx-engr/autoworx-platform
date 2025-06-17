@@ -17,7 +17,7 @@ export const createInventoryAutomationRule = async (payload: any) => {
       "/inventory-automation-rules",
       payload,
     );
-    console.log(response.data);
+
     return response.data;
   } catch (error) {
     throw error;

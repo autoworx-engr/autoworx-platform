@@ -125,6 +125,7 @@ const PipelinePage = async () => {
       pipelinesTitle={type}
       columns={pipelineColumns}
       shopPipelineDataProp={pipelineData}
+      isTechnician={currentUser?.employeeType === "Technician"}
     />
   );
 };

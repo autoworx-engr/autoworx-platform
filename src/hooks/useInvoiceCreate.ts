@@ -160,6 +160,7 @@ export function useInvoiceCreate(type: InvoiceType) {
           companyId: res.data.companyId,
           invoiceId,
         });
+
         successToast(`${type} Create successfully`);
       }
     }

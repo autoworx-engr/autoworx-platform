@@ -14,7 +14,7 @@ export const useDeleteCommunicationAutomationRule = () => {
       queryClient.invalidateQueries({ queryKey: ["communication-automation"] });
     },
     onError: (error) => {
-      errorToast("Field to delete communication automation rule!");
+      errorToast("Failed to delete communication automation rule!");
       console.error(error);
     },
   });

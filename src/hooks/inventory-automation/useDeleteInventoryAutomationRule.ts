@@ -13,7 +13,7 @@ export const useDeleteInventoryAutomationRule = () => {
       queryClient.invalidateQueries({ queryKey: ["inventory-automation"] });
     },
     onError: (error) => {
-      errorToast("Field to delete inventory automation rule!");
+      errorToast("Failed to delete inventory automation rule!");
       console.error(error);
     },
   });

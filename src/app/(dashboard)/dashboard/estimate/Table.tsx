@@ -17,6 +17,7 @@ import { Pagination } from "antd"; // Importing the Pagination component from An
 import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
 import { useListsStore } from "@/stores/lists";
 import { Column } from "@prisma/client";
+import { updateServiceAutomationTrigger } from "@/service/service-maintenance-automation-trigger/api";
 
 export interface InvoiceData {
   id: string;
@@ -45,7 +46,7 @@ export default function Table({ data }: { data: InvoiceData[] }) {
   const [showPagination, setShowPagination] = useState(false);
   const allStatusesFromStore = useListsStore((x) => x.statuses);
   const [filteredStatuses, setFilteredStatuses] = useState<Column[]>([]);
-  
+
   useEffect(() => {
     const shopStatuses = allStatusesFromStore.filter((x) => x.type === "shop");
     setFilteredStatuses(shopStatuses);
@@ -55,7 +56,7 @@ export default function Table({ data }: { data: InvoiceData[] }) {
 
   useEffect(() => {
     const statusOrderMap = new Map(
-      filteredStatuses.map((status) => [status.title, status.order])
+      filteredStatuses.map((status) => [status.title, status.order]),
     );
 
     const filtered = data
@@ -128,13 +129,21 @@ export default function Table({ data }: { data: InvoiceData[] }) {
   // Handler for converting an invoice to an estimate or invoice
   const handleConvertedInvoice = async (id: string) => {
     const res = await convertInvoice(id);
-
+    console.log(res);
     if (res.type === "success") {
       const checkEstimateOrInvoice =
         res.data.type === "Estimate" ? "Invoice" : "Estimate";
       successToast(
         `${checkEstimateOrInvoice} - ${id} converted to ${res.data.type}`,
       );
+
+      if (res?.data?.type == "Invoice") {
+        await updateServiceAutomationTrigger({
+          companyId: res?.data?.companyId,
+          estimateId: res?.data?.id,
+          columnId: res?.data?.columnId!,
+        });
+      }
     } else if (res.type === "globalError") {
       errorToast(res.message);
     }

@@ -17,7 +17,7 @@ export const createPipelineAutomationRule = async (payload: any) => {
       "/pipeline-automation-rules",
       payload,
     );
-    console.log(response.data);
+
     return response.data;
   } catch (error) {
     throw error;

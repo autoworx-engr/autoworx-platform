@@ -367,8 +367,13 @@ export default function InvoiceModalBody({
               <h2 className="font-bold">Contact Information:</h2>
               <p>{company?.name}</p>
               <p>
-                {company?.address}, {company?.city}, {company?.state},{" "}
-                {company?.zip}
+                {company?.address && `${company.address}`}
+                {company?.address && company?.city && ", "}
+                {company?.city && `${company.city}`}
+                {company?.city && company?.state && ", "}
+                {company?.state && `${company.state}`}
+                {company?.state && company?.zip && ", "}
+                {company?.zip && `${company.zip}`}
               </p>
               <p className="mt-1">{company?.phone}</p>
               <p className="mt-1 break-words">{company?.email}</p>
@@ -376,15 +381,15 @@ export default function InvoiceModalBody({
           </div>
 
           <DialogClose className="absolute right-2 top-2 rounded-sm font-bold opacity-90 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground md:right-2 md:top-3 print:hidden">
-            <HiXMark className="font-bold text-slate-500 h-6 w-6" />
+            <HiXMark className="h-6 w-6 font-bold text-slate-500" />
             <span className="sr-only">Close</span>
           </DialogClose>
 
           <hr />
 
           {/* Information Section */}
-          <div className="flex w-full flex-col space-y-4 md:flex-row md:space-x-2 md:space-y-0 ">
-            <div className="grid w-full grow grid-cols-2 gap-2 text-xs md:grid-cols-3 ">
+          <div className="flex w-full flex-col space-y-4 md:flex-row md:space-x-2 md:space-y-0">
+            <div className="grid w-full grow grid-cols-2 gap-2 text-xs md:grid-cols-3">
               {/* Tabs */}
               <div className="col-span-full flex justify-center gap-2 md:hidden">
                 <button
@@ -464,7 +469,7 @@ export default function InvoiceModalBody({
                   </div>
 
                   {/* Estimate Details */}
-                  <div >
+                  <div>
                     <h2 className="font-bold text-slate-500">
                       Estimate Details:
                     </h2>
@@ -537,7 +542,7 @@ export default function InvoiceModalBody({
             </div>
 
             {/* Price Summary */}
-            <div className="w-full space-y-1 text-sm md:w-auto  ">
+            <div className="w-full space-y-1 text-sm md:w-auto">
               {(
                 [
                   ["subtotal", invoice.subtotal],
@@ -555,10 +560,11 @@ export default function InvoiceModalBody({
                       <span className="min-w-0 flex-1 overflow-x-clip text-ellipsis whitespace-nowrap px-2 font-bold uppercase text-[#6571FF]">
                         {key}
                       </span>
-                      <div className="shrink-0 basis-30 rounded bg-[#6571FF] px-2 text-white">
+                      <div className="basis-30 shrink-0 rounded bg-[#6571FF] px-2 text-white">
                         {Number(value)}%
                         {Number(value) !== 0 && (
-                          <span> {" "}
+                          <span>
+                            {" "}
                             |{" "}
                             {formatCurrency(
                               ((invoice.subtotal as any) * Number(value)) / 100,

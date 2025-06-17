@@ -16,6 +16,7 @@ import {
   updateInventoryOrCreateHistory,
 } from "./updateInventory";
 import { addVehicleParts } from "../technician/addVehicleParts";
+import { updateServiceAutomationTrigger } from "@/service/service-maintenance-automation-trigger/api";
 
 interface UpdateEstimateInput {
   id: string;
@@ -504,6 +505,14 @@ export async function updateInvoice(
         return item;
       },
     );
+
+    if (latestInvoice.type == "Invoice") {
+      await updateServiceAutomationTrigger({
+        companyId: latestInvoice?.companyId,
+        estimateId: latestInvoice?.id,
+        columnId: latestInvoice?.columnId!,
+      });
+    }
 
     revalidatePath("/dashboard/estimate");
     return {

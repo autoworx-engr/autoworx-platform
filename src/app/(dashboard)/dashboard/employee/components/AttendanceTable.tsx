@@ -197,9 +197,9 @@ const Dashboard = () => {
                   </thead>
                   <tbody>
                     {attendanceInfo?.attInfo?.map((data, index) => {
-                      const dayOfWeek = moment(data.date).tz(timezone).day(); // Get day of week (0-6)
-                      const dayAbbr = daysOfWeek[dayOfWeek]; // Get abbreviation
-                      const dayDate = moment(data.date).tz(timezone).date(); // Get date number
+                      const dayOfWeek = moment.utc(data.date).day(); // Correct
+                      const dayAbbr = daysOfWeek[dayOfWeek];
+                      const dayDate = moment.utc(data.date).date();
 
                       const effectiveHours = isNaN(Number(data.hours))
                         ? data.hours
@@ -222,14 +222,16 @@ const Dashboard = () => {
                           <td className="px-2 py-2 sm:px-4">
                             {typeof data.clockedIn === "string"
                               ? data.clockedIn
-                              : moment(data.clockedIn)
+                              : moment
+                                  .utc(data.clockedIn)
                                   .tz(timezone)
                                   .format("hh:mm A")}
                           </td>
                           <td className="px-2 py-2 sm:px-4">
                             {typeof data.clockedOut === "string"
                               ? data.clockedOut
-                              : moment(data.clockedOut)
+                              : moment
+                                  .utc(data.clockedOut)
                                   .tz(timezone)
                                   .format("hh:mm A")}
                           </td>

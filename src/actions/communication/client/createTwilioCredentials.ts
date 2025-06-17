@@ -2,6 +2,7 @@
 
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
+import { TwilioCredentials } from "@prisma/client";
 import Twilio from "twilio";
 
 export const getFromNumber = async () => {
@@ -121,7 +122,10 @@ export const createTwilioCredentials = async ({
   }
 };
 
-export const getTwilioCredentials = async () => {
+export const getTwilioCredentials = async (): Promise<{
+  success: boolean;
+  data?: TwilioCredentials | null;
+}> => {
   try {
     const companyId = await getCompanyId();
 

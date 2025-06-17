@@ -38,7 +38,6 @@ export default async function newService({
       where: {
         companyId,
         name: validatedServiceInfo.name,
-        canned: true,
       },
     });
 

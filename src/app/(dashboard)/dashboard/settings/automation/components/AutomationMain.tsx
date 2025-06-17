@@ -2,13 +2,20 @@
 import { useState } from "react";
 import AllCards from "./AllCards";
 import AutomationSidebar from "./AutomationSidebar";
+import { Company, TwilioCredentials } from "@prisma/client";
 
-const AutomationMain = ({ companyId, user }: any) => {
+type AutomationMainProps = {
+  companyId: any
+  user: any
+  company: Company
+  twilio: TwilioCredentials | null
+}
+const AutomationMain = ({ companyId, user, company, twilio }: AutomationMainProps) => {
   const [type, setType] = useState<string | null>(null);
 
   const RenderPage = () => {
     if (!type) return null;
-    return <AllCards type={type} companyId={companyId} user={user} />;
+    return <AllCards type={type} companyId={companyId} user={user} company={company} twilio={twilio!}/>;
   };
 
   return (

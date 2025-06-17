@@ -96,6 +96,10 @@ export function NewAppointmentPipeline({
     vehicleId,
   );
 
+  console.log({ clientId, vehicleId });
+
+  console.log({ newAppointmentData });
+
   const { showError } = useFormErrorStore();
   const setOpen = useCallback(
     (value: boolean) => {

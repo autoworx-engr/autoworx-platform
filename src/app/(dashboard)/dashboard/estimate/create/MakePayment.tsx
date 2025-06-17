@@ -147,7 +147,7 @@ export default function MakePayment() {
         paymentMethodId: paymentMethod?.id,
       });
       const fromPayment = true;
-      const res1 = await createInvoice(fromPayment);
+      const res1: any = await createInvoice(fromPayment);
 
       if (res1 && res1.type === "globalError") {
         errorToast(

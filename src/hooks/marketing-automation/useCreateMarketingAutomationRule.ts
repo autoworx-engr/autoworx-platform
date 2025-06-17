@@ -14,7 +14,7 @@ export const useCreateMarketingAutomationRule = () => {
       queryClient.invalidateQueries({ queryKey: ["marketing-automation"] });
     },
     onError(error) {
-      errorToast("Field to create marketing automation rule!");
+      errorToast("Failed to create marketing automation rule!");
       console.error(error);
     },
   });

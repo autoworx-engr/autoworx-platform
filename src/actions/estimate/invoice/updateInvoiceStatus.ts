@@ -1,5 +1,6 @@
 "use server";
 import { db } from "@/lib/db";
+import { updateServiceAutomationTrigger } from "@/service/service-maintenance-automation-trigger/api";
 import { InvoiceType } from "@prisma/client";
 
 export async function updateInvoiceStatus(
@@ -51,7 +52,7 @@ export async function updateInvoiceStatus(
       );
     }
     try {
-      await db.invoice.update({
+      const updatedInvoice = await db.invoice.update({
         where: { id: invoiceId },
         data: {
           columnId: newStatusId,
@@ -61,6 +62,13 @@ export async function updateInvoiceStatus(
           deliveredAt: deliveredAt,
         },
       });
+
+      await updateServiceAutomationTrigger({
+        companyId: updatedInvoice?.companyId!,
+        estimateId: updatedInvoice?.id!,
+        columnId: updatedInvoice?.columnId!,
+      });
+
       return { type: "success" };
     } catch (error) {
       console.error("Error updating invoice status:", error);

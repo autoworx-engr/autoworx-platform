@@ -107,6 +107,10 @@ export interface LeadWithSalesUser extends Lead {
   totalMessage: number;
 }
 
+export interface ColumnWithLeads extends Column {
+  leads: LeadWithSalesUser[];
+}
+
 // export type Lead = ShopLead | SalesLead;
 export interface ShopPipelineData {
   id: number | null;

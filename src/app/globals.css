@@ -17,6 +17,12 @@ input[type="number"] {
   -moz-appearance: textfield;
 }
 
+/* Firefox */
+.thin-scrollbar {
+  scrollbar-width: thin; 
+  scrollbar-color: #a2a6ac #f1f1f1; /* thumb and track */
+}
+
 /* Hide Arrows From Input Number end here */
 
 .thin-scrollbar::-webkit-scrollbar {

@@ -4,8 +4,8 @@ import { User } from "@prisma/client";
 
 interface SalesSelectorProps {
   disabled?: boolean;
-  users: User[];
-  onSelect: (user: User) => void;
+  users: Partial<User>[];
+  onSelect: (user: Partial<User>) => void;
 }
 const handleMousedown = (event: React.MouseEvent) => {
   event.stopPropagation();

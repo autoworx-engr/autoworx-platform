@@ -94,7 +94,13 @@ export default function WorkOrderModalBody({
         <div className="text-right text-xs">
           <h2 className="font-bold">Contact Information:</h2>
           <p>
-            {company?.address} {company?.city} {company?.state} {company?.zip}
+            {company?.address && `${company.address}`}
+            {company?.address && company?.city && ", "}
+            {company?.city && `${company.city}`}
+            {company?.city && company?.state && ", "}
+            {company?.state && `${company.state}`}
+            {company?.state && company?.zip && ", "}
+            {company?.zip && `${company.zip}`}
           </p>
           <p>{company?.phone}</p>
           <p>{company?.email}</p>

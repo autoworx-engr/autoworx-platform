@@ -33,9 +33,10 @@ export default function TaskForm({
   totalTasksCount = 0,
   setTotalTasks,
   onAutomationTrigger,
+  onCommunicationAutomationTrigger,
   onUpdateTaskInLead,
 }: {
-  companyUsers: User[] | null;
+  companyUsers: Partial<User>[] | null;
   invoiceId?: string;
   leadId?: number;
   clientId?: number;
@@ -43,6 +44,7 @@ export default function TaskForm({
   totalTasksCount?: number;
   setTotalTasks?: React.Dispatch<React.SetStateAction<number>>;
   onAutomationTrigger?: () => void;
+  onCommunicationAutomationTrigger?: () => void;
   onUpdateTaskInLead?: (task: Task) => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -213,6 +215,7 @@ export default function TaskForm({
       if (res.type === "success") {
         // update tasks
         onAutomationTrigger && onAutomationTrigger();
+        onCommunicationAutomationTrigger && onCommunicationAutomationTrigger();
         onUpdateTaskInLead && onUpdateTaskInLead(res.data);
         setTasks((prevTasks) => [...prevTasks, res.data]);
         setTotalTasks && setTotalTasks((prev) => prev + 1);

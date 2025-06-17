@@ -34,7 +34,7 @@ export default function SalesPerformanceTable() {
         },
         {
           label: "Average Deal Size",
-          value: `${data.averageDealSize} $`,
+          value: `${data.averageDealSize === 0 ? '0' : data.averageDealSize.toFixed(2)} $`,
           percentage: data.growthRates.averageDealSizeGR.rate,
           isPositive: data.growthRates.averageDealSizeGR.isPositive,
         },
@@ -58,6 +58,8 @@ export default function SalesPerformanceTable() {
         },
       ]
     : [];
+
+    
   const getPerformanceContent = (label: string): string | undefined => {
     const labelword = label.split(" ");
     for (const word of labelword) {

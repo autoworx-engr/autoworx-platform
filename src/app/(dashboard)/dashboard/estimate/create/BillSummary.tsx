@@ -66,8 +66,9 @@ export function BillSummary() {
             : 0)
         );
       }, 0);
+
       const laborCost = labor?.charge
-        ? parseFloat(labor.charge.toString()) * Number(labor.hours)
+        ? Number((Number(labor.charge) * Number(labor.hours)).toFixed(2))
         : 0;
 
       newServicesTotal += materialCost + laborCost;

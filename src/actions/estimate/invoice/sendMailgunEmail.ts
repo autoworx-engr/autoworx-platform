@@ -40,11 +40,25 @@ export async function sendMailgunEmail({
 
     // Prepare form data for sending the email
     const form = new FormData();
-    form.append("from", `${company?.name} <${company?.email}>`);
+    form.append(
+      "from",
+      `${company?.name} <${company?.id}@${process.env.MAILGUN_DOMAIN}>`,
+    );
     form.append("to", client.email!);
     form.append("subject", subject);
-    form.append("text", text);
+    form.append(
+      "text",
+      `${text}
+
+    -------------------------
+    To unsubscribe, click here: ${process.env.NEXT_PUBLIC_APP_URL}/unsubscribe?email=${encodeURIComponent(client.email!)}`,
+    );
+
     form.append("h:Reply-To", `${company?.id}@${process.env.MAILGUN_DOMAIN}`);
+    form.append(
+      "h:List-Unsubscribe",
+      `<mailto:unsubscribe@${process.env.MAILGUN_DOMAIN}?subject=unsubscribe>, <${process.env.NEXT_PUBLIC_APP_URL}/unsubscribe>`,
+    );
 
     // Send the email via Mailgun API
     const sendMail = await fetch(

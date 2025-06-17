@@ -9,6 +9,7 @@ import NoClientFound from "../NoClientFound";
 import { redirect } from "next/navigation";
 import DetailsBtn from "./DetailsBtn";
 import BackDetailsBtn from "./BackDetailsBtn";
+import { getCompanyId } from "@/lib/companyId";
 
 type TProps = {
   selectedConversation?: string;
@@ -24,7 +25,7 @@ export default async function ConversationsBox({
   showDetails,
 }: TProps) {
   const client = await getClientById(clientId);
-
+  const companyId = await getCompanyId();
   let MessageBox = null;
 
   switch (selectedConversation) {
@@ -95,6 +96,7 @@ export default async function ConversationsBox({
         <div className="flex items-center">
           <ChatHead
             client={client}
+            companyId={companyId}
             selectedConversation={selectedConversation}
           />
           <div className="block lg:hidden">

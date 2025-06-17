@@ -13,9 +13,14 @@ export const useUpdateMarketingAutomationRule = () => {
       successToast("Marketing automation rule updated successfully!");
       queryClient.invalidateQueries({ queryKey: ["marketing-automation"] });
     },
-    onError: (error) => {
-      errorToast("Filed to update marketing automation rule!");
-      console.error(error);
+    onError: (error: any) => {
+      if (error?.response?.status == 417) {
+        errorToast(
+          "Please update the campaign start date and then resume the rule!",
+        );
+      } else {
+        errorToast("Failed to update marketing automation rule!");
+      }
     },
   });
 };

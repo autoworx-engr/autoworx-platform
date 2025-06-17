@@ -1,5 +1,5 @@
 "use client";
-import { FC } from "react";
+import { FC, useState } from "react";
 import { BiSolidEditAlt } from "react-icons/bi";
 import { FaRegCirclePause } from "react-icons/fa6";
 import { FiTrash2 } from "react-icons/fi";
@@ -8,16 +8,25 @@ import { useDeletePipelineAutomationRule } from "../../../../../../hooks/pipelin
 import { useUpdatePipelineAutomationRule } from "../../../../../../hooks/pipeline-automation/useUpdatePipelineAutomationRule";
 import { useUpdateCommunicationAutomationRule } from "@/hooks/communication-automation/useUpdateCommunicationAutomationRule";
 import { useDeleteCommunicationAutomationRule } from "@/hooks/communication-automation/useDeleteCommunicationAutomationRule";
+import { getTitleById, targetOptions } from "./constants";
+import moment from "moment";
+import { useDeleteMarketingAutomationRule } from "@/hooks/marketing-automation/useDeleteMarketingAutomationRule";
+import { useUpdateMarketingAutomationRule } from "@/hooks/marketing-automation/useUpdateMarketingAutomationRule";
+import { errorToast } from "@/lib/toast";
+import { useUpdateServiceMaintenanceAutomationRule } from "@/hooks/service-maintenance-automation/useUpdateServiceMaintenanceAutomationRule";
+import { useDeleteServiceMaintenanceAutomationRule } from "@/hooks/service-maintenance-automation/useDeleteServicemaintenanceAutomationRule";
+import { RiLoader2Fill } from "react-icons/ri";
+import { Popconfirm, Spin } from "antd";
 
 interface Item {
   id: string;
-  title: string;
+  title?: string;
   isPaused?: boolean;
   targetColumnId: number;
-  tag?: {
-    type: "start" | "end";
-    date: string;
-  };
+  startTime?: Date;
+  date?: Date;
+  target?: string[];
+  isActive?: boolean;
 }
 
 interface AutomationCardProps {
@@ -27,6 +36,8 @@ interface AutomationCardProps {
   setId: any;
   type: string;
   companyId: string;
+  index: any;
+ 
 }
 
 const AutomationCard: FC<AutomationCardProps> = ({
@@ -36,13 +47,30 @@ const AutomationCard: FC<AutomationCardProps> = ({
   setId,
   type,
   companyId,
+  index,
+
 }) => {
-  const { mutate: deletePipelineRule } = useDeletePipelineAutomationRule();
-  const { mutate: updatePipelineRule } = useUpdatePipelineAutomationRule();
-  const { mutate: updateCommunicationRule } =
-    useUpdateCommunicationAutomationRule();
-  const { mutate: deleteCommunicationRule } =
-    useDeleteCommunicationAutomationRule();
+  const { mutate: deletePipelineRule, isPending: isPipelineDeleting } =
+    useDeletePipelineAutomationRule();
+  const { mutate: updatePipelineRule, isPending: isPipelineUpdating } =
+    useUpdatePipelineAutomationRule();
+  const {
+    mutate: updateCommunicationRule,
+    isPending: isCommunicationUpdating,
+  } = useUpdateCommunicationAutomationRule();
+  const {
+    mutate: deleteCommunicationRule,
+    isPending: isCommunicationDeleting,
+  } = useDeleteCommunicationAutomationRule();
+  const { mutate: updateMarketingRule, isPending: isMarketingUpdating } =
+    useUpdateMarketingAutomationRule();
+  const { mutate: deleteMarketingRule, isPending: isMarketingDeleting } =
+    useDeleteMarketingAutomationRule();
+
+  const { mutate: updateServiceRule, isPending: isServiceUpdating } =
+    useUpdateServiceMaintenanceAutomationRule();
+  const { mutate: deleteServiceRule, isPending: isServiceDeleting } =
+    useDeleteServiceMaintenanceAutomationRule();
 
   const handleSetIsEdit = (id: any) => {
     setId(id);
@@ -51,14 +79,57 @@ const AutomationCard: FC<AutomationCardProps> = ({
   };
 
   const handlePause = (id: string) => {
-    const data = {
+    let data: { isActive?: boolean; isPaused?: boolean } = {
       isPaused: !item.isPaused,
-      targetColumnId: item.targetColumnId!,
     };
     if (type == "pipeline") {
       updatePipelineRule({ id: id, data: data });
     } else if (type == "communication") {
       updateCommunicationRule({ id: id, companyId: companyId, data: data });
+    } else if (type === "service-maintenance") {
+      updateServiceRule({ id: id, data: data });
+    } else if (type == "marketing") {
+      const now = Date.now();
+
+      const ruleDate = new Date(item.date!);
+      const startTime = new Date(item.startTime!);
+      // Combine date + time to get scheduled timestamp
+      const scheduledDateTime = new Date(
+        ruleDate.getFullYear(),
+        ruleDate.getMonth(),
+        ruleDate.getDate(),
+        startTime.getHours(),
+        startTime.getMinutes(),
+        startTime.getSeconds(),
+      ).getTime();
+
+      const delay = Math.max(0, scheduledDateTime - now);
+
+      if (
+        item.isPaused == true &&
+        item.isActive == false &&
+        data.isPaused == false
+      ) {
+        // If delay is 0, it means the scheduled time is now or in the past
+        if (delay <= 0) {
+          setId(id);
+          setIsCreate(false);
+          setIsEdit(true);
+          errorToast(
+            "Please update the campaign start date and then resume the rule!",
+          );
+          return;
+        }
+
+        data = {
+          isPaused: false,
+          isActive: true,
+        };
+        updateMarketingRule({ id: id, data: data });
+        return;
+      }
+
+      updateMarketingRule({ id: id, data: data });
     }
   };
 
@@ -67,7 +138,14 @@ const AutomationCard: FC<AutomationCardProps> = ({
       deletePipelineRule(id);
     } else if (type == "communication") {
       deleteCommunicationRule(id);
+    } else if (type == "marketing") {
+      deleteMarketingRule(id);
+    } else if (type == "service-maintenance") {
+      deleteServiceRule(id);
     }
+
+    setIsCreate(false);
+    setIsEdit(false);
   };
 
   return (
@@ -76,43 +154,74 @@ const AutomationCard: FC<AutomationCardProps> = ({
         key={item.id}
         className="relative flex items-center justify-between rounded-lg border bg-white p-4 transition hover:shadow"
       >
-        <div className="font-medium text-gray-700">{item.title}</div>
+        <div className="font-medium text-gray-700">
+          {type != "marketing" ? item?.title : `Campaign-${index + 1}`}
+        </div>
 
-        {item.tag && (
-          <span
-            className={`absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 rounded-md px-2 py-1 text-xs text-white ${
-              item.tag.type === "start" ? "bg-indigo-500" : "bg-gray-400"
-            }`}
-          >
-            {item.tag.type === "start"
-              ? `Campaign Starts: ${item.tag.date}`
-              : `Campaign Ended: ${item.tag.date}`}
-          </span>
+        {item.startTime && type == "marketing" ? (
+          <div className="absolute left-1/2 top-0 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center gap-2 rounded-md bg-[#6571FF] px-4 py-0.5 text-xs text-white shadow-md">
+            <span className="font-semibold">Starts:</span>
+            <span>
+              {moment(item.startTime).format("MMM-DD-YY, h:mm A")}{" "}
+              {item.isActive && (
+                <span
+                  className={`h-2 w-2 rounded-full ${item.isActive ? "bg-green-500" : "bg-red-500"}`}
+                ></span>
+              )}
+            </span>
+          </div>
+        ) : (
+          <></>
         )}
 
         <div className="flex items-center gap-3 text-lg">
-          <button
-            onClick={() => handlePause(item.id)}
-            className="text-[#6571FF] hover:text-indigo-700"
-          >
-            {item?.isPaused ? (
-              <IoPlayCircleOutline className="h-5 w-5" />
-            ) : (
-              <FaRegCirclePause />
-            )}
-          </button>
+          {isPipelineUpdating ||
+          isCommunicationUpdating ||
+          isMarketingUpdating ||
+          isServiceUpdating ? (
+            <button>
+              <Spin />
+            </button>
+          ) : (
+            <button
+              onClick={() => handlePause(item.id)}
+              className="text-[#6571FF] hover:text-indigo-700"
+            >
+              {item?.isPaused ? (
+                <IoPlayCircleOutline className="h-5 w-5" />
+              ) : (
+                <FaRegCirclePause />
+              )}
+            </button>
+          )}
+
           <button
             onClick={() => handleSetIsEdit(item.id)}
             className="text-[#6571FF] hover:text-indigo-700"
           >
             <BiSolidEditAlt />
           </button>
-          <button
-            onClick={() => handleDelete(item.id)}
-            className="text-red-500 hover:text-red-700"
-          >
-            <FiTrash2 />
-          </button>
+
+          {isPipelineDeleting ||
+          isCommunicationDeleting ||
+          isMarketingDeleting ||
+          isServiceDeleting ? (
+            <button>
+              <Spin />
+            </button>
+          ) : (
+            <Popconfirm
+              title="Delete the automation rule"
+              description="Are you sure to delete this automation rule?"
+              okText="Yes"
+              cancelText="No"
+              onConfirm={() => handleDelete(item.id)}
+            >
+              <span>
+                <FiTrash2 cursor="pointer" color="#f87171" fontSize={20} />
+              </span>
+            </Popconfirm>
+          )}
         </div>
       </div>
     </div>

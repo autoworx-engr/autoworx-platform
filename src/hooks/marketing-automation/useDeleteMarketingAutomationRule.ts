@@ -13,7 +13,7 @@ export const useDeleteMarketingAutomationRule = () => {
       queryClient.invalidateQueries({ queryKey: ["marketing-automation"] });
     },
     onError: (error) => {
-      errorToast("Field to delete marketing automation rule!");
+      errorToast("Failed to delete marketing automation rule!");
       console.error(error);
     },
   });

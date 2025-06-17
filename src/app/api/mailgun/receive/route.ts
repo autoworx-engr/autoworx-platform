@@ -6,6 +6,7 @@ import { NextResponse } from "next/server";
 import { updateNewEmailChatTrack } from "@/actions/communication/client/chat-track";
 import sendClientMailOrSMSNotify from "@/lib/pusher/client-conversation-notify";
 import { updatePipelineAutomationTrigger } from "@/actions/automation/pipeline/triggerPipelineAutomation";
+import { updateCommunicationAutomationTrigger } from "@/actions/automation/communication/triggerCommunicationAutomation";
 
 export async function POST(request: Request) {
   try {
@@ -183,6 +184,16 @@ export async function POST(request: Request) {
         await updatePipelineAutomationTrigger({
           companyId: client.companyId,
           condition: "MESSAGE_RECEIVED_CLIENT",
+          leadId: client?.Lead.id,
+          columnId: client?.Lead?.columnId,
+        });
+      }
+    } catch (error) {}
+    // communication automation trigger
+    try {
+      if (client?.Lead?.id && client?.Lead?.columnId) {
+        await updateCommunicationAutomationTrigger({
+          companyId: client.companyId,
           leadId: client?.Lead.id,
           columnId: client?.Lead?.columnId,
         });

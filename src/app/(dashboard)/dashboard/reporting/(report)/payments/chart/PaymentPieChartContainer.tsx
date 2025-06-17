@@ -1,4 +1,5 @@
 "use client";
+import { formatCurrency } from "@/utils/formatCurrency";
 import { PieChart, Pie, Tooltip, Cell, ResponsiveContainer } from "recharts";
 
 type TProps = {
@@ -13,7 +14,7 @@ const CustomTooltip = ({ active, payload }: any) => {
     return (
       <div className="w-56 rounded-lg border border-black bg-background p-4 text-[#03A7A2]">
         <p className="text-xl">{data?.name}</p>
-        <p className="text-2xl">${data?.value}</p>
+        <p className="text-2xl">{formatCurrency(data?.value)}</p>
       </div>
     );
   }
@@ -28,6 +29,8 @@ export default function PaymentPieChartContainer({
     { name: "Payment Paid", value: totalPayments },
     { name: "Payment Overdue", value: paymentDue },
   ];
+
+
   return (
     <div className="chart-container grid grid-cols-2 items-center">
       <ResponsiveContainer width="70%" height="100%">

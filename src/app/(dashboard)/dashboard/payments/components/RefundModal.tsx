@@ -200,7 +200,7 @@ export default function RefundModal({
           <button
             onClick={openRefundDialog}
             type="button"
-            className={`flex items-center gap-2 rounded-md px-3 py-1 transition-all ${
+            className={`flex items-center gap-2 rounded-md px-3 py-2 transition-all sm:px-4 sm:py-2 text-sm sm:text-base${
               isDisabled ? "cursor-not-allowed opacity-50" : ""
             } ${
               hasRefund
@@ -214,16 +214,16 @@ export default function RefundModal({
           </button>
         </DialogTrigger>
 
-        <DialogContent className="w-max max-w-xl [&>button]:hidden">
+        <DialogContent className="w-[95vw] max-w-xl max-h-[90vh] overflow-y-auto [&>button]:hidden p-4 sm:p-6">
           <form>
             <DialogHeader>
-              <DialogTitle className="flex items-center justify-between">
-                {hasRefund ? <span>Manage Refund</span> : <span>Refund</span>}
+              <DialogTitle className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-lg sm:text-xl">
+              <span>{hasRefund ? "Manage Refund" : "Refund"}</span>
                 {hasRefund && (
                   <button
                     type="button"
                     onClick={() => setDeleteConfirmOpen(true)}
-                    className="flex items-center gap-1 rounded-lg border bg-[#FF7575] p-2 text-sm text-white"
+                    className="flex items-center gap-1 rounded-lg border bg-[#FF7575] p-2 text-sm text-white self-start sm:self-auto"
                   >
                     <FiTrash2 size={18} />
                   </button>
@@ -233,12 +233,12 @@ export default function RefundModal({
             </DialogHeader>
 
             <Tabs.Root
-              className="mt-5"
+              className="mt-4 sm:mt-5"
               value={tab}
               onValueChange={setTab as any}
             >
-              <div className="mt-5 flex gap-3">
-                <div className="w-40 md:w-fit">
+              <div className="mt-4 sm:mt-5 flex flex-col sm:flex-row gap-3 sm:gap-4">
+                <div className="w-full sm:w-40">
                   <SlimInput
                     labelClassName="text-sm md:text-base"
                     name="date"
@@ -265,7 +265,7 @@ export default function RefundModal({
               </div>
 
               <p className="mb-2 mt-5">Method</p>
-              <Tabs.List className="grid grid-cols-4 justify-between gap-3 md:flex">
+              <Tabs.List className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
                 <TabTrigger value="CARD" tab={tab}>
                   <FaRegCreditCard />
                   Card
@@ -304,7 +304,7 @@ export default function RefundModal({
                 </TabTrigger>
               </Tabs.List>
               <div className="mt-5">
-                <SlimInput
+                {/* <SlimInput
                   className="h-20"
                   labelClassName="text-sm md:text-base"
                   name="refundReason"
@@ -312,24 +312,40 @@ export default function RefundModal({
                   label="Reason for Refund"
                   value={refundReasonInput}
                   onChange={(e) => setRefundReasonInput(e.target.value)}
-                />
+                /> */}
+
+                <label
+    htmlFor="refundReason"
+    className="block mb-2 text-sm md:text-base font-medium text-gray-700"
+  >
+    Reason for Refund
+  </label>
+  <textarea
+    id="refundReason"
+    name="refundReason"
+    value={refundReasonInput}
+     placeholder="Enter reason for refund..."
+    onChange={(e) => setRefundReasonInput(e.target.value)}
+    rows={3}
+    className="w-full p-2 sm:p-3 border border-gray-500 rounded-md shadow-sm focus:outline-none   resize-none"
+  />
               </div>
 
-              <DialogFooter className="mt-5 flex justify-center gap-2 md:gap-5">
+              <DialogFooter className="mt-5 flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
                 <button
                   type="button"
-                  className="rounded-md border-2 border-slate-400 p-2 px-5"
+                  className="w-full sm:w-auto rounded-md border-2 border-slate-400 p-2 px-5"
                   onClick={() => setOpen(false)}
                 >
                   Cancel
                 </button>
                 <button
-                  className="rounded-md bg-blue-500 p-2 px-5 text-white disabled:bg-gray-400"
+                  className="w-full sm:w-auto rounded-md bg-blue-500 p-2 px-5 text-white disabled:bg-gray-400"
                   formAction={() => startTransition(handleSubmit)}
                   disabled={pending}
                   type="submit"
                 >
-                  Record
+                 {pending ? "Recording..." : "Record"}
                 </button>
               </DialogFooter>
             </Tabs.Root>
@@ -366,7 +382,7 @@ export default function RefundModal({
               onClick={() => startTransition(handleDeleteRefund)}
               disabled={pending}
             >
-              Remove Refund
+             {pending ? "Removing..." : "Remove Refund"}
             </button>
           </DialogFooter>
         </DialogContent>

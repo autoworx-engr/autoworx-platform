@@ -1,4 +1,3 @@
-"use client";
 import Avatar from "@/components/Avatar";
 import { User } from "@prisma/client";
 import EditEmployee from "../EditEmployee";
@@ -6,16 +5,23 @@ import { EmployeeWorkInfo } from "./employeeWorkInfoType";
 import Payout from "./Payout";
 import PayoutSales from "./PayoutSales";
 import ResponsiveEmployeeCard from "@/components/mobile-responsive/employee/ResponsiveEmployeeCard";
-import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
+import { db } from "@/lib/db";
+// import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 
-export default function EmployeeInformation({
+export default async function EmployeeInformation({
   employee,
   info,
 }: {
   employee: User;
   info: EmployeeWorkInfo;
 }) {
-  const timezone = useCompanyTimezone();
+  // const timezone = useCompanyTimezone();
+  const company = await db.company.findUnique({
+    where: { id: employee.companyId },
+    select: { timezone: true },
+  });
+  const timezone =
+    company?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
   return (
     <div className="my-8 flex w-full flex-col justify-between gap-3 lg:flex-row lg:gap-5">
       <div className="relative hidden w-full items-center rounded border border-gray-300 bg-background p-3 pt-10 lg:flex">

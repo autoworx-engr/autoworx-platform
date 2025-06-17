@@ -1,4 +1,5 @@
 "use server";
+import { updateCommunicationAutomationTrigger } from "@/actions/automation/communication/triggerCommunicationAutomation";
 import { updatePipelineAutomationTrigger } from "@/actions/automation/pipeline/triggerPipelineAutomation";
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
@@ -115,10 +116,14 @@ export async function sendMessage({
 
       try {
         if (client?.Lead?.id && client?.Lead?.columnId) {
-          
           await updatePipelineAutomationTrigger({
             companyId: client.companyId,
             condition: "MESSAGE_SENT_CLIENT",
+            leadId: client?.Lead.id,
+            columnId: client?.Lead?.columnId,
+          });
+          await updateCommunicationAutomationTrigger({
+            companyId: client.companyId,
             leadId: client?.Lead.id,
             columnId: client?.Lead?.columnId,
           });

@@ -14,7 +14,7 @@ export const useCreatePipelineAutomationRule = () => {
       queryClient.invalidateQueries({ queryKey: ["pipeline-automation"] });
     },
     onError(error) {
-      errorToast("Field to create pipeline automation rule!");
+      errorToast("Failed to create pipeline automation rule!");
       console.error(error);
     },
   });

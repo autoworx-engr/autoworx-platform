@@ -53,11 +53,19 @@ const PipelineRuleForm = ({
   const [showDelayField, setShowDelayField] = useState(
     formData.conditionType === "Time Delay",
   );
-  const { stages, fetchStages, loading, error } = usePipelineStagesStore();
-  const { mutate: createRule } = useCreatePipelineAutomationRule();
-  const { mutate: updateRule } = useUpdatePipelineAutomationRule();
-  const { data, isError, isLoading, isFetched } =
-    useFindOnePipelineAutomationRule(Number(id));
+  const { stages, fetchStages, loading } = usePipelineStagesStore();
+
+  const actionOptions = stages.filter(
+    (stage) => !formData.stageIds?.includes(stage.id),
+  );
+  const { mutate: createRule, isPending: isCreatePending } =
+    useCreatePipelineAutomationRule();
+  const { mutate: updateRule, isPending: isUpdatePending } =
+    useUpdatePipelineAutomationRule();
+  const { data, isLoading, isFetching } = useFindOnePipelineAutomationRule(
+    Number(id),
+  );
+  const [error, setError] = useState<Record<string, string>>({});
 
   useEffect(() => {
     fetchStages("sales");
@@ -104,33 +112,49 @@ const PipelineRuleForm = ({
 
   const handleInputChange = (field: keyof Rule, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+
+    if (error[field]) {
+      setError((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const errors: string[] = [];
+    const newError: Record<string, string> = {};
 
-    if (!formData.title.trim()) errors.push("Title is required.");
+    if (!formData.title.trim()) newError.title = "Title is required.";
     if (!Array.isArray(formData.stageIds) || formData.stageIds.length === 0) {
-      errors.push("At least one stage is required.");
+      newError.stageIds = "At least one stage is required.";
     }
     if (!formData.conditionType.trim())
-      errors.push("Condition type is required.");
+      newError.conditionType = "Condition type is required.";
 
     if (formData.conditionType === "TIME_DELAY") {
       if (formData.timeDelay === null || formData.timeDelay === "") {
-        errors.push(
-          "Time delay is required when condition type is TIME_DELAY.",
-        );
+        newError.timeDelay =
+          "Time delay is required when condition type is TIME_DELAY.";
       }
     }
 
-    if (!formData.targetColumnId) errors.push("Action is required.");
+    if (!formData.targetColumnId)
+      newError.targetColumnId = "Action is required.";
     if (!formData.companyId) errors.push("Company ID is required.");
 
     if (errors.length > 0) {
       errors.forEach((err) => errorToast(err));
+
+      return;
+    }
+
+    if (Object.keys(newError).length > 0) {
+      setError(newError);
+
       return;
     }
 
@@ -161,22 +185,20 @@ const PipelineRuleForm = ({
         });
       }
     } catch (error) {
-      console.error("An error occurred:", error);
-      // Optionally show error message
+      errorToast("Something went wrong!");
     }
   };
 
-  if (loading || isLoading) {
-    <div className="flex h-[600px] items-center justify-center p-4">
-      <Spin />
-    </div>;
+  if (loading || isLoading || isFetching) {
+    return (
+      <div className="flex h-[600px] w-full animate-pulse items-center justify-center rounded-md bg-gray-200 p-4 shadow-sm md:p-6">
+        <Spin />
+      </div>
+    );
   }
 
   return (
-    <div className="">
-      <h2 className="mb-6 text-lg font-semibold text-gray-800 md:text-xl">
-        {mode == "create" ? "New Rule" : "Edit Rule"}
-      </h2>
+    <>
       <div className="h-[600px] rounded-md border bg-white p-4 shadow-sm md:p-6">
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Title */}
@@ -186,8 +208,8 @@ const PipelineRuleForm = ({
             value={formData?.title}
             labelClassName="text-gray-500"
             onChange={(e) => handleInputChange("title", e.target.value)}
-            required
             disabled={loading}
+            error={error.title}
           />
 
           {/* Stage */}
@@ -204,6 +226,7 @@ const PipelineRuleForm = ({
               label="Stage"
               placeholder="Select options"
               required
+              error={error.stageIds}
             />
           </div>
 
@@ -215,6 +238,7 @@ const PipelineRuleForm = ({
             value={formData?.conditionType}
             onChange={(value) => handleInputChange("conditionType", value)}
             required
+            error={error.conditionType}
           />
 
           {/* Delay */}
@@ -225,6 +249,7 @@ const PipelineRuleForm = ({
               options={timeDelays}
               value={formData?.timeDelay!}
               onChange={(value) => handleInputChange("timeDelay", value)}
+              error={error.timeDelay}
             />
           )}
 
@@ -233,23 +258,35 @@ const PipelineRuleForm = ({
           <Selector
             name="action"
             label="Action"
-            options={stages}
+            options={actionOptions}
             value={formData?.targetColumnId!}
             onChange={(value) => handleInputChange("targetColumnId", value)}
             required
+            error={error.targetColumnId}
           />
 
           <div className="flex justify-end pt-4">
             <button
               type="submit"
-              className="rounded-md bg-indigo-500 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-600"
+              disabled={isUpdatePending || isCreatePending}
+              className={`rounded-md px-4 py-2 text-sm font-medium text-white ${
+                isUpdatePending || isCreatePending
+                  ? "cursor-not-allowed bg-indigo-300"
+                  : "bg-indigo-500 hover:bg-indigo-600"
+              }`}
             >
-              {isEdit && id ? "Update" : "Save"}
+              {isUpdatePending || isCreatePending
+                ? isEdit && id
+                  ? "Updating..."
+                  : "Saving..."
+                : isEdit && id
+                  ? "Update"
+                  : "Save"}
             </button>
           </div>
         </form>
       </div>
-    </div>
+    </>
   );
 };
 

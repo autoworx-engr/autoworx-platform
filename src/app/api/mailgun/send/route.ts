@@ -1,3 +1,4 @@
+import { updateCommunicationAutomationTrigger } from "@/actions/automation/communication/triggerCommunicationAutomation";
 import { updatePipelineAutomationTrigger } from "@/actions/automation/pipeline/triggerPipelineAutomation";
 import { db } from "@/lib/db";
 import Formdata from "form-data";
@@ -80,11 +81,25 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     // Prepare form data for sending the email
     const form = new Formdata();
-    form.append("from", `${company?.name} <${company?.email}>`);
+    form.append(
+      "from",
+      `${company?.name} <${company?.id}@${process.env.MAILGUN_DOMAIN}>`,
+    );
     form.append("to", client.email);
     form.append("subject", `New message from ${company?.name}`);
-    form.append("text", text || " ");
+    form.append(
+      "text",
+      `${text}
+
+    -------------------------
+    To unsubscribe, click here: ${process.env.NEXT_PUBLIC_APP_URL}/unsubscribe?email=${encodeURIComponent(client.email!)}`,
+    );
     form.append("h:Reply-To", `${company?.id}@${process.env.MAILGUN_DOMAIN}`);
+
+    form.append(
+      "h:List-Unsubscribe",
+      `<mailto:unsubscribe@${process.env.MAILGUN_DOMAIN}?subject=unsubscribe>, <${process.env.NEXT_PUBLIC_APP_URL}/unsubscribe>`,
+    );
 
     // Add In-Reply-To and References headers if this is a reply
     if (lastEmail?.messageId) {
@@ -207,6 +222,16 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         await updatePipelineAutomationTrigger({
           companyId: client.companyId,
           condition: "MESSAGE_SENT_CLIENT",
+          leadId: client?.Lead.id,
+          columnId: client?.Lead?.columnId,
+        });
+      }
+    } catch (error) {}
+    // trigger automation communication
+    try {
+      if (client?.Lead?.id && client?.Lead?.columnId) {
+        await updateCommunicationAutomationTrigger({
+          companyId: client.companyId,
           leadId: client?.Lead.id,
           columnId: client?.Lead?.columnId,
         });

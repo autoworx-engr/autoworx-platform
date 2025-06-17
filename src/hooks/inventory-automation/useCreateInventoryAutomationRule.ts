@@ -14,7 +14,7 @@ export const useCreateInventoryAutomationRule = () => {
       queryClient.invalidateQueries({ queryKey: ["inventory-automation"] });
     },
     onError(error) {
-      errorToast("Field to create inventory automation rule!");
+      errorToast("Failed to create inventory automation rule!");
       console.error(error);
     },
   });

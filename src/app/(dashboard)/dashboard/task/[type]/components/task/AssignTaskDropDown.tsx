@@ -10,7 +10,7 @@ import { useGetCurrentUser } from "@/utils/useGetCurrentUser.ts";
 import { useIsAdminOrManager } from "@/utils/useIsAdminOrManager.ts";
 
 type TProps = {
-  companyUsers: User[];
+  companyUsers: Partial<User>[];
   onlyOneUser?: boolean;
   assignedUsers: number[];
   setAssignedUsers: React.Dispatch<React.SetStateAction<number[]>>;
@@ -53,7 +53,7 @@ export default function AssignTaskDropDown({
     if (fromUpdate) {
       setUsers((prevUsers) =>
         prevUsers?.filter((user) => {
-          return !assignedUsers?.includes(user.id);
+          return !assignedUsers?.includes(user.id!);
         }),
       );
     }
@@ -150,11 +150,11 @@ export default function AssignTaskDropDown({
                   })
                   .map((user) => (
                     <label
-                      htmlFor={user.id.toString()}
+                      htmlFor={user?.id!.toString()}
                       key={user.id}
                       className="flex cursor-pointer items-center gap-2"
                       onClick={() => {
-                        setAssignedUsers([...assignedUsers, user.id]);
+                        setAssignedUsers([...assignedUsers, user?.id!]);
                         setUsers((prevUser) =>
                           prevUser.filter((u) => user.id !== u.id),
                         );

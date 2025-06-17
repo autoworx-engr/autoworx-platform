@@ -23,6 +23,7 @@ import SearchScroll from "./SearchScroll";
 import { LeadWithSalesUser } from "@/types/invoiceLead";
 import { usePipelineFilterStore } from "@/stores/PipelineFilterStore";
 import usePipelineTrigger from "@/hooks/usePipelineTrigger";
+import useCommunicationTrigger from "@/hooks/useCommunicationTrigger";
 import dynamic from "next/dynamic";
 interface SalesPipelineProps {
   salesPipelineDataProp: Column[];
@@ -46,7 +47,7 @@ export default function SalesPipeline({
   const queryClient = useQueryClient();
 
   const { dispatch } = usePipelineTrigger();
-
+  const { dispatch: communicationDispatch } = useCommunicationTrigger();
   // References for scrolling to leads
   const columnRefs = useRef<(HTMLDivElement | null)[]>([]);
   const leadRefs = useRef<Map<string, HTMLLIElement>>(new Map());
@@ -354,6 +355,12 @@ export default function SalesPipeline({
       leadId: columnInfo.leadId,
       companyId: currentUser?.companyId!,
       condition: "APPOINTMENT_SCHEDULED",
+    });
+
+    communicationDispatch("UPDATE_COMMUNICATION_AUTOMATION_TRIGGER", {
+      columnId: columnInfo.columnId,
+      leadId: columnInfo.leadId,
+      companyId: currentUser?.companyId!,
     });
   };
 

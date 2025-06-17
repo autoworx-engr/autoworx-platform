@@ -202,8 +202,13 @@ const InvoiceComponent = ({
               <div className="text-center text-xs md:text-right">
                 <h2 className="font-bold">Contact Information:</h2>
                 <p>
-                  {companyDetails?.address} {companyDetails?.city}{" "}
-                  {companyDetails?.state} {companyDetails?.zip}
+                  {companyDetails?.address && `${companyDetails.address}`}
+                  {companyDetails?.address && companyDetails?.city && ", "}
+                  {companyDetails?.city && `${companyDetails.city}`}
+                  {companyDetails?.city && companyDetails?.state && ", "}
+                  {companyDetails?.state && `${companyDetails.state}`}
+                  {companyDetails?.state && companyDetails?.zip && ", "}
+                  {companyDetails?.zip && `${companyDetails.zip}`}
                 </p>
                 <p>{companyDetails?.phone}</p>
                 <p>{companyDetails?.email}</p>

@@ -473,12 +473,13 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
           })[]
         }
         timezone={timezone}
-      />
-
-      {/* Analytics will only be loaded and rendered on desktop */}
+      />      {/* Analytics will only be loaded and rendered on desktop */}
       <Suspense fallback="loading...">
         <AnalyticsVisibility>
-          <Analytics />
+          <Analytics 
+            startDate={searchParams.startDate}
+            endDate={searchParams.endDate}
+          />
         </AnalyticsVisibility>
       </Suspense>
     </div>

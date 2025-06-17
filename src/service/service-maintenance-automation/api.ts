@@ -14,20 +14,20 @@ interface IServiceMaintenanceData {
 export const createServiceMaintenanceAutomationRule = async (payload: any) => {
   try {
     const response = await axiosInstance.post(
-      "/communication-automation-rules",
+      "/service-automation-rule",
       payload,
     );
-    console.log(response.data);
+
     return response.data;
   } catch (error) {
     throw error;
   }
 };
 
-export const AllServiceMaintenanceAutomationRules = async () => {
+export const AllServiceMaintenanceAutomationRules = async (companyId:number) => {
   try {
-    const response = await axiosInstance.get(`/communication-automation-rules`);
-    return response.data;
+    const response = await axiosInstance.get(`/service-automation-rule?companyId=${companyId}`);
+    return response.data.data;
   } catch (error) {
     throw error;
   }
@@ -36,7 +36,7 @@ export const AllServiceMaintenanceAutomationRules = async () => {
 export const findOneServiceMaintenanceAutomationRules = async (id: number) => {
   try {
     const response = await axiosInstance.get(
-      `/communication-automation-rules/${id}`,
+      `/service-automation-rule/${id}`,
     );
     return response.data;
   } catch (error) {
@@ -50,7 +50,7 @@ export const updateServiceMaintenanceAutomationRule = async (
 ) => {
   try {
     const response = await axiosInstance.patch(
-      `/communication-automation-rules/${id}`,
+      `/service-automation-rule/${id}`,
       data,
     );
     return response.data;
@@ -62,7 +62,7 @@ export const updateServiceMaintenanceAutomationRule = async (
 export const deleteServiceMaintenanceAutomationRule = async (id: string) => {
   try {
     const response = await axiosInstance.delete(
-      `/communication-automation-rules/${id}`,
+      `/service-automation-rule/${id}`,
     );
     return response.data;
   } catch (error) {

@@ -38,6 +38,7 @@ import {
 } from "@/utils/enums/query-key-constant";
 import { usePipelineFilterStore } from "@/stores/PipelineFilterStore";
 import usePipelineTrigger from "@/hooks/usePipelineTrigger";
+import useCommunicationTrigger from "@/hooks/useCommunicationTrigger";
 import PipelineInvoiceModal from "./PipelineInvoiceModal";
 
 type TProps = {
@@ -94,6 +95,7 @@ export default memo(
     const leadRefs = useRef<Map<string, HTMLLIElement>>(new Map());
     const searchTerm = usePipelineFilterStore((state) => state.searchTerm);
     const { dispatch } = usePipelineTrigger();
+    const { dispatch: communicationDispatch } = useCommunicationTrigger();
 
     useImperativeHandle(ref, () => leadRefs.current);
     const [pending, startTransition] = useTransition();
@@ -173,12 +175,12 @@ export default memo(
       columnId: number;
       categoryIndex: number;
       leadIndex: number;
-      user: User;
+      user: Partial<User>;
     }) => {
       const key = `${categoryIndex}-${leadIndex}`;
       setSelectedUser((prevState) => ({
         ...prevState,
-        [key]: user,
+        [key]: user as User,
       }));
       setOpenSalesSelector((prevState) => ({
         ...prevState,
@@ -186,7 +188,7 @@ export default memo(
       }));
       // const leadId = pipelineData[categoryIndex].leads[leadIndex].leadId;
       try {
-        const updatedLead = await updateLeadSalesUser(leadId, user.id);
+        const updatedLead = await updateLeadSalesUser(leadId, user.id!);
         if (updatedLead) {
           queryClient.setQueryData<
             (Lead & { salesUser: LeadWithSalesUser["salesUser"] })[]
@@ -198,8 +200,8 @@ export default memo(
                   if (lead.id === leadId) {
                     return {
                       ...lead,
-                      assignedSalesUserId: user.id,
-                      salesUser: user,
+                      assignedSalesUserId: user.id!,
+                      salesUser: user as User,
                     };
                   }
                   return lead;
@@ -240,7 +242,6 @@ export default memo(
           vehicleId: vehicleId,
           type: "Estimate",
         });
-        console.log("Draft estimate response:", res);
         if (res.type === "success") {
           successToast(res?.message || "Draft estimate created");
           //updating the pipelien data with the draft estimate flag
@@ -261,6 +262,11 @@ export default memo(
 
           dispatch("UPDATE_PIPELINE_AUTOMATION_TRIGGER", {
             condition: "ESTIMATE_CREATED",
+            companyId: res?.data.companyId,
+            leadId: leadId,
+            columnId: columnId,
+          });
+          communicationDispatch("UPDATE_COMMUNICATION_AUTOMATION_TRIGGER", {
             companyId: res?.data.companyId,
             leadId: leadId,
             columnId: columnId,
@@ -434,7 +440,6 @@ export default memo(
       }
     };
 
-    console.log("created estimate", lead.name, lead.isEstimateCreated);
     return (
       <Draggable
         key={lead.leadId}
@@ -577,11 +582,18 @@ export default memo(
 
             <p className="text-xs text-blue-500">{lead.services}</p>
             <p className="text-xs">{lead.source}</p>
-
+            <p className="text-xs">
+              Creation Date: {new Date(lead.createdAt).toLocaleDateString()}
+            </p>
             <div className="flex justify-between">
               <div className="flex items-center gap-2">
                 {/* client message notification or redirect to client section component */}
-                <CommunicationsNoti lead={lead} />
+                <CommunicationsNoti
+                  lead={{
+                    clientId: lead?.client?.id ?? 0,
+                    totalMessage: lead?.totalClientMessage ?? 0,
+                  }}
+                />
                 <button
                   disabled={pending}
                   type="button"

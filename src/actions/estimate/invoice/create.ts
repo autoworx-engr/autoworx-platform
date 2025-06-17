@@ -5,6 +5,7 @@ import { authOptions } from "@/authOptions";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { db } from "@/lib/db";
 import { getProductWithQuantity } from "@/lib/getProductWithQuantity";
+import { updateServiceAutomationTrigger } from "@/service/service-maintenance-automation-trigger/api";
 import { InspectionType } from "@/stores/estimate-create";
 import { ServerAction } from "@/types/action";
 import { TErrorHandler } from "@/types/globalError";
@@ -472,6 +473,13 @@ export async function createInvoice({
       }),
     );
 
+    if (invoice.type == "Invoice") {
+      await updateServiceAutomationTrigger({
+        companyId: invoice?.companyId,
+        estimateId: invoice?.id,
+        columnId: invoice?.columnId!,
+      });
+    }
     // Step 12: Revalidate the estimate page
     revalidatePath("/estimate");
 

@@ -13,7 +13,7 @@ export const useDeleteInvoiceAutomationRule = () => {
       queryClient.invalidateQueries({ queryKey: ["invoice-automation"] });
     },
     onError: (error) => {
-      errorToast("Field to delete invoice automation rule!");
+      errorToast("Failed to delete invoice automation rule!");
       console.error(error);
     },
   });

@@ -1,46 +1,55 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import Selector from "./Selector";
-import {
-  TextField,
-  Box,
-  Paper,
-  Typography,
-  IconButton,
-  Switch,
-  Chip,
-} from "@mui/material";
-import {
-  AttachFile as AttachFileIcon,
-  Close as CloseIcon,
-  Add as AddIcon,
-} from "@mui/icons-material";
+import { Box, Paper, Typography, Switch } from "@mui/material";
 import MultiSelect from "./MultiSelect";
 import { SlimInput } from "@/components/SlimInput";
 import TemplateVariable from "./TemplateVariable";
 import ActiveTemplate from "./ActiveTemplate";
 import { timeDelays } from "./constants";
-import { errorToast } from "@/lib/toast";
 
+import { TAttachments } from "@/types/automation";
+import {
+  handleFileAttachmentUtils,
+  handleFileSelection,
+  uploadAllAttachments,
+} from "@/utils/handleFileAttachment";
+import { useCreateServiceMaintenanceAutomationRule } from "@/hooks/service-maintenance-automation/useCreateServiceMaintenanceAutomationRule";
+import { usePipelineStagesStore } from "@/stores/pipelineStagesStore";
+
+import { Company, Service, TwilioCredentials } from "@prisma/client";
+import { useServiceStore } from "@/stores/serviceStore";
+import { parseTimeDelayToSeconds } from "@/utils/parseTimeDelayToSeconds";
+import { useFindOneServiceMaintenanceAutomationRule } from "@/hooks/service-maintenance-automation/useFindOneServiceMaintenanceAutomationRule";
+import { parseSecondsToTimeDelay } from "@/utils/parseSecondsToTimeDelay";
+import { useUpdateServiceMaintenanceAutomationRule } from "@/hooks/service-maintenance-automation/useUpdateServiceMaintenanceAutomationRule";
+import { Spin } from "antd";
+import { errorToast } from "@/lib/toast";
 type RuleFormProps = {
   initialData?: Rule;
   mode: "create" | "edit" | undefined;
   id?: string | null;
   isEdit: boolean;
+  user: any;
+  companyId: any;
+  company: Company;
+  twilio: TwilioCredentials | null;
 };
 
 export type Rule = {
   companyId: number | null;
-  id?: string;
+  id?: number;
   title: string;
-  service: string[];
-  condition: string;
-  delay: string;
-  action: string;
+  selectedServiceIds: number[];
+  conditionColumnId: number | null;
+  timeDelay?: number | string | null;
+  targetColumnId: number | null;
   templateType: "SMS" | "EMAIL";
-  attachments?: File[];
-  subject?: string;
-  body: string;
+  attachments?: TAttachments | [];
+  emailSubject?: string | null;
+  emailBody?: string | null;
+  smsBody?: string | null;
+  createdBy: string | null;
 };
 
 // Template variables
@@ -55,114 +64,264 @@ const template_variable_options = [
   { name: "[GOOGLE_MAP_LINK]", description: "Google map link" },
 ];
 
-
-
 const ServiceRuleForm: React.FC<RuleFormProps> = ({
   mode,
   id,
   isEdit,
-  initialData,
+  user,
+  companyId,
+  company,
+  twilio,
 }) => {
   // Default empty rule
-  const [formData, setFormData] = useState<Rule>(
-    initialData || {
-      title: "",
-      service: [],
-      condition: "",
-      delay: "",
-      action: "",
-      templateType: "SMS",
-      attachments: [],
-      subject: "",
-      body: "",
-      companyId: null
-      
-    },
-  );
+  const [formData, setFormData] = useState<Rule>({
+    title: "",
+    selectedServiceIds: [],
+    conditionColumnId: null,
+    targetColumnId: null,
+    timeDelay: null,
+    templateType: "SMS",
+    attachments: [],
+    emailSubject: "",
+    emailBody: "",
+    smsBody: "",
+    createdBy: null,
+    companyId: null,
+  });
   const [activeTemplate, setActiveTemplate] = useState<"SMS" | "EMAIL">("SMS");
+  const [error, setError] = useState<Record<string, string>>({});
+  const userEmail = user?.email;
+  const {
+    serviceOptions,
+    fetchServices,
+    loading: serviceLoading,
+  } = useServiceStore();
+  const { mutate: createService, isPending: isCreatePending } =
+    useCreateServiceMaintenanceAutomationRule();
+  const {
+    stages,
+    fetchStages,
+    loading: stageLoading,
+  } = usePipelineStagesStore();
 
+  const actionOptions = stages.filter(
+    (stage) => formData?.conditionColumnId != stage.id,
+  );
+
+  const { mutate: updateServiceRule, isPending: isUpdatePending } =
+    useUpdateServiceMaintenanceAutomationRule();
+  const { data, isLoading, isFetching } =
+    useFindOneServiceMaintenanceAutomationRule(Number(id));
   // Update rule on initial data change
   useEffect(() => {
-    if (initialData) {
-      setFormData(initialData);
+    if (isEdit && id) {
+      const timeDelay = parseSecondsToTimeDelay(data?.data?.timeDelay);
+      setFormData({
+        companyId: data?.data.companyId,
+        title: data?.data.title,
+        selectedServiceIds: data?.data.serviceMaintenanceStage?.map(
+          (item: any) => item.serviceId,
+        ),
+        conditionColumnId: data?.data.conditionColumnId,
+        targetColumnId:
+          data?.data.targetColumnId == 0
+            ? null
+            : data?.data.targetColumnId || null,
+        timeDelay: timeDelay,
+        templateType: data?.data.templateType,
+        attachments: data?.data.attachments || [],
+        emailSubject: data?.data.emailSubject || "",
+        emailBody: data?.data.emailBody || "",
+        smsBody: data?.data.smsBody || "",
+        createdBy: data?.data.createdBy,
+      });
+      setActiveTemplate(data?.data.templateType);
+    } else {
+      setFormData({
+        title: "",
+        selectedServiceIds: [],
+        conditionColumnId: null,
+        targetColumnId: null,
+        timeDelay: null,
+        templateType: "SMS",
+        attachments: [],
+        emailSubject: "",
+        emailBody: "",
+        smsBody: "",
+        createdBy: null,
+        companyId: null,
+      });
     }
-  }, [initialData]);
+  }, [isEdit, id, data, mode]);
 
+  useEffect(() => {
+    fetchStages("shop");
+  }, []);
   // Handle input changes
   const handleChange = (field: keyof Rule, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+
+    if (error[field]) {
+      setError((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
   };
+
+  useEffect(() => {
+    fetchServices();
+  }, [fetchServices]);
 
   // Handle template toggle
   const handleTemplateToggle = (template: "SMS" | "EMAIL") => {
     setActiveTemplate(template);
 
-    setFormData((prev)=>({
+    setFormData((prev) => ({
       ...prev,
-      templateType:template
-    }))
+      templateType: template,
+    }));
   };
 
   // Handle file attachment
-  const handleFileAttachment = (
+  const handleFileAttachment = async (
     event: React.ChangeEvent<HTMLInputElement>,
     type: string,
   ) => {
-    if (event.target.files) {
-      const file = event.target.files;
-      const fileArray = Array.from(file)
-      if (type === "SMS") {
-        handleChange("attachments", fileArray);
-      } else {
-        handleChange("attachments", fileArray);
-      }
-    }
+    handleFileSelection({
+      event: event,
+      formData,
+      setFormData,
+    });
   };
 
   // Handle form submission
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
+    const newError: Record<string, string> = {};
     const errors: string[] = [];
-        // if (formData.companyId === null) errors.push("Company ID is required.");
-        if (!formData.title || !formData.title.trim())
-      errors.push("Title is required.");
 
-            if (!Array.isArray(formData.service) || formData.service.length === 0) {
-              errors.push("At least one service is required.");
-            }
-           
-              if (!formData.condition)
-      errors.push("Condition is required.");
-              if (!formData.action)
-      errors.push("Action is required.");
-            if (!formData.templateType) errors.push("Template type is required.");
-           
-            if (formData.templateType === "EMAIL") {
-              if (!formData.subject || !formData.subject.trim()) {
-                errors.push("Subject is required for the EMAIL.");
-              }
-            }
-        
-           
-        
-            if (errors.length > 0) {
-              errors.forEach((err) => errorToast(err));
-              return;
-            }
+    if (!formData.title || !formData.title.trim())
+      newError.title = "Title is required.";
 
-            console.log("FOrmData", formData)
+    if (
+      !Array.isArray(formData.selectedServiceIds) ||
+      formData.selectedServiceIds.length === 0
+    ) {
+      newError.selectedServiceIds = "At least one service is required.";
+    }
+
+    if (!formData.conditionColumnId)
+      newError.conditionColumnId = "Condition is required.";
+
+    if (!formData.templateType) errors.push("Template type is required.");
+
+    if (!formData.timeDelay) newError.timeDelay = "Time Delay is required";
+
+    if (formData.templateType === "EMAIL") {
+      const isSubjectEmpty =
+        !formData.emailSubject || !formData.emailSubject.trim();
+      const isBodyEmpty = !formData.emailBody || !formData.emailBody.trim();
+
+      if (isSubjectEmpty && isBodyEmpty) {
+        newError.emailBody = "Email subject and body are required.";
+      } else if (isSubjectEmpty) {
+        newError.emailSubject = "Email subject is required.";
+      } else if (isBodyEmpty) {
+        newError.emailBody = "Email body is required.";
+      }
+
+      if (company?.email === null) {
+        newError.businessEmail = "You haven't added your business email.";
+        errorToast(newError.businessEmail);
+      }
+    }
+
+    if (formData.templateType === "SMS") {
+      if (!formData.smsBody || !formData.smsBody.trim()) {
+        newError.smsBody = "SMS body is required.";
+      }
+
+      if (twilio === null) {
+        newError.twilio = "To send SMS, you must sign in with Twilio.";
+        errorToast(newError.twilio);
+      }
+    }
+
+    if (errors.length > 0) {
+      errors.forEach((err) => errorToast(err));
+
+      return;
+    }
+
+    if (Object.keys(newError).length > 0) {
+      setError(newError);
+
+      return;
+    }
+    // console.log("FOrmData", formData);
+
+    try {
+      const { attachments, timeDelay, ...rest } = formData;
+      const seconds =
+        timeDelay != null ? parseTimeDelayToSeconds(timeDelay) : 0;
+      const uploadedAttachments = await uploadAllAttachments(attachments!);
+
+      const finalData = {
+        ...rest,
+        targetColumnId:
+          formData.targetColumnId != null
+            ? Number(formData.targetColumnId)
+            : null,
+        conditionColumnId: Number(formData.conditionColumnId),
+        timeDelay: seconds,
+        createdBy: userEmail,
+        companyId: companyId,
+        isPaused: false,
+        attachments: uploadedAttachments,
+      };
+
+      if (isEdit && id) {
+        updateServiceRule({ id: id, data: finalData });
+      } else {
+        createService(finalData);
+        //reset the form data
+        setFormData({
+          title: "",
+          selectedServiceIds: [],
+          conditionColumnId: null,
+          targetColumnId: null,
+          timeDelay: null,
+          templateType: "SMS",
+          attachments: [],
+          emailSubject: "",
+          emailBody: "",
+          smsBody: "",
+          createdBy: null,
+          companyId: null,
+        });
+      }
+    } catch (error) {
+      errorToast("Something went wrong!");
+    }
   };
 
-   const handleTemplateChange = (name: string, value: any) => {
+  const handleTemplateChange = (name: string, value: any) => {
     // This cast is safe because we're only passing valid keys from the ActiveTemplate component
     handleChange(name as keyof Rule, value);
   };
+
+  if (isLoading || isFetching || serviceLoading || stageLoading) {
+    return (
+      <div className="flex h-[800px] w-full animate-pulse items-center justify-center rounded-md bg-gray-200 p-4 shadow-sm md:p-6">
+        <Spin />
+      </div>
+    );
+  }
   return (
     <div>
-      <h2 className="mb-6 text-lg font-semibold text-gray-800 md:text-xl">
-        {mode == "create" ? "New Rule" : "Edit Rule"}
-      </h2>
       <div className="rounded-md border bg-white p-4 shadow-sm md:p-6">
         <Paper elevation={0} className="mx-auto max-w-lg rounded-lg">
           <form onSubmit={handleSubmit}>
@@ -173,18 +332,25 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
               value={formData.title}
               labelClassName="text-gray-500"
               onChange={(e) => handleChange("title", e.target.value)}
-              required
+              error={error.title}
             />
 
             {/* Service */}
             <div>
               <MultiSelect
-                options={[{id:"service1", title:"Service1"}, {id:"service2", title:"Service2"}]}
-                value={formData.service}
-                onChange={(value) => handleChange("service", value)}
+                options={serviceOptions}
+                value={
+                  Array.isArray(formData.selectedServiceIds)
+                    ? formData.selectedServiceIds
+                    : formData.selectedServiceIds
+                }
+                onChange={(value) => handleChange("selectedServiceIds", value)}
                 label="Service"
                 placeholder="Select options"
                 required
+                isSearch={true}
+                disabled={serviceLoading}
+                error={error.selectedServiceIds}
               />
             </div>
 
@@ -192,30 +358,33 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
             <Selector
               name="condition"
               label="Condition"
-              options={["condition1", "condition2"]}
-              value={formData.condition}
-              onChange={(value) => handleChange("condition", value)}
+              options={stages}
+              value={formData.conditionColumnId!}
+              onChange={(value) => handleChange("conditionColumnId", value)}
               required
+              disabled={stageLoading}
+              error={error.conditionColumnId}
             />
-            {/* Action */}
-            <Selector
-              name="action"
-              label="Action"
-              options={["action1", "action2"]}
-              value={formData.action}
-              onChange={(value) => handleChange("action", value)}
-              required
-            />
+
             {/* Time Delay */}
             <Selector
               name="delay"
               label="Time Delay"
               options={timeDelays}
-              value={formData.delay}
-              onChange={(value) => handleChange("delay", value)}
+              value={formData.timeDelay!}
+              onChange={(value) => handleChange("timeDelay", value)}
               required
+              error={error.timeDelay}
             />
-
+            {/* Action */}
+            <Selector
+              name="action"
+              label="Action"
+              options={actionOptions}
+              value={formData.targetColumnId!}
+              onChange={(value) => handleChange("targetColumnId", value)}
+              disabled={stageLoading}
+            />
             {/* Templates */}
             <Box className="my-4">
               <label className="mb-2 font-semibold text-gray-500">
@@ -240,56 +409,21 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
                 <Box
                   className={`mb-4 ${activeTemplate !== "SMS" ? "hidden" : ""}`}
                 >
-                  {/* <TextField
-                    multiline
+                  <ActiveTemplate
+                    activeTemplate="SMS"
                     rows={4}
-                    fullWidth
+                    name="smsBody"
+                    setFormData={setFormData}
+                    value={formData.smsBody!}
+                    iconBtnClassName="absolute -bottom-9 right-0"
+                    attachments={formData.attachments}
+                    attachmentName="attachments"
                     placeholder="Enter SMS template here..."
-                    value={formData.smsTemplate}
-                    onChange={(e) =>
-                      handleChange("smsTemplate", e.target.value)
-                    }
-                    InputProps={{
-                      endAdornment: (
-                        <IconButton
-                          component="label"
-                          size="small"
-                          className="absolute -bottom-5 right-1"
-                        >
-                          <AttachFileIcon />
-                          <input
-                            type="file"
-                            hidden
-                            onChange={(e) => handleFileAttachment(e, "sms")}
-                          />
-                        </IconButton>
-                      ),
-                    }}
+                    handleChange={handleTemplateChange}
+                    handleFileAttachment={handleFileAttachment}
+                    attachmentType="sms"
+                    error={error.smsBody}
                   />
-                  {formData.attachments! && (
-                    <Box className="mt-2 flex items-center">
-                      <Chip
-                        label={formData.attachments!.name}
-                        onDelete={() => handleChange("attachments!", null)}
-                        deleteIcon={<CloseIcon />}
-                        variant="outlined"
-                      />
-                    </Box>
-                  )} */}
-
-                   <ActiveTemplate
-                                      activeTemplate="SMS"
-                                      rows={4}
-                                      name="body"
-                                      value={formData.body!}
-                                      iconBtnClassName="absolute -bottom-9 right-0"
-                                      attachment={formData.attachments!}
-                                      attachmentName="attachments"
-                                      placeholder="Enter SMS template here..."
-                                      handleChange={handleTemplateChange}
-                                      handleFileAttachment={handleFileAttachment}
-                                      attachmentType="sms"
-                                    />
                 </Box>
               )}
 
@@ -298,68 +432,24 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
                 <Box
                   className={`mb-4 ${activeTemplate !== "EMAIL" ? "hidden" : ""}`}
                 >
-                  {/* <input
-                    name="emailSubject"
-                    type="text"
-                    value={formData.emailSubject}
-                    placeholder="subject"
-                    className="w-full rounded-sm border border-slate-400 bg-background px-2 py-0.5 leading-6 outline-none"
-                    onChange={(e) =>
-                      handleChange("emailSubject", e.target.value)
-                    }
-                    required
-                  />
-                  <TextField
-                    multiline
-                    rows={6}
-                    fullWidth
-                    placeholder="Enter email body here..."
-                    value={formData.emailBody}
-                    onChange={(e) => handleChange("emailBody", e.target.value)}
-                    InputProps={{
-                      endAdornment: (
-                        <IconButton
-                          component="label"
-                          size="small"
-                          className="absolute -bottom-5 right-1"
-                        >
-                          <AttachFileIcon />
-                          <input
-                            type="file"
-                            hidden
-                            onChange={(e) => handleFileAttachment(e, "email")}
-                          />
-                        </IconButton>
-                      ),
-                    }}
-                  />
-                  {formData.emailAttachment && (
-                    <Box className="mt-10 flex items-center">
-                      <Chip
-                        label={formData.emailAttachment.name}
-                        onDelete={() => handleChange("emailAttachment", null)}
-                        deleteIcon={<CloseIcon />}
-                        variant="outlined"
-                      />
-                    </Box>
-                  )} */}
-
-
                   <ActiveTemplate
-                  activeTemplate="EMAIL"
-                  rows={6}
-                  subjectName="subject"
-                  name="body"
-                  subjectValue={formData.subject}
-                  value={formData.body}
-                  iconBtnClassName="absolute -bottom-16 right-0"
-                  attachment={formData.attachments!}
-                  attachmentName="attachments"
-                  placeholder="Enter email body here..."
-                  handleChange={handleTemplateChange}
-                  handleFileAttachment={handleFileAttachment}
-                  attachmentType="EMAIL"
-                />
+                    activeTemplate="EMAIL"
+                    rows={6}
+                    subjectName="emailSubject"
+                    name="emailBody"
+                    setFormData={setFormData}
+                    subjectValue={formData.emailSubject!}
+                    value={formData.emailBody!}
+                    iconBtnClassName="absolute -bottom-16 right-0"
+                    attachments={formData.attachments}
+                    attachmentName="emailAttachment"
+                    placeholder="Enter email body here..."
+                    handleChange={handleTemplateChange}
+                    handleFileAttachment={handleFileAttachment}
+                    attachmentType="email"
+                    error={error.emailBody || error.emailSubject}
+                    subjectError={error.emailSubject}
+                  />
                 </Box>
               )}
 
@@ -370,10 +460,21 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
             {/* Save & Cancel Buttons */}
             <div className="flex justify-end pt-4">
               <button
+                disabled={isUpdatePending || isCreatePending}
                 type="submit"
-                className="rounded-md bg-indigo-500 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-600"
+                className={`rounded-md px-4 py-2 text-sm font-medium text-white ${
+                  isUpdatePending || isCreatePending
+                    ? "cursor-not-allowed bg-indigo-300"
+                    : "bg-indigo-500 hover:bg-indigo-600"
+                }`}
               >
-                {initialData?.id ? "Update" : "Save"}
+                {isUpdatePending || isCreatePending
+                  ? isEdit && id
+                    ? "Updating..."
+                    : "Saving..."
+                  : isEdit && id
+                    ? "Update"
+                    : "Save"}
               </button>
             </div>
           </form>

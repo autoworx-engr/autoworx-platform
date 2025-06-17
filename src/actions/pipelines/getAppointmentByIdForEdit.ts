@@ -45,42 +45,48 @@ export async function getAppointmentByIdForEdit(
       throw new Error("Appointment not found");
     }
 
-    const confirmationEmailTemplate = appointment.confirmationEmailTemplateId
-      ? await db.emailTemplate.findUnique({
-          where: { id: appointment.confirmationEmailTemplateId },
-        })
-      : null;
-
-    const reminderEmailTemplate = appointment.reminderEmailTemplateId
-      ? await db.emailTemplate.findUnique({
-          where: { id: appointment.reminderEmailTemplateId },
-        })
-      : null;
-    const employees = await db.user.findMany({
-      where: {
-        companyId: appointment.companyId,
-      },
-    });
-
-    const customers = await db.client.findMany({
-      where: { companyId: appointment.companyId },
-    });
-
-    const vehicles = await db.vehicle.findMany({
-      where: { companyId: appointment.companyId },
-    });
-
-    const emailTemplates = await db.emailTemplate.findMany({
-      where: {
-        companyId: appointment.companyId,
-      },
-    });
-
-    const settings = (await db.calendarSettings.findFirst({
-      where: {
-        companyId: appointment.companyId,
-      },
-    })) as CalendarSettings;
+    // Run all the independent database queries in parallel
+    const [
+      confirmationEmailTemplate,
+      reminderEmailTemplate,
+      employees,
+      customers,
+      vehicles,
+      emailTemplates,
+      settings
+    ] = await Promise.all([
+      appointment.confirmationEmailTemplateId
+        ? db.emailTemplate.findUnique({
+            where: { id: appointment.confirmationEmailTemplateId },
+          })
+        : Promise.resolve(null),
+      appointment.reminderEmailTemplateId
+        ? db.emailTemplate.findUnique({
+            where: { id: appointment.reminderEmailTemplateId },
+          })
+        : Promise.resolve(null),
+      db.user.findMany({
+        where: {
+          companyId: appointment.companyId,
+        },
+      }),
+      db.client.findMany({
+        where: { companyId: appointment.companyId },
+      }),
+      db.vehicle.findMany({
+        where: { companyId: appointment.companyId },
+      }),
+      db.emailTemplate.findMany({
+        where: {
+          companyId: appointment.companyId,
+        },
+      }),
+      db.calendarSettings.findFirst({
+        where: {
+          companyId: appointment.companyId,
+        },
+      }) as Promise<CalendarSettings>
+    ]);
 
     return {
       ...appointment,

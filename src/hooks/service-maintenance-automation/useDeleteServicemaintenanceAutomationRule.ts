@@ -16,7 +16,7 @@ export const useDeleteServiceMaintenanceAutomationRule = () => {
       });
     },
     onError: (error) => {
-      errorToast("Field to delete service-maintenance automation rule!");
+      errorToast("Failed to delete service-maintenance automation rule!");
       console.error(error);
     },
   });

@@ -17,7 +17,7 @@ export const createCommunicationAutomationRule = async (payload: any) => {
       "/communication-automation",
       payload,
     );
-    console.log(response.data);
+
     return response.data;
   } catch (error) {
     throw error;

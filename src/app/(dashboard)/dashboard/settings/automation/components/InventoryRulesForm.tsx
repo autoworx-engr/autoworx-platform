@@ -59,29 +59,26 @@ const InventoryRuleForm: React.FC<RuleFormProps> = ({
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
 
-    const errors:string[] = []
+    const errors: string[] = [];
 
-    if(!formData.title || !formData.title.trim()) errors.push("Title is required")
+    if (!formData.title || !formData.title.trim())
+      errors.push("Title is required");
 
-     if(!formData.frequency) errors.push("Frequency is required") 
-     if(!formData.day) errors.push("Day is required") 
-     if(!formData.condition) errors.push("Condition is required") 
-     if(!formData.action) errors.push("Frequency is required") 
+    if (!formData.frequency) errors.push("Frequency is required");
+    if (!formData.day) errors.push("Day is required");
+    if (!formData.condition) errors.push("Condition is required");
+    if (!formData.action) errors.push("Frequency is required");
 
+    if (errors.length > 0) {
+      errors.forEach((err) => errorToast(err));
+      return;
+    }
 
-      if (errors.length > 0) {
-                errors.forEach((err) => errorToast(err));
-                return;
-              }
-
-              console.log("Form Data",formData)
+    console.log("Form Data", formData);
   };
 
   return (
     <div>
-      <h2 className="mb-6 text-lg font-semibold text-gray-800 md:text-xl">
-        {mode == "create" ? "New Rule" : "Edit Rule"}
-      </h2>
       <div className="h-[600px] rounded-md border bg-white p-4 shadow-sm md:p-6">
         <Paper elevation={0} className="mx-auto max-w-lg rounded-lg">
           <form onSubmit={handleSubmit}>

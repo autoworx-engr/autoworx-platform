@@ -5,14 +5,27 @@ import moment from "moment";
 import { getServerSession } from "next-auth";
 import RevenueBarChartContainer from "./chart/RevenueBarChartContainer";
 
-export default async function Analytics() {
+type AnalyticsProps = {
+  startDate?: string;
+  endDate?: string;
+};
+
+export default async function Analytics({ startDate, endDate }: AnalyticsProps) {
   const session = await getServerSession(authOptions);
-  let last30Days = moment().subtract(30, "days");
-  let today = moment();
-
-  let formattedToday = today.format("YYYY-MM-DD");
-  let formattedLast30Days = last30Days.format("YYYY-MM-DD");
-
+  
+  // Use provided dates or default to last 30 days
+  let formattedStartDate: string;
+  let formattedEndDate: string;
+  
+  if (startDate && endDate) {
+    formattedStartDate = moment(decodeURIComponent(startDate), "MM-DD-YYYY").format("YYYY-MM-DD");
+    formattedEndDate = moment(decodeURIComponent(endDate), "MM-DD-YYYY").format("YYYY-MM-DD");
+  } else {
+    let last30Days = moment().subtract(30, "days");
+    let today = moment();
+    formattedStartDate = last30Days.format("YYYY-MM-DD");
+    formattedEndDate = today.format("YYYY-MM-DD");
+  }
   const last30DaysInvoice = await db.invoice.findMany({
     where: {
       companyId: session?.user.companyId,
@@ -24,8 +37,8 @@ export default async function Analytics() {
       AND: [
         {
           createdAt: {
-            gte: new Date(`${formattedLast30Days}T00:00:00.000Z`), // Start of the day
-            lte: new Date(`${formattedToday}T23:59:59.999Z`), // End of the day
+            gte: new Date(`${formattedStartDate}T00:00:00.000Z`), // Start of the day
+            lte: new Date(`${formattedEndDate}T23:59:59.999Z`), // End of the day
           },
         },
       ],

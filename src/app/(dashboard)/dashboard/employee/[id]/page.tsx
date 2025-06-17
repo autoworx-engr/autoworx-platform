@@ -58,7 +58,6 @@ export default async function Page({ params }: { params: { id: string } }) {
       column: true,
     },
   });
-
   return (
     <div className="p-2">
       <div className="w-fit rounded border p-1.5 md:hidden">

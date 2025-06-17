@@ -16,7 +16,7 @@ export const createVehicleValidationSchema = z.object({
       invalid_type_error: "Year must be a number",
     })
     .nonnegative()
-    .refine((year) => year >= 1886 && year <= new Date().getFullYear(), {
+    .refine((year) => year >= 1886, {
       message: "Year must be a valid year",
     }),
   make: z

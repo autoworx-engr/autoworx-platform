@@ -29,11 +29,13 @@ import SearchScroll from "./SearchScroll";
 import { Skeleton } from "antd";
 import PipelineLoadingSkeleton from "./PipelineLoadingSkeleton";
 
+
 interface PipelinesProps {
   pipelinesTitle: string;
   columns?: Column[];
   shopPipelineDataProp: ShopPipelineData[];
   loading?: boolean;
+  isTechnician?:boolean;
 }
 
 export default function Pipelines({
@@ -41,11 +43,12 @@ export default function Pipelines({
   columns,
   loading = false,
   shopPipelineDataProp,
+  isTechnician,
 }: PipelinesProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const pathname = usePathname();
-
+   const pathname = usePathname();
+  
   const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
   const [selectedVehicleId, setSelectedVehicleId] = useState<number | null>(
     null,
@@ -147,6 +150,8 @@ export default function Pipelines({
     } else {
       setOpenDropdownIndex({ category: categoryIndex, index: leadIndex });
     }
+
+    console.log(categoryIndex, leadIndex);
   };
 
   const getInitials = (employee: Employee | null) => {
@@ -322,7 +327,7 @@ export default function Pipelines({
         }
         return column;
       });
-
+      console.log(updatedData);
       setPipelineData(updatedData);
       return;
     }
@@ -622,7 +627,7 @@ export default function Pipelines({
                                     <div className="flex items-center gap-2">
                                       <Link
                                         href={`/dashboard/communication/client/${lead.clientId}`}
-                                        className="group relative"
+                                        className={` group relative ${isTechnician ? 'hidden' : ''}`}
                                       >
                                         <PiWechatLogoLight
                                           size={22}
@@ -681,7 +686,7 @@ export default function Pipelines({
                                       >
                                         <CiCalendar
                                           size={22}
-                                          className="mt-.5 text-gray-800"
+                                          className={`mt-.5 text-gray-800 ${isTechnician ? 'hidden': ''}`}
                                         />
                                         <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
                                           Appointment

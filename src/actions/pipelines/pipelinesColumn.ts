@@ -23,11 +23,11 @@ export const createColumn = async (
   bgColor?: string,
 ) => {
   const session = await getServerSession(authOptions);
-    const companyId = session?.user.companyId;
+  const companyId = session?.user.companyId;
 
-    if (!companyId) {
-      throw new Error("Company ID is required to create an email template.");
-    }
+  if (!companyId) {
+    throw new Error("Company ID is required to create an email template.");
+  }
   const maxOrder = await db.column.findFirst({
     where: { type },
     orderBy: { order: "desc" },

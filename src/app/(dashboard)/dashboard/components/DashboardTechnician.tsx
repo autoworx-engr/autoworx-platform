@@ -63,23 +63,26 @@ const DashboardTechnician = ({
 
   const { data: dashboardInfo } = useServerGet(getTechnicianInfo, timezone);
 
-  const hasClockedInToday = lastClockInOut
+  const hasClockedInToday = lastClockInOut?.clockIn
     ? moment
-        .tz(
-          lastClockInOut.clockIn,
-          lastClockInOut?.timezone ?? moment.tz.guess(),
+        .utc(lastClockInOut.clockIn)
+        .tz(lastClockInOut.timezone ?? moment.tz.guess())
+        .isSame(
+          moment().tz(lastClockInOut.timezone ?? moment.tz.guess()),
+          "day",
         )
-        .isSame(new Date(), "day")
     : false;
-  const hasClockedOutToday = lastClockInOut
-    ? lastClockInOut.clockOut &&
-      moment
-        .tz(
-          lastClockInOut.clockOut,
-          lastClockInOut?.timezone ?? moment.tz.guess(),
+
+  const hasClockedOutToday = lastClockInOut?.clockOut
+    ? moment
+        .utc(lastClockInOut.clockOut)
+        .tz(lastClockInOut.timezone ?? moment.tz.guess())
+        .isSame(
+          moment().tz(lastClockInOut.timezone ?? moment.tz.guess()),
+          "day",
         )
-        .isSame(new Date(), "day")
     : false;
+
   // const { data: messages } = useServerGet(fetchRecentMessages);
 
   // useAutoRefreshRoute(refreshTime);

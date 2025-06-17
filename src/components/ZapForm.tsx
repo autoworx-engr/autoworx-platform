@@ -3,10 +3,16 @@
 import { getLegalBusinessName } from "@/actions/settings/getLegalBusinessName";
 import { useState, useEffect } from "react";
 import ServiceSelectAndAdd from "./ServiceSelectAndAdd";
-
+import {
+  useGetAllYears,
+  useGetMake,
+  useGetModelsByYearAndMake,
+} from "@/hooks/useCarData";
+import Selector from "../app/(dashboard)/dashboard/settings/automation/components/Selector";
 const ZapForm = () => {
   const [legalBusinessName, setLegalBusinessName] = useState<string>("");
   const [consent, setConsent] = useState<boolean>(false);
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -19,10 +25,17 @@ const ZapForm = () => {
     token: "",
   });
 
-  const [selectedService, setSelectedService] = useState<{ id: string | number; title: string } | null>(null)
-  const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>(
-    {}
+  const { data: years, isLoading: isYearsLoading }: any = useGetAllYears();
+  const { data: makes, isLoading: isMakeLoading }: any = useGetMake();
+  const { data: models }: any = useGetModelsByYearAndMake(
+    formData.vehicle_year!,
+    formData.vehicle_make!,
   );
+  const [selectedService, setSelectedService] = useState<{
+    id: string | number;
+    title: string;
+  } | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formStatus, setFormStatus] = useState<{
@@ -91,7 +104,7 @@ const ZapForm = () => {
         ...formData,
         phone: value,
       });
-      
+
       // Only show error if value is not empty and doesn't start with +1
       if (value && !value.startsWith("+1")) {
         setFieldErrors({
@@ -118,26 +131,28 @@ const ZapForm = () => {
     }
   };
 
-   const handleServiceChange = (value: string | { id: string | number; title: string }) => {
+  const handleServiceChange = (
+    value: string | { id: string | number; title: string },
+  ) => {
     if (typeof value === "object") {
       // Store the full object separately
-      setSelectedService(value)
+      setSelectedService(value);
       // Store only the ID in formData
-      setFormData((prev) => ({ ...prev, service: value.id.toString() }))
+      setFormData((prev) => ({ ...prev, service: value.id.toString() }));
     } else {
       // If it's just a string (ID), store it directly
-      setSelectedService(null)
-      setFormData((prev) => ({ ...prev, service: value }))
+      setSelectedService(null);
+      setFormData((prev) => ({ ...prev, service: value }));
     }
-  }
-  
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
     setFormStatus({ message: "", type: null });
 
     try {
-      const serviceTitle = selectedService?.title || formData.service
+      const serviceTitle = selectedService?.title || formData.service;
       // Construct the opportunity source string in the required format
       const opportunitySource = `(${formData.source}) ${formData.vehicle_year} ${formData.vehicle_make} ${formData.vehicle_model} | ${serviceTitle}`;
 
@@ -190,6 +205,15 @@ const ZapForm = () => {
       setIsSubmitting(false);
     }
   };
+
+  const vehicleOptions = makes?.data?.map((vehicle: any) => ({
+    title: vehicle.name ?? "Unknown",
+    id: vehicle.name,
+  }));
+  const vehicleModelOptions = models?.data?.map((vehicle: any) => ({
+    title: vehicle.name ?? "Unknown",
+    id: vehicle.name,
+  }));
 
   return (
     <div className="mx-auto w-full max-w-md">
@@ -272,9 +296,11 @@ const ZapForm = () => {
                 <p className="mt-1 text-sm text-red-600">{fieldErrors.phone}</p>
               )}
             </div>
-<div className="space-y-2">
-             
-              <ServiceSelectAndAdd value={formData.service} onChange={handleServiceChange}/>
+            <div className="space-y-2">
+              <ServiceSelectAndAdd
+                value={formData.service}
+                onChange={handleServiceChange}
+              />
             </div>
 
             {/* Vehicle Information Section */}
@@ -284,7 +310,7 @@ const ZapForm = () => {
               </h3>
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
+            {/* <div className="grid grid-cols-3 gap-3">
               <div className="space-y-2">
                 <label
                   htmlFor="vehicle_year"
@@ -341,9 +367,47 @@ const ZapForm = () => {
                   className="w-full rounded-md border-2 border-gray-300 px-4 py-2 placeholder:text-gray-500 focus:border-[#00b8b0] focus:outline-none focus:ring-2 focus:ring-[#00b8b0]"
                 />
               </div>
-            </div>
+            </div> */}
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              <Selector
+                name="vehicle_year"
+                label="Year"
+                placeholder="Select year"
+                options={years?.data}
+                value={formData.vehicle_year || ""}
+                onChange={(value) =>
+                  setFormData((prev) => ({ ...prev, vehicle_year: value }))
+                }
+                isSearch={true}
+                isClear={true}
+              />
+              <Selector
+                name="vehicle_make"
+                label="Make"
+                placeholder="Select make"
+                options={vehicleOptions || []}
+                value={formData.vehicle_make || ""}
+                onChange={(value) =>
+                  setFormData((prev) => ({ ...prev, vehicle_make: value }))
+                }
+                isSearch={true}
+                isClear={true}
+              />
 
-            
+              <Selector
+                name="vehicle_model"
+                label="Model"
+                placeholder="Select model"
+                options={vehicleModelOptions || []}
+                // rootClassName="w-1/3"
+                value={formData.vehicle_make || ""}
+                onChange={(value) =>
+                  setFormData((prev) => ({ ...prev, vehicle_model: value }))
+                }
+                isSearch={true}
+                isClear={true}
+              />
+            </div>
 
             {formStatus.message && (
               <div
@@ -375,7 +439,7 @@ const ZapForm = () => {
               id="consent"
               checked={consent || false}
               onChange={(e) => setConsent(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 text-[#00b8b0] focus:ring-[#00b8b0] cursor-pointer"
+              className="h-4 w-4 cursor-pointer rounded border-gray-300 text-[#00b8b0] focus:ring-[#00b8b0]"
             />
             <label htmlFor="consent" className="text-white text-opacity-90">
               I agree to receive text messages, emails, and calls from{" "}

@@ -5,6 +5,8 @@ import { sendLeadStageChangeOrCloseNotification } from "@/lib/notification/pipel
 import { LeadWithSalesUser } from "@/types/invoiceLead";
 import { Client, Prisma, Vehicle } from "@prisma/client";
 import moment from "moment-timezone";
+import { updatePipelineAutomationTrigger } from "../automation/pipeline/triggerPipelineAutomation";
+import { updateCommunicationAutomationTrigger } from "../automation/communication/triggerCommunicationAutomation";
 
 type TGetLeads = {
   columnId?: number;
@@ -21,28 +23,15 @@ export const getLeads = async ({
 }: TGetLeads): Promise<LeadWithSalesUser[]> => {
   const companyId = await getCompanyId();
   try {
-    let query: Prisma.LeadWhereInput = {};
-    if (searchTerm && columnId) {
-      query = {
-        companyId,
-        columnId,
+    const query: Prisma.LeadWhereInput = {
+      companyId,
+      ...(columnId && { columnId }),
+      ...(searchTerm && {
         clientName: {
           contains: searchTerm,
         },
-      };
-    } else if (columnId) {
-      query = {
-        companyId,
-        columnId,
-      };
-    } else {
-      query = {
-        companyId,
-        clientName: {
-          contains: searchTerm,
-        },
-      };
-    }
+      }),
+    };
 
     const timezone = moment.tz.guess();
     const todayTimeString = moment()
@@ -50,8 +39,11 @@ export const getLeads = async ({
       .startOf("day")
       .format("YYYY-MM-DDTHH:mm:ss");
 
+    const now = moment();
+    const todayStart = moment(todayTimeString);
+
     const leadsData = await db.lead.findMany({
-      where: { ...query },
+      where: query,
       take,
       skip,
       orderBy: {
@@ -107,100 +99,75 @@ export const getLeads = async ({
       },
     });
 
-    let leadsDataWithClient: LeadWithSalesUser[] = [];
-    let ind = 0;
+    const vehicleIds = leadsData
+      .map((lead) => lead.vehicleId)
+      .filter((id): id is number => id !== null);
 
-    for (const lead of leadsData) {
-      let dataToPush: {
-        client:
-          | (Client & {
-              vehicle?: Vehicle | null;
-              appointments?: {
-                id: number;
-                date: Date | null;
-                startTime: string | null;
-                endTime: string | null;
-              }[];
-            })
-          | null;
-        column?: any;
-      } = {
-        client: null,
-        // column: {},
-      };
-      // const client = await db.client.findFirst({
-      //   where: {
-      //     leadId: lead.id,
-      //     companyId,
-      //   },
-      //   include: {
-      //     appointments: {
-      //       where: {
-      //         date: {
-      //           gte: moment(todayTimeString) as any,
-      //         },
-      //       },
-      //       orderBy: {
-      //         date: "desc",
-      //       },
-      //       select: {
-      //         id: true,
-      //         title: true,
-      //         date: true,
-      //         startTime: true,
-      //         endTime: true,
-      //       },
-      //     },
-      //   },
-      // });
+    const vehicles =
+      vehicleIds.length > 0
+        ? await db.vehicle.findMany({
+            where: { id: { in: vehicleIds } },
+          })
+        : [];
+
+    const vehicleMap = new Map(vehicles.map((v) => [v.id, v]));
+
+    const leadsDataWithClient: LeadWithSalesUser[] = leadsData.map((lead) => {
       const client = lead.Client.find(
-        (client) => client.companyId === companyId && client.leadId === lead.id,
+        (client: any) =>
+          client.companyId === companyId && client.leadId === lead.id,
       );
-      const appointments = client?.appointments.filter((appointment) => {
+
+      const appointments = client?.appointments.filter((appointment: any) => {
         if (
-          appointment.date &&
-          moment(appointment?.date).isSameOrAfter(todayTimeString)
+          !appointment.date ||
+          !moment(appointment.date).isSameOrAfter(todayStart)
         ) {
-          if (
-            moment(appointment.date)
-              .startOf("day")
-              .format("YYYY-MM-DDTHH:mm:ss") === todayTimeString &&
-            moment(appointment.endTime, "HH:mm").isBefore(moment())
-          ) {
-            return false;
-          }
-          return true;
+          return false;
         }
+
+        if (
+          moment(appointment.date).startOf("day").isSame(todayStart) &&
+          appointment.endTime &&
+          moment(appointment.endTime, "HH:mm").isBefore(now)
+        ) {
+          return false;
+        }
+
+        return true;
       });
-      if (client) {
-        dataToPush.client = { ...client, appointments };
-      }
-      if (lead.vehicleId) {
-        let vehicle = await db.vehicle.findFirst({
-          where: {
-            id: lead.vehicleId,
-            companyId,
-          },
-        });
-        if (dataToPush.client) dataToPush.client.vehicle = vehicle;
-      }
-      if (!lead.isQualified) {
-        dataToPush.column = {
-          id: Math.random(),
-          title: "Unqualified",
-        };
-      } else {
-        dataToPush.column = lead.column;
-      }
+
+      const vehicle = lead.vehicleId ? vehicleMap.get(lead.vehicleId) : null;
+
+      const clientData = client
+        ? {
+            ...client,
+            appointments,
+            vehicle,
+          }
+        : null;
+
+      const column = lead.isQualified
+        ? lead.column
+        : {
+            id: Math.random(),
+            title: "Unqualified",
+            type: "sales",
+            order: 0,
+            textColor: null,
+            bgColor: null,
+            companyId: companyId,
+          };
 
       const { Client, ...leadWithoutClient } = lead;
-      leadsDataWithClient.push({
+
+      return {
         ...leadWithoutClient,
-        ...dataToPush,
+        client: clientData,
+        column,
         totalMessage: client?._count?.ClientSMS ?? 0,
-      });
-      ind++;
-    }
+      };
+    });
 
     return leadsDataWithClient;
   } catch (error) {
@@ -242,6 +209,24 @@ export async function updateLeadColumn(leadId: number, newColumnId: number) {
       title: "Lead Stage Changed",
       notificationType: "STAGE",
     });
+
+    try {
+      await updatePipelineAutomationTrigger({
+        companyId: companyId,
+        condition: "TIME_DELAY",
+        leadId: leadId,
+        columnId: newColumnId,
+      });
+    } catch (error) {}
+
+    // communication automation trigger
+    try {
+      await updateCommunicationAutomationTrigger({
+        companyId: companyId,
+        leadId: leadId,
+        columnId: newColumnId,
+      });
+    } catch (error) {}
 
     // revalidatePath("/dashboard/pipeline/sales/lead");
     // revalidatePath("/dashboard/pipeline/sales/pipeline");

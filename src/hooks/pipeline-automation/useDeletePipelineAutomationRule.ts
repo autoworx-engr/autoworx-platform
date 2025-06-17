@@ -13,7 +13,7 @@ export const useDeletePipelineAutomationRule = () => {
       queryClient.invalidateQueries({ queryKey: ["pipeline-automation"] });
     },
     onError: (error) => {
-      errorToast("Field to delete pipeline automation rule!");
+      errorToast("Failed to delete pipeline automation rule!");
       console.error(error);
     },
   });
