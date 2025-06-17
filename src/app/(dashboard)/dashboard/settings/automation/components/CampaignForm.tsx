@@ -1,5 +1,5 @@
 "use client";
-import Select from "react-select";
+import { Select } from "@radix-ui/react-select"
 import React, { useEffect } from "react";
 import Selector from "./Selector";
 import { useRef, useState } from "react";
