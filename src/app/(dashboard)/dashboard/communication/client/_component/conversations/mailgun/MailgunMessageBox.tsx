@@ -1,0 +1,88 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import SendMail from "./SendMail";
+import MaiGunBox from "./MailGunBox";
+
+import { MailgunEmail, MailgunEmailAttachment } from "@prisma/client";
+import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
+import { pusher } from "@/lib/pusher/client";
+import { readClientEmail } from "@/actions/communication/client/chat-track";
+import { errorToast } from "@/lib/toast";
+import { errorHandler } from "@/error-boundary/globalErrorHandler";
+import { useClientCommunicationStore } from "@/stores/client-store";
+import RedirectToSettings from "./RedirectToSettings";
+
+type TProps = {
+  clientId: number;
+  conversations?: (MailgunEmail & { attachments: MailgunEmailAttachment[] })[];
+  clientEmail: boolean;
+};
+
+export default function MailgunMessageBox({
+  clientId,
+  conversations: initialMessages,
+  clientEmail,
+}: TProps) {
+  const [conversations, setConversations] = useState(initialMessages);
+  const setClientConversationTrack = useClientCommunicationStore(
+    (state) => state.setClientConversationTrack,
+  );
+
+  const user = useGetCurrentUser();
+
+  // pusher subscription
+  useEffect(() => {
+    pusher
+      .subscribe(`mail-${user?.companyId}-${clientId}`)
+      .bind(
+        "mail",
+        (data: MailgunEmail & { attachments: MailgunEmailAttachment[] }) => {
+          if (!data) return;
+          // update cache
+          setConversations((prevMails) => {
+            if (!prevMails) return [data];
+            return [...prevMails, data];
+          });
+        },
+      );
+    return () => {
+      return pusher
+        .unbind("mail")
+        .unsubscribe(`mail-${user?.companyId}-${clientId}`);
+    };
+  }, []);
+
+  // update client unread messages
+  const updateEmailUnReadMessages = useCallback(async () => {
+    try {
+      const readClientConversation = await readClientEmail(clientId);
+      console.log({ readClientConversation });
+      setClientConversationTrack(readClientConversation);
+    } catch (err: any) {
+      const formattedError = errorHandler(err);
+      errorToast(formattedError.message);
+    }
+  }, [clientId]);
+
+  useEffect(() => {
+    updateEmailUnReadMessages();
+  }, []);
+
+  return (
+    <>
+      {clientEmail ? (
+        <>
+          <MaiGunBox conversations={conversations} clientId={clientId} />
+          <SendMail clientId={clientId} setConversations={setConversations} />
+        </>
+      ) : (
+        <RedirectToSettings
+          message="This Client has no email."
+          link={"/dashboard/client/" + clientId}
+          linkText="Go to Client"
+        />
+      )}
+    </>
+  );
+}

@@ -1,0 +1,376 @@
+import { deleteRefund, refundPayment } from "@/actions/payment/refundPayment";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/Dialog";
+import { SlimInput } from "@/components/SlimInput";
+import { errorHandler } from "@/error-boundary/globalErrorHandler";
+import { errorToast, successToast } from "@/lib/toast";
+import { PaymentType } from "@prisma/client";
+import * as Tabs from "@radix-ui/react-tabs";
+import moment from "moment";
+import Image from "next/image";
+import React, { useState, useTransition } from "react";
+import { FaRegCreditCard } from "react-icons/fa6";
+import { FaTrash } from "react-icons/fa";
+import { FiTrash2 } from "react-icons/fi";
+import { IoSettingsOutline, IoSettingsSharp } from "react-icons/io5";
+
+function TabTrigger({
+  value,
+  children,
+  tab,
+}: {
+  value: string;
+  children: React.ReactNode;
+  tab: string;
+}) {
+  return (
+    <Tabs.Trigger
+      value={value}
+      className="flex items-center gap-1 rounded-md bg-[#6571FF] p-1 px-5 text-white transition-all"
+      style={{
+        backgroundColor: tab === value ? "#6571FF" : "transparent",
+        border: tab === value ? "none" : "1px solid #6571FF",
+        color: tab === value ? "white" : "#6571FF",
+      }}
+    >
+      {children}
+    </Tabs.Trigger>
+  );
+}
+
+interface RefundModalProps {
+  paymentId: number;
+  paymentType: PaymentType;
+  totalAmount: number;
+  refundedAmount: number;
+  refundMethod?: string;
+  refundReason?: string;
+  refundDate?: Date;
+  onRefundSuccess: () => Promise<void>;
+}
+
+export default function RefundModal({
+  paymentId,
+  paymentType,
+  totalAmount,
+  refundedAmount,
+  refundMethod,
+  refundReason,
+  refundDate,
+  onRefundSuccess,
+}: RefundModalProps) {
+  const [pending, startTransition] = useTransition();
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [tab, setTab] = useState(paymentType);
+
+  const [date, setDate] = useState<Date>(new Date());
+  const [refundAmount, setRefundAmount] = useState<number | string>(0);
+  const [refundReasonInput, setRefundReasonInput] = useState("");
+
+  const availableToRefund = totalAmount;
+  const hasRefund = refundedAmount > 0;
+
+  const formatAmount = (value: number | string): number => {
+    const num = typeof value === "string" ? parseFloat(value) : value;
+    return parseFloat(num.toFixed(2));
+  };
+
+  function reset() {
+    setTab(paymentType);
+    setDate(new Date());
+    setRefundAmount(0);
+    setRefundReasonInput("");
+  }
+
+  async function handleSubmit() {
+    try {
+      const roundedAmount = formatAmount(refundAmount);
+
+      if (roundedAmount <= 0) {
+        errorToast("Refund amount must be greater than 0");
+        return;
+      }
+
+      if (roundedAmount > availableToRefund) {
+        errorToast("Refund amount cannot exceed available amount");
+        return;
+      }
+
+      const res = await refundPayment({
+        paymentId,
+        refundAmount: roundedAmount,
+        refundMethod: tab,
+        refundReason: refundReasonInput,
+        refundDate: date,
+      });
+
+      if (res?.type === "success") {
+        setOpen(false);
+        successToast("Refund recorded successfully");
+        reset();
+
+        // Call the refresh function to update the data
+        await onRefundSuccess();
+      } else if (res?.type === "globalError") {
+        errorToast(
+          Array.isArray(res?.errorSource) &&
+            res.errorSource.length &&
+            typeof res.errorSource[0] === "object" &&
+            res.errorSource[0] !== null &&
+            "message" in res.errorSource[0] &&
+            typeof (res.errorSource[0] as any).message === "string"
+            ? (res.errorSource[0] as any).message
+            : (res as any).message,
+        );
+      }
+    } catch (err) {
+      const formattedError = errorHandler(err);
+      errorToast(
+        formattedError?.errorSource?.length
+          ? formattedError.errorSource[0].message
+          : formattedError.message,
+      );
+    }
+  }
+
+  async function handleDeleteRefund() {
+    try {
+      const res = await deleteRefund({
+        paymentId,
+      });
+
+      if (res?.type === "success") {
+        setDeleteConfirmOpen(false);
+        setOpen(false);
+        successToast("Refund removed successfully");
+        reset();
+
+        // Call the refresh function to update the data
+        await onRefundSuccess();
+      } else if (res?.type === "globalError") {
+        errorToast(
+          Array.isArray(res?.errorSource) &&
+            res.errorSource.length &&
+            typeof res.errorSource[0] === "object" &&
+            res.errorSource[0] !== null &&
+            "message" in res.errorSource[0] &&
+            typeof (res.errorSource[0] as any).message === "string"
+            ? (res.errorSource[0] as any).message
+            : (res as any).message,
+        );
+      }
+    } catch (err) {
+      const formattedError = errorHandler(err);
+      errorToast(
+        formattedError?.errorSource?.length
+          ? formattedError.errorSource[0].message
+          : formattedError.message,
+      );
+    }
+  }
+
+  const openRefundDialog = () => {
+    if (hasRefund) {
+      // Prepopulate with existing refund data
+      setRefundAmount(formatAmount(refundedAmount));
+      setRefundReasonInput(refundReason || "");
+      setTab((refundMethod as PaymentType) || paymentType);
+      setDate(refundDate || new Date());
+    } else {
+      // Default values for new refund
+      reset();
+      setRefundAmount(formatAmount(availableToRefund));
+    }
+  };
+
+  const isDisabled = totalAmount === 0;
+
+  return (
+    <>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          <button
+            onClick={openRefundDialog}
+            type="button"
+            className={`flex items-center gap-2 rounded-md px-3 py-1 transition-all ${
+              isDisabled ? "cursor-not-allowed opacity-50" : ""
+            } ${
+              hasRefund
+                ? "border border-[#6571FF] bg-white text-[#6571FF] hover:bg-blue-50"
+                : "border border-[#6571FF] bg-[#6571FF] text-white hover:bg-blue-600"
+            }`}
+            disabled={isDisabled}
+          >
+            <span>Refund</span>
+            {hasRefund && <IoSettingsOutline color="#6571FF" />}
+          </button>
+        </DialogTrigger>
+
+        <DialogContent className="w-max max-w-xl [&>button]:hidden">
+          <form>
+            <DialogHeader>
+              <DialogTitle className="flex items-center justify-between">
+                {hasRefund ? <span>Manage Refund</span> : <span>Refund</span>}
+                {hasRefund && (
+                  <button
+                    type="button"
+                    onClick={() => setDeleteConfirmOpen(true)}
+                    className="flex items-center gap-1 rounded-lg border bg-[#FF7575] p-2 text-sm text-white"
+                  >
+                    <FiTrash2 size={18} />
+                  </button>
+                )}
+              </DialogTitle>
+              {/* Removed DialogClose component */}
+            </DialogHeader>
+
+            <Tabs.Root
+              className="mt-5"
+              value={tab}
+              onValueChange={setTab as any}
+            >
+              <div className="mt-5 flex gap-3">
+                <div className="w-40 md:w-fit">
+                  <SlimInput
+                    labelClassName="text-sm md:text-base"
+                    name="date"
+                    type="date"
+                    label="Date"
+                    value={moment(date).format("YYYY-MM-DD")}
+                    onChange={(e) => setDate(new Date(e.target.value))}
+                  />
+                </div>
+                <div className="w-full">
+                  <SlimInput
+                    labelClassName="text-sm md:text-base"
+                    name="refundAmount"
+                    type="number"
+                    label="Amount"
+                    value={refundAmount}
+                    onChange={(e) => setRefundAmount(e.target.value)}
+                    onBlur={(e) =>
+                      setRefundAmount(formatAmount(e.target.value))
+                    }
+                    max={availableToRefund}
+                  />
+                </div>
+              </div>
+
+              <p className="mb-2 mt-5">Method</p>
+              <Tabs.List className="grid grid-cols-4 justify-between gap-3 md:flex">
+                <TabTrigger value="CARD" tab={tab}>
+                  <FaRegCreditCard />
+                  Card
+                </TabTrigger>
+
+                <TabTrigger value="CHECK" tab={tab}>
+                  <Image
+                    src={
+                      tab === "CHECK"
+                        ? "/icons/CheckWhite.svg"
+                        : "/icons/Check.svg"
+                    }
+                    alt="Check icon"
+                    width={20}
+                    height={20}
+                  />
+                  Check
+                </TabTrigger>
+
+                <TabTrigger value="CASH" tab={tab}>
+                  <Image
+                    src={
+                      tab === "CASH"
+                        ? "/icons/CashWhite.svg"
+                        : "/icons/Cash.svg"
+                    }
+                    alt="Cash icon"
+                    width={20}
+                    height={20}
+                  />
+                  Cash
+                </TabTrigger>
+
+                <TabTrigger value="OTHER" tab={tab}>
+                  Other
+                </TabTrigger>
+              </Tabs.List>
+              <div className="mt-5">
+                <SlimInput
+                  className="h-20"
+                  labelClassName="text-sm md:text-base"
+                  name="refundReason"
+                  type="text"
+                  label="Reason for Refund"
+                  value={refundReasonInput}
+                  onChange={(e) => setRefundReasonInput(e.target.value)}
+                />
+              </div>
+
+              <DialogFooter className="mt-5 flex justify-center gap-2 md:gap-5">
+                <button
+                  type="button"
+                  className="rounded-md border-2 border-slate-400 p-2 px-5"
+                  onClick={() => setOpen(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="rounded-md bg-blue-500 p-2 px-5 text-white disabled:bg-gray-400"
+                  formAction={() => startTransition(handleSubmit)}
+                  disabled={pending}
+                  type="submit"
+                >
+                  Record
+                </button>
+              </DialogFooter>
+            </Tabs.Root>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <DialogContent className="w-full max-w-md">
+          <DialogHeader>
+            <DialogTitle>Remove Refund</DialogTitle>
+            <DialogClose />
+          </DialogHeader>
+
+          <div className="mt-3 text-sm text-gray-600">
+            <p>Are you sure you want to remove this refund?</p>
+            <p className="mt-2">
+              This will restore the payment to its original amount and remove
+              all refund information.
+            </p>
+          </div>
+
+          <DialogFooter className="mt-5 flex justify-center gap-2 md:gap-5">
+            <button
+              type="button"
+              className="rounded-md border-2 border-slate-400 p-2 px-5"
+              onClick={() => setDeleteConfirmOpen(false)}
+            >
+              Cancel
+            </button>
+            <button
+              className="rounded-md bg-red-500 p-2 px-5 text-white disabled:bg-gray-400"
+              onClick={() => startTransition(handleDeleteRefund)}
+              disabled={pending}
+            >
+              Remove Refund
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}

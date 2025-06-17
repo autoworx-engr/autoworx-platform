@@ -1,0 +1,130 @@
+"use client";
+
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/Tabs";
+import { User } from "@prisma/client";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect } from "react";
+import ProductTable from "./ProductTable";
+import SearchFilter from "./SearchFilter";
+
+import DatabaseTable from "./DatabaseTable";
+import DatabaseFilterHeader from "./DatabaseFilterHeader";
+
+export default function InventoryList({
+  products,
+  supplies,
+  productId,
+  user,
+  isFullWidth = false,
+  databaseContent,
+  totalDatabaseItems,
+  categories,
+  onPageChange,
+  onLimitChange,
+  currentPage,
+  currentLimit,
+}: {
+  products: any;
+  supplies: any;
+  productId: number;
+  user: User;
+  isFullWidth?: boolean;
+  databaseContent: any[];
+  totalDatabaseItems: number;
+  categories: any[];
+  onPageChange: (page: number) => void;
+  onLimitChange: (limit: number) => void;
+  currentPage: number;
+  currentLimit: number;
+}) {
+  const router = useRouter();
+  const search = useSearchParams();
+  const view = search?.get("view") ?? "products";
+
+  useEffect(() => {
+    if (!search?.get("view")) {
+      router.push("/dashboard/inventory?view=products");
+    }
+  }, [search, router]);
+
+  return (
+    <Tabs
+      value={view}
+      className={`col-start-1 mt-3 flex min-h-0 w-full flex-col overflow-clip text-xs lg:h-[83vh] 2xl:text-base ${isFullWidth ? "md:w-full" : "md:w-1/2"} `}
+    >
+      <TabsList>
+        <TabsTrigger
+          value="database"
+          onClick={() => router.push("/dashboard/inventory?view=database")}
+        >
+          Database
+        </TabsTrigger>
+
+        {(user.employeeType === "Admin" || user.employeeType === "Manager") && (
+          <TabsTrigger
+            value="supplies"
+            onClick={() => router.push("/dashboard/inventory?view=supplies")}
+          >
+            Supplies
+          </TabsTrigger>
+        )}
+        {user.employeeType !== "Technician" && (
+          <TabsTrigger
+            value="products"
+            onClick={() => router.push("/dashboard/inventory?view=products")}
+          >
+            Products
+          </TabsTrigger>
+        )}
+      </TabsList>
+
+      {view === "products" && (
+        <TabsContent
+          value="products"
+          className={`mx-2 md:visible md:static overflow-y-auto md:opacity-100 ${productId ? "invisible absolute opacity-0" : "visible static opacity-100"}`}
+        >
+          <SearchFilter />
+          <ProductTable
+            products={products as any}
+            currentProductId={productId}
+          />
+        </TabsContent>
+      )}
+
+      {view === "supplies" && (
+        <TabsContent
+          value="supplies"
+          className={`mx-2 md:visible md:static overflow-y-auto md:opacity-100 ${productId ? "invisible absolute opacity-0" : "visible static opacity-100"}`}
+        >
+          <SearchFilter />
+          <ProductTable
+            products={supplies as any}
+            currentProductId={productId}
+          />
+        </TabsContent>
+      )}
+
+      {view === "database" && (
+        <TabsContent
+          value="database"
+          className={`mx-2 flex min-h-0 flex-col md:visible md:static md:opacity-100`}
+        >
+          <div className="relative flex h-full w-full flex-col">
+            {/* Fixed filter header */}
+            <div className="sticky top-0 z-50 bg-white pb-2 pt-2">
+              <DatabaseFilterHeader categories={categories} />
+            </div>
+
+            {/* Scrollable content area */}
+            <div className="h-full overflow-y-auto">
+              <DatabaseTable
+                totalItems={totalDatabaseItems}
+                data={databaseContent}
+              />
+            </div>
+          </div>
+        </TabsContent>
+      )}
+    </Tabs>
+  );
+}

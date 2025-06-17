@@ -1,0 +1,10 @@
+{
+  "extends": "next/core-web-vitals",
+  "env": {
+    "jest": true,
+  },
+  "rules": {
+    "react-hooks/exhaustive-deps": "off",
+    "react/no-unescaped-entities": 0,
+  },
+}

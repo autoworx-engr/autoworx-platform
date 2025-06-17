@@ -1,0 +1,486 @@
+import { authOptions } from "@/authOptions";
+import { db } from "@/lib/db";
+import { Invoice, Prisma } from "@prisma/client";
+import moment from "moment";
+import { getServerSession } from "next-auth";
+import { Suspense } from "react";
+import Calculation from "../../components/Calculation";
+import CalculationWithTooltip from "../../components/CalculationWithTooltip";
+import Analytics from "./Analytics";
+import AnalyticsVisibility from "./AnalyticsVisibility";
+import FilterHeader from "./FilterHeader";
+import RevenueDisplay from "./RevenueDisplay";
+import { FormatUtcToTimezone } from "@/utils/FormatUtcToTimezone";
+import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
+
+type TProps = {
+  searchParams: {
+    category?: string;
+    startDate?: string;
+    endDate?: string;
+    service?: string;
+    search?: string;
+    price?: string;
+    cost?: string;
+    profit?: string;
+    filterRevenue?: string;
+  };
+};
+
+export type TSliderData = {
+  id: number;
+  min: number;
+  max: number;
+  defaultValue?: [number, number];
+  type: "price" | "cost" | "profit";
+};
+
+export type TInvoice = Prisma.InvoiceGetPayload<{
+  include: {
+    invoiceItems: {
+      include: {
+        materials: true;
+        labor: true;
+      };
+    };
+    vehicle: {
+      select: {
+        make: true;
+        model: true;
+        submodel: true;
+      };
+    };
+    client: {
+      select: {
+        id: true;
+        firstName: true;
+        lastName: true;
+      };
+    };
+    technician: true;
+    InventoryProductHistory: {
+      include: { product: { select: { name: true } } };
+    };
+  };
+}>;
+
+export default async function RevenueReportPage({ searchParams }: TProps) {
+  const session = await getServerSession(authOptions);
+  const { timezone } = await getCompanyTimezone();
+  const filterOR: any = [];
+
+  const invoicesPromise = db.invoice.findMany({
+    where: {
+      companyId: session?.user?.companyId,
+      type: "Invoice",
+      column: {
+        companyId: session?.user?.companyId,
+        title: "Delivered",
+      },
+      invoiceItems: {
+        some:
+          searchParams.category || searchParams.service
+            ? {
+                OR: [
+                  {
+                    service: {
+                      name: searchParams.service?.trim(),
+                      category: { name: searchParams.category },
+                    },
+                  },
+                ],
+              }
+            : undefined,
+      },
+      OR: filterOR.length > 0 ? filterOR : undefined,
+    },
+    include: {
+      invoiceItems: {
+        include: {
+          materials: true,
+          labor: true,
+        },
+      },
+      vehicle: {
+        select: {
+          make: true,
+          model: true,
+          submodel: true,
+        },
+      },
+      client: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+        },
+      },
+      technician: true,
+      InventoryProductHistory: {
+        where: {
+          isLost: true,
+        },
+        include: {
+          product: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  const servicesPromise = db.service.findMany({
+    where: {
+      companyId: session?.user?.companyId,
+    },
+    include: {
+      category: true,
+    },
+  });
+
+  const categoriesPromise = db.category.findMany({
+    where: {
+      companyId: session?.user?.companyId,
+    },
+  });
+
+  const [invoices, services, categories] = await Promise.all([
+    invoicesPromise,
+    servicesPromise,
+    categoriesPromise,
+  ]);
+  let filteredInvoicesWithOutDate: Invoice[] = [];
+  let filteredInvoices =
+    searchParams?.search && invoices
+      ? invoices.filter((invoice) => {
+          if (!invoice.client && !invoice.id) {
+            return false;
+          }
+          const fullName = `${invoice?.client?.firstName} ${invoice?.client?.lastName}`;
+          return (
+            fullName
+              .toLowerCase()
+              .includes(searchParams?.search?.trim()?.toLowerCase() || "") ||
+            invoice.id.toString().includes(searchParams?.search?.trim() || "")
+          );
+        })
+      : invoices;
+
+  if (searchParams.startDate && searchParams.endDate) {
+    const formattedStartDate =
+      searchParams.startDate &&
+      moment(decodeURIComponent(searchParams.startDate!), "MM-DD-YYYY").format(
+        "YYYY-MM-DD",
+      );
+
+    const formattedEndDate =
+      searchParams.endDate &&
+      moment(decodeURIComponent(searchParams.endDate!), "MM-DD-YYYY").format(
+        "YYYY-MM-DD",
+      );
+
+    filteredInvoicesWithOutDate = filteredInvoices;
+
+    filteredInvoices = filteredInvoices.filter((invoice) => {
+      if (!invoice.deliveredAt) {
+        return false;
+      }
+      const invoiceDate = FormatUtcToTimezone(
+        invoice.deliveredAt,
+        timezone,
+        "YYYY-MM-DD",
+      );
+
+      return (
+        invoiceDate >= formattedStartDate && invoiceDate <= formattedEndDate
+      );
+    });
+
+    // filterOR.push({
+    //   deliveredAt: {
+    //     gte:
+    //       formattedStartDate && new Date(`${formattedStartDate}T00:00:00.000Z`), // Start of the day
+    //     lte: formattedEndDate && new Date(`${formattedEndDate}T23:59:59.999Z`), // End of the day
+    //   },
+    // });
+  }
+
+  const getService = services.map((service) => service.name);
+  const getCategory = categories.map((category) => category.name);
+
+  const maxPrice = Math.max(
+    ...filteredInvoices.map((invoice) => Number(invoice.grandTotal)),
+  );
+
+  let maxCost = 0;
+  let maxProfit = 0;
+
+  const filteredInvoice = filteredInvoices.filter((invoice) => {
+    const laborCost = invoice?.technician.reduce((acc, technician) => {
+      acc += Number(technician?.amount);
+      return acc;
+    }, 0);
+    const { costPrice, profitPrice } = invoice.invoiceItems.reduce(
+      (
+        acc,
+        cur: Prisma.InvoiceItemGetPayload<{
+          include: {
+            materials: true;
+            labor: true;
+          };
+        }>,
+      ) => {
+        const materialCostPrice = cur.materials.reduce(
+          (acc, cur) =>
+            acc + Number(cur?.cost || 0) * Number(cur?.quantity || 0),
+          0,
+        );
+        // labor cost price is assumed to be per hour
+        // const laborCostPrice =
+        //   Number(cur.labor?.charge || 0) * Number(cur?.labor?.hours) || 0;
+        const costPrice = materialCostPrice;
+        acc.costPrice += costPrice;
+        acc.profitPrice = Number(invoice.grandTotal) - acc.costPrice;
+        return acc;
+      },
+      {
+        costPrice: 0,
+        profitPrice: 0,
+      },
+    );
+
+    (invoice as any).costPrice = costPrice + laborCost;
+    (invoice as any).profitPrice = profitPrice - laborCost;
+    maxCost = Math.max(maxCost, costPrice);
+    maxProfit = Math.max(maxProfit, profitPrice);
+    if (!searchParams.price && !searchParams.cost && !searchParams.profit) {
+      return true;
+    }
+    // filter by price of invoice
+    if (searchParams.price) {
+      const [minPrice, maxPrice] = searchParams.price.split("-").map(Number);
+      if (
+        Number(invoice?.grandTotal) >= minPrice &&
+        Number(invoice?.grandTotal) <= maxPrice
+      ) {
+        return true;
+      }
+    }
+    // filter by cost of invoice
+    if (searchParams.cost) {
+      const [minCost, maxCost] = searchParams.cost.split("-").map(Number);
+      if (costPrice >= minCost && costPrice <= maxCost) {
+        return true;
+      }
+    }
+    // filter by profit of invoice
+    if (searchParams.profit) {
+      const [minProfit, maxProfit] = searchParams.profit.split("-").map(Number);
+      if (profitPrice >= minProfit && profitPrice <= maxProfit) {
+        return true;
+      }
+    }
+  });
+
+  // multiple filters
+  const filterMultipleSliders: TSliderData[] = [
+    {
+      id: 1,
+      type: "price",
+      min: 0,
+      max: maxPrice,
+      // defaultValue: [50, 250],
+    },
+    {
+      id: 2,
+      type: "cost",
+      min: 0,
+      max: maxCost,
+    },
+    {
+      id: 3,
+      type: "profit",
+      min: 0,
+      max: maxProfit,
+    },
+  ];
+
+  // Calculate the total week profit (Invoice has a `profit` field)
+  const now = new Date();
+  const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+  const endOfWeek = new Date(now.setDate(now.getDate() - now.getDay() + 6));
+
+  const weeklyInvoices = (
+    searchParams.startDate && searchParams.endDate
+      ? filteredInvoicesWithOutDate
+      : filteredInvoices
+  ).filter(
+    (invoice) =>
+      invoice.deliveredAt &&
+      new Date(invoice.deliveredAt) >= startOfWeek &&
+      invoice.deliveredAt &&
+      new Date(invoice.deliveredAt) <= endOfWeek,
+  );
+
+  const totalWeekProfit = weeklyInvoices.reduce(
+    (total, invoice) => total + Number((invoice as Invoice).grandTotal || 0),
+    0,
+  );
+
+  // Calculate the total month profit (Invoice has a `profit` field)
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+  const monthlyInvoices = (
+    searchParams.startDate && searchParams.endDate
+      ? filteredInvoicesWithOutDate
+      : filteredInvoices
+  ).filter(
+    (invoice) =>
+      invoice.deliveredAt &&
+      new Date(invoice.deliveredAt) >= startOfMonth &&
+      invoice.deliveredAt &&
+      new Date(invoice.deliveredAt) <= endOfMonth,
+  );
+
+  const totalMonthProfit = monthlyInvoices.reduce(
+    (total, invoice) => total + Number((invoice as Invoice).grandTotal || 0),
+    0,
+  );
+
+  // Calculate the all time profit (Invoice has a `profit` field)
+  const totalProfit = invoices.reduce(
+    (total, invoice) => total + Number((invoice as Invoice).grandTotal || 0),
+    0,
+  );
+
+  // Calculate total revenue (sum of profits) for all invoices
+  const totalRevenue = filteredInvoice.reduce(
+    (total, invoice) => total + Number((invoice as Invoice).grandTotal || 0),
+    0,
+  );
+
+  // Calculate filtered revenue only when date range is applied
+  let filteredRevenue =
+    searchParams?.startDate && searchParams?.endDate
+      ? filteredInvoice.reduce(
+          (total, invoice) =>
+            total + Number((invoice as Invoice).grandTotal || 0),
+          0,
+        )
+      : totalRevenue; // Use total revenue when no date filter
+
+  let getFilteredCategoryId = categories.find(
+    (category) => category.name === searchParams.category,
+  )?.id;
+
+  //filter based on the filterRevenue query
+  filteredRevenue = searchParams?.filterRevenue
+    ? filteredInvoice.reduce((total, invoice) => {
+        if (searchParams?.filterRevenue === "Price") {
+          return total + Number(invoice.grandTotal?.toString() || 0);
+        } else if (searchParams?.filterRevenue === "Cost") {
+          return total + (Number((invoice as any)?.costPrice) || 0);
+        } else if (searchParams?.filterRevenue === "Profit") {
+          return total + Number((invoice as any).profitPrice.toString());
+        }
+        return total;
+      }, 0)
+    : totalRevenue;
+
+  if (searchParams.category) {
+    let filteredInvoiceItems = [];
+
+    for (const invoice of filteredInvoices) {
+      for (const item of invoice.invoiceItems) {
+        let serviceId: any = item?.serviceId;
+        if (serviceId) {
+          const services = await db.service.findMany({
+            where: {
+              categoryId: getFilteredCategoryId,
+              id: serviceId,
+              companyId: session?.user?.companyId,
+            },
+            select: {
+              id: true,
+            },
+          });
+          for (const service of services) {
+            if (service.id === serviceId) {
+              filteredInvoiceItems.push(item);
+            }
+          }
+        }
+      }
+    }
+    // Calculate total material cost and labor cost for filtered invoic
+    let totalMaterialCost = 0;
+    let totalLaborCost = 0;
+
+    filteredInvoiceItems.forEach((item: any) => {
+      if (item.labor) {
+        totalLaborCost +=
+          item.labor.hours * item.labor.charge - item.labor.discount;
+      }
+
+      item.materials.forEach((material: any) => {
+        const materialCost =
+          material.quantity * material.sell - material.discount;
+        totalMaterialCost += materialCost;
+      });
+    });
+    filteredRevenue = totalMaterialCost + totalLaborCost;
+  }
+
+  return (
+    <div className="space-y-5">
+      <div className="my-7 grid grid-cols-2 gap-4 xl:grid-cols-4">
+        <Calculation content="WEEK" amount={totalWeekProfit} />
+        <Calculation content="MONTH" amount={totalMonthProfit} />
+        <Calculation content="YTD" amount={totalProfit} />
+        <CalculationWithTooltip
+          content="REVENUE (FILTERED)"
+          amount={filteredRevenue}
+          hasDateRange={!!(searchParams?.startDate && searchParams?.endDate)}
+          startDate={
+            searchParams?.startDate
+              ? decodeURIComponent(searchParams.startDate)
+              : undefined
+          }
+          endDate={
+            searchParams?.endDate
+              ? decodeURIComponent(searchParams.endDate)
+              : undefined
+          }
+        />
+      </div>
+      {/* filter section */}
+      <FilterHeader
+        searchParams={searchParams}
+        filterMultipleSliders={filterMultipleSliders}
+        getCategory={getCategory}
+        getService={getService}
+      />
+
+      {/* Conditional Rendering Based on Device */}
+      <RevenueDisplay
+        filteredInvoice={
+          filteredInvoice as (TInvoice & {
+            costPrice: number;
+            profitPrice: number;
+          })[]
+        }
+        timezone={timezone}
+      />
+
+      {/* Analytics will only be loaded and rendered on desktop */}
+      <Suspense fallback="loading...">
+        <AnalyticsVisibility>
+          <Analytics />
+        </AnalyticsVisibility>
+      </Suspense>
+    </div>
+  );
+}
