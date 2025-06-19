@@ -70,7 +70,7 @@ export default async function Dashboard() {
     // ],
     //   },
     // });
-
+    console.log('Getting appointments .... ')
     appointments = await db.appointment.findMany({
       where: {
         companyId: user.companyId,
@@ -111,6 +111,7 @@ export default async function Dashboard() {
       return appointmentEndTime.utc().isAfter(currentDateTime);
     });
   } else {
+    console.log('Getting appointments .... ')
     appointments = await db.appointment.findMany({
       where: {
         companyId: user.companyId,
@@ -181,6 +182,7 @@ export default async function Dashboard() {
     });
   }
 
+  console.log('Getting tasks .... ')
   const tasks = await db.task.findMany({
     where: {
       companyId: user.companyId,
@@ -208,14 +210,18 @@ export default async function Dashboard() {
     let assignedUsers: User[] = [];
 
     // Get the assigned users for the task
+    console.log('Getting task users .... ')
     const taskUsers = (await db.taskUser.findMany({
       where: {
-        taskId: task.id,
+        OR: [
+          {taskId: task.id,}
+        ]
       },
     })) as any;
 
     // Get the user details for the assigned users
     for (const taskUser of taskUsers) {
+      console.log('Getting task users 2 .... ')
       const user = (await db.user.findUnique({
         where: {
           id: taskUser.userId,
@@ -232,7 +238,7 @@ export default async function Dashboard() {
       assignedUsers,
     });
   }
-
+  console.log('Getting company users .... ')
   const companyUsers = await db.user.findMany({
     where: {
       companyId: user.companyId,
@@ -240,6 +246,7 @@ export default async function Dashboard() {
   });
 
   // fetching all the leave requests
+   console.log('Getting pending users .... ')
   let pendingLeaveRequests = await db.leaveRequest.findMany({
     where: {
       companyId: user.companyId,
@@ -272,6 +279,7 @@ export default async function Dashboard() {
   const calendarAppointments = [];
 
   for (const appointment of appointments) {
+     console.log('Getting appointment users .... ')
     const appointmentUsers = await db.appointmentUser.findMany({
       where: { appointmentId: appointment.id },
     });
@@ -366,6 +374,7 @@ export default async function Dashboard() {
       return bLastEmailDate - aLastEmailDate;
     });
 
+    console.log('Getting Messages .... ')
     const internalMessages = await fetchRecentMessages();
     return (
       <DashboardSales
@@ -379,10 +388,11 @@ export default async function Dashboard() {
       />
     );
   } else if (user.employeeType === "Technician") {
+   
     let lastClockInOut = await getLastClockInOutForUser({
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     });
-
+ console.log('Getting Clock in .... ')
     return (
       <DashboardTechnician
         refreshTime={refreshTime}

@@ -14,7 +14,8 @@
     "prettier:fix": "npm run prettier --fix",
     "tsc": "set NODE_OPTIONS=--max-old-space-size=4096 && tsc",
     "test": "jest",
-    "test:watch": "jest --watchAll"
+    "test:watch": "jest --watchAll",
+    "prisma:merge": "cat prisma/schema/*.prisma > prisma/schema.prisma"
   },
   "dependencies": {
     "@ant-design/icons": "^5.4.0",
