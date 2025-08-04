@@ -1,0 +1,61 @@
+import { db } from "@/lib/db";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+} from "@/lib/tokenGenerator";
+import jwt from "jsonwebtoken";
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const refreshAccessToken = body?.refreshAccessToken as string;
+    if (!refreshAccessToken) {
+      return new Response("Unauthorized", { status: 401 });
+    }
+
+    const payload = jwt.verify(
+      refreshAccessToken,
+      process.env.REFRESH_SECRET || "",
+    );
+
+    if (!payload || typeof payload !== "object" || !payload.email) {
+      return Response.json({
+        message: "Invalid token",
+        error: "InvalidRefreshTokenError",
+        status: 401,
+      });
+    }
+
+    const user = await db.user.findUnique({
+      where: { id: payload.id },
+    });
+
+    if (!user) {
+      return Response.json({
+        message: "User not found",
+        error: "UserNotFoundError",
+        status: 404,
+      });
+    }
+
+    const newAccessToken = generateAccessToken(user) as string;
+    const newRefreshToken = generateRefreshToken(user) as string;
+
+    return Response.json(
+      {
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken,
+      },
+      {
+        status: 200,
+      },
+    );
+  } catch (error) {
+    console.error("refresh token request error:", error);
+    return Response.json({
+      message: "Invalid Refresh Token",
+      error: "InvalidRefreshTokenError",
+      status: 403,
+    });
+  }
+}

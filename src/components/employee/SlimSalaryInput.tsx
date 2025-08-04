@@ -1,0 +1,76 @@
+"use client";
+
+import { useState } from "react";
+import { SalaryType } from "@prisma/client";
+import { SlimInput } from "@/components/SlimInput";
+import { useFormErrorStore } from "@/stores/form-error";
+import SelectEmployeeSalaryType from "@/app/(dashboard)/dashboard/employee/SelectEmployeeSalaryType";
+
+interface SlimSalaryInputProps {
+  onSalaryChange?: (salaryData: { salaryType: SalaryType; salaryAmount: number } | null) => void;
+  salaryTypeOpen: boolean;
+  setSalaryTypeOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  initialSalaryType?: SalaryType;
+  initialSalaryAmount?: number;
+}
+
+export default function SlimSalaryInput({ 
+  onSalaryChange,
+  salaryTypeOpen,
+  setSalaryTypeOpen,
+  initialSalaryType,
+  initialSalaryAmount
+}: SlimSalaryInputProps) {
+  const { showError, clearError } = useFormErrorStore();
+
+  const handleSalaryAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (value && !/^(\d*\.?\d+|\d+\.?\d*)$/.test(value)) {
+      showError({
+        field: "salaryAmount",
+        message: "Salary amount must be a valid number.",
+      });
+    } else {
+      clearError();
+      
+      // Get current salary type from the form
+      const salaryTypeElement = document.querySelector<HTMLInputElement>("[name='salaryType']");
+      const salaryType = salaryTypeElement?.value as SalaryType;
+      
+      if (onSalaryChange && salaryType && value) {
+        onSalaryChange({
+          salaryType,
+          salaryAmount: Number(value)
+        });
+      } else if (onSalaryChange && (!salaryType || !value)) {
+        onSalaryChange(null);
+      }
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between gap-x-4">
+        <SelectEmployeeSalaryType
+          required={false}
+          salaryTypeOpen={salaryTypeOpen}
+          setSalaryTypeOpen={setSalaryTypeOpen}
+          defaultType={initialSalaryType}
+        />
+        <div className="grow">
+          <SlimInput
+            name="salaryAmount"
+            label="Salary Amount"
+            type="number"
+            required={false}
+            step="0.01"
+            min="0"
+            placeholder="Enter salary amount"
+            defaultValue={initialSalaryAmount ? initialSalaryAmount.toString() : ""}
+            onChange={handleSalaryAmountChange}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,31 @@
+import { Task } from "@prisma/client";
+import { FaPen } from "react-icons/fa";
+
+type TTaskTooltipProps = {
+  event: Task;
+  onModalOpen?: () => void;
+};
+
+export default function TaskTooltip({ event, onModalOpen }: TTaskTooltipProps) {
+  return (
+    <div>
+      <div className="flex items-center justify-between">
+        <h3 className="font-semibold">{event.title}</h3>
+
+        <button
+          type="button"
+          className="text- rounded-full bg-[#6571FF] p-2 text-white"
+          onClick={(e) => {
+            e.stopPropagation();
+            onModalOpen && onModalOpen();
+          }}
+        >
+          <FaPen className="mx-auto text-[10px]" />
+        </button>
+      </div>
+
+      <p className="mt-3">{event.description}</p>
+      <p className="mt-3">Task Priority: {event.priority}</p>
+    </div>
+  );
+}

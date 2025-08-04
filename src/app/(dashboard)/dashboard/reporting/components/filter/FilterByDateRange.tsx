@@ -1,0 +1,174 @@
+"use client";
+import { format } from "date-fns";
+import { usePathname, useSearchParams, useRouter } from "next/navigation";
+import React, { useEffect, useRef, useState } from "react";
+import { DateRangePicker } from "react-date-range";
+import "react-date-range/dist/styles.css"; // main style file
+import "react-date-range/dist/theme/default.css"; // theme css file
+import { CiCalendar } from "react-icons/ci";
+import { TFilterModalState } from "../../(report)/revenue/FilterHeader";
+type TProps = {
+  startDate: string;
+  endDate: string;
+  modalName: string;
+  closeModal: (modalName: string) => void;
+  toggleModal: (modalName: string) => void;
+  activeModal: TFilterModalState;
+};
+export default function FilterDateRange({
+  startDate,
+  endDate,
+  closeModal,
+  toggleModal,
+  activeModal,
+  modalName,
+}: TProps) {
+  const [state, setState] = useState({
+    selection: {
+      startDate: new Date(),
+      endDate: new Date(),
+      key: "selection",
+    },
+  });
+
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+
+  // const [showPicker, setShowPicker] = useState(false);
+  const [tempRange, setTempRange] = useState(state.selection);
+  const [isRangeSelected, setIsRangeSelected] = useState(false);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node) &&
+        buttonRef.current &&
+        !buttonRef.current.contains(event.target as Node)
+      ) {
+        closeModal(modalName);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const pathname = usePathname();
+  const router = useRouter();
+  const params = useSearchParams();
+
+  const handleSelect = (ranges: any) => {
+    setTempRange(ranges.selection);
+  };
+
+  const togglePicker = () => {
+    toggleModal(modalName);
+  };
+
+  const handleOk = () => {
+    const searchParams = new URLSearchParams(params!);
+    const formattedStart = format(tempRange.startDate, "MM/dd/yyyy");
+    const formattedEnd = format(tempRange.endDate, "MM/dd/yyyy");
+    if (tempRange.startDate && tempRange.endDate) {
+      searchParams.set("startDate", encodeURIComponent(formattedStart));
+      searchParams.set("endDate", encodeURIComponent(formattedEnd));
+    } else {
+      searchParams.delete("startDate");
+      searchParams.delete("endDate");
+    }
+    const newPath = `${pathname}?${searchParams.toString()}`;
+    router.push(newPath);
+    setState({ selection: tempRange });
+    closeModal(modalName);
+    setIsRangeSelected(true);
+  };
+
+  const formatRange = (start: Date, end: Date) => {
+    const formattedStart = format(start, "MM/dd/yyyy");
+    const formattedEnd = format(end, "MM/dd/yyyy");
+    if (startDate !== "undefined" && endDate !== "undefined") {
+      return `${startDate} - ${endDate}`;
+    } else if (isRangeSelected) {
+      return `${formattedStart} - ${formattedEnd}`;
+    } else {
+      return "Date Range";
+    }
+  };
+
+  const handleClear = () => {
+    const searchParams = new URLSearchParams(params!);
+    searchParams.delete("startDate");
+    searchParams.delete("endDate");
+    const newPath = `${pathname}?${searchParams.toString()}`;
+    router.replace(newPath);
+
+    // Reset both state and temporary range
+    const resetSelection = {
+      startDate: new Date(),
+      endDate: new Date(),
+      key: "selection",
+    };
+
+    setState({ selection: resetSelection });
+    setTempRange(resetSelection);
+    closeModal(modalName);
+    setIsRangeSelected(false);
+  };
+  return (
+    <div className="relative w-full md:w-auto">
+      <button
+        ref={buttonRef}
+        onClick={togglePicker}
+        className="flex w-full items-center justify-between gap-2 rounded-sm border border-gray-400 p-1 text-sm text-gray-400 hover:border-blue-600 md:max-w-80"
+      >
+        <span className="truncate">
+          {formatRange(state.selection.startDate, state.selection.endDate)}
+        </span>
+        <CiCalendar />
+      </button>
+
+      {activeModal[modalName as keyof TFilterModalState] && (
+        <div
+          ref={dropdownRef}
+          className="fixed left-1/2 right-auto top-[38%] z-50 mt-2 w-[338px] -translate-x-1/2 -translate-y-1/2 transform overflow-y-auto rounded-lg border border-gray-300 bg-background p-4 shadow-lg md:absolute md:left-auto md:right-auto md:top-full md:w-auto md:translate-x-0 md:translate-y-0 md:transform-none"
+        >
+          <div className="relative">
+            <DateRangePicker
+              ranges={[tempRange]}
+              onChange={handleSelect}
+              moveRangeOnFirstSelection={false}
+              months={1}
+              direction="horizontal"
+              preventSnapRefocus={true}
+              calendarFocus="forwards"
+              className={`[&_.rdrDayStartPreview]:!color-transparent [&_.rdrDayEndPreview]:!color-transparent [&_.rdrDateDisplayItem]:p-2 [&_.rdrDateDisplayItem_input]:text-sm [&_.rdrDateDisplayWrapper]:!w-[300px] [&_.rdrDateDisplay]:text-sm [&_.rdrDayEndPreview]:!border-0 [&_.rdrDayHovered]:!border-0 [&_.rdrDayHovered]:!bg-transparent [&_.rdrDayInPreview]:!border-0 [&_.rdrDayInPreview]:!bg-transparent [&_.rdrDayNumber]:text-sm [&_.rdrDayStartPreview]:!border-0 [&_.rdrDayToday]:!bg-[#6571FF] [&_.rdrDayToday]:after:hidden [&_.rdrDayToday_.rdrDayNumber]:!text-white [&_.rdrDay]:!bg-transparent [&_.rdrDay_today]:!border-0 [&_.rdrDay_today]:!bg-transparent [&_.rdrDefinedRangesWrapper]:hidden md:[&_.rdrDefinedRangesWrapper]:block [&_.rdrMonthAndYearWrapper]:!w-[300px] [&_.rdrMonthName]:text-sm [&_.rdrMonthPicker]:text-sm [&_.rdrMonth]:!w-[300px] [&_.rdrMonths]:!w-[300px] [&_.rdrNextPrevButton]:h-8 [&_.rdrNextPrevButton]:w-8 [&_.rdrWeekDay]:text-xs [&_.rdrYearPicker]:text-sm`}
+            />
+          </div>
+
+          <div className="mt-4 flex justify-end gap-2">
+            <button
+              onClick={handleClear}
+              className="min-w-[60px] rounded bg-red-500 px-3 py-2 text-sm text-white md:px-4 md:text-base"
+            >
+              Clear
+            </button>
+            <button
+              onClick={handleOk}
+              className="min-w-[60px] rounded bg-blue-500 px-3 py-2 text-sm text-white md:px-4 md:text-base"
+            >
+              OK
+            </button>
+            <button
+              onClick={togglePicker}
+              className="min-w-[60px] rounded bg-gray-300 px-3 py-2 text-sm md:px-4 md:text-base"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

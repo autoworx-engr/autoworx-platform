@@ -1,0 +1,58 @@
+"use server";
+
+import { db } from "@/lib/db";
+import { ServerAction } from "@/types/action";
+import deleteGoogleCalendarEvent from "../task/google-calendar/deleteGoogleCalendarEvent";
+import { getGoogleCalendarToken } from "../calendar-settings/getGoogleCalendarAuth";
+import axios from "axios";
+
+export async function deleteAppointment(id: number): Promise<ServerAction> {
+  try {
+    const deletedAppointment = await db.appointment.delete({
+      where: {
+        id,
+      },
+    });
+    deleteRemindersInNest(deletedAppointment.id.toString());
+    // revalidatePath("/task");
+
+    // delete task from google calendar
+
+    try {
+      let googleCalendarToken = (await getGoogleCalendarToken())
+        ?.googleCalendarToken;
+
+      if (googleCalendarToken && deletedAppointment.googleEventId) {
+        deleteGoogleCalendarEvent(deletedAppointment.googleEventId);
+      }
+    } catch (error) {
+      console.log("🚀 ~ deleteAppointment ~ error:", error);
+    }
+
+    return {
+      type: "success",
+    };
+  } catch (error) {
+    console.log("🚀 ~ deleteAppointment ~ error:", error);
+    return {
+      type: "error",
+    };
+  }
+}
+
+export async function deleteRemindersInNest(id: string) {
+  try {
+    const { data } = await axios.post(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/reminder/delete`,
+      { id },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    return data;
+  } catch (error) {
+    console.log("❌ error from deleteRemindersInNest", error);
+  }
+}

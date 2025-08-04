@@ -1,0 +1,158 @@
+"use client";
+
+import Selector from "@/components/Selector";
+import useVehicleByClientIdQuery from "@/hooks/query-hook/useVehicleByClientIdQuery";
+import { queryKeys } from "@/lib/queryKeys";
+import { useListsStore } from "@/stores/lists";
+import { Vehicle } from "@prisma/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import NewVehicle from "../Lists/NewVehicle";
+import { SelectProps } from "../Lists/select-props";
+
+export function SelectAppointmentVehicle({
+  name = "vehicleId",
+  vehicleId = null,
+  fromLead = false,
+  value = null,
+  setValue,
+  openDropdown,
+  setOpenDropdown,
+  isClear = false,
+  isEdit = false,
+  clientId = null,
+}: SelectProps<Partial<Vehicle> | null>) {
+  const state = useState(value);
+  const [vehicle, setVehicle] = setValue ? [value, setValue] : state;
+  // const vehicleList = useListsStore((x) => x.vehicles);
+  const newAddedVehicle = useListsStore((x) => x.newAddedVehicle);
+
+  const isClientIdNumber = !isNaN(Number(clientId)) && clientId !== null;
+
+  const { data: clientVehicles = [] } = useVehicleByClientIdQuery(
+    Number(clientId),
+    {
+      enabled: isClientIdNumber,
+    }
+  );
+
+  useEffect(() => {
+    if (fromLead && vehicleId) {
+      const matchedVehicle = clientVehicles.find((v) => v.id === vehicleId);
+      if (matchedVehicle) {
+        setVehicle(matchedVehicle);
+      } else {
+        setVehicle(null);
+      }
+    }
+  }, [vehicleId, clientVehicles]);
+
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const selectedVehicle = newAddedVehicle ?? clientVehicles?.[0];
+
+    if (clientId) {
+      if (clientVehicles?.length > 0 && !value) {
+        if (isEdit == false) {
+          console.log("Setting vehicle to first client vehicle");
+          setVehicle(selectedVehicle);
+          // useListsStore.setState({ vehicle: selectedVehicle });
+        }
+      } else {
+        const matchedVehicle = clientVehicles?.find(
+          (vehicle) => vehicle.id === value?.id
+        );
+        const finalVehicle = matchedVehicle ?? selectedVehicle;
+        console.log(
+          "Setting vehicle to matched or new added vehicle",
+          finalVehicle
+        );
+        setVehicle(finalVehicle);
+        // useListsStore.setState({ vehicle: finalVehicle });
+      }
+    }
+  }, [newAddedVehicle, clientId, clientVehicles]);
+
+  useEffect(() => {
+    return () => {
+      if (newAddedVehicle) {
+        useListsStore.setState({ newAddedVehicle: null });
+      }
+    };
+  }, []);
+
+  const handleClear = () => {
+    setVehicle(null);
+    useListsStore.setState({ vehicle: null, newAddedVehicle: null });
+  };
+
+  return (
+    <>
+      <input type="hidden" name={name} value={vehicle?.id ?? ""} />
+
+      <div className="flex items-center gap-2">
+        <Selector
+          disabledDropdown={clientId && !vehicle?.fromRequest ? false : true}
+          label={(vehicle: Partial<Vehicle> | null) =>
+            vehicle
+              ? `${vehicle.year || ""} ${vehicle.make ?? ""} ${vehicle.model ?? ""} ${vehicle.other ?? ""}`
+              : "Vehicle"
+          }
+          newButton={
+            <NewVehicle
+              clientId={Number(clientId)}
+              onAdd={(vehicle: Vehicle) => {
+                setVehicle(vehicle);
+                useListsStore.setState({ vehicle });
+                useListsStore.setState(() => ({
+                  newAddedVehicle: vehicle,
+                }));
+                queryClient.setQueryData(
+                  queryKeys.vehicleByClientId(Number(clientId)),
+                  (oldVehicle: Vehicle[]) => {
+                    return oldVehicle && oldVehicle.length > 0
+                      ? [...oldVehicle, vehicle]
+                      : [];
+                  }
+                );
+                vehicle && setOpenDropdown && setOpenDropdown(false);
+              }}
+            />
+          }
+          items={clientVehicles}
+          onSearch={(search: string) =>
+            clientVehicles.filter((vehicle) =>
+              vehicle.model?.toLowerCase().includes(search.toLowerCase())
+            )
+          }
+          openState={[
+            openDropdown as boolean,
+            setOpenDropdown as Dispatch<SetStateAction<boolean>>,
+          ]}
+          selectedItem={vehicle}
+          onSelect={(vehicle) => {
+            setVehicle(vehicle);
+          }}
+          displayList={(item) => (
+            <p>{`${item.year || ""} ${item.make ?? ""} ${item.model ?? ""}`}</p>
+          )}
+          footer={
+            isClear && vehicle ? (
+              <button
+                type="button"
+                onClick={() => {
+                  handleClear();
+                  setOpenDropdown && setOpenDropdown(false);
+                }}
+                className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+              >
+                Clear Vehicle
+              </button>
+            ) : null
+          }
+        />
+      </div>
+    </>
+  );
+}

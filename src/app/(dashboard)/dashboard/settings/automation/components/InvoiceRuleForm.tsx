@@ -1,0 +1,503 @@
+"use client";
+import React, { useState, useEffect } from "react";
+import Selector from "./Selector";
+import { Box, Paper, Typography, Switch } from "@mui/material";
+import { SlimInput } from "@/components/SlimInput";
+import TemplateVariable from "./TemplateVariable";
+import ActiveTemplate from "./ActiveTemplate";
+import { timeDelays } from "./constants";
+import { errorToast } from "@/lib/toast";
+import { TAttachments } from "@/types/automation";
+import {
+  handleFileAttachmentUtils,
+  uploadAllAttachments,
+} from "@/utils/handleFileAttachment";
+import CustomRadioGroup from "./CustomRadioGroup";
+import { usePipelineStagesStore } from "@/stores/pipelineStagesStore";
+import { useCreateInvoiceAutomationRule } from "@/hooks/invoice-automation/useCreateInvoiceAutomationRule";
+import { useUpdateInvoiceAutomationRule } from "@/hooks/invoice-automation/useUpdateInvoiceAutomationRule";
+import { useFindOneInvoiceAutomationRule } from "@/hooks/invoice-automation/useFindOneInvoiceAutomationRule";
+import { parseTimeDelayToSeconds } from "@/utils/parseTimeDelayToSeconds";
+import { parseSecondsToTimeDelay } from "@/utils/parseSecondsToTimeDelay";
+import { Spin } from "antd";
+import { Company, TwilioCredentials } from "@prisma/client";
+type RuleFormProps = {
+  initialData?: Rule;
+  mode: "create" | "edit" | undefined;
+  id?: string | null;
+  isEdit: boolean;
+  companyId: any;
+  user: any;
+  company: Company;
+  twilio: TwilioCredentials | null;
+};
+
+export type Rule = {
+  companyId: number | null;
+  createdBy: string | null;
+  id?: string;
+  title: string;
+  invoiceStatusId: number | null;
+  timeDelay: number | null | string;
+  communicationType: "SMS" | "EMAIL" | "BOTH";
+  attachments?: TAttachments | [];
+  emailSubject?: string | null;
+  emailBody?: string | null;
+  smsBody?: string | null;
+  isPaused?: boolean;
+};
+
+// Template variables
+const template_variable_options = [
+  { name: "<INVOICE_LINK>", description: "Invoice link" },
+  { name: "<ADDRESS>", description: "Address" },
+  { name: "<CLIENT>", description: "Client" },
+  { name: "<BUSINESS_NAME>", description: "Your business name" },
+  { name: "<DATE>", description: "Date" },
+  { name: "<REVIEW_LINK>", description: "Review link" },
+  { name: "<SERVICE>", description: "Service" },
+  { name: "<PHONE>", description: "Phone" },
+];
+
+const InvoiceRuleForm: React.FC<RuleFormProps> = ({
+  mode,
+  id,
+  isEdit,
+  initialData,
+  companyId,
+  user,
+  twilio,
+  company,
+}) => {
+  const userEmail = user?.email;
+
+  const [loading, setLoading] = useState(false);
+  // Default empty rule
+  const [formData, setFormData] = useState<Rule>(
+    initialData || {
+      createdBy: userEmail,
+      companyId: Number(companyId),
+      title: "",
+      invoiceStatusId: null,
+      timeDelay: null,
+      communicationType: "SMS",
+      attachments: [],
+      emailSubject: "",
+      emailBody: "",
+      smsBody: "",
+    }
+  );
+  const [activeTemplate, setActiveTemplate] = useState<"SMS" | "EMAIL">("SMS");
+  const [error, setError] = useState<Record<string, string>>({});
+  const {
+    stages,
+    fetchStages,
+    loading: stageLoading,
+  } = usePipelineStagesStore();
+
+  const { mutate: createRule, isPending: isCreatePending } =
+    useCreateInvoiceAutomationRule();
+  const { mutate: updateRule, isPending: isUpdatePending } =
+    useUpdateInvoiceAutomationRule();
+  const { data, isLoading, isFetching } = useFindOneInvoiceAutomationRule(
+    Number(id)
+  );
+
+  useEffect(() => {
+    fetchStages("shop");
+  }, []);
+
+  useEffect(() => {
+    const loadData = async () => {
+      if (isEdit && id) {
+        const timeDelay = parseSecondsToTimeDelay(data?.data?.timeDelay);
+        setFormData({
+          companyId: data?.data.companyId,
+          title: data?.data.title,
+          invoiceStatusId: data?.data?.invoiceStatusId,
+          timeDelay: timeDelay,
+          communicationType: data?.data.communicationType,
+          emailSubject: data?.data.emailSubject,
+          emailBody: data?.data.emailBody,
+          smsBody: data?.data.smsBody,
+          attachments: data?.data.attachments,
+          createdBy: data?.data.createdBy,
+        });
+
+        setActiveTemplate(
+          data?.data.communicationType === "BOTH"
+            ? "SMS"
+            : data?.data.communicationType
+        );
+        setLoading(false);
+      } else {
+        setFormData({
+          companyId: null,
+          title: "",
+          invoiceStatusId: null,
+          timeDelay: null,
+          communicationType: "SMS",
+          emailSubject: "",
+          emailBody: "",
+          smsBody: "",
+          attachments: [],
+          createdBy: null,
+        });
+      }
+    };
+    loadData();
+  }, [isEdit, id, data?.data, mode]);
+
+  // Update rule on initial data change
+  useEffect(() => {
+    if (initialData) {
+      setFormData(initialData);
+    }
+  }, [initialData]);
+
+  // Handle input changes
+  const handleChange = (field: keyof Rule, value: any) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+
+    if (error[field]) {
+      setError((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
+
+    // Clear subject-related errors when subject field changes
+    if (field === "emailSubject" && (error.emailSubject || error.emailBody)) {
+      setError((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors.emailSubject;
+        return newErrors;
+      });
+    }
+  };
+
+  // Handle template toggle
+  const handleTemplateToggle = (template: "SMS" | "EMAIL") => {
+    setActiveTemplate(template);
+
+    setFormData((prev) => ({
+      ...prev,
+      templateType: template,
+    }));
+  };
+
+  // Handle file attachment
+  const handleFileAttachment = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+    type: string
+  ) => {
+    handleFileAttachmentUtils({
+      event: event,
+      formData,
+      setFormData,
+    });
+  };
+
+  // Handle form submission
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    const errors: string[] = [];
+    const newError: Record<string, string> = {};
+
+    if (!formData.title || !formData.title.trim())
+      newError.title = "Title is required.";
+
+    if (!formData.invoiceStatusId)
+      newError.invoiceStatusId = "Invoice Status is required.";
+
+    if (formData.timeDelay === null)
+      newError.timeDelay = "Time delay is required.";
+
+    // if (!formData.templateType) errors.push("Template type is required.");
+    if (!formData.communicationType)
+      errors.push("Communication type is required.");
+
+    if (formData.communicationType === "EMAIL") {
+      const isSubjectEmpty =
+        !formData.emailSubject || !formData.emailSubject.trim();
+      const isBodyEmpty = !formData.emailBody || !formData.emailBody.trim();
+
+      if (isSubjectEmpty && isBodyEmpty) {
+        newError.emailBody = "Email subject and body are required.";
+        newError.emailSubject = "Subject is required.";
+      } else if (isSubjectEmpty) {
+        newError.emailSubject = "Subject is required.";
+        newError.emailBody = "Email subject is required.";
+      } else if (isBodyEmpty) {
+        newError.emailBody = "Email body is required.";
+      }
+
+      if (company?.email === null) {
+        newError.businessEmail = "You haven't added your business email.";
+        errorToast(newError.businessEmail);
+      }
+    }
+
+    if (formData.communicationType === "BOTH") {
+      const isSubjectEmpty =
+        !formData.emailSubject || !formData.emailSubject.trim();
+      const isBodyEmpty = !formData.emailBody || !formData.emailBody.trim();
+
+      if (isSubjectEmpty && isBodyEmpty) {
+        newError.emailBody = "Email subject and body are required.";
+        newError.emailSubject = "Subject is required.";
+      }
+      if (isSubjectEmpty) {
+        newError.emailSubject = "Subject is required.";
+        newError.emailBody = "Subject is required.";
+      }
+      if (isBodyEmpty) {
+        newError.emailBody = "Email body is required.";
+      }
+
+      if (!formData.smsBody || !formData.smsBody.trim()) {
+        newError.smsBody = "SMS body is required.";
+      }
+
+      if (company?.email === null) {
+        newError.businessEmail = "You haven't added your business email.";
+        errorToast(newError.businessEmail);
+      }
+
+      if (twilio === null) {
+        newError.twilio = "To send SMS, you must sign in with Twilio.";
+        errorToast(newError.twilio);
+      }
+    }
+    if (formData.communicationType === "SMS") {
+      if (!formData.smsBody || !formData.smsBody.trim()) {
+        newError.smsBody = "SMS body is required.";
+      }
+
+      if (twilio === null) {
+        newError.twilio = "To send SMS, you must sign in with Twilio.";
+        errorToast(newError.twilio);
+      }
+    }
+
+    if (errors.length > 0) {
+      errors.forEach((err) => errorToast(err));
+      return;
+    }
+
+    if (Object.keys(newError).length > 0) {
+      setError(newError);
+
+      return;
+    }
+
+    try {
+      if (formData.timeDelay != null) {
+        const seconds = parseTimeDelayToSeconds(formData.timeDelay!);
+        formData.timeDelay = seconds;
+      }
+
+      formData.invoiceStatusId = Number(formData.invoiceStatusId);
+      formData.createdBy = userEmail;
+      formData.companyId = companyId;
+
+      if (isEdit && id) {
+        updateRule({ id: id, data: formData });
+        setLoading(true);
+      } else {
+        createRule(formData);
+        setFormData({
+          title: "",
+          invoiceStatusId: null,
+          timeDelay: null,
+          communicationType: "SMS",
+          attachments: [],
+          emailSubject: "",
+          emailBody: "",
+          smsBody: "",
+          companyId: companyId,
+          createdBy: null,
+        });
+      }
+    } catch (error) {}
+  };
+
+  const handleTemplateChange = (name: string, value: any) => {
+    // This cast is safe because we're only passing valid keys from the ActiveTemplate component
+    handleChange(name as keyof Rule, value);
+  };
+
+  if (
+    isLoading ||
+    isFetching ||
+    isUpdatePending ||
+    stageLoading ||
+    loading ||
+    isCreatePending
+  ) {
+    return (
+      <div className="flex h-[800px] w-full animate-pulse items-center justify-center rounded-md bg-gray-200 p-4 shadow-sm md:p-6">
+        <Spin />
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="rounded-md border bg-white p-4 shadow-sm md:p-6">
+        <Paper elevation={0} className="mx-auto max-w-lg rounded-lg">
+          <form onSubmit={handleSubmit}>
+            {/* Title */}
+            <SlimInput
+              name="label"
+              label="Title"
+              value={formData.title}
+              labelClassName="text-gray-500"
+              onChange={(e) => handleChange("title", e.target.value)}
+              required
+              error={error.title}
+            />
+
+            {/* Invoice Status */}
+            <Selector
+              name="status"
+              label="Invoice Status"
+              options={stages}
+              value={formData.invoiceStatusId!}
+              onChange={(value) => handleChange("invoiceStatusId", value)}
+              required
+              disabled={stageLoading}
+              isClear={true}
+              error={error.invoiceStatusId}
+            />
+
+            {/* Time Delay */}
+            <Selector
+              name="delay"
+              label="Time Delay"
+              options={timeDelays}
+              value={formData.timeDelay!}
+              onChange={(value) => handleChange("timeDelay", value)}
+              required
+              error={error.timeDelay}
+            />
+
+            {/* Communication Type */}
+            <CustomRadioGroup
+              name="communicationType"
+              label="Select Communication Type"
+              value={formData.communicationType}
+              onChange={handleChange}
+              options={[
+                { label: "SMS", value: "SMS" },
+                { label: "Email", value: "EMAIL" },
+                { label: "Both", value: "BOTH" },
+              ]}
+            />
+
+            {/* Templates */}
+            <Box className="my-4">
+              <label className="mb-2 font-semibold text-gray-500">
+                Templates
+              </label>
+
+              <Box className="mb-2 flex items-center">
+                <Typography className="mr-2">SMS</Typography>
+                <Switch
+                  checked={activeTemplate === "EMAIL"}
+                  onChange={() =>
+                    handleTemplateToggle(
+                      activeTemplate === "SMS" ? "EMAIL" : "SMS"
+                    )
+                  }
+                />
+                <Typography className="ml-2">Email</Typography>
+              </Box>
+
+              {/* SMS Template */}
+              {activeTemplate === "SMS" && (
+                <Box
+                  className={`mb-4 ${activeTemplate !== "SMS" ? "hidden" : ""}`}
+                >
+                  <ActiveTemplate
+                    activeTemplate="SMS"
+                    rows={4}
+                    name="smsBody"
+                    setFormData={setFormData}
+                    value={formData.smsBody!}
+                    iconBtnClassName="absolute -bottom-9 right-0"
+                    attachments={formData.attachments}
+                    attachmentName="attachments"
+                    placeholder="Enter SMS template here..."
+                    handleChange={handleTemplateChange}
+                    handleFileAttachment={handleFileAttachment}
+                    attachmentType="sms"
+                    error={
+                      error.smsBody || error.emailBody || error.emailSubject
+                    }
+                  />
+                </Box>
+              )}
+
+              {/* Email Template */}
+              {activeTemplate === "EMAIL" && (
+                <Box
+                  className={`mb-4 ${activeTemplate !== "EMAIL" ? "hidden" : ""}`}
+                >
+                  <ActiveTemplate
+                    activeTemplate="EMAIL"
+                    rows={6}
+                    subjectName="emailSubject"
+                    name="emailBody"
+                    setFormData={setFormData}
+                    subjectValue={formData.emailSubject!}
+                    value={formData.emailBody!}
+                    iconBtnClassName="absolute -bottom-16 right-0"
+                    attachments={formData.attachments}
+                    attachmentName="emailAttachment"
+                    placeholder="Enter email body here..."
+                    handleChange={handleTemplateChange}
+                    handleFileAttachment={handleFileAttachment}
+                    attachmentType="email"
+                    error={
+                      error.emailBody || error.emailSubject || error.smsBody
+                    }
+                    subjectError={!!error.emailSubject}
+                  />
+                </Box>
+              )}
+
+              {/* Template Variables */}
+              <TemplateVariable VARIABLES={template_variable_options} />
+            </Box>
+
+            {/* Save & Cancel Buttons */}
+            <div className="flex justify-end pt-4">
+              <button
+                type="submit"
+                disabled={isCreatePending || isUpdatePending}
+                className={`rounded-md px-4 py-2 text-sm font-medium text-white ${
+                  isUpdatePending || isCreatePending
+                    ? "cursor-not-allowed bg-indigo-300"
+                    : "bg-indigo-500 hover:bg-indigo-600"
+                }`}
+              >
+                {isUpdatePending || isCreatePending
+                  ? isEdit && id
+                    ? "Updating..."
+                    : "Saving..."
+                  : isEdit && id
+                    ? "Update"
+                    : "Save"}
+              </button>
+            </div>
+          </form>
+        </Paper>
+      </div>
+    </div>
+  );
+};
+
+export default InvoiceRuleForm;

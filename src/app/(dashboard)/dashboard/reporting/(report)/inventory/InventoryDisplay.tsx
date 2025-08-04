@@ -1,0 +1,204 @@
+"use client";
+import { useMediaQuery } from "react-responsive";
+import {
+  InventoryProduct,
+  InventoryProductHistory,
+  Prisma,
+} from "@prisma/client";
+import InventoryTableRow from "./InventoryTableRow";
+import InventoryMobileCard from "./InventoryMobileCard";
+import { useEffect, useState } from "react";
+import { Pagination } from "antd";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+
+type TProps = {
+  inventoryProducts: Prisma.InventoryProductGetPayload<{
+    include: {
+      InventoryProductHistory: {
+        where: {
+          type: "Sale";
+        };
+      };
+    };
+  }>[];
+
+  timezone: string;
+  page?: number;
+  take?: number;
+};
+
+type TInventoryPurchaseHistory = (InventoryProductHistory & {
+  calculation: {
+    averageCost: number;
+    averageSales: number;
+    ReturnAndInvestment: string;
+    quantitySold: number;
+    stockQuantity: number;
+  };
+  productInfo: InventoryProduct;
+  date: Date | null;
+})[];
+
+export default function InventoryDisplay({
+  inventoryProducts,
+  timezone,
+  page,
+  take,
+}: TProps) {
+  const isDesktop = useMediaQuery({ query: "(min-width: 640px)" });
+  const [currentPage, setCurrentPage] = useState(page || 1);
+  const [pageSize, setPageSize] = useState(take || 50); // Default page size set to 50
+  const [showPagination, setShowPagination] = useState(false);
+  const [filteredProducts, setFilteredProducts] = useState(inventoryProducts);
+
+  const pathname = usePathname();
+  const router = useRouter();
+  const params = useSearchParams();
+  const search = params.get("search");
+
+  useEffect(() => {
+    if (inventoryProducts.length > 0) {
+      setShowPagination(true);
+    } else {
+      setShowPagination(false);
+    }
+  }, [inventoryProducts]);
+
+  const inventoryHistory = inventoryProducts.reduce((acc, product) => {
+    const salesHistory = product.InventoryProductHistory.filter((history) => {
+      return history.type === "Sale";
+    });
+    const purchaseHistory = product.InventoryProductHistory.filter(
+      (history) => {
+        return history.type === "Purchase";
+      }
+    );
+    const stockQuantity = product.quantity ?? 0;
+    const { totalSalesPrice, quantitySold } = salesHistory.reduce(
+      (acc, cur) => {
+        acc.totalSalesPrice =
+          acc.totalSalesPrice + Number(cur.price) * Number(cur.quantity);
+        acc.quantitySold += Number(cur.quantity);
+        return acc;
+      },
+      {
+        totalSalesPrice: 0,
+        quantitySold: 0,
+      }
+    );
+
+    const averageSales = Math.round(
+      totalSalesPrice / (quantitySold || 1)
+    ) as number;
+
+    const totalPurchaseQuantity = purchaseHistory.reduce(
+      (acc, history) => acc + Number(history.quantity),
+      0
+    );
+
+    const totalPurchasePrice = purchaseHistory.reduce(
+      (acc, history) => acc + Number(history.price) * Number(history.quantity),
+      0
+    );
+
+    const averageCost = Math.round(totalPurchasePrice / totalPurchaseQuantity);
+
+    const ReturnAndInvestment =
+      averageSales > averageCost
+        ? (((averageSales - averageCost) / averageCost) * 100).toFixed(2)
+        : "0.00";
+    const { InventoryProductHistory, ...productInfo } = product;
+    acc.push(
+      ...purchaseHistory.map((purchase) => ({
+        ...purchase,
+        calculation: {
+          averageCost,
+          averageSales,
+          ReturnAndInvestment,
+          quantitySold: Number(quantitySold),
+          stockQuantity: Number(stockQuantity),
+        },
+        productInfo: productInfo,
+      }))
+    );
+    return acc;
+  }, [] as TInventoryPurchaseHistory);
+
+  const handlePageChange = (page: number, pageSize?: number) => {
+    const searchParams = new URLSearchParams(params.toString());
+    searchParams.set("page", page.toString());
+    if (pageSize) {
+      setPageSize(pageSize);
+      searchParams.set("take", pageSize.toString());
+    } else {
+      searchParams.delete("take");
+    }
+    setCurrentPage(page);
+    const newPath = `${pathname}?${searchParams.toString()}`;
+    router.push(newPath);
+  };
+
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = currentPage * pageSize;
+
+  const inventoryToRender = search
+    ? inventoryHistory
+    : inventoryHistory.slice(startIndex, endIndex);
+  if (isDesktop) {
+    return (
+      <div className="thin-scrollbar hidden scroll-smooth md:block">
+        {" "}
+        <div className="">
+          <table className="max-h-[600px] w-full overflow-y-auto shadow-md">
+            <thead className="sticky top-0 z-10 bg-background">
+              <tr className="h-10 border-b">
+                <th className="border-b px-4 py-2 text-left">Product #</th>
+                <th className="border-b px-4 py-2 text-left">Name </th>
+                <th className="border-b px-4 py-2 text-left">Average Cost</th>
+                <th className="border-b px-4 py-2 text-left">Average Sell</th>
+                <th className="border-b px-4 py-2 text-left">Stock Qty.</th>
+                <th className="border-b px-4 py-2 text-left">Qty. Sold</th>
+                <th className="border-b px-4 py-2 text-left">Type</th>
+                <th className="border-b px-4 py-2 text-left">ROI Average</th>
+                <th className="border-b px-4 py-2 text-left">Purchase Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {inventoryToRender?.map((history, index) => (
+                <InventoryTableRow
+                  key={history.id}
+                  history={history}
+                  index={
+                    currentPage > 1 ? index + 10 * (currentPage - 1) : index
+                  }
+                  timezone={timezone}
+                />
+              ))}
+            </tbody>
+          </table>
+          {showPagination && (
+            <div className="mt-4 flex justify-end">
+              <Pagination
+                className="custom-pagination"
+                current={currentPage}
+                pageSize={pageSize}
+                total={inventoryHistory.length}
+                onChange={handlePageChange}
+                showSizeChanger
+                onShowSizeChange={handlePageChange}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4 md:hidden">
+      {inventoryHistory.map((history, index) => (
+        <InventoryMobileCard key={history.id} history={history} index={index} />
+      ))}
+    </div>
+  );
+}

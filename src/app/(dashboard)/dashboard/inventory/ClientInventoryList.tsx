@@ -1,0 +1,99 @@
+"use client";
+
+import { useEffect } from "react";
+import { useInventoryDatabaseSearchStore } from "@/stores/inventoryDatabaseSearchStore";
+import InventoryList from "./InventoryList";
+import { useQuery } from "@tanstack/react-query";
+
+type Props = {
+  supplies: any[];
+  products: any[];
+  view: string;
+  productId: number;
+  user: any;
+  inventoryCategories: any[];
+};
+
+type InventoryProduct = {
+  id: string;
+  productName: string;
+  category: string;
+  unit: string;
+};
+
+type ProductsResponse = {
+  data: InventoryProduct[];
+  meta: {
+    page: number;
+    limit: number;
+    totalCount: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
+};
+
+export default function ClientInventoryList({
+  supplies,
+  products,
+  view,
+  productId,
+  user,
+  inventoryCategories,
+}: Props) {
+  const {
+    search,
+    categoryName,
+    page,
+    limit,
+    setPage,
+    setLimit,
+    resetFilters,
+  } = useInventoryDatabaseSearchStore();
+
+  useEffect(() => {
+    resetFilters();
+  }, []);
+
+  const { data, isLoading, isError } = useQuery<ProductsResponse>({
+    queryKey: ["inventory-database", search, categoryName, page, limit],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (search) params.set("search", search);
+      if (categoryName) params.set("categoryName", categoryName);
+      params.set("page", String(page));
+      params.set("limit", String(limit));
+
+      const res = await fetch(`/api/inventoryWirehouse/products?${params.toString()}`);
+      if (!res.ok) throw new Error("Failed to fetch inventory products");
+
+      return res.json();
+    },
+    enabled: view === "database",
+  });
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+  };
+
+  const handleLimitChange = (newLimit: number) => {
+    setLimit(newLimit);
+  };
+
+  return (
+    <InventoryList
+      products={products}
+      supplies={supplies}
+      productId={productId}
+      user={user}
+      isFullWidth={view === "database"}
+      databaseContent={data?.data || []}
+      totalDatabaseItems={data?.meta.totalCount || 0}
+      categories={inventoryCategories}
+      onPageChange={handlePageChange}
+      onLimitChange={handleLimitChange}
+      currentPage={page}
+      currentLimit={limit}
+    />
+  );
+}

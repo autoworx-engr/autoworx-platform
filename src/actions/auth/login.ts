@@ -1,0 +1,48 @@
+"use server";
+
+import { AppError } from "@/error-boundary/error";
+import { db } from "@/lib/db";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+} from "@/lib/tokenGenerator";
+import { HttpStatusCode } from "axios";
+import bcrypt from "bcrypt";
+
+export default async function login(credentials: {
+  email: string;
+  password: string;
+}) {
+  try {
+    const user = await db.user.findUnique({
+      where: { email: credentials.email },
+    });
+
+    if (!user || !user.password) return null;
+
+    const isPasswordMatched = await bcrypt.compare(
+      credentials.password,
+      user.password,
+    );
+
+    if (!isPasswordMatched) return null;
+
+    const newAccessToken = generateAccessToken(user) as string;
+    const newRefreshToken = generateRefreshToken(user) as string;
+
+    return {
+      id: user.id.toString(),
+      name: `${user.firstName} ${user.lastName}`,
+      email: user.email,
+      role: user.role,
+      companyId: user.companyId,
+      employeeType: user.employeeType,
+      isSuperAdmin: user.isSuperAdmin,
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+    };
+  } catch (error) {
+    console.error("Login error:", error);
+    throw new AppError(HttpStatusCode.Unauthorized, "Login failed");
+  }
+}
