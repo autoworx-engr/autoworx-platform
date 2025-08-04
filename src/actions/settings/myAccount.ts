@@ -8,7 +8,7 @@ import {
   TUpdateUserValidationSchema,
   updateUserValidationSchema,
 } from "@/validations/schemas/settings/my-account/account.validation";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
 
