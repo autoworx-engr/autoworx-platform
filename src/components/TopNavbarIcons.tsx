@@ -15,7 +15,7 @@ export default function TopNavbarIcons() {
   const currentUser = useGetCurrentUser();
 
   return (
-    <div className="flex items-center gap-x-5">
+    <div className="flex items-center gap-x-3">
       {/* <SwitchDashboard /> */}
       {(currentUser?.employeeType == "Admin" ||
         currentUser?.employeeType == "Manager" ||

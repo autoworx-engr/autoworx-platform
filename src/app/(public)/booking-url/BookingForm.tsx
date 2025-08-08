@@ -9,6 +9,7 @@ import moment from "moment";
 import { getCurrentTime } from "@/utils/time";
 import { decodeCompanyId } from "@/utils/companyIdEncoder";
 import { processBooking } from "@/actions/booking/processBooking";
+import { getCompanyCalendarSettings } from "@/actions/booking/getCompanyCalendarSettings";
 
 type FormData = {
   title: string;
@@ -32,6 +33,7 @@ const BookingForm = () => {
 
   // Add state for company info if needed
   const [companyInfo, setCompanyInfo] = useState<any>(null);
+  const [calendarSettings, setCalendarSettings] = useState<any>(null);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -75,8 +77,42 @@ const BookingForm = () => {
       // TODO: Implement company info fetching if needed
       // fetchCompanyInfo(companyId).then(setCompanyInfo);
       console.log("Decoded company ID:", companyId);
+
+      // Fetch calendar settings for the company
+      getCompanyCalendarSettings(companyId.toString()).then((settings) => {
+        setCalendarSettings(settings);
+      });
     }
   }, [companyId]);
+
+  // Clear startTime if it's outside the valid range when date or calendar settings change
+  useEffect(() => {
+    if (formData.startTime && formData.date) {
+      const restrictions = getTimeRestrictions();
+      const currentTime = formData.startTime;
+      const selectedDate = moment(formData.date);
+      const appointmentDateTime = moment(
+        `${formData.date} ${formData.startTime}`
+      );
+      const now = moment();
+
+      // Clear if the appointment is in the past
+      if (appointmentDateTime.isBefore(now)) {
+        handleChange("startTime", "");
+        return;
+      }
+
+      // Only clear based on restrictions if they exist
+      if (restrictions.min || restrictions.max) {
+        if (
+          (restrictions.min && currentTime < restrictions.min) ||
+          (restrictions.max && currentTime > restrictions.max)
+        ) {
+          handleChange("startTime", "");
+        }
+      }
+    }
+  }, [formData.date, calendarSettings]);
 
   const handleChange = (field: keyof FormData, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -88,6 +124,35 @@ const BookingForm = () => {
         return newErrors;
       });
     }
+  };
+
+  // Helper function to get time restrictions based on calendar settings
+  const getTimeRestrictions = () => {
+    const restrictions: { min?: string; max?: string } = {};
+
+    if (calendarSettings) {
+      const dayStart = calendarSettings.dayStart || "08:00";
+      const dayEnd = calendarSettings.dayEnd || "18:00";
+      const selectedDate = moment(formData.date);
+      const isSelectedDateToday = selectedDate.isSame(moment(), "day");
+
+      if (isSelectedDateToday) {
+        // If it's today, use the later of current time or dayStart
+        const currentTime = getCurrentTime();
+        restrictions.min = currentTime > dayStart ? currentTime : dayStart;
+      } else {
+        // If it's a future date, use dayStart
+        restrictions.min = dayStart;
+      }
+
+      restrictions.max = dayEnd;
+    } else if (formData.date && moment(formData.date).isSame(moment(), "day")) {
+      // Fallback: if no calendar settings and it's today, use current time
+      restrictions.min = getCurrentTime();
+    }
+    // If no calendar settings and it's not today, no restrictions
+
+    return restrictions;
   };
 
   const handleFormSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -116,6 +181,30 @@ const BookingForm = () => {
 
       if (appointmentDateTime.isBefore(now)) {
         newError.startTime = "Appointment time must be in the future.";
+      } else if (calendarSettings) {
+        // Only check calendar restrictions if settings exist and appointment is not in the past
+        const dayStart = calendarSettings.dayStart || "08:00";
+        const dayEnd = calendarSettings.dayEnd || "18:00";
+        const selectedDate = moment(formData.date);
+        const isSelectedDateToday = selectedDate.isSame(moment(), "day");
+
+        // For today, check if time is after current time AND within business hours
+        if (isSelectedDateToday) {
+          const currentTime = getCurrentTime();
+          const effectiveMinTime =
+            currentTime > dayStart ? currentTime : dayStart;
+          if (
+            formData.startTime < effectiveMinTime ||
+            formData.startTime > dayEnd
+          ) {
+            newError.startTime = `Please select a time between ${moment(effectiveMinTime, "HH:mm").format("h:mm A")} and ${moment(dayEnd, "HH:mm").format("h:mm A")}.`;
+          }
+        } else {
+          // For future dates, only check business hours
+          if (formData.startTime < dayStart || formData.startTime > dayEnd) {
+            newError.startTime = `Please select a time between ${moment(dayStart, "HH:mm").format("h:mm A")} and ${moment(dayEnd, "HH:mm").format("h:mm A")}.`;
+          }
+        }
       }
     }
 
@@ -189,8 +278,8 @@ const BookingForm = () => {
   const inputClass =
     "focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20";
   return (
-    <div className=" max-w-xl mx-auto bg-white rounded-2xl shadow-lg border border-gray-100">
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 rounded-t-2xl">
+    <div className="max-w-xl scale-90 mx-auto bg-white rounded-2xl shadow-lg border border-gray-100">
+      <div className="bg-gradient-to-r from-[#00b8b0] to-[#0098da] text-white p-6 rounded-t-2xl">
         <h3 className="text-2xl font-bold ">Book Your Appointment</h3>
         <p className="text-blue-100 mt-1">Fill in the details below</p>
       </div>
@@ -242,7 +331,8 @@ const BookingForm = () => {
                 </label>
                 <input
                   value={formData.startTime}
-                  min={isToday ? getCurrentTime() : undefined} //
+                  min={getTimeRestrictions().min}
+                  max={getTimeRestrictions().max}
                   onChange={(e) => handleChange("startTime", e.target.value)}
                   id="start-time"
                   type="time"
@@ -255,6 +345,29 @@ const BookingForm = () => {
                       "border-red-500 focus-visible:ring-red-500"
                   )}
                 />
+
+                {calendarSettings && formData.date && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    {(() => {
+                      const selectedDate = moment(formData.date);
+                      const isSelectedDateToday = selectedDate.isSame(
+                        moment(),
+                        "day"
+                      );
+                      const dayStart = calendarSettings.dayStart || "08:00";
+                      const dayEnd = calendarSettings.dayEnd || "18:00";
+
+                      if (isSelectedDateToday) {
+                        const currentTime = getCurrentTime();
+                        const effectiveStartTime =
+                          currentTime > dayStart ? currentTime : dayStart;
+                        return `Available hours: ${moment(effectiveStartTime, "HH:mm").format("h:mm A")} - ${moment(dayEnd, "HH:mm").format("h:mm A")}`;
+                      } else {
+                        return `Available hours: ${moment(dayStart, "HH:mm").format("h:mm A")} - ${moment(dayEnd, "HH:mm").format("h:mm A")}`;
+                      }
+                    })()}
+                  </p>
+                )}
 
                 {error.startTime && (
                   <p id="start-time-error" className="text-sm text-red-500">
@@ -297,6 +410,7 @@ const BookingForm = () => {
                 type="email"
               />
               <SlimInput
+                type="tel"
                 error={error.mobile}
                 value={formData.mobile}
                 onChange={(e) => handleChange("mobile", e.target.value)}
@@ -358,7 +472,7 @@ const BookingForm = () => {
               className={`w-full py-3 text-center rounded-md font-medium transition-colors ${
                 isLoading
                   ? "bg-gray-400 text-gray-200 cursor-not-allowed"
-                  : "bg-blue-600 hover:bg-blue-700 text-white"
+                  : "bg-gradient-to-r from-[#00b8b0] to-[#0098da] hover:bg-[#00b8b0] text-white"
               }`}
             >
               {isLoading ? "Booking..." : "Book Appointment"}

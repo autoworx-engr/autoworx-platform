@@ -10,14 +10,16 @@ import { errorToast } from "@/lib/toast";
 
 type TProps = {
   setting: NotificationSettingsV2;
+  isPayment?:boolean;
 };
 
 type TMutationFnProps = {
   switchKey: "email_enabled" | "push_enabled" | "text_enabled";
   value: boolean;
+  
 };
 
-export default function NotificationTableRow({ setting }: TProps) {
+export default function NotificationTableRow({ setting, isPayment=false }: TProps) {
   const settingTitle = getNotificationTitle(setting.notification_type || "");
   const user = useGetCurrentUser();
 
@@ -67,7 +69,7 @@ export default function NotificationTableRow({ setting }: TProps) {
         </td>
       )}
 
-      {setting && (
+      {setting && isPayment && (
         <td>
           <MySwitch
             checked={setting["text_enabled"] as boolean}

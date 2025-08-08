@@ -99,6 +99,7 @@ export default async function PaymentReportPage({ searchParams }: TProps) {
         },
       },
       deposit: true,
+      cash: true,
       invoice: {
         select: {
           due: true,

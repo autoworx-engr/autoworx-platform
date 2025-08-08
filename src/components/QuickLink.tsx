@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import React, { useEffect, useRef, useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Zap,
   FilePlus2,
@@ -7,23 +7,23 @@ import {
   UserPlus2,
   MessageCircleWarning,
   FileUser,
-} from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import AddNewEmployee from './Lists/NewEmployee';
-import NewCustomer from './Lists/NewCustomer';
-import { stateStore } from '@/stores/stateStore';
-import { AppointmentCreateOrEdit } from './appointment/AppointmentCreateOrEdit';
-import { Appointment, Lead } from '@prisma/client';
-import { useQueryClient } from '@tanstack/react-query';
-import { appointmentQueryKey } from '@/app/(dashboard)/dashboard/task/_constant';
-import { useDate } from '@/app/(dashboard)/dashboard/task/_hook/lib/useDate';
-import useMonth from '@/app/(dashboard)/dashboard/task/_hook/lib/useMonth';
-import moment from 'moment';
-import { updatePipelineAutomationTrigger } from '@/actions/automation/pipeline/triggerPipelineAutomation';
-import useWeekStartEndDays from '@/app/(dashboard)/dashboard/task/_hook/lib/useWeekStartEndDays';
-import Link from 'next/link';
-import { errorHandler } from '@/error-boundary/globalErrorHandler';
-import AddLeads from '@/app/(dashboard)/dashboard/pipeline/components/AddLeads';
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import AddNewEmployee from "./Lists/NewEmployee";
+import NewCustomer from "./Lists/NewCustomer";
+import { stateStore } from "@/stores/stateStore";
+import { AppointmentCreateOrEdit } from "./appointment/AppointmentCreateOrEdit";
+import { Appointment, Lead } from "@prisma/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { appointmentQueryKey } from "@/app/(dashboard)/dashboard/task/_constant";
+import { useDate } from "@/app/(dashboard)/dashboard/task/_hook/lib/useDate";
+import useMonth from "@/app/(dashboard)/dashboard/task/_hook/lib/useMonth";
+import moment from "moment";
+import { updatePipelineAutomationTrigger } from "@/actions/automation/pipeline/triggerPipelineAutomation";
+import useWeekStartEndDays from "@/app/(dashboard)/dashboard/task/_hook/lib/useWeekStartEndDays";
+import Link from "next/link";
+import { errorHandler } from "@/error-boundary/globalErrorHandler";
+import AddLeads from "@/app/(dashboard)/dashboard/pipeline/components/AddLeads";
 
 const QuickLink = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -34,14 +34,14 @@ const QuickLink = () => {
   const router = useRouter();
 
   const date = useDate();
-  const dateFormat = date.format('YYYY-MM-DD');
+  const dateFormat = date.format("YYYY-MM-DD");
   const month = useMonth();
   const formattedMonth = month
-    ? moment(month, 'YYYY-MM').format('MMMM')
-    : moment().format('MMMM');
+    ? moment(month, "YYYY-MM").format("MMMM")
+    : moment().format("MMMM");
 
   const formattedYear = month
-    ? moment(month, 'YYYY-MM').year()
+    ? moment(month, "YYYY-MM").year()
     : moment().year();
   const { weekStartDate, weekEndDate } = useWeekStartEndDays();
   const queryClient = useQueryClient();
@@ -64,16 +64,16 @@ const QuickLink = () => {
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isClientOpen, isAppointmentModalOpen, isLeadOpen, isBugOpen]);
 
   const actions = [
     {
       icon: FileUser,
-      label: 'Create Lead',
+      label: "Create Lead",
       onClick: () => {
         setIsLeadOpen(true);
         setIsDropdownOpen(false);
@@ -81,15 +81,15 @@ const QuickLink = () => {
     },
     {
       icon: FilePlus2,
-      label: 'Create Estimate',
+      label: "Create Estimate",
       onClick: () => {
-        router.push('/dashboard/estimate/create');
+        router.push("/dashboard/estimate/create");
         setIsDropdownOpen(false);
       },
     },
     {
       icon: CalendarPlus,
-      label: 'New Appointment',
+      label: "New Appointment",
       onClick: () => {
         setIsDropdownOpen(false);
         setIsAppointmentOpen(true);
@@ -97,14 +97,14 @@ const QuickLink = () => {
     },
     {
       icon: UserPlus2,
-      label: 'Create Client',
+      label: "Create Client",
       onClick: () => {
         setIsDropdownOpen(false);
       },
     },
     {
       icon: MessageCircleWarning,
-      label: 'Bug Report Message',
+      label: "Bug Report Message",
       onClick: () => {
         setIsBugOpen(true);
         setIsDropdownOpen(false);
@@ -139,7 +139,7 @@ const QuickLink = () => {
 
       if (newAppointment?.lead?.columnId && newAppointment?.lead?.companyId) {
         await updatePipelineAutomationTrigger({
-          condition: 'APPOINTMENT_SCHEDULED',
+          condition: "APPOINTMENT_SCHEDULED",
           companyId: newAppointment?.lead?.companyId,
           leadId: newAppointment?.lead?.id,
           columnId: newAppointment?.lead?.columnId,
@@ -157,7 +157,7 @@ const QuickLink = () => {
         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
         className="flex items-center"
       >
-        <Zap className="mr-2 h-5 w-5 sm:h-7 sm:w-7 text-white sm:text-[#6571FF]" />
+        <Zap className="h-5 w-5 sm:h-7 sm:w-7 text-white sm:text-[#6571FF]" />
       </button>
 
       {isDropdownOpen && (
@@ -166,9 +166,9 @@ const QuickLink = () => {
             <div className="space-y-2">
               {actions.map((action, idx) => (
                 <div key={idx}>
-                  {action.label === 'Create Estimate' ? (
+                  {action.label === "Create Estimate" ? (
                     <Link
-                      href={'/dashboard/estimate/create'}
+                      href={"/dashboard/estimate/create"}
                       onClick={() => setIsDropdownOpen(false)}
                       className="flex cursor-pointer items-center space-x-3 rounded-lg border border-gray-200 bg-white p-3 transition hover:bg-[#F4F6FF]"
                     >
@@ -177,7 +177,7 @@ const QuickLink = () => {
                         {action.label}
                       </span>
                     </Link>
-                  ) : action.label === 'Create Client' ? (
+                  ) : action.label === "Create Client" ? (
                     <div>
                       <NewCustomer
                         buttonElement={
@@ -190,7 +190,7 @@ const QuickLink = () => {
                         }
                       />
                     </div>
-                  ) : action.label === 'Create Lead' ? (
+                  ) : action.label === "Create Lead" ? (
                     <AddLeads
                       buttonChild={
                         <div className="flex cursor-pointer items-center space-x-3 rounded-lg border border-gray-200 bg-white p-3 transition hover:bg-[#F4F6FF]">

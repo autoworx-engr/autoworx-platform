@@ -40,12 +40,14 @@ export default function SMSAttachment({ message, handleDownload }: TProps) {
               className={`#inline-block mx-1 mt-2 cursor-pointer gap-x-2 rounded-md border border-gray-200 px-2 py-1 ${message.sentBy === "Company" && "#float-right"}`}
               href={`/dashboard/communication/photo?url=${attachment?.url}`}
             >
-              <Image
-                src={attachment.url}
-                alt="message"
-                width={70}
-                height={100}
-              />
+              <span>
+                <FaFile />
+              </span>
+              <p>
+                {attachment.name?.length > 10
+                  ? attachment.name.slice(0, 10) + "..."
+                  : attachment.name}
+              </p>
             </Link>
           );
         }

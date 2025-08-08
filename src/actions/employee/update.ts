@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { manageSalaryHistory } from "@/lib/salaryHistoryManager";
 import { ServerAction } from "@/types/action";
 import { TErrorHandler } from "@/types/globalError";
-import bcrypt from "bcryptjs";
+import bcrypt from "bcrypt";
 import {
   TUpdateEmployeeValidationSchema,
   updateEmployeeValidationSchema,

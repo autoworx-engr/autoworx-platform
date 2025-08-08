@@ -41,9 +41,10 @@ export default function CategoryItems({ category }: TProps) {
     notificationSetting?.length > 0
   ) {
     content = notificationSetting?.map((setting) => (
-      <NotificationTableRow key={setting.id} setting={setting} />
+      <NotificationTableRow isPayment={category === "PAYMENT"} key={setting.id} setting={setting} />
     ));
   }
+
 
   return (
     <div className="w-full overflow-auto border p-2 sm:w-full">
@@ -53,7 +54,7 @@ export default function CategoryItems({ category }: TProps) {
             <td></td>
             <td className="text-sm font-semibold">Email</td>
             <td className="text-sm font-semibold">Push</td>
-            <td className="text-sm font-semibold">Text</td>
+          {category === "PAYMENT" && (<td className="text-sm font-semibold">Text</td>)}  
           </tr>
         </thead>
         <tbody>{content}</tbody>

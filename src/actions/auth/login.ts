@@ -7,7 +7,7 @@ import {
   generateRefreshToken,
 } from "@/lib/tokenGenerator";
 import { HttpStatusCode } from "axios";
-import bcrypt from "bcryptjs";
+import bcrypt from "bcrypt";
 
 export default async function login(credentials: {
   email: string;

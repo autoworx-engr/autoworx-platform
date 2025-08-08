@@ -30,6 +30,9 @@ type TProps = {
       depositMethod: string | null;
       depositNotes: string | null;
     } | null;
+    cash: {
+      receivedCash: string | null;
+    } | null;
   };
   index: number;
   timezone: string;
@@ -96,6 +99,12 @@ export default function PaymentMobileCard({
           <div className="text-sm text-[#66738C]">Amount</div>
           <div className="font-semibold text-[#66738C]">
             {formatCurrency(Number(payment.amount))}
+          </div>
+        </div>
+        <div className="col-span-2">
+          <div className="text-sm text-[#66738C]">Cash Received</div>
+          <div className="font-semibold text-[#66738C]">
+            {payment.cash?.receivedCash ? payment.cash.receivedCash : 'N/A'}
           </div>
         </div>
       </div>

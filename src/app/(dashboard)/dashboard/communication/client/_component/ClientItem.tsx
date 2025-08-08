@@ -56,10 +56,10 @@ export default function ClientItem({
   const searchParams = useSearchParams();
 
   const conversationTrack = useClientCommunicationStore(
-    (state) => state.clientConversationTrack,
+    (state) => state.clientConversationTrack
   );
   const setClientConversationTrack = useClientCommunicationStore(
-    (state) => state.setClientConversationTrack,
+    (state) => state.setClientConversationTrack
   );
 
   const markClientMessagesAsUnseen = async (clientId: number) => {
@@ -133,7 +133,7 @@ export default function ClientItem({
   const handleStarUnStarClient = async (
     event: React.MouseEvent<HTMLButtonElement>,
     isStarred: boolean,
-    clientId: number,
+    clientId: number
   ) => {
     try {
       event.stopPropagation();
@@ -164,7 +164,7 @@ export default function ClientItem({
       ref={buttonRef}
       className={cn(
         "relative mb-2 flex w-full cursor-pointer items-center gap-2 overflow-x-hidden rounded-md p-3",
-        selected ? "bg-[#006D77]" : "bg-[#F2F2F2]",
+        selected ? "bg-[#006D77]" : "bg-[#F2F2F2]"
       )}
       onClick={handleRedirect}
     >
@@ -185,7 +185,7 @@ export default function ClientItem({
         <p
           className={cn(
             "text-[14px] font-bold",
-            selected ? "text-white" : "text-[#797979]",
+            selected ? "text-white" : "text-[#797979]"
           )}
         >
           {client?.firstName} {client?.lastName}
@@ -193,7 +193,7 @@ export default function ClientItem({
         <p
           className={cn(
             "mt-2 text-xs",
-            selected ? "text-white" : "text-[#797979]",
+            selected ? "text-white" : "text-[#797979]"
           )}
         >
           {client?.customerCompany}
@@ -203,10 +203,13 @@ export default function ClientItem({
             className={cn(
               "mt-2 line-clamp-1 text-xs",
               selected ? "text-white" : "text-[#797979]",
-              chatHistory?.emailIsRead ? "font-normal" : "font-bold",
+              chatHistory?.emailIsRead ? "font-normal" : "font-bold"
             )}
           >
-            Last client email: {chatHistory?.emailLastMessage}
+            {chatHistory?.lastMessageBy === "Company"
+              ? "You (Email) "
+              : "Client (Email) "}
+            : {chatHistory?.emailLastMessage}
           </p>
         )}
         {chatHistory?.smsLastMessage && (
@@ -214,10 +217,13 @@ export default function ClientItem({
             className={cn(
               "mt-2 line-clamp-1 text-xs",
               selected ? "text-white" : "text-[#797979]",
-              chatHistory?.smsIsRead ? "font-normal" : "font-bold",
+              chatHistory?.smsIsRead ? "font-normal" : "font-bold"
             )}
           >
-            Last client sms: {chatHistory?.smsLastMessage}
+            {chatHistory?.lastMessageBy === "Company"
+              ? "You (SMS) "
+              : "Client (SMS) "}
+            : {chatHistory?.smsLastMessage}
           </p>
         )}
       </div>
@@ -248,7 +254,7 @@ export default function ClientItem({
                   "h-8 w-8",
                   selected
                     ? "text-white hover:bg-[#005a63]"
-                    : "text-gray-500 hover:bg-gray-200",
+                    : "text-gray-500 hover:bg-gray-200"
                 )}
               >
                 <MdKeyboardArrowDown className="h-4 w-4" />
@@ -279,7 +285,7 @@ export default function ClientItem({
                   handleStarUnStarClient(
                     e as any,
                     !!client?.isStarred,
-                    client?.id as number,
+                    client?.id as number
                   );
                 }}
               >

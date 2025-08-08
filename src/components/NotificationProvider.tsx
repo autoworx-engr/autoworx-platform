@@ -55,6 +55,9 @@ export type NotificationsPopoverProps = IconButtonProps & {
 const takeLimit = 5;
 const maxLimit = 100;
 
+// Modern, aesthetic UI redesign (design-only)
+// Logic and state untouched
+
 export function NotificationsPopover({
   data = [],
   sx,
@@ -65,10 +68,8 @@ export function NotificationsPopover({
   const [limit, setLimit] = useState(takeLimit);
   const [totalUnRead, setTotalUnRead] = useState(0);
   const userId = sessionUser?.id;
-
   const [isViewAll, setIsViewAll] = useState(false);
 
-  // get all notification for user
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
@@ -84,19 +85,15 @@ export function NotificationsPopover({
         console.error(err);
       }
     };
-    if (userId) {
-      fetchNotifications();
-    }
+    if (userId) fetchNotifications();
   }, [limit, userId]);
 
   const [openPopover, setOpenPopover] = useState<HTMLButtonElement | null>(
     null
   );
 
-  // pusher implement my notification
   useEffect(() => {
     let ignore = false;
-    // Enable pusher logging - don't include this in production
     pusher
       .subscribe(`noti-${userId}`)
       .bind("notification", function (data: Notification) {
@@ -125,45 +122,30 @@ export function NotificationsPopover({
 
   const handleClosePopover = useCallback(() => {
     setOpenPopover(null);
-    // setIsViewAll(false);
-    // setLimit(takeLimit);
   }, []);
 
   const handleLinkClick = useCallback(() => {
     setOpenPopover(null);
   }, []);
 
-  // Click to mark all notifications as read
   const handleMarkAllAsRead = useCallback(async () => {
-    const updatedNotifications = await markAsAllRead(Number(userId));
-    if (updatedNotifications.type === "success") {
-      const updateNotificationState = notifications.map((notification) => ({
-        ...notification,
-        isUnRead: false,
-      }));
+    const updated = await markAsAllRead(Number(userId));
+    if (updated.type === "success") {
+      setNotifications(notifications.map((n) => ({ ...n, isUnRead: false })));
       setOpenPopover(null);
-      setNotifications(updateNotificationState);
       setTotalUnRead(0);
     } else {
       errorToast("Failed to mark all as read");
     }
   }, [notifications]);
 
-  // handle mark as read by id
-  const handleMarkAsReadById = async (notificationId: number) => {
-    const updatedNotifications = await markAsReadById(notificationId);
-    if (updatedNotifications.type === "success") {
-      const updateNotificationState = notifications.map((notification) => {
-        if (notification.id === notificationId) {
-          return {
-            ...notification,
-            isUnRead: false,
-          };
-        }
-        return notification;
-      });
-      setNotifications(updateNotificationState);
-      setTotalUnRead((prevUnRead) => prevUnRead - 1);
+  const handleMarkAsReadById = async (id: number) => {
+    const updated = await markAsReadById(id);
+    if (updated.type === "success") {
+      setNotifications(
+        notifications.map((n) => (n.id === id ? { ...n, isUnRead: false } : n))
+      );
+      setTotalUnRead((prev) => prev - 1);
     } else {
       errorToast("Failed to mark all as read");
     }
@@ -191,9 +173,13 @@ export function NotificationsPopover({
         slotProps={{
           paper: {
             sx: {
-              width: 360,
+              width: 400,
               maxHeight: 700,
+              p: 0,
+              borderRadius: 3,
               overflow: "hidden",
+              boxShadow: 5,
+              bgcolor: "background.paper",
               display: "flex",
               flexDirection: "column",
             },
@@ -201,69 +187,37 @@ export function NotificationsPopover({
         }}
       >
         <Box
+          px={3}
+          py={2}
           display="flex"
           alignItems="center"
-          sx={{ py: 2, pl: 2.5, pr: 1.5 }}
+          justifyContent="space-between"
         >
-          <Box sx={{ flexGrow: 1 }}>
-            <Typography variant="subtitle1">Notifications</Typography>
-            <Typography variant="body2" sx={{ color: "text.secondary" }}>
-              You have {totalUnRead} unread messages
+          <Box>
+            <Typography variant="h6">Notifications</Typography>
+            <Typography variant="body2" color="text.secondary">
+              {totalUnRead > 0
+                ? `You have ${totalUnRead} unread notifications`
+                : "All caught up!"}
             </Typography>
           </Box>
-
           {totalUnRead > 0 && (
-            <Tooltip title=" Mark all as read">
-              <IconButton color="primary" onClick={handleMarkAllAsRead}>
+            <Tooltip title="Mark all as read">
+              <IconButton onClick={handleMarkAllAsRead} color="primary">
                 <IoCheckmarkDone className="text-xl" />
               </IconButton>
             </Tooltip>
           )}
         </Box>
 
-        <Divider sx={{ borderStyle: "dashed" }} />
+        <Divider />
 
-        <Scrollbar
-          fillContent
-          sx={{ minHeight: 240, maxHeight: { xs: 360, sm: "none" } }}
-        >
-          <List
-            disablePadding
-            subheader={
-              <ListSubheader
-                disableSticky
-                sx={{ py: 1, px: 2.5, typography: "overline" }}
-              >
-                New
-              </ListSubheader>
-            }
-          >
-            {notifications.slice(0, 2).map((notification) => (
+        <Scrollbar sx={{ minHeight: 240, maxHeight: 400 }}>
+          <List disablePadding>
+            {notifications.map((n, i) => (
               <NotificationItem
-                key={notification.id}
-                notification={notification}
-                onMarkAsReadById={handleMarkAsReadById}
-                onLinkClick={handleLinkClick}
-              />
-            ))}
-          </List>
-
-          <List
-            disablePadding
-            className="overflow-y-auto"
-            subheader={
-              <ListSubheader
-                disableSticky
-                sx={{ py: 1, px: 2.5, typography: "overline" }}
-              >
-                Before that
-              </ListSubheader>
-            }
-          >
-            {notifications.slice(2).map((notification) => (
-              <NotificationItem
-                key={notification.id}
-                notification={notification}
+                key={n.id}
+                notification={n}
                 onMarkAsReadById={handleMarkAsReadById}
                 onLinkClick={handleLinkClick}
               />
@@ -273,15 +227,15 @@ export function NotificationsPopover({
 
         {!isViewAll && (
           <>
-            <Divider sx={{ borderStyle: "dashed" }} />
-            <Box sx={{ p: 1 }}>
+            <Divider />
+            <Box p={2}>
               <Button
                 onClick={handleViewAllNotifications}
                 fullWidth
-                disableRipple
-                color="inherit"
+                variant="text"
+                sx={{ color: "text.primary" }}
               >
-                View all
+                View All
               </Button>
             </Box>
           </>
@@ -291,72 +245,58 @@ export function NotificationsPopover({
   );
 }
 
-// ----------------------------------------------------------------------
-
 function NotificationItem({
   notification,
   onMarkAsReadById,
   onLinkClick,
-}: {
-  notification: Notification;
-  onMarkAsReadById: (id: number) => void;
-  onLinkClick: () => void;
-}) {
+}: any) {
   const { avatarUrl, title } = renderContent(notification);
   const [pending, startTransition] = useTransition();
   return (
     <ListItemButton
-      // LinkComponent={Link}
-      // href={notification.redirectUrl || ""}
       sx={{
-        py: 1.5,
-        px: 2.5,
-        mt: "1px",
+        px: 3,
+        py: 2,
+        alignItems: "start",
+        borderBottom: "1px solid #f0f0f0",
         ...(notification.isUnRead && {
-          bgcolor: "action.selected",
+          bgcolor: "#f0f5ff",
         }),
       }}
     >
       <Link
-        className="flex items-center"
-        href={notification.redirectUrl || ""}
+        href={notification.redirectUrl || "#"}
+        className="flex items-start gap-3"
         onClick={onLinkClick}
       >
-        <ListItemAvatar>
-          <Avatar sx={{ bgcolor: "background.neutral" }}>{avatarUrl}</Avatar>
-        </ListItemAvatar>
+        <Avatar sx={{ width: 36, height: 36, bgcolor: "#8E97FF" }}>
+          {avatarUrl}
+        </Avatar>
         <ListItemText
           primary={title}
           secondary={
             <Typography
               variant="caption"
-              sx={{
-                mt: 0.5,
-                gap: 0.5,
-                display: "flex",
-                alignItems: "center",
-                color: "text.disabled",
-              }}
+              color="text.secondary"
+              sx={{ display: "flex", alignItems: "center", mt: 0.5 }}
             >
-              <CiClock2 className="text-sm" />
+              <CiClock2 className="mr-1 text-sm" />
               {fToNow(notification.createdAt)}
             </Typography>
           }
         />
       </Link>
       {notification.isUnRead && (
-        <ListItemText className="shrink-0">
-          <Tooltip
+        <Tooltip title="Mark as read">
+          <IconButton
             onClick={() =>
               startTransition(() => onMarkAsReadById(notification.id))
             }
-            title="Mark as read"
+            disabled={pending}
           >
-            <IconButton disabled={pending} color="primary">
-              <IoCheckmarkDone className="text-xl" />
-            </IconButton>
-          </Tooltip>
-        </ListItemText>
+            <IoCheckmarkDone className="text-xl text-blue-500" />
+          </IconButton>
+        </Tooltip>
       )}
     </ListItemButton>
   );

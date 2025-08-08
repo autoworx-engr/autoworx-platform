@@ -113,6 +113,7 @@ export default function PaymentTable({
               <th className="border-b px-4 py-2 text-left">Vehicle Info</th>
               <th className="border-b px-4 py-2 text-left">Transaction Date</th>
               <th className="border-b px-4 py-2 text-left">Amount</th>
+              <th className="border-b px-4 py-2 text-left">Cash Received</th>
               <th className="border-b px-4 py-2 text-left">Method</th>
               <th className="border-b px-4 py-2 text-left">Refund</th>
             </tr>
@@ -158,6 +159,9 @@ export default function PaymentTable({
                       </div>
                     )}
                   </div>
+                </td>
+                <td className="border-b px-4 py-2">
+                  {item.cashReceived ? item.cashReceived : 'N/A'}
                 </td>
                 <td className="border-b px-4 py-2">{item.method}</td>                <td className="border-b px-4 py-2">
                   <RefundModal
@@ -226,6 +230,13 @@ export default function PaymentTable({
                 </p>
                 <p className="text-lg font-semibold text-[#66738C]">
                   {item.method}
+                </p>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-[#66738C]">Cash Received:</p>
+                <p className="text-sm font-semibold text-[#66738C]">
+                  {item.cashReceived ? item.cashReceived : 'N/A'}
                 </p>
               </div>              <div className="flex justify-end">
                 <RefundModal

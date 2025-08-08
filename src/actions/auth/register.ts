@@ -8,7 +8,7 @@ import generateZapierToken from "@/lib/generateZapierToken";
 import { insertPreloadedData } from "@/lib/insertPreloadedData";
 import { TErrorHandler } from "@/types/globalError";
 import { createUserValidation } from "@/validations/schemas/auth/user.validation";
-import bcrypt from "bcryptjs";
+import bcrypt from "bcrypt";
 import httpStatus from "http-status";
 import { env } from "next-runtime-env";
 import { uploadNotificationSettings } from "../settings/updateNotification";
