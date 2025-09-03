@@ -1,9 +1,8 @@
 import { authOptions } from "@/authOptions";
 import { db } from "@/lib/db";
+import moment from "moment";
 import { getServerSession } from "next-auth";
 import PaymentBarChartContainer from "./chart/PaymentBarChartContainer";
-import PaymentPieChartContainer from "./chart/PaymentPieChartContainer";
-import moment from "moment";
 
 const paymentMethods = ["CARD", "CHECK", "CASH", "OTHER"];
 
@@ -19,20 +18,27 @@ export default async function Analytics({
   const session = await getServerSession(authOptions);
 
   // Use provided dates or default to all time
-  let dateFilter = {};
+  let invoiceDateFilter = {};
+  let paymentDateFilter = {};
 
   if (startDate && endDate) {
     const formattedStartDate = moment(
       decodeURIComponent(startDate),
-      "MM-DD-YYYY",
+      "MM-DD-YYYY"
     ).format("YYYY-MM-DD");
     const formattedEndDate = moment(
       decodeURIComponent(endDate),
-      "MM-DD-YYYY",
+      "MM-DD-YYYY"
     ).format("YYYY-MM-DD");
 
-    dateFilter = {
+    invoiceDateFilter = {
       createdAt: {
+        gte: new Date(`${formattedStartDate}T00:00:00.000Z`),
+        lte: new Date(`${formattedEndDate}T23:59:59.999Z`),
+      },
+    };
+    paymentDateFilter = {
+      date: {
         gte: new Date(`${formattedStartDate}T00:00:00.000Z`),
         lte: new Date(`${formattedEndDate}T23:59:59.999Z`),
       },
@@ -41,7 +47,7 @@ export default async function Analytics({
   const invoices = await db.invoice.findMany({
     where: {
       companyId: session?.user?.companyId,
-      ...dateFilter,
+      ...invoiceDateFilter,
     },
     select: {
       grandTotal: true,
@@ -50,7 +56,7 @@ export default async function Analytics({
   const payments = await db.payment.findMany({
     where: {
       companyId: session?.user?.companyId,
-      ...dateFilter,
+      ...paymentDateFilter,
     },
     select: {
       amount: true,
@@ -60,12 +66,12 @@ export default async function Analytics({
 
   const totalInvoicesGrandTotal = invoices.reduce(
     (acc, invoice) => acc + Number(invoice.grandTotal),
-    0,
+    0
   );
 
   const totalPayments = payments.reduce(
     (acc, payment) => acc + Number(payment.amount),
-    0,
+    0
   );
 
   const paymentDue = totalInvoicesGrandTotal - totalPayments;
@@ -81,7 +87,7 @@ export default async function Analytics({
       {
         method: method,
         payment: 0,
-      },
+      }
     );
   });
 

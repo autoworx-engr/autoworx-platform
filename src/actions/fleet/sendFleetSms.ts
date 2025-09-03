@@ -80,7 +80,7 @@ export async function sendFleetSms({ statementId }: { statementId: string }) {
     const table = [tableHeader, ...tableRows, tableFooter].join("\n");
 
     const variabledBody = `Client: ${clientName}\n\n${table}`;
-    const res = await sendMessage({
+    sendMessage({
       clientId: fleetStatement?.invoice?.[0]?.client?.id!,
       // subject: variabledSubject,
       message: variabledBody || "",

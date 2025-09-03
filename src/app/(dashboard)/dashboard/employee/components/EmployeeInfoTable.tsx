@@ -49,11 +49,7 @@ export default function EmployeeInfoTable({
       // Rebuild moment using Detroit timezone from date strings
       const convertedStart = moment.tz(startStr, timezone).startOf("day").utc();
       const convertedEnd = moment.tz(endStr, timezone).endOf("day").utc();
-      // const convertedStart = convertDateToMidnightInTimezone(
-      //   startStr,
-      //   timezone
-      // );
-      // const convertedEnd = convertDateToMidnightInTimezone(endStr, timezone);
+  
 
       filtered = filtered.filter((row) => {
         const rowDate = moment.utc(row.dateClosed); // Backend returns UTC

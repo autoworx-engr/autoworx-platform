@@ -26,6 +26,7 @@ import useHolidaysQuery from "../../../_hook/useHolidaysQuery";
 import { getDayNumber } from "../../../_utils/utils.DateSelector";
 import CalendarTooltip from "../CalendarTooltip";
 import HolidayDeleteConfirmation from "../HolidayDeleteConfirmation";
+import { Skeleton } from "antd";
 
 export default function Month() {
   const { setDate, setNavigating } = useCalendarStore((state) => ({
@@ -44,22 +45,20 @@ export default function Month() {
   const { data: settings } = useSettingsQuery();
   const { data: holidays = [] } = useHolidaysQuery(
     formattedMonth,
-    formattedYear,
+    formattedYear
   );
   const router = useRouter();
   const { data: session } = useSession();
 
   // Fetch tasks for the current month
-  const { data: tasks = [] } = useTaskQueryByMonth(
+  const { data: tasks = [], isLoading: isTasksLoading } = useTaskQueryByMonth(
     formattedMonth,
-    formattedYear,
+    formattedYear
   );
 
   // Fetch appointment for the current month
-  const { data: appointments = [] } = useAppointmentQueryByMonth(
-    formattedMonth,
-    formattedYear,
-  );
+  const { data: appointments = [], isLoading: isAppointmentsLoading } =
+    useAppointmentQueryByMonth(formattedMonth, formattedYear);
 
   const isAdmin = session?.user.employeeType === EmployeeType.Admin;
 
@@ -150,7 +149,7 @@ export default function Month() {
 
     const holiday = holidays.find((holiday: any) => {
       const holidayDateLocal = new Date(holiday.date).toLocaleDateString(
-        "en-CA",
+        "en-CA"
       );
       return holidayDateLocal === currDateLocal;
     });
@@ -176,7 +175,7 @@ export default function Month() {
     } else if (type === "task") {
       // Get the id of the task from the dataTransfer object
       const taskId = parseInt(
-        event.dataTransfer.getData("text/plain").split("|")[1],
+        event.dataTransfer.getData("text/plain").split("|")[1]
       );
 
       let oldTask = tasks.find((task) => task.id === taskId);
@@ -207,12 +206,12 @@ export default function Month() {
     } else {
       // Get the id of the appointment from the dataTransfer object
       const appointmentId = parseInt(
-        event.dataTransfer.getData("text/plain").split("|")[1],
+        event.dataTransfer.getData("text/plain").split("|")[1]
       );
 
       // Find the appointment in your state
       const appointment = appointments.find(
-        (appointment) => appointment.id == appointmentId,
+        (appointment) => appointment.id == appointmentId
       );
 
       if (appointment) {
@@ -244,6 +243,55 @@ export default function Month() {
   };
   const clientTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
+  if (isTasksLoading || isAppointmentsLoading) {
+    return (
+      <div className="mt-3 border-l border-t border-neutral-200">
+        <div className="flex w-full">
+          {/* Header skeleton */}
+          {Array.from({ length: 7 }).map((_, i) => (
+            <div
+              key={i}
+              className="flex w-full items-center justify-center border-b border-r border-neutral-200 p-2"
+            >
+              <Skeleton.Button
+                active
+                size="small"
+                style={{
+                  width: "60px",
+                  height: "20px",
+                }}
+              />
+            </div>
+          ))}
+        </div>
+
+        {/* Calendar grid skeleton */}
+        <div className="grid h-[93%] grid-cols-7 grid-rows-5 xl:h-[95%]">
+          {Array.from({ length: 35 }).map((_, index) => (
+            <div
+              key={index}
+              className="relative flex h-full flex-col border-b border-r border-neutral-200 p-2"
+            >
+              {/* Date number skeleton */}
+              <div className="flex justify-end">
+                <div className="my-0.5 flex h-32 w-8 items-start justify-center">
+                  <Skeleton.Button
+                    active
+                    size="small"
+                    style={{
+                      width: "20px",
+                      height: "20px",
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mt-3 border-l border-t border-neutral-200" ref={dropRef}>
       <div className="flex w-full">
@@ -270,7 +318,7 @@ export default function Month() {
               <TooltipTrigger
                 type="button"
                 className={cn(
-                  "relative flex h-full cursor-default flex-col border-b border-r border-neutral-200 p-2",
+                  "relative flex h-full cursor-default flex-col border-b border-r border-neutral-200 p-2"
                 )}
                 onClick={(event) => {
                   if (
@@ -313,7 +361,7 @@ export default function Month() {
                         today.getMonth() === cell[0]?.getMonth() &&
                         today.getDate() === cell[0]?.getDate()
                         ? "text-[#6571FF]"
-                        : "text-[#797979]",
+                        : "text-[#797979]"
                     )}
                   >
                     {cell[0]?.getDate() || ""}
@@ -387,17 +435,17 @@ export default function Month() {
                                         if (
                                           event.target instanceof Node &&
                                           event.currentTarget.contains(
-                                            event.target,
+                                            event.target
                                           )
                                         ) {
                                           // Convert Date object to string to avoid timezone issues
                                           const dateString =
                                             cell[0] instanceof Date
                                               ? cell[0].toLocaleDateString(
-                                                  "en-CA",
+                                                  "en-CA"
                                                 ) // 'YYYY-MM-DD' format
                                               : moment(cell[0]).format(
-                                                  "YYYY-MM-DD",
+                                                  "YYYY-MM-DD"
                                                 );
 
                                           // Set navigation flag to prevent reset, then set date and navigate
@@ -407,7 +455,7 @@ export default function Month() {
                                           // Clear navigation flag after a short delay to allow navigation to complete
                                           setTimeout(
                                             () => setNavigating(false),
-                                            30000,
+                                            30000
                                           );
                                         }
                                         router.push("/dashboard/task/day");
@@ -418,7 +466,7 @@ export default function Month() {
                                   )}
                                 </Tooltip>
                               );
-                            },
+                            }
                           )}
                       </div>
                     )}
@@ -438,7 +486,7 @@ export default function Month() {
                           holiday?.id ? "z-20" : "z-10",
                           cell[1].length || cell[2].length
                             ? "-bottom-12"
-                            : "-bottom-24",
+                            : "-bottom-24"
                         )}
                       >
                         <span className="block lg:hidden">H</span>{" "}
@@ -452,7 +500,7 @@ export default function Month() {
                           />
                         )}
                       </div>
-                    ),
+                    )
                 )}
               </TooltipTrigger>
 
@@ -496,7 +544,7 @@ export default function Month() {
                                 >
                                   <p>{appointment.title}</p>
                                 </div>
-                              ),
+                              )
                             )}
                           </div>
                         </>

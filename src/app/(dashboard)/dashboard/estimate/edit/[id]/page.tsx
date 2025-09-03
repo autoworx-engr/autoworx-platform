@@ -113,17 +113,17 @@ export default async function Page({
 
     const technicians =
       item.service?.Technician?.filter(
-        (tech) => tech.invoiceId === invoice.id,
+        (tech) => tech.invoiceId === invoice.id
       ) || [];
 
     if (technicians.length) {
       if (Array.isArray(technicians) && technicians.length > 0) {
         const statuses = technicians.map((tech) =>
-          tech.status?.toLowerCase().trim(),
+          tech.status?.toLowerCase().trim()
         );
 
         const isServiceComplete = statuses.every(
-          (status) => status === "complete",
+          (status) => status === "complete"
         );
 
         if (isServiceComplete) {
@@ -197,7 +197,7 @@ export default async function Page({
       cost: product.price,
       tags: product.tags.map((tag) => tag.tag),
       productId: product.id,
-    })),
+    }))
   );
 
   labors.forEach((labor) => {
@@ -240,95 +240,103 @@ export default async function Page({
   });
 
   return (
-    <div className="gap-3 space-y-4 overflow-clip py-2 md:-my-2 md:min-h-[93vh] lg:grid lg:grid-cols-[1fr,24rem] lg:grid-rows-[auto,auto,1fr] lg:space-y-0">
-      <Title>Estimate</Title>
+    <div className="gap-3 space-y-4 overflow-clip py-2 md:-my-2 md:min-h-[93vh] xl:grid xl:grid-cols-4 xl:space-y-0">
+      <div className="col-span-3 space-y-4">
+        <Title>Estimate</Title>
 
-      <SyncLists
-        customers={customers}
-        vehicles={vehicles}
-        categories={categories}
-        services={services}
-        materials={materials}
-        labors={labors}
-        tags={tags}
-        vendors={vendors}
-        statuses={statuses}
-        paymentMethods={paymentMethods}
-        client={client}
-      />
-      <SyncEstimate
-        invoice={invoice}
-        // @ts-ignore
-        items={items}
-        photos={photos}
-        tasks={tasks}
-        payment={payment}
-        inspections={invoiceInspections}
-      />
-
-      <div>
-        <ConvertButton
-          type={invoice.type}
-          text={`Update ${invoice.type}`}
-          icon={<FaSave />}
-          className="border-none bg-[#6571FF] px-8 text-white"
+        <SyncLists
+          customers={customers}
+          vehicles={vehicles}
+          categories={categories}
+          services={services}
+          materials={materials}
+          labors={labors}
+          tags={tags}
+          vendors={vendors}
+          statuses={statuses}
+          paymentMethods={paymentMethods}
+          client={client}
         />
-        {/* <ConvertTo invoice={invoice} /> */}
+        <SyncEstimate
+          invoice={invoice}
+          // @ts-ignore
+          items={items}
+          photos={photos}
+          tasks={tasks}
+          payment={payment}
+          inspections={invoiceInspections}
+        />
+
+        <Header
+          id={invoice.id}
+          client={client!}
+          vehicle={vehicle!}
+          status={status!}
+          invoice={invoice}
+          isAllServicesCompleted={incompleteServices.length === 0}
+          isEdit={true}
+        />
+
+        <Tabs
+          defaultValue="create"
+          className="col-start-1 flex min-h-[72vh] flex-col overflow-clip"
+        >
+          <TabsList className="grid grid-cols-4 md:inline-flex">
+            <TabsTrigger value="payments" className="order-4 pl-12 md:order-1">
+              Payments
+            </TabsTrigger>
+            <TabsTrigger
+              value="inspections"
+              className="order-3 pl-12 md:order-2"
+            >
+              Inspections
+            </TabsTrigger>
+            <TabsTrigger
+              value="attachment"
+              className="order-2 pl-12 md:order-3"
+            >
+              Attachment
+            </TabsTrigger>
+            <TabsTrigger value="create" className="order-1 md:order-4">
+              Create
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="create">
+            <CreateTab />
+          </TabsContent>
+
+          <TabsContent value="attachment">
+            <AttachmentTab />
+          </TabsContent>
+
+          <TabsContent value="inspections">
+            <InspectionsTab />
+          </TabsContent>
+          <TabsContent value="payments">
+            <PaymentTab
+              clientId={
+                searchParams.clientId
+                  ? parseInt(searchParams.clientId)
+                  : (invoice?.clientId ?? undefined)
+              }
+            />
+          </TabsContent>
+        </Tabs>
       </div>
 
-      <Header
-        id={invoice.id}
-        client={client!}
-        vehicle={vehicle!}
-        status={status!}
-        invoice={invoice}
-        isAllServicesCompleted={incompleteServices.length === 0}
-        isEdit={true}
-      />
-
-      <Tabs
-        defaultValue="create"
-        className="col-start-1 flex min-h-0 flex-col overflow-clip"
-      >
-        <TabsList className="grid grid-cols-4 md:inline-flex">
-          <TabsTrigger value="payments" className="order-4 pl-12 md:order-1">
-            Payments
-          </TabsTrigger>
-          <TabsTrigger value="inspections" className="order-3 pl-12 md:order-2">
-            Inspections
-          </TabsTrigger>
-          <TabsTrigger value="attachment" className="order-2 pl-12 md:order-3">
-            Attachment
-          </TabsTrigger>
-          <TabsTrigger value="create" className="order-1 md:order-4">
-            Create
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="create">
-          <CreateTab />
-        </TabsContent>
-
-        <TabsContent value="attachment">
-          <AttachmentTab />
-        </TabsContent>
-
-        <TabsContent value="inspections">
-          <InspectionsTab />
-        </TabsContent>
-        <TabsContent value="payments">
-          <PaymentTab
-            clientId={
-              searchParams.clientId
-                ? parseInt(searchParams.clientId)
-                : (invoice?.clientId ?? undefined)
-            }
+      <div className="app-shadow grid grid-rows-[1fr,auto,auto] divide-y rounded-md">
+        <div>
+          <ConvertButton
+            type={invoice.type}
+            text={`Update ${invoice.type}`}
+            icon={<FaSave />}
+            className="border-none bg-[#6571FF] px-8 text-white"
           />
-        </TabsContent>
-      </Tabs>
+          {/* <ConvertTo invoice={invoice} /> */}
 
-      <div className="app-shadow col-start-2 row-start-2 row-end-4 grid grid-rows-[1fr,auto,auto] divide-y rounded-md md:h-[85vh]">
-        <Create />
+          <Create />
+        </div>
         <BillSummary
           isEstimateServiceFee={Number(invoice.serviceFee) > 0}
           isEstimateTax={Number(invoice.tax) > 0}

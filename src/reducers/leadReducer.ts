@@ -20,9 +20,10 @@ export function leadReducer<T>(
             };
             return state.map(column => {
                 if (column.id === columnId) {
+                    const updatedLeads = [...column.leads, ...leads];
                     return {
                         ...column,
-                        leads: [...column.leads, ...leads],
+                        leads: updatedLeads,
                     };
                 }
                 return column;
@@ -44,9 +45,10 @@ export function leadReducer<T>(
                         (lead: any) => !existingLeadIds.has(lead.id)
                     );
 
+                    const updatedLeads = [...column.leads, ...newLeads];
                     return {
                         ...column,
-                        leads: [...column.leads, ...newLeads],
+                        leads: updatedLeads,
                         hasMoreLeads: false, // Mark as all leads loaded
                     };
                 }
@@ -99,15 +101,17 @@ export function leadReducer<T>(
                 columnId: destinationColumn.id,
             });
 
-            const updatedDestinationColumn = {
-                ...destinationColumn,
-                leads: destinationColumn.leads,
-            };
+                const updatedDestinationColumn = {
+                    ...destinationColumn,
+                    leads: destinationColumn.leads,
+                    totalLeads: destinationColumn.totalLeads + 1,
+                };
 
-            const updatedSourceColumn = {
-                ...sourceColumn,
-                leads: updatedSourceLeads,
-            };
+                const updatedSourceColumn = {
+                    ...sourceColumn,
+                    leads: updatedSourceLeads,
+                    totalLeads: sourceColumn.totalLeads - 1,
+                };
 
             return state.map(column => {
                 if (column.id === sourceColumn.id) {
@@ -127,9 +131,11 @@ export function leadReducer<T>(
             };
             return state.map(column => {
                 if (column.id === columnId) {
+                    const updatedLeads = column.leads.filter(lead => lead.id !== leadId);
                     return {
                         ...column,
-                        leads: column.leads.filter(lead => lead.id !== leadId),
+                        leads: updatedLeads,
+                        totalLeads: column.totalLeads - 1, 
                     };
                 }
                 return column;

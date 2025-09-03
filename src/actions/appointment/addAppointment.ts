@@ -13,12 +13,12 @@ import moment from "moment-timezone";
 import { authOptions } from "@/authOptions";
 import { sendNewAppointmentNotification } from "@/lib/notification/task-and-appointment-notify";
 import { Client, Lead } from "@prisma/client";
+import axios from "axios";
 import { getServerSession } from "next-auth";
 import { getGoogleCalendarToken } from "../calendar-settings/getGoogleCalendarAuth";
 import { sendMessage } from "../communication/client/sendMessage";
-import { sendSendgridEmail } from "../estimate/invoice/sendSendgridMail";
+import { sendInfobipEmail } from "../estimate/invoice/sendInfobipEmail";
 import createGoogleCalendarEvent from "../task/google-calendar/createGoogleCalendarEvent";
-import axios from "axios";
 export interface AppointmentToAdd {
   title: string;
   date?: string;
@@ -257,7 +257,7 @@ export async function addAppointment(
         // send email
         if (client) {
           try {
-            await sendSendgridEmail({
+            sendInfobipEmail({
               clientId: client.id,
               subject: confirmationSubject,
               text: confirmationMessage,
@@ -266,7 +266,7 @@ export async function addAppointment(
             console.log("🚀 ~ error:", error);
           }
           try {
-            await sendMessage({
+            sendMessage({
               companyId: client.companyId,
               clientId: client.id,
               message: confirmationMessage || "",
@@ -349,7 +349,7 @@ export async function addAppointment(
                   .replace("<PHONE>", company?.phone ?? "");
 
                 try {
-                  sendSendgridEmail({
+                  sendInfobipEmail({
                     clientId: client.id,
                     subject: reminderSubject,
                     text: reminderMessage,

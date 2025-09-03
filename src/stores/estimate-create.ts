@@ -3,7 +3,7 @@ import { Coupon, Labor, Material, Service, Tag, Task } from "@prisma/client";
 import { create } from "zustand";
 
 export interface Item {
-  id: string | number; // nanoid
+  id?: string | number; // nanoid
   service: Service | null;
   materials: (Material | null)[];
   labor: Labor | null;
@@ -33,7 +33,7 @@ interface EstimateCreateStore {
   policy: string;
   customerNotes: string;
   customerComments: string;
-  photos: string[];
+  photos: { id?: number;  photo?: string}[];
   tasks: { id: undefined | number; task: string }[];
   items: Item[];
   payment: FullPayment;
@@ -60,7 +60,7 @@ interface EstimateCreateStore {
   setCustomerComments: (customerComments: string) => void;
   setCoupon: (coupon: Coupon) => void;
 
-  setPhotos: (photos: string[]) => void;
+  setPhotos: (photos: { id?: number; photo?: string}[]) => void;
   addPhoto: (photo: string) => void;
   removePhoto: (photo: string) => void;
 
@@ -137,7 +137,7 @@ export const useEstimateCreateStore = create<EstimateCreateStore>((set) => ({
 
   setCoupon: (coupon: Coupon) => set({ coupon }),
 
-  setPhotos: (photos: string[]) => set({ photos }),
+  setPhotos: (photos: {id?: number, photo?: string}[]) => set({ photos }),
   addPhoto: (photo: string) =>
     set((x: any) => ({ photos: [...x.photos, photo] })),
   removePhoto: (photo: string) =>

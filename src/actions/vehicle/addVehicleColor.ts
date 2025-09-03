@@ -1,21 +1,29 @@
-"use server";
+'use server';
 
-import { getCompanyId } from "@/lib/companyId";
-import { db } from "@/lib/db";
-import { ServerAction } from "@/types/action";
+import { errorHandler } from '@/error-boundary/globalErrorHandler';
+import { getCompanyId } from '@/lib/companyId';
+import { db } from '@/lib/db';
+import { ServerAction } from '@/types/action';
+import { TErrorHandler } from '@/types/globalError';
 
-export async function addVehicleColor(name: string): Promise<ServerAction> {
-  const companyId = await getCompanyId();
+export async function addVehicleColor(
+  name: string
+): Promise<ServerAction | TErrorHandler> {
+  try {
+    const companyId = await getCompanyId();
 
-  const newColor = await db.vehicleColor.create({
-    data: {
-      name,
-      companyId,
-    },
-  });
+    const newColor = await db.vehicleColor.create({
+      data: {
+        name,
+        companyId,
+      },
+    });
 
-  return {
-    type: "success",
-    data: newColor,
-  };
+    return {
+      type: 'success',
+      data: newColor,
+    };
+  } catch (err) {
+    return errorHandler(err);
+  }
 }

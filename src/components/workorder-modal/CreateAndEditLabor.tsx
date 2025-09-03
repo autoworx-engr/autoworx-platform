@@ -32,6 +32,8 @@ import {
 import { FaTimes } from "react-icons/fa";
 import { Circles } from "react-loader-spinner"; // Importing the spinner
 import VehicleParts from "./VehicleParts";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/queryKeys";
 
 type TProps = {
   invoiceItemId: number;
@@ -69,6 +71,9 @@ export default function CreateAndEditLabor({
   const [open, setOpen] = useState(false);
   const [priorityOpen, setPriorityOpen] = useState(false);
   const [employeeOpen, setEmployeeOpen] = useState(false);
+
+
+  const queryClient = useQueryClient();
 
   const [selectedVehicleParts, setSelectedVehicleParts] = useState<
     Partial<Parts>[]
@@ -165,7 +170,8 @@ export default function CreateAndEditLabor({
       setError("Employee is required");
       setLoading(false); // Hide spinner
       return;
-    }    try {
+    }
+    try {
       if (technician) {
         // For technicians, only allow updating status, keep other fields from the original technician
         const updatedPayload = isTechnician ? {
@@ -209,12 +215,7 @@ export default function CreateAndEditLabor({
                 : tech,
             ),
           );
-
-          // Dispatch custom event to notify InvoiceModalBody
-          const event = new CustomEvent("invoice-updated", {
-            detail: { invoiceId: invoiceId },
-          });
-          window.dispatchEvent(event);
+          
         } else if (response.type === "globalError") {
           setError(
             response?.errorSource?.length
@@ -247,11 +248,6 @@ export default function CreateAndEditLabor({
             },
           ]);
           setSelectedVehicleParts([]);
-          // Dispatch custom event to notify InvoiceModalBody
-          const event = new CustomEvent("invoice-updated", {
-            detail: { invoiceId: invoiceId },
-          });
-          window.dispatchEvent(event);
         } else if (response.type === "globalError") {
           setError(
             response?.errorSource?.length
@@ -268,6 +264,12 @@ export default function CreateAndEditLabor({
           : formattedError.message,
       );
     } finally {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.getInvoiceModalDataKey(invoiceId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.getWorkOrderDataKey(invoiceId),
+      });
       setLoading(false); // Hide spinner
     }
   };

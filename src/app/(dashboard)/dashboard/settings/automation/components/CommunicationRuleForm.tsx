@@ -1,30 +1,31 @@
-'use client';
-import React, { useState, useEffect, ChangeEvent } from 'react';
-import Selector from './Selector';
-import { Box, Paper, Typography, Switch } from '@mui/material';
-import MultiSelect from './MultiSelect';
-import { SlimInput } from '@/components/SlimInput';
-import ActiveTemplate from './ActiveTemplate';
-import TemplateVariable from './TemplateVariable';
-import { usePipelineStagesStore } from '@/stores/pipelineStagesStore';
-import { timeDelays } from './constants';
-import { errorToast } from '@/lib/toast';
-import { parseTimeDelayToSeconds } from '@/utils/parseTimeDelayToSeconds';
-import { useCreateCommunicationAutomationRule } from '@/hooks/communication-automation/useCreateCommunicationAutomationRule';
-import { useUpdateCommunicationAutomationRule } from '@/hooks/communication-automation/useUpdateCommunicationAutomationRule';
-import { useFindOneCommunicationAutomationRule } from '@/hooks/communication-automation/useFindOneCommunicationAutomationRule';
-import { Spin } from 'antd';
-import { parseSecondsToTimeDelay } from '@/utils/parseSecondsToTimeDelay';
-import { TAttachments } from '@/types/automation';
+"use client";
+import React, { useState, useEffect, ChangeEvent } from "react";
+import Selector from "./Selector";
+import { Box, Paper, Typography, Switch } from "@mui/material";
+import MultiSelect from "./MultiSelect";
+import { SlimInput } from "@/components/SlimInput";
+import ActiveTemplate from "./ActiveTemplate";
+import TemplateVariable from "./TemplateVariable";
+import { usePipelineStagesStore } from "@/stores/pipelineStagesStore";
+import { timeDelays } from "./constants";
+import { errorToast } from "@/lib/toast";
+import { parseTimeDelayToSeconds } from "@/utils/parseTimeDelayToSeconds";
+import { useCreateCommunicationAutomationRule } from "@/hooks/communication-automation/useCreateCommunicationAutomationRule";
+import { useUpdateCommunicationAutomationRule } from "@/hooks/communication-automation/useUpdateCommunicationAutomationRule";
+import { useFindOneCommunicationAutomationRule } from "@/hooks/communication-automation/useFindOneCommunicationAutomationRule";
+import { Spin } from "antd";
+import { parseSecondsToTimeDelay } from "@/utils/parseSecondsToTimeDelay";
+import { TAttachments } from "@/types/automation";
 import {
   handleFileSelection,
   uploadAllAttachments,
-} from '@/utils/handleFileAttachment';
-import CustomRadioGroup from './CustomRadioGroup';
-import { Company, TwilioCredentials } from '@prisma/client';
+} from "@/utils/handleFileAttachment";
+import CustomRadioGroup from "./CustomRadioGroup";
+import { Company, TwilioCredentials } from "@prisma/client";
+import { useCharacterLimit } from "@/hooks/useCharecterLimit";
 
 type RuleFormProps = {
-  mode: 'create' | 'edit' | undefined;
+  mode: "create" | "edit" | undefined;
   id?: string | null;
   isEdit: boolean;
   companyId: any;
@@ -39,8 +40,8 @@ export type Rule = {
   title: string | null;
   stages: number[];
   timeDelay: number | null | string;
-  communicationType: 'SMS' | 'EMAIL' | 'BOTH';
-  templateType: 'SMS' | 'EMAIL';
+  communicationType: "SMS" | "EMAIL" | "BOTH";
+  templateType: "SMS" | "EMAIL";
   isSendWeekDays: boolean;
   isSendOfficeHours: boolean;
   subject?: string | null;
@@ -64,16 +65,16 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<Rule>({
     companyId: null,
-    title: '',
+    title: "",
     stages: [],
     timeDelay: null,
-    communicationType: 'SMS',
-    templateType: 'SMS',
+    communicationType: "SMS",
+    templateType: "SMS",
     isSendWeekDays: false,
     isSendOfficeHours: false,
-    subject: '',
-    emailBody: '',
-    smsBody: '',
+    subject: "",
+    emailBody: "",
+    smsBody: "",
     attachments: [],
     createdBy: null,
     targetColumnId: null,
@@ -88,7 +89,7 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
     (stage) => !formData.stages?.includes(stage.id)
   );
 
-  const [activeTemplate, setActiveTemplate] = useState<'SMS' | 'EMAIL'>('SMS');
+  const [activeTemplate, setActiveTemplate] = useState<"SMS" | "EMAIL">("SMS");
   const { mutate: createRule, isPending: isCreatePending } =
     useCreateCommunicationAutomationRule();
   const { mutate: updateRule, isPending: isUpdatePending } =
@@ -98,6 +99,11 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
   );
   const [error, setError] = useState<Record<string, string>>({});
   const userEmail = user?.email;
+  const maxLength = 300;
+  const { length, isLimitExceeded } = useCharacterLimit(
+    formData?.emailBody! || formData?.smsBody!,
+    maxLength
+  );
 
   useEffect(() => {
     const loadData = async () => {
@@ -127,16 +133,16 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
       } else {
         setFormData({
           companyId: null,
-          title: '',
+          title: "",
           stages: [],
           timeDelay: null,
-          communicationType: 'SMS',
-          templateType: 'SMS',
+          communicationType: "SMS",
+          templateType: "SMS",
           isSendWeekDays: false,
           isSendOfficeHours: false,
-          subject: '',
-          emailBody: '',
-          smsBody: '',
+          subject: "",
+          emailBody: "",
+          smsBody: "",
           attachments: [],
           createdBy: null,
           targetColumnId: null,
@@ -147,7 +153,7 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
   }, [isEdit, id, data?.data, mode]);
 
   useEffect(() => {
-    fetchStages('sales');
+    fetchStages("sales");
   }, []);
 
   // Handle input changes
@@ -163,7 +169,7 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
     }
 
     // Clear subject-related errors when subject field changes
-    if (field === 'subject' && (error.emailSubject || error.emailBody)) {
+    if (field === "subject" && (error.emailSubject || error.emailBody)) {
       setError((prev) => {
         const newErrors = { ...prev };
         delete newErrors.emailSubject;
@@ -173,7 +179,7 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
   };
 
   // Handle template toggle
-  const handleTemplateToggle = (template: 'SMS' | 'EMAIL') => {
+  const handleTemplateToggle = (template: "SMS" | "EMAIL") => {
     setActiveTemplate(template);
 
     setFormData((prev) => ({
@@ -207,30 +213,30 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
     const newError: Record<string, string> = {};
 
     if (!formData.title || !formData.title.trim())
-      newError.title = 'Title is required.';
+      newError.title = "Title is required.";
     if (!Array.isArray(formData.stages) || formData.stages.length === 0) {
-      newError.stages = 'At least one stage is required.';
+      newError.stages = "At least one stage is required.";
     }
     if (formData.timeDelay === null)
-      newError.timeDelay = 'Time delay is required.';
+      newError.timeDelay = "Time delay is required.";
 
-    if (!formData.templateType) errors.push('Template type is required.');
+    if (!formData.templateType) errors.push("Template type is required.");
 
     if (!formData.communicationType)
-      errors.push('Communication type is required.');
+      errors.push("Communication type is required.");
 
-    if (formData.communicationType === 'EMAIL') {
+    if (formData.communicationType === "EMAIL") {
       const isSubjectEmpty = !formData.subject || !formData.subject.trim();
       const isBodyEmpty = !formData.emailBody || !formData.emailBody.trim();
 
       if (isSubjectEmpty && isBodyEmpty) {
-        newError.emailBody = 'Email subject and body are required.';
-        newError.emailSubject = 'Subject is required.';
+        newError.emailBody = "Email subject and body are required.";
+        newError.emailSubject = "Subject is required.";
       } else if (isSubjectEmpty) {
-        newError.emailSubject = 'Subject is required.';
-        newError.emailBody = 'Email subject is required.';
+        newError.emailSubject = "Subject is required.";
+        newError.emailBody = "Email subject is required.";
       } else if (isBodyEmpty) {
-        newError.emailBody = 'Email body is required.';
+        newError.emailBody = "Email body is required.";
       }
 
       if (company?.email === null) {
@@ -239,24 +245,24 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
       }
     }
 
-    if (formData.communicationType === 'BOTH') {
+    if (formData.communicationType === "BOTH") {
       const isSubjectEmpty = !formData.subject || !formData.subject.trim();
       const isBodyEmpty = !formData.emailBody || !formData.emailBody.trim();
 
       if (isSubjectEmpty && isBodyEmpty) {
-        newError.emailBody = 'Email subject and body are required.';
-        newError.emailSubject = 'Subject is required.';
+        newError.emailBody = "Email subject and body are required.";
+        newError.emailSubject = "Subject is required.";
       }
       if (isSubjectEmpty) {
-        newError.emailSubject = 'Subject is required.';
-        newError.emailBody = 'Subject is required.';
+        newError.emailSubject = "Subject is required.";
+        newError.emailBody = "Subject is required.";
       }
       if (isBodyEmpty) {
-        newError.emailBody = 'Email body is required.';
+        newError.emailBody = "Email body is required.";
       }
 
       if (!formData.smsBody || !formData.smsBody.trim()) {
-        newError.smsBody = 'SMS body is required.';
+        newError.smsBody = "SMS body is required.";
       }
 
       if (company?.email === null) {
@@ -265,17 +271,17 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
       }
 
       if (twilio === null) {
-        newError.twilio = 'To send SMS, you must sign in with Twilio.';
+        newError.twilio = "To send SMS, you must sign in with Twilio.";
         errorToast(newError.twilio);
       }
     }
-    if (formData.communicationType === 'SMS') {
+    if (formData.communicationType === "SMS") {
       if (!formData.smsBody || !formData.smsBody.trim()) {
-        newError.smsBody = 'SMS body is required.';
+        newError.smsBody = "SMS body is required.";
       }
 
       if (twilio === null) {
-        newError.twilio = 'To send SMS, you must sign in with Twilio.';
+        newError.twilio = "To send SMS, you must sign in with Twilio.";
         errorToast(newError.twilio);
       }
     }
@@ -324,24 +330,24 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
         createRule(finalData);
         setFormData({
           companyId: null,
-          title: '',
+          title: "",
           stages: [],
           timeDelay: null,
-          communicationType: 'SMS',
-          templateType: 'SMS',
+          communicationType: "SMS",
+          templateType: "SMS",
           isSendWeekDays: false,
           isSendOfficeHours: false,
-          subject: '',
-          emailBody: '',
-          smsBody: '',
+          subject: "",
+          emailBody: "",
+          smsBody: "",
           attachments: [],
           createdBy: null,
           targetColumnId: null,
         });
-        setActiveTemplate('SMS');
+        setActiveTemplate("SMS");
       }
     } catch (error) {
-      errorToast('Something went wrong!');
+      errorToast("Something went wrong!");
     }
   };
 
@@ -362,7 +368,7 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
                   label="Title"
                   value={formData.title!}
                   labelClassName="text-gray-500"
-                  onChange={(e) => handleChange('title', e.target.value)}
+                  onChange={(e) => handleChange("title", e.target.value)}
                   // required
                 />
 
@@ -371,7 +377,7 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
                   <MultiSelect
                     options={stages}
                     value={formData.stages}
-                    onChange={(value) => handleChange('stages', value)}
+                    onChange={(value) => handleChange("stages", value)}
                     label="Stage"
                     placeholder="Select options"
                     required
@@ -385,7 +391,7 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
                   label="Time Delay"
                   options={timeDelays}
                   value={formData.timeDelay!}
-                  onChange={(value) => handleChange('timeDelay', value)}
+                  onChange={(value) => handleChange("timeDelay", value)}
                   required
                   error={error.timeDelay}
                 />
@@ -396,7 +402,7 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
                   label="Action"
                   options={actionOptions}
                   value={formData.targetColumnId!}
-                  onChange={(value) => handleChange('targetColumnId', value)}
+                  onChange={(value) => handleChange("targetColumnId", value)}
                   // error={error.targetColumnId}
                   disabled={loading}
                   isClear={true}
@@ -409,9 +415,9 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
                   value={formData.communicationType}
                   onChange={handleChange}
                   options={[
-                    { label: 'SMS', value: 'SMS' },
-                    { label: 'Email', value: 'EMAIL' },
-                    { label: 'Both', value: 'BOTH' },
+                    { label: "SMS", value: "SMS" },
+                    { label: "Email", value: "EMAIL" },
+                    { label: "Both", value: "BOTH" },
                   ]}
                 />
 
@@ -421,7 +427,7 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
                     type="checkbox"
                     checked={formData.isSendWeekDays}
                     onChange={(e) =>
-                      handleChange('isSendWeekDays', e.target.checked)
+                      handleChange("isSendWeekDays", e.target.checked)
                     }
                     className="mr-2"
                     id="isSendWeekDays"
@@ -436,7 +442,7 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
                     type="checkbox"
                     checked={formData.isSendOfficeHours}
                     onChange={(e) =>
-                      handleChange('isSendOfficeHours', e.target.checked)
+                      handleChange("isSendOfficeHours", e.target.checked)
                     }
                     className="mr-2"
                     id="isSendOfficeHours"
@@ -455,10 +461,10 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
                   <Box className="mb-2 flex items-center">
                     <Typography className="mr-2">SMS</Typography>
                     <Switch
-                      checked={activeTemplate === 'EMAIL'}
+                      checked={activeTemplate === "EMAIL"}
                       onChange={() =>
                         handleTemplateToggle(
-                          activeTemplate === 'SMS' ? 'EMAIL' : 'SMS'
+                          activeTemplate === "SMS" ? "EMAIL" : "SMS"
                         )
                       }
                     />
@@ -466,9 +472,9 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
                   </Box>
 
                   {/* SMS Template */}
-                  {activeTemplate === 'SMS' && (
+                  {activeTemplate === "SMS" && (
                     <Box
-                      className={`mb-4 ${activeTemplate !== 'SMS' ? 'hidden' : ''}`}
+                      className={`mb-4 ${activeTemplate !== "SMS" ? "hidden" : ""}`}
                     >
                       <ActiveTemplate
                         activeTemplate="SMS"
@@ -486,14 +492,17 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
                         error={
                           error.smsBody || error.emailBody || error.emailSubject
                         }
+                        maxLength={maxLength}
+                        characterLength={length}
+                        isLimitExceeded={isLimitExceeded}
                       />
                     </Box>
                   )}
 
                   {/* EMAIL Template */}
-                  {activeTemplate === 'EMAIL' && (
+                  {activeTemplate === "EMAIL" && (
                     <Box
-                      className={`mb-4 ${activeTemplate !== 'EMAIL' ? 'hidden' : ''}`}
+                      className={`mb-4 ${activeTemplate !== "EMAIL" ? "hidden" : ""}`}
                     >
                       <ActiveTemplate
                         activeTemplate="EMAIL"
@@ -514,6 +523,9 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
                           error.emailBody || error.emailSubject || error.smsBody
                         }
                         subjectError={!!error.emailSubject}
+                        maxLength={maxLength}
+                        characterLength={length}
+                        isLimitExceeded={isLimitExceeded}
                       />
                     </Box>
                   )}
@@ -526,20 +538,22 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
                 <div className="flex justify-end pt-4">
                   <button
                     type="submit"
-                    disabled={isCreatePending || isUpdatePending}
+                    disabled={
+                      isCreatePending || isUpdatePending || isLimitExceeded
+                    }
                     className={`rounded-md px-4 py-2 text-sm font-medium text-white ${
-                      isUpdatePending || isCreatePending
-                        ? 'cursor-not-allowed bg-indigo-300'
-                        : 'bg-indigo-500 hover:bg-indigo-600'
+                      isUpdatePending || isCreatePending || isLimitExceeded
+                        ? "cursor-not-allowed bg-indigo-300"
+                        : "bg-indigo-500 hover:bg-indigo-600"
                     }`}
                   >
                     {isUpdatePending || isCreatePending
                       ? isEdit && id
-                        ? 'Updating...'
-                        : 'Saving...'
+                        ? "Updating..."
+                        : "Saving..."
                       : isEdit && id
-                        ? 'Update'
-                        : 'Save'}
+                        ? "Update"
+                        : "Save"}
                   </button>
                 </div>
               </form>

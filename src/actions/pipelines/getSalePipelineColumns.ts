@@ -27,7 +27,8 @@ export const getSalePipelineColumns = async (
         // For subsequent loads, fetch all leads (no pagination)
       });
 
-      const totalLeadsPromise = getLeadsCountByColumnId(column.id, companyId);
+      // Get total count with same search criteria for accurate pagination
+      const totalLeadsPromise = getLeadsCountByColumnId(column.id, companyId, searchTerm);
       const [leads, totalLeads] = await Promise.all([
         leadsPromise,
         totalLeadsPromise,

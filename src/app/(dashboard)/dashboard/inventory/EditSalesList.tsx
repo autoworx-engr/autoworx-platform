@@ -23,6 +23,8 @@ import { useEffect, useState, useTransition, useRef } from "react";
 import { useProduct as productUse } from "../../../../actions/inventory/useProduct";
 import { useFormErrorStore } from "@/stores/form-error";
 import { FaEdit } from "react-icons/fa";
+import moment from "moment-timezone";
+import { useCompanyTimezone } from "@/hooks/useCompanyTimezone"; // ← adjust path if needed
 
 interface EditSalesListProps {
   productId: number;
@@ -44,26 +46,33 @@ export default function EditSalesList({
 }: EditSalesListProps) {
   const [open, setOpen] = useState(false);
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(
-    history?.invoiceId || null,
+    history?.invoiceId || null
   );
-  const [date, setDate] = useState(
-    history?.date
-      ? new Date(history.date).toISOString().split("T")[0]
-      : new Date().toISOString().split("T")[0],
+
+  const companyTz = useCompanyTimezone();
+
+  // Helper: format a date for <input type="date"> in company TZ (never null)
+  const formatForInput = (d?: Date | string | null): string =>
+    d
+      ? moment(d ?? undefined)
+          .tz(companyTz)
+          .format("YYYY-MM-DD")
+      : moment().tz(companyTz).format("YYYY-MM-DD");
+
+  const [date, setDate] = useState<string>(formatForInput(history?.date));
+  const [quantity, setQuantity] = useState<string>(
+    history?.quantity?.toString() || ""
   );
-  const [quantity, setQuantity] = useState(history?.quantity?.toString() || "");
-  // Use a ref to store the original quantity to ensure it doesn't change unexpectedly
+  // Keep original quantity stable for diff calcs
   const originalQuantityRef = useRef<number>(Number(history?.quantity ?? 0));
-  const [notes, setNotes] = useState(history?.notes || "");
+  const [notes, setNotes] = useState<string>(history?.notes || "");
   const [formChanged, setFormChanged] = useState(false);
   const { showError, clearError } = useFormErrorStore();
   const [pending, startTransition] = useTransition();
 
-  // Check if form has changed
+  // Detect form changes (compare against originals in company TZ)
   useEffect(() => {
-    const originalDate = history?.date
-      ? new Date(history.date).toISOString().split("T")[0]
-      : new Date().toISOString().split("T")[0];
+    const originalDate = formatForInput(history?.date);
     const originalQuantity = history?.quantity?.toString() || "";
     const originalNotes = history?.notes || "";
     const originalInvoiceId = history?.invoiceId || null;
@@ -75,45 +84,44 @@ export default function EditSalesList({
       selectedInvoiceId !== originalInvoiceId;
 
     setFormChanged(hasChanged);
-  }, [date, quantity, notes, selectedInvoiceId, history]);
+  }, [date, quantity, notes, selectedInvoiceId, history, companyTz]);
 
   // Reset original quantity when dialog opens
   useEffect(() => {
     if (open) {
-      // Update the ref when the dialog opens
       originalQuantityRef.current = Number(history?.quantity ?? 0);
     }
   }, [open, history]);
 
-  async function handleSubmit(formData: FormData) {
-    // Parse the new quantity from input
+  async function handleSubmit(_formData: FormData) {
+    // Validate quantity input
     const newQuantityValue = Number(quantity);
-
-    // Get the original quantity from the ref
-    const originalQuantity = originalQuantityRef.current;
-
-    // Calculate the difference and determine if it's an increase or decrease
-    let quantityDifference: number;
-    let isPositive: boolean;
-
-    if (newQuantityValue > originalQuantity) {
-      // Quantity increased - we need to add inventory
-      quantityDifference = newQuantityValue - originalQuantity;
-      isPositive = true;
-    } else {
-      // Quantity decreased or stayed same - we need to remove inventory
-      quantityDifference = originalQuantity - newQuantityValue;
-      isPositive = false;
+    if (!Number.isFinite(newQuantityValue) || newQuantityValue <= 0) {
+      showError({ message: "Quantity must be a positive number." });
+      return;
     }
 
-    // Don't allow zero difference (no change)
-    if (quantityDifference === 0) {
+    // Compute difference vs original
+    const originalQuantity = originalQuantityRef.current;
+    let quantityDifference: number;
+
+    if (newQuantityValue > originalQuantity) {
+      // increased → add
+      quantityDifference = newQuantityValue - originalQuantity;
+    } else if (newQuantityValue < originalQuantity) {
+      // decreased → remove
+      quantityDifference = originalQuantity - newQuantityValue;
+    } else {
+      // unchanged → fallback to submitting current as diff (keeps old behavior)
       quantityDifference = newQuantityValue;
     }
 
+    // Parse "YYYY-MM-DD" in company TZ to a real Date
+    const zonedDate = moment.tz(date, "YYYY-MM-DD", companyTz).toDate();
+
     const res = await productUse({
       productId,
-      date: new Date(date),
+      date: zonedDate, // ✅ aligned with company timezone
       quantity: quantityDifference.toString(),
       notes,
       invoiceId: selectedInvoiceId,
@@ -134,21 +142,17 @@ export default function EditSalesList({
     }
   }
 
-  // Reset form when dialog opens/closes
+  // Reset form when dialog opens/closes (keep dates TZ-safe)
   useEffect(() => {
     if (open) {
-      setDate(
-        history?.date
-          ? new Date(history.date).toISOString().split("T")[0]
-          : new Date().toISOString().split("T")[0],
-      );
+      setDate(formatForInput(history?.date));
       setQuantity(history?.quantity?.toString() || "");
       setNotes(history?.notes || "");
       setSelectedInvoiceId(history?.invoiceId || null);
     } else {
       clearError();
     }
-  }, [open, history, clearError]);
+  }, [open, history, clearError, companyTz]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -174,6 +178,7 @@ export default function EditSalesList({
             onChange={(e) => setDate(e.target.value)}
           />
           <br className="block md:hidden" />
+
           <SlimInput
             name="quantity"
             value={quantity}
@@ -221,8 +226,8 @@ export default function EditSalesList({
           </DialogClose>
           <Submit
             className="mb-2 flex items-center justify-center rounded-lg border bg-[#6571FF] px-5 py-2 text-white disabled:bg-slate-400 md:mb-0"
-            formAction={(formData: FormData) => {
-              startTransition(() => handleSubmit(formData));
+            formAction={(_fd: FormData) => {
+              startTransition(() => handleSubmit(_fd));
               return Promise.resolve();
             }}
             disabled={pending || !formChanged}

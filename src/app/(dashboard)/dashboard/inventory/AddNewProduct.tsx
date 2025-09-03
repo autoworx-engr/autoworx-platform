@@ -491,7 +491,7 @@ export default function AddNewProduct({ product, isDatabase }: ProductProps) {
             <SlimInput name="lot" label="Lot#" required={false} />
           </div>
           <div>
-            <SlimInput name="receipt" label="Receipt#" required={false} />
+            <SlimInput  name="receipt" label="Receipt#" required={false} />
           </div>
 
           {/* mobile form */}

@@ -2,9 +2,14 @@
 import { cn } from "@/lib/cn";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import Link from "next/link";
-import React, { useEffect, useState, useTransition, useCallback, useMemo, useRef } from "react";
-
-import { createLeadDraftEstimate } from "@/actions/pipelines/createLeadDraftEstimate";
+import React, {
+  useEffect,
+  useState,
+  useTransition,
+  useCallback,
+  useMemo,
+  useRef,
+} from "react";
 import {
   getLeads,
   getLeadsWithCountOptimized as getLeadsWithCount,
@@ -35,6 +40,8 @@ import { NewAppointmentPipeline } from "./NewAppointmentPipeline";
 import SelectComponent from "./Select";
 import TaskForm from "./TaskForm";
 import { TableCell, TableRow } from "@/components/ui/table";
+import { createDraftEstimate } from "@/actions/estimate/invoice/createDraft";
+import { createLeadDraftEstimate } from "@/actions/pipelines/createLeadDraftEstimate";
 
 type TProps = {
   salesColumn: Column[];
@@ -98,17 +105,17 @@ const Leads = ({ salesColumn }: TProps) => {
 
   useEffect(() => {
     const controller = new AbortController();
-    
+
     const fetchLeads = async (retryCount = 0) => {
       try {
         setLoading(true);
         const skip = (currentPage - 1) * pageSize;
-        
+
         // Add timeout to the fetch request to prevent hanging
         const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('Request timeout')), 10000); // 10 second timeout
+          setTimeout(() => reject(new Error("Request timeout")), 10000); // 10 second timeout
         });
-        
+
         const fetchPromise = getLeadsWithCount({
           take: pageSize,
           skip: skip,
@@ -119,12 +126,12 @@ const Leads = ({ salesColumn }: TProps) => {
           status: filter.status,
           dateRange: dateRange,
         });
-        
-        const { leads: updatedLeads, totalCount: count } = await Promise.race([
+
+        const { leads: updatedLeads, totalCount: count } = (await Promise.race([
           fetchPromise,
-          timeoutPromise
-        ]) as { leads: LeadWithSalesUser[]; totalCount: number };
-        
+          timeoutPromise,
+        ])) as { leads: LeadWithSalesUser[]; totalCount: number };
+
         if (!controller.signal.aborted) {
           setInitialLeads(updatedLeads);
           setLeads(updatedLeads);
@@ -134,15 +141,22 @@ const Leads = ({ salesColumn }: TProps) => {
       } catch (error) {
         if (!controller.signal.aborted) {
           console.error("Error fetching leads:", error);
-          
+
           // Simple retry logic for network errors
-          if (retryCount < 2 && (error as any)?.code !== 'ABORT_ERR' && (error as any)?.message !== 'Request timeout') {
-            setTimeout(() => {
-              fetchLeads(retryCount + 1);
-            }, 1000 * (retryCount + 1)); // Exponential backoff
+          if (
+            retryCount < 2 &&
+            (error as any)?.code !== "ABORT_ERR" &&
+            (error as any)?.message !== "Request timeout"
+          ) {
+            setTimeout(
+              () => {
+                fetchLeads(retryCount + 1);
+              },
+              1000 * (retryCount + 1)
+            ); // Exponential backoff
             return;
           }
-          
+
           // Show error toast for persistent failures
           errorToast("Failed to load leads. Please refresh the page.");
         }
@@ -157,7 +171,7 @@ const Leads = ({ salesColumn }: TProps) => {
     const timeoutId = setTimeout(() => {
       fetchLeads();
     }, 100);
-    
+
     return () => {
       controller.abort();
       clearTimeout(timeoutId);
@@ -171,14 +185,17 @@ const Leads = ({ salesColumn }: TProps) => {
   };
 
   // Memoize handlePageChange to prevent unnecessary re-creation
-  const handlePageChange = useCallback((page: number, size?: number) => {
-    if (size && size !== pageSize) {
-      setPageSize(size);
-      setCurrentPage(1); // Reset page only if page size changed
-    } else {
-      setCurrentPage(page);
-    }
-  }, [pageSize]);
+  const handlePageChange = useCallback(
+    (page: number, size?: number) => {
+      if (size && size !== pageSize) {
+        setPageSize(size);
+        setCurrentPage(1); // Reset page only if page size changed
+      } else {
+        setCurrentPage(page);
+      }
+    },
+    [pageSize]
+  );
 
   // Reset page to 1 when search changes
   // useEffect(() => {
@@ -190,16 +207,21 @@ const Leads = ({ salesColumn }: TProps) => {
     const filterKey = JSON.stringify({
       search,
       filter,
-      dateRange: dateRange?.map(d => d?.toISOString()) || [null, null]
+      dateRange: dateRange?.map((d) => d?.toISOString()) || [null, null],
     });
 
+    const isSearchEmpty = !search || search.trim() === "";
+
     // Skip if we've already processed this exact filter combination
-    if (processedFiltersRef.current.has(filterKey)) {
+    if (!isSearchEmpty && processedFiltersRef.current.has(filterKey)) {
       return;
     }
 
+    if (isSearchEmpty) {
+      processedFiltersRef.current.clear();
+    }
     setCurrentPage(1);
-    
+
     // Increased debounce time to 800ms to reduce API calls
     const debounceTimeout = setTimeout(() => {
       processedFiltersRef.current.add(filterKey);
@@ -218,7 +240,7 @@ const Leads = ({ salesColumn }: TProps) => {
         // Parallel API calls instead of sequential
         const [userResponse, companyUsers] = await Promise.all([
           fetch("/api/getUser"),
-          getCompanyUser()
+          getCompanyUser(),
         ]);
 
         if (userResponse.ok) {
@@ -229,7 +251,7 @@ const Leads = ({ salesColumn }: TProps) => {
           const salesUsers = companyUsers.filter(
             (user) => user.employeeType === "Sales"
           );
-          
+
           if (userData?.employeeType === "Sales") {
             const currentSalesUser = salesUsers.find(
               (user) => user.id.toString() === userData?.id.toString()
@@ -247,52 +269,55 @@ const Leads = ({ salesColumn }: TProps) => {
     fetchUserAndCompanyUsers();
   }, []);
   // Memoize the draft estimate handler to prevent re-creation on every render
-  const handleCreateDraftEstimate = useCallback(async ({
-    clientId,
-    vehicleId,
-    leadId,
-  }: {
-    leadId: number;
-    clientId: number | undefined;
-    vehicleId: number | undefined;
-  }) => {
-    try {
-      const draftEstimateId = customAlphabet("1234567890", 10)();
-      const res = await createLeadDraftEstimate({
-        id: draftEstimateId,
-        leadId,
-        clientId: clientId,
-        vehicleId: vehicleId,
-        type: "Estimate",
-      });
-      if (res.type === "success") {
-        successToast(res?.message || "Draft estimate created");
-        setLeads((prevLeads) => {
-          return prevLeads.map((lead) => {
-            if (lead.id === leadId) {
-              return { ...lead, isEstimateCreated: true };
-            }
-            return lead;
-          });
+  const handleCreateDraftEstimate = useCallback(
+    async ({
+      clientId,
+      vehicleId,
+      leadId,
+    }: {
+      leadId: number;
+      clientId: number | undefined;
+      vehicleId: number | undefined;
+    }) => {
+      try {
+        const draftEstimateId = customAlphabet("1234567890", 10)();
+        const res = await createLeadDraftEstimate({
+          id: draftEstimateId,
+          leadId,
+          clientId: clientId!,
+          vehicleId: vehicleId,
+          type: "Estimate",
         });
-      } else if (res.type === "error") {
-        router.push(`/dashboard/estimate/view/${res.data.id}`);
-      } else if (res.type === "globalError") {
+        if (res.type === "success") {
+          successToast(res?.message || "Draft estimate created");
+          setLeads((prevLeads) => {
+            return prevLeads.map((lead) => {
+              if (lead.id === leadId) {
+                return { ...lead, isEstimateCreated: true };
+              }
+              return lead;
+            });
+          });
+        } else if (res.type === "error") {
+          router.push(`/dashboard/estimate/view/${res.data.id}`);
+        } else if (res.type === "globalError") {
+          errorToast(
+            res?.errorSource && res?.errorSource.length > 0
+              ? res?.errorSource[0].message
+              : res.message
+          );
+        }
+      } catch (err) {
+        const formattedError = errorHandler(err);
         errorToast(
-          res?.errorSource && res?.errorSource.length > 0
-            ? res?.errorSource[0].message
-            : res.message
+          formattedError?.errorSource && formattedError?.errorSource.length > 0
+            ? formattedError?.errorSource[0].message
+            : formattedError.message
         );
       }
-    } catch (err) {
-      const formattedError = errorHandler(err);
-      errorToast(
-        formattedError?.errorSource && formattedError?.errorSource.length > 0
-          ? formattedError?.errorSource[0].message
-          : formattedError.message
-      );
-    }
-  }, [router]); // Only depend on router
+    },
+    [router]
+  ); // Only depend on router
   //sort leads by time created in descending order (already sorted by backend)
   // leads?.sort((a, b) => {
   //   return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
@@ -323,29 +348,32 @@ const Leads = ({ salesColumn }: TProps) => {
   // }
 
   // Optimized column change handler with useCallback
-  const handleColumnChange = useCallback(async ({
-    leadId,
-    newColumnId,
-  }: {
-    leadId: number;
-    newColumnId: number;
-  }) => {
-    try {
-      const updatedLead = await updateLeadColumn(leadId, newColumnId);
-      const column = updatedLead.column;
-      setLeads((prevLeads) =>
-        prevLeads.map((lead) => {
-          if (lead.id === updatedLead.id) {
-            return { ...lead, column };
-          }
-          return lead;
-        })
-      );
-      toast.success("Lead status updated successfully");
-    } catch (err) {
-      toast.error("Error updating lead status");
-    }
-  }, []); // No dependencies needed
+  const handleColumnChange = useCallback(
+    async ({
+      leadId,
+      newColumnId,
+    }: {
+      leadId: number;
+      newColumnId: number;
+    }) => {
+      try {
+        const updatedLead = await updateLeadColumn(leadId, newColumnId);
+        const column = updatedLead.column;
+        setLeads((prevLeads) =>
+          prevLeads.map((lead) => {
+            if (lead.id === updatedLead.id) {
+              return { ...lead, column };
+            }
+            return lead;
+          })
+        );
+        toast.success("Lead status updated successfully");
+      } catch (err) {
+        toast.error("Error updating lead status");
+      }
+    },
+    []
+  ); // No dependencies needed
 
   return (
     <div className="space-y-8 px-3">
@@ -390,7 +418,7 @@ const Leads = ({ salesColumn }: TProps) => {
       </div>
 
       <div className="hidden lg:block">
-        <OptimizedLoading loading={loading}>
+        {leads.length > 0 && !loading ? (
           <table className="w-full shadow-md">
             <thead className="bg-background">
               <tr className="h-10 border-b">
@@ -586,7 +614,14 @@ const Leads = ({ salesColumn }: TProps) => {
                 })}
             </tbody>
           </table>
-        </OptimizedLoading>
+        ) : (
+          <div
+            className="flex w-full items-center justify-center"
+            style={{ height: "calc(100vh - 300px)" }}
+          >
+            <Spin size="large" />
+          </div>
+        )}
       </div>
 
       {/* Pagination */}
@@ -624,9 +659,12 @@ const SearchTerms = React.memo(function SearchTerms({
   search: string;
   setSearch: React.Dispatch<React.SetStateAction<string>>;
 }) {
-  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.target.value);
-  }, [setSearch]);
+  const handleSearchChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setSearch(e.target.value);
+    },
+    [setSearch]
+  );
 
   return (
     <div className="relative min-w-0 flex-1">
@@ -654,55 +692,58 @@ const DropdownMenuDemo = React.memo(function DropdownMenuDemo({
     [key: string]: string;
   };
   clearFilters: () => void;
-}){
+}) {
   // Memoize expensive computations to prevent recalculation on every render
-  const { statusItems, serviceItems, sourceItems, salesPersonItems } = useMemo(() => {
-    const uniqueStatuses = new Set<string>();
-    const uniqueServices = new Set<string>();
-    const uniqueSources = new Set<string>();
-    const salesPersonsId = new Set<number>();
+  const { statusItems, serviceItems, sourceItems, salesPersonItems } =
+    useMemo(() => {
+      const uniqueStatuses = new Set<string>();
+      const uniqueServices = new Set<string>();
+      const uniqueSources = new Set<string>();
+      const salesPersonsId = new Set<number>();
 
-    leads?.forEach((lead) => {
-      if (lead.column?.title) {
-        uniqueStatuses.add(lead.column.title);
-      }
-      if (lead.services) {
-        uniqueServices.add(lead.services);
-      }
-      if (lead.source) {
-        uniqueSources.add(lead.source);
-      }
-      if (lead.salesUser?.id) {
-        salesPersonsId.add(lead.salesUser?.id);
-      }
-    });
+      leads?.forEach((lead) => {
+        if (lead.column?.title) {
+          uniqueStatuses.add(lead.column.title);
+        }
+        if (lead.services) {
+          uniqueServices.add(lead.services);
+        }
+        if (lead.source) {
+          uniqueSources.add(lead.source);
+        }
+        if (lead.salesUser?.id) {
+          salesPersonsId.add(lead.salesUser?.id);
+        }
+      });
 
-    return {
-      statusItems: Array.from(uniqueStatuses).map((statusName, index) => ({
-        id: `status-${index}`,
-        value: statusName,
-        label: statusName,
-      })),
-      serviceItems: Array.from(uniqueServices).map((serviceName, index) => ({
-        id: `service-${index}`,
-        value: serviceName,
-        label: serviceName,
-      })),
-      sourceItems: Array.from(uniqueSources).map((sourceName, index) => ({
-        id: `source-${index}`,
-        value: sourceName,
-        label: sourceName,
-      })),
-      salesPersonItems: Array.from(salesPersonsId).map((personId, index) => ({
-        id: `person-${index}`,
-        value: personId.toString(),
-        label:
-          leads?.find((lead) => lead.salesUser?.id === personId)?.salesUser?.firstName +
-          " " +
-          leads?.find((lead) => lead.salesUser?.id === personId)?.salesUser?.lastName,
-      }))
-    };
-  }, [leads]); // Only recalculate when leads change
+      return {
+        statusItems: Array.from(uniqueStatuses).map((statusName, index) => ({
+          id: `status-${index}`,
+          value: statusName,
+          label: statusName,
+        })),
+        serviceItems: Array.from(uniqueServices).map((serviceName, index) => ({
+          id: `service-${index}`,
+          value: serviceName,
+          label: serviceName,
+        })),
+        sourceItems: Array.from(uniqueSources).map((sourceName, index) => ({
+          id: `source-${index}`,
+          value: sourceName,
+          label: sourceName,
+        })),
+        salesPersonItems: Array.from(salesPersonsId).map((personId, index) => ({
+          id: `person-${index}`,
+          value: personId.toString(),
+          label:
+            leads?.find((lead) => lead.salesUser?.id === personId)?.salesUser
+              ?.firstName +
+            " " +
+            leads?.find((lead) => lead.salesUser?.id === personId)?.salesUser
+              ?.lastName,
+        })),
+      };
+    }, [leads]); // Only recalculate when leads change
 
   return (
     <DropdownMenu.Root>

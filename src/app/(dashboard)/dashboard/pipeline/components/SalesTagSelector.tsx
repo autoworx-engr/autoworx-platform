@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useMemo } from "react";
 import { FaChevronDown, FaChevronUp, FaSearch } from "react-icons/fa";
 import { IoMdClose } from "react-icons/io";
 import { PiPaletteBold } from "react-icons/pi";
-import { Tag } from "@prisma/client";
+import { Tag, User } from "@prisma/client";
 
 import { INVOICE_COLORS } from "@/lib/consts";
 import { useFormErrorStore } from "@/stores/form-error";
@@ -15,7 +15,12 @@ import {
 } from "@/components/DropdownMenu";
 import FormError from "@/components/FormError";
 import Submit from "@/components/Submit";
-import { getSalesTags, createSalesTag, deleteSalesTag } from "@/actions/pipelines/leadTag";
+import {
+  getSalesTags,
+  createSalesTag,
+  deleteSalesTag,
+} from "@/actions/pipelines/leadTag";
+import getUser from "@/lib/getUser";
 
 type SelectedColor = { textColor: string; bgColor: string } | null;
 
@@ -35,7 +40,16 @@ export function SalesTagSelector({
   const [colorPickerVisible, setColorPickerVisible] = useState(false);
   const [selectedColor, setSelectedColor] = useState<SelectedColor>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [user, setUser] = useState<User | null>(null);
 
+  useEffect(() => {
+    async function fetchUser() {
+      const data = await getUser();
+      setUser(data);
+    }
+
+    fetchUser();
+  }, [user]);
   // Fetch sales tags on mount
   useEffect(() => {
     const fetchTags = async () => {
@@ -62,10 +76,14 @@ export function SalesTagSelector({
   const filteredTags = useMemo(() => {
     return search
       ? tags.filter((tag) =>
-          tag.name.toLowerCase().includes(search.toLowerCase()),
+          tag.name.toLowerCase().includes(search.toLowerCase())
         )
       : tags;
   }, [search, tags]);
+
+  const isRestrictedUser =
+    user?.employeeType === "Sales" || user?.employeeType === "Technician";
+  disable = isRestrictedUser;
 
   const handleDeleteTag = async (id: number) => {
     const res = await deleteSalesTag(id);
@@ -126,7 +144,7 @@ export function SalesTagSelector({
                 <button
                   disabled={disable}
                   onClick={() => handleDeleteTag(tagItem.id)}
-                  className="text-lg text-[#66738C] disabled:cursor-not-allowed disabled:text-[#66738C]"
+                  className={`text-lg text-[#66738C] disabled:cursor-not-allowed disabled:text-[#66738C] ${isRestrictedUser ? "hidden" : ""}`}
                 >
                   <IoMdClose />
                 </button>
@@ -193,10 +211,13 @@ function QuickAddSalesTagForm({
 
   const handleSubmit = async (data: FormData) => {
     const name = data.get("name") as string;
-
+    
     const res = await createSalesTag({ name, ...selectedColor });
     if (res.type === "error") {
-      showError({ field: "name", message: res.message || "Failed to create sales tag" });
+      showError({
+        field: "name",
+        message: res.message || "Failed to create sales tag",
+      });
     } else if (res.data) {
       formRef.current?.reset();
       onSuccess?.(res.data);

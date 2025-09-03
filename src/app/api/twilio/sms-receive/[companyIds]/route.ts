@@ -1,5 +1,5 @@
 // import { updateCommunicationAutomationTrigger } from "@/actions/automation/communication/triggerCommunicationAutomation";
-import { updatePipelineAutomationTrigger } from "@/actions/automation/pipeline/triggerPipelineAutomation";
+import { updatePipelineAutomationTriggerWithToken } from "@/actions/automation/pipeline/triggerPipelineAutomation";
 import { updateNewSMSChatTrack } from "@/actions/communication/client/chat-track";
 import { db } from "@/lib/db";
 import { sendClientMessageNotification } from "@/lib/notification/communication-notify";
@@ -119,15 +119,16 @@ export async function POST(
           clientId: client.id,
           smsLastMessage: body.Body,
           lastMessageBy: "Client",
+          attachments: attachments,
         });
 
         // pusher trigger to send message to company admin real time
 
-        await receiveTwiloMessage({ ...dbMessage, attachments });
+        receiveTwiloMessage({ ...dbMessage, attachments });
 
         if (clientConversationTrack) {
           // send a notification to the client for updated message
-          await sendClientMailOrSMSNotify(+companyId, clientConversationTrack);
+          sendClientMailOrSMSNotify(+companyId, clientConversationTrack);
         }
 
         const totalUnReadMessages = await db.clientConversationTrack.findFirst({
@@ -153,7 +154,7 @@ export async function POST(
         });
 
         if (client.Lead?.id && client.Lead?.columnId) {
-          const responseData = await updatePipelineAutomationTrigger({
+          const responseData = await updatePipelineAutomationTriggerWithToken({
             condition: "MESSAGE_RECEIVED_CLIENT",
             companyId: +companyId,
             leadId: client.Lead?.id,

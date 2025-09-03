@@ -7,7 +7,7 @@ interface LeadLinkState {
   leadLinks: LeadLink[];
   leadLink: LeadLink | null;
   fetchLeadLinks: (companyId: number) => Promise<void>;
-  fetchSingleLeadLink: (companyId: number, shortUrl: string) => Promise<void>;
+  fetchSingleLeadLink: (shortUrl: string) => Promise<void>;
 }
 
 export const useLeadLinkStore = create<LeadLinkState>((set) => ({
@@ -17,8 +17,8 @@ export const useLeadLinkStore = create<LeadLinkState>((set) => ({
     const res = await getLeadLinks({ companyId });
     set({ leadLinks: res?.data });
   },
-  fetchSingleLeadLink: async (companyId, shortUrl) => {
-    const res = await getLeadLink({ companyId, shortUrl });
+  fetchSingleLeadLink: async (shortUrl) => {
+    const res = await getLeadLink({ shortUrl });
     set({ leadLink: res?.data });
   },
 }));

@@ -31,6 +31,7 @@ export default function UsersArea({
   groupsList,
   setGroupsList,
   className,
+  chatList,
 }: {
   currentUser: Session["user"];
   usersList: any[];
@@ -38,8 +39,71 @@ export default function UsersArea({
   setGroupsList: React.Dispatch<React.SetStateAction<any[]>>;
   groupsList: any;
   className?: string;
+  chatList?: Array<{
+    id: string;
+    type: 'user' | 'group';
+    data: any;
+    timestamp: number;
+  }>;
 }) {
   const totalMessageBoxLength = usersList.length + groupsList.length;
+
+  // If we have a unified chat list, use that for ordering
+  const renderChatBoxes = (): React.JSX.Element[] => {
+    if (chatList) {
+      // Use the unified chat list which preserves the exact opening order
+      return chatList.map((chat) => {
+        if (chat.type === 'user') {
+          return (
+            <UserMessageBox
+              key={chat.id}
+              user={chat.data}
+              setUsersList={setUsersList}
+              totalMessageBoxLength={totalMessageBoxLength}
+            />
+          );
+        } else {
+          return (
+            <GroupMessageBox
+              key={chat.id}
+              group={chat.data}
+              setGroupsList={setGroupsList}
+              totalMessageBox={totalMessageBoxLength}
+            />
+          );
+        }
+      });
+    }
+
+    // Fallback to old method if chatList is not available
+    const allChats: React.JSX.Element[] = [];
+    
+    // Add users first (they maintain their order in usersList)
+    usersList.forEach((user: any) => {
+      allChats.push(
+        <UserMessageBox
+          key={`user-${user.id}`}
+          user={user}
+          setUsersList={setUsersList}
+          totalMessageBoxLength={totalMessageBoxLength}
+        />
+      );
+    });
+    
+    // Add groups after users (they maintain their order in groupsList)
+    groupsList.forEach((group: any) => {
+      allChats.push(
+        <GroupMessageBox
+          key={`group-${group.id}`}
+          group={group}
+          setGroupsList={setGroupsList}
+          totalMessageBox={totalMessageBoxLength}
+        />
+      );
+    });
+    
+    return allChats;
+  };
 
   return (
     <div
@@ -49,26 +113,7 @@ export default function UsersArea({
         className,
       )}
     >
-      {usersList.map((user) => {
-        return (
-          <UserMessageBox
-            key={user.id}
-            user={user}
-            setUsersList={setUsersList}
-            totalMessageBoxLength={totalMessageBoxLength}
-          />
-        );
-      })}
-      {groupsList.map((group: any) => {
-        return (
-          <GroupMessageBox
-            key={group.id}
-            group={group}
-            setGroupsList={setGroupsList}
-            totalMessageBox={totalMessageBoxLength}
-          />
-        );
-      })}
+      {renderChatBoxes()}
 
       {totalMessageBoxLength === 3 && (
         <div

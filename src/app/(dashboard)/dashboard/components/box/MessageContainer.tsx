@@ -34,8 +34,8 @@ export default function MessageContainer({
         clientMessages?.filter(
           (msg) =>
             msg?.firstName?.toLowerCase().includes(search.toLowerCase()) ||
-            msg?.lastName?.toLowerCase().includes(search.toLowerCase()),
-        ),
+            msg?.lastName?.toLowerCase().includes(search.toLowerCase())
+        )
       );
       setFilteredInternalMessages(
         internalMessages?.filter(
@@ -45,8 +45,8 @@ export default function MessageContainer({
               .includes(search.toLowerCase()) ||
             msg?.from?.lastName?.toLowerCase().includes(search.toLowerCase()) ||
             msg?.to?.firstName?.toLowerCase().includes(search.toLowerCase()) ||
-            msg?.to?.lastName?.toLowerCase().includes(search.toLowerCase()),
-        ),
+            msg?.to?.lastName?.toLowerCase().includes(search.toLowerCase())
+        )
       );
     }
   }, [search]);
@@ -91,7 +91,7 @@ export default function MessageContainer({
               key={data.id}
               userName={userName}
               message={`${messageBy} ${data.message}`}
-              redirectUrl={"/dashboard/communication/internal"}
+              redirectUrl={`/dashboard/communication/internal/?id=${data?.from?.id === user?.id ? data?.to?.id : data?.from?.id}`}
               communicationType="Internal"
               photoUrl={data?.from?.image}
             />

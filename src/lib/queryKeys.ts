@@ -11,4 +11,8 @@ export const queryKeys = {
   ],
   company: "company",
   dashboardTask: ["tasks", "dashboard"],
+  getInvoiceModalDataKey: (invoiceId: string) => [
+    "invoice-modal-data", invoiceId],
+  getWorkOrderDataKey: (invoiceId: string) => ["work-order-data", invoiceId],
+  getNotifications: (userId: number) => ["notifications", userId],
 };

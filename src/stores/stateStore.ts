@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+import { create } from "zustand";
 
 interface State {
   isClientOpen: boolean;
@@ -11,6 +11,8 @@ interface State {
   setIsAppointmentOpen?: (isOpen: boolean) => void;
   isBugOpen: boolean;
   setIsBugOpen: (isOpen: boolean) => void;
+  isNewBugOpen: boolean;
+  setIsNewBugOpen: (isOpen: boolean) => void;
 }
 
 export const stateStore = create<State>((set) => ({
@@ -24,4 +26,6 @@ export const stateStore = create<State>((set) => ({
   setIsAppointmentOpen: (isOpen) => set({ isAppointmentOpen: isOpen }),
   isBugOpen: false,
   setIsBugOpen: (isOpen) => set({ isBugOpen: isOpen }),
+  isNewBugOpen: false,
+  setIsNewBugOpen: (isOpen: boolean) => set({ isNewBugOpen: isOpen }),
 }));

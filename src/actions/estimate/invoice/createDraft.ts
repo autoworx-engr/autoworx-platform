@@ -3,6 +3,7 @@
 import { authOptions } from "@/authOptions";
 import { db } from "@/lib/db";
 import { sendEstimateCreateNotification } from "@/lib/notification/invoice-notify";
+import { updateInvoiceAutomationTrigger } from "@/service/invoice-automation-trigger/api";
 import { Invoice } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
@@ -87,6 +88,14 @@ export async function createDraftEstimate({
       });
     }
 
+    // Trigger automation
+    updateInvoiceAutomationTrigger({
+      companyId: estimate.companyId,
+      invoiceId: estimate.id,
+      columnId: estimate.columnId!,
+      type: estimate.type,
+    });
+
     // send notification for invoice creation
     sendEstimateCreateNotification({
       companyId,
@@ -98,7 +107,7 @@ export async function createDraftEstimate({
     estimate = draftEstimate;
   }
 
-  revalidatePath(`/dashboard/communication/client/${clientId}`);
+  revalidatePath("/dashboard/communication/client/${clientId}");
 
   return {
     type: "success",

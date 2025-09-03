@@ -10,9 +10,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { cn } from "@/lib/cn";
 import { useActionStoreCreateEdit } from "@/stores/createEditStore";
-import moment from "moment";
+import moment from "moment-timezone";
 import Link from "next/link";
 
 const evenColor = "bg-background";
@@ -43,6 +44,7 @@ export default function ResponsiveEstimateCard({
     textColor,
   } = invoiceEstimate || {};
   const { setActionType } = useActionStoreCreateEdit();
+  const timezone = useCompanyTimezone();
 
   return (
     <Card className={cn("w-full", index % 2 === 0 ? evenColor : oddColor)}>
@@ -62,7 +64,7 @@ export default function ResponsiveEstimateCard({
           />
         </CardTitle>
         <CardDescription className="font-bold">
-          {moment(createdAt).format("DD.MM.YYYY")}
+          {moment.tz(createdAt, timezone).format("MM/DD/YYYY")}
         </CardDescription>
       </CardHeader>
       <CardContent>

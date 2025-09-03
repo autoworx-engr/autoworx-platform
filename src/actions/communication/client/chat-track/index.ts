@@ -1,6 +1,49 @@
 "use server";
 import { db } from "@/lib/db";
 
+// Helper function to create descriptive attachment message
+function createAttachmentMessage(
+  attachments: any[],
+  textMessage?: string
+): string {
+  if (!attachments || attachments.length === 0) {
+    return textMessage || "";
+  }
+
+  // Count images vs other files
+  const images = attachments.filter(
+    (att) =>
+      att.name?.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i) ||
+      att.url?.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i)
+  );
+  const otherFiles = attachments.filter(
+    (att) =>
+      !att.name?.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i) &&
+      !att.url?.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i)
+  );
+
+  const parts = [];
+
+  if (images.length > 0) {
+    parts.push(images.length === 1 ? "1 image" : `${images.length} images`);
+  }
+
+  if (otherFiles.length > 0) {
+    parts.push(
+      otherFiles.length === 1 ? "1 file" : `${otherFiles.length} files`
+    );
+  }
+
+  const attachmentText = parts.join(", ");
+
+  // If there's both text and attachments, combine them
+  if (textMessage && textMessage.trim()) {
+    return `${textMessage.trim()} — ${attachmentText}`;
+  }
+
+  return attachmentText;
+}
+
 type TCreateChatTrack = {
   clientId: number;
   emailLastMessage: string;
@@ -9,7 +52,8 @@ type TCreateChatTrack = {
   emailIsRead: boolean;
   smsUnReadCount: number;
   emailIsUnReadCount: number;
-  lastMessageBy: string;
+  lastMessageBy?: string;
+  lastEmailBy?: string;
 };
 
 export async function initialCreateClientChatTrack(clientId: number) {
@@ -48,6 +92,8 @@ export async function CreateClientChatTrack(
         emailIsRead: data.emailIsRead,
         smsUnReadCount: data.smsUnReadCount,
         emailIsUnReadCount: data.emailIsUnReadCount,
+        lastMessageBy: data.lastMessageBy,
+        lastEmailBy: data.lastEmailBy,
       };
       return await db.clientConversationTrack.create({
         data: { ...createData },
@@ -61,41 +107,47 @@ export async function CreateClientChatTrack(
 type TUpdateClientEmailChatTrack = {
   clientId: number;
   emailLastMessage: string;
-  lastMessageBy: string;
+  lastEmailBy: string; // Who sent the email (Company or Client)
+  attachments?: any[]; // Array of attachments to create descriptive message
 };
 
 // update client email conversation track
 export async function updateNewEmailChatTrack({
   clientId,
   emailLastMessage,
-  lastMessageBy,
+  lastEmailBy,
+  attachments = [],
 }: TUpdateClientEmailChatTrack) {
   try {
     const getChatTrack = await db.clientConversationTrack.findUnique({
       where: { clientId: clientId },
     });
+
+    // Create descriptive message
+    const finalMessage = createAttachmentMessage(attachments, emailLastMessage);
+
     if (!getChatTrack) {
       return CreateClientChatTrack(clientId, {
         clientId,
-        emailLastMessage,
+        emailLastMessage: finalMessage,
         smsLastMessage: "",
         smsIsRead: true,
-        emailIsRead: lastMessageBy === "Company" ? true : false,
+        emailIsRead: lastEmailBy === "Company" ? true : false,
         smsUnReadCount: 0,
-        emailIsUnReadCount: lastMessageBy === "Company" ? 0 : 1,
-        lastMessageBy,
+        emailIsUnReadCount: lastEmailBy === "Company" ? 0 : 1,
+        lastEmailBy,
       });
     }
     const updatedData = await db.clientConversationTrack.update({
       where: { clientId: clientId },
       data: {
-        emailLastMessage,
-        emailIsRead: lastMessageBy === "Company" ? true : false,
+        emailLastMessage: finalMessage,
+        emailIsRead: lastEmailBy === "Company" ? true : false,
         sendAt: new Date().toISOString(),
         emailIsUnReadCount: {
-          increment: lastMessageBy === "Company" ? 0 : 1,
+          increment: lastEmailBy === "Company" ? 0 : 1,
         },
-        lastMessageBy,
+        lastEmailBy,
       },
     });
     return updatedData;
@@ -109,22 +161,28 @@ type TUpdateClientSMSChatTrack = {
   clientId: number;
   smsLastMessage: string;
   lastMessageBy: string;
+  attachments?: any[]; // Array of attachments to create descriptive message
 };
 
 export async function updateNewSMSChatTrack({
   clientId,
   smsLastMessage,
   lastMessageBy,
+  attachments = [],
 }: TUpdateClientSMSChatTrack) {
   try {
     const getChatTrack = await db.clientConversationTrack.findUnique({
       where: { clientId: clientId },
     });
+
+    // Create descriptive message
+    const finalMessage = createAttachmentMessage(attachments, smsLastMessage);
+
     if (!getChatTrack) {
       return CreateClientChatTrack(clientId, {
         clientId,
         emailLastMessage: "",
-        smsLastMessage,
+        smsLastMessage: finalMessage,
         smsIsRead: lastMessageBy === "Company" ? true : false,
         emailIsRead: true,
         smsUnReadCount: lastMessageBy === "Company" ? 0 : 1,
@@ -135,12 +193,13 @@ export async function updateNewSMSChatTrack({
     const updatedData = await db.clientConversationTrack.update({
       where: { clientId },
       data: {
-        smsLastMessage,
+        smsLastMessage: finalMessage,
         smsIsRead: lastMessageBy === "Company" ? true : false,
         sendAt: new Date().toISOString(),
         smsUnReadCount: {
           increment: lastMessageBy === "Company" ? 0 : 1,
         },
+        lastMessageBy,
       },
     });
     return updatedData;
@@ -158,7 +217,7 @@ export async function readClientSMS(clientId: number) {
     if (!findClientChatTrack) {
       return initialCreateClientChatTrack(clientId);
     }
-    const updatedData = !findClientChatTrack?.smsIsRead
+    const updatedData = findClientChatTrack?.smsUnReadCount
       ? await db.clientConversationTrack.update({
           where: { clientId },
           data: {
@@ -182,7 +241,7 @@ export async function readClientEmail(clientId: number) {
     if (!findClientChatTrack) {
       return initialCreateClientChatTrack(clientId);
     }
-    const updatedData = !findClientChatTrack?.emailIsRead
+    const updatedData = findClientChatTrack?.emailIsUnReadCount
       ? await db.clientConversationTrack.update({
           where: { clientId },
           data: {
@@ -207,15 +266,27 @@ export async function unreadClientSmsAndEmail(clientId: number) {
       return initialCreateClientChatTrack(clientId);
     }
 
-    const updatedData = await db.clientConversationTrack.update({
-      where: { clientId },
-      data: {
-        smsIsRead: false,
-        smsUnReadCount: { increment: 1 }, // or set to specific number
-        emailIsRead: false,
-        emailIsUnReadCount: { increment: 1 }, // or set to specific number
-      },
-    });
+    let updatedData = findClientChatTrack;
+
+    if (!!updatedData?.smsLastMessage) {
+      updatedData = await db.clientConversationTrack.update({
+        where: { clientId },
+        data: {
+          smsIsRead: false,
+          smsUnReadCount: { increment: 1 }, // or set to specific number
+        },
+      });
+    }
+
+    if (!!updatedData?.emailLastMessage) {
+      updatedData = await db.clientConversationTrack.update({
+        where: { clientId },
+        data: {
+          emailIsRead: false,
+          emailIsUnReadCount: { increment: 1 }, // or set to specific number
+        },
+      });
+    }
 
     return updatedData;
   } catch (err) {

@@ -1,9 +1,9 @@
-'use server';
-import { db } from '@/lib/db';
-import { updateServiceAutomationTrigger } from '@/service/service-maintenance-automation-trigger/api';
-import { InvoiceType } from '@prisma/client';
-import { sendInvoiceDeliveredNotification } from '@/lib/notification/invoice-notify';
-import { updateInvoiceAutomationTrigger } from '@/service/invoice-automation-trigger/api';
+"use server";
+import { db } from "@/lib/db";
+import { updateServiceAutomationTrigger } from "@/service/service-maintenance-automation-trigger/api";
+import { InvoiceType } from "@prisma/client";
+import { sendInvoiceDeliveredNotification } from "@/lib/notification/invoice-notify";
+import { updateInvoiceAutomationTrigger } from "@/service/invoice-automation-trigger/api";
 
 export async function updateInvoiceStatus(
   invoiceId: string,
@@ -25,32 +25,32 @@ export async function updateInvoiceStatus(
     });
 
     if (column) {
-      if (column.title === 'In Progress') {
-        type = 'Invoice';
+      if (column.title === "In Progress") {
+        type = "Invoice";
         typeChanted = true;
         deliveredAt = null;
-      } else if (column.title === 'Delivered') {
+      } else if (column.title === "Delivered") {
         // // Only set deliveredAt if it hasn't been set already
         // if (!currentInvoice?.deliveredAt) {
         //   deliveredAt = new Date();
         // } else {
         deliveredAt = new Date();
         // }
-      } else if (column.title === 'Completed') {
+      } else if (column.title === "Completed") {
         // if (!currentInvoice?.completedAt) {
         //   completedAt = new Date();
         // } else {
         completedAt = new Date();
         // }
       } else {
-        if (currentInvoice?.type === 'Invoice') {
-          type = 'Invoice';
+        if (currentInvoice?.type === "Invoice") {
+          type = "Invoice";
         }
         deliveredAt = null;
       }
     } else {
       throw new Error(
-        'Column not found to create invoice conversions at pipeline stage'
+        "Column not found to create invoice conversions at pipeline stage"
       );
     }
     try {
@@ -72,9 +72,8 @@ export async function updateInvoiceStatus(
           },
         },
       });
-      console.log('column', column);
 
-      if (column?.title === 'Delivered') {
+      if (column?.title === "Delivered") {
         // send notification when invoice is delivered
         sendInvoiceDeliveredNotification({
           companyId: updatedInvoice.companyId,
@@ -93,14 +92,15 @@ export async function updateInvoiceStatus(
         companyId: updatedInvoice?.companyId!,
         invoiceId: updatedInvoice?.id!,
         columnId: updatedInvoice?.columnId!,
+        type: updatedInvoice?.type!,
       });
 
-      return { type: 'success' };
+      return { type: "success" };
     } catch (error) {
-      console.error('Error updating invoice status:', error);
-      return { type: 'error', message: 'Failed to update invoice status' };
+      console.error("Error updating invoice status:", error);
+      return { type: "error", message: "Failed to update invoice status" };
     }
   } else {
-    return { type: 'error', message: 'Invoice not found' };
+    return { type: "error", message: "Invoice not found" };
   }
 }

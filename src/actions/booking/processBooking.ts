@@ -60,6 +60,7 @@ export async function createAppointment(data: {
   clientId: number;
   companyId: string;
   userId?: number; // Optional, will use default user if not provided
+  notes?: string; // Add notes parameter
 }): Promise<Appointment | null> {
   try {
     // Calculate end time (1 hour after start time)
@@ -89,7 +90,7 @@ export async function createAppointment(data: {
         clientId: data.clientId,
         companyId: parseInt(data.companyId),
         userId: userId,
-        notes: `Online booking appointment`, // Add a note indicating it's an online booking
+        notes: data.notes,
       },
     });
     return appointment;
@@ -112,6 +113,7 @@ export async function processBooking(formData: {
   state?: string;
   zip?: string;
   customerCompany?: string;
+  notes?: string; // Add notes to the formData type
 }, companyId: string) {
   try {
     // First, check if client exists by phone number
@@ -147,6 +149,7 @@ export async function processBooking(formData: {
       startTime: formData.startTime,
       clientId: client.id,
       companyId,
+      notes: formData.notes, // Pass the notes to createAppointment
     });
     
     if (!appointment) {

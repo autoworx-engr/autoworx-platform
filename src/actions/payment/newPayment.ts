@@ -235,13 +235,13 @@ export async function newPayment({
         invoiceId: invoice.id,
       });
 
-      if (invoice.type == "Invoice") {
-        await updateInvoiceAutomationTrigger({
-          companyId: invoice?.companyId!,
-          invoiceId: invoice?.id!,
-          columnId: invoice?.columnId!,
-        });
-      }
+      // invoice automation trigger
+      await updateInvoiceAutomationTrigger({
+        companyId: invoice?.companyId!,
+        invoiceId: invoice?.id!,
+        columnId: invoice?.columnId!,
+        type: invoice?.type!,
+      });
 
       return { newPayment, invoice };
     });

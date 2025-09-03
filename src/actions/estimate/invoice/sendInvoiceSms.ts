@@ -62,7 +62,7 @@ export async function sendInvoiceSms({ invoiceId }: { invoiceId: string }) {
     const clientName =
       (invoice.client?.firstName
         ? invoice.client?.firstName
-        : invoice.client?.lastName) ?? " ";
+        : invoice.client?.lastName) ?? "";
 
     let variabledBody =
       (template.message
@@ -83,8 +83,9 @@ export async function sendInvoiceSms({ invoiceId }: { invoiceId: string }) {
           "<BUSINESS_NAME>",
           invoice?.company?.name || "No business name"
         ) || "") +
-      `\n\nInvoice Link: ${process.env.NEXT_PUBLIC_APP_URL}/public-invoice/${invoice.id}`;
-    const res = await sendMessage({
+      `\n\n${process.env.NEXT_PUBLIC_APP_URL}/public-invoice/${invoice.id}`;
+
+    sendMessage({
       clientId: invoice.client.id,
       // subject: variabledSubject,
       message: variabledBody || "",

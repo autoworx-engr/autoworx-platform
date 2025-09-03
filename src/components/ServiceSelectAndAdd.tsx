@@ -5,14 +5,9 @@ import {
   getCategories,
   getServices,
 } from '@/app/(dashboard)/dashboard/pipeline/components/getServices-Categories';
-import {
-  getServicesByToken,
-  getCategoriesByToken,
-} from '@/actions/services/getServicesAndCategoriesByToken';
 import { useListsStore } from '@/stores/lists';
 import { errorToast, successToast } from '@/lib/toast';
 import newService from '@/actions/estimate/service/newService';
-import newServiceByToken from '@/actions/estimate/service/newServiceByToken';
 import { errorHandler } from '@/error-boundary/globalErrorHandler';
 
 export interface Option {
@@ -24,35 +19,16 @@ export interface ServiceSelectAndAddProps {
   value: string | { id: string | number; title: string };
   onChange: (value: string | { id: string | number; title: string }) => void;
   disabled?: boolean;
-  token?: string; // Add token prop for unauthenticated access
 }
 
 const ServiceSelectAndAdd = ({
   value,
   onChange,
   disabled = false,
-  token,
 }: ServiceSelectAndAddProps) => {
-  // Get data from store first to avoid unnecessary API calls (only for authenticated mode)
-  const { services: storeServices, categories: storeCategories } =
-    useListsStore();
-
+  // Get data from store for authenticated users
+  const { services, categories } = useListsStore();
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [localServices, setLocalServices] = useState<Service[]>([]);
-  const [localCategories, setLocalCategories] = useState<Category[]>([]);
-
-  // For token-based access (unauthenticated), use local state
-  // For authenticated access, prefer store but fallback to local state
-  const services = token
-    ? localServices
-    : storeServices.length > 0
-      ? storeServices
-      : localServices;
-  const categories = token
-    ? localCategories
-    : storeCategories.length > 0
-      ? storeCategories
-      : localCategories;
 
   // Memoize options to prevent unnecessary re-renders
   const options = useMemo<Option[]>(() => {
@@ -70,33 +46,17 @@ const ServiceSelectAndAdd = ({
       }
 
       try {
-        let res;
-
-        if (token) {
-          // Token-based service creation
-          res = await newServiceByToken({
-            name: newItem,
-            categoryId: category.id,
-            token,
-          });
-        } else {
-          // Authenticated service creation
-          res = await newService({
-            name: newItem,
-            categoryId: category.id,
-          });
-        }
+        // Authenticated service creation
+        const res = await newService({
+          name: newItem,
+          categoryId: category.id,
+        });
 
         if (res.type === 'success') {
-          if (token) {
-            // Update local state for token-based access
-            setLocalServices((prev) => [...prev, res.data]);
-          } else {
-            // Update store state for authenticated access
-            useListsStore.setState((state) => ({
-              services: [...state.services, res.data],
-            }));
-          }
+          // Update store state for authenticated access
+          useListsStore.setState((state) => ({
+            services: [...state.services, res.data],
+          }));
 
           successToast('New Service Created');
 
@@ -109,18 +69,15 @@ const ServiceSelectAndAdd = ({
           errorToast(res.message || 'Failed to create new service');
         }
       } catch (error) {
-        // console.error("Error creating service:", error);
         errorHandler(error);
         errorToast('Failed to create new service');
       }
     },
-    [onChange, token]
+    [onChange]
   );
-  // Fetch data based on authentication mode
+  // Fetch data for authenticated users
   useEffect(() => {
-    const shouldFetchData = token
-      ? localServices.length === 0 || localCategories.length === 0
-      : storeServices.length === 0 || storeCategories.length === 0;
+    const shouldFetchData = services.length === 0 || categories.length === 0;
 
     if (!shouldFetchData) return;
 
@@ -129,67 +86,37 @@ const ServiceSelectAndAdd = ({
       try {
         const promises = [];
 
-        if (token) {
-          // Token-based fetching
-          if (localServices.length === 0) {
-            promises.push(getServicesByToken(token));
-          }
-          if (localCategories.length === 0) {
-            promises.push(getCategoriesByToken(token));
-          }
-        } else {
-          // Authenticated fetching
-          if (storeServices.length === 0) {
-            promises.push(getServices());
-          }
-          if (storeCategories.length === 0) {
-            promises.push(getCategories());
-          }
+        // Authenticated fetching
+        if (services.length === 0) {
+          promises.push(getServices());
+        }
+        if (categories.length === 0) {
+          promises.push(getCategories());
         }
 
         const results = await Promise.all(promises);
 
-        if (token) {
-          // Handle token-based results
-          let servicesResult: Service[] = [];
-          let categoriesResult: Category[] = [];
+        // Handle authenticated results - update store
+        let servicesResult: Service[] = [];
+        let categoriesResult: Category[] = [];
 
-          if (localServices.length === 0 && localCategories.length === 0) {
-            [servicesResult, categoriesResult] = results as [
-              Service[],
-              Category[],
-            ];
-          } else if (localServices.length === 0) {
-            servicesResult = results[0] as Service[];
-          } else if (localCategories.length === 0) {
-            categoriesResult = results[0] as Category[];
-          }
-
-          if (servicesResult.length > 0) setLocalServices(servicesResult);
-          if (categoriesResult.length > 0) setLocalCategories(categoriesResult);
-        } else {
-          // Handle authenticated results - update store
-          let servicesResult: Service[] = [];
-          let categoriesResult: Category[] = [];
-
-          if (storeServices.length === 0 && storeCategories.length === 0) {
-            [servicesResult, categoriesResult] = results as [
-              Service[],
-              Category[],
-            ];
-          } else if (storeServices.length === 0) {
-            servicesResult = results[0] as Service[];
-          } else if (storeCategories.length === 0) {
-            categoriesResult = results[0] as Category[];
-          }
-
-          useListsStore.setState((state) => ({
-            ...(servicesResult.length > 0 && { services: servicesResult }),
-            ...(categoriesResult.length > 0 && {
-              categories: categoriesResult,
-            }),
-          }));
+        if (services.length === 0 && categories.length === 0) {
+          [servicesResult, categoriesResult] = results as [
+            Service[],
+            Category[],
+          ];
+        } else if (services.length === 0) {
+          servicesResult = results[0] as Service[];
+        } else if (categories.length === 0) {
+          categoriesResult = results[0] as Category[];
         }
+
+        useListsStore.setState((state) => ({
+          ...(servicesResult.length > 0 && { services: servicesResult }),
+          ...(categoriesResult.length > 0 && {
+            categories: categoriesResult,
+          }),
+        }));
       } catch (err) {
         console.error('Failed to fetch data:', err);
         errorToast('Failed to load services and categories');
@@ -199,13 +126,7 @@ const ServiceSelectAndAdd = ({
     };
 
     fetchData();
-  }, [
-    token,
-    storeServices.length,
-    storeCategories.length,
-    localServices.length,
-    localCategories.length,
-  ]);
+  }, [services.length, categories.length]);
 
   return (
     <SelectorWithAdd

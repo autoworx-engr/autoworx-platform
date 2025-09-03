@@ -1,39 +1,39 @@
-import type { IconButtonProps } from "@mui/material/IconButton";
+import type { IconButtonProps } from '@mui/material/IconButton';
 
-import { useCallback, useEffect, useState, useTransition } from "react";
+import { useCallback, useEffect, useState, useTransition } from 'react';
 
-import Avatar from "@mui/material/Avatar";
-import Badge from "@mui/material/Badge";
-import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import Divider from "@mui/material/Divider";
-import IconButton from "@mui/material/IconButton";
-import List from "@mui/material/List";
-import ListItemAvatar from "@mui/material/ListItemAvatar";
-import ListItemButton from "@mui/material/ListItemButton";
-import ListItemText from "@mui/material/ListItemText";
-import ListSubheader from "@mui/material/ListSubheader";
-import Popover from "@mui/material/Popover";
-import Tooltip from "@mui/material/Tooltip";
-import Typography from "@mui/material/Typography";
+import Avatar from '@mui/material/Avatar';
+import Badge from '@mui/material/Badge';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Divider from '@mui/material/Divider';
+import IconButton from '@mui/material/IconButton';
+import List from '@mui/material/List';
+import ListItemButton from '@mui/material/ListItemButton';
+import ListItemText from '@mui/material/ListItemText';
+import Popover from '@mui/material/Popover';
+import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
 
-import { fToNow } from "src/utils/formatDate";
+import { fToNow } from 'src/utils/formatDate';
 
-import { getNotifications } from "@/actions/notification/getNotifications";
+import { getNotifications } from '@/actions/notification/getNotifications';
 import {
   markAsAllRead,
   markAsReadById,
-} from "@/actions/notification/markAsRead";
-import { pusher } from "@/lib/pusher/client";
-import { errorToast } from "@/lib/toast";
-import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
-import { Notification } from "@prisma/client";
-import Image from "next/image";
-import Link from "next/link";
-import { CiClock2 } from "react-icons/ci";
-import { IoCheckmarkDone } from "react-icons/io5";
-import { MdOutlineNotifications } from "react-icons/md";
-import { Scrollbar } from "src/components/scrollbar";
+} from '@/actions/notification/markAsRead';
+import { pusher } from '@/lib/pusher/client';
+import { errorToast } from '@/lib/toast';
+import { useGetCurrentUser } from '@/utils/useGetCurrentUser';
+import { Notification } from '@prisma/client';
+import Image from 'next/image';
+import Link from 'next/link';
+import { CiClock2 } from 'react-icons/ci';
+import { IoCheckmarkDone } from 'react-icons/io5';
+import { MdOutlineNotifications } from 'react-icons/md';
+import { Scrollbar } from 'src/components/scrollbar';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { queryKeys } from '@/lib/queryKeys';
 
 // ----------------------------------------------------------------------
 
@@ -48,9 +48,7 @@ import { Scrollbar } from "src/components/scrollbar";
 //   createdAt:
 // };
 
-export type NotificationsPopoverProps = IconButtonProps & {
-  data?: Notification[];
-};
+export type NotificationsPopoverProps = IconButtonProps;
 
 const takeLimit = 5;
 const maxLimit = 100;
@@ -59,16 +57,40 @@ const maxLimit = 100;
 // Logic and state untouched
 
 export function NotificationsPopover({
-  data = [],
   sx,
   ...other
 }: NotificationsPopoverProps) {
   const sessionUser = useGetCurrentUser();
-  const [notifications, setNotifications] = useState(data);
+  const [notifications, setNotifications] = useState([] as Notification[]);
   const [limit, setLimit] = useState(takeLimit);
   const [totalUnRead, setTotalUnRead] = useState(0);
   const userId = sessionUser?.id;
   const [isViewAll, setIsViewAll] = useState(false);
+
+  // TODO: future: use react-query for caching and background updates
+  // const { data, isLoading, isFetched } = useQuery({
+  //   queryKey: queryKeys.getNotifications(Number(userId)),
+  //   queryFn: async () => {
+  //     const response = await getNotifications({
+  //       userId: Number(userId),
+  //       limit,
+  //     });
+  //     if (response.type === 'success') {
+  //       return response.data;
+  //     }
+  //     return { notifications: [], count: 0 };
+  //   },
+  //   enabled: !!userId,
+  // });
+
+  // console.log({ data, isLoading, isFetched });
+
+  // useEffect(() => {
+  //   if (isFetched) {
+  //     setNotifications(data?.notifications || []);
+  //     setTotalUnRead(data?.count || 0);
+  //   }
+  // }, [isFetched]);
 
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -77,7 +99,7 @@ export function NotificationsPopover({
           userId: Number(userId),
           limit,
         });
-        if (response.type === "success") {
+        if (response.type === 'success') {
           setNotifications(response.data.notifications);
           setTotalUnRead(response.data.count);
         }
@@ -96,10 +118,10 @@ export function NotificationsPopover({
     let ignore = false;
     pusher
       .subscribe(`noti-${userId}`)
-      .bind("notification", function (data: Notification) {
+      .bind('notification', function (data: Notification) {
         if (!ignore) {
-          setNotifications((prev) => [data, ...prev]);
-          setTotalUnRead((prev) => prev + 1);
+          setNotifications(prev => [data, ...prev]);
+          setTotalUnRead(prev => prev + 1);
         }
       });
     return () => {
@@ -130,31 +152,31 @@ export function NotificationsPopover({
 
   const handleMarkAllAsRead = useCallback(async () => {
     const updated = await markAsAllRead(Number(userId));
-    if (updated.type === "success") {
-      setNotifications(notifications.map((n) => ({ ...n, isUnRead: false })));
+    if (updated.type === 'success') {
+      setNotifications(notifications.map(n => ({ ...n, isUnRead: false })));
       setOpenPopover(null);
       setTotalUnRead(0);
     } else {
-      errorToast("Failed to mark all as read");
+      errorToast('Failed to mark all as read');
     }
   }, [notifications]);
 
   const handleMarkAsReadById = async (id: number) => {
     const updated = await markAsReadById(id);
-    if (updated.type === "success") {
+    if (updated.type === 'success') {
       setNotifications(
-        notifications.map((n) => (n.id === id ? { ...n, isUnRead: false } : n))
+        notifications.map(n => (n.id === id ? { ...n, isUnRead: false } : n))
       );
-      setTotalUnRead((prev) => prev - 1);
+      setTotalUnRead(prev => prev - 1);
     } else {
-      errorToast("Failed to mark all as read");
+      errorToast('Failed to mark all as read');
     }
   };
 
   return (
     <>
       <IconButton
-        color={openPopover ? "primary" : "default"}
+        color={openPopover ? 'primary' : 'default'}
         onClick={handleOpenPopover}
         sx={sx}
         {...other}
@@ -168,8 +190,8 @@ export function NotificationsPopover({
         open={!!openPopover}
         anchorEl={openPopover}
         onClose={handleClosePopover}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-        transformOrigin={{ vertical: "top", horizontal: "right" }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
         slotProps={{
           paper: {
             sx: {
@@ -177,11 +199,11 @@ export function NotificationsPopover({
               maxHeight: 700,
               p: 0,
               borderRadius: 3,
-              overflow: "hidden",
+              overflow: 'hidden',
               boxShadow: 5,
-              bgcolor: "background.paper",
-              display: "flex",
-              flexDirection: "column",
+              bgcolor: 'background.paper',
+              display: 'flex',
+              flexDirection: 'column',
             },
           },
         }}
@@ -198,7 +220,7 @@ export function NotificationsPopover({
             <Typography variant="body2" color="text.secondary">
               {totalUnRead > 0
                 ? `You have ${totalUnRead} unread notifications`
-                : "All caught up!"}
+                : 'All caught up!'}
             </Typography>
           </Box>
           {totalUnRead > 0 && (
@@ -233,7 +255,7 @@ export function NotificationsPopover({
                 onClick={handleViewAllNotifications}
                 fullWidth
                 variant="text"
-                sx={{ color: "text.primary" }}
+                sx={{ color: 'text.primary' }}
               >
                 View All
               </Button>
@@ -257,19 +279,19 @@ function NotificationItem({
       sx={{
         px: 3,
         py: 2,
-        alignItems: "start",
-        borderBottom: "1px solid #f0f0f0",
+        alignItems: 'start',
+        borderBottom: '1px solid #f0f0f0',
         ...(notification.isUnRead && {
-          bgcolor: "#f0f5ff",
+          bgcolor: '#f0f5ff',
         }),
       }}
     >
       <Link
-        href={notification.redirectUrl || "#"}
+        href={notification.redirectUrl || '#'}
         className="flex items-start gap-3"
         onClick={onLinkClick}
       >
-        <Avatar sx={{ width: 36, height: 36, bgcolor: "#8E97FF" }}>
+        <Avatar sx={{ width: 36, height: 36, bgcolor: '#8E97FF' }}>
           {avatarUrl}
         </Avatar>
         <ListItemText
@@ -278,7 +300,7 @@ function NotificationItem({
             <Typography
               variant="caption"
               color="text.secondary"
-              sx={{ display: "flex", alignItems: "center", mt: 0.5 }}
+              sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}
             >
               <CiClock2 className="mr-1 text-sm" />
               {fToNow(notification.createdAt)}
@@ -311,27 +333,27 @@ function renderContent(notification: Notification) {
       <Typography
         component="span"
         variant="body2"
-        sx={{ color: "text.secondary" }}
+        sx={{ color: 'text.secondary' }}
       >
         &nbsp; {notification.description}
       </Typography>
     </Typography>
   );
 
-  if (notification.type === "task") {
+  if (notification.type === 'task') {
     return {
       avatarUrl: (
         <Image
           width={24}
           height={24}
           alt={notification.title}
-          src={"/icons/navbar/Task.svg"}
+          src={'/icons/navbar/Task.svg'}
         />
       ),
       title,
     };
   }
-  if (notification.type === "message") {
+  if (notification.type === 'message') {
     return {
       avatarUrl: (
         <Image
@@ -344,7 +366,7 @@ function renderContent(notification: Notification) {
       title,
     };
   }
-  if (notification.type === "inventory") {
+  if (notification.type === 'inventory') {
     return {
       avatarUrl: (
         <Image
@@ -357,7 +379,7 @@ function renderContent(notification: Notification) {
       title,
     };
   }
-  if (notification.type === "invoice") {
+  if (notification.type === 'invoice') {
     return {
       avatarUrl: (
         <Image
@@ -370,7 +392,7 @@ function renderContent(notification: Notification) {
       title,
     };
   }
-  if (notification.type === "pipelines") {
+  if (notification.type === 'pipelines') {
     return {
       avatarUrl: (
         <Image
@@ -383,7 +405,7 @@ function renderContent(notification: Notification) {
       title,
     };
   }
-  if (notification.type === "directory") {
+  if (notification.type === 'directory') {
     return {
       avatarUrl: (
         <Image
@@ -396,7 +418,7 @@ function renderContent(notification: Notification) {
       title,
     };
   }
-  if (notification.type === "payment") {
+  if (notification.type === 'payment') {
     return {
       avatarUrl: (
         <Image

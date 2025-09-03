@@ -4,13 +4,14 @@ import { authOptions } from "@/authOptions";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { db } from "@/lib/db";
 import { sendEstimateCreateNotification } from "@/lib/notification/invoice-notify";
+import { updateInvoiceAutomationTrigger } from "@/service/invoice-automation-trigger/api";
 import { ServerAction } from "@/types/action";
 import { TErrorHandler } from "@/types/globalError";
 import { TCreateDraftEstimateValidationSchema } from "@/validations/schemas/pipeline/draftEstimate.validation";
 import { getServerSession } from "next-auth";
 
 export const createLeadDraftEstimate = async function (
-  draftEstimate: TCreateDraftEstimateValidationSchema,
+  draftEstimate: TCreateDraftEstimateValidationSchema
   // @ts-ignore
 ): Promise<ServerAction | TErrorHandler> {
   try {
@@ -74,6 +75,14 @@ export const createLeadDraftEstimate = async function (
                 },
               },
             },
+          });
+
+          // Trigger automation
+          updateInvoiceAutomationTrigger({
+            companyId: newDraftEstimate.companyId,
+            invoiceId: newDraftEstimate.id,
+            columnId: newDraftEstimate.columnId!,
+            type: newDraftEstimate.type,
           });
 
           // send notification for invoice creation

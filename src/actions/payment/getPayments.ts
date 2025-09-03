@@ -48,6 +48,9 @@ export async function getPayments(): Promise<ReturnPayment[]> {
       },
       deposit: true,
     },
+    orderBy: {
+      date: "desc",
+    },
   });
 
   return payments.map((payment) => {

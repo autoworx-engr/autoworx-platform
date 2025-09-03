@@ -84,9 +84,9 @@ export default memo(function LeadCard({
           draggableId: leadData.id.toString(),
         },
       });
-
-      await updateLeadColumn(leadData.id, parseInt(newColumnId));
+      
       successToast("Lead moved successfully");
+      await updateLeadColumn(leadData.id, parseInt(newColumnId));
       setShowColumnSelect(false);
     } catch (error) {
       errorToast("Failed to move lead. Please try again.");

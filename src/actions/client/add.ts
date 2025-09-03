@@ -23,11 +23,11 @@ export async function addCustomer(data: {
   tagId?: number;
   photo?: string;
   sourceId?: number;
-}): Promise<ServerAction | TErrorHandler> {
+}, pathname?: string): Promise<ServerAction | TErrorHandler> {
   try {
     await createClientValidationSchema.parseAsync(data);
     const session = await getServerSession(authOptions);
-    const companyId = session?.user.companyId;
+    const companyId = session?.user?.companyId;
 
     if (!companyId) {
       throw new Error("Company ID is required to create an email template.");
@@ -70,7 +70,9 @@ export async function addCustomer(data: {
 
     await initialCreateClientChatTrack(newCustomer.id);
 
-    revalidatePath("/client");
+    if (pathname?.includes('/dashboard/client')) {
+      revalidatePath(pathname);
+    }
 
     return { type: "success", data: newCustomer };
   } catch (error: any) {

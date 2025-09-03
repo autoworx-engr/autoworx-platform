@@ -14,7 +14,7 @@ import type {
   Vehicle,
 } from "@prisma/client";
 import mergeRefs from "merge-refs";
-import moment, { Moment } from "moment";
+import moment, { Moment } from "moment-timezone";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDrop } from "react-dnd";
 import { assignAppointmentDate } from "@/actions/appointment/assignAppointmentDate";
@@ -23,6 +23,7 @@ import DayRow from "../components/day/DayRow";
 import DayTask from "../components/day/DayTask";
 import { useAutoScrollWhileDragging } from "./useAutoScrollWhileDragging";
 import { useCalendarStore } from "@/stores/calendarStore";
+import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 
 export function useDate() {
   const { date } = useCalendarStore();
@@ -62,6 +63,7 @@ export default function Day({
   templates: EmailTemplate[];
 }) {
   const { startTime, setStartTime, setUpdateVariable } = useCalendarStore();
+  const timezone = useCompanyTimezone();
   // Memoize rows generation to prevent unnecessary recalculation
   const rows = useMemo(() => {
     const timeRows: string[] = [];
@@ -181,7 +183,7 @@ export default function Day({
               : new Date(date.format("YYYY-MM-DD")),
             startTime: oldTask?.startTime || startTime,
             endTime: oldTask?.endTime || endTime,
-            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            timezone: timezone,
           });
 
           setUpdateVariable();
@@ -198,7 +200,7 @@ export default function Day({
               date: new Date(oldTask.date),
               startTime: newStartTime,
               endTime: newEndTime,
-              timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+              timezone: timezone,
             });
 
             setUpdateVariable();
@@ -222,7 +224,7 @@ export default function Day({
             date: oldAppointment.date as Date | string,
             startTime: newStartTime,
             endTime: newEndTime,
-            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            timezone: timezone,
           });
           setUpdateVariable();
         }

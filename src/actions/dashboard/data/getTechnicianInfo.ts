@@ -32,10 +32,12 @@ export interface CurrentProject {
   services: {
     name: string | undefined;
     due: Date | null;
+    startDate: Date | null;
   }[];
   yearMakeModel: string;
   totalPayout: number;
-  dueDate: string | null;
+  dueDate: Date | null;
+  startDate: Date | null;
 }
 export async function getCurrentProjects() {
   const { companyId, userId } = await getEssentials();
@@ -44,6 +46,7 @@ export async function getCurrentProjects() {
   const invoices = await db.invoice.findMany({
     where: {
       companyId,
+      type: "Invoice",
       technician: {
         some: {
           userId,
@@ -77,15 +80,37 @@ export async function getCurrentProjects() {
       0
     );
 
+    // Get the earliest start date from technicians
+    const earliestStartDate = technicians.reduce<Date | null>(
+      (earliest, technician) => {
+        if (!technician.date) return earliest;
+        if (!earliest) return technician.date;
+        return technician.date < earliest ? technician.date : earliest;
+      },
+      null
+    );
+
+    // Get the earliest due date from technicians
+    const earliestDueDate = technicians.reduce<Date | null>(
+      (earliest, technician) => {
+        if (!technician.due) return earliest;
+        if (!earliest) return technician.due;
+        return technician.due < earliest ? technician.due : earliest;
+      },
+      null
+    );
+
     return {
       id: invoice.id,
       services: technicians.map((technician) => ({
         name: technician.service?.name,
         due: technician.due,
+        startDate: technician.date,
       })),
-      yearMakeModel: `${invoice?.vehicle?.year || ""} ${invoice.vehicle?.make} ${invoice.vehicle?.model} ${invoice.vehicle?.other}`,
+      yearMakeModel: `${invoice?.vehicle?.year || ""} ${invoice.vehicle?.make || ""} ${invoice.vehicle?.model || ""} ${invoice.vehicle?.other || ""}`,
       totalPayout,
-      dueDate: invoice.dueDate,
+      dueDate: earliestDueDate, // Now using technician due date instead of invoice due date
+      startDate: earliestStartDate,
     };
   });
 

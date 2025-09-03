@@ -4,9 +4,19 @@ import { TInvoice } from "./page";
 import Link from "next/link";
 import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
 import { FormatUtcToTimezone } from "@/utils/FormatUtcToTimezone";
+import { Tooltip } from "antd";
+import { FaExclamation } from "react-icons/fa";
 
 type TProps = {
-  invoice: TInvoice & { costPrice: number; profitPrice: number };
+  invoice: TInvoice & { 
+    costPrice: number; 
+    profitPrice: number;
+    inventoryLossAmount: number;
+    materialLossAmount: number;
+    laborLossAmount: number;
+    totalLossAmount: number;
+    materialLossDetails: { name: string; loss: number; isFromInventory: boolean }[];
+  };
   index: number;
   timezone: string;
 };
@@ -21,6 +31,36 @@ export default function RevenueMobileCard({
     timezone,
     "MMM Do, YYYY",
   );
+
+  // Display the actual cost (what we spent)
+  const displayCost = Number(invoice.costPrice);
+  
+  // Check if there are any losses to show the exclamation mark
+  const hasLosses = invoice.totalLossAmount > 0;
+  
+  // Generate loss details for tooltip
+  const lossDetails = [];
+  
+  // Inventory losses (lost products)
+  if (invoice.inventoryLossAmount > 0) {
+    const inventoryMaterialNames = invoice.InventoryProductHistory?.map(
+      (item) => item.product?.name
+    ).filter(Boolean);
+    lossDetails.push(`Inventory Loss: ${inventoryMaterialNames?.join(", ")}`);
+  }
+  
+  // Material losses (show actual material names with losses)
+  if (invoice.materialLossAmount > 0 && invoice.materialLossDetails?.length > 0) {
+    const materialNames = invoice.materialLossDetails.map(detail => 
+      `${detail.name} ($${detail.loss.toFixed(2)})`
+    );
+    lossDetails.push(`Material Loss: ${materialNames.join(", ")}`);
+  }
+  
+  // Labor losses
+  if (invoice.laborLossAmount > 0) {
+    lossDetails.push(`Labor Loss: Technician cost exceeds charges ($${invoice.laborLossAmount.toFixed(2)})`);
+  }
 
   return (
     <div
@@ -64,8 +104,13 @@ export default function RevenueMobileCard({
         </div>
         <div>
           <div className="text-sm text-gray-500">Cost</div>
-          <div className="font-semibold text-[#66738C]">
-            {formatCurrency(Number(invoice.costPrice))}
+          <div className="flex items-center gap-2 font-semibold text-[#66738C]">
+            {formatCurrency(displayCost)}
+            {hasLosses && (
+              <Tooltip title={lossDetails?.join(" | ") || "Loss detected"}>
+                <FaExclamation color="red" size={12} />
+              </Tooltip>
+            )}
           </div>
         </div>
         <div>

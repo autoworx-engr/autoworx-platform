@@ -15,7 +15,7 @@ type TProps = {
 const CustomBar = ({ isFiltered, ...props }: any) => {
   const { x, y, width, height, fill } = props;
   const barWidth = Math.min(width * 1.5, 30);
-  const xPosition = isFiltered ? x + 24 : x + 8;
+  const xPosition = isFiltered ? x + width * 1.1 : x + width * 0.7;
   return (
     <rect
       x={xPosition}
@@ -39,13 +39,13 @@ const CustomLabel = (props: any) => {
 };
 export default function LeadsBarChartContainer({ searchParams }: TProps) {
   const [data, setData] = useState<any>();
-  const isMax2540 = useMediaQuery({ query: "(max-width: 2540px)" });
+
   // State for startDate and endDate
   const [startDate, setStartDate] = useState<string | undefined>(
-    searchParams?.startDate,
+    searchParams?.startDate
   );
   const [endDate, setEndDate] = useState<string | undefined>(
-    searchParams?.endDate,
+    searchParams?.endDate
   );
   const [isFiltered, setIsFiltered] = useState<boolean>(false);
 
@@ -76,7 +76,7 @@ export default function LeadsBarChartContainer({ searchParams }: TProps) {
         const result = await getLeadInfo(
           timezone,
           startDate ? decodeURIComponent(startDate) : undefined,
-          endDate ? decodeURIComponent(endDate) : undefined,
+          endDate ? decodeURIComponent(endDate) : undefined
         );
         if (isMounted) {
           setData(result);
@@ -149,10 +149,17 @@ export default function LeadsBarChartContainer({ searchParams }: TProps) {
           shape={(props: any) => {
             const { x, y, width, height, ...rest } = props;
             const barWidth = Math.min(width * 1.5, 30);
+
+            const xPosition = isFiltered
+              ? x - width * 1
+              : x -
+                width *
+                  (data?.monthlyQualifiedAndUnqualifiedLeads.length <= 10
+                    ? 0.4
+                    : 0.3);
             return (
               <rect
-                // x={x - 9}
-                x={!isFiltered ? (isMax2540 ? x - 9 : x - 16) : x - 20}
+                x={xPosition}
                 y={y - 10}
                 rx="20"
                 ry="15"

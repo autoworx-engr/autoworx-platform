@@ -13,6 +13,7 @@ import {
 import Selector from "@/components/Selector";
 import { SlimInput } from "@/components/SlimInput";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
+import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { useInvoiceCreate } from "@/hooks/useInvoiceCreate";
 import { cn } from "@/lib/cn";
 import { errorToast, successToast } from "@/lib/toast";
@@ -21,7 +22,7 @@ import { useListsStore } from "@/stores/lists";
 import { additionalDataValidation } from "@/validations/schemas/payment/payment.validation";
 import { CardType, PaymentMethod, PaymentType } from "@prisma/client";
 import * as Tabs from "@radix-ui/react-tabs";
-import moment from "moment";
+import moment from "moment-timezone";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import React, { useEffect, useState, useTransition } from "react";
@@ -52,6 +53,7 @@ function TabTrigger({
 }
 
 export default function MakePayment() {
+  const timezone = useCompanyTimezone();
   const { paymentMethods } = useListsStore();
 
   const {
@@ -347,8 +349,15 @@ export default function MakePayment() {
                       labelClassName="text-sm md:text-base"
                       name="date"
                       type="date"
-                      value={moment(date).format("YYYY-MM-DD")}
-                      onChange={(e) => setDate(new Date(e.target.value))}
+                      value={date ? moment(date).format("YYYY-MM-DD") : ""}
+                      onChange={(e) => {
+                        const localDate = moment.tz(
+                          e.target.value,
+                          "YYYY-MM-DD",
+                          timezone
+                        );
+                        setDate(localDate.toDate());
+                      }}
                     />
                   </div>
                   <div className="w-full">
@@ -466,8 +475,15 @@ export default function MakePayment() {
                     labelClassName="text-sm md:text-base"
                     name="date"
                     type="date"
-                    value={moment(date).format("YYYY-MM-DD")}
-                    onChange={(e) => setDate(new Date(e.target.value))}
+                    value={date ? moment(date).format("YYYY-MM-DD") : ""}
+                    onChange={(e) => {
+                      const localDate = moment.tz(
+                        e.target.value,
+                        "YYYY-MM-DD",
+                        timezone
+                      );
+                      setDate(localDate.toDate());
+                    }}
                   />
                 </div>
 
@@ -518,8 +534,15 @@ export default function MakePayment() {
                     labelClassName="text-sm md:text-base"
                     name="date"
                     type="date"
-                    value={moment(date).format("YYYY-MM-DD")}
-                    onChange={(e) => setDate(new Date(e.target.value))}
+                    value={date ? moment(date).format("YYYY-MM-DD") : ""}
+                    onChange={(e) => {
+                      const localDate = moment.tz(
+                        e.target.value,
+                        "YYYY-MM-DD",
+                        timezone
+                      );
+                      setDate(localDate.toDate());
+                    }}
                   />
                 </div>
 
@@ -618,8 +641,15 @@ export default function MakePayment() {
                     labelClassName="text-sm md:text-base"
                     name="date"
                     type="date"
-                    value={moment(date).format("YYYY-MM-DD")}
-                    onChange={(e) => setDate(new Date(e.target.value))}
+                    value={date ? moment(date).format("YYYY-MM-DD") : ""}
+                    onChange={(e) => {
+                      const localDate = moment.tz(
+                        e.target.value,
+                        "YYYY-MM-DD",
+                        timezone
+                      );
+                      setDate(localDate.toDate());
+                    }}
                   />
                 </div>
 
@@ -657,8 +687,15 @@ export default function MakePayment() {
                     labelClassName="text-sm md:text-base"
                     name="date"
                     type="date"
-                    value={moment(date).format("YYYY-MM-DD")}
-                    onChange={(e) => setDate(new Date(e.target.value))}
+                    value={date ? moment(date).format("YYYY-MM-DD") : ""}
+                    onChange={(e) => {
+                      const localDate = moment.tz(
+                        e.target.value,
+                        "YYYY-MM-DD",
+                        timezone
+                      );
+                      setDate(localDate.toDate());
+                    }}
                   />
                 </div>
 

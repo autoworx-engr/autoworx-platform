@@ -2,7 +2,6 @@
 
 import { SlimInput, slimInputClassName } from "@/components/SlimInput";
 import { cn } from "@/lib/utils";
-
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import moment from "moment";
@@ -10,6 +9,8 @@ import { getCurrentTime } from "@/utils/time";
 import { decodeCompanyId } from "@/utils/companyIdEncoder";
 import { processBooking } from "@/actions/booking/processBooking";
 import { getCompanyCalendarSettings } from "@/actions/booking/getCompanyCalendarSettings";
+import Image from "next/image";
+import { getCompanyById } from "@/actions/settings/getCompnayById";
 
 type FormData = {
   title: string;
@@ -19,11 +20,7 @@ type FormData = {
   lastName: string;
   email: string;
   mobile: string;
-  address: string;
-  city: string;
-  state: string;
-  zip: string;
-  customerCompany: string;
+  notes: string;
 };
 
 const BookingForm = () => {
@@ -43,12 +40,21 @@ const BookingForm = () => {
     lastName: "",
     email: "",
     mobile: "+1",
-    address: "",
-    city: "",
-    state: "",
-    zip: "",
-    customerCompany: "",
+    notes: "",
   });
+
+  // State for handling title dropdown and custom input
+  const [selectedTitleOption, setSelectedTitleOption] = useState("");
+  const [customTitle, setCustomTitle] = useState("");
+
+  // Predefined title options
+  const titleOptions = [
+    "Phone Call Request",
+    "Free Consultation", 
+    "Wrap Design Consultation",
+    "Virtual Appointment",
+    "Custom"
+  ];
 
   const [error, setError] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -61,6 +67,19 @@ const BookingForm = () => {
     ? moment(date).toDate().toDateString() ===
       moment(date).toDate().toDateString()
     : false;
+
+  useEffect(() => {
+    const fetchCompany = async () => {
+      try {
+        const company = await getCompanyById({ companyId: `${companyId}` });
+        setCompanyInfo(company || null);
+      } catch (error) {
+        console.error("Error fetching company info:", error);
+      }
+    };
+
+    fetchCompany();
+  }, [companyId]);
 
   // Set minimum date to today
   useEffect(() => {
@@ -115,12 +134,64 @@ const BookingForm = () => {
   }, [formData.date, calendarSettings]);
 
   const handleChange = (field: keyof FormData, value: any) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    let processedValue = value;
+
+    if (field === "mobile") {
+      processedValue = processedValue.replace(/\D/g, "");
+
+      if (!processedValue.startsWith("+1")) {
+        if (processedValue.startsWith("+")) {
+          processedValue = "+1" + processedValue.slice(1);
+        } else if (processedValue.startsWith("1")) {
+          processedValue = "+" + processedValue;
+        } else {
+          processedValue = "+1" + processedValue;
+        }
+      }
+    }
+
+    setFormData((prev) => ({ ...prev, [field]: processedValue }));
 
     if (error[field]) {
       setError((prev) => {
         const newErrors = { ...prev };
         delete newErrors[field];
+        return newErrors;
+      });
+    }
+  };
+
+  // Handle title dropdown selection
+  const handleTitleSelection = (value: string) => {
+    setSelectedTitleOption(value);
+    
+    if (value === "Custom") {
+      setFormData((prev) => ({ ...prev, title: customTitle }));
+    } else {
+      setFormData((prev) => ({ ...prev, title: value }));
+      setCustomTitle(""); // Clear custom title when selecting predefined option
+    }
+
+    // Clear title error if exists
+    if (error.title) {
+      setError((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors.title;
+        return newErrors;
+      });
+    }
+  };
+
+  // Handle custom title input
+  const handleCustomTitleChange = (value: string) => {
+    setCustomTitle(value);
+    setFormData((prev) => ({ ...prev, title: value }));
+
+    // Clear title error if exists
+    if (error.title) {
+      setError((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors.title;
         return newErrors;
       });
     }
@@ -163,7 +234,11 @@ const BookingForm = () => {
     const newError: Record<string, string> = {};
 
     if (!formData.title.trim()) {
-      newError.title = "Appointment Title is required.";
+      if (selectedTitleOption === "Custom") {
+        newError.title = "Please enter a custom appointment title.";
+      } else {
+        newError.title = "Appointment Title is required.";
+      }
     }
 
     if (!formData.date) {
@@ -211,6 +286,9 @@ const BookingForm = () => {
     if (!formData.firstName.trim()) {
       newError.firstName = "First Name is required.";
     }
+    if (!formData.lastName.trim()) {
+      newError.lastName = "Last Name is required.";
+    }
 
     if (!formData.mobile.trim()) {
       newError.mobile = "Mobile is required.";
@@ -251,12 +329,12 @@ const BookingForm = () => {
           lastName: "",
           email: "",
           mobile: "+1",
-          address: "",
-          city: "",
-          state: "",
-          zip: "",
-          customerCompany: "",
+          notes: "",
         });
+
+        // Reset title selection states
+        setSelectedTitleOption("");
+        setCustomTitle("");
 
         // Show success message
         setSuccessMessage(result.message);
@@ -276,12 +354,26 @@ const BookingForm = () => {
   };
 
   const inputClass =
-    "focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20";
+    "focus:border-[#00B4B5] focus:outline-none focus:ring-2 focus:ring-[#00B4B5]";
   return (
     <div className="max-w-xl scale-90 mx-auto bg-white rounded-2xl shadow-lg border border-gray-100">
-      <div className="bg-gradient-to-r from-[#00b8b0] to-[#0098da] text-white p-6 rounded-t-2xl">
-        <h3 className="text-2xl font-bold ">Book Your Appointment</h3>
-        <p className="text-blue-100 mt-1">Fill in the details below</p>
+      <div className="flex items-center gap-4 bg-gradient-to-r from-[#00b8b0] to-[#0098da] text-white p-6 rounded-t-2xl">
+        <Image
+          src={companyInfo?.image || "/icons/business.png"}
+          alt="Company Logo"
+          width={56}
+          height={56}
+          className={cn(
+            !companyInfo?.image && "bg-white",
+            "w-14 h-14 rounded-full border-2 border-white"
+          )}
+        />
+        <div>
+          <h3 className="text-2xl font-bold">
+            {companyInfo?.name || "Book Your Appointment"}
+          </h3>
+          <p className="text-blue-100 mt-1">Fill in the details below</p>
+        </div>
       </div>
 
       <div className="p-6">
@@ -298,15 +390,50 @@ const BookingForm = () => {
         )}
 
         <form onSubmit={handleFormSubmit} className="grid gap-6">
-          <SlimInput
-            value={formData.title}
-            onChange={(e) => handleChange("title", e.target.value)}
-            name="title"
-            label="Appointment Title"
-            required
-            className={`${inputClass}`}
-            error={error.title}
-          />
+          {/* Title Selection */}
+          <div className="space-y-2">
+            <label className="flex gap-1 items-center" htmlFor="title-select">
+              <span className="mb-1 text-sm font-medium">Appointment Title</span>
+              <span className="text-red-500">*</span>
+            </label>
+            
+            <select
+              id="title-select"
+              value={selectedTitleOption}
+              onChange={(e) => handleTitleSelection(e.target.value)}
+              className={cn(
+                slimInputClassName,
+                "h-[33px] px-3 w-full",
+                inputClass,
+                error.title && "border-red-500 focus-visible:ring-red-500"
+              )}
+              required
+            >
+              <option value="">Select appointment type...</option>
+              {titleOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option === "Custom" ? "Custom (Enter your own)" : option}
+                </option>
+              ))}
+            </select>
+
+            {/* Custom title input - only show when "Custom" is selected */}
+            {selectedTitleOption === "Custom" && (
+              <SlimInput
+                value={customTitle}
+                onChange={(e) => handleCustomTitleChange(e.target.value)}
+                name="customTitle"
+                label="Enter Custom Title"
+                placeholder="Enter your custom appointment title"
+                required
+                className={`${inputClass}`}
+              />
+            )}
+
+            {error.title && (
+              <p className="text-sm text-red-600 mt-1">{error.title}</p>
+            )}
+          </div>
 
           <div className="grid gap-4 md:grid-cols-2">
             <SlimInput
@@ -396,7 +523,8 @@ const BookingForm = () => {
                 name="lastName"
                 label="Last Name"
                 className={`${inputClass}`}
-                required={false}
+                required
+                error={error.lastName}
               />
             </div>
             <div className="grid gap-4 md:grid-cols-2">
@@ -420,49 +548,25 @@ const BookingForm = () => {
                 required
               />
             </div>
-            <SlimInput
-              value={formData.address}
-              onChange={(e) => handleChange("address", e.target.value)}
-              rootClassName="flex-1"
-              name="address"
-              label="Address"
-              className={`${inputClass}`}
-              required={false}
-            />
-            <div className="grid gap-4 md:grid-cols-3">
-              <SlimInput
-                value={formData.city}
-                onChange={(e) => handleChange("city", e.target.value)}
-                name="city"
-                label="City"
-                className={`${inputClass}`}
-                required={false}
-              />
-              <SlimInput
-                value={formData.state}
-                onChange={(e) => handleChange("state", e.target.value)}
-                name="state"
-                label="State"
-                className={`${inputClass}`}
-                required={false}
-              />
-              <SlimInput
-                value={formData.zip}
-                onChange={(e) => handleChange("zip", e.target.value)}
-                name="zip"
-                label="Zip"
-                className={`${inputClass}`}
-                required={false}
+
+            <div className="space-y-2">
+              <label className="flex gap-1 items-center" htmlFor="notes">
+                <span className="mb-1 text-sm font-medium">Notes</span>
+              </label>
+              <textarea
+                id="notes"
+                name="notes"
+                value={formData.notes}
+                onChange={(e) => handleChange("notes", e.target.value)}
+                placeholder="Add any additional notes for your appointment..."
+                rows={3}
+                className={cn(
+                  "w-full px-3 py-2 border border-gray-300 rounded-md resize-none",
+                  "focus:border-[#00B4B5] focus:outline-none focus:ring-2 focus:ring-[#00B4B5]",
+                  inputClass
+                )}
               />
             </div>
-            <SlimInput
-              value={formData.customerCompany}
-              onChange={(e) => handleChange("customerCompany", e.target.value)}
-              name="customerCompany"
-              required={false}
-              className={`${inputClass}`}
-              label="Company"
-            />
           </div>
 
           <div className="p-0 pt-3">

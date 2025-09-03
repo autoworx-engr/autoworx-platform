@@ -22,7 +22,23 @@ export default async function newTag({
     if (!companyId) {
       throw new Error("Company ID is required to create an email template.");
     }
+const isExist = await db.tag.findFirst({
+    where: {
+      companyId,
+      name: {
+        equals: name.trim(),
+        
+      },
+      type,
+    },
+  }); 
 
+  if(isExist){
+    return {
+      type: "error",
+      message: "This Tag is already exists.",
+    };  
+  }
   const newTag = await db.tag.create({
     data: {
       companyId,

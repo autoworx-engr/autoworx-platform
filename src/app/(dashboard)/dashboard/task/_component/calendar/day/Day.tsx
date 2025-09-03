@@ -1,10 +1,11 @@
 "use client";
 import getTaskById from "@/actions/task/getTaskById";
+import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { useCalendarStore } from "@/stores/calendarStore";
 import { formatTime, updateTimeSpace } from "@/utils/taskAndActivity";
 import type { Task } from "@prisma/client";
 import mergeRefs from "merge-refs";
-import moment, { Moment } from "moment";
+import moment, { Moment } from "moment-timezone";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDrop } from "react-dnd";
 import useAppointmentMutation from "../../../_hook/appointment/mutation/useAppointmentMutation";
@@ -16,6 +17,7 @@ import useTaskMutation from "../../../_hook/task/mutation/useTaskMutation";
 import useTaskQueryByDate from "../../../_hook/task/query/useTaskQueryByDate";
 import DayRow from "./DayRow";
 import DayTask from "./DayTask";
+import { Skeleton } from "antd";
 
 function doesTaskOrAppointmentEndNextDay(startTime: Moment, endTime: Moment) {
   // Parse the start and end times as moment objects with specific time format
@@ -28,12 +30,16 @@ function doesTaskOrAppointmentEndNextDay(startTime: Moment, endTime: Moment) {
 
 export default function Day() {
   const date = useDate();
+  const timezone = useCompanyTimezone();
   const dateFormat = date.format("YYYY-MM-DD");
 
   const { data: settings } = useSettingsQuery();
-  const { data: tasks = [] } = useTaskQueryByDate(dateFormat);
-  const { data: appointments = [] } = useAppointmentQueryByDate(dateFormat);
+  const { data: tasks = [], isLoading: isTasksLoading } =
+    useTaskQueryByDate(dateFormat);
+  const { data: appointments = [], isLoading: isAppointmentsLoading } =
+    useAppointmentQueryByDate(dateFormat);
 
+  const isDataLoading = isTasksLoading || isAppointmentsLoading;
   // mutation for task
   const taskMutation = useTaskMutation();
 
@@ -57,7 +63,7 @@ export default function Day() {
         } else {
           return "12 AM";
         }
-      }),
+      })
     );
     return timeRows;
   }, []);
@@ -77,6 +83,16 @@ export default function Day() {
       canDrop: monitor.canDrop(),
     }),
   }) as [{ canDrop: boolean; isOver: boolean }, any];
+
+  // useEffect(() => {
+  //   const date = moment(dateQuery).format("YYYY-MM-DD");
+  //   if (dateQuery) {
+  //     setDate(date);
+  //   } else {
+  //     const todayDate = moment().tz(timezone).format("YYYY-MM-DD");
+  //     setDate(todayDate);
+  //   }
+  // }, [dateQuery]);
 
   useEffect(() => {
     // This effect checks if the ref is available and updates isRefAvailable accordingly.
@@ -104,7 +120,7 @@ export default function Day() {
             ...appointmentData,
             type: "appointment" as const,
             assignedUsers: appointmentUsers.map(
-              (appointmentUser) => appointmentUser.user,
+              (appointmentUser) => appointmentUser.user
             ),
           };
         }),
@@ -139,7 +155,7 @@ export default function Day() {
 
           return aBigIndex - bBigIndex;
         }),
-    [tasks, appointments, date],
+    [tasks, appointments, date]
   );
   // drop event handler
   const handleDrop = useCallback(
@@ -174,7 +190,7 @@ export default function Day() {
             date: new Date(date.format("YYYY-MM-DD")),
             startTime: startTime,
             endTime: endTime,
-            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            timezone: timezone,
           });
 
           setUpdateVariable();
@@ -183,17 +199,17 @@ export default function Day() {
           const { newStartTime, newEndTime } = updateTimeSpace(
             oldTask?.startTime as string,
             oldTask?.endTime as string,
-            rows[rowIndex],
+            rows[rowIndex]
           );
           if (oldTask) {
             taskMutation.mutate({
               id: oldTask.id,
               date: new Date(
-                oldTask.date ? oldTask.date : date.format("YYYY-MM-DD"),
+                oldTask.date ? oldTask.date : date.format("YYYY-MM-DD")
               ),
               startTime: newStartTime,
               endTime: newEndTime,
-              timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+              timezone: timezone,
             });
 
             setUpdateVariable();
@@ -204,12 +220,12 @@ export default function Day() {
         const appointmentId = parseInt(attributeData[1]);
         // Find the appointment in your state
         const oldAppointment = appointments.find(
-          (appointment) => appointment.id === appointmentId,
+          (appointment) => appointment.id === appointmentId
         );
         const { newStartTime, newEndTime } = updateTimeSpace(
           oldAppointment?.startTime as string,
           oldAppointment?.endTime as string,
-          rows[rowIndex],
+          rows[rowIndex]
         );
         if (oldAppointment) {
           appointmentMutation.mutate({
@@ -217,13 +233,13 @@ export default function Day() {
             date: oldAppointment.date as Date | string,
             startTime: newStartTime,
             endTime: newEndTime,
-            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            timezone: timezone,
           });
           setUpdateVariable();
         }
       }
     },
-    [tasks, appointments, date, rows, setUpdateVariable],
+    [tasks, appointments, date, rows, setUpdateVariable]
   );
 
   //scrolling till settings.dayStart
@@ -259,7 +275,7 @@ export default function Day() {
 
       if (!startTime && !hasScrolledRef.current) {
         const startTimeIndex = rows.findIndex(
-          (row) => formatTime(row) === settings?.dayStart,
+          (row) => formatTime(row) === settings?.dayStart
         );
 
         if (startTimeIndex !== -1) {
@@ -289,7 +305,7 @@ export default function Day() {
       }
       return "0%"; // Default fallback
     },
-    [],
+    []
   );
 
   return (
@@ -297,72 +313,109 @@ export default function Day() {
       ref={mergeRefs(dropRef, parentRef, containerRef)}
       className="relative mt-3 h-[90%] overflow-auto"
     >
-      {rows.map((row, i) => (
-        <DayRow
-          key={i}
-          row={row}
-          rows={rows}
-          index={i}
-          onDrop={handleDrop}
-          date={date}
-        />
-      ))}
+      {isDataLoading ? (
+        <>
+          {Array.from({ length: 24 }).map((_, index) => (
+            <div key={`row-skeleton-${index}`} className="relative">
+              {/* Time label skeleton  */}
+              <div
+                className={`absolute flex h-full w-[100px] items-center justify-center ${
+                  index === 0 ? "-top-6" : "-top-[37.5px]"
+                }`}
+              >
+                <Skeleton.Button active size="small" className="!w-16 !h-4" />
+              </div>
 
-      {/* Tasks */}
-      {events.map((event, index) => {
-        const eventStartTime = moment(event.startTime, "HH:mm");
-        const eventEndTime = moment(event.endTime, "HH:mm");
+              {/* Row button skeleton */}
+              <div
+                className={`ml-[85px] h-[75px] border-neutral-200 ${
+                  index !== rows.length && "border-b border-l"
+                } ${index !== 0 ? "" : "border-t"}`}
+                style={{
+                  width: "calc(100% - 85px)",
+                  backgroundColor: "#f2f2f2",
+                }}
+              >
+                <Skeleton.Button
+                  active
+                  size="large"
+                  className="!w-full !h-full !bg-gray-200"
+                  style={{ borderRadius: "0px" }}
+                />
+              </div>
+            </div>
+          ))}
+        </>
+      ) : (
+        <>
+          {rows.map((row, i) => (
+            <DayRow
+              key={i}
+              row={row}
+              rows={rows}
+              index={i}
+              onDrop={handleDrop}
+              date={date}
+            />
+          ))}
 
-        const isEventEndNextDay = doesTaskOrAppointmentEndNextDay(
-          eventStartTime,
-          eventEndTime,
-        );
+          {/* Tasks */}
+          {events.map((event, index) => {
+            const eventStartTime = moment(event.startTime, "HH:mm");
+            const eventEndTime = moment(event.endTime, "HH:mm");
 
-        const dayEnd = moment("23:59", "HH:mm");
+            const isEventEndNextDay = doesTaskOrAppointmentEndNextDay(
+              eventStartTime,
+              eventEndTime
+            );
 
-        const tasksInRow = events.filter((task) => {
-          const taskStartTime = moment(task.startTime, "HH:mm");
-          const taskEndTime = moment(task.endTime, "HH:mm");
-          const isTaskEndNextDay = doesTaskOrAppointmentEndNextDay(
-            taskStartTime,
-            taskEndTime,
-          );
-          if (
-            event.rowStartIndex === task.rowStartIndex ||
-            (eventStartTime.isBefore(taskEndTime) &&
-              eventEndTime.isAfter(taskStartTime)) ||
-            (isEventEndNextDay &&
-              eventStartTime.isBefore(taskEndTime) &&
-              dayEnd.isAfter(taskStartTime)) ||
-            (isTaskEndNextDay &&
-              eventStartTime.isBefore(dayEnd) &&
-              eventEndTime.isAfter(taskStartTime))
-          ) {
-            return true;
-          }
-        });
+            const dayEnd = moment("23:59", "HH:mm");
 
-        const taskIndex = tasksInRow.findIndex((task) => {
-          if (task.id === event.id && task.type === event.type) {
-            return true;
-          }
-        });
+            const tasksInRow = events.filter((task) => {
+              const taskStartTime = moment(task.startTime, "HH:mm");
+              const taskEndTime = moment(task.endTime, "HH:mm");
+              const isTaskEndNextDay = doesTaskOrAppointmentEndNextDay(
+                taskStartTime,
+                taskEndTime
+              );
+              if (
+                event.rowStartIndex === task.rowStartIndex ||
+                (eventStartTime.isBefore(taskEndTime) &&
+                  eventEndTime.isAfter(taskStartTime)) ||
+                (isEventEndNextDay &&
+                  eventStartTime.isBefore(taskEndTime) &&
+                  dayEnd.isAfter(taskStartTime)) ||
+                (isTaskEndNextDay &&
+                  eventStartTime.isBefore(dayEnd) &&
+                  eventEndTime.isAfter(taskStartTime))
+              ) {
+                return true;
+              }
+            });
 
-        return (
-          <DayTask
-            key={index}
-            isDragOver={isOver}
-            rowsLength={rows.length}
-            totalTaskInRow={tasksInRow.length}
-            calculateLeftPosition={calculateLeftPosition(
-              taskIndex,
-              tasksInRow.length,
-            )}
-            event={event}
-            isRefAvailable={isRefAvailable}
-          />
-        );
-      })}
+            const taskIndex = tasksInRow.findIndex((task) => {
+              if (task.id === event.id && task.type === event.type) {
+                return true;
+              }
+            });
+
+            return (
+              <DayTask
+                key={index}
+                isDragOver={isOver}
+                rowsLength={rows.length}
+                totalTaskInRow={tasksInRow.length}
+                calculateLeftPosition={calculateLeftPosition(
+                  taskIndex,
+                  tasksInRow.length
+                )}
+                event={event}
+                isRefAvailable={isRefAvailable}
+              />
+            );
+          })}
+        </>
+      )}
     </div>
   );
 }

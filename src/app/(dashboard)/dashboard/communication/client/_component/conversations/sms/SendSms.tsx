@@ -7,6 +7,25 @@ import React, { useRef, useState, useTransition } from "react";
 import { MdSend } from "react-icons/md";
 import useSmsSendMutation from "../../../_hooks/useSmsSendMutation";
 import AttachmentInput from "../AttachmentInput";
+import { useClientCommunicationStore } from "@/stores/client-store";
+
+// Helper function to format attachment message
+const formatAttachmentMessage = (files: File[]) => {
+  if (files.length === 0) return "";
+  
+  const images = files.filter(file => file.type.startsWith('image/'));
+  const otherFiles = files.filter(file => !file.type.startsWith('image/'));
+  
+  const parts = [];
+  if (images.length > 0) {
+    parts.push(images.length === 1 ? "1 image" : `${images.length} images`);
+  }
+  if (otherFiles.length > 0) {
+    parts.push(otherFiles.length === 1 ? "1 file" : `${otherFiles.length} files`);
+  }
+  
+  return parts.join(", ");
+};
 
 type TProps = {
   clientId: number;
@@ -15,6 +34,7 @@ type TProps = {
 export default function SendSms({ clientId }: TProps) {
   const { clientList, setClientList } = clientListStore();
   const { mutate, isSuccess, isPending } = useSmsSendMutation(clientId);
+  const { clientConversationTrack, setClientConversationTrack } = useClientCommunicationStore();
 
   const [files, setFiles] = useState<File[]>([]);
   const [messageInput, setMessageInput] = useState("");
@@ -38,6 +58,21 @@ export default function SendSms({ clientId }: TProps) {
       isSending: true,
       sentBy: "Company",
     };
+
+    // Update conversation track optimistically
+    const lastMessage = files.length > 0 
+      ? formatAttachmentMessage(files)
+      : trimmedMessage;
+
+    if (clientConversationTrack) {
+      setClientConversationTrack({
+        ...clientConversationTrack,
+        smsLastMessage: lastMessage,
+        lastMessageBy: "Company",
+        smsIsRead: true,
+        sendAt: new Date(),
+      });
+    }
 
     setMessageInput("");
     setFiles([]);
@@ -68,70 +103,78 @@ export default function SendSms({ clientId }: TProps) {
         multiAttachmentFile={files}
         onAllRemove={() => setFiles([])}
         onRemoveAttachment={(attachmentName) =>
-          setFiles((prev) =>
-            prev.filter((file) => file.name !== attachmentName)
-          )
+          setFiles((prev) => prev.filter((f) => f.name !== attachmentName))
         }
       />
+
       <form
-        className="flex h-[51px] items-center gap-x-2 rounded-b-md bg-[#D9D9D9] px-2 py-1"
+        className="flex items-center gap-2 rounded-b-md bg-zinc-100 px-2 py-1 dark:bg-zinc-800/60"
         onSubmit={handleSendMessage}
+        onDragOver={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          const dropped = Array.from(e.dataTransfer.files || []);
+          if (dropped.length) setFiles((prev) => [...prev, ...dropped]);
+        }}
       >
+        {/* hidden file input */}
         <input
           onChange={(e) => {
-            setFiles(Array.from(e?.target?.files || []));
-            e.target.value = "";
+            const picked = Array.from(e?.target?.files || []);
+            if (picked.length) setFiles((prev) => [...prev, ...picked]);
+            e.currentTarget.value = "";
           }}
           multiple
           type="file"
           className="hidden"
           ref={fileRef}
+          aria-hidden
+          tabIndex={-1}
         />
-        <Image
-          src="/icons/Attachment.svg"
-          alt="attachment"
-          width={20}
-          height={20}
-          className="cursor-pointer"
-          onClick={() => {
-            fileRef?.current?.click();
-          }}
-        />
-        <div className="flex h-full w-full items-center gap-x-2 rounded-md bg-background">
+
+        {/* attach button */}
+        <button
+          type="button"
+          onClick={() => fileRef?.current?.click()}
+          className="inline-flex h-9 w-9 items-center justify-center rounded-md text-zinc-600 transition hover:bg-zinc-200/80 active:scale-[0.98] dark:text-zinc-300 dark:hover:bg-white/10"
+          aria-label="Add attachment"
+        >
+          <Image src="/icons/Attachment.svg" alt="" width={20} height={20} />
+        </button>
+
+        {/* input area */}
+        <div className="flex w-full items-center gap-2 rounded-md bg-white ring-1 ring-zinc-200 focus-within:ring-emerald-500 dark:bg-zinc-900 dark:ring-white/10">
           <textarea
-            placeholder="Send Message..."
-            className="h-full w-full  rounded-md border-none px-2 py-0 text-[16px] focus:outline-none"
+            placeholder="Send message…"
+            className="max-h-28 min-h-10 w-full resize-none rounded-md border-none bg-transparent px-3 py-2 text-[15px] leading-5 text-zinc-800 outline-none placeholder:text-zinc-400 focus:outline-none dark:text-zinc-100 dark:placeholder:text-zinc-500"
             value={messageInput}
             style={{
               WebkitAppearance: "none",
-              maxHeight: "100%",
               WebkitTextSizeAdjust: "100%",
               touchAction: "manipulation",
             }}
             onChange={(e) => setMessageInput(e.target.value)}
-            // onKeyDown={(event) =>
-            //   startTransaction(() => {
-            //     if (event.key === "Enter" && !event.shiftKey) {
-            //       event.preventDefault(); // Prevents a new line
-            //       handleSendMessage(event); // Call your send function
-            //     }
-            //   })
-            // }
-
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault(); // Prevents a new line
+                e.preventDefault(); // no newline
                 handleSendMessage(e);
               }
             }}
+            rows={1}
+            aria-label="Message"
           />
+
+          {/* send button */}
           <button
             disabled={isPending || (!messageInput && files.length === 0)}
             type="submit"
-            className="px-2 text-[#006D77] disabled:text-gray-400"
+            className="mr-1 inline-flex h-9 w-9 items-center justify-center rounded-md text-emerald-700 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:text-zinc-400 disabled:hover:bg-transparent dark:text-emerald-400 dark:hover:bg-emerald-400/10"
+            aria-label="Send message"
           >
-            <MdSend className="text-2xl" />
-            {/* <Image src="/icons/Send.svg" alt="send" width={20} height={20} /> */}
+            <MdSend className="text-xl" />
           </button>
         </div>
       </form>

@@ -1,8 +1,8 @@
-'use server';
+"use server";
 
-import { db } from '@/lib/db';
-import { updateInvoiceAutomationTrigger } from '@/service/invoice-automation-trigger/api';
-import { ServerAction } from '@/types/action';
+import { db } from "@/lib/db";
+import { updateInvoiceAutomationTrigger } from "@/service/invoice-automation-trigger/api";
+import { ServerAction } from "@/types/action";
 
 // 1. Fetch the invoice by its ID, including its associated technicians.
 // 2. If no technicians are found, return a success message without making any updates.
@@ -31,28 +31,28 @@ export async function updateWorkOrderStatus(id: string): Promise<ServerAction> {
 
   const technicians = invoice?.technician;
 
-  if (!technicians) {
+  if (!technicians || technicians.length === 0) {
     // No need to update the status if there are no technicians
-    return { type: 'success', message: 'No technicians found' };
+    return { type: "success", message: "No technicians found" };
   }
 
   const allComplete = technicians.every(
-    (technician) => technician.status === 'Complete'
+    (technician) => technician.status === "Complete"
   );
   const anyInProgress = technicians.some(
-    (technician) => technician.status === 'In Progress'
+    (technician) => technician.status === "In Progress"
   );
   const anyPending = technicians.some(
     (technician) =>
-      technician.status === 'Pending' || technician.status === 'Cancel'
+      technician.status === "Pending" || technician.status === "Cancel"
   );
 
   // Check if the current status is already "Completed" and all technicians are complete
   if (
-    (allComplete && invoice?.column?.title === 'Completed') ||
-    invoice?.column?.title === 'Delivered'
+    (allComplete && invoice?.column?.title === "Completed") ||
+    invoice?.column?.title === "Delivered"
   ) {
-    return { type: 'success', message: 'Work order is already in final state' };
+    return { type: "success", message: "Work order is already in final state" };
   }
   let columnId = invoice.columnId;
   let completedAt: Date | undefined | null;
@@ -60,8 +60,8 @@ export async function updateWorkOrderStatus(id: string): Promise<ServerAction> {
     // Find the "Pending" column
     const pendingColumn = await db.column.findFirst({
       where: {
-        title: 'Pending',
-        type: 'shop',
+        title: "Pending",
+        type: "shop",
         companyId: invoice.companyId,
       },
     });
@@ -69,14 +69,14 @@ export async function updateWorkOrderStatus(id: string): Promise<ServerAction> {
     if (pendingColumn) {
       columnId = pendingColumn.id;
     } else {
-      throw new Error('Pending column not found');
+      throw new Error("Pending column not found");
     }
   } else if (anyInProgress) {
     // Find the "In Progress" column
     const inProgressColumn = await db.column.findFirst({
       where: {
-        title: 'In Progress',
-        type: 'shop',
+        title: "In Progress",
+        type: "shop",
         companyId: invoice.companyId,
       },
     });
@@ -84,14 +84,14 @@ export async function updateWorkOrderStatus(id: string): Promise<ServerAction> {
     if (inProgressColumn) {
       columnId = inProgressColumn.id;
     } else {
-      throw new Error('In Progress column not found');
+      throw new Error("In Progress column not found");
     }
   } else if (allComplete) {
     // Find the "Completed" column
     const completeColumn = await db.column.findFirst({
       where: {
-        title: 'Completed',
-        type: 'shop',
+        title: "Completed",
+        type: "shop",
         companyId: invoice.companyId,
       },
     });
@@ -100,29 +100,27 @@ export async function updateWorkOrderStatus(id: string): Promise<ServerAction> {
       columnId = completeColumn.id;
       completedAt = new Date();
     } else {
-      throw new Error('Completed column not found');
+      throw new Error("Completed column not found");
     }
   }
 
-  const updatedInvoice = await db.invoice.update({
-    where: { id },
-    data: {
-      columnId,
-      completedAt,
-    },
-  });
+  // const updatedInvoice = await db.invoice.update({
+  //   where: { id },
+  //   data: {
+  //     columnId,
+  //     completedAt,
+  //   },
+  // });
 
-  if (
-    invoice.columnId != updatedInvoice.columnId &&
-    updatedInvoice.type == 'Invoice'
-  ) {
-    // if work order status update invoice automation trigger
-    await updateInvoiceAutomationTrigger({
-      companyId: updatedInvoice?.companyId!,
-      invoiceId: updatedInvoice?.id,
-      columnId: updatedInvoice?.columnId!,
-    });
-  }
+  // if (invoice.columnId != updatedInvoice.columnId) {
+  //   // if work order status update invoice automation trigger
+  //   await updateInvoiceAutomationTrigger({
+  //     companyId: updatedInvoice?.companyId!,
+  //     invoiceId: updatedInvoice?.id,
+  //     columnId: updatedInvoice?.columnId!,
+  //     type: updatedInvoice?.type!,
+  //   });
+  // }
 
-  return { type: 'success', message: 'Work order status updated' };
+  return { type: "success", message: "Work order status updated" };
 }

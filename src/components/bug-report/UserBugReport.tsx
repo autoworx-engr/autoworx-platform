@@ -1,47 +1,47 @@
-'use client';
-import React, { useEffect, useRef, useState } from 'react';
-import { BugIcon, MessageCircleWarning } from 'lucide-react';
-import { Card, CardContent } from '../ui/card';
-import { useGetAllBugReportsMessages } from '@/hooks/bug-reports-messages/useGetAllBugReportsMessages';
-import { errorHandler } from '@/error-boundary/globalErrorHandler';
-import { createBugReportMessageByCompany } from '@/actions/bug-report-message/createBugReportMessageByCompany';
-import { useGetAllCompanyBugReports } from '@/hooks/bug-reports/useGetAllCompanyBugReports';
-import { createNewBugReportMessage } from '@/actions/bug-report-message/newBugReport';
-import SelectorWithChildren from '@/app/(dashboard)/dashboard/components/SelectorWithChildren';
-import toast from 'react-hot-toast';
-import { ReadMessage } from '@/actions/bug-report-message/ReadMessage';
-import { MessageCard } from './MessageCard';
-import { ChatHeader } from './ChatHeader';
-import { ChatInput } from './ChatInput';
-import { BugReportDropdownCard } from './BugReportDropdownCard';
-import { moduleOptions } from '@/constants/module.constant';
-import { MessageBubbleSkeleton } from './MessageBubbleSkeleton';
-import { TBugReportMessage } from '@/types/BugReportMessage';
-import OptimisticMessageCard from './OptimisticMessageCard';
-import { stateStore } from '@/stores/stateStore';
+"use client";
+import React, { useEffect, useRef, useState } from "react";
+import { BugIcon, MessageCircleWarning } from "lucide-react";
+import { Card, CardContent } from "../ui/card";
+import { useGetAllBugReportsMessages } from "@/hooks/bug-reports-messages/useGetAllBugReportsMessages";
+import { errorHandler } from "@/error-boundary/globalErrorHandler";
+import { createBugReportMessageByCompany } from "@/actions/bug-report-message/createBugReportMessageByCompany";
+import { useGetAllCompanyBugReports } from "@/hooks/bug-reports/useGetAllCompanyBugReports";
+import { createNewBugReportMessage } from "@/actions/bug-report-message/newBugReport";
+import SelectorWithChildren from "@/app/(dashboard)/dashboard/components/SelectorWithChildren";
+import toast from "react-hot-toast";
+import { ReadMessage } from "@/actions/bug-report-message/ReadMessage";
+import { MessageCard } from "./MessageCard";
+import { ChatHeader } from "./ChatHeader";
+import { ChatInput } from "./ChatInput";
+import { BugReportDropdownCard } from "./BugReportDropdownCard";
+import { moduleOptions } from "@/constants/module.constant";
+import { MessageBubbleSkeleton } from "./MessageBubbleSkeleton";
+import { TBugReportMessage } from "@/types/BugReportMessage";
+import OptimisticMessageCard from "./OptimisticMessageCard";
+import { stateStore } from "@/stores/stateStore";
 
 interface Contact {
   id: string;
   name: string;
-  type: 'company' | 'client';
+  type: "company" | "client";
   reportedBugs: number;
   avatar: string;
 }
 
 const UserBugReport = () => {
-  const { isBugOpen: isDropdownOpen, setIsBugOpen: setIsDropdownOpen } =
+  const { isBugOpen: isDropdownOpen, setIsBugOpen: setIsDropdownOpen, isNewBugOpen, setIsNewBugOpen } =
     stateStore();
-  const [isNewBugOpen, setIsNewBugOpen] = useState(false);
+  // const [isNewBugOpen, setIsNewBugOpen] = useState(false);
   const [selectedContact, setSelectedContact] = useState<any | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [message, setMessage] = useState('');
-  const [subject, setSubject] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [message, setMessage] = useState("");
+  const [subject, setSubject] = useState("");
   const [selectedModule, setSelectedModule] = useState<string | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const [reportMessage, setReportMessage] = useState<string>('');
+  const [reportMessage, setReportMessage] = useState<string>("");
 
   const {
     data,
@@ -67,11 +67,11 @@ const UserBugReport = () => {
     : [];
 
   useEffect(() => {
-    setReportMessage('');
+    setReportMessage("");
   }, [ReportMessages, companyBugRefetch]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [ReportMessages, loading]);
 
   useEffect(() => {
@@ -85,9 +85,9 @@ const UserBugReport = () => {
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [setIsDropdownOpen]);
 
@@ -96,7 +96,7 @@ const UserBugReport = () => {
     const readMessage = async () => {
       await ReadMessage({
         bugReportId: selectedContact.id,
-        senderType: 'super_admin',
+        senderType: "super_admin",
       });
     };
 
@@ -106,7 +106,7 @@ const UserBugReport = () => {
   const handleContactSelect = (contact: Contact) => {
     setSelectedContact(contact);
     setIsDropdownOpen(false);
-    setSearchQuery('');
+    setSearchQuery("");
   };
 
   const handleCloseChat = () => {
@@ -120,23 +120,23 @@ const UserBugReport = () => {
     try {
       setLoading(true);
       setReportMessage(currentMessage);
-      setMessage('');
+      setMessage("");
       let uploadedAttachmentData: any = [];
 
       // Step 1: Upload files
       if (selectedFiles.length > 0) {
         const formData = new FormData();
         selectedFiles.forEach((file) => {
-          formData.append('file', file);
+          formData.append("file", file);
         });
 
-        const uploadRes = await fetch('/api/upload', {
-          method: 'POST',
+        const uploadRes = await fetch("/api/upload", {
+          method: "POST",
           body: formData,
         });
 
         if (!uploadRes.ok) {
-          console.error('File upload failed');
+          console.error("File upload failed");
           setMessage(currentMessage); // restore input on failure
           return;
         }
@@ -178,36 +178,38 @@ const UserBugReport = () => {
   const handleNewBugReport = async () => {
     if (!subject) {
       toast.error(
-        'Oops! Please choose the module related to your issue so we can help fix it faster.'
+        "Oops! Select the module for your issue so we can help faster."
       );
       return;
     }
 
     if (!message.trim()) {
-      toast.error('Don’t forget to describe the issue so we can assist you!');
+      toast.error(
+        "Don’t forget to describe the issue so we can assist you faster!"
+      );
       return;
     }
     const currentMessage = message;
     try {
       setLoading(true);
       setReportMessage(currentMessage);
-      setMessage('');
+      setMessage("");
       let uploadedAttachmentData: any = [];
 
       // Step 1: Upload files
       if (selectedFiles.length > 0) {
         const formData = new FormData();
         selectedFiles.forEach((file) => {
-          formData.append('file', file);
+          formData.append("file", file);
         });
 
-        const uploadRes = await fetch('/api/upload', {
-          method: 'POST',
+        const uploadRes = await fetch("/api/upload", {
+          method: "POST",
           body: formData,
         });
 
         if (!uploadRes.ok) {
-          console.error('File upload failed');
+          console.error("File upload failed");
           return;
         }
 
@@ -229,16 +231,16 @@ const UserBugReport = () => {
       const res = await createNewBugReportMessage({
         content: currentMessage,
         subject,
-        senderType: 'company',
+        senderType: "company",
         attachments:
           uploadedAttachmentData.length > 0
             ? uploadedAttachmentData
             : undefined,
       });
 
-      if (res.type === 'success') {
-        setMessage('');
-        setSubject('');
+      if (res.type === "success") {
+        setMessage("");
+        setSubject("");
         setSelectedModule(null);
         setIsNewBugOpen(false);
         setSelectedFiles([]);
@@ -246,7 +248,7 @@ const UserBugReport = () => {
         companyBugRefetch();
         setLoading(false);
       } else {
-        toast.error('Something went wrong');
+        toast.error("Something went wrong");
       }
     } catch (err) {
       setLoading(false);
@@ -259,7 +261,7 @@ const UserBugReport = () => {
     if (option) {
       setSubject(option.label);
     } else {
-      setSubject('');
+      setSubject("");
     }
   };
 

@@ -6,6 +6,25 @@ import { MailgunEmail, MailgunEmailAttachment } from "@prisma/client";
 import AttachmentInput from "../AttachmentInput";
 import { MdSend } from "react-icons/md";
 import { clientListStore } from "@/stores/client-store";
+import { useClientCommunicationStore } from "@/stores/client-store";
+
+// Helper function to format attachment message
+const formatAttachmentMessage = (files: File[]) => {
+  if (files.length === 0) return "";
+  
+  const images = files.filter(file => file.type.startsWith('image/'));
+  const otherFiles = files.filter(file => !file.type.startsWith('image/'));
+  
+  const parts = [];
+  if (images.length > 0) {
+    parts.push(images.length === 1 ? "1 image" : `${images.length} images`);
+  }
+  if (otherFiles.length > 0) {
+    parts.push(otherFiles.length === 1 ? "1 file" : `${otherFiles.length} files`);
+  }
+  
+  return parts.join(", ");
+};
 
 export default function SendMail({
   clientId,
@@ -19,6 +38,7 @@ export default function SendMail({
   >;
 }) {
   const { clientList, setClientList } = clientListStore();
+  const { clientConversationTrack, setClientConversationTrack } = useClientCommunicationStore();
   const [pending, startTransition] = React.useTransition();
   const [messageInput, setMessageInput] = useState("");
 
@@ -29,9 +49,27 @@ export default function SendMail({
   const handleSendMessage = async (
     e:
       | React.FormEvent<HTMLFormElement>
-      | React.KeyboardEvent<HTMLTextAreaElement>,
+      | React.KeyboardEvent<HTMLTextAreaElement>
   ) => {
     e.preventDefault();
+
+    if (!messageInput.trim() && files.length === 0) return;
+
+    // Update conversation track optimistically
+    const lastMessage = files.length > 0 
+      ? formatAttachmentMessage(files)
+      : messageInput.trim();
+
+    if (clientConversationTrack) {
+      setClientConversationTrack({
+        ...clientConversationTrack,
+        emailLastMessage: lastMessage,
+        lastEmailBy: "Company",
+        emailIsRead: true,
+        sendAt: new Date(),
+      });
+    }
+
     try {
       const formData = new FormData();
       formData.append("recipient", clientId.toString());
@@ -45,7 +83,7 @@ export default function SendMail({
 
       // Log all data from formData
 
-      const response = await fetch("/api/sendgrid/send", {
+      const response = await fetch("/api/infobip/email/send", {
         method: "POST",
         body: formData,
       });
@@ -69,10 +107,10 @@ export default function SendMail({
       setMessageInput("");
       setFiles([]);
       const currentClient = clientList?.find(
-        (client) => client.id === clientId,
+        (client) => client.id === clientId
       );
       const filterCurrentClient = clientList?.filter(
-        (client) => client.id !== clientId,
+        (client) => client.id !== clientId
       );
       currentClient && setClientList([currentClient, ...filterCurrentClient]);
     } catch (e) {
@@ -83,7 +121,7 @@ export default function SendMail({
   const handleRemoveAttachment = (fileName: string) => {
     setFiles(
       (multiFiles) =>
-        multiFiles && multiFiles?.filter((file) => file?.name !== fileName),
+        multiFiles && multiFiles?.filter((file) => file?.name !== fileName)
     );
   };
   return (
@@ -93,56 +131,79 @@ export default function SendMail({
         onAllRemove={() => setFiles([])}
         onRemoveAttachment={handleRemoveAttachment}
       />
+
       <form
-        className="flex h-[51px] items-center gap-x-2 rounded-b-md bg-[#D9D9D9] px-2 py-1"
-        onSubmit={(event) => startTransition(() => handleSendMessage(event))}
+        className="flex items-center gap-2 rounded-b-md bg-zinc-100 px-2 py-1 dark:bg-zinc-800/60"
+        onSubmit={(event) => {
+          event.preventDefault();
+          startTransition(() => handleSendMessage(event));
+        }}
+        onDragOver={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          const dropped = Array.from(e.dataTransfer.files || []);
+          if (dropped.length) setFiles((prev) => [...prev, ...dropped]);
+        }}
       >
+        {/* hidden file input */}
         <input
           onChange={(e) => {
-            setFiles(Array.from(e?.target?.files || []));
-            e.target.value = "";
+            const picked = Array.from(e.target.files || []);
+            if (picked.length) setFiles((prev) => [...prev, ...picked]); // append, don't replace
+            e.currentTarget.value = "";
           }}
           multiple
           type="file"
           className="hidden"
           ref={fileRef}
+          aria-hidden
+          tabIndex={-1}
         />
-        <Image
-          src="/icons/Attachment.svg"
-          alt="attachment"
-          width={20}
-          height={20}
-          className="cursor-pointer"
-          onClick={() => {
-            fileRef?.current?.click();
-          }}
-        />
-        <div className="flex h-full w-full items-center gap-x-2 rounded-md bg-background">
+
+        {/* attach button (accessible) */}
+        <button
+          type="button"
+          onClick={() => fileRef?.current?.click()}
+          className="inline-flex h-9 w-9 items-center justify-center rounded-md text-zinc-600 transition hover:bg-zinc-200/80 active:scale-[0.98] dark:text-zinc-300 dark:hover:bg-white/10"
+          aria-label="Add attachment"
+          title="Add attachment"
+        >
+          <Image src="/icons/Attachment.svg" alt="" width={20} height={20} />
+        </button>
+
+        {/* input area */}
+        <div className="flex w-full items-center gap-2 rounded-md bg-white ring-1 ring-zinc-200 focus-within:ring-emerald-500 dark:bg-zinc-900 dark:ring-white/10">
           <textarea
-            placeholder="Send Message..."
-            className="h-full w-full rounded-md border-none px-2 py-0 text-[16px] focus:outline-none"
+            placeholder="Send message…"
+            className="max-h-28 min-h-10 w-full resize-none rounded-md border-none bg-transparent px-3 py-2 text-[15px] leading-5 text-zinc-800 outline-none placeholder:text-zinc-400 focus:outline-none dark:text-zinc-100 dark:placeholder:text-zinc-500"
             value={messageInput}
             style={{
               WebkitAppearance: "none",
-              maxHeight: "100%",
               WebkitTextSizeAdjust: "100%",
               touchAction: "manipulation",
             }}
             onChange={(e) => setMessageInput(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault(); // Prevents a new line
+                e.preventDefault();
                 startTransition(() => handleSendMessage(e));
               }
             }}
+            rows={1}
+            aria-label="Message"
           />
+
           <button
             type="submit"
-            className="px-2 text-[#006D77] disabled:text-gray-400"
+            className="mr-1 inline-flex h-9 w-9 items-center justify-center rounded-md text-emerald-700 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:text-zinc-400 disabled:hover:bg-transparent dark:text-emerald-400 dark:hover:bg-emerald-400/10"
             disabled={pending || (!messageInput && files.length === 0)}
+            aria-label="Send message"
+            title="Send"
           >
-            <MdSend className="text-2xl" />
-            {/* <Image src="/icons/Send.svg" alt="send" width={20} height={20} /> */}
+            <MdSend className="text-xl" />
           </button>
         </div>
       </form>

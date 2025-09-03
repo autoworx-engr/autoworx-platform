@@ -41,6 +41,13 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
         },
       ],
     },
+    include: {
+      taskUser: {
+        include: {
+          user: true,
+        },
+      },
+    },
   });
 
   const companyUsersPromise = db.user.findMany({
@@ -51,7 +58,7 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
 
   const smsPromise = getSms(client?.id);
 
-  const [conversationsData, estimates, tasks, companyUsers, smsData] =
+  const [conversationsData, estimates, tasksData, companyUsers, smsData] =
     await Promise.all([
       conversationsPromise,
       estimatesPromise,
@@ -60,67 +67,134 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
       smsPromise,
     ]);
 
+  // Transform tasks to include assignedUsers in the correct format
+  const tasks = tasksData.map((task) => ({
+    ...task,
+    assignedUsers: task.taskUser.map((tu) => tu.user),
+  }));
+
   const conversations = conversationsData.data;
 
   return (
-    <div className="thin-scrollbar h-[60%] space-y-4 overflow-y-auto px-4 2xl:h-[60%]">
-      {/* client notes */}
-      <ClientNotes clientId={client.id} clientNotes={client?.notes || ""} />
-      {/* shared files */}
-      <div>
-        <p>Shared Files</p>
-        <div className="mt-4 flex flex-wrap items-center gap-5">
-          <p>Email :</p>
-          {conversations &&
-            conversations?.length > 0 &&
-            conversations?.map((email) =>
-              email.attachments.map((attachment) => (
-                <SaveAttachment key={attachment.id} attachment={attachment} />
-              ))
+    <div className="thin-scrollbar h-[60%] 2xl:h-[60%] overflow-y-auto px-4 space-y-6">
+      {/* Client notes */}
+      <section className="rounded-2xl border border-zinc-200/70 bg-white p-4 shadow-sm transition-colors dark:border-white/10 dark:bg-zinc-900/60 mt-2">
+        <ClientNotes clientId={client.id} clientNotes={client?.notes || ""} />
+      </section>
+
+      {/* Shared files */}
+      <section className="rounded-2xl border border-zinc-200/70 bg-white p-4 shadow-sm transition-colors dark:border-white/10 dark:bg-zinc-900/60">
+        <header className="mb-3 flex items-center justify-between">
+          <h3 className="text-sm font-semibold tracking-tight text-zinc-800 dark:text-zinc-100">
+            Shared Files
+          </h3>
+          <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium text-zinc-600 dark:bg-white/10 dark:text-zinc-300">
+            {(conversations?.flatMap((e) => e.attachments).length || 0) +
+              (smsData?.flatMap((s) => s.attachments).length || 0)}
+          </span>
+        </header>
+
+        {/* Email attachments */}
+        <div className="mt-1">
+          <div className="flex items-center gap-2">
+            <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+              Email
+            </p>
+            <span className="rounded-full bg-zinc-100 px-1.5 py-0.5 text-[10px] text-zinc-600 dark:bg-white/10 dark:text-zinc-300">
+              {conversations?.flatMap((e) => e.attachments).length || 0}
+            </span>
+          </div>
+
+          <div className="mt-3 flex flex-wrap gap-3">
+            {conversations && conversations.length > 0 ? (
+              conversations.map((email) =>
+                email.attachments.map((attachment) => (
+                  <SaveAttachment key={attachment.id} attachment={attachment} />
+                ))
+              )
+            ) : (
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                No files shared via email yet.
+              </p>
             )}
+          </div>
         </div>
 
-        <div className="mt-4 flex flex-wrap items-center gap-5">
-          <p>SMS :</p>
+        {/* SMS attachments */}
+        <div className="mt-5">
+          <div className="flex items-center gap-2">
+            <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+              SMS
+            </p>
+            <span className="rounded-full bg-zinc-100 px-1.5 py-0.5 text-[10px] text-zinc-600 dark:bg-white/10 dark:text-zinc-300">
+              {smsData?.flatMap((s) => s.attachments).length || 0}
+            </span>
+          </div>
 
-          {smsData &&
-            smsData?.length > 0 &&
-            smsData?.map((sms) =>
-              sms.attachments.map((attachment) => (
-                <SaveAttachment key={attachment.id} attachment={attachment} />
-              ))
+          <div className="mt-3 flex flex-wrap gap-3">
+            {smsData && smsData.length > 0 ? (
+              smsData.map((sms) =>
+                sms.attachments.map((attachment) => (
+                  <SaveAttachment key={attachment.id} attachment={attachment} />
+                ))
+              )
+            ) : (
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                No files shared via SMS yet.
+              </p>
             )}
+          </div>
         </div>
-      </div>
-      {/* estimate and invoices */}
-      <div>
-        <p>Estimate and Invoices</p>
+      </section>
+
+      {/* Estimates & Invoices */}
+      <section className="rounded-2xl border border-zinc-200/70 bg-white p-4 shadow-sm transition-colors dark:border-white/10 dark:bg-zinc-900/60">
+        <header className="mb-3 flex items-center justify-between">
+          <h3 className="text-sm font-semibold tracking-tight text-zinc-800 dark:text-zinc-100">
+            Estimates & Invoices
+          </h3>
+        </header>
         <ClientEstimates
           clientId={client.id}
           estimates={estimates}
           vehicles={vehicles}
         />
-      </div>
-      {/* task */}
-      {/* TODO: @bettercallsundim - complete this feature */}
-      <div>
-        <p>Task List</p>
-        <div className="mt-4 flex flex-wrap items-center gap-4 text-sm">
-          {tasks?.length > 0 &&
+      </section>
+
+      {/* Task list */}
+      <section className="rounded-2xl border border-zinc-200/70 bg-white p-4 shadow-sm transition-colors dark:border-white/10 dark:bg-zinc-900/60">
+        <header className="mb-3 flex items-center justify-between">
+          <h3 className="text-sm font-semibold tracking-tight text-zinc-800 dark:text-zinc-100">
+            Task List
+          </h3>
+          <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium text-zinc-600 dark:bg-white/10 dark:text-zinc-300">
+            {tasks?.length || 0}
+          </span>
+        </header>
+
+        <div className="flex flex-wrap items-center gap-2">
+          {tasks?.length ? (
             tasks.map((task) => (
               <div
                 key={task.id}
-                className="flex items-center gap-x-4 rounded-full bg-[#6571FF] px-2 py-1 text-white"
+                className="group flex items-center gap-2 rounded-full border border-transparent bg-indigo-600/90 px-3 py-1.5 text-xs font-medium text-white shadow-sm transition-colors hover:bg-indigo-600"
+                title={task.title}
               >
-                <span>
-                  {task.title.length > 20
-                    ? task.title.slice(0, 20) + "..."
+                <span className="truncate max-w-[12rem]">
+                  {task.title.length > 40
+                    ? task.title.slice(0, 40) + "…"
                     : task.title}
                 </span>
                 <TaskActions usersOfCompany={companyUsers} task={task} />
               </div>
-            ))}
-          <div>
+            ))
+          ) : (
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              No tasks yet — add one below.
+            </p>
+          )}
+
+          <div className="ml-auto">
             <NewTask
               companyUsers={companyUsers}
               isClientTask={true}
@@ -128,7 +202,7 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
             />
           </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

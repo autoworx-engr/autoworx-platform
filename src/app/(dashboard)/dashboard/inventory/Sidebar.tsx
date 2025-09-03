@@ -178,7 +178,7 @@ export default async function Sidebar({
                         cost={parseFloat(product.price?.toString() || "0")} // This should still work
                         productType={product.type}
                       />
-                      <ReplenishProductForm productId={productId} />
+                      <ReplenishProductForm lastUnit={product.unit} productId={productId} />
                     </div>
                   )}
                 </div>

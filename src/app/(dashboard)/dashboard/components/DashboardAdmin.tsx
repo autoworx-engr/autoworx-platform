@@ -1,7 +1,7 @@
 import AppointmentListBox from "./box/AppointmentListBox";
-import EmployeeLeaveRequestsBox from "./box/EmployeeLeaveRequestsBox";
 import EmployeePayoutBox from "./box/EmployeePayoutBox";
 import InventoryBox from "./box/InventoryBox";
+import ReputationBox from "./box/ReputationBox";
 import RevenueBox from "./box/RevenueBox";
 import SalesPipelineBox from "./box/SalesPipelineBox";
 import ShopPipelineBox from "./box/ShopPipelineBox";
@@ -34,7 +34,7 @@ const Dashboard = async () => {
       {/* col 4*/}
       <div className="flex h-full w-full flex-1 flex-col space-y-4 lg:w-[30%]">
         <TaskListBox />
-        <EmployeeLeaveRequestsBox />
+        <ReputationBox />
       </div>
     </div>
   );

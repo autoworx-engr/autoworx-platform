@@ -124,6 +124,13 @@ export default function InventoryDisplay({
     return acc;
   }, [] as TInventoryPurchaseHistory);
 
+  // Sort the final inventory history by date in descending order
+  const sortedInventoryHistory = inventoryHistory.sort((a, b) => {
+    const dateA = a.date ? new Date(a.date).getTime() : 0;
+    const dateB = b.date ? new Date(b.date).getTime() : 0;
+    return dateB - dateA;
+  });
+
   const handlePageChange = (page: number, pageSize?: number) => {
     const searchParams = new URLSearchParams(params.toString());
     searchParams.set("page", page.toString());
@@ -142,8 +149,8 @@ export default function InventoryDisplay({
   const endIndex = currentPage * pageSize;
 
   const inventoryToRender = search
-    ? inventoryHistory
-    : inventoryHistory.slice(startIndex, endIndex);
+    ? sortedInventoryHistory
+    : sortedInventoryHistory.slice(startIndex, endIndex);
   if (isDesktop) {
     return (
       <div className="thin-scrollbar hidden scroll-smooth md:block">
@@ -182,7 +189,7 @@ export default function InventoryDisplay({
                 className="custom-pagination"
                 current={currentPage}
                 pageSize={pageSize}
-                total={inventoryHistory.length}
+                total={sortedInventoryHistory.length}
                 onChange={handlePageChange}
                 showSizeChanger
                 onShowSizeChange={handlePageChange}
@@ -196,7 +203,7 @@ export default function InventoryDisplay({
 
   return (
     <div className="space-y-4 md:hidden">
-      {inventoryHistory.map((history, index) => (
+      {sortedInventoryHistory.map((history, index) => (
         <InventoryMobileCard key={history.id} history={history} index={index} />
       ))}
     </div>

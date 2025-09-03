@@ -142,9 +142,9 @@ export default function SalesPerformanceTable() {
           <ConvertedDataGraph data={data?.convertedLeadsPerMonth || []} />
         </div>
 
-        <div className="hidden lg:flex">
+        {/* <div className="hidden lg:flex">
           <SalesAcitivityGraph />
-        </div>
+        </div> */}
 
         {/* </div> */}
       </div>

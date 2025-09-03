@@ -1,17 +1,17 @@
-'use server';
+"use server";
 
-import { createTask } from '@/actions/task/createTask';
-import { authOptions } from '@/authOptions';
-import { errorHandler } from '@/error-boundary/globalErrorHandler';
-import { db } from '@/lib/db';
-import { getProductWithQuantity } from '@/lib/getProductWithQuantity';
-import { sendEstimateCreateNotification } from '@/lib/notification/invoice-notify';
-import { updateInvoiceAutomationTrigger } from '@/service/invoice-automation-trigger/api';
-import { updateServiceAutomationTrigger } from '@/service/service-maintenance-automation-trigger/api';
-import { InspectionType } from '@/stores/estimate-create';
-import { ServerAction } from '@/types/action';
-import { TErrorHandler } from '@/types/globalError';
-import { estimateCreateValidationSchema } from '@/validations/schemas/estimate/estimate.validation';
+import { createTask } from "@/actions/task/createTask";
+import { authOptions } from "@/authOptions";
+import { errorHandler } from "@/error-boundary/globalErrorHandler";
+import { db } from "@/lib/db";
+import { getProductWithQuantity } from "@/lib/getProductWithQuantity";
+import { sendEstimateCreateNotification } from "@/lib/notification/invoice-notify";
+import { updateInvoiceAutomationTrigger } from "@/service/invoice-automation-trigger/api";
+import { updateServiceAutomationTrigger } from "@/service/service-maintenance-automation-trigger/api";
+import { InspectionType } from "@/stores/estimate-create";
+import { ServerAction } from "@/types/action";
+import { TErrorHandler } from "@/types/globalError";
+import { estimateCreateValidationSchema } from "@/validations/schemas/estimate/estimate.validation";
 import {
   Coupon,
   InvoiceType,
@@ -19,9 +19,9 @@ import {
   Material,
   Service,
   Tag,
-} from '@prisma/client';
-import { getServerSession } from 'next-auth';
-import { revalidatePath } from 'next/cache';
+} from "@prisma/client";
+import { getServerSession } from "next-auth";
+import { revalidatePath } from "next/cache";
 
 /**
  * Creates a new invoice in the system
@@ -52,7 +52,7 @@ type TCreateInvoiceProps = {
   customerNotes: string;
   customerComments: string;
 
-  photos: string[];
+  photos: { id?: number;  photo?: string}[];
   items: {
     service: Service | null;
     materials: ((Material & { tags: Tag[] }) | null)[];
@@ -138,7 +138,7 @@ export async function createInvoice({
     const companyId = session?.user.companyId;
 
     if (!companyId) {
-      throw new Error('Company ID is required to create an email template.');
+      throw new Error("Company ID is required to create an email template.");
     }
 
     const invoice = await db.$transaction(async (db) => {
@@ -148,11 +148,11 @@ export async function createInvoice({
 
       if (!finalColumnId) {
         // If type is "Estimate", the column should be "Pending", otherwise, it should be "In Progress"
-        if (type === 'Estimate') {
+        if (type === "Estimate") {
           const defaultColumn = await db.column.findFirst({
             where: {
-              title: 'Pending',
-              type: 'shop',
+              title: "Pending",
+              type: "shop",
               companyId,
             },
             select: {
@@ -162,13 +162,13 @@ export async function createInvoice({
           if (defaultColumn) {
             finalColumnId = defaultColumn.id;
           } else {
-            throw new Error('Default column not found');
+            throw new Error("Default column not found");
           }
         } else {
           const inProgressColumnId = await db.column.findFirst({
             where: {
-              title: 'In Progress',
-              type: 'shop',
+              title: "In Progress",
+              type: "shop",
               companyId,
             },
             select: {
@@ -179,7 +179,7 @@ export async function createInvoice({
             finalColumnId = inProgressColumnId.id;
             isWorkOrder = true;
           } else {
-            throw new Error('In Progress column not found');
+            throw new Error("In Progress column not found");
           }
         }
       } else {
@@ -191,10 +191,10 @@ export async function createInvoice({
           },
         });
         if (column) {
-          type = column.title === 'In Progress' ? 'Invoice' : type;
-          isWorkOrder = column.title === 'In Progress';
+          type = column.title === "In Progress" ? "Invoice" : type;
+          isWorkOrder = column.title === "In Progress";
         } else {
-          throw new Error('Column not found to create invoice conversions');
+          throw new Error("Column not found to create invoice conversions");
         }
       }
 
@@ -249,7 +249,7 @@ export async function createInvoice({
       });
       //for estimate creation mark
       // If it's an estimate, find the client's lead and update
-      if (type === 'Estimate' && clientId) {
+      if (type === "Estimate" && clientId) {
         const theClient = await db.client.findUnique({
           where: { id: clientId },
         });
@@ -319,7 +319,7 @@ export async function createInvoice({
           return db.invoicePhoto.create({
             data: {
               invoiceId: newInvoice.id,
-              photo,
+              photo: photo.photo ?? "",
             },
           });
         })
@@ -380,7 +380,7 @@ export async function createInvoice({
             materials.map(async (material) => {
               if (!material || !material.name) return;
               if (Number(material?.quantity || 0) <= 0) {
-                throw new Error('Material quantity should be greater than 0');
+                throw new Error("Material quantity should be greater than 0");
               }
               // if (Number(material?.cost || 0) > Number(material?.sell || 0)) {
               //   throw new Error(
@@ -469,12 +469,12 @@ export async function createInvoice({
       tasks.map(async (task) => {
         if (!task) return;
 
-        const taskSplit = task.task.split(':');
+        const taskSplit = task.task.split(":");
 
         return createTask({
           title: taskSplit[0].trim(),
-          description: taskSplit.length > 1 ? taskSplit[1].trim() : '',
-          priority: 'Medium',
+          description: taskSplit.length > 1 ? taskSplit[1].trim() : "",
+          priority: "Medium",
           assignedUsers: [],
           invoiceId: invoice.id,
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -488,30 +488,31 @@ export async function createInvoice({
       companyId,
       invoiceId: invoice.id,
       invoiceType: invoice.type,
-      clientName: invoice.client?.firstName + ' ' + invoice.client?.lastName,
+      clientName: invoice.client?.firstName + " " + invoice.client?.lastName,
     });
 
-    if (invoice.type == 'Invoice') {
+    if (invoice.type == "Invoice") {
       await updateServiceAutomationTrigger({
         companyId: invoice?.companyId,
         estimateId: invoice?.id,
         columnId: invoice?.columnId!,
       });
-
-      // If newly invoice created invoice automation trigger
-      updateInvoiceAutomationTrigger({
-        companyId: invoice?.companyId,
-        invoiceId: invoice?.id!,
-        columnId: invoice?.columnId!,
-      });
     }
 
+    // If newly invoice created invoice automation trigger
+    updateInvoiceAutomationTrigger({
+      companyId: invoice?.companyId,
+      invoiceId: invoice?.id!,
+      columnId: invoice?.columnId!,
+      type: invoice?.type!,
+    });
+
     // Step 12: Revalidate the estimate page
-    revalidatePath('/estimate');
+    revalidatePath("/estimate");
 
     // Return success response
     return {
-      type: 'success',
+      type: "success",
       data: invoice,
     };
   } catch (err) {

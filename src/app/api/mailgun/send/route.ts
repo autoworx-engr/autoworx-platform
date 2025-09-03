@@ -171,7 +171,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       await updateNewEmailChatTrack({
         clientId: parseInt(recipient),
         emailLastMessage: text || "",
-        lastMessageBy: "Company",
+        lastEmailBy: "Company",
       });
       for (const file of attachments) {
         const formData2 = new FormData();

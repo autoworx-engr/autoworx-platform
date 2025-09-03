@@ -3,12 +3,14 @@ import { getLastClockInOutForUser } from "@/actions/dashboard/clockIn";
 import AppointmentListBox from "./box/AppointmentListBox";
 import AttendanceButtonsBox from "./box/AttendanceButtonsBox";
 import RecentMessagesBox from "./box/RecentMessagesBox";
+import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
 
 export default async function DashboardOther() {
-  const currentTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const companyTimezone = await getCompanyTimezone();
+  const timezone = companyTimezone?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   let lastClockInOut = await getLastClockInOutForUser({
-    timezone: currentTimezone,
+    timezone: timezone,
   });
 
   return (

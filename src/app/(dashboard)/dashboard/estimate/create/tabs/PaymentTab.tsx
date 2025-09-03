@@ -1,12 +1,11 @@
 import { cn } from "@/lib/cn";
 import { db } from "@/lib/db";
 import { Service } from "@prisma/client";
-import moment from "moment";
-import Link from "next/link";
+import moment from "moment-timezone";
 import React from "react";
-import CurrentInvoicePayment from "./CurrentInvoicePayment";
 import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
 import { formatCurrency } from "@/utils/formatCurrency";
+import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
 
 const evenColor = "bg-background";
 const oddColor = "bg-[#F8FAFF]";
@@ -16,6 +15,8 @@ export default async function PaymentTab({
 }: {
   clientId: number | undefined;
 }) {
+  const { timezone } = await getCompanyTimezone();
+
   if (!clientId)
     return (
       <div className="flex h-full items-center justify-center">
@@ -85,6 +86,7 @@ export default async function PaymentTab({
       cash: true,
       deposit: true,
       createdAt: true,
+      date: true,
       Refund: {
         select: {
           id: true,
@@ -159,7 +161,7 @@ export default async function PaymentTab({
             ? payment.other
             : payment.deposit,
       // Use payment date instead of invoice date if available
-      paymentDate: payment.createdAt || originalInvoice.createdAt,
+      paymentDate: payment.date || originalInvoice.createdAt,
     });
 
     // Add payment transaction entry
@@ -169,7 +171,7 @@ export default async function PaymentTab({
       invoiceId: originalInvoice.id,
       vehicle: vehicle?.model ?? "",
       amount: originalAmount,
-      date: payment.createdAt || originalInvoice.createdAt,
+      date: payment.date || originalInvoice.createdAt,
       method: paymentMethodText,
       notes: payment.notes,
       paymentId: payment.id,
@@ -245,9 +247,9 @@ export default async function PaymentTab({
   });
 
   return (
-    <div className="h-full">
+    <div className="w-full mx-auto h-full">
       {/* Section 1 */}
-      <div className="flex h-[25%] flex-wrap items-center justify-between gap-4 md:flex-nowrap md:gap-0">
+      <div className="flex h-[25%] flex-wrap items-center justify-between gap-4 2xl:flex-nowrap md:gap-0">
         {/* <CurrentInvoicePayment /> */}
         <div className="grid w-full grid-cols-2 justify-between border border-slate-400 md:flex md:w-fit">
           <div className="bg-[#F8FAFF] p-5 px-2 text-center font-semibold md:px-10">
@@ -295,11 +297,11 @@ export default async function PaymentTab({
       </div>
 
       {/* Section 2 */}
-      <h3 className="mb-1 mt-3 font-semibold">Invoice Payments</h3>
+      <h3 className="mb-1 mt-3 lg:mt-12 font-semibold">Invoice Payments</h3>
       <div className="h-[30%] overflow-scroll rounded-lg border md:rounded-none">
         {/* Desktop View */}
-        <div className="hidden md:block">
-          <table className="w-full text-xs">
+        <div className="hidden md:block ">
+          <table className="table-auto w-full text-xs">
             <thead className="bg-background">
               <tr className="h-10 border-b">
                 <th className="px-10 text-left">Invoice ID</th>
@@ -329,7 +331,7 @@ export default async function PaymentTab({
                   </td>
                   <td className="px-10 text-left">{data.vehicle}</td>
                   <td className="px-10 text-left">
-                    ${data.amountPaid?.toString()}
+                    {formatCurrency(data.amountPaid)}
                   </td>
                   <td className="px-10 text-left">
                     {data.paymentMethodInfo &&
@@ -341,7 +343,9 @@ export default async function PaymentTab({
                   <td className="px-10 text-left">
                     {moment(data.paymentDate).format("DD.MM.YYYY")}
                   </td>
-                  <td className="px-10 text-left">{data.due?.toString()}</td>
+                  <td className="px-10 text-left">
+                    {formatCurrency(Number(data.due))}
+                  </td>
                   <td className="px-10 text-left">{data.column?.title}</td>
                   <td className="px-10 text-left">{data.notes}</td>
                 </tr>
@@ -370,7 +374,7 @@ export default async function PaymentTab({
                   }
                 />
                 <p className="text-lg font-bold text-[#6571FF]">
-                  ${data.amountPaid?.toString()}
+                  {formatCurrency(data.amountPaid)}
                 </p>
               </div>
               <div className="mt-2 space-y-2">
@@ -381,7 +385,7 @@ export default async function PaymentTab({
                 <div className="flex justify-between">
                   <p className="text-sm text-[#66738C]">Date</p>
                   <p className="text-sm font-medium">
-                    {moment(data.paymentDate).format("DD.MM.YYYY")}
+                    {moment.tz(data.paymentDate, timezone).format("DD.MM.YYYY")}
                   </p>
                 </div>
                 <div className="flex justify-between">
@@ -412,7 +416,7 @@ export default async function PaymentTab({
 
       {/* Section 3 */}
       <h3 className="mb-1 mt-3 font-semibold">Transaction History</h3>
-      <div className="h-[30%] overflow-scroll rounded-lg border md:rounded-none">
+      <div className="h-[30%] overflow-scroll  rounded-lg border md:rounded-none">
         {/* Desktop View */}
         <div className="hidden md:block">
           <table className="w-full text-xs">
@@ -460,7 +464,7 @@ export default async function PaymentTab({
                   <td
                     className={`px-10 text-left ${transaction.type === "REFUND" ? "text-red-600" : ""}`}
                   >
-                    ${Math.abs(transaction.amount).toFixed(2)}
+                    {formatCurrency(Math.abs(transaction.amount))}
                   </td>
                   <td className="px-10 text-left">
                     {transaction.cashReceived
@@ -468,7 +472,7 @@ export default async function PaymentTab({
                       : "N/A"}
                   </td>
                   <td className="px-10 text-left">
-                    {moment(transaction.date).format("DD.MM.YYYY")}
+                    {moment.tz(transaction.date, timezone).format("DD.MM.YYYY")}
                   </td>
                   <td className="px-10 text-left">{transaction.method}</td>
                   <td className="px-10 text-left">{transaction.notes}</td>

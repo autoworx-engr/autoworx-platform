@@ -1,3 +1,4 @@
+"use client";
 import { updateLeaveRequestStatus } from "@/actions/settings/my-account/leave-requests/updateLeaveRequestStatus";
 import { errorToast, successToast } from "@/lib/toast";
 import formatDateToReadable from "@/utils/formatDate";
@@ -36,7 +37,7 @@ export const EmployeeLeaveRequest = ({
           onClick={async () => {
             const res = await updateLeaveRequestStatus(
               leaveRequest.id,
-              "Approved",
+              "Approved"
             );
             if (res.success) {
               successToast(res.message);
@@ -52,7 +53,7 @@ export const EmployeeLeaveRequest = ({
           onClick={async () => {
             const res = await updateLeaveRequestStatus(
               leaveRequest.id,
-              "Rejected",
+              "Rejected"
             );
             if (res.success) {
               successToast(res.message);

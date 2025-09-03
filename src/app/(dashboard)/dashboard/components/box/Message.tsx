@@ -1,4 +1,3 @@
-
 import Image from "next/image";
 import Link from "next/link";
 
@@ -25,7 +24,7 @@ export function Message({
       <Image width={60} height={60} src={photoUrl} alt="" />
 
       <div>
-        <p className="mb-2 font-semibold">{userName}</p>
+        <p className="mb-2 font-semibold pr-8">{userName}</p>
         <p>{message}</p>
       </div>
       <span className="absolute right-2 top-2 rounded-md bg-emerald-600 px-2 py-1 text-xs text-white">

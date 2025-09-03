@@ -1,15 +1,15 @@
 "use client";
 
 import EditVendor from "@/components/Lists/EditVendor";
+import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { cn } from "@/lib/cn";
 import { Vendor } from "@prisma/client";
-import moment from "moment";
-import { redirect, useRouter } from "next/navigation";
-import React from "react";
+import { Popconfirm } from "antd";
+import moment from "moment-timezone";
+import { useRouter } from "next/navigation";
 import { CiEdit } from "react-icons/ci";
 import { FaTimes } from "react-icons/fa";
 import { deleteVendor } from "../../../../../actions/vendor/deleteVendor";
-import { Popconfirm } from "antd";
 
 const evenColor = "bg-background";
 const oddColor = "bg-[#F8FAFF]";
@@ -22,6 +22,7 @@ export default function Table({
   vendorId: number;
 }) {
   const router = useRouter();
+  const timezone = useCompanyTimezone();
 
   return (
     <div className="hidden h-[90%] w-[70%] overflow-y-auto lg:block">
@@ -45,7 +46,7 @@ export default function Table({
               className={cn(
                 "cursor-pointer rounded-md py-3",
                 index % 2 === 0 ? evenColor : oddColor,
-                vendorId === vendor.id && "border-2 border-[#6571FF]",
+                vendorId === vendor.id && "border-2 border-[#6571FF]"
               )}
               onClick={() =>
                 router.push(`/dashboard/inventory/vendor?vendorId=${vendor.id}`)
@@ -64,9 +65,9 @@ export default function Table({
               <td className="px-2 py-1 text-left">{vendor.website}</td>
               <td className="px-2 py-1 text-left">
                 {/* {moment.utc(vendor.createdAt).format("DD MMM YYYY, hh:mm A")} */}
-                {moment.utc(vendor.createdAt).format(
+                {moment.tz(vendor.createdAt, timezone).format(
                   // date.month.year
-                  "MM/DD/YYYY",
+                  "MM/DD/YYYY"
                 )}
               </td>
 

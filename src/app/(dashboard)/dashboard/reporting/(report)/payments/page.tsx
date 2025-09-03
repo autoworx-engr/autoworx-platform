@@ -65,29 +65,6 @@ export default async function PaymentReportPage({ searchParams }: TProps) {
     ? parseInt(searchParams.take, 10)
     : defaultTake;
 
-  if (searchParams.search) {
-    filterOR.push({ invoiceId: { contains: searchParams.search?.trim() } });
-  } else if (searchParams.startDate && searchParams.endDate) {
-    const formattedStartDate =
-      searchParams.startDate &&
-      moment(decodeURIComponent(searchParams.startDate!), "MM-DD-YYYY").format(
-        "YYYY-MM-DD"
-      );
-
-    const formattedEndDate =
-      searchParams.endDate &&
-      moment(decodeURIComponent(searchParams.endDate!), "MM-DD-YYYY").format(
-        "YYYY-MM-DD"
-      );
-    filterOR.push({
-      createdAt: {
-        gte:
-          formattedStartDate && new Date(`${formattedStartDate}T00:00:00.000Z`), // Start of the day
-        lte: formattedEndDate && new Date(`${formattedEndDate}T23:59:59.999Z`), // End of the day
-      },
-    });
-  }
-
   const paymentInfo = await db.payment.findMany({
     where: {
       companyId: session?.user?.companyId,
@@ -113,11 +90,12 @@ export default async function PaymentReportPage({ searchParams }: TProps) {
         },
       },
     },
-    // take: take,
-    // skip: (page - 1) * take,
+    orderBy: {
+      date: "desc",
+    },
   });
 
-  const filteredPayments =
+  let filteredPayments =
     searchParams?.search && paymentInfo
       ? paymentInfo.filter((payment: any) => {
           if (!payment.invoice.client && !payment.invoice.id) {
@@ -134,6 +112,36 @@ export default async function PaymentReportPage({ searchParams }: TProps) {
           );
         })
       : paymentInfo;
+
+  if (searchParams.startDate && searchParams.endDate) {
+    const formattedStartDate = searchParams.startDate
+      ? decodeURIComponent(searchParams.startDate!) // e.g. "05/01/2025"
+      : null;
+
+    const formattedEndDate = searchParams.endDate
+      ? decodeURIComponent(searchParams.endDate!)
+      : null;
+
+    const convertedStart = formattedStartDate
+      ? moment.tz(formattedStartDate!, "MM/DD/YYYY", timezone).startOf("day")
+      : null;
+
+    const convertedEnd = formattedEndDate
+      ? moment.tz(formattedEndDate!, "MM/DD/YYYY", timezone).endOf("day")
+      : null;
+
+    filteredPayments = filteredPayments.filter((payment) => {
+      if (!payment?.date) {
+        return false;
+      }
+
+      const paymentDate = payment.date ? moment.utc(payment.date) : null;
+      return (
+        paymentDate &&
+        paymentDate.isBetween(convertedStart, convertedEnd, null, "[]")
+      );
+    });
+  }
 
   const outStandingPayment = await db.payment.findMany({
     where: { companyId: session?.user?.companyId },
@@ -176,7 +184,7 @@ export default async function PaymentReportPage({ searchParams }: TProps) {
       {/* Replace the existing table and mobile card sections with: */}
       <PaymentDisplay
         paymentInfo={filteredPayments}
-        timezone={timezone || "America/Detroit"}
+        timezone={timezone}
         page={page}
         take={take}
       />{" "}

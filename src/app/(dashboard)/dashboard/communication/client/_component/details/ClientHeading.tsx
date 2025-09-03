@@ -1,19 +1,16 @@
 import { db } from "@/lib/db";
-import { Client, Service, Vehicle, Lead, User } from "@prisma/client";
+import { Client, Vehicle, User } from "@prisma/client";
 import Image from "next/image";
-// import CreateAppointment from "./CreateAppointment";
 import dynamic from "next/dynamic";
 import BackBtn from "../conversations/BackBtn";
+import { cn } from "@/lib/cn";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/Tooltip";
 
-type TProps = {
-  client?: Client | null;
-  vehicles?: Partial<Vehicle>[];
-};
+type TProps = { client?: Client | null; vehicles?: Partial<Vehicle>[] };
 
 const VehicleDetails = dynamic(() => import("./VehicleDetails"), {
   ssr: false,
 });
-
 const CreateAppointment = dynamic(() => import("./CreateAppointment"), {
   ssr: false,
 });
@@ -25,87 +22,125 @@ export default async function ClientHeading({ client, vehicles = [] }: TProps) {
     isLead: boolean;
     services: string;
     salesUser: User | null;
-  } | null> = client?.leadId
+  } | null> = client.leadId
     ? db.lead.findUnique({
         where: { id: client.leadId },
-        select: {
-          isLead: true,
-          services: true,
-          salesUser: true,
-        },
+        select: { isLead: true, services: true, salesUser: true },
       })
     : Promise.resolve(null);
 
-  const invoicesPromise =
-    client?.id &&
-    db.invoice.findMany({
-      where: { clientId: client.id },
-      include: {
-        invoiceItems: {
-          include: { service: true },
-        },
-        vehicle: true,
-      },
-    });
+  const invoicesPromise = db.invoice.findMany({
+    where: { clientId: client.id },
+    include: {
+      invoiceItems: { include: { service: true } },
+      vehicle: true,
+    },
+  });
 
   const [lead, invoices] = await Promise.all([leadPromise, invoicesPromise]);
 
   return (
-    <div className="#h-[25%] h-[40%] rounded-t-lg bg-[#006D77] text-xs text-white 2xl:text-base">
-      {/*  md:min-h-[35%] */}
+    <div
+      className={cn(
+        "h-[40%] rounded-t-2xl text-white text-xs 2xl:text-base",
+        // richer depth: gradient + subtle ring
+        "bg-gradient-to-r from-[#006D77] to-[#0a8a95] ring-1 ring-white/10 pb-4"
+      )}
+    >
       {/* Header */}
-      <div className="flex px-2 pt-4 xl:pt-0">
+      <div className="flex items-center gap-2 px-2 pt-4 xl:pt-2">
         <div className="block xl:hidden">
           <BackBtn />
         </div>
-        <h2 className="text-white xl:p-3">Client Data</h2>
+        <h2 className="px-1 text-sm font-semibold tracking-tight xl:p-3 xl:text-base">
+          Client Data
+        </h2>
       </div>
 
-      <div className="grid h-full grid-cols-1 overflow-hidden px-2 md:grid-cols-2 gap-2">
-        <div className="h-full rounded-lg">
-          {/* Content */}
-          <div className="mt-5 flex items-center gap-3 px-5">
-            {/* lg:flex-col gap-5 lg:flex-wrap 2xl:flex-row */}
+      {/* Body */}
+      <div className="grid h-[calc(100%-3rem)] grid-cols-1 gap-3 overflow-hidden px-2 md:grid-cols-2">
+        {/* Left: identity & actions */}
+        <div className="h-full rounded-xl">
+          <div className="mt-3 flex items-center gap-4 px-3 sm:px-5">
             <Image
               src={
-                !client?.photo
+                !client.photo
                   ? "/images/default.png"
                   : client.photo.includes("/images/default.png")
                     ? "/images/default.png"
                     : client.photo
               }
-              alt="client"
-              width={80}
-              height={80}
-              className="h-[80px] w-[80px] rounded-full 2xl:h-[110px] 2xl:w-[110px]"
+              alt={
+                `${client.firstName ?? ""} ${client.lastName ?? ""}`.trim() ||
+                "Client"
+              }
+              width={96}
+              height={96}
+              className={cn(
+                "h-20 w-20 rounded-full object-cover",
+                "ring-2 ring-white/70 shadow-sm",
+                "2xl:h-[110px] 2xl:w-[110px]"
+              )}
             />
 
-            <div className="mt-2 flex flex-col lg:mt-0">
-              <h2 className="text-white">
-                {client?.firstName} {client?.lastName}
-              </h2>
-              <p className="text-white">Email : {client?.email}</p>
-              <p className="text-white">Phone : {client?.mobile}</p>
-              <p>{client?.id && <CreateAppointment clientId={client?.id} />}</p>
+            <div className="mt-1 flex min-w-0 flex-col">
+              <h3 className="truncate text-base font-semibold">
+                <Tooltip>
+                  <TooltipTrigger>
+                    {client.firstName} {client.lastName}
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-gradient-to-r from-[#006D77] to-[#0a8a95] text-white">
+                    <p>
+                      {client.firstName} {client.lastName}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </h3>
+
+              {client.email && (
+                <p className="mt-1 truncate text-[11px] opacity-90 2xl:text-sm">
+                  <span className="opacity-80">Email:</span>{" "}
+                  <span className="font-medium">{client.email}</span>
+                </p>
+              )}
+
+              {client.mobile && (
+                <p className="mt-1 truncate text-[11px] opacity-90 2xl:text-sm">
+                  <span className="opacity-80">Phone:</span>{" "}
+                  <span className="font-medium">{client.mobile}</span>
+                </p>
+              )}
+
+              <div className="mt-3">
+                <CreateAppointment clientId={client.id} />
+              </div>
+
               {lead?.salesUser && (
-                <p className="mt-4 text-white">
-                  Assigned Sales :{" "}
-                  {`${lead?.salesUser?.firstName} ${lead?.salesUser?.lastName}`}
+                <p className="mt-3 text-[11px] opacity-90 2xl:text-sm">
+                  <span className="opacity-80">Assigned Sales:</span>{" "}
+                  <span className="font-medium">
+                    {lead.salesUser.firstName} {lead.salesUser.lastName}
+                  </span>
                 </p>
               )}
             </div>
           </div>
         </div>
 
-        <div className="custom-scrollbar max-h-[200px] w-full flex-1 overflow-y-scroll rounded-md lg:mt-6 lg:py-0 lg:pl-0">
-          {client?.id && (
-            <VehicleDetails
-              isLeadClient={!!(lead && lead.isLead)}
-              vehicles={vehicles || []}
-              invoices={invoices || []}
-              singleService={lead ? lead?.services : ""}
-            />
+        {/* Right: vehicles & invoices */}
+        <div
+          className={cn(
+            "custom-scrollbar max-h-[220px] w-full flex-1 overflow-y-auto rounded-xl",
+            // readable frosted card on teal
+            "bg-white/10 p-3 backdrop-blur-md shadow-[inset_0_0_0_1px_rgba(255,255,255,0.2)]"
           )}
+        >
+          <VehicleDetails
+            isLeadClient={!!lead?.isLead}
+            vehicles={vehicles}
+            invoices={invoices}
+            singleService={lead?.services ?? ""}
+          />
         </div>
       </div>
     </div>

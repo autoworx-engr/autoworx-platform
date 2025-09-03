@@ -2,8 +2,8 @@
 
 import { db } from "@/lib/db";
 import getUser from "@/lib/getUser";
-import { sendSendgridEmail } from "../estimate/invoice/sendSendgridMail";
 import { updateNewEmailChatTrack } from "../communication/client/chat-track";
+import { sendInfobipEmail } from "../estimate/invoice/sendInfobipEmail";
 
 export async function sendFleetEmail({ statementId }: { statementId: string }) {
   try {
@@ -92,7 +92,7 @@ export async function sendFleetEmail({ statementId }: { statementId: string }) {
 
     const variabledBody = `Client: ${clientName}\n\n${table}`;
 
-    const res = await sendSendgridEmail({
+    const res = await sendInfobipEmail({
       clientId: fleetStatement?.invoice?.[0]?.client.id,
       subject: variabledSubject,
       text: variabledBody || "",
@@ -113,7 +113,7 @@ export async function sendFleetEmail({ statementId }: { statementId: string }) {
       await updateNewEmailChatTrack({
         clientId: fleetStatement?.invoice?.[0]?.client.id,
         emailLastMessage: variabledBody || "",
-        lastMessageBy: "Company",
+        lastEmailBy: "Company",
       });
     }
     return {

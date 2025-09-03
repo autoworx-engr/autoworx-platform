@@ -1,13 +1,33 @@
 "use client";
 
+import UserBugReport from "@/components/bug-report/UserBugReport";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import getUser from "@/lib/getUser";
+import { stateStore } from "@/stores/stateStore";
+import { User } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { LuMail, LuRefreshCcw, LuServerCrash } from "react-icons/lu";
+import { MdBugReport } from "react-icons/md";
 
 export default function ServerError({ error }: { error: Error }) {
   console.error("Server Error Log:", error);
+  const [user, setUser] = useState<User | null>(null);
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await getUser();
+        setUser(res);
+      } catch (error) {
+        console.error("Failed to fetch user:", error);
+      }
+    };
+    fetchUser();
+  }, []);
+
+  const { setIsNewBugOpen } = stateStore();
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-gradient-to-br from-white to-gray-100 p-4">
       <Card className="w-full max-w-3xl space-y-8 p-6 md:p-12">
@@ -33,13 +53,26 @@ export default function ServerError({ error }: { error: Error }) {
               Refreshing the page
             </button>
           </div>
-          <div className="space-y-2 rounded-lg border border-[#00b8b0]/30 bg-[#00b8b0]/5 p-4 text-center">
-            <LuMail className="mx-auto h-6 w-6 text-[#00b8b0]" />
-            <p className="text-gray-600">Contact support at</p>
-            <p className="break-all text-lg font-semibold text-[#00b8b0]">
-              {process.env.INFO_EMAIL}
-            </p>
-          </div>
+          {user ? (
+            <div className="space-y-2 rounded-lg border border-gray-200 p-4 text-center">
+              <MdBugReport className="mx-auto h-6 w-6 text-[#00b8b0]" />
+              <p className="text-gray-600">Found an issue?</p>
+              <button
+                onClick={() => setIsNewBugOpen(true)}
+                className="text-lg font-semibold text-[#00b8b0] hover:underline"
+              >
+                Report Bug
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-2 rounded-lg border border-[#00b8b0]/30 bg-[#00b8b0]/5 p-4 text-center">
+              <LuMail className="mx-auto h-6 w-6 text-[#00b8b0]" />
+              <p className="text-gray-600">Contact support at</p>
+              <p className="break-all text-lg font-semibold text-[#00b8b0]">
+                {process.env.INFO_EMAIL}
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="flex justify-center">
@@ -62,6 +95,8 @@ export default function ServerError({ error }: { error: Error }) {
           </Button>
         </div>
       </Card>
+
+      {user && <UserBugReport />}
     </div>
   );
 }

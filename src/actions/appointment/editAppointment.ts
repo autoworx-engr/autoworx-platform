@@ -17,11 +17,11 @@ import { getServerSession } from "next-auth";
 // import { revalidatePath } from "next/cache";
 import { getGoogleCalendarToken } from "../calendar-settings/getGoogleCalendarAuth";
 import { sendMessage } from "../communication/client/sendMessage";
-import { sendSendgridEmail } from "../estimate/invoice/sendSendgridMail";
+import { sendInfobipEmail } from "../estimate/invoice/sendInfobipEmail";
 import createGoogleCalendarEvent from "../task/google-calendar/createGoogleCalendarEvent";
 import updateGoogleCalendarEvent from "../task/google-calendar/updateGoogleCalendarEvent";
-import { deleteRemindersInNest } from "./deleteAppointment";
 import { scheduleRemindersInNest } from "./addAppointment";
+import { deleteRemindersInNest } from "./deleteAppointment";
 
 export interface AppointmentToUpdate {
   title: string;
@@ -230,13 +230,13 @@ export async function editAppointment({
       if (appointment.confirmationEmailTemplateStatus) {
         // send email
         if (client) {
-          await sendSendgridEmail({
+          sendInfobipEmail({
             clientId: client.id,
             subject: confirmationSubject,
             text: confirmationMessage,
           });
           try {
-            await sendMessage({
+            sendMessage({
               companyId: client.companyId,
               clientId: client.id,
               message: confirmationMessage || "",
@@ -310,7 +310,7 @@ export async function editAppointment({
                 .replace("<PHONE>", company?.phone ?? "");
 
               try {
-                sendSendgridEmail({
+                sendInfobipEmail({
                   clientId: client.id,
                   subject: reminderSubject,
                   text: reminderMessage,

@@ -29,7 +29,7 @@ const ResponsiveEmployeeCard = ({
   //     ? moment(data.createdAt).format("MM/DD/YYYY")
   //     : moment(data.joinDate).format("MM/DD/YYYY");
 
-  const joinDate = moment(data?.createdAt).format("MM/DD/YYYY");
+  const joinDate = moment(data?.joinDate).format("MM/DD/YYYY");
 
   const url =
     data.isFleet == true && isFleet == true

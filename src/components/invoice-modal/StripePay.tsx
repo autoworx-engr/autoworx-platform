@@ -11,6 +11,13 @@ import {
 } from "../Dialog";
 import { Label } from "../ui/label";
 import { errorToast } from "@/lib/toast";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
+import { ChevronDown } from "lucide-react";
 
 export function StripePay({
   due,
@@ -27,19 +34,55 @@ export function StripePay({
 }) {
   const [amount, setAmount] = useState(due);
   const [isLoading, setIsLoading] = useState(false);
+  const [payType, setPayType] = useState<"payment" | "deposit">("payment");
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="default" className="bg-[#6571ff] text-white">
-          Pay with Stripe
-        </Button>
-      </DialogTrigger>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            className="w-fit ml-auto bg-[#6571ff] text-white font-medium py-1 pb-1.5
+            px-7 rounded transition-colors duration-200 shadow-sm flex items-center justify-between text-sm"
+          >
+            Pay Now
+            <ChevronDown className="w-4 h-4 ml-1.5" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-full bg-[#6571ff]">
+          <DropdownMenuItem className="w-full text-white bg-[#6571ff] cursor-pointer p-0.5">
+            <DialogTrigger asChild>
+              <button
+                onClick={() => {
+                  setPayType("payment");
+                  setAmount(due); // Reset to due amount for payments
+                }}
+                className="w-full rounded py-1 bg-[#6571ff] text-white"
+              >
+                Payment
+              </button>
+            </DialogTrigger>
+          </DropdownMenuItem>
+          <DropdownMenuItem className="text-white bg-[#6571ff] cursor-pointer p-0.5">
+            <DialogTrigger asChild>
+              <button
+                onClick={() => {
+                  setPayType("deposit");
+                  setAmount(""); // Clear amount for deposits
+                }}
+                className="w-full rounded py-1 bg-[#6571ff] text-white"
+              >
+                Deposit
+              </button>
+            </DialogTrigger>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Make Payment With Stripe</DialogTitle>
-          {/* <DialogDescription>
-            Pay your invoice dues with Stripe
-          </DialogDescription> */}
+          <DialogTitle>
+            Make {payType === "payment" ? "Payment" : "Deposit"} With Stripe
+          </DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="gap-4">
@@ -50,6 +93,11 @@ export function StripePay({
               <input
                 value={amount}
                 type="text"
+                placeholder={
+                  payType === "deposit"
+                    ? "Enter deposit amount"
+                    : "Enter payment amount"
+                }
                 className="w-full rounded-lg border px-2 py-2"
                 onChange={(e) => {
                   let inputValue = e.target.value;
@@ -58,11 +106,11 @@ export function StripePay({
                   if (/^\d*\.?\d*$/.test(inputValue)) {
                     setAmount(inputValue);
                   }
-
-                  // Number(inputValue) <= due && setAmount(Number(inputValue));
                 }}
               />
-              <span className="text-xs">( Max. {due} )</span>
+              {payType === "payment" && (
+                <span className="text-xs">( Max. {due} )</span>
+              )}
             </div>
           </div>
         </div>
@@ -70,13 +118,14 @@ export function StripePay({
           <Button
             className="bg-[#6571ff] text-white"
             type="button"
-            disabled={isLoading}
+            disabled={isLoading || !amount || Number(amount) <= 0}
             onClick={async () => {
               setIsLoading(true);
               const res = await createStripePaymentLink({
                 amount,
                 invoiceId,
                 companyId,
+                payType,
               });
               if (res.url) {
                 window.open(res.url, "_self");

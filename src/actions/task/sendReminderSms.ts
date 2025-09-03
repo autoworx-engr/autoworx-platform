@@ -78,7 +78,7 @@ export async function sendReminderSms({ invoiceId }: { invoiceId: string }) {
             : "No vehicle Found"
         ) +
       `\n\nInvoice Link: ${process.env.NEXT_PUBLIC_APP_URL}/public-invoice/${invoice.id}`;
-    const res = await sendMessage({
+    sendMessage({
       clientId: invoice.client.id,
       // subject: variabledSubject,
       message: variabledBody || "",

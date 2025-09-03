@@ -2,6 +2,7 @@ import { CheckCircle } from "lucide-react";
 import Image from "next/image";
 import React from "react";
 import { Badge } from "../ui/badge";
+import Link from "next/link";
 
 export default function Solution() {
   return (
@@ -13,12 +14,14 @@ export default function Solution() {
               THE SOLUTION
             </Badge>
             <div className="mb-4 flex items-center justify-center gap-5">
-              <Image
-                src="/images/solution/logo1.png"
-                alt="solution-logo"
-                width={56}
-                height={48}
-              />
+              <Link href={"/"}>
+                <Image
+                  src="/images/solution/logo1.png"
+                  alt="solution-logo"
+                  width={56}
+                  height={48}
+                />
+              </Link>
               <h2 className="text-2xl font-bold text-[#0F172A] md:text-3xl lg:text-4xl">
                 The All-in-One Platform
               </h2>

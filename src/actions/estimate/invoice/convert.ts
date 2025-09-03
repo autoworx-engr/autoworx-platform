@@ -1,16 +1,16 @@
-'use server';
+"use server";
 
-import getProductByInvoiceId from '@/actions/common/getProductByInvoiceId';
-import { errorHandler } from '@/error-boundary/globalErrorHandler';
-import { getCompanyId } from '@/lib/companyId';
-import { db } from '@/lib/db';
-import { lowInventoryNotification } from '@/lib/notification/inventory-notify';
-import { sendInvoiceConvertedNotification } from '@/lib/notification/invoice-notify';
-import { updateInvoiceAutomationTrigger } from '@/service/invoice-automation-trigger/api';
-import { ServerAction } from '@/types/action';
-import { TErrorHandler } from '@/types/globalError';
-import { InvoiceType } from '@prisma/client';
-import { revalidatePath } from 'next/cache';
+import getProductByInvoiceId from "@/actions/common/getProductByInvoiceId";
+import { errorHandler } from "@/error-boundary/globalErrorHandler";
+import { getCompanyId } from "@/lib/companyId";
+import { db } from "@/lib/db";
+import { lowInventoryNotification } from "@/lib/notification/inventory-notify";
+import { sendInvoiceConvertedNotification } from "@/lib/notification/invoice-notify";
+import { updateInvoiceAutomationTrigger } from "@/service/invoice-automation-trigger/api";
+import { ServerAction } from "@/types/action";
+import { TErrorHandler } from "@/types/globalError";
+import { InvoiceType } from "@prisma/client";
+import { revalidatePath } from "next/cache";
 
 export async function convertInvoice(
   id: string
@@ -27,15 +27,15 @@ export async function convertInvoice(
       });
 
       if (!invoice) {
-        return { type: 'error', message: 'Invoice not found' };
+        return { type: "error", message: "Invoice not found" };
       }
 
-      if (invoice.type === 'Estimate' && !invoice.columnId) {
+      if (invoice.type === "Estimate" && !invoice.columnId) {
         const pendingColumnId = await db.column.findFirst({
           where: {
             companyId,
-            title: 'Pending',
-            type: 'shop',
+            title: "Pending",
+            type: "shop",
           },
         });
         if (pendingColumnId) {
@@ -54,18 +54,18 @@ export async function convertInvoice(
       const updatedInvoiceData = await db.invoice.update({
         where: { id },
         data: {
-          type: invoice.type === 'Estimate' ? 'Invoice' : 'Estimate',
+          type: invoice.type === "Estimate" ? "Invoice" : "Estimate",
           convertedAt: new Date(),
         },
       });
-      // If estimate convert to invoice, invoice automation trigger
-      if (updatedInvoiceData.type == 'Invoice') {
-        updateInvoiceAutomationTrigger({
-          companyId: updatedInvoiceData?.companyId!,
-          invoiceId: updatedInvoiceData?.id!,
-          columnId: updatedInvoiceData?.columnId!,
-        });
-      }
+
+      // If estimate/invoice convert to invoice/estimate, invoice automation trigger
+      updateInvoiceAutomationTrigger({
+        companyId: updatedInvoiceData?.companyId!,
+        invoiceId: updatedInvoiceData?.id!,
+        columnId: updatedInvoiceData?.columnId!,
+        type: updatedInvoiceData?.type!,
+      });
 
       await Promise.all(
         productsWithQuantity.map(async (product) => {
@@ -100,7 +100,7 @@ export async function convertInvoice(
                 ).toFixed(2),
                 vendorId: productsWithQuantity.find((m) => m.id === product.id)
                   ?.vendorId,
-                type: 'Sale',
+                type: "Sale",
                 invoiceId: id,
               },
             });
@@ -110,7 +110,7 @@ export async function convertInvoice(
                 companyId,
                 invoiceId: id,
                 productId: product.id,
-                type: 'Sale',
+                type: "Sale",
               },
             });
           }
@@ -144,9 +144,9 @@ export async function convertInvoice(
         })
       );
 
-      const clientName = invoice.client?.firstName || 'Client';
+      const clientName = invoice.client?.firstName || "Client";
 
-      if (updatedInvoiceData.type == 'Invoice') {
+      if (updatedInvoiceData.type == "Invoice") {
         // send invoice converted notification to all admins and managers or sales
         sendInvoiceConvertedNotification({
           clientName,
@@ -159,11 +159,11 @@ export async function convertInvoice(
       return updatedInvoiceData;
     });
 
-    revalidatePath('/estimate');
+    revalidatePath("/estimate");
 
     return {
-      type: 'success',
-      message: 'Invoice converted',
+      type: "success",
+      message: "Invoice converted",
       data: updatedInvoiceData,
     };
   } catch (err) {
@@ -185,15 +185,15 @@ export async function convertInvoicePublic(
       });
 
       if (!invoice) {
-        return { type: 'error', message: 'Invoice not found' };
+        return { type: "error", message: "Invoice not found" };
       }
 
-      if (invoice.type === 'Estimate' && !invoice.columnId) {
+      if (invoice.type === "Estimate" && !invoice.columnId) {
         const pendingColumnId = await db.column.findFirst({
           where: {
             companyId,
-            title: 'Pending',
-            type: 'shop',
+            title: "Pending",
+            type: "shop",
           },
         });
         if (pendingColumnId) {
@@ -259,7 +259,7 @@ export async function convertInvoicePublic(
                 ).toFixed(2),
                 vendorId: productsWithQuantity.find((m) => m.id === product.id)
                   ?.vendorId,
-                type: 'Sale',
+                type: "Sale",
                 invoiceId: id,
               },
             });
@@ -269,7 +269,7 @@ export async function convertInvoicePublic(
                 companyId,
                 invoiceId: id,
                 productId: product.id,
-                type: 'Sale',
+                type: "Sale",
               },
             });
           }
@@ -303,9 +303,9 @@ export async function convertInvoicePublic(
         })
       );
 
-      const clientName = invoice.client?.firstName || 'Client';
+      const clientName = invoice.client?.firstName || "Client";
 
-      if (updatedInvoiceData.type === 'Invoice') {
+      if (updatedInvoiceData.type === "Invoice") {
         // send invoice converted notification to all admins and managers or sales
         sendInvoiceConvertedNotification({
           clientName,
@@ -321,8 +321,8 @@ export async function convertInvoicePublic(
     // revalidatePath("/estimate");
 
     return {
-      type: 'success',
-      message: 'Invoice converted',
+      type: "success",
+      message: "Invoice converted",
       data: updatedInvoiceData,
     };
   } catch (err) {

@@ -15,7 +15,7 @@ export default function Settings() {
             <GoGear />
           </button>
         </DialogTrigger>
-        {open && <SettingsModalContent />}
+        {open && <SettingsModalContent onClose={() => setOpen(false)} />}
       </Dialog>
     </div>
   );

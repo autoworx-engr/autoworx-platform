@@ -2,7 +2,7 @@ import { db } from "@/lib/db";
 import { Cron } from "croner";
 
 import { sendMessage } from "@/actions/communication/client/sendMessage";
-import { sendSendgridEmail } from "@/actions/estimate/invoice/sendSendgridMail";
+import { sendInfobipEmail } from "@/actions/estimate/invoice/sendInfobipEmail";
 import moment from "moment-timezone";
 // Schedule the cron job
 // new Cron("*/5 * * * * *", async () => {
@@ -70,7 +70,7 @@ await (async function appointmentReminders() {
           const reminderDate = moment.tz(
             // @ts-ignore
             `${time.date}T${time.time}`,
-            company?.timezone || appointment?.timezone || "Etc/UTC",
+            company?.timezone || appointment?.timezone || "Etc/UTC"
           );
 
           // const cronExpression = `${reminderDate.utc().minutes()} ${reminderDate.utc().hours()} ${reminderDate.utc().date()} ${reminderDate.utc().month() + 1} *`;
@@ -93,7 +93,7 @@ await (async function appointmentReminders() {
               if (appointment.client && appointment.reminderTemplate) {
                 const appointmentDateTime = moment.tz(
                   `${appointment.date}T${appointment.startTime}:00`,
-                  appointment.timezone ?? "Etc/UTC",
+                  appointment.timezone ?? "Etc/UTC"
                 );
 
                 //@ts-expect-error
@@ -101,31 +101,31 @@ await (async function appointmentReminders() {
                   .replace("<VEHICLE>", appointment.vehicle?.model || "")
                   .replace(
                     "<CLIENT>",
-                    `${appointment.client.firstName ? appointment.client.firstName : appointment.client.lastName}`,
+                    `${appointment.client.firstName ? appointment.client.firstName : appointment.client.lastName}`
                   )
 
                   .replace(
                     "<DATE>",
-                    appointmentDateTime.format("dddd, MMMM DD, h:mm A"),
+                    appointmentDateTime.format("dddd, MMMM DD, h:mm A")
                   );
                 //@ts-expect-error
                 const reminderMessage = appointment.reminderTemplate.message
                   .replace("<VEHICLE>", appointment.vehicle?.model || "")
                   .replace(
                     "<CLIENT>",
-                    `${appointment.client.firstName ? appointment.client.firstName : appointment.client.lastName}`,
+                    `${appointment.client.firstName ? appointment.client.firstName : appointment.client.lastName}`
                   )
                   .replace(
                     "<DATE>",
                     moment(
                       //@ts-expect-error
-                      `${new Date(appointment?.date).toISOString()?.split("T")[0]}T${appointment.startTime}:00`,
-                    ).format("dddd, MMMM DD, h:mm A"),
+                      `${new Date(appointment?.date).toISOString()?.split("T")[0]}T${appointment.startTime}:00`
+                    ).format("dddd, MMMM DD, h:mm A")
                   );
 
                 if (appointment.clientId) {
                   try {
-                    await sendSendgridEmail({
+                    sendInfobipEmail({
                       clientId: appointment.clientId,
                       subject: reminderSubject,
                       text: reminderMessage,
@@ -135,7 +135,7 @@ await (async function appointmentReminders() {
                   }
 
                   try {
-                    await sendMessage({
+                    sendMessage({
                       companyId: appointment.companyId,
                       clientId: appointment.clientId,
                       message: reminderMessage || "",
@@ -146,7 +146,7 @@ await (async function appointmentReminders() {
                   }
                 }
               }
-            },
+            }
           );
         }
       }

@@ -1,20 +1,21 @@
-import { createLeadDraftEstimate } from '@/actions/pipelines/createLeadDraftEstimate';
-import { AppointmentCreateOrEdit } from '@/components/appointment/AppointmentCreateOrEdit';
-import { actionTypes } from '@/constants/lead.constant';
-import { useColumnDispatch } from '@/context/sales-pipeline.context';
-import { errorToast, successToast } from '@/lib/toast';
-import { updatePipelineAutomationTrigger } from '@/service/pipeline-automation-trigger/api';
-import { LeadWithSalesUser } from '@/types/invoiceLead';
-import { Appointment } from '@prisma/client';
-import { customAlphabet } from 'nanoid';
-import Image from 'next/image';
-import { useState, useTransition } from 'react';
-import { LuCalendar, LuCalendarCheck } from 'react-icons/lu';
-import CommunicationsNoti from '../../../components/CommunicationsNoti';
-import PipelineInvoiceModal from '../../../components/PipelineInvoiceModal';
-import AddTaskComponent from './AddTaskComponent';
-import LeadAssign from './LeadAssign';
-import { errorHandler } from '@/error-boundary/globalErrorHandler';
+import { AppointmentCreateOrEdit } from "@/components/appointment/AppointmentCreateOrEdit";
+import { actionTypes } from "@/constants/lead.constant";
+import { useColumnDispatch } from "@/context/sales-pipeline.context";
+import { errorToast, successToast } from "@/lib/toast";
+import { updatePipelineAutomationTrigger } from "@/service/pipeline-automation-trigger/api";
+import { LeadWithSalesUser } from "@/types/invoiceLead";
+import { Appointment } from "@prisma/client";
+import { customAlphabet } from "nanoid";
+import Image from "next/image";
+import { useState, useTransition } from "react";
+import { LuCalendar, LuCalendarCheck } from "react-icons/lu";
+import CommunicationsNoti from "../../../components/CommunicationsNoti";
+import PipelineInvoiceModal from "../../../components/PipelineInvoiceModal";
+import AddTaskComponent from "./AddTaskComponent";
+import LeadAssign from "./LeadAssign";
+import { errorHandler } from "@/error-boundary/globalErrorHandler";
+import { createDraftEstimate } from "@/actions/estimate/invoice/createDraft";
+import { createLeadDraftEstimate } from "@/actions/pipelines/createLeadDraftEstimate";
 
 type TProps = {
   lead: LeadWithSalesUser;
@@ -41,16 +42,16 @@ export default function LeadActions({ lead }: TProps) {
     vehicleId,
   }: TCreateDraftEstimateParams) => {
     try {
-      const draftEstimateId = customAlphabet('1234567890', 10)();
+      const draftEstimateId = customAlphabet("1234567890", 10)();
       const res = await createLeadDraftEstimate({
         id: draftEstimateId,
         leadId,
-        clientId: clientId,
+        clientId: clientId!,
         vehicleId: vehicleId,
-        type: 'Estimate',
+        type: "Estimate",
       });
-      if (res.type === 'success') {
-        successToast(res?.message || 'Draft estimate created');
+      if (res.type === "success") {
+        successToast(res?.message || "Draft estimate created");
         //updating the pipelien data with the draft estimate flag
         dispatch({
           type: actionTypes.CREATE_INVOICE,
@@ -63,7 +64,7 @@ export default function LeadActions({ lead }: TProps) {
 
         // Trigger pipeline automation
         const response = await updatePipelineAutomationTrigger({
-          condition: 'ESTIMATE_CREATED',
+          condition: "ESTIMATE_CREATED",
           companyId: res?.data.companyId,
           leadId,
           columnId,
@@ -85,9 +86,9 @@ export default function LeadActions({ lead }: TProps) {
         //   leadId,
         //   columnId,
         // });
-      } else if (res.type === 'error') {
+      } else if (res.type === "error") {
         setInvoiceId(res.data.id);
-      } else if (res.type === 'globalError') {
+      } else if (res.type === "globalError") {
         errorToast(
           res?.errorSource && res?.errorSource.length > 0
             ? res?.errorSource[0].message
@@ -97,7 +98,7 @@ export default function LeadActions({ lead }: TProps) {
     } catch (err) {
       // console.error("Error creating draft estimate:", err);
       errorHandler(err);
-      errorToast('Failed to create draft estimate. Please try again.');
+      errorToast("Failed to create draft estimate. Please try again.");
     }
   };
 
@@ -120,7 +121,7 @@ export default function LeadActions({ lead }: TProps) {
 
       // Trigger pipeline automation
       const response = await updatePipelineAutomationTrigger({
-        condition: 'APPOINTMENT_SCHEDULED',
+        condition: "APPOINTMENT_SCHEDULED",
         companyId: lead.companyId,
         leadId: leadInfo.leadId,
         columnId: leadInfo.columnId,
@@ -143,7 +144,7 @@ export default function LeadActions({ lead }: TProps) {
       //   columnId: leadInfo.columnId,
       // });
     } catch (err) {
-      console.error('Automation run failed', err);
+      console.error("Automation run failed", err);
     }
   };
 

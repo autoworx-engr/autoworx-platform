@@ -1,28 +1,28 @@
-"use client";
+'use client';
 
-import ItemSelector from "@/components/ItemSelector";
-import { SelectTags } from "@/components/Lists/SelectTags";
-import ResponsiveEstimateCreateTab from "@/components/mobile-responsive/estimate/ResponsiveEstimateCreateTab";
-import { cn } from "@/lib/cn";
-import { useEstimateCreateStore } from "@/stores/estimate-create";
-import { useEstimatePopupStore } from "@/stores/estimate-popup";
-import { useListsStore } from "@/stores/lists";
-import { Decimal } from "decimal.js";
-import { create } from "mutative";
-import { nanoid } from "nanoid";
-import React, { useState, useEffect } from "react";
-import { HiOutlinePlusCircle, HiOutlineXCircle } from "react-icons/hi2";
-import { useMediaQuery } from "react-responsive";
+import ItemSelector from '@/components/ItemSelector';
+import { SelectTags } from '@/components/Lists/SelectTags';
+import ResponsiveEstimateCreateTab from '@/components/mobile-responsive/estimate/ResponsiveEstimateCreateTab';
+import { cn } from '@/lib/cn';
+import { useEstimateCreateStore } from '@/stores/estimate-create';
+import { useEstimatePopupStore } from '@/stores/estimate-popup';
+import { useListsStore } from '@/stores/lists';
+import { Decimal } from 'decimal.js';
+import { create } from 'mutative';
+import { nanoid } from 'nanoid';
+import React, { useState, useEffect } from 'react';
+import { HiOutlinePlusCircle, HiOutlineXCircle } from 'react-icons/hi2';
+import { useMediaQuery } from 'react-responsive';
 
 export function CreateTab() {
   const { items, removeMaterial } = useEstimateCreateStore();
   const { open, close } = useEstimatePopupStore();
 
-  const isMax640 = useMediaQuery({ query: "(max-width: 640px)" });
+  const isMax640 = useMediaQuery({ query: '(max-width: 640px)' });
 
-  const services = useListsStore((x) => x.services);
-  const materials = useListsStore((x) => x.materials);
-  const labors = useListsStore((x) => x.labors);
+  const services = useListsStore(x => x.services);
+  const materials = useListsStore(x => x.materials);
+  const labors = useListsStore(x => x.labors);
 
   // dropdown state
   const [dropdownsOpen, setDropdownsOpen] = useState({
@@ -34,7 +34,7 @@ export function CreateTab() {
 
   // Helper function to add a service
   const addService = () => {
-    useEstimateCreateStore.setState((x) => ({
+    useEstimateCreateStore.setState(x => ({
       items: [
         ...x.items,
         {
@@ -43,7 +43,7 @@ export function CreateTab() {
           materials: [null],
           labor: null,
           tags: [],
-          serviceDesc: "",
+          serviceDesc: '',
         },
       ],
     }));
@@ -53,7 +53,7 @@ export function CreateTab() {
       setTimeout(() => {
         window.scrollTo({
           top: document.body.scrollHeight,
-          behavior: "smooth",
+          behavior: 'smooth',
         });
       }, 100);
     }
@@ -77,7 +77,7 @@ export function CreateTab() {
           <table className="w-full border-separate border-spacing-x-8 border-spacing-y-5">
             <thead>
               <tr>
-                {["Services", "Materials/Parts", "Labor", "Tags"].map((x) => (
+                {['Services', 'Materials/Parts', 'Labor', 'Tags'].map(x => (
                   <th key={x}>{x}</th>
                 ))}
                 <th>
@@ -88,10 +88,10 @@ export function CreateTab() {
             <tbody>
               {items.map((item, i) => (
                 <tr key={`item-${i}`}>
-                  {["service", "materials", "labor", "tags"].map(
+                  {['service', 'materials', 'labor', 'tags'].map(
                     (itemKey, j) => {
                       switch (itemKey) {
-                        case "service":
+                        case 'service':
                           return (
                             <td>
                               <ItemSelector
@@ -100,45 +100,45 @@ export function CreateTab() {
                                 item={item}
                                 list={[...services]
                                   .filter(
-                                    (service) =>
+                                    service =>
                                       service?.name &&
-                                      service.name.trim() !== "",
+                                      service.name.trim() !== ''
                                   )
                                   .reverse()}
                                 display="name"
                                 onEdit={() =>
-                                  open("SERVICE", {
+                                  open('SERVICE', {
                                     itemId: item.id,
                                     edit: true,
                                     service: item.service,
                                     serviceDesc: item.serviceDesc,
                                   })
                                 }
-                                onSelect={(service) =>
-                                  useEstimateCreateStore.setState((x) =>
-                                    create(x, (x) => {
+                                onSelect={service =>
+                                  useEstimateCreateStore.setState(x =>
+                                    create(x, x => {
                                       x.items[i].service = service;
-                                    }),
+                                    })
                                   )
                                 }
-                                onSearch={(search) => {
+                                onSearch={search => {
                                   const validServices = services.filter(
-                                    (service) =>
+                                    service =>
                                       service?.name &&
-                                      service.name.trim() !== "",
+                                      service.name.trim() !== ''
                                   );
 
                                   if (search) {
-                                    return validServices.filter((service) =>
+                                    return validServices.filter(service =>
                                       service.name
                                         .toLowerCase()
-                                        .includes(search.toLowerCase()),
+                                        .includes(search.toLowerCase())
                                     );
                                   }
                                   return validServices;
                                 }}
                                 onDelete={() => {
-                                  useEstimateCreateStore.setState((x) => {
+                                  useEstimateCreateStore.setState(x => {
                                     // set the service to null
                                     const items = x.items.map((item, index) => {
                                       if (index === i) {
@@ -157,13 +157,13 @@ export function CreateTab() {
                               />
                             </td>
                           );
-                        case "materials":
+                        case 'materials':
                           return item.materials.length >= 0 ? (
                             <td className="relative">
                               {item.materials.length > 0 &&
                                 item.materials.map((material, j) => (
                                   <div
-                                    className={cn("mt-2.5", j === 0 && "mt-0")}
+                                    className={cn('mt-2.5', j === 0 && 'mt-0')}
                                     key={`material-${j}`}
                                   >
                                     <ItemSelector
@@ -185,24 +185,24 @@ export function CreateTab() {
                                         close();
                                       }}
                                       onEdit={() => {
-                                        open("MATERIAL", {
+                                        open('MATERIAL', {
                                           itemId: item.id,
                                           edit: true,
                                           material,
                                           materialIndex: j,
                                         });
                                       }}
-                                      onSelect={(material) => {
-                                        useEstimateCreateStore.setState((x) =>
-                                          create(x, (x) => {
+                                      onSelect={material => {
+                                        useEstimateCreateStore.setState(x =>
+                                          create(x, x => {
                                             x.items[i].materials[j] = {
                                               ...material,
                                               quantity: Decimal(0),
                                             };
-                                          }),
+                                          })
                                         );
 
-                                        open("MATERIAL", {
+                                        open('MATERIAL', {
                                           itemId: item.id,
                                           edit: true,
                                           material: {
@@ -212,13 +212,13 @@ export function CreateTab() {
                                           materialIndex: j,
                                         });
                                       }}
-                                      onSearch={(search) => {
+                                      onSearch={search => {
                                         if (search) {
                                           const filteredMaterials =
-                                            materials.filter((material) =>
+                                            materials.filter(material =>
                                               material.name
                                                 .toLowerCase()
-                                                .includes(search.toLowerCase()),
+                                                .includes(search.toLowerCase())
                                             );
                                           return filteredMaterials;
                                         } else {
@@ -237,10 +237,10 @@ export function CreateTab() {
                                         type="button"
                                         className="absolute flex items-center gap-1 text-sm text-[#6571FF]"
                                         onClick={() => {
-                                          useEstimateCreateStore.setState((x) =>
-                                            create(x, (x) => {
+                                          useEstimateCreateStore.setState(x =>
+                                            create(x, x => {
                                               x.items[i].materials.push(null);
-                                            }),
+                                            })
                                           );
                                         }}
                                       >
@@ -253,7 +253,7 @@ export function CreateTab() {
 
                               {item.materials.length == 0 && (
                                 <div
-                                  className={cn("mt-2.5", j === 0 && "mt-0")}
+                                  className={cn('mt-2.5', j === 0 && 'mt-0')}
                                   key={`material-${j}`}
                                 >
                                   <ItemSelector
@@ -274,30 +274,30 @@ export function CreateTab() {
                                       });
                                     }}
                                     // onEdit={() => {}}
-                                    onSelect={(material) => {
-                                      useEstimateCreateStore.setState((x) =>
-                                        create(x, (x) => {
+                                    onSelect={material => {
+                                      useEstimateCreateStore.setState(x =>
+                                        create(x, x => {
                                           x.items[i].materials[j] = {
                                             ...material,
                                             quantity: Decimal(0),
                                           };
-                                        }),
+                                        })
                                       );
 
-                                      open("MATERIAL", {
+                                      open('MATERIAL', {
                                         itemId: item.id,
                                         edit: true,
                                         material: { ...material, quantity: 0 },
                                         materialIndex: j,
                                       });
                                     }}
-                                    onSearch={(search) => {
+                                    onSearch={search => {
                                       if (search) {
                                         const filteredMaterials =
-                                          materials.filter((material) =>
+                                          materials.filter(material =>
                                             material.name
                                               .toLowerCase()
-                                              .includes(search.toLowerCase()),
+                                              .includes(search.toLowerCase())
                                           );
                                         return filteredMaterials;
                                       } else {
@@ -316,10 +316,10 @@ export function CreateTab() {
                                       type="button"
                                       className="absolute flex items-center gap-1 text-sm text-[#6571FF]"
                                       onClick={() => {
-                                        useEstimateCreateStore.setState((x) =>
-                                          create(x, (x) => {
+                                        useEstimateCreateStore.setState(x =>
+                                          create(x, x => {
                                             x.items[i].materials.push(null);
-                                          }),
+                                          })
                                         );
                                       }}
                                     >
@@ -333,7 +333,7 @@ export function CreateTab() {
                           ) : (
                             <td></td>
                           );
-                        case "labor":
+                        case 'labor':
                           return (
                             <td>
                               <ItemSelector
@@ -343,23 +343,23 @@ export function CreateTab() {
                                 list={[...labors].reverse()}
                                 display="name"
                                 onEdit={() =>
-                                  open("LABOR", {
+                                  open('LABOR', {
                                     itemId: item.id,
                                     edit: true,
                                     labor: item.labor,
                                   })
                                 }
-                                onSelect={(labor) => {
-                                  useEstimateCreateStore.setState((x) =>
-                                    create(x, (x) => {
+                                onSelect={labor => {
+                                  useEstimateCreateStore.setState(x =>
+                                    create(x, x => {
                                       x.items[i].labor = {
                                         ...labor,
                                         hours: new Decimal(0),
                                       };
-                                    }),
+                                    })
                                   );
 
-                                  open("LABOR", {
+                                  open('LABOR', {
                                     itemId: item.id,
                                     edit: true,
                                     labor: {
@@ -368,13 +368,13 @@ export function CreateTab() {
                                     },
                                   });
                                 }}
-                                onSearch={(search) => {
+                                onSearch={search => {
                                   if (search) {
                                     const filteredLabors = labors.filter(
-                                      (labor) =>
+                                      labor =>
                                         labor.name
                                           .toLowerCase()
-                                          .includes(search.toLowerCase()),
+                                          .includes(search.toLowerCase())
                                     );
 
                                     return filteredLabors;
@@ -383,7 +383,7 @@ export function CreateTab() {
                                   }
                                 }}
                                 onDelete={() => {
-                                  useEstimateCreateStore.setState((x) => {
+                                  useEstimateCreateStore.setState(x => {
                                     // set the labor to null
                                     const items = x.items.map((item, index) => {
                                       if (index === i) {
@@ -401,20 +401,20 @@ export function CreateTab() {
                               />
                             </td>
                           );
-                        case "tags":
+                        case 'tags':
                           return (
                             <td>
                               <SelectTags
                                 type="TAG"
                                 value={item.tags}
-                                setValue={(tags) => {
-                                  useEstimateCreateStore.setState((x) =>
-                                    create(x, (x) => {
+                                setValue={tags => {
+                                  useEstimateCreateStore.setState(x =>
+                                    create(x, x => {
                                       x.items[i].tags =
                                         tags instanceof Function
                                           ? tags(item.tags)
                                           : tags;
-                                    }),
+                                    })
                                   );
                                 }}
                                 index={[i, j]}
@@ -424,13 +424,13 @@ export function CreateTab() {
                             </td>
                           );
                       }
-                    },
+                    }
                   )}
                   <td>
                     <button
                       type="button"
                       onClick={() => {
-                        useEstimateCreateStore.setState((x) => ({
+                        useEstimateCreateStore.setState(x => ({
                           items: items.toSpliced(i, 1),
                         }));
                       }}

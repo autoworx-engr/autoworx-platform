@@ -16,57 +16,33 @@ export default async function getTasks(params?: Prisma.TaskFindManyArgs) {
     let totalTasks: number = 0;
 
     const { where, ...restParams } = params || {};
-    if (
-      employeeType === "Admin" ||
-      employeeType === "Manager" ||
-      employeeType === "Sales"
-    ) {
-      tasks = await db.task.findMany({
-        where: {
-          companyId,
-          ...(where || {}),
-        },
-        ...restParams,
-      });
-
-      totalTasks = await db.task.count({
-        where: {
-          companyId,
-        },
-      });
-    } else {
-      const userId = session?.user?.id;
-      if (!userId) {
-        throw new Error("User ID is required to fetch tasks.");
-      }
-
-      const whereCondition = {
-        companyId,
-        OR: [
-          {
-            taskUser: {
-              some: {
-                userId: +userId,
-              },
-            },
-          },
-          {
-            userId: +userId,
-          },
-        ],
-      };
-      tasks = await db.task.findMany({
-        where: {
-          ...whereCondition,
-          ...(where || {}),
-        },
-        ...restParams,
-      });
-
-      totalTasks = await db.task.count({
-        where: whereCondition,
-      });
+    const userId = session?.user?.id;
+    if (!userId) {
+      throw new Error("User ID is required to fetch tasks.");
     }
+
+    // Get tasks created by user OR assigned to user
+    const whereCondition = {
+      companyId,
+      OR: [
+        { userId: +userId }, // Tasks created by the user
+        { taskUser: { some: { userId: +userId } } }, // Tasks assigned to the user
+      ],
+      ...(where || {}),
+    };
+
+    tasks = await db.task.findMany({
+      where: whereCondition,
+      ...restParams,
+    });
+
+    totalTasks = await db.task.count({
+      where: {
+        companyId,
+        OR: [{ userId: +userId }, { taskUser: { some: { userId: +userId } } }],
+      },
+    });
+
     return {
       data: tasks,
       totalTask: totalTasks,

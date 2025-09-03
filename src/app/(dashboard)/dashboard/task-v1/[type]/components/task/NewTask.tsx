@@ -22,6 +22,7 @@ import { useEffect, useRef, useState } from "react";
 import { FaCheck, FaPlus } from "react-icons/fa6";
 import AssignTaskDropDown from "./AssignTaskDropDown";
 import { useCalendarStore } from "@/stores/calendarStore";
+import { useRouter } from "next/navigation";
 
 export default function NewTask({
   companyUsers,
@@ -34,6 +35,7 @@ export default function NewTask({
   isClientTask?: boolean;
   clientId?: number | null;
 }) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   // const [showUsers, setShowUsers] = useState(false);
   const [title, setTitle] = useState("");
@@ -82,33 +84,28 @@ export default function NewTask({
 
   const handleTimeChange = (
     e: React.ChangeEvent<HTMLInputElement>,
-    type: "start" | "end",
+    type: "start" | "end"
   ) => {
     let timeValue = e.target.value;
 
-    // Check if date exists and is today
-    // const isToday =
-    //   date === formatDateToToday(date ?? new Date().toISOString());
-    // const currentTime = getCurrentTime(); // Always in 24-hour HH:mm format
+    // Regex: HH:mm (00:00 - 23:59)
+    const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
+    if (!timeRegex.test(timeValue)) {
+      errorToast("Invalid time format! Please enter time as HH:mm");
+      return;
+    }
 
     if (type === "start") {
-      // ❌ Restrict past times if a date is present (today)
-      // if (isToday && timeValue < currentTime) {
-      //   errorToast("Start time cannot be in the past!");
-      //   timeValue = currentTime; // Reset to current time
-      // }
-
       setStartTime(timeValue);
 
-      // ✅ Set `endTime` to 1 hour after `startTime`
+      // Auto set endTime = startTime + 1 hour
       setEndTime(addOneHour(timeValue));
     } else if (type === "end") {
-      // ❌ Prevent selecting past time of `startTime`
-      // if (timeValue < startTime!) {
-      //   errorToast("End time cannot be before start time!");
-      //   return;
-      // }
-
+      if (startTime && timeValue < startTime) {
+        errorToast("End time cannot be before start time!");
+        return;
+      }
       setEndTime(timeValue);
     }
   };
@@ -150,7 +147,7 @@ export default function NewTask({
 
     if (date && (!startTime || !endTime)) {
       return errorToast(
-        "Start time and End time are required when a date is selected!",
+        "Start time and End time are required when a date is selected!"
       );
     }
 
@@ -179,6 +176,7 @@ export default function NewTask({
     // });
 
     setUpdateVariable();
+    router.refresh();
 
     if (res.type === "globalError") {
       showError({

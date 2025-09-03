@@ -23,7 +23,7 @@ const EmployeeLeaveRequests = ({
       <div className="mb-8 flex items-center justify-between">
         <span className="text-2xl font-bold">Leave Requests</span>{" "}
       </div>
-      <div className="custom-scrollbar flex flex-1 flex-col space-y-4">
+      <div className="custom-scrollbar flex flex-1 flex-col space-y-4 md:pb-2">
         {leaveRequests.map((leaveRequest, idx) => (
           <EmployeeLeaveRequest key={idx} leaveRequest={leaveRequest} />
         ))}
@@ -46,7 +46,7 @@ const EmployeeLeaveRequest = ({
     <div className="flex flex-col gap-y-2 rounded-md border border-gray-400 px-4 py-4 text-xs 2xl:flex-row 2xl:items-start 2xl:justify-between">
       <div className="flex h-full flex-col justify-between 2xl:w-[35%]">
         <div>
-          <p className="font-semibold">{leaveRequest.title}</p>
+          <p className="font-semibold text-lg">{leaveRequest.title}</p>
           {/* <p>Employee : John Doe</p> */}
         </div>
         <div>
@@ -75,7 +75,12 @@ const EmployeeLeaveRequest = ({
             }}
             className="flex items-center justify-center self-end"
           >
-            <Image src="/icons/delete.png" alt="Delete Icon" width={24} height={24} />
+            <Image
+              src="/icons/delete.png"
+              alt="Delete Icon"
+              width={24}
+              height={24}
+            />
           </button>
         )}
         <span

@@ -6,9 +6,14 @@ import { Task, User } from "@prisma/client";
 import { useTransition } from "react";
 import { FaRegCheckCircle } from "react-icons/fa";
 import { MdOutlineEdit } from "react-icons/md";
+
+type TaskWithAssignedUsers = Task & {
+  assignedUsers: User[];
+};
+
 type TProps = {
   usersOfCompany: User[];
-  task: Task;
+  task: TaskWithAssignedUsers;
 };
 
 export default function TaskActions({ usersOfCompany, task }: TProps) {

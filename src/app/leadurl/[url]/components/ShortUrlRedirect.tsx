@@ -5,7 +5,7 @@ import { Spin } from "antd";
 import { useParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
 
-const ShortUrlRedirect = ({ companyId }: { companyId: number }) => {
+const ShortUrlRedirect = () => {
   const params = useParams();
   const url = params?.url as string;
 
@@ -21,7 +21,7 @@ const ShortUrlRedirect = ({ companyId }: { companyId: number }) => {
 
     const fetch = async () => {
       try {
-        await fetchSingleLeadLink(companyId, shortUrlKey);
+        await fetchSingleLeadLink(shortUrlKey);
       } catch (err) {
         setError("Failed to fetch link.");
         console.error("Error fetching lead link:", err);
@@ -31,12 +31,12 @@ const ShortUrlRedirect = ({ companyId }: { companyId: number }) => {
     };
 
     fetch();
-  }, [url, fetchSingleLeadLink, companyId]);
+  }, [url, fetchSingleLeadLink]);
 
   // Handle redirect
   useEffect(() => {
     if (leadLink && leadLink.generatedLink) {
-      window.location.href = leadLink.generatedLink;
+      window.location.href = `${leadLink.generatedLink}&companyId=${leadLink.companyId}`;
     }
   }, [leadLink]);
 

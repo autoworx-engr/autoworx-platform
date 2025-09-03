@@ -10,6 +10,7 @@ type TSendPaymentReceivedNotification = {
   clientName: string;
   invoiceId: string;
   sendRoles?: EmployeeType[];
+  isDeposit?: boolean;
 };
 
 export async function sendPaymentReceivedNotification({
@@ -18,6 +19,7 @@ export async function sendPaymentReceivedNotification({
   amount,
   invoiceId,
   sendRoles = ["Admin", "Manager"],
+  isDeposit = false,
 }: TSendPaymentReceivedNotification) {
   try {
     const companyUniqueId = companyId || (await getCompanyId());
@@ -32,7 +34,7 @@ export async function sendPaymentReceivedNotification({
     });
     const redirectUrl = "/dashboard/payments";
 
-    const description = `Payment of ${formatCurrency(amount)} received from ${clientName} for invoice #${invoiceId}. View in Autoworx.`;
+    const description = `${isDeposit ? "Deposit" : "Payment"} of ${formatCurrency(amount)} received from ${clientName} for invoice #${invoiceId}. View in Autoworx.`;
 
     const title = "Payment Received";
     for (const user of getUsers) {

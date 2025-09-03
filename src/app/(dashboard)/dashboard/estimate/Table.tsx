@@ -10,13 +10,14 @@ import { useActionStoreCreateEdit } from "@/stores/createEditStore";
 import { useListsStore } from "@/stores/lists";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { Pagination } from "antd"; // Importing the Pagination component from Ant Design
-import moment from "moment";
+import moment from "moment-timezone";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CiEdit } from "react-icons/ci";
 import { useMediaQuery } from "react-responsive";
 import ConvertTo from "./ConvertTo";
+import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 
 export interface InvoiceData {
   id: string;
@@ -57,6 +58,7 @@ export default function Table({
 }: TTableProps) {
   const { setActionType } = useActionStoreCreateEdit();
   const [currentPage, setCurrentPage] = useState(parseInt(page ?? "", 10) || 1);
+  const timezone = useCompanyTimezone();
   const [pageSize, setPageSize] = useState(
     parseInt(take ?? "", 10) || defaultTake
   );
@@ -95,8 +97,6 @@ export default function Table({
   //   const newPath = `${pathname}?${searchParams.toString()}`;
   //   router.push(newPath);
   // };
-
-  console.log("data", estimateData);
 
   // for preventing unnecessary re-renders
   const handlePageChange = useCallback(
@@ -139,7 +139,7 @@ export default function Table({
   };
 
   return (
-    <div className="min-h-[65vh] overflow-x-scroll rounded-md bg-background xl:overflow-auto flex flex-col ">
+    <div className="min-h-[65vh] overflow-x-scroll rounded-md bg-background xl:overflow-auto xl:overflow-y-hidden flex flex-col ">
       <div className="flex-grow">
         {isMax640 ? (
           <div className="flex  w-full flex-col items-center justify-center gap-y-4">
@@ -206,7 +206,7 @@ export default function Table({
                   </td>
                   <td className="px-4 py-2 text-left">
                     <p className="block h-full w-full">
-                      {moment(data.createdAt).format("MM/DD/YYYY")}
+                      {moment.tz(data.createdAt, timezone).format("MM/DD/YYYY")}
                     </p>
                   </td>
                   <td className="px-4 py-2 text-left">
@@ -227,7 +227,9 @@ export default function Table({
                     <td className="px-4 py-2 text-left">
                       <p className="block h-full w-full">
                         {data?.deliveredAt
-                          ? moment(data?.deliveredAt).format("MM/DD/YYYY")
+                          ? moment
+                              .tz(data?.deliveredAt, timezone)
+                              .format("MM/DD/YYYY")
                           : ""}
                       </p>
                     </td>

@@ -1,46 +1,48 @@
-'use client';
-import { getCalenderSettings } from '@/actions/task/getCalendarSettings';
-import { DropdownSelection } from '@/components/DropDownSelection';
-import { CalendarType } from '@/types/calendar';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
-import { appointmentQueryKey, calenderQueryKey } from '../../_constant';
-import DisplayDate from './DisplayDate';
-import Settings from './Settings';
-import CalendarSearch from './CalendarSearch';
-import moment from 'moment';
-import { useCalendarStore } from '@/stores/calendarStore';
-import ArrowButton from './ArrowButton';
-import { AppointmentCreateOrEdit } from '@/components/appointment/AppointmentCreateOrEdit';
-import { useSession } from 'next-auth/react';
-import DateSelector from './DateSelector';
-import { useDate } from '../../_hook/lib/useDate';
-import useMonth from '../../_hook/lib/useMonth';
-import useWeekStartEndDays from '../../_hook/lib/useWeekStartEndDays';
-import { Appointment, Lead } from '@prisma/client';
-import { updatePipelineAutomationTrigger } from '@/actions/automation/pipeline/triggerPipelineAutomation';
-import { errorHandler } from '@/error-boundary/globalErrorHandler';
+"use client";
+import { getCalenderSettings } from "@/actions/task/getCalendarSettings";
+import { DropdownSelection } from "@/components/DropDownSelection";
+import { CalendarType } from "@/types/calendar";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { appointmentQueryKey, calenderQueryKey } from "../../_constant";
+import DisplayDate from "./DisplayDate";
+import Settings from "./Settings";
+import CalendarSearch from "./CalendarSearch";
+import moment from "moment";
+import { useCalendarStore } from "@/stores/calendarStore";
+import ArrowButton from "./ArrowButton";
+import { AppointmentCreateOrEdit } from "@/components/appointment/AppointmentCreateOrEdit";
+import { useSession } from "next-auth/react";
+import DateSelector from "./DateSelector";
+import { useDate } from "../../_hook/lib/useDate";
+import useMonth from "../../_hook/lib/useMonth";
+import useWeekStartEndDays from "../../_hook/lib/useWeekStartEndDays";
+import { Appointment, Lead } from "@prisma/client";
+import { updatePipelineAutomationTrigger } from "@/actions/automation/pipeline/triggerPipelineAutomation";
+import { errorHandler } from "@/error-boundary/globalErrorHandler";
 
 type THeadingProps = {
   type: CalendarType;
 };
 
-const BUTTON_STYLE = 'app-shadow rounded-md p-2 text-[#797979]';
-const DROPDOWN_STYLE =
-  'app-shadow rounded-md bg-background px-3 py-2 text-[#797979] capitalize';
+const days = ["SUN", "MON", "TUE", "WED", "THUS", "FRI", "SAT"];
 
-const ALLOWED_ROLES_FOR_NEW_APPOINTMENT = ['Admin', 'Manager', 'Sales'];
+const BUTTON_STYLE = "app-shadow rounded-md p-2 text-[#797979]";
+const DROPDOWN_STYLE =
+  "app-shadow rounded-md bg-background px-3 py-2 text-[#797979] capitalize";
+
+const ALLOWED_ROLES_FOR_NEW_APPOINTMENT = ["Admin", "Manager", "Sales"];
 
 export default function Heading({ type }: THeadingProps) {
   const date = useDate();
-  const dateFormat = date.format('YYYY-MM-DD');
+  const dateFormat = date.format("YYYY-MM-DD");
   const month = useMonth();
   const formattedMonth = month
-    ? moment(month, 'YYYY-MM').format('MMMM')
-    : moment().format('MMMM');
+    ? moment(month, "YYYY-MM").format("MMMM")
+    : moment().format("MMMM");
 
   const formattedYear = month
-    ? moment(month, 'YYYY-MM').year()
+    ? moment(month, "YYYY-MM").year()
     : moment().year();
 
   const { weekStartDate, weekEndDate } = useWeekStartEndDays();
@@ -54,17 +56,19 @@ export default function Heading({ type }: THeadingProps) {
     },
   });
   const router = useRouter();
-  const calenderQueryType = type === 'day' ? 'date' : type;
-  const { setDate, setNavigating } = useCalendarStore();
+  const calenderQueryType = type === "day" ? "date" : type;
+  const { setDate, setNavigating, date: currentDate } = useCalendarStore();
+
+  const currentDayIndex = moment(currentDate).day();
 
   const handleTodayClick = () => {
-    const today = moment().format('YYYY-MM-DD');
+    const today = moment().format("YYYY-MM-DD");
     setDate(today);
 
-    if (type !== 'day') {
+    if (type !== "day") {
       // Set navigation flag to prevent reset, then navigate
       setNavigating(true);
-      router.push('day');
+      router.push("day");
 
       // Clear navigation flag after a short delay to allow navigation to complete
       // setTimeout(() => setNavigating(false), 30000);
@@ -98,7 +102,7 @@ export default function Heading({ type }: THeadingProps) {
 
       if (newAppointment?.lead?.columnId && newAppointment?.lead?.companyId) {
         await updatePipelineAutomationTrigger({
-          condition: 'APPOINTMENT_SCHEDULED',
+          condition: "APPOINTMENT_SCHEDULED",
           companyId: newAppointment?.lead?.companyId,
           leadId: newAppointment?.lead?.id,
           columnId: newAppointment?.lead?.columnId,
@@ -117,7 +121,7 @@ export default function Heading({ type }: THeadingProps) {
 
       <div className="flex flex-wrap items-center justify-between gap-1 text-left lg:justify-end xl:gap-3">
         {/* Desktop Search */}
-        <div className="mb-2 hidden w-full md:mb-0 lg:block lg:w-64">
+        <div className="mb-2 hidden w-full md:mb-0 lg:block lg:w-64 xl:w-80">
           <CalendarSearch type={type} />
         </div>
 
@@ -146,9 +150,9 @@ export default function Heading({ type }: THeadingProps) {
 
         {/* dropdown selection day, week and month */}
         <div>
-          {' '}
+          {" "}
           <DropdownSelection
-            dropDownValues={['day', 'week', 'month']}
+            dropDownValues={["day", "week", "month"]}
             onValueChange={(value) => {
               // Set navigation flag to prevent reset, then navigate
               // setNavigating(true);
@@ -164,7 +168,7 @@ export default function Heading({ type }: THeadingProps) {
         </div>
         {/* new appointment */}
         {ALLOWED_ROLES_FOR_NEW_APPOINTMENT.includes(
-          user?.employeeType ?? ''
+          user?.employeeType ?? ""
         ) && (
           <AppointmentCreateOrEdit
             onAppointmentCreated={handleAppointmentCreate}
@@ -174,7 +178,22 @@ export default function Heading({ type }: THeadingProps) {
         <Settings />
 
         {/* Mobile Search */}
+
         <div className="my-2 block w-full md:mb-0 lg:hidden">
+          <div className="flex items-center justify-around gap-2">
+            {days.map((day, index) => (
+              <p
+                key={day}
+                className={` p-1 rounded-full ${
+                  index === currentDayIndex
+                    ? "bg-blue-500 text-white font-bold"
+                    : ""
+                }`}
+              >
+                {day}
+              </p>
+            ))}
+          </div>
           <CalendarSearch type={type} />
         </div>
       </div>

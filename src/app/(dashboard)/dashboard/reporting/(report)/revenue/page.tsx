@@ -141,11 +141,9 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
         },
       },
     },
-    // take: take,
-    // skip: (page - 1) * take,
-    // orderBy: {
-    //   deliveredAt: 'desc', // optional, helpful for consistent paging
-    // },
+    orderBy: {
+      deliveredAt: "desc",
+    },
   });
 
   const servicesPromise = db.service.findMany({
@@ -193,32 +191,38 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
       : invoices;
 
   if (searchParams.startDate && searchParams.endDate) {
-    const formattedStartDate =
-      searchParams.startDate &&
-      moment(decodeURIComponent(searchParams.startDate!), "MM-DD-YYYY").format(
-        "YYYY-MM-DD"
-      );
+    const formattedStartDate = searchParams.startDate
+      ? decodeURIComponent(searchParams.startDate!) // e.g. "05/01/2025"
+      : null;
 
-    const formattedEndDate =
-      searchParams.endDate &&
-      moment(decodeURIComponent(searchParams.endDate!), "MM-DD-YYYY").format(
-        "YYYY-MM-DD"
-      );
+    const formattedEndDate = searchParams.endDate
+      ? decodeURIComponent(searchParams.endDate!)
+      : null;
 
+    const convertedStart = formattedStartDate
+      ? moment.tz(formattedStartDate!, "MM/DD/YYYY", timezone).startOf("day")
+      : null;
+
+    const convertedEnd = formattedEndDate
+      ? moment.tz(formattedEndDate!, "MM/DD/YYYY", timezone).endOf("day")
+      : null;
+
+    // console.log("formattedStartDate", convertedStart);
+    // console.log("formattedEndDate", convertedEnd);
+    // console.log("timezone", timezone);
     filteredInvoicesWithOutDate = filteredInvoices;
 
     filteredInvoices = filteredInvoices.filter((invoice) => {
       if (!invoice.deliveredAt) {
         return false;
       }
-      const invoiceDate = FormatUtcToTimezone(
-        invoice.deliveredAt,
-        timezone ?? "America/Detroit",
-        "YYYY-MM-DD"
-      );
 
+      const invoiceDate = invoice.deliveredAt
+        ? moment.utc(invoice.deliveredAt)
+        : null;
       return (
-        invoiceDate >= formattedStartDate && invoiceDate <= formattedEndDate
+        invoiceDate &&
+        invoiceDate.isBetween(convertedStart, convertedEnd, null, "[]")
       );
     });
 
@@ -246,7 +250,15 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
       acc += Number(technician?.amount);
       return acc;
     }, 0);
-    const { costPrice, profitPrice } = invoice.invoiceItems.reduce(
+
+    // Calculate inventory losses (lost products from inventory)
+    // const inventoryLossAmount = invoice.InventoryProductHistory?.reduce(
+    //   (total, item) => total + Number(item.price) * Number(item.quantity),
+    //   0
+    // ) || 0;
+    const inventoryLossAmount = 0;
+
+    const { costPrice, profitPrice, materialLossAmount, laborLossAmount, materialLossDetails } = invoice.invoiceItems.reduce(
       (
         acc,
         cur: Prisma.InvoiceItemGetPayload<{
@@ -261,22 +273,69 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
             acc + Number(cur?.cost || 0) * Number(cur?.quantity || 0),
           0
         );
-        // labor cost price is assumed to be per hour
-        // const laborCostPrice =
-        //   Number(cur.labor?.charge || 0) * Number(cur?.labor?.hours) || 0;
+
+        // Calculate material loss and track material names with losses
+        const { totalMaterialLoss, lossDetails } = cur.materials.reduce((acc, material) => {
+          const materialCost = Number(material?.cost || 0) * Number(material?.quantity || 0);
+          const materialRevenue = (Number(material?.sell || 0) * Number(material?.quantity || 0)) - Number(material?.discount || 0);
+          const loss = materialCost > materialRevenue ? materialCost - materialRevenue : 0;
+          
+          if (loss > 0) {
+            acc.lossDetails.push({
+              name: material.name,
+              loss: loss,
+              isFromInventory: !!material.productId
+            });
+          }
+          
+          acc.totalMaterialLoss += loss;
+          return acc;
+        }, { totalMaterialLoss: 0, lossDetails: [] as { name: string; loss: number; isFromInventory: boolean }[] });
+
+        // Calculate labor loss (when technician amount > labor charge)
+        // let laborLoss = 0;
+        // if (cur.labor) {
+        //   const laborRevenue = (Number(cur.labor.charge || 0) * Number(cur.labor.hours || 0)) - Number(cur.labor.discount || 0);
+        //   // Find technician costs for this labor
+        //   const technicianCosts = invoice.technician
+        //     .filter(tech => tech.invoiceItemId === cur.id)
+        //     .reduce((sum, tech) => sum + Number(tech.amount || 0), 0);
+        //   
+        //   laborLoss = technicianCosts > laborRevenue ? technicianCosts - laborRevenue : 0;
+        // }
+        const laborLoss = 0;
+
         const costPrice = materialCostPrice;
         acc.costPrice += costPrice;
-        acc.profitPrice = Number(invoice.grandTotal) - acc.costPrice;
+        acc.materialLossAmount += totalMaterialLoss;
+        acc.laborLossAmount += laborLoss;
+        acc.materialLossDetails.push(...lossDetails);
         return acc;
       },
       {
         costPrice: 0,
         profitPrice: 0,
+        materialLossAmount: 0,
+        laborLossAmount: 0,
+        materialLossDetails: [] as { name: string; loss: number; isFromInventory: boolean }[],
       }
     );
 
-    (invoice as any).costPrice = costPrice + laborCost;
-    (invoice as any).profitPrice = profitPrice - laborCost;
+    // Calculate total costs and profit correctly
+    const totalCostPrice = costPrice + laborCost;
+    // const totalLossAmount = inventoryLossAmount + materialLossAmount + laborLossAmount;
+    const totalLossAmount = materialLossAmount; // Only material loss
+    
+    // Profit = Revenue - Total Costs 
+    const finalProfitPrice = Number(invoice.grandTotal) - totalCostPrice;
+
+    (invoice as any).costPrice = totalCostPrice;
+    (invoice as any).profitPrice = finalProfitPrice;
+    (invoice as any).inventoryLossAmount = inventoryLossAmount;
+    (invoice as any).materialLossAmount = materialLossAmount;
+    (invoice as any).laborLossAmount = laborLossAmount;
+    (invoice as any).totalLossAmount = totalLossAmount;
+    (invoice as any).materialLossDetails = materialLossDetails;
     maxCost = Math.max(maxCost, costPrice);
     maxProfit = Math.max(maxProfit, profitPrice);
     if (!searchParams.price && !searchParams.cost && !searchParams.profit) {
@@ -550,6 +609,11 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
           filteredInvoice as (TInvoice & {
             costPrice: number;
             profitPrice: number;
+            inventoryLossAmount: number;
+            materialLossAmount: number;
+            laborLossAmount: number;
+            totalLossAmount: number;
+            materialLossDetails: { name: string; loss: number; isFromInventory: boolean }[];
           })[]
         }
         timezone={timezone}

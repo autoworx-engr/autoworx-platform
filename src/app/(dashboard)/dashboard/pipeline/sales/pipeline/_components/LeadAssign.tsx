@@ -88,7 +88,7 @@ export default function LeadAssign({ lead, salesUser }: TProps) {
       {salesUser ? (
         <Tooltip title={`Assign To Me`} placement="right">
           <div
-            className="size-6 rounded-full border-2 border-[#66738C] p-1 text-[.60rem] text-[#66738C]"
+            className="flex items-center justify-center size-6 rounded-full border-2 border-[#66738C] p-1 text-[.60rem] text-[#66738C]"
             onClick={() => setIsSalesSelectorOpen((prev) => !prev)}
           >
             {salesUser.firstName.charAt(0).toUpperCase() +

@@ -6,9 +6,25 @@ export default function DisplayDate({ type }: { type: CalendarType }) {
   const { date, week, month } = useCalendarStore();
 
   const param = type === "day" ? date : type === "week" ? week : month;
-  const formattedDate = moment(param).isValid()
-    ? moment(param).format(type === "day" ? "dddd, D MMMM YYYY" : "MMMM YYYY")
-    : moment().format(type === "day" ? "dddd, D MMMM YYYY" : "MMMM YYYY");
 
-  return <>{formattedDate}</>;
+  const longFormat = type === "day" ? "dddd, D MMMM YYYY" : "MMMM YYYY"; // Full format
+  const shortFormat = type === "day" ? "ddd, D MMM YY" : "MMM YY"; // Short format
+
+  const formattedDateLong = moment(param).isValid()
+    ? moment(param).format(longFormat)
+    : moment().format(longFormat);
+
+  const formattedDateShort = moment(param).isValid()
+    ? moment(param).format(shortFormat)
+    : moment().format(shortFormat);
+
+  return (
+    <>
+      {/* Small screen → short format */}
+      <span className="block md:hidden">{formattedDateShort}</span>
+
+      {/* Medium & Large screen → long format */}
+      <span className="hidden md:block">{formattedDateLong}</span>
+    </>
+  );
 }

@@ -28,6 +28,7 @@ export default function AssignTaskDropDown({
   const [showUsers, setShowUsers] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const userDivRef = useRef<HTMLDivElement>(null);
+  
   const handleTrigger = () => {
     setShowUsers(!showUsers);
   };
@@ -49,16 +50,24 @@ export default function AssignTaskDropDown({
     }
   }, [showUsers]);
 
+  // Initialize users list once on mount
   useEffect(() => {
-    if (fromUpdate) {
-      setUsers((prevUsers) =>
-        prevUsers?.filter((user) => {
-          return !assignedUsers?.includes(user.id!);
-        }),
-      );
+    if (fromUpdate && assignedUsers && assignedUsers.length > 0) {
+      // For updates: filter out already assigned users from the available users list
+      const filteredUsers = companyUsers.filter((user) => {
+        return !assignedUsers.includes(user.id!);
+      });
+      setUsers(filteredUsers);
     }
+    // For new tasks: keep all company users available (no filtering needed)
+  }, []); // Empty dependency array to run only once on mount
+
+  // Cleanup effect
+  useEffect(() => {
     return () => {
-      !fromUpdate && setAssignedUsers([]);
+      if (!fromUpdate) {
+        setAssignedUsers([]);
+      }
     };
   }, []);
 

@@ -25,6 +25,7 @@ import { parseSecondsToTimeDelay } from "@/utils/parseSecondsToTimeDelay";
 import { useUpdateServiceMaintenanceAutomationRule } from "@/hooks/service-maintenance-automation/useUpdateServiceMaintenanceAutomationRule";
 import { Spin } from "antd";
 import { errorToast } from "@/lib/toast";
+import { useCharacterLimit } from "@/hooks/useCharecterLimit";
 type RuleFormProps = {
   initialData?: Rule;
   mode: "create" | "edit" | undefined;
@@ -107,13 +108,19 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
   } = usePipelineStagesStore();
 
   const actionOptions = stages.filter(
-    (stage) => formData?.conditionColumnId != stage.id,
+    (stage) => formData?.conditionColumnId != stage.id
   );
 
   const { mutate: updateServiceRule, isPending: isUpdatePending } =
     useUpdateServiceMaintenanceAutomationRule();
   const { data, isLoading, isFetching } =
     useFindOneServiceMaintenanceAutomationRule(Number(id));
+  const maxLength = 160;
+  const { length, isLimitExceeded } = useCharacterLimit(
+    formData?.emailBody! || formData?.smsBody!,
+    maxLength
+  );
+
   // Update rule on initial data change
   useEffect(() => {
     if (isEdit && id) {
@@ -122,7 +129,7 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
         companyId: data?.data.companyId,
         title: data?.data.title,
         selectedServiceIds: data?.data.serviceMaintenanceStage?.map(
-          (item: any) => item.serviceId,
+          (item: any) => item.serviceId
         ),
         conditionColumnId: data?.data.conditionColumnId,
         targetColumnId:
@@ -137,11 +144,7 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
         smsBody: data?.data.smsBody || "",
         createdBy: data?.data.createdBy,
       });
-      setActiveTemplate(
-        data?.data.communicationType === "BOTH"
-          ? "SMS"
-          : data?.data.communicationType,
-      );
+      setActiveTemplate(data?.data.templateType);
       setLoading(false);
     } else {
       setFormData({
@@ -194,7 +197,7 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
   // Handle file attachment
   const handleFileAttachment = async (
     event: React.ChangeEvent<HTMLInputElement>,
-    type: string,
+    type: string
   ) => {
     handleFileSelection({
       event: event,
@@ -409,7 +412,7 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
                   checked={activeTemplate === "EMAIL"}
                   onChange={() =>
                     handleTemplateToggle(
-                      activeTemplate === "SMS" ? "EMAIL" : "SMS",
+                      activeTemplate === "SMS" ? "EMAIL" : "SMS"
                     )
                   }
                 />
@@ -435,6 +438,9 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
                     handleFileAttachment={handleFileAttachment}
                     attachmentType="sms"
                     error={error.smsBody}
+                    maxLength={maxLength}
+                    characterLength={length}
+                    isLimitExceeded={isLimitExceeded}
                   />
                 </Box>
               )}
@@ -461,6 +467,9 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
                     attachmentType="email"
                     error={error.emailBody || error.emailSubject}
                     subjectError={!!error.emailSubject}
+                    maxLength={maxLength}
+                    characterLength={length}
+                    isLimitExceeded={isLimitExceeded}
                   />
                 </Box>
               )}
@@ -472,10 +481,10 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
             {/* Save & Cancel Buttons */}
             <div className="flex justify-end pt-4">
               <button
-                disabled={isUpdatePending || isCreatePending}
+                disabled={isUpdatePending || isCreatePending || isLimitExceeded}
                 type="submit"
                 className={`rounded-md px-4 py-2 text-sm font-medium text-white ${
-                  isUpdatePending || isCreatePending
+                  isUpdatePending || isCreatePending || isLimitExceeded
                     ? "cursor-not-allowed bg-indigo-300"
                     : "bg-indigo-500 hover:bg-indigo-600"
                 }`}

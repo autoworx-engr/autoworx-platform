@@ -1,20 +1,21 @@
-"use client";
+'use client';
 
-import { pusher } from "@/lib/pusher/client";
-import { errorToast } from "@/lib/toast";
-import { useDemoClientFilterStore } from "@/stores/clientFilter";
-import { Client, ClientConversationTrack } from "@prisma/client";
-import { useParams, usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
-import InfiniteScroll from "react-infinite-scroll-component";
-import { getClientByScroll } from "../_actions/getClientByScroll";
-import { getClients } from "../_actions/getClients";
-import { clientSortByUpdatedMessage } from "../_utils";
-import ClientItem from "./ClientItem";
+import { pusher } from '@/lib/pusher/client';
+import { errorToast } from '@/lib/toast';
+import { useDemoClientFilterStore } from '@/stores/clientFilter';
+import { Client, ClientConversationTrack } from '@prisma/client';
+import { useParams, usePathname, useRouter } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
+import InfiniteScroll from 'react-infinite-scroll-component';
+import { getClientByScroll } from '../_actions/getClientByScroll';
+import { getClients } from '../_actions/getClients';
+import { clientSortByUpdatedMessage } from '../_utils';
+import ClientItem from './ClientItem';
 import {
   clientListStore,
   useClientCommunicationStore,
-} from "@/stores/client-store";
+} from '@/stores/client-store';
+import { isIosPwa } from '@/utils/isIosPwa';
 
 type TClient = Client & {
   conversationsTrack?: ClientConversationTrack | null;
@@ -35,7 +36,7 @@ export default function ClientInfinityScroll({
   const { filter, searchTerm } = useDemoClientFilterStore();
   const { clientList, setClientList } = clientListStore();
   const resetClientData = useClientCommunicationStore(
-    (state) => state.resetClientData,
+    state => state.resetClientData
   );
   const [hasMore, setHasMore] = useState(true);
   const params = useParams();
@@ -45,16 +46,16 @@ export default function ClientInfinityScroll({
   const router = useRouter();
 
   const pathname = usePathname();
-  let isClientInitialPage = pathname === "/dashboard/communication/client";
+  let isClientInitialPage = pathname === '/dashboard/communication/client';
 
   // subscribe to pusher channel for realtime updates
   useEffect(() => {
     pusher
       .subscribe(`client-notify-${companyId}`)
-      .bind("client-notify", (data: ClientConversationTrack) => {
+      .bind('client-notify', (data: ClientConversationTrack) => {
         if (!data) return;
-        setClients((prevClients) => {
-          const updatedClient = prevClients.map((client) => {
+        setClients(prevClients => {
+          const updatedClient = prevClients.map(client => {
             if (client.id == data.clientId) {
               return {
                 ...client,
@@ -73,7 +74,7 @@ export default function ClientInfinityScroll({
         }
       });
     return () => {
-      pusher.unbind("client-notify").unsubscribe(`client-notify-${companyId}`);
+      pusher.unbind('client-notify').unsubscribe(`client-notify-${companyId}`);
     };
   }, [pathname]);
 
@@ -87,7 +88,7 @@ export default function ClientInfinityScroll({
         });
         setClients(clients);
       } catch (err) {
-        errorToast("Failed to fetch clients");
+        errorToast('Failed to fetch clients');
       }
     };
     fetchFilteredClients();
@@ -96,15 +97,21 @@ export default function ClientInfinityScroll({
   // const [page, setPage] = useState(1);
   useEffect(() => {
     if (isClientInitialPage) {
+      //192.168.1.5:3000
+
       // if (clients && clients.length === 0) router.push("/404");
-      if (clients && clients.length > 0) {
+      const isPwa = isIosPwa();
+      if (isPwa && clients && clients.length > 0) {
+        router.push('/dashboard/communication/client');
+        setHasMore(true);
+      } else if (clients && clients.length > 0) {
         router.push(`/dashboard/communication/client/${clients[0]?.id}`);
         useClientCommunicationStore.setState({
           clientConversationTrack: clients[0]?.conversationsTrack,
         });
         setHasMore(true);
       } else {
-        router.push("/dashboard/communication/client");
+        router.push('/dashboard/communication/client');
         setHasMore(false);
       }
     }
@@ -127,10 +134,10 @@ export default function ClientInfinityScroll({
       if (fetchClients.length < defaultTakeData) {
         setHasMore(false);
       }
-      setClients((prev) => [...prev, ...fetchClients]);
+      setClients(prev => [...prev, ...fetchClients]);
     } catch (err) {
       setHasMore(false);
-      errorToast("Failed to fetch clients");
+      errorToast('Failed to fetch clients');
     }
   };
 
@@ -143,7 +150,7 @@ export default function ClientInfinityScroll({
       <InfiniteScroll
         dataLength={dataLength} //This is important field to render the next data
         next={fetchData}
-        hasMore={filter === "All" && hasMore}
+        hasMore={filter === 'All' && hasMore}
         loader={
           <div className="text-center">
             <div className="mx-auto h-6 w-6 animate-spin rounded-full border-4 border-dashed border-yellow-500"></div>

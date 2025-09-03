@@ -58,8 +58,8 @@ const CannedLeadForm = ({ companyId }: { companyId: number }) => {
       prevEntries.map((entry) =>
         entry.id === id
           ? { ...entry, showQR: !entry.showQR }
-          : { ...entry, showQR: false },
-      ),
+          : { ...entry, showQR: false }
+      )
     );
   };
 
@@ -71,7 +71,7 @@ const CannedLeadForm = ({ companyId }: { companyId: number }) => {
       acc[entry.source].push(entry);
       return acc;
     },
-    {},
+    {}
   );
 
   const handleDeleteLink = async (id: number) => {
@@ -80,7 +80,7 @@ const CannedLeadForm = ({ companyId }: { companyId: number }) => {
       // Optionally, you can refetch the lead links after deletion
       await fetchLeadLinks(companyId);
       setEntries((prevEntries) =>
-        prevEntries.filter((entry) => entry.id !== id),
+        prevEntries.filter((entry) => entry.id !== id)
       );
     } catch (error) {
       console.error("Error deleting lead link:", error);
@@ -163,7 +163,7 @@ const CannedLeadForm = ({ companyId }: { companyId: number }) => {
                                 className="rounded-full p-2 transition-colors duration-200 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
                                 onClick={() => {
                                   navigator.clipboard.writeText(
-                                    entry.shortUrl || entry.generatedLink,
+                                    entry.shortUrl || entry.generatedLink
                                   );
                                   successToast("Copied to clipboard!");
                                 }}
@@ -200,9 +200,26 @@ const CannedLeadForm = ({ companyId }: { companyId: number }) => {
                           {entry.showQR && (
                             <div className="mt-4 flex flex-col items-end justify-center gap-4 sm:flex-row sm:justify-end">
                               <button
-                                onClick={() => {
-                                  navigator.clipboard.writeText(entry.QRCode!);
-                                  successToast("QR code copied!");
+                                onClick={async () => {
+                                  try {
+                                    // Try to copy image to clipboard (Chrome/Edge)
+                                    const response = await fetch(entry.QRCode!);
+                                    const blob = await response.blob();
+                                    await navigator.clipboard.write([
+                                      new window.ClipboardItem({
+                                        [blob.type]: blob,
+                                      }),
+                                    ]);
+                                    successToast("QR code image copied!");
+                                  } catch (err) {
+                                    // Fallback for Firefox/Safari: copy URL as text
+                                    await navigator.clipboard.writeText(
+                                      entry.QRCode!
+                                    );
+                                    successToast(
+                                      "QR code image copied as link"
+                                    );
+                                  }
                                 }}
                                 className="order-2 rounded-md border border-gray-200 bg-gray-50 px-4 py-2 text-sm transition-colors duration-200 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400 sm:order-1"
                               >

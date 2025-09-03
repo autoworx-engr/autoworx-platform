@@ -53,7 +53,7 @@ const businessSettings = [
   
   {
     link: "/dashboard/settings/leadgeneration",
-    label: "Lead Generation",
+    label: "Lead Capture",
   },
   {
     link: "/dashboard/settings/automation",

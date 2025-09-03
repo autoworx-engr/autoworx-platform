@@ -73,7 +73,7 @@ export default function AllCards({
     isLoading: invoiceAutomationIsLoading,
     isFetching: invoiceAutomationIsFetching,
   } = useAllInvoiceAutomationRules(companyId);
-  
+
   const {
     data: allInventoryAutomation,
     isLoading: inventoryAutomationIsLoading,
@@ -97,7 +97,6 @@ export default function AllCards({
     setIsEdit(false);
   }, [type]);
 
-
   const items =
     type === "pipeline"
       ? allPipelineRules?.data
@@ -109,7 +108,9 @@ export default function AllCards({
             ? allServiceAutomation
             : type === "invoice"
               ? allInvoiceAutomation?.data
-              : type === 'inventory' ? allInventoryAutomation?.data : campaigns;
+              : type === "inventory"
+                ? allInventoryAutomation?.data
+                : campaigns;
 
   const allowedCompany = [4, 14];
   useEffect(() => {
@@ -133,7 +134,7 @@ export default function AllCards({
 
   return (
     <div className="mx-auto flex flex-col items-start gap-10 bg-gray-50 md:flex-row">
-      <div className="w-1/2">
+      <div className="w-full lg:w-1/2">
         <div className="mx-auto w-full max-w-xl">
           <h2 className="mb-6 text-lg font-semibold capitalize text-gray-800 md:text-xl">
             {`${type} Automation`}
@@ -204,7 +205,7 @@ export default function AllCards({
         </div>
       </div>
 
-      <div className="w-1/2">
+      <div className="w-full lg:w-1/2">
         {FormComponent && (isCreate || isEdit) && (
           <>
             <div className="mb-4 flex items-center justify-between">

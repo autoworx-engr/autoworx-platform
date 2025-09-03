@@ -1,17 +1,19 @@
 "use client";
-import moment from "moment";
+import moment from "moment-timezone";
 import { LuCalendarX2 } from "react-icons/lu";
 import useAppointmentQueryByDate from "../../_hook/appointment/query/useAppointmentQueryByDate";
 import { useDate } from "../../_hook/lib/useDate";
 import TaskError from "../ui/TaskError";
 import TaskSpinner from "../ui/TaskSpinner";
+import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 
 export default function AppointmentLists() {
   const date = useDate();
+  const timezone = useCompanyTimezone();
   const dateFormat = date.format("YYYY-MM-DD");
 
-  const inputDate = new Date();
-  inputDate.setHours(0, 0, 0, 0);
+  // Get current date in company timezone
+  const inputDate = moment.tz(timezone).startOf("day").toDate();
 
   const {
     data: appointments,
@@ -20,7 +22,6 @@ export default function AppointmentLists() {
   } = useAppointmentQueryByDate(dateFormat);
 
   let content = null;
-
   if (isLoading && !isError) {
     content = <TaskSpinner />;
   } else if (!isLoading && isError) {
@@ -49,7 +50,9 @@ export default function AppointmentLists() {
     content = appointments.map((appointment: any) => {
       const start = moment(appointment.startTime, "HH:mm");
       const end = moment(appointment.endTime, "HH:mm");
-      const date = moment.utc(appointment?.date)?.format("Do MMMM YYYY");
+      const date = moment(appointment?.date, "YYYY-MM-DD").format(
+        "Do MMMM YYYY"
+      );
 
       return (
         <div
@@ -96,7 +99,7 @@ export default function AppointmentLists() {
                 ? appointment.assignedUsers
                     .map(
                       (user: any) =>
-                        `${user?.firstName ?? ""} ${user?.lastName ?? ""}`,
+                        `${user?.firstName ?? ""} ${user?.lastName ?? ""}`
                     )
                     .join(", ")
                 : "N/A"}

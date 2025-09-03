@@ -46,7 +46,7 @@ export default async function EmployeeLeaveRequestsBox({
       {" "}
       <div className={`flex h-full flex-col rounded-md p-6 shadow-lg`}>
         <div className="mb-4 flex items-center justify-between">
-          <span className="text-xl font-bold">Reputation Management</span>
+          <span className="text-xl font-bold">Employee Leave Requests</span>
           <EmployeeLeaveRequestsModal
             pendingLeaveRequests={pendingLeaveRequests}
           />
@@ -58,10 +58,11 @@ export default async function EmployeeLeaveRequestsBox({
           {pendingLeaveRequests.length === 0 && (
             <div className="flex flex-1 flex-col items-center justify-center py-2 text-center">
               <div className="relative">
-                <span className="animate-gradient-x bg-gradient-to-r from-blue-600 to-teal-500 bg-clip-text text-xl font-semibold text-transparent">
+                <span>No Leave Requests</span>
+                {/* <span className="animate-gradient-x bg-gradient-to-r from-blue-600 to-teal-500 bg-clip-text text-xl font-semibold text-transparent">
                   Something Great is Coming...
                 </span>
-                <span className="absolute -bottom-1 left-0 h-0.5 w-full animate-pulse bg-gradient-to-r from-blue-600 to-teal-500"></span>
+                <span className="absolute -bottom-1 left-0 h-0.5 w-full animate-pulse bg-gradient-to-r from-blue-600 to-teal-500"></span> */}
               </div>
             </div>
           )}

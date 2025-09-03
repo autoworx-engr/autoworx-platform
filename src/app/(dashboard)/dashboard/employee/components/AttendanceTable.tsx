@@ -329,17 +329,17 @@ const Dashboard = () => {
 
               // Default to current week if we couldn't parse
               if (!startDateObj || isNaN(startDateObj.getTime())) {
-                startDateObj = moment().startOf("week").toDate();
+                startDateObj = moment.tz(timezone).startOf("week").toDate();
               }
 
               if (!endDateObj || isNaN(endDateObj.getTime())) {
-                endDateObj = moment().endOf("week").toDate();
+                endDateObj = moment.tz(timezone).endOf("week").toDate();
               }
 
               // Convert dates to ISO format strings for the server action
               const formattedStartDate =
-                moment(startDateObj).format("YYYY-MM-DD");
-              const formattedEndDate = moment(endDateObj).format("YYYY-MM-DD");
+                moment.tz(startDateObj, timezone).format("YYYY-MM-DD");
+              const formattedEndDate = moment.tz(endDateObj, timezone).format("YYYY-MM-DD");
 
               // Update state with the new dates
               setStartDate(formattedStartDate);
@@ -347,8 +347,8 @@ const Dashboard = () => {
             }}
             onCancel={() => {
               // Reset to current week
-              const currentWeekStart = moment().startOf("week");
-              const currentWeekEnd = moment().endOf("week");
+              const currentWeekStart = moment.tz(timezone).startOf("week");
+              const currentWeekEnd = moment.tz(timezone).endOf("week");
 
               setStartDate(currentWeekStart.format("YYYY-MM-DD"));
               setEndDate(currentWeekEnd.format("YYYY-MM-DD"));
@@ -382,9 +382,9 @@ const Dashboard = () => {
                   </thead>
                   <tbody>
                     {attendanceInfo?.attInfo?.map((data, index) => {
-                      const dayOfWeek = moment.utc(data.date).day();
+                      const dayOfWeek = moment.utc(data.date).tz(timezone).day();
                       const dayAbbr = daysOfWeek[dayOfWeek];
-                      const dayDate = moment.utc(data.date).date();
+                      const dayDate = moment.utc(data.date).tz(timezone).date();
 
                       const effectiveHours = isNaN(Number(data.hours))
                         ? data.hours

@@ -90,7 +90,7 @@ export function SelectStatus({
     // alert("outside click");
     setOpen && setOpen(false);
   });
-  const restrictedColumns = ["Pending", "In Progress", "Completed"];
+  const restrictedColumns = ["Pending", "In Progress", "Completed", "Delivered"];
   return (
     <div>
       <input type="hidden" name={name} value={status?.title ?? ""} />

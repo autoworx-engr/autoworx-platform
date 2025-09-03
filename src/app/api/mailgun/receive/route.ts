@@ -160,7 +160,7 @@ export async function POST(request: Request) {
     const clientConversationTrack = await updateNewEmailChatTrack({
       clientId: client.id,
       emailLastMessage: extractActualMessage(emailData.message),
-      lastMessageBy: "Client",
+      lastEmailBy: "Client",
     });
 
     // send mail realtime by pusher

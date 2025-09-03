@@ -26,14 +26,14 @@ export default async function RecentMessagesBox() {
     const aLastEmailDate =
       a.MailgunEmail.length > 0
         ? new Date(
-            a.MailgunEmail[a.MailgunEmail.length - 1].createdAt,
+            a.MailgunEmail[a.MailgunEmail.length - 1].createdAt
           ).getTime()
         : new Date("1970-01-01").getTime();
 
     const bLastEmailDate =
       b.MailgunEmail.length > 0
         ? new Date(
-            b.MailgunEmail[b.MailgunEmail.length - 1].createdAt,
+            b.MailgunEmail[b.MailgunEmail.length - 1].createdAt
           ).getTime()
         : new Date("1970-01-01").getTime();
 
@@ -50,13 +50,15 @@ export default async function RecentMessagesBox() {
         <BoxTitle
           className="mb-4"
           title="Recent Messages"
-          redirectLink="/dashboard/task/day"
+          redirectLink="/dashboard/communication/internal"
         />
         <MessageContainer
           user={user}
           clientMessages={user.employeeType === "Sales" ? sortedClients : []}
           internalMessages={
-            user.employeeType === "Sales" ? internalMessages : []
+            user.employeeType === "Technician" || user.employeeType === "Other"
+              ? internalMessages
+              : []
           }
         />
       </div>

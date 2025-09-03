@@ -1,9 +1,9 @@
+import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
+import { db } from "@/lib/db";
 import getUser from "@/lib/getUser";
+import moment from "moment-timezone";
 import AppointmentDetails from "./AppointmentDetails";
 import BoxTitle from "./BoxTitle";
-import moment from "moment";
-import { db } from "@/lib/db";
-import { combineDateTimeWithTimezone } from "@/lib/combineDateTimeWithTimezone";
 
 const fetchWithAppointment = {
   include: {
@@ -35,13 +35,19 @@ const fetchWithAppointment = {
 
 export default async function AppointmentListBox() {
   const user = await getUser();
+  const { timezone } = await getCompanyTimezone();
+
   // let tasks;
   let appointments = [];
+
   // Get all appointments
-  // Current date and time
-  const currentDateTime = moment.utc();
-  // Start of today
-  const startOfToday = moment().utc().startOf("day");
+  // Start of today in company timezone
+  const startOfToday = moment.tz(timezone).utc().startOf("day");
+
+  // const startOfYesterday = moment
+  //   .tz(timezone)
+  //   .subtract(1, "day")
+  //   .startOf("day");
 
   if (
     user.employeeType === "Admin" ||
@@ -60,18 +66,18 @@ export default async function AppointmentListBox() {
       },
       ...fetchWithAppointment,
     });
-    // Filter appointments
-    appointments = appointments.filter((appointment) => {
-      // Convert appointment end time to moment with timezone
-      const appointmentEndTime = combineDateTimeWithTimezone(
-        appointment?.date!,
-        appointment?.endTime!,
-        appointment?.timezone!,
-      );
+    // Filter appointments by time
+    // appointments = appointments.filter((appointment) => {
+    //   // Convert appointment end time to moment with timezone
+    //   const appointmentEndTime = combineDateTimeWithTimezone(
+    //     appointment?.date!,
+    //     appointment?.endTime!,
+    //     timezone!
+    //   );
 
-      // Keep appointment if its end time is in the future
-      return appointmentEndTime.utc().isAfter(currentDateTime);
-    });
+    //   // Keep appointment if its end time is in the future
+    //   return appointmentEndTime.utc().isAfter(currentDateTime);
+    // });
   } else {
     appointments = await db.appointment.findMany({
       where: {
@@ -97,21 +103,21 @@ export default async function AppointmentListBox() {
       },
       ...fetchWithAppointment,
     });
-    // Filter appointments
-    appointments = appointments.filter((appointment) => {
-      // Convert appointment end time to moment with timezone
-      const appointmentEndTime = combineDateTimeWithTimezone(
-        appointment?.date!,
-        appointment?.endTime!,
-        appointment?.timezone!,
-      );
+    // Filter appointments by time
+    // appointments = appointments.filter((appointment) => {
+    //   // Convert appointment end time to moment with timezone
+    //   const appointmentEndTime = combineDateTimeWithTimezone(
+    //     appointment?.date!,
+    //     appointment?.endTime!,
+    //     timezone!
+    //   );
 
-      // Keep appointment if its end time is in the future
-      return appointmentEndTime.utc().isAfter(currentDateTime);
-    });
+    //   // Keep appointment if its end time is in the future
+    //   return appointmentEndTime.utc().isAfter(currentDateTime);
+    // });
   }
   return (
-    <div className="flex-1 overflow-y-hidden p-6 shadow-md">
+    <div className="overflow-y-hidden h-full p-6 md:pb-20 shadow-md">
       <div className="h-full">
         <BoxTitle title="Appointments" redirectLink="/dashboard/task/day" />
         <div className="custom-scrollbar flex h-full flex-1 flex-col space-y-4 overflow-x-hidden pb-4">

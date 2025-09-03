@@ -20,7 +20,7 @@ export const getClients = cache(
       },
       orderBy: {
         conversationsTrack: {
-          updatedAt: "desc",
+          sendAt: "desc",
         },
       },
       include: {
@@ -91,5 +91,5 @@ export const getClients = cache(
     } catch (err) {
       throw err;
     }
-  },
+  }
 );

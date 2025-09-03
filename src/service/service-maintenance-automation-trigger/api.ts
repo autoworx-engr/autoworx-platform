@@ -1,4 +1,6 @@
+"use server";
 import axiosInstance from "@/helpers/axios";
+import { serverAxios } from "@/helpers/server-axios";
 
 type TUpdateServiceAutomationTrigger = {
   companyId: number;
@@ -6,12 +8,12 @@ type TUpdateServiceAutomationTrigger = {
   columnId: number;
 };
 export const updateServiceAutomationTrigger = async function (
-  payload: TUpdateServiceAutomationTrigger,
+  payload: TUpdateServiceAutomationTrigger
 ) {
   try {
-    const response = await axiosInstance.patch(
+    const response = await serverAxios.patch(
       "/service-automation-trigger",
-      payload,
+      payload
     );
     return response.data;
   } catch (error) {

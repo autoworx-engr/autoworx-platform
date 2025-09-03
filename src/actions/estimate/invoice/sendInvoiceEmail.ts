@@ -2,8 +2,7 @@
 
 import { db } from "@/lib/db";
 import getUser from "@/lib/getUser";
-import { sendSendgridEmail } from "./sendSendgridMail";
-import { updateNewEmailChatTrack } from "@/actions/communication/client/chat-track";
+import { sendInfobipEmail } from "./sendInfobipEmail";
 
 export async function sendInvoiceEmail({ invoiceId }: { invoiceId: string }) {
   try {
@@ -91,32 +90,14 @@ export async function sendInvoiceEmail({ invoiceId }: { invoiceId: string }) {
           "<BUSINESS_NAME>",
           invoice?.company?.name || "No business found"
         ) +
-      `\n\nInvoice Link: ${process.env.NEXT_PUBLIC_APP_URL}/public-invoice/${invoice.id}`;
+      `\n\n${process.env.NEXT_PUBLIC_APP_URL}/public-invoice/${invoice.id}`;
 
-    const res = await sendSendgridEmail({
+    const res = await sendInfobipEmail({
       clientId: invoice.client.id,
       subject: variabledSubject,
       text: variabledBody || "",
     });
 
-    if (res?.id) {
-      await db.mailgunEmail.create({
-        data: {
-          subject: invoice?.company?.name || "Autoworx",
-          text: variabledBody || "",
-          emailBy: "Company",
-          companyId: invoice.company.id,
-          clientId: invoice.client.id,
-          messageId: res.id,
-        },
-      });
-
-      await updateNewEmailChatTrack({
-        clientId: invoice.client.id,
-        emailLastMessage: variabledBody || "",
-        lastMessageBy: "Company",
-      });
-    }
     return {
       success: true,
     };

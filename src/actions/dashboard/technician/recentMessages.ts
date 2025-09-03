@@ -17,7 +17,7 @@ export interface FullMessage {
 }
 
 export const fetchRecentMessages = async (
-  take?: number,
+  take?: number
 ): Promise<FullMessage[]> => {
   try {
     const user = await getUser();

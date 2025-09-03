@@ -10,6 +10,7 @@ export async function getLeadLinks({
   const leadLinks = await db.leadLink.findMany({
     where: {
       companyId: companyId,
+      isShow: true,
     },
     orderBy: {
       createdAt: "desc",

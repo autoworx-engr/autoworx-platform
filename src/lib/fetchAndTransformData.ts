@@ -1,6 +1,7 @@
 "use server";
 import { InvoiceType } from "@prisma/client";
 import { db } from "./db";
+import moment from "moment-timezone";
 
 const defaultTake = 50;
 
@@ -14,7 +15,8 @@ export async function fetchAndTransformData(
     page?: string;
     searchTerm?: string;
     take?: string;
-  } = {}
+  } = {},
+  timezone: string
 ) {
   const page = searchParams.page ? parseInt(searchParams.page, 10) : 1;
 
@@ -23,6 +25,22 @@ export async function fetchAndTransformData(
     : defaultTake;
 
   const { startDate, endDate, status, searchTerm } = searchParams;
+
+  const formattedStartDate = searchParams.startDate
+    ? decodeURIComponent(searchParams.startDate!) // e.g. "05/01/2025"
+    : null;
+
+  const formattedEndDate = searchParams.endDate
+    ? decodeURIComponent(searchParams.endDate!)
+    : null;
+
+  const convertedStart = formattedStartDate
+    ? moment.tz(formattedStartDate, "YYYY-MM-DD", timezone).startOf("day")
+    : null;
+
+  const convertedEnd = formattedEndDate
+    ? moment.tz(formattedEndDate, "YYYY-MM-DD", timezone).endOf("day")
+    : null;
 
   const decodedSearchTerm = decodeURIComponent(searchTerm || "").trim();
   const decodedStatus = decodeURIComponent(status || "");
@@ -253,14 +271,57 @@ export async function fetchAndTransformData(
     },
   });
 
+  const deliveredStatus = await db.column.findFirst({
+    where: {
+      companyId: companyId,
+      title: "Delivered",
+      type: "shop",
+    },
+  });
+
+  let dateFilter;
+
+  if (
+    deliveredStatus?.id &&
+    Array.isArray(statusIds) &&
+    statusIds.length === 1 &&
+    statusIds.includes(deliveredStatus.id)
+  ) {
+    dateFilter = {
+      deliveredAt: {
+        ...(convertedStart ? { gte: convertedStart.toDate() } : {}),
+        ...(convertedEnd ? { lte: convertedEnd.toDate() } : {}),
+      },
+    };
+  } else if (
+    deliveredStatus?.id &&
+    Array.isArray(statusIds) &&
+    statusIds.length > 1 &&
+    statusIds.includes(deliveredStatus.id)
+  ) {
+    const dateRangeFilter = {
+      ...(convertedStart ? { gte: convertedStart.toDate() } : {}),
+      ...(convertedEnd ? { lte: convertedEnd.toDate() } : {}),
+    };
+
+    dateFilter = {
+      OR: [{ createdAt: dateRangeFilter }, { deliveredAt: dateRangeFilter }],
+    };
+  } else {
+    dateFilter = {
+      createdAt: {
+        ...(convertedStart ? { gte: convertedStart.toDate() } : {}),
+        ...(convertedEnd ? { lte: convertedEnd.toDate() } : {}),
+      },
+    };
+  }
+
   const dataPromise = db.invoice.findMany({
     where: {
       type,
       companyId,
-      createdAt: {
-        gte: startDate ? new Date(`${startDate}T00:00:00`) : undefined,
-        lte: endDate ? new Date(`${endDate}T23:59:59.999`) : undefined,
-      },
+      ...dateFilter,
+
       columnId: {
         in: statusIds,
       },
@@ -499,6 +560,28 @@ export async function fetchAndTransformData(
     totalEstimateCountPromise,
   ]);
 
+  const filteredPromises =
+    deliveredStatus?.id &&
+    Array.isArray(statusIds) &&
+    statusIds.length > 1 &&
+    statusIds.includes(deliveredStatus.id)
+      ? data.filter((invoice) => {
+          const start = convertedStart ? convertedStart.toDate() : null;
+          const end = convertedEnd ? convertedEnd.toDate() : null;
+
+          // Helper function to check if date is in range
+          const isInRange = (date: any) => {
+            if (!date) return false;
+            const time = new Date(date).getTime();
+            if (start && time < start.getTime()) return false;
+            if (end && time > end.getTime()) return false;
+            return true;
+          };
+
+          return isInRange(invoice.createdAt) || isInRange(invoice.deliveredAt);
+        })
+      : data;
+
   // Define custom sorting order for status titles
   const statusOrder = [
     "Pending",
@@ -536,7 +619,7 @@ export async function fetchAndTransformData(
     return statusOrder.length;
   };
 
-  const transformedData = data.map((item) => {
+  const transformedData = filteredPromises.map((item) => {
     const vehicle = item.vehicle;
     const client = item.client;
     const status = item.column;

@@ -1,6 +1,7 @@
-"use client";
+'use client';
 
-import { addVehicleColor } from "@/actions/vehicle/addVehicleColor";
+import { addVehicleColor } from '@/actions/vehicle/addVehicleColor';
+import { getVehicleColors } from '@/actions/vehicle/getVehicleColor';
 import {
   Dialog,
   DialogClose,
@@ -9,14 +10,15 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/Dialog";
-import FormError from "@/components/FormError";
-import { SlimInput } from "@/components/SlimInput";
-import Submit from "@/components/Submit";
-import { useFormErrorStore } from "@/stores/form-error";
-import { VehicleColor } from "@prisma/client";
-import { useEffect, useState } from "react";
-import { FaChevronDown, FaChevronUp, FaSearch } from "react-icons/fa";
+} from '@/components/Dialog';
+import FormError from '@/components/FormError';
+import { SlimInput } from '@/components/SlimInput';
+import Submit from '@/components/Submit';
+import { errorToast } from '@/lib/toast';
+import { useFormErrorStore } from '@/stores/form-error';
+import { VehicleColor } from '@prisma/client';
+import { useEffect, useState } from 'react';
+import { FaChevronDown, FaChevronUp, FaSearch } from 'react-icons/fa';
 
 interface ColorSelectorProps {
   selectedColor: VehicleColor | null;
@@ -27,23 +29,22 @@ interface ColorSelectorProps {
 export default function ColorSelector({
   selectedColor,
   onSelect,
-  label = "Color",
+  label = 'Color',
 }: ColorSelectorProps) {
   const [colorOpen, setColorOpen] = useState(false);
   const [colors, setColors] = useState<VehicleColor[]>([]);
   const [filteredColors, setFilteredColors] = useState<VehicleColor[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Fetch colors on component mount
   useEffect(() => {
     async function getColors() {
-      const { getVehicleColors } = await import(
-        "@/actions/vehicle/getVehicleColor"
-      );
       const res = await getVehicleColors();
-      if (res.type === "success") {
+      if (res.type === 'success') {
         setColors(res.data);
         setFilteredColors(res.data);
+      } else if (res.type === 'globalError') {
+        errorToast('Failed to fetch colors');
       }
     }
     getColors();
@@ -54,10 +55,10 @@ export default function ColorSelector({
     const query = e.target.value.toLowerCase();
     setSearchQuery(query);
 
-    if (query.trim() === "") {
+    if (query.trim() === '') {
       setFilteredColors(colors);
     } else {
-      const filtered = colors.filter((color) =>
+      const filtered = colors.filter(color =>
         color.name.toLowerCase().includes(query)
       );
       setFilteredColors(filtered);
@@ -68,24 +69,24 @@ export default function ColorSelector({
   const handleSelectColor = (color: VehicleColor) => {
     onSelect(color);
     setColorOpen(false);
-    setSearchQuery("");
+    setSearchQuery('');
     setFilteredColors(colors);
   };
 
   useEffect(() => {
-    setSearchQuery("");
+    setSearchQuery('');
   }, [colorOpen]);
 
   return (
     <div className="w-full">
       <label className="font-medium">{label}</label>
-      <input type="hidden" name="colorId" value={selectedColor?.id || ""} />
+      <input type="hidden" name="colorId" value={selectedColor?.id || ''} />
 
       {/* Color selector */}
       <div className="relative w-full">
         <div
           className={`mt-1 flex h-[30px] w-full items-center justify-between rounded-sm border border-slate-400 px-2 ${
-            selectedColor ? "bg-background" : ""
+            selectedColor ? 'bg-background' : ''
           }`}
           onClick={() => setColorOpen(!colorOpen)}
         >
@@ -97,7 +98,7 @@ export default function ColorSelector({
           <button
             type="button"
             className="text-[#797979]"
-            onClick={(e) => {
+            onClick={e => {
               e.stopPropagation();
               setColorOpen(!colorOpen);
             }}
@@ -137,7 +138,7 @@ export default function ColorSelector({
             </div>
             <div className="border-t-2 border-slate-400 p-2">
               <NewVehicleColor
-                setColors={(newColors) => {
+                setColors={newColors => {
                   setColors(newColors);
                   setFilteredColors(newColors);
                 }}
@@ -166,20 +167,20 @@ function NewVehicleColor({
   const { showError } = useFormErrorStore();
 
   async function handleSubmit(data: FormData) {
-    const name = data.get("name") as string;
+    const name = data.get('name') as string;
 
     const res = await addVehicleColor(name);
 
-    if (res.type === "error") {
-      showError({
-        field: res.field || "name",
-        message: res.message || "",
-      });
-    } else {
-      setColors((colors) => [...colors, res.data]);
+    if (res.type === 'success') {
+      setColors(colors => [...colors, res.data]);
       setOpen(false);
       setColor(res.data);
       setColorOpen(false);
+    } else if (res.type === 'globalError') {
+      showError({
+        field: res.field || 'name',
+        message: res.message || '',
+      });
     }
   }
 
@@ -198,7 +199,7 @@ function NewVehicleColor({
 
         <div className="grid gap-2">
           <FormError />
-          <SlimInput name="name" label={""} />
+          <SlimInput name="name" label={''} />
         </div>
 
         <DialogFooter>

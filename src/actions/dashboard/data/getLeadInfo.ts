@@ -26,11 +26,12 @@ export async function getLeadInfo(
     // Use moment to handle date formatting consistently
     startDateObj = moment(startDate, 'MM/DD/YYYY').startOf('day').toDate();
     endDateObj = moment(endDate, 'MM/DD/YYYY').endOf('day').toDate();
-  } else {
-    // Default to current month if no dates are provided
-    startDateObj = currentMonthStart;
-    endDateObj = currentMonthEnd;
   }
+  //  else {
+  //   // Default to current month if no dates are provided
+  //   startDateObj = currentMonthStart;
+  //   endDateObj = currentMonthEnd;
+  // }
 
   const monthlyQualifiedAndUnqualifiedLeads =
     await getMonthlyQualifiedAndUnqualifiedLeads(
