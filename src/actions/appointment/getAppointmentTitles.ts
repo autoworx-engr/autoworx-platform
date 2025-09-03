@@ -15,9 +15,9 @@ export async function getAppointmentTitles() {
   }
 
   try {
-    const appointmentTitles = await db.appointmentTitle.findMany({
+    const appointmentTitles = await db.appointment_titles.findMany({
       where: {
-        companyId: session.user.companyId,
+        company_id: session.user.companyId,
       },
       orderBy: {
         name: "asc",
