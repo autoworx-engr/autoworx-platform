@@ -7,7 +7,7 @@ datasource db {
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
-
+// Appointment for a company.
 model Appointment {
   id                              Int               @id @default(autoincrement())
   userId                          Int               @map("user_id")
@@ -24,23 +24,24 @@ model Appointment {
   confirmationEmailTemplateStatus Boolean           @default(false) @map("confirmation_email_template_status")
   reminderEmailTemplateId         Int?              @map("reminder_email_template_id")
   reminderEmailTemplateStatus     Boolean           @default(false) @map("reminder_email_template_status")
-  times                           Json?
+  times                           Json? // { time: string; date: string }
   createdAt                       DateTime          @default(now()) @map("created_at")
   updatedAt                       DateTime          @default(now()) @updatedAt @map("updated_at")
+  user                            User              @relation(fields: [userId], references: [id])
+  company                         Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  appointmentUsers                AppointmentUser[]
+  client                          Client?           @relation(fields: [clientId], references: [id])
+  vehicle                         Vehicle?          @relation(fields: [vehicleId], references: [id])
   googleEventId                   String?
   timezone                        String?
-  company                         Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  client                          Client?           @relation(fields: [clientId], references: [id])
-  user                            User              @relation(fields: [userId], references: [id])
-  vehicle                         Vehicle?          @relation(fields: [vehicleId], references: [id])
-  appointmentUsers                AppointmentUser[]
 
-  @@index([userId], map: "fk_tasks_user")
-  @@index([companyId], map: "fk_tasks_company")
-  @@index([clientId], map: "fk_tasks_client")
+  @@index([userId], name: "fk_tasks_user")
+  @@index([companyId], name: "fk_tasks_company")
+  @@index([clientId], name: "fk_tasks_client")
   @@index([date])
 }
 
+// Assigned user for an appointment.
 model AppointmentUser {
   id            Int         @id @default(autoincrement())
   appointmentId Int         @map("appointment_id")
@@ -54,19 +55,37 @@ model AppointmentUser {
   @@index([appointmentId])
 }
 
+// Appointment Title model for company-specific appointment titles
+model AppointmentTitle {
+  id        Int      @id @default(autoincrement())
+  name      String   @db.VarChar(100)
+  companyId Int      @map("company_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@map("appointment_titles")
+}
+
+// Pipeline Automation Schema
+
 model PipelineAutomationRule {
-  id                  Int                  @id @default(autoincrement())
-  title               String
-  conditionType       ConditionType
-  targetColumnId      Int?
-  isPaused            Boolean              @default(false)
-  timeDelay           Int?
-  companyId           Int
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
-  company             Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  targetColumn        Column?              @relation("targetColumn", fields: [targetColumnId], references: [id])
-  stages              PipelineStage[]
+  id             Int             @id @default(autoincrement())
+  title          String
+  stages         PipelineStage[] // Stages where the rule applies (can select multiple)
+  conditionType  ConditionType
+  targetColumnId Int? // Target column/stage where lead will move to
+  targetColumn   Column?         @relation(fields: [targetColumnId], references: [id], name: "targetColumn")
+  isPaused       Boolean         @default(false)
+  timeDelay      Int? // in seconds
+  companyId      Int
+  company        Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  // Related models
   timeDelayExecutions TimeDelayExecution[]
 
   @@index([companyId])
@@ -76,8 +95,8 @@ model PipelineStage {
   id             Int                    @id @default(autoincrement())
   pipelineRuleId Int
   columnId       Int
-  column         Column                 @relation(fields: [columnId], references: [id], onDelete: Cascade)
   pipelineRule   PipelineAutomationRule @relation(fields: [pipelineRuleId], references: [id], onDelete: Cascade)
+  column         Column                 @relation(fields: [columnId], references: [id], onDelete: Cascade)
 
   @@unique([pipelineRuleId, columnId])
   @@index([pipelineRuleId])
@@ -91,21 +110,21 @@ model TimeDelayExecution {
   estimateId                String?
   serviceMaintenanceRuleId  Int?
   invoiceAutomationRuleId   Int?
+  lead                      Lead?                             @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  estimate                  Invoice?                          @relation(fields: [estimateId], references: [id], onDelete: Cascade)
   executeAt                 DateTime
   status                    ExecutionStatus                   @default(PENDING)
   jobId                     String?
   createdAt                 DateTime                          @default(now())
   updatedAt                 DateTime                          @updatedAt
   columnId                  Int?
-  inventoryAutomationRuleId Int?
   column                    Column?                           @relation(fields: [columnId], references: [id])
-  communicationRule         CommunicationAutomationRule?      @relation(fields: [communicationRuleId], references: [id])
-  estimate                  Invoice?                          @relation(fields: [estimateId], references: [id], onDelete: Cascade)
+  pipelineRule              PipelineAutomationRule?           @relation(fields: [pipelineRuleId], references: [id], onDelete: SetNull)
+  communicationRule         CommunicationAutomationRule?      @relation(fields: [communicationRuleId], references: [id], onDelete: SetNull)
+  serviceMaintenanceRule    ServiceMaintenanceAutomationRule? @relation(fields: [serviceMaintenanceRuleId], references: [id], onDelete: SetNull)
+  InvoiceAutomationRule     InvoiceAutomationRule?            @relation(fields: [invoiceAutomationRuleId], references: [id], onDelete: SetNull)
   InventoryAutomationRule   InventoryAutomationRule?          @relation(fields: [inventoryAutomationRuleId], references: [id])
-  InvoiceAutomationRule     InvoiceAutomationRule?            @relation(fields: [invoiceAutomationRuleId], references: [id])
-  lead                      Lead?                             @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  pipelineRule              PipelineAutomationRule?           @relation(fields: [pipelineRuleId], references: [id])
-  serviceMaintenanceRule    ServiceMaintenanceAutomationRule? @relation(fields: [serviceMaintenanceRuleId], references: [id])
+  inventoryAutomationRuleId Int?
 
   @@index([executeAt, status])
   @@index([pipelineRuleId])
@@ -117,22 +136,22 @@ model CommunicationAutomationRule {
   id                 Int                    @id @default(autoincrement())
   companyId          Int
   title              String
+  stages             CommunicationStage[]
   timeDelay          Int
-  targetColumnId     Int?
+  targetColumnId     Int? // Target column/stage where lead will move to
   communicationType  CommunicationType
   isSendWeekDays     Boolean                @default(false)
   isSendOfficeHours  Boolean                @default(false)
   templateType       TemplateType
   subject            String?
-  emailBody          String?
-  smsBody            String?
+  emailBody          String?                @db.Text
+  smsBody            String?                @db.Text
   isPaused           Boolean                @default(false)
   createdBy          String?
+  attachments        AutomationAttachment[] @relation("CommunicationAttachments")
   createdAt          DateTime               @default(now())
   updatedAt          DateTime               @updatedAt
-  attachments        AutomationAttachment[] @relation("CommunicationAttachments")
-  targetColumn       Column?                @relation("targetColumn", fields: [targetColumnId], references: [id])
-  stages             CommunicationStage[]
+  targetColumn       Column?                @relation(fields: [targetColumnId], references: [id], name: "targetColumn")
   timeDelayExecution TimeDelayExecution[]
 }
 
@@ -140,8 +159,8 @@ model CommunicationStage {
   id                  Int                         @id @default(autoincrement())
   communicationRuleId Int
   columnId            Int
-  column              Column                      @relation(fields: [columnId], references: [id], onDelete: Cascade)
   communicationRule   CommunicationAutomationRule @relation(fields: [communicationRuleId], references: [id], onDelete: Cascade)
+  column              Column                      @relation(fields: [columnId], references: [id], onDelete: Cascade)
 
   @@unique([communicationRuleId, columnId])
   @@index([communicationRuleId])
@@ -161,14 +180,14 @@ model MarketingAutomationRule {
   vehicleModel         String?
   communicationType    CommunicationType
   emailSubject         String?
-  emailBody            String?
-  smsBody              String?
+  emailBody            String?                @db.Text
+  smsBody              String?                @db.Text
   isPaused             Boolean                @default(false)
   createdBy            String
   isActive             Boolean                @default(true)
+  attachments          AutomationAttachment[] @relation("MarketingAttachments")
   createdAt            DateTime               @default(now())
   updatedAt            DateTime               @updatedAt
-  attachments          AutomationAttachment[] @relation("MarketingAttachments")
 }
 
 model ServiceMaintenanceAutomationRule {
@@ -177,19 +196,19 @@ model ServiceMaintenanceAutomationRule {
   title                   String
   conditionColumnId       Int
   isPaused                Boolean                   @default(false)
-  timeDelay               Int?
+  timeDelay               Int? // in seconds
   targetColumnId          Int?
   templateType            TemplateType              @default(SMS)
   emailSubject            String?
-  emailBody               String?
-  smsBody                 String?
+  emailBody               String?                   @db.Text
+  smsBody                 String?                   @db.Text
   createdBy               String?
   createdAt               DateTime                  @default(now())
   updatedAt               DateTime                  @updatedAt
-  attachments             AutomationAttachment[]    @relation("ServiceMaintenanceAttachments")
   company                 Company                   @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  conditionColumn         Column                    @relation("conditionColumn", fields: [conditionColumnId], references: [id])
-  targetColumn            Column?                   @relation("targetColumn", fields: [targetColumnId], references: [id])
+  targetColumn            Column?                   @relation(fields: [targetColumnId], references: [id], name: "targetColumn")
+  attachments             AutomationAttachment[]    @relation("ServiceMaintenanceAttachments")
+  conditionColumn         Column?                   @relation(fields: [conditionColumnId], references: [id], name: "conditionColumn")
   serviceMaintenanceStage ServiceMaintenanceStage[]
   timeDelayExecution      TimeDelayExecution[]
 }
@@ -198,9 +217,9 @@ model ServiceMaintenanceStage {
   id                       Int                              @id @default(autoincrement())
   serviceMaintenanceRuleId Int
   serviceId                Int
-  columnId                 Int?
-  service                  Service                          @relation(fields: [serviceId], references: [id], onDelete: Cascade)
   serviceMaintenanceRule   ServiceMaintenanceAutomationRule @relation(fields: [serviceMaintenanceRuleId], references: [id], onDelete: Cascade)
+  service                  Service                          @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  columnId                 Int?
 
   @@unique([serviceMaintenanceRuleId, serviceId])
   @@index([serviceMaintenanceRuleId])
@@ -215,18 +234,18 @@ model InvoiceAutomationRule {
   timeDelay          String?
   isPaused           Boolean                @default(false)
   communicationType  CommunicationType
-  emailBody          String?
-  smsBody            String?
+  emailBody          String?                @db.Text
+  smsBody            String?                @db.Text
   emailSubject       String?
+  invoiceStatus      Column?                @relation(fields: [invoiceStatusId], references: [id], name: "invoiceStatus")
+  attachments        AutomationAttachment[] @relation("InvoiceAttachments")
+  company            Company                @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  timeDelayExecution TimeDelayExecution[]
   createdBy          String?
   createdAt          DateTime               @default(now())
   updatedAt          DateTime               @updatedAt
-  columnId           Int?
-  attachments        AutomationAttachment[] @relation("InvoiceAttachments")
   Column             Column?                @relation(fields: [columnId], references: [id])
-  company            Company                @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  invoiceStatus      Column                 @relation("invoiceStatus", fields: [invoiceStatusId], references: [id])
-  timeDelayExecution TimeDelayExecution[]
+  columnId           Int?
 }
 
 model AutomationAttachment {
@@ -236,12 +255,12 @@ model AutomationAttachment {
   marketingId          Int?
   serviceMaintenanceId Int?
   invoiceId            Int?
-  createdAt            DateTime                          @default(now())
-  updatedAt            DateTime                          @updatedAt
   communication        CommunicationAutomationRule?      @relation("CommunicationAttachments", fields: [communicationId], references: [id])
-  invoice              InvoiceAutomationRule?            @relation("InvoiceAttachments", fields: [invoiceId], references: [id])
   marketing            MarketingAutomationRule?          @relation("MarketingAttachments", fields: [marketingId], references: [id])
   serviceMaintenance   ServiceMaintenanceAutomationRule? @relation("ServiceMaintenanceAttachments", fields: [serviceMaintenanceId], references: [id])
+  invoice              InvoiceAutomationRule?            @relation("InvoiceAttachments", fields: [invoiceId], references: [id])
+  createdAt            DateTime                          @default(now())
+  updatedAt            DateTime                          @updatedAt
 }
 
 model InventoryAutomationRule {
@@ -249,7 +268,7 @@ model InventoryAutomationRule {
   title              String
   companyId          Int
   frequency          InventoryAutomationFrequency
-  day                DayOfWeek?
+  day                DayOfWeek? // Only required when frequency is WEEKLY
   condition          InventoryCondition
   action             InventoryNotificationAction
   isPaused           Boolean                         @default(false)
@@ -272,1515 +291,7 @@ model InventoryAutomationTeamMember {
   @@id([inventoryRuleId, userId])
 }
 
-model Client {
-  id                     Int                      @id @default(autoincrement())
-  firstName              String                   @map("first_name")
-  lastName               String?                  @map("last_name")
-  mobile                 String?
-  email                  String?
-  address                String?
-  city                   String?
-  state                  String?
-  zip                    String?
-  isFleet                Boolean?                 @default(false) @map("is_fleet")
-  photo                  String                   @default("/images/default.png")
-  fromRequest            Boolean?                 @default(false) @map("from_request")
-  fromRequestedCompanyId Int?                     @map("from_requested_company_id")
-  sourceId               Int?                     @map("source_id")
-  converted              Boolean?                 @default(false) @map("converted")
-  companyId              Int                      @map("company_id")
-  createdAt              DateTime                 @default(now()) @map("created_at")
-  updatedAt              DateTime                 @default(now()) @updatedAt @map("updated_at")
-  customerCompany        String?                  @map("customer_company")
-  tagId                  Int?                     @map("tag_id")
-  notes                  String?
-  leadId                 Int?
-  firstContactTime       DateTime?
-  lastMailgunEmailReadId Int?
-  isStarred              Boolean?                 @default(false)
-  appointments           Appointment[]
-  company                Company                  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  Lead                   Lead?                    @relation(fields: [leadId], references: [id])
-  source                 Source?                  @relation(fields: [sourceId], references: [id])
-  tag                    Tag?                     @relation(fields: [tagId], references: [id])
-  ClientCall             ClientCall[]
-  conversationsTrack     ClientConversationTrack?
-  ClientCoupon           ClientCoupon[]
-  ClientSMS              ClientSMS[]
-  fleet                  Fleet?
-  Invoice                Invoice[]
-  MailgunEmail           MailgunEmail[]
-  Task                   Task[]
-  Vehicle                Vehicle[]
-
-  @@index([companyId], map: "fk_customers_company")
-  @@map("Client")
-}
-
-model Fleet {
-  id                   Int              @id @default(autoincrement())
-  clientId             Int              @unique @map("client_id")
-  fleetName            String
-  contactName          String
-  preferredPaymentTerm String?          @map("preferred_payment_term")
-  createdAt            DateTime         @default(now()) @map("created_at")
-  updatedAt            DateTime         @default(now()) @updatedAt @map("updated_at")
-  client               Client           @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  statement            FleetStatement[]
-}
-
-model FleetStatement {
-  id        String    @id @default(cuid())
-  fleetId   Int       @map("fleet_id")
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
-  Fleet     Fleet     @relation(fields: [fleetId], references: [id])
-  invoice   Invoice[]
-}
-
-model Source {
-  id        Int      @id @default(autoincrement())
-  name      String
-  companyId Int      @map("company_id")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
-  Client    Client[]
-  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-}
-
-model ClientCoupon {
-  id        Int      @id @default(autoincrement())
-  couponId  Int      @map("coupon_id")
-  clientId  Int      @map("client_id")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
-  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  coupon    Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
-}
-
-model ClientConversationTrack {
-  id                 Int       @id @default(autoincrement())
-  clientId           Int       @unique @map("client_id")
-  emailIsRead        Boolean   @default(true) @map("email_is_read")
-  smsIsRead          Boolean   @default(true) @map("sms_is_read")
-  emailIsUnReadCount Int       @default(0) @map("email_is_unread_count")
-  smsUnReadCount     Int       @default(0) @map("sms_unread_count")
-  emailLastMessage   String?   @map("email_last_message")
-  smsLastMessage     String?   @map("sms_last_message")
-  lastMessageBy      String?   @map("last_message_by")
-  last_email_by      String?
-  sendAt             DateTime? @map("send_at")
-  createdAt          DateTime  @default(now()) @map("created_at")
-  updatedAt          DateTime  @default(now()) @updatedAt @map("updated_at")
-  client             Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
-}
-
-model Company {
-  id                               Int                                @id @default(autoincrement())
-  name                             String
-  businessId                       String?                            @map("business_id")
-  businessType                     String?                            @map("business_type")
-  phone                            String?
-  email                            String?
-  industry                         String?
-  website                          String?
-  address                          String?
-  city                             String?
-  state                            String?
-  zip                              String?
-  image                            String?
-  businessVisibility               Boolean?                           @default(true) @map("business_visibility")
-  phoneVisibility                  Boolean?                           @default(true) @map("phone_visibility")
-  addressVisibility                Boolean?                           @default(true) @map("address_visibility")
-  tax                              Decimal?                           @default(0)
-  serviceFee                       Decimal?                           @default(0)
-  currency                         String?                            @default("USD")
-  terms                            String?                            @db.VarChar(800)
-  policy                           String?                            @db.VarChar(800)
-  lead_terms                       String?
-  lead_policy                      String?
-  googleEmail                      String?                            @map("google_email")
-  googleRefreshToken               String?                            @map("google_refresh_token")
-  googleCalendarToken              String?                            @map("google_calendar_token")
-  createdAt                        DateTime                           @default(now()) @map("created_at")
-  updatedAt                        DateTime                           @default(now()) @updatedAt @map("updated_at")
-  companyLatitude                  Float?
-  companyLongitude                 Float?
-  zapierToken                      String?                            @unique @db.VarChar(240)
-  isCRMEnabled                     Boolean?                           @default(false) @map("is_crm_enabled")
-  twilioCredentialsId              Int?
-  mailgunCredentialId              Int?
-  stripeAccountId                  String?
-  timezone                         String?
-  appointments                     Appointment[]
-  BugReport                        BugReport[]
-  calendarSettings                 CalendarSettings?
-  categories                       Category[]
-  clients                          Client[]
-  ClientCall                       ClientCall[]
-  ClientSMS                        ClientSMS[]
-  ClockInOut                       ClockInOut[]
-  Column                           Column[]
-  MailgunCredential                MailgunCredential?                 @relation(fields: [mailgunCredentialId], references: [id])
-  TwilioCredentials                TwilioCredentials?                 @relation(fields: [twilioCredentialsId], references: [id])
-  companyJoinsAsOne                CompanyJoin[]                      @relation("CompanyOne")
-  companyJoinsAsTwo                CompanyJoin[]                      @relation("CompanyTwo")
-  companyPermissionModules         CompanyPermissionModule[]
-  Coupon                           Coupon[]
-  emailTemplates                   EmailTemplate[]
-  Holiday                          Holiday[]
-  inventoryAutomationRule          InventoryAutomationRule[]
-  inventoryProducts                InventoryProduct[]
-  InventoryProductHistory          InventoryProductHistory[]
-  invoices                         Invoice[]
-  InvoiceAutomationRule            InvoiceAutomationRule[]
-  labors                           Labor[]
-  Lead                             Lead[]
-  leadLink                         LeadLink[]
-  LeaveRequest                     LeaveRequest[]
-  MailgunEmail                     MailgunEmail[]
-  materials                        Material[]
-  Notification                     Notification[]
-  NotificationSettings             NotificationSettingsV2[]
-  Payment                          Payment[]
-  paymentMethods                   PaymentMethod[]
-  permissions                      Permission[]
-  permissionForManager             PermissionForManager[]
-  permissionForOther               PermissionForOther[]
-  permissionForSales               PermissionForSales[]
-  permissionForTechnician          PermissionForTechnician[]
-  PipelineAutomationRule           PipelineAutomationRule[]
-  RequestEstimateReceived          RequestEstimate[]                  @relation("ReceiverCompany")
-  RequestEstimateSent              RequestEstimate[]                  @relation("SenderCompany")
-  salaryHistory                    SalaryHistory[]
-  services                         Service[]
-  ServiceMaintenanceAutomationRule ServiceMaintenanceAutomationRule[]
-  Source                           Source[]
-  statuses                         Status[]
-  stripePayment                    StripePayment[]
-  tags                             Tag[]
-  tasks                            Task[]
-  Technician                       Technician[]
-  users                            User[]
-  UserFeedback                     UserFeedback[]
-  vehicles                         Vehicle[]
-  VehicleColor                     VehicleColor[]
-  vendors                          Vendor[]
-  appointment_titles               appointment_titles[]
-  companyEmailTemplate             CompanyEmailTemplate[]
-  Refund                           Refund[]
-}
-
-model CompanyJoin {
-  id           Int      @id @default(autoincrement())
-  companyOneId Int
-  companyTwoId Int
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
-  companyOne   Company  @relation("CompanyOne", fields: [companyOneId], references: [id], onDelete: Cascade)
-  companyTwo   Company  @relation("CompanyTwo", fields: [companyTwoId], references: [id], onDelete: Cascade)
-}
-
-model CalendarSettings {
-  id        Int      @id @default(autoincrement())
-  companyId Int      @unique @map("company_id")
-  weekStart String
-  dayStart  String
-  dayEnd    String
-  weekend1  String   @default("Saturday")
-  weekend2  String   @default("Sunday")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
-  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  @@index([companyId])
-}
-
-model Holiday {
-  id        Int      @id @default(autoincrement())
-  companyId Int      @map("company_id")
-  date      DateTime
-  month     String
-  year      Int
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
-  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  @@index([companyId])
-  @@index([month])
-  @@index([year])
-}
-
-model EmailTemplate {
-  id        Int               @id @default(autoincrement())
-  subject   String
-  message   String?
-  type      EmailTemplateType
-  companyId Int               @map("company_id")
-  createdAt DateTime          @default(now()) @map("created_at")
-  updatedAt DateTime          @default(now()) @updatedAt @map("updated_at")
-  company   Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  @@index([companyId])
-}
-
-model Lead {
-  id                  Int                  @id @default(autoincrement())
-  clientName          String               @map("client_name")
-  clientEmail         String?              @map("client_email")
-  clientPhone         String?              @map("client_phone")
-  vehicleInfo         String               @map("vehicle_info")
-  vehicleId           Int?
-  services            String
-  source              String
-  comments            String?
-  companyId           Int                  @map("company_id")
-  createdAt           DateTime             @default(now()) @map("created_at")
-  updatedAt           DateTime             @default(now()) @updatedAt @map("updated_at")
-  columnChangedAt     DateTime?            @map("column_changed_at")
-  columnId            Int?                 @map("column_id")
-  assignedSalesUserId Int?                 @map("assigned_sales_id")
-  assignedDate        DateTime?            @map("assigned_date")
-  isLead              Boolean              @default(true)
-  isQualified         Boolean              @default(true)
-  isEstimateCreated   Boolean?             @default(false)
-  serviceId           Int?
-  clientId            Int?
-  Client              Client[]
-  salesUser           User?                @relation(fields: [assignedSalesUserId], references: [id], onDelete: Cascade)
-  column              Column?              @relation(fields: [columnId], references: [id], onDelete: Cascade)
-  company             Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  Service             Service?             @relation(fields: [serviceId], references: [id])
-  leadTags            LeadTags[]
-  tasks               Task[]
-  TimeDelayExecutions TimeDelayExecution[]
-
-  @@index([serviceId])
-  @@index([vehicleId])
-  @@index([columnId])
-  @@index([companyId])
-  @@index([assignedSalesUserId])
-  @@index([clientEmail])
-  @@index([columnChangedAt])
-  @@index([isEstimateCreated])
-  @@index([createdAt])
-  @@index([companyId, columnId])
-}
-
-model LeadTags {
-  id        Int      @id @default(autoincrement())
-  leadId    Int      @map("lead_id")
-  tagId     Int      @map("tag_id")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
-  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
-
-  @@index([leadId], map: "fk_lead_tags_lead")
-  @@index([tagId], map: "fk_lead_tags_tag")
-}
-
-model LeadLink {
-  id            Int      @id @default(autoincrement())
-  source        String
-  generatedLink String
-  shortUrl      String?
-  QRCode        String?
-  isShow        Boolean  @default(true)
-  companyId     Int?
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at")
-  company       Company? @relation(fields: [companyId], references: [id])
-
-  @@unique([source, companyId, shortUrl], name: "unique_lead_link_per_company")
-  @@index([companyId])
-}
-
-model LeaveRequest {
-  id          Int                @id @default(autoincrement())
-  userId      Int                @map("user_id")
-  startDate   DateTime           @map("start_date")
-  endDate     DateTime           @map("end_date")
-  status      LeaveRequestStatus
-  title       String
-  description String
-  companyId   Int                @map("company_id")
-  createdAt   DateTime           @default(now()) @map("created_at")
-  updatedAt   DateTime           @default(now()) @updatedAt @map("updated_at")
-  company     Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model CompanyEmailTemplate {
-  id        Int      @id @default(autoincrement())
-  subject   String
-  message   String?
-  companyId Int      @map("company_id")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
-  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  @@map("companyEmailTemplate")
-}
-
-model TwilioCredentials {
-  id             Int       @id @default(autoincrement())
-  accountSid     String    @map("account_sid")
-  authToken      String?   @map("auth_token")
-  phoneNumber    String    @map("phone_number")
-  apiKeySid      String    @map("api_key_sid")
-  apiKeySecret   String    @map("api_key_secret")
-  twimlAppSid    String?   @map("twiml_app_sid")
-  phoneNumberSid String    @map("phone_number_sid")
-  companyId      Int       @unique @map("company_id")
-  createdAt      DateTime  @default(now()) @map("created_at")
-  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at")
-  Company        Company[]
-}
-
-model MailgunCredential {
-  id                 Int                       @id @default(autoincrement())
-  companyId          Int
-  mailAddress        String?
-  domain             String
-  apiKey             String?
-  smtpPassword       String?
-  dnsRecords         Json?
-  isVerified         Boolean                   @default(false)
-  verificationStatus MailgunVerificationStatus @default(pending)
-  createdAt          DateTime                  @default(now())
-  updatedAt          DateTime                  @updatedAt
-  company            Company[]
-
-  @@unique([companyId, domain])
-}
-
-model MailgunEmail {
-  id          Int                      @id @default(autoincrement())
-  subject     String
-  text        String
-  emailBy     EMAIL_BY
-  messageId   String?
-  companyId   Int
-  clientId    Int
-  createdAt   DateTime                 @default(now())
-  client      Client                   @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  company     Company                  @relation(fields: [companyId], references: [id])
-  attachments MailgunEmailAttachment[]
-}
-
-model MailgunEmailAttachment {
-  id             Int          @id @default(autoincrement())
-  name           String
-  url            String
-  size           Int
-  mailgunEmailId Int
-  mailgunEmail   MailgunEmail @relation(fields: [mailgunEmailId], references: [id], onDelete: Cascade)
-}
-
-model Category {
-  id                Int                @id @default(autoincrement())
-  name              String
-  companyId         Int                @map("company_id")
-  createdAt         DateTime           @default(now()) @map("created_at")
-  updatedAt         DateTime           @default(now()) @updatedAt @map("updated_at")
-  company           Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  inventoryProducts InventoryProduct[]
-  labors            Labor[]
-  materials         Material[]
-  services          Service[]
-}
-
-model Status {
-  id        Int       @id @default(autoincrement())
-  name      String
-  textColor String
-  bgColor   String
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
-  companyId Int       @map("company_id")
-  Invoice   Invoice[]
-  company   Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
-}
-
-model Column {
-  id                               Int                                @id @default(autoincrement())
-  title                            String
-  type                             String
-  order                            Int
-  textColor                        String?
-  bgColor                          String?
-  companyId                        Int                                @map("company_id")
-  company                          Company                            @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  targetForCommunicationRules      CommunicationAutomationRule[]      @relation("targetColumn")
-  communicationStage               CommunicationStage[]
-  invoices                         Invoice[]
-  InvoiceAutomationRule            InvoiceAutomationRule[]
-  invoiceAutomationRule            InvoiceAutomationRule[]            @relation("invoiceStatus")
-  lead                             Lead[]
-  targetForRules                   PipelineAutomationRule[]           @relation("targetColumn")
-  pipelineStages                   PipelineStage[]
-  serviceMaintenanceStageForRules  ServiceMaintenanceAutomationRule[] @relation("conditionColumn")
-  serviceMaintenanceAutomationRule ServiceMaintenanceAutomationRule[] @relation("targetColumn")
-  timeDelayExecutions              TimeDelayExecution[]
-
-  @@index([companyId])
-  @@index([type])
-  @@index([type, companyId])
-}
-
-model InventoryProduct {
-  id                      Int                       @id @default(autoincrement())
-  name                    String
-  description             String?
-  categoryId              Int?                      @map("category_id")
-  quantity                Decimal?                  @default(1) @db.Decimal(10, 2)
-  price                   Decimal?                  @default(0)
-  unit                    String?                   @default("pc")
-  lot                     String?
-  vendorId                Int?                      @map("vendor_id")
-  userId                  Int?                      @map("user_id")
-  type                    InventoryProductType
-  receipt                 String?
-  lowInventoryAlert       Int?                      @map("low_inventory_alert")
-  companyId               Int                       @map("company_id")
-  createdAt               DateTime                  @default(now()) @map("created_at")
-  updatedAt               DateTime                  @default(now()) @updatedAt @map("updated_at")
-  category                Category?                 @relation(fields: [categoryId], references: [id])
-  company                 Company                   @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  User                    User?                     @relation(fields: [userId], references: [id])
-  vendor                  Vendor?                   @relation(fields: [vendorId], references: [id])
-  InventoryProductHistory InventoryProductHistory[]
-  tags                    InventoryProductTag[]
-  Material                Material[]
-}
-
-model InventoryProductTag {
-  inventoryId Int              @map("inventory_id")
-  tagId       Int              @map("tag_id")
-  inventory   InventoryProduct @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
-  tag         Tag              @relation(fields: [tagId], references: [id], onDelete: Cascade)
-
-  @@id([inventoryId, tagId])
-}
-
-model InventoryProductHistory {
-  id        Int                         @id @default(autoincrement())
-  price     Decimal?                    @default(0)
-  quantity  Decimal                     @db.Decimal(10, 2)
-  date      DateTime?                   @default(now())
-  notes     String?
-  type      InventoryProductHistoryType
-  productId Int                         @map("inventory_id")
-  invoiceId String?                     @map("invoice_id")
-  vendorId  Int?                        @map("vendor_id")
-  createdAt DateTime                    @default(now()) @map("created_at")
-  updatedAt DateTime                    @default(now()) @updatedAt @map("updated_at")
-  isLost    Boolean?                    @default(false) @map("is_lost")
-  companyId Int                         @map("company_id")
-  company   Company                     @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  product   InventoryProduct            @relation(fields: [productId], references: [id], onDelete: Cascade)
-  invoice   Invoice?                    @relation(fields: [invoiceId], references: [id])
-  vendor    Vendor?                     @relation(fields: [vendorId], references: [id])
-}
-
-model Vendor {
-  id                      Int                       @id @default(autoincrement())
-  name                    String?
-  website                 String?
-  email                   String?
-  phone                   String?
-  address                 String?
-  city                    String?
-  state                   String?
-  zip                     String?
-  companyName             String
-  notes                   String?
-  companyId               Int                       @map("company_id")
-  createdAt               DateTime                  @default(now()) @map("created_at")
-  updatedAt               DateTime                  @default(now()) @updatedAt @map("updated_at")
-  inventoryProducts       InventoryProduct[]
-  InventoryProductHistory InventoryProductHistory[]
-  material                Material[]
-  company                 Company                   @relation(fields: [companyId], references: [id], onDelete: Cascade)
-}
-
-model inventoryWirehouseProduct {
-  id          Int    @id @default(autoincrement())
-  productName String @unique
-  category    String
-  unit        String
-
-  @@index([productName])
-  @@index([category])
-  @@index([unit])
-  @@index([category, productName])
-}
-
-model InvoiceItem {
-  id          Int          @id @default(autoincrement())
-  invoiceId   String?      @map("invoice_id")
-  serviceId   Int?         @map("service_id")
-  laborId     Int?         @map("labor_id")
-  createdAt   DateTime     @default(now()) @map("created_at")
-  updatedAt   DateTime     @default(now()) @updatedAt @map("updated_at")
-  serviceDesc String?      @map("service_desc")
-  invoice     Invoice?     @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  labor       Labor?       @relation(fields: [laborId], references: [id])
-  service     Service?     @relation(fields: [serviceId], references: [id])
-  tags        ItemTag[]
-  materials   Material[]
-  technicians Technician[]
-}
-
-model Service {
-  id                      Int                       @id @default(autoincrement())
-  createdAt               DateTime                  @default(now()) @map("created_at")
-  updatedAt               DateTime                  @default(now()) @updatedAt @map("updated_at")
-  name                    String
-  description             String?
-  canned                  Boolean?                  @default(false)
-  fromRequest             Boolean?                  @default(false) @map("from_request")
-  fromRequestedCompanyId  Int?                      @map("from_requested_company_id")
-  categoryId              Int?                      @map("category_id")
-  companyId               Int                       @map("company_id")
-  invoiceItems            InvoiceItem[]
-  InvoiceRedo             InvoiceRedo[]
-  Lead                    Lead[]
-  requestEstimate         RequestEstimate?          @relation("Service")
-  category                Category?                 @relation(fields: [categoryId], references: [id])
-  company                 Company                   @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  ServiceMaintenanceStage ServiceMaintenanceStage[]
-  Technician              Technician[]
-  vehicleParts            VehicleParts[]
-
-  @@index([companyId], map: "fk_services_company")
-}
-
-model Material {
-  id            Int               @id @default(autoincrement())
-  name          String
-  vendorId      Int?              @map("vendor_id")
-  categoryId    Int?              @map("category_id")
-  notes         String?
-  quantity      Decimal?          @db.Decimal(10, 2)
-  cost          Decimal?
-  sell          Decimal?
-  discount      Decimal?
-  companyId     Int               @map("company_id")
-  invoiceId     String?           @map("invoice_id")
-  invoiceItemId Int?              @map("invoice_item_id")
-  productId     Int?              @map("product_id")
-  createdAt     DateTime          @default(now()) @map("created_at")
-  updatedAt     DateTime          @default(now()) @updatedAt @map("updated_at")
-  category      Category?         @relation(fields: [categoryId], references: [id])
-  company       Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  invoice       Invoice?          @relation(fields: [invoiceId], references: [id])
-  invoiceItem   InvoiceItem?      @relation(fields: [invoiceItemId], references: [id], onDelete: Cascade)
-  product       InventoryProduct? @relation(fields: [productId], references: [id])
-  vendor        Vendor?           @relation(fields: [vendorId], references: [id])
-  tags          MaterialTag[]
-
-  @@index([companyId], map: "fk_materials_company")
-}
-
-model Labor {
-  id           Int           @id @default(autoincrement())
-  name         String
-  categoryId   Int?          @map("category_id")
-  notes        String?
-  hours        Decimal?      @db.Decimal(13, 3)
-  charge       Decimal?
-  discount     Decimal?
-  companyId    Int           @map("company_id")
-  cannedLabor  Boolean?      @default(false) @map("canned_labor")
-  createdAt    DateTime      @default(now()) @map("created_at")
-  updatedAt    DateTime      @default(now()) @updatedAt @map("updated_at")
-  invoiceItems InvoiceItem[]
-  category     Category?     @relation(fields: [categoryId], references: [id])
-  company      Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  tags         LaborTag[]
-}
-
-model Tag {
-  id                  Int                   @id @default(autoincrement())
-  name                String
-  textColor           String
-  bgColor             String
-  type                TagType               @default(GENERAL)
-  createdAt           DateTime              @default(now()) @map("created_at")
-  updatedAt           DateTime              @default(now()) @updatedAt @map("updated_at")
-  companyId           Int                   @map("company_id")
-  Client              Client[]
-  InventoryProductTag InventoryProductTag[]
-  InvoiceTags         InvoiceTags[]
-  items               ItemTag[]
-  labors              LaborTag[]
-  leadTags            LeadTags[]
-  materials           MaterialTag[]
-  company             Company               @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  @@index([companyId, type])
-}
-
-model ItemTag {
-  itemId Int
-  tagId  Int
-  item   InvoiceItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
-  tag    Tag         @relation(fields: [tagId], references: [id], onDelete: Cascade)
-
-  @@id([itemId, tagId])
-}
-
-model MaterialTag {
-  materialId Int      @map("material_id")
-  tagId      Int      @map("tag_id")
-  material   Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
-  tag        Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
-
-  @@id([materialId, tagId])
-}
-
-model LaborTag {
-  laborId Int   @map("labor_id")
-  tagId   Int   @map("tag_id")
-  labor   Labor @relation(fields: [laborId], references: [id], onDelete: Cascade)
-  tag     Tag   @relation(fields: [tagId], references: [id], onDelete: Cascade)
-
-  @@id([laborId, tagId])
-}
-
-model Invoice {
-  id                      String                    @id @default(cuid())
-  createdAt               DateTime                  @default(now()) @map("created_at")
-  updatedAt               DateTime                  @default(now()) @updatedAt @map("updated_at")
-  convertedAt             DateTime?                 @map("converted_at")
-  deliveredAt             DateTime?                 @map("delivered_at")
-  completedAt             DateTime?                 @map("completed_at")
-  type                    InvoiceType               @default(Invoice)
-  clientId                Int?                      @map("customer_id")
-  vehicleId               Int?                      @map("vehicle_id")
-  subtotal                Decimal?                  @default(0) @db.Decimal(8, 2)
-  discount                Decimal?                  @default(0) @db.Decimal(8, 2)
-  tax                     Decimal?                  @default(0) @db.Decimal(8, 2)
-  serviceFee              Decimal?                  @default(0) @db.Decimal(8, 2)
-  grandTotal              Decimal?                  @default(0) @map("grand_total") @db.Decimal(8, 2)
-  deposit                 Decimal?                  @default(0) @db.Decimal(8, 2)
-  due                     Decimal?                  @default(0) @db.Decimal(8, 2)
-  statusId                Int?                      @map("status_id")
-  fleetStatementId        String?
-  internalNotes           String?
-  dueDate                 String?
-  terms                   String?
-  policy                  String?
-  customerNotes           String?
-  customerComments        String?
-  companyId               Int                       @map("company_id")
-  userId                  Int?                      @map("user_id")
-  assignedToId            Int?                      @map("assigned_to")
-  fromRequest             Boolean?                  @default(false) @map("from_request")
-  fromRequestedCompanyId  Int?                      @map("from_requested_company_id")
-  requestEstimateId       Int?                      @unique @map("request_estimate_id")
-  columnId                Int?                      @map("column_id")
-  profit                  Int?                      @default(0)
-  authorizedName          String?
-  stripePaymentLink       String?
-  isWorkOrder             Boolean?                  @default(false) @map("is_work_order")
-  workOrderCreatedAt      DateTime?                 @map("work_order_created_at")
-  serviceIndex            Json?
-  totalPayment            Decimal?                  @default(0) @map("total_payment") @db.Decimal(8, 2)
-  damageNotes             String?                   @map("damage_notes")
-  columnChangedAt         DateTime?                 @map("column_changed_at")
-  InventoryProductHistory InventoryProductHistory[]
-  assignedTo              User?                     @relation("assignedTo", fields: [assignedToId], references: [id])
-  column                  Column?                   @relation(fields: [columnId], references: [id])
-  company                 Company                   @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  client                  Client?                   @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  FleetStatement          FleetStatement?           @relation(fields: [fleetStatementId], references: [id])
-  requestEstimate         RequestEstimate?          @relation(fields: [requestEstimateId], references: [id])
-  status                  Status?                   @relation(fields: [statusId], references: [id])
-  user                    User?                     @relation("user", fields: [userId], references: [id])
-  vehicle                 Vehicle?                  @relation(fields: [vehicleId], references: [id])
-  Inspections             InvoiceInspection[]
-  invoiceItems            InvoiceItem[]
-  photos                  InvoicePhoto[]
-  InvoiceRedo             InvoiceRedo[]
-  tags                    InvoiceTags[]
-  Material                Material[]
-  payments                Payment[]
-  stripePayments          StripePayment[]
-  tasks                   Task[]
-  technician              Technician[]
-  TimeDelayExecution      TimeDelayExecution[]
-  vehicleParts            VehicleParts[]
-  Refund                  Refund[]
-
-  @@index([companyId], map: "fk_invoices_company")
-  @@index([companyId, type])
-}
-
-model InvoiceTags {
-  id        Int      @id @default(autoincrement())
-  invoiceId String   @map("invoice_id")
-  tagId     Int      @map("tag_id")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
-  invoice   Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
-
-  @@index([invoiceId], map: "fk_invoice_tags_invoice")
-  @@index([tagId], map: "fk_invoice_tags_tag")
-}
-
-model InvoicePhoto {
-  id        Int      @id @default(autoincrement())
-  invoiceId String   @map("invoice_id")
-  photo     String   @db.VarChar(1024)
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
-  invoice   Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-
-  @@index([invoiceId], map: "fk_invoice_photos_invoice")
-}
-
-model RequestEstimate {
-  id                Int      @id @default(autoincrement())
-  senderId          Int      @map("sender_id")
-  senderCompanyId   Int      @map("sender_company_id")
-  receiverId        Int      @map("receiver_id")
-  receiverCompanyId Int      @map("receiver_company_id")
-  vehicleId         Int      @unique @map("vehicle_id")
-  serviceId         Int      @unique @map("service_id")
-  invoiceId         String   @map("invoice_id")
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @default(now()) @updatedAt @map("updated_at")
-  invoice           Invoice?
-  message           Message? @relation("Message")
-  receiverCompany   Company  @relation("ReceiverCompany", fields: [receiverCompanyId], references: [id], onDelete: Cascade)
-  receiver          User     @relation("Receiver", fields: [receiverId], references: [id], onDelete: Cascade)
-  senderCompany     Company  @relation("SenderCompany", fields: [senderCompanyId], references: [id], onDelete: Cascade)
-  sender            User     @relation("Sender", fields: [senderId], references: [id], onDelete: Cascade)
-  service           Service  @relation("Service", fields: [serviceId], references: [id], onDelete: Cascade)
-  vehicle           Vehicle  @relation("Vehicle", fields: [vehicleId], references: [id], onDelete: Cascade)
-}
-
-model Technician {
-  id            Int            @id @default(autoincrement())
-  userId        Int            @map("user_id")
-  date          DateTime?      @map("assigned_date")
-  dateClosed    DateTime?      @map("date_closed")
-  due           DateTime?      @default(now())
-  amount        Decimal?       @default(0)
-  priority      Priority?      @default(Low)
-  status        String?
-  note          String?        @map("new_note")
-  serviceId     Int            @map("service_id")
-  invoiceId     String         @map("invoice_id")
-  companyId     Int            @map("company_id")
-  invoiceItemId Int            @map("invoice_item_id")
-  createdAt     DateTime       @default(now()) @map("created_at")
-  updatedAt     DateTime       @default(now()) @updatedAt @map("updated_at")
-  InvoiceRedo   InvoiceRedo[]
-  company       Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  invoice       Invoice        @relation(fields: [invoiceId], references: [id])
-  invoiceItem   InvoiceItem    @relation(fields: [invoiceItemId], references: [id], onDelete: Cascade)
-  service       Service        @relation(fields: [serviceId], references: [id], onDelete: Cascade)
-  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  vehicleParts  VehicleParts[]
-}
-
-model InvoiceRedo {
-  id           Int        @id @default(autoincrement())
-  invoiceId    String     @map("invoice_id")
-  serviceId    Int        @map("service_id")
-  technicianId Int        @map("technician_id")
-  notes        String?
-  createdAt    DateTime   @default(now()) @map("created_at")
-  updatedAt    DateTime   @default(now()) @updatedAt @map("updated_at")
-  invoice      Invoice    @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  service      Service    @relation(fields: [serviceId], references: [id])
-  technician   Technician @relation(fields: [technicianId], references: [id])
-}
-
-model InvoiceInspection {
-  id        Int      @id @default(autoincrement())
-  invoiceId String   @map("invoice_id")
-  title     String
-  driver    Boolean  @default(false)
-  passenger Boolean  @default(false)
-  notes     String?
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
-  invoice   Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-
-  @@index([invoiceId], map: "fk_invoice_inspections_invoice")
-}
-
-model Message {
-  id                Int              @id @default(autoincrement())
-  to                Int?
-  message           String
-  from              Int
-  groupId           Int?             @map("group_id")
-  section           MessageSection?
-  requestEstimateId Int?             @unique @map("request_estimate_id")
-  createdAt         DateTime         @default(now()) @map("created_at")
-  updatedAt         DateTime         @default(now()) @updatedAt @map("updated_at")
-  attachment        Attachment[]
-  chatTrack         ChatTrack?
-  group             Group?           @relation(fields: [groupId], references: [id])
-  requestEstimate   RequestEstimate? @relation("Message", fields: [requestEstimateId], references: [id])
-
-  @@index([to], map: "fk_messages_to")
-  @@index([from], map: "fk_messages_from")
-  @@index([groupId], map: "fk_messages_group")
-}
-
-model ChatTrack {
-  id          Int             @id @default(autoincrement())
-  lastMessage String
-  isRead      Boolean         @default(false)
-  section     MessageSection?
-  senderId    Int?            @map("sender_id")
-  receiverId  Int?            @map("receiver_id")
-  messageId   Int?            @unique @map("message_id")
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @default(now()) @updatedAt @map("updated_at")
-  message     Message?        @relation(fields: [messageId], references: [id])
-}
-
-model Attachment {
-  id                 Int               @id @default(autoincrement())
-  fileName           String
-  fileType           String
-  fileUrl            String
-  fileSize           String
-  messageId          Int?
-  bugReportMessageId Int?
-  createdAt          DateTime          @default(now())
-  updatedAt          DateTime          @default(now()) @updatedAt @map("updated_at")
-  bugReportMessage   BugReportMessage? @relation(fields: [bugReportMessageId], references: [id])
-  message            Message?          @relation(fields: [messageId], references: [id])
-}
-
-model Group {
-  id         Int          @id @default(autoincrement())
-  name       String
-  type       String       @default("Group")
-  createdAt  DateTime     @default(now()) @map("created_at")
-  updatedAt  DateTime     @default(now()) @updatedAt @map("updated_at")
-  messages   Message[]
-  UserGroups UserGroups[]
-}
-
-model BugReport {
-  id               Int                @id @default(autoincrement())
-  companyId        Int
-  isResolved       Boolean?           @default(false)
-  createdAt        DateTime           @default(now())
-  updatedAt        DateTime           @default(now()) @updatedAt @map("updatedAt")
-  company          Company            @relation(fields: [companyId], references: [id])
-  BugReportMessage BugReportMessage[]
-}
-
-model BugReportMessage {
-  id          Int          @id @default(autoincrement())
-  bugReportId Int
-  subject     String?
-  content     String
-  senderType  UserType
-  userId      Int
-  isRead      Boolean      @default(false)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @default(now()) @updatedAt @map("updatedAt")
-  attachment  Attachment[]
-  bugReport   BugReport    @relation(fields: [bugReportId], references: [id])
-}
-
-model NotificationSettingsV2 {
-  id                Int                 @id @default(autoincrement())
-  companyId         Int                 @map("company_id")
-  userId            Int                 @map("user_id")
-  section           NotificationSection
-  notification_type NotificationType
-  email_enabled     Boolean             @default(false) @map("email_enabled")
-  push_enabled      Boolean             @default(false) @map("push_enabled")
-  text_enabled      Boolean             @default(false) @map("text_enabled")
-  last_updated      DateTime            @default(now()) @map("last_updated")
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
-  company           Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, notification_type], name: "user_notification_type")
-}
-
-model Notification {
-  id          Int      @id @default(autoincrement())
-  userId      Int      @map("user_id")
-  companyId   Int      @map("company_id")
-  type        String?
-  title       String
-  description String
-  isUnRead    Boolean  @default(true) @map("is_unread")
-  avatarUrl   String?
-  redirectUrl String?
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
-  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model Payment {
-  id              Int             @id @default(autoincrement())
-  date            DateTime?
-  notes           String?
-  amount          Decimal?
-  refundedAmount  Decimal?        @default(0) @map("refunded_amount")
-  refundMethod    PaymentType?    @map("refund_method")
-  refundReason    String?         @map("refund_reason")
-  type            PaymentType
-  invoiceId       String?         @map("invoice_id")
-  companyId       Int             @map("company_id")
-  refundCreatedAt DateTime?       @map("refund_created_at")
-  refundUpdatedAt DateTime?       @map("refund_updated_at")
-  createdAt       DateTime        @default(now()) @map("created_at")
-  updatedAt       DateTime        @default(now()) @updatedAt @map("updated_at")
-  card            CardPayment?
-  cash            CashPayment?
-  check           CheckPayment?
-  deposit         DepositPayment?
-  other           OtherPayment?
-  Company         Company         @relation(fields: [companyId], references: [id])
-  invoice         Invoice?        @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  stripePayment   StripePayment?
-  Refund          Refund[]
-
-  @@index([companyId])
-  @@index([invoiceId])
-  @@index([date])
-  @@index([amount])
-}
-
-model Refund {
-  id          Int         @id @default(autoincrement())
-  amount      Decimal     @db.Decimal(8, 2)
-  reason      String?
-  method      PaymentType
-  refundDate  DateTime    @default(now()) @map("refund_date")
-  notes       String?
-  paymentId   Int         @map("payment_id")
-  invoiceId   String      @map("invoice_id")
-  companyId   Int         @map("company_id")
-  processedBy Int?        @map("processed_by")
-  createdAt   DateTime    @default(now()) @map("created_at")
-  updatedAt   DateTime    @default(now()) @updatedAt @map("updated_at")
-  company     Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  invoice     Invoice     @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  payment     Payment     @relation(fields: [paymentId], references: [id], onDelete: Cascade)
-  user        User?       @relation(fields: [processedBy], references: [id])
-
-  @@map("refunds")
-}
-
-model CardPayment {
-  id         Int      @id @default(autoincrement())
-  paymentId  Int      @unique
-  creditCard String?
-  cardType   CardType
-  payment    Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
-}
-
-model CheckPayment {
-  id          Int     @id @default(autoincrement())
-  paymentId   Int     @unique
-  checkNumber String?
-  payment     Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
-}
-
-model CashPayment {
-  id           Int     @id @default(autoincrement())
-  paymentId    Int     @unique
-  receivedCash String?
-  payment      Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
-}
-
-model OtherPayment {
-  id              Int            @id @default(autoincrement())
-  paymentId       Int            @unique
-  paymentMethodId Int?
-  payment         Payment        @relation(fields: [paymentId], references: [id], onDelete: Cascade)
-  paymentMethod   PaymentMethod? @relation(fields: [paymentMethodId], references: [id], onDelete: Cascade)
-}
-
-model DepositPayment {
-  id            Int     @id @default(autoincrement())
-  paymentId     Int     @unique
-  depositMethod String?
-  depositNotes  String?
-  payment       Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
-}
-
-model StripePayment {
-  id                    Int      @id @default(autoincrement())
-  stripePaymentIntentId String   @unique @map("stripe_payment_intent_id")
-  paymentId             Int      @unique @map("payment_id")
-  invoiceId             String?  @map("invoice_id")
-  companyId             Int      @map("company_id")
-  createdAt             DateTime @default(now()) @map("created_at")
-  updatedAt             DateTime @default(now()) @updatedAt @map("updated_at")
-  company               Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  invoice               Invoice? @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  payment               Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
-}
-
-model PaymentMethod {
-  id        Int            @id @default(autoincrement())
-  name      String
-  companyId Int            @map("company_id")
-  createdAt DateTime       @default(now()) @map("created_at")
-  updatedAt DateTime       @default(now()) @updatedAt @map("updated_at")
-  payments  OtherPayment[]
-  company   Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
-}
-
-model Coupon {
-  id           Int            @id @default(autoincrement())
-  name         String
-  code         String
-  type         String
-  startDate    DateTime
-  endDate      DateTime
-  discount     Decimal
-  discountType DiscountType
-  status       CouponStatus
-  redemptions  Int
-  companyId    Int            @map("company_id")
-  createdAt    DateTime       @default(now()) @map("created_at")
-  updatedAt    DateTime       @default(now()) @updatedAt @map("updated_at")
-  ClientCoupon ClientCoupon[]
-  company      Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
-}
-
-model CompanyPermissionModule {
-  id              Int      @id @default(autoincrement())
-  companyId       Int      @map("company_id")
-  permission_name String
-  title           String
-  enabled         Boolean
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at")
-  company         Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  @@unique([companyId, permission_name])
-}
-
-model SalaryHistory {
-  id           Int        @id @default(autoincrement())
-  userId       Int        @map("user_id")
-  companyId    Int        @map("company_id")
-  salaryType   SalaryType @map("salary_type")
-  salaryAmount Decimal    @map("salary_amount") @db.Decimal(10, 2)
-  startDate    DateTime   @map("start_date")
-  endDate      DateTime?  @map("end_date")
-  isActive     Boolean    @default(true) @map("is_active")
-  createdAt    DateTime   @default(now()) @map("created_at")
-  updatedAt    DateTime   @default(now()) @updatedAt @map("updated_at")
-  company      Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId, isActive], map: "fk_salary_history_user_active")
-  @@index([companyId], map: "fk_salary_history_company")
-  @@index([startDate, endDate], map: "idx_salary_history_dates")
-}
-
-model Task {
-  id            Int        @id @default(autoincrement())
-  title         String     @db.VarChar(100)
-  description   String?
-  date          DateTime?
-  startTime     String?    @map("start_time")
-  endTime       String?    @map("end_time")
-  priority      Priority
-  createdAt     DateTime   @default(now()) @map("created_at")
-  updatedAt     DateTime   @default(now()) @updatedAt @map("updated_at")
-  userId        Int        @map("user_id")
-  companyId     Int        @map("company_id")
-  invoiceId     String?    @map("invoice_id")
-  clientId      Int?       @map("client_id")
-  googleEventId String?
-  leadId        Int?       @map("lead_id")
-  client        Client?    @relation(fields: [clientId], references: [id])
-  company       Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  Invoice       Invoice?   @relation(fields: [invoiceId], references: [id])
-  lead          Lead?      @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  taskUser      TaskUser[]
-
-  @@index([userId])
-  @@index([companyId])
-}
-
-model TaskUser {
-  id        Int      @id @default(autoincrement())
-  taskId    Int      @map("task_id")
-  userId    Int      @map("user_id")
-  eventId   String?  @db.VarChar(100)
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
-  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([taskId])
-}
-
-model UserFeedback {
-  id                     Int                      @id @default(autoincrement())
-  userId                 Int                      @map("user_id")
-  companyId              Int                      @map("company_id")
-  whatHappened           String
-  whatExpected           String
-  snapshotImage          String?
-  createdAt              DateTime                 @default(now()) @map("created_at")
-  updatedAt              DateTime                 @default(now()) @updatedAt @map("updated_at")
-  company                Company                  @relation(fields: [companyId], references: [id])
-  user                   User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  UserFeedbackAttachment UserFeedbackAttachment[]
-}
-
-model UserFeedbackAttachment {
-  id             Int          @id @default(autoincrement())
-  fileName       String
-  userFeedbackId Int          @map("user_feedback_id")
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @default(now()) @updatedAt @map("updated_at")
-  userFeedback   UserFeedback @relation(fields: [userFeedbackId], references: [id])
-}
-
-model User {
-  id                             Int                             @id @default(autoincrement())
-  firstName                      String
-  lastName                       String?
-  email                          String                          @unique
-  emailVerifiedAt                DateTime?                       @map("email_verified_at")
-  image                          String                          @default("/images/default.png")
-  password                       String
-  provider                       Provider                        @default(email)
-  timezone                       String                          @default("UTC")
-  phone                          String?
-  address                        String?
-  city                           String?
-  state                          String?
-  zip                            String?
-  companyName                    String?                         @map("company_name")
-  commission                     Decimal?                        @default(0) @db.Decimal(10, 3)
-  role                           Role                            @default(admin)
-  employeeType                   EmployeeType                    @default(Admin)
-  isSuperAdmin                   Boolean                         @default(false) @map("is_super_admin")
-  joinDate                       DateTime?                       @map("join_date")
-  companyId                      Int                             @map("company_id")
-  createdAt                      DateTime                        @default(now()) @map("created_at")
-  updatedAt                      DateTime                        @default(now()) @updatedAt @map("updated_at")
-  appointments                   Appointment[]
-  appointmentUsers               AppointmentUser[]
-  ClientCall                     ClientCall[]
-  ClientSMS                      ClientSMS[]
-  ClockInOut                     ClockInOut[]
-  inventoryAutomationTeamMembers InventoryAutomationTeamMember[]
-  inventoryProducts              InventoryProduct[]
-  assignedInvoices               Invoice[]                       @relation("assignedTo")
-  invoices                       Invoice[]                       @relation("user")
-  salesLead                      Lead[]
-  LeaveRequest                   LeaveRequest[]
-  Notification                   Notification[]
-  NotificationSettings           NotificationSettingsV2[]
-  OAuthToken                     OAuthToken?
-  resetToken                     PasswordResetToken?
-  permissions                    Permission[]
-  receivedEstimates              RequestEstimate[]               @relation("Receiver")
-  sentEstimates                  RequestEstimate[]               @relation("Sender")
-  salaryHistory                  SalaryHistory[]
-  tasks                          Task[]
-  taskUsers                      TaskUser[]
-  Technician                     Technician[]
-  company                        Company                         @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  UserFeedback                   UserFeedback[]
-  UserGroups                     UserGroups[]
-  Refund                         Refund[]
-
-  @@index([companyId], map: "fk_users_company")
-}
-
-model PasswordResetToken {
-  id        String   @id @default(uuid())
-  token     String   @unique
-  otp       String
-  userId    Int      @unique @map("user_id")
-  expiresAt DateTime @map("expires_at")
-  createdAt DateTime @default(now()) @map("created_at")
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model OAuthToken {
-  id           Int       @id @default(autoincrement())
-  userId       Int       @unique @map("user_id")
-  provider     String
-  accessToken  String    @map("access_token")
-  refreshToken String?   @map("refresh_token")
-  expiresIn    DateTime? @map("expires_in")
-  createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @default(now()) @updatedAt @map("updated_at")
-  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId], map: "fk_oauth_tokens_user")
-}
-
-model PermissionForManager {
-  id                            Int     @id @default(autoincrement())
-  companyId                     Int     @map("company_id")
-  communicationHubInternal      Boolean @default(true) @map("communication_hub_internal")
-  communicationHubClients       Boolean @default(true) @map("communication_hub_clients")
-  communicationHubCollaboration Boolean @default(true) @map("communication_hub_collaboration")
-  estimatesInvoices             Boolean @default(true) @map("estimates_invoices")
-  calendarTask                  Boolean @default(true) @map("calendar_task")
-  payments                      Boolean @default(true)
-  workforceManagement           Boolean @default(true) @map("workforce_management")
-  reporting                     Boolean @default(true)
-  inventoryAll                  Boolean @default(true)
-  integrations                  Boolean @default(false)
-  salesPipeline                 Boolean @default(true) @map("sales_pipeline")
-  shopPipeline                  Boolean @default(true) @map("shop_pipeline")
-  businessSettings              Boolean @default(false) @map("business_settings")
-  company                       Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-}
-
-model PermissionForSales {
-  id                            Int     @id @default(autoincrement())
-  companyId                     Int     @map("company_id")
-  communicationHubInternal      Boolean @default(true) @map("communication_hub_internal")
-  communicationHubClients       Boolean @default(true) @map("communication_hub_clients")
-  communicationHubCollaboration Boolean @default(true) @map("communication_hub_collaboration")
-  estimatesInvoices             Boolean @default(true) @map("estimates_invoices")
-  calendarTask                  Boolean @default(true) @map("calendar_task")
-  payments                      Boolean @default(false)
-  salesPipeline                 Boolean @default(true) @map("sales_pipeline")
-  workforceManagementViewOnly   Boolean @default(true) @map("workforce_management")
-  reportingViewOnly             Boolean @default(true)
-  inventoryAllViewOnly          Boolean @default(true)
-  company                       Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-}
-
-model PermissionForTechnician {
-  id                          Int     @id @default(autoincrement())
-  companyId                   Int     @map("company_id")
-  communicationHubInternal    Boolean @default(true) @map("communication_hub_internal")
-  calendarTask                Boolean @default(true) @map("calendar_task")
-  shopPipeline                Boolean @default(true) @map("shop_pipeline")
-  workforceManagementViewOnly Boolean @default(true) @map("workforce_management")
-  reportingViewOnly           Boolean @default(true)
-  company                     Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-}
-
-model PermissionForOther {
-  id                            Int     @id @default(autoincrement())
-  companyId                     Int     @map("company_id")
-  communicationHubInternal      Boolean @default(false) @map("communication_hub_internal")
-  communicationHubClients       Boolean @default(false) @map("communication_hub_clients")
-  communicationHubCollaboration Boolean @default(false) @map("communication_hub_collaboration")
-  estimatesInvoices             Boolean @default(false) @map("estimates_invoices")
-  calendarTask                  Boolean @default(false) @map("calendar_task")
-  payments                      Boolean @default(false)
-  workforceManagement           Boolean @default(false) @map("workforce_management")
-  reporting                     Boolean @default(false)
-  inventoryAll                  Boolean @default(false)
-  integrations                  Boolean @default(false)
-  salesPipeline                 Boolean @default(false) @map("sales_pipeline")
-  shopPipeline                  Boolean @default(false) @map("shop_pipeline")
-  businessSettings              Boolean @default(false) @map("business_settings")
-  company                       Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-}
-
-model Permission {
-  id                            Int     @id @default(autoincrement())
-  userId                        Int     @map("user_id")
-  companyId                     Int     @map("company_id")
-  communicationHubInternal      Boolean @default(false) @map("communication_hub_internal")
-  communicationHubClients       Boolean @default(false) @map("communication_hub_clients")
-  communicationHubCollaboration Boolean @default(false) @map("communication_hub_collaboration")
-  estimatesInvoices             Boolean @default(false) @map("estimates_invoices")
-  calendarTask                  Boolean @default(false) @map("calendar_task")
-  payments                      Boolean @default(false)
-  workforceManagement           Boolean @default(false) @map("workforce_management")
-  reporting                     Boolean @default(false)
-  inventory                     Boolean @default(false)
-  integrations                  Boolean @default(false)
-  salesPipeline                 Boolean @default(false) @map("sales_pipeline")
-  shopPipeline                  Boolean @default(false) @map("shop_pipeline")
-  businessSettings              Boolean @default(false) @map("business_settings")
-  workforceManagementViewOnly   Boolean @default(false) @map("workforce_management_view_only")
-  reportingViewOnly             Boolean @default(false) @map("reporting_view_only")
-  inventoryAllViewOnly          Boolean @default(false) @map("inventory_all_view_only")
-  company                       Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  user                          User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, companyId])
-}
-
-model ClockInOut {
-  id         Int          @id @default(autoincrement())
-  userId     Int          @map("user_id")
-  companyId  Int          @map("company_id")
-  clockIn    DateTime     @map("clock_in")
-  clockOut   DateTime?    @map("clock_out")
-  timezone   String?
-  createdAt  DateTime     @default(now()) @map("created_at")
-  updatedAt  DateTime     @default(now()) @updatedAt @map("updated_at")
-  ClockBreak ClockBreak[]
-  company    Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId], map: "fk_clock_in_out_user")
-  @@index([companyId], map: "fk_clock_in_out_company")
-}
-
-model ClockBreak {
-  id           Int        @id @default(autoincrement())
-  clockInOutId Int        @map("clock_in_out_id")
-  breakStart   DateTime   @map("break_start")
-  breakEnd     DateTime?  @map("break_end")
-  createdAt    DateTime   @default(now()) @map("created_at")
-  updatedAt    DateTime   @default(now()) @updatedAt @map("updated_at")
-  clockInOut   ClockInOut @relation(fields: [clockInOutId], references: [id], onDelete: Cascade)
-
-  @@index([clockInOutId], map: "fk_clock_break_clock_in_out")
-}
-
-model ClientSMS {
-  id          Int                    @id @default(autoincrement())
-  message     String
-  from        String
-  to          String
-  sentBy      ClientSMSSentBy
-  isRead      Boolean                @default(false) @map("is_read")
-  userId      Int?                   @map("user_id")
-  companyId   Int                    @map("company_id")
-  clientId    Int                    @map("client_id")
-  createdAt   DateTime               @default(now()) @map("created_at")
-  updatedAt   DateTime               @default(now()) @updatedAt @map("updated_at")
-  client      Client                 @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  company     Company                @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  user        User?                  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  attachments ClientSmsAttachments[]
-}
-
-model ClientCall {
-  id            Int             @id @default(autoincrement())
-  callSid       String          @unique
-  from          String
-  to            String
-  status        String?
-  direction     String?
-  duration      Int?
-  recordingUrl  String?
-  recordingSid  String?
-  callStartTime DateTime?
-  callEndTime   DateTime?
-  sentBy        ClientSMSSentBy
-  userId        Int?            @map("user_id")
-  companyId     Int             @map("company_id")
-  clientId      Int             @map("client_id")
-  createdAt     DateTime        @default(now()) @map("created_at")
-  updatedAt     DateTime        @default(now()) @updatedAt @map("updated_at")
-  client        Client          @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  company       Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  user          User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model ClientSmsAttachments {
-  id          Int       @id @default(autoincrement())
-  name        String
-  url         String
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at")
-  clientSMSId Int       @map("client_sms_id")
-  clientSMS   ClientSMS @relation(fields: [clientSMSId], references: [id], onDelete: Cascade)
-}
-
-model Vehicle {
-  id                     Int              @id @default(autoincrement())
-  year                   Int?
-  make                   String?
-  model                  String?
-  submodel               String?
-  type                   String?
-  transmission           String?
-  engineSize             String?
-  license                String?
-  vin                    String?
-  notes                  String?
-  other                  String?
-  fromRequest            Boolean?         @default(false) @map("from_request")
-  fromRequestedCompanyId Int?             @map("from_requested_company_id")
-  colorId                Int?             @map("color_id")
-  clientId               Int?             @map("customer_id")
-  companyId              Int              @map("company_id")
-  createdAt              DateTime         @default(now()) @map("created_at")
-  updatedAt              DateTime         @default(now()) @updatedAt @map("updated_at")
-  appointments           Appointment[]
-  invoices               Invoice[]
-  requestEstimate        RequestEstimate? @relation("Vehicle")
-  color                  VehicleColor?    @relation(fields: [colorId], references: [id])
-  company                Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  client                 Client?          @relation(fields: [clientId], references: [id], onDelete: Cascade)
-
-  @@index([companyId], map: "fk_vehicles_company")
-}
-
-model VehicleColor {
-  id        Int       @id @default(autoincrement())
-  name      String
-  companyId Int       @map("company_id")
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
-  Vehicle   Vehicle[]
-  company   Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
-}
-
-model VehicleParts {
-  id           Int         @id @default(autoincrement())
-  partsName    String
-  technicianId Int?        @map("technician_id")
-  invoiceId    String      @map("invoice_id")
-  serviceId    Int?        @map("service_id")
-  createdAt    DateTime    @default(now()) @map("created_at")
-  updatedAt    DateTime    @default(now()) @updatedAt @map("updated_at")
-  invoice      Invoice     @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  service      Service?    @relation(fields: [serviceId], references: [id], onDelete: Cascade)
-  technician   Technician? @relation(fields: [technicianId], references: [id], onDelete: Cascade)
-}
-
-model UserGroups {
-  A     Int
-  B     Int
-  Group Group @relation(fields: [A], references: [id], onDelete: Cascade)
-  User  User  @relation(fields: [B], references: [id], onDelete: Cascade)
-
-  @@id([A, B], map: "_UserGroups_AB_pkey")
-  @@index([B], map: "_UserGroups_B_index")
-  @@map("_UserGroups")
-}
-
-model appointment_titles {
-  id         Int      @id @default(autoincrement())
-  name       String   @db.VarChar(100)
-  company_id Int
-  created_at DateTime @default(now())
-  updated_at DateTime @default(now())
-  Company    Company  @relation(fields: [company_id], references: [id], onDelete: Cascade)
-
-  @@index([company_id])
-}
-
+// Enums
 enum CommunicationType {
   SMS
   EMAIL
@@ -1855,9 +366,359 @@ enum InventoryNotificationAction {
   BOTH
 }
 
+// Client of a company.
+// Client is just data, they can't login.
+model Client {
+  id                     Int                      @id @default(autoincrement())
+  firstName              String                   @map("first_name")
+  lastName               String?                  @map("last_name")
+  mobile                 String?
+  email                  String?
+  address                String?
+  city                   String?
+  state                  String?
+  zip                    String?
+  isFleet                Boolean?                 @default(false) @map("is_fleet")
+  photo                  String                   @default("/images/default.png")
+  fromRequest            Boolean?                 @default(false) @map("from_request")
+  fromRequestedCompanyId Int?                     @map("from_requested_company_id")
+  sourceId               Int?                     @map("source_id")
+  converted              Boolean?                 @default(false) @map("converted")
+  companyId              Int                      @map("company_id")
+  createdAt              DateTime                 @default(now()) @map("created_at")
+  updatedAt              DateTime                 @default(now()) @updatedAt @map("updated_at")
+  company                Company                  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  customerCompany        String?                  @map("customer_company")
+  tagId                  Int?                     @map("tag_id")
+  notes                  String?
+  conversationsTrack     ClientConversationTrack?
+  appointments           Appointment[]
+  source                 Source?                  @relation(fields: [sourceId], references: [id])
+  tag                    Tag?                     @relation(fields: [tagId], references: [id])
+  Vehicle                Vehicle[]
+  Invoice                Invoice[]
+  ClientCoupon           ClientCoupon[]
+  Task                   Task[]
+  ClientSMS              ClientSMS[]
+  ClientCall             ClientCall[]
+  leadId                 Int?
+  Lead                   Lead?                    @relation(fields: [leadId], references: [id])
+  MailgunEmail           MailgunEmail[]
+  firstContactTime       DateTime?
+  lastMailgunEmailReadId Int?
+  isStarred              Boolean?                 @default(false)
+  fleet                  Fleet?
+
+  @@index([companyId], name: "fk_customers_company")
+  @@map("Client")
+}
+
+model Fleet {
+  id                   Int              @id @default(autoincrement())
+  clientId             Int              @unique @map("client_id")
+  fleetName            String
+  contactName          String
+  preferredPaymentTerm String?          @map("preferred_payment_term")
+  createdAt            DateTime         @default(now()) @map("created_at")
+  updatedAt            DateTime         @default(now()) @updatedAt @map("updated_at")
+  client               Client           @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  statement            FleetStatement[]
+}
+
+model FleetStatement {
+  id        String    @id @default(cuid())
+  fleetId   Int       @map("fleet_id")
+  Fleet     Fleet     @relation(fields: [fleetId], references: [id])
+  invoice   Invoice[]
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
+}
+
+model Source {
+  id        Int      @id @default(autoincrement())
+  name      String
+  companyId Int      @map("company_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  Client    Client[]
+}
+
+model ClientCoupon {
+  id        Int      @id @default(autoincrement())
+  couponId  Int      @map("coupon_id")
+  clientId  Int      @map("client_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  coupon    Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+}
+
+model ClientConversationTrack {
+  id                 Int       @id @default(autoincrement())
+  clientId           Int       @unique @map("client_id") // Add unique constraint to establish the one-to-one relation
+  emailIsRead        Boolean   @default(true) @map("email_is_read")
+  smsIsRead          Boolean   @default(true) @map("sms_is_read")
+  emailIsUnReadCount Int       @default(0) @map("email_is_unread_count")
+  smsUnReadCount     Int       @default(0) @map("sms_unread_count")
+  emailLastMessage   String?   @map("email_last_message") @db.Text
+  smsLastMessage     String?   @map("sms_last_message") @db.Text
+  lastMessageBy      String?   @map("last_message_by")
+  lastEmailBy        String?   @map("last_email_by") // Track who sent the last email: "Company" or "Client"
+  sendAt             DateTime? @map("send_at")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @default(now()) @updatedAt @map("updated_at")
+  client             Client    @relation(fields: [clientId], references: [id], onDelete: Cascade) // Update this line to establish the one-to-one relation
+}
+
+// Company model.
+// Every user belongs to a company.
+// For now, every user has to create their own company when registering.
+// In the future, we can add a feature to join a company.
+model Company {
+  id                               Int                                @id @default(autoincrement())
+  name                             String
+  businessId                       String?                            @map("business_id")
+  businessType                     String?                            @map("business_type")
+  phone                            String?
+  email                            String?
+  industry                         String?
+  website                          String?
+  address                          String?
+  city                             String?
+  state                            String?
+  zip                              String?
+  image                            String?
+  businessVisibility               Boolean?                           @default(true) @map("business_visibility")
+  phoneVisibility                  Boolean?                           @default(true) @map("phone_visibility")
+  addressVisibility                Boolean?                           @default(true) @map("address_visibility")
+  tax                              Decimal?                           @default(0)
+  serviceFee                       Decimal?                           @default(0)
+  currency                         String?                            @default("USD")
+  terms                            String?                            @db.VarChar(800)
+  policy                           String?                            @db.VarChar(800)
+  leadTerms                        String?                            @map("lead_terms") @db.Text
+  leadPolicy                       String?                            @map("lead_policy") @db.Text
+  googleEmail                      String?                            @map("google_email")
+  googleRefreshToken               String?                            @map("google_refresh_token")
+  googleCalendarToken              String?                            @map("google_calendar_token")
+  createdAt                        DateTime                           @default(now()) @map("created_at")
+  updatedAt                        DateTime                           @default(now()) @updatedAt @map("updated_at")
+  companyLatitude                  Float?
+  companyLongitude                 Float?
+  zapierToken                      String?                            @unique @db.VarChar(240)
+  users                            User[]
+  tasks                            Task[]
+  clients                          Client[]
+  services                         Service[]
+  vehicles                         Vehicle[]
+  invoices                         Invoice[]
+  calendarSettings                 CalendarSettings[]
+  appointments                     Appointment[]
+  appointmentTitles                AppointmentTitle[]
+  emailTemplates                   EmailTemplate[]
+  materials                        Material[]
+  vendors                          Vendor[]
+  labors                           Labor[]
+  tags                             Tag[]
+  categories                       Category[]
+  statuses                         Status[]
+  paymentMethods                   PaymentMethod[]
+  inventoryProducts                InventoryProduct[]
+  VehicleColor                     VehicleColor[]
+  Source                           Source[]
+  Payment                          Payment[]
+  Coupon                           Coupon[]
+  Technician                       Technician[]
+  companyJoinsAsOne                CompanyJoin[]                      @relation("CompanyOne")
+  companyJoinsAsTwo                CompanyJoin[]                      @relation("CompanyTwo")
+  companyEmailTemplate             CompanyEmailTemplate[]
+  permissionForManager             PermissionForManager[]
+  permissionForSales               PermissionForSales[]
+  permissionForTechnician          PermissionForTechnician[]
+  permissionForOther               PermissionForOther[]
+  permissions                      Permission[]
+  Lead                             Lead[]
+  isCRMEnabled                     Boolean?                           @default(false) @map("is_crm_enabled")
+  LeaveRequest                     LeaveRequest[]
+  RequestEstimateSent              RequestEstimate[]                  @relation("SenderCompany")
+  RequestEstimateReceived          RequestEstimate[]                  @relation("ReceiverCompany")
+  Column                           Column[]
+  ClockInOut                       ClockInOut[]
+  Holiday                          Holiday[]
+  InventoryProductHistory          InventoryProductHistory[]
+  UserFeedback                     UserFeedback[]
+  ClientSMS                        ClientSMS[]
+  ClientCall                       ClientCall[]
+  TwilioCredentials                TwilioCredentials?                 @relation(fields: [twilioCredentialsId], references: [id])
+  twilioCredentialsId              Int?
+  MailgunCredential                MailgunCredential?                 @relation(fields: [mailgunCredentialId], references: [id])
+  mailgunCredentialId              Int?
+  MailgunEmail                     MailgunEmail[]
+  NotificationSettings             NotificationSettingsV2[]
+  Notification                     Notification[]
+  stripeAccountId                  String?
+  timezone                         String?
+  stripePayment                    StripePayment[]
+  leadLink                         LeadLink[]
+  PipelineAutomationRule           PipelineAutomationRule[]
+  ServiceMaintenanceAutomationRule ServiceMaintenanceAutomationRule[]
+  Refund                           Refund[]
+  InvoiceAutomationRule            InvoiceAutomationRule[]
+  inventoryAutomationRule          InventoryAutomationRule[]
+  companyPermissionModules         CompanyPermissionModule[]
+  BugReport                        BugReport[]
+  salaryHistory                    SalaryHistory[]
+}
+
+// create model that will handle multiple companies join and collaboration
+model CompanyJoin {
+  id           Int      @id @default(autoincrement())
+  companyOneId Int
+  companyTwoId Int
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
+  companyOne   Company  @relation(fields: [companyOneId], references: [id], onDelete: Cascade, name: "CompanyOne")
+  companyTwo   Company  @relation(fields: [companyTwoId], references: [id], onDelete: Cascade, name: "CompanyTwo")
+}
+
+// Calendar settings for a company.
+model CalendarSettings {
+  id        Int      @id @default(autoincrement())
+  companyId Int      @unique @map("company_id")
+  weekStart String
+  dayStart  String
+  dayEnd    String
+  weekend1  String   @default("Saturday")
+  weekend2  String   @default("Sunday")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+}
+
+model Holiday {
+  id        Int      @id @default(autoincrement())
+  companyId Int      @map("company_id")
+  date      DateTime
+  month     String
+  year      Int
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@index([month])
+  @@index([year])
+}
+
+// Email template for a company.
+model EmailTemplate {
+  id        Int               @id @default(autoincrement())
+  subject   String
+  message   String?           @db.Text
+  type      EmailTemplateType
+  companyId Int               @map("company_id")
+  createdAt DateTime          @default(now()) @map("created_at")
+  updatedAt DateTime          @default(now()) @updatedAt @map("updated_at")
+  company   Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+}
+
 enum EmailTemplateType {
   Confirmation
   Reminder
+}
+
+model Lead {
+  id                  Int        @id @default(autoincrement())
+  clientName          String     @map("client_name")
+  clientEmail         String?    @map("client_email")
+  clientPhone         String?    @map("client_phone")
+  vehicleInfo         String     @map("vehicle_info")
+  vehicleId           Int?
+  services            String
+  source              String
+  comments            String?
+  companyId           Int        @map("company_id")
+  createdAt           DateTime   @default(now()) @map("created_at")
+  updatedAt           DateTime   @default(now()) @updatedAt @map("updated_at")
+  columnChangedAt     DateTime?  @map("column_changed_at")
+  company             Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  columnId            Int?       @map("column_id")
+  column              Column?    @relation(fields: [columnId], references: [id], onDelete: Cascade)
+  assignedSalesUserId Int?       @map("assigned_sales_id")
+  assignedDate        DateTime?  @map("assigned_date")
+  salesUser           User?      @relation(fields: [assignedSalesUserId], references: [id], onDelete: Cascade)
+  isLead              Boolean    @default(true)
+  isQualified         Boolean    @default(true)
+  isEstimateCreated   Boolean?   @default(false)
+  tasks               Task[]
+  leadTags            LeadTags[]
+  serviceId           Int?
+  Service             Service?   @relation(fields: [serviceId], references: [id])
+  clientId            Int?
+
+  Client              Client[]
+  TimeDelayExecutions TimeDelayExecution[]
+
+  @@index([serviceId])
+  @@index([vehicleId])
+  @@index([columnId])
+  @@index([companyId])
+  @@index([assignedSalesUserId])
+  @@index([clientEmail])
+  @@index([columnChangedAt])
+  @@index([isEstimateCreated])
+  @@index([createdAt])
+  @@index([companyId, columnId])
+}
+
+model LeadTags {
+  id        Int      @id @default(autoincrement())
+  leadId    Int      @map("lead_id")
+  tagId     Int      @map("tag_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@index([leadId], name: "fk_lead_tags_lead")
+  @@index([tagId], name: "fk_lead_tags_tag")
+}
+
+model LeadLink {
+  id            Int      @id @default(autoincrement())
+  source        String
+  generatedLink String   @db.Text
+  shortUrl      String?
+  QRCode        String?  @db.Text
+  isShow        Boolean  @default(true)
+  companyId     Int?
+  company       Company? @relation(fields: [companyId], references: [id])
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@unique([source, companyId, shortUrl], name: "unique_lead_link_per_company")
+  @@index([companyId])
+}
+
+model LeaveRequest {
+  id          Int                @id @default(autoincrement())
+  userId      Int                @map("user_id")
+  startDate   DateTime           @map("start_date")
+  endDate     DateTime           @map("end_date")
+  status      LeaveRequestStatus
+  title       String
+  description String
+  companyId   Int                @map("company_id")
+  createdAt   DateTime           @default(now()) @map("created_at")
+  updatedAt   DateTime           @default(now()) @updatedAt @map("updated_at")
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company     Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
 }
 
 enum LeaveRequestStatus {
@@ -1866,10 +727,78 @@ enum LeaveRequestStatus {
   Rejected
 }
 
+// TODO: this might need to be renamed
+model CompanyEmailTemplate {
+  id        Int      @id @default(autoincrement())
+  subject   String
+  message   String?  @db.Text
+  companyId Int      @map("company_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("companyEmailTemplate")
+}
+
+model TwilioCredentials {
+  id Int @id @default(autoincrement())
+
+  accountSid     String  @map("account_sid")
+  authToken      String? @map("auth_token")
+  phoneNumber    String  @map("phone_number")
+  apiKeySid      String  @map("api_key_sid")
+  apiKeySecret   String  @map("api_key_secret")
+  twimlAppSid    String? @map("twiml_app_sid")
+  phoneNumberSid String  @map("phone_number_sid")
+  companyId      Int     @unique @map("company_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  Company Company[]
+}
+
+model MailgunCredential {
+  id                 Int                       @id @default(autoincrement())
+  companyId          Int
+  mailAddress        String?
+  domain             String
+  apiKey             String?
+  smtpPassword       String?
+  dnsRecords         Json?
+  isVerified         Boolean                   @default(false)
+  verificationStatus MailgunVerificationStatus @default(pending) // Use an enum if possible
+  company            Company[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, domain]) // Ensures a user cannot have duplicate domains
+}
+
 enum MailgunVerificationStatus {
   pending
   verified
   failed
+}
+
+model MailgunEmail {
+  id Int @id @default(autoincrement())
+
+  subject     String
+  text        String                   @db.Text
+  attachments MailgunEmailAttachment[]
+  emailBy     EMAIL_BY
+
+  messageId String?
+
+  companyId Int
+  company   Company @relation(fields: [companyId], references: [id])
+
+  clientId Int
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
 }
 
 enum EMAIL_BY {
@@ -1877,10 +806,137 @@ enum EMAIL_BY {
   Company
 }
 
+model MailgunEmailAttachment {
+  id Int @id @default(autoincrement())
+
+  name String
+  url  String
+  size Int
+
+  mailgunEmailId Int
+  mailgunEmail   MailgunEmail @relation(fields: [mailgunEmailId], references: [id], onDelete: Cascade)
+}
+
+// Category of a invoice.
+// Category is a part of Service, Material and Labor.
+// It's an independant model. So, one category can be in multiple services, materials and labors.
+model Category {
+  id                Int                @id @default(autoincrement())
+  name              String
+  companyId         Int                @map("company_id")
+  createdAt         DateTime           @default(now()) @map("created_at")
+  updatedAt         DateTime           @default(now()) @updatedAt @map("updated_at")
+  services          Service[]
+  materials         Material[]
+  labors            Labor[]
+  inventoryProducts InventoryProduct[]
+  company           Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+}
+
+// Status of a invoice.
+// Status is an independant model. So, one status can be in multiple invoices.
+model Status {
+  id        Int       @id @default(autoincrement())
+  name      String
+  textColor String // hex (with #)
+  bgColor   String // hex (with #)
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
+  companyId Int       @map("company_id")
+  company   Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  Invoice   Invoice[]
+}
+
 enum Priority {
   Low
   Medium
   High
+}
+
+// Updated Column model with fixed relations
+
+model Column {
+  id        Int     @id @default(autoincrement())
+  title     String
+  type      String // "sales" or "shop"
+  order     Int
+  textColor String?
+  bgColor   String?
+  companyId Int     @map("company_id")
+
+  company  Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  invoices Invoice[]
+  lead     Lead[]
+
+  // Relations for pipeline automation
+  pipelineStages                   PipelineStage[]
+  communicationStage               CommunicationStage[]
+  timeDelayExecutions              TimeDelayExecution[]
+  targetForRules                   PipelineAutomationRule[]           @relation("targetColumn")
+  targetForCommunicationRules      CommunicationAutomationRule[]      @relation("targetColumn")
+  serviceMaintenanceAutomationRule ServiceMaintenanceAutomationRule[] @relation("targetColumn")
+  serviceMaintenanceStageForRules  ServiceMaintenanceAutomationRule[] @relation("conditionColumn")
+  invoiceAutomationRule            InvoiceAutomationRule[]            @relation("invoiceStatus")
+  InvoiceAutomationRule            InvoiceAutomationRule[]
+
+  @@index([companyId])
+  @@index([type])
+  @@index([type, companyId])
+}
+
+model InventoryProduct {
+  id                      Int                       @id @default(autoincrement())
+  name                    String
+  description             String?                   @db.Text
+  categoryId              Int?                      @map("category_id")
+  quantity                Decimal?                  @default(1) @db.Decimal(10, 2)
+  price                   Decimal?                  @default(0)
+  unit                    String?                   @default("pc")
+  lot                     String?
+  vendorId                Int?                      @map("vendor_id")
+  userId                  Int?                      @map("user_id")
+  User                    User?                     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  type                    InventoryProductType
+  receipt                 String?
+  lowInventoryAlert       Int?                      @map("low_inventory_alert")
+  companyId               Int                       @map("company_id")
+  createdAt               DateTime                  @default(now()) @map("created_at")
+  updatedAt               DateTime                  @default(now()) @updatedAt @map("updated_at")
+  company                 Company                   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  category                Category?                 @relation(fields: [categoryId], references: [id])
+  vendor                  Vendor?                   @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+  InventoryProductHistory InventoryProductHistory[]
+  Material                Material[]
+  tags                    InventoryProductTag[]
+}
+
+model InventoryProductTag {
+  inventoryId Int              @map("inventory_id")
+  tagId       Int              @map("tag_id")
+  inventory   InventoryProduct @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+  tag         Tag              @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([inventoryId, tagId])
+}
+
+model InventoryProductHistory {
+  id        Int                         @id @default(autoincrement())
+  price     Decimal?                    @default(0)
+  quantity  Decimal                     @db.Decimal(10, 2)
+  date      DateTime?                   @default(now())
+  notes     String?
+  type      InventoryProductHistoryType
+  productId Int                         @map("inventory_id")
+  invoiceId String?                     @map("invoice_id")
+  vendorId  Int?                        @map("vendor_id")
+  createdAt DateTime                    @default(now()) @map("created_at")
+  updatedAt DateTime                    @default(now()) @updatedAt @map("updated_at")
+  isLost    Boolean?                    @default(false) @map("is_lost")
+  product   InventoryProduct            @relation(fields: [productId], references: [id], onDelete: Cascade)
+  invoice   Invoice?                    @relation(fields: [invoiceId], references: [id])
+  vendor    Vendor?                     @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+  companyId Int                         @map("company_id")
+  company   Company                     @relation(fields: [companyId], references: [id], onDelete: Cascade)
 }
 
 enum InventoryProductHistoryType {
@@ -1893,16 +949,304 @@ enum InventoryProductType {
   Product
 }
 
+// Vendor of a company.
+// Vendor is just data, they can't login.
+// Vendor is a part of Material.
+model Vendor {
+  id                      Int                       @id @default(autoincrement())
+  name                    String?
+  website                 String?
+  email                   String?
+  phone                   String?
+  address                 String?
+  city                    String?
+  state                   String?
+  zip                     String?
+  // company name for vendor. Its not related to company model.
+  companyName             String
+  notes                   String?
+  companyId               Int                       @map("company_id")
+  createdAt               DateTime                  @default(now()) @map("created_at")
+  updatedAt               DateTime                  @default(now()) @updatedAt @map("updated_at")
+  company                 Company                   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  material                Material[]
+  inventoryProducts       InventoryProduct[]
+  InventoryProductHistory InventoryProductHistory[]
+}
+
+model inventoryWirehouseProduct {
+  id          Int    @id @default(autoincrement())
+  productName String @unique
+  category    String
+  unit        String
+
+  @@index([productName])
+  @@index([category])
+  @@index([unit])
+  @@index([category, productName])
+}
+
+// InvoiceItem of a invoice.
+// Its a holder for service, material and labor.
+// One invoice can have multiple InvoiceItems.
+// And one InvoiceItem can have one service, material and labor.
+// Its dependant on invoice. So, invoiceItem can't be in multiple invoices.
+model InvoiceItem {
+  id          Int          @id @default(autoincrement())
+  invoiceId   String?      @map("invoice_id")
+  serviceId   Int?         @map("service_id")
+  laborId     Int?         @map("labor_id")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @default(now()) @updatedAt @map("updated_at")
+  invoice     Invoice?     @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  service     Service?     @relation(fields: [serviceId], references: [id])
+  labor       Labor?       @relation(fields: [laborId], references: [id])
+  serviceDesc String?      @map("service_desc")
+  materials   Material[]
+  tags        ItemTag[]
+  technicians Technician[]
+}
+
 enum InvoiceItemMaterialType {
   Material
   Product
 }
 
+// Service of a invoice.
+// Service is a part of InvoiceItem.
+// One invoice can have multiple InvoiceItems.
+// And one InvoiceItem can have one service.
+// Service itself is an independant model, So one service can be in multiple invoices.
+// And if you want to fetch services for a client, you need to fetch all invoices and then all invoice items and then you'll get services.
+model Service {
+  id                      Int                       @id @default(autoincrement())
+  createdAt               DateTime                  @default(now()) @map("created_at")
+  updatedAt               DateTime                  @default(now()) @updatedAt @map("updated_at")
+  name                    String
+  description             String?
+  canned                  Boolean?                  @default(false)
+  fromRequest             Boolean?                  @default(false) @map("from_request")
+  fromRequestedCompanyId  Int?                      @map("from_requested_company_id")
+  categoryId              Int?                      @map("category_id")
+  companyId               Int                       @map("company_id")
+  vehicleParts            VehicleParts[]
+  company                 Company                   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  category                Category?                 @relation(fields: [categoryId], references: [id])
+  invoiceItems            InvoiceItem[]
+  Technician              Technician[]
+  requestEstimate         RequestEstimate?          @relation("Service")
+  InvoiceRedo             InvoiceRedo[]
+  Lead                    Lead[]
+  ServiceMaintenanceStage ServiceMaintenanceStage[]
+
+  @@index([companyId], name: "fk_services_company")
+}
+
+// Material of a invoice.
+// Material is a part of InvoiceItem.
+// One invoice can have multiple InvoiceItems.
+// And one InvoiceItem can have one material.
+// Material itself is an independant model, So one material can be in multiple invoices.
+// And if you want to fetch materials for a client, you need to fetch all invoices and then all invoice items and then you'll get materials.
+model Material {
+  id            Int               @id @default(autoincrement())
+  name          String
+  vendorId      Int?              @map("vendor_id")
+  categoryId    Int?              @map("category_id")
+  notes         String?
+  quantity      Decimal?          @db.Decimal(10, 2)
+  cost          Decimal?
+  sell          Decimal?
+  discount      Decimal?
+  companyId     Int               @map("company_id")
+  invoiceId     String?           @map("invoice_id")
+  invoiceItemId Int?              @map("invoice_item_id")
+  productId     Int?              @map("product_id")
+  createdAt     DateTime          @default(now()) @map("created_at")
+  updatedAt     DateTime          @default(now()) @updatedAt @map("updated_at")
+  company       Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  vendor        Vendor?           @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+  category      Category?         @relation(fields: [categoryId], references: [id])
+  invoiceItem   InvoiceItem?      @relation(fields: [invoiceItemId], references: [id], onDelete: Cascade)
+  product       InventoryProduct? @relation(fields: [productId], references: [id])
+  invoice       Invoice?          @relation(fields: [invoiceId], references: [id])
+  tags          MaterialTag[]
+
+  @@index([companyId], name: "fk_materials_company")
+}
+
+// Labor of a invoice.
+// Labor is a part of InvoiceItem.
+// One invoice can have multiple InvoiceItems.
+// And one InvoiceItem can have one labor.
+// Labor itself is an independant model, So one labor can be in multiple invoices.
+// And if you want to fetch labors for a customer, you need to fetch all invoices and then all invoice items and then you'll get labors.
+model Labor {
+  id           Int           @id @default(autoincrement())
+  name         String
+  categoryId   Int?          @map("category_id")
+  notes        String?
+  hours        Decimal?      @db.Decimal(13, 3)
+  charge       Decimal?
+  discount     Decimal?
+  companyId    Int           @map("company_id")
+  cannedLabor  Boolean?      @default(false) @map("canned_labor")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @default(now()) @updatedAt @map("updated_at")
+  company      Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  category     Category?     @relation(fields: [categoryId], references: [id])
+  invoiceItems InvoiceItem[]
+  tags         LaborTag[]
+  // @@unique([name, companyId], name: "name_companyId")
+}
+
+// Tag for a invoice.
+// Tag is a part of InvoiceItem, Material and Labor.
+// One invoice can have multiple InvoiceItems.
+// And one InvoiceItem, Material and Labor can have multiple tags.
+// Tag itself is an independant model, So one tag can be in multiple invoices.
+model Tag {
+  id                  Int                   @id @default(autoincrement())
+  name                String
+  textColor           String // hex (with #)
+  bgColor             String // hex (with #)
+  type                TagType               @default(GENERAL) //Tag type to distinguish between sales, client, etc.
+  createdAt           DateTime              @default(now()) @map("created_at")
+  updatedAt           DateTime              @default(now()) @updatedAt @map("updated_at")
+  companyId           Int                   @map("company_id")
+  company             Company               @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  items               ItemTag[]
+  materials           MaterialTag[]
+  labors              LaborTag[]
+  Client              Client[]
+  InvoiceTags         InvoiceTags[]
+  InventoryProductTag InventoryProductTag[]
+  leadTags            LeadTags[]
+
+  @@index([companyId, type]) // NEW: Index for better query performance
+}
+
+// Many to many relation between Item and Tag.
+model ItemTag {
+  itemId Int
+  tagId  Int
+  item   InvoiceItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  tag    Tag         @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([itemId, tagId])
+}
+
+// Many to many relation between Material and Tag.
+model MaterialTag {
+  materialId Int      @map("material_id")
+  tagId      Int      @map("tag_id")
+  material   Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  tag        Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([materialId, tagId])
+}
+
+// Many to many relation between Labor and Tag.
+model LaborTag {
+  laborId Int   @map("labor_id")
+  tagId   Int   @map("tag_id")
+  labor   Labor @relation(fields: [laborId], references: [id], onDelete: Cascade)
+  tag     Tag   @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([laborId, tagId])
+}
+
+// NEW: Enum for tag types
 enum TagType {
-  GENERAL
-  SALES
-  CLIENT
-  INVENTORY
+  GENERAL // For invoice items, materials, labor
+  SALES // For sales/leads
+  CLIENT // For clients
+  INVENTORY // For inventory products
+}
+
+// Invoice of a company.
+// Note that `Invoice` is same as `Estimate`. So don't get confused.
+// We can differentiate them by `type` field.
+model Invoice {
+  id                      String                    @id @default(cuid())
+  createdAt               DateTime                  @default(now()) @map("created_at")
+  updatedAt               DateTime                  @default(now()) @updatedAt @map("updated_at")
+  convertedAt             DateTime?                 @map("converted_at")
+  deliveredAt             DateTime?                 @map("delivered_at")
+  completedAt             DateTime?                 @map("completed_at")
+  type                    InvoiceType               @default(Invoice)
+  clientId                Int?                      @map("customer_id")
+  vehicleId               Int?                      @map("vehicle_id")
+  subtotal                Decimal?                  @default(0) @db.Decimal(8, 2)
+  discount                Decimal?                  @default(0) @db.Decimal(8, 2)
+  tax                     Decimal?                  @default(0) @db.Decimal(8, 2)
+  serviceFee              Decimal?                  @default(0) @db.Decimal(8, 2)
+  grandTotal              Decimal?                  @default(0) @map("grand_total") @db.Decimal(8, 2)
+  deposit                 Decimal?                  @default(0) @db.Decimal(8, 2)
+  due                     Decimal?                  @default(0) @db.Decimal(8, 2)
+  statusId                Int?                      @map("status_id")
+  fleetStatementId        String?
+  internalNotes           String?
+  dueDate                 String?
+  terms                   String?
+  policy                  String?
+  customerNotes           String?
+  customerComments        String?
+  companyId               Int                       @map("company_id")
+  userId                  Int?                      @map("user_id")
+  assignedToId            Int?                      @map("assigned_to")
+  fromRequest             Boolean?                  @default(false) @map("from_request")
+  fromRequestedCompanyId  Int?                      @map("from_requested_company_id")
+  requestEstimateId       Int?                      @unique @map("request_estimate_id")
+  columnId                Int?                      @map("column_id")
+  profit                  Int?                      @default(0)
+  authorizedName          String?
+  stripePaymentLink       String?                   @db.Text
+  isWorkOrder             Boolean?                  @default(false) @map("is_work_order")
+  workOrderCreatedAt      DateTime?                 @map("work_order_created_at")
+  company                 Company                   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  invoiceItems            InvoiceItem[]
+  vehicleParts            VehicleParts[]
+  photos                  InvoicePhoto[]
+  tasks                   Task[]
+  status                  Status?                   @relation(fields: [statusId], references: [id])
+  payments                Payment[]
+  user                    User?                     @relation(name: "user", fields: [userId], references: [id], onDelete: SetNull)
+  Material                Material[]
+  InventoryProductHistory InventoryProductHistory[]
+  vehicle                 Vehicle?                  @relation(fields: [vehicleId], references: [id])
+  client                  Client?                   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  technician              Technician[]
+  tags                    InvoiceTags[]
+  requestEstimate         RequestEstimate?          @relation(fields: [requestEstimateId], onDelete: SetNull, references: [id])
+  assignedTo              User?                     @relation(name: "assignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+  column                  Column?                   @relation(fields: [columnId], references: [id], onDelete: SetNull)
+  InvoiceRedo             InvoiceRedo[]
+  serviceIndex            Json?
+  Inspections             InvoiceInspection[]
+  totalPayment            Decimal?                  @default(0) @map("total_payment") @db.Decimal(8, 2)
+  damageNotes             String?                   @map("damage_notes")
+  columnChangedAt         DateTime?                 @map("column_changed_at")
+  stripePayments          StripePayment[]
+  TimeDelayExecution      TimeDelayExecution[]
+  Refund                  Refund[]
+  FleetStatement          FleetStatement?           @relation(fields: [fleetStatementId], references: [id])
+
+  @@index([companyId], name: "fk_invoices_company")
+  @@index([companyId, type])
+}
+
+model InvoiceTags {
+  id        Int      @id @default(autoincrement())
+  invoiceId String   @map("invoice_id")
+  tagId     Int      @map("tag_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  invoice   Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId], name: "fk_invoice_tags_invoice")
+  @@index([tagId], name: "fk_invoice_tags_tag")
 }
 
 enum InvoiceType {
@@ -1910,14 +1254,210 @@ enum InvoiceType {
   Estimate
 }
 
+// Photo of a invoice.
+// One invoice can have multiple photos.
+model InvoicePhoto {
+  id        Int      @id @default(autoincrement())
+  invoiceId String   @map("invoice_id")
+  photo     String   @db.VarChar(1024)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  invoice   Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId], name: "fk_invoice_photos_invoice")
+}
+
+model RequestEstimate {
+  id                Int      @id @default(autoincrement())
+  senderId          Int      @map("sender_id")
+  senderCompanyId   Int      @map("sender_company_id")
+  receiverId        Int      @map("receiver_id")
+  receiverCompanyId Int      @map("receiver_company_id")
+  vehicleId         Int      @unique @map("vehicle_id")
+  serviceId         Int      @unique @map("service_id")
+  invoiceId         String   @map("invoice_id")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @default(now()) @updatedAt @map("updated_at")
+  sender            User     @relation("Sender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver          User     @relation("Receiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  senderCompany     Company  @relation("SenderCompany", fields: [senderCompanyId], references: [id], onDelete: Cascade)
+  receiverCompany   Company  @relation("ReceiverCompany", fields: [receiverCompanyId], references: [id], onDelete: Cascade)
+  invoice           Invoice?
+  vehicle           Vehicle? @relation("Vehicle", fields: [vehicleId], references: [id], onDelete: Cascade)
+  service           Service? @relation("Service", fields: [serviceId], references: [id], onDelete: Cascade)
+  message           Message? @relation("Message")
+}
+
+// Technician of a InvoiceItem.
+// One InvoiceItem can have multiple technicians.
+model Technician {
+  id            Int       @id @default(autoincrement())
+  userId        Int       @map("user_id")
+  date          DateTime? @map("assigned_date")
+  dateClosed    DateTime? @map("date_closed")
+  due           DateTime? @default(now())
+  amount        Decimal?  @default(0)
+  priority      Priority? @default(Low)
+  status        String?
+  note          String?   @map("new_note")
+  serviceId     Int       @map("service_id")
+  invoiceId     String    @map("invoice_id")
+  companyId     Int       @map("company_id")
+  invoiceItemId Int       @map("invoice_item_id")
+
+  createdAt    DateTime       @default(now()) @map("created_at")
+  updatedAt    DateTime       @default(now()) @updatedAt @map("updated_at")
+  vehicleParts VehicleParts[]
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  service      Service?       @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  invoice      Invoice?       @relation(fields: [invoiceId], references: [id])
+  company      Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  InvoiceRedo  InvoiceRedo[]
+  invoiceItem  InvoiceItem    @relation(fields: [invoiceItemId], references: [id], onDelete: Cascade)
+}
+
+model InvoiceRedo {
+  id           Int      @id @default(autoincrement())
+  invoiceId    String   @map("invoice_id")
+  serviceId    Int      @map("service_id")
+  technicianId Int      @map("technician_id")
+  notes        String?
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
+
+  invoice    Invoice    @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  service    Service    @relation(fields: [serviceId], references: [id])
+  technician Technician @relation(fields: [technicianId], references: [id])
+}
+
+//model for inspection of a invoice.
+model InvoiceInspection {
+  id        Int      @id @default(autoincrement())
+  invoiceId String   @map("invoice_id")
+  title     String
+  driver    Boolean  @default(false)
+  passenger Boolean  @default(false)
+  notes     String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  invoice   Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId], name: "fk_invoice_inspections_invoice")
+}
+
+// Message for chat.
+model Message {
+  id                Int              @id @default(autoincrement())
+  to                Int?
+  message           String
+  from              Int
+  groupId           Int?             @map("group_id")
+  section           MessageSection?
+  requestEstimateId Int?             @unique @map("request_estimate_id")
+  createdAt         DateTime         @default(now()) @map("created_at")
+  updatedAt         DateTime         @default(now()) @updatedAt @map("updated_at")
+  group             Group?           @relation(fields: [groupId], references: [id])
+  attachment        Attachment[]
+  requestEstimate   RequestEstimate? @relation("Message", fields: [requestEstimateId], references: [id])
+  chatTrack         ChatTrack?
+
+  @@index([to], name: "fk_messages_to")
+  @@index([from], name: "fk_messages_from")
+  @@index([groupId], name: "fk_messages_group")
+  @@index([updatedAt], name: "idx_messages_updated_at")
+  @@index([section], name: "idx_messages_section")
+  @@index([to, from, updatedAt], name: "idx_messages_conversation")
+  @@index([groupId, section, updatedAt], name: "idx_messages_filter")
+}
+
 enum MessageSection {
   internal
   collaboration
 }
 
+model ChatTrack {
+  id          Int             @id @default(autoincrement())
+  lastMessage String
+  isRead      Boolean         @default(false)
+  section     MessageSection?
+  senderId    Int?            @map("sender_id")
+  receiverId  Int?            @map("receiver_id")
+  messageId   Int?            @unique @map("message_id")
+  message     Message?        @relation(fields: [messageId], references: [id])
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @default(now()) @updatedAt @map("updated_at")
+}
+
+model Attachment {
+  id                 Int               @id @default(autoincrement())
+  fileName           String // File name (e.g., 'image.png')
+  fileType           String // File type (e.g., 'image/png', 'application/pdf')
+  fileUrl            String // File storage path or URL
+  fileSize           String
+  messageId          Int? // Foreign key to Message model, enforces one-to-one relationship
+  bugReportMessageId Int?
+  message            Message?          @relation(fields: [messageId], references: [id])
+  bugReportMessage   BugReportMessage? @relation(fields: [bugReportMessageId], references: [id])
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @default(now()) @updatedAt @map("updated_at")
+}
+
+model Group {
+  id        Int       @id @default(autoincrement())
+  name      String
+  type      String    @default("Group")
+  users     User[]    @relation("UserGroups")
+  messages  Message[]
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
+}
+
+model BugReport {
+  id               Int                @id @default(autoincrement())
+  companyId        Int
+  isResolved       Boolean?           @default(false)
+  company          Company            @relation(fields: [companyId], references: [id])
+  BugReportMessage BugReportMessage[]
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @default(now()) @updatedAt @map("updatedAt")
+}
+
+model BugReportMessage {
+  id          Int          @id @default(autoincrement())
+  bugReportId Int
+  subject     String?
+  content     String       @db.Text
+  senderType  UserType
+  userId      Int
+  isRead      Boolean      @default(false)
+  attachment  Attachment[] // Relation to Attachment
+  bugReport   BugReport    @relation(fields: [bugReportId], references: [id])
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @default(now()) @updatedAt @map("updatedAt")
+}
+
 enum UserType {
   super_admin
   company
+}
+
+// notification settings model
+model NotificationSettingsV2 {
+  id                Int                 @id @default(autoincrement())
+  companyId         Int                 @map("company_id")
+  userId            Int                 @map("user_id")
+  section           NotificationSection
+  notification_type NotificationType
+  email_enabled     Boolean             @default(false) @map("email_enabled")
+  push_enabled      Boolean             @default(false) @map("push_enabled")
+  text_enabled      Boolean             @default(false) @map("text_enabled")
+  last_updated      DateTime            @default(now()) @map("last_updated")
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  company           Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, notification_type], name: "user_notification_type")
 }
 
 enum NotificationType {
@@ -1970,6 +1510,146 @@ enum NotificationSection {
   COMMUNICATIONS
 }
 
+model Notification {
+  id          Int      @id @default(autoincrement())
+  userId      Int      @map("user_id")
+  companyId   Int      @map("company_id")
+  type        String?
+  title       String
+  description String
+  isUnRead    Boolean  @default(true) @map("is_unread")
+  avatarUrl   String?
+  redirectUrl String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+}
+
+// Payment of a invoice.
+// One invoice can have one payment. And one payment can't be in multiple invoices.
+// Payment can be of type card, check, cash or other.
+// If payment type is other, then it can have a payment method.
+// If payment type is card, then it can have a card type.
+model Payment {
+  id              Int             @id @default(autoincrement())
+  date            DateTime?
+  notes           String?
+  amount          Decimal? // Original payment amount
+  refundedAmount  Decimal?        @default(0) @map("refunded_amount")
+  refundMethod    PaymentType?    @map("refund_method")
+  refundReason    String?         @map("refund_reason")
+  type            PaymentType
+  card            CardPayment?
+  check           CheckPayment?
+  cash            CashPayment?
+  other           OtherPayment?
+  deposit         DepositPayment?
+  invoiceId       String?         @map("invoice_id")
+  companyId       Int             @map("company_id")
+  refundCreatedAt DateTime?       @map("refund_created_at")
+  refundUpdatedAt DateTime?       @map("refund_updated_at")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @default(now()) @updatedAt @map("updated_at")
+  invoice         Invoice?        @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  Company         Company?        @relation(fields: [companyId], references: [id])
+  stripePayment   StripePayment?
+  Refund          Refund[]
+
+  @@index([companyId])
+  @@index([invoiceId])
+  @@index([date])
+  @@index([amount])
+}
+
+model Refund {
+  id         Int         @id @default(autoincrement())
+  amount     Decimal     @db.Decimal(8, 2)
+  reason     String?
+  method     PaymentType // How the refund was processed (CASH, CARD, etc.)
+  refundDate DateTime    @default(now()) @map("refund_date")
+  notes      String?
+
+  // Foreign keys
+  paymentId   Int    @map("payment_id")
+  invoiceId   String @map("invoice_id")
+  companyId   Int    @map("company_id")
+  processedBy Int?   @map("processed_by") // User who processed the refund
+
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  payment Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user    User?   @relation(fields: [processedBy], references: [id], onDelete: SetNull)
+
+  @@map("refunds")
+}
+
+model CardPayment {
+  id         Int      @id @default(autoincrement())
+  paymentId  Int      @unique
+  creditCard String?
+  cardType   CardType
+  payment    Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+}
+
+model CheckPayment {
+  id          Int     @id @default(autoincrement())
+  paymentId   Int     @unique
+  checkNumber String?
+  payment     Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+}
+
+model CashPayment {
+  id           Int     @id @default(autoincrement())
+  paymentId    Int     @unique
+  receivedCash String?
+  payment      Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+}
+
+model OtherPayment {
+  id              Int            @id @default(autoincrement())
+  paymentId       Int            @unique
+  paymentMethodId Int?
+  payment         Payment        @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  paymentMethod   PaymentMethod? @relation(fields: [paymentMethodId], references: [id], onDelete: Cascade)
+}
+
+model DepositPayment {
+  id            Int     @id @default(autoincrement())
+  paymentId     Int     @unique
+  depositMethod String?
+  depositNotes  String?
+  payment       Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+}
+
+model StripePayment {
+  id                    Int      @id @default(autoincrement())
+  stripePaymentIntentId String   @unique @map("stripe_payment_intent_id")
+  paymentId             Int      @unique @map("payment_id")
+  payment               Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  invoiceId             String?  @map("invoice_id")
+  invoice               Invoice? @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  companyId             Int      @map("company_id")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @default(now()) @updatedAt @map("updated_at")
+  company               Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+}
+
+model PaymentMethod {
+  id        Int            @id @default(autoincrement())
+  name      String
+  companyId Int            @map("company_id")
+  createdAt DateTime       @default(now()) @map("created_at")
+  updatedAt DateTime       @default(now()) @updatedAt @map("updated_at")
+  payments  OtherPayment[]
+  company   Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+}
+
 enum PaymentType {
   CARD
   CHECK
@@ -1985,6 +1665,24 @@ enum CardType {
   OTHER
 }
 
+model Coupon {
+  id           Int            @id @default(autoincrement())
+  name         String
+  code         String
+  type         String
+  startDate    DateTime
+  endDate      DateTime
+  discount     Decimal
+  discountType DiscountType
+  status       CouponStatus
+  redemptions  Int
+  companyId    Int            @map("company_id")
+  createdAt    DateTime       @default(now()) @map("created_at")
+  updatedAt    DateTime       @default(now()) @updatedAt @map("updated_at")
+  company      Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  ClientCoupon ClientCoupon[]
+}
+
 enum CouponStatus {
   Active
   Expired
@@ -1995,11 +1693,204 @@ enum DiscountType {
   Fixed
 }
 
+// Permission Module System for Super Admin
+// Simple permission system with predefined modules
+
+model CompanyPermissionModule {
+  id        Int @id @default(autoincrement())
+  companyId Int @map("company_id")
+
+  permission_name String
+  title           String
+  enabled         Boolean
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, permission_name])
+}
+
+// Salary History model to track changes in salary configuration
+// This allows proper calculation of payouts across different salary periods
+model SalaryHistory {
+  id           Int        @id @default(autoincrement())
+  userId       Int        @map("user_id")
+  companyId    Int        @map("company_id")
+  salaryType   SalaryType @map("salary_type")
+  salaryAmount Decimal    @map("salary_amount") @db.Decimal(10, 2)
+  startDate    DateTime   @map("start_date")
+  endDate      DateTime?  @map("end_date") // null means current/active salary
+  isActive     Boolean    @default(true) @map("is_active")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @default(now()) @updatedAt @map("updated_at")
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isActive], name: "fk_salary_history_user_active")
+  @@index([companyId], name: "fk_salary_history_company")
+  @@index([startDate, endDate], name: "idx_salary_history_dates")
+}
+
 enum SalaryType {
   HOURLY
   BI_WEEKLY
   WEEKLY
   MONTHLY
+}
+
+// Task for a company.
+model Task {
+  id            Int        @id @default(autoincrement())
+  title         String     @db.VarChar(100)
+  description   String?
+  date          DateTime?
+  startTime     String?    @map("start_time")
+  endTime       String?    @map("end_time")
+  priority      Priority
+  taskUser      TaskUser[]
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @default(now()) @updatedAt @map("updated_at")
+  userId        Int        @map("user_id")
+  companyId     Int        @map("company_id")
+  invoiceId     String?    @map("invoice_id")
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company       Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  Invoice       Invoice?   @relation(fields: [invoiceId], references: [id])
+  clientId      Int?       @map("client_id")
+  client        Client?    @relation(fields: [clientId], references: [id])
+  googleEventId String?
+  leadId        Int?       @map("lead_id")
+  lead          Lead?      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([companyId])
+}
+
+// Assigned user for a task.
+// One task can have multiple users.
+model TaskUser {
+  id        Int      @id @default(autoincrement())
+  taskId    Int      @map("task_id")
+  userId    Int      @map("user_id")
+  eventId   String?  @db.VarChar(100)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+}
+
+model UserFeedback {
+  id                     Int                      @id @default(autoincrement())
+  userId                 Int                      @map("user_id")
+  companyId              Int                      @map("company_id")
+  whatHappened           String
+  whatExpected           String
+  snapshotImage          String?
+  createdAt              DateTime                 @default(now()) @map("created_at")
+  updatedAt              DateTime                 @default(now()) @updatedAt @map("updated_at")
+  user                   User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  UserFeedbackAttachment UserFeedbackAttachment[]
+  company                Company                  @relation(fields: [companyId], references: [id])
+}
+
+model UserFeedbackAttachment {
+  id             Int          @id @default(autoincrement())
+  fileName       String
+  userFeedbackId Int          @map("user_feedback_id")
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @default(now()) @updatedAt @map("updated_at")
+  userFeedback   UserFeedback @relation(fields: [userFeedbackId], references: [id])
+}
+
+// User model.
+// User can be employee or admin.
+// When user registers, they have to create a company. So, every new user is an admin.
+// After that, they can add employees to the company.
+model User {
+  id                Int                @id @default(autoincrement())
+  firstName         String
+  lastName          String?
+  email             String             @unique
+  emailVerifiedAt   DateTime?          @map("email_verified_at")
+  image             String             @default("/images/default.png")
+  password          String
+  provider          Provider           @default(email)
+  timezone          String             @default("UTC")
+  phone             String?
+  address           String?
+  city              String?
+  state             String?
+  zip               String?
+  companyName       String?            @map("company_name")
+  commission        Decimal?           @default(0) @db.Decimal(10, 3)
+  role              Role               @default(admin)
+  employeeType      EmployeeType       @default(Admin)
+  isSuperAdmin      Boolean            @default(false) @map("is_super_admin")
+  joinDate          DateTime?          @map("join_date")
+  companyId         Int                @map("company_id")
+  createdAt         DateTime           @default(now()) @map("created_at")
+  updatedAt         DateTime           @default(now()) @updatedAt @map("updated_at")
+  company           Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  groups            Group[]            @relation("UserGroups")
+  tasks             Task[]
+  taskUsers         TaskUser[]
+  appointments      Appointment[]
+  appointmentUsers  AppointmentUser[]
+  invoices          Invoice[]          @relation("user")
+  Technician        Technician[]
+  permissions       Permission[]
+  assignedInvoices  Invoice[]          @relation("assignedTo")
+  LeaveRequest      LeaveRequest[]
+  sentEstimates     RequestEstimate[]  @relation("Sender")
+  receivedEstimates RequestEstimate[]  @relation("Receiver")
+  OAuthToken        OAuthToken?
+  ClockInOut        ClockInOut[]
+  UserFeedback      UserFeedback[]
+  inventoryProducts InventoryProduct[]
+  ClientSMS         ClientSMS[]
+  ClientCall        ClientCall[]
+
+  salesLead                      Lead[]
+  NotificationSettings           NotificationSettingsV2[]
+  Notification                   Notification[]
+  resetToken                     PasswordResetToken?
+  Refund                         Refund[]
+  inventoryAutomationTeamMembers InventoryAutomationTeamMember[]
+  salaryHistory                  SalaryHistory[]
+
+  @@index([companyId], name: "fk_users_company")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  otp       String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int      @unique @map("user_id")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+}
+
+// OAuth token for user.
+// This is mainly used for google calendar integration.
+model OAuthToken {
+  id           Int       @id @default(autoincrement())
+  userId       Int       @unique @map("user_id")
+  provider     String
+  accessToken  String    @map("access_token")
+  refreshToken String?   @map("refresh_token")
+  expiresIn    DateTime? @map("expires_in")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @default(now()) @updatedAt @map("updated_at")
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], name: "fk_oauth_tokens_user")
 }
 
 enum Provider {
@@ -2021,7 +1912,254 @@ enum EmployeeType {
   Other
 }
 
+model PermissionForManager {
+  id                            Int     @id @default(autoincrement())
+  companyId                     Int     @map("company_id")
+  communicationHubInternal      Boolean @default(true) @map("communication_hub_internal")
+  communicationHubClients       Boolean @default(true) @map("communication_hub_clients")
+  communicationHubCollaboration Boolean @default(true) @map("communication_hub_collaboration")
+  estimatesInvoices             Boolean @default(true) @map("estimates_invoices")
+  calendarTask                  Boolean @default(true) @map("calendar_task")
+  payments                      Boolean @default(true)
+  workforceManagement           Boolean @default(true) @map("workforce_management")
+  reporting                     Boolean @default(true)
+  inventoryAll                  Boolean @default(true)
+  integrations                  Boolean @default(false)
+  salesPipeline                 Boolean @default(true) @map("sales_pipeline")
+  shopPipeline                  Boolean @default(true) @map("shop_pipeline")
+  businessSettings              Boolean @default(false) @map("business_settings")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+}
+
+model PermissionForSales {
+  id                            Int     @id @default(autoincrement())
+  companyId                     Int     @map("company_id")
+  communicationHubInternal      Boolean @default(true) @map("communication_hub_internal")
+  communicationHubClients       Boolean @default(true) @map("communication_hub_clients")
+  communicationHubCollaboration Boolean @default(true) @map("communication_hub_collaboration")
+  estimatesInvoices             Boolean @default(true) @map("estimates_invoices")
+  calendarTask                  Boolean @default(true) @map("calendar_task")
+  payments                      Boolean @default(false)
+  salesPipeline                 Boolean @default(true) @map("sales_pipeline")
+
+  //view only
+  workforceManagementViewOnly Boolean @default(true) @map("workforce_management")
+  reportingViewOnly           Boolean @default(true)
+  inventoryAllViewOnly        Boolean @default(true)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+}
+
+model PermissionForTechnician {
+  id                       Int     @id @default(autoincrement())
+  companyId                Int     @map("company_id")
+  communicationHubInternal Boolean @default(true) @map("communication_hub_internal")
+  calendarTask             Boolean @default(true) @map("calendar_task")
+  shopPipeline             Boolean @default(true) @map("shop_pipeline")
+
+  //view only
+  workforceManagementViewOnly Boolean @default(true) @map("workforce_management")
+  reportingViewOnly           Boolean @default(true)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+}
+
+model PermissionForOther {
+  id                            Int     @id @default(autoincrement())
+  companyId                     Int     @map("company_id")
+  communicationHubInternal      Boolean @default(false) @map("communication_hub_internal")
+  communicationHubClients       Boolean @default(false) @map("communication_hub_clients")
+  communicationHubCollaboration Boolean @default(false) @map("communication_hub_collaboration")
+  estimatesInvoices             Boolean @default(false) @map("estimates_invoices")
+  calendarTask                  Boolean @default(false) @map("calendar_task")
+  payments                      Boolean @default(false)
+  workforceManagement           Boolean @default(false) @map("workforce_management")
+  reporting                     Boolean @default(false)
+  inventoryAll                  Boolean @default(false)
+  integrations                  Boolean @default(false)
+  salesPipeline                 Boolean @default(false) @map("sales_pipeline")
+  shopPipeline                  Boolean @default(false) @map("shop_pipeline")
+  businessSettings              Boolean @default(false) @map("business_settings")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+}
+
+model Permission {
+  id                            Int     @id @default(autoincrement())
+  userId                        Int     @map("user_id")
+  companyId                     Int     @map("company_id")
+  communicationHubInternal      Boolean @default(false) @map("communication_hub_internal")
+  communicationHubClients       Boolean @default(false) @map("communication_hub_clients")
+  communicationHubCollaboration Boolean @default(false) @map("communication_hub_collaboration")
+  estimatesInvoices             Boolean @default(false) @map("estimates_invoices")
+  calendarTask                  Boolean @default(false) @map("calendar_task")
+  payments                      Boolean @default(false)
+  workforceManagement           Boolean @default(false) @map("workforce_management")
+  reporting                     Boolean @default(false)
+  inventory                     Boolean @default(false)
+  integrations                  Boolean @default(false)
+  salesPipeline                 Boolean @default(false) @map("sales_pipeline")
+  shopPipeline                  Boolean @default(false) @map("shop_pipeline")
+  businessSettings              Boolean @default(false) @map("business_settings")
+
+  // View-only fields
+  workforceManagementViewOnly Boolean @default(false) @map("workforce_management_view_only")
+  reportingViewOnly           Boolean @default(false) @map("reporting_view_only")
+  inventoryAllViewOnly        Boolean @default(false) @map("inventory_all_view_only")
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, companyId])
+}
+
+model ClockInOut {
+  id        Int       @id @default(autoincrement())
+  userId    Int       @map("user_id")
+  companyId Int       @map("company_id")
+  clockIn   DateTime  @map("clock_in")
+  clockOut  DateTime? @map("clock_out")
+  timezone  String?
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company    Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  ClockBreak ClockBreak[]
+
+  @@index([userId], name: "fk_clock_in_out_user")
+  @@index([companyId], name: "fk_clock_in_out_company")
+}
+
+// breaks model ofr clockinout
+model ClockBreak {
+  id           Int       @id @default(autoincrement())
+  clockInOutId Int       @map("clock_in_out_id")
+  breakStart   DateTime  @map("break_start")
+  breakEnd     DateTime? @map("break_end")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  clockInOut ClockInOut @relation(fields: [clockInOutId], references: [id], onDelete: Cascade)
+
+  @@index([clockInOutId], name: "fk_clock_break_clock_in_out")
+}
+
+model ClientSMS {
+  id          Int                    @id @default(autoincrement())
+  message     String                 @db.Text
+  from        String
+  to          String
+  sentBy      ClientSMSSentBy
+  isRead      Boolean                @default(false) @map("is_read")
+  userId      Int?                   @map("user_id")
+  companyId   Int                    @map("company_id")
+  clientId    Int                    @map("client_id")
+  attachments ClientSmsAttachments[]
+
+  client  Client  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  user    User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+}
+
+model ClientCall {
+  id            Int             @id @default(autoincrement())
+  callSid       String          @unique // Twilio's unique call ID
+  from          String // Caller number
+  to            String // Recipient number
+  status        String? // Call status (e.g., completed, failed)
+  direction     String? // inbound or outbound
+  duration      Int? // Duration in seconds
+  recordingUrl  String? // Recording file URL (if applicable)
+  recordingSid  String? // Twilio's unique recording ID
+  callStartTime DateTime? // Start time
+  callEndTime   DateTime? // End time
+  sentBy        ClientSMSSentBy // Enum you already use
+  userId        Int?            @map("user_id")
+  companyId     Int             @map("company_id")
+  clientId      Int             @map("client_id")
+
+  client  Client  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  user    User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+}
+
+model ClientSmsAttachments {
+  id   Int    @id @default(autoincrement())
+  name String
+  url  String
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  clientSMSId Int       @map("client_sms_id")
+  clientSMS   ClientSMS @relation(fields: [clientSMSId], references: [id], onDelete: Cascade)
+}
+
 enum ClientSMSSentBy {
   Client
   Company
 }
+
+// Vehicle of a company.
+model Vehicle {
+  id                     Int      @id @default(autoincrement())
+  year                   Int?
+  make                   String?
+  model                  String?
+  submodel               String?
+  type                   String?
+  transmission           String?
+  engineSize             String?
+  license                String?
+  vin                    String?
+  notes                  String?
+  other                  String?  @db.Text
+  fromRequest            Boolean? @default(false) @map("from_request")
+  fromRequestedCompanyId Int?     @map("from_requested_company_id")
+
+  colorId         Int?             @map("color_id")
+  clientId        Int?             @map("customer_id")
+  companyId       Int              @map("company_id")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @default(now()) @updatedAt @map("updated_at")
+  company         Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  appointments    Appointment[]
+  color           VehicleColor?    @relation(fields: [colorId], references: [id], onDelete: SetNull)
+  client          Client?          @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  invoices        Invoice[]
+  requestEstimate RequestEstimate? @relation("Vehicle")
+
+  @@index([companyId], name: "fk_vehicles_company")
+}
+
+model VehicleColor {
+  id        Int       @id @default(autoincrement())
+  name      String
+  companyId Int       @map("company_id")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
+  Vehicle   Vehicle[]
+  company   Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+}
+
+model VehicleParts {
+  id           Int         @id @default(autoincrement())
+  partsName    String
+  technicianId Int?        @map("technician_id")
+  invoiceId    String      @map("invoice_id")
+  serviceId    Int?        @map("service_id")
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @default(now()) @updatedAt @map("updated_at")
+  technician   Technician? @relation(fields: [technicianId], references: [id], onDelete: Cascade)
+  invoice      Invoice?    @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  service      Service?    @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+}
+
