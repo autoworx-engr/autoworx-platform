@@ -30,10 +30,10 @@ export async function createAppointmentTitle(data: CreateAppointmentTitleData) {
 
   try {
     // Check if appointment title already exists for this company
-    const existingTitle = await db.appointmentTitle.findFirst({
+    const existingTitle = await db.appointment_titles.findFirst({
       where: {
         name: name.trim(),
-        companyId: session.user.companyId,
+        company_id: session.user.companyId,
       },
     });
 
@@ -44,10 +44,10 @@ export async function createAppointmentTitle(data: CreateAppointmentTitleData) {
       };
     }
 
-    const appointmentTitle = await db.appointmentTitle.create({
+    const appointmentTitle = await db.appointment_titles.create({
       data: {
         name: name.trim(),
-        companyId: session.user.companyId,
+        company_id: session.user.companyId,
       },
     });
 
