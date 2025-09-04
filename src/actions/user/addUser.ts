@@ -3,7 +3,7 @@
 import { authOptions } from "@/authOptions";
 import { db } from "@/lib/db";
 import { ServerAction } from "@/types/action";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
 
