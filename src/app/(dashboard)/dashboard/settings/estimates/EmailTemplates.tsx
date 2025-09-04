@@ -40,7 +40,7 @@ export default function EstimateAndInvoicePage() {
         {
           subject: newSubject,
           message: newMessage,
-        },
+        }
       );
 
       successToast("Email Template Updated Successfully");
@@ -68,13 +68,25 @@ export default function EstimateAndInvoicePage() {
             The following message will be sent to the recipient when sharing an
             Invoice/Estimate
           </div>
-          <textarea
-            placeholder="Enter your message here..."
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            className="h-32 w-full resize-none rounded-sm border bg-background p-2 text-sm leading-6 outline-none"
-          />
-          <div className="flex justify-end">
+
+          <div>
+            <div className="flex justify-between mb-1 text-xs text-gray-500">
+              <span className={newMessage.length > 160 ? "text-red-500" : ""}>
+                {newMessage.length}/160
+              </span>
+            </div>
+            <textarea
+              placeholder="Enter your message here..."
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              maxLength={160} // ✅ hard cap
+              className={`h-32 w-full resize-none rounded-sm border bg-background p-2 text-sm leading-6 outline-none ${
+                newMessage.length > 160 ? "border-red-500" : ""
+              }`}
+            />
+          </div>
+
+          <div className="flex justify-end mt-2">
             <button
               type="button"
               onClick={handleUpdate}

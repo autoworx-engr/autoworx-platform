@@ -42,11 +42,12 @@ export default function LeadInfinityScroll({
           columnId,
           take: defaultTakeLeads,
           skip: leadsLength,
+          searchTerm: searchTerm || undefined, // Include search term in pagination
         });
         if (getNextLeads?.length < defaultTakeLeads) {
           setHasMore(false);
         }
-        // TODO: call dispatch action to update leads in the store
+        // Call dispatch action to update leads in the store
         dispatch({
           type: actionTypes.MORE_LEADS,
           payload: {
@@ -67,7 +68,16 @@ export default function LeadInfinityScroll({
     if (leadsLength >= defaultTakeLeads) {
       setHasMore(true);
     }
-  }, []);
+  }, [leadsLength]);
+
+  // Reset hasMore when search term changes
+  useEffect(() => {
+    if (searchTerm) {
+      setHasMore(false); // Disable infinity scroll during search
+    } else if (leadsLength >= defaultTakeLeads) {
+      setHasMore(true); // Re-enable when search is cleared
+    }
+  }, [searchTerm, leadsLength]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -77,7 +87,7 @@ export default function LeadInfinityScroll({
           fetchMoreLeads().finally(() => setScrollLoading(false));
         }
       },
-      { threshold: 0.3 },
+      { threshold: 0.3 }
     );
 
     if (loaderRef.current) {
@@ -90,8 +100,8 @@ export default function LeadInfinityScroll({
   return (
     <ul
       {...provided?.droppableProps}
-      className="thin-scrollbar mt-1 flex max-h-[70vh] min-h-[70vh] flex-col gap-1 overflow-y-auto p-1"
-      style={{ maxHeight: "70vh" }}
+      className="thin-scrollbar mt-1 flex max-h-[65vh] min-h-[65vh] flex-col gap-1 overflow-y-auto p-1"
+      style={{ maxHeight: "65vh" }}
     >
       {children(leads)}
       {hasMore && !searchTerm && (

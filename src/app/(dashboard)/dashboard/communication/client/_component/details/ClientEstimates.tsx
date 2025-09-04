@@ -21,7 +21,7 @@ export default function ClientEstimates({
 }: TProps) {
   const [estimates, setEstimates] = useState(initialEstimates);
   const selectedVehicleIndex = useClientCommunicationStore(
-    (state) => state.selectedVehicleIndex,
+    (state) => state.selectedVehicleIndex
   );
   const [pending, startTransition] = React.useTransition();
   // estimate create handler
@@ -41,20 +41,28 @@ export default function ClientEstimates({
     }
   };
   return (
-    <div className="mt-4 flex flex-wrap items-center gap-4 text-xs">
-      {estimates &&
-        estimates.length > 0 &&
-        estimates?.map((estimate, index) => (
-          <div
-            key={index}
-            className="flex items-center gap-x-4 rounded-full border border-emerald-600 px-2 py-1"
+    <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
+      {/* existing estimates / invoices */}
+      {estimates?.length ? (
+        estimates.map((estimate) => (
+          <Link
+            key={estimate.id}
+            href={`/dashboard/estimate/view/${estimate.id}`}
+            className="flex items-center gap-1.5 rounded-full border border-emerald-600 px-3 py-1.5 text-emerald-700 transition-colors hover:bg-emerald-50 dark:border-emerald-500 dark:text-emerald-400 dark:hover:bg-emerald-500/10"
           >
-            <Link href={`/dashboard/estimate/view/${estimate.id}`}>
+            <span className="font-medium">
               {estimate.type === "Estimate" ? "Estimate" : "Invoice"} #
               {estimate.id}
-            </Link>
-          </div>
-        ))}
+            </span>
+          </Link>
+        ))
+      ) : (
+        <p className="text-xs text-zinc-500 dark:text-zinc-400">
+          No estimates or invoices yet.
+        </p>
+      )}
+
+      {/* add new estimate */}
       <Popconfirm
         title="Are you sure you want to create a new estimate?"
         onConfirm={() => startTransition(handleCreateEstimate)}
@@ -63,9 +71,10 @@ export default function ClientEstimates({
       >
         <button
           disabled={pending}
-          className="rounded-full bg-gray-400 px-6 py-1 text-white"
+          className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-600 text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+          aria-label="Create new estimate"
         >
-          <FaPlus />
+          <FaPlus className="h-3.5 w-3.5" />
         </button>
       </Popconfirm>
     </div>

@@ -19,10 +19,10 @@ type TAppointmentCreateOrEditProps = {
   isModalOpen?: boolean; // Optional prop to control modal visibility
   setIsModalOpen?: React.Dispatch<React.SetStateAction<boolean>>;
   onAppointmentCreated?: (
-    appointment: Appointment & { lead: Lead | null },
+    appointment: Appointment & { lead: Lead | null }
   ) => void; // Replace 'any' with actual type
   onAppointmentUpdated?: (
-    appointment: Appointment & { lead: Lead | null },
+    appointment: Appointment & { lead: Lead | null }
   ) => void; // Replace 'any' with
   onAppointmentDeleted?: (appointmentId?: number) => void; // Replace 'any' with actual type
 };
@@ -98,6 +98,7 @@ export function AppointmentCreateOrEdit({
           onAppointmentCreated={onAppointmentCreated}
           onAppointmentUpdated={onAppointmentUpdated}
           onAppointmentDeleted={onAppointmentDeleted}
+          setIsAppointmentModalOpen={setOpen}
         />
       )}
     </Dialog>

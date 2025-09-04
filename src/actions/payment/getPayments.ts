@@ -21,6 +21,7 @@ export interface ReturnPayment {
   method: string;
   paid: boolean;
   paymentType: PaymentType;
+  cashReceived?: string | null;
 }
 
 export async function getPayments(): Promise<ReturnPayment[]> {
@@ -47,6 +48,9 @@ export async function getPayments(): Promise<ReturnPayment[]> {
       },
       deposit: true,
     },
+    orderBy: {
+      date: "desc",
+    },
   });
 
   return payments.map((payment) => {
@@ -70,6 +74,7 @@ export async function getPayments(): Promise<ReturnPayment[]> {
       method: getPaymentMethod(payment),
       paid: Number(payment.invoice?.grandTotal) <= Number(payment.amount),
       paymentType: payment.type,
+      cashReceived: payment.cash?.receivedCash || null,
     };
   });
 }

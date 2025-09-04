@@ -35,6 +35,9 @@ type TProps = {
       depositMethod: string | null;
       depositNotes: string | null;
     } | null;
+    cash: {
+      receivedCash: string | null;
+    } | null;
   })[];
   timezone: string;
   page?: number;
@@ -48,8 +51,8 @@ export default function PaymentDisplay({
   take,
 }: TProps) {
   const isDesktop = useMediaQuery({ query: "(min-width: 640px)" });
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(50); // Default page size set to 50
+  const [currentPage, setCurrentPage] = useState(page || 1);
+  const [pageSize, setPageSize] = useState(take || 50); // Default page size set to 50
   const [showPagination, setShowPagination] = useState(false);
   const [totalPayments, setTotalPayments] = useState(paymentInfo);
   const [filteredPayments, setFilteredPayments] = useState(paymentInfo);
@@ -131,6 +134,7 @@ export default function PaymentDisplay({
               <th className="border-b px-4 py-2 text-left">Vehicle Info</th>
               <th className="border-b px-4 py-2 text-left">Payment Method</th>
               <th className="border-b px-4 py-2 text-left">Total Amount</th>
+              <th className="border-b px-4 py-2 text-left">Cash Received</th>
               <th className="border-b px-4 py-2 text-left">Status</th>
             </tr>
           </thead>
@@ -176,6 +180,11 @@ export default function PaymentDisplay({
                   <td className="border-b px-4 py-2 text-left">
                     {formatCurrency(Number(payment.amount))}
                   </td>
+                  <td className="border-b px-4 py-2 text-left">
+                    {payment.cash?.receivedCash
+                      ? payment.cash.receivedCash
+                      : "N/A"}
+                  </td>
                   <td
                     className={cn(
                       `border-b px-4 py-2 text-left`,
@@ -196,7 +205,7 @@ export default function PaymentDisplay({
               className="custom-pagination"
               current={currentPage}
               pageSize={pageSize}
-              total={totalPayments.length}
+              total={filteredPayments?.length}
               onChange={handlePageChange}
               showSizeChanger
               onShowSizeChange={handlePageChange}

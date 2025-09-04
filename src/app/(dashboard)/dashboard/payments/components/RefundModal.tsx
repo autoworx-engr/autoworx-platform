@@ -1,4 +1,4 @@
-import { deleteRefundV2, refundPaymentV2 } from "@/actions/payment/refundPaymentV2";
+import { deleteRefund, refundPayment } from '@/actions/payment/refundPayment';
 import {
   Dialog,
   DialogClose,
@@ -7,19 +7,21 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/Dialog";
-import { SlimInput } from "@/components/SlimInput";
-import { errorHandler } from "@/error-boundary/globalErrorHandler";
-import { errorToast, successToast } from "@/lib/toast";
-import { PaymentType } from "@prisma/client";
-import * as Tabs from "@radix-ui/react-tabs";
-import moment from "moment";
-import Image from "next/image";
-import React, { useState, useTransition, useEffect } from "react";
-import { FaRegCreditCard } from "react-icons/fa6";
-import { FaTrash } from "react-icons/fa";
-import { FiTrash2 } from "react-icons/fi";
-import { IoSettingsOutline, IoSettingsSharp } from "react-icons/io5";
+} from '@/components/Dialog';
+import { SlimInput } from '@/components/SlimInput';
+import { errorHandler } from '@/error-boundary/globalErrorHandler';
+import { errorToast, successToast } from '@/lib/toast';
+import { PaymentType } from '@prisma/client';
+import * as Tabs from '@radix-ui/react-tabs';
+import moment from 'moment';
+import Image from 'next/image';
+import React, { useState, useTransition, useEffect } from 'react';
+import { FaRegCreditCard } from 'react-icons/fa6';
+import { FaTrash } from 'react-icons/fa';
+import { FiTrash2 } from 'react-icons/fi';
+import { IoSettingsOutline, IoSettingsSharp } from 'react-icons/io5';
+import { useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '@/lib/queryKeys';
 
 function TabTrigger({
   value,
@@ -35,9 +37,9 @@ function TabTrigger({
       value={value}
       className="flex items-center gap-1 rounded-md bg-[#6571FF] p-1 px-5 text-white transition-all"
       style={{
-        backgroundColor: tab === value ? "#6571FF" : "transparent",
-        border: tab === value ? "none" : "1px solid #6571FF",
-        color: tab === value ? "white" : "#6571FF",
+        backgroundColor: tab === value ? '#6571FF' : 'transparent',
+        border: tab === value ? 'none' : '1px solid #6571FF',
+        color: tab === value ? 'white' : '#6571FF',
       }}
     >
       {children}
@@ -73,14 +75,16 @@ export default function RefundModal({
 
   const [date, setDate] = useState<Date>(new Date());
   const [refundAmount, setRefundAmount] = useState<number | string>(0);
-  const [refundReasonInput, setRefundReasonInput] = useState("");  const availableToRefund = totalAmount;
+  const [refundReasonInput, setRefundReasonInput] = useState('');
+  const availableToRefund = totalAmount;
   const hasRefund = refundedAmount > 0;
+  const queryClient = useQueryClient();
 
   // Populate form with existing refund data when editing
   useEffect(() => {
     if (hasRefund && open) {
       setRefundAmount(refundedAmount);
-      setRefundReasonInput(refundReason || "");
+      setRefundReasonInput(refundReason || '');
       if (refundMethod) {
         setTab(refundMethod as PaymentType);
       }
@@ -91,7 +95,7 @@ export default function RefundModal({
   }, [hasRefund, open, refundedAmount, refundReason, refundMethod, refundDate]);
 
   const formatAmount = (value: number | string): number => {
-    const num = typeof value === "string" ? parseFloat(value) : value;
+    const num = typeof value === 'string' ? parseFloat(value) : value;
     return parseFloat(num.toFixed(2));
   };
 
@@ -99,7 +103,16 @@ export default function RefundModal({
     setTab(paymentType);
     setDate(new Date());
     setRefundAmount(0);
-    setRefundReasonInput("");
+    setRefundReasonInput('');
+  }
+
+  function invalidateInvoiceModalData(invoiceId: string) {
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.getInvoiceModalDataKey(invoiceId),
+    });
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.getWorkOrderDataKey(invoiceId),
+    });
   }
 
   async function handleSubmit() {
@@ -107,14 +120,17 @@ export default function RefundModal({
       const roundedAmount = formatAmount(refundAmount);
 
       if (roundedAmount <= 0) {
-        errorToast("Refund amount must be greater than 0");
+        errorToast('Refund amount must be greater than 0');
         return;
-      }      if (roundedAmount > totalAmount) {
-        errorToast(`Refund amount cannot exceed original payment amount: $${totalAmount.toFixed(2)}`);
+      }
+      if (roundedAmount > totalAmount) {
+        errorToast(
+          `Refund amount cannot exceed original payment amount: $${totalAmount.toFixed(2)}`
+        );
         return;
       }
 
-      const res = await refundPaymentV2({
+      const res = await refundPayment({
         paymentId,
         refundAmount: roundedAmount,
         refundMethod: tab,
@@ -122,23 +138,28 @@ export default function RefundModal({
         refundDate: date,
       });
 
-      if (res?.type === "success") {
+      if (res?.type === 'success') {
         setOpen(false);
-        successToast("Refund recorded successfully");
+        successToast('Refund recorded successfully');
+        const invoiceId = res.data?.invoiceId;
+        if (!invoiceId) {
+          console.warn('No invoiceId returned from refundPayment');
+          return;
+        }
         reset();
-
         // Call the refresh function to update the data
         await onRefundSuccess();
-      } else if (res?.type === "globalError") {
+        invalidateInvoiceModalData(invoiceId);
+      } else if (res?.type === 'globalError') {
         errorToast(
           Array.isArray(res?.errorSource) &&
             res.errorSource.length &&
-            typeof res.errorSource[0] === "object" &&
+            typeof res.errorSource[0] === 'object' &&
             res.errorSource[0] !== null &&
-            "message" in res.errorSource[0] &&
-            typeof (res.errorSource[0] as any).message === "string"
+            'message' in res.errorSource[0] &&
+            typeof (res.errorSource[0] as any).message === 'string'
             ? (res.errorSource[0] as any).message
-            : (res as any).message,
+            : (res as any).message
         );
       }
     } catch (err) {
@@ -146,35 +167,42 @@ export default function RefundModal({
       errorToast(
         formattedError?.errorSource?.length
           ? formattedError.errorSource[0].message
-          : formattedError.message,
+          : formattedError.message
       );
     }
   }
 
   async function handleDeleteRefund() {
     try {
-      const res = await deleteRefundV2({
+      const res = await deleteRefund({
         paymentId,
       });
 
-      if (res?.type === "success") {
+      if (res?.type === 'success') {
         setDeleteConfirmOpen(false);
         setOpen(false);
-        successToast("Refund removed successfully");
+        successToast('Refund removed successfully');
         reset();
+        
+        const invoiceId = res.data?.invoiceId;
+        if (!invoiceId) {
+          console.warn('No invoiceId returned from deleteRefund');
+          return;
+        }
 
         // Call the refresh function to update the data
         await onRefundSuccess();
-      } else if (res?.type === "globalError") {
+        invalidateInvoiceModalData(invoiceId);
+      } else if (res?.type === 'globalError') {
         errorToast(
           Array.isArray(res?.errorSource) &&
             res.errorSource.length &&
-            typeof res.errorSource[0] === "object" &&
+            typeof res.errorSource[0] === 'object' &&
             res.errorSource[0] !== null &&
-            "message" in res.errorSource[0] &&
-            typeof (res.errorSource[0] as any).message === "string"
+            'message' in res.errorSource[0] &&
+            typeof (res.errorSource[0] as any).message === 'string'
             ? (res.errorSource[0] as any).message
-            : (res as any).message,
+            : (res as any).message
         );
       }
     } catch (err) {
@@ -182,7 +210,7 @@ export default function RefundModal({
       errorToast(
         formattedError?.errorSource?.length
           ? formattedError.errorSource[0].message
-          : formattedError.message,
+          : formattedError.message
       );
     }
   }
@@ -191,7 +219,7 @@ export default function RefundModal({
     if (hasRefund) {
       // Prepopulate with existing refund data
       setRefundAmount(formatAmount(refundedAmount));
-      setRefundReasonInput(refundReason || "");
+      setRefundReasonInput(refundReason || '');
       setTab((refundMethod as PaymentType) || paymentType);
       setDate(refundDate || new Date());
     } else {
@@ -211,11 +239,11 @@ export default function RefundModal({
             onClick={openRefundDialog}
             type="button"
             className={`flex items-center gap-2 rounded-md px-3 py-2 transition-all sm:px-4 sm:py-2 text-sm sm:text-base${
-              isDisabled ? "cursor-not-allowed opacity-50" : ""
+              isDisabled ? 'cursor-not-allowed opacity-50' : ''
             } ${
               hasRefund
-                ? "border border-[#6571FF] bg-white text-[#6571FF] hover:bg-blue-50"
-                : "border border-[#6571FF] bg-[#6571FF] text-white hover:bg-blue-600"
+                ? 'border border-[#6571FF] bg-white text-[#6571FF] hover:bg-blue-50'
+                : 'border border-[#6571FF] bg-[#6571FF] text-white hover:bg-blue-600'
             }`}
             disabled={isDisabled}
           >
@@ -228,7 +256,7 @@ export default function RefundModal({
           <form>
             <DialogHeader>
               <DialogTitle className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-lg sm:text-xl">
-              <span>{hasRefund ? "Manage Refund" : "Refund"}</span>
+                <span>{hasRefund ? 'Manage Refund' : 'Refund'}</span>
                 {hasRefund && (
                   <button
                     type="button"
@@ -254,8 +282,8 @@ export default function RefundModal({
                     name="date"
                     type="date"
                     label="Date"
-                    value={moment(date).format("YYYY-MM-DD")}
-                    onChange={(e) => setDate(new Date(e.target.value))}
+                    value={moment(date).format('YYYY-MM-DD')}
+                    onChange={e => setDate(new Date(e.target.value))}
                   />
                 </div>
                 <div className="w-full">
@@ -265,10 +293,8 @@ export default function RefundModal({
                     type="number"
                     label="Amount"
                     value={refundAmount}
-                    onChange={(e) => setRefundAmount(e.target.value)}
-                    onBlur={(e) =>
-                      setRefundAmount(formatAmount(e.target.value))
-                    }
+                    onChange={e => setRefundAmount(e.target.value)}
+                    onBlur={e => setRefundAmount(formatAmount(e.target.value))}
                     max={availableToRefund}
                   />
                 </div>
@@ -284,9 +310,9 @@ export default function RefundModal({
                 <TabTrigger value="CHECK" tab={tab}>
                   <Image
                     src={
-                      tab === "CHECK"
-                        ? "/icons/CheckWhite.svg"
-                        : "/icons/Check.svg"
+                      tab === 'CHECK'
+                        ? '/icons/CheckWhite.svg'
+                        : '/icons/Check.svg'
                     }
                     alt="Check icon"
                     width={20}
@@ -298,9 +324,9 @@ export default function RefundModal({
                 <TabTrigger value="CASH" tab={tab}>
                   <Image
                     src={
-                      tab === "CASH"
-                        ? "/icons/CashWhite.svg"
-                        : "/icons/Cash.svg"
+                      tab === 'CASH'
+                        ? '/icons/CashWhite.svg'
+                        : '/icons/Cash.svg'
                     }
                     alt="Cash icon"
                     width={20}
@@ -325,20 +351,20 @@ export default function RefundModal({
                 /> */}
 
                 <label
-    htmlFor="refundReason"
-    className="block mb-2 text-sm md:text-base font-medium text-gray-700"
-  >
-    Reason for Refund
-  </label>
-  <textarea
-    id="refundReason"
-    name="refundReason"
-    value={refundReasonInput}
-     placeholder="Enter reason for refund..."
-    onChange={(e) => setRefundReasonInput(e.target.value)}
-    rows={3}
-    className="w-full p-2 sm:p-3 border border-gray-500 rounded-md shadow-sm focus:outline-none   resize-none"
-  />
+                  htmlFor="refundReason"
+                  className="block mb-2 text-sm md:text-base font-medium text-gray-700"
+                >
+                  Reason for Refund
+                </label>
+                <textarea
+                  id="refundReason"
+                  name="refundReason"
+                  value={refundReasonInput}
+                  placeholder="Enter reason for refund..."
+                  onChange={e => setRefundReasonInput(e.target.value)}
+                  rows={3}
+                  className="w-full p-2 sm:p-3 border border-gray-500 rounded-md shadow-sm focus:outline-none   resize-none"
+                />
               </div>
 
               <DialogFooter className="mt-5 flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
@@ -355,7 +381,7 @@ export default function RefundModal({
                   disabled={pending}
                   type="submit"
                 >
-                 {pending ? "Recording..." : "Record"}
+                  {pending ? 'Recording...' : 'Record'}
                 </button>
               </DialogFooter>
             </Tabs.Root>
@@ -392,7 +418,7 @@ export default function RefundModal({
               onClick={() => startTransition(handleDeleteRefund)}
               disabled={pending}
             >
-             {pending ? "Removing..." : "Remove Refund"}
+              {pending ? 'Removing...' : 'Remove Refund'}
             </button>
           </DialogFooter>
         </DialogContent>

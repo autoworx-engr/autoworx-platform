@@ -6,7 +6,7 @@ export const getServices = async () => {
   const companyId = await getCompanyId();
   try {
     const services = await db.service.findMany({
-      where: { companyId },
+      where: { companyId, canned: true },
     });
     return services;
   } catch (error) {

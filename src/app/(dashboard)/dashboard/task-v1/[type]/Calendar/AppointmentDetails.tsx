@@ -1,14 +1,17 @@
 "use client";
-import moment from "moment";
+import moment from "moment-timezone";
 import { LuCalendarX2 } from "react-icons/lu";
+import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 
 export default function AppointmentDetails({
   appointments,
 }: {
   appointments: any;
 }) {
-  const inputDate = new Date();
-  inputDate.setHours(0, 0, 0, 0);
+  const timezone = useCompanyTimezone();
+  
+  // Get current date in company timezone
+  const inputDate = moment.tz(timezone).startOf('day').toDate();
 
   const filteredAppointments = appointments.filter((a: any) => {
     return new Date(a.date) >= inputDate;
@@ -28,7 +31,7 @@ export default function AppointmentDetails({
         filteredAppointments.map((appointment: any) => {
           const start = moment(appointment.startTime, "HH:mm");
           const end = moment(appointment.endTime, "HH:mm");
-          const date = moment.utc(appointment?.date)?.format("Do MMMM YYYY");
+          const date = moment.utc(appointment?.date)?.tz(timezone).format("Do MMMM YYYY");
 
           return (
             <div

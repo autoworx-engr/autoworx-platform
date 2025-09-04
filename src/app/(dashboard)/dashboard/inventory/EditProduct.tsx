@@ -436,6 +436,7 @@ export default function EditProduct({ productData }: TProps) {
             </div>
             <div>
               <SlimInput
+                type="text"
                 onChange={handleChange}
                 value={product.receipt as string}
                 name="receipt"

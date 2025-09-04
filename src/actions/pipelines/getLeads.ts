@@ -45,16 +45,18 @@ export const getLeads = async ({
         OR: [
           { clientName: { contains: searchTerm } },
           { vehicleInfo: { contains: searchTerm } },
+          { services: { contains: searchTerm } },
+          { source: { contains: searchTerm } },
         ],
       }),
     };
 
     const todayTimeString = moment()
-      .tz(timezone)
+      .tz(timezone ?? "")
       .startOf("day")
       .format("YYYY-MM-DDTHH:mm:ss");
 
-    const now = moment().tz(timezone);
+    const now = moment().tz(timezone ?? "");
 
     const leadsData = await db.lead.findMany({
       where: query,
@@ -99,7 +101,8 @@ export const getLeads = async ({
             },
             conversationsTrack: {
               select: {
-                smsUnReadCount: true,
+                smsIsRead: true,
+                emailIsRead: true,
               },
             },
           },
@@ -124,7 +127,7 @@ export const getLeads = async ({
       leadsData.map(async (lead) => {
         let client = lead.Client.find(
           (client: any) =>
-            client.companyId === companyId && client.leadId === lead.id,
+            client.companyId === companyId && client.leadId === lead.id
         );
 
         if (!client && lead.clientId) {
@@ -153,7 +156,8 @@ export const getLeads = async ({
               },
               conversationsTrack: {
                 select: {
-                  smsUnReadCount: true,
+                  smsIsRead: true,
+                  emailIsRead: true,
                 },
               },
             },
@@ -169,7 +173,7 @@ export const getLeads = async ({
             const end = moment.tz(
               `${moment(appointment.date).format("YYYY-MM-DD")}T${appointment.endTime}`,
               "YYYY-MM-DDTHH:mm",
-              timezone,
+              timezone ?? ""
             );
 
             // Show appointment only if endTime is same or after now
@@ -202,13 +206,18 @@ export const getLeads = async ({
 
         const { Client, ...leadWithoutClient } = lead;
 
+        const isShowConversationIndicator =
+          client?.conversationsTrack &&
+          (!client?.conversationsTrack?.smsIsRead ||
+            !client?.conversationsTrack?.emailIsRead);
+
         return {
           ...leadWithoutClient,
           client: clientData,
           column,
-          totalMessage: client?.conversationsTrack?.smsUnReadCount ?? 0,
+          totalMessage: isShowConversationIndicator ? 1 : 0,
         };
-      }),
+      })
     );
 
     return leadsDataWithClient;
@@ -265,7 +274,7 @@ export const getLeadsWithCount = async ({
     };
 
     const todayTimeString = moment()
-      .tz(timezone)
+      .tz(timezone ?? "")
       .startOf("day")
       .format("YYYY-MM-DDTHH:mm:ss");
 
@@ -317,7 +326,8 @@ export const getLeadsWithCount = async ({
               },
               conversationsTrack: {
                 select: {
-                  smsUnReadCount: true,
+                  smsIsRead: true,
+                  emailIsRead: true,
                 },
               },
             },
@@ -343,7 +353,7 @@ export const getLeadsWithCount = async ({
       leadsData.map(async (lead) => {
         let client = lead.Client.find(
           (client: any) =>
-            client.companyId === companyId && client.leadId === lead.id,
+            client.companyId === companyId && client.leadId === lead.id
         );
         if (!client && lead.clientId) {
           client = (await db.client.findFirst({
@@ -371,7 +381,8 @@ export const getLeadsWithCount = async ({
               },
               conversationsTrack: {
                 select: {
-                  smsUnReadCount: true,
+                  smsIsRead: true,
+                  emailIsRead: true,
                 },
               },
             },
@@ -420,13 +431,18 @@ export const getLeadsWithCount = async ({
 
         const { Client, ...leadWithoutClient } = lead;
 
+        const isShowConversationIndicator =
+          client?.conversationsTrack &&
+          (!client?.conversationsTrack?.smsIsRead ||
+            !client?.conversationsTrack?.emailIsRead);
+
         return {
           ...leadWithoutClient,
           client: clientData,
           column,
-          totalMessage: client?.conversationsTrack?.smsUnReadCount ?? 0,
+          totalMessage: isShowConversationIndicator ? 1 : 0,
         };
-      }),
+      })
     );
 
     return { leads: await leadsDataWithClient, totalCount };
@@ -485,7 +501,7 @@ export const getLeadsWithCountOptimized = async ({
     };
 
     const todayTimeString = moment()
-      .tz(timezone)
+      .tz(timezone ?? "UTC")
       .startOf("day")
       .format("YYYY-MM-DDTHH:mm:ss");
 
@@ -538,7 +554,8 @@ export const getLeadsWithCountOptimized = async ({
               },
               conversationsTrack: {
                 select: {
-                  smsUnReadCount: true,
+                  smsIsRead: true,
+                  emailIsRead: true,
                 },
               },
             },
@@ -560,25 +577,21 @@ export const getLeadsWithCountOptimized = async ({
         : [];
 
     const vehicleMap = new Map(vehicles.map((v) => [v.id, v]));
-    const now = moment().tz(timezone);
+    const now = moment().tz(timezone ?? "UTC");
 
     // Process leads more efficiently without additional database calls
     const leadsDataWithClient: LeadWithSalesUser[] = leadsData.map((lead) => {
       let client = lead.Client.find(
         (client: any) =>
-          client.companyId === companyId && client.leadId === lead.id,
+          client.companyId === companyId && client.leadId === lead.id
       );
 
       const appointments = client?.appointments.filter((appointment: any) => {
-        if (
-          appointment.date &&
-          appointment.endTime &&
-          appointment.startTime
-        ) {
+        if (appointment.date && appointment.endTime && appointment.startTime) {
           const end = moment.tz(
             `${moment(appointment.date).format("YYYY-MM-DD")}T${appointment.endTime}`,
             "YYYY-MM-DDTHH:mm",
-            timezone,
+            timezone ?? ""
           );
           return end.isSameOrAfter(now);
         }
@@ -609,11 +622,16 @@ export const getLeadsWithCountOptimized = async ({
 
       const { Client, ...leadWithoutClient } = lead;
 
+      const isShowConversationIndicator =
+        client?.conversationsTrack &&
+        (!client?.conversationsTrack?.smsIsRead ||
+          !client?.conversationsTrack?.emailIsRead);
+
       return {
         ...leadWithoutClient,
         client: clientData,
         column,
-        totalMessage: client?.conversationsTrack?.smsUnReadCount ?? 0,
+        totalMessage: isShowConversationIndicator ? 1 : 0,
       } as LeadWithSalesUser;
     });
 
@@ -646,7 +664,7 @@ export async function updateLeadColumn(leadId: number, newColumnId: number) {
     });
 
     if (updatedLead.column?.title === "Converted") {
-      await sendLeadStageChangeOrCloseNotification({
+      sendLeadStageChangeOrCloseNotification({
         companyId,
         description: `Lead "${updatedLead.clientName}" has been closed. Track it in your pipeline.`,
         title: "Lead Closed",
@@ -654,7 +672,7 @@ export async function updateLeadColumn(leadId: number, newColumnId: number) {
       });
     }
 
-    await sendLeadStageChangeOrCloseNotification({
+    sendLeadStageChangeOrCloseNotification({
       companyId,
       description: `Lead "${updatedLead.clientName}" moved to "${updatedLead?.column?.title}". Track progress in Autoworx.`,
       title: "Lead Stage Changed",
@@ -668,7 +686,9 @@ export async function updateLeadColumn(leadId: number, newColumnId: number) {
         leadId: leadId,
         columnId: newColumnId,
       });
-    } catch (error) {}
+    } catch (error) {
+      console.log("updatePipelineAutomationTrigger error", error);
+    }
 
     // communication automation trigger
     try {
@@ -677,7 +697,9 @@ export async function updateLeadColumn(leadId: number, newColumnId: number) {
         leadId: leadId,
         columnId: newColumnId,
       });
-    } catch (error) {}
+    } catch (error) {
+      console.log("updateCommunicationAutomationTrigger error", error);
+    }
 
     // revalidatePath("/dashboard/pipeline/sales/lead");
     // revalidatePath("/dashboard/pipeline/sales/pipeline");
@@ -692,12 +714,21 @@ export async function updateLeadColumn(leadId: number, newColumnId: number) {
 export async function getLeadsCountByColumnId(
   columnId: number,
   companyId: number,
+  searchTerm?: string
 ) {
   try {
     const totalLeadCount = await db.lead.count({
       where: {
         columnId: columnId,
         companyId: companyId,
+        ...(searchTerm && {
+          OR: [
+            { clientName: { contains: searchTerm } },
+            { vehicleInfo: { contains: searchTerm } },
+            { services: { contains: searchTerm } },
+            { source: { contains: searchTerm } },
+          ],
+        }),
       },
     });
     return totalLeadCount;

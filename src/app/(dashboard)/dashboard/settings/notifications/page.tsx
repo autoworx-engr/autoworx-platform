@@ -17,6 +17,8 @@ const NotificationSettingPage = async () => {
   const uniqueSections = Array.from(
     new Set(notificationSections.map((section) => section.section)),
   );
+
+  
   return (
     <div className="flex w-full flex-col">
       <NotificationPermissionAlert />

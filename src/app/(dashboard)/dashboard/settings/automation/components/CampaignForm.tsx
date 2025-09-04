@@ -31,6 +31,9 @@ import {
 } from "@/hooks/useCarData";
 import { Company, TwilioCredentials } from "@prisma/client";
 import { useCalendarSettingsStore } from "@/stores/calendarSettingsStore";
+import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
+import moment from "moment-timezone";
+import { useCharacterLimit } from "@/hooks/useCharecterLimit";
 
 export type Campaign = {
   id?: number;
@@ -74,7 +77,8 @@ const CampaignForm = ({
   company,
   twilio,
 }: CampaignFormProps) => {
-  const today = dayjs().format("YYYY-MM-DD");
+  const companyTimezone = useCompanyTimezone();
+  const today = moment.tz(companyTimezone).format("YYYY-MM-DD");
   const [error, setError] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<Campaign>({
@@ -98,6 +102,20 @@ const CampaignForm = ({
 
   const [minDate, setMinDate] = useState<string>(today);
   const userEmail = user?.email;
+    const maxLength = 300;
+  const { length, isLimitExceeded } = useCharacterLimit(
+    formData?.emailBody! || formData?.smsBody!,
+    maxLength
+  );
+  // Update minDate whenever today changes (when timezone loads)
+  useEffect(() => {
+    setMinDate(today);
+    // Also update the form data date if it's still the old default
+    setFormData(prev => ({
+      ...prev,
+      date: today
+    }));
+  }, [today]);
   const [activeTemplate, setActiveTemplate] = useState<"SMS" | "EMAIL">("SMS");
   const { data: years, isLoading: isYearsLoading }: any = useGetAllYears();
   const { data: makes, isLoading: isMakeLoading }: any = useGetMake();
@@ -616,6 +634,9 @@ const CampaignForm = ({
                   handleFileAttachment={handleFileAttachment}
                   attachmentType="sms"
                   error={error.smsBody || error.emailBody || error.emailSubject}
+                   maxLength={maxLength}
+                        characterLength={length}
+                        isLimitExceeded={isLimitExceeded}
                 />
               </Box>
             )}
@@ -643,6 +664,9 @@ const CampaignForm = ({
                   attachmentType="email"
                   error={error.emailBody || error.smsBody || error.emailSubject}
                   subjectError={!!error.emailSubject}
+                   maxLength={maxLength}
+                        characterLength={length}
+                        isLimitExceeded={isLimitExceeded}
                 />
               </Box>
             )}
@@ -655,9 +679,9 @@ const CampaignForm = ({
           <div className="flex justify-end pt-4">
             <button
               type="submit"
-              disabled={isUpdatePending || isCreatePending}
+              disabled={isUpdatePending || isCreatePending || isLimitExceeded}
               className={`rounded-md px-4 py-2 text-sm font-medium text-white ${
-                isUpdatePending || isCreatePending
+                isUpdatePending || isCreatePending || isLimitExceeded
                   ? "cursor-not-allowed bg-indigo-300"
                   : "bg-indigo-500 hover:bg-indigo-600"
               }`}

@@ -112,7 +112,7 @@ export async function sendSendgridEmail({
     await updateNewEmailChatTrack({
       clientId,
       emailLastMessage: text || "",
-      lastMessageBy: "Company",
+      lastEmailBy: "Company",
     });
 
     // trigger automation pipeline
@@ -267,7 +267,7 @@ To unsubscribe, click here: ${process.env.NEXT_PUBLIC_APP_URL}/unsubscribe?email
     await updateNewEmailChatTrack({
       clientId,
       emailLastMessage: text || "",
-      lastMessageBy: "Company",
+      lastEmailBy: "Company",
     });
 
     // trigger automation pipeline

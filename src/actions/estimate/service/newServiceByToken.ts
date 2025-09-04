@@ -45,14 +45,17 @@ export default async function newServiceByToken({
       throw new Error("Company not found for provided token");
     }
 
-    const existingService = await db.service.findFirst({
+    // Only check for existing canned services with the same name
+    // Allow multiple general services with the same name
+    const existingCannedService = await db.service.findFirst({
       where: {
         companyId: company.id,
         name: validatedServiceInfo.name,
+        canned: true, // Only check canned services
       },
     });
 
-    if (existingService)
+    if (existingCannedService)
       throw new Error("Service already exists with this name");
 
     const newService = await db.service.create({

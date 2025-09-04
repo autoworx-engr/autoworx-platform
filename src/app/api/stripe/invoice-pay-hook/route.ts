@@ -1,12 +1,12 @@
 import { convertInvoicePublic } from "@/actions/estimate/invoice/convert";
-import { db } from "@/lib/db"; // Adjust this path to your database utility or Prisma instance
+import { db } from "@/lib/db";
 import { sendPaymentReceivedNotification } from "@/lib/notification/payment-notify";
 import { env } from "next-runtime-env";
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 
 const stripe = new Stripe(
-  (process.env.STRIPE_SECRET_KEY || env("STRIPE_SECRET_KEY")) as string,
+  (process.env.STRIPE_SECRET_KEY || env("STRIPE_SECRET_KEY")) as string
 );
 
 export async function POST(req: NextRequest) {
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
       rawBody,
       signature,
       (process.env.STRIPE_WEBHOOK_SECRET ||
-        env("STRIPE_WEBHOOK_SECRET")) as string,
+        env("STRIPE_WEBHOOK_SECRET")) as string
     );
 
     // Handle specific event types
@@ -44,10 +44,9 @@ export async function POST(req: NextRequest) {
       if (alreadyProcessed) {
         return NextResponse.json(
           { message: "Already processed" },
-          { status: 200 },
+          { status: 200 }
         );
       }
-
 
       let paymentMethods = await db.paymentMethod.findMany({
         where: {
@@ -62,45 +61,85 @@ export async function POST(req: NextRequest) {
           break;
         }
       }
+
+      // Determine payment type based on payType from metadata
+      const isDeposit = paymentData.payType === "deposit";
+      const paymentType = isDeposit ? "DEPOSIT" : "OTHER";
+
       let stripePayment;
       if (stripeFound === -1) {
         // Create a payment record in the database
-        stripePayment = await db.payment.create({
-          data: {
-            companyId: paymentData.companyId,
-            invoiceId: paymentData.invoiceId,
-            amount: paymentData.amount,
-            type: "OTHER",
-            date: new Date(),
-            other: {
-              create: {
-                paymentMethod: {
-                  create: {
-                    name: "Stripe",
-                    companyId: paymentData.companyId,
+        if (isDeposit) {
+          stripePayment = await db.payment.create({
+            data: {
+              companyId: paymentData.companyId,
+              invoiceId: paymentData.invoiceId,
+              amount: paymentData.amount,
+              type: paymentType,
+              date: new Date(),
+              deposit: {
+                create: {
+                  depositMethod: "Stripe",
+                  depositNotes: "Deposit payment via Stripe",
+                },
+              },
+            },
+          });
+        } else {
+          stripePayment = await db.payment.create({
+            data: {
+              companyId: paymentData.companyId,
+              invoiceId: paymentData.invoiceId,
+              amount: paymentData.amount,
+              type: paymentType,
+              date: new Date(),
+              other: {
+                create: {
+                  paymentMethod: {
+                    create: {
+                      name: "Stripe",
+                      companyId: paymentData.companyId,
+                    },
                   },
                 },
               },
             },
-          },
-        });
+          });
+        }
       } else {
         // Create a payment record in the database
-        stripePayment = await db.payment.create({
-          data: {
-            companyId: paymentData.companyId,
-            invoiceId: paymentData.invoiceId,
-            amount: paymentData.amount,
-            type: "OTHER",
-            date: new Date(),
-
-            other: {
-              create: {
-                paymentMethodId: stripeFound,
+        if (isDeposit) {
+          stripePayment = await db.payment.create({
+            data: {
+              companyId: paymentData.companyId,
+              invoiceId: paymentData.invoiceId,
+              amount: paymentData.amount,
+              type: paymentType,
+              date: new Date(),
+              deposit: {
+                create: {
+                  depositMethod: "Stripe",
+                  depositNotes: "Deposit payment via Stripe",
+                },
               },
             },
-          },
-        });
+          });
+        } else {
+          stripePayment = await db.payment.create({
+            data: {
+              companyId: paymentData.companyId,
+              invoiceId: paymentData.invoiceId,
+              amount: paymentData.amount,
+              type: paymentType,
+              date: new Date(),
+              other: {
+                create: {
+                  paymentMethodId: stripeFound,
+                },
+              },
+            },
+          });
+        }
       }
 
       await db.stripePayment.create({
@@ -122,49 +161,70 @@ export async function POST(req: NextRequest) {
       let stripeInvoice = null;
 
       if (findInvoice) {
-        stripeInvoice = await db.invoice.update({
-          where: {
-            id: paymentData.invoiceId,
-            companyId: paymentData.companyId,
-          },
-          data: {
-            due: {
-              decrement: paymentData.amount,
+        // Update invoice differently based on payment type
+        if (isDeposit) {
+          // For deposits, increment the deposit field
+          stripeInvoice = await db.invoice.update({
+            where: {
+              id: paymentData.invoiceId,
+              companyId: paymentData.companyId,
             },
-            totalPayment: {
-              increment: paymentData.amount,
-            },
-          },
-          include: {
-            client: {
-              select: {
-                firstName: true,
-                lastName: true,
+            data: {
+              deposit: {
+                increment: paymentData.amount,
               },
             },
-          },
-        });
+            include: {
+              client: {
+                select: {
+                  firstName: true,
+                  lastName: true,
+                },
+              },
+            },
+          });
+        } else {
+          // For payments, decrement due and increment totalPayment
+          stripeInvoice = await db.invoice.update({
+            where: {
+              id: paymentData.invoiceId,
+              companyId: paymentData.companyId,
+            },
+            data: {
+              due: {
+                decrement: paymentData.amount,
+              },
+              totalPayment: {
+                increment: paymentData.amount,
+              },
+            },
+            include: {
+              client: {
+                select: {
+                  firstName: true,
+                  lastName: true,
+                },
+              },
+            },
+          });
+        }
       }
-
-      // Update the invoice to mark it as paid
 
       try {
         if (findInvoice?.type === "Estimate") {
-          await convertInvoicePublic(
-            paymentData.invoiceId,
-            paymentData.companyId,
-          );
+          convertInvoicePublic(paymentData.invoiceId, paymentData.companyId);
         }
       } catch (error) {
         console.log("🚀 ~ convert invoice public ~ error:", error);
       }
 
-      // Send a notification about the payment received
-      await sendPaymentReceivedNotification({
+      // Send a notification about the payment/deposit received
+      sendPaymentReceivedNotification({
         companyId: paymentData.companyId,
         amount: paymentData.amount,
         clientName: `${stripeInvoice?.client?.firstName} ${stripeInvoice?.client?.lastName}`,
         invoiceId: paymentData.invoiceId,
+        isDeposit,
       });
     }
 
@@ -174,7 +234,7 @@ export async function POST(req: NextRequest) {
     console.error("🚀 ~ Webhook Error:", error);
     return NextResponse.json(
       { error: `Webhook Error: ${error?.message}` },
-      { status: 400 },
+      { status: 400 }
     );
   }
 }

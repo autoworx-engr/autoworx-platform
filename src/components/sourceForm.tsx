@@ -23,7 +23,7 @@ const SourceForm = ({ companyId }: { companyId: number }) => {
   }
 
   const handleGenerateLink = async (
-    e: React.FormEvent<HTMLFormElement>,
+    e: React.FormEvent<HTMLFormElement>
   ): Promise<void> => {
     e.preventDefault();
     setIsGenerating(true);
@@ -52,21 +52,16 @@ const SourceForm = ({ companyId }: { companyId: number }) => {
       setError(
         err instanceof Error
           ? err.message
-          : "An error occurred while generating the link",
+          : "An error occurred while generating the link"
       );
     } finally {
       setIsGenerating(false);
     }
   };
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(generatedLink);
-    successToast("Link copied to clipboard!");
-  };
-
-  const handleSaveGeneratedLink = async () => {
+  const copyToClipboard = async () => {
     try {
-      if (!source || !generatedLink) {
+      if (!source || !generatedLink || !shortUrl) {
         throw new Error("Source and link must be generated first.");
       }
 
@@ -75,11 +70,43 @@ const SourceForm = ({ companyId }: { companyId: number }) => {
         generatedLink,
         companyId: companyId,
         shortUrl,
+        isShow: false,
+      });
+
+      if (res.data) {
+        navigator.clipboard.writeText(res.data.shortUrl);
+        successToast("Link copied to clipboard!");
+      } else {
+        throw new Error(res.message || "Failed to copy lead link.");
+      }
+    } catch (err) {
+      console.error(err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : "An error occurred while copying the lead link"
+      );
+    }
+  };
+
+  const handleSaveGeneratedLink = async () => {
+    try {
+      if (!source || !generatedLink || !shortUrl) {
+        throw new Error("Source and link must be generated first.");
+      }
+
+      const res = await createLeadLink({
+        source,
+        generatedLink,
+        companyId: companyId,
+        shortUrl,
+        isShow: true,
       });
 
       if (res.type === "success") {
         successToast("Lead link saved successfully!");
         setSource("");
+
         await fetchLeadLinks(companyId);
       } else {
         throw new Error(res.message || "Failed to save lead link.");
@@ -89,7 +116,7 @@ const SourceForm = ({ companyId }: { companyId: number }) => {
       setError(
         err instanceof Error
           ? err.message
-          : "An error occurred while saving the lead link",
+          : "An error occurred while saving the lead link"
       );
     }
   };
@@ -97,7 +124,7 @@ const SourceForm = ({ companyId }: { companyId: number }) => {
   return (
     <div className="mx-auto w-full lg:max-w-[700px]">
       <h2 className="mb-4 text-xl font-semibold text-gray-500 sm:text-2xl">
-        Lead Generation
+        Lead Capture
       </h2>
       <div className="overflow-hidden rounded-lg border-2 border-[#00b8b0] bg-background shadow-lg">
         <div className="bg-gradient-to-r from-[#00b8b0] to-[#0098da] px-6 py-4">
@@ -150,7 +177,7 @@ const SourceForm = ({ companyId }: { companyId: number }) => {
                 <p className="mb-1 text-sm font-medium text-gray-700">
                   Generated Link:
                 </p>
-                <p className="break-all text-sm text-blue-600">{shortUrl}</p>
+                <p className="break-all text-sm text-blue-600">{`${baseUrl}/leadurl/••••••`}</p>
               </div>
               <div className="flex flex-col gap-2 lg:flex-row">
                 <button

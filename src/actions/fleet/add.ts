@@ -55,7 +55,7 @@ export async function addFleet(data: {
       if (existingCustomer && existingCustomer.isFleet == false) {
         return {
           type: "globalError",
-          message: `The email is already used for an existing client ${existingCustomer.firstName + " " + existingCustomer.lastName}. Please go to the client page and set 'Premium' to true to update the client as a fleet.`,
+          message: `Email already linked to ${existingCustomer.firstName} ${existingCustomer.lastName}. Mark "Add as Fleet" in the client page and update.`,
         };
       }
       if (existingCustomer && existingCustomer.isFleet == true) {

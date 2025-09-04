@@ -9,6 +9,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import NewVehicle from "../Lists/NewVehicle";
 import { SelectProps } from "../Lists/select-props";
+import { usePathname } from "next/navigation";
 
 export function SelectAppointmentVehicle({
   name = "vehicleId",
@@ -21,7 +22,9 @@ export function SelectAppointmentVehicle({
   isClear = false,
   isEdit = false,
   clientId = null,
+  setIsAppointmentModalOpen,
 }: SelectProps<Partial<Vehicle> | null>) {
+  const pathname = usePathname();
   const state = useState(value);
   const [vehicle, setVehicle] = setValue ? [value, setValue] : state;
   // const vehicleList = useListsStore((x) => x.vehicles);
@@ -85,6 +88,7 @@ export function SelectAppointmentVehicle({
   const handleClear = () => {
     setVehicle(null);
     useListsStore.setState({ vehicle: null, newAddedVehicle: null });
+    setIsAppointmentModalOpen && setIsAppointmentModalOpen(true);
   };
 
   return (
@@ -103,6 +107,9 @@ export function SelectAppointmentVehicle({
             <NewVehicle
               clientId={Number(clientId)}
               onAdd={(vehicle: Vehicle) => {
+                if (pathname.includes("/dashboard/client")) {
+                  return;
+                }
                 setVehicle(vehicle);
                 useListsStore.setState({ vehicle });
                 useListsStore.setState(() => ({
@@ -118,6 +125,7 @@ export function SelectAppointmentVehicle({
                 );
                 vehicle && setOpenDropdown && setOpenDropdown(false);
               }}
+              setIsAppointmentModalOpen={setIsAppointmentModalOpen}
             />
           }
           items={clientVehicles}

@@ -256,9 +256,8 @@ const PrivacyPolicy = () => {
                   properly.
                 </li>
                 <li>
-                  Opt-Out Options: We provide opt-out links in our
-                  communications for marketing emails. You may also adjust your
-                  preferences through your account settings if applicable.
+                  Opt-Out Options: To unsubscribe from marketing emails, simply
+                  reply “STOP” to any such message.
                 </li>
               </ul>
             </div>
@@ -468,7 +467,7 @@ const PrivacyPolicy = () => {
                 <strong>10. Children’s Privacy</strong>
               </h2>
               <p>
-                Our Services are not directed to children under the age of 13
+                Our Services are not directed to children under the age of 18
                 (or the applicable age of consent in your jurisdiction). We do
                 not knowingly collect Personal Information from children without
                 parental consent. If you believe that we have inadvertently

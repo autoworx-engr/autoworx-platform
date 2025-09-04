@@ -67,8 +67,6 @@ const AutomationSidebar = ({
     }
   };
 
-
-
   if (isLoading) {
     return (
       <div className="mx-auto w-full lg:max-w-[700px]">

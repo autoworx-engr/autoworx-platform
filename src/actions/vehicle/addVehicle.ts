@@ -23,7 +23,7 @@ export async function addVehicle(data: {
   notes: string;
   other: string;
   clientId: number;
-}): Promise<ServerAction | TErrorHandler> {
+}, pathname?: string): Promise<ServerAction | TErrorHandler> {
   try {
     const session = await getServerSession(authOptions);
     const companyId = session?.user.companyId;
@@ -41,7 +41,9 @@ export async function addVehicle(data: {
       },
     });
 
-    revalidatePath("/client");
+    if(pathname?.includes('/dashboard/client')) {
+      revalidatePath(pathname);
+    }
 
     return {
       type: "success",

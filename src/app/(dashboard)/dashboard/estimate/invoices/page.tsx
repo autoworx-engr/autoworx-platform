@@ -8,6 +8,7 @@ import { getServerSession } from "next-auth";
 import Header from "../Header";
 import NavigationTabs from "../NavigationTabs";
 import Table from "../Table";
+import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
 
 export default async function InvoicesPage({
   searchParams,
@@ -23,7 +24,7 @@ export default async function InvoicesPage({
 }>) {
   const session = await getServerSession(authOptions);
   const companyId = session?.user.companyId;
-
+  const { timezone } = await getCompanyTimezone();
   if (!companyId) {
     throw new Error("Company ID is required to create an email template.");
   }
@@ -31,13 +32,13 @@ export default async function InvoicesPage({
     InvoiceType.Invoice,
     companyId,
     searchParams,
+    timezone
   );
 
   const categories = await db.category.findMany({ where: { companyId } });
   const tags = await db.tag.findMany({ where: { companyId, type: "GENERAL" } });
   const statuses = await db.column.findMany({ where: { companyId } });
 
- 
   return (
     <div>
       <Title>Invoices</Title>
@@ -51,7 +52,11 @@ export default async function InvoicesPage({
       />
 
       <NavigationTabs activeTab="b-invoice">
-        {invoices ? <Table estimateData={invoices} isInvoice /> : <div>Loading...</div>}
+        {invoices ? (
+          <Table estimateData={invoices} isInvoice />
+        ) : (
+          <div>Loading...</div>
+        )}
       </NavigationTabs>
     </div>
   );

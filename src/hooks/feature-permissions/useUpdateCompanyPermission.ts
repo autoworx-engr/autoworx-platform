@@ -1,18 +1,12 @@
-import { errorToast, successToast } from '@/lib/toast';
-import { updatePermission } from '@/service/feature-permissions/api';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-
-interface PermissionUpdate {
-  permission_name: string;
-  enabled: boolean;
-  companyId: number;
-}
+import { errorToast, successToast } from "@/lib/toast";
+import { updatePermission } from "@/service/feature-permissions/api";
+import { PermissionUpdate } from "@/types/feature-permission";
+import { useMutation } from "@tanstack/react-query";
 
 export const useUpdateCompanyPermission = () => {
-  const queryClient = useQueryClient();
-
   return useMutation({
-    mutationKey: ['updatePermission'],
+    mutationKey: ["updatePermission"],
+
     mutationFn: async (updates: PermissionUpdate[]) => {
       return await Promise.all(
         updates.map((u) =>
@@ -20,13 +14,13 @@ export const useUpdateCompanyPermission = () => {
         )
       );
     },
+
     onSuccess: () => {
-      successToast('Permissions updated successfully!');
-      // queryClient.invalidateQueries({ queryKey: ['companyPermissions'] });
+      successToast("Permissions updated successfully!");
     },
     onError: (error) => {
-      errorToast('Failed to update permissions!');
-      console.error('Update error:', error);
+      errorToast("Failed to update permissions!");
+      console.error("Update error:", error);
     },
   });
 };

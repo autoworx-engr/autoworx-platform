@@ -75,7 +75,7 @@ export default async function Page({
           cost={parseFloat(product?.price?.toString() || "0")}
           productType={product.type}
         />
-        <ReplenishProductForm productId={productId} />
+        <ReplenishProductForm lastUnit={product.unit} productId={productId} />
       </div>
     </div>
   );

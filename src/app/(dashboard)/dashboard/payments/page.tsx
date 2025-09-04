@@ -11,10 +11,12 @@ import {
   TabsTrigger,
 } from "./components/PaymentTab";
 import PaymentTable from "./components/PaymentTable";
+import { useState } from "react";
 
 export default function Page() {
   const { data: payments, refresh: refreshPayments } =
     useServerGetWithRefresh(getPayments);
+  const [activeTab, setActiveTab] = useState("transactions");
 
   // const { data: couponsData } = useServerGet(getCoupons);
   // const [coupons, setCoupons] = useState(couponsData);
@@ -29,10 +31,14 @@ export default function Page() {
 
       {/* Header */}
       <div className="mt-5 flex justify-between">
-        <HeaderSearch />
+        <HeaderSearch activeTab={activeTab} />
       </div>
 
-      <PaymentTab defaultValue="transactions" className="mt-5 grid-cols-1">
+      <PaymentTab
+        defaultValue="transactions"
+        className="mt-5 grid-cols-1"
+        onValueChange={setActiveTab}
+      >
         <TabsList>
           <TabsTrigger value="coupons">Coupons</TabsTrigger>
           {/* <TabsTrigger value="integrations">Integrations</TabsTrigger> */}

@@ -1,8 +1,15 @@
 import { useCalendarStore } from "@/stores/calendarStore";
-import moment from "moment";
+import moment from "moment-timezone";
+import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 
 export function useDate() {
   const { date } = useCalendarStore();
-  const parsedDate = moment(date, moment.HTML5_FMT.DATE);
-  return parsedDate.isValid() ? parsedDate : moment();
+  const timezone = useCompanyTimezone();
+  
+  if (!date) {
+    return moment.tz(timezone);
+  }
+  
+  const parsedDate = moment.tz(date, moment.HTML5_FMT.DATE, timezone);
+  return parsedDate.isValid() ? parsedDate : moment.tz(timezone);
 }

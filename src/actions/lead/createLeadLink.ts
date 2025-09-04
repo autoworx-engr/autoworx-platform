@@ -9,41 +9,52 @@ export async function createLeadLink({
   generatedLink,
   companyId,
   shortUrl,
+  isShow,
 }: {
   source: string;
   generatedLink: string;
   companyId: number;
   shortUrl: string;
+  isShow: boolean;
 }): Promise<ServerAction> {
   const existingLink = await db.leadLink.findFirst({
     where: {
-      source,
+      source: {
+        contains: source,
+      },
       generatedLink,
       companyId,
     },
   });
 
   if (existingLink) {
+    if (!existingLink.isShow) {
+      const updatedLink = await db.leadLink.update({
+        where: { id: existingLink.id },
+        data: { isShow },
+      });
+      return { type: "success", data: updatedLink };
+    }
+
     return {
       type: "error",
       message: "The lead link already exists",
+      data: existingLink,
     };
   }
 
   const qrDataURL = await QRCode.toDataURL(shortUrl);
 
-  const leadLink = await db.leadLink.create({
+  const newLeadLink = await db.leadLink.create({
     data: {
-      source,
+      source: source.toLowerCase(),
       generatedLink,
       shortUrl,
       QRCode: qrDataURL,
-      companyId: companyId,
+      companyId,
+      isShow,
     },
   });
 
-  return {
-    type: "success",
-    data: leadLink,
-  };
+  return { type: "success", data: newLeadLink };
 }

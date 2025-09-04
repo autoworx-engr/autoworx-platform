@@ -1,36 +1,39 @@
-'use client';
+"use client";
 
-import { addCustomer } from '@/actions/client/add';
+import { addCustomer } from "@/actions/client/add";
 import {
   Dialog,
   DialogClose,
   DialogContent,
   DialogFooter,
   DialogTrigger,
-} from '@/components/Dialog';
-import FormError from '@/components/FormError';
-import SelectClientSource from '@/components/Lists/SelectClientSource';
-import { ClientTagSelector } from '@/components/Lists/ClientTagSelector';
-import { SlimInput } from '@/components/SlimInput';
-import { useFormErrorStore } from '@/stores/form-error';
-import { useListsStore } from '@/stores/lists';
-import { Client, Source, Tag } from '@prisma/client';
-import { useEffect, useState, useTransition } from 'react';
-import { FaTimes } from 'react-icons/fa';
-import { RxAvatar } from 'react-icons/rx';
-import { deleteSource } from '../../actions/source/deleteSource';
-import { getSources } from '../../actions/source/getSources';
-import NewClientSource from './NewClientSource';
-import Submit from '../Submit';
-import { RotatingLines } from 'react-loader-spinner';
-import { stateStore } from '@/stores/stateStore';
+} from "@/components/Dialog";
+import FormError from "@/components/FormError";
+import SelectClientSource from "@/components/Lists/SelectClientSource";
+import { ClientTagSelector } from "@/components/Lists/ClientTagSelector";
+import { SlimInput } from "@/components/SlimInput";
+import { useFormErrorStore } from "@/stores/form-error";
+import { useListsStore } from "@/stores/lists";
+import { Client, Source, Tag } from "@prisma/client";
+import { useEffect, useState, useTransition } from "react";
+import { FaTimes } from "react-icons/fa";
+import { RxAvatar } from "react-icons/rx";
+import { deleteSource } from "../../actions/source/deleteSource";
+import { getSources } from "../../actions/source/getSources";
+import NewClientSource from "./NewClientSource";
+import Submit from "../Submit";
+import { RotatingLines } from "react-loader-spinner";
+import { stateStore } from "@/stores/stateStore";
+import { usePathname } from "next/navigation";
 
 export default function NewCustomer({
   buttonElement,
   setClient,
+  setIsAppointmentModalOpen,
 }: {
   buttonElement?: JSX.Element;
   setClient?: React.Dispatch<React.SetStateAction<Client | null>>;
+  setIsAppointmentModalOpen?: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   const { isClientOpen, setIsClientOpen } = stateStore();
   const [clientSource, setClientSource] = useState<Source | null>(null);
@@ -41,7 +44,18 @@ export default function NewCustomer({
   const [profilePic, setProfilePic] = useState<File | null>(null);
   const [clientSources, setClientSources] = useState<Source[]>([]);
   const { showError, clearError } = useFormErrorStore();
-  const [mobile, setMobile] = useState('+1');
+  const [mobile, setMobile] = useState("+1");
+  const pathname = usePathname();
+  const [clientInfo, setClientInfo] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    address: "",
+    city: "",
+    state: "",
+    zip: "",
+    customerCompany: "",
+  });
   async function getClientSources() {
     const data = await getSources();
     setClientSources(data);
@@ -51,7 +65,7 @@ export default function NewCustomer({
     await deleteSource(id);
 
     setClientSources((prev: Source[]) => {
-      return prev.filter((source) => source.id !== id);
+      return prev.filter(source => source.id !== id);
     });
 
     if (clientSource?.id === id) {
@@ -59,83 +73,111 @@ export default function NewCustomer({
     }
   }
 
+  function resetForm() {
+    setClientInfo({
+      firstName: "",
+      lastName: "",
+      email: "",
+      address: "",
+      city: "",
+      state: "",
+      zip: "",
+      customerCompany: "",
+    });
+    clearError();
+    setMobile("+1");
+    setClientSources([]);
+    setClientSource(null);
+    setProfilePic(null);
+    setTagOpenDropdown(false);
+    setTag(undefined);
+  }
+
   async function handleSubmit() {
     clearError();
-    let photo;
-    const firstName = document.querySelector<HTMLInputElement>('#firstName')
-      ?.value as string;
-    const lastName =
-      document.querySelector<HTMLInputElement>('#lastName')?.value;
-    const email = document.querySelector<HTMLInputElement>('#email')?.value;
-    const mobile = document.querySelector<HTMLInputElement>('#mobile')?.value;
-    const company =
-      document.querySelector<HTMLInputElement>('#customerCompany')?.value;
-    const address = document.querySelector<HTMLInputElement>('#address')?.value;
-    const city = document.querySelector<HTMLInputElement>('#city')?.value;
-    const state = document.querySelector<HTMLInputElement>('#state')?.value;
-    const zip = document.querySelector<HTMLInputElement>('#zip')?.value;
-    if (!firstName?.trim()) {
+
+    // Validate required fields
+    if (!clientInfo.firstName.trim()) {
       showError({
-        field: 'firstName',
-        message: 'First name is required.',
+        field: "firstName",
+        message: "First name is required.",
       });
       return;
     }
-    // if (!email?.trim()) {
-    //   showError({
-    //     field: "email",
-    //     message: "Email is required.",
-    //   });
-    //   return;
-    // }
+
+    // Validate mobile number format
+    if (!mobile.startsWith("+1") || !/^\+1\d{10}$/.test(mobile)) {
+      showError({
+        field: "mobile",
+        message:
+          "Please enter a valid US phone number with area code (e.g., +1234567890).",
+      });
+      return;
+    }
+
+    let photo;
     // update photo
     if (profilePic) {
       const formData = new FormData();
-      formData.append('file', profilePic);
+      formData.append("file", profilePic);
 
-      const uploadRes = await fetch('/api/upload', {
-        method: 'POST',
+      const uploadRes = await fetch("/api/upload", {
+        method: "POST",
         body: formData,
       });
 
       if (!uploadRes.ok) {
-        console.error('Failed to upload photos');
+        console.error("Failed to upload photos");
         return uploadRes.json();
       }
 
       const json = await uploadRes.json();
-      photo = json.data[0];
+      photo = json?.data?.[0];
     }
 
-    const res = await addCustomer({
+    const {
       firstName,
       lastName,
       email,
-      mobile,
-      customerCompany: company,
       address,
       city,
       state,
       zip,
-      tagId: tag?.id,
-      sourceId: clientSource?.id,
-      photo,
-    });
+      customerCompany,
+    } = clientInfo;
 
-    if (res.type === 'globalError') {
+    const res = await addCustomer(
+      {
+        firstName: firstName.trim(),
+        lastName,
+        email,
+        mobile,
+        customerCompany,
+        address,
+        city,
+        state,
+        zip,
+        tagId: tag?.id,
+        sourceId: clientSource?.id,
+        photo,
+      },
+      pathname
+    );
+
+    if (res?.type === "globalError") {
       showError({
         errorSource: res.errorSource,
         message: res.message,
       });
-    } else if (res.type === 'success') {
+    } else if (res?.type === "success") {
       useListsStore.setState(({ customers }) => ({
         customers: [...customers, res.data],
         newAddedCustomer: res.data,
       }));
       setClient && setClient(res?.data);
-      setMobile('+1');
-      clearError();
+      resetForm();
       setIsClientOpen(false);
+      setIsAppointmentModalOpen && setIsAppointmentModalOpen(true);
     }
   }
 
@@ -146,14 +188,15 @@ export default function NewCustomer({
   const handleClose = () => {
     clearError(); // ✅ Reset form errors when closing
     setProfilePic(null); // ✅ Reset profile picture
-    setMobile('+1');
+    setMobile("+1");
     setIsClientOpen(false);
+    setIsAppointmentModalOpen && setIsAppointmentModalOpen(true);
   };
 
   return (
     <Dialog
       open={isClientOpen}
-      onOpenChange={(isClientOpen) => {
+      onOpenChange={isClientOpen => {
         if (!isClientOpen) handleClose();
         setIsClientOpen(isClientOpen);
       }}
@@ -193,7 +236,7 @@ export default function NewCustomer({
                 id="profilePicture"
                 hidden
                 accept="image/*"
-                onChange={(e) => {
+                onChange={e => {
                   const file = e.target.files?.[0];
                   if (file) {
                     setProfilePic(file);
@@ -201,7 +244,7 @@ export default function NewCustomer({
                 }}
               />
               <span className="hidden lg:block">Upload a profile picture</span>
-              <span className="lg:hidden">Upload picture</span>{' '}
+              <span className="lg:hidden">Upload picture</span>{" "}
               <RxAvatar size={48} />
             </label>
           )}
@@ -215,30 +258,35 @@ export default function NewCustomer({
               name="firstName"
               label="First Name"
               required
-              onChange={(e) => {
+              value={clientInfo.firstName}
+              onChange={e => {
                 const value = e.target.value;
-
-                // Validate on input change
-                if (!value.trim()) {
-                  showError({
-                    field: 'firstName',
-                    message: 'First name is required.',
-                  });
-                } else {
-                  clearError();
-                }
+                // Always update the state to allow normal editing
+                setClientInfo(prev => ({ ...prev, firstName: value }));
+                // Clear any existing errors when user is typing
+                clearError();
               }}
             />
-            <SlimInput name="lastName" required={false} />
+            <SlimInput
+              name="lastName"
+              required={false}
+              value={clientInfo.lastName}
+              onChange={e => {
+                const value = e.target.value;
+                setClientInfo(prev => ({ ...prev, lastName: value }));
+              }}
+            />
           </div>
 
           <div className="flex items-center justify-between gap-x-2">
             <SlimInput
               name="email"
               label="Email"
+              value={clientInfo.email}
               // required
-              onChange={(e) => {
+              onChange={e => {
                 const value = e.target.value;
+                setClientInfo(prev => ({ ...prev, email: value }));
 
                 // Validate on input change
                 // if (!value.trim()) {
@@ -256,32 +304,54 @@ export default function NewCustomer({
               label="Mobile"
               required
               value={mobile}
-              onChange={(e) => {
+              onChange={e => {
                 const value = e.target.value;
-
-                // Ensure the value starts with +1 and only allows numeric values
-                if (value.startsWith('+1') && /^\+1\d*$/.test(value)) {
-                  setMobile(value);
-                  clearError();
-                } else {
-                  showError({
-                    field: 'mobile',
-                    message:
-                      'Invalid phone number format. Only numbers are allowed.',
-                  });
-                }
+                // Always update the state to allow editing
+                setMobile(value);
+                // Clear errors when user is typing
+                clearError();
               }}
             />
           </div>
 
           <div className="flex items-center justify-between">
-            <SlimInput rootClassName="flex-1" name="address" required={false} />
+            <SlimInput
+              value={clientInfo.address}
+              rootClassName="flex-1"
+              name="address"
+              required={false}
+              onChange={e => {
+                const value = e.target.value;
+                setClientInfo(prev => ({ ...prev, address: value }));
+              }}
+            />
           </div>
 
           <div className="flex items-center justify-between gap-x-2">
-            <SlimInput name="city" required={false} />
-            <SlimInput name="state" required={false} />
-            <SlimInput name="zip" required={false} />
+            <SlimInput
+              value={clientInfo.city}
+              name="city"
+              required={false}
+              onChange={e => {
+                setClientInfo(prev => ({ ...prev, city: e.target.value }));
+              }}
+            />
+            <SlimInput
+              value={clientInfo.state}
+              name="state"
+              required={false}
+              onChange={e => {
+                setClientInfo(prev => ({ ...prev, state: e.target.value }));
+              }}
+            />
+            <SlimInput
+              name="zip"
+              value={clientInfo.zip}
+              required={false}
+              onChange={e => {
+                setClientInfo(prev => ({ ...prev, zip: e.target.value }));
+              }}
+            />
           </div>
 
           <div className="flex items-center justify-between gap-x-4">
@@ -289,6 +359,11 @@ export default function NewCustomer({
               name="customerCompany"
               required={false}
               label="Company"
+              value={clientInfo.customerCompany}
+              onChange={e => {
+                const value = e.target.value;
+                setClientInfo(prev => ({ ...prev, customerCompany: value }));
+              }}
             />
 
             <div className="w-full">
@@ -296,8 +371,8 @@ export default function NewCustomer({
               {/* TODO: use `Selector` component and make the hieght auto */}
               <SelectClientSource
                 clickabled={false}
-                label={(clientSrc) =>
-                  clientSource ? clientSource.name : 'Client Source'
+                label={clientSrc =>
+                  clientSource ? clientSource.name : "Client Source"
                 }
                 newButton={
                   <NewClientSource
@@ -362,6 +437,7 @@ export default function NewCustomer({
             onClick={() => {
               clearError();
               setIsClientOpen(false);
+              resetForm();
             }}
           >
             Cancel
@@ -377,7 +453,7 @@ export default function NewCustomer({
                 <RotatingLines strokeColor="#fff" strokeWidth="5" width="25" />
               </div>
             ) : (
-              'Add'
+              "Add"
             )}
           </button>
         </DialogFooter>

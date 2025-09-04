@@ -38,11 +38,15 @@ const InventoryResponsiveCard: React.FC<InventoryResponsiveCardProps> = ({
         <div className="flex flex-col gap-2 text-[#66738C] lg:flex-row lg:items-center lg:justify-between">
           <div className="flex-1 space-y-1">
             <div className="flex items-center gap-2">
-              {product.quantity === 0 && (
+              {product.quantity === 0 ? (
                 <Tooltip title="Product is out of stock" placement="top">
                   <FaCircleExclamation className="size-4 text-xl text-red-600" />
                 </Tooltip>
-              )}
+              ) : Number( product.quantity )<= Number(product.lowInventoryAlert) ? (
+                <Tooltip title="Product has low inventory" placement="top">
+                  <FaCircleExclamation className="size-4 text-xl text-yellow-600" />
+                </Tooltip>
+              ) : null}
               <h3
                 onClick={() =>
                   router.push(

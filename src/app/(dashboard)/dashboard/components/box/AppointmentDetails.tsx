@@ -1,6 +1,8 @@
+"use client"
+import { useCalendarStore } from "@/stores/calendarStore";
 import { Appointment, Client, User, Vehicle } from "@prisma/client";
-import moment from "moment";
-import Link from "next/link";
+import moment from "moment-timezone";
+import { useRouter } from "next/navigation";
 
 type TAppointmentDetailsProps = {
   appointment: Appointment & {
@@ -10,20 +12,35 @@ type TAppointmentDetailsProps = {
   };
 };
 
-export default async function AppointmentDetails({
+export default function AppointmentDetails({
   appointment,
 }: TAppointmentDetailsProps) {
+
   const start = moment(appointment.startTime, "HH:mm");
   const end = moment(appointment.endTime, "HH:mm");
-  const date = moment.utc(appointment?.date)?.format("Do MMMM YYYY");
+  const date = moment
+    .utc(appointment?.date)
+    .format("Do MMMM YYYY");
 
   const assignedUsers = appointment.appointmentUsers.flatMap(
     (appointmentUser) => appointmentUser.user
   );
 
+  const router = useRouter();
+
+  const { setNavigating, setDate } = useCalendarStore();
+  const handleTaskClick = () => {
+    const dateString = moment.utc(appointment?.date).format("YYYY-MM-DD");
+
+    // Set navigation flag to prevent reset, then set date and navigate
+    setNavigating(true);
+    setDate(dateString);
+    router.push("/dashboard/task/day");
+  };
+
   return (
-    <Link
-      href={`/dashboard/task/day?date=${moment.utc(appointment?.date).format("YYYY-MM-DD")}`}
+    <span
+      onClick={handleTaskClick}
       className="flex cursor-pointer rounded-md border border-gray-400 py-4 pl-4 pr-2 text-sm"
     >
       <div className="w-[98%]">
@@ -75,6 +92,6 @@ export default async function AppointmentDetails({
         )}
       </div>
       <div className="w-[1%] rounded-full bg-[#6571FF]"></div>
-    </Link>
+    </span>
   );
 }

@@ -2,6 +2,7 @@
 
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { db } from "@/lib/db";
+import { getPusherInstance } from "@/lib/pusher/server";
 import { ServerAction } from "@/types/action";
 import { TErrorHandler } from "@/types/globalError";
 import { revalidatePath } from "next/cache";
@@ -26,6 +27,23 @@ export const updateChatTrack = async (
         message: true,
       },
     });
+
+    // Trigger Pusher event to notify other components that messages were read
+    const pusher = getPusherInstance();
+    if (updatedChatInfo.senderId && updatedChatInfo.receiverId) {
+      // Notify both users involved in the conversation
+      await pusher.trigger(`track-${updatedChatInfo.senderId}`, "chat-track-read", {
+        senderId: updatedChatInfo.senderId,
+        userId: updatedChatInfo.receiverId,
+        section: "internal"
+      });
+      await pusher.trigger(`track-${updatedChatInfo.receiverId}`, "chat-track-read", {
+        senderId: updatedChatInfo.senderId,
+        userId: updatedChatInfo.receiverId,
+        section: "internal"
+      });
+    }
+
     revalidatePath("/communication/internal");
     return {
       type: "success",

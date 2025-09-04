@@ -2,14 +2,30 @@
 
 import { getLegalBusinessName } from "@/actions/settings/getLegalBusinessName";
 import { useState, useEffect } from "react";
-import ServiceSelectAndAdd from "./ServiceSelectAndAdd";
+import ServiceSelectAndAddPublic from "./ServiceSelectAndAddPublic";
 import {
   useGetAllYears,
   useGetMake,
   useGetModelsByYearAndMake,
 } from "@/hooks/useCarData";
 import Selector from "../app/(dashboard)/dashboard/settings/automation/components/Selector";
-const ZapForm = () => {
+import { TermsAndPolicyModal } from "./TermsAndPolicyModal";
+import Image from "next/image";
+import { Globe, MapPin, Phone } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+
+type ZapFormProps = {
+  company: {
+    name: string;
+    image: string;
+    website: string;
+    phone: string;
+    address: string;
+    city: string;
+    state: string;
+  };
+};
+const ZapForm = ({ company }: ZapFormProps) => {
   const [legalBusinessName, setLegalBusinessName] = useState<string>("");
   const [consent, setConsent] = useState<boolean>(false);
 
@@ -139,7 +155,7 @@ const ZapForm = () => {
   };
 
   const handleServiceChange = (
-    value: string | { id: string | number; title: string },
+    value: string | { id: string | number; title: string }
   ) => {
     if (typeof value === "object") {
       // Store the full object separately
@@ -231,10 +247,10 @@ const ZapForm = () => {
   }));
 
   return (
-    <div className="mx-auto w-full max-w-md h-full">
+    <div className="mx-auto w-full max-w-lg h-full">
       <div className="overflow-hidden rounded-lg border-2 border-[#00b8b0] bg-background shadow-lg">
         {/* Header */}
-        <div className="bg-gradient-to-r from-[#00b8b0] to-[#0098da] px-6 py-4">
+        {/* <div className="bg-gradient-to-r from-[#00b8b0] to-[#0098da] px-6 py-4">
           <h2 className="text-center text-2xl font-bold text-white">
             Service Lead Form
           </h2>
@@ -246,8 +262,66 @@ const ZapForm = () => {
               Source: {formData.source}
             </div>
           )}
-        </div>
+        </div> */}
 
+        <div className="bg-gradient-to-r from-[#00b8b0] to-[#0098da] px-6 py-6">
+          {/* Company Logo */}
+          <div className="mb-3 flex">
+            <div className="h-16 w-16 rounded-full bg-white/20 flex items-center justify-center">
+              <div className="text-2xl font-bold text-white ">
+                <Image
+                  src={
+                    company?.image ||
+                    "/images/autoworx-logo.webp"
+                  }
+                  alt={company?.name || "Company Logo"}
+                  width={56}
+                  height={56}
+                  className="w-14 h-14 rounded-full border-2 border-white object-cover"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Business Name */}
+          <h1 className="text-xl font-bold text-white mb-2">{company?.name}</h1>
+
+          {/* Website */}
+          <div className="text-white/90 text-sm mb-1">
+            {company?.website && (
+              <span className="inline-flex items-center gap-1">
+                <Globe className="size-4" />
+                {company?.website}
+              </span>
+            )}
+          </div>
+
+          {/* Address */}
+          <div className="text-white/90 text-sm mb-1">
+            {company?.address && (
+              <span className="inline-flex items-center gap-1">
+                <MapPin className="size-4" />
+                {company?.address}, {company?.city}, {company?.state}
+              </span>
+            )}
+          </div>
+
+          {/* Phone */}
+          <div className="text-white/90 text-sm mb-3">
+            {company?.phone && (
+              <span className="inline-flex items-center gap-1">
+                <Phone className="size-4" />
+                {company?.phone}
+              </span>
+            )}
+          </div>
+
+          {/* Form Title */}
+
+          <p className="mt-1 text-center font-semibold text-white text-opacity-90">
+            Submit your vehicle information to request service
+          </p>
+        </div>
         {/* Form Content */}
         <div className="p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -310,11 +384,17 @@ const ZapForm = () => {
               )}
             </div>{" "}
             <div className="space-y-2">
-              <ServiceSelectAndAdd
-                value={formData.service}
-                onChange={handleServiceChange}
-                token={formData.token}
-              />
+              {formData.token ? (
+                <ServiceSelectAndAddPublic
+                  value={formData.service}
+                  onChange={handleServiceChange}
+                  token={formData.token}
+                />
+              ) : (
+                <div className="w-full rounded-sm border border-slate-400 bg-background px-2 py-0.5 leading-6 outline-none text-gray-400">
+                  Loading services...
+                </div>
+              )}
             </div>
             {/* Vehicle Information Section */}
             <div className="border-t border-gray-200 pb-1 pt-2">
@@ -393,7 +473,7 @@ const ZapForm = () => {
                 isSearch={true}
                 isClear={true}
                 disabled={formData.others !== ""}
-                error={isYearFetchError ? "Failed to fetch years" : undefined}
+                // error={isYearFetchError ? "Failed to fetch years" : undefined}
               />
               <Selector
                 name="vehicle_make"
@@ -407,7 +487,7 @@ const ZapForm = () => {
                 isSearch={true}
                 isClear={true}
                 disabled={formData.others !== ""}
-                error={isMakeFetchError ? "Failed to fetch Makes" : undefined}
+                // error={isMakeFetchError ? "Failed to fetch Makes" : undefined}
               />
 
               <Selector
@@ -423,9 +503,9 @@ const ZapForm = () => {
                 isSearch={true}
                 isClear={true}
                 disabled={formData.others !== ""}
-                error={
-                  isModelsFetchError ? "Failed to fetch Models" : undefined
-                }
+                // error={
+                //   isModelsFetchError ? "Failed to fetch Models" : undefined
+                // }
               />
             </div>
             <div className="space-y-2">
@@ -433,13 +513,16 @@ const ZapForm = () => {
                 htmlFor="others"
                 className="block text-sm font-medium text-gray-700"
               >
-                Others <span className="text-red-500"> *</span>
+                Others
+                <span className="text-xs">
+                  {" "}
+                  (Vehicle not listed or non-vehicle job? Enter details here)
+                </span>
               </label>
               <input
                 id="others"
                 type="text"
                 name="others"
-                placeholder="Anything else you want to add"
                 value={formData.others}
                 onChange={handleChange}
                 disabled={
@@ -465,10 +548,13 @@ const ZapForm = () => {
               type="submit"
               className="w-full rounded-md bg-gradient-to-r from-[#00b8b0] to-[#0098da] px-4 py-2 font-medium text-white transition-colors duration-200 hover:bg-[#00b8b0] focus:outline-none focus:ring-2 focus:ring-[#00b8b0] focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               disabled={
-                isSubmitting || 
-                !consent || 
+                isSubmitting ||
+                !consent ||
                 !!fieldErrors.phone ||
-                (!formData.others && (!formData.vehicle_year || !formData.vehicle_make || !formData.vehicle_model))
+                (!formData.others &&
+                  (!formData.vehicle_year ||
+                    !formData.vehicle_make ||
+                    !formData.vehicle_model))
               }
             >
               {isSubmitting ? "Submitting..." : "Request Service"}
@@ -487,10 +573,27 @@ const ZapForm = () => {
               className="h-4 w-4 cursor-pointer rounded border-gray-300 text-[#00b8b0] focus:ring-[#00b8b0]"
             />
             <label htmlFor="consent" className="text-white text-opacity-90">
-              I agree to receive text messages, emails, and calls from{" "}
+              I agree to receive recurring text messages, emails, and calls from{" "}
               {legalBusinessName} regarding my inquiry and related services.
-              Message and data rates may apply. Reply STOP to opt out at any
-              time.
+              Message and data rates may apply. Reply STOP to opt out, HELP for
+              help. View our{" "}
+              <TermsAndPolicyModal type="terms" token={formData.token}>
+                <button
+                  type="button"
+                  className="underline hover:text-white transition-colors cursor-pointer"
+                >
+                  Terms of Service
+                </button>
+              </TermsAndPolicyModal>{" "}
+              and{" "}
+              <TermsAndPolicyModal type="policy" token={formData.token}>
+                <button
+                  type="button"
+                  className="underline hover:text-white transition-colors cursor-pointer"
+                >
+                  Privacy Policy
+                </button>
+              </TermsAndPolicyModal>
             </label>
           </div>
         </div>

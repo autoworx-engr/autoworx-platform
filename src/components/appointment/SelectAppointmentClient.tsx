@@ -10,6 +10,7 @@ import { queryKeys } from "@/lib/queryKeys";
 import { useQueryClient } from "@tanstack/react-query";
 import NewCustomer from "../Lists/NewCustomer";
 import { SelectProps } from "../Lists/select-props";
+import { usePathname } from "next/navigation";
 
 export function SelectAppointmentClient({
   name = "clientId",
@@ -19,6 +20,7 @@ export function SelectAppointmentClient({
   setValue,
   openDropdown,
   setOpenDropdown,
+  setIsAppointmentModalOpen,
 }: SelectProps<Partial<
   Client & {
     Lead: { id: number; companyId: number; columnId: number };
@@ -27,12 +29,13 @@ export function SelectAppointmentClient({
   const state = useState(value);
   const [client, setClient] = setValue ? [value, setValue] : state;
   const { data: clientList = [] } = useClientListQuery();
-  const newAddedCustomer = useListsStore((x) => x.newAddedCustomer);
+  const newAddedCustomer = useListsStore(x => x.newAddedCustomer);
   const queryClient = useQueryClient();
+  const pathname = usePathname();
 
   useEffect(() => {
     if (fromLead && clientId) {
-      const matchedClient = clientList.find((c) => c.id === clientId);
+      const matchedClient = clientList.find(c => c.id === clientId);
       if (matchedClient) {
         setClient(matchedClient);
       } else {
@@ -49,7 +52,7 @@ export function SelectAppointmentClient({
         [queryKeys.clientList],
         (oldData: Client[] | undefined) => {
           return oldData ? [...oldData, newAddedCustomer] : [newAddedCustomer];
-        },
+        }
       );
     }
   }, [newAddedCustomer]);
@@ -73,6 +76,9 @@ export function SelectAppointmentClient({
           <NewCustomer
             // @ts-ignore
             setClient={(client: Client) => {
+              if (pathname.includes("/dashboard/client")) {
+                return;
+              }
               setClient(client);
               client && handleSetParams(client);
             }}
@@ -98,10 +104,10 @@ export function SelectAppointmentClient({
         )}
         items={clientList}
         onSearch={(search: string) =>
-          clientList.filter((client) =>
+          clientList.filter(client =>
             `${client.firstName} ${client.lastName}`
               .toLowerCase()
-              .includes(search.toLowerCase()),
+              .includes(search.toLowerCase())
           )
         }
         openState={[

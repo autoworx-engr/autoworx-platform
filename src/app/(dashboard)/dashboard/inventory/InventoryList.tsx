@@ -81,26 +81,38 @@ export default function InventoryList({
       {view === "products" && (
         <TabsContent
           value="products"
-          className={`mx-2 md:visible md:static overflow-y-auto md:opacity-100 ${productId ? "invisible absolute opacity-0" : "visible static opacity-100"}`}
+          className={`mx-2 flex min-h-0 flex-col md:visible md:static md:opacity-100 ${productId ? "invisible absolute opacity-0" : "visible static opacity-100"}`}
         >
-          <SearchFilter />
-          <ProductTable
-            products={products as any}
-            currentProductId={productId}
-          />
+          <div className="relative flex h-full w-full flex-col">
+            <div className="sticky top-0 z-50 bg-white pb-2 pt-2">
+              <SearchFilter />
+            </div>
+            <div className="h-full overflow-y-auto">
+              <ProductTable
+                products={products as any}
+                currentProductId={productId}
+              />
+            </div>
+          </div>
         </TabsContent>
       )}
 
       {view === "supplies" && (
         <TabsContent
           value="supplies"
-          className={`mx-2 md:visible md:static overflow-y-auto md:opacity-100 ${productId ? "invisible absolute opacity-0" : "visible static opacity-100"}`}
+          className={`mx-2 flex min-h-0 flex-col md:visible md:static md:opacity-100 ${productId ? "invisible absolute opacity-0" : "visible static opacity-100"}`}
         >
-          <SearchFilter />
-          <ProductTable
-            products={supplies as any}
-            currentProductId={productId}
-          />
+          <div className="relative flex h-full w-full flex-col">
+            <div className="sticky top-0 z-50 bg-white pb-2 pt-2">
+              <SearchFilter />
+            </div>
+            <div className="h-full overflow-y-auto">
+              <ProductTable
+                products={supplies as any}
+                currentProductId={productId}
+              />
+            </div>
+          </div>
         </TabsContent>
       )}
 

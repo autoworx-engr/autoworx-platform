@@ -26,6 +26,8 @@ import {
 import { useState, useEffect, useRef } from "react";
 import { FaEdit } from "react-icons/fa";
 import { UpdatePurchase } from "../../../../actions/inventory/updatePurchase";
+import moment from "moment-timezone";
+import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 
 type TProps = {
   productId: number;
@@ -43,6 +45,10 @@ export default function EditSalePurchaseList({
   product,
   history,
 }: TProps) {
+  const companyTz = useCompanyTimezone(); // ✅ get timezone
+  const formatDateForInput = (date: Date | string) =>
+    moment(date).tz(companyTz).format("YYYY-MM-DD");
+
   const { vendors } = useListsStore();
   const [open, setOpen] = useState(false);
   const [vendor, setVendor] = useState<Vendor | null>(history?.vendor || null);
@@ -55,8 +61,8 @@ export default function EditSalePurchaseList({
   // Initial values from history or defaults (price as total price)
   const initialFormState = {
     date: history?.date
-      ? new Date(history.date).toISOString().split("T")[0]
-      : new Date().toISOString().split("T")[0],
+      ? formatDateForInput(history.date)
+      : moment().tz(companyTz).format("YYYY-MM-DD"),
     quantity: history?.quantity?.toString() || "",
     price:
       history?.price && history?.quantity
@@ -77,8 +83,8 @@ export default function EditSalePurchaseList({
       originalQuantityRef.current = Number(history?.quantity ?? 0);
       setFormState({
         date: history?.date
-          ? new Date(history.date).toISOString().split("T")[0]
-          : new Date().toISOString().split("T")[0],
+          ? formatDateForInput(history.date)
+          : moment().tz(companyTz).format("YYYY-MM-DD"),
         quantity: history?.quantity?.toString() || "",
         price:
           history?.price && history?.quantity
@@ -113,7 +119,7 @@ export default function EditSalePurchaseList({
   };
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
     setFormState((prev) => ({ ...prev, [name]: value }));
@@ -121,6 +127,8 @@ export default function EditSalePurchaseList({
 
   async function handleSubmit(formData: FormData) {
     const date = formData.get("date") as string;
+    // Parse back into Date in companyTz
+    const zonedDate = moment.tz(date, "YYYY-MM-DD", companyTz).toDate();
     const quantity = formData.get("quantity") as string;
     const price = formData.get("price") as string; // Total price
     const unit = formData.get("unit") as string;
@@ -164,16 +172,16 @@ export default function EditSalePurchaseList({
     const roundedPerUnitPrice = parseFloat(perUnitPrice.toFixed(2));
     const res = await UpdatePurchase({
       historyId: history?.id ?? 0,
-      productId: productId,
-      date: new Date(date),
-      originalQuantity: originalQuantity.toString() ?? "0",
-      quantityDifference: quantityDifference.toString() ?? "0",
+      productId,
+      date: zonedDate, // ✅ stored correctly in server timezone
+      originalQuantity: originalQuantityRef.current.toString(),
+      quantityDifference: quantityDifference.toString(),
       notes,
       vendorId: vendor?.id,
       price: roundedPerUnitPrice || 0,
-      unit: unit,
+      unit,
       lot,
-      isIncreasing: isIncreasing,
+      isIncreasing,
       type: history?.type || "Purchase",
     });
 
@@ -251,7 +259,7 @@ export default function EditSalePurchaseList({
                     vendor.companyName
                       ?.toLowerCase()
                       ?.includes(search.toLowerCase()) ||
-                    vendor.name?.toLowerCase().includes(search.toLowerCase()),
+                    vendor.name?.toLowerCase().includes(search.toLowerCase())
                 )
               }
               openState={[vendorOpen, setVendorOpen]}

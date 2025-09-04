@@ -53,7 +53,7 @@ export default function AddTaskComponent({ lead }: TProps) {
   const isShowTaskCount = totalTasksCount > 0;
 
   const triggerButton = (
-    <div className="relative">
+    <div className="relative cursor-pointer">
       <div className="relative h-4 w-4">
         <Image
           src="/icons/addtask.png"

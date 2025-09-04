@@ -55,49 +55,47 @@ export default function PaymentBarChartContainer({ paymentData }: TProps) {
     <div className="chart-container">
       <BarChartComponent height={500} title="" data={paymentData}>
         <XAxis
-          
           dataKey={"method"}
-          height={ 80}
-             style={{ fontSize: "18px", fontWeight: "600" }}
+          height={80}
+          style={{ fontSize: "18px", fontWeight: "600" }}
         >
           <Label
-                                    angle={-360}
-                                    value="method"
-                                    position={"centerBottom"}
-                                    offset={ 0}
-                                    style={{
-                                      textAnchor: "middle",
-                                      fontWeight: "bold",
-                                      fontSize: 14,
-                                    }}
-                                  >
-                                    Type
-                                  </Label>
+            angle={-360}
+            value="method"
+            position={"centerBottom"}
+            offset={0}
+            style={{
+              textAnchor: "middle",
+              fontWeight: "bold",
+              fontSize: 14,
+            }}
+          >
+            Type
+          </Label>
         </XAxis>
         <YAxis tick={false} dataKey={"payment"}>
           <Label
-                                   angle={-90}
-                                    value="Amount"
-                                      position="insideLeft"
-                                    offset={ 10}
-                                    y={ 70}
-                                    style={{
-                                      textAnchor: "middle",
-                                     
-                                      fontWeight: "bold",
-                                      fontSize:  14,
-                                      backgroundColor: "rgba(255, 255, 255, 0.7)",
-                    padding: "2px 4px",
-                    borderRadius: "2px",
-                                    }}
-                                  >
-                                   Amount
-                                  </Label>
+            angle={-90}
+            value="Amount"
+            position="insideLeft"
+            offset={10}
+            y={70}
+            style={{
+              textAnchor: "middle",
+
+              fontWeight: "bold",
+              fontSize: 14,
+              backgroundColor: "rgba(255, 255, 255, 0.7)",
+              padding: "2px 4px",
+              borderRadius: "2px",
+            }}
+          >
+            Amount
+          </Label>
         </YAxis>
         <Bar
           dataKey={"payment"}
           fill="#03A7A2"
-     
           shape={<CustomBar />}
           label={<CustomLabel />}
           name={"Type"}

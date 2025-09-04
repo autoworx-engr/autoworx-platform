@@ -5,7 +5,7 @@ import { Box, Paper, Typography, Switch } from "@mui/material";
 import { SlimInput } from "@/components/SlimInput";
 import TemplateVariable from "./TemplateVariable";
 import ActiveTemplate from "./ActiveTemplate";
-import { timeDelays } from "./constants";
+import { invoiceTimeDelays, invoiceTypeOptions, timeDelays } from "./constants";
 import { errorToast } from "@/lib/toast";
 import { TAttachments } from "@/types/automation";
 import {
@@ -21,6 +21,8 @@ import { parseTimeDelayToSeconds } from "@/utils/parseTimeDelayToSeconds";
 import { parseSecondsToTimeDelay } from "@/utils/parseSecondsToTimeDelay";
 import { Spin } from "antd";
 import { Company, TwilioCredentials } from "@prisma/client";
+import { useCharacterLimit } from "@/hooks/useCharecterLimit";
+
 type RuleFormProps = {
   initialData?: Rule;
   mode: "create" | "edit" | undefined;
@@ -37,6 +39,7 @@ export type Rule = {
   createdBy: string | null;
   id?: string;
   title: string;
+  type: "Invoice" | "Estimate" | null;
   invoiceStatusId: number | null;
   timeDelay: number | null | string;
   communicationType: "SMS" | "EMAIL" | "BOTH";
@@ -78,6 +81,7 @@ const InvoiceRuleForm: React.FC<RuleFormProps> = ({
       createdBy: userEmail,
       companyId: Number(companyId),
       title: "",
+      type: null,
       invoiceStatusId: null,
       timeDelay: null,
       communicationType: "SMS",
@@ -103,6 +107,11 @@ const InvoiceRuleForm: React.FC<RuleFormProps> = ({
     Number(id)
   );
 
+    const maxLength = 160;
+  const { length, isLimitExceeded } = useCharacterLimit(
+    formData?.emailBody! || formData?.smsBody!,
+    maxLength
+  );
   useEffect(() => {
     fetchStages("shop");
   }, []);
@@ -110,12 +119,18 @@ const InvoiceRuleForm: React.FC<RuleFormProps> = ({
   useEffect(() => {
     const loadData = async () => {
       if (isEdit && id) {
-        const timeDelay = parseSecondsToTimeDelay(data?.data?.timeDelay);
+        const timeDelay =
+          data?.data?.timeDelay !== "Instant" &&
+          parseSecondsToTimeDelay(data?.data?.timeDelay);
         setFormData({
           companyId: data?.data.companyId,
           title: data?.data.title,
+          type: data?.data.type,
           invoiceStatusId: data?.data?.invoiceStatusId,
-          timeDelay: timeDelay,
+          timeDelay:
+            data?.data?.timeDelay === "Instant"
+              ? data?.data?.timeDelay
+              : timeDelay,
           communicationType: data?.data.communicationType,
           emailSubject: data?.data.emailSubject,
           emailBody: data?.data.emailBody,
@@ -134,6 +149,7 @@ const InvoiceRuleForm: React.FC<RuleFormProps> = ({
         setFormData({
           companyId: null,
           title: "",
+          type: null,
           invoiceStatusId: null,
           timeDelay: null,
           communicationType: "SMS",
@@ -208,6 +224,8 @@ const InvoiceRuleForm: React.FC<RuleFormProps> = ({
 
     if (!formData.title || !formData.title.trim())
       newError.title = "Title is required.";
+
+    if (!formData.type) newError.type = "Invoice type is required.";
 
     if (!formData.invoiceStatusId)
       newError.invoiceStatusId = "Invoice Status is required.";
@@ -294,9 +312,9 @@ const InvoiceRuleForm: React.FC<RuleFormProps> = ({
     }
 
     try {
-      if (formData.timeDelay != null) {
+      if (formData.timeDelay != null && formData.timeDelay !== "Instant") {
         const seconds = parseTimeDelayToSeconds(formData.timeDelay!);
-        formData.timeDelay = seconds;
+        formData.timeDelay = `${seconds}`;
       }
 
       formData.invoiceStatusId = Number(formData.invoiceStatusId);
@@ -310,6 +328,7 @@ const InvoiceRuleForm: React.FC<RuleFormProps> = ({
         createRule(formData);
         setFormData({
           title: "",
+          type: null,
           invoiceStatusId: null,
           timeDelay: null,
           communicationType: "SMS",
@@ -349,40 +368,53 @@ const InvoiceRuleForm: React.FC<RuleFormProps> = ({
       <div className="rounded-md border bg-white p-4 shadow-sm md:p-6">
         <Paper elevation={0} className="mx-auto max-w-lg rounded-lg">
           <form onSubmit={handleSubmit}>
-            {/* Title */}
-            <SlimInput
-              name="label"
-              label="Title"
-              value={formData.title}
-              labelClassName="text-gray-500"
-              onChange={(e) => handleChange("title", e.target.value)}
-              required
-              error={error.title}
-            />
+            <div className="space-y-2">
+              {/* Title */}
+              <SlimInput
+                name="label"
+                label="Title"
+                value={formData.title}
+                labelClassName="text-gray-500"
+                onChange={(e) => handleChange("title", e.target.value)}
+                required
+                error={error.title}
+              />
 
-            {/* Invoice Status */}
-            <Selector
-              name="status"
-              label="Invoice Status"
-              options={stages}
-              value={formData.invoiceStatusId!}
-              onChange={(value) => handleChange("invoiceStatusId", value)}
-              required
-              disabled={stageLoading}
-              isClear={true}
-              error={error.invoiceStatusId}
-            />
+              {/* Invoice type */}
+              <Selector
+                name="type"
+                label="Type"
+                options={invoiceTypeOptions}
+                value={formData.type!}
+                onChange={(value) => handleChange("type", value)}
+                required
+                error={error.type}
+              />
 
-            {/* Time Delay */}
-            <Selector
-              name="delay"
-              label="Time Delay"
-              options={timeDelays}
-              value={formData.timeDelay!}
-              onChange={(value) => handleChange("timeDelay", value)}
-              required
-              error={error.timeDelay}
-            />
+              {/* Invoice Status */}
+              <Selector
+                name="status"
+                label="Status"
+                options={stages}
+                value={formData.invoiceStatusId!}
+                onChange={(value) => handleChange("invoiceStatusId", value)}
+                required
+                disabled={stageLoading}
+                isClear={true}
+                error={error.invoiceStatusId}
+              />
+
+              {/* Time Delay */}
+              <Selector
+                name="delay"
+                label="Time Delay"
+                options={invoiceTimeDelays}
+                value={formData.timeDelay!}
+                onChange={(value) => handleChange("timeDelay", value)}
+                required
+                error={error.timeDelay}
+              />
+            </div>
 
             {/* Communication Type */}
             <CustomRadioGroup
@@ -437,6 +469,9 @@ const InvoiceRuleForm: React.FC<RuleFormProps> = ({
                     error={
                       error.smsBody || error.emailBody || error.emailSubject
                     }
+                     maxLength={maxLength}
+                        characterLength={length}
+                        isLimitExceeded={isLimitExceeded}
                   />
                 </Box>
               )}
@@ -465,6 +500,9 @@ const InvoiceRuleForm: React.FC<RuleFormProps> = ({
                       error.emailBody || error.emailSubject || error.smsBody
                     }
                     subjectError={!!error.emailSubject}
+                     maxLength={maxLength}
+                        characterLength={length}
+                        isLimitExceeded={isLimitExceeded}
                   />
                 </Box>
               )}
@@ -477,9 +515,9 @@ const InvoiceRuleForm: React.FC<RuleFormProps> = ({
             <div className="flex justify-end pt-4">
               <button
                 type="submit"
-                disabled={isCreatePending || isUpdatePending}
+                disabled={isCreatePending || isUpdatePending || isLimitExceeded}
                 className={`rounded-md px-4 py-2 text-sm font-medium text-white ${
-                  isUpdatePending || isCreatePending
+                  isUpdatePending || isCreatePending || isLimitExceeded
                     ? "cursor-not-allowed bg-indigo-300"
                     : "bg-indigo-500 hover:bg-indigo-600"
                 }`}

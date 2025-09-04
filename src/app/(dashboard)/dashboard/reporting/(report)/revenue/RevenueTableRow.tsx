@@ -8,18 +8,26 @@ import { TInvoice } from "./page";
 import { FormatUtcToTimezone } from "@/utils/FormatUtcToTimezone";
 
 type TProps = {
-  invoice: TInvoice & { costPrice: number; profitPrice: number };
+  invoice: TInvoice & { 
+    costPrice: number; 
+    profitPrice: number;
+    inventoryLossAmount: number;
+    materialLossAmount: number;
+    laborLossAmount: number;
+    totalLossAmount: number;
+    materialLossDetails: { name: string; loss: number; isFromInventory: boolean }[];
+  };
   index: number;
-  inventoryLostTotalCost?: number;
-  inventoryMaterialName?: string[];
+  totalLossAmount?: number;
+  lossDetails?: string[];
   timezone: string;
 };
 
 export default function RevenueTableRow({
   invoice,
   index,
-  inventoryLostTotalCost,
-  inventoryMaterialName,
+  totalLossAmount,
+  lossDetails,
   timezone,
 }: TProps) {
   const formattedDate = FormatUtcToTimezone(
@@ -28,8 +36,12 @@ export default function RevenueTableRow({
     "MMM Do, YYYY"
   );
 
-  const totalCostWithLostCost =
-    Number(invoice.costPrice) + inventoryLostTotalCost!;
+  // Display the actual cost (what we spent)
+  const displayCost = Number(invoice.costPrice);
+  
+  // Check if there are any losses to show the exclamation mark
+  const hasLosses = (totalLossAmount || 0) > 0;
+  
   return (
     <tr
       className={cn(
@@ -62,9 +74,9 @@ export default function RevenueTableRow({
       </td>
       <td className="border-b px-4 py-2 text-left">
         <div className="flex items-center gap-2">
-          {formatCurrency(totalCostWithLostCost)}
-          {inventoryLostTotalCost && (
-            <Tooltip title={inventoryMaterialName?.join() || ""}>
+          {formatCurrency(displayCost)}
+          {hasLosses && (
+            <Tooltip title={lossDetails?.join(" | ") || "Loss detected"}>
               <FaExclamation color="red" size={12} />
             </Tooltip>
           )}

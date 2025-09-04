@@ -15,6 +15,7 @@ import type { Priority, User } from "@prisma/client";
 // import { TimePicker } from "antd";
 import { editTask } from "@/actions/task/editTask.ts";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { FaTrash } from "react-icons/fa";
 import { FaCheck } from "react-icons/fa6";
 // @ts-ignore
@@ -27,9 +28,13 @@ import { useFormErrorStore } from "@/stores/form-error";
 import { addOneHour, formatDateToToday, getCurrentTime } from "@/utils/time";
 import moment from "moment";
 import AssignTaskDropDown from "./AssignTaskDropDown";
+import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
+import { useCalendarStore } from "@/stores/calendarStore";
 
 export default function UpdateTask() {
+  const router = useRouter();
   const { popup, data, close } = usePopupStore();
+  const { setUpdateVariable } = useCalendarStore();
   const { companyUsers, task } = data as {
     companyUsers: User[];
     task: CalendarTask;
@@ -38,7 +43,7 @@ export default function UpdateTask() {
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description);
   const [assignedUsers, setAssignedUsers] = useState<number[]>(
-    task?.assignedUsers?.map((user) => user.id),
+    task?.assignedUsers?.map((user) => user.id) || []
   );
   const { clearError, showError } = useFormErrorStore();
   const [priority, setPriority] = useState<Priority>(task.priority);
@@ -46,7 +51,7 @@ export default function UpdateTask() {
   const [startTime, setStartTime] = useState<string>(task.startTime || "");
   const [endTime, setEndTime] = useState<string>(task.endTime || "");
   const [date, setDate] = useState<string>(
-    moment.utc(task.date).format("YYYY-MM-DD"),
+    moment.utc(task.date).format("YYYY-MM-DD")
   );
 
   // Add state for minimum date and time validation
@@ -59,7 +64,7 @@ export default function UpdateTask() {
 
   const handleTimeChange = (
     e: React.ChangeEvent<HTMLInputElement>,
-    type: "start" | "end",
+    type: "start" | "end"
   ) => {
     let timeValue = e.target.value;
 
@@ -125,7 +130,7 @@ export default function UpdateTask() {
         task: {
           title,
           description,
-          assignedUsers,
+          assignedUsers: assignedUsers || [],
           priority,
           startTime,
           endTime,
@@ -151,6 +156,8 @@ export default function UpdateTask() {
 
       close();
       clearError();
+      setUpdateVariable();
+      router.refresh();
     } catch (err) {
       console.error(err);
     }
@@ -285,6 +292,8 @@ export default function UpdateTask() {
               onClick={async () => {
                 await deleteTask(task.id);
                 close();
+                setUpdateVariable();
+                router.refresh();
               }}
             >
               <FaTrash />

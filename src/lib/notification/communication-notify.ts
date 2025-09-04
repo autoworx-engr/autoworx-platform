@@ -29,7 +29,7 @@ export const sendClientEmailNotification = async ({
     });
     const redirectUrl = `/dashboard/communication/client/${clientId}`;
     const description = `Email from "${clientName}" received. View in your Autoworx inbox.`;
-    const title = "Send a email from Client";
+    const title = "Received an email from Client";
     for (const user of getUsers) {
       sendUserNotifications({
         userId: user.id,

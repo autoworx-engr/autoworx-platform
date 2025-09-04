@@ -10,6 +10,7 @@ import { redirect } from "next/navigation";
 import DetailsBtn from "./DetailsBtn";
 import BackDetailsBtn from "./BackDetailsBtn";
 import { getCompanyId } from "@/lib/companyId";
+import { cn } from "@/lib/cn";
 
 type TProps = {
   selectedConversation?: string;
@@ -49,19 +50,31 @@ export default async function ConversationsBox({
 
   return (
     <div
-      className={`app-shadow relative h-[calc(100dvh-56px)] rounded-lg bg-background lg:h-[90vh] ${showChatClass}`}
+      className={cn(
+        "app-shadow relative rounded-lg bg-background",
+        "h-[calc(100dvh-56px)] lg:h-[90vh]",
+        "ring-1 ring-zinc-200/60 dark:ring-white/10",
+        showChatClass
+      )}
     >
-      {/* Header */}
-      {/* <h2 className="hidden h-[10%] rounded-t-lg p-3 text-[14px] text-[#797979] lg:block 2xl:h-[5%]">
-        Client Message
-      </h2> */}
-      <div className="flex h-full flex-col">
+      {/* Column layout */}
+      <div className="flex h-full flex-col overflow-hidden">
         {/* Chat Header */}
-        <div className="sticky top-0 z-10 flex h-16 items-center justify-between gap-2 bg-[#006D77] px-2 text-white md:rounded-t-md md:p-2">
-          <div className="flex items-center">
+        <div
+          className={cn(
+            "sticky top-0 z-10 flex h-16 items-center justify-between gap-2 px-2 md:px-3",
+            // modern teal gradient + subtle blur over scroll
+            "bg-gradient-to-r from-[#006D77] to-[#008c99]",
+            "ring-1 ring-teal-500/60 text-white",
+            "md:rounded-t-md backdrop-blur supports-[backdrop-filter]:bg-[#006D77]/90"
+          )}
+        >
+          {/* Left: identity */}
+          <div className="flex min-w-0 items-center">
             <div className="block pr-2 lg:hidden">
               <BackDetailsBtn />
             </div>
+
             <Image
               src={
                 !client?.photo
@@ -71,29 +84,35 @@ export default async function ConversationsBox({
                     : client.photo
               }
               alt="client"
-              width={50}
-              height={50}
-              className="size-[50px] rounded-full"
+              width={48}
+              height={48}
+              className="size-12 rounded-full object-cover ring-2 ring-white/70"
             />
-            <div className="ml-4 flex flex-col">
-              <p className="flex items-center gap-x-2 text-[14px] font-bold">
-                <span>
+
+            <div className="ml-3 flex min-w-0 flex-col">
+              <p className="flex items-center gap-1 text-sm font-semibold leading-5">
+                <span className="truncate">
                   {client?.firstName} {client?.lastName}
                 </span>
-                <span>
-                  {" "}
-                  {client?.isStarred && (
-                    <span className="text-2xl text-yellow-500">
-                      <MdOutlineStar />
-                    </span>
-                  )}
-                </span>
+                {client?.isStarred && (
+                  <span
+                    className="inline-flex items-center rounded-full bg-white/15 px-1.5 py-0.5 text-[10px] leading-none text-yellow-300 ring-1 ring-white/30 ml-2"
+                    title="Favorite client"
+                  >
+                    <MdOutlineStar className="mr-0.5" />
+                    Starred
+                  </span>
+                )}
               </p>
-              <p className="text-[8px]">{client?.customerCompany}</p>
+
+              <p className="truncate text-[11px] opacity-90">
+                {client?.customerCompany}
+              </p>
             </div>
           </div>
 
-          <div className="flex items-center">
+          {/* Right: actions */}
+          <div className="flex items-center gap-2">
             <ChatHead
               client={client}
               companyId={companyId}
@@ -105,8 +124,13 @@ export default async function ConversationsBox({
           </div>
         </div>
 
-        <div className="flex-1 overflow-hidden"> {MessageBox}</div>
-        {/* {selected === "PHONE" && <Phone clientId={+clientId} client={client} />} */}
+        {/* Messages */}
+        <div className="flex-1 overflow-hidden">
+          {MessageBox}
+          {/* If you have an empty state, you can drop it in here conditionally */}
+        </div>
+
+        {/* composer stays outside; your composer component mounts below this container */}
       </div>
     </div>
   );

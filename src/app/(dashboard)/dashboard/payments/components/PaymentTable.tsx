@@ -1,6 +1,6 @@
 import { ReturnPayment } from "@/actions/payment/getPayments";
 import { usePaymentFilterStore } from "@/stores/paymentFilter";
-import moment from "moment";
+import moment from "moment-timezone";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { formatCurrency } from "@/utils/formatCurrency";
@@ -45,10 +45,23 @@ export default function PaymentTable({
   useEffect(() => {
     setFilteredData(
       data.filter((item) => {
+        const [start, end] = dateRange;
+
+        // Safely convert to YYYY-MM-DD string to prevent local time leakage
+        const startStr = moment(start).format("YYYY-MM-DD");
+        const endStr = moment(end).format("YYYY-MM-DD");
+
+        // Rebuild moment using Detroit timezone from date strings
+        const convertedStart = moment
+          .tz(startStr, timezone)
+          .startOf("day")
+          .utc();
+        const convertedEnd = moment.tz(endStr, timezone).endOf("day").utc();
+
         const isWithinDateRange =
           dateRange[0] && dateRange[1]
-            ? moment(item.date).isSameOrAfter(dateRange[0], "day") &&
-              moment(item.date).isSameOrBefore(dateRange[1], "day")
+            ? moment.utc(item.date).isSameOrAfter(convertedStart) &&
+              moment.utc(item.date).isSameOrBefore(convertedEnd)
             : true;
 
         const isWithinAmountRange =
@@ -76,7 +89,7 @@ export default function PaymentTable({
           isPaidStatusMatch &&
           isSearchMatch
         );
-      }),
+      })
     );
   }, [data, dateRange, amount, paidStatus, paymentMethod, search]);
 
@@ -97,7 +110,7 @@ export default function PaymentTable({
 
   const paginatedData = filteredData.slice(
     (currentPage - 1) * pageSize,
-    currentPage * pageSize,
+    currentPage * pageSize
   );
 
   return (
@@ -113,6 +126,7 @@ export default function PaymentTable({
               <th className="border-b px-4 py-2 text-left">Vehicle Info</th>
               <th className="border-b px-4 py-2 text-left">Transaction Date</th>
               <th className="border-b px-4 py-2 text-left">Amount</th>
+              <th className="border-b px-4 py-2 text-left">Cash Received</th>
               <th className="border-b px-4 py-2 text-left">Method</th>
               <th className="border-b px-4 py-2 text-left">Refund</th>
             </tr>
@@ -159,7 +173,11 @@ export default function PaymentTable({
                     )}
                   </div>
                 </td>
-                <td className="border-b px-4 py-2">{item.method}</td>                <td className="border-b px-4 py-2">
+                <td className="border-b px-4 py-2">
+                  {item.cashReceived ? item.cashReceived : "N/A"}
+                </td>
+                <td className="border-b px-4 py-2">{item.method}</td>{" "}
+                <td className="border-b px-4 py-2">
                   <RefundModal
                     paymentId={item.id}
                     paymentType={item.paymentType}
@@ -196,7 +214,6 @@ export default function PaymentTable({
                   {FormatUtcToTimezone(item.date, timezone, "MM/DD/YYYY")}
                 </p>
               </div>
-
               <div className="flex items-center justify-between">
                 <Link
                   href={`/dashboard/client/${item?.client?.id && item?.client?.id !== undefined ? item?.client?.id : ""}`}
@@ -217,7 +234,6 @@ export default function PaymentTable({
                   )}
                 </div>
               </div>
-
               <div className="flex items-center justify-between">
                 <p className="text-lg font-semibold text-[#66738C]">
                   {item?.vehicle && item?.vehicle !== undefined
@@ -227,7 +243,14 @@ export default function PaymentTable({
                 <p className="text-lg font-semibold text-[#66738C]">
                   {item.method}
                 </p>
-              </div>              <div className="flex justify-end">
+              </div>
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-[#66738C]">Cash Received:</p>
+                <p className="text-sm font-semibold text-[#66738C]">
+                  {item.cashReceived ? item.cashReceived : "N/A"}
+                </p>
+              </div>{" "}
+              <div className="flex justify-end">
                 <RefundModal
                   paymentId={item.id}
                   paymentType={item.paymentType}

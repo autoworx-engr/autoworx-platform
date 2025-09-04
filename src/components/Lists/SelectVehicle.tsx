@@ -75,7 +75,7 @@ export function SelectVehicle({
               : "Vehicle"
           }
           newButton={
-            <NewVehicle
+            clientId && <NewVehicle
               clientId={Number(clientId)}
               onAdd={(vehicle: Vehicle) => {
                 setVehicle(vehicle);

@@ -7,7 +7,7 @@ import { ServerAction } from "@/types/action";
 import { TErrorHandler } from "@/types/globalError";
 import { createEmployeeValidationSchema } from "@/validations/schemas/employee/employee.validation";
 import { EmployeeType, SalaryType } from "@prisma/client";
-import bcrypt from "bcryptjs";
+import bcrypt from "bcrypt";
 import { revalidatePath } from "next/cache";
 import { uploadNotificationSettings } from "../settings/updateNotification";
 

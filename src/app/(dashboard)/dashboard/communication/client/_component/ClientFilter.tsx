@@ -1,121 +1,122 @@
 "use client";
-
 import { useDebounce } from "@/hooks/useDebounce";
 import { cn } from "@/lib/cn";
 import { useDemoClientFilterStore } from "@/stores/clientFilter";
-import { useEffect } from "react";
-
-type TProps = {
-  search?: string;
-  filter?: string;
-};
+import { useCallback, useEffect } from "react";
+import { Search, X } from "lucide-react";
 
 export default function ClientFilter() {
-  // const router = useRouter();
-  // const pathname = usePathname();
-  // const searchParams = useSearchParams();
   const { filter, setFilter, setSearchTerm, searchTerm } =
     useDemoClientFilterStore();
 
-  const handleSearch = useDebounce((searchTerm: string) => {
-    // if (searchParams) {
-    //   const params = new URLSearchParams(searchParams);
-    //   if (searchTerm === "" && params.has("search")) {
-    //     params.delete("search");
-    //   } else {
-    //     params.set("search", searchTerm);
-    //   }
-    //   router.replace(`${pathname}?${params.toString()}`);
-    // }
-    setSearchTerm(searchTerm);
-  }, 300);
+  // Debounce the search term updates
+  const debouncedSetSearchTerm = useDebounce(setSearchTerm, 300);
 
-  const handleFilterChange = (filter: string) => {
-    // if (searchParams) {
-    //   const params = new URLSearchParams(searchParams);
-    //   params.set("filter", filter);
-    //   if (filter === "All" && params.has("filter")) {
-    //     params.delete("filter");
-    //   }
-    //   const redirectPath = `${pathname}?${params.toString()}`;
-    //   router.replace(redirectPath);
-    // }
-    setFilter(filter);
-  };
+  const handleSearchChange = useCallback(
+    (value: string) => {
+      // Update local state immediately for responsive UI
+      setSearchTerm(value);
+      // Debounce the actual search logic if needed
+      debouncedSetSearchTerm(value);
+    },
+    [setSearchTerm, debouncedSetSearchTerm]
+  );
 
+  const handleFilterChange = useCallback(
+    (value: string) => {
+      setFilter(value);
+    },
+    [setFilter]
+  );
+
+  const clearSearch = useCallback(() => {
+    (document.activeElement as HTMLElement)?.blur?.();
+    setSearchTerm("");
+    debouncedSetSearchTerm("");
+  }, [setSearchTerm, debouncedSetSearchTerm]);
+
+  // Reset filters on component mount
   useEffect(() => {
     setSearchTerm("");
-  }, []);
+    setFilter("All");
+  }, []); // Empty dependency array is fine for mount-only effect
+
+  const filters = ["All", "Unread", "Starred", "Assigned"] as const;
 
   return (
-    <>
-      <div className="w-full">
+    <div className="w-full space-y-4">
+      {/* Search */}
+      <div className="relative">
+        <Search
+          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400"
+          size={18}
+        />
         <input
           type="text"
-          placeholder="Search here..."
-          
-          className="my-6 mr-2 w-full rounded-md border border-emerald-700 p-2 text-[16px] text-[#797979]"
-          style={{
-            WebkitAppearance: "none",
-            maxHeight: "100%",
-            WebkitTextSizeAdjust: "100%",
-            touchAction: "manipulation", // Helps with tap delays in PWAs
-          }}
-          onChange={(e) => handleSearch(e.target.value)}
+          placeholder="Search clients…"
+          className={cn(
+            "w-full rounded-md border bg-white pl-9 pr-9 py-2 text-sm text-zinc-700 placeholder-zinc-400 outline-none",
+            "border-zinc-300 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20",
+            "dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+          )}
+          value={searchTerm}
+          onChange={(e) => handleSearchChange(e.target.value)}
           autoComplete="off"
           autoCorrect="off"
           autoCapitalize="none"
           spellCheck="false"
+          style={{
+            WebkitAppearance: "none",
+            WebkitTextSizeAdjust: "100%",
+            touchAction: "manipulation",
+          }}
+          aria-label="Search clients"
         />
+        {searchTerm && (
+          <button
+            type="button"
+            onClick={clearSearch}
+            className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex h-7 w-7 items-center justify-center rounded-md text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+            aria-label="Clear search"
+            title="Clear"
+          >
+            <X size={16} />
+          </button>
+        )}
       </div>
-      <div className="flex items-center justify-between">
-        <button
-          onClick={() => {
-            handleFilterChange("All");
-          }}
-          className={cn(
-            `rounded-md border-2 border-[#006D77] px-2 py-1 text-xs`,
-            filter === "All" ? "bg-[#006D77] text-white" : "text-[#006D77]",
-          )}
-        >
-          All
-        </button>
-        <button
-          onClick={() => {
-            handleFilterChange("Unread");
-          }}
-          className={cn(
-            `rounded-md border-2 border-[#006D77] px-2 py-1 text-xs`,
-            filter === "Unread" ? "bg-[#006D77] text-white" : "text-[#006D77]",
-          )}
-        >
-          Unread
-        </button>
-        <button
-          onClick={() => {
-            handleFilterChange("Starred");
-          }}
-          className={cn(
-            `rounded-md border-2 border-[#006D77] px-2 py-1 text-xs`,
-            filter === "Starred" ? "bg-[#006D77] text-white" : "text-[#006D77]",
-          )}
-        >
-          Starred
-        </button>
-        <button
-          onClick={() => {
-            handleFilterChange("Assigned");
-          }}
-          className={cn(
-            `rounded-md border-2 border-[#006D77] px-2 py-1 text-xs`,
-            filter === "Assigned"
-              ? "bg-[#006D77] text-white"
-              : "text-[#006D77]",
-          )}
-        >
-          Assigned To Me
-        </button>
+
+      {/* Filters */}
+      <div
+        role="radiogroup"
+        aria-label="Filter clients"
+        className={cn(
+          "flex items-center gap-1 rounded-lg border p-1 text-xs font-medium",
+          "border-emerald-600",
+          "overflow-x-auto no-scrollbar"
+        )}
+      >
+        {filters.map((item) => {
+          const selected = filter === item;
+          const label = item === "Assigned" ? "Assigned To Me" : item;
+          return (
+            <button
+              key={item}
+              role="radio"
+              aria-checked={selected}
+              onClick={() => handleFilterChange(item)}
+              className={cn(
+                "flex-1 whitespace-nowrap rounded-md px-3 py-1.5 transition-all",
+                "focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500",
+                selected
+                  ? "bg-gradient-to-r from-teal-700 to-teal-600 text-white"
+                  : "text-emerald-700 hover:bg-emerald-50 dark:text-emerald-300 dark:hover:bg-emerald-900/20"
+              )}
+            >
+              {label}
+            </button>
+          );
+        })}
       </div>
-    </>
+    </div>
   );
 }

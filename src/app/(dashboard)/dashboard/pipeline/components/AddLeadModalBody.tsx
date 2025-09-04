@@ -57,7 +57,7 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
   });
 
   const handleServiceChange = (
-    value: string | { id: string | number; title: string },
+    value: string | { id: string | number; title: string }
   ) => {
     if (typeof value === "object") {
       // Store the full object separately
@@ -162,7 +162,7 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
             serviceId: formData.service,
             oppurtunity_source: opportunitySource,
           }),
-        },
+        }
       );
 
       if (response.ok) {
@@ -236,6 +236,7 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
 
   return (
     <DialogContent
+      className="max-h-[calc(100vh-2rem)] overflow-y-auto"
       onCloseAutoFocus={() => setFormStatus({ message: "", type: null })}
     >
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -363,7 +364,10 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
             className="block text-sm font-medium text-gray-700"
           >
             Others
-             {/* <span className="text-red-500"> *</span> */}
+            <span className="text-xs">
+              {" "}
+              (Vehicle not listed or non-vehicle job? Enter details here)
+            </span>
           </label>
           <input
             id="others"

@@ -20,6 +20,7 @@ import {
   AccordionTrigger,
 } from "../ui/accordion";
 import ProblemCard from "./ProblemCard";
+import TestimonialCard from "./TestimonialCard";
 
 const problem = [
   {
@@ -101,6 +102,22 @@ export default function Problem() {
           <div className="mb-16 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {problem.map((item, index) => (
               <ProblemCard key={index} item={item} />
+            ))}
+          </div>
+
+          {/* Testimonial  */}
+          <div className="mx-auto max-w-xl mb-16">
+            {[
+              {
+                name: "Maria G.",
+                title: "Founder at Tint & Shine Auto Studio",
+                image: "/images/solution/user/maria.jpg",
+                rating: 5,
+                quote:
+                  "I was always buried in paperwork and chasing payments. Autoworx changed everything. My estimates and invoices are all in one place, and customers love the online approval. Plus, they beat my credit card processing rate!",
+              },
+            ].map((testimonial, index) => (
+              <TestimonialCard key={index} testimonial={testimonial} />
             ))}
           </div>
 

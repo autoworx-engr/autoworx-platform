@@ -12,6 +12,7 @@ import { useEffect, useState } from "react";
 import { FaTimes, FaTrash } from "react-icons/fa";
 import UpdateTemplate from "./UpdateTemplate";
 import { TbUserX } from "react-icons/tb";
+import { IoAlertCircleOutline } from "react-icons/io5";
 
 type TReminderProps = {
   client: Partial<Client> | null;
@@ -143,7 +144,7 @@ export function Reminder({
     // Check if reminder is before the appointment
     const appointmentDateTime = moment(
       `${date} ${startTime}`,
-      "YYYY-MM-DD HH:mm",
+      "YYYY-MM-DD HH:mm"
     );
     const reminderDateTime = moment(`${dateInput} ${time}`, "YYYY-MM-DD HH:mm");
 
@@ -200,7 +201,7 @@ export function Reminder({
             />
           }
           items={templates.filter(
-            (template: EmailTemplate) => template.type === "Confirmation",
+            (template: EmailTemplate) => template.type === "Confirmation"
           )}
           displayList={(template: EmailTemplate) => (
             <div className="flex">
@@ -235,7 +236,7 @@ export function Reminder({
           setSelectedItem={setConfirmationTemplate}
           onSearch={(search: string) =>
             templates.filter((template) =>
-              template.subject.toLowerCase().includes(search.toLowerCase()),
+              template.subject.toLowerCase().includes(search.toLowerCase())
             )
           }
           openState={[openConfirmation, setOpenConfirmation]}
@@ -270,7 +271,7 @@ export function Reminder({
             />
           }
           items={templates.filter(
-            (template: EmailTemplate) => template.type === "Reminder",
+            (template: EmailTemplate) => template.type === "Reminder"
           )}
           displayList={(template: EmailTemplate) => (
             <div className="flex">
@@ -305,7 +306,7 @@ export function Reminder({
           setSelectedItem={setReminderTemplate}
           onSearch={(search: string) =>
             templates.filter((template) =>
-              template.subject.toLowerCase().includes(search.toLowerCase()),
+              template.subject.toLowerCase().includes(search.toLowerCase())
             )
           }
           openState={[openReminder, setOpenReminder]}
@@ -359,11 +360,11 @@ export function Reminder({
 
             const timeObjMoment = moment(
               `${timeObj.date} ${timeObj.time}`,
-              "YYYY-MM-DD HH:mm",
+              "YYYY-MM-DD HH:mm"
             );
 
             const formattedTime = moment(timeObjMoment).format(
-              "MMMM Do YYYY, h:mm A",
+              "MMMM Do YYYY, h:mm A"
             );
 
             // const diff = moment.duration(appointmentTime.diff(timeObjMoment));
@@ -388,6 +389,13 @@ export function Reminder({
             );
           })}
         </div>
+      </div>
+      <div className="flex items-start gap-2  p-2  text-sm text-yellow-800">
+        <IoAlertCircleOutline className="mt-1 h-5 w-5 flex-shrink-0 text-yellow-600" />
+        <p className="leading-relaxed">
+          Your client will receive automated reminders <strong>24 hours</strong>{" "}
+          and <strong>2 hours</strong> prior to their scheduled appointment.
+        </p>
       </div>
     </>
   );

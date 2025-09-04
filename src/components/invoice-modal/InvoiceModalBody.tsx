@@ -14,6 +14,7 @@ import {
 } from "@/components/Dialog";
 import { useServerGet } from "@/hooks/useServerGet";
 import { cn } from "@/lib/cn";
+import { queryKeys } from "@/lib/queryKeys";
 import { errorToast, successToast } from "@/lib/toast";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
@@ -32,25 +33,26 @@ import {
   User,
   Vehicle,
 } from "@prisma/client";
+import { useQuery } from "@tanstack/react-query";
 import { Popconfirm, Spin, Tooltip } from "antd";
 import moment from "moment";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FaCopy, FaPrint, FaRegEdit } from "react-icons/fa";
 import { FaCommentSms, FaRegShareFromSquare } from "react-icons/fa6";
 import { HiXMark } from "react-icons/hi2";
 import { IoCloseCircleSharp } from "react-icons/io5";
 import { MdOutlineMail } from "react-icons/md";
+import { PiWechatLogoLight } from "react-icons/pi";
 import { useReactToPrint } from "react-to-print";
 import WorkOrderModal from "../workorder-modal/WorkOrderModal";
 import { InspectionItems } from "./InspectionItems";
 import { InvoiceItems } from "./InvoiceItems";
 import { StripePay } from "./StripePay";
-import { planObject } from "@/utils/planObject";
-import { PiWechatLogoLight } from "react-icons/pi";
+import { getPaymentSummary } from "@/actions/payment/refundPayment";
 const DownloadPDF = dynamic(() => import("./DownloadInvoice"), {
   ssr: false,
 });
@@ -80,9 +82,17 @@ export default function InvoiceModalBody({
   const searchParams = useSearchParams();
 
   const [invoice, setInvoice] = useState<InvoiceData>();
+  const { data, isLoading, isError, error, isFetched } = useQuery({
+    queryKey: queryKeys.getInvoiceModalDataKey(invoiceId!),
+    queryFn: () => getInvoiceModalData(invoiceId!),
+    enabled: !!invoiceId,
+  });
+
+  console.log({ isError, error, data });
+
   const [twilioCredentials, setTwilioCredentials] =
     useState<TwilioCredentials | null>();
-  const [isLoading, setIsLoading] = useState(true);
+  // const [isLoading, setIsLoading] = useState(true);
   const printComponentRef = useRef(null);
   const promiseResolveRef = useRef<any>(null);
   const [showAuthorizedName, setShowAuthorizedName] = useState(false);
@@ -102,6 +112,22 @@ export default function InvoiceModalBody({
 
   const [isSuccessMsgShown, setIsSuccessMsgShown] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
+  const [refundAmount, setRefundAmount] = useState<number>(0);
+
+  useEffect(() => {
+    if (isFetched && !isLoading && data) {
+      setInvoice(data.invoice);
+      setTwilioCredentials(data?.twilioCredentials);
+      const refundAmount = data.invoice.Refund?.[0]?.amount || 0;
+      setRefundAmount(refundAmount);
+
+      // Important: Set the authorized name from the server data
+      if (data.invoice?.authorizedName) {
+        setAuthorizedName(data.invoice.authorizedName);
+        setAuthorizedNameInput(data.invoice.authorizedName);
+      }
+    }
+  }, [isLoading, data, isFetched]);
 
   // We watch for the state to change here, and for the Promise resolve to be available
   useEffect(() => {
@@ -126,58 +152,13 @@ export default function InvoiceModalBody({
     },
   });
   const currentUser = useGetCurrentUser();
+
   // If the invoice is not passed, and selfFetch is not set to true, throw an error
   if (!invoiceId) {
     throw new Error("Invoice id not provided");
   }
-  const { data: stripeAccountData } = useServerGet(
-    getStripeAccount,
-    invoice?.companyId
-  );
-
-  // Add a refresh function that can be called to reload the data
-  const refreshInvoiceData = useCallback(async () => {
-    if (!invoiceId) return;
-
-    try {
-      const res = await getInvoiceModalData(invoiceId);
-      setInvoice(res.invoice);
-      setTwilioCredentials(res?.twilioCredentials);
-
-      // Important: Set the authorized name from the server data
-      if (res.invoice?.authorizedName) {
-        setAuthorizedName(res.invoice.authorizedName);
-        setAuthorizedNameInput(res.invoice.authorizedName);
-      }
-    } catch (error) {
-      console.error("Error refreshing invoice data:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [invoiceId]);
-
-  // Add an event listener for a custom event that can be triggered from other components
-  useEffect(() => {
-    const handleInvoiceUpdate = (event: CustomEvent) => {
-      if (event.detail.invoiceId === invoiceId) {
-        refreshInvoiceData();
-      }
-    };
-
-    // Add event listener
-    window.addEventListener(
-      "invoice-updated" as any,
-      handleInvoiceUpdate as any
-    );
-
-    // Clean up
-    return () => {
-      window.removeEventListener(
-        "invoice-updated" as any,
-        handleInvoiceUpdate as any
-      );
-    };
-  }, [invoiceId, refreshInvoiceData]);
+  const companyId = data?.invoice?.companyId;
+  const { data: stripeAccountData } = useServerGet(getStripeAccount, companyId);
 
   useEffect(() => {
     if (isSuccess && !isSuccessMsgShown) {
@@ -191,28 +172,6 @@ export default function InvoiceModalBody({
       setIsStripeDialogOpen(true);
     }
   }, [isStripe]);
-  useEffect(() => {
-    const fetchInvoice = async () => {
-      setIsLoading(true);
-      try {
-        const res = await getInvoiceModalData(invoiceId);
-        setInvoice(res.invoice);
-        setTwilioCredentials(res?.twilioCredentials);
-
-        // Important: Set the authorized name from the server data
-        if (res.invoice?.authorizedName) {
-          setAuthorizedName(res.invoice.authorizedName);
-          setAuthorizedNameInput(res.invoice.authorizedName);
-        }
-      } catch (error) {
-        console.error("Error fetching invoice data:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchInvoice();
-  }, [invoiceId]);
 
   if (isLoading) {
     return (
@@ -389,7 +348,9 @@ export default function InvoiceModalBody({
             </div>
           </div>
 
-          <DialogClose className="absolute right-4 top-1 rounded-sm font-bold opacity-90 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground md:right-2 md:top-3 print:hidden">
+          <DialogClose
+            className={`absolute right-4 top-1 rounded-sm font-bold opacity-90 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground md:right-2 md:top-3 print:hidden ${isPublic ? "hidden" : ""}`}
+          >
             <HiXMark className="h-6 w-6 font-bold text-slate-500" />
             <span className="sr-only">Close</span>
           </DialogClose>
@@ -511,7 +472,11 @@ export default function InvoiceModalBody({
                         {invoice.photos.map((x) => {
                           return (
                             <Link
-                              href={`/dashboard/estimate/photo?url=${x.photo}`}
+                              href={
+                                isPublic
+                                  ? `/public-invoice/${invoiceId}/photo?url=${x.photo}`
+                                  : `/dashboard/estimate/photo?url=${x.photo}`
+                              }
                               key={x.id}
                               className="relative mx-auto aspect-square w-full max-w-[120px]"
                             >
@@ -562,6 +527,7 @@ export default function InvoiceModalBody({
                   ["grand total", invoice.grandTotal],
                   ["deposit", invoice.deposit],
                   ["due", invoice.due],
+                  ["Refunded", refundAmount],
                 ] as const
               ).map(([key, value]) => (
                 <div key={key}>
@@ -788,7 +754,11 @@ export default function InvoiceModalBody({
                   {invoice.photos.map((x) => {
                     return (
                       <Link
-                        href={`/dashboard/estimate/photo?url=${x.photo}`}
+                        href={
+                          isPublic
+                            ? `/public-invoice/${invoiceId}/photo?url=${x.photo}`
+                            : `/dashboard/estimate/photo?url=${x.photo}`
+                        }
                         key={x.id}
                         className="relative aspect-square size-36 md:h-full md:w-full"
                       >

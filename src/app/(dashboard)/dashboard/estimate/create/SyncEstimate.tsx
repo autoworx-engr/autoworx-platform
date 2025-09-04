@@ -55,7 +55,10 @@ export default function SyncEstimate({
       invoiceId: invoice.id,
       subtotal: parseFloat(invoice.subtotal?.toString() || "0"),
       type: invoice.type,
-      photos: photos.map((photo) => photo.photo),
+      photos: photos.map((photo) => ({
+        id: photo.id,
+        photo: photo.photo, 
+      })),
       discount: parseFloat(invoice.discount?.toString() || "0"),
       tax: parseFloat(invoice.tax?.toString() || "0"),
       serviceFee: parseFloat(invoice.serviceFee?.toString() || "0"),

@@ -42,34 +42,25 @@ export default function NewTemplate({
 }: TNewTemplateProps) {
   const [open, setOpen] = useState(false);
   const { showError } = useFormErrorStore();
-  // const templates = useListsStore((x) => x.templates);
   const { data: templates = [] } = useTemplatesQuery();
-
   const queryClient = useQueryClient();
 
   const [subject, setSubject] = useState(
     type === "Confirmation"
       ? "Appointment Confirmation"
-      : "Reminder for your upcoming appointment",
+      : "Appointment Reminder"
   );
   const [message, setMessage] = useState("");
 
-  const templateText =
-    type === "Confirmation"
-      ? `Confirmation: Your appointment is on <DATE>`
-      : `reminder: Your appointment is on <DATE>`;
-
   useEffect(() => {
-    // const appointmentDate = moment(`${date}T${startTime}:00`).format(
-    //   "dddd, MMMM DD, h:mm A",
-    // );
-    // const dayName = moment(date).format("dddd");
-    // const month = moment(date).format("MMMM DD");
-    setMessage(`Hi <CLIENT>, ${templateText}. Reply here or call <PHONE> with questions or to reschedule.
-<BUSINESS_NAME>
-<ADDRESS>.
-STOP to opt out.`);
-  }, [clientName, vehicleModel, date, startTime]);
+    // Updated default texts (<160 chars, SMS style)
+    const templateText =
+      type === "Confirmation"
+        ? `Hi <CLIENT>, your <BUSINESS_NAME> appt is on <DATE>. Reply YES to confirm, NO to cancel, or text here to reschedule. STOP to opt out.`
+        : `Reminder: <CLIENT>, your <BUSINESS_NAME> appt is on <DATE>. If you’re not able to make it, text here to reschedule.`;
+
+    setMessage(templateText);
+  }, [clientName, vehicleModel, date, startTime, type]);
 
   async function handleSubmit(data: FormData) {
     const res = await addTemplate({ subject, message, type });
@@ -118,11 +109,23 @@ STOP to opt out.`);
             required
           />
           <label className="block">
-            <div className="mb-1 px-2 font-medium">Message</div>
+            <div className="mb-1 px-2 font-medium flex justify-between">
+              <span>Message</span>
+              <span
+                className={
+                  message.length > 160 ? "text-red-500" : "text-gray-500"
+                }
+              >
+                {message.length}/160
+              </span>
+            </div>
             <textarea
               name="message"
-              rows={10}
-              className={slimInputClassName}
+              rows={5}
+              maxLength={160} // ✅ Enforce SMS strictness
+              className={`${slimInputClassName} ${
+                message.length > 160 ? "border-red-500" : ""
+              }`}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
             />

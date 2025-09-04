@@ -1,12 +1,11 @@
 import { cn } from "@/lib/cn";
 import { db } from "@/lib/db";
 import { Service } from "@prisma/client";
-import moment from "moment";
-import Link from "next/link";
+import moment from "moment-timezone";
 import React from "react";
-import CurrentInvoicePayment from "./CurrentInvoicePayment";
 import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
 import { formatCurrency } from "@/utils/formatCurrency";
+import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
 
 const evenColor = "bg-background";
 const oddColor = "bg-[#F8FAFF]";
@@ -16,6 +15,8 @@ export default async function PaymentTab({
 }: {
   clientId: number | undefined;
 }) {
+  const { timezone } = await getCompanyTimezone();
+
   if (!clientId)
     return (
       <div className="flex h-full items-center justify-center">
@@ -65,7 +66,7 @@ export default async function PaymentTab({
         ...invoice,
         vehicle: vehicle?.model ?? "",
       };
-    }),
+    })
   );
 
   // This will hold the payment-based invoice entries for Transaction History
@@ -85,6 +86,7 @@ export default async function PaymentTab({
       cash: true,
       deposit: true,
       createdAt: true,
+      date: true,
       Refund: {
         select: {
           id: true,
@@ -104,7 +106,7 @@ export default async function PaymentTab({
   for (const payment of allPayments) {
     // Find the original invoice this payment belongs to
     const originalInvoice = invoices.find(
-      (inv) => inv.id === payment.invoiceId,
+      (inv) => inv.id === payment.invoiceId
     );
 
     if (!originalInvoice) continue;
@@ -136,7 +138,7 @@ export default async function PaymentTab({
     // Calculate accurate refund amounts from actual Refund records
     const actualRefundedAmount = payment.Refund.reduce(
       (sum, refund) => sum + Number(refund.amount),
-      0,
+      0
     );
     const originalAmount = Number(payment?.amount ?? 0);
     const netAmount = originalAmount - actualRefundedAmount;
@@ -159,7 +161,7 @@ export default async function PaymentTab({
             ? payment.other
             : payment.deposit,
       // Use payment date instead of invoice date if available
-      paymentDate: payment.createdAt || originalInvoice.createdAt,
+      paymentDate: payment.date || originalInvoice.createdAt,
     });
 
     // Add payment transaction entry
@@ -169,10 +171,11 @@ export default async function PaymentTab({
       invoiceId: originalInvoice.id,
       vehicle: vehicle?.model ?? "",
       amount: originalAmount,
-      date: payment.createdAt || originalInvoice.createdAt,
+      date: payment.date || originalInvoice.createdAt,
       method: paymentMethodText,
       notes: payment.notes,
       paymentId: payment.id,
+      cashReceived: payment.cash?.receivedCash || null,
     });
 
     // Add refund transaction entries
@@ -188,20 +191,21 @@ export default async function PaymentTab({
         notes: refund.notes || refund.reason,
         paymentId: payment.id,
         refundId: refund.id,
+        cashReceived: null, // Refunds don't have cash received
       });
     });
   }
 
   // Sort all transactions by date (newest first)
   allTransactionEntries.sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
   // Calculate total paid amount (net of refunds) using actual refund data
   const totalCustomerPaidAmount = allPayments.reduce((acc, payment) => {
     const originalAmount = Number(payment?.amount ?? 0);
     const actualRefundedAmount = payment.Refund.reduce(
       (sum, refund) => sum + Number(refund.amount),
-      0,
+      0
     );
     const netAmount = originalAmount - actualRefundedAmount;
     return acc + netAmount;
@@ -211,7 +215,7 @@ export default async function PaymentTab({
   const totalRefundedAmount = allPayments.reduce((acc, payment) => {
     const actualRefundedAmount = payment.Refund.reduce(
       (sum, refund) => sum + Number(refund.amount),
-      0,
+      0
     );
     return acc + actualRefundedAmount;
   }, 0);
@@ -220,7 +224,7 @@ export default async function PaymentTab({
     (acc, invoice) =>
       acc +
       (invoice.grandTotal ? parseFloat(invoice.grandTotal.toString()) : 0),
-    0,
+    0
   );
 
   // Count services from original invoices to avoid duplicates
@@ -230,7 +234,7 @@ export default async function PaymentTab({
     invoice.invoiceItems.forEach((item) => {
       if (item.serviceId) {
         const service = totalServices.find(
-          (service) => service.id === item.serviceId,
+          (service) => service.id === item.serviceId
         );
 
         if (service) {
@@ -243,9 +247,9 @@ export default async function PaymentTab({
   });
 
   return (
-    <div className="h-full">
+    <div className="w-full mx-auto h-full">
       {/* Section 1 */}
-      <div className="flex h-[25%] flex-wrap items-center justify-between gap-4 md:flex-nowrap md:gap-0">
+      <div className="flex h-[25%] flex-wrap items-center justify-between gap-4 2xl:flex-nowrap md:gap-0">
         {/* <CurrentInvoicePayment /> */}
         <div className="grid w-full grid-cols-2 justify-between border border-slate-400 md:flex md:w-fit">
           <div className="bg-[#F8FAFF] p-5 px-2 text-center font-semibold md:px-10">
@@ -281,7 +285,7 @@ export default async function PaymentTab({
                   key={service.id}
                   className={cn(
                     "flex gap-44 p-3 py-1",
-                    index % 2 === 0 ? evenColor : oddColor,
+                    index % 2 === 0 ? evenColor : oddColor
                   )}
                 >
                   <p>{service.name}</p>
@@ -293,16 +297,17 @@ export default async function PaymentTab({
       </div>
 
       {/* Section 2 */}
-      <h3 className="mb-1 mt-3 font-semibold">Invoice Payments</h3>
+      <h3 className="mb-1 mt-3 lg:mt-12 font-semibold">Invoice Payments</h3>
       <div className="h-[30%] overflow-scroll rounded-lg border md:rounded-none">
         {/* Desktop View */}
-        <div className="hidden md:block">
-          <table className="w-full text-xs">
+        <div className="hidden md:block ">
+          <table className="table-auto w-full text-xs">
             <thead className="bg-background">
               <tr className="h-10 border-b">
                 <th className="px-10 text-left">Invoice ID</th>
                 <th className="px-10 text-left">Vehicle</th>
                 <th className="px-10 text-left">Amount</th>
+                <th className="px-10 text-left">Cash Received</th>
                 <th className="px-10 text-left">Date</th>
                 <th className="text-nowrap px-10 text-left">Due</th>
                 <th className="text-nowrap px-10 text-left">Status</th>
@@ -326,12 +331,21 @@ export default async function PaymentTab({
                   </td>
                   <td className="px-10 text-left">{data.vehicle}</td>
                   <td className="px-10 text-left">
-                    ${data.amountPaid?.toString()}
+                    {formatCurrency(data.amountPaid)}
+                  </td>
+                  <td className="px-10 text-left">
+                    {data.paymentMethodInfo &&
+                    "receivedCash" in data.paymentMethodInfo &&
+                    data.paymentMethodInfo.receivedCash
+                      ? data.paymentMethodInfo.receivedCash
+                      : "N/A"}
                   </td>
                   <td className="px-10 text-left">
                     {moment(data.paymentDate).format("DD.MM.YYYY")}
                   </td>
-                  <td className="px-10 text-left">{data.due?.toString()}</td>
+                  <td className="px-10 text-left">
+                    {formatCurrency(Number(data.due))}
+                  </td>
                   <td className="px-10 text-left">{data.column?.title}</td>
                   <td className="px-10 text-left">{data.notes}</td>
                 </tr>
@@ -347,7 +361,7 @@ export default async function PaymentTab({
               key={data.id}
               className={cn(
                 "rounded-lg p-4 shadow-sm transition-all duration-200",
-                index % 2 === 0 ? "bg-background" : "bg-[#F8FAFF]",
+                index % 2 === 0 ? "bg-background" : "bg-[#F8FAFF]"
               )}
             >
               <div className="flex items-center justify-between">
@@ -360,7 +374,7 @@ export default async function PaymentTab({
                   }
                 />
                 <p className="text-lg font-bold text-[#6571FF]">
-                  ${data.amountPaid?.toString()}
+                  {formatCurrency(data.amountPaid)}
                 </p>
               </div>
               <div className="mt-2 space-y-2">
@@ -371,12 +385,22 @@ export default async function PaymentTab({
                 <div className="flex justify-between">
                   <p className="text-sm text-[#66738C]">Date</p>
                   <p className="text-sm font-medium">
-                    {moment(data.paymentDate).format("DD.MM.YYYY")}
+                    {moment.tz(data.paymentDate, timezone).format("DD.MM.YYYY")}
                   </p>
                 </div>
                 <div className="flex justify-between">
                   <p className="text-sm text-[#66738C]">Payment Method</p>
                   <p className="text-sm font-medium">{data.paymentMethod}</p>
+                </div>
+                <div className="flex justify-between">
+                  <p className="text-sm text-[#66738C]">Cash Received</p>
+                  <p className="text-sm font-medium">
+                    {data.paymentMethodInfo &&
+                    "receivedCash" in data.paymentMethodInfo &&
+                    data.paymentMethodInfo.receivedCash
+                      ? data.paymentMethodInfo.receivedCash
+                      : "N/A"}
+                  </p>
                 </div>
                 {data.notes && (
                   <div className="pt-2">
@@ -392,7 +416,7 @@ export default async function PaymentTab({
 
       {/* Section 3 */}
       <h3 className="mb-1 mt-3 font-semibold">Transaction History</h3>
-      <div className="h-[30%] overflow-scroll rounded-lg border md:rounded-none">
+      <div className="h-[30%] overflow-scroll  rounded-lg border md:rounded-none">
         {/* Desktop View */}
         <div className="hidden md:block">
           <table className="w-full text-xs">
@@ -403,6 +427,7 @@ export default async function PaymentTab({
                 <th className="px-10 text-left">Invoice ID</th>
                 <th className="px-10 text-left">Vehicle</th>
                 <th className="px-10 text-left">Amount</th>
+                <th className="px-10 text-left">Cash Received</th>
                 <th className="px-10 text-left">Date</th>
                 <th className="text-nowrap px-10 text-left">Method</th>
                 <th className="px-10 text-left">Notes</th>
@@ -439,10 +464,15 @@ export default async function PaymentTab({
                   <td
                     className={`px-10 text-left ${transaction.type === "REFUND" ? "text-red-600" : ""}`}
                   >
-                    ${Math.abs(transaction.amount).toFixed(2)}
+                    {formatCurrency(Math.abs(transaction.amount))}
                   </td>
                   <td className="px-10 text-left">
-                    {moment(transaction.date).format("DD.MM.YYYY")}
+                    {transaction.cashReceived
+                      ? transaction.cashReceived
+                      : "N/A"}
+                  </td>
+                  <td className="px-10 text-left">
+                    {moment.tz(transaction.date, timezone).format("DD.MM.YYYY")}
                   </td>
                   <td className="px-10 text-left">{transaction.method}</td>
                   <td className="px-10 text-left">{transaction.notes}</td>
@@ -458,7 +488,7 @@ export default async function PaymentTab({
               key={transaction.id}
               className={cn(
                 "rounded-lg p-4 shadow-sm transition-all duration-200",
-                index % 2 === 0 ? "bg-background" : "bg-[#F8FAFF]",
+                index % 2 === 0 ? "bg-background" : "bg-[#F8FAFF]"
               )}
             >
               <div className="flex items-center justify-between">
@@ -508,6 +538,14 @@ export default async function PaymentTab({
                 <div className="flex justify-between">
                   <p className="text-sm text-[#66738C]">Method</p>
                   <p className="text-sm font-medium">{transaction.method}</p>
+                </div>
+                <div className="flex justify-between">
+                  <p className="text-sm text-[#66738C]">Cash Received</p>
+                  <p className="text-sm font-medium">
+                    {transaction.cashReceived
+                      ? transaction.cashReceived
+                      : "N/A"}
+                  </p>
                 </div>
                 {transaction.notes && (
                   <div className="pt-2">

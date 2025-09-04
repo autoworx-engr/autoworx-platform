@@ -1,6 +1,9 @@
-import moment from "moment";
+import moment from "moment-timezone";
 
-export function formatDate(date: Date | string) {
+export function formatDate(date: Date | string, timezone?: string) {
+  if (timezone) {
+    return moment.tz(date, timezone).format("YYYY-MM-DD");
+  }
   return moment(date).format("YYYY-MM-DD");
 }
 

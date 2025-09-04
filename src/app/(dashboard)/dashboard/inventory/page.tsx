@@ -52,12 +52,12 @@ export default async function Page({
           <Title className="text-[20px] md:text-2xl">Inventory</Title>
         </div>
 
-        {(user?.employeeType === "Admin" || user?.employeeType === "Manager") &&
-          view !== "database" && (
-            <div className="mt-2">
-              <AddNewProduct />
-            </div>
-          )}
+        {(user?.employeeType === "Admin" ||
+          user?.employeeType === "Manager") && (
+          <div className="mt-2">
+            <AddNewProduct />
+          </div>
+        )}
       </header>
 
       <div className="mb-5 flex h-full w-full flex-col justify-between gap-3 md:mb-0 md:flex-wrap">
@@ -70,7 +70,10 @@ export default async function Page({
           inventoryCategories={inventoryCategories.data}
         />
 
-        <Sidebar hidden={view === "database"} productId={parseInt(productId || "0")} />
+        <Sidebar
+          hidden={view === "database"}
+          productId={parseInt(productId || "0")}
+        />
       </div>
     </div>
   );

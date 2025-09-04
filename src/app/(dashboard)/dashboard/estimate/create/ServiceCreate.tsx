@@ -52,7 +52,7 @@ export default function ServiceCreate() {
       useEstimateCreateStore.setState((x) =>
         create(x, (x) => {
           x.items[i].service = res.data;
-        }),
+        })
       );
 
       // Add to listsStore
@@ -62,9 +62,8 @@ export default function ServiceCreate() {
 
       close();
     } else if (res.type === "globalError") {
-      console.error({ res });
       errorToast(
-        res.errorSource?.length ? res.errorSource[0].message : res.message,
+        res.errorSource?.length ? res.errorSource[0].message : res.message
       );
     }
   }
@@ -98,6 +97,7 @@ export default function ServiceCreate() {
               categoryId: category?.id,
               description,
             },
+            serviceDesc: description,
           };
         }
         return item;
@@ -134,7 +134,9 @@ export default function ServiceCreate() {
       <textarea
         placeholder="Description"
         value={description}
-        onChange={(e) => setDescription(e.target.value)}
+        onChange={(e) => {
+          setDescription(e.target.value);
+        }}
         className="h-40 rounded-md border-2 border-slate-400 p-2"
       />
 

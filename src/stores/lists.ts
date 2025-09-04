@@ -29,6 +29,7 @@ interface ListsStore {
   tags: Tag[];
   vendors: Vendor[];
   statuses: Column[];
+  appointmentTitles: { id: number; name: string; companyId: number }[];
   newAddedCustomer: Client | null;
   newAddedVehicle: Vehicle | null;
   paymentMethods: PaymentMethod[];
@@ -51,6 +52,7 @@ export const useListsStore = create<ListsStore>((set) => ({
   tags: [],
   vendors: [],
   statuses: [],
+  appointmentTitles: [],
   newAddedCustomer: null,
   newAddedVehicle: null,
   paymentMethods: [],
@@ -71,6 +73,7 @@ export const useListsStore = create<ListsStore>((set) => ({
       tags: [],
       vendors: [],
       statuses: [],
+      appointmentTitles: [],
       newAddedCustomer: null,
       newAddedVehicle: null,
       paymentMethods: [],

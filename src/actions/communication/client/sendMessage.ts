@@ -99,12 +99,7 @@ export async function sendMessage({
         },
       });
 
-      await updateNewSMSChatTrack({
-        clientId,
-        smsLastMessage: message ?? "",
-        lastMessageBy: "Company",
-      });
-
+      const processedAttachments = [];
       for (const file of attachments) {
         let atc = await db.clientSmsAttachments.create({
           data: {
@@ -113,7 +108,18 @@ export async function sendMessage({
             clientSMSId: dbMessage.id,
           },
         });
+        processedAttachments.push({
+          name: file.name,
+          url: file.url,
+        });
       }
+
+      await updateNewSMSChatTrack({
+        clientId,
+        smsLastMessage: message ?? "",
+        lastMessageBy: "Company",
+        attachments: processedAttachments,
+      });
 
       let data = await db.clientSMS.findFirst({
         where: {
@@ -133,20 +139,7 @@ export async function sendMessage({
               leadId: client?.Lead.id,
               columnId: client?.Lead?.columnId,
             });
-          } else {
-            await updatePipelineAutomationTrigger({
-              companyId: client.companyId,
-              condition: "MESSAGE_RECEIVED_CLIENT",
-              leadId: client?.Lead.id,
-              columnId: client?.Lead?.columnId,
-            });
           }
-
-          // await updateCommunicationAutomationTrigger({
-          //   companyId: client.companyId,
-          //   leadId: client?.Lead.id,
-          //   columnId: client?.Lead?.columnId,
-          // });
         }
       } catch (error) {}
 

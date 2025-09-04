@@ -8,11 +8,13 @@ import { useCalendarStore } from "@/stores/calendarStore";
 import { Task as TaskType } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { Tooltip } from "antd";
-import moment from "moment";
+import moment from "moment-timezone";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { FaRegCheckCircle } from "react-icons/fa";
 import { MdOutlineEdit } from "react-icons/md";
+import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
+import { useDate } from "../../task/_hook/lib/useDate";
 
 type TaskProps = {
   task: TaskType;
@@ -23,10 +25,16 @@ const Task = ({ task }: TaskProps) => {
   const router = useRouter();
   const { setNavigating, setDate } = useCalendarStore();
   const queryClient = useQueryClient();
+  const timezone = useCompanyTimezone();
+  const queryDate = useDate();
 
   const handleTaskClick = () => {
-    console.log("Task clicked:", task);
-    const dateString = moment.utc(task?.date).format("YYYY-MM-DD");
+    // const dateString = moment.utc(task?.date).tz(timezone).format("YYYY-MM-DD");
+    const dateString = task?.date
+      ? task.date instanceof Date
+        ? task.date.toLocaleDateString("en-CA") // 'YYYY-MM-DD' format
+        : moment(task.date).format("YYYY-MM-DD")
+      : queryDate.format("YYYY-MM-DD");
 
     // Set navigation flag to prevent reset, then set date and navigate
     setNavigating(true);
@@ -56,7 +64,7 @@ const Task = ({ task }: TaskProps) => {
             "bg-[#6571FF]": task.priority === "Low",
             "bg-[#25AADD]": task.priority === "Medium",
             "bg-[#006d77]": task.priority === "High",
-          },
+          }
         )}
         onClick={handleTaskClick}
       >
@@ -67,7 +75,7 @@ const Task = ({ task }: TaskProps) => {
             </div>
           </Tooltip>
           <div className="mt-0.5 text-xs opacity-75 md:hidden">
-            {moment.utc(task?.date).format("MMM DD")}
+            {moment.utc(task?.date).tz(timezone).format("MMM DD")}
           </div>
         </div>
         <span className="flex flex-shrink-0 items-center gap-x-1 md:gap-x-2">

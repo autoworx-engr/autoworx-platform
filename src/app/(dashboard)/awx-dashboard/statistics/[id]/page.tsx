@@ -1,13 +1,10 @@
-import { db } from "@/lib/db";
-import Image from "next/image";
-import { FaExternalLinkAlt } from "react-icons/fa";
 import ChartData from "@/app/(dashboard)/dashboard/components/ChartData";
-import FeaturePermission from "../../components/FeaturePermission";
+import Avatar from "@/components/Avatar";
+import { db } from "@/lib/db";
 import Link from "next/link";
 import { IoIosArrowBack } from "react-icons/io";
-import Avatar from "@/components/Avatar";
-import { useGetAllCompanyBugReports } from "@/hooks/bug-reports/useGetAllCompanyBugReports";
 import CompanyReportSection from "../../components/CompanyReportSection";
+import FeaturePermission from "../../components/FeaturePermission";
 
 type propsType = {
   params: {
@@ -53,7 +50,7 @@ const Page = async (props: propsType) => {
   }
 
   const employees = sales + technicians + managers + others;
- 
+
 
   return (
     <div className="h-full bg-[#F8F9FA] px-4 text-xs 2xl:text-base">
@@ -71,7 +68,7 @@ const Page = async (props: propsType) => {
                 </h3>
               </div>
               {/* <div className="space-y-4 rounded-md bg-background p-4 shadow-lg 2xl:p-8">
-                
+
 
                 <Avatar
                   photo={
@@ -113,7 +110,7 @@ const Page = async (props: propsType) => {
             alt={company?.name}
           />
           <h3 className="text-base md:text-xl  font-semibold  mt-3">{company?.name}</h3>
-        
+
         </div>
       </div>
 

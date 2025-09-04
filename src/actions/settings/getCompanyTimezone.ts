@@ -6,16 +6,25 @@ import { getServerSession } from "next-auth";
 import { cache } from "react";
 import moment from "moment-timezone";
 
-export const getCompanyTimezone = cache(async function () {
-  const session = await getServerSession(authOptions);
-  const companyId = session?.user.companyId;
-
-  const company = await db.company.findUnique({
+// Cache only the deterministic part (DB lookup by ID)
+const getCompanyById = cache(async (companyId: number) => {
+  return db.company.findUnique({
     where: { id: companyId },
     select: { timezone: true },
   });
+});
+
+export async function getCompanyTimezone() {
+  const session = await getServerSession(authOptions);
+  const companyId = session?.user.companyId;
+
+  if (!session || !companyId) {
+    return { timezone: moment.tz.guess() };
+  }
+
+  const company = await getCompanyById(companyId);
 
   return {
     timezone: company?.timezone || moment.tz.guess(),
   };
-});
+}

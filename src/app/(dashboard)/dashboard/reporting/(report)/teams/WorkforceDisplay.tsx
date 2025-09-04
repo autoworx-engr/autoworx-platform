@@ -1,14 +1,14 @@
-"use client";
-import { cn } from "@/lib/cn";
-import { formatCurrency } from "@/utils/formatCurrency";
-import { Prisma, User } from "@prisma/client";
-import { Pagination } from "antd";
-import moment from "moment-timezone";
-import Link from "next/link";
-import { useEffect, useState } from "react";
-import { useMediaQuery } from "react-responsive";
-import WorkforceMobileCard from "./WorkforceMobileCard";
-import { useSearchParams } from "next/navigation";
+'use client';
+import { cn } from '@/lib/cn';
+import { formatCurrency } from '@/utils/formatCurrency';
+import { Prisma, User } from '@prisma/client';
+import { Pagination } from 'antd';
+import moment from 'moment-timezone';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { useMediaQuery } from 'react-responsive';
+import WorkforceMobileCard from './WorkforceMobileCard';
+import { useSearchParams } from 'next/navigation';
 
 type TProps = {
   employees: (User & {
@@ -30,13 +30,14 @@ export default function WorkforceDisplay({
   formattedStartDate,
   hasDateRange,
 }: TProps) {
-  const isDesktop = useMediaQuery({ query: "(min-width: 640px)" });
+  console.log('WorkforceDisplay employees', employees);
+  const isDesktop = useMediaQuery({ query: '(min-width: 640px)' });
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(50); // Default page size set to 50
   const [showPagination, setShowPagination] = useState(false);
 
   const params = useSearchParams();
-  const search = params.get("search");
+  const search = params.get('search');
 
   useEffect(() => {
     if (employees.length > 0) {
@@ -88,7 +89,7 @@ export default function WorkforceDisplay({
                       techDate.isSameOrAfter(formattedStartDate) &&
                       techDate.isSameOrBefore(formattedEndDate));
 
-                  if (cur.status === "Complete" && isDateValid) {
+                  if (cur.status === 'Complete' && isDateValid) {
                     return acc + 1;
                   }
 
@@ -108,7 +109,7 @@ export default function WorkforceDisplay({
                     techDate.isSameOrAfter(formattedStartDate) &&
                     techDate.isSameOrBefore(formattedEndDate));
 
-                if (tech.status === "Complete" && isDateValid) {
+                if (tech.status === 'Complete' && isDateValid) {
                   return sum + Number(tech?.amount || 0);
                 }
 
@@ -117,24 +118,24 @@ export default function WorkforceDisplay({
 
               // Get the latest completion date
               const latestCompletionDate = employee.Technician.filter(
-                (tech) => tech.status === "Complete" && tech.dateClosed
+                tech => tech.status === 'Complete' && tech.dateClosed
               )
-                .map((tech) => moment(tech.dateClosed))
+                .map(tech => moment(tech.dateClosed))
                 .sort((a, b) => b.diff(a))[0];
 
               return (
                 <tr
                   key={employee.id}
                   className={cn(
-                    "cursor-pointer rounded-md py-3",
-                    index % 2 === 0 ? "bg-background" : "bg-blue-100"
+                    'cursor-pointer rounded-md py-3',
+                    index % 2 === 0 ? 'bg-background' : 'bg-blue-100'
                   )}
                 >
                   <Link
                     href={`/dashboard/employee/${employee.id}?view=details`}
                   >
                     <td className="border-b px-4 py-2 text-left hover:text-blue-500">
-                      {" "}
+                      {' '}
                       {employee.firstName} {employee.lastName}
                     </td>
                   </Link>
@@ -145,13 +146,13 @@ export default function WorkforceDisplay({
                     {formatCurrency(totalPayout)}
                   </td>
                   <td className="border-b px-4 py-2 text-left"></td>
-                  <td className={cn("border-b px-4 py-2 text-left")}>
+                  <td className={cn('border-b px-4 py-2 text-left')}>
                     {jobsCompleted}
                   </td>
-                  <td className={cn("border-b px-4 py-2 text-left")}>
+                  <td className={cn('border-b px-4 py-2 text-left')}>
                     {latestCompletionDate
-                      ? moment(latestCompletionDate).format("MM/DD/YYYY")
-                      : "N/A"}
+                      ? moment(latestCompletionDate).format('MM/DD/YYYY')
+                      : 'N/A'}
                   </td>
                 </tr>
               );

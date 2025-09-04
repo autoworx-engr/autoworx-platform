@@ -62,6 +62,17 @@ export default function Pipelines({
   // References for scrolling to leads
   const columnRefs = useRef<(HTMLDivElement | null)[]>([]);
   const leadRefs = useRef<Map<string, HTMLLIElement>>(new Map());
+  const [screenWidth, setScreenWidth] = useState<number>(window.innerWidth);
+
+  function updateWidth() {
+    setScreenWidth(window.innerWidth);
+  }
+
+  useEffect(() => {
+    updateWidth();
+    window.addEventListener("resize", updateWidth);
+    return () => window.removeEventListener("resize", updateWidth);
+  }, []);
 
   useEffect(() => {
     // setIsLoading(true);
@@ -519,6 +530,7 @@ export default function Pipelines({
                 <Droppable
                   droppableId={`${categoryIndex}`}
                   key={categoryIndex.toString() + 1}
+                  isDropDisabled={screenWidth < 768}
                 >
                   {(provided) => (
                     <div
@@ -561,6 +573,7 @@ export default function Pipelines({
                               key={lead.invoiceId}
                               draggableId={`${categoryIndex}-${leadIndex}`}
                               index={leadIndex}
+                              isDragDisabled={screenWidth < 768}
                             >
                               {(provided) => (
                                 <li

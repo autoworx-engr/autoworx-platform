@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useMemo } from "react";
 import { FaChevronDown, FaChevronUp, FaSearch } from "react-icons/fa";
 import { IoMdClose } from "react-icons/io";
 import { PiPaletteBold } from "react-icons/pi";
-import { Tag } from "@prisma/client";
+import { Tag, User } from "@prisma/client";
 
 import { INVOICE_COLORS } from "@/lib/consts";
 import { useFormErrorStore } from "@/stores/form-error";
@@ -18,6 +18,7 @@ import Submit from "@/components/Submit";
 import newTag from "@/actions/tag/newTag";
 import { getTags } from "@/actions/tag/getTags";
 import { deleteTag } from "@/actions/tag/deleteTag";
+import getUser from "@/lib/getUser";
 
 type SelectedColor = { textColor: string; bgColor: string } | null;
 
@@ -39,6 +40,16 @@ export function EmployeeTagSelector({
   const [colorPickerVisible, setColorPickerVisible] = useState(false);
   const [selectedColor, setSelectedColor] = useState<SelectedColor>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    async function fetchUser() {
+      const data = await getUser();
+      setUser(data);
+    }
+
+    fetchUser();
+  }, [user]);
 
   // Fetch tags on mount
   useEffect(() => {
@@ -66,7 +77,7 @@ export function EmployeeTagSelector({
   const filteredTags = useMemo(() => {
     return search
       ? tags.filter((tag) =>
-          tag.name.toLowerCase().includes(search.toLowerCase()),
+          tag.name.toLowerCase().includes(search.toLowerCase())
         )
       : tags;
   }, [search, tags]);
@@ -79,6 +90,9 @@ export function EmployeeTagSelector({
     }
   };
 
+  const isRestrictedUser =
+    user?.employeeType === "Sales" || user?.employeeType === "Technician";
+  disable = isRestrictedUser;
   return (
     <>
       <DropdownMenu open={open} onOpenChange={setOpen}>
@@ -131,7 +145,7 @@ export function EmployeeTagSelector({
                 <button
                   disabled={disable}
                   onClick={() => handleDeleteTag(tagItem.id)}
-                  className="text-lg text-[#66738C] disabled:cursor-not-allowed disabled:text-[#66738C]"
+                  className={`text-lg text-[#66738C] disabled:cursor-not-allowed disabled:text-[#66738C] ${isRestrictedUser ? "hidden" : ""}`}
                 >
                   <IoMdClose />
                 </button>

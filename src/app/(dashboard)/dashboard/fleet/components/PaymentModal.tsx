@@ -17,9 +17,10 @@ import { errorToast, successToast } from "@/lib/toast";
 import { useListsStore } from "@/stores/lists";
 import { cn } from "@/lib/cn";
 import * as Tabs from "@radix-ui/react-tabs";
-import moment from "moment";
+import moment from "moment-timezone";
 import Image from "next/image";
 import { FaRegCreditCard } from "react-icons/fa6";
+import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 
 interface PaymentModalProps {
   isOpen: boolean;
@@ -60,10 +61,12 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   totalDue,
   onPaymentSuccess,
 }) => {
+  const timezone = useCompanyTimezone();
+
   const { paymentMethods } = useListsStore();
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState("CARD");
-  
+
   // Form states
   const [date, setDate] = useState<Date>(new Date());
   const [notes, setNotes] = useState("");
@@ -72,7 +75,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const [check, setCheck] = useState("");
   const [cash, setCash] = useState<string>("");
   const [amount, setAmount] = useState<number | string>(totalDue);
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(
+    null
+  );
   const [openPaymentMethod, setOpenPaymentMethod] = useState(false);
   const [paymentMethodInput, setPaymentMethodInput] = useState("");
 
@@ -103,7 +108,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const handleSubmit = async () => {
     try {
       const roundedAmount = formatAmount(amount);
-      
+
       if (Number(roundedAmount) > totalDue) {
         errorToast("Payment amount exceeds the due amount");
         return;
@@ -223,8 +228,15 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                       labelClassName="text-sm md:text-base"
                       name="date"
                       type="date"
-                      value={moment(date).format("YYYY-MM-DD")}
-                      onChange={(e) => setDate(new Date(e.target.value))}
+                      value={date ? moment(date).format("YYYY-MM-DD") : ""}
+                      onChange={(e) => {
+                        const localDate = moment.tz(
+                          e.target.value,
+                          "YYYY-MM-DD",
+                          timezone
+                        );
+                        setDate(localDate.toDate());
+                      }}
                     />
                   </div>
                   <div className="w-full">
@@ -342,8 +354,15 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                     labelClassName="text-sm md:text-base"
                     name="date"
                     type="date"
-                    value={moment(date).format("YYYY-MM-DD")}
-                    onChange={(e) => setDate(new Date(e.target.value))}
+                    value={date ? moment(date).format("YYYY-MM-DD") : ""}
+                    onChange={(e) => {
+                      const localDate = moment.tz(
+                        e.target.value,
+                        "YYYY-MM-DD",
+                        timezone
+                      );
+                      setDate(localDate.toDate());
+                    }}
                   />
                 </div>
 
@@ -394,8 +413,15 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                     labelClassName="text-sm md:text-base"
                     name="date"
                     type="date"
-                    value={moment(date).format("YYYY-MM-DD")}
-                    onChange={(e) => setDate(new Date(e.target.value))}
+                    value={date ? moment(date).format("YYYY-MM-DD") : ""}
+                    onChange={(e) => {
+                      const localDate = moment.tz(
+                        e.target.value,
+                        "YYYY-MM-DD",
+                        timezone
+                      );
+                      setDate(localDate.toDate());
+                    }}
                   />
                 </div>
 
@@ -465,7 +491,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                         onClick={handleNewPaymentMethod}
                         className={cn(
                           "text-nowrap rounded-md px-2 text-white",
-                          paymentMethodInput ? "bg-slate-700" : "bg-slate-400",
+                          paymentMethodInput ? "bg-slate-700" : "bg-slate-400"
                         )}
                         type="button"
                         disabled={!paymentMethodInput}
@@ -477,7 +503,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   items={paymentMethods}
                   onSearch={(search: string) =>
                     paymentMethods.filter((method) =>
-                      method.name.toLowerCase().includes(search.toLowerCase()),
+                      method.name.toLowerCase().includes(search.toLowerCase())
                     )
                   }
                   displayList={(paymentMethod: PaymentMethod) => (
@@ -495,8 +521,15 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                     labelClassName="text-sm md:text-base"
                     name="date"
                     type="date"
-                    value={moment(date).format("YYYY-MM-DD")}
-                    onChange={(e) => setDate(new Date(e.target.value))}
+                    value={date ? moment(date).format("YYYY-MM-DD") : ""}
+                    onChange={(e) => {
+                      const localDate = moment.tz(
+                        e.target.value,
+                        "YYYY-MM-DD",
+                        timezone
+                      );
+                      setDate(localDate.toDate());
+                    }}
                   />
                 </div>
 

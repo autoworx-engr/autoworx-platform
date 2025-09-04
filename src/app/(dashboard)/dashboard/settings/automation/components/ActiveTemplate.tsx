@@ -4,6 +4,7 @@ import { Close as CloseIcon } from "@mui/icons-material";
 import { Box, IconButton, TextField } from "@mui/material";
 import { ImAttachment } from "react-icons/im";
 import Image from "next/image";
+import { useCharacterLimit } from "@/hooks/useCharecterLimit";
 
 type TemplateProps = {
   activeTemplate: string;
@@ -15,7 +16,7 @@ type TemplateProps = {
   iconBtnClassName?: string;
   handleFileAttachment: (
     event: ChangeEvent<HTMLInputElement>,
-    type: string,
+    type: string
   ) => void;
   label?: string;
   attachments?: { fileUrl: string; id: number; isLocal?: boolean }[];
@@ -26,6 +27,9 @@ type TemplateProps = {
   subjectValue?: string;
   error?: string;
   subjectError?: boolean;
+  characterLength?: number;
+  maxLength?: number;
+  isLimitExceeded?: boolean;
 };
 
 const ActiveTemplate = ({
@@ -46,10 +50,13 @@ const ActiveTemplate = ({
   setFormData,
   error,
   subjectError,
+  characterLength,
+  maxLength,
+  isLimitExceeded,
 }: TemplateProps) => {
   const handleDeleteAttachment = (
     e: React.MouseEvent<HTMLButtonElement>,
-    fileToRemove: { fileUrl: string },
+    fileToRemove: { fileUrl: string }
   ) => {
     e.stopPropagation();
     const updatedAttachments =
@@ -107,6 +114,13 @@ const ActiveTemplate = ({
             ),
           }}
         />
+
+        <div
+          className={`absolute bottom-1 left-2 text-xs font-medium 
+             ${isLimitExceeded ? "text-red-500 " : "text-gray-500 dark:text-gray-400"}`}
+        >
+          {characterLength}/{maxLength}
+        </div>
       </Box>
 
       {attachments && attachments.length > 0 && (

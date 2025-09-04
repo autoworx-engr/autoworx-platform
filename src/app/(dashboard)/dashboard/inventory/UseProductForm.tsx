@@ -1,5 +1,9 @@
 "use client";
 
+import { useEffect, useState, useTransition } from "react";
+import moment from "moment-timezone";
+import { useCompanyTimezone } from "@/hooks/useCompanyTimezone"; // ← adjust path if needed
+
 import {
   Dialog,
   DialogClose,
@@ -14,7 +18,6 @@ import Selector from "@/components/Selector";
 import { SlimInput } from "@/components/SlimInput";
 import Submit from "@/components/Submit";
 import { InventoryProductType } from "@prisma/client";
-import { useEffect, useState, useTransition } from "react";
 import { useProduct as productUse } from "../../../../actions/inventory/useProduct";
 import { useFormErrorStore } from "@/stores/form-error";
 
@@ -36,19 +39,32 @@ export default function UseProductForm({
     id: string;
     clientName: string;
   } | null>(null);
+
   const { showError, clearError } = useFormErrorStore();
   const [pending, startTransition] = useTransition();
 
+  const companyTz = useCompanyTimezone();
+  const todayInCompanyTz = moment().tz(companyTz).format("YYYY-MM-DD");
+
   // TODO: Add validation for quantity
   async function handleSubmit(formData: FormData) {
-    const date = formData.get("date") as string;
-    const quantity = formData.get("quantity") as string;
-    const notes = formData.get("notes") as string;
+    const date = (formData.get("date") as string) || todayInCompanyTz; // "YYYY-MM-DD"
+    const quantity = (formData.get("quantity") as string) || "";
+    const notes = (formData.get("notes") as string) || "";
+
+    const qNum = Number(quantity);
+    if (!qNum || !Number.isFinite(qNum) || qNum <= 0) {
+      showError({ message: "Quantity must be a positive number." });
+      return;
+    }
+
+    // Parse "YYYY-MM-DD" in company timezone to a real Date
+    const zonedDate = moment.tz(date, "YYYY-MM-DD", companyTz).toDate();
 
     const res = await productUse({
       productId,
-      date: new Date(date),
-      quantity: quantity,
+      date: zonedDate, // ✅ aligned with company timezone
+      quantity: quantity, // keep as string if your action expects string
       notes,
       invoiceId: invoiceId?.id,
     });
@@ -94,9 +110,11 @@ export default function UseProductForm({
             name="date"
             type="date"
             className="col-span-1"
-            defaultValue={new Date().toISOString().split("T")[0]}
+            // ✅ default value in the company timezone
+            defaultValue={todayInCompanyTz}
           />
           <br className="block md:hidden" />
+
           <SlimInput name="quantity" className="col-span-1" />
           <br className="block md:hidden" />
 
@@ -110,7 +128,7 @@ export default function UseProductForm({
           {productType === "Product" && (
             <div className="col-span-2">
               <Selector
-                label={(invoice) =>
+                label={(invoice: { id: string; clientName: string } | null) =>
                   invoice
                     ? `${invoice.id} - ${invoice.clientName}`
                     : "Select Invoice"

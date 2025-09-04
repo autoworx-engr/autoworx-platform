@@ -8,6 +8,9 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+
+
+
 // Appointment for a company.
 model Appointment {
   id                              Int               @id @default(autoincrement())
@@ -55,6 +58,21 @@ model AppointmentUser {
 
   @@index([appointmentId])
 }
+
+// Appointment Title model for company-specific appointment titles
+model AppointmentTitle {
+  id        Int      @id @default(autoincrement())
+  name      String   @db.VarChar(100)
+  companyId Int      @map("company_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@map("appointment_titles")
+}
+
 // Pipeline Automation Schema
 
 model PipelineAutomationRule {
@@ -215,8 +233,9 @@ model InvoiceAutomationRule {
   id                 Int                    @id @default(autoincrement())
   title              String
   companyId          Int
+  type               InvoiceType            @default(Invoice)
   invoiceStatusId    Int
-  timeDelay          Int?
+  timeDelay          String?
   isPaused           Boolean                @default(false)
   communicationType  CommunicationType
   emailBody          String?                @db.Text
@@ -350,6 +369,7 @@ enum InventoryNotificationAction {
   SMS
   BOTH
 }
+
 // Client of a company.
 // Client is just data, they can't login.
 model Client {
@@ -445,14 +465,16 @@ model ClientConversationTrack {
   smsIsRead          Boolean   @default(true) @map("sms_is_read")
   emailIsUnReadCount Int       @default(0) @map("email_is_unread_count")
   smsUnReadCount     Int       @default(0) @map("sms_unread_count")
-  emailLastMessage   String    @default("no message") @map("email_last_message")
-  smsLastMessage     String    @default("no message") @map("sms_last_message")
-  lastMessageBy      String?    @map("last_message_by")
+  emailLastMessage   String?   @map("email_last_message") @db.Text
+  smsLastMessage     String?   @map("sms_last_message") @db.Text
+  lastMessageBy      String?   @map("last_message_by")
+  lastEmailBy        String?   @map("last_email_by") // Track who sent the last email: "Company" or "Client"
   sendAt             DateTime? @map("send_at")
   createdAt          DateTime  @default(now()) @map("created_at")
   updatedAt          DateTime  @default(now()) @updatedAt @map("updated_at")
   client             Client    @relation(fields: [clientId], references: [id], onDelete: Cascade) // Update this line to establish the one-to-one relation
 }
+
 // Company model.
 // Every user belongs to a company.
 // For now, every user has to create their own company when registering.
@@ -479,6 +501,8 @@ model Company {
   currency                         String?                            @default("USD")
   terms                            String?                            @db.VarChar(800)
   policy                           String?                            @db.VarChar(800)
+  leadTerms                        String?                            @map("lead_terms") @db.Text
+  leadPolicy                       String?                            @map("lead_policy") @db.Text
   googleEmail                      String?                            @map("google_email")
   googleRefreshToken               String?                            @map("google_refresh_token")
   googleCalendarToken              String?                            @map("google_calendar_token")
@@ -495,6 +519,7 @@ model Company {
   invoices                         Invoice[]
   calendarSettings                 CalendarSettings[]
   appointments                     Appointment[]
+  appointmentTitles                AppointmentTitle[]
   emailTemplates                   EmailTemplate[]
   materials                        Material[]
   vendors                          Vendor[]
@@ -675,6 +700,7 @@ model LeadLink {
   generatedLink String   @db.Text
   shortUrl      String?
   QRCode        String?  @db.Text
+  isShow        Boolean  @default(true)
   companyId     Int?
   company       Company? @relation(fields: [companyId], references: [id])
   createdAt     DateTime @default(now()) @map("created_at")
@@ -794,6 +820,7 @@ model MailgunEmailAttachment {
   mailgunEmailId Int
   mailgunEmail   MailgunEmail @relation(fields: [mailgunEmailId], references: [id], onDelete: Cascade)
 }
+
 // Category of a invoice.
 // Category is a part of Service, Material and Labor.
 // It's an independant model. So, one category can be in multiple services, materials and labors.
@@ -860,6 +887,7 @@ model Column {
   @@index([type])
   @@index([type, companyId])
 }
+
 model InventoryProduct {
   id                      Int                       @id @default(autoincrement())
   name                    String
@@ -961,6 +989,7 @@ model inventoryWirehouseProduct {
   @@index([unit])
   @@index([category, productName])
 }
+
 // InvoiceItem of a invoice.
 // Its a holder for service, material and labor.
 // One invoice can have multiple InvoiceItems.
@@ -1138,6 +1167,7 @@ enum TagType {
   CLIENT // For clients
   INVENTORY // For inventory products
 }
+
 // Invoice of a company.
 // Note that `Invoice` is same as `Estimate`. So don't get confused.
 // We can differentiate them by `type` field.
@@ -1318,6 +1348,7 @@ model InvoiceInspection {
 
   @@index([invoiceId], name: "fk_invoice_inspections_invoice")
 }
+
 // Message for chat.
 model Message {
   id                Int              @id @default(autoincrement())
@@ -1337,6 +1368,10 @@ model Message {
   @@index([to], name: "fk_messages_to")
   @@index([from], name: "fk_messages_from")
   @@index([groupId], name: "fk_messages_group")
+  @@index([updatedAt], name: "idx_messages_updated_at")
+  @@index([section], name: "idx_messages_section")
+  @@index([to, from, updatedAt], name: "idx_messages_conversation")
+  @@index([groupId, section, updatedAt], name: "idx_messages_filter")
 }
 
 enum MessageSection {
@@ -1409,6 +1444,7 @@ enum UserType {
   super_admin
   company
 }
+
 // notification settings model
 model NotificationSettingsV2 {
   id                Int                 @id @default(autoincrement())
@@ -1493,6 +1529,7 @@ model Notification {
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
 }
+
 // Payment of a invoice.
 // One invoice can have one payment. And one payment can't be in multiple invoices.
 // Payment can be of type card, check, cash or other.
@@ -1659,6 +1696,7 @@ enum DiscountType {
   Percentage
   Fixed
 }
+
 // Permission Module System for Super Admin
 // Simple permission system with predefined modules
 
@@ -1678,33 +1716,34 @@ model CompanyPermissionModule {
 
   @@unique([companyId, permission_name])
 }
+
 // Salary History model to track changes in salary configuration
 // This allows proper calculation of payouts across different salary periods
 model SalaryHistory {
-    id           Int        @id @default(autoincrement())
-    userId       Int        @map("user_id")
-    companyId    Int        @map("company_id")
-    salaryType   SalaryType @map("salary_type")
-    salaryAmount Decimal    @map("salary_amount") @db.Decimal(10, 2)
-    startDate    DateTime   @map("start_date")
-    endDate      DateTime?  @map("end_date") // null means current/active salary
-    isActive     Boolean    @default(true) @map("is_active")
-    createdAt    DateTime   @default(now()) @map("created_at")
-    updatedAt    DateTime   @default(now()) @updatedAt @map("updated_at")
+  id           Int        @id @default(autoincrement())
+  userId       Int        @map("user_id")
+  companyId    Int        @map("company_id")
+  salaryType   SalaryType @map("salary_type")
+  salaryAmount Decimal    @map("salary_amount") @db.Decimal(10, 2)
+  startDate    DateTime   @map("start_date")
+  endDate      DateTime?  @map("end_date") // null means current/active salary
+  isActive     Boolean    @default(true) @map("is_active")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @default(now()) @updatedAt @map("updated_at")
 
-    user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-    company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
-    @@index([userId, isActive], name: "fk_salary_history_user_active")
-    @@index([companyId], name: "fk_salary_history_company")
-    @@index([startDate, endDate], name: "idx_salary_history_dates")
+  @@index([userId, isActive], name: "fk_salary_history_user_active")
+  @@index([companyId], name: "fk_salary_history_company")
+  @@index([startDate, endDate], name: "idx_salary_history_dates")
 }
 
 enum SalaryType {
-    HOURLY
-    BI_WEEKLY
-    WEEKLY
-    MONTHLY
+  HOURLY
+  BI_WEEKLY
+  WEEKLY
+  MONTHLY
 }
 
 // Task for a company.
@@ -1749,6 +1788,7 @@ model TaskUser {
 
   @@index([taskId])
 }
+
 model UserFeedback {
   id                     Int                      @id @default(autoincrement())
   userId                 Int                      @map("user_id")
@@ -1771,6 +1811,7 @@ model UserFeedbackAttachment {
   updatedAt      DateTime     @default(now()) @updatedAt @map("updated_at")
   userFeedback   UserFeedback @relation(fields: [userFeedbackId], references: [id])
 }
+
 // User model.
 // User can be employee or admin.
 // When user registers, they have to create a company. So, every new user is an admin.
@@ -2070,6 +2111,7 @@ enum ClientSMSSentBy {
   Client
   Company
 }
+
 // Vehicle of a company.
 model Vehicle {
   id                     Int      @id @default(autoincrement())
@@ -2124,3 +2166,4 @@ model VehicleParts {
   invoice      Invoice?    @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
   service      Service?    @relation(fields: [serviceId], references: [id], onDelete: Cascade)
 }
+

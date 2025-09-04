@@ -88,7 +88,7 @@ export default function TaskContentModal({
       setTitle(taskData?.title || "");
       setDescription(taskData?.description || "");
       setAssignedUsers(assignUsers);
-      setDate(moment.utc(taskData.date).format("YYYY-MM-DD"));
+      setDate(taskData.date ? moment.utc(taskData.date).format("YYYY-MM-DD") : "");
       setStartTime(taskData?.startTime || "");
       setEndTime(taskData?.endTime || "");
       setPriority(taskData?.priority || "Low");
@@ -179,7 +179,7 @@ export default function TaskContentModal({
       return errorToast("Task title is required!");
     }
 
-    if (date && (!startTime || !endTime)) {
+    if (date && date.trim() !== "" && (!startTime || !endTime)) {
       return errorToast(
         "Start time and End time are required when a date is selected!",
       );
@@ -197,7 +197,7 @@ export default function TaskContentModal({
           priority,
           startTime,
           endTime,
-          date: moment(date).isValid()
+          date: date && date.trim() !== "" && moment(date).isValid()
             ? new Date(date).toISOString()
             : undefined,
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -220,7 +220,7 @@ export default function TaskContentModal({
         clientId,
         leadId: leadId ?? undefined,
         invoiceId: invoiceId ?? undefined,
-        date: date ? new Date(date).toISOString() : undefined,
+        date: date && date.trim() !== "" ? new Date(date).toISOString() : undefined,
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       });
       if (res.type === "success") {

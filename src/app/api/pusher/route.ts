@@ -31,6 +31,35 @@ export async function POST(req: Request) {
     if (!to || (!message && !attachmentFiles && !requestEstimate)) {
       throw new Error("Missing some argument for message");
     }
+
+    // Helper function to generate lastMessage text
+    const generateLastMessageText = (message: string, attachmentFiles: any[] | null) => {
+      // If there's a text message, use it
+      if (message && message.trim()) {
+        return message;
+      }
+      
+      // If there are attachments but no text message, generate descriptive text
+      if (attachmentFiles && attachmentFiles.length > 0) {
+        const imageCount = attachmentFiles.filter(file => 
+          file.fileType && file.fileType.startsWith('image/')
+        ).length;
+        const otherFileCount = attachmentFiles.length - imageCount;
+        
+        const parts = [];
+        if (imageCount > 0) {
+          parts.push(`${imageCount} ${imageCount === 1 ? 'image' : 'images'}`);
+        }
+        if (otherFileCount > 0) {
+          parts.push(`${otherFileCount} ${otherFileCount === 1 ? 'file' : 'files'}`);
+        }
+        
+        return parts.join(' and ');
+      }
+      
+      return message || '';
+    };
+
     let channel = `user-${userId}`;
     let messageData: TMessageDate = {
       from: userId,
@@ -41,7 +70,7 @@ export async function POST(req: Request) {
     };
 
     const chatTrackDataCreate = {
-      lastMessage: message as string,
+      lastMessage: generateLastMessageText(message, attachmentFiles),
       isRead: false,
       senderId: userId,
       receiverId: to as number,
@@ -115,7 +144,7 @@ export async function POST(req: Request) {
           },
           data: {
             messageId: createdMessage.id,
-            lastMessage: message as string,
+            lastMessage: generateLastMessageText(message, attachmentFiles),
             isRead: false,
             section,
             senderId: userId,

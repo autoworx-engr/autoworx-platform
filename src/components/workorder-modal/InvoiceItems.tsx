@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { cn } from "@/lib/cn";
-import type { db } from "@/lib/db";
-import React, { useState } from "react";
-import { FaChevronDown, FaChevronUp } from "react-icons/fa6";
-import LaborItems from "./LaborItems";
-import ReDoModal from "./ReDoModal";
-import { Technician,VehicleParts } from "@prisma/client";
+import { cn } from '@/lib/cn';
+import type { db } from '@/lib/db';
+import React, { useState } from 'react';
+import { FaChevronDown, FaChevronUp } from 'react-icons/fa6';
+import LaborItems from './LaborItems';
+import ReDoModal from './ReDoModal';
+import { Technician, VehicleParts } from '@prisma/client';
 
 type TProps = {
   invoiceTechnicians: (Technician & { name: string })[];
@@ -38,10 +38,10 @@ export function InvoiceItems({
   invoiceTechnicians,
   invoiceStatus,
   writePermission,
-  techniciansPerItem
+  techniciansPerItem,
 }: TProps) {
   const [openService, setOpenService] = useState<number | null>(null);
-  return items?.map((item) => {
+  return items?.map(item => {
     if (!item.service) return null;
     return (
       <div
@@ -50,8 +50,8 @@ export function InvoiceItems({
       >
         <div
           className={cn(
-            "flex w-full cursor-pointer justify-between text-[#6571FF]",
-            openService && "border-b py-2",
+            'flex w-full cursor-pointer justify-between text-[#6571FF]',
+            openService && 'border-b py-2'
           )}
           onClick={() =>
             setOpenService(openService === item.id ? null : item.id)
@@ -97,7 +97,6 @@ export function InvoiceItems({
               serviceId={item?.serviceId as number}
               writePermission={writePermission}
               technicianList={techniciansPerItem[item.id] || []}
-
             />
           </div>
         )}

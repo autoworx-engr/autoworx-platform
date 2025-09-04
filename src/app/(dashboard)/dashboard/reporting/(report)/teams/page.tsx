@@ -1,15 +1,13 @@
-import CalculationWithTooltip from "@/app/(dashboard)/dashboard/reporting/components/CalculationWithTooltip";
-import { authOptions } from "@/authOptions";
-import { db } from "@/lib/db";
-import moment from "moment";
-import { getServerSession } from "next-auth";
-import Calculation from "../../components/Calculation";
-import FilterHeader from "./FilterHeader";
-import WorkforceDisplay from "./WorkforceDisplay";
-import { getDateRanges } from "@/actions/dashboard/data/lib";
-import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
-import { convertDateToMidnightInTimezone } from "@/utils/convertDateToMidnightInTimezone";
-import { normalizeSearch } from "@/utils/normalizeSearch";
+import { getCompanyTimezone } from '@/actions/settings/getCompanyTimezone';
+import CalculationWithTooltip from '@/app/(dashboard)/dashboard/reporting/components/CalculationWithTooltip';
+import { authOptions } from '@/authOptions';
+import { db } from '@/lib/db';
+import { normalizeSearch } from '@/utils/normalizeSearch';
+import moment from 'moment';
+import { getServerSession } from 'next-auth';
+import Calculation from '../../components/Calculation';
+import FilterHeader from './FilterHeader';
+import WorkforceDisplay from './WorkforceDisplay';
 
 // Props type
 type TProps = {
@@ -19,7 +17,7 @@ type TProps = {
     endDate?: string;
     service?: string;
     search?: string;
-    employeeType?: "Admin" | "Sales" | "Technician" | "Manager" | "Other";
+    employeeType?: 'Admin' | 'Sales' | 'Technician' | 'Manager' | 'Other';
   };
 };
 
@@ -29,7 +27,7 @@ type TSliderData = {
   min: number;
   max: number;
   defaultValue?: [number, number];
-  type: "price" | "cost" | "profit";
+  type: 'price' | 'cost' | 'profit';
 };
 
 // Filter sliders
@@ -43,7 +41,7 @@ export default async function WorkforceReportPage({ searchParams }: TProps) {
   );
   const { timezone } = await getCompanyTimezone();
 
-  const { currentMonthStart, currentMonthEnd } = getDateRanges(timezone);
+  // const { currentMonthStart, currentMonthEnd } = getDateRanges(timezone);
 
   const formattedStartDate = hasDateRange
     ? decodeURIComponent(searchParams.startDate!) // e.g. "05/01/2025"
@@ -54,11 +52,11 @@ export default async function WorkforceReportPage({ searchParams }: TProps) {
     : null;
 
   const convertedStart = hasDateRange
-    ? moment.tz(formattedStartDate!, "MM/DD/YYYY", timezone).startOf("day")
+    ? moment.tz(formattedStartDate!, 'MM/DD/YYYY', timezone).startOf('day')
     : null;
 
   const convertedEnd = hasDateRange
-    ? moment.tz(formattedEndDate!, "MM/DD/YYYY", timezone).endOf("day")
+    ? moment.tz(formattedEndDate!, 'MM/DD/YYYY', timezone).endOf('day')
     : null;
   // Fetch all employees and their related data in a single query
   const allEmployees = await db.user.findMany({
@@ -71,21 +69,24 @@ export default async function WorkforceReportPage({ searchParams }: TProps) {
   });
 
   // Filter employees based on type and date range
-  const filteredEmployees = allEmployees.filter((employee) => {
+  const filteredEmployees = allEmployees.filter(employee => {
     // Filter by employee type if specified
     const matchesType = searchParams.employeeType
       ? employee.employeeType === searchParams.employeeType
       : true;
-    const statusCompleted = employee.Technician.some(
-      (tech) => tech.status === "Complete"
-    );
+
+    // TODO: This condition is only showing employees with completed tasks.
+    // const statusCompleted = employee.Technician.some(
+    //   tech => tech.status === 'Complete'
+    // );
+
     // Filter by date range if specified
     const matchesDateRange = hasDateRange
-      ? employee.Technician.some((tech) => {
+      ? employee.Technician.some(tech => {
           const techDate = tech.dateClosed ? moment.utc(tech.dateClosed) : null;
           return (
             techDate &&
-            techDate.isBetween(convertedStart, convertedEnd, null, "[]")
+            techDate.isBetween(convertedStart, convertedEnd, null, '[]')
           );
         })
       : true;
@@ -93,12 +94,19 @@ export default async function WorkforceReportPage({ searchParams }: TProps) {
     // Filter by search query if specified
     const matchesSearch = searchParams?.search
       ? normalizeSearch(`${employee.firstName} ${employee.lastName}`)?.includes(
-          normalizeSearch(searchParams?.search || "")
+          normalizeSearch(searchParams?.search || '')
         )
       : true;
 
+    // console.log({
+    //   employeeName: `${employee.firstName} ${employee.lastName}`,
+    //   matchesType,
+    //   matchesDateRange,
+    //   matchesSearch,
+    // });
+
     // Combine all filters
-    return matchesType && matchesDateRange && matchesSearch && statusCompleted;
+    return matchesType && matchesDateRange && matchesSearch;
   });
 
   // Calculate Current Month Payout
@@ -107,7 +115,7 @@ export default async function WorkforceReportPage({ searchParams }: TProps) {
       const techDate = tech.dateClosed ? moment(tech.dateClosed).utc() : null;
 
       if (
-        tech.status === "Complete" &&
+        tech.status === 'Complete' &&
         techDate !== null &&
         techDate.isSameOrAfter(convertedStart?.format()) &&
         techDate.isSameOrBefore(convertedEnd?.format())
@@ -121,9 +129,9 @@ export default async function WorkforceReportPage({ searchParams }: TProps) {
 
   // Calculate Overall Technician Payout (till date)
   const overallTechnicianPayout = allEmployees.reduce((acc, employee) => {
-    if (employee.employeeType === "Technician") {
+    if (employee.employeeType === 'Technician') {
       const techTotal = employee.Technician.reduce((sum, tech) => {
-        return tech.status === "Complete"
+        return tech.status === 'Complete'
           ? sum + Number(tech?.amount || 0)
           : sum;
       }, 0);
@@ -134,9 +142,9 @@ export default async function WorkforceReportPage({ searchParams }: TProps) {
 
   // Calculate Overall Sales Payout (till date)
   const overallSalesPayout = allEmployees.reduce((acc, employee) => {
-    if (employee.employeeType === "Sales") {
+    if (employee.employeeType === 'Sales') {
       const salesTotal = employee.Technician.reduce((sum, tech) => {
-        return tech.status === "Complete"
+        return tech.status === 'Complete'
           ? sum + Number(tech?.amount || 0)
           : sum;
       }, 0);
@@ -155,7 +163,7 @@ export default async function WorkforceReportPage({ searchParams }: TProps) {
           techDate.isSameOrAfter(convertedStart) &&
           techDate.isSameOrBefore(convertedEnd));
 
-      if (tech.status === "Complete" && isDateValid) {
+      if (tech.status === 'Complete' && isDateValid) {
         return sum + Number(tech?.amount || 0);
       }
 
@@ -177,7 +185,7 @@ export default async function WorkforceReportPage({ searchParams }: TProps) {
             techDate.isSameOrAfter(convertedStart) &&
             techDate.isSameOrBefore(convertedEnd));
 
-        if (tech.status === "Complete" && isDateValid) {
+        if (tech.status === 'Complete' && isDateValid) {
           return sum + Number(tech?.amount || 0);
         }
 
@@ -188,7 +196,7 @@ export default async function WorkforceReportPage({ searchParams }: TProps) {
     return acc;
   }, 0);
 
-  const getEmployeeType = ["Admin", "Manager", "Sales", "Technician", "Other"];
+  const getEmployeeType = ['Admin', 'Manager', 'Sales', 'Technician', 'Other'];
   const hasEmployeeTypeFilter = !!searchParams?.employeeType;
 
   return (

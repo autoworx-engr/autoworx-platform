@@ -9,59 +9,41 @@ import { clockOut } from "@/actions/dashboard/clockOut";
 import { successToast } from "@/lib/toast";
 import moment from "moment-timezone";
 import { useCallback } from "react";
+import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 
 type TAttendanceButtonsBoxProps = {
   lastClockInOut: (ClockInOut & { ClockBreak: ClockBreak[] }) | null;
 };
 
-export function formatDateToCustomString(date: Date) {
-  const options = {
-    hour: "numeric",
-    minute: "numeric",
-    hour12: true,
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  };
-  //@ts-ignore
-  return moment(date).utc().toDate().toLocaleString("en-US", options);
+export function formatDateToCustomString(date: Date, timezone?: string) {
+  const companyTimezone =
+    timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+  return moment(date).tz(companyTimezone).format("MMMM D, YYYY h:mm A");
 }
 
-export function formatToTimeString(date: Date) {
-  let hours = date.getHours();
-  const minutes = date.getMinutes();
-  const amPm = hours >= 12 ? "PM" : "AM";
-
-  // Convert 24-hour format to 12-hour format
-  hours = hours % 12 || 12;
-
-  // Format minutes with leading zero if needed
-  const formattedMinutes = minutes < 10 ? "0" + minutes : minutes;
-
-  return `${hours.toString().padStart(2, "0")}:${formattedMinutes} ${amPm}`;
+export function formatToTimeString(date: Date, timezone?: string) {
+  const companyTimezone =
+    timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+  return moment(date).tz(companyTimezone).format("h:mm A");
 }
 
 export default function AttendanceButtonsBox({
   lastClockInOut,
 }: TAttendanceButtonsBoxProps) {
+  const companyTimezone = useCompanyTimezone();
+
   const hasClockedInToday = lastClockInOut?.clockIn
     ? moment
         .utc(lastClockInOut.clockIn)
-        .tz(lastClockInOut.timezone ?? moment.tz.guess())
-        .isSame(
-          moment().tz(lastClockInOut.timezone ?? moment.tz.guess()),
-          "day",
-        )
+        .tz(companyTimezone)
+        .isSame(moment().tz(companyTimezone), "day")
     : false;
 
   const hasClockedOutToday = lastClockInOut?.clockOut
     ? moment
         .utc(lastClockInOut.clockOut)
-        .tz(lastClockInOut.timezone ?? moment.tz.guess())
-        .isSame(
-          moment().tz(lastClockInOut.timezone ?? moment.tz.guess()),
-          "day",
-        )
+        .tz(companyTimezone)
+        .isSame(moment().tz(companyTimezone), "day")
     : false;
 
   const validBreak = useCallback(
@@ -73,23 +55,23 @@ export default function AttendanceButtonsBox({
         lastClockInOut?.ClockBreak[lastClockInOut?.ClockBreak?.length - 1].id
       );
     },
-    [lastClockInOut],
+    [lastClockInOut]
   );
   return (
-    <div className="flex h-[20%] justify-between gap-x-2 rounded-md p-4 shadow-lg xl:p-8">
-      <div>
+    <div className="flex flex-col sm:flex-row w-full h-[13%] gap-2 rounded-md p-4 shadow-lg">
+      <div className="w-full">
         <button
           onClick={async () => {
             if (!lastClockInOut || lastClockInOut?.clockOut) {
               const res = await clockIn({
-                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                timezone: companyTimezone,
               });
               if (res.success) {
                 successToast("Clocked In Successfully");
               }
             }
           }}
-          className={`h-full rounded ${
+          className={`h-full w-full rounded ${
             hasClockedInToday
               ? "cursor-not-allowed bg-gray-400"
               : !lastClockInOut?.clockOut && lastClockInOut?.clockIn
@@ -107,12 +89,15 @@ export default function AttendanceButtonsBox({
           <br />
           {lastClockInOut?.clockIn && !lastClockInOut?.clockOut && (
             <span className="text-xs">
-              {formatDateToCustomString(new Date(lastClockInOut?.clockIn))}
+              {formatDateToCustomString(
+                new Date(lastClockInOut?.clockIn),
+                companyTimezone
+              )}
             </span>
           )}
         </button>
       </div>
-      <div>
+      <div className="w-full">
         <button
           onClick={async () => {
             if (lastClockInOut && !lastClockInOut?.clockOut) {
@@ -124,11 +109,11 @@ export default function AttendanceButtonsBox({
               }
             }
           }}
-          className={`h-full rounded ${
+          className={`h-full w-full rounded ${
             hasClockedOutToday
               ? "cursor-not-allowed bg-gray-400"
               : "bg-[#6571FF]"
-          } bg-[#6571FF] px-4 py-4 text-xl font-semibold text-white xl:px-10 ${lastClockInOut && lastClockInOut?.clockIn && !lastClockInOut?.clockOut ? "cursor-pointer" : "cursor-default"}`}
+          } bg-[#6571FF] px-4 py-4 font-semibold text-white xl:px-10 ${lastClockInOut && lastClockInOut?.clockIn && !lastClockInOut?.clockOut ? "cursor-pointer" : "cursor-default"}`}
           disabled={hasClockedOutToday ?? false}
           title={hasClockedOutToday ? "You have already clocked out today" : ""}
         >
@@ -137,7 +122,7 @@ export default function AttendanceButtonsBox({
           {/* <span className="text-xs">10:00 AM</span> */}
         </button>
       </div>
-      <div>
+      <div className="w-full">
         {lastClockInOut &&
         lastClockInOut?.ClockBreak[lastClockInOut?.ClockBreak?.length - 1]
           ?.breakEnd === null ? (
@@ -155,7 +140,7 @@ export default function AttendanceButtonsBox({
                 }
               }
             }}
-            className={`h-full rounded bg-[#03A7A2] px-4 py-4 font-semibold text-white xl:px-10 xl:text-xl`}
+            className={`h-full w-full rounded bg-[#03A7A2] px-4 py-4 font-semibold text-white xl:px-10 xl:text-xl`}
           >
             End Break
           </button>
@@ -171,7 +156,7 @@ export default function AttendanceButtonsBox({
                 }
               }
             }}
-            className={`h-full rounded bg-[#6571FF] px-4 py-4 font-semibold text-white xl:px-10 xl:text-xl ${lastClockInOut && !lastClockInOut?.clockOut ? "cursor-pointer" : "cursor-default"}`}
+            className={`h-full w-full rounded bg-[#6571FF] px-4 py-4 font-semibold text-white xl:px-10 xl:text-xl ${lastClockInOut && !lastClockInOut?.clockOut ? "cursor-pointer" : "cursor-default"}`}
           >
             <span>Break</span> <br />
             <div className="mt-1 flex flex-col">
@@ -182,8 +167,9 @@ export default function AttendanceButtonsBox({
                       key={ind}
                       className="text-[10px] font-light leading-[1.3]"
                     >
-                      {formatToTimeString(Break.breakStart)} -{" "}
-                      {Break?.breakEnd && formatToTimeString(Break?.breakEnd)}
+                      {formatToTimeString(Break.breakStart, companyTimezone)} -{" "}
+                      {Break?.breakEnd &&
+                        formatToTimeString(Break?.breakEnd, companyTimezone)}
                     </span>
                   );
                 })}

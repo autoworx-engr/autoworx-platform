@@ -1,54 +1,58 @@
-"use client";
+'use client';
 
-import { errorToast, successToast } from "@/lib/toast";
-import { useEstimateCreateStore } from "@/stores/estimate-create";
-import { ChangeEvent, useTransition } from "react";
-import { HiXCircle } from "react-icons/hi2";
-import imageCompression from "browser-image-compression";
-import Image from "next/image";
+import { errorToast, successToast } from '@/lib/toast';
+import { useEstimateCreateStore } from '@/stores/estimate-create';
+import { ChangeEvent, useTransition } from 'react';
+import { HiXCircle } from 'react-icons/hi2';
+import imageCompression from 'browser-image-compression';
+import Image from 'next/image';
 
 export function ImagesInput() {
   const { photos, setPhotos } = useEstimateCreateStore();
   const [pending, startTransition] = useTransition();
-  console.log({ photos });
   const handleUploadImage = async (event: ChangeEvent<HTMLInputElement>) => {
     try {
       const files = event.currentTarget.files;
       console.log({ files });
       if (!files?.length) return;
       const compressPhotos = await Promise.all(
-        Array.from(files).map(async (file) =>
+        Array.from(files).map(async file =>
           imageCompression(file, {
             maxSizeMB: 1, // max size in MB
             maxWidthOrHeight: 1920, // limit resolution
             useWebWorker: true,
-          }),
-        ),
+          })
+        )
       );
       console.log({ compressPhotos });
       const formData = new FormData();
-      compressPhotos.forEach((file) => {
-        formData.append("file", file);
+      compressPhotos.forEach(file => {
+        formData.append('file', file);
       });
 
-      const res = await fetch("/api/upload", {
-        method: "POST",
+      const res = await fetch('/api/upload', {
+        method: 'POST',
         body: formData,
       });
 
-      console.log({ res });
-
       if (!res.ok) {
-        throw new Error("Failed to upload photos");
+        throw new Error('Failed to upload photos');
       }
 
       const json = await res.json();
       const data = json.data;
-      setPhotos([...photos, ...data]);
-      successToast("Image uploaded successfully");
+      console.log({ data });
+      setPhotos([
+        ...photos,
+        ...data.map((photo: string) => ({
+          id: undefined,
+          photo: photo ?? '',
+        })),
+      ]);
+      successToast('Image uploaded successfully');
     } catch (err) {
-      console.error("Error uploading image:", err);
-      errorToast("Error uploading image. Please try again.");
+      console.error('Error uploading image:', err);
+      errorToast('Error uploading image. Please try again.');
     }
   };
   return (
@@ -59,7 +63,7 @@ export function ImagesInput() {
           hidden
           accept="image/*"
           multiple
-          onChange={(event) => startTransition(() => handleUploadImage(event))}
+          onChange={event => startTransition(() => handleUploadImage(event))}
         />
         <svg
           width="72"
@@ -77,7 +81,7 @@ export function ImagesInput() {
           />
         </svg>
         <span className="text-sm font-medium">
-          Attach {pending ? "uploading..." : "Photo/Video"}
+          Attach {pending ? 'uploading...' : 'Photo/Video'}
         </span>
         {pending && (
           <span className="animate-bounce text-sm font-bold text-red-400">
@@ -93,8 +97,12 @@ export function ImagesInput() {
           >
             {
               // eslint-disable-next-line @next/next/no-img-element
-              <Image src={photo} fill
-    className="object-contain p-2"  alt={`image-${i}`} />
+              <Image
+                src={photo.photo ?? ''}
+                fill
+                className="object-contain p-2"
+                alt={`image-${i}`}
+              />
             }
             <button
               type="button"

@@ -1,66 +1,66 @@
-'use server';
-import { handlePrismaError } from '@/error-boundary/handlePrismaError';
-import { createTask } from '@/actions/task/createTask';
-import { errorHandler } from '@/error-boundary/globalErrorHandler';
-import { getCompanyId } from '@/lib/companyId';
-import { db } from '@/lib/db';
-import { ServerAction } from '@/types/action';
-import { TErrorHandler } from '@/types/globalError';
-import { estimateEditValidationSchema } from '@/validations/schemas/estimate/estimate.validation';
+"use server";
+import { handlePrismaError } from "@/error-boundary/handlePrismaError";
+import { createTask } from "@/actions/task/createTask";
+import { errorHandler } from "@/error-boundary/globalErrorHandler";
+import { getCompanyId } from "@/lib/companyId";
+import { db } from "@/lib/db";
+import { ServerAction } from "@/types/action";
+import { TErrorHandler } from "@/types/globalError";
+import { estimateEditValidationSchema } from "@/validations/schemas/estimate/estimate.validation";
 import {
-    InvoiceType,
-    Labor,
-    Material,
-    Service,
-    Tag,
-    Prisma,
-} from '@prisma/client';
-import { revalidatePath } from 'next/cache';
+  InvoiceType,
+  Labor,
+  Material,
+  Service,
+  Tag,
+  Prisma,
+} from "@prisma/client";
+import { revalidatePath } from "next/cache";
 
-import { getProductWithQuantity } from '@/lib/getProductWithQuantity';
-import { InspectionType } from '@/stores/estimate-create';
+import { getProductWithQuantity } from "@/lib/getProductWithQuantity";
+import { InspectionType } from "@/stores/estimate-create";
 import {
-    updateInventoryOnEstimateConversion,
-    updateInventoryOrCreateHistory,
-} from './updateInventory';
-import { addVehicleParts } from '../technician/addVehicleParts';
-import { updateServiceAutomationTrigger } from '@/service/service-maintenance-automation-trigger/api';
-import { sendInvoiceDeliveredNotification } from '@/lib/notification/invoice-notify';
-import { updateInvoiceAutomationTrigger } from '@/service/invoice-automation-trigger/api';
+  updateInventoryOnEstimateConversion,
+  updateInventoryOrCreateHistory,
+} from "./updateInventory";
+import { updateServiceAutomationTrigger } from "@/service/service-maintenance-automation-trigger/api";
+import { sendInvoiceDeliveredNotification } from "@/lib/notification/invoice-notify";
+import { updateInvoiceAutomationTrigger } from "@/service/invoice-automation-trigger/api";
 
 interface UpdateEstimateInput {
-    id: string;
+  id: string;
 
-    clientId: number | undefined;
-    vehicleId: number | undefined;
+  clientId: number | undefined;
+  vehicleId: number | undefined;
 
-    columnId: number | undefined;
+  columnId: number | undefined;
 
-    subtotal: number;
-    discount: number;
-    tax: number;
-    serviceFee: number;
-    grandTotal: number;
-    due: number;
+  subtotal: number;
+  discount: number;
+  tax: number;
+  serviceFee: number;
+  grandTotal: number;
+  due: number;
 
-    internalNotes: string;
-    terms: string;
-    policy: string;
-    customerNotes: string;
-    customerComments: string;
+  internalNotes: string;
+  terms: string;
+  policy: string;
+  customerNotes: string;
+  customerComments: string;
 
-    photos: string[];
-    items: {
-        id?: number;
-        service: Service | null;
-        materials: ((Material & { tags: Tag[] }) | null)[];
-        labor: (Labor & { tags: Tag[] }) | null;
-        tags: Tag[];
-    }[];
-    tasks: { id: undefined | number; task: string }[];
-    type: InvoiceType;
-    inspections: InspectionType[];
-    damageNotes: string | null;
+  photos: { id?: number; photo?: string }[];
+  items: {
+    id?: number;
+    service: Service | null;
+    materials: ((Material & { tags: Tag[] }) | null)[];
+    labor: (Labor & { tags: Tag[] }) | null;
+    tags: Tag[];
+    serviceDesc?: string;
+  }[];
+  tasks: { id: undefined | number; task: string }[];
+  type: InvoiceType;
+  inspections: InspectionType[];
+  damageNotes: string | null;
 }
 
 // transaction timeout test function
@@ -69,620 +69,648 @@ interface UpdateEstimateInput {
 // }
 
 export async function updateInvoice(
-    data: UpdateEstimateInput,
-    fromPayment: boolean = false,
-    retryCount: number = 0
+  data: UpdateEstimateInput,
+  fromPayment: boolean = false,
+  retryCount: number = 0
 ): Promise<ServerAction | TErrorHandler> {
-    const MAX_RETRIES = 2;
+  const MAX_RETRIES = 2;
+  try {
+    await estimateEditValidationSchema.parseAsync(data);
 
-    try {
-        await estimateEditValidationSchema.parseAsync(data);
+    const companyId = await getCompanyId();
 
-        const companyId = await getCompanyId();
+    //find invoice from database
+    const invoice = await db.invoice.findUnique({
+      where: {
+        id: data.id,
+      },
+      include: {
+        column: {
+          select: {
+            title: true,
+          },
+        },
+      },
+    });
 
-        //find invoice from database
-        const invoice = await db.invoice.findUnique({
-            where: {
-                id: data.id,
-            },
-            include: {
-                column: {
-                    select: {
-                        title: true,
-                    },
-                },
-            },
-        });
+    const column = await db.column.findUnique({
+      where: { id: data.columnId },
+    });
 
-        const column = await db.column.findUnique({
-            where: { id: data.columnId },
-        });
+    // use prisma transaction for better performance or safely save data in db
+    const updatedInvoice = await db.$transaction(
+      async txDb => {
+        // await wait(21000);
 
-        // Get the technician details
-        const technicians = await db.technician.findMany({
-            where: {
-                invoiceId: data.id,
-            },
-            include: {
-                vehicleParts: true,
-            },
-        });
+        // merge all the same products and sum the quantity
+        let materials: Material[] = [];
 
-        // use prisma transaction for better performance or safely save data in db
-        const updatedInvoice = await db.$transaction(
-            async txDb => {
-                // await wait(21000);
+        for (const item in data.items) {
+          const itemMaterials = data?.items[item].materials;
 
-                // merge all the same products and sum the quantity
-                let materials: Material[] = [];
-
-                for (const item in data.items) {
-                    const itemMaterials = data?.items[item].materials;
-
-                    if (itemMaterials) {
-                        materials = [
-                            ...materials,
-                            ...itemMaterials.filter(
-                                material => material !== null
-                            ),
-                        ];
-                    }
-                }
-
-                // const productsWithQuantity = getProductWithQuantity(materials);
-
-                if (invoice?.type === 'Invoice') {
-                    await updateInventoryOrCreateHistory({
-                        materials,
-                        companyId,
-                        invoiceId: invoice.id,
-                    });
-                } else if (
-                    invoice?.type === 'Estimate' &&
-                    (column?.title === 'In Progress' || fromPayment)
-                ) {
-                    const productsWithQuantity =
-                        getProductWithQuantity(materials);
-                    await updateInventoryOnEstimateConversion({
-                        productsWithQuantity,
-                        companyId,
-                        invoiceId: invoice.id,
-                    });
-                }
-
-                let isWorkOrder = invoice?.isWorkOrder;
-                let deliveredAt = invoice?.deliveredAt;
-                let completedAt = invoice?.completedAt;
-
-                if (column) {
-                    // data.type = column.title === "In Progress" ? "Invoice" : data.type;
-                    if (column.title === 'In Progress') {
-                        data.type = 'Invoice';
-                        isWorkOrder = true;
-                        deliveredAt = null;
-                    } else if (column.title === 'Delivered') {
-                        if (!deliveredAt) {
-                            deliveredAt = new Date();
-                        }
-                    } else if (column.title === 'Completed') {
-                        if (!completedAt) {
-                            completedAt = new Date();
-                        } else {
-                            completedAt = invoice?.completedAt;
-                        }
-                    }
-                } else {
-                    data.columnId = undefined;
-                    data.type = 'Estimate';
-                }
-                // re-calculating the profit
-                const totalCost = data.items?.reduce((acc, item) => {
-                    const materials = item.materials;
-                    const labor = item.labor;
-
-                    const materialCost = materials?.reduce((acc, material) => {
-                        return (
-                            acc +
-                            Number(material?.cost) * Number(material?.quantity)
-                        );
-                    }, 0);
-
-                    const laborCost =
-                        Number(labor?.charge) * Number(labor?.hours);
-
-                    return acc + materialCost + laborCost;
-                }, 0);
-
-                // update invoice itself
-                const updatedInvoice = await txDb.invoice.update({
-                    where: {
-                        id: data.id,
-                    },
-                    data: {
-                        clientId: data.clientId,
-                        vehicleId: data.vehicleId ?? null,
-                        profit: data.grandTotal - totalCost,
-                        columnId: data.columnId ?? null,
-                        subtotal: data.subtotal,
-                        discount: data.discount,
-                        tax: data.tax,
-                        serviceFee: data.serviceFee,
-                        grandTotal: data.grandTotal,
-                        due: data.due,
-                        internalNotes: data.internalNotes,
-                        terms: data.terms,
-                        policy: data.policy,
-                        customerNotes: data.customerNotes,
-                        customerComments: data.customerComments,
-                        type: data.type as InvoiceType,
-                        isWorkOrder,
-                        workOrderCreatedAt:
-                            (invoice?.workOrderCreatedAt ?? isWorkOrder)
-                                ? new Date()
-                                : null,
-                        convertedAt: new Date(),
-                        completedAt,
-                        deliveredAt,
-                        damageNotes: data.damageNotes,
-                    },
-                    include: {
-                        client: true,
-                        vehicle: true,
-                        column: true,
-                        invoiceItems: {
-                            include: {
-                                service: true,
-                                labor: {
-                                    include: {
-                                        tags: {
-                                            include: { tag: true },
-                                        },
-                                    },
-                                },
-                                materials: {
-                                    include: {
-                                        tags: {
-                                            include: { tag: true },
-                                        },
-                                    },
-                                },
-                                tags: {
-                                    include: { tag: true },
-                                },
-                            },
-                        },
-                        tasks: true,
-                    },
-                });
-
-                if (
-                    invoice?.column?.title !== 'Delivered' &&
-                    column?.title === 'Delivered'
-                ) {
-                    // send notification when invoice is delivered
-                    sendInvoiceDeliveredNotification({
-                        companyId: updatedInvoice.companyId,
-                        invoiceId: updatedInvoice.id,
-                        clientName: `${updatedInvoice.client?.firstName} ${updatedInvoice.client?.lastName}`,
-                    });
-                }
-
-                // delete existing photos
-                await txDb.invoicePhoto.deleteMany({
-                    where: {
-                        invoiceId: data.id,
-                    },
-                });
-
-                // create new photos
-                await Promise.all(
-                    data?.photos?.map(async photo => {
-                        return txDb.invoicePhoto.create({
-                            data: {
-                                invoiceId: data.id,
-                                photo,
-                            },
-                        });
-                    })
-                );
-                // delete existing inspections
-                await txDb.invoiceInspection.deleteMany({
-                    where: {
-                        invoiceId: data.id,
-                    },
-                });
-
-                // create new inspections
-                await Promise.all(
-                    data.inspections.map(async inspection => {
-                        return txDb.invoiceInspection.create({
-                            data: {
-                                invoiceId: data.id,
-                                title: inspection.title,
-                                driver: inspection.driver,
-                                passenger: inspection.passenger,
-                                notes: inspection.notes,
-                            },
-                        });
-                    })
-                );
-
-                // delete existing items
-                await txDb.invoiceItem.deleteMany({
-                    where: {
-                        invoiceId: data.id,
-                    },
-                });
-
-                // todo: LOOP FOR SERVICES ITEMS
-                const serviceIndex: (number | undefined)[] = [];
-
-                await Promise.all(
-                    data.items?.map(async item => {
-                        const service = item.service;
-                        serviceIndex.push(service?.id);
-
-                        const materials = item.materials;
-                        const labor = item.labor;
-                        const tags = item.tags;
-
-                        let laborId;
-                        // delete existing labors
-                        if (labor?.id) {
-                            const existingLabor = await txDb.labor.findUnique({
-                                where: {
-                                    id: labor.id,
-                                },
-                            });
-
-                            if (
-                                existingLabor &&
-                                existingLabor.cannedLabor === false
-                            ) {
-                                await txDb.labor.delete({
-                                    where: {
-                                        id: labor.id,
-                                    },
-                                });
-                            }
-                        }
-
-                        // create new labor
-                        if (labor) {
-                            const newLabor = await txDb.labor.create({
-                                data: {
-                                    name: labor.name,
-                                    categoryId: labor.categoryId,
-                                    notes: labor.notes,
-                                    hours: labor.hours,
-                                    charge: labor.charge,
-                                    discount: labor.discount,
-                                    companyId,
-                                },
-                            });
-
-                            // create labor tags
-                            await Promise.all(
-                                labor.tags.map(async tag => {
-                                    if (tag?.id) {
-                                        return txDb.laborTag.create({
-                                            data: {
-                                                laborId: newLabor.id,
-                                                tagId: tag.id,
-                                            },
-                                        });
-                                    }
-                                })
-                            );
-
-                            laborId = newLabor.id;
-                        }
-
-                        // create new items
-                        const invoiceItem = await txDb.invoiceItem.create({
-                            data: {
-                                invoiceId: data.id,
-                                serviceId: service?.id,
-                                laborId,
-                                serviceDesc: service?.description,
-                            },
-                        });
-
-                        const getTechnicianForThisService = technicians.filter(
-                            technician => {
-                                return (
-                                    technician.serviceId === service?.id &&
-                                    technician.invoiceId === data.id &&
-                                    technician.invoiceItemId === item.id
-                                );
-                            }
-                        );
-
-                        // TODO: Insert the new technicians
-                        (getTechnicianForThisService.map(async technician => {
-                            const newTechnician = await txDb.technician.create({
-                                data: {
-                                    date: technician.date,
-                                    dateClosed: technician.dateClosed,
-                                    due: technician.due,
-                                    amount: technician.amount,
-                                    priority: technician.priority,
-                                    status: technician.status,
-                                    note: technician.note,
-                                    serviceId: technician.serviceId,
-                                    invoiceId: data.id,
-                                    companyId,
-                                    userId: technician.userId,
-                                    invoiceItemId: invoiceItem.id,
-                                },
-                            });
-                            await addVehicleParts(
-                                technician.vehicleParts,
-                                newTechnician.id
-                            );
-                        }),
-                            // Delete existing materials
-                            await txDb.material.deleteMany({
-                                where: {
-                                    invoiceItemId: invoiceItem.id,
-                                },
-                            }));
-
-                        const materialsCreatePromise =
-                            materials?.length > 0
-                                ? materials?.map(async material => {
-                                      if (!material || !material.name) return;
-                                      if (
-                                          Number(material?.quantity || 0) <= 0
-                                      ) {
-                                          throw new Error(
-                                              'Material quantity should be greater than 0'
-                                          );
-                                      }
-
-                                      const newMat = await txDb.material.create(
-                                          {
-                                              data: {
-                                                  name: material.name,
-                                                  vendorId: material.vendorId,
-                                                  categoryId:
-                                                      material.categoryId,
-                                                  notes: material.notes,
-                                                  quantity: material.quantity,
-                                                  cost: material.cost,
-                                                  sell: material.sell,
-                                                  discount: material.discount,
-                                                  invoiceId: data.id,
-                                                  companyId,
-                                                  invoiceItemId: invoiceItem.id,
-                                                  productId: material.productId,
-                                              },
-                                          }
-                                      );
-
-                                      // create tags
-                                      await Promise.all(
-                                          material.tags.map(async tag => {
-                                              if (tag?.id) {
-                                                  return txDb.materialTag.create(
-                                                      {
-                                                          data: {
-                                                              materialId:
-                                                                  newMat.id,
-                                                              tagId: tag.id,
-                                                          },
-                                                      }
-                                                  );
-                                              }
-                                          })
-                                      );
-                                  })
-                                : [];
-                        // Create materials
-                        await Promise.all(materialsCreatePromise);
-
-                        // create tags
-                        await Promise.all(
-                            tags.map(async tag => {
-                                if (tag?.id) {
-                                    return txDb.itemTag.create({
-                                        data: {
-                                            itemId: invoiceItem.id,
-                                            tagId: tag.id,
-                                        },
-                                    });
-                                }
-                            })
-                        );
-                    })
-                );
-
-                await txDb.invoice.update({
-                    where: {
-                        id: data.id,
-                    },
-                    data: {
-                        serviceIndex: JSON.stringify(serviceIndex),
-                    },
-                });
-
-                if (
-                    invoice?.columnId !== updatedInvoice.columnId &&
-                    updatedInvoice.type === 'Invoice'
-                ) {
-                    // if invoice status update invoice automation trigger
-                    updateInvoiceAutomationTrigger({
-                        companyId: updatedInvoice?.companyId!,
-                        invoiceId: updatedInvoice?.id!,
-                        columnId: updatedInvoice?.columnId!,
-                    });
-                }
-
-                if (
-                    updatedInvoice.type === 'Invoice' &&
-                    invoice?.type === 'Estimate'
-                ) {
-                    updateServiceAutomationTrigger({
-                        companyId: updatedInvoice?.companyId,
-                        estimateId: updatedInvoice?.id,
-                        columnId: updatedInvoice?.columnId!,
-                    });
-                }
-
-                return updatedInvoice;
-            },
-            {
-                maxWait: 20000, // 20 seconds
-                timeout: 20000, // 20 seconds
-                isolationLevel: 'Serializable', // Ensure data consistency
-            }
-        );
-
-        // task create or update this section
-        await Promise.all(
-            data?.tasks?.map(async task => {
-                // if task.id is undefined, create a new task
-                if (task.id === undefined) {
-                    return createTask({
-                        title: task.task.split(':')[0],
-                        description:
-                            task.task.length > 1 ? task.task.split(':')[1] : '',
-                        assignedUsers: [],
-                        priority: 'Medium',
-                        invoiceId: data.id,
-                        timezone:
-                            Intl.DateTimeFormat().resolvedOptions().timeZone,
-                        clientId: data.clientId,
-                    });
-                } else if (task.id) {
-                    // if task.id is not undefined, update the task
-                    return db.task.update({
-                        where: {
-                            id: task?.id,
-                        },
-                        data: {
-                            title: task.task.split(':')[0],
-                            description:
-                                task.task.length > 1
-                                    ? task.task.split(':')[1]
-                                    : '',
-                        },
-                    });
-                }
-            })
-        );
-
-        // Now fetch the most updated invoice with all the relations
-        // const latestInvoice = (await db.invoice.findUnique({
-        //     where: {
-        //         id: updatedInvoice.id,
-        //     },
-        //     include: {
-        //         client: true,
-        //         vehicle: true,
-        //         column: true,
-        //         invoiceItems: {
-        //             include: {
-        //                 service: true,
-        //                 labor: {
-        //                     include: {
-        //                         tags: {
-        //                             include: { tag: true },
-        //                         },
-        //                     },
-        //                 },
-        //                 materials: {
-        //                     include: {
-        //                         tags: {
-        //                             include: { tag: true },
-        //                         },
-        //                     },
-        //                 },
-        //                 tags: {
-        //                     include: { tag: true },
-        //                 },
-        //             },
-        //         },
-        //         tasks: true,
-        //     },
-        // })) as any; // TODO: Fix the type
-
-        updatedInvoice.invoiceItems = updatedInvoice?.invoiceItems.map(
-            (item: any) => {
-                item.tags = item.tags.map((tag: any) => tag.tag);
-                item.materials = item.materials.map((material: any) => {
-                    material.tags = material.tags.map((tag: any) => tag.tag);
-                    return material;
-                });
-                item.labor = item.labor
-                    ? {
-                          ...item.labor,
-                          tags: item.labor.tags.map((tag: any) => tag.tag),
-                      }
-                    : null;
-                return item;
-            }
-        );
-
-        revalidatePath('/dashboard/estimate');
-        return {
-            type: 'success',
-            data: updatedInvoice,
-        };
-    } catch (err) {
-        // Enhanced error handling for Prisma and transaction errors
-        if (
-            err instanceof Prisma.PrismaClientKnownRequestError ||
-            err instanceof Prisma.PrismaClientValidationError ||
-            err instanceof Prisma.PrismaClientUnknownRequestError ||
-            err instanceof Prisma.PrismaClientRustPanicError ||
-            err instanceof Prisma.PrismaClientInitializationError
-        ) {
-            const prismaError = handlePrismaError(err);
-            if (prismaError) {
-                // Retry logic for timeout errors
-                if (
-                    (prismaError.statusCode === 408 || // REQUEST_TIMEOUT
-                        prismaError.statusCode === 503) && // SERVICE_UNAVAILABLE
-                    retryCount < MAX_RETRIES
-                ) {
-                    console.log(
-                        `Retrying invoice update due to timeout. Attempt ${retryCount + 1}/${MAX_RETRIES}`
-                    );
-
-                    // Wait before retry (exponential backoff)
-                    await new Promise(resolve =>
-                        setTimeout(resolve, Math.pow(2, retryCount) * 1000)
-                    );
-
-                    return updateInvoice(data, fromPayment, retryCount + 1);
-                }
-
-                console.log({
-                    prismaErrorCode:
-                        err instanceof Prisma.PrismaClientKnownRequestError
-                            ? err.code
-                            : 'N/A',
-                    error: prismaError,
-                    retryCount,
-                });
-                return {
-                    type: 'globalError',
-                    message: prismaError.message,
-                    statusCode: prismaError.statusCode,
-                    errorSource: [
-                        {
-                            path: 'transaction',
-                            message: 'Transaction failed , Please try again',
-                        },
-                    ],
-                } as TErrorHandler;
-            }
+          if (itemMaterials) {
+            materials = [
+              ...materials,
+              ...itemMaterials.filter(material => material !== null),
+            ];
+          }
         }
 
-        // Fallback to general error handler
-        const formattedError = errorHandler(err);
-        console.log({ error: formattedError.errorSource, formattedError });
-        return formattedError;
+        // const productsWithQuantity = getProductWithQuantity(materials);
+
+        if (invoice?.type === "Invoice") {
+          await updateInventoryOrCreateHistory({
+            materials,
+            companyId,
+            invoiceId: invoice.id,
+          });
+        } else if (
+          invoice?.type === "Estimate" &&
+          (column?.title === "In Progress" || fromPayment)
+        ) {
+          const productsWithQuantity = getProductWithQuantity(materials);
+          await updateInventoryOnEstimateConversion({
+            productsWithQuantity,
+            companyId,
+            invoiceId: invoice.id,
+          });
+        }
+
+        let isWorkOrder = invoice?.isWorkOrder;
+        let deliveredAt = invoice?.deliveredAt;
+        let completedAt = invoice?.completedAt;
+
+        if (column) {
+          // data.type = column.title === "In Progress" ? "Invoice" : data.type;
+          if (column.title === "In Progress") {
+            data.type = "Invoice";
+            isWorkOrder = true;
+            deliveredAt = null;
+          } else if (column.title === "Delivered") {
+            if (!deliveredAt) {
+              deliveredAt = new Date();
+            }
+          } else if (column.title === "Completed") {
+            if (!completedAt) {
+              completedAt = new Date();
+            } else {
+              completedAt = invoice?.completedAt;
+            }
+          }
+        } else {
+          data.columnId = undefined;
+          data.type = "Estimate";
+        }
+        // re-calculating the profit
+        const totalCost = data.items?.reduce((acc, item) => {
+          const materials = item.materials;
+          const labor = item.labor;
+
+          const materialCost = materials?.reduce((acc, material) => {
+            return acc + Number(material?.cost) * Number(material?.quantity);
+          }, 0);
+
+          const laborCost = Number(labor?.charge) * Number(labor?.hours);
+
+          return acc + materialCost + laborCost;
+        }, 0);
+
+        // create or update photos
+        const updatedInvoicePhotos = await Promise.all(
+          data?.photos?.map(async photo => {
+            if (!photo.id) {
+              return txDb.invoicePhoto.create({
+                data: {
+                  invoiceId: data.id,
+                  photo: photo.photo ?? "",
+                },
+              });
+            }
+            return photo;
+          })
+        );
+
+        // delete photos which are removed
+        await txDb.invoicePhoto.deleteMany({
+          where: {
+            invoiceId: data.id,
+            id: {
+              notIn: updatedInvoicePhotos
+                ?.map(photo => photo.id)
+                .filter(Boolean) as number[],
+            },
+          },
+        });
+
+        // delete existing inspections
+        await txDb.invoiceInspection.deleteMany({
+          where: {
+            invoiceId: data.id,
+          },
+        });
+
+        // create new inspections
+        await Promise.all(
+          data.inspections.map(async inspection => {
+            return txDb.invoiceInspection.create({
+              data: {
+                invoiceId: data.id,
+                title: inspection.title,
+                driver: inspection.driver,
+                passenger: inspection.passenger,
+                notes: inspection.notes,
+              },
+            });
+          })
+        );
+
+        const updatedInvoiceItem = await Promise.all(
+          data.items?.map(async item => {
+            let findExistingItem = null;
+            if (Number(item?.id)) {
+              findExistingItem = await txDb.invoiceItem.findUnique({
+                where: {
+                  id: item?.id,
+                },
+              });
+            }
+
+            if (findExistingItem) {
+              // check if labor exist
+              let findExistingLabor = null;
+              if (Number(item?.labor?.id)) {
+                findExistingLabor = await txDb.labor.findUnique({
+                  where: {
+                    id: item?.labor?.id,
+                  },
+                });
+              }
+
+              if (!findExistingLabor && item.labor) {
+                findExistingLabor = await txDb.labor.create({
+                  data: {
+                    name: item?.labor?.name ?? "",
+                    categoryId: item?.labor?.categoryId,
+                    notes: item?.labor?.notes,
+                    hours: item?.labor?.hours ?? 0,
+                    charge: item?.labor?.charge ?? 0,
+                    discount: item?.labor?.discount ?? 0,
+                    companyId,
+                  },
+                });
+              }
+
+              let updatedLabor = null;
+
+              if (findExistingLabor) {
+                updatedLabor = await txDb.labor.update({
+                  where: {
+                    id: findExistingLabor.id,
+                  },
+                  data: {
+                    name: item?.labor?.name,
+                    categoryId: item?.labor?.categoryId,
+                    notes: item?.labor?.notes,
+                    hours: item?.labor?.hours ?? 0,
+                    charge: item?.labor?.charge ?? 0,
+                    discount: item?.labor?.discount ?? 0,
+                    companyId,
+                  },
+                });
+              }
+
+              // update item
+              const updatedInvoiceItem = await txDb.invoiceItem.update({
+                where: {
+                  id: findExistingItem?.id,
+                },
+                data: {
+                  serviceId: item.service?.id ?? null,
+                  laborId: updatedLabor?.id ?? null,
+                  serviceDesc: item?.serviceDesc || item?.service?.description,
+                },
+              });
+
+              // update Material info
+              // find first has material in invoice or invoiceId
+              let materials: any[] = [];
+
+              if (item?.materials?.length > 0) {
+                materials = await Promise.all(
+                  item.materials.map(async material => {
+                    const hasMaterialInInvoice = await txDb.material.findFirst({
+                      where: {
+                        id: material?.id,
+                        invoiceId: invoice?.id,
+                        invoiceItemId: item?.id,
+                      },
+                    });
+                    if (!material || !material.name) return;
+                    if (Number(material?.quantity || 0) <= 0) {
+                      throw new Error(
+                        "Material quantity should be greater than 0"
+                      );
+                    }
+                    if (hasMaterialInInvoice) {
+                      const updatedMaterial = await txDb.material.update({
+                        where: {
+                          id: hasMaterialInInvoice.id,
+                        },
+                        data: {
+                          name: material?.name,
+                          vendorId: material?.vendorId,
+                          categoryId: material?.categoryId,
+                          notes: material?.notes,
+                          quantity: material?.quantity,
+                          cost: material?.cost,
+                          sell: material?.sell ?? 0,
+                          discount: material?.discount ?? 0,
+                          invoiceId: data.id,
+                          companyId,
+                          invoiceItemId: findExistingItem.id,
+                          productId: hasMaterialInInvoice.productId,
+                        },
+                      });
+                      return updatedMaterial;
+                    } else {
+                      const newMaterial = await txDb.material.create({
+                        data: {
+                          name: material.name,
+                          vendorId: material.vendorId,
+                          categoryId: material.categoryId,
+                          notes: material.notes,
+                          quantity: material.quantity,
+                          cost: material.cost,
+                          sell: material.sell,
+                          discount: material.discount,
+                          invoiceId: data.id,
+                          companyId,
+                          invoiceItemId: findExistingItem.id,
+                          productId: material.productId,
+                        },
+                      });
+                      return newMaterial;
+                    }
+                  })
+                );
+              }
+
+              // delete removed unused materials for this item
+              await txDb.material.deleteMany({
+                where: {
+                  invoiceItemId: findExistingItem?.id,
+                  invoiceId: invoice?.id,
+                  id: {
+                    notIn: materials
+                      ?.filter(Boolean)
+                      .map(material => material?.id),
+                  },
+                },
+              });
+
+              const tags = item.tags;
+
+              const tagsCreatePromise = tags.map(async tag => {
+                let hasTagsExist = await txDb.itemTag.findFirst({
+                  where: {
+                    tagId: tag?.id,
+                    itemId: findExistingItem?.id,
+                  },
+                });
+
+                if (!hasTagsExist) {
+                  hasTagsExist = await txDb.itemTag.create({
+                    data: {
+                      itemId: findExistingItem.id,
+                      tagId: tag.id,
+                    },
+                  });
+                }
+                return hasTagsExist;
+              });
+
+              await Promise.all(tagsCreatePromise);
+              // delete tags which are not in the updated list
+              await txDb.itemTag.deleteMany({
+                where: {
+                  itemId: findExistingItem.id,
+                  tagId: {
+                    notIn: tags.map(tag => tag.id),
+                  },
+                },
+              });
+              return updatedInvoiceItem;
+            } else {
+              // if item not exist in invoice
+              const labor = item?.labor;
+              let newLabor = null;
+              if (labor) {
+                newLabor = await txDb.labor.create({
+                  data: {
+                    name: labor?.name ?? "",
+                    categoryId: labor?.categoryId,
+                    notes: labor?.notes,
+                    hours: labor?.hours ?? 0,
+                    charge: labor?.charge ?? 0,
+                    discount: labor?.discount ?? 0,
+                    companyId,
+                  },
+                });
+              }
+
+              const newInvoiceItem = await txDb.invoiceItem.create({
+                data: {
+                  invoiceId: invoice?.id,
+                  serviceId: item.service?.id,
+                  laborId: newLabor?.id,
+                  serviceDesc: item?.service?.description,
+                },
+              });
+
+              item?.materials?.length > 0 &&
+                (await Promise.all(
+                  item.materials.map(async material => {
+                    if (!material || !material.name) return;
+                    if (Number(material?.quantity || 0) <= 0) {
+                      throw new Error(
+                        "Material quantity should be greater than 0"
+                      );
+                    }
+                    await txDb.material.create({
+                      data: {
+                        name: material.name,
+                        vendorId: material.vendorId,
+                        categoryId: material.categoryId,
+                        notes: material.notes,
+                        quantity: material.quantity,
+                        cost: material.cost,
+                        sell: material.sell,
+                        discount: material.discount,
+                        invoiceId: invoice?.id,
+                        companyId,
+                        invoiceItemId: newInvoiceItem.id,
+                        productId: material.productId,
+                      },
+                    });
+                  })
+                ));
+
+              const tags = item.tags;
+
+              const tagsCreatePromise = tags.map(async tag => {
+                await txDb.itemTag.create({
+                  data: {
+                    itemId: newInvoiceItem.id,
+                    tagId: tag.id,
+                  },
+                });
+              });
+
+              await Promise.all(tagsCreatePromise);
+              return newInvoiceItem;
+            }
+          })
+        );
+
+        // delete removed items
+        await txDb.invoiceItem.deleteMany({
+          where: {
+            invoiceId: invoice?.id,
+            NOT: {
+              id: {
+                in: updatedInvoiceItem
+                  .map(item => item.id)
+                  .filter(Boolean) as number[],
+              },
+            },
+          },
+        });
+
+        // update invoice itself
+        const updatedInvoice = await txDb.invoice.update({
+          where: {
+            id: data.id,
+          },
+          data: {
+            clientId: data.clientId,
+            vehicleId: data.vehicleId ?? null,
+            profit: data.grandTotal - totalCost,
+            columnId: data.columnId ?? null,
+            subtotal: data.subtotal,
+            discount: data.discount,
+            tax: data.tax,
+            serviceFee: data.serviceFee,
+            grandTotal: data.grandTotal,
+            due: data.due,
+            internalNotes: data.internalNotes,
+            terms: data.terms,
+            policy: data.policy,
+            customerNotes: data.customerNotes,
+            customerComments: data.customerComments,
+            type: data.type as InvoiceType,
+            isWorkOrder,
+            workOrderCreatedAt:
+              (invoice?.workOrderCreatedAt ?? isWorkOrder) ? new Date() : null,
+            convertedAt: new Date(),
+            completedAt,
+            deliveredAt,
+            damageNotes: data.damageNotes,
+            serviceIndex: JSON.stringify(
+              updatedInvoiceItem
+                .map(item => item?.id)
+                .filter(Boolean)
+                .sort((a, b) => a - b)
+            ),
+          },
+          include: {
+            client: true,
+            vehicle: true,
+            column: true,
+            invoiceItems: {
+              include: {
+                service: true,
+                labor: {
+                  include: {
+                    tags: {
+                      include: { tag: true },
+                    },
+                  },
+                },
+                materials: {
+                  include: {
+                    tags: {
+                      include: { tag: true },
+                    },
+                  },
+                },
+                tags: {
+                  include: { tag: true },
+                },
+              },
+            },
+            tasks: true,
+          },
+        });
+
+        if (
+          invoice?.column?.title !== "Delivered" &&
+          column?.title === "Delivered"
+        ) {
+          // send notification when invoice is delivered
+          sendInvoiceDeliveredNotification({
+            companyId: updatedInvoice.companyId,
+            invoiceId: updatedInvoice.id,
+            clientName: `${updatedInvoice.client?.firstName} ${updatedInvoice.client?.lastName}`,
+          });
+        }
+
+        if (invoice?.columnId !== updatedInvoice.columnId) {
+          // if invoice status update invoice automation trigger
+          updateInvoiceAutomationTrigger({
+            companyId: updatedInvoice?.companyId!,
+            invoiceId: updatedInvoice?.id!,
+            columnId: updatedInvoice?.columnId!,
+            type: updatedInvoice?.type!,
+          });
+        }
+
+        if (updatedInvoice.type === "Invoice" && invoice?.type === "Estimate") {
+          updateServiceAutomationTrigger({
+            companyId: updatedInvoice?.companyId,
+            estimateId: updatedInvoice?.id,
+            columnId: updatedInvoice?.columnId!,
+          });
+        }
+
+        return updatedInvoice;
+      },
+      {
+        maxWait: 20000, // 20 seconds
+        timeout: 20000, // 20 seconds
+        isolationLevel: "Serializable", // Ensure data consistency
+      }
+    );
+
+    // task create or update this section
+    const invoiceTasks = await Promise.all(
+      data?.tasks?.map(async task => {
+        // if task.id is undefined, create a new task
+        if (task.id === undefined) {
+          const response = await createTask({
+            title: task.task.split(":")[0],
+            description: task.task.length > 1 ? task.task.split(":")[1] : "",
+            assignedUsers: [],
+            priority: "Medium",
+            invoiceId: data.id,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            clientId: data.clientId,
+          });
+
+          if (response.type === "success") {
+            return response.data;
+          }
+        } else if (task.id) {
+          // if task.id is not undefined, update the task
+          return db.task.update({
+            where: {
+              id: task?.id,
+            },
+            data: {
+              title: task.task.split(":")[0],
+              description: task.task.length > 1 ? task.task.split(":")[1] : "",
+            },
+          });
+        }
+      })
+    );
+
+    // delete tasks which are removed from the invoice
+    await db.task.deleteMany({
+      where: {
+        invoiceId: data.id,
+        id: {
+          notIn: invoiceTasks.map(task => task?.id).filter(Boolean) as number[],
+        },
+      },
+    });
+
+    updatedInvoice.invoiceItems = updatedInvoice?.invoiceItems.map(
+      (item: any) => {
+        item.tags = item.tags.map((tag: any) => tag.tag);
+        item.materials = item.materials.map((material: any) => {
+          material.tags = material.tags.map((tag: any) => tag.tag);
+          return material;
+        });
+        item.labor = item.labor
+          ? {
+              ...item.labor,
+              tags: item.labor.tags.map((tag: any) => tag.tag),
+            }
+          : null;
+        return item;
+      }
+    );
+
+    revalidatePath("/dashboard/estimate");
+    return {
+      type: "success",
+      data: updatedInvoice,
+    };
+  } catch (err) {
+    console.log({ err, retryCount });
+    // Enhanced error handling for Prisma and transaction errors
+    if (
+      err instanceof Prisma.PrismaClientKnownRequestError ||
+      err instanceof Prisma.PrismaClientValidationError ||
+      err instanceof Prisma.PrismaClientUnknownRequestError ||
+      err instanceof Prisma.PrismaClientRustPanicError ||
+      err instanceof Prisma.PrismaClientInitializationError
+    ) {
+      const prismaError = handlePrismaError(err);
+      if (prismaError) {
+        // Retry logic for timeout errors
+        if (
+          (prismaError.statusCode === 408 || // REQUEST_TIMEOUT
+            prismaError.statusCode === 503) && // SERVICE_UNAVAILABLE
+          retryCount < MAX_RETRIES
+        ) {
+          console.log(
+            `Retrying invoice update due to timeout. Attempt ${retryCount + 1}/${MAX_RETRIES}`
+          );
+
+          // Wait before retry (exponential backoff)
+          await new Promise(resolve =>
+            setTimeout(resolve, Math.pow(2, retryCount) * 1000)
+          );
+
+          return updateInvoice(data, fromPayment, retryCount + 1);
+        }
+
+        console.log({
+          prismaErrorCode:
+            err instanceof Prisma.PrismaClientKnownRequestError
+              ? err.code
+              : "N/A",
+          error: prismaError,
+          retryCount,
+        });
+        return {
+          type: "globalError",
+          message: prismaError.message,
+          statusCode: prismaError.statusCode,
+          errorSource: [
+            {
+              path: "transaction",
+              message: "update failed, Please try again",
+            },
+          ],
+        } as TErrorHandler;
+      }
     }
+
+    // Fallback to general error handler
+    const formattedError = errorHandler(err);
+    console.log({ error: formattedError.errorSource, formattedError });
+    return formattedError;
+  }
 }

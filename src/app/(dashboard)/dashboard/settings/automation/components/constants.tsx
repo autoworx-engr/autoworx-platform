@@ -7,6 +7,11 @@ export const conditions = [
   { id: "TIME_DELAY", title: "Time Delay" },
 ];
 
+export const invoiceTypeOptions = [
+  { id: "Invoice", title: "Invoice" },
+  { id: "Estimate", title: "Estimate" },
+];
+
 export const actionTypeOption = [
   { id: "MOVE_TO_STAGE", title: "Move to stage" },
   { id: "SEND_EMAIL", title: "Send email" },
@@ -15,6 +20,41 @@ export const actionTypeOption = [
 ];
 
 export const timeDelays = [
+  "30 seconds",
+  "1 minute",
+  "2 minutes",
+  "5 minutes",
+  "10 minutes",
+  "15 minutes",
+  "30 minutes",
+  "45 minutes",
+  "1 hour",
+  "2 hours",
+  "3 hours",
+  "5 hours",
+  "6 hours",
+  "10 hours",
+  "12 hours",
+  "1 day",
+  "2 days",
+  "3 days",
+  "5 days",
+  "7 days",
+  "10 days",
+  "14 days",
+  "1 month",
+  "2 months",
+  "3 months",
+  "6 months",
+  "9 months",
+  "1 year",
+  "1.5 year",
+  "2 year",
+  "3 year",
+];
+
+export const invoiceTimeDelays = [
+  "Instant",
   "30 seconds",
   "1 minute",
   "2 minutes",
@@ -78,7 +118,7 @@ export type CommunicationType = "SMS" | "EMAIL" | "BOTH";
 
 export function getTitleById(
   id: string,
-  targetOptions: any,
+  targetOptions: any
 ): string | undefined {
   return targetOptions.find((option: any) => option.id === id)?.title;
 }

@@ -21,7 +21,11 @@ export default function ClientNotes({ clientId, clientNotes }: TProps) {
   };
   return (
     <div>
-      <h2 className="mt-2 py-3 text-[#797979]">Client Notes</h2>
+      <header className="mb-3 flex items-center justify-between">
+        <h3 className="text-sm font-semibold tracking-tight text-zinc-800 dark:text-zinc-100">
+          Client Notes
+        </h3>
+      </header>
       <textarea
         className="w-full rounded-md border border-emerald-600 p-2 text-xs text-[#797979]"
         value={notes || ""}

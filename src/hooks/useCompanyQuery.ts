@@ -8,5 +8,6 @@ export function useCompanyQuery() {
     queryFn: async () => {
       return getCompany();
     },
+    staleTime: 24 * 3600 * 1000,
   });
 }

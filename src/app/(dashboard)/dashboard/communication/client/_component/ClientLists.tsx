@@ -30,7 +30,7 @@ export default async function ClientLists({ searchParams }: TProps) {
       id="client-message-lists"
     >
       {/* Header */}
-      <h2 className="text-[14px] text-[#797979]">Client List</h2>
+      {/* <h2 className="text-[14px] text-[#797979]">Client List</h2> */}
 
       {/* Search */}
       <ClientFilter />

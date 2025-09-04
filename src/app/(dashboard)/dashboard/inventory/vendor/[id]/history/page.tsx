@@ -1,10 +1,11 @@
+import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
 import EditVendor from "@/components/Lists/EditVendor";
 import Title from "@/components/Title";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/cn";
 import { db } from "@/lib/db";
 import { formatCurrency } from "@/utils/formatCurrency";
-import moment from "moment";
+import moment from "moment-timezone";
 import Link from "next/link";
 import { IoIosArrowBack } from "react-icons/io";
 
@@ -16,6 +17,8 @@ export default async function Page({
 }: {
   params: { id: string };
 }) {
+  const { timezone } = await getCompanyTimezone();
+
   const histories = await db.inventoryProductHistory.findMany({
     where: {
       vendorId: parseInt(id),
@@ -85,7 +88,7 @@ export default async function Page({
                     key={history.id}
                     className={cn(
                       "py-3",
-                      index % 2 === 0 ? evenColor : oddColor,
+                      index % 2 === 0 ? evenColor : oddColor
                     )}
                   >
                     <td className="h-12 px-10 text-left">
@@ -102,7 +105,9 @@ export default async function Page({
                     </td>
                     <td className="px-10 text-left">{formatCurrency(total)}</td>
                     <td className="px-10 text-left">
-                      {moment.utc(history.createdAt).format("DD.MM.YYYY")}
+                      {moment
+                        .tz(history.createdAt, timezone)
+                        .format("DD.MM.YYYY")}
                     </td>
                     <td className="mt-2 flex gap-3 px-5">
                       {history.product.receipt}

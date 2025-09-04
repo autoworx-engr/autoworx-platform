@@ -33,6 +33,7 @@ const Timezone = ({
             }));
           }}
           displayValue="UTC"
+          className="min-w-64"
         />
         <button
           onClick={handleBrowserTimezone}

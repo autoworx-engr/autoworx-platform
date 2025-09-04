@@ -12,6 +12,11 @@ type TProps = {
   filteredInvoice: (TInvoice & {
     costPrice: number;
     profitPrice: number;
+    inventoryLossAmount: number;
+    materialLossAmount: number;
+    laborLossAmount: number;
+    totalLossAmount: number;
+    materialLossDetails: { name: string; loss: number; isFromInventory: boolean }[];
   })[];
   timezone: string | Date;
   page?: number;
@@ -56,15 +61,6 @@ export default function RevenueDisplay({
     const newPath = `${pathname}?${searchParams.toString()}`;
     router.push(newPath);
   };
-
-  const calculateTotalLostCost = (
-    inventoryHistory: InventoryProductHistory[]
-  ) => {
-    return inventoryHistory.reduce(
-      (total, item) => total + Number(item.price) * Number(item.quantity),
-      0
-    );
-  };
   const startIndex = (currentPage - 1) * pageSize;
   const endIndex = currentPage * pageSize;
   const invoicesToRender = search
@@ -88,22 +84,38 @@ export default function RevenueDisplay({
           </thead>
           <tbody>
             {invoicesToRender?.map((invoice, index) => {
-              const inventoryLostTotalCost = calculateTotalLostCost(
-                invoice?.InventoryProductHistory || []
-              );
-
-              const inventoryMaterialName =
-                invoice.InventoryProductHistory?.map(
+              // Generate loss details for tooltip
+              const lossDetails = [];
+              
+              // Inventory losses (lost products)
+              if (invoice.inventoryLossAmount > 0) {
+                const inventoryMaterialNames = invoice.InventoryProductHistory?.map(
                   (item) => item.product?.name
+                ).filter(Boolean);
+                lossDetails.push(`Inventory Loss: ${inventoryMaterialNames?.join(", ")}`);
+              }
+              
+              // Material losses (show actual material names with losses)
+              if (invoice.materialLossAmount > 0 && invoice.materialLossDetails?.length > 0) {
+                const materialNames = invoice.materialLossDetails.map(detail => 
+                  `${detail.name} ($${detail.loss.toFixed(2)})`
                 );
+                lossDetails.push(`Material Loss: ${materialNames.join(", ")}`);
+              }
+              
+              // Labor losses
+              if (invoice.laborLossAmount > 0) {
+                lossDetails.push(`Labor Loss: Technician cost exceeds charges ($${invoice.laborLossAmount.toFixed(2)})`);
+              }
+
               return (
                 <RevenueTableRow
                   key={invoice.id}
                   invoice={invoice}
                   timezone={timezone as string}
                   index={index}
-                  inventoryLostTotalCost={inventoryLostTotalCost}
-                  inventoryMaterialName={inventoryMaterialName}
+                  totalLossAmount={invoice.totalLossAmount}
+                  lossDetails={lossDetails}
                 />
               );
             })}

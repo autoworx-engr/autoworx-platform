@@ -17,6 +17,8 @@ import toast from "react-hot-toast";
 import DueDate from "./DueDateInput";
 import { InvoiceItems } from "./InvoiceItems";
 import SaveWorkOrderBtn from "./SaveWorkOrderBtn";
+import { useQuery } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/queryKeys";
 
 export default function WorkOrderModalBody({
   invoiceId,
@@ -28,41 +30,27 @@ export default function WorkOrderModalBody({
   onWorkOrderCreated?: () => void;
 }) {
   const [dueDate, setDueDate] = useState<string | null>("");
-  const [refreshKey, setRefreshKey] = useState(0);
+  // const [refreshKey, setRefreshKey] = useState(0);
 
-  const { data, error, loading } = useServerGet(
-    getWorkOrderData,
-    invoiceId,
-    refreshKey
-  );
+  // const { data, error, loading } = useServerGet(
+  //   getWorkOrderData,
+  //   invoiceId,
+  //   refreshKey
+  // );
+
+  const { data, error, isLoading, isFetched } = useQuery({
+    queryKey: queryKeys.getWorkOrderDataKey(invoiceId),
+    queryFn: () => getWorkOrderData(invoiceId),
+    enabled: !!invoiceId,
+  });
 
   useEffect(() => {
-    if ((data as IWorkOrderData)?.invoice?.dueDate) {
+    if (isFetched && (data as IWorkOrderData)?.invoice?.dueDate) {
       setDueDate((data as IWorkOrderData)?.invoice?.dueDate ?? "");
     }
   }, [data]);
 
-  useEffect(() => {
-    const handleInvoiceUpdate = (event: CustomEvent) => {
-      if (event.detail.invoiceId === invoiceId) {
-        setRefreshKey((prev) => prev + 1);
-      }
-    };
-
-    window.addEventListener(
-      "invoice-updated" as any,
-      handleInvoiceUpdate as any
-    );
-
-    return () => {
-      window.removeEventListener(
-        "invoice-updated" as any,
-        handleInvoiceUpdate as any
-      );
-    };
-  }, [invoiceId]);
-
-  if (loading) {
+  if (isLoading) {
     return (
       <DialogPortal>
         <DialogOverlay />
@@ -136,7 +124,11 @@ export default function WorkOrderModalBody({
             {writePermission ? (
               <DueDate dueDate={dueDate} setDueDate={setDueDate} />
             ) : (
-              invoice?.dueDate && <p>Due Date: {invoice?.dueDate}</p>
+              invoice?.dueDate && (
+                <p>
+                  Due Date: {moment.utc(invoice.dueDate).format("MM/DD/YYYY")}
+                </p>
+              )
             )}
           </div>
         </div>

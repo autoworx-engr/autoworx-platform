@@ -1,15 +1,28 @@
 "use client";
 
-
 import DateRange from "@/app/(dashboard)/dashboard/payments/components/PaymentDateRange";
 import { usePaymentFilterStore } from "@/stores/paymentFilter";
 import Link from "next/link";
+import { useEffect, useRef } from "react";
 import { IoIosSearch } from "react-icons/io";
 import { IoPieChartOutline } from "react-icons/io5";
 import FilterforPayment from "./FilterforPayment";
 
-export default function HeaderSearch() {
+interface HeaderSearchProps {
+  activeTab?: string;
+}
+
+export default function HeaderSearch({ activeTab }: HeaderSearchProps) {
   const { setFilter } = usePaymentFilterStore();
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Clear input when tab changes
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.value = "";
+    }
+    setFilter({ search: "" });
+  }, [activeTab, setFilter]);
 
   return (
     <div className="mt-5 flex w-full flex-wrap items-center justify-between gap-2 px-2">
@@ -18,6 +31,7 @@ export default function HeaderSearch() {
           <div className="relative w-full min-w-0 flex-1">
             <IoIosSearch className="absolute left-3 top-3 text-gray-400" />
             <input
+              ref={inputRef}
               type="text"
               placeholder="Search..."
               className="w-full rounded border border-[#66738C] p-2 pl-10"

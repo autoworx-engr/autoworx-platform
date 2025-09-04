@@ -8,6 +8,7 @@ import { getServerSession } from "next-auth";
 import Header from "./Header";
 import NavigationTabs from "./NavigationTabs";
 import Table from "./Table";
+import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
 
 export default async function EstimatesPage({
   searchParams,
@@ -23,14 +24,15 @@ export default async function EstimatesPage({
 }>) {
   const session = await getServerSession(authOptions);
   const companyId = session?.user.companyId;
-
+  const { timezone } = await getCompanyTimezone();
   if (!companyId) {
     throw new Error("Company ID is required");
   }
   const estimatesPromise = fetchAndTransformData(
     InvoiceType.Estimate,
     companyId,
-    searchParams
+    searchParams,
+    timezone
   );
 
   const categoriesPromise = db.category.findMany({

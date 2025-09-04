@@ -38,7 +38,7 @@ export default function TaskListBox() {
     });
   };
   return (
-    <div className="flex-1 overflow-y-auto shadow-md">
+    <div className="flex-1 h-full overflow-y-auto shadow-md">
       <div
         className={`flex h-full flex-col overflow-y-auto rounded-md p-4 shadow-lg md:p-6`}
       >

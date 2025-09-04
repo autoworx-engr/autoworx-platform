@@ -14,6 +14,7 @@ import { SlimInput, slimInputClassName } from "@/components/SlimInput";
 import Submit from "@/components/Submit";
 import { cn } from "@/lib/cn";
 import { useFormErrorStore } from "@/stores/form-error";
+import AppointmentTitleSelectAndAdd from "./AppointmentTitleSelectAndAdd";
 
 import type {
   Appointment,
@@ -36,7 +37,7 @@ import { useCalendarStore } from "@/stores/calendarStore";
 import { formatTime } from "@/utils/taskAndActivity";
 import { addOneHour, formatDateToToday, getCurrentTime } from "@/utils/time";
 import { useQueryClient } from "@tanstack/react-query";
-import moment from "moment";
+import moment from "moment-timezone";
 import { customAlphabet } from "nanoid";
 import { useEffect, useRef, useState } from "react";
 import { FaTrash } from "react-icons/fa";
@@ -46,6 +47,8 @@ import { Reminder } from "./Reminder";
 import ScheduleTab from "./ScheduleTab";
 import { SelectAppointmentClient } from "./SelectAppointmentClient";
 import { SelectAppointmentVehicle } from "./SelectAppointmentVehicle";
+import { formatTime12Hour } from "@/utils/formateTime12Hours";
+import { Select } from "antd";
 enum Tab {
   Schedule = 0,
   Reminder = 1,
@@ -60,11 +63,12 @@ type AppointmentModalBodyProps = {
   fromEdit?: boolean;
   appointmentId?: number;
   onModalClose: () => void;
+  setIsAppointmentModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   onAppointmentCreated?: (
-    appointment: Appointment & { lead: Lead | null },
+    appointment: Appointment & { lead: Lead | null }
   ) => void;
   onAppointmentUpdated?: (
-    appointment: Appointment & { lead: Lead | null },
+    appointment: Appointment & { lead: Lead | null }
   ) => void;
   onAppointmentDeleted?: (appointmentId?: number) => void;
 };
@@ -81,7 +85,9 @@ export default function AppointmentModalBody({
   onAppointmentCreated,
   onAppointmentUpdated,
   onAppointmentDeleted,
+  setIsAppointmentModalOpen,
 }: AppointmentModalBodyProps) {
+  const { Option } = Select;
   const {
     data: appointment,
     isError,
@@ -105,23 +111,27 @@ export default function AppointmentModalBody({
     useEstimatesQueryByClient(
       client?.id!,
       { id: true, clientId: true },
-      { enabled: !!client?.id },
+      { enabled: !!client?.id }
     );
 
   const draftEstimates = estimates.map((estimate) => estimate.id);
 
+  const timezone = useCompanyTimezone();
+  const today = moment.tz(timezone).format("YYYY-MM-DD");
+
   const [tab, setTab] = useState(Tab.Reminder);
 
   const [date, setDate] = useState<string | undefined>(
-    moment.utc(appointment?.date).format("YYYY-MM-DD") ??
-      new Date().toISOString().split("T")[0],
+    appointment?.date
+      ? moment.utc(appointment?.date).format("YYYY-MM-DD")
+      : today
   );
-  const [title, setTitle] = useState("");
+  const [title, setTitle] = useState<string>("");
 
   const [notes, setNotes] = useState("");
 
-  const [startTime, setStartTime] = useState<string | undefined>("");
-  const [endTime, setEndTime] = useState<string | undefined>("");
+  const [startTime, setStartTime] = useState("00:00");
+  const [endTime, setEndTime] = useState("00:00");
   const [allDay, setAllDay] = useState(false);
   const [vehicle, setVehicle] = useState<Partial<Vehicle> | null>(null);
   const [draft, setDraft] = useState<string | null>(null);
@@ -139,8 +149,6 @@ export default function AppointmentModalBody({
 
   const [draftOpen, setDraftOpen] = useState(false);
 
-  const timezone = useCompanyTimezone();
-
   // dropdown states
   const [clientOpenDropdown, setClientOpenDropdown] = useState(false);
   const [vehicleOpenDropdown, setVehicleOpenDropdown] = useState(false);
@@ -150,7 +158,7 @@ export default function AppointmentModalBody({
 
   useEffect(() => {
     if (fromEdit && appointment) {
-      setTitle(appointment?.title);
+      setTitle(appointment?.title || "");
       setDate(moment.utc(appointment?.date ?? "").format("YYYY-MM-DD"));
       setStartTime(appointment?.startTime ?? "");
       setEndTime(appointment?.endTime ?? "");
@@ -163,13 +171,57 @@ export default function AppointmentModalBody({
       setConfirmationTemplate(appointment?.confirmationEmailTemplate ?? null);
       setReminderTemplate(appointment?.reminderEmailTemplate ?? null);
       setConfirmationTemplateStatus(
-        appointment?.confirmationEmailTemplateStatus ?? false,
+        appointment?.confirmationEmailTemplateStatus ?? false
       );
       setReminderTemplateStatus(
-        appointment?.reminderEmailTemplateStatus ?? false,
+        appointment?.reminderEmailTemplateStatus ?? false
       );
+
+      // Update original values when appointment data is loaded
+      setOriginalValues({
+        title: appointment?.title || "",
+        date: moment.utc(appointment?.date ?? "").format("YYYY-MM-DD"),
+        startTime: appointment?.startTime ?? "",
+        endTime: appointment?.endTime ?? "",
+        assignedUsers: appointment?.assignUsers
+          ? [...appointment.assignUsers]
+          : [],
+        client: appointment?.client ?? null,
+        vehicle: appointment?.vehicle ?? null,
+        draft: appointment?.draftEstimate ?? null,
+        notes: appointment?.notes ?? "",
+        confirmationTemplate: appointment?.confirmationEmailTemplate ?? null,
+        reminderTemplate: appointment?.reminderEmailTemplate ?? null,
+        confirmationTemplateStatus:
+          appointment?.confirmationEmailTemplateStatus ?? false,
+        reminderTemplateStatus:
+          appointment?.reminderEmailTemplateStatus ?? false,
+        times: (appointment?.times as any) ?? [],
+      });
     }
   }, [fromEdit, appointment]);
+
+  // Initialize original values for new appointments
+  useEffect(() => {
+    if (!fromEdit) {
+      setOriginalValues({
+        title: "",
+        date: today,
+        startTime: "",
+        endTime: "",
+        assignedUsers: [],
+        client: null,
+        vehicle: null,
+        draft: null,
+        notes: "",
+        confirmationTemplate: null,
+        reminderTemplate: null,
+        confirmationTemplateStatus: false,
+        reminderTemplateStatus: false,
+        times: [],
+      });
+    }
+  }, [fromEdit, today]);
 
   useEffect(() => {
     if (selectedStartTime) {
@@ -205,6 +257,14 @@ export default function AppointmentModalBody({
       }
     }
   }, [selectedDate, selectedStartTime]);
+
+  // Update date whenever today changes (when timezone loads)
+  useEffect(() => {
+    // Only update date if we're not editing an appointment and don't have a selected date
+    if (!fromEdit && !selectedDate) {
+      setDate(today);
+    }
+  }, [today, fromEdit, selectedDate]);
 
   // Add state for minimum date and time validation
   // const [minDate, setMinDate] = useState<string>("");
@@ -262,14 +322,14 @@ export default function AppointmentModalBody({
   }, [allDay, settings?.dayStart, settings?.dayEnd, date]);
 
   const handleSubmit = async () => {
-    // Add validation for date and time
-    if (!title.trim()) {
+    // Add validation for date and time - title is always a string now
+    if (!title || !title.trim()) {
       return errorToast("Appointment title is required!");
     }
 
     if (date && (!startTime || !endTime)) {
       return errorToast(
-        "Start time and End time are required when a date is selected!",
+        "Start time and End time are required when a date is selected!"
       );
     }
 
@@ -281,7 +341,7 @@ export default function AppointmentModalBody({
 
     if (client && reminderTemplateStatus && reminderTemplate && !timezone) {
       return errorToast(
-        "Set company timezone in Settings > Business Profile to send client reminders.",
+        "Set company timezone in Settings > Business Profile to send client reminders."
       );
     }
 
@@ -291,7 +351,7 @@ export default function AppointmentModalBody({
       res = await editAppointment({
         id: appointmentId,
         appointment: {
-          title,
+          title: title,
           date: date as string,
           startTime: startTime as string,
           endTime: endTime as string,
@@ -317,7 +377,7 @@ export default function AppointmentModalBody({
       }
     } else {
       res = await addAppointment({
-        title,
+        title: title,
         date,
         startTime,
         endTime,
@@ -429,9 +489,10 @@ export default function AppointmentModalBody({
   ]);
 
   function resetAll() {
-    setDate(undefined);
-    setStartTime(undefined);
-    setEndTime(undefined);
+    setTitle("");
+    setDate(today);
+    setStartTime("00:00");
+    setEndTime("00:00");
     setClient(null);
     setVehicle(null);
     setDraft(null);
@@ -502,6 +563,18 @@ export default function AppointmentModalBody({
     openReminder,
   ]);
 
+  useEffect(() => {
+    let now = moment.tz(timezone);
+
+    const roundedMinutes = Math.ceil(now.minute() / 15) * 15;
+    now.minute(roundedMinutes).second(0).millisecond(0);
+
+    setStartTime(now.format("HH:mm"));
+
+    const end = now.clone().add(1, "hours");
+    setEndTime(end.format("HH:mm"));
+  }, [timezone]);
+
   // Add scroll to the side of the schedule sync with the calender settings
   const rows = Array.from({ length: 24 }, (_, i) => {
     return `${i % 12 || 12} ${i < 12 ? "A" : "P"}M`;
@@ -513,33 +586,28 @@ export default function AppointmentModalBody({
 
   const handleTimeChange = (
     e: React.ChangeEvent<HTMLInputElement>,
-    type: "start" | "end",
+    type: "start" | "end"
   ) => {
     let timeValue = e.target.value;
 
-    // Check if date exists and is today
-    // const isToday =
-    //   date === formatDateToToday(date ?? new Date().toISOString());
-    // const currentTime = getCurrentTime(); // Always in 24-hour HH:mm format
+    // Regex: HH:mm (00:00 - 23:59)
+    const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
+    if (!timeRegex.test(timeValue)) {
+      errorToast("Invalid time format! Please enter time as HH:mm");
+      return;
+    }
 
     if (type === "start") {
-      // ❌ Restrict past times if a date is present (today)
-      // if (isToday && timeValue < currentTime) {
-      //   errorToast("Start time cannot be in the past!");
-      //   timeValue = currentTime; // Reset to current time
-      // }
-
       setStartTime(timeValue);
 
-      // ✅ Set `endTime` to 1 hour after `startTime`
+      // Auto set endTime = startTime + 1 hour
       setEndTime(addOneHour(timeValue));
     } else if (type === "end") {
-      // ❌ Prevent selecting past time of `startTime`
-      // if (timeValue < startTime!) {
-      //   errorToast("End time cannot be before start time!");
-      //   return;
-      // }
-
+      if (startTime && timeValue < startTime) {
+        errorToast("End time cannot be before start time!");
+        return;
+      }
       setEndTime(timeValue);
     }
   };
@@ -569,6 +637,15 @@ export default function AppointmentModalBody({
     errorToast("Failed to fetch appointment data");
   }
 
+  // Generate options in 15-min intervals
+  const timeOptions = Array.from({ length: 24 * 4 }, (_, i) => {
+    const hour = Math.floor(i / 4);
+    const minute = (i % 4) * 15;
+    const value = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+    const label = formatTime12Hour(hour, minute, timezone);
+    return { value, label };
+  });
+
   return (
     <DialogContent
       className="grid max-h-full max-w-5xl grid-rows-[auto,1fr,auto] sm:max-w-[60vw]"
@@ -584,7 +661,7 @@ export default function AppointmentModalBody({
             type="button"
             className={cn(
               "rounded-full px-4 py-1 font-semibold",
-              tab === Tab.Schedule && "bg-background",
+              tab === Tab.Schedule && "bg-background"
             )}
             onClick={() => setTab(Tab.Schedule)}
           >
@@ -596,7 +673,7 @@ export default function AppointmentModalBody({
             type="button"
             className={cn(
               "rounded-full px-4 py-1 font-semibold",
-              tab === Tab.Reminder && "bg-background",
+              tab === Tab.Reminder && "bg-background"
             )}
             onClick={() => setTab(Tab.Reminder)}
           >
@@ -610,12 +687,9 @@ export default function AppointmentModalBody({
         <div className="space-y-4 bg-background p-6">
           <FormError />
 
-          <SlimInput
-            name="title"
-            label="Appointment Title"
-            required
+          <AppointmentTitleSelectAndAdd
             value={title}
-            onChange={(event) => setTitle(event.currentTarget.value)}
+            onChange={(value) => setTitle(value)}
           />
 
           <div className="flex flex-wrap items-end gap-2 2xl:flex-nowrap">
@@ -635,26 +709,42 @@ export default function AppointmentModalBody({
                 <span className="mb-1 text-sm font-medium text-gray-700">
                   Start Time
                 </span>
-                <input
-                  type="time"
-                  value={startTime}
-                  onChange={(e) => handleTimeChange(e, "start")}
-                  className={cn(slimInputClassName, "h-[34px] px-3")}
-                  // Only disable the time input if the selected date is today, but restrict future time
-                  // min={isToday ? getCurrentTime() : undefined} // Restrict time to future if today
-                />
+                <div>
+                  <Select
+                    value={startTime}
+                    onChange={(value) =>
+                      handleTimeChange({ target: { value } } as any, "start")
+                    }
+                    style={{ width: "100%", height: 34 }}
+                    className="border-slate-400 border rounded-md"
+                  >
+                    {timeOptions.map((time) => (
+                      <Option key={time.value} value={time.value}>
+                        <p className="text-base text-gray-600"> {time.label}</p>
+                      </Option>
+                    ))}
+                  </Select>
+                </div>
               </label>
 
               <label className="flex flex-col items-start">
                 <span className="mb-1 text-sm font-medium text-gray-700">
                   End Time
                 </span>
-                <input
-                  type="time"
+                <Select
                   value={endTime}
-                  onChange={(e) => handleTimeChange(e, "end")}
-                  className={cn(slimInputClassName, "h-[34px] px-3")}
-                />
+                  onChange={(value) =>
+                    handleTimeChange({ target: { value } } as any, "end")
+                  }
+                  style={{ width: "100%", height: 34 }}
+                  className="border-slate-400 border rounded-md"
+                >
+                  {timeOptions.map((time) => (
+                    <Option key={time.value} value={time.value}>
+                      {time.label}
+                    </Option>
+                  ))}
+                </Select>
               </label>
             </div>
           </div>
@@ -679,7 +769,7 @@ export default function AppointmentModalBody({
           {/* assign Sales */}
           <AssignUsers
             assignedUsers={assignedUsers.filter(
-              (user) => user.employeeType === "Sales",
+              (user) => user.employeeType === "Sales"
             )}
             title="+ Assign Sales Person"
             employeeType="Sales"
@@ -688,7 +778,7 @@ export default function AppointmentModalBody({
             }}
             onRemoveAssignedUser={(user: User) => {
               setAssignedUsers((prev) =>
-                prev.filter((assignedUser) => assignedUser.id !== user.id),
+                prev.filter((assignedUser) => assignedUser.id !== user.id)
               );
             }}
           />
@@ -696,7 +786,7 @@ export default function AppointmentModalBody({
           {/* assign technicians */}
           <AssignUsers
             assignedUsers={assignedUsers.filter(
-              (user) => user.employeeType === "Technician",
+              (user) => user.employeeType === "Technician"
             )}
             title="+ Assign Technician"
             employeeType="Technician"
@@ -705,7 +795,7 @@ export default function AppointmentModalBody({
             }}
             onRemoveAssignedUser={(user: User) => {
               setAssignedUsers((prev) =>
-                prev.filter((assignedUser) => assignedUser.id !== user.id),
+                prev.filter((assignedUser) => assignedUser.id !== user.id)
               );
             }}
           />
@@ -719,6 +809,7 @@ export default function AppointmentModalBody({
             setValue={setClient}
             openDropdown={clientOpenDropdown}
             setOpenDropdown={setClientOpenDropdown}
+            setIsAppointmentModalOpen={setIsAppointmentModalOpen}
           />
 
           <SelectAppointmentVehicle
@@ -729,6 +820,7 @@ export default function AppointmentModalBody({
             setValue={setVehicle}
             openDropdown={vehicleOpenDropdown}
             setOpenDropdown={setVehicleOpenDropdown}
+            setIsAppointmentModalOpen={setIsAppointmentModalOpen}
           />
 
           <Selector
@@ -755,7 +847,7 @@ export default function AppointmentModalBody({
             displayList={(item) => <p className="text-[#6571FF]">{item}</p>}
             onSearch={(search) => {
               return draftEstimates.filter((draft) =>
-                draft.toLowerCase().includes(search.toLowerCase()),
+                draft.toLowerCase().includes(search.toLowerCase())
               );
             }}
           />
@@ -816,7 +908,7 @@ export default function AppointmentModalBody({
         <div
           className={cn(
             "flex gap-5 md:gap-0",
-            fromEdit && appointmentId ? "justify-between" : "justify-end",
+            fromEdit && appointmentId ? "justify-between" : "justify-end"
           )}
         >
           {fromEdit && appointmentId && (
@@ -846,20 +938,23 @@ export default function AppointmentModalBody({
                 Cancel
               </button>
             </DialogClose>
-            <Submit
+            <button
+              type="button"
               className={`rounded-md border px-4 py-1 text-white ${
-                formChanged ? "bg-[#6571FF]" : "cursor-not-allowed bg-gray-400"
+                formChanged
+                  ? "bg-[#6571FF] cursor-pointer hover:bg-blue-600"
+                  : "cursor-not-allowed bg-gray-400"
               }`}
-              formAction={handleSubmit}
+              onClick={handleSubmit}
               disabled={
                 !formChanged ||
                 (fromEdit && !appointmentIsFetch) ||
                 (fromEdit && !settingsIsFetched) ||
-                (fromEdit && !estimateIsFetched)
+                (fromEdit && !!client?.id && !estimateIsFetched) // Only require estimates if client is selected
               }
             >
               Save
-            </Submit>
+            </button>
           </DialogFooter>
         </div>
       }

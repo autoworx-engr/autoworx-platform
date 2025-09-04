@@ -1,5 +1,9 @@
-import { ImSearch } from "react-icons/im";
-import TopNavbarIcons from "./TopNavbarIcons";
+// import TopNavbarIcons from "./TopNavbarIcons";
+import dynamic from 'next/dynamic';
+
+const TopNavbarIcons = dynamic(() => import('./TopNavbarIcons'), {
+  ssr: false,
+});
 
 export default function TopNavbar() {
   return (

@@ -4,6 +4,7 @@ import ChartData from "../ChartData";
 import { getMonthlyPayout } from "@/actions/dashboard/data/getTechnicianInfo";
 import { getSalaryPayouts } from "@/actions/dashboard/data/getSalaryPayouts";
 import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
+import moment from "moment-timezone";
 
 export default async function MonthlyPayoutBox() {
   const companyTimezone = await getCompanyTimezone();
@@ -68,7 +69,7 @@ export default async function MonthlyPayoutBox() {
         {/* Show pay period for salary users */}
         {hasValidSalaryInfo && salaryPayouts.payPeriodStart && salaryPayouts.payPeriodEnd && (
           <div className="text-xs text-gray-600">
-            Pay Period: {new Date(salaryPayouts.payPeriodStart).toLocaleDateString()} - {new Date(salaryPayouts.payPeriodEnd).toLocaleDateString()}
+            Pay Period: {moment.utc(salaryPayouts.payPeriodStart).tz(timezone).format('MM/DD/YYYY')} - {moment.utc(salaryPayouts.payPeriodEnd).tz(timezone).format('MM/DD/YYYY')}
           </div>
         )}
         

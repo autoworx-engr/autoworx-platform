@@ -1,13 +1,13 @@
-"use client";
-import { deleteVehicle } from "@/actions/vehicle/deleteVehicle";
-import EditVehicle from "@/components/Lists/EditVehicle";
-import NewVehicle from "@/components/Lists/NewVehicle";
-import VehicleCard from "@/components/mobile-responsive/client/VehicleCard";
-import { cn } from "@/lib/cn";
-import { Vehicle } from "@prisma/client";
-import { useRouter, useSearchParams } from "next/navigation";
-import React from "react";
-import { FaTimes } from "react-icons/fa";
+'use client';
+import { deleteVehicle } from '@/actions/vehicle/deleteVehicle';
+import EditVehicle from '@/components/Lists/EditVehicle';
+import NewVehicle from '@/components/Lists/NewVehicle';
+import VehicleCard from '@/components/mobile-responsive/client/VehicleCard';
+import { cn } from '@/lib/cn';
+import { Vehicle } from '@prisma/client';
+import { useRouter, useSearchParams } from 'next/navigation';
+import React from 'react';
+import { FaTimes } from 'react-icons/fa';
 
 export default function VehicleList({
   clientId,
@@ -20,24 +20,26 @@ export default function VehicleList({
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const vehicleId = Number(searchParams?.get("vehicleId"));
+  const vehicleId = Number(searchParams?.get('vehicleId'));
 
   return (
     <div
-      className={`${selectedVehicle && "hidden lg:block"} h-full w-full space-y-2 px-4`}
+      className={`${selectedVehicle && 'hidden lg:block'} h-full w-full space-y-2 px-4`}
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-x-8">
           <h3 className="text-lg font-semibold">Vehicle List</h3>
         </div>
-        <NewVehicle
-          clientId={clientId}
-          newButton={
-            <button className="rounded-md bg-[#6571FF] p-2 px-5 text-white">
-              + Add New Vehicle
-            </button>
-          }
-        />
+        {clientId && (
+          <NewVehicle
+            clientId={clientId}
+            newButton={
+              <button className="rounded-md bg-[#6571FF] p-2 px-5 text-white">
+                + Add New Vehicle
+              </button>
+            }
+          />
+        )}
       </div>
 
       <VehicleCard vehicles={vehicles} clientId={clientId} />
@@ -61,11 +63,11 @@ export default function VehicleList({
               <tr
                 key={index}
                 className={cn(
-                  "cursor-pointer rounded-md py-3",
-                  index % 2 === 0 ? "bg-background" : "bg-[#EEF4FF]",
+                  'cursor-pointer rounded-md py-3',
+                  index % 2 === 0 ? 'bg-background' : 'bg-[#EEF4FF]',
                   vehicleId &&
                     vehicleId === vehicle?.id &&
-                    "border-2 border-[#6571FF]"
+                    'border-2 border-[#6571FF]'
                 )}
                 onClick={() => {
                   router.push(
@@ -74,7 +76,7 @@ export default function VehicleList({
                 }}
               >
                 <td className="text-nowrap px-4 py-1 text-left 2xl:px-10">
-                  {vehicle?.year || ""}
+                  {vehicle?.year || ''}
                 </td>
                 <td className="text-nowrap px-4 py-1 text-left 2xl:px-10">
                   {vehicle.make}
@@ -90,7 +92,7 @@ export default function VehicleList({
                 </td>
                 <td className="px-4 py-1 text-left 2xl:px-10">
                   <div className="flex items-center gap-x-4 text-xl">
-                    {" "}
+                    {' '}
                     <EditVehicle vehicle={vehicle} />
                     <button
                       type="button"

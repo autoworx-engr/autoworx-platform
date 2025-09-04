@@ -32,13 +32,16 @@ const NotificationServiceContainer = ({
     }, {});
     setOpenService(closeService);
   };
+
   return (
     <div className="flex-1">
       <div
         className="flex w-full cursor-pointer items-center justify-between border p-8 font-semibold"
         onClick={handleServiceToggle}
       >
-        <span className="capitalize">{title}</span>
+        <span className="capitalize">
+          {title === "work force" ? "Job Tracking" : title}
+        </span>
         <button>
           <IoIosArrowDown />
         </button>

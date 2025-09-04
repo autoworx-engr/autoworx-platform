@@ -23,15 +23,23 @@ import {
   useGetModelsByYearAndMake,
 } from "@/hooks/useCarData";
 import SelectorWithSearch from "./SelectorWithSearch";
+import { usePathname } from "next/navigation";
 
 type TProps = {
   newButton?: React.ReactNode;
   onAdd?: (vehicle: Vehicle) => void;
   clientId: number;
+  setIsAppointmentModalOpen?: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
-export default function NewVehicle({ newButton, onAdd, clientId }: TProps) {
+export default function NewVehicle({
+  newButton,
+  onAdd,
+  clientId,
+  setIsAppointmentModalOpen,
+}: TProps) {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
   const { showError, clearError } = useFormErrorStore();
   const [selectedColor, setSelectedColor] = useState<VehicleColor | null>(null);
   const [formData, setFormData] = useState({
@@ -72,7 +80,6 @@ export default function NewVehicle({ newButton, onAdd, clientId }: TProps) {
           id: vehicle.name,
         }))
       : [];
-
   const handleInputChange = (name: string, value: string) => {
     setFormData((prev) => ({
       ...prev,
@@ -118,7 +125,7 @@ export default function NewVehicle({ newButton, onAdd, clientId }: TProps) {
       make,
       model,
       submodel,
-      type,
+      type: type || "",
       colorId: selectedColor?.id,
       transmission,
       engineSize,
@@ -127,18 +134,19 @@ export default function NewVehicle({ newButton, onAdd, clientId }: TProps) {
       notes,
       other,
       clientId,
-    });
+    }, pathname);
 
-    if (res.type === "globalError") {
+    if (res?.type === "globalError") {
       showError({
         field: res.field || "make",
         errorSource: res.errorSource,
         message: res.message || "",
       });
-    } else if (res.type === "success") {
+    } else if (res?.type === "success") {
       onAdd && onAdd(res.data);
       setOpen(false);
       clearError();
+      setIsAppointmentModalOpen && setIsAppointmentModalOpen(true);
     }
   }
   return (
@@ -229,6 +237,7 @@ export default function NewVehicle({ newButton, onAdd, clientId }: TProps) {
             <SlimInput name="vin" required={false} />
             <SlimInput
               name="other"
+              label="Other (Vehicle not listed or non-vehicle job? Enter details here)"
               required={false}
               rootClassName={`col-span-full ${
                 !!formData.vehicleYear &&

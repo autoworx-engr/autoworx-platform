@@ -8,12 +8,11 @@ import generateZapierToken from "@/lib/generateZapierToken";
 import { insertPreloadedData } from "@/lib/insertPreloadedData";
 import { TErrorHandler } from "@/types/globalError";
 import { createUserValidation } from "@/validations/schemas/auth/user.validation";
-import bcrypt from "bcryptjs";
+import bcrypt from "bcrypt";
 import httpStatus from "http-status";
 import { env } from "next-runtime-env";
 import { uploadNotificationSettings } from "../settings/updateNotification";
 
-import jwt from "jsonwebtoken";
 
 interface RegisterData {
   firstName: string;
@@ -280,7 +279,16 @@ export async function register({
     ]);
     // Insert preloaded data
     await insertPreloadedData(newCompany.id);
-    // TODO: Create default email template
+
+    // Create default email template
+
+    await db.companyEmailTemplate.create({
+      data: {
+        subject: `Estimate for services requested at <BUSINESS_NAME>`,
+        message: `Hey <CLIENT>, your estimate for <VEHICLE> is ready.  – <BUSINESS_NAME>`,
+        companyId: newCompany.id,
+      },
+    });
 
     return { success: true };
   } catch (err) {

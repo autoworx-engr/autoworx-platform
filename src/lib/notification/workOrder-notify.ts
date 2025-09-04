@@ -28,16 +28,29 @@ export const sendTechnicianJobCompleteNotification = async ({
     const getUsers = await getUsersByRole(companyUniqueId, sendRoles, {
       id: true,
     });
+
+    const vehicleInfo = await db.invoice.findUnique({
+      where: { id: invoiceId },
+      include: { vehicle: true },
+    });
+
+    const { make, model, year } = vehicleInfo?.vehicle || {};
+
+    const vehicleName =
+      make && model
+        ? `${year ? year : ""} ${make} ${model}`
+        : make || invoiceId;
+
     const getTechnicianUser = await db.user.findFirst({
       where: { id: userId },
-      select: { firstName: true, lastName: true },
+      select: { id: true, firstName: true, lastName: true },
     });
     for (const user of getUsers) {
       const title = "Technician Job Complete";
 
       const description = isAllJobsCompleted
-        ? `All jobs "${invoiceId}" has been completed by ${getTechnicianUser?.firstName} ${getTechnicianUser?.lastName || ""}. View status in Autoworx.`
-        : `Job "${invoiceId}" has been completed by ${getTechnicianUser?.firstName} ${getTechnicianUser?.lastName || ""}. View status in Autoworx`;
+        ? `All jobs for "${vehicleName}" has been completed by ${getTechnicianUser?.firstName} ${getTechnicianUser?.lastName || ""}. View status in Autoworx.`
+        : `The job for "${vehicleName}" has been completed by ${getTechnicianUser?.firstName} ${getTechnicianUser?.lastName || ""}. View status in Autoworx`;
       // call actual send notification utility function
       sendUserNotifications({
         userId: user.id,
@@ -49,7 +62,7 @@ export const sendTechnicianJobCompleteNotification = async ({
         description,
         iconType: "invoice",
         type: "JOB_COMPLETED",
-        redirectUrl: "/",
+        redirectUrl: `/dashboard/employee/${getTechnicianUser?.id}?view=details`,
       });
     }
   } catch (err) {
@@ -85,7 +98,7 @@ export async function sendTechnicianAssignForWorkOrderNotify({
       title,
       description,
       type: "JOB_ASSIGNED",
-      redirectUrl: "/",
+      redirectUrl: `/dashboard/employee/${technicianUser.id}?view=details`,
     });
   } catch (err) {
     throw err;

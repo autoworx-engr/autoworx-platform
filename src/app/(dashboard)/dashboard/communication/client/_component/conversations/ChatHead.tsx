@@ -15,6 +15,7 @@ import { PremiumModal } from "../phone/PremiumCallModal";
 import { useGetCompanyPermissions } from "@/hooks/feature-permissions/useGetCompanyPersmissions";
 import { useCompanyFeaturePermissionStore } from "@/stores/companyFeaturePermissionStore";
 import { companyPermissionModule } from "@/constants/company-permission";
+import { cn } from "@/lib/cn";
 
 type TClient =
   | (Client & {
@@ -44,7 +45,7 @@ export default function ChatHead({
 
   const isCallingAccess = companyFeaturePermission.find(
     (permission) =>
-      permission.permission_name === companyPermissionModule.CALLING_ACCESS,
+      permission.permission_name === companyPermissionModule.CALLING_ACCESS
   );
 
   const handleTabChange = (tab: string) => {
@@ -65,7 +66,7 @@ export default function ChatHead({
   };
 
   const clientConversationTrack = useClientCommunicationStore(
-    (state) => state.clientConversationTrack,
+    (state) => state.clientConversationTrack
   );
 
   // useEffect(() => {
@@ -95,60 +96,76 @@ export default function ChatHead({
   }, []);
 
   return (
-    <div className="flex items-center">
+    <div
+      className="flex items-center"
+      role="tablist"
+      aria-label="Conversation channels"
+    >
+      {/* EMAIL */}
       <button
-        onClick={() => {
-          handleTabChange("EMAIL");
-        }}
-        className="relative rounded-full p-3"
-        style={{
-          backgroundColor:
-            selected === "EMAIL" ? "rgba(255, 255, 255, 0.34)" : "",
-        }}
+        onClick={() => handleTabChange("EMAIL")}
+        role="tab"
+        aria-selected={selected === "EMAIL"}
+        aria-controls="panel-email"
+        title="Email"
+        className={cn(
+          "relative rounded-full p-3 transition-all",
+          "hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/70",
+          selected === "EMAIL" ? "bg-white/30" : "bg-transparent"
+        )}
       >
-        {clientConversationTrack &&
-          clientConversationTrack?.emailIsUnReadCount! > 0 && (
-            <span className="absolute -top-1 rounded-full bg-red-500 px-1">
-              {clientConversationTrack?.emailIsUnReadCount}
+        {/* unread badge */}
+        {clientConversationTrack && !clientConversationTrack?.emailIsRead && (
+          <span className="absolute -top-1 -right-1 z-10">
+            <span className="absolute -inset-0.5 animate-ping rounded-full bg-rose-400/70" />
+            <span className="relative flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-bold leading-none text-white ring-2 ring-white/80">
+              1
             </span>
-          )}
-        <MdAlternateEmail className="text-xl text-white" />
-        {/* <Image src="/icons/Chat.png" alt="chat" width={20} height={20} /> */}
+          </span>
+        )}
+        <MdAlternateEmail className="text-[20px] text-white" />
       </button>
 
+      {/* SMS */}
       <button
-        onClick={() => {
-          handleTabChange("SMS");
-        }}
-        className="relative rounded-full p-3"
-        style={{
-          backgroundColor:
-            selected === "SMS" ? "rgba(255, 255, 255, 0.34)" : "",
-        }}
+        onClick={() => handleTabChange("SMS")}
+        role="tab"
+        aria-selected={selected === "SMS"}
+        aria-controls="panel-sms"
+        title="SMS"
+        className={cn(
+          "relative rounded-full p-3 transition-all",
+          "hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/70",
+          selected === "SMS" ? "bg-white/30" : "bg-transparent"
+        )}
       >
-        {clientConversationTrack &&
-          clientConversationTrack?.smsUnReadCount! > 0 && (
-            <span className="absolute -top-1 rounded-full bg-red-500 px-1">
-              {clientConversationTrack?.smsUnReadCount}
+        {clientConversationTrack && !clientConversationTrack?.smsIsRead && (
+          <span className="absolute -top-1 -right-1 z-10">
+            <span className="absolute -inset-0.5 animate-ping rounded-full bg-rose-400/70" />
+            <span className="relative flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-bold leading-none text-white ring-2 ring-white/80">
+              1
             </span>
-          )}
-        <FaSms className="text-xl text-white" />
-        {/* <Image src="/icons/Email.png" alt="chat" width={20} height={20} /> */}
+          </span>
+        )}
+        <FaSms className="text-[20px] text-white" />
       </button>
 
+      {/* PHONE */}
       <button
-        onClick={() => {
-          handleTabChange("PHONE");
-        }}
-        className="rounded-full p-3"
-        style={{
-          backgroundColor:
-            selected === "PHONE" ? "rgba(255, 255, 255, 0.34)" : "",
-        }}
+        onClick={() => handleTabChange("PHONE")}
+        role="tab"
+        aria-selected={selected === "PHONE"}
+        aria-controls="panel-phone"
+        title="Phone"
+        className={cn(
+          "relative rounded-full p-3 transition-all",
+          "hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/70",
+          selected === "PHONE" ? "bg-white/30" : "bg-transparent"
+        )}
       >
-        <IoCall className="text-xl text-white" />
-        {/* <Image src="/icons/Phone.png" alt="phone" width={20} height={20} /> */}
+        <IoCall className="text-[20px] text-white" />
       </button>
+
       <PremiumModal
         open={showPremiumModal}
         onClose={() => setShowPremiumModal(false)}

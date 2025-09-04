@@ -367,9 +367,10 @@ const TermsConditions = () => {
               </h3>
               <ul className="list-inside list-disc space-y-2">
                 <li>
-                  Refund Eligibility: Refunds, if applicable, will be provided
-                  according to our Refund Policy. Please refer to our Refund
-                  Policy for details on eligibility and procedures.
+                  Refund Eligibility: Any dispute regarding your purchase must
+                  be submitted within 30 days of the transaction. Refunds, if
+                  applicable, will be provided in accordance with our Refund
+                  Policy.
                 </li>
                 <li>
                   Disputed Charges: If you believe you have been billed in
@@ -495,9 +496,11 @@ const TermsConditions = () => {
               <ul className="list-inside list-disc space-y-2">
                 <li>
                   Applicable Law: These Terms shall be governed by and construed
-                  in accordance with the laws of the jurisdiction in which
-                  Autoworx Tech Solutions operates, without regard to its
-                  conflict of law provisions.
+                  in accordance with the laws of the State of Georgia, without
+                  regard to its conflict-of-law provisions, and any dispute
+                  arising under these Terms shall be subject to the exclusive
+                  jurisdiction of the state and federal courts located in
+                  Gwinnett County, Georgia.
                 </li>
               </ul>
 
@@ -512,12 +515,17 @@ const TermsConditions = () => {
                   attempt to resolve the dispute amicably through negotiation.
                 </li>
                 <li>
-                  Arbitration: If the dispute cannot be resolved through
-                  negotiation, it shall be submitted to binding arbitration in
-                  accordance with the rules of an agreed-upon arbitration
-                  organization. The arbitration shall be conducted in [Insert
-                  Location or Specify “a mutually agreed location”], and the
-                  arbitrator’s decision shall be final and binding.
+                  Dispute Resolution: : The parties agree to first attempt to
+                  resolve any controversy, claim, or dispute arising out of or
+                  relating to these Terms through good-faith negotiation. If the
+                  parties are unable to resolve the dispute within thirty (30)
+                  days of written notice, either party may pursue the matter in
+                  the Magistrate Court (small claims division) of Gwinnett
+                  County, Georgia, provided the claim falls within that court’s
+                  jurisdictional limits. For all other claims, venue shall lie
+                  exclusively in the state or federal courts located in Gwinnett
+                  County, Georgia, and the parties hereby consent to the
+                  personal jurisdiction of those courts.
                 </li>
                 <li>
                   Class Action Waiver: You agree that any dispute resolution
@@ -592,6 +600,19 @@ const TermsConditions = () => {
                 address provided in your Account or as otherwise provided by
                 you. It is your responsibility to ensure that your contact
                 information is accurate and current.
+              </p>
+
+              <h3>
+                <strong>16.3 Policy Updates</strong>
+              </h3>
+              <p>
+                Autoworx Tech Solutions reserves the right to modify or update
+                these Terms and any related policies at any time in its sole
+                discretion. All changes will be posted on our website, and it is
+                your responsibility to review the Terms periodically for
+                updates. If you do not agree to any revised Terms, you must
+                promptly notify our office in writing and cease using the
+                service.
               </p>
             </div>
             {/* // Point 17 */}

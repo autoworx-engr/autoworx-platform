@@ -1,61 +1,93 @@
-import { MailgunEmail, MailgunEmailAttachment } from "@prisma/client";
-import React from "react";
-import { isImage } from "../../../_utils";
+import { cn } from "@/lib/cn";
 import Image from "next/image";
-import { FaFile } from "react-icons/fa";
 import Link from "next/link";
+import { FaFile } from "react-icons/fa";
 
-type TProps = {
-  message: MailgunEmail & { attachments: MailgunEmailAttachment[] };
-  onDownload: (fileUrl: string, fileName: string) => void;
+type Attachment = {
+  name: string;
+  url: string;
+  mimeType?: string | null;
+  sizeBytes?: number | null;
 };
 
+type TProps = {
+  message: { emailBy: string; attachments?: Attachment[] };
+  onDownload?: (fileUrl: string, fileName: string) => void;
+};
+
+const isImage = (nameOrMime?: string) =>
+  !!nameOrMime &&
+  (/\.(png|jpe?g|gif|webp|bmp|tiff|svg)$/i.test(nameOrMime) ||
+    /^image\//i.test(nameOrMime));
+
 export default function MailAttachment({ message, onDownload }: TProps) {
+  const attachments = message?.attachments ?? [];
+  if (!attachments.length) return null;
+
   return (
     <div
-      className={`flex w-full flex-wrap items-center ${message.emailBy === "Company" && "justify-end"}`}
+      className={cn(
+        "mt-2 flex w-full flex-wrap items-start gap-2",
+        message.emailBy === "Company" && "justify-end"
+      )}
     >
-      {message?.attachments?.map((attachment: any, index: number) => {
-        if (isImage(attachment.name)) {
+      {attachments.map((att, i) => {
+        const img = isImage(att.mimeType ?? att.name);
+
+        // IMAGE THUMB
+        if (img) {
           return (
             <Link
-              href={`/dashboard/communication/photo?url=${attachment.url}`}
-              className={`#inline-block mx-1 mt-2 cursor-pointer gap-x-2 rounded-md border border-gray-200 px-2 py-1 ${message.emailBy === "Company" && "#float-right"}`}
-              key={index}
+              key={`${att.url}-${i}`}
+              href={`/dashboard/communication/photo?url=${encodeURIComponent(att.url)}`}
+              className={cn(
+                "group relative inline-flex overflow-hidden rounded-md ring-1 ring-zinc-200 transition",
+                "hover:ring-emerald-400 dark:ring-white/10"
+              )}
+              title={att.name}
             >
               <Image
-                src={attachment.url}
-                alt="message"
-                width={70}
-                height={100}
+                src={att.url}
+                alt={att.name || "image attachment"}
+                width={96}
+                height={96}
+                className="h-20 w-24 object-cover"
               />
+              <span className="pointer-events-none absolute inset-0 opacity-0 transition-opacity group-hover:opacity-100 bg-black/10" />
             </Link>
           );
-        } else {
-          // return (
-          //   <div
-          //     className={`#inline-block mx-1 mt-2 cursor-pointer gap-x-2 rounded-md border border-gray-200 px-2 py-1 ${message.emailBy === "Company" && "#float-right"}`}
-          //     key={index}
-          //     onClick={() => onDownload(attachment.url, attachment.name)}
-          //   >
-          //     <span>
-          //       <FaFile />
-          //     </span>
-          //     <p>
-          //       {attachment.name?.length > 10
-          //         ? attachment.name.slice(0, 10) + "..."
-          //         : attachment.name}
-          //     </p>
-          //   </div>
-          // );
-          <Link
-            key={index}
-            className={`#inline-block mx-1 mt-2 cursor-pointer gap-x-2 rounded-md border border-gray-200 px-2 py-1 ${message.emailBy === "Company" && "#float-right"}`}
-            href={`/dashboard/communication/photo?url=${attachment?.url}`}
-          >
-            <Image src={attachment.url} alt="message" width={70} height={100} />
-          </Link>;
         }
+
+        // FILE CHIP
+        return (
+          <Link
+            key={`${att.url}-${i}`}
+            href={`/dashboard/communication/photo?url=${encodeURIComponent(att.url)}`}
+            className={cn(
+              "inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm",
+              "ring-1 ring-zinc-200 bg-white hover:ring-emerald-400 transition",
+              "dark:bg-zinc-900 dark:ring-white/10"
+            )}
+            title={att.name}
+          >
+            <FaFile className="text-zinc-500 dark:text-zinc-300" />
+            <span className="max-w-[12rem] truncate text-zinc-700 dark:text-zinc-200">
+              {att.name || "file"}
+            </span>
+            {onDownload && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onDownload(att.url, att.name);
+                }}
+                className="ml-1 rounded-sm px-1.5 py-0.5 text-xs text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-400/10"
+              >
+                Download
+              </button>
+            )}
+          </Link>
+        );
       })}
     </div>
   );
