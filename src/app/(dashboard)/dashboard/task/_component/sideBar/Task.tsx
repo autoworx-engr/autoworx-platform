@@ -27,7 +27,7 @@ export default function TaskComponent({ task }: TaskComponentProps) {
   const [{ isDragging }, drag] = useDrag({
     type: "task",
     item: { type: "task", id: task.id },
-    collect: (monitor) => ({
+    collect: monitor => ({
       isDragging: !!monitor.isDragging(),
     }),
   });
@@ -44,8 +44,8 @@ export default function TaskComponent({ task }: TaskComponentProps) {
     try {
       await deleteTask(task.id);
       successToast("Task Completed successfully.");
-      queryClient.setQueryData([taskQueryKey.allTasks], (oldTask: Task[]) => {
-        return oldTask.filter((t) => t.id !== task.id);
+      queryClient.invalidateQueries({
+        queryKey: taskQueryKey.allTaskByScroll,
       });
     } catch (error) {
       console.error("Failed to delete task:", error);
@@ -86,7 +86,7 @@ export default function TaskComponent({ task }: TaskComponentProps) {
   const handleDeleteTask = (taskId: number) => {
     queryClient.setQueryData([taskQueryKey.allTasks], (oldData: Task[]) => {
       return oldData && oldData.length > 0
-        ? oldData.filter((task) => task.id !== taskId)
+        ? oldData.filter(task => task.id !== taskId)
         : [];
     });
     revalidateTaskQueries();

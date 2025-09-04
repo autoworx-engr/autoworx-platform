@@ -5,6 +5,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import login from "./actions/auth/login";
 import { db } from "./lib/db";
+import { env } from "next-runtime-env";
 
 declare module "next-auth" {
   interface Session {
@@ -47,7 +48,7 @@ const refreshAccessToken = async (token: JWT) => {
         body: JSON.stringify({
           refreshAccessToken: token.refreshToken,
         }),
-      },
+      }
     );
 
     if (!response.ok) {
@@ -63,7 +64,7 @@ const refreshAccessToken = async (token: JWT) => {
 
     const verifyToken = jwt.verify(
       accessToken,
-      process.env.ACCESS_SECRET || "",
+      process.env.ACCESS_SECRET || ""
     ) as jwt.JwtPayload;
 
     const accessTokenExpires = (verifyToken?.exp ?? 0) * 1000;
@@ -91,15 +92,16 @@ export const authOptions: NextAuthOptions = {
     signIn: "/login",
     error: "/auth/error",
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: env("NEXTAUTH_SECRET"),
   providers: [
     CredentialsProvider({
-      name: "AutoWorx",
+      id: "credentials",
+      name: "credentials",
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      authorize: async (credentials) => {
+      authorize: async credentials => {
         if (!credentials?.email || !credentials?.password) return null;
         const loggedInUser = await login({
           email: credentials.email,
@@ -109,8 +111,8 @@ export const authOptions: NextAuthOptions = {
       },
     }),
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      clientId: env("GOOGLE_CLIENT_ID") ?? "",
+      clientSecret: env("GOOGLE_CLIENT_SECRET") ?? "",
     }),
   ],
   callbacks: {
@@ -118,7 +120,7 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         const verifyToken = jwt.verify(
           user.accessToken,
-          process.env.ACCESS_SECRET || "",
+          process.env.ACCESS_SECRET || ""
         ) as jwt.JwtPayload;
 
         const accessTokenExpires = (verifyToken?.exp ?? 0) * 1000;
@@ -182,3 +184,6 @@ export const authOptions: NextAuthOptions = {
     },
   },
 };
+console.log("NEXTAUTH_SECRET:", env("NEXTAUTH_SECRET"));
+console.log("NextURl", env("NEXTAUTH_URL"));
+console.log("Auth Options Loaded", authOptions);

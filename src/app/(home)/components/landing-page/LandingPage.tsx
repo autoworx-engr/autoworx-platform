@@ -15,6 +15,7 @@ const Last = dynamic(() => import("./Last"));
 export default function LandingPage() {
   return (
     <div  className="text-black">
+    
       <Hero />
       <Success />
       <ReviewSection />

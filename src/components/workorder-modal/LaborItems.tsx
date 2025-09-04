@@ -6,13 +6,15 @@ import { deleteTechnician } from "@/actions/estimate/technician/deleteTechnician
 import CreateAndEditLabor from "./CreateAndEditLabor";
 import { cn } from "@/lib/utils";
 import { getTechniciansWithPermission } from "@/actions/estimate/technician/getTechniciansWithPermission";
+import { queryKeys } from "@/lib/queryKeys";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function LaborItems({
   invoiceItemId,
   invoiceId,
   serviceId,
   writePermission,
-  technicianList
+  technicianList,
 }: {
   invoiceItemId: number;
   invoiceId: string;
@@ -27,6 +29,8 @@ export default function LaborItems({
   const [technicians, setTechnicians] = useState(technicianList);
   const [error, setError] = useState("");
   const [pending, startTransition] = useTransition();
+
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const fetchTechnicians = async () => {
@@ -45,12 +49,22 @@ export default function LaborItems({
 
   const handleTechnicianDelete = async (technicianId: number) => {
     try {
-      await deleteTechnician({
+      const response = await deleteTechnician({
         id: technicianId,
         invoiceId,
       });
+
+      if (response.type === "success") {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.getInvoiceModalDataKey(invoiceId),
+        });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.getWorkOrderDataKey(invoiceId),
+        });
+      }
+
       const updatedTechnicians = technicians.filter(
-        (technician) => technician.id !== technicianId,
+        technician => technician.id !== technicianId
       );
       setTechnicians(updatedTechnicians);
       setError("");
@@ -78,13 +92,13 @@ export default function LaborItems({
           writePermission={writePermission}
         />
 
-        {technicians.map((technician) => (
+        {technicians.map(technician => (
           <button
             key={technician.id}
             className={cn(
               "flex items-center justify-evenly space-x-1 text-nowrap rounded-full border bg-[#6571FF] px-3 py-0.5",
               !technician.hasPermission &&
-                "cursor-default border-[#6571FF] bg-transparent",
+                "cursor-default border-[#6571FF] bg-transparent"
             )}
           >
             <CreateAndEditLabor

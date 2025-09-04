@@ -8,8 +8,6 @@ import {
   sendInvoiceAuthorizeNotification,
   sendInvoiceConvertedNotification,
 } from '@/lib/notification/invoice-notify';
-import { updateInvoiceAutomationTrigger } from '@/service/invoice-automation-trigger/api';
-import { updateServiceAutomationTrigger } from '@/service/service-maintenance-automation-trigger/api';
 import { ServerAction } from '@/types/action';
 import { TErrorHandler } from '@/types/globalError';
 import { InvoiceType } from '@prisma/client';
