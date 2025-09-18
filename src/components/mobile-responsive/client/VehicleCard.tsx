@@ -2,6 +2,7 @@ import { deleteVehicle } from "@/actions/vehicle/deleteVehicle";
 import EditVehicle from "@/components/Lists/EditVehicle";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Vehicle } from "@prisma/client";
+import { Popconfirm } from "antd";
 import { useRouter } from "next/navigation";
 import { FaTimes } from "react-icons/fa";
 
@@ -33,7 +34,17 @@ export default function VehicleCard({
             </CardTitle>
             <div className="flex gap-2">
               <EditVehicle vehicle={vehicle} />
-              <button
+
+               <Popconfirm
+                      title="Delete the Vehicle"
+                      description="Are you sure to delete this Vehicle?"
+                      okText="Yes"
+                      cancelText="No"
+                      onConfirm={() => deleteVehicle(vehicle.id, clientId)}
+                    >
+                      <FaTimes color="#f87171" size={16} />
+                    </Popconfirm>
+              {/* <button
                 type="button"
                 onClick={() => {
                   deleteVehicle(vehicle.id, clientId);
@@ -41,7 +52,7 @@ export default function VehicleCard({
                 className="text-xs text-red-500"
               >
                 <FaTimes className="text-base" />
-              </button>
+              </button> */}
             </div>
           </CardHeader>
           <CardContent

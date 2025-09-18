@@ -19,7 +19,7 @@ import {
   VehicleParts as Parts,
   Priority,
   Technician,
-  User
+  User,
 } from "@prisma/client";
 import moment from "moment";
 import {
@@ -71,7 +71,6 @@ export default function CreateAndEditLabor({
   const [open, setOpen] = useState(false);
   const [priorityOpen, setPriorityOpen] = useState(false);
   const [employeeOpen, setEmployeeOpen] = useState(false);
-
 
   const queryClient = useQueryClient();
 
@@ -129,11 +128,11 @@ export default function CreateAndEditLabor({
       });
       setPriority(priority as Priority);
       setStatus(technicianStatus as TStatus);
-      setEmployee(employeeList.find((e) => e.id === userId) || null);
+      setEmployee(employeeList.find(e => e.id === userId) || null);
     }
   }, [technician, employeeList]);
   const handleChange = (
-    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = event.target;
 
@@ -154,7 +153,7 @@ export default function CreateAndEditLabor({
       return;
     } else {
       setError(null);
-      setInputValues((prevState) => ({
+      setInputValues(prevState => ({
         ...prevState,
         [name]: value,
       }));
@@ -174,53 +173,54 @@ export default function CreateAndEditLabor({
     try {
       if (technician) {
         // For technicians, only allow updating status, keep other fields from the original technician
-        const updatedPayload = isTechnician ? {
-          date: new Date(technician.date || new Date()),
-          due: new Date(technician.due || new Date()),
-          amount: Number(technician.amount) || 0,
-          note: technician.note || "",
-          userId: technician.userId,
-          status,
-          priority: technician.priority || "Low",
-          invoiceId,
-          serviceId,
-        } : {
-          date: new Date(inputValues.date),
-          due: new Date(inputValues.due),
-          amount: Number(inputValues.amount),
-          note: inputValues.note,
-          userId: employee?.id,
-          status,
-          priority,
-          invoiceId,
-          serviceId,
-        };
+        const updatedPayload = isTechnician
+          ? {
+              date: new Date(technician.date || new Date()),
+              due: new Date(technician.due || new Date()),
+              amount: Number(technician.amount) || 0,
+              note: technician.note || "",
+              userId: technician.userId,
+              status,
+              priority: technician.priority || "Low",
+              invoiceId,
+              serviceId,
+            }
+          : {
+              date: new Date(inputValues.date),
+              due: new Date(inputValues.due),
+              amount: Number(inputValues.amount),
+              note: inputValues.note,
+              userId: employee?.id,
+              status,
+              priority,
+              invoiceId,
+              serviceId,
+            };
 
         const response = await updateTechnician(
           technician.id,
           updatedPayload,
-          isTechnician ? technician.vehicleParts || [] : selectedVehicleParts,
+          isTechnician ? technician.vehicleParts || [] : selectedVehicleParts
         );
 
         if (response.type === "success") {
           setOpen(false);
-          setTechnicians((prev) =>
-            prev.map((tech) =>
+          setTechnicians(prev =>
+            prev.map(tech =>
               tech.id === technician.id
                 ? {
                     ...response.data,
                     hasPermission: tech.hasPermission,
                     vehicleParts: selectedVehicleParts as Parts[],
                   }
-                : tech,
-            ),
+                : tech
+            )
           );
-          
         } else if (response.type === "globalError") {
           setError(
             response?.errorSource?.length
               ? response.errorSource[0].message
-              : response.message,
+              : response.message
           );
         }
       } else {
@@ -239,7 +239,7 @@ export default function CreateAndEditLabor({
         const response = await addTechnician(payload, selectedVehicleParts);
         if (response.type === "success") {
           setOpen(false);
-          setTechnicians((prev) => [
+          setTechnicians(prev => [
             ...prev,
             {
               ...response.data,
@@ -252,7 +252,7 @@ export default function CreateAndEditLabor({
           setError(
             response?.errorSource?.length
               ? response.errorSource[0].message
-              : response.message,
+              : response.message
           );
         }
       }
@@ -261,7 +261,7 @@ export default function CreateAndEditLabor({
       setError(
         formattedError?.errorSource?.length
           ? formattedError.errorSource[0].message
-          : formattedError.message,
+          : formattedError.message
       );
     } finally {
       queryClient.invalidateQueries({
@@ -300,12 +300,12 @@ export default function CreateAndEditLabor({
 
   //show only them who are not assigned
   const availableEmployees = employeeList.filter(
-    (emp) => !technicianList?.some((tech) => tech.userId === emp.id),
+    emp => !technicianList?.some(tech => tech.userId === emp.id)
   );
   // parts select handler
   const handleSelectParts = (part: { label: string; value: string }) => {
     if (isTechnician) return; // Prevent technicians from adding parts
-    setSelectedVehicleParts((prev) => [
+    setSelectedVehicleParts(prev => [
       ...prev,
       { partsName: part.value, invoiceId: invoiceId, serviceId: serviceId },
     ]);
@@ -314,8 +314,8 @@ export default function CreateAndEditLabor({
   // parts remove handler
   const handleRemoveParts = (part: { label: string; value: string }) => {
     if (isTechnician) return; // Prevent technicians from removing parts
-    setSelectedVehicleParts((prev) =>
-      prev.filter((vPart) => vPart.partsName !== part.value),
+    setSelectedVehicleParts(prev =>
+      prev.filter(vPart => vPart.partsName !== part.value)
     );
   };
 
@@ -328,8 +328,10 @@ export default function CreateAndEditLabor({
           </DialogTrigger>
         ) : (
           <p className="cursor-auto text-[#6571FF]">{technician.name}</p>
-        )      ) : (
-        writePermission && !isTechnician && (
+        )
+      ) : (
+        writePermission &&
+        !isTechnician && (
           <DialogTrigger asChild>
             <button
               onClick={reset}
@@ -344,7 +346,6 @@ export default function CreateAndEditLabor({
         <h2 className="text-xl font-bold">
           {technician ? "Edit Technician" : "Assign Technician"}
         </h2>
-
         {error && (
           <div className="mb-4 flex items-center justify-between rounded-md bg-red-700 px-4 py-1 text-white">
             <p>{error}</p>
@@ -353,14 +354,18 @@ export default function CreateAndEditLabor({
             </button>
           </div>
         )}
-        <div className="grid grid-cols-2 gap-4">          {/* Assigned by */}
+        <div className="grid grid-cols-2 gap-4">
+          {" "}
+          {/* Assigned by */}
           <div>
             <label className="mb-1 px-2 text-sm font-medium md:text-base">
               Assign To
             </label>
-            <div className={isTechnician ? "pointer-events-none opacity-50" : ""}>
+            <div
+              className={isTechnician ? "pointer-events-none opacity-50" : ""}
+            >
               <Selector
-                label={(employee) =>
+                label={employee =>
                   employee?.firstName ? `${employee.firstName}` : "Employee"
                 }
                 newButton={<div></div>}
@@ -371,10 +376,10 @@ export default function CreateAndEditLabor({
                   </p>
                 )}
                 onSearch={(search: string) =>
-                  availableEmployees.filter((employee) =>
+                  availableEmployees.filter(employee =>
                     `${employee.firstName} ${employee.lastName}`
                       .toLowerCase()
-                      .includes(search.toLowerCase()),
+                      .includes(search.toLowerCase())
                   )
                 }
                 openState={[employeeOpen, setEmployeeOpen]}
@@ -383,7 +388,8 @@ export default function CreateAndEditLabor({
                 setSelectedItem={setEmployee}
               />
             </div>
-          </div>          <SlimInput
+          </div>{" "}
+          <SlimInput
             value={inputValues.date}
             onChange={handleChange}
             labelClassName="text-sm md:text-base"
@@ -411,13 +417,16 @@ export default function CreateAndEditLabor({
             label="Amount"
             name="amount"
             readOnly={isTechnician}
-          />          <div>
+          />{" "}
+          <div>
             <label className="mb-1 px-2 text-sm font-medium md:text-base">
               Priority
             </label>
-            <div className={isTechnician ? "pointer-events-none opacity-50" : ""}>
+            <div
+              className={isTechnician ? "pointer-events-none opacity-50" : ""}
+            >
               <Selector
-                label={(priority) => (priority ? priority : "Priority")}
+                label={priority => (priority ? priority : "Priority")}
                 items={["Low", "Medium", "High"]}
                 displayList={(priority: Priority) => <p>{priority}</p>}
                 openState={[priorityOpen, setPriorityOpen]}
@@ -437,12 +446,13 @@ export default function CreateAndEditLabor({
             {/* TODO: use better UI */}
             <DropdownSelection
               dropDownValues={["Pending", "In Progress", "Complete", "Cancel"]}
-              onValueChange={(value) => setStatus(value as any)}
+              onValueChange={value => setStatus(value as any)}
               changesValue={status}
               buttonClassName="h-10 cursor-pointer rounded-md border-2 border-slate-400 p-2 outline-none w-full py-2"
             />
           </div>
-        </div>        {isAdminOrManger && (
+        </div>{" "}
+        {isAdminOrManger && (
           <div>
             <label
               htmlFor="note"
@@ -472,14 +482,14 @@ export default function CreateAndEditLabor({
             </div>
           </div>
         )}
-        {/* select vehicle parts item */}        <VehicleParts
+        {/* select vehicle parts item */}{" "}
+        <VehicleParts
           fromEdit={!!technician}
           selectedParts={selectedVehicleParts || []}
           onRemoveParts={handleRemoveParts}
           onSelectParts={handleSelectParts}
           isWriteAccess={isAdminOrManger && !isTechnician}
         />
-
         <DialogFooter>
           <DialogClose className="mt-2 rounded-lg border-2 border-slate-400 p-2 text-sm md:mt-0 md:text-base">
             Cancel

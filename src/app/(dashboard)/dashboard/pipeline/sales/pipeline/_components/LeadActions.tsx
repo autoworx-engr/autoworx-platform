@@ -25,7 +25,7 @@ type TCreateDraftEstimateParams = {
   columnId: number;
   leadId: number;
   clientId?: number;
-  vehicleId: number;
+  vehicleId: number | null;
 };
 
 export default function LeadActions({ lead }: TProps) {
@@ -165,13 +165,13 @@ export default function LeadActions({ lead }: TProps) {
             disabled={pending}
             type="button"
             onClick={() => {
-              if (lead?.columnId && lead.id) {
+              if (lead?.columnId && lead.id && lead?.client) {
                 startTransition(() =>
                   handleCreateDraftEstimate({
                     columnId: lead.columnId!,
                     leadId: lead.id,
                     clientId: lead.client?.id,
-                    vehicleId: lead?.client?.vehicle?.id!,
+                    vehicleId: lead?.vehicleId,
                   })
                 );
               }

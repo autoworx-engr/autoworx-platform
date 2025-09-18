@@ -49,6 +49,7 @@ import { SelectAppointmentClient } from "./SelectAppointmentClient";
 import { SelectAppointmentVehicle } from "./SelectAppointmentVehicle";
 import { formatTime12Hour } from "@/utils/formateTime12Hours";
 import { Select } from "antd";
+import { normalizeTime } from "@/utils/normalizeTime";
 enum Tab {
   Schedule = 0,
   Reminder = 1,
@@ -160,8 +161,25 @@ export default function AppointmentModalBody({
     if (fromEdit && appointment) {
       setTitle(appointment?.title || "");
       setDate(moment.utc(appointment?.date ?? "").format("YYYY-MM-DD"));
-      setStartTime(appointment?.startTime ?? "");
-      setEndTime(appointment?.endTime ?? "");
+
+      if (appointment?.startTime) {
+        const parsed = normalizeTime(appointment.startTime);
+        if (parsed) {
+          const roundedMinutes = Math.ceil(parsed.minute() / 15) * 15;
+          parsed.minute(roundedMinutes).second(0).millisecond(0);
+          setStartTime(parsed.format("HH:mm")); // always 24h
+        }
+      }
+
+      if (appointment?.endTime) {
+        const parsed = normalizeTime(appointment.endTime);
+        if (parsed) {
+          const roundedMinutes = Math.ceil(parsed.minute() / 15) * 15;
+          parsed.minute(roundedMinutes).second(0).millisecond(0);
+          setEndTime(parsed.format("HH:mm")); // always 24h
+        }
+      }
+
       setNotes(appointment?.notes ?? "");
       setClient(appointment?.client ?? null);
       setVehicle(appointment?.vehicle ?? null);
@@ -266,21 +284,6 @@ export default function AppointmentModalBody({
     }
   }, [today, fromEdit, selectedDate]);
 
-  // Add state for minimum date and time validation
-  // const [minDate, setMinDate] = useState<string>("");
-
-  // const params = useSearchParams();
-  // const router = useRouter();
-  // const pathname = usePathname();
-
-  // const removeClientIdFromParams = () => {
-  //   const searchParams = new URLSearchParams(params!);
-  //   if (searchParams.has("clientId")) {
-  //     searchParams.delete("clientId");
-  //     router.push(pathname!);
-  //   }
-  // };
-
   useEffect(() => {
     return () => {
       resetAll();
@@ -297,7 +300,7 @@ export default function AppointmentModalBody({
   useEffect(() => {
     if (allDay && settings) {
       const isToday = date === formatDateToToday(date ?? new Date().toString());
-      const currentTime = getCurrentTime(); // Current time in HH:mm format
+      const currentTime = getCurrentTime();
 
       let startTime = settings.dayStart;
       let endTime = settings.dayEnd;
@@ -316,8 +319,47 @@ export default function AppointmentModalBody({
         }
       }
 
-      setStartTime(startTime);
-      setEndTime(endTime);
+      setStartTime(() => {
+        const [hour, minute] = startTime.split(":").map(Number);
+        return formatTime12Hour(hour, minute, timezone);
+      });
+
+      setEndTime(() => {
+        const [hour, minute] = endTime.split(":").map(Number);
+        return formatTime12Hour(hour, minute, timezone);
+      });
+    } else if (settings) {
+      if (fromEdit && appointment) {
+        setTitle(appointment?.title || "");
+
+        if (appointment?.startTime) {
+          const parsed = normalizeTime(appointment.startTime);
+          if (parsed) {
+            const roundedMinutes = Math.ceil(parsed.minute() / 15) * 15;
+            parsed.minute(roundedMinutes).second(0).millisecond(0);
+            setStartTime(parsed.format("HH:mm")); // always 24h
+          }
+        }
+
+        if (appointment?.endTime) {
+          const parsed = normalizeTime(appointment.endTime);
+          if (parsed) {
+            const roundedMinutes = Math.ceil(parsed.minute() / 15) * 15;
+            parsed.minute(roundedMinutes).second(0).millisecond(0);
+            setEndTime(parsed.format("HH:mm")); // always 24h
+          }
+        }
+      } else {
+        let now = moment.tz(timezone);
+
+        const roundedMinutes = Math.ceil(now.minute() / 15) * 15;
+        now.minute(roundedMinutes).second(0).millisecond(0);
+
+        setStartTime(now.format("HH:mm"));
+
+        const end = now.clone().add(1, "hours");
+        setEndTime(end.format("HH:mm"));
+      }
     }
   }, [allDay, settings?.dayStart, settings?.dayEnd, date]);
 
@@ -701,7 +743,12 @@ export default function AppointmentModalBody({
               value={date ?? ""}
               // min={minDate}
               required
-              onChange={(event) => setDate(event.currentTarget.value)}
+              onChange={(event) => {
+                const newDate = moment(event.currentTarget.value).format(
+                  "YYYY-MM-DD"
+                );
+                setDate(newDate);
+              }}
             />
 
             <div className="flex items-end gap-2">

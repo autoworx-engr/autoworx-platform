@@ -88,7 +88,7 @@ export default function LeadTags({ leadTags, lead }: TLeadTagsProps) {
               type="button"
               className={cn(
                 "ml-1 cursor-pointer text-xs text-white disabled:cursor-not-allowed disabled:opacity-50",
-                leadTag.tag?.bgColor === "white" && "text-black",
+                leadTag.tag?.bgColor === "white" && "text-black"
               )}
               onClick={() => {
                 handleRemoveTag({
@@ -116,6 +116,7 @@ export default function LeadTags({ leadTags, lead }: TLeadTagsProps) {
       {isTagDropdownOpen && (
         <div className="-left-100 absolute top-12 z-20">
           <SalesTagSelector
+            leadTags={leadTags}
             disable={false} // pending
             setValue={(selectedTag) => {
               if (selectedTag && lead.columnId) {

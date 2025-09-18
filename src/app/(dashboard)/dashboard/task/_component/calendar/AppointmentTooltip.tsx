@@ -1,6 +1,6 @@
 import { Appointment, Client, User } from "@prisma/client";
+import { SquarePen } from "lucide-react";
 import moment from "moment";
-import { FaPen } from "react-icons/fa";
 
 type TAppointmentTooltipProps = {
   event: Appointment & {
@@ -26,7 +26,7 @@ export default function AppointmentTooltip({
               onModalOpen && onModalOpen();
             }}
           >
-            <FaPen className="mx-auto text-[10px]" />
+            <SquarePen className="w-4 h-4 cursor-pointer mx-auto" />
           </button>
         </div>
 
@@ -61,6 +61,7 @@ export default function AppointmentTooltip({
           {moment(event.startTime, "HH:mm").format("hh:mm A")} To{" "}
           {moment(event.endTime, "HH:mm").format("hh:mm A")}
         </p>
+        <p>Notes: {event?.notes}</p>
       </div>
     </>
   );

@@ -38,7 +38,7 @@ export default function NewLabor({
   const [hours, setHours] = useState<string>("");
   const [charge, setCharge] = useState<string>("");
   const [discount, setDiscount] = useState<string>("");
-  
+
   const { clearError, showError } = useFormErrorStore();
 
   const { close, data } = useEstimatePopupStore();
@@ -62,7 +62,7 @@ export default function NewLabor({
   useEffect(() => {
     if (currentSelectedCategoryId) {
       setCategory(
-        categories.find((cat) => cat.id === currentSelectedCategoryId)!,
+        categories.find((cat) => cat.id === currentSelectedCategoryId)!
       );
     }
   }, [currentSelectedCategoryId]);
@@ -120,13 +120,13 @@ export default function NewLabor({
       });
       return false;
     }
-    
+
     return true;
   };
 
   async function handleSubmit() {
     if (!validateForm()) return;
-    
+
     const res = await newLabor({
       name,
       categoryId: category?.id!,
@@ -200,13 +200,16 @@ export default function NewLabor({
   }
 
   return (
-    <Dialog open={open} onOpenChange={(newOpen) => {
-      if (!newOpen) {
-        // This handles the X button click or clicking outside the dialog
-        handleDialogClose();
-      }
-      setOpen(newOpen);
-    }}>
+    <Dialog
+      open={open}
+      onOpenChange={(newOpen) => {
+        if (!newOpen) {
+          // This handles the X button click or clicking outside the dialog
+          handleDialogClose();
+        }
+        setOpen(newOpen);
+      }}
+    >
       <DialogTrigger asChild>
         {newButton ? (
           newButton
@@ -235,6 +238,13 @@ export default function NewLabor({
               value={name}
               onChange={(e) => {
                 const value = e.target.value;
+                if (value.length > 30) {
+                  showError({
+                    field: "name",
+                    message: "Labor name must be less than 30 characters",
+                  });
+                  return false;
+                }
                 setName(value);
                 // Clear error when user starts typing
                 if (value.trim()) {
@@ -281,8 +291,8 @@ export default function NewLabor({
               value={hours}
               onChange={(e) => {
                 const value = e.target.value;
-                setHours(value)
-              // Clear error when user starts typing
+                setHours(value);
+                // Clear error when user starts typing
                 if (value.trim()) {
                   clearError();
                 }
@@ -301,8 +311,8 @@ export default function NewLabor({
               value={charge}
               onChange={(e) => {
                 const value = e.target.value;
-                setCharge(value)
-               // Clear error when user starts typing
+                setCharge(value);
+                // Clear error when user starts typing
                 if (value.trim()) {
                   clearError();
                 }

@@ -17,7 +17,7 @@ export const staticPermissions = [
   {
     title: "Communication Hub",
     permission_name: "communicationHub",
-    status: false,
+    status: true,
   },
   { title: "Communication", permission_name: "communication", status: false },
   { title: "Calling Access", permission_name: "callingAccess", status: false },

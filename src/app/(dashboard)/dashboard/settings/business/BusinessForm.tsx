@@ -18,7 +18,7 @@ export default function BusinessForm({ company }: TProps) {
   const queryClient = useQueryClient();
   const [imageSrc, setImageSrc] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null | undefined>(
-    company?.image,
+    company?.image
   );
 
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +40,7 @@ export default function BusinessForm({ company }: TProps) {
     city: company?.city || "",
     state: company?.state || "",
     zip: company?.zip || "",
-    timezone: company?.timezone,
+    timezone: company?.timezone
   });
 
   // useEffect(() => {
@@ -155,7 +155,7 @@ export default function BusinessForm({ company }: TProps) {
     const { name, value } = e.target;
 
     // Update business settings
-    setBusinessSettings((prev) => ({ ...prev, [name]: value }));
+    setBusinessSettings(prev => ({ ...prev, [name]: value }));
 
     // Perform validation based on input name
     let error = "";
@@ -184,9 +184,9 @@ export default function BusinessForm({ company }: TProps) {
     }
 
     // Update validation errors
-    setValidationErrors((prev) => ({
+    setValidationErrors(prev => ({
       ...prev,
-      [name]: error,
+      [name]: error
     }));
   };
 
@@ -197,23 +197,23 @@ export default function BusinessForm({ company }: TProps) {
     const newValidationErrors: { [key: string]: string } = {};
 
     newValidationErrors.legalBusinessName = validateLegalBusinessName(
-      businessSettings.legalBusinessName,
+      businessSettings.legalBusinessName
     );
     newValidationErrors.businessRegistrationIDNumber =
       validateBusinessRegistrationID(
-        businessSettings.businessRegistrationIDNumber,
+        businessSettings.businessRegistrationIDNumber
       );
     newValidationErrors.businessType = validateBusinessType(
-      businessSettings.businessType,
+      businessSettings.businessType
     );
     newValidationErrors.businessPhone = validateBusinessPhone(
-      businessSettings.businessPhone,
+      businessSettings.businessPhone
     );
     newValidationErrors.businessEmail = validateBusinessEmail(
-      businessSettings.businessEmail,
+      businessSettings.businessEmail
     );
     newValidationErrors.businessWebsite = validateBusinessWebsite(
-      businessSettings.businessWebsite,
+      businessSettings.businessWebsite
     );
 
     // Set validation errors
@@ -221,7 +221,7 @@ export default function BusinessForm({ company }: TProps) {
 
     // Check if there are any errors
     const hasErrors = Object.values(newValidationErrors).some(
-      (error) => error !== "",
+      error => error !== ""
     );
     if (hasErrors) {
       return;
@@ -234,7 +234,7 @@ export default function BusinessForm({ company }: TProps) {
         if (company?.image) {
           const response = await fetch(`/api/upload`, {
             method: "DELETE",
-            body: JSON.stringify({ filePath: company.image }),
+            body: JSON.stringify({ filePath: company.image })
           });
           await response.json();
         }
@@ -243,7 +243,7 @@ export default function BusinessForm({ company }: TProps) {
         formData.append("file", imageSrc);
         const uploadRes = await fetch("/api/upload", {
           method: "POST",
-          body: formData,
+          body: formData
         });
 
         if (!uploadRes.ok) {
@@ -272,7 +272,7 @@ export default function BusinessForm({ company }: TProps) {
         state: businessSettings.state,
         zip: businessSettings.zip,
         image,
-        timezone: businessSettings.timezone,
+        timezone: businessSettings.timezone
       };
 
       const response = await updateCompany(company?.id, companyData);
@@ -284,7 +284,7 @@ export default function BusinessForm({ company }: TProps) {
         errorToast(
           response.errorSource && response.errorSource.length > 0
             ? response.errorSource[0].message
-            : response.message,
+            : response.message
         );
       }
     } catch (err) {
@@ -292,7 +292,7 @@ export default function BusinessForm({ company }: TProps) {
       errorToast(
         formattedError.errorSource && formattedError.errorSource.length > 0
           ? formattedError.errorSource[0].message
-          : formattedError.message,
+          : formattedError.message
       );
     }
   };
@@ -308,11 +308,11 @@ export default function BusinessForm({ company }: TProps) {
         isPDFPhoto={true}
       />
       <form
-        onSubmit={(e) => startTransition(() => handleSubmit(e))}
+        onSubmit={e => startTransition(() => handleSubmit(e))}
         className="space-y-4"
       >
         {/* name and registration number */}
-        <div className="grid grid-cols-2 gap-x-8">
+        <div className="grid md:grid-cols-2 grid-cols-1 gap-x-8">
           <SlimInput
             value={businessSettings.legalBusinessName}
             onChange={handleChange}
@@ -331,7 +331,7 @@ export default function BusinessForm({ company }: TProps) {
           />
         </div>
         {/* businessType and phone number */}
-        <div className="grid grid-cols-2 gap-x-8">
+        <div className="grid md:grid-cols-2 grid-cols-1 gap-x-8">
           <SlimInput
             required={true}
             value={businessSettings.businessType}
@@ -350,7 +350,7 @@ export default function BusinessForm({ company }: TProps) {
           />
         </div>
         {/* industry and email */}
-        <div className="grid grid-cols-2 gap-x-8">
+        <div className="grid md:grid-cols-2 grid-cols-1 gap-x-8">
           <SlimInput
             required={false}
             value={businessSettings.industrySpecialization}
@@ -393,7 +393,7 @@ export default function BusinessForm({ company }: TProps) {
             error={validationErrors.companyAddress}
           />
         </div>
-        <div className="grid grid-cols-3 gap-x-8">
+        <div className="grid md:grid-cols-3 grid-cols-1 gap-x-8">
           <SlimInput
             value={businessSettings.city}
             onChange={handleChange}

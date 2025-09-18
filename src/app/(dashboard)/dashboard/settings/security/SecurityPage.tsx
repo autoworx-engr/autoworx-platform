@@ -12,7 +12,7 @@ export default function SecurityPage({ company }: { company: any }) {
     regenerateZapierToken();
   }
   return (
-    <div className=" w-full  items-start  px-5">
+    <div className=" w-full  items-start">
       <div className="space-y-4">
         {/* Contact Number Settings */}
         <div>
@@ -57,7 +57,7 @@ export default function SecurityPage({ company }: { company: any }) {
               </button>
               <button
                 type="button"
-                className="rounded-md bg-[#6571FF] px-10 py-1.5 text-white"
+                className="rounded-md hidden sm:block bg-[#6571FF] px-10 py-1.5 text-white"
                 disabled={isTokenGenerating}
                 onClick={async () => {
                   setIsTokenGenerating(true);
@@ -72,6 +72,22 @@ export default function SecurityPage({ company }: { company: any }) {
                 Regenerate Token
               </button>
             </div>
+            <button
+              type="button"
+              className="w-full mx-auto rounded-md sm:hidden bg-[#6571FF] px-6 py-1.5 text-white"
+              disabled={isTokenGenerating}
+              onClick={async () => {
+                setIsTokenGenerating(true);
+
+                regenerateZapierToken()
+                  .then(() => successToast("Token Regenerated"))
+                  .finally(() => {
+                    setIsTokenGenerating(false);
+                  });
+              }}
+            >
+              Regenerate Token
+            </button>
           </div>
         </div>
       </div>

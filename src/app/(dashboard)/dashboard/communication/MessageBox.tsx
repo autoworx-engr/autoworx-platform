@@ -55,7 +55,7 @@ export default function MessageBox({
   const messageBoxRef = useRef<HTMLDivElement>(null);
   const [openSettings, setOpenSettings] = useState(false);
   const [multiAttachmentFile, setMultiAttachmentFile] = useState<File[] | null>(
-    null,
+    null
   );
 
   const router = useRouter();
@@ -65,7 +65,7 @@ export default function MessageBox({
   const [isImageLoaded, setIsImageLoaded] = useState(false);
 
   const isEstimateAttachmentShow = pathname?.includes(
-    "/communication/collaboration",
+    "/communication/collaboration"
   );
 
   const { lastMessage, setLastMessage } = useChatTrackStore();
@@ -81,7 +81,7 @@ export default function MessageBox({
 
   async function handleSendMessage(e: any) {
     e.preventDefault();
-    
+
     try {
       if (!message && !multiAttachmentFile) return;
 
@@ -115,7 +115,7 @@ export default function MessageBox({
           attachmentFileUrl && attachmentFileUrl.length > 0
             ? (attachmentFileUrl as string[]).map((fileUrl, urlIndex) => {
                 const findFileIntoMultiFile = multiAttachmentFile?.find(
-                  (_, fileIndex) => fileIndex === urlIndex,
+                  (_, fileIndex) => fileIndex === urlIndex
                 );
                 return {
                   fileName: findFileIntoMultiFile?.name,
@@ -170,7 +170,7 @@ export default function MessageBox({
       }
       setUsersList &&
         setUsersList((usersList) =>
-          usersList.filter((u) => u.id !== receiverUser?.id),
+          usersList.filter((u) => u.id !== receiverUser?.id)
         );
     } catch (err) {
       const formattedError = errorHandler(err);
@@ -181,7 +181,7 @@ export default function MessageBox({
   const handleDeleteUserFromGroupList = async (userId: number) => {
     const isUserExistInGroup = await getUserInGroup(
       parseInt(session?.user?.id!),
-      group?.id!,
+      group?.id!
     );
     if (!isUserExistInGroup) {
       toast.error("You can not remove this User from this group");
@@ -202,7 +202,7 @@ export default function MessageBox({
                 };
               }
               return g;
-            }),
+            })
           );
       }
     }
@@ -235,14 +235,14 @@ export default function MessageBox({
   const handleRemoveAttachment = (fileName: string) => {
     setMultiAttachmentFile(
       (multiFiles) =>
-        multiFiles && multiFiles?.filter((file) => file?.name !== fileName),
+        multiFiles && multiFiles?.filter((file) => file?.name !== fileName)
     );
   };
   return (
     <div
       className={cn(
         "app-shadow flex h-[calc(100vh-50px)] w-full flex-col overflow-hidden border bg-background max-[1400px]:w-[100%] sm:h-full sm:rounded-lg",
-        totalMessageBox > 2 && "sm:h-[44vh]",
+        totalMessageBox > 2 && "sm:h-[44vh]"
       )}
     >
       {/* name and delete */}
@@ -264,20 +264,18 @@ export default function MessageBox({
           </button>
           {fromGroup ? (
             <div className="flex items-center">
-              {group?.users
-                .slice(0, 4)
-                .map((groupUser: any, index: number) => (
-                  <Avatar
-                    key={groupUser.id}
-                    photo={groupUser.image}
-                    width={50}
-                    height={50}
-                    className={cn(
-                      "rounded-full",
-                      index === 0 ? "ml-0" : "-ml-9 sm:-ml-8",
-                    )}
-                  />
-                ))}
+              {group?.users.slice(0, 4).map((groupUser: any, index: number) => (
+                <Avatar
+                  key={groupUser.id}
+                  photo={groupUser.image}
+                  width={50}
+                  height={50}
+                  className={cn(
+                    "rounded-full",
+                    index === 0 ? "ml-0" : "-ml-9 sm:-ml-8"
+                  )}
+                />
+              ))}
             </div>
           ) : (
             <Avatar photo={receiverUser?.image} width={50} height={50} />
@@ -357,11 +355,11 @@ export default function MessageBox({
         {messages.map((message: TMessage, index: number) => {
           const messageDate = format(
             new Date(message?.createdAt ?? new Date()),
-            "PPP",
+            "PPP"
           ); // 'Jan 1, 2024'
           const messageTime = format(
             new Date(message?.createdAt ?? new Date()),
-            "h:mm a",
+            "h:mm a"
           ); // '12:30 PM'
 
           const showDateSeparator = messageDate !== lastDate;
@@ -371,7 +369,7 @@ export default function MessageBox({
               {showDateSeparator && (
                 <div className="block py-2 text-center text-xs text-gray-500">
                   {formatDate(
-                    new Date(message?.createdAt ?? new Date()).toDateString(),
+                    new Date(message?.createdAt ?? new Date()).toDateString()
                   )}
                 </div>
               )}
@@ -389,64 +387,64 @@ export default function MessageBox({
 
       {/* attachments */}
       {multiAttachmentFile && multiAttachmentFile.length > 0 && (
-        <div className="relative w-full bg-[#D9D9D9] p-3">
-          <TiDeleteOutline
-            onClick={() => setMultiAttachmentFile(null)}
-            className="absolute right-0 top-0 z-20 cursor-pointer rounded-full text-red-500 lg:right-4"
-            size={28}
-          />
+        <div className="relative w-full rounded-lg border border-gray-200 bg-white shadow-md">
+          {/* Sticky header */}
+          <div className="sticky top-0 z-20 flex items-center justify-end bg-white px-3 py-2 shadow-sm">
+            <button
+              onClick={() => setMultiAttachmentFile(null)}
+              className="rounded-full bg-red-500/10 p-1.5 text-red-600 hover:bg-red-500/20 transition"
+              aria-label="Remove all attachments"
+            >
+              <TiDeleteOutline size={22} />
+            </button>
+          </div>
 
-          <div className="thin-scrollbar max-h-64 overflow-y-auto pr-2">
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 xl:grid-cols-8 2xl:grid-cols-10">
-              {multiAttachmentFile?.map((attachmentFile) => {
-                return (
-                  <div
-                    key={attachmentFile.name}
-                    className="flex flex-col space-y-1"
+          {/* Scrollable attachments */}
+          <div className="thin-scrollbar max-h-64 overflow-y-auto px-4 pb-4">
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8">
+              {multiAttachmentFile?.map((attachmentFile) => (
+                <div
+                  key={attachmentFile.name}
+                  className="group relative flex flex-col items-center rounded-lg border border-gray-200 bg-gray-50 p-2 shadow-sm transition hover:shadow-md"
+                >
+                  {/* Remove single attachment */}
+                  <button
+                    onClick={() => handleRemoveAttachment(attachmentFile.name)}
+                    className="absolute right-1 top-1 hidden rounded-full bg-white p-1 text-gray-700 shadow-sm hover:text-red-500 group-hover:block transition"
+                    aria-label={`Remove ${attachmentFile.name}`}
                   >
-                    <div
-                      key={attachmentFile.name}
-                      className="relative h-fit w-fit"
-                    >
-                      <TiDeleteOutline
-                        onClick={() =>
-                          handleRemoveAttachment(attachmentFile.name)
-                        }
-                        className="absolute -right-1 -top-1 z-10 cursor-pointer rounded-full bg-background"
-                        size={20}
+                    <TiDeleteOutline size={18} />
+                  </button>
+
+                  {/* Image preview */}
+                  {attachmentFile.type.includes("image") ? (
+                    <div className="relative h-24 w-24 overflow-hidden rounded-md border">
+                      <Image
+                        src={URL.createObjectURL(attachmentFile)}
+                        alt={attachmentFile.name}
+                        className="object-cover"
+                        fill
+                        sizes="96px"
                       />
-                      {attachmentFile.type.includes("image") ? (
-                        <div className="relative h-24 w-24 overflow-hidden rounded-md border">
-                          <Image
-                            src={URL.createObjectURL(attachmentFile)}
-                            // placeholder="blur"
-                            alt={attachmentFile.name}
-                            className="object-cover"
-                            fill
-                            // width={100}
-                            // height={100}
-                            sizes="96px"
-                          />
-                        </div>
-                      ) : (
-                        <div className="flex h-24 w-24 flex-col justify-between space-y-1 rounded-md bg-[#006D77] p-2 text-white">
-                          <p className="line-clamp-1 text-xs font-medium">
-                            {attachmentFile.name}
-                          </p>
-                          <p className="text-xs">
-                            file size:{" "}
-                            {(attachmentFile.size / 1024 / 1024).toPrecision(2)}{" "}
-                            MB
-                          </p>
-                        </div>
-                      )}
                     </div>
-                    <p className="line-clamp-2 text-sm">
-                      {attachmentFile.name}
-                    </p>
-                  </div>
-                );
-              })}
+                  ) : (
+                    // Non-image file preview
+                    <div className="flex h-24 w-24 flex-col items-center justify-center rounded-md bg-blue-600 text-white">
+                      <p className="line-clamp-1 text-xs font-medium text-center">
+                        {attachmentFile.name.split(".").pop()?.toUpperCase()}
+                      </p>
+                      <p className="text-[10px]">
+                        {(attachmentFile.size / 1024 / 1024).toFixed(2)} MB
+                      </p>
+                    </div>
+                  )}
+
+                  {/* File name */}
+                  <p className="mt-2 line-clamp-2 w-full text-center text-xs text-gray-700">
+                    {attachmentFile.name}
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -462,7 +460,7 @@ export default function MessageBox({
           <div
             className={cn(
               "absolute -top-[55px] space-y-1",
-              isEstimateAttachmentShow ? "-top-[55px]" : "-top-[27px]",
+              isEstimateAttachmentShow ? "-top-[55px]" : "-top-[27px]"
             )}
           >
             <p

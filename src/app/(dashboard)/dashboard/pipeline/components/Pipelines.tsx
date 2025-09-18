@@ -191,7 +191,7 @@ export default function Pipelines({
         typeof value === "function" ? value(selectedEmployees[key]) : value;
 
       // Update the selected employee in the state
-      setSelectedEmployees((prevState) => ({
+      setSelectedEmployees(prevState => ({
         ...prevState,
         [key]: resolvedValue,
       }));
@@ -230,7 +230,7 @@ export default function Pipelines({
     leadIndex: number
   ) => {
     const key = `${categoryIndex}-${leadIndex}`;
-    setTagDropdownStates((prevState) => ({
+    setTagDropdownStates(prevState => ({
       ...prevState,
       [key]: !prevState[key],
     }));
@@ -286,7 +286,7 @@ export default function Pipelines({
         const updatedPipelineData = [...pipelineData];
         updatedPipelineData[categoryIndex].leads[leadIndex].tags =
           updatedPipelineData[categoryIndex].leads[leadIndex].tags.filter(
-            (tag) => tag.tag.id !== tagToRemove.id
+            tag => tag.tag.id !== tagToRemove.id
           );
         setPipelineData(updatedPipelineData);
         // setLeadTags((prevState) => {
@@ -310,7 +310,7 @@ export default function Pipelines({
     leadIndex: number
   ) => {
     const key = `${categoryIndex}-${leadIndex}`;
-    setOpenServiceDropdown((prevState) => ({
+    setOpenServiceDropdown(prevState => ({
       ...prevState,
       [key]: !prevState[key],
     }));
@@ -321,11 +321,11 @@ export default function Pipelines({
     leadIndex: number
   ) => {
     const key = `${categoryIndex}-${leadIndex}`;
-    setShowColumnSelect((prevState) => ({
+    setShowColumnSelect(prevState => ({
       ...prevState,
       [key]: !prevState[key],
     }));
-    setColumnDropdownOpen((prevState) => ({
+    setColumnDropdownOpen(prevState => ({
       ...prevState,
       [key]: !prevState[key],
     }));
@@ -340,8 +340,8 @@ export default function Pipelines({
     const lead = pipelineData[categoryIndex].leads[leadIndex];
 
     if (!newColumnId || newColumnId === categoryIndex.toString()) {
-      setShowColumnSelect((prev) => ({ ...prev, [key]: false }));
-      setColumnDropdownOpen((prev) => ({ ...prev, [key]: false }));
+      setShowColumnSelect(prev => ({ ...prev, [key]: false }));
+      setColumnDropdownOpen(prev => ({ ...prev, [key]: false }));
       return;
     }
 
@@ -395,8 +395,8 @@ export default function Pipelines({
         }
       }
 
-      setShowColumnSelect((prev) => ({ ...prev, [key]: false }));
-      setColumnDropdownOpen((prev) => ({ ...prev, [key]: false }));
+      setShowColumnSelect(prev => ({ ...prev, [key]: false }));
+      setColumnDropdownOpen(prev => ({ ...prev, [key]: false }));
     } catch (error) {
       toast.error("Failed to move lead. Please try again.");
       console.error("Error moving lead:", error);
@@ -532,10 +532,10 @@ export default function Pipelines({
                   key={categoryIndex.toString() + 1}
                   isDropDisabled={screenWidth < 768}
                 >
-                  {(provided) => (
+                  {provided => (
                     <div
                       {...provided.droppableProps}
-                      ref={(el) => {
+                      ref={el => {
                         provided.innerRef(el);
                         columnRefs.current[categoryIndex] = el;
                       }}
@@ -575,11 +575,11 @@ export default function Pipelines({
                               index={leadIndex}
                               isDragDisabled={screenWidth < 768}
                             >
-                              {(provided) => (
+                              {provided => (
                                 <li
                                   {...provided.draggableProps}
                                   {...provided.dragHandleProps}
-                                  ref={(el) => {
+                                  ref={el => {
                                     provided.innerRef(el);
                                     // Store a reference to this lead element
                                     if (el) leadRefs.current.set(key, el);
@@ -665,11 +665,11 @@ export default function Pipelines({
                                         .map((col, idx) => ({
                                           id: col.id,
                                           value: pipelineData
-                                            .findIndex((p) => p.id === col.id)
+                                            .findIndex(p => p.id === col.id)
                                             .toString(),
                                           label: col.title || "Untitled Column",
                                         }))}
-                                      onSelect={(columnId) =>
+                                      onSelect={columnId =>
                                         handleColumnChange(
                                           categoryIndex,
                                           leadIndex,
@@ -678,11 +678,11 @@ export default function Pipelines({
                                       }
                                       onClose={() => {
                                         const key = `${categoryIndex}-${leadIndex}`;
-                                        setShowColumnSelect((prev) => ({
+                                        setShowColumnSelect(prev => ({
                                           ...prev,
                                           [key]: false,
                                         }));
-                                        setColumnDropdownOpen((prev) => ({
+                                        setColumnDropdownOpen(prev => ({
                                           ...prev,
                                           [key]: false,
                                         }));
@@ -698,7 +698,7 @@ export default function Pipelines({
                                   <div className="mb-1 flex flex-wrap items-center gap-1">
                                     {pipelineData[categoryIndex].leads[
                                       leadIndex
-                                    ].tags.map((invoiceTag) => (
+                                    ].tags.map(invoiceTag => (
                                       <span
                                         key={`tag-${invoiceTag.id}`}
                                         className="mr-2 inline-flex h-[20px] items-center rounded bg-gray-300 px-1 py-1 text-xs font-semibold text-black"
@@ -739,7 +739,12 @@ export default function Pipelines({
                                   {isTagDropdownOpen && (
                                     <div className="-left-100 absolute top-12 z-20">
                                       <EmployeeTagSelector
-                                        setValue={(selectedTag) =>
+                                        employeeTags={pipelineData[
+                                          categoryIndex
+                                        ].leads[leadIndex].tags.map(
+                                          invoiceTag => invoiceTag.tag
+                                        )}
+                                        setValue={selectedTag =>
                                           handleTagSelect(
                                             categoryIndex,
                                             leadIndex,
@@ -764,12 +769,15 @@ export default function Pipelines({
                                   </div>
                                   {/* service code */}
                                   <ServiceSelector
-                                    services={lead.services.completed.concat(
-                                      lead.services.incomplete
-                                    )}
+                                    services={lead.services.completed
+                                      .concat(lead.services.incomplete)
+                                      .concat(lead.services.unAssigned)}
                                     completedServices={lead.services.completed}
                                     incompleteServices={
                                       lead.services.incomplete
+                                    }
+                                    unAssignedServices={
+                                      lead.services.unAssigned
                                     }
                                     isServiceDropdownOpen={
                                       isServiceDropdownOpen

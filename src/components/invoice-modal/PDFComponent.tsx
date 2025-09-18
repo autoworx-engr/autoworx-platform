@@ -388,9 +388,7 @@ const PDFComponent = function PDF({
               <Text style={[styles.boldText, { marginBottom: 2 }]}>
                 Vehicle Details:
               </Text>
-              <Text style={styles.fontSize10}>
-                {vehicle?.year?.toString().padStart(2, "0") || ""}
-              </Text>
+              <Text style={styles.fontSize10}>{vehicle?.year || ""}</Text>
               <Text style={styles.fontSize10}>{vehicle?.make}</Text>
               <Text style={styles.fontSize10}>{vehicle?.model}</Text>
               <Text style={styles.fontSize10}>{vehicle?.submodel}</Text>

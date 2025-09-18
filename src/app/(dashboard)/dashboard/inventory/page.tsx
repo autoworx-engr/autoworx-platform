@@ -6,6 +6,8 @@ import getUser from "@/lib/getUser";
 import AddNewProduct from "./AddNewProduct";
 import Sidebar from "./Sidebar";
 import ClientInventoryList from "./ClientInventoryList";
+import { cache } from "react";
+import { InventoryProductType } from "@prisma/client";
 
 async function getCategories() {
   const res = await fetch(
@@ -17,26 +19,80 @@ async function getCategories() {
   return res.json();
 }
 
+type TGetInventoryItem = {
+  type: InventoryProductType;
+  page: number;
+  limit: number;
+  search?: string;
+  category?: string;
+};
+
+const getInventoryItem = cache(
+  async ({ type, page, limit, search, category }: TGetInventoryItem) => {
+    try {
+      const companyId = await getCompanyId();
+      const items = await db.inventoryProduct.findMany({
+        where: {
+          companyId,
+          type: type,
+          name: { contains: search },
+          category: { name: category },
+        },
+        include: {
+          category: true,
+          vendor: true,
+          User: type === "Supply" ? true : false,
+        },
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy: { name: "asc" },
+      });
+      const totalItems = await db.inventoryProduct.count({
+        where: {
+          companyId,
+          type: type,
+          name: { contains: search },
+          category: { name: category },
+        },
+      });
+      return { data: items, totalItems: totalItems };
+    } catch (error) {
+      console.log(error);
+      throw new Error(`Failed to fetch ${type.toLowerCase()}s`);
+    }
+  }
+);
+
 export default async function Page({
-  searchParams: { productId, view },
+  searchParams: { productId, view, page = "1", limit = "50", search, category },
 }: {
   searchParams: {
     productId: string;
     view: string;
+    page?: string;
+    limit?: string;
+    search?: string;
+    category?: string;
   };
 }) {
   const companyId = await getCompanyId();
+  const { data: supplies, totalItems: totalSupplies } = await getInventoryItem({
+    type: "Supply",
+    page: parseInt(page),
+    limit: parseInt(limit),
+    search,
+    category,
+  });
+
+  const { data: products, totalItems: totalProducts } = await getInventoryItem({
+    type: "Product",
+    page: parseInt(page),
+    limit: parseInt(limit),
+    search,
+    category,
+  });
 
   const inventoryCategories = await getCategories();
-  const supplies = await db.inventoryProduct.findMany({
-    where: { companyId, type: "Supply" },
-    include: { category: true, vendor: true, User: true },
-  });
-
-  const products = await db.inventoryProduct.findMany({
-    where: { companyId, type: "Product" },
-    include: { category: true, vendor: true },
-  });
 
   const categories = await db.category.findMany({ where: { companyId } });
   const vendors = await db.vendor.findMany({ where: { companyId } });
@@ -62,8 +118,16 @@ export default async function Page({
 
       <div className="mb-5 flex h-full w-full flex-col justify-between gap-3 md:mb-0 md:flex-wrap">
         <ClientInventoryList
+          searchParams={{
+            page,
+            limit,
+            search,
+            category,
+          }}
           supplies={supplies}
           products={products}
+          totalSupplies={totalSupplies}
+          totalProducts={totalProducts}
           view={view}
           productId={parseInt(productId || "0")}
           user={user}

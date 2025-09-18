@@ -14,10 +14,10 @@ import moment from "moment-timezone";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CiEdit } from "react-icons/ci";
 import { useMediaQuery } from "react-responsive";
 import ConvertTo from "./ConvertTo";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
+import { SquarePen } from "lucide-react";
 
 export interface InvoiceData {
   id: string;
@@ -243,7 +243,7 @@ export default function Table({
                       className="text-2xl text-blue-600"
                       onClick={() => setActionType("edit")}
                     >
-                      <CiEdit />
+                      <SquarePen className="w-5 h-5 text-[#6571FF]" />
                     </Link>
                   </td>
                 </tr>

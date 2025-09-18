@@ -2,7 +2,7 @@ import { deleteTask } from "@/actions/task/deleteTask";
 import { TASK_COLOR } from "@/lib/consts";
 import { useCalendarStore } from "@/stores/calendarStore";
 import { Task } from "@prisma/client";
-import { Tooltip } from "antd";
+import { Popconfirm, Tooltip } from "antd";
 import moment from "moment";
 import React, { LegacyRef } from "react";
 import { useDrag } from "react-dnd";
@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation";
 import { useDate } from "../../../task-v1/[type]/Calendar/Day";
 import { taskQueryKey } from "../../_constant";
 import useWeekStartEndDays from "../../_hook/lib/useWeekStartEndDays";
+import { SquarePen } from "lucide-react";
 
 type TaskComponentProps = {
   task: Task;
@@ -27,7 +28,7 @@ export default function TaskComponent({ task }: TaskComponentProps) {
   const [{ isDragging }, drag] = useDrag({
     type: "task",
     item: { type: "task", id: task.id },
-    collect: monitor => ({
+    collect: (monitor) => ({
       isDragging: !!monitor.isDragging(),
     }),
   });
@@ -86,7 +87,7 @@ export default function TaskComponent({ task }: TaskComponentProps) {
   const handleDeleteTask = (taskId: number) => {
     queryClient.setQueryData([taskQueryKey.allTasks], (oldData: Task[]) => {
       return oldData && oldData.length > 0
-        ? oldData.filter(task => task.id !== taskId)
+        ? oldData.filter((task) => task.id !== taskId)
         : [];
     });
     revalidateTaskQueries();
@@ -135,17 +136,27 @@ export default function TaskComponent({ task }: TaskComponentProps) {
       </span>
 
       <TaskCreateOrEdit
-        triggerIcon={<MdOutlineEdit className="mr-2 cursor-pointer" />}
+        triggerIcon={
+          <SquarePen className="w-5 h-5 text-[#6571FF] mr-2 cursor-pointer" />
+        }
         taskId={task.id}
         fromEdit
         onTaskUpdated={handleUpdate}
         onTaskDelete={handleDeleteTask}
       />
 
-      <FaRegCheckCircle
-        className="text-xl text-white hover:text-gray-400"
-        onClick={handleDelete}
-      />
+      <Popconfirm
+        title="Complete Task"
+        description="Are you sure you want to mark this task as completed?"
+        okText="Yes"
+        cancelText="No"
+        onConfirm={handleDelete}
+      >
+        <FaRegCheckCircle
+          className="text-xl text-white hover:text-gray-400"
+          // onClick={handleDelete}
+        />
+      </Popconfirm>
     </div>
   );
 }

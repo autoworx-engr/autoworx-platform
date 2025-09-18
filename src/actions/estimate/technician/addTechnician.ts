@@ -11,6 +11,7 @@ import moment from "moment";
 import { revalidatePath } from "next/cache";
 import { addVehicleParts } from "./addVehicleParts";
 import { updateWorkOrderStatus } from "./updateWorkOrderStatus";
+import { getVehicleByInvoiceId } from "@/actions/vehicle/getVehicleByInvoiceId";
 
 type TechnicianInput = {
   date: Date;
@@ -27,11 +28,20 @@ type TechnicianInput = {
 
 export async function addTechnician(
   payload: TechnicianInput,
-  vehicleParts: Partial<VehicleParts>[],
+  vehicleParts: Partial<VehicleParts>[]
 ): Promise<ServerAction | TErrorHandler> {
   const sessionUser = await getUserFromSession();
   const companyId = sessionUser.companyId;
 
+  const vehicleInfo = await getVehicleByInvoiceId(payload.invoiceId);
+  const { make, model, year } = vehicleInfo || {};
+
+  const vehicleName =
+    make && model
+      ? `${year ? year : ""} ${make} ${model}`
+      : make || payload.invoiceId;
+
+  console.log("vehicleInfo", vehicleInfo, "or", vehicleName);
   try {
     // if (!payload) {
     //   return { type: "error", message: "Invalid payload" };
@@ -45,7 +55,7 @@ export async function addTechnician(
       currentTime.getHours(),
       currentTime.getMinutes(),
       currentTime.getSeconds(),
-      currentTime.getMilliseconds(),
+      currentTime.getMilliseconds()
     );
 
     const newTechnician = await db.technician.create({
@@ -69,7 +79,7 @@ export async function addTechnician(
       sendTechnicianAssignForWorkOrderNotify({
         technicianUserId: technicianUser?.id as number,
         companyId,
-        description: `Job "${payload?.invoiceId}" has been assigned to you. View details in Autoworx.`,
+        description: `You have been assigned a job on ${vehicleName}. View details in Autoworx.`,
         title: "Assigned to Work Order",
       });
     }

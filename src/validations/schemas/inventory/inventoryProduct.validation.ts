@@ -48,7 +48,7 @@ export const createProductValidationSchema = z
           invalid_type_error: "Price must be a number",
         })
         .nonnegative("Price must be non-negative")
-        .finite("Price must be finite"),
+        .finite("Price must be finite")
     ),
 
     categoryId: z
@@ -73,7 +73,7 @@ export const createProductValidationSchema = z
       },
       {
         message: "Material Quantity must be a positive number",
-      },
+      }
     ),
     unit: z
       .string({
@@ -123,7 +123,7 @@ export const createProductValidationSchema = z
     {
       message: "Low inventory alert must be less than current quantity",
       path: ["lowInventoryAlert"],
-    },
+    }
   );
 
 // update product validation schema for inventory products
@@ -158,7 +158,7 @@ export const updateProductValidationSchema = z
       .finite("Price must be finite")
       .refine(
         (num) => (num * 100) % 1 === 0,
-        "Price cannot have more than 2 decimal places",
+        "Price cannot have more than 2 decimal places"
       )
       .optional()
       .nullable(),
@@ -186,7 +186,7 @@ export const updateProductValidationSchema = z
         },
         {
           message: "Material Quantity must be a positive number",
-        },
+        }
       )
       .optional()
       .nullable(),
@@ -236,7 +236,7 @@ export const updateProductValidationSchema = z
     {
       message: "Low inventory alert must be less than current quantity",
       path: ["lowInventoryAlert"],
-    },
+    }
   );
 
 export type TCreateProductValidation = z.infer<

@@ -16,7 +16,6 @@ import Submit from "@/components/Submit";
 import { useFormErrorStore } from "@/stores/form-error";
 import { Vehicle, VehicleColor } from "@prisma/client";
 import { useState } from "react";
-import { FaPen } from "react-icons/fa";
 import ColorSelector from "@/components/ColorSelector";
 import {
   useGetAllYears,
@@ -24,6 +23,7 @@ import {
   useGetModelsByYearAndMake,
 } from "@/hooks/useCarData";
 import SelectorWithSearch from "./SelectorWithSearch";
+import { SquarePen } from "lucide-react";
 
 export default function EditVehicle({
   vehicle,
@@ -144,7 +144,7 @@ export default function EditVehicle({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <button type="button" className="text-xs text-[#6571FF]">
-          <FaPen />
+          <SquarePen className="w-4 h-4 cursor-pointer" />
         </button>
       </DialogTrigger>
 

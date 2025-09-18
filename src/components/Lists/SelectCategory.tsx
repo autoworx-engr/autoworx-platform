@@ -16,6 +16,7 @@ export default function SelectCategory({
   categoryOpen,
   setCategoryOpen,
   required = false,
+  onBlur,
 }: {
   categoryData?: Category | null;
   onCategoryChange: (category: Category) => void;
@@ -23,8 +24,10 @@ export default function SelectCategory({
   categoryOpen?: boolean;
   setCategoryOpen?: any;
   required?: boolean;
+  onBlur?: () => void;
 }) {
   const { categories } = useListsStore();
+  const [error, setError] = useState<string | null>();
   const [category, setCategory] = useState<Category | null>(categoryData);
   const [categoryInput, setCategoryInput] = useState("");
 
@@ -96,27 +99,44 @@ export default function SelectCategory({
               <span className="absolute -top-1 ml-0.5 text-red-500">*</span>
             )}
           </label>
+          <p className="text-xs">Category must be less than 25 characters</p>
         </div>
       )}
 
       <Selector
         label={(category: Category | null) =>
-          category ? category.name || `Category ${category.id}` : "Category"
+          category
+            ? category.name || `Category ${category.id}`
+            : required
+              ? "Category*"
+              : "Category"
         }
         newButton={
           <div className="flex gap-2">
-            <input
-              type="text"
-              placeholder="Category Name"
-              value={categoryInput}
-              onChange={(e) => setCategoryInput(e.target.value)}
-              className="w-full rounded-md border-2 border-slate-400 p-1"
-            />
+            <div>
+              <input
+                type="text"
+                placeholder="Category Name"
+                value={categoryInput}
+                onChange={(e) => {
+                  const value = e.target.value;
+
+                  if (value.length > 25) {
+                    setError("Category must be less than 25 characters");
+                    return false;
+                  }
+                  setCategoryInput(e.target.value);
+                }}
+                className="w-full rounded-md border-2 border-slate-400 p-1"
+              />
+              {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
+            </div>
+
             <button
               onClick={handleNewCategory}
               className={cn(
                 "text-nowrap rounded-md px-2 text-white",
-                categoryInput ? "bg-slate-700" : "bg-slate-400",
+                categoryInput ? "bg-slate-700" : "bg-slate-400"
               )}
               type="button"
               disabled={!categoryInput}
@@ -148,10 +168,21 @@ export default function SelectCategory({
         )}
         onSearch={(search: string) =>
           categories.filter((cat) =>
-            cat.name.toLowerCase().includes(search.toLowerCase()),
+            cat.name.toLowerCase().includes(search.toLowerCase())
           )
         }
-        openState={[categoryOpen as boolean, setCategoryOpen]}
+        openState={[
+          categoryOpen as boolean,
+          (open: React.SetStateAction<boolean>) => {
+            const newValue =
+              typeof open === "function" ? open(categoryOpen as boolean) : open;
+            setCategoryOpen && setCategoryOpen(newValue);
+            // Trigger validation when dropdown closes
+            if (!newValue && onBlur) {
+              onBlur();
+            }
+          },
+        ]}
         selectedItem={category}
         setSelectedItem={setCategory}
       />

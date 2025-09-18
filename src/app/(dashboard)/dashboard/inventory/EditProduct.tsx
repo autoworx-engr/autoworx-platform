@@ -23,11 +23,11 @@ import {
   Vendor,
 } from "@prisma/client";
 import { useEffect, useState } from "react";
-import { CiEdit } from "react-icons/ci";
 import { editProduct } from "../../../../actions/inventory/edit";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { errorToast } from "@/lib/toast";
 import { useFormErrorStore } from "@/stores/form-error";
+import { SquarePen } from "lucide-react";
 
 type TProps = {
   productData: InventoryProduct & { category: Category; vendor: Vendor };
@@ -49,7 +49,7 @@ export default function EditProduct({ productData }: TProps) {
   const { vendors } = useListsStore(); // useful
   const [vendor, setVendor] = useState<Vendor | null>(productData.vendor);
   const [category, setCategory] = useState<Category | null>(
-    productData.category,
+    productData.category
   );
 
   const { showError, clearError } = useFormErrorStore();
@@ -71,7 +71,7 @@ export default function EditProduct({ productData }: TProps) {
   useEffect(() => setCategoryOpen(false), [vendorOpen]);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const name = e.target.name as string;
     const value = e.target.value as string;
@@ -158,10 +158,10 @@ export default function EditProduct({ productData }: TProps) {
         message: "Unit is required.",
       });
       hasError = true;
-    } else if (/^\d+$/.test(unit.trim())) {
+    } else if (/\d/.test(unit.trim())) {
       showError({
         field: "unit",
-        message: "Unit must be text and cannot be numbers only.",
+        message: "Unit cannot contain any numbers.",
       });
       hasError = true;
     }
@@ -208,7 +208,7 @@ export default function EditProduct({ productData }: TProps) {
       errorToast(
         formattedError.errorSource && formattedError.errorSource.length > 0
           ? formattedError.errorSource[0].message
-          : formattedError.message,
+          : formattedError.message
       );
     }
   }
@@ -227,7 +227,7 @@ export default function EditProduct({ productData }: TProps) {
       >
         <div>
           <DialogTrigger asChild>
-            <CiEdit />
+            <SquarePen className="w-5 h-5" />
           </DialogTrigger>
         </div>
         {/* <div className="block md:hidden">
@@ -313,8 +313,8 @@ export default function EditProduct({ productData }: TProps) {
                           ?.toLowerCase()
                           ?.includes(search.toLowerCase()) ||
                         (vendor?.name?.toLowerCase() || "").includes(
-                          search.toLowerCase(),
-                        ),
+                          search.toLowerCase()
+                        )
                     )
                   }
                   displayList={(vendor: Vendor) => (
@@ -374,11 +374,30 @@ export default function EditProduct({ productData }: TProps) {
                 required={false}
               />
               <SlimInput
-                onChange={handleChange}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Update the product state
+                  setProduct({ ...product, unit: value });
+
+                  // Validation
+                  if (!value.trim()) {
+                    showError({
+                      field: "unit",
+                      message: "Unit is required.",
+                    });
+                  } else if (/\d/.test(value.trim())) {
+                    showError({
+                      field: "unit",
+                      message: "Unit cannot contain any numbers.",
+                    });
+                  } else {
+                    clearError();
+                  }
+                }}
                 value={product.unit as string}
                 name="unit"
                 type="text"
-                required={false}
+                required
               />
               <SlimInput
                 onChange={handleChange}
@@ -420,7 +439,26 @@ export default function EditProduct({ productData }: TProps) {
                 required
               />
               <SlimInput
-                onChange={handleChange}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Update the product state
+                  setProduct({ ...product, unit: value });
+
+                  // Validation
+                  if (!value.trim()) {
+                    showError({
+                      field: "unit",
+                      message: "Unit is required.",
+                    });
+                  } else if (/\d/.test(value.trim())) {
+                    showError({
+                      field: "unit",
+                      message: "Unit cannot contain any numbers.",
+                    });
+                  } else {
+                    clearError();
+                  }
+                }}
                 value={product.unit as string}
                 name="unit"
                 type="text"

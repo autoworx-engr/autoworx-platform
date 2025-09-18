@@ -6,8 +6,8 @@ import React, { useEffect, useState } from "react";
 import { Pagination } from "antd"; // Importing the Pagination component from Ant Design
 import DeleteFleet from "./DeleteFleet";
 import NewFleet from "@/app/(dashboard)/dashboard/fleet/components/NewFleet";
-import { FaPenToSquare } from "react-icons/fa6";
 import { padId } from "@/lib/padId";
+import { SquarePen } from "lucide-react";
 
 const FleetListTable = ({ filteredFleets }: { filteredFleets: any }) => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -31,7 +31,7 @@ const FleetListTable = ({ filteredFleets }: { filteredFleets: any }) => {
 
   const paginatedFleets = filteredFleets.slice(
     (currentPage - 1) * pageSize,
-    currentPage * pageSize,
+    currentPage * pageSize
   );
 
   return (
@@ -54,7 +54,7 @@ const FleetListTable = ({ filteredFleets }: { filteredFleets: any }) => {
               key={index}
               className={cn(
                 "py-3",
-                index % 2 === 0 ? "bg-background" : "bg-[#EEF4FF]",
+                index % 2 === 0 ? "bg-background" : "bg-[#EEF4FF]"
               )}
             >
               <td className="border-b px-4 py-2 text-left">
@@ -102,7 +102,9 @@ const FleetListTable = ({ filteredFleets }: { filteredFleets: any }) => {
                   <NewFleet
                     fleet={client}
                     isEdit={true}
-                    buttonElement={<FaPenToSquare />}
+                    buttonElement={
+                      <SquarePen className="w-5 h-5 cursor-pointer" />
+                    }
                   />
                   <DeleteFleet id={client.fleet.clientId} />
                 </div>

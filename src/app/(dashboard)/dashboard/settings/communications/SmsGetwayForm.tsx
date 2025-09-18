@@ -99,29 +99,29 @@ const SmsGetwayForm: React.FC = () => {
     !formData.apiKeySecret.trim() ||
     !formData.phoneNumberSid.trim();
   return (
-    <div className="flex items-center justify-center bg-gray-50">
-      <div className="w-full max-w-lg rounded-lg bg-background p-10 shadow-lg">
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label
-              htmlFor="account_sid"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Account SID <span className="text-red-500"> *</span>
-            </label>
-            <input
-              type="text"
-              id="account_sid"
-              name="accountSid"
-              value={formData.accountSid}
-              onChange={handleChange}
-              required
-              className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-            />
-          </div>
+    // <div className="flex items-center justify-center bg-gray-50">
+    <div className="w-full max-w-2xl rounded-lg bg-background p-10 shadow-lg">
+      <form onSubmit={handleSubmit}>
+        <div className="mb-4">
+          <label
+            htmlFor="account_sid"
+            className="block text-sm font-medium text-gray-700"
+          >
+            Account SID <span className="text-red-500"> *</span>
+          </label>
+          <input
+            type="text"
+            id="account_sid"
+            name="accountSid"
+            value={formData.accountSid}
+            onChange={handleChange}
+            required
+            className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+          />
+        </div>
 
-          {/* Auth Token */}
-          {/* <div className="mb-4">
+        {/* Auth Token */}
+        {/* <div className="mb-4">
             <label
               htmlFor="auth_token"
               className="block text-sm font-medium text-gray-700"
@@ -139,83 +139,83 @@ const SmsGetwayForm: React.FC = () => {
             />
           </div> */}
 
-          {/* Phone Number */}
-          <div className="mb-4">
-            <label
-              htmlFor="phone_number"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Phone Number <span className="text-red-500"> *</span>
-            </label>
-            <input
-              type="text"
-              id="phone_number"
-              name="phoneNumber"
-              onChange={handleChange}
-              value={formData.phoneNumber}
-              required
-              className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-            />
-          </div>
+        {/* Phone Number */}
+        <div className="mb-4">
+          <label
+            htmlFor="phone_number"
+            className="block text-sm font-medium text-gray-700"
+          >
+            Phone Number <span className="text-red-500"> *</span>
+          </label>
+          <input
+            type="text"
+            id="phone_number"
+            name="phoneNumber"
+            onChange={handleChange}
+            value={formData.phoneNumber}
+            required
+            className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+          />
+        </div>
 
-          {/* Phone Number SID*/}
-          <div className="mb-4">
-            <label
-              htmlFor="phoneNumberSid"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Phone Number SID <span className="text-red-500"> *</span>
-            </label>
-            <input
-              type="text"
-              id="phoneNumberSid"
-              name="phoneNumberSid"
-              onChange={handleChange}
-              value={formData.phoneNumberSid}
-              required
-              className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-            />
-          </div>
+        {/* Phone Number SID*/}
+        <div className="mb-4">
+          <label
+            htmlFor="phoneNumberSid"
+            className="block text-sm font-medium text-gray-700"
+          >
+            Phone Number SID <span className="text-red-500"> *</span>
+          </label>
+          <input
+            type="text"
+            id="phoneNumberSid"
+            name="phoneNumberSid"
+            onChange={handleChange}
+            value={formData.phoneNumberSid}
+            required
+            className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+          />
+        </div>
 
-          {/* API Key SID */}
-          <div className="mb-4">
-            <label
-              htmlFor="api_key_sid"
-              className="block text-sm font-medium text-gray-700"
-            >
-              API Key SID <span className="text-red-500"> *</span>
-            </label>
-            <input
-              type="text"
-              id="api_key_sid"
-              name="apiKeySid"
-              onChange={handleChange}
-              value={formData.apiKeySid}
-              required
-              className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-            />
-          </div>
+        {/* API Key SID */}
+        <div className="mb-4">
+          <label
+            htmlFor="api_key_sid"
+            className="block text-sm font-medium text-gray-700"
+          >
+            API Key SID <span className="text-red-500"> *</span>
+          </label>
+          <input
+            type="text"
+            id="api_key_sid"
+            name="apiKeySid"
+            onChange={handleChange}
+            value={formData.apiKeySid}
+            required
+            className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+          />
+        </div>
 
-          {/* API Key Secret */}
-          <div className="mb-4">
-            <label
-              htmlFor="api_key_secret"
-              className="block text-sm font-medium text-gray-700"
-            >
-              API Key Secret <span className="text-red-500"> *</span>
-            </label>
-            <input
-              type="password"
-              id="api_key_secret"
-              name="apiKeySecret"
-              onChange={handleChange}
-              value={formData.apiKeySecret}
-              required
-              className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-            />
-          </div>
+        {/* API Key Secret */}
+        <div className="mb-4">
+          <label
+            htmlFor="api_key_secret"
+            className="block text-sm font-medium text-gray-700"
+          >
+            API Key Secret <span className="text-red-500"> *</span>
+          </label>
+          <input
+            type="password"
+            id="api_key_secret"
+            name="apiKeySecret"
+            onChange={handleChange}
+            value={formData.apiKeySecret}
+            required
+            className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+          />
+        </div>
 
-          {/* <div className="mb-6">
+        {/* <div className="mb-6">
             <label
               htmlFor="twiml_app_sid"
               className="block text-sm font-medium text-gray-700"
@@ -232,18 +232,18 @@ const SmsGetwayForm: React.FC = () => {
             />
           </div> */}
 
-          <div className="flex justify-end">
-            <button
-              disabled={isSubmitDisabled}
-              type="submit"
-              className={`CO rounded-md px-10 py-1.5 text-white focus:outline-none focus:ring-2 focus:ring-offset-2 ${isSubmitDisabled ? "cursor-not-allowed bg-gray-400" : "bg-[#6571FF] hover:bg-indigo-600 focus:ring-blue-500"} `}
-            >
-              Save
-            </button>
-          </div>
-        </form>
-      </div>
+        <div className="flex justify-end">
+          <button
+            disabled={isSubmitDisabled}
+            type="submit"
+            className={`CO rounded-md px-10 py-1.5 text-white focus:outline-none focus:ring-2 focus:ring-offset-2 ${isSubmitDisabled ? "cursor-not-allowed bg-gray-400" : "bg-[#6571FF] hover:bg-indigo-600 focus:ring-blue-500"} `}
+          >
+            Save
+          </button>
+        </div>
+      </form>
     </div>
+    // </div>
   );
 };
 

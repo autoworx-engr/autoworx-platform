@@ -14,7 +14,7 @@ import {
   getTotalBreaksValue,
 } from "@/lib/convertDurations";
 import { useParams } from "next/navigation";
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import moment from "moment-timezone";
 
@@ -78,22 +78,29 @@ const Dashboard = () => {
   const [refetch, setRefetch] = useState(0);
   const [updateError, setUpdateError] = useState<string | null>(null);
   const [updateSuccess, setUpdateSuccess] = useState<string | null>(null);
-  const [startDate, setStartDate] = useState<string>(
-    moment.tz(timezone).startOf("week").format("YYYY-MM-DD"),
-  );
-  const [endDate, setEndDate] = useState<string>(
-    moment.tz(timezone).endOf("week").format("YYYY-MM-DD"),
-  );
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
 
   const params = useParams();
   const employeeId = Number(params?.id);
 
+  // Initialize date range when timezone is loaded
+  useEffect(() => {
+    if (timezone && (!startDate || !endDate)) {
+      const weekStart = moment.tz(timezone).startOf("week");
+      const weekEnd = moment.tz(timezone).endOf("week");
+      setStartDate(weekStart.format("YYYY-MM-DD"));
+      setEndDate(weekEnd.format("YYYY-MM-DD"));
+    }
+  }, [timezone, startDate, endDate]);
+
   // Modified to include startDate and endDate parameters
+  // Only fetch when both dates are available
   const { data: attendanceInfo } = useServerGet(
     getAttendanceInfo,
     employeeId,
-    startDate,
-    endDate,
+    startDate || undefined,
+    endDate || undefined,
     refetch,
   );
 
@@ -296,50 +303,46 @@ const Dashboard = () => {
         <div className="left-3 top-3 w-fit">
           <DateRange
             onOk={(start: any, end: any) => {
-              let startDateObj;
-              let endDateObj;
+              let startDateObj: Date;
+              let endDateObj: Date;
 
               // Process start date
-              if (start && typeof start === "object") {
-                // Check if it's a Date object
-                if (start instanceof Date) {
-                  startDateObj = start;
-                } else if (typeof start.toDate === "function") {
-                  startDateObj = start.toDate();
-                }
-                // Try to parse it as a date string
-                else if (typeof start.toString === "function") {
-                  startDateObj = new Date(start.toString());
-                }
-              }
-
-              // Process end date
-              if (end && typeof end === "object") {
-                // Check if it's a Date object
-                if (end instanceof Date) {
-                  endDateObj = end;
-                } else if (typeof end.toDate === "function") {
-                  endDateObj = end.toDate();
-                }
-                // Try to parse it as a date string
-                else if (typeof end.toString === "function") {
-                  endDateObj = new Date(end.toString());
-                }
-              }
-
-              // Default to current week if we couldn't parse
-              if (!startDateObj || isNaN(startDateObj.getTime())) {
+              if (start instanceof Date) {
+                startDateObj = start;
+              } else if (start && typeof start === "object" && typeof start.toDate === "function") {
+                startDateObj = start.toDate();
+              } else if (start && typeof start.toString === "function") {
+                startDateObj = new Date(start.toString());
+              } else {
                 startDateObj = moment.tz(timezone).startOf("week").toDate();
               }
 
-              if (!endDateObj || isNaN(endDateObj.getTime())) {
+              // Process end date
+              if (end instanceof Date) {
+                endDateObj = end;
+              } else if (end && typeof end === "object" && typeof end.toDate === "function") {
+                endDateObj = end.toDate();
+              } else if (end && typeof end.toString === "function") {
+                endDateObj = new Date(end.toString());
+              } else {
                 endDateObj = moment.tz(timezone).endOf("week").toDate();
               }
 
-              // Convert dates to ISO format strings for the server action
-              const formattedStartDate =
-                moment.tz(startDateObj, timezone).format("YYYY-MM-DD");
-              const formattedEndDate = moment.tz(endDateObj, timezone).format("YYYY-MM-DD");
+              // Validate the parsed dates
+              if (isNaN(startDateObj.getTime())) {
+                startDateObj = moment.tz(timezone).startOf("week").toDate();
+              }
+
+              if (isNaN(endDateObj.getTime())) {
+                endDateObj = moment.tz(timezone).endOf("week").toDate();
+              }
+
+              // Convert the dates to proper format for server
+              // When user selects dates from DateRangePicker, they're in local browser time
+              // We need to ensure these dates are interpreted correctly by the server
+              // Format as YYYY-MM-DD which will be interpreted by the server in company timezone
+              const formattedStartDate = moment(startDateObj).format("YYYY-MM-DD");
+              const formattedEndDate = moment(endDateObj).format("YYYY-MM-DD");
 
               // Update state with the new dates
               setStartDate(formattedStartDate);
@@ -347,11 +350,13 @@ const Dashboard = () => {
             }}
             onCancel={() => {
               // Reset to current week
-              const currentWeekStart = moment.tz(timezone).startOf("week");
-              const currentWeekEnd = moment.tz(timezone).endOf("week");
+              if (timezone) {
+                const currentWeekStart = moment.tz(timezone).startOf("week");
+                const currentWeekEnd = moment.tz(timezone).endOf("week");
 
-              setStartDate(currentWeekStart.format("YYYY-MM-DD"));
-              setEndDate(currentWeekEnd.format("YYYY-MM-DD"));
+                setStartDate(currentWeekStart.format("YYYY-MM-DD"));
+                setEndDate(currentWeekEnd.format("YYYY-MM-DD"));
+              }
             }}
           />
         </div>
@@ -364,111 +369,131 @@ const Dashboard = () => {
         )}
 
         <div className="">
-          {/* Attendance Table */}
-          <div className="min-w-[60%] flex-col gap-4 lg:flex">
-            <div className="max-h-[400px] overflow-y-auto">
-              <div className="h-full w-full rounded border">
-                <table className="h-full w-full bg-background text-center text-sm lg:text-base">
-                  <thead className="sticky top-0 bg-background">
-                    <tr className="border-b">
-                      <th className="bg-background px-4 py-2">Date</th>
-                      <th className="px-4 py-2">Time Clocked In</th>
-                      <th className="px-4 py-2">Time Clocked Out</th>
-                      <th className="hidden justify-center px-4 py-2 lg:flex">
-                        Break
-                      </th>
-                      <th className="px-4 py-2">Hours</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {attendanceInfo?.attInfo?.map((data, index) => {
-                      const dayOfWeek = moment.utc(data.date).tz(timezone).day();
-                      const dayAbbr = daysOfWeek[dayOfWeek];
-                      const dayDate = moment.utc(data.date).tz(timezone).date();
-
-                      const effectiveHours = isNaN(Number(data.hours))
-                        ? data.hours
-                        : convertDuration(
-                            Number(data.hours) - Number(data.totalBreaks),
-                          );
-
-                      return (
-                        <tr
-                          key={index}
-                          className={`group ${
-                            index % 2 === 0
-                              ? "border-b bg-blue-50"
-                              : "border-b bg-background"
-                          }`}
-                        >
-                          <td className="bg-background px-2 py-2 font-medium sm:px-4">
-                            {dayAbbr}-{dayDate}
-                          </td>
-                          <td className="px-2 py-2 sm:px-4">
-                            {renderTimeCell(data, "clockedIn", index)}
-                          </td>
-                          <td className="px-2 py-2 sm:px-4">
-                            {renderTimeCell(data, "clockedOut", index)}
-                          </td>
-                          <td className="hidden justify-center px-2 py-2 sm:px-4 lg:flex">
-                            {getTotalBreaksValue(data.totalBreaks)}
-                          </td>
-                          <td className="px-2 py-2 lg:px-4">
-                            {effectiveHours}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+          {/* Show loading state when dates are not initialized or data is not available */}
+          {!startDate || !endDate || !attendanceInfo ? (
+            <div className="flex h-40 items-center justify-center">
+              <div className="text-gray-500">Loading attendance data...</div>
             </div>
-          </div>
+          ) : (
+            <>
+              {/* Attendance Table */}
+              <div className="min-w-[60%] flex-col gap-4 lg:flex">
+                <div className="max-h-[400px] overflow-y-auto">
+                  <div className="h-full w-full rounded border">
+                    <table className="h-full w-full bg-background text-center text-sm lg:text-base">
+                      <thead className="sticky top-0 bg-background">
+                        <tr className="border-b">
+                          <th className="bg-background px-4 py-2">Date</th>
+                          <th className="px-4 py-2">Time Clocked In</th>
+                          <th className="px-4 py-2">Time Clocked Out</th>
+                          <th className="hidden justify-center px-4 py-2 lg:flex">
+                            Break
+                          </th>
+                          <th className="px-4 py-2">Hours</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {attendanceInfo?.attInfo?.map((data, index) => {
+                          // Fix date processing to avoid timezone shifts
+                          // If data.date is a string in YYYY-MM-DD format, parse it as local date
+                          let dateMoment;
+                          if (typeof data.date === 'string') {
+                            // Parse as local date to avoid timezone shifts
+                            dateMoment = moment.tz(data.date, timezone);
+                          } else {
+                            // If it's a Date object, convert it properly
+                            dateMoment = moment(data.date).tz(timezone);
+                          }
 
-          {/* Metrics Section */}
-          <div className="mt-10 grid w-full grid-cols-1 gap-4 lg:grid-cols-2">
-            {metricData.map((metric, index) => (
-              <div
-                key={index}
-                className="relative flex items-center justify-center gap-4 rounded-lg border border-gray-300 bg-background p-4"
-              >
-                <div className="absolute left-1 top-1">
-                  <div
-                    onMouseEnter={() => setInfoIndex(index)}
-                    onMouseLeave={() => setInfoIndex(null)}
-                  >
-                    <CiCircleInfo className="h-3 w-3 cursor-pointer" />
+                          const dayOfWeek = dateMoment.day();
+                          const dayAbbr = daysOfWeek[dayOfWeek];
+                          const dayDate = dateMoment.date();
+
+                          const effectiveHours = isNaN(Number(data.hours))
+                            ? data.hours
+                            : convertDuration(
+                                Number(data.hours) - Number(data.totalBreaks),
+                              );
+
+                          return (
+                            <tr
+                              key={index}
+                              className={`group ${
+                                index % 2 === 0
+                                  ? "border-b bg-blue-50"
+                                  : "border-b bg-background"
+                              }`}
+                            >
+                              <td className="bg-background px-2 py-2 font-medium sm:px-4">
+                                {dayAbbr}-{dayDate}
+                              </td>
+                              <td className="px-2 py-2 sm:px-4">
+                                {renderTimeCell(data, "clockedIn", index)}
+                              </td>
+                              <td className="px-2 py-2 sm:px-4">
+                                {renderTimeCell(data, "clockedOut", index)}
+                              </td>
+                              <td className="hidden justify-center px-2 py-2 sm:px-4 lg:flex">
+                                {getTotalBreaksValue(data.totalBreaks)}
+                              </td>
+                              <td className="px-2 py-2 lg:px-4">
+                                {effectiveHours}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
                   </div>
-                  {infoIndex === index && (
-                    <div
-                      style={{ backgroundColor: "rgba(102, 115, 140, 0.9)" }}
-                      className="absolute left-5 top-0 z-10 flex h-auto min-h-[60px] w-[200px] items-center justify-center rounded-lg p-2 text-sm text-white"
-                    >
-                      {getInfoContent(metric.label)}
-                    </div>
-                  )}
-                </div>
-                <div className="w-[70%] text-base font-bold text-gray-700">
-                  {metric.label}
-                </div>
-                <div className="w-[60%] text-lg font-semibold text-gray-800">
-                  {metric.value}
-                </div>
-                <div
-                  className={`flex items-center gap-1 text-sm font-medium ${metric.isPositive ? "text-green-500" : "text-red-500"}`}
-                >
-                  <div>
-                    {metric.isPositive ? (
-                      <IoMdArrowDropup />
-                    ) : (
-                      <IoMdArrowDropdown />
-                    )}
-                  </div>
-                  <div className="text-nowrap">{metric.percentage}</div>
                 </div>
               </div>
-            ))}
-          </div>
+
+              {/* Metrics Section */}
+              <div className="mt-10 grid w-full grid-cols-1 gap-4 lg:grid-cols-2">
+                {metricData.map((metric, index) => (
+                  <div
+                    key={index}
+                    className="relative flex items-center justify-center gap-4 rounded-lg border border-gray-300 bg-background p-4"
+                  >
+                    <div className="absolute left-1 top-1">
+                      <div
+                        onMouseEnter={() => setInfoIndex(index)}
+                        onMouseLeave={() => setInfoIndex(null)}
+                      >
+                        <CiCircleInfo className="h-3 w-3 cursor-pointer" />
+                      </div>
+                      {infoIndex === index && (
+                        <div
+                          style={{ backgroundColor: "rgba(102, 115, 140, 0.9)" }}
+                          className="absolute left-5 top-0 z-10 flex h-auto min-h-[60px] w-[200px] items-center justify-center rounded-lg p-2 text-sm text-white"
+                        >
+                          {getInfoContent(metric.label)}
+                        </div>
+                      )}
+                    </div>
+                    <div className="w-[70%] text-base font-bold text-gray-700">
+                      {metric.label}
+                    </div>
+                    <div className="w-[60%] text-lg font-semibold text-gray-800">
+                      {metric.value}
+                    </div>
+                    <div
+                      className={`flex items-center gap-1 text-sm font-medium ${metric.isPositive ? "text-green-500" : "text-red-500"}`}
+                    >
+                      <div>
+                        {metric.isPositive ? (
+                          <IoMdArrowDropup />
+                        ) : (
+                          <IoMdArrowDropdown />
+                        )}
+                      </div>
+                      <div className="text-nowrap">{metric.percentage}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

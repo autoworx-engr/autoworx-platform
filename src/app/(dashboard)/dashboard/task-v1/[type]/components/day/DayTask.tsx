@@ -4,7 +4,6 @@ import DraggableTaskTooltip from "./draggable/DraggableTaskTooltip";
 import { AppointmentFull } from "@/types/db";
 import moment from "moment";
 import { useMediaQuery } from "react-responsive";
-import { FaPen } from "react-icons/fa";
 import { usePopupStore } from "@/stores/popup";
 import {
   CalendarSettings,
@@ -15,6 +14,7 @@ import {
 } from "@prisma/client";
 import { TASK_COLOR } from "@/lib/consts";
 import { useEffect, useState } from "react";
+import { SquarePen } from "lucide-react";
 
 type TProps = {
   event: any;
@@ -66,7 +66,7 @@ export default function DayTask({
   const top = `${Math.round((diffRowAndEventTime / 60) * 75)}px`;
   const widthNumber = is1300 ? 300 : 300;
   let width = `${widthNumber}px`;
-  
+
   // @ts-ignore
   const backgroundColor = event.priority
     ? //@ts-ignore
@@ -79,7 +79,7 @@ export default function DayTask({
   }
 
   if (!isRefAvailable) return null;
-  
+
   return (
     <Tooltip key={event.id}>
       <ResizeTaskTooltip
@@ -105,7 +105,7 @@ export default function DayTask({
           updateTaskData={{ event, companyUsers }}
           updateAppointmentData={{
             appointment: appointmentsFull.find(
-              (appointment) => appointment.id === event.id,
+              (appointment) => appointment.id === event.id
             ),
             employees: companyUsers,
             customers,
@@ -150,7 +150,7 @@ export default function DayTask({
                       {event.assignedUsers
                         .slice(0, 1)
                         .map(
-                          (user: User) => `${user.firstName} ${user.lastName}`,
+                          (user: User) => `${user.firstName} ${user.lastName}`
                         )}
                     </p>
                     <p className="text-left">
@@ -186,7 +186,7 @@ export default function DayTask({
                     })
                   }
                 >
-                  <FaPen className="mx-auto text-[10px]" />
+                  <SquarePen className="w-4 h-4 cursor-pointer mx-auto" />
                 </button>
               </div>
 

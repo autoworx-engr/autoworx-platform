@@ -7,7 +7,6 @@ import {
   createAppointmentValidationSchema,
   TCreateAppointmentValidationSchema,
 } from "@/validations/schemas/task/appointment.validation";
-import { Cron } from "croner";
 import moment from "moment-timezone";
 // import cron from "node-cron";
 import { authOptions } from "@/authOptions";
@@ -293,84 +292,18 @@ export async function addAppointment(
         },
       });
 
-      if (appointment?.startTime) {
+      if (newAppointment.date && newAppointment?.startTime) {
+        let i = 0;
+
         for (const time of appointment.times) {
-          // Ensure the reminderDate is parsed correctly with the timezone
-          const reminderDate = moment.tz(
-            `${time.date}T${time.time}`,
-            company?.timezone || appointment?.timezone || "Etc/UTC"
-          );
-
-          new Cron(
-            reminderDate.toDate(), // Pass as Date object
-            {
-              timezone: company?.timezone || appointment?.timezone || "Etc/UTC",
-            },
-            async () => {
-              const stillExists = await db.appointment.findUnique({
-                where: { id: newAppointment.id },
-              });
-
-              if (!stillExists) {
-                console.log("Appointment deleted. Skipping reminder.");
-                return;
-              }
-              if (client && reminderTemplate) {
-                const clientName = client?.firstName || client?.lastName || "";
-
-                const reminderSubject = reminderTemplate.subject
-                  .replace(
-                    "<VEHICLE>",
-                    `${vehicle?.year ? vehicle?.year : ""} ${vehicle?.make} ${vehicle?.model} ${vehicle?.other}`
-                  )
-                  .replace("<CLIENT>", clientName)
-                  .replace(
-                    "<DATE>",
-                    moment(
-                      `${appointment.date}T${appointment.startTime}:00`
-                    ).format("dddd, MMMM DD, h:mm A")
-                  );
-
-                const reminderMessage = (reminderTemplate?.message || "")
-                  .replace(
-                    "<VEHICLE>",
-                    `${vehicle?.year ? vehicle?.year : ""} ${vehicle?.make} ${vehicle?.model} ${vehicle?.other}`
-                  )
-                  .replace("<CLIENT>", clientName)
-                  .replace(
-                    "<DATE>",
-                    moment(
-                      //@ts-expect-error
-                      `${new Date(appointment?.date).toISOString()?.split("T")[0]}T${appointment.startTime}:00`
-                    ).format("dddd, MMMM DD, h:mm A")
-                  )
-                  .replace("<BUSINESS_NAME>", company?.name ?? "")
-                  .replace("<ADDRESS>", company?.address ?? "")
-                  .replace("<PHONE>", company?.phone ?? "");
-
-                try {
-                  sendInfobipEmail({
-                    clientId: client.id,
-                    subject: reminderSubject,
-                    text: reminderMessage,
-                  });
-                } catch (error) {
-                  console.log("🚀 ~ error:", error);
-                }
-
-                try {
-                  sendMessage({
-                    companyId: client.companyId,
-                    clientId: client.id,
-                    message: reminderMessage || "",
-                    attachments: [],
-                  });
-                } catch (error) {
-                  console.log("🚀 ~ error:", error);
-                }
-              }
-            }
-          );
+          scheduleRemindersInNest({
+            id: newAppointment.id.toString(),
+            date: new Date(`${time.date}T00:00:00.000Z`),
+            time: time.time,
+            timezone: company?.timezone || appointment?.timezone || "Etc/UTC",
+            when: "exact",
+            reminderIndex: i++,
+          });
         }
       }
     }
@@ -429,7 +362,9 @@ export async function addAppointment(
         startTime: appointment?.startTime || "",
         assignSalesIds: appointment.assignedUsers,
       });
-    } catch (error) {}
+    } catch (error) {
+      console.log("🚀 ~ addAppointment ~ error:", error);
+    }
 
     return { type: "success", data: newAppointment };
   } catch (error) {
@@ -442,11 +377,15 @@ export async function scheduleRemindersInNest({
   date,
   time,
   timezone,
+  when,
+  reminderIndex,
 }: {
   id: string;
   date: Date; // e.g., "2025-07-20"
   time: string; // e.g., "15:00"
   timezone: string;
+  when?: string;
+  reminderIndex?: number;
 }) {
   try {
     const { data } = await axios.post(
@@ -456,6 +395,8 @@ export async function scheduleRemindersInNest({
         date,
         time,
         timezone,
+        when,
+        reminderIndex,
       },
       {
         headers: {

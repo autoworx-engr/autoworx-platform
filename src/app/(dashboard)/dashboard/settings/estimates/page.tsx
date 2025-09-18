@@ -48,7 +48,7 @@ export default function EstimateAndInvoicePage() {
 
   useEffect(() => {
     setDisabled(
-      currentTermsLength > maxLength || currentPolicyLength > maxLength,
+      currentTermsLength > maxLength || currentPolicyLength > maxLength
     );
   }, [currentTermsLength, currentPolicyLength]);
 
@@ -70,7 +70,7 @@ export default function EstimateAndInvoicePage() {
       });
 
       const currencyOptions: CurrencyOption[] = Object.entries(
-        currenciesMap,
+        currenciesMap
       ).map(([code, currency]) => ({
         value: code,
         label: `${currency.symbol ? currency.symbol + " " : ""}${code}`,
@@ -121,14 +121,14 @@ export default function EstimateAndInvoicePage() {
   };
 
   return (
-    <div className="grid w-full grid-cols-2 items-start gap-4 px-5">
+    <div className="grid w-full grid-cols-1 md:grid-cols-2 items-start gap-4 px-5">
       <div className="space-y-4">
         {/* Currency & Tax */}
         <div>
           <h2 className="mb-2 text-xl font-semibold">Tax & Service Fee</h2>
           <div className="space-y-3 rounded-sm border bg-background p-5">
             <div className="flex w-full flex-col items-center justify-between gap-4 lg:flex-row">
-              <div className="relative w-1/2">
+              <div className="relative w-full md:w-1/2">
                 <SlimInput
                   name="taxAmount"
                   value={tax.toString()}
@@ -142,7 +142,7 @@ export default function EstimateAndInvoicePage() {
               </div>
 
               {/* Service Fee */}
-              <div className="relative w-1/2">
+              <div className="relative w-full md:w-1/2">
                 <SlimInput
                   name="serviceFee"
                   value={serviceFee.toString()}
@@ -154,7 +154,7 @@ export default function EstimateAndInvoicePage() {
                 />
                 <span className="absolute bottom-1 right-1">%</span>
               </div>
-              <div className="flex w-1/2 flex-col items-start">
+              <div className="flex w-full md:w-1/2 flex-col items-start">
                 <div className="mb-1 px-2 text-sm font-medium sm:text-base">
                   Currency
                 </div>
@@ -187,7 +187,7 @@ export default function EstimateAndInvoicePage() {
         <div>
           <h2 className="mb-2 text-xl font-semibold">Terms & Conditions</h2>
           <div className="space-y-3 rounded-sm border bg-background p-5">
-            <div className="grid grid-cols-2 items-start space-x-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 items-start gap-3">
               <label className="block">
                 <div className="mb-1 px-2 font-medium">Terms & Conditions</div>
                 <div className="relative">

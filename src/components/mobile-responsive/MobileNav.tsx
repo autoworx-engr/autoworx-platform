@@ -4,23 +4,20 @@ import { PermissionsResult } from "@/lib/getPermissions";
 import { filterNavList } from "@/lib/navListAuthorization";
 import { FEATURE_PERMISSIONS_MAP } from "@/lib/routePermissionsMap";
 import { useCompanyFeaturePermissionStore } from "@/stores/companyFeaturePermissionStore";
+import { isIosPwa } from "@/utils/isIosPwa";
+import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { HiOutlineBars3, HiXCircle } from "react-icons/hi2";
-import LogoutBtn from "../LogoutBtn";
-import { NotificationsPopover } from "../NotificationProvider";
-import ThemeSwitch from "../ThemeSwitch";
-import MobileNavList from "./MobileNavList";
-import AddLeads from "@/app/(dashboard)/dashboard/pipeline/components/AddLeads";
-import { TbUsersPlus } from "react-icons/tb";
-import { isIosPwa } from "@/utils/isIosPwa";
 import { IoReload } from "react-icons/io5";
 import BugReport from "../bug-report/BugReport";
-import SwitchDashboard from "../SwitchDashboard";
+import LogoutBtn from "../LogoutBtn";
+import { NotificationsPopover } from "../NotificationProvider";
 import QuickLink from "../QuickLink";
-import { usePathname } from "next/navigation";
-import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
+import ThemeSwitch from "../ThemeSwitch";
+import MobileNavList from "./MobileNavList";
 
 type TProps = {
   navList: {

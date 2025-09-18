@@ -164,7 +164,7 @@ export const authOptions: NextAuthOptions = {
       if (Date.now() < (token?.accessTokenExpires as number)) {
         return token;
       }
-      console.log("Access token expired, refreshing...");
+      // console.log("Access token expired, refreshing...");
       return refreshAccessToken(token);
     },
     async session({ session, token }) {
@@ -184,6 +184,3 @@ export const authOptions: NextAuthOptions = {
     },
   },
 };
-console.log("NEXTAUTH_SECRET:", env("NEXTAUTH_SECRET"));
-console.log("NextURl", env("NEXTAUTH_URL"));
-console.log("Auth Options Loaded", authOptions);

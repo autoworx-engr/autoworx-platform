@@ -4,6 +4,7 @@ import { EmployeeType } from "@prisma/client";
 import { getCompanyId } from "../companyId";
 import { db } from "../db";
 import getUser from "../getUser";
+import { getVehicleByInvoiceId } from "@/actions/vehicle/getVehicleByInvoiceId";
 
 type TTechnicianJobCompleteNotification = {
   sendRoles?: EmployeeType[];
@@ -29,12 +30,13 @@ export const sendTechnicianJobCompleteNotification = async ({
       id: true,
     });
 
-    const vehicleInfo = await db.invoice.findUnique({
-      where: { id: invoiceId },
-      include: { vehicle: true },
-    });
+    // const vehicleInfo = await db.invoice.findUnique({
+    //   where: { id: invoiceId },
+    //   include: { vehicle: true },
+    // });
 
-    const { make, model, year } = vehicleInfo?.vehicle || {};
+    const vehicleInfo = await getVehicleByInvoiceId(invoiceId);
+    const { make, model, year } = vehicleInfo || {};
 
     const vehicleName =
       make && model

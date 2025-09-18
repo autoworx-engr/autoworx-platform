@@ -11,7 +11,6 @@ import {
   TUpdateAppointmentValidationSchema,
   updateAppointmentValidationSchema,
 } from "@/validations/schemas/task/appointment.validation";
-import { Cron } from "croner";
 import moment from "moment";
 import { getServerSession } from "next-auth";
 // import { revalidatePath } from "next/cache";
@@ -254,101 +253,30 @@ export async function editAppointment({
       },
     });
 
-    if (appointment.startTime) {
+    await deleteRemindersInNest(String(updatedAppointment.id));
+
+    if (updatedAppointment.date && updatedAppointment.startTime) {
+      let i = 0;
       for (const time of appointment?.times ?? []) {
-        // Ensure the reminderDate is parsed correctly with the timezone
-        const reminderDate = moment.tz(
-          `${time.date}T${time.time}`,
-          company?.timezone || appointment?.timezone || "Etc/UTC"
-        );
-
-        // Convert reminderDate to UTC for cron expression
-
-        new Cron(
-          reminderDate.toDate(), // Pass as Date object
-          {
+        try {
+          scheduleRemindersInNest({
+            id: updatedAppointment.id.toString(),
+            date: new Date(`${time.date}T00:00:00.000Z`),
+            time: time.time,
             timezone: company?.timezone || appointment?.timezone || "Etc/UTC",
-          },
-          async () => {
-            const stillExists = await db.appointment.findUnique({
-              where: { id: updatedAppointment.id },
-            });
-
-            if (!stillExists) {
-              console.log("Appointment deleted. Skipping reminder.");
-              return;
-            }
-            if (client && reminderTemplate) {
-              const clientName = client?.firstName || client?.lastName || "";
-              const reminderSubject = reminderTemplate.subject
-                .replace(
-                  "<VEHICLE>",
-                  `${vehicle?.year ? vehicle?.year : ""} ${vehicle?.make} ${vehicle?.model} ${vehicle?.other}`
-                )
-                .replace("<CLIENT>", clientName)
-                .replace(
-                  "<DATE>",
-                  moment(
-                    `${appointment.date}T${appointment.startTime}:00`
-                  ).format("dddd, MMMM DD, h:mm A")
-                );
-
-              const reminderMessage = (reminderTemplate?.message || "")
-                .replace(
-                  "<VEHICLE>",
-                  `${vehicle?.year ? vehicle?.year : ""} ${vehicle?.make} ${vehicle?.model} ${vehicle?.other}`
-                )
-                .replace("<CLIENT>", clientName)
-                .replace(
-                  "<DATE>",
-                  moment(
-                    `${appointment.date}T${appointment.startTime}:00`
-                  ).format("dddd, MMMM DD, h:mm A")
-                )
-                .replace("<BUSINESS_NAME>", company?.name ?? "")
-                .replace("<ADDRESS>", company?.address ?? "")
-                .replace("<PHONE>", company?.phone ?? "");
-
-              try {
-                sendInfobipEmail({
-                  clientId: client.id,
-                  subject: reminderSubject,
-                  text: reminderMessage,
-                });
-              } catch (error) {
-                console.log("🚀 ~ error:", error);
-              }
-
-              try {
-                sendMessage({
-                  companyId: client.companyId,
-                  clientId: client.id,
-                  message: reminderMessage || "",
-                  attachments: [],
-                });
-              } catch (error) {
-                console.log("🚀 ~ error:", error);
-              }
-            }
-          }
-        );
+            when: "exact",
+            reminderIndex: i++,
+          });
+        } catch (error) {
+          console.log("🚀 ~ editAppointment ~ error:", error);
+        }
       }
     }
-
-    // send a notification when create a new appointment
-    sendAppointmentUpdateNotification({
-      companyId,
-      title: appointment.title,
-      appointmentDate: appointment?.date || "",
-      startTime: appointment?.startTime || "",
-      assignSalesIds: appointment.assignedUsers,
-      clientName: client ? `${client?.firstName} ${client?.lastName}` : "",
-    });
 
     try {
       updatedAppointment.date &&
         updatedAppointment.startTime &&
-        onAppointmentUpdate({
+        scheduleRemindersInNest({
           id: updatedAppointment.id.toString(),
           date: updatedAppointment.date, // e.g., "2025-07-20"
           time: updatedAppointment.startTime, // e.g., "15:00"
@@ -401,6 +329,16 @@ export async function editAppointment({
       console.log("🚀 ~ error:", error);
     }
 
+    // send a notification when create a new appointment
+    sendAppointmentUpdateNotification({
+      companyId,
+      title: appointment.title,
+      appointmentDate: appointment?.date || "",
+      startTime: appointment?.startTime || "",
+      assignSalesIds: appointment.assignedUsers,
+      clientName: client ? `${client?.firstName} ${client?.lastName}` : "",
+    });
+
     // revalidatePath("/task");
     return {
       type: "success",
@@ -410,22 +348,4 @@ export async function editAppointment({
     console.log("🚀 ~ error:", error);
     return errorHandler(error);
   }
-}
-
-async function onAppointmentUpdate({
-  id,
-  date,
-  time,
-  timezone,
-}: {
-  id: string;
-  date: Date;
-  time: string;
-  timezone: string;
-}) {
-  // Step 1: Delete old reminders
-  await deleteRemindersInNest(id);
-
-  // Step 2: Schedule new reminders
-  await scheduleRemindersInNest({ id, date, time, timezone });
 }

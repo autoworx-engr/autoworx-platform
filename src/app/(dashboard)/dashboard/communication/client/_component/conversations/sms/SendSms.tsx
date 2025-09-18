@@ -12,18 +12,20 @@ import { useClientCommunicationStore } from "@/stores/client-store";
 // Helper function to format attachment message
 const formatAttachmentMessage = (files: File[]) => {
   if (files.length === 0) return "";
-  
-  const images = files.filter(file => file.type.startsWith('image/'));
-  const otherFiles = files.filter(file => !file.type.startsWith('image/'));
-  
+
+  const images = files.filter((file) => file.type.startsWith("image/"));
+  const otherFiles = files.filter((file) => !file.type.startsWith("image/"));
+
   const parts = [];
   if (images.length > 0) {
     parts.push(images.length === 1 ? "1 image" : `${images.length} images`);
   }
   if (otherFiles.length > 0) {
-    parts.push(otherFiles.length === 1 ? "1 file" : `${otherFiles.length} files`);
+    parts.push(
+      otherFiles.length === 1 ? "1 file" : `${otherFiles.length} files`
+    );
   }
-  
+
   return parts.join(", ");
 };
 
@@ -34,7 +36,8 @@ type TProps = {
 export default function SendSms({ clientId }: TProps) {
   const { clientList, setClientList } = clientListStore();
   const { mutate, isSuccess, isPending } = useSmsSendMutation(clientId);
-  const { clientConversationTrack, setClientConversationTrack } = useClientCommunicationStore();
+  const { clientConversationTrack, setClientConversationTrack } =
+    useClientCommunicationStore();
 
   const [files, setFiles] = useState<File[]>([]);
   const [messageInput, setMessageInput] = useState("");
@@ -60,9 +63,8 @@ export default function SendSms({ clientId }: TProps) {
     };
 
     // Update conversation track optimistically
-    const lastMessage = files.length > 0 
-      ? formatAttachmentMessage(files)
-      : trimmedMessage;
+    const lastMessage =
+      files.length > 0 ? formatAttachmentMessage(files) : trimmedMessage;
 
     if (clientConversationTrack) {
       setClientConversationTrack({
@@ -99,7 +101,7 @@ export default function SendSms({ clientId }: TProps) {
   return (
     <>
       <AttachmentInput
-        className="bottom-[90px]"
+        className="bottom-[50px]"
         multiAttachmentFile={files}
         onAllRemove={() => setFiles([])}
         onRemoveAttachment={(attachmentName) =>

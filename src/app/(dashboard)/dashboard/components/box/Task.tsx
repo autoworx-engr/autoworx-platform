@@ -7,20 +7,21 @@ import { successToast } from "@/lib/toast";
 import { useCalendarStore } from "@/stores/calendarStore";
 import { Task as TaskType } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { Tooltip } from "antd";
+import { Popconfirm, Tooltip } from "antd";
 import moment from "moment-timezone";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { FaRegCheckCircle } from "react-icons/fa";
-import { MdOutlineEdit } from "react-icons/md";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { useDate } from "../../task/_hook/lib/useDate";
+import { SquarePen } from "lucide-react";
 
 type TaskProps = {
   task: TaskType;
+  onTaskDeleted?: (taskId: number) => void;
 };
 
-const Task = ({ task }: TaskProps) => {
+const Task = ({ task, onTaskDeleted }: TaskProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const router = useRouter();
   const { setNavigating, setDate } = useCalendarStore();
@@ -54,6 +55,7 @@ const Task = ({ task }: TaskProps) => {
         fromEdit
         taskId={task.id}
         onTaskUpdated={revalidateTask}
+        onTaskDelete={onTaskDeleted}
         isModalOpen={isModalOpen}
         setIsModalOpen={setIsModalOpen}
       />
@@ -79,7 +81,7 @@ const Task = ({ task }: TaskProps) => {
           </div>
         </div>
         <span className="flex flex-shrink-0 items-center gap-x-1 md:gap-x-2">
-          <MdOutlineEdit
+          <SquarePen
             onClick={(e) => {
               e.stopPropagation();
               setIsModalOpen(true);
@@ -87,15 +89,24 @@ const Task = ({ task }: TaskProps) => {
             className="h-4 w-4 cursor-pointer hover:opacity-70 md:h-5 md:w-5"
           />
 
-          <FaRegCheckCircle
-            className="h-4 w-4 cursor-pointer hover:opacity-70 md:h-5 md:w-5"
-            onClick={async (e) => {
-              e.stopPropagation();
+          <Popconfirm
+            title="Complete Task"
+            description="Are you sure you want to mark this task as completed?"
+            okText="Yes"
+            cancelText="No"
+            onConfirm={async (e) => {
+              e?.stopPropagation();
               await deleteTask(task.id);
               revalidateTask();
               successToast("Task completed");
             }}
-          />
+            onCancel={(e) => e?.stopPropagation()}
+          >
+            <FaRegCheckCircle
+              className="h-4 w-4 cursor-pointer hover:opacity-70 md:h-5 md:w-5"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </Popconfirm>
         </span>
       </div>
     </>

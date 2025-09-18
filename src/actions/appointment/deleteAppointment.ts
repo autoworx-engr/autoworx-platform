@@ -13,7 +13,12 @@ export async function deleteAppointment(id: number): Promise<ServerAction> {
         id,
       },
     });
-    deleteRemindersInNest(deletedAppointment.id.toString());
+
+    try {
+      deleteRemindersInNest(deletedAppointment.id.toString());
+    } catch (error) {
+      console.log("🚀 ~ deleteAppointment ~ error:", error);
+    }
     // revalidatePath("/task");
 
     // delete task from google calendar

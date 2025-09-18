@@ -22,13 +22,12 @@ import { useFormErrorStore } from "@/stores/form-error";
 import { EmployeeType, User, SalaryType } from "@prisma/client";
 import moment from "moment";
 import { useSession } from "next-auth/react";
-import { FaPen } from "react-icons/fa";
-import { FaPenToSquare } from "react-icons/fa6";
 import { FiX } from "react-icons/fi";
 import { IoMdSettings } from "react-icons/io";
 import SelectEmployeeType from "./SelectEmployeeType";
 import SlimSalaryManagement from "@/components/employee/SlimSalaryManagement";
 import Image from "next/image";
+import { SquarePen } from "lucide-react";
 
 export default function EditEmployee({
   employee,
@@ -217,7 +216,11 @@ export default function EditEmployee({
           <button
             className={`${settingIcon ? "text-gray-600" : ""} text-[#6571FF]"`}
           >
-            {settingIcon ? <IoMdSettings /> : <FaPenToSquare />}
+            {settingIcon ? (
+              <IoMdSettings />
+            ) : (
+              <SquarePen className="w-5 h-5 text-[#6571FF]" />
+            )}
           </button>
         </div>
       </DialogTrigger>
@@ -247,7 +250,7 @@ export default function EditEmployee({
               </div>
 
               <span className="absolute bottom-0 left-2 text-lg text-[#6571FF]">
-                <FaPen />
+                <SquarePen className="w-4 h-4 cursor-pointer" />
               </span>
 
               <input

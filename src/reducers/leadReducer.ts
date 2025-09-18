@@ -318,10 +318,11 @@ export function leadReducer<T>(
         }
 
         case actionTypes.CREATE_LEAD_TASK: {
-            const { task, leadId, columnId } = action.payload as {
+            const { task, leadId, columnId, isUpdate } = action.payload as {
                 task: Task;
                 leadId: number;
                 columnId: number;
+                isUpdate?: boolean;
             };
             return state.map(column => {
                 if (column.id === columnId) {
@@ -329,10 +330,21 @@ export function leadReducer<T>(
                         ...column,
                         leads: column.leads.map(lead => {
                             if (lead.id === leadId) {
-                                return {
-                                    ...lead,
-                                    tasks: [...(lead.tasks || []), task],
-                                };
+                                if (isUpdate) {
+                                    // Update existing task
+                                    return {
+                                        ...lead,
+                                        tasks: (lead.tasks || []).map(existingTask => 
+                                            existingTask.id === task.id ? task : existingTask
+                                        ),
+                                    };
+                                } else {
+                                    // Create new task
+                                    return {
+                                        ...lead,
+                                        tasks: [...(lead.tasks || []), task],
+                                    };
+                                }
                             }
                             return lead;
                         }),

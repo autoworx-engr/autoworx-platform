@@ -14,7 +14,7 @@ import { SlimInput, slimInputClassName } from "@/components/SlimInput";
 import Submit from "@/components/Submit";
 import useCompanyUsersQuery from "@/hooks/query-hook/useCompanyUsersQuery";
 import { cn } from "@/lib/cn";
-import { errorToast } from "@/lib/toast";
+import { errorToast, successToast } from "@/lib/toast";
 import { useCalendarStore } from "@/stores/calendarStore";
 import { useFormErrorStore } from "@/stores/form-error";
 import { addOneHour } from "@/utils/time";
@@ -26,8 +26,13 @@ import AssignTaskDropDown from "./AssignTaskDropDown";
 import useTaskById from "@/hooks/query-hook/useTaskById";
 import { useQueryClient } from "@tanstack/react-query";
 import { taskQueryKey } from "@/app/(dashboard)/dashboard/task/_constant";
+import { queryKeys } from "@/lib/queryKeys";
 import { FaTrash } from "react-icons/fa";
 import { deleteTask } from "@/actions/task/deleteTask";
+import { formatTime12Hour } from "@/utils/formateTime12Hours";
+import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
+import { Select } from "antd";
+import { normalizeTime } from "@/utils/normalizeTime";
 
 type NewTaskProps = {
   onlyOneUser?: boolean;
@@ -64,10 +69,10 @@ export default function TaskContentModal({
   });
 
   const queryClient = useQueryClient();
-
+  const timezone = useCompanyTimezone();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-
+  const { Option } = Select;
   const [assignedUsers, setAssignedUsers] = useState<number[]>([]);
   const [priority, setPriority] = useState<Priority>("Low");
   const [time, setTime] = useState<{ startTime: string; endTime: string }>();
@@ -83,14 +88,34 @@ export default function TaskContentModal({
   useEffect(() => {
     if (taskData && fromEdit) {
       const assignUsers = taskData?.taskUser?.map(
-        (taskUserData) => taskUserData.user.id,
+        (taskUserData) => taskUserData.user.id
       );
       setTitle(taskData?.title || "");
       setDescription(taskData?.description || "");
       setAssignedUsers(assignUsers);
-      setDate(taskData.date ? moment.utc(taskData.date).format("YYYY-MM-DD") : "");
+      setDate(
+        taskData.date ? moment.utc(taskData.date).format("YYYY-MM-DD") : ""
+      );
       setStartTime(taskData?.startTime || "");
       setEndTime(taskData?.endTime || "");
+
+      if (taskData?.startTime) {
+        const parsed = normalizeTime(taskData.startTime);
+        if (parsed) {
+          const roundedMinutes = Math.ceil(parsed.minute() / 15) * 15;
+          parsed.minute(roundedMinutes).second(0).millisecond(0);
+          setStartTime(parsed.format("HH:mm"));
+        }
+      }
+
+      if (taskData?.endTime) {
+        const parsed = normalizeTime(taskData.endTime);
+        if (parsed) {
+          const roundedMinutes = Math.ceil(parsed.minute() / 15) * 15;
+          parsed.minute(roundedMinutes).second(0).millisecond(0);
+          setEndTime(parsed.format("HH:mm")); // always 24h
+        }
+      }
       setPriority(taskData?.priority || "Low");
     }
   }, [taskData, fromEdit]);
@@ -113,7 +138,7 @@ export default function TaskContentModal({
 
   const handleTimeChange = (
     e: React.ChangeEvent<HTMLInputElement>,
-    type: "start" | "end",
+    type: "start" | "end"
   ) => {
     let timeValue = e.target.value;
 
@@ -181,7 +206,7 @@ export default function TaskContentModal({
 
     if (date && date.trim() !== "" && (!startTime || !endTime)) {
       return errorToast(
-        "Start time and End time are required when a date is selected!",
+        "Start time and End time are required when a date is selected!"
       );
     }
 
@@ -197,9 +222,10 @@ export default function TaskContentModal({
           priority,
           startTime,
           endTime,
-          date: date && date.trim() !== "" && moment(date).isValid()
-            ? new Date(date).toISOString()
-            : undefined,
+          date:
+            date && date.trim() !== "" && moment(date).isValid()
+              ? new Date(date).toISOString()
+              : undefined,
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         },
       });
@@ -220,7 +246,8 @@ export default function TaskContentModal({
         clientId,
         leadId: leadId ?? undefined,
         invoiceId: invoiceId ?? undefined,
-        date: date && date.trim() !== "" ? new Date(date).toISOString() : undefined,
+        date:
+          date && date.trim() !== "" ? new Date(date).toISOString() : undefined,
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       });
       if (res.type === "success") {
@@ -236,32 +263,62 @@ export default function TaskContentModal({
             ? res.errorSource[0].message
             : res.message,
       });
+      setIsLoading(false);
       return;
     }
 
     setIsLoading(false);
 
-    // reset form
-    setTitle("");
-    setDescription("");
-    setAssignedUsers([]);
-    setPriority("Low");
-    setTime(undefined);
-    setStartTime("");
-    setEndTime("");
-    onClose && onClose();
-    setDate("");
-    clearError();
-    close();
+    // Only close modal and reset form if the operation was successful
+    if (res.type === "success") {
+      // Show success message
+      if (fromEdit && taskId) {
+        successToast("Task updated successfully");
+      } else {
+        successToast("Task created successfully");
+      }
+
+      // reset form
+      setTitle("");
+      setDescription("");
+      setAssignedUsers([]);
+      setPriority("Low");
+      setTime(undefined);
+      setStartTime("");
+      setEndTime("");
+      setDate("");
+      clearError();
+
+      // Close the modal
+      onClose && onClose();
+    }
   }
 
   const handleDeleteTask = async (taskId: number) => {
     try {
-      await deleteTask(taskId);
-      onTaskDeleted && onTaskDeleted(taskId);
-      onClose && onClose();
+      setIsLoading(true);
+      const result = await deleteTask(taskId);
+
+      if (result.type === "success") {
+        successToast("Task deleted successfully");
+        // Invalidate multiple query caches to ensure UI updates everywhere
+        queryClient.invalidateQueries({
+          queryKey: taskQueryKey.taskById(taskId.toString()),
+        });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.dashboardTask,
+        });
+        setUpdateVariable(); // Update calendar store
+        onTaskDeleted && onTaskDeleted(taskId);
+        onClose && onClose();
+      } else {
+        errorToast("Failed to delete task");
+      }
     } catch (err) {
+      console.error("Error deleting task:", err);
       errorToast("Failed to delete task");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -269,6 +326,15 @@ export default function TaskContentModal({
     errorToast("Failed to fetch task data");
     return null; // or handle the error as needed
   }
+
+  // Generate options in 15-min intervals
+  const timeOptions = Array.from({ length: 24 * 4 }, (_, i) => {
+    const hour = Math.floor(i / 4);
+    const minute = (i % 4) * 15;
+    const value = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+    const label = formatTime12Hour(hour, minute, timezone);
+    return { value, label };
+  });
 
   return (
     <DialogContent>
@@ -316,30 +382,53 @@ export default function TaskContentModal({
                 onChange={(event) => setDate(event.currentTarget.value)}
               />
               <div className="flex items-end gap-2">
+                {/* Start Time */}
                 <label className="flex flex-col items-start">
                   <span className="mb-1 text-sm font-medium text-gray-700">
                     Start Time
                   </span>
-                  <input
-                    type="time"
-                    value={startTime}
-                    onChange={(e) => handleTimeChange(e, "start")}
-                    className={cn(slimInputClassName, "h-[34px] px-3")}
-                    // Only disable the time input if the selected date is today, but restrict future time
-                    // min={isToday ? getCurrentTime() : undefined} // Restrict time to future if today
-                  />
+                  <div>
+                    <Select
+                      value={startTime}
+                      onChange={(value) =>
+                        handleTimeChange({ target: { value } } as any, "start")
+                      }
+                      style={{ width: "100%", height: 34 }}
+                      className="border-slate-400 border rounded-md"
+                    >
+                      <Option value="">Select Start Time</Option>
+
+                      {timeOptions.map((time) => (
+                        <Option key={time.value} value={time.value}>
+                          <p className="text-base text-gray-600">
+                            {time.label}
+                          </p>
+                        </Option>
+                      ))}
+                    </Select>
+                  </div>
                 </label>
 
                 <label className="flex flex-col items-start">
                   <span className="mb-1 text-sm font-medium text-gray-700">
                     End Time
                   </span>
-                  <input
-                    type="time"
+                  <Select
                     value={endTime}
-                    onChange={(e) => handleTimeChange(e, "end")}
-                    className={cn(slimInputClassName, "h-[34px] px-3")}
-                  />
+                    onChange={(value) =>
+                      handleTimeChange({ target: { value } } as any, "end")
+                    }
+                    style={{ width: "100%", height: 34 }}
+                    className="border-slate-400 border rounded-md"
+                  >
+                    <Option value="">Select End Time</Option>
+
+                    {timeOptions.map((time) => (
+                      <Option key={time.value} value={time.value}>
+                        {time.label}
+                      </Option>
+                    ))}
+                  </Select>
                 </label>
               </div>
             </div>
@@ -397,7 +486,7 @@ export default function TaskContentModal({
         <div
           className={cn(
             "flex justify-between gap-10 md:gap-0",
-            !fromEdit && "justify-end",
+            !fromEdit && "justify-end"
           )}
         >
           {fromEdit && taskId && (

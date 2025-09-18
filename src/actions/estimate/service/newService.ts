@@ -25,7 +25,7 @@ export default async function newService({
         categoryId,
         description,
         canned,
-      },
+      }
     );
     const session = await getServerSession(authOptions);
     const companyId = session?.user.companyId;
@@ -34,15 +34,18 @@ export default async function newService({
       throw new Error("Company ID is required to create an email template.");
     }
 
-    const existingService = await db.service.findFirst({
-      where: {
-        companyId,
-        name: validatedServiceInfo.name,
-      },
-    });
+    if (canned) {
+      const existingService = await db.service.findFirst({
+        where: {
+          companyId,
+          name: validatedServiceInfo.name,
+          canned: true,
+        },
+      });
 
-    if (existingService)
-      throw new Error("Service already exists with this name");
+      if (existingService)
+        throw new Error("Service already exists with this name");
+    }
 
     const newService = await db.service.create({
       data: {

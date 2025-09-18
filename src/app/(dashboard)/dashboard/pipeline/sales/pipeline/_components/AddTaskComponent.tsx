@@ -8,6 +8,7 @@ import { Task } from "@prisma/client";
 import TaskListPopup from "./TaskListPopup";
 import TaskCreateOrEdit from "@/components/task/TaskCreateOrEdit";
 import Image from "next/image";
+import { useState } from "react";
 
 type TProps = {
   lead: LeadWithSalesUser;
@@ -15,6 +16,8 @@ type TProps = {
 
 export default function AddTaskComponent({ lead }: TProps) {
   const dispatch = useColumnDispatch();
+  const [editTaskId, setEditTaskId] = useState<number | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const handleLeadTaskUpdate = async (task: Task) => {
     try {
@@ -49,6 +52,32 @@ export default function AddTaskComponent({ lead }: TProps) {
       return;
     }
   };
+
+  const handleTaskUpdated = async (task: Task) => {
+    try {
+      dispatch({
+        type: actionTypes.CREATE_LEAD_TASK,
+        payload: {
+          task,
+          leadId: lead.id,
+          columnId: lead.columnId!,
+          isUpdate: true,
+        },
+      });
+      successToast("Task updated successfully");
+      setIsEditModalOpen(false);
+      setEditTaskId(null);
+    } catch (err) {
+      console.error("Error updating task:", err);
+      return;
+    }
+  };
+
+  const handleTaskClick = (taskId: number) => {
+    setEditTaskId(taskId);
+    setIsEditModalOpen(true);
+  };
+
   const totalTasksCount = lead?.tasks?.length || 0;
   const isShowTaskCount = totalTasksCount > 0;
 
@@ -79,8 +108,20 @@ export default function AddTaskComponent({ lead }: TProps) {
         clientId={lead?.client?.id}
         onTaskCreated={handleLeadTaskUpdate}
       />
+      {/* Edit Task Modal */}
+      {editTaskId && (
+        <TaskCreateOrEdit
+          taskId={editTaskId}
+          fromEdit={true}
+          leadId={lead?.id}
+          clientId={lead?.client?.id}
+          isModalOpen={isEditModalOpen}
+          setIsModalOpen={setIsEditModalOpen}
+          onTaskUpdated={handleTaskUpdated}
+        />
+      )}
       {lead?.tasks && lead?.tasks?.length > 0 && (
-        <TaskListPopup tasks={lead?.tasks} />
+        <TaskListPopup tasks={lead?.tasks} onTaskClick={handleTaskClick} />
       )}
       <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
         Add Task

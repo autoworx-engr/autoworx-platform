@@ -8,14 +8,16 @@ export async function updateCommunicationAutomationTrigger({
   companyId,
   leadId,
   columnId,
+  generatedToken,
 }: {
   companyId: number;
   leadId: number;
   columnId: number;
+  generatedToken?: string;
 }) {
   try {
     const session = await getServerSession(authOptions);
-    const token = session?.accessToken || null;
+    const token = session?.accessToken || generatedToken;
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_API_BASE_URL}/communication-automation-trigger`,
       {

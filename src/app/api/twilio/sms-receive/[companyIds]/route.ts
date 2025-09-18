@@ -140,18 +140,15 @@ export async function POST(
           },
         });
 
-        const channelName = `message-${client.id}`;
-
-        pusher.trigger(channelName, "client", {
-          count: totalUnReadMessages?.smsUnReadCount,
-          updatedColumnId: client.Lead?.columnId,
-        });
-
         sendClientMessageNotification({
           companyId: +companyId,
           clientId: client.id,
           clientName: client.firstName + " " + client.lastName,
         });
+
+        const channelName = `message-${client.id}`;
+
+        let updatedColumnId = client.Lead?.columnId;
 
         if (client.Lead?.id && client.Lead?.columnId) {
           const responseData = await updatePipelineAutomationTriggerWithToken({
@@ -161,22 +158,15 @@ export async function POST(
             columnId: client.Lead?.columnId,
           });
 
-          if (
-            responseData?.data &&
-            responseData?.data?.columnId !== client?.Lead?.columnId
-          ) {
-            pusher.trigger(channelName, "client", {
-              count: totalUnReadMessages?.smsUnReadCount,
-              updatedColumnId: responseData.data?.columnId,
-            });
+          if (responseData?.data?.columnId) {
+            updatedColumnId = responseData.data.columnId;
           }
-
-          // await updateCommunicationAutomationTrigger({
-          //   companyId: +companyId,
-          //   leadId: client.Lead?.id,
-          //   columnId: client.Lead?.columnId,
-          // });
         }
+
+        pusher.trigger(channelName, "client", {
+          count: totalUnReadMessages?.smsUnReadCount,
+          updatedColumnId,
+        });
       }
     }
     // Send a success response

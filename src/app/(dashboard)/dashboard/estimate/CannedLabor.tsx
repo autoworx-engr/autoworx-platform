@@ -18,14 +18,13 @@ import { Category, Labor } from "@prisma/client";
 import { useEffect, useState } from "react";
 import { FaTimes } from "react-icons/fa";
 import { IoMdCheckmarkCircleOutline } from "react-icons/io";
-import { RiEditFill } from "react-icons/ri";
 import NewLabor from "./NewLabor";
 import { Pagination, Popconfirm, message } from "antd"; // Added message for notifications
-import { CiEdit } from "react-icons/ci";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { toNumber } from "lodash";
 import { errorToast } from "@/lib/toast";
 import { useEstimateFilterStore } from "@/stores/estimate-filter";
+import { SquarePen } from "lucide-react";
 
 export default function CannedLabor({
   labors,
@@ -197,6 +196,10 @@ const LaborComponent = ({
   };
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.value.length > 50) {
+      setNameError("Labor name must be less than 50 characters");
+      return false;
+    }
     setName(e.target.value);
     if (e.target.value.trim()) {
       setNameError("");
@@ -263,7 +266,7 @@ const LaborComponent = ({
                 onClick={() => setIsEdit(!isEdit)}
                 className="text-2xl text-[#6571FF]"
               >
-                <CiEdit />
+                <SquarePen className="w-5 h-5 text-[#6571FF]" />
               </button>
               {!isEdit && (
                 <Popconfirm
@@ -387,7 +390,7 @@ const LaborComponent = ({
           onClick={() => setIsEdit(!isEdit)}
           className="text-xl text-[#6571FF]"
         >
-          <CiEdit />
+          <SquarePen className="w-5 h-5 text-[#6571FF]" />
         </button>
         <Popconfirm
           title="Delete the Canned Labor"

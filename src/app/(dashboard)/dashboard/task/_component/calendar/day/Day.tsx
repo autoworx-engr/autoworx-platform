@@ -33,13 +33,14 @@ export default function Day() {
   const timezone = useCompanyTimezone();
   const dateFormat = date.format("YYYY-MM-DD");
 
-  const { data: settings } = useSettingsQuery();
+  const { data: settings, isLoading: isSettingsLoading } = useSettingsQuery();
   const { data: tasks = [], isLoading: isTasksLoading } =
     useTaskQueryByDate(dateFormat);
   const { data: appointments = [], isLoading: isAppointmentsLoading } =
     useAppointmentQueryByDate(dateFormat);
 
-  const isDataLoading = isTasksLoading || isAppointmentsLoading;
+  const isDataLoading =
+    isTasksLoading || isAppointmentsLoading || isSettingsLoading;
   // mutation for task
   const taskMutation = useTaskMutation();
 
@@ -78,10 +79,10 @@ export default function Day() {
   const [isRefAvailable, setIsRefAvailable] = useState<boolean>(false);
   const [{ canDrop, isOver }, dropRef] = useDrop({
     accept: ["tag", "task", "appointment"],
-    collect: (monitor) => ({
+    collect: monitor => ({
       isOver: monitor.isOver(),
-      canDrop: monitor.canDrop(),
-    }),
+      canDrop: monitor.canDrop()
+    })
   }) as [{ canDrop: boolean; isOver: boolean }, any];
 
   // useEffect(() => {
@@ -109,29 +110,29 @@ export default function Day() {
   const events = useMemo(
     () =>
       [
-        ...tasks.map((task) => ({
+        ...tasks.map(task => ({
           ...task,
           type: "task" as const,
-          assignedUsers: [],
+          assignedUsers: []
         })),
-        ...appointments.map((appointment) => {
+        ...appointments.map(appointment => {
           const { appointmentUsers, ...appointmentData } = appointment;
           return {
             ...appointmentData,
             type: "appointment" as const,
             assignedUsers: appointmentUsers.map(
-              (appointmentUser) => appointmentUser.user
-            ),
+              appointmentUser => appointmentUser.user
+            )
           };
-        }),
+        })
       ]
-        .map((event) => {
+        .map(event => {
           const taskStartTime = moment(event.startTime, "HH:mm").format("h A");
           const taskEndTime = moment(event.endTime, "HH:mm").format("h A");
 
           // Find the rowStartIndex and rowEndIndex by looping through the rows array
-          const rowStartIndex = rows.findIndex((row) => row === taskStartTime);
-          const rowEndIndex = rows.findIndex((row) => row === taskEndTime);
+          const rowStartIndex = rows.findIndex(row => row === taskStartTime);
+          const rowEndIndex = rows.findIndex(row => row === taskEndTime);
 
           // Return the task with the rowStartIndex and rowEndIndex
           return { ...event, rowStartIndex, rowEndIndex };
@@ -172,15 +173,15 @@ export default function Day() {
         // Get the id of the task from the dataTransfer object
         const taskId = parseInt(attributeData[1]);
         // Find the task in your state
-        let oldTask = tasks.find((task) => task.id === taskId);
+        let oldTask = tasks.find(task => task.id === taskId);
         if (!oldTask) {
           oldTask = (await getTaskById(taskId, {
             select: {
               id: true,
               startTime: true,
               endTime: true,
-              date: true,
-            },
+              date: true
+            }
           })) as Task | undefined;
         }
         const taskFoundWithoutTime = !oldTask?.startTime && !oldTask?.endTime;
@@ -190,7 +191,7 @@ export default function Day() {
             date: new Date(date.format("YYYY-MM-DD")),
             startTime: startTime,
             endTime: endTime,
-            timezone: timezone,
+            timezone: timezone
           });
 
           setUpdateVariable();
@@ -209,7 +210,7 @@ export default function Day() {
               ),
               startTime: newStartTime,
               endTime: newEndTime,
-              timezone: timezone,
+              timezone: timezone
             });
 
             setUpdateVariable();
@@ -220,7 +221,7 @@ export default function Day() {
         const appointmentId = parseInt(attributeData[1]);
         // Find the appointment in your state
         const oldAppointment = appointments.find(
-          (appointment) => appointment.id === appointmentId
+          appointment => appointment.id === appointmentId
         );
         const { newStartTime, newEndTime } = updateTimeSpace(
           oldAppointment?.startTime as string,
@@ -233,7 +234,7 @@ export default function Day() {
             date: oldAppointment.date as Date | string,
             startTime: newStartTime,
             endTime: newEndTime,
-            timezone: timezone,
+            timezone: timezone
           });
           setUpdateVariable();
         }
@@ -253,13 +254,13 @@ export default function Day() {
 
       if (startTime) {
         const formattedTime = moment(startTime, "HH:mm").format("h A");
-        const timeIndex = rows.findIndex((row) => row === formattedTime);
+        const timeIndex = rows.findIndex(row => row === formattedTime);
 
         if (timeIndex !== -1) {
           const scrollPosition = timeIndex * 75;
           containerRef.current.scrollTo({
             top: scrollPosition,
-            behavior: "smooth",
+            behavior: "smooth"
           });
 
           // Mark only after successful scroll
@@ -275,14 +276,14 @@ export default function Day() {
 
       if (!startTime && !hasScrolledRef.current) {
         const startTimeIndex = rows.findIndex(
-          (row) => formatTime(row) === settings?.dayStart
+          row => formatTime(row) === settings?.dayStart
         );
 
         if (startTimeIndex !== -1) {
           const scrollPosition = startTimeIndex * 75;
           containerRef.current.scrollTo({
             top: scrollPosition,
-            behavior: "smooth",
+            behavior: "smooth"
           });
 
           hasScrolledRef.current = true;
@@ -333,7 +334,7 @@ export default function Day() {
                 } ${index !== 0 ? "" : "border-t"}`}
                 style={{
                   width: "calc(100% - 85px)",
-                  backgroundColor: "#f2f2f2",
+                  backgroundColor: "#f2f2f2"
                 }}
               >
                 <Skeleton.Button
@@ -371,7 +372,7 @@ export default function Day() {
 
             const dayEnd = moment("23:59", "HH:mm");
 
-            const tasksInRow = events.filter((task) => {
+            const tasksInRow = events.filter(task => {
               const taskStartTime = moment(task.startTime, "HH:mm");
               const taskEndTime = moment(task.endTime, "HH:mm");
               const isTaskEndNextDay = doesTaskOrAppointmentEndNextDay(
@@ -393,7 +394,7 @@ export default function Day() {
               }
             });
 
-            const taskIndex = tasksInRow.findIndex((task) => {
+            const taskIndex = tasksInRow.findIndex(task => {
               if (task.id === event.id && task.type === event.type) {
                 return true;
               }

@@ -1,35 +1,35 @@
-'use client';
+"use client";
 
-import getClientByUnreadMsg from '@/actions/communication/client/getUnreadMessageCount';
-import fetchUnreadInternalMessageCount from '@/actions/communication/internal/fetchUnreadInternalMessageCount';
-import { useServerGet } from '@/hooks/useServerGet';
-import { cn } from '@/lib/cn';
-import { PermissionsResult } from '@/lib/getPermissions';
-import { FEATURE_PERMISSIONS_MAP } from '@/lib/routePermissionsMap';
-import { useCompanyFeaturePermissionStore } from '@/stores/companyFeaturePermissionStore';
-import { pusher } from '@/lib/pusher/client';
-import { useClientCommunicationStore } from '@/stores/client-store';
-import { useGetCurrentUser } from '@/utils/useGetCurrentUser';
-import { ClientConversationTrack } from '@prisma/client';
-import Image from 'next/image';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { ReactNode, useEffect, useState } from 'react';
+import getClientByUnreadMsg from "@/actions/communication/client/getUnreadMessageCount";
+import fetchUnreadInternalMessageCount from "@/actions/communication/internal/fetchUnreadInternalMessageCount";
+import { useServerGet } from "@/hooks/useServerGet";
+import { cn } from "@/lib/cn";
+import { PermissionsResult } from "@/lib/getPermissions";
+import { FEATURE_PERMISSIONS_MAP } from "@/lib/routePermissionsMap";
+import { useCompanyFeaturePermissionStore } from "@/stores/companyFeaturePermissionStore";
+import { pusher } from "@/lib/pusher/client";
+import { useClientCommunicationStore } from "@/stores/client-store";
+import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
+import { ClientConversationTrack } from "@prisma/client";
+import Image from "next/image";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { ReactNode, useEffect, useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from './DropdownMenu';
+} from "./DropdownMenu";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from './Tooltip';
-import { useChatTrackStore } from '@/stores/chatTrackStore';
-import { useSession } from 'next-auth/react';
-import { filterNavList } from '@/lib/navListAuthorization';
+} from "./Tooltip";
+import { useChatTrackStore } from "@/stores/chatTrackStore";
+import { useSession } from "next-auth/react";
+import { filterNavList } from "@/lib/navListAuthorization";
 
 type TProps = {
   navList: {
@@ -48,25 +48,25 @@ type TProps = {
 };
 
 export default function SideNavbar({ navList, permissions }: TProps) {
-  const pathName = usePathname() || '';
+  const pathName = usePathname() || "";
   const user = useGetCurrentUser();
   const { unreadMessageCount, setUnreadMessageCount } = useChatTrackStore();
 
-  const isSuperAdminRoute = pathName.startsWith('/awx-dashboard');
+  const isSuperAdminRoute = pathName.startsWith("/awx-dashboard");
 
   // Get company feature permissions from store
   const { companyFeaturePermission } = useCompanyFeaturePermissionStore();
 
   const modifiedPathName = (
-    pathName === '/dashboard'
-      ? '/dashboard/dashboard'
-      : pathName === '/dashboard/client'
-        ? '/dashboard/employee'
+    pathName === "/dashboard"
+      ? "/dashboard/dashboard"
+      : pathName === "/dashboard/client"
+        ? "/dashboard/employee"
         : pathName
   )
-    .split('/')
+    .split("/")
     .slice(0, 3)
-    .join('/');
+    .join("/");
   const companyId = user?.companyId;
 
   const [clientConversations, setClientConversations] = useState<
@@ -74,7 +74,7 @@ export default function SideNavbar({ navList, permissions }: TProps) {
   >([]);
 
   const clientConversationTrack = useClientCommunicationStore(
-    state => state.clientConversationTrack
+    (state) => state.clientConversationTrack
   );
 
   const { data: unreadInternalMessageCountData } = useServerGet(
@@ -105,14 +105,14 @@ export default function SideNavbar({ navList, permissions }: TProps) {
       await refreshUnreadCounts();
     };
 
-    channel.bind('chat-track', refreshUnreadCounts);
-    channel.bind('chat-track-read', chatTrackReadHandler);
-    channel.bind('collaboration-unread-updated', refreshUnreadCounts);
+    channel.bind("chat-track", refreshUnreadCounts);
+    channel.bind("chat-track-read", chatTrackReadHandler);
+    channel.bind("collaboration-unread-updated", refreshUnreadCounts);
 
     return () => {
-      channel.unbind('chat-track');
-      channel.unbind('chat-track-read');
-      channel.unbind('collaboration-unread-updated');
+      channel.unbind("chat-track");
+      channel.unbind("chat-track-read");
+      channel.unbind("collaboration-unread-updated");
       pusher.unsubscribe(`track-${userId}`);
     };
   });
@@ -121,7 +121,7 @@ export default function SideNavbar({ navList, permissions }: TProps) {
   const companyUserPermissions = permissions?.companyPermissions;
   // check if user has permission to view notification
   const notificationShowPermission =
-    permissions?.role === 'Admin'
+    permissions?.role === "Admin"
       ? true
       : (userPermissions?.communicationHubClients ??
         userPermissions?.communicationHubInternal ??
@@ -132,21 +132,21 @@ export default function SideNavbar({ navList, permissions }: TProps) {
 
   // Specific permission checks for each communication type
   const hasClientCommunicationPermission =
-    permissions?.role === 'Admin'
+    permissions?.role === "Admin"
       ? true
       : (userPermissions?.communicationHubClients ??
         //@ts-ignore
         companyUserPermissions?.communicationHubClients);
 
   const hasInternalCommunicationPermission =
-    permissions?.role === 'Admin'
+    permissions?.role === "Admin"
       ? true
       : (userPermissions?.communicationHubInternal ??
         //@ts-ignore
         companyUserPermissions?.communicationHubInternal);
 
   const hasCollaborationCommunicationPermission =
-    permissions?.role === 'Admin'
+    permissions?.role === "Admin"
       ? true
       : (userPermissions?.communicationHubCollaboration ??
         //@ts-ignore
@@ -157,18 +157,18 @@ export default function SideNavbar({ navList, permissions }: TProps) {
   function canAccessCompanyFeatureRoute(route: string): boolean {
     if (!companyFeaturePermission || companyFeaturePermission.length === 0)
       return true;
-    const routeWithoutQuery = route.split('?')[0];
+    const routeWithoutQuery = route.split("?")[0];
     const featureKey = FEATURE_PERMISSIONS_MAP[routeWithoutQuery];
     if (!featureKey) return true;
     if (Array.isArray(featureKey)) {
-      return featureKey.some(key =>
+      return featureKey.some((key) =>
         companyFeaturePermission.some(
-          perm => perm.permission_name === key && perm.enabled
+          (perm) => perm.permission_name === key && perm.enabled
         )
       );
     }
     return companyFeaturePermission.some(
-      perm => perm.permission_name === featureKey && perm.enabled
+      (perm) => perm.permission_name === featureKey && perm.enabled
     );
   }
   // First filter by permissions, then by company feature permission
@@ -177,10 +177,10 @@ export default function SideNavbar({ navList, permissions }: TProps) {
     let permissionFiltered = filterNavList(navList, permissions);
     // Company feature permission filtering
     return permissionFiltered
-      .filter(item => !item.link || canAccessCompanyFeatureRoute(item.link))
-      .map(item => {
+      .filter((item) => !item.link || canAccessCompanyFeatureRoute(item.link))
+      .map((item) => {
         if (item.subnav) {
-          const filteredSubnav = item.subnav.filter(sub =>
+          const filteredSubnav = item.subnav.filter((sub) =>
             canAccessCompanyFeatureRoute(sub.link)
           );
           return {
@@ -198,10 +198,10 @@ export default function SideNavbar({ navList, permissions }: TProps) {
     // Company feature permission filtering
     setFilteredNavList(
       permissionFiltered
-        .filter(item => !item.link || canAccessCompanyFeatureRoute(item.link))
-        .map(item => {
+        .filter((item) => !item.link || canAccessCompanyFeatureRoute(item.link))
+        .map((item) => {
           if (item.subnav) {
-            const filteredSubnav = item.subnav.filter(sub =>
+            const filteredSubnav = item.subnav.filter((sub) =>
               canAccessCompanyFeatureRoute(sub.link)
             );
             return {
@@ -253,12 +253,12 @@ export default function SideNavbar({ navList, permissions }: TProps) {
   useEffect(() => {
     pusher
       .subscribe(`client-notify-${companyId}`)
-      .bind('client-notify', (data: ClientConversationTrack) => {
+      .bind("client-notify", (data: ClientConversationTrack) => {
         if (!data) return;
-        setClientConversations(prevClients => {
+        setClientConversations((prevClients) => {
           if (!prevClients) return [data];
           const findConversation = prevClients?.find(
-            conversation => conversation?.clientId === data?.clientId
+            (conversation) => conversation?.clientId === data?.clientId
           );
           if (findConversation) {
             return prevClients;
@@ -268,7 +268,7 @@ export default function SideNavbar({ navList, permissions }: TProps) {
         });
       });
     return () => {
-      pusher.unbind('client-notify').unsubscribe(`client-notify-${companyId}`);
+      pusher.unbind("client-notify").unsubscribe(`client-notify-${companyId}`);
     };
   }, [pathName]);
 
@@ -291,8 +291,8 @@ export default function SideNavbar({ navList, permissions }: TProps) {
 
   useEffect(() => {
     if (clientConversationTrack) {
-      setClientConversations(prevClients => {
-        return prevClients.filter(client => {
+      setClientConversations((prevClients) => {
+        return prevClients.filter((client) => {
           if (
             client.clientId === clientConversationTrack.clientId &&
             clientConversationTrack.smsIsRead &&
@@ -308,7 +308,9 @@ export default function SideNavbar({ navList, permissions }: TProps) {
 
   const totalMessageCount =
     (hasClientCommunicationPermission ? unReadClientCount : 0) +
-    (hasCollaborationCommunicationPermission ? unreadMessageCount.collaborationCount : 0) +
+    (hasCollaborationCommunicationPermission
+      ? unreadMessageCount.collaborationCount
+      : 0) +
     (hasInternalCommunicationPermission ? unreadMessageCount.internalCount : 0);
 
   return (
@@ -346,7 +348,7 @@ export default function SideNavbar({ navList, permissions }: TProps) {
                       width={24}
                       height={24}
                     />
-                    {item.title === 'Communication Hub' &&
+                    {item.title === "Communication Hub" &&
                       notificationShowPermission &&
                       totalMessageCount > 0 && (
                         <span className="absolute right-0 -top-1 -translate-y-1/2 translate-x-1/2 rounded-full bg-red-500 px-2 py-1 text-xs text-white">
@@ -363,24 +365,24 @@ export default function SideNavbar({ navList, permissions }: TProps) {
                       asChild
                       className="cursor-pointer border border-solid border-white bg-background shadow-lg hover:bg-slate-500/80 hover:text-white focus:bg-slate-500/80 focus:text-white"
                     >
-                      <Link href={subnavItem.link} prefetch={false}>
+                      <Link href={subnavItem.link}>
                         <span>{subnavItem.title}</span>
                         {subnavItem.link ===
-                          '/dashboard/communication/client' &&
+                          "/dashboard/communication/client" &&
                           hasClientCommunicationPermission &&
                           unReadClientCount > 0 && (
                             <span className="ml-2 rounded-full bg-red-500 px-2 py-1 text-xs text-white">
                               {unReadClientCount}
                             </span>
                           )}
-                        {subnavItem.title === 'Internal' &&
+                        {subnavItem.title === "Internal" &&
                           hasInternalCommunicationPermission &&
                           unreadMessageCount.internalCount > 0 && (
                             <span className="ml-2 rounded-full bg-red-500 px-2 py-1 text-xs text-white">
                               {unreadMessageCount.internalCount}
                             </span>
                           )}
-                        {subnavItem.title === 'Collaboration' &&
+                        {subnavItem.title === "Collaboration" &&
                           hasCollaborationCommunicationPermission &&
                           unreadMessageCount.collaborationCount > 0 && (
                             <span className="ml-2 rounded-full bg-red-500 px-2 py-1 text-xs text-white">
@@ -401,11 +403,10 @@ export default function SideNavbar({ navList, permissions }: TProps) {
                   {item.link && (
                     <Link
                       className={cn(
-                        'rounded-sm p-2 hover:bg-background/25',
-                        modifiedPathName === item.path && '!bg-black invert'
+                        "rounded-sm p-2 hover:bg-background/25",
+                        modifiedPathName === item.path && "!bg-black invert"
                       )}
                       href={item.link}
-                      prefetch={false}
                     >
                       <Image
                         src={item.icon}
@@ -420,7 +421,7 @@ export default function SideNavbar({ navList, permissions }: TProps) {
                   <TooltipContent
                     side="right"
                     sideOffset={8}
-                    className="border border-solid border-white bg-slate-500/80 text-white"
+                    className="border border-solid border-white bg-slate-500/80 text-white z-[999]"
                   >
                     {item.title}
                   </TooltipContent>
@@ -435,11 +436,10 @@ export default function SideNavbar({ navList, permissions }: TProps) {
           <Tooltip>
             <TooltipTrigger asChild>
               <Link
-                prefetch={false}
                 href="/dashboard/settings/my-account"
                 className={`rounded-sm p-2 hover:bg-background/25 hover:opacity-50 ${
-                  modifiedPathName === '/dashboard/settings' &&
-                  '!bg-black invert'
+                  modifiedPathName === "/dashboard/settings" &&
+                  "!bg-black invert"
                 }`}
               >
                 <Image
@@ -503,9 +503,9 @@ function Dropdown({
             <button
               type="button"
               className={cn(
-                'rounded-sm p-2 hover:bg-background/25',
-                open && activeDropdown === index && '!bg-black invert',
-                active && '!bg-black invert'
+                "rounded-sm p-2 hover:bg-background/25",
+                open && activeDropdown === index && "!bg-black invert",
+                active && "!bg-black invert"
               )}
             >
               {icon}

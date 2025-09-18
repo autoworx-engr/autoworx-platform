@@ -10,7 +10,8 @@ export const createDraftEstimateValidationSchema = z.object({
       required_error: "Vehicle Id must be required",
       message: "Vehicle Id must be a number",
     })
-    .optional(),
+    .optional()
+    .nullable(),
   clientId: z
     .number({
       required_error: "Client Id must be required",

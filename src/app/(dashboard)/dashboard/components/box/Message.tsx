@@ -19,17 +19,27 @@ export function Message({
   return (
     <Link
       href={redirectUrl ?? "#"}
-      className="relative flex w-full flex-col gap-x-2 rounded-md border p-2 px-2 xl:flex-row xl:items-start"
+      className="relative w-full rounded-md border p-2 px-2 xl:flex-row xl:items-start"
     >
-      <Image width={60} height={60} src={photoUrl} alt="" />
+      <div className="flex items-center gap-2">
+        <Image
+          width={60}
+          height={60}
+          src={photoUrl}
+          alt=""
+          className="rounded-lg"
+        />
 
-      <div>
-        <p className="mb-2 font-semibold pr-8">{userName}</p>
-        <p>{message}</p>
+        <div>
+          <p className="font-semibold flex flex-1">
+            {userName.length > 20 ? userName.slice(0, 20) + "..." : userName}
+          </p>
+          <span className="rounded-md bg-emerald-600 px-2 py-1 text-xs text-white">
+            {communicationType}
+          </span>
+        </div>
       </div>
-      <span className="absolute right-2 top-2 rounded-md bg-emerald-600 px-2 py-1 text-xs text-white">
-        {communicationType}
-      </span>
+      <p className="mt-2">{message}</p>
     </Link>
   );
 }

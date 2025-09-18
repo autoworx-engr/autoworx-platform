@@ -7,8 +7,8 @@ import { useEffect } from "react";
 import ProductTable from "./ProductTable";
 import SearchFilter from "./SearchFilter";
 
-import DatabaseTable from "./DatabaseTable";
 import DatabaseFilterHeader from "./DatabaseFilterHeader";
+import DatabaseTable from "./DatabaseTable";
 
 export default function InventoryList({
   products,
@@ -19,10 +19,9 @@ export default function InventoryList({
   databaseContent,
   totalDatabaseItems,
   categories,
-  onPageChange,
-  onLimitChange,
-  currentPage,
-  currentLimit,
+  searchParams,
+  totalProducts,
+  totalSupplies,
 }: {
   products: any;
   supplies: any;
@@ -36,6 +35,14 @@ export default function InventoryList({
   onLimitChange: (limit: number) => void;
   currentPage: number;
   currentLimit: number;
+  totalProducts: number;
+  totalSupplies: number;
+  searchParams: {
+    page: string;
+    limit: string;
+    search?: string;
+    category?: string;
+  };
 }) {
   const router = useRouter();
   const search = useSearchParams();
@@ -85,11 +92,18 @@ export default function InventoryList({
         >
           <div className="relative flex h-full w-full flex-col">
             <div className="sticky top-0 z-50 bg-white pb-2 pt-2">
-              <SearchFilter />
+              <SearchFilter
+                searchParams={{
+                  search: searchParams.search,
+                  category: searchParams.category,
+                }}
+              />
             </div>
             <div className="h-full overflow-y-auto">
               <ProductTable
+                searchParams={searchParams}
                 products={products as any}
+                totalItems={totalProducts}
                 currentProductId={productId}
               />
             </div>
@@ -104,10 +118,12 @@ export default function InventoryList({
         >
           <div className="relative flex h-full w-full flex-col">
             <div className="sticky top-0 z-50 bg-white pb-2 pt-2">
-              <SearchFilter />
+              <SearchFilter searchParams={{search: searchParams.search, category: searchParams.category}}/>
             </div>
             <div className="h-full overflow-y-auto">
               <ProductTable
+                totalItems={totalSupplies}
+                searchParams={searchParams}
                 products={supplies as any}
                 currentProductId={productId}
               />

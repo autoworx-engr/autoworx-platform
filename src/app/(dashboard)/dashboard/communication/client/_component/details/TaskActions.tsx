@@ -3,9 +3,9 @@
 import { deleteTask } from "@/actions/task/deleteTask";
 import { usePopupStore } from "@/stores/popup";
 import { Task, User } from "@prisma/client";
+import { SquarePen } from "lucide-react";
 import { useTransition } from "react";
 import { FaRegCheckCircle } from "react-icons/fa";
-import { MdOutlineEdit } from "react-icons/md";
 
 type TaskWithAssignedUsers = Task & {
   assignedUsers: User[];
@@ -31,7 +31,7 @@ export default function TaskActions({ usersOfCompany, task }: TProps) {
           });
         }}
       >
-        <MdOutlineEdit className="cursor-pointer" />
+        <SquarePen className="w-5 h-5 text-[#6571FF]" />
       </button>
 
       <button

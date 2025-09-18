@@ -338,6 +338,12 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
     (invoice as any).materialLossDetails = materialLossDetails;
     maxCost = Math.max(maxCost, costPrice);
     maxProfit = Math.max(maxProfit, profitPrice);
+    
+    // Filter based on filterRevenue selection (Profit filter should show only profitable invoices)
+    if (searchParams.filterRevenue === "Profit" && finalProfitPrice <= 0) {
+      return false; // Exclude invoices with zero or negative profit
+    }
+    
     if (!searchParams.price && !searchParams.cost && !searchParams.profit) {
       return true;
     }
@@ -471,19 +477,21 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
     (category) => category.name === searchParams.category
   )?.id;
 
-  //filter based on the filterRevenue query
-  filteredRevenue = searchParams?.filterRevenue
-    ? filteredInvoice.reduce((total, invoice) => {
-        if (searchParams?.filterRevenue === "Price") {
-          return total + Number(invoice.grandTotal?.toString() || 0);
-        } else if (searchParams?.filterRevenue === "Cost") {
-          return total + (Number((invoice as any)?.costPrice) || 0);
-        } else if (searchParams?.filterRevenue === "Profit") {
-          return total + Number((invoice as any).profitPrice.toString());
-        }
-        return total;
-      }, 0)
-    : totalRevenue;
+  //filter based on the filterRevenue query - use the filtered invoice data
+  if (searchParams?.filterRevenue) {
+    filteredRevenue = filteredInvoice.reduce((total, invoice) => {
+      if (searchParams?.filterRevenue === "Price") {
+        return total + Number(invoice.grandTotal?.toString() || 0);
+      } else if (searchParams?.filterRevenue === "Cost") {
+        return total + (Number((invoice as any)?.costPrice) || 0);
+      } else if (searchParams?.filterRevenue === "Profit") {
+        // Only sum positive profits since we've already filtered out losses
+        const profit = Number((invoice as any).profitPrice.toString());
+        return total + (profit > 0 ? profit : 0);
+      }
+      return total;
+    }, 0);
+  }
 
   if (searchParams.category) {
     let filteredInvoiceItems = [];

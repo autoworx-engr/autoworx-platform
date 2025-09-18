@@ -11,11 +11,12 @@ const fetchUsers = async ({ pageParam = 1, searchTerm = "" }) => {
         id: true,
         firstName: true,
         lastName: true,
+        image: true,
       },
       orderBy: { createdAt: "desc" },
       take: defaultTake,
       skip: (pageParam - 1) * defaultTake,
-    },
+    }
   );
   const hasMore = defaultTake * pageParam < totalUsers;
   return {

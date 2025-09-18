@@ -17,6 +17,7 @@ import {
 } from "@/components/Dialog";
 import { useFormErrorStore } from "@/stores/form-error";
 import { errorToast } from "@/lib/toast";
+import toast from "react-hot-toast";
 
 export default function NewService({
   newButton,
@@ -34,6 +35,7 @@ export default function NewService({
   const [name, setName] = useState("");
   const [nameError, setNameError] = useState("");
   const [category, setCategory] = useState<Category | undefined>();
+  const [categoryError, setCategoryError] = useState("");
   const [description, setDescription] = useState("");
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -44,7 +46,7 @@ export default function NewService({
       if (data?.service && data.edit) {
         setName(data.service.name);
         setCategory(
-          categories.find((cat) => cat.id === data.service.categoryId),
+          categories.find((cat) => cat.id === data.service.categoryId)
         );
         setDescription(data.service.description);
       } else {
@@ -59,6 +61,7 @@ export default function NewService({
     setCategory(undefined);
     setDescription("");
     setNameError("");
+    setCategoryError("");
     clearError();
   };
 
@@ -78,20 +81,37 @@ export default function NewService({
     }
   };
 
+  const validateCategory = (category: Category | undefined) => {
+    if (!category) {
+      setCategoryError("Category is required");
+      showError({
+        field: "category",
+        message: "Category is required",
+      });
+      return false;
+    } else {
+      setCategoryError("");
+      clearError();
+      return true;
+    }
+  };
+
   async function handleSubmit() {
     try {
       setIsLoading(true);
 
-      // Validate only the service name
-      if (!validateName(name)) {
+      // Validate both service name and category
+      const isNameValid = validateName(name);
+      const isCategoryValid = validateCategory(category);
+      
+      if (!isNameValid || !isCategoryValid) {
         setIsLoading(false);
         return;
       }
 
-      // Category is optional, so pass undefined if not selected
       const res = await newService({
         name,
-        categoryId: category?.id, // Will be undefined if no category is selected
+        categoryId: category?.id, // Will be defined since we validated it
         description,
         canned: true,
       });
@@ -141,8 +161,11 @@ export default function NewService({
     try {
       setIsLoading(true);
       console.log(":::: Handle Edit ::::", name);
-      // Validate the service name
-      if (!validateName(name)) {
+      // Validate both service name and category
+      const isNameValid = validateName(name);
+      const isCategoryValid = validateCategory(category);
+      
+      if (!isNameValid || !isCategoryValid) {
         setIsLoading(false);
         return;
       }
@@ -156,7 +179,7 @@ export default function NewService({
               service: {
                 ...item.service,
                 name,
-                categoryId: category?.id, // Will be undefined if no category is selected
+                categoryId: category?.id, // Will be defined since we validated it
                 description,
               },
             };
@@ -219,6 +242,11 @@ export default function NewService({
               value={name}
               onChange={(e) => {
                 const value = e.target.value;
+
+                if (value.length > 50) {
+                  setNameError("Service name must be less than 50 characters");
+                  return false;
+                }
                 setName(value);
                 // Clear error when user starts typing
                 if (value.trim()) {
@@ -242,18 +270,40 @@ export default function NewService({
 
           <div className="flex flex-col">
             <SelectCategory
-              onCategoryChange={setCategory}
+              onCategoryChange={(selectedCategory) => {
+                setCategory(selectedCategory);
+                // Clear error when category is selected
+                if (selectedCategory) {
+                  setCategoryError("");
+                  clearError();
+                }
+              }}
               labelPosition="none"
               categoryData={category}
               categoryOpen={categoryOpen}
               setCategoryOpen={setCategoryOpen}
+              required={true}
+              onBlur={() => validateCategory(category)}
             />
+            {categoryError && (
+              <span className="mt-1 text-xs text-red-500">
+                {categoryError}
+              </span>
+            )}
           </div>
 
           <textarea
             placeholder="Description"
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value;
+
+              if (value.length > 250) {
+                toast.error("Description must be less than 250 characters");
+                return false;
+              }
+              setDescription(value);
+            }}
             className="h-40 rounded-md border-2 border-slate-400 p-2"
           />
         </div>

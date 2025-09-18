@@ -18,10 +18,10 @@ import { SlimInput } from "@/components/SlimInput";
 import { DEFAULT_IMAGE_URL } from "@/lib/consts";
 import { useFormErrorStore } from "@/stores/form-error";
 import { Client, Source, Tag } from "@prisma/client";
+import { SquarePen } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState, useTransition } from "react";
 import { FaTimes } from "react-icons/fa";
-import { FaPen, FaPenToSquare } from "react-icons/fa6";
 import { IoMdSettings } from "react-icons/io";
 import { RxAvatar } from "react-icons/rx";
 import { RotatingLines } from "react-loader-spinner";
@@ -38,7 +38,7 @@ export default function EditCustomer({
 }) {
   const [open, setOpen] = useState(false);
   const [clientSource, setClientSource] = useState<Source | null>(
-    client.source,
+    client.source
   );
   const [pending, startTransition] = useTransition();
 
@@ -47,7 +47,7 @@ export default function EditCustomer({
   const [tag, setTag] = useState<Tag | undefined>(client.tag!);
   const [isPremium, setIsPremium] = useState<boolean>(client.isFleet!);
   const [profilePic, setProfilePic] = useState<string | null>(
-    client.photo !== DEFAULT_IMAGE_URL ? client.photo : null,
+    client.photo !== DEFAULT_IMAGE_URL ? client.photo : null
   );
   const [newProfilePic, setNewProfilePic] = useState<File | null>(null);
   const [clientSources, setClientSources] = useState<Source[]>([]);
@@ -190,7 +190,11 @@ export default function EditCustomer({
           <button
             className={`${settingIcon ? "text-gray-600" : ""} text-[#6571FF]"`}
           >
-            {settingIcon ? <IoMdSettings /> : <FaPenToSquare />}
+            {settingIcon ? (
+              <IoMdSettings />
+            ) : (
+              <SquarePen className="w-5 h-5 text-[#6571FF]" />
+            )}
           </button>
         </DialogTrigger>
 
@@ -206,21 +210,21 @@ export default function EditCustomer({
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <div className="relative h-20 w-20 rounded-full border border-slate-400 hover:border-dashed hover:opacity-80 overflow-hidden">
                   <Image
-                  src={
-                    newProfilePic
-                      ? URL.createObjectURL(newProfilePic)
-                      : profilePic || ""
-                  }
-                  width={80}
-                  height={80}
-                  alt="profile"
-                  className="h-full w-full object-cover"
-                  unoptimized={newProfilePic !== null}
-      crossOrigin="anonymous"
-                />
+                    src={
+                      newProfilePic
+                        ? URL.createObjectURL(newProfilePic)
+                        : profilePic || ""
+                    }
+                    width={80}
+                    height={80}
+                    alt="profile"
+                    className="h-full w-full object-cover"
+                    unoptimized={newProfilePic !== null}
+                    crossOrigin="anonymous"
+                  />
                 </div>
                 <span className="absolute bottom-0 left-2 text-lg text-[#6571FF]">
-                  <FaPen />
+                  <SquarePen className="w-5 h-5 cursor-pointer" />
                 </span>
 
                 <input
@@ -415,7 +419,7 @@ export default function EditCustomer({
                     return clientSources.filter((clientSource: Source) =>
                       clientSource.name
                         .toLowerCase()
-                        .includes(search.toLowerCase()),
+                        .includes(search.toLowerCase())
                     );
                   }}
                   openState={[openClientSource, setOpenClientSource]}
