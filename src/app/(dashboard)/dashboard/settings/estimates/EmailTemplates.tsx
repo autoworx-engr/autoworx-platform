@@ -50,7 +50,7 @@ export default function EstimateAndInvoicePage() {
   };
 
   return (
-    <div className="flex flex-col items-start gap-4 px-5">
+    <div className="flex flex-col items-start">
       <div className="w-full space-y-2">
         <h2 className="text-xl font-semibold">
           Edit Draft Email for Sharing Estimate/Invoice

@@ -15,7 +15,7 @@ export default function DeleteEmployee({ employee }: { employee: User }) {
       cancelText="No"
       onConfirm={() => deleteEmployee(employee.id)}
     >
-      <FaTimes cursor={"pointer"} color="#f87171" className="text-xl" />
+      <FaTimes cursor={"pointer"} color="#f87171" className="text-xl mt-1" />
     </Popconfirm>
   );
 }

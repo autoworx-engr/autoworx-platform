@@ -23,12 +23,13 @@ import { Category, Service } from "@prisma/client";
 import React, { useEffect, useState } from "react";
 import { FaTimes } from "react-icons/fa";
 import { IoMdCheckmarkCircleOutline } from "react-icons/io";
-import { RiEditFill } from "react-icons/ri";
 import NewService from "./NewService";
 import { Pagination, Popconfirm } from "antd";
-import { CiEdit } from "react-icons/ci";
 import { useFormErrorStore } from "@/stores/form-error";
 import { useEstimateFilterStore } from "@/stores/estimate-filter";
+import { errorToast, successToast } from "@/lib/toast";
+import toast from "react-hot-toast";
+import { SquarePen } from "lucide-react";
 
 const evenColor = "bg-background";
 const oddColor = "bg-[#F8FAFF]";
@@ -184,6 +185,10 @@ const ServiceComponent = ({
 
   // Validation function
   const validateName = (value: string) => {
+    if (value.length > 50) {
+      setNameError("Service name must be less than 50 characters");
+      return false;
+    }
     if (!value.trim()) {
       setNameError("Service name is required");
       showError({
@@ -212,13 +217,16 @@ const ServiceComponent = ({
       name: name,
       description: description || "",
       categoryId: category?.id,
+      canned: true,
     });
 
     // Optionally handle the response (e.g., check for success or errors)
     if (res && "type" in res && res.type === "success") {
+      successToast("Service updated successfully!");
       setIsEdit(false); // Exit edit mode only on success
     } else {
       // Handle error if needed (e.g., show a toast)
+      errorToast(res?.message ?? "Update failed. Please try again.");
       console.error("Update failed:", res);
     }
   }
@@ -252,6 +260,12 @@ const ServiceComponent = ({
                   value={name}
                   onChange={(e) => {
                     const value = e.target.value;
+                    if (value.length > 50) {
+                      setNameError(
+                        "Service name must be less than 50 characters"
+                      );
+                      return false;
+                    }
                     setName(value);
                     if (value.trim()) {
                       setNameError("");
@@ -288,7 +302,7 @@ const ServiceComponent = ({
                 onClick={() => setIsEdit(!isEdit)}
                 className="text-2xl text-[#6571FF]"
               >
-                <CiEdit />
+                <SquarePen className="w-5 h-5 text-[#6571FF]" />
               </button>
               {!isEdit && (
                 <Popconfirm
@@ -406,7 +420,15 @@ const ServiceComponent = ({
             <textarea
               placeholder="Description"
               value={description || ""}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value;
+
+                if (value.length > 250) {
+                  toast.error("Description must be less than 250 characters");
+                  return false;
+                }
+                setDescription(value);
+              }}
               className="h-20 max-w-[150px] rounded-md border-2 border-slate-400 p-2"
             />
           </div>
@@ -425,7 +447,7 @@ const ServiceComponent = ({
           onClick={() => setIsEdit(!isEdit)}
           className="text-xl text-[#6571FF]"
         >
-          <CiEdit />
+          <SquarePen className="w-5 h-5 text-[#6571FF]" />
         </button>
         <Popconfirm
           title="Delete the canned service"

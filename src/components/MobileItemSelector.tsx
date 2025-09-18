@@ -2,14 +2,9 @@
 import { cn } from "@/lib/cn";
 import { Item } from "@/stores/estimate-create";
 import { useEstimatePopupStore } from "@/stores/estimate-popup";
+import { SquarePen } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
-import {
-  FaPen,
-  FaTimes,
-  FaSearch,
-  FaChevronDown,
-  FaChevronUp,
-} from "react-icons/fa";
+import { FaTimes, FaSearch, FaChevronDown, FaChevronUp } from "react-icons/fa";
 
 type MobileItemSelectorProps<T> = {
   label: string;
@@ -137,7 +132,7 @@ export default function MobileItemSelector<T>({
       <button
         className={cn(
           "relative flex h-10 w-full items-center justify-between rounded-md border-2 border-slate-400 px-4",
-          !selected && "text-slate-400",
+          !selected && "text-slate-400"
         )}
         onClick={handleClick}
       >
@@ -162,7 +157,7 @@ export default function MobileItemSelector<T>({
                 }}
               >
                 <div className="rounded-full bg-[#6571FF] p-1 text-white">
-                  <FaPen className="text-[10px]" />
+                  <SquarePen className="w-4 h-4 cursor-pointer" />
                 </div>
               </button>
             )}

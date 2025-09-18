@@ -7,9 +7,9 @@ import { Vendor } from "@prisma/client";
 import { Popconfirm } from "antd";
 import moment from "moment-timezone";
 import { useRouter } from "next/navigation";
-import { CiEdit } from "react-icons/ci";
 import { FaTimes } from "react-icons/fa";
 import { deleteVendor } from "../../../../../actions/vendor/deleteVendor";
+import { SquarePen } from "lucide-react";
 
 const evenColor = "bg-background";
 const oddColor = "bg-[#F8FAFF]";
@@ -75,7 +75,7 @@ export default function Table({
                 <EditVendor
                   button={
                     <button className="text-2xl text-blue-600">
-                      <CiEdit />
+                      <SquarePen className="w-5 h-5 text-[#6571FF]" />
                     </button>
                   }
                   vendor={vendor}

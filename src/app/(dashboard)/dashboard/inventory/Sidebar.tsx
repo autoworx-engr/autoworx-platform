@@ -12,6 +12,12 @@ import UseProductForm from "./UseProductForm";
 import { formatCurrency } from "@/utils/formatCurrency";
 import EditProduct from "./EditProduct";
 import Image from "next/image";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/Tooltip";
 
 export default async function Sidebar({
   productId,
@@ -36,7 +42,7 @@ export default async function Sidebar({
 
   const imgUrl = product
     ? await QRCode.toDataURL(
-        `${env("NEXT_PUBLIC_APP_URL")}/dashboard/inventory/use/${product.id}`,
+        `${env("NEXT_PUBLIC_APP_URL")}/dashboard/inventory/use/${product.id}`
       )
     : null;
 
@@ -66,7 +72,7 @@ export default async function Sidebar({
     <div
       className={`mt-3 ${
         hidden ? "hidden" : !!productId ? "flex" : "hidden md:flex"
-      } h-[88.5%] w-full flex-col overflow-y-scroll md:mt-12 md:w-1/2`}
+      }  h-fit lg:h-full w-fit mx-auto flex-col overflow-y-scroll md:mt-12 md:w-1/2`}
     >
       <div className="flex flex-col gap-4 lg:flex-row">
         <div className="flex flex-col justify-between px-5 md:px-0">
@@ -77,12 +83,32 @@ export default async function Sidebar({
               </h3>
               <p className="mt-2 text-center text-2xl font-bold 2xl:text-4xl">
                 {product && (
-                  <>
-                    {formatCurrency(
-                      parseFloat(product?.price?.toString() || "0") *
-                        parseFloat(product?.quantity?.toString() || "0"),
-                    )}
-                  </>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="cursor-default ">
+                          {(() => {
+                            const totalPrice =
+                              parseFloat(product.price?.toString() || "0") *
+                              parseFloat(product.quantity?.toString() || "0");
+                            const totalStr = totalPrice.toLocaleString(); // comma separated
+                            // Shorten display if too long
+                            return totalStr.length > 6
+                              ? totalStr.slice(0, 6) + ".."
+                              : totalStr;
+                          })()}
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>
+                          {formatCurrency(
+                            parseFloat(product.price?.toString() || "0") *
+                              parseFloat(product.quantity?.toString() || "0")
+                          )}
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 )}
               </p>
             </div>
@@ -94,17 +120,38 @@ export default async function Sidebar({
               </h3>
               <p className="mt-2 text-nowrap text-center text-2xl font-bold 2xl:text-3xl">
                 {product && (
-                  <>
-                    {formatCurrency(parseFloat(product?.price?.toString()!))}
-                    <span className="text-base">/{product.unit}</span>
-                  </>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="cursor-default">
+                          {(() => {
+                            const price = parseFloat(
+                              product.price?.toString() || "0"
+                            );
+                            const priceStr = price.toLocaleString(); // comma separated
+                            return priceStr.length > 6
+                              ? priceStr.slice(0, 6) + ".."
+                              : priceStr;
+                          })()}
+                          <span className="text-base">/{product.unit}</span>
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>
+                          {formatCurrency(
+                            parseFloat(product.price?.toString() || "0")
+                          )}
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 )}
               </p>
             </div>
           </div>
         </div>
         <div className="app-shadow mb-2 w-full rounded-lg bg-[#F8F9FA] p-4 text-xs md:mb-0 md:bg-background 2xl:text-base">
-          <div className="grid grid-cols-1 gap-0 md:gap-4 lg:grid-cols-5">
+          <div className="grid grid-cols-1 gap-0  lg:grid-cols-5 md:gap-10">
             <div className="order-2 col-span-2 px-[10px] py-1 md:order-1 md:px-0 md:py-0">
               <h3 className="hidden text-lg font-semibold md:block">
                 Inventory Details
@@ -125,7 +172,7 @@ export default async function Sidebar({
             </div>
 
             {product && (
-              <div className="order-1 col-span-3 grid grid-cols-2 md:order-2 md:gap-5">
+              <div className="order-1 col-span-3 grid grid-cols-2 md:order-2 md:gap-10">
                 {/* qr code */}
                 <div className="block md:hidden">
                   <div>
@@ -154,14 +201,28 @@ export default async function Sidebar({
                       </div>
                     )}
                     <div>
-                      <span
-                        className={cn(
-                          "text-6xl",
-                          Number(product.quantity) === 0 && "text-red-600",
-                        )}
-                      >
-                        {Number(product.quantity)}
-                      </span>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span
+                              className={cn(
+                                "text-5xl cursor-default",
+                                Number(product.quantity) === 0 && "text-red-600"
+                              )}
+                            >
+                              {String(product.quantity).length > 2
+                                ? String(product.quantity).slice(0, 2) + ".."
+                                : Number(product.quantity)}
+                            </span>
+                          </TooltipTrigger>
+                          {String(product.quantity).length > 4 && (
+                            <TooltipContent>
+                              <p>{Number(product.quantity)}</p>
+                            </TooltipContent>
+                          )}
+                        </Tooltip>
+                      </TooltipProvider>
+
                       <span>/{product.unit}</span>
                     </div>
                     <span>Remaining</span>
@@ -178,7 +239,10 @@ export default async function Sidebar({
                         cost={parseFloat(product.price?.toString() || "0")} // This should still work
                         productType={product.type}
                       />
-                      <ReplenishProductForm lastUnit={product.unit} productId={productId} />
+                      <ReplenishProductForm
+                        lastUnit={product.unit}
+                        productId={productId}
+                      />
                     </div>
                   )}
                 </div>

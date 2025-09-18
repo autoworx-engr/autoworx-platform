@@ -19,9 +19,9 @@ const TemplateVariable = ({
   VARIABLES?: TemplateVariable[];
 }) => {
   return (
-    <div className="font-medium text-gray-500">
+    <div className="font-medium text-gray-500 ">
       <h4 className="mb-2 text-base">TEMPLATE VARIABLES</h4>
-      <div>
+      <div className="mb-4 flex flex-wrap gap-2">
         {VARIABLES.map((variable) => (
           <span key={variable.name} className="text-sm">
             {variable.name},

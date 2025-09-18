@@ -239,58 +239,67 @@ const AWXBugReport = () => {
 
       {/* Chat Interface */}
       {selectedContact && (
-        <Card className="absolute right-0 sm:right-16 md:right-24 lg:right-40 top-20 z-20 mx-auto w-full max-w-md">
-          <div className="px-3 py-1 text-sm text-[#797979]">Bug Report</div>
-          <ChatHeader
-            type="super_admin"
-            selectedContact={selectedContact}
-            onClose={handleCloseChat}
-            onResolve={handleResolve}
-          />
+        <div className="fixed inset-0 z-10 px-5">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm h-screen"></div>
+          <Card
+            className="absolute border rounded-lg shadow-[50px] border-gray-400 top-20 left-1/2 -translate-x-1/2 sm:translate-x-0 
+            sm:left-auto sm:right-16 
+            md:right-10 md:top-0 
+            z-20 mx-auto w-full max-w-xs md:max-w-md 
+            transition-all duration-300 ease-in-out"
+          >
+            <div className="px-3 py-1 text-sm text-[#797979]">Bug Report</div>
+            <ChatHeader
+              type="super_admin"
+              selectedContact={selectedContact}
+              onClose={handleCloseChat}
+              onResolve={handleResolve}
+            />
 
-          <CardContent className="custom-scrollbar h-80 overflow-y-auto bg-gray-50 p-4">
-            {!loading && messageLoading ? (
-              <>
-                <MessageBubbleSkeleton isSender={true} />
-                <MessageBubbleSkeleton isSender={false} />
-                <MessageBubbleSkeleton isSender={true} />
-              </>
-            ) : (
-              <div className="space-y-4">
-                {ReportMessages?.map((messages: TBugReportMessage) => (
-                  <MessageCard
-                    key={messages.id}
-                    messages={messages}
-                    selectedContact={selectedContact}
-                    isAdminView={true}
-                  />
-                ))}
+            <CardContent className="custom-scrollbar h-80 overflow-y-auto bg-gray-50 p-4">
+              {!loading && messageLoading ? (
+                <>
+                  <MessageBubbleSkeleton isSender={true} />
+                  <MessageBubbleSkeleton isSender={false} />
+                  <MessageBubbleSkeleton isSender={true} />
+                </>
+              ) : (
+                <div className="space-y-4">
+                  {ReportMessages?.map((messages: TBugReportMessage) => (
+                    <MessageCard
+                      key={messages.id}
+                      messages={messages}
+                      selectedContact={selectedContact}
+                      isAdminView={true}
+                    />
+                  ))}
 
-                {loading && selectedFiles?.length > 0 && (
-                  <OptimisticMessageCard
-                    loading={loading}
-                    message={reportMessage}
-                    selectedContact={selectedContact}
-                    selectedFiles={selectedFiles}
-                  />
-                )}
-                <div ref={bottomRef} />
-              </div>
-            )}
-          </CardContent>
+                  {loading && selectedFiles?.length > 0 && (
+                    <OptimisticMessageCard
+                      loading={loading}
+                      message={reportMessage}
+                      selectedContact={selectedContact}
+                      selectedFiles={selectedFiles}
+                    />
+                  )}
+                  <div ref={bottomRef} />
+                </div>
+              )}
+            </CardContent>
 
-          {/* Message Input */}
-          <ChatInput
-            message={message}
-            setMessage={setMessage}
-            onSend={handleSendMessage}
-            selectedFiles={selectedFiles}
-            handleFileChange={handleFileChange}
-            handleRemoveFile={handleRemoveFile}
-            isResolved={selectedContact.isResolved}
-            loading={loading}
-          />
-        </Card>
+            {/* Message Input */}
+            <ChatInput
+              message={message}
+              setMessage={setMessage}
+              onSend={handleSendMessage}
+              selectedFiles={selectedFiles}
+              handleFileChange={handleFileChange}
+              handleRemoveFile={handleRemoveFile}
+              isResolved={selectedContact.isResolved}
+              loading={loading}
+            />
+          </Card>
+        </div>
       )}
     </div>
   );

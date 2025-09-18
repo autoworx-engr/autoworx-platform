@@ -57,8 +57,19 @@ export default function AttendanceButtonsBox({
     },
     [lastClockInOut]
   );
+
+  // Check if technician is currently on break
+  const isOnBreak =
+    lastClockInOut &&
+    lastClockInOut?.ClockBreak.length > 0 &&
+    lastClockInOut?.ClockBreak[lastClockInOut?.ClockBreak?.length - 1]
+      ?.breakEnd === null;
+
+  // Check if technician is clocked in (and not clocked out)
+  const isClockedIn =
+    lastClockInOut && lastClockInOut?.clockIn && !lastClockInOut?.clockOut;
   return (
-    <div className="flex flex-col sm:flex-row w-full h-[13%] gap-2 rounded-md p-4 shadow-lg">
+    <div className="flex flex-col sm:flex-row w-full gap-2 rounded-md p-4 shadow-lg">
       <div className="w-full">
         <button
           onClick={async () => {
@@ -81,7 +92,7 @@ export default function AttendanceButtonsBox({
           disabled={hasClockedInToday}
           title={hasClockedInToday ? "You have already clocked in today" : ""}
         >
-          <span className="font-semibold xl:text-xl">
+          <span className="font-semibold 2xl:text-xl">
             {!lastClockInOut?.clockOut && lastClockInOut?.clockIn
               ? "Clocked-In"
               : "Clock-In"}
@@ -100,6 +111,11 @@ export default function AttendanceButtonsBox({
       <div className="w-full">
         <button
           onClick={async () => {
+            // Prevent clock out if on break or not clocked in
+            if (isOnBreak || !isClockedIn) {
+              return;
+            }
+
             if (lastClockInOut && !lastClockInOut?.clockOut) {
               const res = await clockOut({
                 clockInOutId: lastClockInOut.id,
@@ -110,22 +126,28 @@ export default function AttendanceButtonsBox({
             }
           }}
           className={`h-full w-full rounded ${
-            hasClockedOutToday
+            hasClockedOutToday || isOnBreak || !isClockedIn
               ? "cursor-not-allowed bg-gray-400"
               : "bg-[#6571FF]"
-          } bg-[#6571FF] px-4 py-4 font-semibold text-white xl:px-10 ${lastClockInOut && lastClockInOut?.clockIn && !lastClockInOut?.clockOut ? "cursor-pointer" : "cursor-default"}`}
-          disabled={hasClockedOutToday ?? false}
-          title={hasClockedOutToday ? "You have already clocked out today" : ""}
+          } px-4 py-4 font-semibold text-white xl:px-10`}
+          disabled={hasClockedOutToday || isOnBreak || !isClockedIn}
+          title={
+            hasClockedOutToday
+              ? "You have already clocked out today"
+              : isOnBreak
+                ? "You must end your break before clocking out"
+                : !isClockedIn
+                  ? "You must clock in before you can clock out"
+                  : ""
+          }
         >
-          <span className="font-semibold xl:text-xl">Clock-Out</span>
+          <span className="font-semibold 2xl:text-xl">Clock-Out</span>
           <br />
           {/* <span className="text-xs">10:00 AM</span> */}
         </button>
       </div>
       <div className="w-full">
-        {lastClockInOut &&
-        lastClockInOut?.ClockBreak[lastClockInOut?.ClockBreak?.length - 1]
-          ?.breakEnd === null ? (
+        {isOnBreak ? (
           <button
             onClick={async () => {
               if (lastClockInOut && validBreak(lastClockInOut)) {
@@ -140,13 +162,18 @@ export default function AttendanceButtonsBox({
                 }
               }
             }}
-            className={`h-full w-full rounded bg-[#03A7A2] px-4 py-4 font-semibold text-white xl:px-10 xl:text-xl`}
+            className={`h-full w-full rounded bg-[#03A7A2] px-4 py-4 font-semibold text-white xl:px-10 2xl:text-xl cursor-pointer`}
           >
             End Break
           </button>
         ) : (
           <button
             onClick={async () => {
+              // Only allow break if clocked in
+              if (!isClockedIn) {
+                return;
+              }
+
               if (lastClockInOut && !lastClockInOut?.clockOut) {
                 const res = await takeBreak({
                   clockInOutId: lastClockInOut.id,
@@ -156,7 +183,15 @@ export default function AttendanceButtonsBox({
                 }
               }
             }}
-            className={`h-full w-full rounded bg-[#6571FF] px-4 py-4 font-semibold text-white xl:px-10 xl:text-xl ${lastClockInOut && !lastClockInOut?.clockOut ? "cursor-pointer" : "cursor-default"}`}
+            className={`h-full w-full rounded px-4 py-4 font-semibold text-white xl:px-10 xl:text-xl ${
+              isClockedIn
+                ? "bg-[#6571FF] cursor-pointer"
+                : "bg-gray-400 cursor-not-allowed"
+            }`}
+            disabled={!isClockedIn}
+            title={
+              !isClockedIn ? "You must clock in before taking a break" : ""
+            }
           >
             <span>Break</span> <br />
             <div className="mt-1 flex flex-col">

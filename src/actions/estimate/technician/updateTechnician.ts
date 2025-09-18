@@ -26,13 +26,12 @@ type TechnicianInput = {
 export const updateTechnician = async (
   technicianId: number,
   payload: TechnicianInput,
-  vehicleParts: Partial<VehicleParts>[],
+  vehicleParts: Partial<VehicleParts>[]
 ): Promise<ServerAction | TErrorHandler> => {
   try {
     // if (!payload) {
     //   return { type: "error", message: "Invalid payload" };
     // }
-
     await updateTechnicianValidationSchema.parseAsync(payload);
     // Ensure the date includes both date and time
     const dateWithTime = new Date(payload.date);
@@ -41,7 +40,7 @@ export const updateTechnician = async (
       currentTime.getHours(),
       currentTime.getMinutes(),
       currentTime.getSeconds(),
-      currentTime.getMilliseconds(),
+      currentTime.getMilliseconds()
     );
 
     const updatedTechnician = await db.technician.update({
@@ -88,6 +87,7 @@ export const updateTechnician = async (
       },
     };
   } catch (err) {
+    console.error("Error in updateTechnician:", err);
     return errorHandler(err);
   }
 };

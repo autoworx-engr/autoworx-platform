@@ -6,11 +6,11 @@ import {
   permissionModuleForAdminManager,
   permissionModuleForSales,
   permissionModuleForTechnician,
-  permissionModuleForOther,
+  permissionModuleForOther
 } from "@/lib/permissionModule";
 import {
   getUserPermissions,
-  savePermissions,
+  savePermissions
 } from "@/actions/settings/teamManagement";
 
 interface CustomizeUserRolesProps {
@@ -40,28 +40,32 @@ const CustomizeUserRole = ({ user, onBack }: CustomizeUserRolesProps) => {
 
   useEffect(() => {
     // Fetch default and user-specific permissions
-    getUserPermissions(user.id, user.employeeType).then((data) => {
+    getUserPermissions(user.id, user.employeeType).then(data => {
+      console.log("Fetched permissions:", data);
       setPermissions(data || {});
     });
   }, [user.id, user.employeeType]);
+
   const handlePermissionChange = async (key: string, checked: boolean) => {
-    setPermissions((prev) => {
+    setPermissions(prev => {
       const { id, ...prevWithoutId } = prev;
       const updatedPermissions = { ...prevWithoutId, [key]: checked };
       // Upsert the entire permissions object
-      savePermissions(user.id, updatedPermissions).catch((error) => {});
+      savePermissions(user.id, updatedPermissions).catch(error => {
+        console.error("Failed to update permission:", error);
+      });
       return updatedPermissions;
     });
   };
 
   const handleViewOnlyChange = async (
     viewOnlyKey: string,
-    checked: boolean,
+    checked: boolean
   ) => {
-    setPermissions((prev) => {
+    setPermissions(prev => {
       const updatedPermissions = { ...prev, [viewOnlyKey]: checked };
       // Upsert the entire permissions object
-      savePermissions(user.id, updatedPermissions).catch((error) => {
+      savePermissions(user.id, updatedPermissions).catch(error => {
         console.error("Failed to update view-only permission:", error);
       });
       return updatedPermissions;
@@ -126,7 +130,7 @@ const CustomizeUserRole = ({ user, onBack }: CustomizeUserRolesProps) => {
                 {!module.viewOnly && (
                   <Switch
                     checked={permissions[module.key] ?? false}
-                    onChange={(checked) =>
+                    onChange={checked =>
                       handlePermissionChange(module.key, checked)
                     }
                     className="shadow-md"
@@ -138,7 +142,7 @@ const CustomizeUserRole = ({ user, onBack }: CustomizeUserRolesProps) => {
                   <div className="group">
                     <Checkbox
                       checked={permissions[module.viewOnly] ?? false}
-                      onChange={(e) =>
+                      onChange={e =>
                         handleViewOnlyChange(module.viewOnly!, e.target.checked)
                       }
                     ></Checkbox>

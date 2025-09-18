@@ -12,6 +12,14 @@ type Props = {
   productId: number;
   user: any;
   inventoryCategories: any[];
+  totalSupplies: number;
+  totalProducts: number;
+  searchParams: {
+    page: string;
+    limit: string;
+    search?: string;
+    category?: string;
+  };
 };
 
 type InventoryProduct = {
@@ -40,16 +48,12 @@ export default function ClientInventoryList({
   productId,
   user,
   inventoryCategories,
+  searchParams,
+  totalProducts,
+  totalSupplies,
 }: Props) {
-  const {
-    search,
-    categoryName,
-    page,
-    limit,
-    setPage,
-    setLimit,
-    resetFilters,
-  } = useInventoryDatabaseSearchStore();
+  const { search, categoryName, page, limit, setPage, setLimit, resetFilters } =
+    useInventoryDatabaseSearchStore();
 
   useEffect(() => {
     resetFilters();
@@ -64,7 +68,9 @@ export default function ClientInventoryList({
       params.set("page", String(page));
       params.set("limit", String(limit));
 
-      const res = await fetch(`/api/inventoryWirehouse/products?${params.toString()}`);
+      const res = await fetch(
+        `/api/inventoryWirehouse/products?${params.toString()}`
+      );
       if (!res.ok) throw new Error("Failed to fetch inventory products");
 
       return res.json();
@@ -86,6 +92,9 @@ export default function ClientInventoryList({
       supplies={supplies}
       productId={productId}
       user={user}
+      searchParams={searchParams}
+      totalProducts={totalProducts}
+      totalSupplies={totalSupplies}
       isFullWidth={view === "database"}
       databaseContent={data?.data || []}
       totalDatabaseItems={data?.meta.totalCount || 0}

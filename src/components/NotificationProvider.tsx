@@ -32,8 +32,6 @@ import { CiClock2 } from 'react-icons/ci';
 import { IoCheckmarkDone } from 'react-icons/io5';
 import { MdOutlineNotifications } from 'react-icons/md';
 import { Scrollbar } from 'src/components/scrollbar';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { queryKeys } from '@/lib/queryKeys';
 
 // ----------------------------------------------------------------------
 

@@ -1,3 +1,4 @@
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/Tooltip";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { FaCaretDown, FaCaretUp } from "react-icons/fa";
 
@@ -21,9 +22,28 @@ const ChartData = ({
         <h3 className="text-xs font-bold">{heading}</h3>
         {subHeading && <h6 className="#xl:text-sm text-xs">{subHeading}</h6>}
         <div className="#xl:mt-4 mt-2">
-          <span className="text-lg font-bold xl:text-2xl">
-            {dollarSign ? formatCurrency(number) : number}
-            {isNumberPercent && "%"}
+          <span>
+            {formatCurrency(number).length > 20 ||
+            number.toString().length > 20 ? (
+              <span className="text-lg font-bold xl:text-2xl">
+                <Tooltip>
+                  <TooltipTrigger>
+                    {dollarSign
+                      ? formatCurrency(number).slice(0, 20).concat("...")
+                      : number.toString().slice(0, 20).concat("...")}
+                  </TooltipTrigger>
+                  <TooltipContent className="text-lg font-bold xl:text-2xl">
+                    <p>{dollarSign ? formatCurrency(number) : number}</p>
+                    {isNumberPercent && "%"}
+                  </TooltipContent>
+                </Tooltip>
+              </span>
+            ) : (
+              <span className="text-lg font-bold xl:text-2xl">
+                {dollarSign ? formatCurrency(number) : number}
+                {isNumberPercent && "%"}
+              </span>
+            )}
           </span>
         </div>
       </div>

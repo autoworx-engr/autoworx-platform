@@ -1,9 +1,5 @@
 // import TopNavbarIcons from "./TopNavbarIcons";
-import dynamic from 'next/dynamic';
-
-const TopNavbarIcons = dynamic(() => import('./TopNavbarIcons'), {
-  ssr: false,
-});
+import TopNavbarIcons from './TopNavbarIcons';
 
 export default function TopNavbar() {
   return (

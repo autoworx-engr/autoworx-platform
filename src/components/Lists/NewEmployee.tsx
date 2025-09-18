@@ -338,6 +338,7 @@ export default function AddNewEmployee({
               />
               <SlimInput
                 name="mobileNumber"
+                type="tel"
                 required
                 onChange={(e) => {
                   const value = e.target.value;

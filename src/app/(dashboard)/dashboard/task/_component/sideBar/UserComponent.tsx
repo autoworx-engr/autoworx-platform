@@ -38,17 +38,17 @@ export default function UserComponent({
     <>
       <button
         className={cn(
-          "mt-2 flex w-full items-center rounded-lg sm:h-[12%]",
-          isSelected ? "bg-[#006D77]" : "bg-[#F8F9FA]",
+          "mt-2 flex w-full items-center rounded-lg sm:h-[12%] pl-2",
+          isSelected ? "bg-[#006D77]" : "bg-[#F8F9FA]"
         )}
         onClick={onSelect}
       >
-        <Avatar photo={user.image} width={50} height={50} />
+        <Avatar photo={user.image} width={40} height={40} />
         <p
           className={cn(
             "ml-2 text-[14px] font-bold sm:text-xs",
             isSelected ? "text-white" : "text-[#797979]",
-            minimized && "sr-only",
+            minimized && "sr-only"
           )}
         >
           {user.firstName} {user.lastName}

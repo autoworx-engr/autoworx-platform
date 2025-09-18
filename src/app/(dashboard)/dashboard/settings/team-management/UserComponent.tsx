@@ -1,12 +1,12 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import Search from "@/app/(dashboard)/dashboard/employee/components/Search";
-import { BiSolidEditAlt } from "react-icons/bi";
 import Image from "next/image";
 import CustomizeUserRole from "./CustomizeUserRole";
 import { EmployeeType, Role } from "@prisma/client";
 import { teamManagementUser } from "@/actions/settings/teamManagement";
 import { useEmployeeWorkFilterStore } from "@/stores/employeeWorkFilter";
+import { SquarePen } from "lucide-react";
 
 interface User {
   id: number;
@@ -29,13 +29,13 @@ const UserList: React.FC = () => {
         const fetchedUsers = await teamManagementUser();
         const searchedUsers = search.toLowerCase();
         let filteredUsers = fetchedUsers.filter(
-          (user) => user.employeeType !== EmployeeType.Admin,
+          (user) => user.employeeType !== EmployeeType.Admin
         );
         if (searchedUsers) {
           filteredUsers = filteredUsers.filter((user) =>
             `${user.firstName}${user.lastName}`
               .toLowerCase()
-              .includes(searchedUsers),
+              .includes(searchedUsers)
           );
         }
         setUsers(filteredUsers);
@@ -99,9 +99,9 @@ const UserList: React.FC = () => {
                     <div>
                       <button
                         onClick={() => handleEditClick(user)}
-                        className="text-blue-800 hover:underline"
+                        className="text-[#6571FF] hover:underline"
                       >
-                        <BiSolidEditAlt />
+                        <SquarePen className="w-5 h-5" />
                       </button>
                     </div>
                   </li>

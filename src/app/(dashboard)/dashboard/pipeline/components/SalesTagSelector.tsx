@@ -29,11 +29,16 @@ export function SalesTagSelector({
   open,
   setOpen,
   disable = false,
+  leadTags,
 }: {
   setValue?: (tag?: Tag) => void;
   open?: boolean;
   setOpen?: (open: boolean) => void;
   disable?: boolean;
+  leadTags: {
+    id: number;
+    tag: Tag;
+  }[];
 }) {
   const [tags, setTags] = useState<Tag[]>([]);
   const [search, setSearch] = useState("");
@@ -49,7 +54,8 @@ export function SalesTagSelector({
     }
 
     fetchUser();
-  }, [user]);
+  }, []);
+
   // Fetch sales tags on mount
   useEffect(() => {
     const fetchTags = async () => {
@@ -123,33 +129,37 @@ export function SalesTagSelector({
 
           {/* Tag List */}
           <div className="thin-scrollbar max-h-28 space-y-1 overflow-y-auto">
-            {filteredTags.map((tagItem) => (
-              <div
-                key={tagItem.id}
-                className="mx-4 flex cursor-pointer items-center justify-between rounded-full px-4"
-                style={{
-                  backgroundColor: tagItem.bgColor,
-                  color: tagItem.textColor,
-                }}
-              >
-                <button
-                  className="w-full text-left"
-                  onClick={() => {
-                    setValue?.(tagItem);
-                    setOpen?.(false);
+            {filteredTags
+              .filter(
+                (el) => !leadTags.map((tag) => tag.tag.name).includes(el.name)
+              )
+              .map((tagItem) => (
+                <div
+                  key={tagItem.id}
+                  className="mx-4 flex cursor-pointer items-center justify-between rounded-full px-4"
+                  style={{
+                    backgroundColor: tagItem.bgColor,
+                    color: tagItem.textColor,
                   }}
                 >
-                  {tagItem.name}
-                </button>
-                <button
-                  disabled={disable}
-                  onClick={() => handleDeleteTag(tagItem.id)}
-                  className={`text-lg text-[#66738C] disabled:cursor-not-allowed disabled:text-[#66738C] ${isRestrictedUser ? "hidden" : ""}`}
-                >
-                  <IoMdClose />
-                </button>
-              </div>
-            ))}
+                  <button
+                    className="w-full text-left"
+                    onClick={() => {
+                      setValue?.(tagItem);
+                      setOpen?.(false);
+                    }}
+                  >
+                    {tagItem.name}
+                  </button>
+                  <button
+                    disabled={disable}
+                    onClick={() => handleDeleteTag(tagItem.id)}
+                    className={`text-lg text-[#66738C] disabled:cursor-not-allowed disabled:text-[#66738C] ${isRestrictedUser ? "hidden" : ""}`}
+                  >
+                    <IoMdClose />
+                  </button>
+                </div>
+              ))}
           </div>
 
           {/* Quick Add */}
@@ -211,7 +221,7 @@ function QuickAddSalesTagForm({
 
   const handleSubmit = async (data: FormData) => {
     const name = data.get("name") as string;
-    
+
     const res = await createSalesTag({ name, ...selectedColor });
     if (res.type === "error") {
       showError({

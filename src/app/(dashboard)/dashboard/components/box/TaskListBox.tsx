@@ -12,6 +12,19 @@ export default function TaskListBox() {
 
   const queryClient = useQueryClient();
 
+  const revalidateTask = () => {
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.dashboardTask,
+    });
+  };
+
+  const handleTaskDeleted = (taskId: number) => {
+    // Immediately update the UI by invalidating queries
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.dashboardTask,
+    });
+  };
+
   let content = null;
 
   if (isLoading && !isError) {
@@ -29,14 +42,10 @@ export default function TaskListBox() {
       </div>
     );
   } else if (!isLoading && !isError && tasks && tasks.length > 0) {
-    content = tasks.map((task, idx) => <Task key={idx} task={task} />);
+    content = tasks.map((task, idx) => (
+      <Task key={idx} task={task} onTaskDeleted={handleTaskDeleted} />
+    ));
   }
-
-  const revalidateTask = () => {
-    queryClient.invalidateQueries({
-      queryKey: queryKeys.dashboardTask,
-    });
-  };
   return (
     <div className="flex-1 h-full overflow-y-auto shadow-md">
       <div

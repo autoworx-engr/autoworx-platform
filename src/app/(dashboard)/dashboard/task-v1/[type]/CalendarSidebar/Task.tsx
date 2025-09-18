@@ -8,9 +8,9 @@ import moment from "moment";
 import React, { LegacyRef } from "react";
 import { useDrag } from "react-dnd";
 import { FaRegCheckCircle } from "react-icons/fa";
-import { MdOutlineEdit } from "react-icons/md";
 import { useDate } from "../Calendar/Day";
 import { useRouter } from "next/navigation";
+import { SquarePen } from "lucide-react";
 
 export default function TaskComponent({
   task,
@@ -90,9 +90,8 @@ export default function TaskComponent({
             : task.title}{" "}
         </Tooltip>
       </span>
-
-      <MdOutlineEdit
-        className="mr-2 cursor-pointer"
+      <SquarePen
+        className="w-5 h-5 text-[#6571FF] mr-2 cursor-pointer"
         onClick={(e) => {
           e.stopPropagation();
           open("UPDATE_TASK", {

@@ -3,7 +3,7 @@ import { env } from "next-runtime-env";
 
 export default function manifest(): MetadataRoute.Manifest {
     const baseUrl = env("NEXT_PUBLIC_SITE_URL") || ""
-    console.log("Menifest function is being call")
+    // console.log("Menifest function is being call")
   return {
     name: "Autoworx",
     short_name: "Autoworx",

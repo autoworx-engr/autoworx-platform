@@ -45,7 +45,7 @@ export function SelectStatus({
   isAllServicesCompleted?: boolean;
 }) {
   const [status, setStatus] = useState<Column | null>(null);
-  const statusList = useListsStore((x) => x.statuses);
+  const statusList = useListsStore(x => x.statuses);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [selectedColor, setSelectedColor] = useState<SelectedColor>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -63,13 +63,15 @@ export function SelectStatus({
     }
   }, [status]);
 
+  const isDelivered = value?.title === "Delivered";
+
   useEffect(() => {
     if (statusList.length === 0) {
       useListsStore.setState({ status: null });
     }
   }, [statusList]);
   const filteredShopStatus = statusList.filter(
-    (status) => status.type === "shop",
+    status => status.type === "shop"
   );
   async function handleDelete(event: React.MouseEvent<HTMLButtonElement>) {
     event.stopPropagation();
@@ -77,7 +79,7 @@ export function SelectStatus({
       const res = await deleteColumn(statusToDelete);
       if (res) {
         useListsStore.setState(({ statuses }) => ({
-          statuses: statuses.filter((status) => status.id !== statusToDelete),
+          statuses: statuses.filter(status => status.id !== statusToDelete),
         }));
         if (status?.id === statusToDelete) {
           setStatus(null);
@@ -90,13 +92,18 @@ export function SelectStatus({
     // alert("outside click");
     setOpen && setOpen(false);
   });
-  const restrictedColumns = ["Pending", "In Progress", "Completed", "Delivered"];
+  const restrictedColumns = [
+    "Pending",
+    "In Progress",
+    "Completed",
+    "Delivered",
+  ];
   return (
     <div>
       <input type="hidden" name={name} value={status?.title ?? ""} />
       <DropdownMenu
         open={open}
-        onOpenChange={(open) => {
+        onOpenChange={open => {
           // !open && setOpen && setOpen(open);
         }}
       >
@@ -109,6 +116,7 @@ export function SelectStatus({
           onClick={() => {
             setOpen && setOpen(!open);
           }}
+          disabled={isDelivered}
         >
           <PiPulse />
           {status?.title ?? "Status"}
@@ -137,7 +145,7 @@ export function SelectStatus({
             </button>
           </div>
           <div className="space-y-1">
-            {filteredShopStatus.map((statusItem) => (
+            {filteredShopStatus.map(statusItem => (
               <div
                 key={statusItem.id}
                 onClick={() => {
@@ -146,7 +154,7 @@ export function SelectStatus({
                     !isAllServicesCompleted
                   ) {
                     return errorToast(
-                      "All services must be completed by Technicians before moving to delivered.",
+                      "All services must be completed by Technicians before moving to delivered."
                     );
                   }
 
@@ -167,7 +175,7 @@ export function SelectStatus({
                 {!restrictedColumns.includes(statusItem.title) && (
                   <button
                     className="px-2 text-lg text-[#66738C] hover:text-gray-900"
-                    onClick={(event) => {
+                    onClick={event => {
                       event.stopPropagation();
                       setStatusToDelete(statusItem.id);
                       setDeleteConfirmOpen(true);
@@ -181,7 +189,7 @@ export function SelectStatus({
           </div>
           <FormError />
           <QuickAddForm
-            onSuccess={(status) => {
+            onSuccess={status => {
               setStatus(status);
               if (setOpen) setOpen(false);
               // setOpen(false);
@@ -260,7 +268,7 @@ function QuickAddForm({
         title,
         "shop",
         selectedColor?.textColor || undefined,
-        selectedColor?.bgColor || undefined,
+        selectedColor?.bgColor || undefined
       );
 
       formRef.current?.reset();

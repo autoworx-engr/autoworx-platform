@@ -1,13 +1,14 @@
-'use client';
-import { deleteVehicle } from '@/actions/vehicle/deleteVehicle';
-import EditVehicle from '@/components/Lists/EditVehicle';
-import NewVehicle from '@/components/Lists/NewVehicle';
-import VehicleCard from '@/components/mobile-responsive/client/VehicleCard';
-import { cn } from '@/lib/cn';
-import { Vehicle } from '@prisma/client';
-import { useRouter, useSearchParams } from 'next/navigation';
-import React from 'react';
-import { FaTimes } from 'react-icons/fa';
+"use client";
+import { deleteVehicle } from "@/actions/vehicle/deleteVehicle";
+import EditVehicle from "@/components/Lists/EditVehicle";
+import NewVehicle from "@/components/Lists/NewVehicle";
+import VehicleCard from "@/components/mobile-responsive/client/VehicleCard";
+import { cn } from "@/lib/cn";
+import { Vehicle } from "@prisma/client";
+import { Popconfirm } from "antd";
+import { useRouter, useSearchParams } from "next/navigation";
+import React from "react";
+import { FaTimes } from "react-icons/fa";
 
 export default function VehicleList({
   clientId,
@@ -20,13 +21,13 @@ export default function VehicleList({
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const vehicleId = Number(searchParams?.get('vehicleId'));
+  const vehicleId = Number(searchParams?.get("vehicleId"));
 
   return (
     <div
-      className={`${selectedVehicle && 'hidden lg:block'} h-full w-full space-y-2 px-4`}
+      className={`${selectedVehicle && "hidden lg:block"} h-full w-full space-y-2`}
     >
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between px-4">
         <div className="flex items-center gap-x-8">
           <h3 className="text-lg font-semibold">Vehicle List</h3>
         </div>
@@ -44,10 +45,9 @@ export default function VehicleList({
 
       <VehicleCard vehicles={vehicles} clientId={clientId} />
 
-      {/* TODO: make it scrollable */}
-      <div className="hidden lg:block">
-        <table className="w-full">
-          <thead>
+      <div className="hidden lg:block h-80 overflow-x-auto">
+        <table className="w-full border-collapse">
+          <thead className="sticky top-0 bg-white shadow-sm">
             <tr className="h-10 border-b">
               <th className="px-4 text-left 2xl:px-10">Year</th>
               <th className="px-4 text-left 2xl:px-10">Make</th>
@@ -63,11 +63,11 @@ export default function VehicleList({
               <tr
                 key={index}
                 className={cn(
-                  'cursor-pointer rounded-md py-3',
-                  index % 2 === 0 ? 'bg-background' : 'bg-[#EEF4FF]',
+                  "cursor-pointer rounded-md py-3",
+                  index % 2 === 0 ? "bg-background" : "bg-[#EEF4FF]",
                   vehicleId &&
                     vehicleId === vehicle?.id &&
-                    'border-2 border-[#6571FF]'
+                    "border-2 border-[#6571FF]"
                 )}
                 onClick={() => {
                   router.push(
@@ -76,7 +76,7 @@ export default function VehicleList({
                 }}
               >
                 <td className="text-nowrap px-4 py-1 text-left 2xl:px-10">
-                  {vehicle?.year || ''}
+                  {vehicle?.year || ""}
                 </td>
                 <td className="text-nowrap px-4 py-1 text-left 2xl:px-10">
                   {vehicle.make}
@@ -92,9 +92,18 @@ export default function VehicleList({
                 </td>
                 <td className="px-4 py-1 text-left 2xl:px-10">
                   <div className="flex items-center gap-x-4 text-xl">
-                    {' '}
+                    {" "}
                     <EditVehicle vehicle={vehicle} />
-                    <button
+                    <Popconfirm
+                      title="Delete the Vehicle"
+                      description="Are you sure to delete this Vehicle?"
+                      okText="Yes"
+                      cancelText="No"
+                      onConfirm={() => deleteVehicle(vehicle.id, clientId)}
+                    >
+                      <FaTimes color="#f87171" size={16} />
+                    </Popconfirm>
+                    {/* <button
                       type="button"
                       onClick={() => {
                         deleteVehicle(vehicle.id, clientId);
@@ -102,7 +111,7 @@ export default function VehicleList({
                       className="text-xs text-red-500"
                     >
                       <FaTimes />
-                    </button>
+                    </button> */}
                   </div>
                 </td>
               </tr>

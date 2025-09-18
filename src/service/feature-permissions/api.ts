@@ -12,7 +12,7 @@ export const allFeaturePermissions = async () => {
 };
 
 export const allCompanyFeaturePermissions = async (companyId: number) => {
-  console.log("companyId", companyId)
+  // console.log("companyId", companyId)
   try {
     const response = await serverAxios.get(
       `/admin/permissions/companies/${companyId}`

@@ -70,7 +70,7 @@ export const createTechnicianValidationSchema = z
       {
         required_error: "Priority is required",
         invalid_type_error: "Invalid priority value",
-      },
+      }
     ),
 
     status: z.enum(
@@ -83,7 +83,7 @@ export const createTechnicianValidationSchema = z
       {
         required_error: "Status is required",
         invalid_type_error: "Invalid status value",
-      },
+      }
     ),
 
     invoiceId: z
@@ -102,7 +102,7 @@ export const createTechnicianValidationSchema = z
       .positive("Invoice item ID must be positive"),
   })
   .refine(
-    (data) => {
+    data => {
       if (data.date && data.due) {
         // Ensure date is not after due date
         return data.date <= data.due;
@@ -112,7 +112,7 @@ export const createTechnicianValidationSchema = z
     {
       message: "Date cannot be after due date",
       path: ["date"],
-    },
+    }
   );
 
 // update a technician validation schema with more detailed validations
@@ -147,7 +147,7 @@ export const updateTechnicianValidationSchema = z
         invalid_type_error: "Note must be a string",
       })
       .trim()
-      .max(1000, "Note cannot exceed 1000 characters")
+      .max(1500, "Note cannot exceed 1500 characters")
       .optional()
       .nullish(),
 
@@ -164,7 +164,7 @@ export const updateTechnicianValidationSchema = z
       {
         required_error: "Priority is required",
         invalid_type_error: "Invalid priority value",
-      },
+      }
     ),
 
     status: z
@@ -178,7 +178,7 @@ export const updateTechnicianValidationSchema = z
         {
           required_error: "Status is required",
           invalid_type_error: "Invalid status value",
-        },
+        }
       )
       .optional(),
 
@@ -190,7 +190,7 @@ export const updateTechnicianValidationSchema = z
       .nonempty("Invoice Must be required"),
   })
   .refine(
-    (data) => {
+    data => {
       if (data?.date && data?.due) {
         // Ensure date is not after due date
         return data.date <= data.due;
@@ -200,7 +200,7 @@ export const updateTechnicianValidationSchema = z
     {
       message: "Date cannot be after due date",
       path: ["date"],
-    },
+    }
   );
 
 // Create a type from the schema

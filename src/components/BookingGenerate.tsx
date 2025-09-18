@@ -10,16 +10,16 @@ const baseUrl = window.location.origin;
 
 const BookingGenerate = ({ companyId }: { companyId?: string }) => {
   const [showQR, setShowQR] = useState(false);
-  
+
   // Generate booking URL with encoded company_id as query parameter
-  const encodedCompanyId = companyId ? encodeCompanyId(companyId) : 'default';
+  const encodedCompanyId = companyId ? encodeCompanyId(companyId) : "default";
   const bookingUrl = `${baseUrl}/booking-url?ref=${encodedCompanyId}`;
-  
+
   // Generate QR code URL
   const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(bookingUrl)}`;
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 md:px-8 mt-10">
+    <div className="mx-auto w-full max-w-6xl sm:px-6 md:px-8 mt-10">
       <h2 className="mb-4 text-xl font-semibold text-gray-500 sm:text-2xl">
         Booking form
       </h2>
@@ -53,9 +53,7 @@ const BookingGenerate = ({ companyId }: { companyId?: string }) => {
                       </button>
                       <button
                         className={`rounded-full p-2 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 ${
-                          showQR
-                            ? "bg-blue-50"
-                            : "hover:bg-gray-100"
+                          showQR ? "bg-blue-50" : "hover:bg-gray-100"
                         }`}
                         onClick={() => setShowQR(!showQR)}
                         aria-label="Show QR code"

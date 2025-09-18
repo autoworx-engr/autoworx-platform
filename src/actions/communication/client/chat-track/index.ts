@@ -268,7 +268,7 @@ export async function unreadClientSmsAndEmail(clientId: number) {
 
     let updatedData = findClientChatTrack;
 
-    if (!!updatedData?.smsLastMessage) {
+    if (updatedData?.lastMessageBy === "Client") {
       updatedData = await db.clientConversationTrack.update({
         where: { clientId },
         data: {
@@ -278,7 +278,7 @@ export async function unreadClientSmsAndEmail(clientId: number) {
       });
     }
 
-    if (!!updatedData?.emailLastMessage) {
+    if (updatedData?.lastEmailBy === "Client") {
       updatedData = await db.clientConversationTrack.update({
         where: { clientId },
         data: {

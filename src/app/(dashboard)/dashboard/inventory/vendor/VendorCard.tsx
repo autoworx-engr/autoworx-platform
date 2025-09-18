@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import EditVendor from "@/components/Lists/EditVendor";
-import { CiEdit } from "react-icons/ci";
 import { deleteVendor } from "@/actions/vendor/deleteVendor";
 import { useRouter } from "next/navigation";
 import { Vendor } from "@prisma/client";
@@ -10,6 +9,7 @@ import { FaTimes } from "react-icons/fa";
 import moment from "moment";
 import VendorListStore from "@/stores/vendorListStore";
 import { Popconfirm } from "antd";
+import { SquarePen } from "lucide-react";
 
 const VendorCard = ({
   vendors,
@@ -41,7 +41,7 @@ const VendorCard = ({
                 <div
                   onClick={() => {
                     router.push(
-                      `/dashboard/inventory/vendor?vendorId=${vendor.id}`,
+                      `/dashboard/inventory/vendor?vendorId=${vendor.id}`
                     );
                     setActive(true);
                   }}
@@ -57,7 +57,7 @@ const VendorCard = ({
                   <EditVendor
                     button={
                       <button className="text-2xl text-blue-600">
-                        <CiEdit />
+                        <SquarePen className="w-5 h-5 text-[#6571FF]" />
                       </button>
                     }
                     vendor={vendor}
@@ -89,7 +89,7 @@ const VendorCard = ({
                   <span>
                     {moment.utc(vendor.createdAt).format(
                       // date.month.year
-                      "MM/DD/YYYY",
+                      "MM/DD/YYYY"
                     )}
                   </span>
                 </div>

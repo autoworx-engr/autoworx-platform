@@ -4,9 +4,9 @@ import { useEstimatePopupStore } from "@/stores/estimate-popup";
 import { DropdownMenuContent } from "@radix-ui/react-dropdown-menu";
 import { useEffect, useRef, useState } from "react";
 import { FaChevronDown, FaChevronUp, FaSearch, FaTimes } from "react-icons/fa";
-import { FaPen } from "react-icons/fa6";
 import { DropdownMenu, DropdownMenuTrigger } from "./DropdownMenu";
 import { useMediaQuery } from "react-responsive";
+import { SquarePen } from "lucide-react";
 
 export default function ItemSelector<T>({
   label,
@@ -155,7 +155,7 @@ export default function ItemSelector<T>({
               onClick={() => setOpen(true)}
               className={cn(
                 "flex h-10 w-full items-center justify-between rounded-md border-2 border-slate-400 px-4",
-                open && "invisible",
+                open && "invisible"
               )}
             >
               <p className="text-sm font-medium text-slate-400">{label}</p>
@@ -164,7 +164,7 @@ export default function ItemSelector<T>({
           ) : (
             <div
               className={cn(
-                "relative flex h-10 w-full items-center justify-between rounded-md border-2 border-slate-400 px-4",
+                "relative flex h-10 w-full items-center justify-between rounded-md border-2 border-slate-400 px-4"
               )}
             >
               <p className="text-sm font-medium text-slate-400">
@@ -183,7 +183,7 @@ export default function ItemSelector<T>({
                 }}
               >
                 <div className="rounded-full bg-[#6571FF] p-1 text-white">
-                  <FaPen className="text-[10px]" />
+                  <SquarePen className="w-4 h-4 cursor-pointer" />
                 </div>
               </button>
 

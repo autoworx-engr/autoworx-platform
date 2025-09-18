@@ -279,7 +279,7 @@ export default async function Page({
 
         <Tabs
           defaultValue="create"
-          className="col-start-1 flex min-h-[72vh] flex-col overflow-clip"
+          className="col-start-1 flex min-h-[40vh] lg:min-h-[69vh] flex-col overflow-clip"
         >
           <TabsList className="grid grid-cols-4 md:inline-flex">
             <TabsTrigger value="payments" className="order-4 pl-12 md:order-1">

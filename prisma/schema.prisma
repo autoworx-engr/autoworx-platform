@@ -5,7 +5,6 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  
   directUrl   = env("DIRECT_URL")
 }
 
@@ -567,6 +566,7 @@ model Company {
   BugReport                        BugReport[]
   salaryHistory                    SalaryHistory[]
   appointmentTitles                AppointmentTitle[]
+  shortLinks                       ShortLink[] // Short links associated with this company
 }
 
 // create model that will handle multiple companies join and collaboration
@@ -1293,7 +1293,7 @@ model Technician {
   amount        Decimal?  @default(0)
   priority      Priority? @default(Low)
   status        String?
-  note          String?   @map("new_note")
+  note          String?   @map("new_note") @db.VarChar(1500)
   serviceId     Int       @map("service_id")
   invoiceId     String    @map("invoice_id")
   companyId     Int       @map("company_id")
@@ -1845,6 +1845,7 @@ model User {
   Refund                         Refund[]
   inventoryAutomationTeamMembers InventoryAutomationTeamMember[]
   salaryHistory                  SalaryHistory[]
+  shortLinks                     ShortLink[] // Links created by this user
 
   @@index([companyId], name: "fk_users_company")
 }
@@ -1979,7 +1980,7 @@ model Permission {
   payments                      Boolean @default(false)
   workforceManagement           Boolean @default(false) @map("workforce_management")
   reporting                     Boolean @default(false)
-  inventory                     Boolean @default(false)
+  inventoryAll                     Boolean @default(false)
   integrations                  Boolean @default(false)
   salesPipeline                 Boolean @default(false) @map("sales_pipeline")
   shopPipeline                  Boolean @default(false) @map("shop_pipeline")
@@ -2129,6 +2130,30 @@ model VehicleColor {
   updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
   Vehicle   Vehicle[]
   company   Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+}
+
+// Generic URL shortener for any links
+model ShortLink {
+  id          Int      @id @default(autoincrement())
+  shortCode   String   @unique @db.VarChar(10) // Short unique identifier (e.g., "abc123")
+  originalUrl String   @unique @db.VarChar(767) // The original URL - unique to prevent duplicates
+  title       String?  @db.VarChar(255) // Optional title for the link
+  description String?  @db.Text // Optional description
+  clicks      Int      @default(0) // Track number of clicks
+  isActive    Boolean  @default(true) // Allow enabling/disabling links
+  expiresAt   DateTime? // Optional expiration date
+  createdBy   Int?     // Optional user who created the link
+  companyId   Int?     // Optional company association
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+  
+  user        User?    @relation(fields: [createdBy], references: [id], onDelete: SetNull)
+  company     Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+
+  @@index([shortCode])
+  @@index([createdBy])
+  @@index([companyId])
+  @@index([isActive])
 }
 
 model VehicleParts {

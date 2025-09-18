@@ -3,7 +3,7 @@ import {
   DialogClose,
   DialogContent,
   DialogFooter,
-  DialogTrigger,
+  DialogTrigger
 } from "@/components/Dialog";
 import { SlimInput } from "@/components/SlimInput";
 import React, { useEffect, useRef, useState } from "react";
@@ -30,7 +30,7 @@ type TContactListUser = {
 export default function AddUsersInGroupModal({
   users,
   groupId,
-  setGroupsList,
+  setGroupsList
 }: TProps) {
   const [groupUsers, setGroupUsers] = useState(users);
 
@@ -60,15 +60,15 @@ export default function AddUsersInGroupModal({
   }, [open]);
 
   const getFindUsers = async (searchTerm?: string) => {
-    const withoutContactList = contactList.map((user) => ({
-      id: user.id,
+    const withoutContactList = contactList.map(user => ({
+      id: user.id
     }));
-    const alreadyAddedUsersInGroup = users.map((user) => ({
-      id: user.id,
+    const alreadyAddedUsersInGroup = users.map(user => ({
+      id: user.id
     }));
     const searchUsersResult = await searchUsers(
       searchTerm || "",
-      withoutContactList.concat(alreadyAddedUsersInGroup),
+      withoutContactList.concat(alreadyAddedUsersInGroup)
     );
     if (searchUsersResult.success) {
       setGroupUsers(searchUsersResult.data);
@@ -83,55 +83,53 @@ export default function AddUsersInGroupModal({
       const searchTerm = event.target.value;
       getFindUsers(searchTerm);
     },
-    500,
+    500
   );
 
   // add user in contact list
   const handleAddContactList = (user: User) => {
     const modifyUser = {
       id: user.id,
-      name: user.firstName + " " + user.lastName,
+      name: user.firstName + " " + user.lastName
     };
-    setGroupUsers((prevContact) =>
-      prevContact.filter((prevUser) => prevUser.id !== user.id),
+    setGroupUsers(prevContact =>
+      prevContact.filter(prevUser => prevUser.id !== user.id)
     );
 
     setError(null);
-    setContactList((prev) => [...prev, modifyUser]);
+    setContactList(prev => [...prev, modifyUser]);
     setOpenUserList(false);
   };
 
   const handleDeleteFromContactList = (user: TContactListUser) => {
-    setGroupUsers((prevUser) => [
+    setGroupUsers(prevUser => [
       ...prevUser,
-      users.find((u) => u.id === user.id)!,
+      users.find(u => u.id === user.id)!
     ]);
-    setContactList((prev) =>
-      prev.filter((prevUser) => prevUser.id !== user.id),
-    );
+    setContactList(prev => prev.filter(prevUser => prevUser.id !== user.id));
   };
 
   const handleAddUserInGroup = async () => {
     if (contactList.length !== 0 && groupId) {
-      const usersInGroup = contactList.map((user) => ({
-        id: user.id,
+      const usersInGroup = contactList.map(user => ({
+        id: user.id
       }));
       const response = await addUserInGroup({
         groupId,
-        users: usersInGroup,
+        users: usersInGroup
       });
       if (response.status === 200) {
         setOpen(false);
         setError("");
         setContactList([]);
         setGroupsList &&
-          setGroupsList((groupList) =>
-            groupList.map((g) => {
+          setGroupsList(groupList =>
+            groupList.map(g => {
               if (g.id === groupId) {
                 return response.data;
               }
               return g;
-            }),
+            })
           );
       } else {
         setError("Failed to create group.");
@@ -149,7 +147,7 @@ export default function AddUsersInGroupModal({
           <TiPlusOutline className="size-5 text-[#006D77]" />
         </button>
       </DialogTrigger>
-      <DialogContent className="w-[350px] sm:w-full">
+      <DialogContent className="w-full overflow-hidden">
         {error && <p className="text-center text-sm text-red-400">{error}</p>}
         <h2 className="mb-5 text-2xl font-bold">Add Users</h2>
         <div>
@@ -166,7 +164,7 @@ export default function AddUsersInGroupModal({
                     className="w-full rounded-sm border border-primary-foreground bg-background py-0.5 pl-7 leading-6 outline-none"
                   />
                   <RiArrowUpSLine
-                    onClick={() => setOpenUserList((prev) => !prev)}
+                    onClick={() => setOpenUserList(prev => !prev)}
                     className="absolute right-0 top-[5px] size-6 cursor-pointer"
                   />
                   <CiSearch className="absolute left-1 top-[5px] size-5 cursor-pointer" />
@@ -174,7 +172,7 @@ export default function AddUsersInGroupModal({
                 {/* user list */}
                 <div className="flex h-72 flex-col items-start space-y-2 overflow-y-auto p-1">
                   {groupUsers.length > 0 ? (
-                    groupUsers.map((user) => (
+                    groupUsers.map(user => (
                       <div
                         key={user?.id}
                         className="flex cursor-pointer items-center space-x-2 p-1"
@@ -209,21 +207,21 @@ export default function AddUsersInGroupModal({
                 type="text"
                 readOnly
                 onClick={() => {
-                  setOpenUserList((prev) => !prev);
+                  setOpenUserList(prev => !prev);
                   getFindUsers();
                 }}
                 className="cursor-pointer"
               />
               <RiArrowDownSLine
                 onClick={() => {
-                  setOpenUserList((prev) => !prev);
+                  setOpenUserList(prev => !prev);
                   getFindUsers();
                 }}
                 className="absolute right-1 top-[32px] size-6 cursor-pointer"
               />
               {/* added user in group */}
               <div className="mt-3 flex flex-wrap gap-3">
-                {contactList.map((groupUser) => (
+                {contactList.map(groupUser => (
                   <div
                     key={groupUser.id}
                     className="flex items-center justify-between space-x-1 rounded-full bg-[#006D77] px-2 py-1 text-white"

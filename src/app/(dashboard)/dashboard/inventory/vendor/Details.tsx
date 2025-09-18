@@ -34,11 +34,22 @@ export default function Details({ vendor }: { vendor: Vendor | undefined }) {
           <p>Company Name: {vendor?.companyName}</p>
           <p>Phone: {vendor.phone}</p>
           <p>Email: {vendor.email}</p>
+          <p>
+            Website:
+            <Link
+              href={vendor.website || ""}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="break-all max-w-[250px]  hover:underline"
+            >
+              {vendor.website}
+            </Link>
+          </p>
           <p>Address: {vendor.address}</p>
           <p>City: {vendor.city}</p>
           <p>State: {vendor.state}</p>
           <p>Zip: {vendor.zip}</p>
-          <p>Website: {vendor.website}</p>
+
           <p>Notes: {vendor.notes}</p>
           <div className="absolute bottom-3 right-2">
             <Link

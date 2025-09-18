@@ -23,6 +23,7 @@ type ZapFormProps = {
     address: string;
     city: string;
     state: string;
+    companyId: number;
   };
 };
 const ZapForm = ({ company }: ZapFormProps) => {
@@ -228,6 +229,7 @@ const ZapForm = ({ company }: ZapFormProps) => {
         });
       }
     } catch (error) {
+      console.log(error);
       setFormStatus({
         message: "An error occurred. Please try again later.",
         type: "error",
@@ -270,10 +272,7 @@ const ZapForm = ({ company }: ZapFormProps) => {
             <div className="h-16 w-16 rounded-full bg-white/20 flex items-center justify-center">
               <div className="text-2xl font-bold text-white ">
                 <Image
-                  src={
-                    company?.image ||
-                    "/images/autoworx-logo.webp"
-                  }
+                  src={company?.image || "/images/autoworx-logo.webp"}
                   alt={company?.name || "Company Logo"}
                   width={56}
                   height={56}
@@ -575,8 +574,8 @@ const ZapForm = ({ company }: ZapFormProps) => {
             <label htmlFor="consent" className="text-white text-opacity-90">
               I agree to receive recurring text messages, emails, and calls from{" "}
               {legalBusinessName} regarding my inquiry and related services.
-              Message and data rates may apply. Reply STOP to opt out, HELP for
-              help. View our{" "}
+              Message frequency varies. Message and data rates may apply. Reply
+              STOP to opt out, HELP for help. View our{" "}
               <TermsAndPolicyModal type="terms" token={formData.token}>
                 <button
                   type="button"

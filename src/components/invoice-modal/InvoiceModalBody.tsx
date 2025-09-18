@@ -5,6 +5,7 @@ import { getInvoiceModalData } from "@/actions/estimate/invoice/getInvoiceModalD
 import { getIsWorkorderCreated } from "@/actions/estimate/invoice/getworkorderCreated";
 import { sendInvoiceEmail } from "@/actions/estimate/invoice/sendInvoiceEmail";
 import { sendInvoiceSms } from "@/actions/estimate/invoice/sendInvoiceSms";
+import { getOrCreateShortLinkAction } from "@/actions/shortener/getOrCreateShortLink";
 import { getStripeAccount } from "@/app/(dashboard)/dashboard/settings/payments/stripe";
 import {
   DialogClose,
@@ -88,7 +89,7 @@ export default function InvoiceModalBody({
     enabled: !!invoiceId,
   });
 
-  console.log({ isError, error, data });
+  // console.log({ isError, error, data });
 
   const [twilioCredentials, setTwilioCredentials] =
     useState<TwilioCredentials | null>();
@@ -212,10 +213,44 @@ export default function InvoiceModalBody({
     }
     successToast("Invoice sent successfully");
   };
-  const handleCopyLink = () => {
-    const link = `${process.env.NEXT_PUBLIC_APP_URL}/public-invoice/${invoiceId}`;
-    navigator.clipboard.writeText(link);
-    successToast("Link copied to clipboard");
+  const handleCopyLink = async () => {
+    try {
+      const clientName = invoice?.client?.firstName || invoice?.client?.lastName || "";
+      
+      const shortLinkResult = await getOrCreateShortLinkAction({
+        invoiceId: invoiceId!,
+        clientName
+      });
+      
+      if (shortLinkResult.success && shortLinkResult.shortUrl) {
+        await navigator.clipboard.writeText(shortLinkResult.shortUrl);
+        console.log("📋 Copy Link - Short link:", {
+          isExisting: shortLinkResult.isExisting,
+          originalUrl: shortLinkResult.originalUrl,
+          shortUrl: shortLinkResult.shortUrl,
+          shortCode: shortLinkResult.shortCode,
+          invoiceId: invoiceId,
+          clientName: clientName
+        });
+        successToast("Short link copied to clipboard");
+      } else {
+        // Fallback to original URL if short link creation fails
+        const fallbackUrl = shortLinkResult.originalUrl || `${process.env.NEXT_PUBLIC_APP_URL}/public-invoice/${invoiceId}`;
+        await navigator.clipboard.writeText(fallbackUrl);
+        console.log("⚠️ Copy Link - Using original URL:", {
+          error: shortLinkResult.error,
+          originalUrl: fallbackUrl,
+          invoiceId: invoiceId
+        });
+        successToast("Link copied to clipboard");
+      }
+    } catch (error) {
+      console.error("Error copying link:", error);
+      // Fallback to original URL
+      const fallbackLink = `${process.env.NEXT_PUBLIC_APP_URL}/public-invoice/${invoiceId}`;
+      await navigator.clipboard.writeText(fallbackLink);
+      successToast("Link copied to clipboard");
+    }
   };
   return (
     <DialogPortal>
@@ -430,7 +465,7 @@ export default function InvoiceModalBody({
                       Vehicle Details:
                     </h2>
                     <div className="flex flex-row flex-wrap gap-2">
-                      <p>{vehicle?.year?.toString().padStart(2, "0") || ""}</p>
+                      <p>{vehicle?.year || ""}</p>
                       <p>{vehicle?.make}</p>
                       <p>{vehicle?.model}</p>
                       {vehicle?.other && <p>{vehicle?.other}</p>}

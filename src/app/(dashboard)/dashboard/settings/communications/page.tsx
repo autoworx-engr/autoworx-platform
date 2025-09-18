@@ -15,15 +15,15 @@ export default async function CommunicationPage() {
   //   where: { id: companyId },
   // });
   return (
-    <div className="grid w-full grid-cols-2 items-start gap-4 px-5">
+    <div className="grid w-full grid-cols-1 md:grid-cols-2 items-start gap-4 px-5">
       {/* Security/Zapier Token  */}
       <div>
         <SecurityPage company={JSON.parse(JSON.stringify(company))} />
         <BookingGenerate companyId={companyId.toString()} />
-       
-       <div className="mt-4">
-         <TermsAndPolicyEditor />
-       </div>
+
+        <div className="mt-4">
+          <TermsAndPolicyEditor />
+        </div>
       </div>
       {/* Sidebar */}
       <div className="space-y-4">
@@ -32,7 +32,7 @@ export default async function CommunicationPage() {
           <h2 className="mb-2 text-xl font-semibold">
             Twilio Credentials ( For SMS & Call )
           </h2>
-          <div className="space-y-3 rounded-sm border p-5">
+          <div className="space-y-3 rounded-sm border">
             {/* TODO: future added */}
             <SmsGetwayForm />
           </div>

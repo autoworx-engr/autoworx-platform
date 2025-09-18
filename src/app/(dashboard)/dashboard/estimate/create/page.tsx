@@ -67,7 +67,7 @@ export default async function Page({
   // spread all `tag` objects into `tags` array
   products.forEach((product) => {
     (product as unknown as { tags: Tag[] }).tags = product.tags.map(
-      (tag) => tag.tag,
+      (tag) => tag.tag
     );
   });
 
@@ -85,7 +85,7 @@ export default async function Page({
   // spread all `tag` objects into `tags` array
   labors.forEach((labor) => {
     (labor as unknown as { tags: Tag[] }).tags = labor.tags.map(
-      (tag) => tag.tag,
+      (tag) => tag.tag
     );
   });
 
@@ -97,79 +97,87 @@ export default async function Page({
       cost: product.price,
       tags: product.tags,
       productId: product.id,
-    })),
+    }))
   );
   return (
-    <div className="gap-3 space-y-4 overflow-clip py-2 md:-my-2 md:min-h-[93vh] lg:grid lg:grid-cols-[1fr,24rem] lg:grid-rows-[auto,auto,1fr] lg:space-y-0">
-      <Title>Estimate</Title>
+    <div className="gap-3 space-y-4 overflow-clip py-2 md:-my-2 md:min-h-[93vh] xl:grid xl:grid-cols-4 xl:space-y-0">
+      <div className="col-span-3 space-y-4">
+        <Title>Estimate</Title>
 
-      <SyncLists
-        customers={customers}
-        vehicles={vehicles}
-        categories={categories}
-        services={services}
-        materials={materials}
-        labors={labors}
-        tags={tags}
-        vendors={vendors}
-        statuses={statuses}
-        paymentMethods={paymentMethods}
-        client={client}
-      />
-      <div>
-        <ConvertButton
-          type={InvoiceType.Estimate}
-          text="Save as Estimate"
-          className="border-none bg-[#6470FF] text-white"
-          icon={<EstimateLogo />}
+        <SyncLists
+          customers={customers}
+          vehicles={vehicles}
+          categories={categories}
+          services={services}
+          materials={materials}
+          labors={labors}
+          tags={tags}
+          vendors={vendors}
+          statuses={statuses}
+          paymentMethods={paymentMethods}
+          client={client}
         />
+
+        <Header />
+
+        <Tabs
+          defaultValue="create"
+          className="col-start-1 flex min-h-[40vh] lg:min-h-[69vh] flex-col overflow-clip"
+        >
+          <TabsList className="grid grid-cols-4 md:inline-flex">
+            <TabsTriggerCreate value="payments" className="order-4 md:order-1">
+              Payments
+            </TabsTriggerCreate>
+            <TabsTriggerCreate
+              value="inspections"
+              className="order-3 md:order-2"
+            >
+              Inspections
+            </TabsTriggerCreate>
+            <TabsTriggerCreate
+              value="attachment"
+              className="order-2 md:order-3"
+            >
+              Attachment
+            </TabsTriggerCreate>
+            <TabsTriggerCreate value="create" className="order-1 md:order-4">
+              Create
+            </TabsTriggerCreate>
+          </TabsList>
+
+          <TabsContent value="create" className="h-full w-full">
+            <CreateTab />
+          </TabsContent>
+
+          <TabsContent value="attachment">
+            <AttachmentTab />
+          </TabsContent>
+
+          <TabsContent value="inspections">
+            <InspectionsTab />
+          </TabsContent>
+          <TabsContent value="payments">
+            <PaymentTab
+              clientId={
+                searchParams.clientId
+                  ? parseInt(searchParams.clientId)
+                  : undefined
+              }
+            />
+          </TabsContent>
+        </Tabs>
       </div>
 
-      <Header />
-
-      <Tabs
-        defaultValue="create"
-        className="col-start-1 flex min-h-0 flex-col overflow-clip"
-      >
-        <TabsList className="grid grid-cols-4 md:inline-flex">
-          <TabsTriggerCreate value="payments" className="order-4 md:order-1">
-            Payments
-          </TabsTriggerCreate>
-          <TabsTriggerCreate value="inspections" className="order-3 md:order-2">
-            Inspections
-          </TabsTriggerCreate>
-          <TabsTriggerCreate value="attachment" className="order-2 md:order-3">
-            Attachment
-          </TabsTriggerCreate>
-          <TabsTriggerCreate value="create" className="order-1 md:order-4">
-            Create
-          </TabsTriggerCreate>
-        </TabsList>
-
-        <TabsContent value="create" className="h-auto w-full">
-          <CreateTab />
-        </TabsContent>
-
-        <TabsContent value="attachment">
-          <AttachmentTab />
-        </TabsContent>
-
-        <TabsContent value="inspections">
-          <InspectionsTab />
-        </TabsContent>
-        <TabsContent value="payments">
-          <PaymentTab
-            clientId={
-              searchParams.clientId
-                ? parseInt(searchParams.clientId)
-                : undefined
-            }
+      <div className="app-shadow grid grid-rows-[1fr,auto,auto] divide-y rounded-md">
+        <div>
+          <ConvertButton
+            type={InvoiceType.Estimate}
+            text="Save as Estimate"
+            className="border-none bg-[#6470FF] text-white"
+            icon={<EstimateLogo />}
           />
-        </TabsContent>
-      </Tabs>
-
-      <div className="app-shadow col-start-2 row-start-2 row-end-4 grid grid-rows-[1fr,auto,auto] divide-y rounded-md md:min-h-[85vh]">
-        <Create />
+          <Create />
+        </div>
         <BillSummary />
       </div>
     </div>

@@ -24,7 +24,7 @@ export const lossProductValidationSchema = z.object({
     },
     {
       message: "Quantity must be a positive number",
-    },
+    }
   ),
   notes: z
     .string({
@@ -54,7 +54,7 @@ export const updateSalesInventoryHistorySchema = z.object({
     },
     {
       message: "Quantity must be a positive number",
-    },
+    }
   ),
   notes: z.string().trim().max(500, "Notes cannot exceed 500 characters"),
 
@@ -84,7 +84,7 @@ export const updatePurchaseInventoryHistorySchema = z.object({
     .finite("Price must be finite")
     .refine(
       (num) => (num * 100) % 1 === 0,
-      "Price cannot have more than 2 decimal places",
+      "Price cannot have more than 2 decimal places"
     )
     .optional()
     .nullable(),
@@ -96,7 +96,7 @@ export const updatePurchaseInventoryHistorySchema = z.object({
     },
     {
       message: "Quantity must be a positive number",
-    },
+    }
   ),
 
   unit: z

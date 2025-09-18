@@ -1,5 +1,5 @@
 import { Task } from "@prisma/client";
-import { FaPen } from "react-icons/fa";
+import { SquarePen } from "lucide-react";
 
 type TTaskTooltipProps = {
   event: Task;
@@ -20,7 +20,7 @@ export default function TaskTooltip({ event, onModalOpen }: TTaskTooltipProps) {
             onModalOpen && onModalOpen();
           }}
         >
-          <FaPen className="mx-auto text-[10px]" />
+          <SquarePen className="w-4 h-4 cursor-pointer mx-auto" />
         </button>
       </div>
 

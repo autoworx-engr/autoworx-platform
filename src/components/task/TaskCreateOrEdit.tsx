@@ -3,9 +3,9 @@
 import { Dialog, DialogTrigger } from "@/components/Dialog";
 import { useState } from "react";
 import { FaPlus } from "react-icons/fa6";
-import { MdOutlineEdit } from "react-icons/md";
 import TaskContentModal from "./TaskContentModal";
 import { Task } from "@prisma/client";
+import { SquarePen } from "lucide-react";
 
 type NewTaskProps = {
   onlyOneUser?: boolean;
@@ -59,7 +59,7 @@ export default function TaskCreateOrEdit({
     openButtonIcon = (
       <button className="flex w-full min-w-32 items-center justify-center gap-1 rounded-md bg-blue-600 px-2 py-2 text-[15px] text-white max-[1300px]:py-1">
         {fromEdit ? (
-          <MdOutlineEdit className="mr-2 cursor-pointer" />
+          <SquarePen className="w-5 h-5 text-[#6571FF] mr-2 cursor-pointer" />
         ) : (
           <FaPlus className="" />
         )}

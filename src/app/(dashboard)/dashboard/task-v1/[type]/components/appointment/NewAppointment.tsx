@@ -114,8 +114,17 @@ export function NewAppointment({
   useEffect(() => {
     if (data?.startTime) {
       if (typeof data.startTime === "string" && data.startTime.includes(":")) {
-        setStartTime(data.startTime);
-        setEndTime(addOneHour(data.startTime));
+        setStartTime(() => {
+          if (!data.startTime) return "";
+          const [hour, minute] = data.startTime.split(":").map(Number);
+          return formatTime12Hour(hour, minute, companyTimezone);
+        });
+
+        setEndTime(() => {
+          if (!data?.endTime) return "";
+          const [hour, minute] = data.endTime.split(":").map(Number);
+          return formatTime12Hour(hour, minute, companyTimezone);
+        });
       } else {
         try {
           const dateObj = moment(data.startTime).toDate();
@@ -214,30 +223,60 @@ export function NewAppointment({
 
   // Change start and end time based on settings
   useEffect(() => {
-    if (allDay && settings) {
-      const isToday =
-        date === formatDateToToday(date ?? moment().toDate().toISOString());
-      const currentTime = getCurrentTime(); // Current time in HH:mm format
+    if (allDay) {
+      // All-day event: from 9:00 AM to 10:00 PM
+      const startTime = "09:00";
+      const endTime = "22:00";
 
-      let startTime = settings.dayStart;
-      let endTime = settings.dayEnd;
+      setStartTime(() => {
+        const [hour, minute] = startTime.split(":").map(Number);
+        return formatTime12Hour(hour, minute, companyTimezone);
+      });
 
-      if (isToday && startTime < currentTime) {
-        startTime = currentTime;
+      setEndTime(() => {
+        const [hour, minute] = endTime.split(":").map(Number);
+        return formatTime12Hour(hour, minute, companyTimezone);
+      });
+    } else if (settings) {
+      if (data) {
+        if (data?.startTime) {
+          if (
+            typeof data.startTime === "string" &&
+            data.startTime.includes(":")
+          ) {
+            setStartTime(() => {
+              if (!data.startTime) return "";
+              const [hour, minute] = data.startTime.split(":").map(Number);
+              return formatTime12Hour(hour, minute, companyTimezone);
+            });
 
-        // Ensure endTime is at least 30-60 minutes after startTime
-        if (endTime < startTime) {
-          endTime = addOneHour(startTime); // Add 1 hour buffer
-        }
+            setEndTime(() => {
+              if (!data?.endTime) return "";
+              const [hour, minute] = data.endTime.split(":").map(Number);
+              return formatTime12Hour(hour, minute, companyTimezone);
+            });
+          } else {
+            try {
+              const dateObj = moment(data.startTime).toDate();
+              const formattedTime = `${dateObj.getHours().toString().padStart(2, "0")}:${dateObj.getMinutes().toString().padStart(2, "0")}`;
+              setStartTime(formattedTime);
+              setEndTime(addOneHour(formattedTime));
+            } catch (e) {
+              console.error("Failed to parse startTime:", e);
+            }
+          }
+        } else {
+          let now = moment.tz(companyTimezone);
 
-        // Prevent exceeding settings.dayEnd
-        if (endTime > settings.dayEnd) {
-          endTime = settings.dayEnd;
+          const roundedMinutes = Math.ceil(now.minute() / 15) * 15;
+          now.minute(roundedMinutes).second(0).millisecond(0);
+
+          setStartTime(now.format("HH:mm"));
+
+          const end = now.clone().add(1, "hours");
+          setEndTime(end.format("HH:mm"));
         }
       }
-
-      setStartTime(startTime);
-      setEndTime(endTime);
     }
   }, [allDay, settings?.dayStart, settings?.dayEnd, date]);
 

@@ -3,13 +3,13 @@ import { deleteCoupon } from "@/actions/coupon/new";
 import { Coupon } from "@prisma/client";
 import moment from "moment";
 import React, { useState, useEffect } from "react";
-import { CiEdit } from "react-icons/ci";
 import { FaTimes } from "react-icons/fa";
 import EditCoupon from "./EditCoupon";
 import NewCoupon from "./NewCoupon";
 import QrCodeForCoupon from "./QrCodeForCoupon";
 import { Pagination, Popconfirm } from "antd"; // Importing the Pagination component from Ant Design
 import { useMediaQuery } from "react-responsive";
+import { SquarePen } from "lucide-react";
 
 // Define the props for the CouponTable component
 interface CouponTableProps {
@@ -44,7 +44,7 @@ const CuponComponet = ({ coupons, setCoupons }: CouponTableProps) => {
 
   const paginatedCoupons = coupons.slice(
     (currentPage - 1) * pageSize,
-    currentPage * pageSize,
+    currentPage * pageSize
   );
 
   const handleCouponQr = (coupon: Coupon) => {
@@ -62,7 +62,7 @@ const CuponComponet = ({ coupons, setCoupons }: CouponTableProps) => {
     e.stopPropagation();
     await deleteCoupon(coupon.id);
     setCoupons(
-      (prevCoupons) => prevCoupons?.filter((c) => c.id !== coupon.id) || null,
+      (prevCoupons) => prevCoupons?.filter((c) => c.id !== coupon.id) || null
     );
     setSelectedCoupon(null);
     setShowQr(false);
@@ -72,8 +72,8 @@ const CuponComponet = ({ coupons, setCoupons }: CouponTableProps) => {
     setCoupons(
       (prevCoupons) =>
         prevCoupons?.map((coupon) =>
-          coupon.id === updatedCoupon.id ? updatedCoupon : coupon,
-        ) || null,
+          coupon.id === updatedCoupon.id ? updatedCoupon : coupon
+        ) || null
     );
   };
 
@@ -158,7 +158,7 @@ const CuponComponet = ({ coupons, setCoupons }: CouponTableProps) => {
                           className="text-left text-2xl text-blue-600"
                           onClick={(e) => handleEdit(e, coupon)}
                         >
-                          <CiEdit />
+                          <SquarePen className="w-5 h-5 text-[#6571FF]" />
                         </button>
                         <Popconfirm
                           title="Delete the Coupon"
@@ -200,7 +200,7 @@ const CuponComponet = ({ coupons, setCoupons }: CouponTableProps) => {
                         className="text-left text-2xl text-blue-600"
                         onClick={(e) => handleEdit(e, coupon)}
                       >
-                        <CiEdit />
+                        <SquarePen className="w-5 h-5 text-[#6571FF]" />
                       </button>
                       <Popconfirm
                         title="Delete the Coupon"

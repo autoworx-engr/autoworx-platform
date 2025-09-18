@@ -2,10 +2,12 @@
 
 import { Dialog, DialogTrigger } from "@/components/Dialog";
 import { Appointment, Lead } from "@prisma/client";
+import { useSession } from "next-auth/react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { FaPlus } from "react-icons/fa";
 import AppointmentModalBody from "./AppointmentModalBody";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { AppointModalBodyTechnician } from "./AppointModalBodyTechnician";
 
 type TAppointmentCreateOrEditProps = {
   fromLead?: boolean;
@@ -42,6 +44,8 @@ export function AppointmentCreateOrEdit({
   isModalOpen = false,
   setIsModalOpen,
 }: TAppointmentCreateOrEditProps) {
+  const { data: session } = useSession();
+
   const state = useState(false);
   const [open, setOpen] = setIsModalOpen
     ? [isModalOpen, setIsModalOpen]
@@ -85,7 +89,9 @@ export function AppointmentCreateOrEdit({
       }}
     >
       {!setIsModalOpen && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-      {open && (
+      {open && session?.user?.employeeType === "Technician" ? (
+        <AppointModalBodyTechnician appointmentId={appointmentId!} />
+      ) : (
         <AppointmentModalBody
           fromLead={fromLead}
           clientId={clientId}

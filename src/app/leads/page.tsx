@@ -15,6 +15,7 @@ interface CompanyInfo {
   address: string;
   city: string;
   state: string;
+  companyId: number;
 }
 
 const LeadService = () => {
@@ -44,6 +45,7 @@ const LeadService = () => {
           address: result?.address ?? "",
           city: result?.city ?? "",
           state: result?.state ?? "",
+          companyId: result?.id ?? +companyId,
         });
       } catch (err) {
         errorToast("Failed to load company info");

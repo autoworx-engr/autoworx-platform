@@ -6,14 +6,15 @@ import { Task, User } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
 import moment from "moment";
 import { useEffect, useState } from "react";
-import { FaPen } from "react-icons/fa";
 import { useMediaQuery } from "react-responsive";
-import { taskQueryKey } from "../../../_constant";
+import { appointmentQueryKey, taskQueryKey } from "../../../_constant";
 import { useDate } from "../../../_hook/lib/useDate";
 import DraggableTaskTooltip from "../DraggableTaskTooltip";
 import ResizeTaskTooltip from "./ResizeTaskTooltip";
 import TaskTooltip from "../TaskTooltip";
 import useWeekStartEndDays from "../../../_hook/lib/useWeekStartEndDays";
+import AppointmentTooltip from "../AppointmentTooltip";
+import { AppointmentCreateOrEdit } from "@/components/appointment/AppointmentCreateOrEdit";
 
 type TProps = {
   event: any;
@@ -35,6 +36,7 @@ export default function DayTask({
   const date = useDate();
   const dateFormat = date.format("YYYY-MM-DD");
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+  const [isAppointmentModalOpen, setIsAppointmentOpen] = useState(false);
   const queryClient = useQueryClient();
   const [height, setHeight] = useState(0);
   const is1300 = useMediaQuery({ query: "(max-width: 1300px)" });
@@ -51,6 +53,20 @@ export default function DayTask({
 
     queryClient.invalidateQueries({
       queryKey: [taskQueryKey.allTasks, weekStartDate, weekEndDate],
+    });
+  };
+
+  const revalidateAppointmentQueries = () => {
+    queryClient.invalidateQueries({
+      queryKey: [
+        appointmentQueryKey.allAppointments,
+        weekStartDate,
+        weekEndDate,
+      ],
+    });
+
+    queryClient.invalidateQueries({
+      queryKey: [appointmentQueryKey.allAppointments, dateFormat],
     });
   };
 
@@ -84,6 +100,7 @@ export default function DayTask({
 
   if (!isRefAvailable) return null;
 
+  console.log("Rendering Task: ", event);
   return (
     <Tooltip key={event.id}>
       <ResizeTaskTooltip
@@ -144,7 +161,7 @@ export default function DayTask({
                       {event?.assignedUsers
                         .slice(0, 1)
                         .map(
-                          (user: User) => `${user.firstName} ${user.lastName}`,
+                          (user: User) => `${user.firstName} ${user.lastName}`
                         )}
                     </p>
                     <p className="text-left">
@@ -153,6 +170,9 @@ export default function DayTask({
                     </p>
                     <p className="text-left">
                       Draft Estimate: {event.draftEstimate}
+                    </p>
+                    <p className="text-left">
+                      Notes: {event?.notes}
                     </p>
                   </div>
                   <div className="absolute inset-y-1 right-0 h-[calc(100%-0.5rem)] w-1.5 rounded-lg border bg-[#6571FF]"></div>
@@ -165,7 +185,7 @@ export default function DayTask({
             </>
           }
         </DraggableTaskTooltip>
-        {event.type !== "appointment" && (
+        {event.type !== "appointment" ? (
           <>
             <TooltipContent className="w-72 rounded-md border border-slate-400 bg-background p-3">
               <TaskTooltip
@@ -180,6 +200,23 @@ export default function DayTask({
               isModalOpen={isTaskModalOpen}
               setIsModalOpen={setIsTaskModalOpen}
               onTaskDelete={revalidateTaskQueries}
+            />
+          </>
+        ) : (
+          <>
+            <TooltipContent className="w-72 rounded-md border border-slate-400 bg-background p-3">
+              <AppointmentTooltip
+                event={event}
+                onModalOpen={() => setIsAppointmentOpen(true)}
+              />
+            </TooltipContent>
+            <AppointmentCreateOrEdit
+              fromEdit
+              appointmentId={event.id}
+              isModalOpen={isAppointmentModalOpen}
+              setIsModalOpen={setIsAppointmentOpen}
+              onAppointmentUpdated={revalidateAppointmentQueries}
+              onAppointmentDeleted={revalidateAppointmentQueries}
             />
           </>
         )}

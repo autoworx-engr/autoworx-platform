@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
-import moment, { Moment } from "moment";
+import moment, { Moment } from "moment-timezone";
 import { getCompany } from "../settings/getCompany";
 
 interface GrowthRate {
@@ -84,7 +84,9 @@ export async function getAttendanceInfo(
     throw new Error("User or calendar settings not found");
   }
 
-  const now = moment(); // Current date and time
+  // Get the company timezone for consistent date processing
+  const companyTimezone = company?.timezone || 'UTC';
+  const now = moment.tz(companyTimezone); // Current date and time in company timezone
   const standardWorkingHours = 8; // Standard working hours per day
 
   // Helper function to get attendance info for a given date range
@@ -232,26 +234,28 @@ export async function getAttendanceInfo(
   let endOfWeek: Moment;
 
   if (startDateParam && endDateParam) {
-    startOfWeek = moment(startDateParam);
-    endOfWeek = moment(endDateParam);
+    // Parse dates in the company timezone to avoid date shifts
+    startOfWeek = moment.tz(startDateParam, companyTimezone);
+    endOfWeek = moment.tz(endDateParam, companyTimezone);
   } else {
-    startOfWeek = moment().startOf("week");
-    endOfWeek = moment().endOf("week");
+    // Use current week in company timezone
+    startOfWeek = moment.tz(companyTimezone).startOf("week");
+    endOfWeek = moment.tz(companyTimezone).endOf("week");
   }
 
   const attInfo = await getAttendanceInfoForRange(startOfWeek, endOfWeek);
 
-  // Get current monthly attendance information
-  const startOfMonth = moment().startOf("month");
-  const endOfMonth = moment().endOf("month");
+  // Get current monthly attendance information using company timezone
+  const startOfMonth = moment.tz(companyTimezone).startOf("month");
+  const endOfMonth = moment.tz(companyTimezone).endOf("month");
   const attInfoMonth = await getAttendanceInfoForRange(
     startOfMonth,
     endOfMonth,
   );
 
-  // Get previous monthly attendance information
-  const startOfPrevMonth = moment().subtract(1, "month").startOf("month");
-  const endOfPrevMonth = moment().subtract(1, "month").endOf("month");
+  // Get previous monthly attendance information using company timezone
+  const startOfPrevMonth = moment.tz(companyTimezone).subtract(1, "month").startOf("month");
+  const endOfPrevMonth = moment.tz(companyTimezone).subtract(1, "month").endOf("month");
   const attInfoPrevMonth = await getAttendanceInfoForRange(
     startOfPrevMonth,
     endOfPrevMonth,

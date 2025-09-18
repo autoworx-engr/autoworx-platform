@@ -51,7 +51,7 @@ export default function AddNewProduct({ product, isDatabase }: ProductProps) {
   const [databaseUnit, setDatabaseUnit] = useState(product?.unit || "");
   // New state for product type
   const [productType, setProductType] = useState<InventoryProductType>(
-    InventoryProductType.Product,
+    InventoryProductType.Product
   );
 
   // New validation states for numeric fields
@@ -121,7 +121,7 @@ export default function AddNewProduct({ product, isDatabase }: ProductProps) {
         message: "Quantity is required.",
       });
       hasError = true;
-    } else if (isNaN(Number(quantityValue)) || Number(quantityValue) < 0) {
+    } else if (isNaN(Number(quantityValue)) || Number(quantityValue) <= 0) {
       showError({
         field: "quantity",
         message: "Quantity must be a positive number.",
@@ -136,10 +136,10 @@ export default function AddNewProduct({ product, isDatabase }: ProductProps) {
         message: "Price is required.",
       });
       hasError = true;
-    } else if (isNaN(Number(priceValue)) || Number(priceValue) < 0) {
+    } else if (isNaN(Number(priceValue)) || Number(priceValue) <= 0) {
       showError({
         field: "price",
-        message: "Price must be a valid number.",
+        message: "Price must be a positive number.",
       });
       hasError = true;
     }
@@ -151,12 +151,31 @@ export default function AddNewProduct({ product, isDatabase }: ProductProps) {
         message: "Unit is required.",
       });
       hasError = true;
-    } else if (/^\d+$/.test(unitValue.trim())) {
+    } else if (/\d/.test(unitValue.trim())) {
       showError({
         field: "unit",
-        message: "Unit must be text and cannot be numbers only.",
+        message: "Unit cannot contain any numbers.",
       });
       hasError = true;
+    }
+
+    if (description) {
+      if (description.length < 20) {
+        showError({
+          field: "description",
+          message: "Description must be greater than 20 characters",
+        });
+
+        hasError = true;
+      }
+      if (description.length > 250) {
+        showError({
+          field: "description",
+          message: "Description must be less than 250 characters",
+        });
+
+        hasError = true;
+      }
     }
 
     // If any validation error, stop form submission
@@ -211,7 +230,7 @@ export default function AddNewProduct({ product, isDatabase }: ProductProps) {
       errorToast(
         formattedError.errorSource && formattedError.errorSource.length > 0
           ? formattedError.errorSource[0].message
-          : formattedError.message,
+          : formattedError.message
       );
     }
   }
@@ -246,7 +265,7 @@ export default function AddNewProduct({ product, isDatabase }: ProductProps) {
         field: "quantity",
         message: "Quantity is required.",
       });
-    } else if (isNaN(Number(value)) || Number(value) < 0) {
+    } else if (isNaN(Number(value)) || Number(value) <= 0) {
       showError({
         field: "quantity",
         message: "Quantity must be a positive number.",
@@ -265,10 +284,10 @@ export default function AddNewProduct({ product, isDatabase }: ProductProps) {
         field: "price",
         message: "Price is required.",
       });
-    } else if (isNaN(Number(value)) || Number(value) < 0) {
+    } else if (isNaN(Number(value)) || Number(value) <= 0) {
       showError({
         field: "price",
-        message: "Price must be a valid number.",
+        message: "Price must be a positive number.",
       });
     } else {
       clearError();
@@ -277,16 +296,28 @@ export default function AddNewProduct({ product, isDatabase }: ProductProps) {
 
   const handleUnitChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+
     if (isDatabase) {
       setDatabaseUnit(value);
     } else {
       setUnit(value);
     }
 
+    // Validation
     if (!value) {
       showError({
         field: "unit",
         message: "Unit is required.",
+      });
+    } else if (/\d/.test(value.trim())) {
+      showError({
+        field: "unit",
+        message: "Unit cannot contain any numbers.",
+      });
+    } else if (value.length > 10) {
+      showError({
+        field: "unit",
+        message: "Unit must be less than 10 characters",
       });
     } else {
       clearError();
@@ -304,7 +335,7 @@ export default function AddNewProduct({ product, isDatabase }: ProductProps) {
       <DialogTrigger asChild>
         <button
           onClick={handleAddNewProduct}
-          className={`rounded-md bg-[#6571FF] px-3 text-white md:p-2 md:px-5 ${isDatabase ? "w-full py-2 md:w-auto" : ""}`}
+          className={`rounded-md bg-[#6571FF] py-1.5 px-4 text-white md:py-2 md:px-5 text-sm ${isDatabase ? "w-full py-2 md:w-auto" : ""}`}
         >
           Add New Product
         </button>
@@ -326,6 +357,7 @@ export default function AddNewProduct({ product, isDatabase }: ProductProps) {
               // Display a non-editable field when isDatabase is true
               <div>
                 <label className="block font-medium">Category</label>
+
                 <div className="rounded-md border border-gray-300 bg-gray-100 px-3 py-2">
                   {product?.category || "No category selected"}
                 </div>
@@ -403,8 +435,8 @@ export default function AddNewProduct({ product, isDatabase }: ProductProps) {
                         ?.toLowerCase()
                         ?.includes(search.toLowerCase()) ||
                       (vendor?.name?.toLowerCase() || "").includes(
-                        search.toLowerCase(),
-                      ),
+                        search.toLowerCase()
+                      )
                   )
                 }
                 openState={[vendorOpen, setVendorOpen]}
@@ -416,11 +448,16 @@ export default function AddNewProduct({ product, isDatabase }: ProductProps) {
               />
             </div>
           </div>
-          <div className="w-full pt-2 md:pt-0">
+          <div className="w-full py-2 md:py-0">
             <label>Description</label>
+            <p className="text-xs">
+              Description must be less than 250 characters
+            </p>
             <textarea
               name="description"
               required={false}
+              minLength={20}
+              maxLength={150}
               className="h-28 w-full rounded-sm border border-primary-foreground border-slate-400 bg-background px-2 py-0.5 leading-6 md:w-[95%]"
             />
             <div>
@@ -465,22 +502,13 @@ export default function AddNewProduct({ product, isDatabase }: ProductProps) {
               onChange={handleQuantityChange}
             />
 
-            <div>
-              <label htmlFor="price" className="px-2 font-medium">
-                Price
-                <span className="ml-1 text-red-500">*</span>
-              </label>
-              <div className="#mt-1 flex gap-1 rounded-sm border border-primary-foreground bg-background py-0.5 leading-6">
-                <input
-                  type="text"
-                  name="price"
-                  value={price}
-                  onChange={handlePriceChange}
-                  className="w-full rounded-sm border border-slate-400 px-2 py-0.5 outline-none"
-                  id="price"
-                />
-              </div>
-            </div>
+            <SlimInput
+              name="price"
+              type="number"
+              required
+              value={price}
+              onChange={handlePriceChange}
+            />
 
             <SlimInput
               name="unit"
@@ -491,7 +519,7 @@ export default function AddNewProduct({ product, isDatabase }: ProductProps) {
             <SlimInput name="lot" label="Lot#" required={false} />
           </div>
           <div>
-            <SlimInput  name="receipt" label="Receipt#" required={false} />
+            <SlimInput name="receipt" label="Receipt#" required={false} />
           </div>
 
           {/* mobile form */}
@@ -504,22 +532,13 @@ export default function AddNewProduct({ product, isDatabase }: ProductProps) {
               onChange={handleQuantityChange}
             />
 
-            <div className="my-1">
-              <label htmlFor="price" className="px-2 font-medium">
-                Price
-                <span className="ml-1 text-red-500">*</span>
-              </label>
-              <div className="#mt-1 flex gap-1 rounded-sm border border-primary-foreground bg-background py-0.5 leading-6">
-                <input
-                  type="text"
-                  name="price"
-                  value={price}
-                  onChange={handlePriceChange}
-                  className="w-full rounded-sm border border-slate-400 px-2 py-0.5 outline-none"
-                  id="price"
-                />
-              </div>
-            </div>
+            <SlimInput
+              name="price"
+              type="number"
+              required
+              value={price}
+              onChange={handlePriceChange}
+            />
 
             <SlimInput
               name="unit"
@@ -528,7 +547,6 @@ export default function AddNewProduct({ product, isDatabase }: ProductProps) {
               onChange={handleUnitChange}
             />
             <SlimInput name="lot" label="Lot#" required={false} />
-            <SlimInput name="receipt" label="Receipt#" required={false} />
           </div>
           <div className="mt-5 rounded-md bg-[#6571FF5E] p-2 md:mt-0">
             <p className="font-semibold">Quantity for Low Inventory</p>

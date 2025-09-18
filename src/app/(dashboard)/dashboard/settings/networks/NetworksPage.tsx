@@ -46,7 +46,7 @@ const NetworksPage = ({
     useState<string>("");
 
   const [connectedCompanies, setConnectedCompanies] = useState<Company[] | []>(
-    connectedCompaniesData,
+    connectedCompaniesData
   );
   const [nearbyCompanies, setNearbyCompanies] = useState<Company[] | []>([]);
   const [searchedNearbyCompanies, setSearchedNearbyCompanies] = useState<
@@ -67,12 +67,12 @@ const NetworksPage = ({
 
   const handleConnectWithCompany = async (
     companyId: number,
-    companyName: string,
+    companyName: string
   ) => {
     const result = await connectWithCompany(companyId);
     if (result.success) {
       setNearbyCompanies((prevNearby) =>
-        prevNearby.filter((company) => company.id !== companyId),
+        prevNearby.filter((company) => company.id !== companyId)
       );
       setConnectedCompanies((prevConnected) => [
         ...prevConnected,
@@ -81,7 +81,6 @@ const NetworksPage = ({
       successToast(`Connected with ${companyName}`);
     } else {
       errorToast(`Failed to connect with ${companyName}`);
-
     }
   };
 
@@ -90,7 +89,7 @@ const NetworksPage = ({
     debounce((value: [number, number]) => {
       setNearByCompanyRangeDebounced(value);
     }, 300), // 300ms debounce delay
-    [],
+    []
   );
 
   useEffect(() => {
@@ -98,7 +97,7 @@ const NetworksPage = ({
       findNearbyCompanies(
         location.latitude,
         location.longitude,
-        nearByCompanyRange,
+        nearByCompanyRange
       ).then((res) => {
         setNearbyCompanies(res.data);
       });
@@ -112,9 +111,7 @@ const NetworksPage = ({
   useEffect(() => {
     if (nearbyCompaniesSearch.length > 0) {
       const filteredNearbyCompanies = nearbyCompanies.filter((company) =>
-        company.name
-          .toLowerCase()
-          .includes(nearbyCompaniesSearch.toLowerCase()),
+        company.name.toLowerCase().includes(nearbyCompaniesSearch.toLowerCase())
       );
       setSearchedNearbyCompanies(filteredNearbyCompanies);
     } else {
@@ -143,8 +140,8 @@ const NetworksPage = ({
   }, [currentCompany]);
 
   return (
-    <div className="h-full w-[80%] overflow-y-auto p-8">
-      <div className="grid grid-cols-2 gap-x-8">
+    <div className="h-full w-[90%] overflow-y-auto p-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="#w-1/2">
           <h3 className="my-4 text-lg font-bold">Collaborations</h3>
           <div className="space-y-8 overflow-y-auto rounded-md p-8 shadow-md">
@@ -201,7 +198,7 @@ const NetworksPage = ({
                       if (res?.success) {
                         setBusinessVisibility(value);
                         successToast(
-                          "Business visibility updated successfully",
+                          "Business visibility updated successfully"
                         );
                       } else {
                         errorToast("Failed to update business visibility");
@@ -220,11 +217,11 @@ const NetworksPage = ({
                       if (res?.success) {
                         setPhoneVisibility(value);
                         successToast(
-                          "Business phone visibility updated successfully",
+                          "Business phone visibility updated successfully"
                         );
                       } else {
                         errorToast(
-                          "Failed to update Business phone visibility",
+                          "Failed to update Business phone visibility"
                         );
                       }
                     }}
@@ -241,11 +238,11 @@ const NetworksPage = ({
                       if (res?.success) {
                         setBusinessAddressVisibility(value);
                         successToast(
-                          "Business address visibility updated successfully",
+                          "Business address visibility updated successfully"
                         );
                       } else {
                         errorToast(
-                          "Failed to update business address visibility",
+                          "Failed to update business address visibility"
                         );
                       }
                     }}
@@ -273,9 +270,9 @@ const NetworksPage = ({
                               });
                               setLatLong(
                                 position.coords.latitude,
-                                position.coords.longitude,
+                                position.coords.longitude
                               );
-                            },
+                            }
                           );
                           setLocationAllow(true);
                         } else {

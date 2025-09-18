@@ -35,6 +35,7 @@ export interface ShopLead {
   services: {
     completed: string[];
     incomplete: string[];
+    unAssigned: string[];
   };
   deliveredAt: Date | null;
   createdAt: string;

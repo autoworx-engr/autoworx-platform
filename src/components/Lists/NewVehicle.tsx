@@ -23,6 +23,7 @@ import {
   useGetModelsByYearAndMake,
 } from "@/hooks/useCarData";
 import SelectorWithSearch from "./SelectorWithSearch";
+import { Spin } from "antd";
 import { usePathname } from "next/navigation";
 
 type TProps = {
@@ -39,6 +40,7 @@ export default function NewVehicle({
   setIsAppointmentModalOpen,
 }: TProps) {
   const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
   const pathname = usePathname();
   const { showError, clearError } = useFormErrorStore();
   const [selectedColor, setSelectedColor] = useState<VehicleColor | null>(null);
@@ -119,22 +121,25 @@ export default function NewVehicle({
     const vin = data.get("vin") as string;
     const other = data.get("other") as string;
     const notes = data.get("notes") as string;
-
-    const res = await addVehicle({
-      year,
-      make,
-      model,
-      submodel,
-      type: type || "",
-      colorId: selectedColor?.id,
-      transmission,
-      engineSize,
-      license,
-      vin,
-      notes,
-      other,
-      clientId,
-    }, pathname);
+    setLoading(true);
+    const res = await addVehicle(
+      {
+        year,
+        make,
+        model,
+        submodel,
+        type: type || "",
+        colorId: selectedColor?.id,
+        transmission,
+        engineSize,
+        license,
+        vin,
+        notes,
+        other,
+        clientId,
+      },
+      pathname
+    );
 
     if (res?.type === "globalError") {
       showError({
@@ -142,17 +147,22 @@ export default function NewVehicle({
         errorSource: res.errorSource,
         message: res.message || "",
       });
+      setLoading(false);
     } else if (res?.type === "success") {
       onAdd && onAdd(res.data);
       setOpen(false);
       clearError();
+      setLoading(false);
       setIsAppointmentModalOpen && setIsAppointmentModalOpen(true);
     }
   }
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {newButton ? (
+    <Dialog open={open && loading === false} onOpenChange={setOpen}>
+      <DialogTrigger disabled={loading} asChild>
+        {loading ? (
+          <Spin />
+        ) : newButton ? (
           newButton
         ) : (
           <button type="button" className="text-xs text-[#6571FF]">
@@ -270,6 +280,7 @@ export default function NewVehicle({
           <Submit
             className="rounded-lg border bg-[#6571FF] px-5 py-2 text-white"
             formAction={handleSubmit}
+            disabled={loading}
           >
             Add
           </Submit>

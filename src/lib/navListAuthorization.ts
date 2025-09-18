@@ -14,6 +14,7 @@ type BasePermission = {
   estimatesInvoices?: boolean;
   payments?: boolean;
   inventory?: boolean;
+  inventoryAll?: boolean; // Added for Manager permissions
   inventoryAllViewOnly?: boolean;
   workforceManagement?: boolean;
   workforceManagementViewOnly?: boolean;
@@ -98,6 +99,7 @@ export function filterNavList(
           case "Inventory":
             return (
               check("inventory", "inventory") ||
+              check("inventoryAll", "inventoryAll") ||
               check("inventoryAllViewOnly", "inventoryAllViewOnly")
             );
 
@@ -233,10 +235,25 @@ export function filterNavList(
                   return check("salesPipeline", "salesPipeline");
 
                 case "Inventory List":
-                  return check("inventory", "inventory");
+                  return (
+                    check("inventory", "inventory") ||
+                    check("inventoryAll", "inventoryAll") ||
+                    check("inventoryAllViewOnly", "inventoryAllViewOnly")
+                  );
 
                 case "Vendor List":
-                  return check("inventoryAllViewOnly", "inventoryAllViewOnly");
+                  return (
+                    check("inventory", "inventory") ||
+                    check("inventoryAll", "inventoryAll") ||
+                    check("inventoryAllViewOnly", "inventoryAllViewOnly")
+                  );
+
+                case "Camera":
+                  return (
+                    check("inventory", "inventory") ||
+                    check("inventoryAll", "inventoryAll") ||
+                    check("inventoryAllViewOnly", "inventoryAllViewOnly")
+                  );
 
                 default:
                   return true;

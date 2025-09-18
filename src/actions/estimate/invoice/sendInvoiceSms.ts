@@ -3,6 +3,7 @@
 import { sendMessage } from "@/actions/communication/client/sendMessage";
 import { db } from "@/lib/db";
 import getUser from "@/lib/getUser";
+import { getOrCreateInvoiceShortLink } from "@/lib/shortener";
 
 export async function sendInvoiceSms({ invoiceId }: { invoiceId: string }) {
   try {
@@ -64,6 +65,34 @@ export async function sendInvoiceSms({ invoiceId }: { invoiceId: string }) {
         ? invoice.client?.firstName
         : invoice.client?.lastName) ?? "";
 
+    // Get or create a short link for the invoice
+    const shortLinkResult = await getOrCreateInvoiceShortLink(
+      invoice.id,
+      clientName,
+      user.id,
+      user.companyId
+    );
+
+    let invoiceLink = shortLinkResult.originalUrl || `${process.env.NEXT_PUBLIC_APP_URL}/public-invoice/${invoice.id}`; // fallback to original URL
+    
+    if (shortLinkResult.success && shortLinkResult.shortUrl) {
+      invoiceLink = shortLinkResult.shortUrl;
+      console.log("📧 Invoice SMS - Short link:", {
+        isExisting: shortLinkResult.isExisting,
+        originalUrl: shortLinkResult.originalUrl,
+        shortUrl: shortLinkResult.shortUrl,
+        shortCode: shortLinkResult.shortCode,
+        invoiceId: invoice.id,
+        clientName: clientName
+      });
+    } else {
+      console.log("⚠️ Invoice SMS - Failed to get/create short link, using original URL:", {
+        error: shortLinkResult.error,
+        originalUrl: shortLinkResult.originalUrl,
+        invoiceId: invoice.id
+      });
+    }
+
     let variabledBody =
       (template.message
         ?.replace("<CLIENT>", clientName)
@@ -83,7 +112,7 @@ export async function sendInvoiceSms({ invoiceId }: { invoiceId: string }) {
           "<BUSINESS_NAME>",
           invoice?.company?.name || "No business name"
         ) || "") +
-      `\n\n${process.env.NEXT_PUBLIC_APP_URL}/public-invoice/${invoice.id}`;
+      `\n\n${invoiceLink}`;
 
     sendMessage({
       clientId: invoice.client.id,

@@ -24,10 +24,10 @@ import {
   Vendor,
 } from "@prisma/client";
 import { useState, useEffect, useRef } from "react";
-import { FaEdit } from "react-icons/fa";
 import { UpdatePurchase } from "../../../../actions/inventory/updatePurchase";
 import moment from "moment-timezone";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
+import { SquarePen } from "lucide-react";
 
 type TProps = {
   productId: number;
@@ -203,7 +203,7 @@ export default function EditSalePurchaseList({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <button className="flex w-full items-center justify-end text-[#6571FF] md:justify-center">
-          <FaEdit />
+          <SquarePen className="w-5 h-5" />
         </button>
       </DialogTrigger>
 

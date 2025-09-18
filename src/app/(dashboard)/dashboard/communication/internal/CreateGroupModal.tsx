@@ -71,7 +71,7 @@ export default function CreateGroupModal({
       searchTerm || "",
       contactList.map((user) => ({
         id: user.id,
-      })),
+      }))
     );
     if (searchUsersResult.success) {
       setGroupUsers(searchUsersResult.data);
@@ -86,7 +86,7 @@ export default function CreateGroupModal({
       const searchTerm = event.target.value;
       getFindUsers(searchTerm);
     },
-    500,
+    500
   );
 
   // add user in contact list
@@ -96,7 +96,7 @@ export default function CreateGroupModal({
       name: user.firstName + " " + user.lastName,
     };
     setGroupUsers((prevContact) =>
-      prevContact.filter((prevUser) => prevUser.id !== user.id),
+      prevContact.filter((prevUser) => prevUser.id !== user.id)
     );
 
     setError(null);
@@ -110,7 +110,7 @@ export default function CreateGroupModal({
       users.find((u) => u.id === user.id)!,
     ]);
     setContactList((prev) =>
-      prev.filter((prevUser) => prevUser.id !== user.id),
+      prev.filter((prevUser) => prevUser.id !== user.id)
     );
   };
 
@@ -130,7 +130,7 @@ export default function CreateGroupModal({
         setContactList([]);
         setSideBarGroupLists((prevGroups) => {
           const isExistInGroup = prevGroups.find(
-            (g) => g.id === response.data.id,
+            (g) => g.id === response.data.id
           );
           if (!isExistInGroup) {
             return [...prevGroups, response.data];
@@ -235,7 +235,7 @@ export default function CreateGroupModal({
                 className="absolute right-1 top-[32px] size-6 cursor-pointer"
               />
               {/* added user in group */}
-              <div className="mt-3 flex flex-wrap gap-3">
+              <div className="mt-3 flex flex-wrap gap-3 max-h-[250px] overflow-y-auto">
                 {contactList.map((groupUser) => (
                   <div
                     key={groupUser.id}

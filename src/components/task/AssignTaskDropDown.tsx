@@ -1,11 +1,8 @@
 import Avatar from "@/components/Avatar";
+import Selector from "@/components/Selector";
 import { User } from "@prisma/client";
-import { useEffect, useRef, useState } from "react";
-import { FaChevronDown, FaChevronUp } from "react-icons/fa";
-import { TiDeleteOutline } from "react-icons/ti";
-
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/cn";
+import { useState, useMemo } from "react";
+import { IoCloseSharp } from "react-icons/io5";
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser.ts";
 import { useIsAdminOrManager } from "@/utils/useIsAdminOrManager.ts";
 
@@ -24,170 +21,103 @@ export default function AssignTaskDropDown({
   setAssignedUsers,
   fromUpdate,
 }: TProps) {
-  const [users, setUsers] = useState(companyUsers);
-  const [showUsers, setShowUsers] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const userDivRef = useRef<HTMLDivElement>(null);
-  const handleTrigger = () => {
-    setShowUsers(!showUsers);
-  };
-
   const authUser = useGetCurrentUser();
-
   const isAdminOrManager = useIsAdminOrManager();
-  const userForAssign = isAdminOrManager
-    ? users
-    : users.filter((user) => user?.id === Number(authUser?.id));
+  
+  const [selectorOpen, setSelectorOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<Partial<User> | null>(null);
 
-  const [searchTerm, setSearchTerm] = useState("");
+  // Filter users based on admin/manager permissions
+  const userForAssign = useMemo(() => {
+    return isAdminOrManager
+      ? companyUsers
+      : companyUsers.filter((user) => user?.id === Number(authUser?.id));
+  }, [companyUsers, isAdminOrManager, authUser?.id]);
 
-  useEffect(() => {
-    if (showUsers) {
-      if (inputRef.current) {
-        inputRef.current.focus();
+  // Get available users (not already assigned)
+  const availableUsers = useMemo(() => {
+    return userForAssign.filter((user) => !assignedUsers.includes(user.id!));
+  }, [userForAssign, assignedUsers]);
+
+  // Get assigned user objects
+  const assignedUserObjects = useMemo(() => {
+    return assignedUsers
+      .map((userId) => companyUsers.find((user) => user.id === userId))
+      .filter(Boolean) as Partial<User>[];
+  }, [assignedUsers, companyUsers]);
+
+  const handleAssignUser = (user: Partial<User>) => {
+    if (user.id) {
+      if (onlyOneUser) {
+        setAssignedUsers([user.id]);
+      } else {
+        setAssignedUsers((prev) => [...prev, user.id!]);
       }
+      setSelectedUser(null);
+      setSelectorOpen(false);
     }
-  }, [showUsers]);
-
-  useEffect(() => {
-    if (fromUpdate) {
-      setUsers((prevUsers) =>
-        prevUsers?.filter((user) => {
-          return !assignedUsers?.includes(user.id!);
-        }),
-      );
-    }
-  }, [assignedUsers]);
+  };
 
   const handleRemoveUser = (userId: number) => {
-    const findUser = companyUsers.find((user) => user.id === userId);
-    setUsers((prevUsers) => prevUsers.concat(findUser as User));
-    setAssignedUsers((prevAssignUserId) =>
-      prevAssignUserId.filter((id) => id !== userId),
-    );
+    setAssignedUsers((prev) => prev.filter((id) => id !== userId));
   };
 
-  useEffect(() => {
-    const handleClickOutside = (event: any) => {
-      if (userDivRef.current && !userDivRef.current.contains(event.target)) {
-        setShowUsers(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
   return (
-    <>
-      <div className="mb-3 flex flex-col">
-        <label htmlFor="assigned_users">Assign</label>
-        <div className="#no-visible-scrollbar my-2 flex max-h-40 w-full flex-wrap items-center gap-1 overflow-y-auto">
-          {assignedUsers?.length > 0 &&
-            assignedUsers.map((userId) => {
-              const userInfo = companyUsers.find((user) => user.id === userId);
-              const fullName = userInfo?.firstName + " " + userInfo?.lastName;
-              return (
-                <div
-                  key={userId}
-                  className={cn(
-                    //   buttonVariants({ variant: "outline" }),
-                    "flex items-center gap-x-2 rounded-sm border px-3 py-2 shadow-md",
-                  )}
-                >
-                  <span>{fullName}</span>
-                  <TiDeleteOutline
-                    onClick={() => handleRemoveUser(userId)}
-                    className="size-6 flex-shrink-0 cursor-pointer text-red-300"
-                  />
-                </div>
-              );
-            })}
-        </div>
-
-        {!onlyOneUser && showUsers ? (
-          <div className="relative">
-            <input
-              ref={inputRef}
-              onChange={(event) => setSearchTerm(event.target.value)}
-              onBlur={() => {
-                if (users.length === 0) {
-                  setShowUsers(false);
-                }
-              }}
-              type="text"
-              placeholder="Search Users"
-              name="searchUsers"
-              className="flex w-full items-center justify-end rounded-md border-2 border-gray-500 p-2"
-            />
-            {users.length > 0 && (
-              <div
-                ref={userDivRef}
-                className={cn(
-                  "#no-visible-scrollbar mt-2 flex max-h-56 w-full flex-col gap-2 overflow-y-auto p-2 font-bold lg:w-[460px]",
-                  "#overflow-hidden absolute top-[45px] z-50 min-w-[8rem] rounded-md border bg-popover p-1 text-popover-foreground shadow-md",
-                  "p-3 pt-6",
-                )}
-              >
-                <button
-                  onClick={() => setShowUsers(false)}
-                  type="button"
-                  className="sticky right-2 top-0 z-50 ml-auto"
-                >
-                  <TiDeleteOutline size={30} className="text-red-300" />
-                </button>
-                {userForAssign
-                  .filter((user) => {
-                    const fullName = user.firstName + " " + user.lastName;
-                    return fullName
-                      .toLowerCase()
-                      .includes(searchTerm.toLowerCase());
-                  })
-                  .map((user) => (
-                    <label
-                      htmlFor={user?.id!.toString()}
-                      key={user.id}
-                      className="flex cursor-pointer items-center gap-2"
-                      onClick={() => {
-                        setAssignedUsers([...assignedUsers, user?.id!]);
-                        setUsers((prevUser) =>
-                          prevUser.filter((u) => user.id !== u.id),
-                        );
-                      }}
-                    >
-                      <Avatar photo={user.image} width={40} height={40} />
-                      <span>
-                        {user.firstName} {user.lastName}
-                      </span>
-                    </label>
-                  ))}
-                {/* <button
-                  onClick={() => setShowUsers(false)}
-                  type="button"
-                  className="$right-2 sticky top-2"
-                >
-                  <TiDeleteOutline size={30} className="text-red-300" />
-                </button> */}
-              </div>
-            )}
-          </div>
-        ) : (
-          <Button
-            type="button"
-            onClick={handleTrigger}
-            variant="outline"
-            className="flex w-full items-center justify-end rounded-md border-2 border-gray-500 p-2"
-          >
-            {showUsers ? (
-              <FaChevronUp className="text-[#797979]" />
-            ) : (
-              <FaChevronDown className="text-[#797979]" />
-            )}
-          </Button>
-        )}
+    <div className="mb-3 flex flex-col">
+      <label htmlFor="assigned_users">Assign</label>
+      
+      {/* Display assigned users */}
+      <div className="#no-visible-scrollbar my-2 flex max-h-40 w-full flex-wrap items-center gap-1 overflow-y-auto">
+        {assignedUserObjects.map((userInfo) => {
+          const fullName = `${userInfo?.firstName} ${userInfo?.lastName}`;
+          return (
+            <div
+              key={userInfo?.id}
+              className="flex items-center gap-x-2 rounded-sm border px-3 py-2 shadow-md"
+            >
+              <span>{fullName}</span>
+              <IoCloseSharp
+                onClick={() => handleRemoveUser(userInfo?.id!)}
+                className="size-6 flex-shrink-0 cursor-pointer text-red-300 hover:text-red-500"
+              />
+            </div>
+          );
+        })}
       </div>
-    </>
+
+      {/* User selector */}
+      <div className="w-full">
+        <Selector
+          label={() => availableUsers.length === 0 ? "No users available" : "Select user to assign"}
+          items={availableUsers}
+          newButton={
+            <div className="text-center text-sm text-gray-500 p-2">
+              {availableUsers.length === 0
+                ? "All users are already assigned"
+                : "Select a user from the list"
+              }
+            </div>
+          }
+          displayList={(user: Partial<User>) => (
+            <div className="flex items-center gap-3 py-2 px-3 hover:bg-gray-50">
+              <Avatar photo={user.image} width={32} height={32} />
+              <span className="font-medium text-gray-700">
+                {user.firstName} {user.lastName}
+              </span>
+            </div>
+          )}
+          onSearch={(search: string) =>
+            availableUsers.filter((user) => {
+              const fullName = `${user.firstName} ${user.lastName}`.toLowerCase();
+              return fullName.includes(search.toLowerCase());
+            })
+          }
+          openState={[selectorOpen, setSelectorOpen]}
+          selectedItem={selectedUser}
+          setSelectedItem={setSelectedUser}
+          onSelect={handleAssignUser}
+        />
+      </div>
+    </div>
   );
 }

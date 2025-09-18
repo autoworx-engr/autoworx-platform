@@ -503,3 +503,23 @@ button {
 .hidden-testimonial {
   display: none;
 }
+
+/* Force OneSignal bell to bottom-right */
+#onesignal-bell-container,
+#onesignal-bell-launcher,
+.onesignal-bell-launcher-button {
+  position: fixed !important;
+  right: 5px !important;
+  left: auto !important;
+  bottom: 5px !important;
+  margin: 0 !important;
+}
+
+/* Hide on small devices */
+@media (max-width: 576px) {
+  #onesignal-bell-container,
+  #onesignal-bell-launcher,
+  .onesignal-bell-launcher-button {
+    display: none !important;
+  }
+}

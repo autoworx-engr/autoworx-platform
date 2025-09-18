@@ -29,6 +29,7 @@ export default function NewVendor({
   afterSubmit?: (vendor: Vendor) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [companyName, setCompanyName] = useState("");
   const { showError, clearError } = useFormErrorStore();
 
   async function handleSubmit() {
@@ -53,6 +54,24 @@ export default function NewVendor({
       showError({
         field: "companyName",
         message: "Company name is required.",
+      });
+      return;
+    }
+
+    // Validate character limit (50 characters)
+    if (company && company.trim().length > 50) {
+      showError({
+        field: "companyName",
+        message: "Company name cannot exceed 50 characters.",
+      });
+      return;
+    }
+
+    // Validate that company name is not numeric only
+    if (company && /^\d+$/.test(company.trim())) {
+      showError({
+        field: "companyName",
+        message: "Company name cannot be numeric only.",
       });
       return;
     }
@@ -126,6 +145,7 @@ export default function NewVendor({
 
   const handleClose = () => {
     clearError(); // Reset form errors when closing
+    setCompanyName(""); // Reset company name
     setOpen(false);
   };
 
@@ -148,22 +168,41 @@ export default function NewVendor({
 
         <div className="grid gap-2 overflow-y-auto sm:grid-cols-2">
           <SlimInput id="contactName" name="contactName" />
-          <SlimInput
-            id="companyName"
-            name="companyName"
-            required
-            onChange={(e) => {
-              const value = e.target.value;
-              if (!value.trim()) {
-                showError({
-                  field: "companyName",
-                  message: "Company name is required.",
-                });
-              } else {
-                clearError();
-              }
-            }}
-          />
+          <div className="space-y-1">
+            <SlimInput
+              id="companyName"
+              name="companyName"
+              required
+              value={companyName}
+              maxLength={50}
+              onChange={(e) => {
+                const value = e.target.value;
+                setCompanyName(value);
+                
+                if (!value.trim()) {
+                  showError({
+                    field: "companyName",
+                    message: "Company name is required.",
+                  });
+                } else if (value.trim().length > 50) {
+                  showError({
+                    field: "companyName",
+                    message: "Company name cannot exceed 50 characters.",
+                  });
+                } else if (/^\d+$/.test(value.trim())) {
+                  showError({
+                    field: "companyName",
+                    message: "Company name cannot be numeric only.",
+                  });
+                } else {
+                  clearError();
+                }
+              }}
+            />
+            <div className="text-right text-xs text-gray-500">
+              {companyName.length}/50
+            </div>
+          </div>
           <SlimInput
             id="phone"
             name="phone"

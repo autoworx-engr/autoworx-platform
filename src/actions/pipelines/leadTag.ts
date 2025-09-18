@@ -3,6 +3,7 @@
 import { db } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/authOptions";
+import { revalidatePath } from "next/cache";
 
 export const saveLeadTag = async (leadId: number, tagId: number) => {
   try {
@@ -132,6 +133,7 @@ export const deleteSalesTag = async (tagId: number) => {
       },
     });
 
+    revalidatePath("/dashboard/pipeline/sales/pipeline");
     return { type: "success", message: "Sales tag deleted successfully" };
   } catch (error) {
     console.error("Error deleting sales tag:", error);
