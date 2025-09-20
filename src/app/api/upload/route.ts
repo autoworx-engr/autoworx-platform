@@ -43,6 +43,7 @@ export async function POST(req: NextRequest, res: NextResponse) {
         },
         body: file,
       });
+      console.log("🚀 ~ POST ~ upload:", upload);
 
       if (upload.ok) {
         return url.split("?")[0]; // Return uploaded file URL
