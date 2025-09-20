@@ -82,7 +82,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     // Handle file attachments (same as before)
     const filePaths: string[] = [];
     const attachments: File[] = [];
-    const uploadDir = path.join(process.cwd(), "public/uploads"); // use process.cwd() on Next.js server
+    const uploadDir = path.join(process.cwd(), "/tmp/uploads"); // use process.cwd() on Next.js server
     if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
     if (files && files.length > 0) {
@@ -155,7 +155,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           console.error("Failed to upload photos");
           continue;
         }
-        const upJson = await uploadRes.json() as { data?: string[] };
+        const upJson = (await uploadRes.json()) as { data?: string[] };
         if (file && upJson?.data?.length && upJson.data.length > 0) {
           const attachment = await db.mailgunEmailAttachment.create({
             data: {
