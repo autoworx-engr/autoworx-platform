@@ -3,10 +3,16 @@ import fs from "fs";
 import { NextResponse } from "next/server";
 export async function GET(
   req: Request,
-  { params }: { params: { filename: string } },
+  { params }: { params: { filename: string } }
 ) {
   const { filename } = params;
-  const filePath = path.join(process.cwd(), "images/uploads", filename);
+  // use serverless-safe tmp dir
+  const uploadDir = "/tmp/uploads";
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  }
+
+  const filePath = path.join(uploadDir, filename);
   if (fs.existsSync(filePath)) {
     const ext = path.extname(filename).toLowerCase();
     let contentType = "image/jpeg"; // Default to JPEG

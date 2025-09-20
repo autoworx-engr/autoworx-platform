@@ -119,7 +119,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     // Handle multiple files
     const filePaths: string[] = [];
     const attachments = [];
-    const uploadDir = path.join(__dirname, "public/uploads");
+    const uploadDir = path.join(__dirname, "/tmp/uploads");
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }

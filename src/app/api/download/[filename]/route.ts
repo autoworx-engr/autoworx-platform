@@ -3,14 +3,19 @@ import fs from "fs";
 import path from "path";
 export async function GET(
   req: NextRequest,
-  { params }: { params: { filename: string } },
+  { params }: { params: { filename: string } }
 ) {
   try {
-    const filePath = path.join(
-      process.cwd(),
-      "images/uploads",
-      params.filename,
-    );
+    // serverless-safe writable path
+    const uploadDir = "/tmp/uploads";
+
+    // make sure it exists
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+
+    const filePath = path.join(uploadDir, params.filename);
+
     if (fs.existsSync(filePath)) {
       const fileBuffer = fs.readFileSync(filePath);
       return new NextResponse(fileBuffer, {
