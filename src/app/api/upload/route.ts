@@ -57,6 +57,7 @@ export async function POST(req: NextRequest, res: NextResponse) {
 
     return NextResponse.json({ status: "success", data: fileNames });
   } catch (e) {
+    console.log("🚀 ~ /upload POST ~ e:", e);
     return NextResponse.json({ status: "fail", data: e });
   }
 }
