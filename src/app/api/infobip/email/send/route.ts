@@ -152,6 +152,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       // Upload & persist attachment URLs (same as before)
       const processedAttachments = [];
       for (const file of attachments) {
+        console.log("🚀 ~ POST ~ file:", file);
         const fd2 = new FormData();
         fd2.append("file", file as any);
         const uploadRes = await fetch(
@@ -163,6 +164,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           continue;
         }
         const upJson = (await uploadRes.json()) as { data?: string[] };
+        console.log("🚀 ~ POST ~ upJson:", upJson);
         if (file && upJson?.data?.length && upJson.data.length > 0) {
           const attachment = await db.mailgunEmailAttachment.create({
             data: {
