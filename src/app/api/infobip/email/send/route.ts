@@ -8,6 +8,8 @@ import fetch from "node-fetch";
 import path from "path";
 import { pipeline, Readable } from "stream";
 import { promisify } from "util";
+import os from "os";
+
 const pump = promisify(pipeline);
 
 // Helper: Web Stream -> Node Readable
@@ -82,8 +84,13 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     // Handle file attachments (same as before)
     const filePaths: string[] = [];
     const attachments: File[] = [];
-    const uploadDir = path.join(process.cwd(), "/tmp/uploads"); // use process.cwd() on Next.js server
-    if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+
+    // ✅ use OS tmp dir instead of process.cwd()
+    const uploadDir = path.join(os.tmpdir(), "uploads");
+
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
 
     if (files && files.length > 0) {
       for (const file of files) {

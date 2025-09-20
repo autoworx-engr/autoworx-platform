@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import { pipeline, Readable } from "stream";
 import { promisify } from "util";
+import os from "os";
 
 const pump = promisify(pipeline);
 
@@ -205,8 +206,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     if (file) {
       const nodeStream = webStreamToNodeStream(file.stream());
 
-      // ✅ use /tmp instead of ./public/uploads
-      const uploadDir = "/tmp/uploads";
+      // ✅ Use OS temp directory (works on Vercel/Lambda)
+      const uploadDir = path.join(os.tmpdir(), "uploads");
       if (!fs.existsSync(uploadDir)) {
         fs.mkdirSync(uploadDir, { recursive: true });
       }

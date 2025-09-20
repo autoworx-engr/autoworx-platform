@@ -8,6 +8,8 @@ import fetch from "node-fetch";
 import path from "path";
 import { pipeline, Readable } from "stream";
 import { promisify } from "util";
+import os from "os";
+
 const pump = promisify(pipeline);
 
 // Helper function to convert Web Stream to Node.js Readable stream
@@ -119,11 +121,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     // Handle multiple files
     const filePaths: string[] = [];
     const attachments = [];
-    const uploadDir = path.join(__dirname, "/tmp/uploads");
+    // ✅ always use OS tmp dir for writable storage in serverless
+    const uploadDir = path.join(os.tmpdir(), "uploads");
+
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
-
     if (files && files.length > 0) {
       for (const file of files) {
         attachments.push(file);
