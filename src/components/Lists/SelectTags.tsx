@@ -7,9 +7,8 @@ import { useFormErrorStore } from "@/stores/form-error";
 import { useListsStore } from "@/stores/lists";
 import { Tag } from "@prisma/client";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FaChevronUp, FaSearch } from "react-icons/fa";
+import { FaChevronUp, FaSearch, FaTimes } from "react-icons/fa";
 import { FaChevronDown } from "react-icons/fa6";
-import { HiXCircle } from "react-icons/hi2";
 import { PiPaletteBold } from "react-icons/pi";
 import {
   DropdownMenu,
@@ -93,7 +92,9 @@ export function SelectTags({
                 }}
                 className="absolute right-0 top-0 -translate-y-1/2 translate-x-1/2 text-[#6470FF]"
               >
-                <HiXCircle />
+                <div className="rounded-full bg-[#6571FF] p-1 text-white">
+                  <FaTimes className="text-[10px]" />
+                </div>
               </button>
             </div>
           ))}

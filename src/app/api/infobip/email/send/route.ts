@@ -1,13 +1,13 @@
 import { updatePipelineAutomationTrigger } from "@/actions/automation/pipeline/triggerPipelineAutomation";
 import { updateNewEmailChatTrack } from "@/actions/communication/client/chat-track";
 import { db } from "@/lib/db";
-import Formdata from "form-data";
 import fs from "fs";
 import { NextRequest, NextResponse } from "next/server";
-import fetch from "node-fetch";
 import path from "path";
 import { pipeline, Readable } from "stream";
 import { promisify } from "util";
+import os from "os";
+
 const pump = promisify(pipeline);
 
 // Helper: Web Stream -> Node Readable
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     });
 
     // Build Infobip multipart form
-    const form = new Formdata();
+    const form = new FormData();
     // "from" should be a verified sender address in Infobip (display name allowed)
     form.append("from", `${company.name} <mail@${process.env.INFOBIP_DOMAIN}>`);
     form.append("to", client.email!);
@@ -82,8 +82,13 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     // Handle file attachments (same as before)
     const filePaths: string[] = [];
     const attachments: File[] = [];
-    const uploadDir = path.join(process.cwd(), "/tmp/uploads"); // use process.cwd() on Next.js server
-    if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+
+    // ✅ use OS tmp dir instead of process.cwd()
+    const uploadDir = path.join(os.tmpdir(), "uploads");
+
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
 
     if (files && files.length > 0) {
       for (const file of files) {
@@ -95,8 +100,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         await new Promise((r) => setTimeout(r, 100)); // ensure flush
 
         filePaths.push(filePath);
-        // Infobip: multiple "attachment" parts allowed
-        form.append("attachment", fs.createReadStream(filePath), file.name);
+        // Read file as buffer and create Blob for FormData
+        const fileBuffer = fs.readFileSync(filePath);
+        const fileBlob = new Blob([fileBuffer]);
+        form.append("attachment", fileBlob, file.name);
       }
     }
 
@@ -112,9 +119,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         // Accept JSON explicitly when sending multipart/form-data
         Accept: "application/json",
         Authorization: `App ${apiKey}`,
-        // NOTE: DO NOT set Content-Type; 'form-data' sets boundary automatically.
-      } as any,
-      body: form as any,
+        // NOTE: DO NOT set Content-Type; FormData sets boundary automatically.
+      },
+      body: form,
     });
 
     const json: any = await sendRes.json();
@@ -145,17 +152,19 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       // Upload & persist attachment URLs (same as before)
       const processedAttachments = [];
       for (const file of attachments) {
+        console.log("🚀 ~ POST ~ file:", file);
         const fd2 = new FormData();
         fd2.append("file", file as any);
         const uploadRes = await fetch(
           `${process.env.NEXT_PUBLIC_APP_URL}/api/upload`,
-          { method: "POST", body: fd2 as any }
+          { method: "POST", body: fd2 }
         );
         if (!uploadRes.ok) {
           console.error("Failed to upload photos");
           continue;
         }
         const upJson = (await uploadRes.json()) as { data?: string[] };
+        console.log("🚀 ~ POST ~ upJson:", upJson);
         if (file && upJson?.data?.length && upJson.data.length > 0) {
           const attachment = await db.mailgunEmailAttachment.create({
             data: {

@@ -47,6 +47,8 @@ export async function sendUserNotifications({
       notificationType: type,
     });
 
+    console.log("Notification Setting:", setting, userId);
+
     if (setting?.push_enabled) {
       await sendNotification({
         userId,
@@ -57,7 +59,7 @@ export async function sendUserNotifications({
         redirectUrl,
       });
 
-      sendPushNotification({
+      await sendPushNotification({
         userId,
         title,
         body: description,

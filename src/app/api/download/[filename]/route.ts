@@ -1,19 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
+import os from "os";
+
 export async function GET(
   req: NextRequest,
   { params }: { params: { filename: string } }
 ) {
   try {
     // serverless-safe writable path
-    const uploadDir = "/tmp/uploads";
+    const uploadDir = path.join(os.tmpdir(), "uploads");
 
     // make sure it exists
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
-
     const filePath = path.join(uploadDir, params.filename);
 
     if (fs.existsSync(filePath)) {
