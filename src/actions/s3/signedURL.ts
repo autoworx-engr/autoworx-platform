@@ -1,9 +1,20 @@
 "use server";
 
-import { s3Client } from "@/lib/s3Client";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import crypto from "crypto";
+
+import { S3Client } from "@aws-sdk/client-s3";
+
+export const s3Client = new S3Client({
+  region: process.env.AWS_BUCKET_REGION!,
+  credentials: {
+    accessKeyId:
+      process.env.AUTOWORX_AWS_ACCESS_KEY! || process.env.AWS_ACCESS_KEY!,
+    secretAccessKey:
+      process.env.AUTOWORX_AWS_SECRET_KEY! || process.env.AWS_SECRET_KEY!,
+  },
+});
 
 // 50mb
 const maxFileSize = 50 * 1024 * 1024;
@@ -51,7 +62,7 @@ export async function getSignedURL({
   const url = await getSignedUrl(
     s3Client,
     putObjectCommand,
-    { expiresIn: 60 }, // 60 seconds
+    { expiresIn: 60 } // 60 seconds
   );
 
   return { success: { url } };
