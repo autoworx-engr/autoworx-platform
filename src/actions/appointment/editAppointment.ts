@@ -107,6 +107,10 @@ export async function editAppointment({
         timezone: appointment.timezone,
       },
     });
+    console.log(
+      "🚀 ~ editAppointment ~ updatedAppointment:",
+      updatedAppointment
+    );
 
     // Delete all the assigned users for the appointment
     await db.appointmentUser.deleteMany({
@@ -173,6 +177,7 @@ export async function editAppointment({
         phone: true,
       },
     });
+    console.log("🚀 ~ editAppointment ~ company:", company);
 
     if (confirmationEmailTemplate) {
       const appointmentDate = moment(
@@ -229,12 +234,12 @@ export async function editAppointment({
       if (appointment.confirmationEmailTemplateStatus) {
         // send email
         if (client) {
-          sendInfobipEmail({
-            clientId: client.id,
-            subject: confirmationSubject,
-            text: confirmationMessage,
-          });
           try {
+            sendInfobipEmail({
+              clientId: client.id,
+              subject: confirmationSubject,
+              text: confirmationMessage,
+            });
             sendMessage({
               companyId: client.companyId,
               clientId: client.id,
@@ -253,7 +258,11 @@ export async function editAppointment({
       },
     });
 
-    await deleteRemindersInNest(String(updatedAppointment.id));
+    try {
+      await deleteRemindersInNest(String(updatedAppointment.id));
+    } catch (error) {
+      console.log("🚀 ~ editAppointment ~ error:", error);
+    }
 
     if (updatedAppointment.date && updatedAppointment.startTime) {
       let i = 0;
