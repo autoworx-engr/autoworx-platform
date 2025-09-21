@@ -176,14 +176,14 @@ export default function ItemSelector<T>({
 
               {/* Edit button */}
               <button
-                className="absolute -top-2 right-3"
+                className="absolute -top-2 right-3.5"
                 type="button"
                 onClick={() => {
                   onEdit && onEdit();
                 }}
               >
                 <div className="rounded-full bg-[#6571FF] p-1 text-white">
-                  <SquarePen className="w-4 h-4 cursor-pointer" />
+                  <SquarePen className="w-3 h-3 cursor-pointer" />
                 </div>
               </button>
 
