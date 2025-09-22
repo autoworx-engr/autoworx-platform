@@ -23,7 +23,7 @@ export default function AssignTaskDropDown({
 }: TProps) {
   const authUser = useGetCurrentUser();
   const isAdminOrManager = useIsAdminOrManager();
-  
+
   const [selectorOpen, setSelectorOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<Partial<User> | null>(null);
 
@@ -65,7 +65,7 @@ export default function AssignTaskDropDown({
   return (
     <div className="mb-3 flex flex-col">
       <label htmlFor="assigned_users">Assign</label>
-      
+
       {/* Display assigned users */}
       <div className="#no-visible-scrollbar my-2 flex max-h-40 w-full flex-wrap items-center gap-1 overflow-y-auto">
         {assignedUserObjects.map((userInfo) => {
@@ -88,14 +88,15 @@ export default function AssignTaskDropDown({
       {/* User selector */}
       <div className="w-full">
         <Selector
-          label={() => availableUsers.length === 0 ? "No users available" : "Select user to assign"}
+          label={() =>
+            availableUsers.length === 0 ? "No users available" : "Select user"
+          }
           items={availableUsers}
           newButton={
             <div className="text-center text-sm text-gray-500 p-2">
               {availableUsers.length === 0
                 ? "All users are already assigned"
-                : "Select a user from the list"
-              }
+                : "Select a user from the list"}
             </div>
           }
           displayList={(user: Partial<User>) => (
@@ -108,7 +109,8 @@ export default function AssignTaskDropDown({
           )}
           onSearch={(search: string) =>
             availableUsers.filter((user) => {
-              const fullName = `${user.firstName} ${user.lastName}`.toLowerCase();
+              const fullName =
+                `${user.firstName} ${user.lastName}`.toLowerCase();
               return fullName.includes(search.toLowerCase());
             })
           }

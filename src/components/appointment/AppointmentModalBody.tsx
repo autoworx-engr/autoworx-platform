@@ -421,6 +421,7 @@ export default function AppointmentModalBody({
             timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
           },
         });
+        console.log("🚀 ~ handleSubmit ~ res:", res);
         if (res.type === "success") {
           queryClient.invalidateQueries({
             queryKey: queryKeys.appointmentById(appointmentId),
