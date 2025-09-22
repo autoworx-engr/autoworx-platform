@@ -10,13 +10,22 @@ import { cache } from "react";
 import { InventoryProductType } from "@prisma/client";
 
 async function getCategories() {
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_APP_URL}/api/inventoryWirehouse/category`,
-    { cache: "no-store" }
-  );
+  try {
+    console.log(
+      "Fetching categories from API...",
+      process.env.NEXT_PUBLIC_APP_URL
+    );
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_APP_URL}/api/inventoryWirehouse/category`,
+      { cache: "no-store" }
+    );
+    console.log("Response status:", res.json());
 
-  if (!res.ok) throw new Error("Failed to fetch categories");
-  return res.json();
+    if (!res.ok) throw new Error("Failed to fetch categories");
+    return res.json();
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+  }
 }
 
 type TGetInventoryItem = {
