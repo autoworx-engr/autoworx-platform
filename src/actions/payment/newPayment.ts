@@ -249,7 +249,7 @@ export async function newPayment({
       },
       {
         timeout: 15000, // 15 seconds
-        maxWait: 10000, // 10 seconds
+        maxWait: 6000, // 6 seconds
       }
     );
 

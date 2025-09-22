@@ -45,9 +45,7 @@ function serializeResult(input: any): any {
 }
 
 // Extend Prisma to serialize Decimal in all model operations
-const extendedPrisma = new PrismaClient({
-  log: ["query", "error", "warn"],
-}).$extends({
+const extendedPrisma = new PrismaClient().$extends({
   query: {
     $allModels: {
       $allOperations({ args, query }) {
