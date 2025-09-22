@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 import { db } from '@/lib/db';
 
-const prisma = new PrismaClient();
+export const dynamic = 'force-dynamic'; // 👈 important
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,7 +15,6 @@ export async function GET(request: NextRequest) {
 
     let where: any = {};
 
-    // Prioritize search text
     if (search) {
       where.OR = [
         { productName: { contains: search } },
@@ -25,12 +23,11 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    // Add category filter if provided
     if (categoryName) {
       if (search) {
         where = {
           AND: [
-            { OR: where.OR }, // Prioritize search
+            { OR: where.OR },
             { category: { contains: categoryName } },
           ],
         };
@@ -45,7 +42,6 @@ export async function GET(request: NextRequest) {
         where,
         take: limit,
         skip,
-        // orderBy: { productName: 'asc' }, // Uncomment if sorting is needed
       }),
     ]);
 

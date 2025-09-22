@@ -50,7 +50,7 @@ const businessSettings = [
     link: "/dashboard/settings/communications",
     label: "Communications Hub",
   },
-
+  
   {
     link: "/dashboard/settings/leadgeneration",
     label: "Lead Capture",
@@ -67,29 +67,24 @@ const Sidebar = (props: Props) => {
   const { companyFeaturePermission } = useCompanyFeaturePermissionStore();
   // Helper: Check if company feature permission allows access to this route
   function canAccessCompanyFeatureRoute(route: string): boolean {
-    if (!companyFeaturePermission || companyFeaturePermission.length === 0)
-      return true;
+    if (!companyFeaturePermission || companyFeaturePermission.length === 0) return true;
     const routeWithoutQuery = route.split("?")[0];
     const featureKey = FEATURE_PERMISSIONS_MAP[routeWithoutQuery];
     if (!featureKey) return true;
     if (Array.isArray(featureKey)) {
-      return featureKey.some(key =>
+      return featureKey.some((key) =>
         companyFeaturePermission.some(
-          perm => perm.permission_name === key && perm.enabled
+          (perm) => perm.permission_name === key && perm.enabled
         )
       );
     }
     return companyFeaturePermission.some(
-      perm => perm.permission_name === featureKey && perm.enabled
+      (perm) => perm.permission_name === featureKey && perm.enabled
     );
   }
 
-  const filteredAccountSettings = accountSettings.filter(setting =>
-    canAccessCompanyFeatureRoute(setting.link)
-  );
-  const filteredBusinessSettings = businessSettings.filter(setting =>
-    canAccessCompanyFeatureRoute(setting.link)
-  );
+  const filteredAccountSettings = accountSettings.filter((setting) => canAccessCompanyFeatureRoute(setting.link));
+  const filteredBusinessSettings = businessSettings.filter((setting) => canAccessCompanyFeatureRoute(setting.link));
   // State to handle sidebar visibility on small screens
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -120,7 +115,7 @@ const Sidebar = (props: Props) => {
 
   return (
     <div className="">
-      {/* for mobile view */}
+      {" "}
       <div className="block lg:hidden">
         <button className={`ml-5 text-xl`} onClick={toggleSidebar}>
           {isSidebarOpen ? <FaTimes /> : <FaBars />}
@@ -134,7 +129,7 @@ const Sidebar = (props: Props) => {
               "-translate-x-full": !isSidebarOpen,
               "sm:ml-14 md:ml-14 lg:ml-14": isSidebarOpen, // Margin applied when sidebar is open
               "sm:ml-0 md:ml-0": !isSidebarOpen, // No margin when sidebar is closed
-            }
+            },
           )}
         >
           <div className="flex items-end justify-end align-middle">
@@ -154,7 +149,7 @@ const Sidebar = (props: Props) => {
                     "block px-4 py-2 hover:bg-gray-100 hover:text-gray-900",
                     {
                       "font-medium text-[#6571FF]": path === setting.link,
-                    }
+                    },
                   )}
                   key={index}
                   href={setting.link}
@@ -167,35 +162,32 @@ const Sidebar = (props: Props) => {
           {permissions &&
             (permissions.role === "Admin" ||
               permissions.role === "Manager") && (
-              <div className="sm:block">
+              <div className="hidden sm:block">
                 <h3 className="mb-4 font-bold">
                   <span className="border-b-2 pb-1">Business Settings</span>
                 </h3>
                 <div className="space-y-2">
                   {filteredBusinessSettings.map((setting, index) => {
-                      return (
-                        <Link
-                          className={cn(
-                            "block px-4 py-2 hover:bg-gray-100 hover:text-gray-900",
-                            {
-                              "font-medium text-[#6571FF]":
-                                path === setting.link,
-                            }
-                          )}
-                          key={index}
-                          href={setting.link}
-                        >
-                          {setting.label}
-                        </Link>
-                      );
-                    })}
+                    return (
+                      <Link
+                        className={cn(
+                          "block px-4 py-2 hover:bg-gray-100 hover:text-gray-900",
+                          {
+                            "font-medium text-[#6571FF]": path === setting.link,
+                          },
+                        )}
+                        key={index}
+                        href={setting.link}
+                      >
+                        {setting.label}
+                      </Link>
+                    );
+                  })}
                 </div>
               </div>
             )}
         </div>
       </div>
-
-      {/* for desktop view */}
       <div className="sticky top-6 hidden min-h-[80vh] min-w-[300px] max-w-[350px] rounded-2xl bg-background px-6 py-8 shadow-xl lg:block">
         <h3 className="mb-4 font-bold">
           <span className="border-b-2 pb-1">Account Settings</span>
@@ -208,7 +200,7 @@ const Sidebar = (props: Props) => {
                   "block px-4 py-2 hover:bg-gray-100 hover:text-gray-900",
                   {
                     "font-medium text-[#6571FF]": path === setting.link,
-                  }
+                  },
                 )}
                 key={index}
                 href={setting.link}
@@ -232,7 +224,7 @@ const Sidebar = (props: Props) => {
                         "block px-4 py-2 hover:bg-gray-100 hover:text-gray-900",
                         {
                           "font-medium text-[#6571FF]": path === setting.link,
-                        }
+                        },
                       )}
                       key={index}
                       href={setting.link}
