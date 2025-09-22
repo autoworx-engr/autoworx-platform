@@ -1,7 +1,7 @@
-import { PrismaClient } from "@prisma/client";
 import { nanoid } from "nanoid";
+import { db } from "./db";
 
-const prisma = new PrismaClient();
+const prisma = db;
 
 export interface CreateShortLinkOptions {
   originalUrl: string;
