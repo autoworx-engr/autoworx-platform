@@ -72,157 +72,166 @@ export async function makeFleetStatementPayment(data: {
     // Calculate total due amount
     const totalDue = statement.invoice.reduce(
       (sum, invoice) => sum + Number(invoice.due || 0),
-      0,
+      0
     );
 
     if (data.amount > totalDue) {
       throw new Error(
-        `Payment amount ($${data.amount}) exceeds total due amount ($${totalDue})`,
+        `Payment amount ($${data.amount}) exceeds total due amount ($${totalDue})`
       );
     }
 
     // Process payment by distributing amount across invoices
-    const result = await db.$transaction(async (tx) => {
-      let remainingAmount = data.amount;
-      const paymentsCreated = [];
+    const result = await db.$transaction(
+      async tx => {
+        let remainingAmount = data.amount;
+        const paymentsCreated = [];
 
-      for (const invoice of statement.invoice) {
-        if (remainingAmount <= 0) break;
+        for (const invoice of statement.invoice) {
+          if (remainingAmount <= 0) break;
 
-        const invoiceDue = Number(invoice.due || 0);
-        const paymentAmount = Math.min(remainingAmount, invoiceDue);
+          const invoiceDue = Number(invoice.due || 0);
+          const paymentAmount = Math.min(remainingAmount, invoiceDue);
 
-        if (paymentAmount > 0) {
-          // Create payment record based on payment method
-          let payment;
+          if (paymentAmount > 0) {
+            // Create payment record based on payment method
+            let payment;
 
-          switch (data.paymentMethod) {
-            case "CARD":
-              payment = await tx.payment.create({
-                data: {
-                  invoiceId: invoice.id,
-                  type: "CARD",
-                  date: new Date(),
-                  notes:
-                    data.notes || `Fleet statement payment - ${statement.id}`,
-                  amount: paymentAmount,
-                  companyId: companyId,
-                  card:
-                    data.creditCard && data.cardType
+            switch (data.paymentMethod) {
+              case "CARD":
+                payment = await tx.payment.create({
+                  data: {
+                    invoiceId: invoice.id,
+                    type: "CARD",
+                    date: new Date(),
+                    notes:
+                      data.notes || `Fleet statement payment - ${statement.id}`,
+                    amount: paymentAmount,
+                    companyId: companyId,
+                    card:
+                      data.creditCard && data.cardType
+                        ? {
+                            create: {
+                              creditCard: data.creditCard,
+                              cardType: data.cardType,
+                            },
+                          }
+                        : undefined,
+                  },
+                  include: {
+                    card: true,
+                  },
+                });
+                break;
+
+              case "CHECK":
+                payment = await tx.payment.create({
+                  data: {
+                    invoiceId: invoice.id,
+                    type: "CHECK",
+                    date: new Date(),
+                    notes:
+                      data.notes || `Fleet statement payment - ${statement.id}`,
+                    amount: paymentAmount,
+                    companyId: companyId,
+                    check: data.checkNumber
                       ? {
                           create: {
-                            creditCard: data.creditCard,
-                            cardType: data.cardType,
+                            checkNumber: data.checkNumber,
                           },
                         }
                       : undefined,
-                },
-                include: {
-                  card: true,
-                },
-              });
-              break;
+                  },
+                  include: {
+                    check: true,
+                  },
+                });
+                break;
 
-            case "CHECK":
-              payment = await tx.payment.create({
-                data: {
-                  invoiceId: invoice.id,
-                  type: "CHECK",
-                  date: new Date(),
-                  notes:
-                    data.notes || `Fleet statement payment - ${statement.id}`,
-                  amount: paymentAmount,
-                  companyId: companyId,
-                  check: data.checkNumber
-                    ? {
-                        create: {
-                          checkNumber: data.checkNumber,
-                        },
-                      }
-                    : undefined,
-                },
-                include: {
-                  check: true,
-                },
-              });
-              break;
-
-            case "CASH":
-              payment = await tx.payment.create({
-                data: {
-                  invoiceId: invoice.id,
-                  type: "CASH",
-                  date: new Date(),
-                  notes:
-                    data.notes || `Fleet statement payment - ${statement.id}`,
-                  amount: paymentAmount,
-                  companyId: companyId,
-                  cash: {
-                    create: {
-                      receivedCash: paymentAmount.toString(),
+              case "CASH":
+                payment = await tx.payment.create({
+                  data: {
+                    invoiceId: invoice.id,
+                    type: "CASH",
+                    date: new Date(),
+                    notes:
+                      data.notes || `Fleet statement payment - ${statement.id}`,
+                    amount: paymentAmount,
+                    companyId: companyId,
+                    cash: {
+                      create: {
+                        receivedCash: paymentAmount.toString(),
+                      },
                     },
                   },
-                },
-                include: {
-                  cash: true,
-                },
-              });
-              break;
+                  include: {
+                    cash: true,
+                  },
+                });
+                break;
 
-            case "OTHER":
-              payment = await tx.payment.create({
-                data: {
-                  invoiceId: invoice.id,
-                  type: "OTHER",
-                  date: new Date(),
-                  notes:
-                    data.notes || `Fleet statement payment - ${statement.id}`,
-                  amount: paymentAmount,
-                  companyId: companyId,
-                  other: data.paymentMethodId
-                    ? {
-                        create: {
-                          paymentMethodId: data.paymentMethodId,
-                        },
-                      }
-                    : undefined,
-                },
-                include: {
-                  other: true,
-                },
-              });
-              break;
+              case "OTHER":
+                payment = await tx.payment.create({
+                  data: {
+                    invoiceId: invoice.id,
+                    type: "OTHER",
+                    date: new Date(),
+                    notes:
+                      data.notes || `Fleet statement payment - ${statement.id}`,
+                    amount: paymentAmount,
+                    companyId: companyId,
+                    other: data.paymentMethodId
+                      ? {
+                          create: {
+                            paymentMethodId: data.paymentMethodId,
+                          },
+                        }
+                      : undefined,
+                  },
+                  include: {
+                    other: true,
+                  },
+                });
+                break;
 
-            default:
-              throw new Error("Invalid payment method");
+              default:
+                throw new Error("Invalid payment method");
+            }
+
+            // Update invoice totals
+            const newTotalPayment =
+              Number(invoice.totalPayment || 0) + paymentAmount;
+            const newDue = Number(invoice.grandTotal || 0) - newTotalPayment;
+
+            await tx.invoice.update({
+              where: { id: invoice.id },
+              data: {
+                totalPayment: newTotalPayment,
+                due: Math.max(0, newDue), // Ensure due doesn't go negative
+                type: "Invoice", // Ensure invoice is converted to Invoice type when payment is made
+                convertedAt:
+                  invoice.type === "Estimate"
+                    ? new Date()
+                    : invoice.convertedAt,
+              },
+            });
+
+            paymentsCreated.push(payment);
+            remainingAmount -= paymentAmount;
           }
-
-          // Update invoice totals
-          const newTotalPayment =
-            Number(invoice.totalPayment || 0) + paymentAmount;
-          const newDue = Number(invoice.grandTotal || 0) - newTotalPayment;
-
-          await tx.invoice.update({
-            where: { id: invoice.id },
-            data: {
-              totalPayment: newTotalPayment,
-              due: Math.max(0, newDue), // Ensure due doesn't go negative
-              type: "Invoice", // Ensure invoice is converted to Invoice type when payment is made
-              convertedAt: invoice.type === "Estimate" ? new Date() : invoice.convertedAt,
-            },
-          });
-
-          paymentsCreated.push(payment);
-          remainingAmount -= paymentAmount;
         }
-      }
 
-      return {
-        paymentsCreated,
-        totalPaid: data.amount,
-        remainingAmount,
-      };
-    });
+        return {
+          paymentsCreated,
+          totalPaid: data.amount,
+          remainingAmount,
+        };
+      },
+      {
+        timeout: 15000, // 15 seconds
+        maxWait: 6000, // 6 seconds
+      }
+    );
 
     revalidatePath("/dashboard/fleet");
 

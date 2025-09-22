@@ -138,7 +138,7 @@ export default function Users() {
           pageParams: oldData.pageParams,
           pages: updatedPages,
         };
-      },
+      }
     );
   };
 
@@ -146,7 +146,7 @@ export default function Users() {
     <div
       className={cn(
         "md:app-shadow relative mt-5 flex flex-grow flex-col gap-2 overflow-hidden rounded-[12px] md:bg-background",
-        minimized || "p-3",
+        minimized || "p-3"
       )}
     >
       <div>
