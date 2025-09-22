@@ -47,7 +47,9 @@ export async function editAppointment({
   try {
     await updateAppointmentValidationSchema.parseAsync({ id, appointment });
     const session = await getServerSession(authOptions);
+    console.log("🚀 ~ editAppointment ~ session:", session);
     const companyId = session?.user.companyId;
+    console.log("🚀 ~ editAppointment ~ companyId:", companyId);
 
     if (!companyId) {
       throw new Error("Company ID is required to create an email template.");
@@ -60,6 +62,10 @@ export async function editAppointment({
           id,
         },
       });
+      console.log(
+        "🚀 ~ editAppointment ~ existingAppointment:",
+        existingAppointment
+      );
 
       if (existingAppointment?.draftEstimate !== appointment.draftEstimate) {
         // Create draft estimate (if doesn't exist)
@@ -68,6 +74,7 @@ export async function editAppointment({
             id: appointment.draftEstimate,
           },
         });
+        console.log("🚀 ~ editAppointment ~ draftEstimate:", draftEstimate);
 
         if (!draftEstimate) {
           await db.invoice.create({

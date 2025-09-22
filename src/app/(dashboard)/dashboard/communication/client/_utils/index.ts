@@ -28,8 +28,8 @@ export const clientSortByUpdatedMessage = (
   
   const sortedClients = clients.slice().sort((a, b) => {
     // For proper chat list ordering, we need to handle multiple scenarios:
-    // 1. Clients with actual messages (SMS or Email) - sort by most recent activity
-    // 2. Clients with conversation tracks but no messages - sort by track timestamp
+    // 1. Clients with actual messages (SMS or Email) - sort by most recent message activity
+    // 2. Clients with conversation tracks but no messages - sort by track timestamp  
     // 3. Clients without conversation tracks - sort by creation date
     
     const aTrack = a.conversationsTrack;
@@ -39,37 +39,64 @@ export const clientSortByUpdatedMessage = (
     const aHasMessages = !!(aTrack?.smsLastMessage || aTrack?.emailLastMessage);
     const bHasMessages = !!(bTrack?.smsLastMessage || bTrack?.emailLastMessage);
     
+    // Helper function to get the best available timestamp for sorting
+    const getEffectiveTimestamp = (track: ClientConversationTrack | null | undefined, hasMessages: boolean) => {
+      if (!track) return 0;
+      
+      // For clients with messages, prioritize sendAt (actual message time) over updatedAt
+      if (hasMessages && track.sendAt) {
+        return new Date(track.sendAt).getTime();
+      }
+      
+      // Fallback to updatedAt (when track was last modified)
+      if (track.updatedAt) {
+        return new Date(track.updatedAt).getTime();
+      }
+      
+      // Last resort: createdAt
+      if (track.createdAt) {
+        return new Date(track.createdAt).getTime();
+      }
+      
+      return 0;
+    };
+    
     // Priority 1: Clients with actual messages come first
     if (aHasMessages && !bHasMessages) {
-      return -1;
+      return -1; // a comes first
     }
     if (!aHasMessages && bHasMessages) {
-      return 1;
+      return 1; // b comes first
     }
     
-    // Priority 2: If both have messages OR both don't have messages, sort by timestamp
-    if ((aHasMessages && bHasMessages) || (!aHasMessages && !bHasMessages && aTrack && bTrack)) {
-      // Helper function to get the most recent timestamp from a conversation track
-      const getTrackTimestamp = (track: ClientConversationTrack | null | undefined) => {
-        if (!track) return 0;
-        
-        // Check all possible timestamps and return the most recent one
-        const timestamps = [
-          track.updatedAt ? new Date(track.updatedAt).getTime() : 0,
-          track.sendAt ? new Date(track.sendAt).getTime() : 0,
-          track.createdAt ? new Date(track.createdAt).getTime() : 0,
-        ].filter(t => t > 0);
-        
-        return timestamps.length > 0 ? Math.max(...timestamps) : 0;
-      };
+    // Priority 2: If both have messages, sort by most recent message activity
+    if (aHasMessages && bHasMessages) {
+      const aTimestamp = getEffectiveTimestamp(aTrack, true);
+      const bTimestamp = getEffectiveTimestamp(bTrack, true);
       
-      const aTrackTimestamp = getTrackTimestamp(aTrack);
-      const bTrackTimestamp = getTrackTimestamp(bTrack);
+      // If timestamps are the same, use client ID as tiebreaker for consistent ordering
+      if (aTimestamp === bTimestamp) {
+        return b.id - a.id; // Higher ID first (more recent client)
+      }
       
-      return bTrackTimestamp - aTrackTimestamp; // Most recent first
+      // Most recent message first
+      return bTimestamp - aTimestamp;
     }
     
-    // Priority 3: Clients with conversation tracks (but no messages) vs clients without tracks
+    // Priority 3: Both don't have messages but have conversation tracks
+    if (!aHasMessages && !bHasMessages && aTrack && bTrack) {
+      const aTimestamp = getEffectiveTimestamp(aTrack, false);
+      const bTimestamp = getEffectiveTimestamp(bTrack, false);
+      
+      // If timestamps are the same, use client ID as tiebreaker
+      if (aTimestamp === bTimestamp) {
+        return b.id - a.id;
+      }
+      
+      return bTimestamp - aTimestamp;
+    }
+    
+    // Priority 4: One has track, other doesn't - prioritize the one with track
     if (aTrack && !bTrack) {
       return -1;
     }
@@ -77,9 +104,14 @@ export const clientSortByUpdatedMessage = (
       return 1;
     }
     
-    // Priority 4: Both don't have conversation tracks - sort by client creation date
+    // Priority 5: Both don't have conversation tracks - sort by client creation date (most recent first)
     const aCreatedAt = a.createdAt ? new Date(a.createdAt).getTime() : 0;
     const bCreatedAt = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    
+    // If creation dates are the same, use client ID as tiebreaker
+    if (aCreatedAt === bCreatedAt) {
+      return b.id - a.id;
+    }
     
     return bCreatedAt - aCreatedAt;
   });
