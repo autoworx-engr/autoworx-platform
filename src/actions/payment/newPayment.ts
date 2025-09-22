@@ -69,13 +69,13 @@ export async function newPayment({
 
     // transaction use for payment process
     const { newPayment, invoice } = await db.$transaction(
-      async db => {
+      async tx => {
         // get all the product materials
         let newPayment;
 
         switch (type) {
           case "CARD":
-            newPayment = await db.payment.create({
+            newPayment = await tx.payment.create({
               data: {
                 companyId,
                 invoiceId,
@@ -97,7 +97,7 @@ export async function newPayment({
             break;
 
           case "CHECK":
-            newPayment = await db.payment.create({
+            newPayment = await tx.payment.create({
               data: {
                 companyId,
                 invoiceId,
@@ -119,7 +119,7 @@ export async function newPayment({
             break;
 
           case "CASH":
-            newPayment = await db.payment.create({
+            newPayment = await tx.payment.create({
               data: {
                 companyId,
                 invoiceId,
@@ -141,7 +141,7 @@ export async function newPayment({
             break;
 
           case "OTHER":
-            newPayment = await db.payment.create({
+            newPayment = await tx.payment.create({
               data: {
                 companyId,
                 invoiceId,
@@ -169,7 +169,7 @@ export async function newPayment({
 
           case "DEPOSIT":
             // Update the invoice with the deposit amount, method, and notes
-            newPayment = await db.payment.create({
+            newPayment = await tx.payment.create({
               data: {
                 companyId,
                 invoiceId,
@@ -188,7 +188,7 @@ export async function newPayment({
               },
             });
 
-            await db.invoice.update({
+            await tx.invoice.update({
               where: { id: invoiceId },
               data: {
                 deposit: {
@@ -206,7 +206,7 @@ export async function newPayment({
         }
 
         // update the invoice
-        let invoice = await db.invoice.update({
+        let invoice = await tx.invoice.update({
           where: {
             id: invoiceId,
           },
@@ -229,7 +229,7 @@ export async function newPayment({
           },
         });
 
-        await sendPaymentReceivedNotification({
+        sendPaymentReceivedNotification({
           companyId,
           clientName:
             invoice?.client?.firstName + " " + invoice?.client?.lastName,
@@ -238,7 +238,7 @@ export async function newPayment({
         });
 
         // invoice automation trigger
-        await updateInvoiceAutomationTrigger({
+        updateInvoiceAutomationTrigger({
           companyId: invoice?.companyId!,
           invoiceId: invoice?.id!,
           columnId: invoice?.columnId!,
