@@ -10,6 +10,7 @@ import { useClientFilterStore } from "@/stores/clientFilter";
 import ResponsiveEmployeeCard from "@/components/mobile-responsive/employee/ResponsiveEmployeeCard";
 import ClientListTable from "./ClientListTable";
 import { generateRandomId } from "@/utils/randomNumber";
+import { normalizeSearch } from "../../../../utils/normalizeSearch";
 // import * as PusherPushNotifications from "@pusher/push-notifications-web";
 
 export default function ClientList({
@@ -24,16 +25,22 @@ export default function ClientList({
   const [filteredClients, setFilteredClients] = useState(clients);
 
   useEffect(() => {
+    const searchWords = (search || "").toLowerCase().trim().split(/\s+/);
+
     setFilteredClients(
-      clients.filter((client) => {
-        return (
-          client.id.toString().includes(search) ||
-          client.firstName.toLowerCase().includes(search.toLowerCase()) ||
-          client.lastName?.toLowerCase().includes(search.toLowerCase()) ||
-          client.email?.toLowerCase().includes(search.toLowerCase()) ||
-          client.mobile?.toLowerCase().includes(search.toLowerCase())
+      clients.filter((client: any) => {
+        const fullName =
+          `${client.firstName || ""} ${client.lastName || ""}`.toLowerCase();
+        const email = client.email?.toLowerCase() || "";
+        const mobile = client.mobile?.toLowerCase() || "";
+
+        return searchWords.every(
+          (word) =>
+            fullName.includes(word) ||
+            email.includes(word) ||
+            mobile.includes(word)
         );
-      }),
+      })
     );
   }, [search, clients]);
 
