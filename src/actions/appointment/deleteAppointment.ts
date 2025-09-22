@@ -47,6 +47,7 @@ export async function deleteAppointment(id: number): Promise<ServerAction> {
 
 export async function deleteRemindersInNest(id: string) {
   try {
+    console.log("🚀 ~ deleteRemindersInNest ~ start:");
     const { data } = await axios.post(
       `${process.env.NEXT_PUBLIC_API_BASE_URL}/reminder/delete`,
       { id },
@@ -56,8 +57,11 @@ export async function deleteRemindersInNest(id: string) {
         },
       }
     );
+    console.log("🚀 ~ deleteRemindersInNest ~ end:");
     return data;
   } catch (error) {
+    console.log("🚀 ~ deleteRemindersInNest ~ end:");
+
     console.log("❌ error from deleteRemindersInNest", error);
   }
 }
