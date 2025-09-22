@@ -11,7 +11,7 @@ export default function useAppointmentSearchQuery(searchTerm: string = "") {
         where: {
           OR: [
             {
-              title: { contains: searchTerm },
+              title: { contains: searchTerm, mode: "insensitive" },
             },
           ],
         },
@@ -33,10 +33,15 @@ export default function useAppointmentSearchQuery(searchTerm: string = "") {
           },
         },
       });
-     return response.data as (Appointment & {
-  client: { id: number; firstName: string; lastName: string } | null;
-  vehicle: { id: number; make: string; model: string; year: string } | null;
-})[];
+      return response.data as (Appointment & {
+        client: { id: number; firstName: string; lastName: string } | null;
+        vehicle: {
+          id: number;
+          make: string;
+          model: string;
+          year: string;
+        } | null;
+      })[];
     },
     enabled: !!searchTerm.trim(),
   });
