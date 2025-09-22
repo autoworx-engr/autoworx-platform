@@ -384,7 +384,7 @@ export default function TaskContentModal({
               <div className="flex items-end gap-2">
                 {/* Start Time */}
                 <label className="flex flex-col items-start">
-                  <span className="mb-1 text-sm font-medium text-gray-700">
+                  <span className="mb-1 text-sm font-medium text-gray-500">
                     Start Time
                   </span>
                   <div>
@@ -394,9 +394,9 @@ export default function TaskContentModal({
                         handleTimeChange({ target: { value } } as any, "start")
                       }
                       style={{ width: "100%", height: 34 }}
-                      className="border-slate-400 border rounded-md"
+                      className="border-slate-400 border text-gray-500 rounded-md"
                     >
-                      <Option value="">Select Start Time</Option>
+                      <Option value="">Start Time</Option>
 
                       {timeOptions.map((time) => (
                         <Option key={time.value} value={time.value}>
@@ -410,7 +410,7 @@ export default function TaskContentModal({
                 </label>
 
                 <label className="flex flex-col items-start">
-                  <span className="mb-1 text-sm font-medium text-gray-700">
+                  <span className="mb-1 text-sm font-medium text-gray-500">
                     End Time
                   </span>
                   <Select
@@ -421,7 +421,7 @@ export default function TaskContentModal({
                     style={{ width: "100%", height: 34 }}
                     className="border-slate-400 border rounded-md"
                   >
-                    <Option value="">Select End Time</Option>
+                    <Option value="">End Time</Option>
 
                     {timeOptions.map((time) => (
                       <Option key={time.value} value={time.value}>
