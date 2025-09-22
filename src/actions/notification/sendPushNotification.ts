@@ -39,7 +39,7 @@ export const sendPushNotification = async ({
 
     const res = await fetch(url, options);
     const response = await res.json();
-    // console.log("Response from OneSignal:", response);
+    console.log("Response from OneSignal:", response);
   } catch (err) {
     console.log("error from onesignal server", err);
     throw err;
