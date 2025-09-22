@@ -1,16 +1,11 @@
 "use client";
 
-import { cn } from "@/lib/cn";
 import { Client, Source, Tag } from "@prisma/client";
-import Link from "next/link";
 import React, { useEffect, useState } from "react";
-import DeleteClient from "./DeleteClient";
-import EditClient from "./EditClient";
 import { useClientFilterStore } from "@/stores/clientFilter";
 import ResponsiveEmployeeCard from "@/components/mobile-responsive/employee/ResponsiveEmployeeCard";
 import ClientListTable from "./ClientListTable";
-import { generateRandomId } from "@/utils/randomNumber";
-import { normalizeSearch } from "../../../../utils/normalizeSearch";
+import { padId } from "@/lib/padId";
 // import * as PusherPushNotifications from "@pusher/push-notifications-web";
 
 export default function ClientList({
@@ -31,11 +26,13 @@ export default function ClientList({
       clients.filter((client: any) => {
         const fullName =
           `${client.firstName || ""} ${client.lastName || ""}`.toLowerCase();
-        const email = client.email?.toLowerCase() || "";
-        const mobile = client.mobile?.toLowerCase() || "";
+        const email = client?.email?.toLowerCase() || "";
+        const mobile = client?.mobile?.toLowerCase() || "";
+        const id = padId(client.id);
 
         return searchWords.every(
           (word) =>
+            id.includes(word) ||
             fullName.includes(word) ||
             email.includes(word) ||
             mobile.includes(word)
