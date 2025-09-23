@@ -7,30 +7,28 @@ import {
   removeInvoiceTag,
   saveInvoiceTag,
 } from "@/actions/pipelines/invoiceTag";
+import { AppointmentCreateOrEdit } from "@/components/appointment/AppointmentCreateOrEdit";
 import WorkOrderModal from "@/components/workorder-modal/WorkOrderModal";
-import { usePopupStore } from "@/stores/popup";
 import { Column, Employee, ShopPipelineData } from "@/types/invoiceLead";
 import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd";
 import { Tag, User } from "@prisma/client";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { SetStateAction, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { CiCalendar } from "react-icons/ci";
+import { FaExchangeAlt } from "react-icons/fa";
+import { IoIosAddCircleOutline } from "react-icons/io";
 import { IoAddCircleOutline } from "react-icons/io5";
 import { PiWechatLogoLight } from "react-icons/pi";
-import { FaExchangeAlt } from "react-icons/fa";
-import Image from "next/image";
 import { EmployeeSelector } from "./EmployeeSelector";
 import { EmployeeTagSelector } from "./EmployeeTagSelector";
-import { NewAppointmentPipeline } from "./NewAppointmentPipeline";
-import ServiceSelector from "./ServiceSelector";
-import TaskForm from "./TaskForm";
-import SearchScroll from "./SearchScroll";
-import ShopColumnDropdown from "./ShopColumnDropdown";
-import { Skeleton } from "antd";
 import PipelineLoadingSkeleton from "./PipelineLoadingSkeleton";
-import { IoIosAddCircleOutline } from "react-icons/io";
+import SearchScroll from "./SearchScroll";
+import ServiceSelector from "./ServiceSelector";
+import ShopColumnDropdown from "./ShopColumnDropdown";
+import TaskForm from "./TaskForm";
 
 interface PipelinesProps {
   pipelinesTitle: string;
@@ -103,7 +101,9 @@ export default function Pipelines({
     category: number;
     index: number;
   } | null>(null);
-  const { popup, open, close } = usePopupStore();
+  
+  // State for appointment modal
+  const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
 
   const [tag, setTag] = useState<Tag>();
   const [tagDropdownStates, setTagDropdownStates] = useState<{
@@ -850,11 +850,12 @@ export default function Pipelines({
                                             setSelectedClientId(lead?.clientId);
                                           }
 
-                                          lead?.vehicleId &&
+                                          if (lead?.vehicleId) {
                                             setSelectedVehicleId(
                                               lead?.vehicleId
                                             );
-                                          open("ADD_TASK");
+                                          }
+                                          setIsAppointmentModalOpen(true);
                                         }}
                                         className="group relative"
                                       >
@@ -905,12 +906,23 @@ export default function Pipelines({
       )}
 
       {selectedClientId && (
-        <NewAppointmentPipeline
+        <AppointmentCreateOrEdit
           clientId={selectedClientId}
           vehicleId={selectedVehicleId}
-          popup={popup}
-          open={open}
-          close={close}
+          isModalOpen={isAppointmentModalOpen}
+          setIsModalOpen={setIsAppointmentModalOpen}
+          onAppointmentCreated={(appointment) => {
+            // Handle appointment created
+            setIsAppointmentModalOpen(false);
+            setSelectedClientId(null);
+            setSelectedVehicleId(null);
+          }}
+          onAppointmentUpdated={(appointment) => {
+            // Handle appointment updated
+            setIsAppointmentModalOpen(false);
+            setSelectedClientId(null);
+            setSelectedVehicleId(null);
+          }}
         />
       )}
     </>

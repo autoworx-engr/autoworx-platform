@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { Client, MailgunEmail, User } from "@prisma/client";
 import { FullMessage } from "@/actions/dashboard/technician/recentMessages";
 import { Message } from "./Message";
+import { formatInternalAttachmentMessage } from "@/utils/formatAttachmentMessage";
 
 type TMessageContainerProps = {
   clientMessages?: (Client & {
@@ -85,12 +86,19 @@ export default function MessageContainer({
             user?.id === data?.from?.id
               ? (data?.to?.firstName || "") + (data?.to?.lastName || "")
               : (data?.from?.firstName || "") + (data?.from?.lastName || "");
-          const messageBy = data?.from?.id === user?.id && "You: ";
+          const messageBy = data?.from?.id === user?.id ? "You: " : "";
+
+          // Format message with attachment handling
+          const formattedMessage = formatInternalAttachmentMessage(
+            data.message,
+            data.attachment
+          );
+
           return (
             <Message
               key={data.id}
               userName={userName}
-              message={`${messageBy} ${data.message}`}
+              message={`${messageBy} ${formattedMessage}`}
               redirectUrl={`/dashboard/communication/internal/?id=${data?.from?.id === user?.id ? data?.to?.id : data?.from?.id}`}
               communicationType="Internal"
               photoUrl={data?.from?.image}

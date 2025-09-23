@@ -224,14 +224,6 @@ export default function InvoiceModalBody({
       
       if (shortLinkResult.success && shortLinkResult.shortUrl) {
         await navigator.clipboard.writeText(shortLinkResult.shortUrl);
-        console.log("📋 Copy Link - Short link:", {
-          isExisting: shortLinkResult.isExisting,
-          originalUrl: shortLinkResult.originalUrl,
-          shortUrl: shortLinkResult.shortUrl,
-          shortCode: shortLinkResult.shortCode,
-          invoiceId: invoiceId,
-          clientName: clientName
-        });
         successToast("Short link copied to clipboard");
       } else {
         // Fallback to original URL if short link creation fails

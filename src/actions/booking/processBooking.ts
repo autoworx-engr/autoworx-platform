@@ -3,6 +3,7 @@
 import { db } from "@/lib/db";
 import { Client, Appointment } from "@prisma/client";
 import moment from "moment";
+import { sendNewAppointmentNotification } from "@/lib/notification/task-and-appointment-notify";
 
 export async function findClientByPhone(phone: string, companyId: string): Promise<Client | null> {
   try {
@@ -157,6 +158,21 @@ export async function processBooking(formData: {
         success: false,
         message: "Failed to create appointment",
       };
+    }
+    
+    // Send notification after successful appointment creation
+    try {
+      sendNewAppointmentNotification({
+        companyId: parseInt(companyId),
+        clientName: `${client.firstName} ${client.lastName || ""}`,
+        title: appointment.title,
+        appointmentDate: appointment.date ? appointment.date.toISOString().split('T')[0] : "",
+        startTime: appointment.startTime || "",
+        assignSalesIds: [], // Empty array since processBooking doesn't assign specific users
+      });
+    } catch (error) {
+      console.error("Error sending appointment notification:", error);
+      // Don't fail the booking if notification fails
     }
     
     return {
