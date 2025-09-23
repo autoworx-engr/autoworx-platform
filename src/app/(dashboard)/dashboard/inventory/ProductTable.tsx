@@ -166,7 +166,7 @@ export default function ProductTable({
                       )}
                     </div>
                   </td>
-                  <td className="max-w-36 px-4 text-left">
+                  <td className="max-w-36 px-4 text-left truncate">
                     {product.category?.name}
                   </td>
                   <td className="px-4 text-left 2xl:px-10">

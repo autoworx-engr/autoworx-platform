@@ -43,10 +43,8 @@ export default async function Page({
   });
 
   const totalPurchaseAmount =
-    vendor?.inventoryProducts.reduce((acc, product) => {
-      return (
-        acc + ((product.price as any) || 0) * Number(product.quantity || 0)
-      );
+    histories?.reduce((acc, product) => {
+      return acc + Number(product.price || 0) * Number(product.quantity || 0);
     }, 0) ?? 0;
 
   // const totalPurchaseAmount = histories.reduce((acc, history) => {
@@ -81,7 +79,7 @@ export default async function Page({
             </thead>
 
             <tbody>
-              {histories.map((history, index) => {
+              {histories?.map((history, index) => {
                 const total = Number(history.price) * Number(history.quantity);
                 return (
                   <tr
