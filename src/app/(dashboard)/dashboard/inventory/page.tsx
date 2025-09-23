@@ -19,7 +19,6 @@ async function getCategories() {
       `${process.env.NEXT_PUBLIC_APP_URL}/api/inventoryWirehouse/category`,
       { cache: "no-store" }
     );
-    console.log("Response status:", await res.json());
 
     if (!res.ok) throw new Error("Failed to fetch categories");
     return res.json();
@@ -101,7 +100,7 @@ export default async function Page({
     category,
   });
 
-  const inventoryCategories = await getCategories() ?? [];
+  const inventoryCategories = (await getCategories()) ?? [];
 
   console.log("Inventory Categories:", inventoryCategories);
 
