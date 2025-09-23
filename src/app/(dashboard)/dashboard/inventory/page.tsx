@@ -11,10 +11,6 @@ import { InventoryProductType } from "@prisma/client";
 
 async function getCategories() {
   try {
-    console.log(
-      "Fetching categories from API...",
-      process.env.NEXT_PUBLIC_APP_URL
-    );
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_APP_URL}/api/inventoryWirehouse/category`,
       { cache: "no-store" }
@@ -102,7 +98,6 @@ export default async function Page({
 
   const inventoryCategories = (await getCategories()) ?? [];
 
-  console.log("Inventory Categories:", inventoryCategories);
 
   const categories = await db.category.findMany({ where: { companyId } });
   const vendors = await db.vendor.findMany({ where: { companyId } });
