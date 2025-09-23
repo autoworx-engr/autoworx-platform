@@ -130,7 +130,7 @@ export default function InventoryList({
               <ProductTable
                 searchParams={searchParams}
                 products={products as any}
-                totalItems={totalProducts}
+                totalItems={totalSupplies}
                 currentProductId={productId}
                 user={user}
               />
