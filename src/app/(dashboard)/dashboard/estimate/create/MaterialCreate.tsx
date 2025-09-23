@@ -81,13 +81,13 @@ export default function MaterialCreate() {
                   notes: data.material.notes,
                   quantity: quantityValue || 0,
                   cost: Number(
-                    costValue === 0 ? undefined : costValue || 0,
+                    costValue === 0 ? undefined : costValue || 0
                   ) as any,
                   sell: Number(
-                    sellValue === 0 ? undefined : sellValue || 0,
+                    sellValue === 0 ? undefined : sellValue || 0
                   ) as any,
                   discount: Number(
-                    discountValue === 0 ? undefined : discountValue || 0,
+                    discountValue === 0 ? undefined : discountValue || 0
                   ) as any,
                   addToInventory: data.material.addToInventory,
                 };
@@ -121,7 +121,7 @@ export default function MaterialCreate() {
   useEffect(() => {
     if (currentSelectedCategoryId) {
       setCategory(
-        categories.find((cat) => cat.id === currentSelectedCategoryId)!,
+        categories.find((cat) => cat.id === currentSelectedCategoryId)!
       );
     }
   }, [currentSelectedCategoryId]);
@@ -247,7 +247,7 @@ export default function MaterialCreate() {
           close();
         } else if (res.type === "globalError") {
           errorToast(
-            res.errorSource?.length ? res.errorSource[0].message : res.message,
+            res.errorSource?.length ? res.errorSource[0].message : res.message
           );
         } else {
           errorToast(res.message!);
@@ -257,7 +257,7 @@ export default function MaterialCreate() {
         errorToast(
           formattedError.errorSource?.length
             ? formattedError.errorSource[0].message
-            : formattedError.message,
+            : formattedError.message
         );
       }
     } else {
@@ -466,11 +466,11 @@ export default function MaterialCreate() {
             vendors.filter(
               (vendor) =>
                 (vendor?.companyName?.toLowerCase() || "").includes(
-                  search.toLowerCase(),
+                  search.toLowerCase()
                 ) ||
                 (vendor?.name?.toLowerCase() || "").includes(
-                  search.toLowerCase(),
-                ),
+                  search.toLowerCase()
+                )
             )
           }
           displayList={(vendor: Vendor) => (
@@ -515,6 +515,7 @@ export default function MaterialCreate() {
         <input
           type="number"
           id="qt"
+          min={0}
           value={quantity || ""}
           onChange={(e) => setQuantity(parseFloat(e.target.value))}
           className="w-full rounded-md border-2 border-slate-400 p-1 text-xs"
@@ -529,6 +530,7 @@ export default function MaterialCreate() {
         <input
           type="number"
           id="price"
+          min={0}
           value={cost ?? ""}
           onChange={(e) =>
             setCost(e.target.value ? parseFloat(e.target.value) : undefined)
@@ -546,6 +548,7 @@ export default function MaterialCreate() {
         <input
           type="number"
           id="sell"
+          min={0}
           value={sell ?? ""}
           onChange={(e) =>
             setSell(e.target.value ? parseFloat(e.target.value) : undefined)
@@ -562,6 +565,7 @@ export default function MaterialCreate() {
         <input
           type="number"
           id="discount"
+          min={0}
           value={discount ?? ""}
           onChange={(e) => setDiscount(parseFloat(e.target.value))}
           className="w-full rounded-md border-2 border-slate-400 p-1 text-xs"

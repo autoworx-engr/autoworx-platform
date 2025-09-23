@@ -118,6 +118,7 @@ export default function SideNavbar({ navList, permissions }: TProps) {
   });
 
   const userPermissions = permissions?.userPermissions;
+
   const companyUserPermissions = permissions?.companyPermissions;
   // check if user has permission to view notification
   const notificationShowPermission =

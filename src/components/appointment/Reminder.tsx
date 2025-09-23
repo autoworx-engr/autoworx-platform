@@ -390,12 +390,15 @@ export function Reminder({
           })}
         </div>
       </div>
-      <div className="flex items-start gap-2  p-2  text-sm text-yellow-800">
+      <div className="flex items-start gap-2 p-2 text-sm text-yellow-800">
         <IoAlertCircleOutline className="mt-1 h-5 w-5 flex-shrink-0 text-yellow-600" />
-        <p className="leading-relaxed">
-          Your client will receive automated reminders <strong>24 hours</strong>{" "}
-          and <strong>2 hours</strong> prior to their scheduled appointment.
-        </p>
+        <div className="flex-1 min-w-0">
+          <p className="leading-relaxed break-words">
+            Your client will receive automated reminders{" "}
+            <strong>24 hours</strong> and <strong>2 hours</strong> prior to
+            their scheduled appointment.
+          </p>
+        </div>
       </div>
     </>
   );
