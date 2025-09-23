@@ -57,7 +57,7 @@ export async function sendUserNotifications({
         redirectUrl,
       });
 
-      sendPushNotification({
+      await sendPushNotification({
         userId,
         title,
         body: description,
@@ -67,7 +67,7 @@ export async function sendUserNotifications({
 
     // send email notification
     if (setting?.email_enabled && userEmail) {
-      sendNotificationByEmail({
+      await sendNotificationByEmail({
         companyId,
         description,
         userName: userName,
@@ -78,7 +78,7 @@ export async function sendUserNotifications({
 
     // send sms notification
     if (setting?.text_enabled && userPhoneNo) {
-      sendNotificationBySms({
+      await sendNotificationBySms({
         userName,
         companyId,
         description,
@@ -87,6 +87,6 @@ export async function sendUserNotifications({
     }
   } catch (error) {
     console.error("Error sending user notification:", error);
-    throw error;
+    // throw error;
   }
 }

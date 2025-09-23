@@ -13,7 +13,6 @@ import httpStatus from "http-status";
 import { env } from "next-runtime-env";
 import { uploadNotificationSettings } from "../settings/updateNotification";
 
-
 interface RegisterData {
   firstName: string;
   lastName?: string;
@@ -33,10 +32,10 @@ const ACCESS_CODE = env("ACCESS_CODE");
 
 const insertDefaultColumns = async (columnId: number, type: string) => {
   const columnsFortypes = defaultColumnWithColor.filter(
-    (column) => column.type === type
+    column => column.type === type
   );
 
-  const columnsWithCompany = columnsFortypes.map((column) => ({
+  const columnsWithCompany = columnsFortypes.map(column => ({
     ...column,
     companyId: columnId,
   }));
@@ -71,9 +70,12 @@ export async function register({
       throw new AppError(httpStatus.BAD_REQUEST, "Invalid access code");
     }
 
+
+    const lowerCaseEmail = userInfo.email.toLowerCase();
+
     // check if the user already created
     const user = await db.user.findUnique({
-      where: { email: userInfo.email },
+      where: { email: lowerCaseEmail },
     });
 
     if (user) {
@@ -208,7 +210,7 @@ export async function register({
     ];
 
     await Promise.all(
-      defaultPermissions.map((perm) =>
+      defaultPermissions.map(perm =>
         db.companyPermissionModule.create({
           data: {
             companyId: newCompany.id,
@@ -224,7 +226,7 @@ export async function register({
       data: {
         firstName: userInfo.firstName,
         lastName: userInfo.lastName,
-        email: userInfo.email,
+        email: lowerCaseEmail,
         password: hashedPassword,
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone, // TODO: temporary solution
         companyId: newCompany.id,

@@ -1,13 +1,13 @@
 import { updatePipelineAutomationTrigger } from "@/actions/automation/pipeline/triggerPipelineAutomation";
 import { updateNewEmailChatTrack } from "@/actions/communication/client/chat-track";
 import { db } from "@/lib/db";
-import Formdata from "form-data";
 import fs from "fs";
 import { NextRequest, NextResponse } from "next/server";
-import fetch from "node-fetch";
 import path from "path";
 import { pipeline, Readable } from "stream";
 import { promisify } from "util";
+import os from "os";
+
 const pump = promisify(pipeline);
 
 // Helper function to convert Web Stream to Node.js Readable stream
@@ -80,12 +80,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     });
 
     // Prepare form data for sending the email
-    const form = new Formdata();
+    const form = new FormData();
     form.append(
       "from",
       `${company?.name} <${company?.id}@${process.env.MAILGUN_DOMAIN}>`
     );
-    form.append("to", client.email);
+    form.append("to", client.email!);
     form.append("subject", `New message from ${company?.name}`);
     form.append(
       "text",
@@ -119,11 +119,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     // Handle multiple files
     const filePaths: string[] = [];
     const attachments = [];
-    const uploadDir = path.join(__dirname, "public/uploads");
+    // ✅ always use OS tmp dir for writable storage in serverless
+    const uploadDir = path.join(os.tmpdir(), "uploads");
+
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
-
     if (files && files.length > 0) {
       for (const file of files) {
         attachments.push(file);
@@ -134,7 +135,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         await new Promise((resolve) => setTimeout(resolve, 100)); // Ensure write completion
 
         filePaths.push(filePath);
-        form.append("attachment", fs.createReadStream(filePath), file.name);
+        // Read file as buffer and create Blob for FormData
+        const fileBuffer = fs.readFileSync(filePath);
+        const fileBlob = new Blob([fileBuffer]);
+        form.append("attachment", fileBlob, file.name);
       }
     }
 
@@ -190,12 +194,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         }
 
         const json = await uploadRes.json();
-        // @ts-expect-error
         if (file && json?.data?.length > 0) {
           await db.mailgunEmailAttachment.create({
             data: {
               name: file.name,
-              // @ts-expect-error
               url: json.data[0],
               size: file.size,
               mailgunEmailId: mailData.id,

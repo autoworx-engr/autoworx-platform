@@ -3,6 +3,8 @@ import Leads from "../../components/Leads";
 import { Suspense } from "react";
 import { Spin } from "antd";
 
+export const dynamic = "force-dynamic";
+
 // Loading component for better UX
 function LoadingLeads() {
   return (

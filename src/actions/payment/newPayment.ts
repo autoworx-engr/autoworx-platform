@@ -68,183 +68,190 @@ export async function newPayment({
     });
 
     // transaction use for payment process
-    const { newPayment, invoice } = await db.$transaction(async (db) => {
-      // get all the product materials
-      let newPayment;
+    const { newPayment, invoice } = await db.$transaction(
+      async tx => {
+        // get all the product materials
+        let newPayment;
 
-      switch (type) {
-        case "CARD":
-          newPayment = await db.payment.create({
-            data: {
-              companyId,
-              invoiceId,
-              date: new Date(date),
-              notes,
-              amount,
-              type: "CARD",
-              card: {
-                create: {
-                  cardType: (additionalData as CardPaymentData).cardType,
-                  creditCard: (additionalData as CardPaymentData).creditCard,
+        switch (type) {
+          case "CARD":
+            newPayment = await tx.payment.create({
+              data: {
+                companyId,
+                invoiceId,
+                date: new Date(date),
+                notes,
+                amount,
+                type: "CARD",
+                card: {
+                  create: {
+                    cardType: (additionalData as CardPaymentData).cardType,
+                    creditCard: (additionalData as CardPaymentData).creditCard,
+                  },
                 },
               },
-            },
-            include: {
-              card: true,
-            },
-          });
-          break;
+              include: {
+                card: true,
+              },
+            });
+            break;
 
-        case "CHECK":
-          newPayment = await db.payment.create({
-            data: {
-              companyId,
-              invoiceId,
-              date: new Date(date),
-              notes,
-              amount,
-              type: "CHECK",
-              check: {
-                create: {
-                  checkNumber: (additionalData as CheckPaymentData).checkNumber,
+          case "CHECK":
+            newPayment = await tx.payment.create({
+              data: {
+                companyId,
+                invoiceId,
+                date: new Date(date),
+                notes,
+                amount,
+                type: "CHECK",
+                check: {
+                  create: {
+                    checkNumber: (additionalData as CheckPaymentData)
+                      .checkNumber,
+                  },
                 },
               },
-            },
-            include: {
-              check: true,
-            },
-          });
-          break;
+              include: {
+                check: true,
+              },
+            });
+            break;
 
-        case "CASH":
-          newPayment = await db.payment.create({
-            data: {
-              companyId,
-              invoiceId,
-              date: new Date(date),
-              notes,
-              amount,
-              type: "CASH",
-              cash: {
-                create: {
-                  receivedCash: (additionalData as CashPaymentData)
-                    .receivedCash,
+          case "CASH":
+            newPayment = await tx.payment.create({
+              data: {
+                companyId,
+                invoiceId,
+                date: new Date(date),
+                notes,
+                amount,
+                type: "CASH",
+                cash: {
+                  create: {
+                    receivedCash: (additionalData as CashPaymentData)
+                      .receivedCash,
+                  },
                 },
               },
-            },
-            include: {
-              cash: true,
-            },
-          });
-          break;
+              include: {
+                cash: true,
+              },
+            });
+            break;
 
-        case "OTHER":
-          newPayment = await db.payment.create({
-            data: {
-              companyId,
-              invoiceId,
-              date: new Date(date),
-              notes,
-              amount,
-              type: "OTHER",
-              other: {
-                create: {
-                  paymentMethodId: (additionalData as OtherPaymentData)
-                    .paymentMethodId,
+          case "OTHER":
+            newPayment = await tx.payment.create({
+              data: {
+                companyId,
+                invoiceId,
+                date: new Date(date),
+                notes,
+                amount,
+                type: "OTHER",
+                other: {
+                  create: {
+                    paymentMethodId: (additionalData as OtherPaymentData)
+                      .paymentMethodId,
+                  },
                 },
               },
-            },
-            include: {
-              other: {
-                include: {
-                  paymentMethod: true,
+              include: {
+                other: {
+                  include: {
+                    paymentMethod: true,
+                  },
                 },
               },
-            },
-          });
+            });
 
-          break;
+            break;
 
-        case "DEPOSIT":
-          // Update the invoice with the deposit amount, method, and notes
-          newPayment = await db.payment.create({
-            data: {
-              companyId,
-              invoiceId,
-              date: new Date(date),
-              notes,
-              amount,
-              type: "DEPOSIT",
-              deposit: {
-                create: {
-                  depositMethod: (additionalData as DepositPaymentData)
-                    .depositMethod,
-                  depositNotes: (additionalData as DepositPaymentData)
-                    .depositNotes,
+          case "DEPOSIT":
+            // Update the invoice with the deposit amount, method, and notes
+            newPayment = await tx.payment.create({
+              data: {
+                companyId,
+                invoiceId,
+                date: new Date(date),
+                notes,
+                amount,
+                type: "DEPOSIT",
+                deposit: {
+                  create: {
+                    depositMethod: (additionalData as DepositPaymentData)
+                      .depositMethod,
+                    depositNotes: (additionalData as DepositPaymentData)
+                      .depositNotes,
+                  },
                 },
               },
-            },
-          });
+            });
 
-          await db.invoice.update({
-            where: { id: invoiceId },
-            data: {
-              deposit: {
-                increment: amount,
+            await tx.invoice.update({
+              where: { id: invoiceId },
+              data: {
+                deposit: {
+                  increment: amount,
+                },
+                totalPayment: {
+                  decrement: amount,
+                },
               },
-              totalPayment: {
-                decrement: amount,
+            });
+            break;
+
+          default:
+            throw new Error("Invalid payment type");
+        }
+
+        // update the invoice
+        let invoice = await tx.invoice.update({
+          where: {
+            id: invoiceId,
+          },
+          data: {
+            type: InvoiceType.Invoice,
+            due: {
+              decrement: amount,
+            },
+            totalPayment: {
+              increment: amount,
+            },
+          },
+          include: {
+            client: {
+              select: {
+                firstName: true,
+                lastName: true,
               },
             },
-          });
-          break;
+          },
+        });
 
-        default:
-          throw new Error("Invalid payment type");
+        sendPaymentReceivedNotification({
+          companyId,
+          clientName:
+            invoice?.client?.firstName + " " + invoice?.client?.lastName,
+          amount: amount,
+          invoiceId: invoice.id,
+        });
+
+        // invoice automation trigger
+        updateInvoiceAutomationTrigger({
+          companyId: invoice?.companyId!,
+          invoiceId: invoice?.id!,
+          columnId: invoice?.columnId!,
+          type: invoice?.type!,
+        });
+
+        return { newPayment, invoice };
+      },
+      {
+        timeout: 15000, // 15 seconds
+        maxWait: 6000, // 6 seconds
       }
-
-      // update the invoice
-      let invoice = await db.invoice.update({
-        where: {
-          id: invoiceId,
-        },
-        data: {
-          type: InvoiceType.Invoice,
-          due: {
-            decrement: amount,
-          },
-          totalPayment: {
-            increment: amount,
-          },
-        },
-        include: {
-          client: {
-            select: {
-              firstName: true,
-              lastName: true,
-            },
-          },
-        },
-      });
-
-      sendPaymentReceivedNotification({
-        companyId,
-        clientName:
-          invoice?.client?.firstName + " " + invoice?.client?.lastName,
-        amount: amount,
-        invoiceId: invoice.id,
-      });
-
-      // invoice automation trigger
-      await updateInvoiceAutomationTrigger({
-        companyId: invoice?.companyId!,
-        invoiceId: invoice?.id!,
-        columnId: invoice?.columnId!,
-        type: invoice?.type!,
-      });
-
-      return { newPayment, invoice };
-    });
+    );
 
     revalidatePath("/dashboard/estimate/edit");
 

@@ -32,6 +32,8 @@ export default function ClientInfinityScroll({
   defaultTakeData = 20,
   companyId,
 }: TProps) {
+  
+  // Initial clients should already be properly sorted from the server
   const [clients, setClients] = useState<TClient[]>(initialsClients);
   const { filter, searchTerm } = useDemoClientFilterStore();
   const { clientList, setClientList } = clientListStore();
@@ -54,19 +56,29 @@ export default function ClientInfinityScroll({
       .subscribe(`client-notify-${companyId}`)
       .bind('client-notify', (data: ClientConversationTrack) => {
         if (!data) return;
+        
         setClients(prevClients => {
-          const updatedClient = prevClients.map(client => {
-            if (client.id == data.clientId) {
-              return {
-                ...client,
-                conversationsTrack: data,
-              };
-            }
-            return client;
+          // Ensure no duplicates by using a Map with client ID as key
+          const clientMap = new Map();
+          prevClients.forEach(client => {
+            clientMap.set(client.id, client);
           });
-          const sortedClient = clientSortByUpdatedMessage(updatedClient);
-          return sortedClient;
+
+          // Update the specific client's conversation track
+          if (clientMap.has(data.clientId)) {
+            const existingClient = clientMap.get(data.clientId);
+            clientMap.set(data.clientId, {
+              ...existingClient,
+              conversationsTrack: data,
+            });
+          }
+
+          // Convert back to array and sort
+          const updatedClients = Array.from(clientMap.values());
+          const sortedClients = clientSortByUpdatedMessage(updatedClients);
+          return sortedClients;
         });
+        
         if (clientIdParams === data.clientId.toString()) {
           useClientCommunicationStore.setState({
             clientConversationTrack: data,
@@ -79,20 +91,30 @@ export default function ClientInfinityScroll({
   }, [pathname]);
 
   useEffect(() => {
-    const fetchFilteredClients = async () => {
-      try {
-        const clients = await getClients({
-          companyId: companyId,
-          search: searchTerm,
-          filter,
-        });
-        setClients(clients);
-      } catch (err) {
-        errorToast('Failed to fetch clients');
-      }
-    };
-    fetchFilteredClients();
-  }, [filter, searchTerm]);
+    // Only refetch when user is actively filtering/searching
+    // For 'All' filter with no search, rely on initial clients + infinite scroll
+    if (searchTerm || (filter && filter !== 'All')) {
+      const fetchFilteredClients = async () => {
+        try {
+          const fetchedClients = await getClients({
+            companyId: companyId,
+            search: searchTerm,
+            filter,
+          });
+          
+          setClients(fetchedClients);
+          setHasMore(filter === 'All'); // Only enable infinite scroll for 'All' filter
+        } catch (err) {
+          errorToast('Failed to fetch clients');
+        }
+      };
+      fetchFilteredClients();
+    } else if (filter === 'All' && !searchTerm && clients.length === 0 && initialsClients.length > 0) {
+      // If filter is 'All' and no search, use initial clients (they're already sorted)
+      setClients(initialsClients);
+      setHasMore(true);
+    }
+  }, [filter, searchTerm, initialsClients.length]);
 
   // const [page, setPage] = useState(1);
   useEffect(() => {
@@ -121,8 +143,12 @@ export default function ClientInfinityScroll({
   }, [clients, isClientInitialPage]);
 
   useEffect(() => {
-    setClientList(clients);
-  }, [clients]);
+    // Update clientList store with sorted clients and prevent duplicates
+    const uniqueClients = clients.filter((client, index, self) => 
+      index === self.findIndex(c => c.id === client.id)
+    );
+    setClientList(uniqueClients);
+  }, [clients, setClientList]);
 
   const fetchData = async () => {
     try {
@@ -134,7 +160,14 @@ export default function ClientInfinityScroll({
       if (fetchClients.length < defaultTakeData) {
         setHasMore(false);
       }
-      setClients(prev => [...prev, ...fetchClients]);
+      
+      // Prevent duplicate clients when fetching more data
+      // Note: getClientByScroll already returns sorted data
+      setClients(prev => {
+        const existingIds = new Set(prev.map(client => client.id));
+        const newClients = fetchClients.filter(client => !existingIds.has(client.id));
+        return [...prev, ...newClients];
+      });
     } catch (err) {
       setHasMore(false);
       errorToast('Failed to fetch clients');
@@ -150,7 +183,7 @@ export default function ClientInfinityScroll({
       <InfiniteScroll
         dataLength={dataLength} //This is important field to render the next data
         next={fetchData}
-        hasMore={filter === 'All' && hasMore}
+        hasMore={filter === 'All' && !searchTerm && hasMore}
         loader={
           <div className="text-center">
             <div className="mx-auto h-6 w-6 animate-spin rounded-full border-4 border-dashed border-yellow-500"></div>

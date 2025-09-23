@@ -47,7 +47,9 @@ export async function editAppointment({
   try {
     await updateAppointmentValidationSchema.parseAsync({ id, appointment });
     const session = await getServerSession(authOptions);
+    console.log("🚀 ~ editAppointment ~ session:", session);
     const companyId = session?.user.companyId;
+    console.log("🚀 ~ editAppointment ~ companyId:", companyId);
 
     if (!companyId) {
       throw new Error("Company ID is required to create an email template.");
@@ -60,6 +62,10 @@ export async function editAppointment({
           id,
         },
       });
+      console.log(
+        "🚀 ~ editAppointment ~ existingAppointment:",
+        existingAppointment
+      );
 
       if (existingAppointment?.draftEstimate !== appointment.draftEstimate) {
         // Create draft estimate (if doesn't exist)
@@ -68,6 +74,7 @@ export async function editAppointment({
             id: appointment.draftEstimate,
           },
         });
+        console.log("🚀 ~ editAppointment ~ draftEstimate:", draftEstimate);
 
         if (!draftEstimate) {
           await db.invoice.create({
@@ -107,6 +114,10 @@ export async function editAppointment({
         timezone: appointment.timezone,
       },
     });
+    console.log(
+      "🚀 ~ editAppointment ~ updatedAppointment:",
+      updatedAppointment
+    );
 
     // Delete all the assigned users for the appointment
     await db.appointmentUser.deleteMany({
@@ -173,6 +184,7 @@ export async function editAppointment({
         phone: true,
       },
     });
+    console.log("🚀 ~ editAppointment ~ company:", company);
 
     if (confirmationEmailTemplate) {
       const appointmentDate = moment(
@@ -229,12 +241,12 @@ export async function editAppointment({
       if (appointment.confirmationEmailTemplateStatus) {
         // send email
         if (client) {
-          sendInfobipEmail({
-            clientId: client.id,
-            subject: confirmationSubject,
-            text: confirmationMessage,
-          });
           try {
+            sendInfobipEmail({
+              clientId: client.id,
+              subject: confirmationSubject,
+              text: confirmationMessage,
+            });
             sendMessage({
               companyId: client.companyId,
               clientId: client.id,
@@ -253,7 +265,11 @@ export async function editAppointment({
       },
     });
 
-    await deleteRemindersInNest(String(updatedAppointment.id));
+    try {
+      await deleteRemindersInNest(String(updatedAppointment.id));
+    } catch (error) {
+      console.log("🚀 ~ editAppointment ~ error:", error);
+    }
 
     if (updatedAppointment.date && updatedAppointment.startTime) {
       let i = 0;

@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import { pipeline, Readable } from "stream";
 import { promisify } from "util";
+import os from "os";
 
 const pump = promisify(pipeline);
 
@@ -20,7 +21,7 @@ export async function GET(request: NextRequest) {
         {
           status: 400,
           headers: { "Content-Type": "application/json" },
-        },
+        }
       );
     }
     const client = await db.client.findFirst({
@@ -85,7 +86,7 @@ export async function GET(request: NextRequest) {
               };
             }
             return null;
-          }),
+          })
         );
 
         emails.push({
@@ -120,7 +121,7 @@ export async function GET(request: NextRequest) {
 
 // Helper function to convert Web Stream to Node.js Readable stream
 function webStreamToNodeStream(
-  webStream: ReadableStream<Uint8Array>,
+  webStream: ReadableStream<Uint8Array>
 ): Readable {
   const reader = webStream.getReader();
 
@@ -197,14 +198,21 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     if (!recipient || !subject || !text) {
       return NextResponse.json(
         { success: false, error: "Missing required form data" },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
     // Handle file if exists
     if (file) {
       const nodeStream = webStreamToNodeStream(file.stream());
-      filePath = path.join("./public/uploads", file.name);
+
+      // ✅ Use OS temp directory (works on Vercel/Lambda)
+      const uploadDir = path.join(os.tmpdir(), "uploads");
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+
+      filePath = path.join(uploadDir, file.name);
       await pump(nodeStream, fs.createWriteStream(filePath));
     }
 
@@ -212,7 +220,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const oAuth2Client = new google.auth.OAuth2(
       process.env.GMAIL_CLIENT_ID,
       process.env.GMAIL_CLIENT_SECRET,
-      `${env("NEXT_PUBLIC_APP_URL")}/dashboard/communication/client/auth`,
+      `${env("NEXT_PUBLIC_APP_URL")}/dashboard/communication/client/auth`
     );
 
     const company = await db.company.findFirst({

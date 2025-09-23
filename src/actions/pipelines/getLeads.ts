@@ -43,10 +43,10 @@ export const getLeads = async ({
       ...(columnId && { columnId }),
       ...(searchTerm && {
         OR: [
-          { clientName: { contains: searchTerm } },
-          { vehicleInfo: { contains: searchTerm } },
-          { services: { contains: searchTerm } },
-          { source: { contains: searchTerm } },
+          { clientName: { contains: searchTerm, mode: "insensitive" } },
+          { vehicleInfo: { contains: searchTerm, mode: "insensitive" } },
+          { services: { contains: searchTerm, mode: "insensitive" } },
+          { source: { contains: searchTerm, mode: "insensitive" } },
         ],
       }),
     };
@@ -249,10 +249,10 @@ export const getLeadsWithCount = async ({
       ...(columnId && { columnId }),
       ...(searchTerm && {
         OR: [
-          { clientName: { contains: searchTerm } },
-          { vehicleInfo: { contains: searchTerm } },
-          { services: { contains: searchTerm } },
-          { source: { contains: searchTerm } },
+          { clientName: { contains: searchTerm, mode: "insensitive" } },
+          { vehicleInfo: { contains: searchTerm, mode: "insensitive" } },
+          { services: { contains: searchTerm, mode: "insensitive" } },
+          { source: { contains: searchTerm, mode: "insensitive" } },
         ],
       }),
       ...(assignedTo && { assignedSalesUserId: parseInt(assignedTo) }),
@@ -476,10 +476,10 @@ export const getLeadsWithCountOptimized = async ({
       ...(columnId && { columnId }),
       ...(searchTerm && {
         OR: [
-          { clientName: { contains: searchTerm } },
-          { vehicleInfo: { contains: searchTerm } },
-          { services: { contains: searchTerm } },
-          { source: { contains: searchTerm } },
+          { clientName: { contains: searchTerm, mode: "insensitive" } },
+          { vehicleInfo: { contains: searchTerm, mode: "insensitive" } },
+          { services: { contains: searchTerm, mode: "insensitive" } },
+          { source: { contains: searchTerm, mode: "insensitive" } },
         ],
       }),
       ...(assignedTo && { assignedSalesUserId: parseInt(assignedTo) }),
@@ -723,10 +723,10 @@ export async function getLeadsCountByColumnId(
         companyId: companyId,
         ...(searchTerm && {
           OR: [
-            { clientName: { contains: searchTerm } },
-            { vehicleInfo: { contains: searchTerm } },
-            { services: { contains: searchTerm } },
-            { source: { contains: searchTerm } },
+            { clientName: { contains: searchTerm, mode: "insensitive" } },
+            { vehicleInfo: { contains: searchTerm, mode: "insensitive" } },
+            { services: { contains: searchTerm, mode: "insensitive" } },
+            { source: { contains: searchTerm, mode: "insensitive" } },
           ],
         }),
       },

@@ -16,14 +16,16 @@ interface PayoutProps {
   showBreakdown?: boolean;
 }
 
-export default async function Payout({ info, showBreakdown = false }: PayoutProps) {
+export default async function Payout({
+  info,
+  showBreakdown = false,
+}: PayoutProps) {
   // Calculate unified earnings (work-based + salary if available)
   const previousMonthEarnings = await calculateUnifiedPreviousMonthEarnings(
     info as History[]
   );
-  const secondPreviousMonthEarnings = await calculateUnified2ndPreviousMonthEarnings(
-    info as History[]
-  );
+  const secondPreviousMonthEarnings =
+    await calculateUnified2ndPreviousMonthEarnings(info as History[]);
   const currentMonthEarnings = await calculateUnifiedCurrentMonthEarnings(
     info as History[]
   );
@@ -86,9 +88,9 @@ export default async function Payout({ info, showBreakdown = false }: PayoutProp
             showBreakdown: true,
           }}
         />
-        <UnifiedPayoutCard 
-          title="YTD Payout" 
-          amount={totalEarnings} 
+        <UnifiedPayoutCard
+          title="YTD Payout"
+          amount={totalEarnings}
           breakdown={{
             workBased: earningsBreakdown.workBased.total,
             salary: earningsBreakdown.salary.total,

@@ -349,7 +349,10 @@ export default function MessageBox({
       {/* Messages */}
       <div
         id="messageBox"
-        className="h-[82%] overflow-y-scroll"
+        className={cn(
+          "overflow-y-scroll",
+          totalMessageBox > 2 ? "h-[calc(100%-60px)]" : "h-[82%]"
+        )}
         ref={messageBoxRef}
       >
         {messages.map((message: TMessage, index: number) => {
@@ -452,7 +455,10 @@ export default function MessageBox({
 
       {/* Input */}
       <form
-        className="relative flex h-[8%] items-center gap-2 bg-[#D9D9D9] p-2"
+        className={cn(
+          "relative flex items-center gap-2 bg-[#D9D9D9] p-2",
+          totalMessageBox > 2 ? "h-[60px] min-h-[60px]" : "h-[8%] min-h-[50px]"
+        )}
         onSubmit={(e) => startTransition(() => handleSendMessage(e))}
       >
         {/* attachment or estimate dropdown */}
@@ -497,7 +503,7 @@ export default function MessageBox({
         <input
           type="text"
           placeholder="Send Message..."
-          className="h-5 w-full rounded-md border-none px-2 py-5 text-base focus:outline-none"
+          className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#006D77] focus:border-transparent"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
         />
