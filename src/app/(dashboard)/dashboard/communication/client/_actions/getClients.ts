@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { getUserFromSession } from "@/lib/getCurrentUser";
 import { Client, ClientConversationTrack, Prisma } from "@prisma/client";
 import { cache } from "react";
+import { clientSortByUpdatedMessage } from "../_utils";
 
 type TGetClientsProps = {
   companyId: number;
@@ -18,11 +19,7 @@ export const getClients = cache(
       where: {
         companyId,
       },
-      orderBy: {
-        conversationsTrack: {
-          sendAt: "desc",
-        },
-      },
+      // Remove the complex orderBy and handle sorting in application code
       include: {
         conversationsTrack: true,
       },
@@ -32,7 +29,8 @@ export const getClients = cache(
     try {
       switch (filter) {
         case "Unread":
-          clients = await db.client.findMany({
+          // Get all clients with unread messages, then sort and limit
+          const allUnreadClients = await db.client.findMany({
             ...queryObj,
             where: {
               ...queryObj.where,
@@ -41,18 +39,24 @@ export const getClients = cache(
               },
             },
           });
+          const sortedUnreadClients = clientSortByUpdatedMessage(allUnreadClients);
+          clients = sortedUnreadClients.slice(0, take) as typeof clients;
           break;
         case "Starred":
-          clients = await db.client.findMany({
+          // Get all starred clients, then sort and limit  
+          const allStarredClients = await db.client.findMany({
             ...queryObj,
             where: {
               ...queryObj.where,
               isStarred: true,
             },
           });
+          const sortedStarredClients = clientSortByUpdatedMessage(allStarredClients);
+          clients = sortedStarredClients.slice(0, take) as typeof clients;
           break;
         case "Assigned":
-          clients = await db.client.findMany({
+          // Get all assigned clients, then sort and limit
+          const allAssignedClients = await db.client.findMany({
             ...queryObj,
             where: {
               ...queryObj.where,
@@ -63,9 +67,23 @@ export const getClients = cache(
               },
             },
           });
+          const sortedAssignedClients = clientSortByUpdatedMessage(allAssignedClients);
+          clients = sortedAssignedClients.slice(0, take) as typeof clients;
           break;
         default:
-          clients = await db.client.findMany({ ...queryObj, take });
+          // For the initial load, we need to get ALL clients, sort them properly,
+          // and then take the top 'take' number of clients
+          // This ensures we get the actual top clients, not just a random 20
+          const allClients = await db.client.findMany({ 
+            ...queryObj, 
+            // Remove the 'take' limit here - we need all clients to sort properly
+          });
+          
+          // Apply proper sorting to get the actual top clients
+          const sortedAllClients = clientSortByUpdatedMessage(allClients);
+          
+          // Now take only the top 'take' number of clients
+          clients = sortedAllClients.slice(0, take) as typeof clients;
           break;
       }
 
@@ -85,6 +103,9 @@ export const getClients = cache(
               false)
           );
         });
+        
+        // Apply sorting for search results
+        clients = clientSortByUpdatedMessage(clients) as typeof clients;
       }
 
       return clients;

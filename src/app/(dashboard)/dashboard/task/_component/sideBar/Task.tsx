@@ -137,7 +137,7 @@ export default function TaskComponent({ task }: TaskComponentProps) {
 
       <TaskCreateOrEdit
         triggerIcon={
-          <SquarePen className="w-5 h-5 text-[#6571FF] mr-2 cursor-pointer" />
+          <SquarePen className="w-5 h-5 text-white hover:text-gray-400 mr-2 cursor-pointer" />
         }
         taskId={task.id}
         fromEdit

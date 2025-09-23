@@ -147,6 +147,7 @@ export default function AppointmentModalBody({
   const [confirmationTemplateStatus, setConfirmationTemplateStatus] =
     useState(false);
   const [reminderTemplateStatus, setReminderTemplateStatus] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [draftOpen, setDraftOpen] = useState(false);
 
@@ -364,39 +365,80 @@ export default function AppointmentModalBody({
   }, [allDay, settings?.dayStart, settings?.dayEnd, date]);
 
   const handleSubmit = async () => {
-    // Add validation for date and time - title is always a string now
-    if (!title || !title.trim()) {
-      return errorToast("Appointment title is required!");
-    }
+    if (isSubmitting) return; // Prevent multiple submissions
 
-    if (date && (!startTime || !endTime)) {
-      return errorToast(
-        "Start time and End time are required when a date is selected!"
-      );
-    }
+    try {
+      setIsSubmitting(true);
 
-    if (client && confirmationTemplateStatus && !confirmationTemplate) {
-      return errorToast("No confirmation template is selected");
-    } else if (client && reminderTemplateStatus && !reminderTemplate) {
-      return errorToast("No reminder template is selected");
-    }
+      // Add validation for date and time - title is always a string now
+      if (!title || !title.trim()) {
+        setIsSubmitting(false);
+        return errorToast("Appointment title is required!");
+      }
 
-    if (client && reminderTemplateStatus && reminderTemplate && !timezone) {
-      return errorToast(
-        "Set company timezone in Settings > Business Profile to send client reminders."
-      );
-    }
+      if (date && (!startTime || !endTime)) {
+        setIsSubmitting(false);
+        return errorToast(
+          "Start time and End time are required when a date is selected!"
+        );
+      }
 
-    let res;
+      if (client && confirmationTemplateStatus && !confirmationTemplate) {
+        setIsSubmitting(false);
+        return errorToast("No confirmation template is selected");
+      } else if (client && reminderTemplateStatus && !reminderTemplate) {
+        setIsSubmitting(false);
+        return errorToast("No reminder template is selected");
+      }
 
-    if (fromEdit && appointmentId) {
-      res = await editAppointment({
-        id: appointmentId,
-        appointment: {
+      if (client && reminderTemplateStatus && reminderTemplate && !timezone) {
+        setIsSubmitting(false);
+        return errorToast(
+          "Set company timezone in Settings > Business Profile to send client reminders."
+        );
+      }
+
+      let res;
+
+      if (fromEdit && appointmentId) {
+        res = await editAppointment({
+          id: appointmentId,
+          appointment: {
+            title: title,
+            date: date as string,
+            startTime: startTime as string,
+            endTime: endTime as string,
+            assignedUsers: assignedUsers.map((user) => user.id),
+            clientId: client ? client.id : undefined,
+            vehicleId: vehicle ? vehicle.id : undefined,
+            draftEstimate: draft,
+            notes,
+            confirmationEmailTemplateId: confirmationTemplate?.id,
+            reminderEmailTemplateId: reminderTemplate?.id,
+            confirmationEmailTemplateStatus: confirmationTemplateStatus,
+            reminderEmailTemplateStatus: reminderTemplateStatus,
+            times,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          },
+        });
+        console.log("🚀 ~ handleSubmit ~ res:", res);
+        if (res.type === "success") {
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.appointmentById(appointmentId),
+          });
+          onAppointmentUpdated && onAppointmentUpdated(res.data);
+          try {
+            successToast("Appointment updated successfully!");
+          } catch (toastError) {
+            console.error("Toast error:", toastError);
+          }
+        }
+      } else {
+        res = await addAppointment({
           title: title,
-          date: date as string,
-          startTime: startTime as string,
-          endTime: endTime as string,
+          date,
+          startTime,
+          endTime,
           assignedUsers: assignedUsers.map((user) => user.id),
           clientId: client ? client.id : undefined,
           vehicleId: vehicle ? vehicle.id : undefined,
@@ -408,58 +450,43 @@ export default function AppointmentModalBody({
           reminderEmailTemplateStatus: reminderTemplateStatus,
           times,
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        },
-      });
-      if (res.type === "success") {
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.appointmentById(appointmentId),
         });
-        onAppointmentUpdated && onAppointmentUpdated(res.data);
-        successToast("Appointment updated successfully!");
+        if (res.type === "success") {
+          onAppointmentCreated &&
+            onAppointmentCreated({ ...res.data, lead: client?.Lead || null });
+          try {
+            successToast("Appointment created successfully!");
+          } catch (toastError) {
+            console.error("Toast error:", toastError);
+          }
+        }
       }
-    } else {
-      res = await addAppointment({
-        title: title,
-        date,
-        startTime,
-        endTime,
-        assignedUsers: assignedUsers.map((user) => user.id),
-        clientId: client ? client.id : undefined,
-        vehicleId: vehicle ? vehicle.id : undefined,
-        draftEstimate: draft,
-        notes,
-        confirmationEmailTemplateId: confirmationTemplate?.id,
-        reminderEmailTemplateId: reminderTemplate?.id,
-        confirmationEmailTemplateStatus: confirmationTemplateStatus,
-        reminderEmailTemplateStatus: reminderTemplateStatus,
-        times,
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      });
+
       if (res.type === "success") {
         onAppointmentCreated &&
           onAppointmentCreated({ ...res.data, lead: client?.Lead || null });
-        successToast("Appointment created successfully!");
+        resetAll();
+        onModalClose();
+        console.log("modal should closed");
+        setUpdateVariable();
+        return;
       }
-    }
 
-    if (res.type === "success") {
-      onAppointmentCreated &&
-        onAppointmentCreated({ ...res.data, lead: client?.Lead || null });
-      resetAll();
-      onModalClose();
-      setUpdateVariable();
-      return;
-    }
-
-    if (res.type === "globalError") {
-      showError({
-        field: res.field || "all",
-        message:
-          res.errorSource && res.errorSource.length > 0
-            ? res.errorSource[0].message
-            : res.message,
-      });
-      return;
+      if (res.type === "globalError") {
+        setIsSubmitting(false);
+        showError({
+          field: res.field || "all",
+          message:
+            res.errorSource && res.errorSource.length > 0
+              ? res.errorSource[0].message
+              : res.message,
+        });
+        return;
+      }
+    } catch (error) {
+      setIsSubmitting(false);
+      console.error("Error in handleSubmit:", error);
+      errorToast("An unexpected error occurred. Please try again.");
     }
   };
 
@@ -988,19 +1015,20 @@ export default function AppointmentModalBody({
             <button
               type="button"
               className={`rounded-md border px-4 py-1 text-white ${
-                formChanged
+                formChanged && !isSubmitting
                   ? "bg-[#6571FF] cursor-pointer hover:bg-blue-600"
                   : "cursor-not-allowed bg-gray-400"
               }`}
               onClick={handleSubmit}
               disabled={
                 !formChanged ||
+                isSubmitting ||
                 (fromEdit && !appointmentIsFetch) ||
                 (fromEdit && !settingsIsFetched) ||
                 (fromEdit && !!client?.id && !estimateIsFetched) // Only require estimates if client is selected
               }
             >
-              Save
+              {isSubmitting ? "Saving..." : "Save"}
             </button>
           </DialogFooter>
         </div>

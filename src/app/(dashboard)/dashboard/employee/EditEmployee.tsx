@@ -249,8 +249,8 @@ export default function EditEmployee({
                 />
               </div>
 
-              <span className="absolute bottom-0 left-2 text-lg text-[#6571FF]">
-                <SquarePen className="w-4 h-4 cursor-pointer" />
+              <span className="absolute bottom-0 left-1 text-lg p-1 rounded-full bg-[#6571FF]">
+                <SquarePen className="w-3 h-3 cursor-pointer text-white " />
               </span>
 
               <input

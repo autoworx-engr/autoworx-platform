@@ -243,7 +243,7 @@ export default function Table({
                       className="text-2xl text-blue-600"
                       onClick={() => setActionType("edit")}
                     >
-                      <SquarePen className="w-5 h-5 text-[#6571FF]" />
+                      <SquarePen className="w-4 h-4 text-[#6571FF]" />
                     </Link>
                   </td>
                 </tr>
