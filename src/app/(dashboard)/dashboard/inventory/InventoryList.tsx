@@ -129,7 +129,7 @@ export default function InventoryList({
             <div className="h-full overflow-y-auto">
               <ProductTable
                 searchParams={searchParams}
-                products={products as any}
+                products={supplies as any}
                 totalItems={totalSupplies}
                 currentProductId={productId}
                 user={user}
