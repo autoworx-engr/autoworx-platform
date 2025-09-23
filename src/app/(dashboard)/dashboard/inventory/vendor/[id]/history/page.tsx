@@ -19,13 +19,10 @@ export default async function Page({
 }) {
   const { timezone } = await getCompanyTimezone();
 
-  const histories = await db.inventoryProductHistory.findMany({
+  const inventoryProducts = await db.inventoryProduct.findMany({
     where: {
       vendorId: parseInt(id),
-      type: "Purchase",
-    },
-    include: {
-      product: true,
+      // type: "Purchase"
     },
     orderBy: {
       createdAt: "desc",
@@ -43,15 +40,15 @@ export default async function Page({
   });
 
   const totalPurchaseAmount =
-    histories?.reduce((acc, product) => {
+    inventoryProducts?.reduce((acc, product) => {
       return acc + Number(product.price || 0) * Number(product.quantity || 0);
     }, 0) ?? 0;
 
-  // const totalPurchaseAmount = histories.reduce((acc, history) => {
-  //   return acc + (history.product.price as any) * history.quantity;
+  // const totalPurchaseAmount = histories.reduce((acc, product) => {
+  //   return acc + (product.product.price as any) * product.quantity;
   // }, 0);
 
-  const totalAmountSpent = 0;
+  // const totalAmountSpent = 0;
 
   return (
     <div className="h-full">
@@ -59,7 +56,7 @@ export default async function Page({
         <Link href="/dashboard/inventory/vendor">
           <IoIosArrowBack />
         </Link>
-        Vendor - Purchase History
+        Vendor - Purchase product
       </Title>
 
       <div className="mt-5 flex h-full flex-col gap-5 p-2 lg:flex-row">
@@ -79,37 +76,35 @@ export default async function Page({
             </thead>
 
             <tbody>
-              {histories?.map((history, index) => {
-                const total = Number(history.price) * Number(history.quantity);
+              {inventoryProducts?.map((product, index) => {
+                const total = Number(product.price) * Number(product.quantity);
                 return (
                   <tr
-                    key={history.id}
+                    key={product.id}
                     className={cn(
                       "py-3",
                       index % 2 === 0 ? evenColor : oddColor
                     )}
                   >
                     <td className="h-12 px-10 text-left">
-                      <p>{history.id}</p>
+                      <p>{product.id}</p>
                     </td>
                     <td className="text-nowrap px-10 text-left">
-                      {history.product.name}
+                      {product.name}
                     </td>
                     <td className="text-nowrap px-10 text-left">
-                      {formatCurrency(Number(history.price))}
+                      {formatCurrency(Number(product.price))}
                     </td>
                     <td className="px-10 text-left">
-                      {Number(history.quantity)}
+                      {Number(product.quantity)}
                     </td>
                     <td className="px-10 text-left">{formatCurrency(total)}</td>
                     <td className="px-10 text-left">
                       {moment
-                        .tz(history.createdAt, timezone)
+                        .tz(product.createdAt, timezone)
                         .format("DD.MM.YYYY")}
                     </td>
-                    <td className="mt-2 flex gap-3 px-5">
-                      {history.product.receipt}
-                    </td>
+                    <td className="mt-2 flex gap-3 px-5">{product.receipt}</td>
                   </tr>
                 );
               })}
@@ -118,23 +113,23 @@ export default async function Page({
         </div>
 
         <div className="space-y-3 lg:hidden">
-          {histories.map((history, index) => (
+          {inventoryProducts.map((product, index) => (
             <Card key={index} className="relative">
               <CardContent className="pt-6">
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div className="space-y-3">
                     <div>
                       <div className="text-muted-foreground">Name</div>
-                      <div className="font-medium">{history.product.name}</div>
+                      <div className="font-medium">{product.name}</div>
                     </div>
                     <div>
                       <div className="text-muted-foreground">Price</div>
-                      <div className="font-medium">{Number(history.price)}</div>
+                      <div className="font-medium">{Number(product.price)}</div>
                     </div>
                     <div>
                       <div className="text-muted-foreground">Quantity</div>
                       <div className="font-medium">
-                        {Number(history.quantity)}
+                        {Number(product.quantity)}
                       </div>
                     </div>
                   </div>
@@ -142,20 +137,18 @@ export default async function Page({
                     <div>
                       <div className="text-muted-foreground">Date</div>
                       <div className="font-medium">
-                        {moment.utc(history.createdAt).format("DD.MM.YYYY")}
+                        {moment.utc(product.createdAt).format("DD.MM.YYYY")}
                       </div>
                     </div>
                     <div>
                       <div className="text-muted-foreground">Total</div>
                       <div className="font-medium">
-                        {Number(history.price) * Number(history.quantity)}
+                        {Number(product.price) * Number(product.quantity)}
                       </div>
                     </div>
                     <div>
                       <div className="text-muted-foreground">Receipt</div>
-                      <div className="font-medium">
-                        {history.product.receipt}
-                      </div>
+                      <div className="font-medium">{product.receipt}</div>
                     </div>
                   </div>
                 </div>
@@ -182,7 +175,7 @@ export default async function Page({
                   Total Number of purchase
                 </h3>
                 <p className="mt-2 text-center text-4xl font-bold">
-                  {histories.length}
+                  {inventoryProducts.length}
                 </p>
               </div>
             </div>
