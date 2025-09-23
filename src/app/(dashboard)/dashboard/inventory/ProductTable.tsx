@@ -1,12 +1,9 @@
 "use client";
 
 import { deleteInventory } from "@/actions/inventory/delete";
-import InventoryResponsiveCard from "@/components/mobile-responsive/inventory/ResponsiveInventoryCard";
 import { cn } from "@/lib/cn";
 import { useInventoryFilterStore } from "@/stores/inventoryFilter";
-import { ProductCardProps } from "@/types/inventory";
 import { Category, InventoryProduct, User, Vendor } from "@prisma/client";
-import { Pagination, Popconfirm, Tooltip } from "antd"; // Importing the Pagination component from Ant Design
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { FaTimes } from "react-icons/fa";
@@ -35,14 +32,8 @@ export default function ProductTable({
   const router = useRouter();
   const search = useSearchParams();
   const viewTab = search?.get("view");
-  async function getUserInfo() {
-    getUser().then((user) => {
-      setUser(user);
-    });
-  }
   const { search: productSearch, category } = useInventoryFilterStore();
   const [filteredProducts, setFilteredProducts] = useState(products);
-  const [user, setUser] = useState<User | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(50);
   const [showPagination, setShowPagination] = useState(false);
