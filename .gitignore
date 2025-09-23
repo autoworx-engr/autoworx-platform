@@ -49,7 +49,6 @@ public/uploads/*
 credentials.js
 credentials.json
 token.json
-package-lock.json
 certificates
 
 /logs
