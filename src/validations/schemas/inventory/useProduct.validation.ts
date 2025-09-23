@@ -82,10 +82,6 @@ export const updatePurchaseInventoryHistorySchema = z.object({
     })
     .nonnegative("Price must be non-negative")
     .finite("Price must be finite")
-    .refine(
-      (num) => (num * 100) % 1 === 0,
-      "Price cannot have more than 2 decimal places"
-    )
     .optional()
     .nullable(),
 

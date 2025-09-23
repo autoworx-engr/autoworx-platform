@@ -129,6 +129,17 @@ export default function AddNewProduct({ product, isDatabase }: ProductProps) {
       hasError = true;
     }
 
+    if (quantity) {
+      if (quantity.length > 8) {
+        showError({
+          field: "quantity",
+          message: "Quantity must be less than 8 characters",
+        });
+
+        hasError = true;
+      }
+    }
+
     // Price validation
     if (!priceValue || priceValue.trim() === "") {
       showError({
