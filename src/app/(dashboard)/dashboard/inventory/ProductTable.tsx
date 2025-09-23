@@ -2,7 +2,6 @@
 
 import { deleteInventory } from "@/actions/inventory/delete";
 import { cn } from "@/lib/cn";
-import getUser from "@/lib/getUser";
 import { Category, InventoryProduct, User, Vendor } from "@prisma/client";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
@@ -12,11 +11,6 @@ import InventoryResponsiveCard from "@/components/mobile-responsive/inventory/Re
 import { ProductCardProps } from "@/types/inventory";
 import { Pagination, Popconfirm } from "antd"; // Importing the Pagination component from Ant Design
 import { Tooltip } from "antd";
-import {
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/Tooltip";
 
 const evenColor = "bg-background";
 const oddColor = "bg-blue-100";
@@ -26,6 +20,7 @@ export default function ProductTable({
   products,
   searchParams,
   totalItems,
+  user,
 }: {
   currentProductId: number | undefined;
   products: (InventoryProduct & {
@@ -39,26 +34,17 @@ export default function ProductTable({
     limit: string;
   };
   totalItems: number;
+  user: User;
 }) {
   const router = useRouter();
   const search = useSearchParams();
   const pathname = usePathname();
   const viewTab = search?.get("view");
-  async function getUserInfo() {
-    getUser().then(user => {
-      setUser(user);
-    });
-  }
-  const [user, setUser] = useState<User | null>(null);
   const [currentPage, setCurrentPage] = useState(
     Number(searchParams.page) || 1
   );
   const [pageSize, setPageSize] = useState(Number(searchParams.limit) || 50);
   const [showPagination, setShowPagination] = useState(false);
-
-  useEffect(() => {
-    getUserInfo();
-  }, []);
 
   useEffect(() => {
     if (totalItems > 10) {
