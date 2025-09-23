@@ -26,6 +26,7 @@ export function SelectAppointmentVehicle({
 }: SelectProps<Partial<Vehicle> | null>) {
   const pathname = usePathname();
   const state = useState(value);
+
   const [vehicle, setVehicle] = setValue ? [value, setValue] : state;
   // const vehicleList = useListsStore((x) => x.vehicles);
   const newAddedVehicle = useListsStore((x) => x.newAddedVehicle);
@@ -58,7 +59,6 @@ export function SelectAppointmentVehicle({
     if (clientId) {
       if (clientVehicles?.length > 0 && !value) {
         if (isEdit == false) {
-          console.log("Setting vehicle to first client vehicle");
           setVehicle(selectedVehicle);
           // useListsStore.setState({ vehicle: selectedVehicle });
         }
@@ -67,10 +67,7 @@ export function SelectAppointmentVehicle({
           (vehicle) => vehicle.id === value?.id
         );
         const finalVehicle = matchedVehicle ?? selectedVehicle;
-        console.log(
-          "Setting vehicle to matched or new added vehicle",
-          finalVehicle
-        );
+
         setVehicle(finalVehicle);
         // useListsStore.setState({ vehicle: finalVehicle });
       }
@@ -90,7 +87,7 @@ export function SelectAppointmentVehicle({
     useListsStore.setState({ vehicle: null, newAddedVehicle: null });
     setIsAppointmentModalOpen && setIsAppointmentModalOpen(true);
   };
-
+  console.log("vehicle", vehicle);
   return (
     <>
       <input type="hidden" name={name} value={vehicle?.id ?? ""} />
@@ -130,8 +127,10 @@ export function SelectAppointmentVehicle({
           }
           items={clientVehicles}
           onSearch={(search: string) =>
-            clientVehicles.filter((vehicle) =>
-              vehicle.model?.toLowerCase().includes(search.toLowerCase())
+            clientVehicles.filter(
+              (vehicle) =>
+                vehicle.model?.toLowerCase().includes(search.toLowerCase()) ||
+                vehicle.other?.toLowerCase().includes(search.toLowerCase())
             )
           }
           openState={[
@@ -143,7 +142,7 @@ export function SelectAppointmentVehicle({
             setVehicle(vehicle);
           }}
           displayList={(item) => (
-            <p>{`${item.year || ""} ${item.make ?? ""} ${item.model ?? ""}`}</p>
+            <p>{`${item.year || ""} ${item.make ?? ""} ${item.model ?? ""} ${item.other ?? ""}`}</p>
           )}
           footer={
             isClear && vehicle ? (
