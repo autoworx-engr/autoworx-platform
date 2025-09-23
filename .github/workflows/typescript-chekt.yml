@@ -25,3 +25,5 @@ jobs:
 
       - name: TypeScript check
         run: npx tsc --noEmit
+        env:
+          NODE_OPTIONS: '--max-old-space-size=4096'
