@@ -8,6 +8,7 @@ import TaskActions from "./TaskActions";
 import SaveAttachment from "./SaveAttachment";
 import dynamic from "next/dynamic";
 import getSms from "@/actions/communication/client/getSms";
+import { cn } from "@/lib/cn";
 
 type TProps = {
   client?: Client | null;
@@ -177,7 +178,14 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
             tasks.map((task) => (
               <div
                 key={task.id}
-                className="group flex items-center gap-2 rounded-full border border-transparent bg-indigo-600/90 px-3 py-1.5 text-xs font-medium text-white shadow-sm transition-colors hover:bg-indigo-600"
+                className={cn(
+                  "group flex items-center gap-2 rounded-full border border-transparent  px-3 py-1.5 text-xs font-medium text-white shadow-sm transition-colors",
+                  {
+                    "bg-[#6571FF]": task.priority === "Low",
+                    "bg-[#25AADD]": task.priority === "Medium",
+                    "bg-[#006d77]": task.priority === "High",
+                  }
+                )}
                 title={task.title}
               >
                 <span className="truncate max-w-[12rem]">
