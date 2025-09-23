@@ -103,6 +103,8 @@ export default async function Page({
 
   const inventoryCategories = await getCategories();
 
+  console.log("Inventory Categories:", inventoryCategories);
+
   const categories = await db.category.findMany({ where: { companyId } });
   const vendors = await db.vendor.findMany({ where: { companyId } });
 
