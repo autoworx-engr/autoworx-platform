@@ -1,11 +1,11 @@
 "use client";
 import { useEmployeeFilterStore } from "@/stores/employeeFilter";
-import { User } from "@prisma/client";
 import moment from "moment";
-import { useEffect, useMemo, useState } from "react";
-import { generateRandomId } from "@/utils/randomNumber";
+import { useMemo } from "react";
 import EmployeeTable from "./components/EmployeeTable";
 import ResponsiveEmployeeCard from "@/components/mobile-responsive/employee/ResponsiveEmployeeCard";
+import { padId } from "@/lib/padId";
+import { User } from "@prisma/client";
 export default function Employee({
   employees,
   needCompanyName,
@@ -41,7 +41,7 @@ export default function Employee({
   //   setFilteredEmployees(filtered);
   // }, [dateRange, search, type, employees]);
 
-  const filteredEmployees = useMemo(()=>{
+  const filteredEmployees = useMemo(() => {
     return employees.filter((employee) => {
       const isWithinDateRange =
         dateRange[0] && dateRange[1]
@@ -52,16 +52,25 @@ export default function Employee({
       const isTypeMatch =
         type !== "All" ? employee.employeeType === type : true;
 
-      const isSearchMatch = search
-        ? employee.firstName.toLowerCase().includes(search.toLowerCase()) ||
-          employee.lastName?.toLowerCase().includes(search.toLowerCase()) ||
-          employee.email.toLowerCase().includes(search.toLowerCase()) ||
-          employee.phone?.toLowerCase().includes(search.toLowerCase())
-        : true;
+      const searchWords = (search || "").toLowerCase().trim().split(/\s+/);
+
+      const fullName =
+        `${employee?.firstName || ""} ${employee?.lastName || ""}`.toLowerCase();
+      const email = employee?.email?.toLowerCase() || "";
+      const phone = employee?.phone?.toLowerCase() || "";
+      const id = padId(employee?.id);
+
+      const isSearchMatch = searchWords.every(
+        (word) =>
+          id.includes(word) ||
+          fullName.includes(word) ||
+          email.includes(word) ||
+          phone.includes(word)
+      );
 
       return isWithinDateRange && isTypeMatch && isSearchMatch;
     });
-  }, [[dateRange, search, type, employees]])
+  }, [[dateRange, search, type, employees]]);
 
   return (
     <div className="">
