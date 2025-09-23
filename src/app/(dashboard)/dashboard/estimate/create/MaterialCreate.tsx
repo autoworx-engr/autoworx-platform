@@ -515,6 +515,7 @@ export default function MaterialCreate() {
         <input
           type="number"
           id="qt"
+          min={0}
           value={quantity || ""}
           onChange={(e) => setQuantity(parseFloat(e.target.value))}
           className="w-full rounded-md border-2 border-slate-400 p-1 text-xs"
@@ -529,6 +530,7 @@ export default function MaterialCreate() {
         <input
           type="number"
           id="price"
+          min={0}
           value={cost ?? ""}
           onChange={(e) =>
             setCost(e.target.value ? parseFloat(e.target.value) : undefined)
@@ -546,6 +548,7 @@ export default function MaterialCreate() {
         <input
           type="number"
           id="sell"
+          min={0}
           value={sell ?? ""}
           onChange={(e) =>
             setSell(e.target.value ? parseFloat(e.target.value) : undefined)
@@ -562,7 +565,7 @@ export default function MaterialCreate() {
         <input
           type="number"
           id="discount"
-          min="0"
+          min={0}
           value={discount ?? ""}
           onChange={(e) => setDiscount(parseFloat(e.target.value))}
           className="w-full rounded-md border-2 border-slate-400 p-1 text-xs"
