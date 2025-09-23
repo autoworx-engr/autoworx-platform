@@ -1,24 +1,17 @@
 "use client";
 
 import { deleteInventory } from "@/actions/inventory/delete";
+import InventoryResponsiveCard from "@/components/mobile-responsive/inventory/ResponsiveInventoryCard";
 import { cn } from "@/lib/cn";
 import getUser from "@/lib/getUser";
 import { useInventoryFilterStore } from "@/stores/inventoryFilter";
-import { Category, InventoryProduct, User, Vendor } from "@prisma/client";
-import { useRouter, useSearchParams } from "next/navigation";
-import React, { useEffect, useState } from "react";
-import { FaTimes } from "react-icons/fa";
-import { FaCircleExclamation } from "react-icons/fa6";
-import EditProduct from "./EditProduct";
-import InventoryResponsiveCard from "@/components/mobile-responsive/inventory/ResponsiveInventoryCard";
 import { ProductCardProps } from "@/types/inventory";
-import { Pagination, Popconfirm } from "antd"; // Importing the Pagination component from Ant Design
-import { Tooltip } from "antd";
-import {
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/Tooltip";
+import { Category, InventoryProduct, User, Vendor } from "@prisma/client";
+import { Pagination, Popconfirm, Tooltip } from "antd"; // Importing the Pagination component from Ant Design
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { FaTimes } from "react-icons/fa";
+import EditProduct from "./EditProduct";
 
 const evenColor = "bg-background";
 const oddColor = "bg-blue-100";
