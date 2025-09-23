@@ -11,30 +11,36 @@ export default function useTaskSearchQuery(searchTerm: string) {
         where: {
           OR: [
             {
-              title: { contains: searchTerm },
+              title: { contains: searchTerm, mode: "insensitive" },
             },
           ],
         },
         include: {
-          client:{
+          client: {
             select: {
               id: true,
               firstName: true,
               lastName: true,
-            }
+            },
           },
           Invoice: {
             select: {
-              vehicle: true
-            }
-          }
-        }
-        
+              vehicle: true,
+            },
+          },
+        },
       });
       return response.data as (Task & {
-  client: { id: number; firstName: string; lastName: string } | null;
-  Invoice: { vehicle: { id: number; make: string; model: string; year: string } | null } | null;
-})[];
+        client: { id: number; firstName: string; lastName: string } | null;
+        Invoice: {
+          vehicle: {
+            id: number;
+            make: string;
+            model: string;
+            year: string;
+          } | null;
+        } | null;
+      })[];
     },
     enabled: !!searchTerm.trim(),
   });

@@ -2,13 +2,9 @@
 
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
-import {
-  EmployeeType,
-  PrismaClient,
-  Role
-} from "@prisma/client";
+import { EmployeeType, Role } from "@prisma/client";
 
-const prisma = new PrismaClient();
+const prisma = db;
 export const teamManagementUser = async (): Promise<
   {
     id: number;
@@ -122,7 +118,7 @@ export const updatePermissionForRole = async ({
         const technicianPermission = await db.permissionForTechnician.findFirst(
           {
             where: { companyId },
-          },
+          }
         );
         if (technicianPermission) {
           await db.permissionForTechnician.update({
@@ -211,7 +207,7 @@ export const getUserPermissions = async (userId: number, role: string) => {
   } catch (error) {
     console.error(
       `Error fetching permissions for userId: ${userId} and role: ${role}`,
-      error,
+      error
     );
     return {};
   }
@@ -220,7 +216,7 @@ export const getUserPermissions = async (userId: number, role: string) => {
 // Save user permissions
 export const savePermissions = async (
   userId: number,
-  newPermissions: object,
+  newPermissions: object
 ) => {
   try {
     const companyId = await getCompanyId();

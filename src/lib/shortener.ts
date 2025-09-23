@@ -1,7 +1,8 @@
-import { PrismaClient } from "@prisma/client";
+"use server";
 import { nanoid } from "nanoid";
+import { db } from "./db";
 
-const prisma = new PrismaClient();
+const prisma = db;
 
 export interface CreateShortLinkOptions {
   originalUrl: string;
@@ -40,9 +41,7 @@ function generateShortCode(length: number = 6): string {
 /**
  * Find existing short link by original URL only (ignores user/company filters)
  */
-export async function findExistingShortLink(
-  originalUrl: string
-): Promise<{
+export async function findExistingShortLink(originalUrl: string): Promise<{
   success: boolean;
   shortCode?: string;
   shortUrl?: string;
@@ -54,7 +53,7 @@ export async function findExistingShortLink(
         originalUrl,
         isActive: true,
       },
-      orderBy: { createdAt: 'desc' }, // Get the most recent one
+      orderBy: { createdAt: "desc" }, // Get the most recent one
     });
 
     if (existingLink) {
@@ -361,13 +360,13 @@ export async function getOrCreateInvoiceShortLink(
 }> {
   try {
     const originalUrl = `${process.env.NEXT_PUBLIC_APP_URL}/public-invoice/${invoiceId}`;
-    
+
     const result = await createShortLink({
       originalUrl,
-      title: `Invoice ${invoiceId}${clientName ? ` - ${clientName}` : ''}`,
-      description: `Public invoice link${clientName ? ` for ${clientName}` : ''}`,
+      title: `Invoice ${invoiceId}${clientName ? ` - ${clientName}` : ""}`,
+      description: `Public invoice link${clientName ? ` for ${clientName}` : ""}`,
       createdBy,
-      companyId
+      companyId,
     });
 
     return {
@@ -376,10 +375,10 @@ export async function getOrCreateInvoiceShortLink(
     };
   } catch (error) {
     console.error("Error getting/creating invoice short link:", error);
-    return { 
-      success: false, 
+    return {
+      success: false,
       error: "Failed to get/create invoice short link",
-      originalUrl: `${process.env.NEXT_PUBLIC_APP_URL}/public-invoice/${invoiceId}`
+      originalUrl: `${process.env.NEXT_PUBLIC_APP_URL}/public-invoice/${invoiceId}`,
     };
   }
 }
