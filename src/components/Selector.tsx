@@ -4,6 +4,12 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@radix-ui/react-dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/Tooltip";
 import React, { ChangeEvent, useEffect, useState } from "react";
 import { FaChevronDown, FaChevronUp, FaSearch } from "react-icons/fa";
 
@@ -139,13 +145,28 @@ export default function Selector<T>({
           onClick={() => setIsOpen && setIsOpen(true)}
           className={cn(
             "flex h-10 w-full items-center justify-between rounded-md border-2 border-slate-400 px-4",
-            isOpen && "invisible",
+            isOpen && "invisible"
           )}
         >
           {/* Display selected item or label */}
-          <p className="text-sm font-medium text-slate-400">
-            {selected ? label(selected) : label(null)}
-          </p>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <p className="text-sm font-medium text-slate-400 cursor-default">
+                  {selected
+                    ? label(selected).length > 25
+                      ? label(selected).substring(0, 25) + "..."
+                      : label(selected)
+                    : label(null)}
+                </p>
+              </TooltipTrigger>
+              {selected && label(selected).length > 25 && (
+                <TooltipContent>
+                  <p>{label(selected)}</p>
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
           {!disabledDropdown && (
             <FaChevronDown className="ms-4 text-[#797979]" />
           )}
@@ -189,7 +210,7 @@ export default function Selector<T>({
                     className={cn(
                       "w-full p-1 px-2 text-left hover:bg-gray-100",
                       border &&
-                        "relative left-1/2 my-1 w-[95%] -translate-x-1/2 rounded-md border-2 border-slate-400 py-[0.3rem]",
+                        "relative left-1/2 my-1 w-[95%] -translate-x-1/2 rounded-md border-2 border-slate-400 py-[0.3rem]"
                     )}
                   >
                     {displayList(item)}
@@ -202,7 +223,7 @@ export default function Selector<T>({
                     className={cn(
                       "w-full p-1 px-2 text-left hover:bg-gray-100",
                       border &&
-                        "relative left-1/2 my-1 w-[95%] -translate-x-1/2 rounded-md border-2 border-slate-400 py-[0.3rem]",
+                        "relative left-1/2 my-1 w-[95%] -translate-x-1/2 rounded-md border-2 border-slate-400 py-[0.3rem]"
                     )}
                   >
                     {displayList(item)}
