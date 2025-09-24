@@ -130,25 +130,19 @@ export function BillSummary({
   // Calculate grand total
   useEffect(() => {
     let netAmount = subtotal - discount;
-    console.log("sub total", subtotal);
-    console.log("discount", discount);
+
     let taxAdd = 0;
     let suppliesFeeAdd = 0;
     let newGrandTotal = netAmount;
 
     if (isTaxEnabled && tax > 0) {
       taxAdd = Number((netAmount * (tax / 100)).toFixed(2));
-      console.log("taxAdd", taxAdd);
     }
 
     if (isSuppliesEnabled && serviceFee > 0) {
       suppliesFeeAdd = Number((netAmount * (serviceFee / 100)).toFixed(2));
-      console.log("supplies add", suppliesFeeAdd);
     }
-    console.log(
-      "grand total",
-      (newGrandTotal + taxAdd + suppliesFeeAdd).toFixed(2)
-    );
+
     setGrandTotal(Number((newGrandTotal + taxAdd + suppliesFeeAdd).toFixed(2)));
   }, [
     subtotal,
@@ -203,10 +197,6 @@ export function BillSummary({
           ["shop supplies", serviceFee.toFixed(2)],
           ["deposit", deposit.toFixed(2)],
           ["payment", totalPayment.toFixed(2)],
-          [
-            "total payment",
-            Number(totalPayment.toFixed(2)) + Number(deposit.toFixed(2)),
-          ],
           [
             "due",
             Number(grandTotal.toFixed(2)) -

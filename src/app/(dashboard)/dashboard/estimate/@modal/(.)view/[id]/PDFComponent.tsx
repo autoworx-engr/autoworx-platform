@@ -379,10 +379,6 @@ const PDFComponent = ({
                 ["deposit", invoice.deposit],
                 ["payment", invoice.totalPayment],
                 [
-                  "total payment",
-                  Number(invoice.totalPayment) + Number(invoice.deposit),
-                ],
-                [
                   "due",
                   Number(invoice.grandTotal) -
                     (Number(invoice.totalPayment) + Number(invoice.deposit)),
