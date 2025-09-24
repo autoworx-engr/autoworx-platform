@@ -32,39 +32,33 @@ export default function AssignUsers({
 
   const [employeeList, setEmployeeList] = useState<User[]>([]);
 
+  // Calculate available employees by filtering out assigned users from the original employees data
   useEffect(() => {
     if (isSuccess && employees) {
-      setEmployeeList(employees);
+      // Always start from the original employees data and filter out assigned users
+      const availableEmployees = employees.filter(
+        (employee) =>
+          !assignedUsers.some(
+            (assignedUser) => assignedUser.id === employee.id,
+          ),
+      );
+      setEmployeeList(availableEmployees);
     }
-  }, [isSuccess, employees]);
+  }, [isSuccess, employees, assignedUsers]);
 
   const [addEmployeePersonOpen, setAddEmployeePersonOpen] = useState(false);
   const [assignedEmployeeSearch, setAssignedEmployeeSearch] = useState("");
 
   const doAssignUser = (user: User) => {
-    setEmployeeList((prev) => prev.filter((u) => u.id !== user.id));
     onAssignUser && onAssignUser(user);
     setAssignedEmployeeSearch("");
     setAddEmployeePersonOpen(false);
+    // No need to manually update employeeList as the useEffect will handle it
   };
 
-  useEffect(() => {
-    if (assignedUsers && assignedUsers.length > 0) {
-      // If assignUsers is true, we need to remove the assigned users from the employees list
-      setEmployeeList((prev) =>
-        prev.filter(
-          (employee) =>
-            !assignedUsers.some(
-              (assignedUser) => assignedUser.id === employee.id,
-            ),
-        ),
-      );
-    }
-  }, [assignedUsers]);
-
   const doRemoveAssignedUser = (user: User) => {
-    setEmployeeList((prev) => [...prev, user]);
     onRemoveAssignedUser && onRemoveAssignedUser(user);
+    // No need to manually update employeeList as the useEffect will handle it
   };
 
   let content = null;
@@ -92,7 +86,12 @@ export default function AssignUsers({
               onClick={() => doAssignUser(employee)}
               type="button"
             >
-              <Avatar photo={employee.image} width={50} height={50} />
+              <Avatar 
+                photo={employee.image} 
+                width={50} 
+                height={50} 
+                alt={`${employee.firstName} ${employee.lastName}`}
+              />
 
               <p className="font-medium">
                 {employee.firstName} {employee.lastName}
@@ -121,7 +120,12 @@ export default function AssignUsers({
               className="flex items-center justify-between gap-x-4 rounded-md border border-gray-300 px-4 py-2"
             >
               <div className="flex items-center gap-x-4">
-                <Avatar photo={user.image} width={30} height={30} />
+                <Avatar 
+                  photo={user.image} 
+                  width={30} 
+                  height={30} 
+                  alt={`${user.firstName} ${user.lastName}`}
+                />
                 <p>
                   {user.firstName} {user.lastName}
                 </p>
