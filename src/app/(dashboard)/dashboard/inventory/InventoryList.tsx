@@ -131,7 +131,6 @@ export default function InventoryList({
                 totalItems={totalSupplies}
                 searchParams={searchParams}
                 products={supplies as any}
-                totalItems={totalSupplies}
                 currentProductId={productId}
                 user={user}
               />
