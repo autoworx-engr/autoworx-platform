@@ -7,16 +7,18 @@ import { successToast } from "@/lib/toast";
 import TaskCreateOrEdit from "@/components/task/TaskCreateOrEdit";
 
 // Task List Popup Component
-function TaskListPopup({ 
-  tasks, 
-  onTaskClick 
-}: { 
-  tasks: Task[], 
-  onTaskClick: (taskId: number) => void 
+function TaskListPopup({
+  tasks,
+  onTaskClick,
+  isTechnician = false,
+}: {
+  tasks: Task[];
+  onTaskClick: (taskId: number) => void;
+  isTechnician?: boolean;
 }) {
   return (
     <div
-      className="absolute -left-20 z-[9999] mt-1 hidden h-[90px] max-h-[110px] w-[200px] transform overflow-y-auto rounded-lg border border-[#66738C] bg-background p-2 group-hover:block"
+      className={`absolute ${isTechnician ? "-left-6" : "-left-20"} z-[9999] mt-1 hidden h-[90px] max-h-[110px] w-[200px] transform overflow-y-auto rounded-lg border border-[#66738C] bg-background p-2 group-hover:block`}
       style={{ top: "-6rem" }}
     >
       {tasks.map((task) => (
@@ -54,6 +56,7 @@ export default function TaskForm({
   onAutomationTrigger,
   onCommunicationAutomationTrigger,
   onUpdateTaskInLead,
+  isTechnician = false,
 }: {
   companyUsers: Partial<User>[] | null;
   invoiceId?: string;
@@ -65,6 +68,7 @@ export default function TaskForm({
   onAutomationTrigger?: () => void;
   onCommunicationAutomationTrigger?: () => void;
   onUpdateTaskInLead?: (task: Task) => void;
+  isTechnician?: boolean;
 }) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [editTaskId, setEditTaskId] = useState<number | null>(null);
@@ -86,8 +90,8 @@ export default function TaskForm({
 
   const handleTaskUpdated = (task: Task) => {
     onUpdateTaskInLead && onUpdateTaskInLead(task);
-    setTasks((prevTasks) => 
-      prevTasks.map(existingTask => 
+    setTasks((prevTasks) =>
+      prevTasks.map((existingTask) =>
         existingTask.id === task.id ? task : existingTask
       )
     );
@@ -131,7 +135,7 @@ export default function TaskForm({
         invoiceId={invoiceId}
         onTaskCreated={handleTaskCreated}
       />
-      
+
       {/* Edit Task Modal */}
       {editTaskId && (
         <TaskCreateOrEdit
@@ -145,9 +149,13 @@ export default function TaskForm({
           onTaskUpdated={handleTaskUpdated}
         />
       )}
-      
+
       {tasks && tasks.length > 0 && (
-        <TaskListPopup tasks={tasks} onTaskClick={handleTaskClick} />
+        <TaskListPopup
+          isTechnician={isTechnician}
+          tasks={tasks}
+          onTaskClick={handleTaskClick}
+        />
       )}
     </div>
   );
