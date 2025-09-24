@@ -390,9 +390,14 @@ export default function MessageBox({
 
       {/* attachments */}
       {multiAttachmentFile && multiAttachmentFile.length > 0 && (
-        <div className="relative w-full rounded-lg border border-gray-200 bg-white shadow-md">
+        <div
+          className={cn(
+            "relative w-full rounded-lg border border-gray-200 bg-white shadow-md flex flex-col",
+            totalMessageBox > 2 ? "max-h-[120px]" : "max-h-64"
+          )}
+        >
           {/* Sticky header */}
-          <div className="sticky top-0 z-20 flex items-center justify-end bg-white px-3 py-2 shadow-sm">
+          <div className="sticky top-0 z-20 flex items-center justify-end bg-white px-3 py-2 shadow-sm flex-shrink-0">
             <button
               onClick={() => setMultiAttachmentFile(null)}
               className="rounded-full bg-red-500/10 p-1.5 text-red-600 hover:bg-red-500/20 transition"
@@ -403,48 +408,84 @@ export default function MessageBox({
           </div>
 
           {/* Scrollable attachments */}
-          <div className="thin-scrollbar max-h-64 overflow-y-auto px-4 pb-4">
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8">
+          <div
+            className={cn(
+              "thin-scrollbar overflow-y-auto px-4 pb-4 flex-1",
+              totalMessageBox > 2 ? "max-h-[70px]" : "max-h-52"
+            )}
+          >
+            <div className="flex flex-wrap gap-2 justify-start">
               {multiAttachmentFile?.map((attachmentFile) => (
                 <div
                   key={attachmentFile.name}
-                  className="group relative flex flex-col items-center rounded-lg border border-gray-200 bg-gray-50 p-2 shadow-sm transition hover:shadow-md"
+                  className={cn(
+                    "group relative flex flex-col items-center justify-between rounded-lg border border-gray-200 bg-gray-50 p-2 shadow-sm transition hover:shadow-md",
+                    totalMessageBox > 2 ? "w-16 h-20" : "w-24 h-32"
+                  )}
                 >
                   {/* Remove single attachment */}
                   <button
                     onClick={() => handleRemoveAttachment(attachmentFile.name)}
-                    className="absolute right-1 top-1 hidden rounded-full bg-white p-1 text-gray-700 shadow-sm hover:text-red-500 group-hover:block transition"
+                    className="absolute right-1 top-1 hidden rounded-full bg-white p-1 text-gray-700 shadow-sm hover:text-red-500 group-hover:block transition z-10"
                     aria-label={`Remove ${attachmentFile.name}`}
                   >
-                    <TiDeleteOutline size={18} />
+                    <TiDeleteOutline size={14} />
                   </button>
 
                   {/* Image preview */}
-                  {attachmentFile.type.includes("image") ? (
-                    <div className="relative h-24 w-24 overflow-hidden rounded-md border">
-                      <Image
-                        src={URL.createObjectURL(attachmentFile)}
-                        alt={attachmentFile.name}
-                        className="object-cover"
-                        fill
-                        sizes="96px"
-                      />
-                    </div>
-                  ) : (
-                    // Non-image file preview
-                    <div className="flex h-24 w-24 flex-col items-center justify-center rounded-md bg-blue-600 text-white">
-                      <p className="line-clamp-1 text-xs font-medium text-center">
-                        {attachmentFile.name.split(".").pop()?.toUpperCase()}
-                      </p>
-                      <p className="text-[10px]">
-                        {(attachmentFile.size / 1024 / 1024).toFixed(2)} MB
-                      </p>
-                    </div>
-                  )}
+                  <div className="flex-shrink-0">
+                    {attachmentFile.type.includes("image") ? (
+                      <div
+                        className={cn(
+                          "relative overflow-hidden rounded-md border",
+                          totalMessageBox > 2 ? "h-12 w-12" : "h-16 w-16"
+                        )}
+                      >
+                        <Image
+                          src={URL.createObjectURL(attachmentFile)}
+                          alt={attachmentFile.name}
+                          className="object-cover"
+                          fill
+                          sizes={totalMessageBox > 2 ? "48px" : "64px"}
+                        />
+                      </div>
+                    ) : (
+                      // Non-image file preview
+                      <div
+                        className={cn(
+                          "flex flex-col items-center justify-center rounded-md bg-blue-600 text-white",
+                          totalMessageBox > 2 ? "h-12 w-12" : "h-16 w-16"
+                        )}
+                      >
+                        <p
+                          className={cn(
+                            "line-clamp-1 font-medium text-center",
+                            totalMessageBox > 2 ? "text-[8px]" : "text-xs"
+                          )}
+                        >
+                          {attachmentFile.name.split(".").pop()?.toUpperCase()}
+                        </p>
+                        {totalMessageBox <= 2 && (
+                          <p className="text-[8px]">
+                            {(attachmentFile.size / 1024 / 1024).toFixed(1)} MB
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
 
                   {/* File name */}
-                  <p className="mt-2 line-clamp-2 w-full text-center text-xs text-gray-700">
-                    {attachmentFile.name}
+                  <p
+                    className={cn(
+                      "mt-1 line-clamp-1 w-full text-center text-gray-700 flex-1 flex items-center justify-center",
+                      totalMessageBox > 2 ? "text-[8px]" : "text-xs"
+                    )}
+                  >
+                    {totalMessageBox > 2
+                      ? attachmentFile.name.length > 8
+                        ? attachmentFile.name.substring(0, 8) + "..."
+                        : attachmentFile.name
+                      : attachmentFile.name}
                   </p>
                 </div>
               ))}
