@@ -580,7 +580,14 @@ export default function MaterialCreate() {
           id="discount"
           min="0"
           value={discount ?? ""}
-          onChange={(e) => setDiscount(parseFloat(e.target.value))}
+          onChange={(e) => {
+            if (e.target.value) {
+              const value = parseFloat(e.target.value);
+              setDiscount(value >= 0 ? value : 0);
+            } else {
+              setDiscount(undefined);
+            }
+          }}
           className="w-full rounded-md border-2 border-slate-400 p-1 text-xs"
           placeholder="0"
         />
