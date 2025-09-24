@@ -105,6 +105,7 @@ export default function InventoryList({
                 products={products as any}
                 totalItems={totalProducts}
                 currentProductId={productId}
+                user={user}
               />
             </div>
           </div>
@@ -131,6 +132,7 @@ export default function InventoryList({
                 searchParams={searchParams}
                 products={supplies as any}
                 currentProductId={productId}
+                user={user}
               />
             </div>
           </div>
