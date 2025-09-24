@@ -41,7 +41,7 @@ export function SelectAppointmentVehicle({
   );
 
   useEffect(() => {
-    if (fromLead && vehicleId) {
+    if (vehicleId && clientVehicles.length > 0) {
       const matchedVehicle = clientVehicles.find((v) => v.id === vehicleId);
       if (matchedVehicle) {
         setVehicle(matchedVehicle);

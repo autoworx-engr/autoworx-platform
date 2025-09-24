@@ -1,5 +1,4 @@
 "use client";
-import { useDebounce } from "@/hooks/useDebounce";
 import { cn } from "@/lib/cn";
 import { useDemoClientFilterStore } from "@/stores/clientFilter";
 import { useCallback, useEffect } from "react";
@@ -9,34 +8,33 @@ export default function ClientFilter() {
   const { filter, setFilter, setSearchTerm, searchTerm } =
     useDemoClientFilterStore();
 
-  // Debounce the search term updates
-  const debouncedSetSearchTerm = useDebounce(setSearchTerm, 300);
+  console.log("🔍 ClientFilter RENDER:", { searchTerm, filter });
 
   const handleSearchChange = useCallback(
     (value: string) => {
-      // Update local state immediately for responsive UI
+      // Update store directly
       setSearchTerm(value);
-      // Debounce the actual search logic if needed
-      debouncedSetSearchTerm(value);
     },
-    [setSearchTerm, debouncedSetSearchTerm]
+    [setSearchTerm, searchTerm]
   );
 
   const handleFilterChange = useCallback(
     (value: string) => {
+      console.log("🔍 ClientFilter handleFilterChange:", { oldValue: filter, newValue: value });
       setFilter(value);
     },
-    [setFilter]
+    [setFilter, filter]
   );
 
   const clearSearch = useCallback(() => {
+    console.log("🔍 ClientFilter clearSearch called");
     (document.activeElement as HTMLElement)?.blur?.();
     setSearchTerm("");
-    debouncedSetSearchTerm("");
-  }, [setSearchTerm, debouncedSetSearchTerm]);
+  }, [setSearchTerm]);
 
   // Reset filters on component mount
   useEffect(() => {
+    console.log("🔍 ClientFilter useEffect: Resetting filters on mount");
     setSearchTerm("");
     setFilter("All");
   }, []); // Empty dependency array is fine for mount-only effect

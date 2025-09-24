@@ -18,6 +18,7 @@ type BasePermission = {
   inventoryAllViewOnly?: boolean;
   workforceManagement?: boolean;
   workforceManagementViewOnly?: boolean;
+  businessSettings?: boolean;
   // Add any other keys as needed
 };
 

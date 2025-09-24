@@ -15,17 +15,49 @@ type TGetClientsProps = {
 export const getClients = cache(
   async ({ companyId, filter, search, take = 20 }: TGetClientsProps) => {
     const user = await getUserFromSession();
+    
+    // Base query object
+    const baseWhere: Prisma.ClientWhereInput = {
+      companyId,
+    };
+    
+    // Add search conditions to the base where clause if search is provided
+    if (search && search.trim()) {
+      baseWhere.OR = [
+        {
+          firstName: {
+            contains: search,
+            mode: "insensitive"
+          }
+        },
+        {
+          lastName: {
+            contains: search,
+            mode: "insensitive"
+          }
+        },
+        {
+          email: {
+            contains: search,
+            mode: "insensitive"
+          }
+        },
+        {
+          mobile: {
+            contains: search,
+            mode: "insensitive"
+          }
+        }
+      ];
+    }
+    
     const queryObj: Prisma.ClientFindManyArgs = {
-      where: {
-        companyId,
-      },
-      // Remove the complex orderBy and handle sorting in application code
+      where: baseWhere,
       include: {
         conversationsTrack: true,
       },
     };
-    let clients: (Client & { conversationsTrack?: ClientConversationTrack })[] =
-      [];
+    let clients: (Client & { conversationsTrack?: ClientConversationTrack })[] = [];
     try {
       switch (filter) {
         case "Unread":
@@ -86,30 +118,9 @@ export const getClients = cache(
           clients = sortedAllClients.slice(0, take) as typeof clients;
           break;
       }
-
-      if (!clients || clients.length === 0) {
-        return [];
-      }
-
-      if (search) {
-        const getAllClients = await db.client.findMany({ ...queryObj });
-        clients = getAllClients.filter((client) => {
-          const fullName = `${client.firstName} ${client.lastName}`;
-          return (
-            fullName.toLowerCase().includes(search.toLowerCase()) ||
-            (client.email?.toLowerCase().includes(search.toLowerCase()) ??
-              false) ||
-            (client.mobile?.toLowerCase().includes(search.toLowerCase()) ??
-              false)
-          );
-        });
-        
-        // Apply sorting for search results
-        clients = clientSortByUpdatedMessage(clients) as typeof clients;
-      }
-
-      return clients;
+      return clients || [];
     } catch (err) {
+      console.error("getClients: Error occurred:", err);
       throw err;
     }
   }

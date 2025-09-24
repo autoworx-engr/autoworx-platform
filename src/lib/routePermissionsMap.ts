@@ -45,6 +45,12 @@ export const ROUTE_PERMISSIONS_MAP: Record<
   "/dashboard/settings/estimates": "businessSettings",
   "/dashboard/settings/communications": "businessSettings",
   "/dashboard/settings/security": "businessSettings",
+  "/dashboard/settings/business": "businessSettings",
+  "/dashboard/settings/networks": "businessSettings",
+  "/dashboard/settings/billing": "businessSettings",
+  "/dashboard/settings/leadgeneration": "businessSettings",
+  "/dashboard/settings/automation": "businessSettings",
+  "/dashboard/settings/calendar": "businessSettings",
 };
 
 type CompanyFeaturePermissionKeys =
@@ -97,6 +103,11 @@ export const FEATURE_PERMISSIONS_MAP: Record<
     '/dashboard/settings/estimates': 'businessSettings',
     '/dashboard/settings/communications': 'businessSettings',
     '/dashboard/settings/security': 'businessSettings',
+    '/dashboard/settings/business': 'businessSettings',
+    '/dashboard/settings/networks': 'businessSettings',
+    '/dashboard/settings/billing': 'businessSettings',
+    '/dashboard/settings/leadgeneration': 'businessSettings',
+    '/dashboard/settings/calendar': 'businessSettings',
     '/dashboard/client': 'clientDirectory',
     '/dashboard/employee': 'employeeDirectory',
     '/dashboard/fleet': 'fleetDirectory',

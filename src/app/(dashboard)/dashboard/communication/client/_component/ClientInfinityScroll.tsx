@@ -5,14 +5,13 @@ import { errorToast } from '@/lib/toast';
 import { useDemoClientFilterStore } from '@/stores/clientFilter';
 import { Client, ClientConversationTrack } from '@prisma/client';
 import { useParams, usePathname, useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import { getClientByScroll } from '../_actions/getClientByScroll';
 import { getClients } from '../_actions/getClients';
 import { clientSortByUpdatedMessage } from '../_utils';
 import ClientItem from './ClientItem';
 import {
-  clientListStore,
   useClientCommunicationStore,
 } from '@/stores/client-store';
 import { isIosPwa } from '@/utils/isIosPwa';
@@ -32,11 +31,10 @@ export default function ClientInfinityScroll({
   defaultTakeData = 20,
   companyId,
 }: TProps) {
-  
+
   // Initial clients should already be properly sorted from the server
   const [clients, setClients] = useState<TClient[]>(initialsClients);
   const { filter, searchTerm } = useDemoClientFilterStore();
-  const { clientList, setClientList } = clientListStore();
   const resetClientData = useClientCommunicationStore(
     state => state.resetClientData
   );
@@ -101,20 +99,25 @@ export default function ClientInfinityScroll({
             search: searchTerm,
             filter,
           });
-          
+        
           setClients(fetchedClients);
-          setHasMore(filter === 'All'); // Only enable infinite scroll for 'All' filter
+          setHasMore(false); // Disable infinite scroll for search/filter results
         } catch (err) {
+          console.error("📋 ClientInfinityScroll: Error fetching clients:", err);
           errorToast('Failed to fetch clients');
         }
       };
       fetchFilteredClients();
-    } else if (filter === 'All' && !searchTerm && clients.length === 0 && initialsClients.length > 0) {
-      // If filter is 'All' and no search, use initial clients (they're already sorted)
+    } else if (filter === 'All' && !searchTerm) {
+      console.log("📋 ClientInfinityScroll: Resetting to initial clients:", { 
+        initialCount: initialsClients.length 
+      });
+      
+      // For 'All' filter with no search, use initial clients and enable infinite scroll
       setClients(initialsClients);
-      setHasMore(true);
+      setHasMore(initialsClients.length >= defaultTakeData); // Re-enable infinite scroll if we have enough initial data
     }
-  }, [filter, searchTerm, initialsClients.length]);
+  }, [filter, searchTerm, companyId, initialsClients, defaultTakeData]);
 
   // const [page, setPage] = useState(1);
   useEffect(() => {
@@ -142,18 +145,10 @@ export default function ClientInfinityScroll({
     };
   }, [clients, isClientInitialPage]);
 
-  useEffect(() => {
-    // Update clientList store with sorted clients and prevent duplicates
-    const uniqueClients = clients.filter((client, index, self) => 
-      index === self.findIndex(c => c.id === client.id)
-    );
-    setClientList(uniqueClients);
-  }, [clients, setClientList]);
-
   const fetchData = async () => {
     try {
       const fetchClients = await getClientByScroll({
-        skip: dataLength,
+        skip: clients.length,
         take: defaultTakeData,
       });
 
@@ -169,6 +164,7 @@ export default function ClientInfinityScroll({
         return [...prev, ...newClients];
       });
     } catch (err) {
+      console.error("📋 ClientInfinityScroll fetchData: Error:", err);
       setHasMore(false);
       errorToast('Failed to fetch clients');
     }
@@ -193,7 +189,7 @@ export default function ClientInfinityScroll({
         scrollableTarget="scrollableDiv"
         endMessage={
           <p className="mb-5 text-center">
-            {clientList.length === 0 ? (
+            {clients.length === 0 ? (
               <b>Client Not Found</b>
             ) : (
               <b>Yay! You have seen it all</b>
@@ -201,7 +197,7 @@ export default function ClientInfinityScroll({
           </p>
         }
       >
-        {clientList?.map((client: Client) => {
+        {clients?.map((client: Client) => {
           const selected = parseInt(clientIdParams as string) === client.id;
           return (
             <ClientItem

@@ -421,7 +421,6 @@ export default function AppointmentModalBody({
             timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
           },
         });
-
         if (res.type === "success") {
           queryClient.invalidateQueries({
             queryKey: queryKeys.appointmentById(appointmentId),
@@ -463,11 +462,9 @@ export default function AppointmentModalBody({
       }
 
       if (res.type === "success") {
-        onAppointmentCreated &&
-          onAppointmentCreated({ ...res.data, lead: client?.Lead || null });
+        setIsSubmitting(false);
         resetAll();
         onModalClose();
-
         setUpdateVariable();
         return;
       }
@@ -483,6 +480,9 @@ export default function AppointmentModalBody({
         });
         return;
       }
+
+      // Handle any other response types
+      setIsSubmitting(false);
     } catch (error) {
       setIsSubmitting(false);
       console.error("Error in handleSubmit:", error);
@@ -572,6 +572,7 @@ export default function AppointmentModalBody({
     setReminderTemplateStatus(false);
     setTimes([]);
     setAllDay(false);
+    setIsSubmitting(false);
     // remove the clientId from the url
     // router.push(pathname);
   }
