@@ -1,3 +1,5 @@
+"use client";
+
 import { cn } from "@/lib/cn";
 import Image from "next/image";
 import React from "react";
@@ -15,6 +17,21 @@ export default function Avatar({
   className?: string;
   alt?:string;
 }) {
+  // Better handling of photo URL
+  const getImageSrc = () => {
+    if (!photo || photo.trim() === "" || photo === "null" || photo === "undefined") {
+      return "/images/default.png";
+    }
+    
+    // If photo already contains default.png, use it as is
+    if (photo.includes("/images/default.png")) {
+      return "/images/default.png";
+    }
+    
+    // Return the actual photo URL
+    return photo;
+  };
+
   return (
     <div
       className={cn("relative overflow-hidden rounded-full", className)}
@@ -24,16 +41,14 @@ export default function Avatar({
       }}
     >
       <Image
-        src={
-          !photo
-            ? "/images/default.png"
-            : photo.includes("/images/default.png")
-              ? "/images/default.png"
-              : photo
-        }
+        src={getImageSrc()}
         alt={alt}
-        className={"rounded-full object-fill"}
+        className={"rounded-full object-cover"}
         fill
+        onError={(e) => {
+          // Fallback to default image if loading fails
+          (e.target as HTMLImageElement).src = "/images/default.png";
+        }}
       />
     </div>
   );
