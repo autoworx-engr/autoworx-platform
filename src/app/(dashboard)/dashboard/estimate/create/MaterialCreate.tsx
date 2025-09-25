@@ -61,8 +61,10 @@ export default function MaterialCreate() {
       setQuantity(quantityValue);
       const costValue = parseFloat(data.material.cost);
       setCost(costValue === 0 ? undefined : costValue);
-      const sellValue = parseFloat(data.material.sell || 0);
-      setSell(sellValue === 0 ? undefined : sellValue);
+      const sellValue = parseFloat(
+        data.material.sell === 0 ? undefined : data.material.sell
+      );
+      setSell(sellValue);
       const discountValue = parseFloat(data.material.discount);
       setDiscount(discountValue === 0 ? undefined : discountValue);
       setAddToInventory(data.material.addToInventory || false);
@@ -518,8 +520,17 @@ export default function MaterialCreate() {
           min="0"
           value={quantity || ""}
           onChange={(e) => {
-            const value = parseFloat(e.target.value);
-            setQuantity(value >= 0 ? value : 0);
+            const inputValue = e.target.value;
+            if (inputValue === "" || inputValue === "-" || inputValue === "0") {
+              setQuantity(undefined);
+              return;
+            }
+            const value = parseFloat(inputValue);
+            if (isNaN(value) || value <= 0) {
+              setQuantity(undefined);
+            } else {
+              setQuantity(value);
+            }
           }}
           className="w-full rounded-md border-2 border-slate-400 p-1 text-xs"
           placeholder="0"
@@ -536,11 +547,16 @@ export default function MaterialCreate() {
           min="0"
           value={cost ?? ""}
           onChange={(e) => {
-            if (e.target.value) {
-              const value = parseFloat(e.target.value);
-              setCost(value >= 0 ? value : 0);
-            } else {
+            const inputValue = e.target.value;
+            if (inputValue === "" || inputValue === "-" || inputValue === "0") {
               setCost(undefined);
+              return;
+            }
+            const value = parseFloat(inputValue);
+            if (isNaN(value) || value <= 0) {
+              setCost(undefined);
+            } else {
+              setCost(value);
             }
           }}
           className="w-full rounded-md border-2 border-slate-400 p-1 text-xs"
@@ -559,11 +575,16 @@ export default function MaterialCreate() {
           min="0"
           value={sell ?? ""}
           onChange={(e) => {
-            if (e.target.value) {
-              const value = parseFloat(e.target.value);
-              setSell(value >= 0 ? value : 0);
-            } else {
+            const inputValue = e.target.value;
+            if (inputValue === "" || inputValue === "-" || inputValue === "0") {
               setSell(undefined);
+              return;
+            }
+            const value = parseFloat(inputValue);
+            if (isNaN(value) || value <= 0) {
+              setSell(undefined);
+            } else {
+              setSell(value);
             }
           }}
           className="w-full rounded-md border-2 border-slate-400 p-1 text-xs"
@@ -581,11 +602,16 @@ export default function MaterialCreate() {
           min="0"
           value={discount ?? ""}
           onChange={(e) => {
-            if (e.target.value) {
-              const value = parseFloat(e.target.value);
-              setDiscount(value >= 0 ? value : 0);
-            } else {
+            const inputValue = e.target.value;
+            if (inputValue === "" || inputValue === "-" || inputValue === "0") {
               setDiscount(undefined);
+              return;
+            }
+            const value = parseFloat(inputValue);
+            if (isNaN(value) || value < 0) {
+              setDiscount(undefined);
+            } else {
+              setDiscount(value);
             }
           }}
           className="w-full rounded-md border-2 border-slate-400 p-1 text-xs"
