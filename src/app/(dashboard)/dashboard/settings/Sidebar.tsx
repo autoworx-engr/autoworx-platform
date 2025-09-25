@@ -65,6 +65,7 @@ const Sidebar = (props: Props) => {
   const path = usePathname();
   const { permissions } = usePermissionStore();
   const { companyFeaturePermission } = useCompanyFeaturePermissionStore();
+  
   // Helper: Check if company feature permission allows access to this route
   function canAccessCompanyFeatureRoute(route: string): boolean {
     if (!companyFeaturePermission || companyFeaturePermission.length === 0) return true;
@@ -83,8 +84,38 @@ const Sidebar = (props: Props) => {
     );
   }
 
+  // Helper: Check if user has individual permission for business settings
+  function canAccessBusinessSettings(): boolean {
+    if (!permissions) return false;
+    
+    // Admin always has access
+    if (permissions.role === "Admin") return true;
+    
+    // For managers, check if they have businessSettings permission
+    if (permissions.role === "Manager") {
+      // Check company permission first
+      //@ts-ignore
+      const hasCompanyPermission = Boolean(permissions.companyPermissions?.businessSettings);
+      if (!hasCompanyPermission) return false;
+      
+      // If company allows it, check user permission
+      if (permissions.userPermissions) {
+        //@ts-ignore
+        return Boolean(permissions.userPermissions?.businessSettings);
+      }
+      
+      // If no user permissions defined, assume company permission is enough
+      return hasCompanyPermission;
+    }
+    
+    // Other roles don't have access
+    return false;
+  }
+
   const filteredAccountSettings = accountSettings.filter((setting) => canAccessCompanyFeatureRoute(setting.link));
-  const filteredBusinessSettings = businessSettings.filter((setting) => canAccessCompanyFeatureRoute(setting.link));
+  const filteredBusinessSettings = businessSettings.filter((setting) => 
+    canAccessCompanyFeatureRoute(setting.link) && canAccessBusinessSettings()
+  );
   // State to handle sidebar visibility on small screens
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -159,9 +190,8 @@ const Sidebar = (props: Props) => {
               );
             })}
           </div>
-          {permissions &&
-            (permissions.role === "Admin" ||
-              permissions.role === "Manager") && (
+          {canAccessBusinessSettings() &&
+            filteredBusinessSettings.length > 0 && (
               <div className="hidden sm:block">
                 <h3 className="mb-4 font-bold">
                   <span className="border-b-2 pb-1">Business Settings</span>
@@ -211,7 +241,8 @@ const Sidebar = (props: Props) => {
           })}
         </div>
         {permissions &&
-          (permissions.role === "Admin" || permissions.role === "Manager") && (
+          (permissions.role === "Admin" || permissions.role === "Manager") &&
+          filteredBusinessSettings.length > 0 && (
             <div>
               <h3 className="mb-4 font-bold">
                 <span className="border-b-2 pb-1">Business Settings</span>

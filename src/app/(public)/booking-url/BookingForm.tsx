@@ -107,9 +107,6 @@ const BookingForm = () => {
   // Clear startTime if it's outside the valid range when date or calendar settings change
   useEffect(() => {
     if (formData.startTime && formData.date) {
-      const restrictions = getTimeRestrictions();
-      const currentTime = formData.startTime;
-      const selectedDate = moment(formData.date);
       const appointmentDateTime = moment(
         `${formData.date} ${formData.startTime}`
       );
@@ -121,14 +118,14 @@ const BookingForm = () => {
         return;
       }
 
-      // Only clear based on restrictions if they exist
-      if (restrictions.min || restrictions.max) {
-        if (
-          (restrictions.min && currentTime < restrictions.min) ||
-          (restrictions.max && currentTime > restrictions.max)
-        ) {
-          handleChange("startTime", "");
-        }
+      // Check if the selected time is still available in the current options
+      const availableOptions = getTimeOptions();
+      const isTimeAvailable = availableOptions.some(
+        option => option.value === formData.startTime
+      );
+
+      if (!isTimeAvailable) {
+        handleChange("startTime", "");
       }
     }
   }, [formData.date, calendarSettings]);
@@ -226,6 +223,62 @@ const BookingForm = () => {
     return restrictions;
   };
 
+  // Generate time options with 15-minute intervals within office hours
+  const getTimeOptions = () => {
+    const options: { value: string; label: string }[] = [];
+    const restrictions = getTimeRestrictions();
+    
+    // Default office hours if no settings
+    const dayStart = calendarSettings?.dayStart || "08:00";
+    const dayEnd = calendarSettings?.dayEnd || "18:00";
+    
+    // Parse start and end times
+    const [startHour, startMinute] = dayStart.split(':').map(Number);
+    const [endHour, endMinute] = dayEnd.split(':').map(Number);
+    
+    // Convert to minutes for easier calculation
+    const startTimeInMinutes = startHour * 60 + startMinute;
+    const endTimeInMinutes = endHour * 60 + endMinute;
+    
+    // If we have restrictions (for today), use them
+    let effectiveStartTime = startTimeInMinutes;
+    let effectiveEndTime = endTimeInMinutes;
+    
+    if (restrictions.min) {
+      const [minHour, minMinute] = restrictions.min.split(':').map(Number);
+      const minTimeInMinutes = minHour * 60 + minMinute;
+      effectiveStartTime = Math.max(effectiveStartTime, minTimeInMinutes);
+      
+      // Round up to next 15-minute interval if needed
+      const remainder = effectiveStartTime % 15;
+      if (remainder !== 0) {
+        effectiveStartTime += (15 - remainder);
+      }
+    }
+    
+    if (restrictions.max) {
+      const [maxHour, maxMinute] = restrictions.max.split(':').map(Number);
+      const maxTimeInMinutes = maxHour * 60 + maxMinute;
+      effectiveEndTime = Math.min(effectiveEndTime, maxTimeInMinutes);
+    }
+    
+    // Generate 15-minute intervals
+    for (let minutes = effectiveStartTime; minutes <= effectiveEndTime; minutes += 15) {
+      const hour = Math.floor(minutes / 60);
+      const minute = minutes % 60;
+      
+      // Skip if we've gone past the end time
+      if (hour * 60 + minute > effectiveEndTime) break;
+      
+      const value = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+      const label = moment(`${hour}:${minute}`, 'HH:mm').format('h:mm A');
+      
+      options.push({ value, label });
+    }
+    
+    return options;
+  };
+
   const handleFormSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsLoading(true);
@@ -256,29 +309,15 @@ const BookingForm = () => {
 
       if (appointmentDateTime.isBefore(now)) {
         newError.startTime = "Appointment time must be in the future.";
-      } else if (calendarSettings) {
-        // Only check calendar restrictions if settings exist and appointment is not in the past
-        const dayStart = calendarSettings.dayStart || "08:00";
-        const dayEnd = calendarSettings.dayEnd || "18:00";
-        const selectedDate = moment(formData.date);
-        const isSelectedDateToday = selectedDate.isSame(moment(), "day");
-
-        // For today, check if time is after current time AND within business hours
-        if (isSelectedDateToday) {
-          const currentTime = getCurrentTime();
-          const effectiveMinTime =
-            currentTime > dayStart ? currentTime : dayStart;
-          if (
-            formData.startTime < effectiveMinTime ||
-            formData.startTime > dayEnd
-          ) {
-            newError.startTime = `Please select a time between ${moment(effectiveMinTime, "HH:mm").format("h:mm A")} and ${moment(dayEnd, "HH:mm").format("h:mm A")}.`;
-          }
-        } else {
-          // For future dates, only check business hours
-          if (formData.startTime < dayStart || formData.startTime > dayEnd) {
-            newError.startTime = `Please select a time between ${moment(dayStart, "HH:mm").format("h:mm A")} and ${moment(dayEnd, "HH:mm").format("h:mm A")}.`;
-          }
+      } else {
+        // Additional validation - check if selected time is still available
+        const availableOptions = getTimeOptions();
+        const isTimeAvailable = availableOptions.some(
+          option => option.value === formData.startTime
+        );
+        
+        if (!isTimeAvailable) {
+          newError.startTime = "Selected time is no longer available. Please choose a different time.";
         }
       }
     }
@@ -456,14 +495,12 @@ const BookingForm = () => {
                   <span className="mb-1 text-sm font-medium ">Start Time </span>{" "}
                   <span className="text-red-500">*</span>
                 </label>
-                <input
+                <select
                   value={formData.startTime}
-                  min={getTimeRestrictions().min}
-                  max={getTimeRestrictions().max}
                   onChange={(e) => handleChange("startTime", e.target.value)}
                   id="start-time"
-                  type="time"
                   name="startTime"
+                  required
                   className={cn(
                     slimInputClassName,
                     "h-[33px] px-3 w-full",
@@ -471,7 +508,14 @@ const BookingForm = () => {
                     error.startTime &&
                       "border-red-500 focus-visible:ring-red-500"
                   )}
-                />
+                >
+                  <option value="">Select time...</option>
+                  {getTimeOptions().map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
 
                 {calendarSettings && formData.date && (
                   <p className="text-xs text-gray-500 mt-1">

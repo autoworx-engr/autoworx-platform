@@ -66,6 +66,7 @@ export default function useAppointmentQueryById(
                   lastName: true,
                   email: true,
                   employeeType: true,
+                  image: true,
                 },
               },
             },

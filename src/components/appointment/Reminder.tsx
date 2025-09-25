@@ -173,7 +173,7 @@ export function Reminder({
   return (
     <>
       <div className="mx-auto w-[350px] space-y-4 p-2 md:w-full">
-        <label className="flex items-center">
+        <div className="flex items-center">
           <h2>Confirmation</h2>
           <Switch
             name="confirmation"
@@ -181,7 +181,7 @@ export function Reminder({
             checked={confirmationTemplateStatus}
             setChecked={setConfirmationTemplateStatus}
           />
-        </label>
+        </div>
 
         <Selector
           border
@@ -243,7 +243,7 @@ export function Reminder({
         />
       </div>
       <div className="mx-auto w-[350px] space-y-4 p-2 md:w-full">
-        <label className="flex items-center">
+        <div className="flex items-center">
           <h2>Reminder</h2>
           <Switch
             name="reminder"
@@ -251,7 +251,7 @@ export function Reminder({
             checked={reminderTemplateStatus}
             setChecked={setReminderTemplateStatus}
           />
-        </label>
+        </div>
 
         <Selector
           border

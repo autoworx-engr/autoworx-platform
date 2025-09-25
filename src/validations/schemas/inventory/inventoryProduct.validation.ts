@@ -66,20 +66,24 @@ export const createProductValidationSchema = z
       .positive("Vendor ID must be positive")
       .optional()
       .nullish(),
-    quantity: z.string().refine(
-      (val) => {
-        const num = Number(val);
-        return !isNaN(num) && num >= 0;
-      },
-      {
-        message: "Material Quantity must be a positive number",
-      }
-    ),
+    quantity: z
+      .string()
+      .max(7, "Quantity must be less than 8 characters")
+      .refine(
+        (val) => {
+          const num = Number(val);
+          return !isNaN(num) && num >= 0;
+        },
+        {
+          message: "Material Quantity must be a positive number",
+        }
+      ),
     unit: z
       .string({
         invalid_type_error: "Unit must be a string",
         required_error: "Unit is required",
       })
+      .max(10, "Unit must be less than 10 characters")
       .optional()
       .nullish(),
 
@@ -145,7 +149,7 @@ export const updateProductValidationSchema = z
     description: z
       .string()
       .trim()
-      .max(1000, "Description cannot exceed 1000 characters")
+      .max(250, "Description cannot exceed 250 characters")
       .optional()
       .nullish(),
 
@@ -175,6 +179,7 @@ export const updateProductValidationSchema = z
 
     quantity: z
       .string()
+      .max(7, "Quantity must be less than 8 characters")
       .refine(
         (val) => {
           const num = Number(val);
@@ -191,6 +196,7 @@ export const updateProductValidationSchema = z
         invalid_type_error: "Unit must be a string",
         required_error: "Unit is required",
       })
+      .max(10, "Unit must be less than 10 characters")
       .optional()
       .nullish(),
 

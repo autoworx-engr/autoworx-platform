@@ -34,7 +34,7 @@ export function SelectAppointmentClient({
   const pathname = usePathname();
 
   useEffect(() => {
-    if (fromLead && clientId) {
+    if (clientId && clientList.length > 0) {
       const matchedClient = clientList.find(c => c.id === clientId);
       if (matchedClient) {
         setClient(matchedClient);

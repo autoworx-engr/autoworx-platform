@@ -17,15 +17,18 @@ export const lossProductValidationSchema = z.object({
     invalid_type_error: "Invalid date format",
   }),
   // .refine((date) => date <= new Date(), "Date cannot be in the future"),
-  quantity: z.string().refine(
-    (val) => {
-      const num = Number(val);
-      return !isNaN(num) && num >= 0;
-    },
-    {
-      message: "Quantity must be a positive number",
-    }
-  ),
+  quantity: z
+    .string()
+    .max(7, "Quantity must be less than 8 characters")
+    .refine(
+      (val) => {
+        const num = Number(val);
+        return !isNaN(num) && num >= 0;
+      },
+      {
+        message: "Quantity must be a positive number",
+      }
+    ),
   notes: z
     .string({
       required_error: "Notes are required",
@@ -47,15 +50,18 @@ export const updateSalesInventoryHistorySchema = z.object({
 
   invoiceId: z.string().nullish(),
 
-  quantity: z.string().refine(
-    (val) => {
-      const num = Number(val);
-      return !isNaN(num) && num >= 0;
-    },
-    {
-      message: "Quantity must be a positive number",
-    }
-  ),
+  quantity: z
+    .string()
+    .max(7, "Quantity must be less than 8 characters")
+    .refine(
+      (val) => {
+        const num = Number(val);
+        return !isNaN(num) && num >= 0;
+      },
+      {
+        message: "Quantity must be a positive number",
+      }
+    ),
   notes: z.string().trim().max(500, "Notes cannot exceed 500 characters"),
 
   inventoryProductHistoryId: z
@@ -85,21 +91,25 @@ export const updatePurchaseInventoryHistorySchema = z.object({
     .optional()
     .nullable(),
 
-  quantity: z.string().refine(
-    (val) => {
-      const num = Number(val);
-      return !isNaN(num) && num >= 0;
-    },
-    {
-      message: "Quantity must be a positive number",
-    }
-  ),
+  quantity: z
+    .string()
+    .max(7, "Quantity must be less than 8 characters")
+    .refine(
+      (val) => {
+        const num = Number(val);
+        return !isNaN(num) && num >= 0;
+      },
+      {
+        message: "Quantity must be a positive number",
+      }
+    ),
 
   unit: z
     .string({
       invalid_type_error: "Unit must be a string",
       required_error: "Unit is required",
     })
+    .max(10, "Unit must be less than 10 characters")
     .optional()
     .nullish(),
 

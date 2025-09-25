@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { Client, MailgunEmail, User } from "@prisma/client";
 import { FullMessage } from "@/actions/dashboard/technician/recentMessages";
 import { Message } from "./Message";
-
+import { formatInternalAttachmentMessage } from "@/utils/formatAttachmentMessage";
 
 type TMessageContainerProps = {
   clientMessages?: (Client & {
