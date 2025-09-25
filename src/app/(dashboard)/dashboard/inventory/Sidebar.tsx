@@ -157,17 +157,21 @@ export default async function Sidebar({
                 Inventory Details
               </h3>
 
-              <p className="mt-2">
+              <p className="mt-2 ">
                 <span className="font-semibold">Name: </span>{" "}
-                {product && product.name}
+                <p className="">{product && product.name}</p>
               </p>
               <p className="mt-2">
                 <span className="font-semibold">Type: </span>{" "}
                 {product && product.type}
               </p>
-              <p className="mt-2 text-justify">
+              <p className="mt-2 text-justify ">
                 <span className="font-semibold">Description: </span>{" "}
-                {product && product.description}
+                <p className="">
+                  {product?.description && product.description.length > 80
+                    ? product.description.slice(0, 80) + "..."
+                    : product?.description}
+                </p>
               </p>
             </div>
 

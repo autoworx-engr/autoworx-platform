@@ -137,13 +137,15 @@ export default function ProductTable({
                     <p>{(currentPage - 1) * pageSize + index + 1}</p>
                   </td>
                   <td className="max-w-36 px-4 text-left">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 ">
                       {Number(product.quantity) === 0 ? (
                         <Tooltip
                           title="Product is out of stock"
                           placement="top"
                         >
-                          <span className="text-red-600">{product.name}</span>
+                          <span className="text-red-600 truncate">
+                            {product.name}
+                          </span>
                         </Tooltip>
                       ) : Number(product.quantity) <=
                         Number(product.lowInventoryAlert) ? (
@@ -151,20 +153,24 @@ export default function ProductTable({
                           title="Product has low inventory"
                           placement="top"
                         >
-                          <span className="text-amber-600">{product.name}</span>
+                          <span className="text-amber-600 truncate">
+                            {product.name}
+                          </span>
                         </Tooltip>
                       ) : (
-                        <span>{product.name}</span>
+                        <span className="truncate">{product.name}</span>
                       )}
                     </div>
                   </td>
                   <td className="max-w-36 px-4 text-left truncate">
                     {product.category?.name}
                   </td>
-                  <td className="px-4 text-left 2xl:px-10">
+                  <td className="px-4 text-left 2xl:px-10 truncate">
                     {Number(product.quantity)}
                   </td>
-                  <td className="px-4 text-left 2xl:px-10">{product.unit}</td>
+                  <td className="px-4 text-left 2xl:px-10 truncate">
+                    {product.unit}
+                  </td>
                   {(user?.employeeType === "Admin" ||
                     user?.employeeType === "Manager") && (
                     <td>
