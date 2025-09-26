@@ -11,11 +11,21 @@ export default async function RecentMessagesBox() {
   // Get permissions to check communicationHubInternal
   const permissions = await getPermissions();
   const companyPermissions = permissions?.companyPermissions;
+  const userPermissions = permissions?.userPermissions;
 
-  // Check communicationHubInternal permission
+  console.log(
+    "permissions company",
+    companyPermissions,
+    "permissions Users",
+    permissions?.userPermissions
+  );
+
+  // Priority-based permission check: userPermission first, then companyPermission
   const hasMessagePermission =
     permissions?.role === "Admin" ||
-    companyPermissions?.communicationHubInternal !== false;
+    (userPermissions?.communicationHubInternal !== undefined
+      ? userPermissions.communicationHubInternal
+      : companyPermissions?.communicationHubInternal !== false);
 
   const clients = await db.client.findMany({
     where: { companyId: user.companyId },
