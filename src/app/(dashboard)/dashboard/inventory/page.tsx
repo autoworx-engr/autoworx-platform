@@ -39,8 +39,8 @@ const getInventoryItem = cache(
         where: {
           companyId,
           type: type,
-          name: { contains: search },
-          category: { name: category },
+          name: { contains: search, mode: "insensitive" },
+          category: { name: { contains: category, mode: "insensitive" } },
         },
         include: {
           category: true,
@@ -55,8 +55,8 @@ const getInventoryItem = cache(
         where: {
           companyId,
           type: type,
-          name: { contains: search },
-          category: { name: category },
+          name: { contains: search, mode: "insensitive" },
+          category: { name: { contains: category, mode: "insensitive" } },
         },
       });
       return { data: items, totalItems: totalItems };
@@ -97,7 +97,6 @@ export default async function Page({
   });
 
   const inventoryCategories = (await getCategories()) ?? [];
-
 
   const categories = await db.category.findMany({ where: { companyId } });
   const vendors = await db.vendor.findMany({ where: { companyId } });

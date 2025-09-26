@@ -83,7 +83,7 @@ export const createProductValidationSchema = z
         invalid_type_error: "Unit must be a string",
         required_error: "Unit is required",
       })
-      .max(10, "Unit must be less than 10 characters")
+      .max(5, "Unit must be less than 5 characters")
       .optional()
       .nullish(),
 
@@ -196,7 +196,7 @@ export const updateProductValidationSchema = z
         invalid_type_error: "Unit must be a string",
         required_error: "Unit is required",
       })
-      .max(10, "Unit must be less than 10 characters")
+      .max(5, "Unit must be less than 5 characters")
       .optional()
       .nullish(),
 
