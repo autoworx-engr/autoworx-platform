@@ -676,7 +676,7 @@ const SearchTerms = React.memo(function SearchTerms({
       <input
         type="text"
         value={search}
-        placeholder="Search by client, vehicle, services"
+        placeholder="Search by client, vehicle, services, lead source"
         className="w-full rounded border border-gray-300 p-2 pl-10"
         onChange={handleSearchChange}
       />
