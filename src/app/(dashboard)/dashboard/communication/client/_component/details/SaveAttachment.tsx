@@ -10,7 +10,7 @@ type TProps = {
 
 export default function SaveAttachment({ attachment }: TProps) {
   const handleDownload = (fileUrl: string, fileName: string) => {
-    window.open(fileUrl, "_blank"); // Open the file URL in a new tab
+    window.open(fileUrl, "_blank", "noopener,noreferrer"); // Open the file URL in a new tab
   };
 
   return (

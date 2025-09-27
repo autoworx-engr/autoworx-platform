@@ -219,15 +219,16 @@ export default function MessageBox({
   };
 
   const handleDownload = async (fileUrl: string | null) => {
-    const response = await fetch(fileUrl as string);
-    const responseBlob = await response.blob();
-    const blobURL = URL.createObjectURL(responseBlob);
-    const link = document.createElement("a");
-    link.href = blobURL;
-    link.setAttribute("download", fileUrl?.split("/").pop()!);
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
+    // const response = await fetch(fileUrl as string);
+    // const responseBlob = await response.blob();
+    // const blobURL = URL.createObjectURL(responseBlob);
+    // const link = document.createElement("a");
+    // link.href = blobURL;
+    // link.setAttribute("download", fileUrl?.split("/").pop()!);
+    // document.body.appendChild(link);
+    // link.click();
+    // link.remove();
+    fileUrl && window.open(fileUrl, "_blank", "noopener,noreferrer");
   };
 
   // this handler for mobile device
