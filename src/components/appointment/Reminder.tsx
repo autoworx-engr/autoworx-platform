@@ -173,7 +173,7 @@ export function Reminder({
   return (
     <>
       <div className="mx-auto w-[350px] space-y-4 p-2 md:w-full">
-        <label className="flex items-center">
+        <div className="flex items-center">
           <h2>Confirmation</h2>
           <Switch
             name="confirmation"
@@ -181,7 +181,7 @@ export function Reminder({
             checked={confirmationTemplateStatus}
             setChecked={setConfirmationTemplateStatus}
           />
-        </label>
+        </div>
 
         <Selector
           border
@@ -243,7 +243,7 @@ export function Reminder({
         />
       </div>
       <div className="mx-auto w-[350px] space-y-4 p-2 md:w-full">
-        <label className="flex items-center">
+        <div className="flex items-center">
           <h2>Reminder</h2>
           <Switch
             name="reminder"
@@ -251,7 +251,7 @@ export function Reminder({
             checked={reminderTemplateStatus}
             setChecked={setReminderTemplateStatus}
           />
-        </label>
+        </div>
 
         <Selector
           border
@@ -390,12 +390,15 @@ export function Reminder({
           })}
         </div>
       </div>
-      <div className="flex items-start gap-2  p-2  text-sm text-yellow-800">
+      <div className="flex items-start gap-2 p-2 text-sm text-yellow-800">
         <IoAlertCircleOutline className="mt-1 h-5 w-5 flex-shrink-0 text-yellow-600" />
-        <p className="leading-relaxed">
-          Your client will receive automated reminders <strong>24 hours</strong>{" "}
-          and <strong>2 hours</strong> prior to their scheduled appointment.
-        </p>
+        <div className="flex-1 min-w-0">
+          <p className="leading-relaxed break-words">
+            Your client will receive automated reminders{" "}
+            <strong>24 hours</strong> and <strong>2 hours</strong> prior to
+            their scheduled appointment.
+          </p>
+        </div>
       </div>
     </>
   );

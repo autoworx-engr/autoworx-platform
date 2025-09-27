@@ -101,8 +101,11 @@ export default function InventoryList({
             </div>
             <div className="h-full overflow-y-auto">
               <ProductTable
+                searchParams={searchParams}
                 products={products as any}
+                totalItems={totalProducts}
                 currentProductId={productId}
+                user={user}
               />
             </div>
           </div>
@@ -125,8 +128,11 @@ export default function InventoryList({
             </div>
             <div className="h-full overflow-y-auto">
               <ProductTable
+                totalItems={totalSupplies}
+                searchParams={searchParams}
                 products={supplies as any}
                 currentProductId={productId}
+                user={user}
               />
             </div>
           </div>

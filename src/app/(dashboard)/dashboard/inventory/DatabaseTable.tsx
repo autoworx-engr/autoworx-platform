@@ -58,10 +58,14 @@ export default function DatabaseTable({
                   <p className="block h-full">{item.id}</p>
                 </td>
                 <td className="px-4 py-2 text-left">
-                  <p className="block h-full w-full">{item.productName}</p>
+                  <p className="block h-full w-full truncate">
+                    {item.productName}
+                  </p>
                 </td>
                 <td className="px-4 py-2 text-left">
-                  <p className="block h-full w-full">{item.category}</p>
+                  <p className="block h-full w-full truncate">
+                    {item.category}
+                  </p>
                 </td>
                 <td className="px-4 py-2 text-left">
                   <p className="block h-full w-full">{item.unit}</p>
@@ -79,46 +83,51 @@ export default function DatabaseTable({
 
       {/* Mobile View - Card Layout */}
       <div className="space-y-3 md:hidden">
-      {data.map((item, index) => (
-        <div
-          key={item.id}
-          className={cn("rounded-lg border border-gray-200 p-4 shadow-sm", index % 2 === 0 ? evenColor : oddColor)}
-        >
-          <div className="flex flex-col gap-2">
-            {/* Product name and ID row */}
-            <div className="flex justify-between items-center">
+        {data.map((item, index) => (
+          <div
+            key={item.id}
+            className={cn(
+              "rounded-lg border border-gray-200 p-4 shadow-sm",
+              index % 2 === 0 ? evenColor : oddColor
+            )}
+          >
+            <div className="flex flex-col gap-2">
+              {/* Product name and ID row */}
+              <div className="flex justify-between items-center">
+                <div>
+                  <div className="text-xs text-gray-500">Name</div>
+                  <div className="text-sm font-medium text-gray-800">
+                    {item.productName}
+                  </div>
+                </div>
+
+                {/* Highlighted ID */}
+                <div className="  px-3 py-1 rounded-md ">
+                  <div className="text-base font-bold text-gray-400">
+                    {item.id}
+                  </div>
+                </div>
+              </div>
+
+              {/* Category */}
               <div>
-                <div className="text-xs text-gray-500">Name</div>
-                <div className="text-sm font-medium text-gray-800">{item.productName}</div>
+                <div className="text-xs text-gray-500">Category</div>
+                <div className="text-sm text-gray-800">{item.category}</div>
               </div>
 
-              {/* Highlighted ID */}
-              <div className="  px-3 py-1 rounded-md ">
-                <div className="text-base font-bold text-gray-400">{item.id}</div>
+              {/* Unit */}
+              <div>
+                <div className="text-xs text-gray-500">Unit</div>
+                <div className="text-sm text-gray-800">{item.unit}</div>
               </div>
             </div>
 
-            {/* Category */}
-            <div>
-              <div className="text-xs text-gray-500">Category</div>
-              <div className="text-sm text-gray-800">{item.category}</div>
-            </div>
-
-            {/* Unit */}
-            <div>
-              <div className="text-xs text-gray-500">Unit</div>
-              <div className="text-sm text-gray-800">{item.unit}</div>
+            <div className="mt-3 pt-2 border-t border-gray-200">
+              <AddNewProduct product={item} isDatabase={true} />
             </div>
           </div>
-
-          <div className="mt-3 pt-2 border-t border-gray-200">
-            <AddNewProduct product={item} isDatabase={true} />
-          </div>
-        </div>
-      ))}
-    </div>
-
-
+        ))}
+      </div>
 
       <div className="mt-4 flex justify-end">
         <Pagination

@@ -29,7 +29,6 @@ export default function AddTaskComponent({ lead }: TProps) {
           columnId: lead.columnId!,
         },
       });
-      successToast("Task added successfully");
 
       const response = await updatePipelineAutomationTrigger({
         condition: "TASK_CREATED",

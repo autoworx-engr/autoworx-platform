@@ -215,32 +215,27 @@ export default function InvoiceModalBody({
   };
   const handleCopyLink = async () => {
     try {
-      const clientName = invoice?.client?.firstName || invoice?.client?.lastName || "";
-      
+      const clientName =
+        invoice?.client?.firstName || invoice?.client?.lastName || "";
+
       const shortLinkResult = await getOrCreateShortLinkAction({
         invoiceId: invoiceId!,
-        clientName
+        clientName,
       });
-      
+
       if (shortLinkResult.success && shortLinkResult.shortUrl) {
         await navigator.clipboard.writeText(shortLinkResult.shortUrl);
-        console.log("📋 Copy Link - Short link:", {
-          isExisting: shortLinkResult.isExisting,
-          originalUrl: shortLinkResult.originalUrl,
-          shortUrl: shortLinkResult.shortUrl,
-          shortCode: shortLinkResult.shortCode,
-          invoiceId: invoiceId,
-          clientName: clientName
-        });
         successToast("Short link copied to clipboard");
       } else {
         // Fallback to original URL if short link creation fails
-        const fallbackUrl = shortLinkResult.originalUrl || `${process.env.NEXT_PUBLIC_APP_URL}/public-invoice/${invoiceId}`;
+        const fallbackUrl =
+          shortLinkResult.originalUrl ||
+          `${process.env.NEXT_PUBLIC_APP_URL}/public-invoice/${invoiceId}`;
         await navigator.clipboard.writeText(fallbackUrl);
         console.log("⚠️ Copy Link - Using original URL:", {
           error: shortLinkResult.error,
           originalUrl: fallbackUrl,
-          invoiceId: invoiceId
+          invoiceId: invoiceId,
         });
         successToast("Link copied to clipboard");
       }
@@ -561,7 +556,12 @@ export default function InvoiceModalBody({
                   ["shop supplies", invoice?.serviceFee],
                   ["grand total", invoice.grandTotal],
                   ["deposit", invoice.deposit],
-                  ["due", invoice.due],
+                  ["payment", invoice.totalPayment],
+                  [
+                    "due",
+                    Number(invoice.grandTotal) -
+                      (Number(invoice.totalPayment) + Number(invoice.deposit)),
+                  ],
                   ["Refunded", refundAmount],
                 ] as const
               ).map(([key, value]) => (

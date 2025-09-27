@@ -293,7 +293,7 @@ const ServiceComponent = ({
               {isEdit && (
                 <button
                   onClick={handleUpdateService}
-                  className="text-xl text-green-500"
+                  className="text-2xl text-[#6571FF]"
                 >
                   <IoMdCheckmarkCircleOutline />
                 </button>
@@ -302,7 +302,7 @@ const ServiceComponent = ({
                 onClick={() => setIsEdit(!isEdit)}
                 className="text-2xl text-[#6571FF]"
               >
-                <SquarePen className="w-5 h-5 text-[#6571FF]" />
+                <SquarePen className="w-4 h-4 text-[#6571FF]" />
               </button>
               {!isEdit && (
                 <Popconfirm
@@ -434,20 +434,20 @@ const ServiceComponent = ({
           </div>
         )}
       </TableCell>
-      <TableCell className="flex">
+      <TableCell className="flex items-center my-auto h-full">
         {isEdit && (
           <button
             onClick={handleUpdateService}
-            className="mr-4 text-xl text-green-500"
+            className="mr-4 text-lg text-[#6571FF]"
           >
             <IoMdCheckmarkCircleOutline />
           </button>
         )}
         <button
           onClick={() => setIsEdit(!isEdit)}
-          className="text-xl text-[#6571FF]"
+          className="text-lg text-[#6571FF]"
         >
-          <SquarePen className="w-5 h-5 text-[#6571FF]" />
+          <SquarePen className="w-4 h-4 text-[#6571FF]" />
         </button>
         <Popconfirm
           title="Delete the canned service"

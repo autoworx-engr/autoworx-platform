@@ -377,6 +377,12 @@ const PDFComponent = ({
                 ["shop supplies", invoice?.serviceFee],
                 ["grand total", invoice.grandTotal],
                 ["deposit", invoice.deposit],
+                ["payment", invoice.totalPayment],
+                [
+                  "due",
+                  Number(invoice.grandTotal) -
+                    (Number(invoice.totalPayment) + Number(invoice.deposit)),
+                ],
                 ["due", invoice.due],
               ].map(([field, value], ind) => (
                 <View key={ind} style={styles.total}>

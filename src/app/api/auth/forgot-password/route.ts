@@ -1,8 +1,88 @@
 import { db } from "@/lib/db";
-import { sendMail } from "@/lib/mailgun";
 import { randomUUID } from "crypto";
 import { addMinutes } from "date-fns";
 import { NextResponse } from "next/server";
+
+// Infobip Email API configuration
+const INFOBIP_BASE_URL = process.env.INFOBIP_BASE_URL;
+const INFOBIP_API_KEY = process.env.INFOBIP_API_KEY!;
+
+interface InfobipEmailRequest {
+  from: string;
+  to: string;
+  subject: string;
+  text?: string;
+  html?: string;
+  trackClicks?: boolean;
+  trackOpens?: boolean;
+  replyTo?: string;
+}
+
+interface InfobipEmailResponse {
+  bulkId: string;
+  messages: Array<{
+    to: string;
+    status: {
+      groupId: number;
+      groupName: string;
+      id: number;
+      name: string;
+      description: string;
+    };
+    messageId: string;
+  }>;
+}
+
+async function sendInfobipEmailAPI(
+  emailData: InfobipEmailRequest
+): Promise<InfobipEmailResponse> {
+  try {
+    const formData = new FormData();
+    formData.append("from", emailData.from);
+    formData.append("to", emailData.to);
+    formData.append("subject", emailData.subject);
+
+    if (emailData.text) {
+      formData.append("text", emailData.text);
+    }
+
+    if (emailData.html) {
+      formData.append("html", emailData.text?.replace(/\n/g, "<br>") || "");
+    }
+
+    if (emailData.replyTo) {
+      formData.append("replyTo", emailData.replyTo);
+    }
+
+    if (emailData.trackClicks) {
+      formData.append("trackClicks", "true");
+    }
+
+    if (emailData.trackOpens) {
+      formData.append("trackOpens", "true");
+    }
+
+    const response = await fetch(`https://${INFOBIP_BASE_URL}/email/3/send`, {
+      method: "POST",
+      headers: {
+        Authorization: `App ${INFOBIP_API_KEY}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Infobip API Error:", errorText);
+      throw new Error(`Infobip API Error: ${response.status} - ${errorText}`);
+    }
+
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    console.error("sendInfobipEmailAPI error:", error);
+    throw error;
+  }
+}
 
 export async function POST(req: Request) {
   const { email } = await req.json();
@@ -37,12 +117,46 @@ export async function POST(req: Request) {
 
   const text = `Your password reset link: ${resetUrl}\nOr use this OTP: ${otp} (valid for 15 mins)`;
 
-  // Send the email with the reset instructions
-  await sendMail({
-    to: user.email,
-    subject: "Reset your password",
-    text,
+  // Get user's company for email configuration
+  const company = await db.company.findFirst({
+    where: { id: user.companyId },
   });
+
+  const fromEmail = company?.name 
+    ? `${company.name} <mail@${process.env.INFOBIP_DOMAIN}>`
+    : `AutoWorx <mail@${process.env.INFOBIP_DOMAIN}>`;
+
+  // Send the email with the reset instructions using Infobip
+  try {
+    const infobipEmailData: InfobipEmailRequest = {
+      from: fromEmail,
+      to: user.email,
+      subject: "Reset your password",
+      text: text,
+      trackClicks: true,
+      trackOpens: true,
+    };
+
+    const response = await sendInfobipEmailAPI(infobipEmailData);
+
+    // Check if email was sent successfully
+    if (!response.messages || response.messages.length === 0) {
+      throw new Error("No messages in Infobip response");
+    }
+
+    const message = response.messages[0];
+    if (message.status.groupId !== 1) {
+      throw new Error(
+        `Email failed: ${message.status.name} - ${message.status.description}`
+      );
+    }
+  } catch (error) {
+    console.error("Failed to send password reset email:", error);
+    return NextResponse.json(
+      { error: "Failed to send password reset email" },
+      { status: 500 }
+    );
+  }
 
   return NextResponse.json({ message: "Password reset instructions sent" });
 }

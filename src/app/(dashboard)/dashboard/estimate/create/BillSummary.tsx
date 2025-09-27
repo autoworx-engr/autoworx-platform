@@ -1,16 +1,16 @@
-'use client';
+"use client";
 
-import { checkCouponCode } from '@/actions/coupon/checkCouponCode';
-import { getCompanyTaxCurrency } from '@/actions/settings/emailTemplates';
-import { errorToast, successToast } from '@/lib/toast';
-import { useEstimateCreateStore } from '@/stores/estimate-create';
-import { useListsStore } from '@/stores/lists';
-import { formatCurrency } from '@/utils/formatCurrency';
-import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { RotatingLines } from 'react-loader-spinner';
-import MakePayment from './MakePayment';
-import { is } from 'date-fns/locale';
+import { checkCouponCode } from "@/actions/coupon/checkCouponCode";
+import { getCompanyTaxCurrency } from "@/actions/settings/emailTemplates";
+import { errorToast, successToast } from "@/lib/toast";
+import { useEstimateCreateStore } from "@/stores/estimate-create";
+import { useListsStore } from "@/stores/lists";
+import { formatCurrency } from "@/utils/formatCurrency";
+import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { RotatingLines } from "react-loader-spinner";
+import MakePayment from "./MakePayment";
+import { is } from "date-fns/locale";
 
 export function BillSummary({
   isEstimateTax = true,
@@ -45,7 +45,7 @@ export function BillSummary({
   const [isTaxEnabled, setIsTaxEnabled] = useState<boolean>(true);
   const [isSuppliesEnabled, setIsSuppliesEnabled] = useState<boolean>(true);
 
-  const [couponInput, setCouponInput] = useState('');
+  const [couponInput, setCouponInput] = useState("");
   const [couponLoading, setCouponLoading] = useState(false);
   const [originalTax, setOriginalTax] = useState(0);
   const [originalServiceFee, setOriginalServiceFee] = useState(0);
@@ -64,7 +64,7 @@ export function BillSummary({
         setOriginalServiceFee(taxData.serviceFee);
         setServiceFee(taxData.serviceFee);
       } catch (error) {
-        console.error('Error fetching tax data:', error);
+        console.error("Error fetching tax data:", error);
       }
     }
     fetchTaxAndServiceFee();
@@ -130,25 +130,19 @@ export function BillSummary({
   // Calculate grand total
   useEffect(() => {
     let netAmount = subtotal - discount;
-    console.log('sub total', subtotal);
-    console.log('discount', discount);
+
     let taxAdd = 0;
     let suppliesFeeAdd = 0;
     let newGrandTotal = netAmount;
 
     if (isTaxEnabled && tax > 0) {
       taxAdd = Number((netAmount * (tax / 100)).toFixed(2));
-      console.log('taxAdd', taxAdd);
     }
 
     if (isSuppliesEnabled && serviceFee > 0) {
       suppliesFeeAdd = Number((netAmount * (serviceFee / 100)).toFixed(2));
-      console.log('supplies add', suppliesFeeAdd);
     }
-    console.log(
-      'grand total',
-      (newGrandTotal + taxAdd + suppliesFeeAdd).toFixed(2)
-    );
+
     setGrandTotal(Number((newGrandTotal + taxAdd + suppliesFeeAdd).toFixed(2)));
   }, [
     subtotal,
@@ -176,8 +170,8 @@ export function BillSummary({
         clientId: client?.id,
       });
 
-      if (res.type === 'success') {
-        successToast('Coupon applied successfully');
+      if (res.type === "success") {
+        successToast("Coupon applied successfully");
         setCoupon(res.data);
         setDiscount(
           Number(discount) +
@@ -188,7 +182,7 @@ export function BillSummary({
         errorToast(res.message!);
       }
     } catch (error) {
-      errorToast('Failed to apply coupon');
+      errorToast("Failed to apply coupon");
     }
     setCouponLoading(false);
   }
@@ -197,20 +191,26 @@ export function BillSummary({
     <>
       <div className="space-y-1 p-1.5">
         {[
-          ['subtotal', subtotal.toFixed(2)],
-          ['discount', discount.toFixed(2)],
-          ['tax', tax.toFixed(2)],
-          ['shop supplies', serviceFee.toFixed(2)],
-          ['deposit', deposit.toFixed(2)],
-          ['grand total', grandTotal.toFixed(2)],
+          ["subtotal", subtotal.toFixed(2)],
+          ["discount", discount.toFixed(2)],
+          ["tax", tax.toFixed(2)],
+          ["shop supplies", serviceFee.toFixed(2)],
+          ["deposit", deposit.toFixed(2)],
+          ["payment", totalPayment.toFixed(2)],
+          [
+            "due",
+            Number(grandTotal.toFixed(2)) -
+              (Number(totalPayment.toFixed(2)) + Number(deposit.toFixed(2))),
+          ],
+          ["grand total", grandTotal.toFixed(2)],
         ].map(([title, data], index) => {
-          const isToggleItem = title === 'tax' || title === 'shop supplies';
+          const isToggleItem = title === "tax" || title === "shop supplies";
           const toggleState =
-            title === 'tax' ? isTaxEnabled : isSuppliesEnabled;
+            title === "tax" ? isTaxEnabled : isSuppliesEnabled;
           const toggleSetter =
-            title === 'tax' ? setIsTaxEnabled : setIsSuppliesEnabled;
+            title === "tax" ? setIsTaxEnabled : setIsSuppliesEnabled;
           const originalValue =
-            title === 'tax' ? originalTax : originalServiceFee;
+            title === "tax" ? originalTax : originalServiceFee;
 
           return (
             <div
@@ -223,12 +223,12 @@ export function BillSummary({
                 <div
                   onClick={() => toggleSetter((prev) => !prev)}
                   className={`ml-2 flex h-5 w-10 cursor-pointer items-center rounded-full px-1 transition-colors ${
-                    toggleState ? 'bg-[#6571FF]' : 'bg-gray-400'
+                    toggleState ? "bg-[#6571FF]" : "bg-gray-400"
                   }`}
                 >
                   <div
                     className={`h-3 w-3 transform rounded-full bg-white transition-transform ${
-                      toggleState ? 'translate-x-5' : 'translate-x-0'
+                      toggleState ? "translate-x-5" : "translate-x-0"
                     }`}
                   />
                 </div>
@@ -242,7 +242,7 @@ export function BillSummary({
                     ? `${toggleState ? originalValue : 0}%${
                         toggleState && originalValue > 0
                           ? ` | ${(((subtotal - discount) * originalValue) / 100).toFixed(2)}`
-                          : ''
+                          : ""
                       }`
                     : data
                 }
@@ -259,7 +259,7 @@ export function BillSummary({
         </dl>
 
         {/* Coupon code */}
-        {pathname?.includes('/estimate/create') && (
+        {pathname?.includes("/estimate/create") && (
           <div className="flex justify-between rounded-md border p-1">
             <input
               type="text"
@@ -275,7 +275,7 @@ export function BillSummary({
                 className="rounded-md p-2 transition-colors hover:bg-background/20 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
                 onClick={checkCoupon}
                 disabled={!client}
-                title={!client ? 'Please select a client' : undefined}
+                title={!client ? "Please select a client" : undefined}
               >
                 Apply
               </button>
