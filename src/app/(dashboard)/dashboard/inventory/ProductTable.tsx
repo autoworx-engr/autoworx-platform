@@ -26,6 +26,7 @@ export default function ProductTable({
   products,
   searchParams,
   totalItems,
+  user,
 }: {
   currentProductId: number | undefined;
   products: (InventoryProduct & {
@@ -39,26 +40,17 @@ export default function ProductTable({
     limit: string;
   };
   totalItems: number;
+  user: User;
 }) {
   const router = useRouter();
   const search = useSearchParams();
   const pathname = usePathname();
   const viewTab = search?.get("view");
-  async function getUserInfo() {
-    getUser().then(user => {
-      setUser(user);
-    });
-  }
-  const [user, setUser] = useState<User | null>(null);
   const [currentPage, setCurrentPage] = useState(
     Number(searchParams.page) || 1
   );
   const [pageSize, setPageSize] = useState(Number(searchParams.limit) || 50);
   const [showPagination, setShowPagination] = useState(false);
-
-  useEffect(() => {
-    getUserInfo();
-  }, []);
 
   useEffect(() => {
     if (totalItems > 10) {
@@ -166,7 +158,7 @@ export default function ProductTable({
                       )}
                     </div>
                   </td>
-                  <td className="max-w-36 px-4 text-left">
+                  <td className="max-w-36 px-4 text-left truncate">
                     {product.category?.name}
                   </td>
                   <td className="px-4 text-left 2xl:px-10">

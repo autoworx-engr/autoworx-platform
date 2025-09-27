@@ -81,13 +81,13 @@ export default function MaterialCreate() {
                   notes: data.material.notes,
                   quantity: quantityValue || 0,
                   cost: Number(
-                    costValue === 0 ? undefined : costValue || 0,
+                    costValue === 0 ? undefined : costValue || 0
                   ) as any,
                   sell: Number(
-                    sellValue === 0 ? undefined : sellValue || 0,
+                    sellValue === 0 ? undefined : sellValue || 0
                   ) as any,
                   discount: Number(
-                    discountValue === 0 ? undefined : discountValue || 0,
+                    discountValue === 0 ? undefined : discountValue || 0
                   ) as any,
                   addToInventory: data.material.addToInventory,
                 };
@@ -121,7 +121,7 @@ export default function MaterialCreate() {
   useEffect(() => {
     if (currentSelectedCategoryId) {
       setCategory(
-        categories.find((cat) => cat.id === currentSelectedCategoryId)!,
+        categories.find((cat) => cat.id === currentSelectedCategoryId)!
       );
     }
   }, [currentSelectedCategoryId]);
@@ -247,7 +247,7 @@ export default function MaterialCreate() {
           close();
         } else if (res.type === "globalError") {
           errorToast(
-            res.errorSource?.length ? res.errorSource[0].message : res.message,
+            res.errorSource?.length ? res.errorSource[0].message : res.message
           );
         } else {
           errorToast(res.message!);
@@ -257,7 +257,7 @@ export default function MaterialCreate() {
         errorToast(
           formattedError.errorSource?.length
             ? formattedError.errorSource[0].message
-            : formattedError.message,
+            : formattedError.message
         );
       }
     } else {
@@ -466,11 +466,11 @@ export default function MaterialCreate() {
             vendors.filter(
               (vendor) =>
                 (vendor?.companyName?.toLowerCase() || "").includes(
-                  search.toLowerCase(),
+                  search.toLowerCase()
                 ) ||
                 (vendor?.name?.toLowerCase() || "").includes(
-                  search.toLowerCase(),
-                ),
+                  search.toLowerCase()
+                )
             )
           }
           displayList={(vendor: Vendor) => (
@@ -515,8 +515,12 @@ export default function MaterialCreate() {
         <input
           type="number"
           id="qt"
+          min="0"
           value={quantity || ""}
-          onChange={(e) => setQuantity(parseFloat(e.target.value))}
+          onChange={(e) => {
+            const value = parseFloat(e.target.value);
+            setQuantity(value >= 0 ? value : 0);
+          }}
           className="w-full rounded-md border-2 border-slate-400 p-1 text-xs"
           placeholder="0"
         />
@@ -529,10 +533,16 @@ export default function MaterialCreate() {
         <input
           type="number"
           id="price"
+          min="0"
           value={cost ?? ""}
-          onChange={(e) =>
-            setCost(e.target.value ? parseFloat(e.target.value) : undefined)
-          }
+          onChange={(e) => {
+            if (e.target.value) {
+              const value = parseFloat(e.target.value);
+              setCost(value >= 0 ? value : 0);
+            } else {
+              setCost(undefined);
+            }
+          }}
           className="w-full rounded-md border-2 border-slate-400 p-1 text-xs"
           placeholder="0"
           disabled={data.edit}
@@ -546,10 +556,16 @@ export default function MaterialCreate() {
         <input
           type="number"
           id="sell"
+          min="0"
           value={sell ?? ""}
-          onChange={(e) =>
-            setSell(e.target.value ? parseFloat(e.target.value) : undefined)
-          }
+          onChange={(e) => {
+            if (e.target.value) {
+              const value = parseFloat(e.target.value);
+              setSell(value >= 0 ? value : 0);
+            } else {
+              setSell(undefined);
+            }
+          }}
           className="w-full rounded-md border-2 border-slate-400 p-1 text-xs"
           placeholder="0"
         />
@@ -562,8 +578,16 @@ export default function MaterialCreate() {
         <input
           type="number"
           id="discount"
+          min="0"
           value={discount ?? ""}
-          onChange={(e) => setDiscount(parseFloat(e.target.value))}
+          onChange={(e) => {
+            if (e.target.value) {
+              const value = parseFloat(e.target.value);
+              setDiscount(value >= 0 ? value : 0);
+            } else {
+              setDiscount(undefined);
+            }
+          }}
           className="w-full rounded-md border-2 border-slate-400 p-1 text-xs"
           placeholder="0"
         />

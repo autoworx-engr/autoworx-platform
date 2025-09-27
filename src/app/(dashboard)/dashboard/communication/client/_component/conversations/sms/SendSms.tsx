@@ -110,7 +110,7 @@ export default function SendSms({ clientId }: TProps) {
       />
 
       <form
-        className="flex items-center gap-2 rounded-b-md bg-zinc-100 px-2 py-1 dark:bg-zinc-800/60"
+        className="flex items-center gap-2 rounded-b-md bg-zinc-100 px-2 pb-1 pt-2 dark:bg-zinc-800/60"
         onSubmit={handleSendMessage}
         onDragOver={(e) => {
           e.preventDefault();

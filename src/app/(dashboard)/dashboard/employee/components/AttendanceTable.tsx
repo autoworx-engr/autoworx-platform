@@ -283,7 +283,14 @@ const Dashboard = () => {
     {
       label: "Total Hours",
       value: `${convertMinutesToHours(isNaN(Number(attendanceInfo?.totalHoursWorked)) ? 0 : Number(attendanceInfo?.totalHoursWorked))} Hours`,
-      percentage: attendanceInfo?.growthRateTotalHoursWorked?.rate || "0%",
+      //  percentage: attendanceInfo?.growthRateTotalHoursWorked?.rate || "0%",
+      percentage: (() => {
+        const rate = attendanceInfo?.growthRateTotalHoursWorked?.rate;
+        if (rate === null || rate === undefined || isNaN(Number(rate))) {
+          return "0%";
+        }
+        return rate;
+      })(),
       isPositive:
         attendanceInfo?.growthRateTotalHoursWorked?.isPositive || false,
     },

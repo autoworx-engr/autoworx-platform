@@ -431,7 +431,12 @@ export default function MessageBox({
 
       {/* attachments */}
       {multiAttachmentFile && multiAttachmentFile.length > 0 && (
-        <div className="relative w-full rounded-lg border border-gray-200 bg-white shadow-md">
+        <div
+          className={cn(
+            "relative w-full rounded-lg border border-gray-200 bg-white shadow-md flex flex-col",
+            totalMessageBox > 2 ? "max-h-[120px]" : "max-h-64"
+          )}
+        >
           {/* Sticky header */}
           <div className="sticky top-0 z-20 flex items-center justify-end bg-white px-3 py-2 shadow-sm border-b border-gray-100">
             <button
