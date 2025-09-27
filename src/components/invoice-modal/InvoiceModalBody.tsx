@@ -54,6 +54,7 @@ import { InspectionItems } from "./InspectionItems";
 import { InvoiceItems } from "./InvoiceItems";
 import { StripePay } from "./StripePay";
 import { getPaymentSummary } from "@/actions/payment/refundPayment";
+import { calculateDue } from "@/utils/calculateDue";
 const DownloadPDF = dynamic(() => import("./DownloadInvoice"), {
   ssr: false,
 });
@@ -559,8 +560,11 @@ export default function InvoiceModalBody({
                   ["payment", invoice.totalPayment],
                   [
                     "due",
-                    Number(invoice.grandTotal) -
-                      (Number(invoice.totalPayment) + Number(invoice.deposit)),
+                    calculateDue(
+                      Number(invoice.grandTotal),
+                      Number(invoice.totalPayment),
+                      Number(invoice.deposit)
+                    ),
                   ],
                   ["Refunded", refundAmount],
                 ] as const

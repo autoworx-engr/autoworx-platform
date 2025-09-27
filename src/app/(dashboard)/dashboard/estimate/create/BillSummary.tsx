@@ -11,6 +11,7 @@ import { useEffect, useState } from "react";
 import { RotatingLines } from "react-loader-spinner";
 import MakePayment from "./MakePayment";
 import { is } from "date-fns/locale";
+import { calculateDue } from "@/utils/calculateDue";
 
 export function BillSummary({
   isEstimateTax = true,
@@ -197,11 +198,6 @@ export function BillSummary({
           ["shop supplies", serviceFee.toFixed(2)],
           ["deposit", deposit.toFixed(2)],
           ["payment", totalPayment.toFixed(2)],
-          [
-            "due",
-            Number(grandTotal.toFixed(2)) -
-              (Number(totalPayment.toFixed(2)) + Number(deposit.toFixed(2))),
-          ],
           ["grand total", grandTotal.toFixed(2)],
         ].map(([title, data], index) => {
           const isToggleItem = title === "tax" || title === "shop supplies";
