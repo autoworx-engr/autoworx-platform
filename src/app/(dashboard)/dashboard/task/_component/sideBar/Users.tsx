@@ -192,7 +192,7 @@ export default function Users() {
             ) : hasNextPage ? (
               "Scroll to load more"
             ) : (
-              "No more Users"
+              users.length !== 0 && "No more Users"
             )}
           </div>
         </div>
