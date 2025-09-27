@@ -6,7 +6,7 @@ import { Message as TMessage } from "./internal/UsersArea";
 import { FiMessageCircle } from "react-icons/fi";
 import { IoIosArrowBack, IoMdSend, IoMdSettings } from "react-icons/io";
 import { TiDeleteOutline } from "react-icons/ti";
-import { MdModeEdit } from "react-icons/md";
+import { MdModeEdit, MdCheck } from "react-icons/md";
 import { sendType } from "@/types/Chat";
 import { Attachment, Group, User } from "@prisma/client";
 import { deleteUserFromGroup } from "@/actions/communication/internal/deleteUserFromGroup";
@@ -23,6 +23,8 @@ import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { updateChatTrack } from "@/actions/communication/internal/updateChatTrack";
 import { format } from "date-fns";
 import { formatDate } from "./client/_component/conversations/mailgun/MailgunConversation";
+import { renameGroup } from "@/actions/communication/internal/renameGroup";
+import { SlimInput } from "@/components/SlimInput";
 // import Message from "./Message";
 
 type TSection = "collaboration" | "internal";
@@ -69,6 +71,8 @@ export default function MessageBox({
   );
 
   const { lastMessage, setLastMessage } = useChatTrackStore();
+  const [groupName, setGroupName] = useState(group?.name || "");
+  const [isGroupNameEdited, setIsGroupNameEdited] = useState(false);
   let lastDate = "";
 
   useEffect(() => {
@@ -215,15 +219,16 @@ export default function MessageBox({
   };
 
   const handleDownload = async (fileUrl: string | null) => {
-    const response = await fetch(fileUrl as string);
-    const responseBlob = await response.blob();
-    const blobURL = URL.createObjectURL(responseBlob);
-    const link = document.createElement("a");
-    link.href = blobURL;
-    link.setAttribute("download", fileUrl?.split("/").pop()!);
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
+    // const response = await fetch(fileUrl as string);
+    // const responseBlob = await response.blob();
+    // const blobURL = URL.createObjectURL(responseBlob);
+    // const link = document.createElement("a");
+    // link.href = blobURL;
+    // link.setAttribute("download", fileUrl?.split("/").pop()!);
+    // document.body.appendChild(link);
+    // link.click();
+    // link.remove();
+    fileUrl && window.open(fileUrl, "_blank", "noopener,noreferrer");
   };
 
   // this handler for mobile device
@@ -282,9 +287,23 @@ export default function MessageBox({
           )}
           <div className="flex flex-col">
             <p className="flex flex-col text-[18px] font-bold sm:text-[20px]">
-              {fromGroup
-                ? group?.name
-                : `${receiverUser?.firstName} ${receiverUser?.lastName}`}
+              {fromGroup ? (
+                <>
+                  {openSettings && isGroupNameEdited ? (
+                    <input
+                      type="text"
+                      value={groupName}
+                      onChange={(e) => setGroupName(e.target.value)}
+                      className="text-black rounded-md px-2 py-1 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-white"
+                      autoFocus
+                    ></input>
+                  ) : (
+                    groupName
+                  )}
+                </>
+              ) : (
+                `${receiverUser?.firstName} ${receiverUser?.lastName}`
+              )}
               {receiverUser?.companyName && (
                 <span className="text-sm font-light">
                   {receiverUser?.companyName}
@@ -295,7 +314,30 @@ export default function MessageBox({
           {fromGroup && (
             <>
               {openSettings ? (
-                <MdModeEdit className="ml-3 size-6 cursor-pointer" />
+                <>
+                  {isGroupNameEdited ? (
+                    <>
+                      <MdCheck
+                        className="ml-3 size-6 cursor-pointer"
+                        onClick={async () => {
+                          setIsGroupNameEdited(false);
+                          if (groupName !== group?.name && groupName.trim()) {
+                            setGroupName(groupName.trim());
+                            group?.id &&
+                              (await renameGroup(groupName, group.id));
+                          }
+                        }}
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <MdModeEdit
+                        className="ml-3 size-6 cursor-pointer"
+                        onClick={() => setIsGroupNameEdited(true)}
+                      />
+                    </>
+                  )}
+                </>
               ) : (
                 <IoMdSettings
                   onClick={() => setOpenSettings(true)}
@@ -397,10 +439,10 @@ export default function MessageBox({
           )}
         >
           {/* Sticky header */}
-          <div className="sticky top-0 z-20 flex items-center justify-end bg-white px-3 py-2 shadow-sm flex-shrink-0">
+          <div className="sticky top-0 z-20 flex items-center justify-end bg-white px-3 py-2 shadow-sm border-b border-gray-100">
             <button
               onClick={() => setMultiAttachmentFile(null)}
-              className="rounded-full bg-red-500/10 p-1.5 text-red-600 hover:bg-red-500/20 transition"
+              className="rounded-full bg-red-500/10 p-1.5 text-red-600 hover:bg-red-500/20 transition-colors"
               aria-label="Remove all attachments"
             >
               <TiDeleteOutline size={22} />
@@ -408,84 +450,61 @@ export default function MessageBox({
           </div>
 
           {/* Scrollable attachments */}
-          <div
-            className={cn(
-              "thin-scrollbar overflow-y-auto px-4 pb-4 flex-1",
-              totalMessageBox > 2 ? "max-h-[70px]" : "max-h-52"
-            )}
-          >
-            <div className="flex flex-wrap gap-2 justify-start">
+          <div className="thin-scrollbar max-h-64 overflow-y-auto px-4 pb-4">
+            {/* Fixed responsive grid with minimum item width */}
+            <div
+              className="gap-3 pt-3"
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(90px, 1fr))",
+              }}
+            >
               {multiAttachmentFile?.map((attachmentFile) => (
                 <div
                   key={attachmentFile.name}
-                  className={cn(
-                    "group relative flex flex-col items-center justify-between rounded-lg border border-gray-200 bg-gray-50 p-2 shadow-sm transition hover:shadow-md",
-                    totalMessageBox > 2 ? "w-16 h-20" : "w-24 h-32"
-                  )}
+                  className="group relative flex flex-col items-center rounded-lg border border-gray-200 bg-gray-50 p-2 shadow-sm transition-all hover:shadow-md hover:border-gray-300 min-w-0"
                 >
                   {/* Remove single attachment */}
                   <button
                     onClick={() => handleRemoveAttachment(attachmentFile.name)}
-                    className="absolute right-1 top-1 hidden rounded-full bg-white p-1 text-gray-700 shadow-sm hover:text-red-500 group-hover:block transition z-10"
+                    className="absolute -right-1 -top-1 opacity-0 group-hover:opacity-100 rounded-full bg-white p-1 text-gray-700 shadow-md hover:text-red-500 hover:shadow-lg transition-all z-10 border border-gray-200"
                     aria-label={`Remove ${attachmentFile.name}`}
                   >
-                    <TiDeleteOutline size={14} />
+                    <TiDeleteOutline size={16} />
                   </button>
 
-                  {/* Image preview */}
-                  <div className="flex-shrink-0">
+                  {/* File preview container */}
+                  <div className="relative mb-2">
+                    {/* Image preview */}
                     {attachmentFile.type.includes("image") ? (
-                      <div
-                        className={cn(
-                          "relative overflow-hidden rounded-md border",
-                          totalMessageBox > 2 ? "h-12 w-12" : "h-16 w-16"
-                        )}
-                      >
+                      <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border border-gray-300">
                         <Image
                           src={URL.createObjectURL(attachmentFile)}
                           alt={attachmentFile.name}
                           className="object-cover"
                           fill
-                          sizes={totalMessageBox > 2 ? "48px" : "64px"}
+                          sizes="80px"
                         />
                       </div>
                     ) : (
                       // Non-image file preview
-                      <div
-                        className={cn(
-                          "flex flex-col items-center justify-center rounded-md bg-blue-600 text-white",
-                          totalMessageBox > 2 ? "h-12 w-12" : "h-16 w-16"
-                        )}
-                      >
-                        <p
-                          className={cn(
-                            "line-clamp-1 font-medium text-center",
-                            totalMessageBox > 2 ? "text-[8px]" : "text-xs"
-                          )}
-                        >
-                          {attachmentFile.name.split(".").pop()?.toUpperCase()}
+                      <div className="flex h-20 w-20 flex-shrink-0 flex-col items-center justify-center rounded-md bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-sm">
+                        <p className="text-xs font-semibold text-center px-1 leading-tight">
+                          {attachmentFile.name
+                            .split(".")
+                            .pop()
+                            ?.toUpperCase() || "FILE"}
                         </p>
-                        {totalMessageBox <= 2 && (
-                          <p className="text-[8px]">
-                            {(attachmentFile.size / 1024 / 1024).toFixed(1)} MB
-                          </p>
-                        )}
+                        <p className="text-[10px] mt-0.5 opacity-90">
+                          {(attachmentFile.size / (1024 * 1024)).toFixed(1)}MB
+                        </p>
                       </div>
                     )}
                   </div>
 
                   {/* File name */}
-                  <p
-                    className={cn(
-                      "mt-1 line-clamp-1 w-full text-center text-gray-700 flex-1 flex items-center justify-center",
-                      totalMessageBox > 2 ? "text-[8px]" : "text-xs"
-                    )}
-                  >
-                    {totalMessageBox > 2
-                      ? attachmentFile.name.length > 8
-                        ? attachmentFile.name.substring(0, 8) + "..."
-                        : attachmentFile.name
-                      : attachmentFile.name}
+                  <p className="w-full text-center text-xs text-gray-700 leading-tight break-all line-clamp-2 px-1">
+                    {attachmentFile.name}
                   </p>
                 </div>
               ))}

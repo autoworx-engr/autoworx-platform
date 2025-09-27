@@ -26,6 +26,7 @@ export async function POST(req: NextRequest, res: NextResponse) {
         fileType: file.type,
         fileSize: file.size,
         checksum: "", // Optional
+        fileName: file.name,
       });
 
       if (response.error) {
@@ -43,7 +44,6 @@ export async function POST(req: NextRequest, res: NextResponse) {
         },
         body: file,
       });
-      console.log("🚀 ~ POST ~ upload:", upload);
 
       if (upload.ok) {
         return url.split("?")[0]; // Return uploaded file URL
