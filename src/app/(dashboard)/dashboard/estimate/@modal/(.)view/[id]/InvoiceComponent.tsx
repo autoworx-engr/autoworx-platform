@@ -282,6 +282,13 @@ const InvoiceComponent = ({
                     ["shop supplies", invoice?.serviceFee],
                     ["grand total", invoice.grandTotal],
                     ["deposit", invoice.deposit],
+                    ["payment", invoice.totalPayment],
+                    [
+                      "due",
+                      Number(invoice.grandTotal) -
+                        (Number(invoice.totalPayment) +
+                          Number(invoice.deposit)),
+                    ],
                     ["due", invoice.due],
                   ] as const
                 ).map(([key, value]) => (

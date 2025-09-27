@@ -86,12 +86,14 @@ export default async function Sidebar({
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <span className="cursor-default ">
+                        <span className="cursor-default text-3xl">
                           {(() => {
                             const totalPrice =
                               parseFloat(product.price?.toString() || "0") *
                               parseFloat(product.quantity?.toString() || "0");
+
                             const totalStr = totalPrice.toLocaleString(); // comma separated
+
                             // Shorten display if too long
                             return totalStr.length > 6
                               ? totalStr.slice(0, 6) + ".."
@@ -123,12 +125,13 @@ export default async function Sidebar({
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <span className="cursor-default">
+                        <span className="cursor-default text-3xl">
                           {(() => {
                             const price = parseFloat(
                               product.price?.toString() || "0"
                             );
                             const priceStr = price.toLocaleString(); // comma separated
+
                             return priceStr.length > 6
                               ? priceStr.slice(0, 6) + ".."
                               : priceStr;
@@ -153,21 +156,76 @@ export default async function Sidebar({
         <div className="app-shadow mb-2 w-full rounded-lg bg-[#F8F9FA] p-4 text-xs md:mb-0 md:bg-background 2xl:text-base">
           <div className="grid grid-cols-1 gap-0  lg:grid-cols-5 md:gap-10">
             <div className="order-2 col-span-2 px-[10px] py-1 md:order-1 md:px-0 md:py-0">
-              <h3 className="hidden text-lg font-semibold md:block">
+              <h3 className="hidden text-lg font-semibold md:block text-nowrap">
                 Inventory Details
               </h3>
 
               <p className="mt-2">
                 <span className="font-semibold">Name: </span>{" "}
-                {product && product.name}
+                {product && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="cursor-default">
+                          {product.name?.length > 20
+                            ? product.name.slice(0, 20) + "..."
+                            : product.name}
+                        </span>
+                      </TooltipTrigger>
+                      {product.name?.length > 20 && (
+                        <TooltipContent>
+                          <p>{product.name}</p>
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
               </p>
+
               <p className="mt-2">
                 <span className="font-semibold">Type: </span>{" "}
-                {product && product.type}
+                {product && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="cursor-default">
+                          {product.type?.length > 20
+                            ? product.type.slice(0, 20) + "..."
+                            : product.type}
+                        </span>
+                      </TooltipTrigger>
+                      {product.type?.length > 20 && (
+                        <TooltipContent>
+                          <p>{product.type}</p>
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
               </p>
+
               <p className="mt-2 text-justify">
                 <span className="font-semibold">Description: </span>{" "}
-                {product && product.description}
+                {product && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="cursor-default">
+                          {product.description &&
+                          product.description.length > 80
+                            ? product.description.slice(0, 80) + "..."
+                            : product.description}
+                        </span>
+                      </TooltipTrigger>
+                      {product.description &&
+                        product.description.length > 80 && (
+                          <TooltipContent className="max-w-xs">
+                            <p>{product.description}</p>
+                          </TooltipContent>
+                        )}
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
               </p>
             </div>
 
@@ -206,12 +264,12 @@ export default async function Sidebar({
                           <TooltipTrigger asChild>
                             <span
                               className={cn(
-                                "text-5xl cursor-default",
+                                "text-3xl cursor-default",
                                 Number(product.quantity) === 0 && "text-red-600"
                               )}
                             >
-                              {String(product.quantity).length > 2
-                                ? String(product.quantity).slice(0, 2) + ".."
+                              {String(product.quantity).length > 4
+                                ? String(product.quantity).slice(0, 4) + ".."
                                 : Number(product.quantity)}
                             </span>
                           </TooltipTrigger>
@@ -223,7 +281,29 @@ export default async function Sidebar({
                         </Tooltip>
                       </TooltipProvider>
 
-                      <span>/{product.unit}</span>
+                      <span className="truncate">
+                        /
+                        {product.unit ? (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="cursor-default">
+                                  {product.unit.length > 5
+                                    ? product.unit.slice(0, 5) + "..."
+                                    : product.unit}
+                                </span>
+                              </TooltipTrigger>
+                              {product.unit.length > 5 && (
+                                <TooltipContent>
+                                  <p>{product.unit}</p>
+                                </TooltipContent>
+                              )}
+                            </Tooltip>
+                          </TooltipProvider>
+                        ) : (
+                          "-"
+                        )}
+                      </span>
                     </div>
                     <span>Remaining</span>
                   </div>

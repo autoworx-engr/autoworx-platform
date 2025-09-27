@@ -137,13 +137,20 @@ export default function ProductTable({
                     <p>{(currentPage - 1) * pageSize + index + 1}</p>
                   </td>
                   <td className="max-w-36 px-4 text-left">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 ">
                       {Number(product.quantity) === 0 ? (
                         <Tooltip
                           title="Product is out of stock"
                           placement="top"
                         >
-                          <span className="text-red-600">{product.name}</span>
+                          <span className="text-red-600 cursor-default">
+                            {product.name.length > 20
+                              ? product.name.slice(0, 20) + "..."
+                              : product.name}
+                          </span>
+                          {product.name.length > 20 && (
+                            <span className="sr-only">{product.name}</span>
+                          )}
                         </Tooltip>
                       ) : Number(product.quantity) <=
                         Number(product.lowInventoryAlert) ? (
@@ -151,20 +158,86 @@ export default function ProductTable({
                           title="Product has low inventory"
                           placement="top"
                         >
-                          <span className="text-amber-600">{product.name}</span>
+                          <span className="text-amber-600 cursor-default">
+                            {product.name.length > 20
+                              ? product.name.slice(0, 20) + "..."
+                              : product.name}
+                          </span>
+                          {product.name.length > 20 && (
+                            <span className="sr-only">{product.name}</span>
+                          )}
                         </Tooltip>
                       ) : (
-                        <span>{product.name}</span>
+                        <Tooltip
+                          title={product.name.length > 20 ? product.name : ""}
+                          placement="top"
+                        >
+                          <span className="cursor-default">
+                            {product.name.length > 20
+                              ? product.name.slice(0, 20) + "..."
+                              : product.name}
+                          </span>
+                        </Tooltip>
                       )}
                     </div>
                   </td>
                   <td className="max-w-36 px-4 text-left truncate">
-                    {product.category?.name}
+                    {product.category?.name ? (
+                      <Tooltip
+                        title={
+                          product.category.name.length > 20
+                            ? product.category.name
+                            : undefined
+                        }
+                        placement="top"
+                      >
+                        <span className="cursor-default">
+                          {product.category.name.length > 20
+                            ? product.category.name.slice(0, 20) + "..."
+                            : product.category.name}
+                        </span>
+                      </Tooltip>
+                    ) : (
+                      "-"
+                    )}
                   </td>
-                  <td className="px-4 text-left 2xl:px-10">
-                    {Number(product.quantity)}
+
+                  <td className="px-4 text-left 2xl:px-10 truncate">
+                    <Tooltip
+                      title={
+                        String(product.quantity).length > 10
+                          ? String(product.quantity)
+                          : undefined
+                      }
+                      placement="top"
+                    >
+                      <span className="cursor-default">
+                        {String(product.quantity).length > 10
+                          ? String(product.quantity).slice(0, 10) + "..."
+                          : Number(product.quantity)}
+                      </span>
+                    </Tooltip>
                   </td>
-                  <td className="px-4 text-left 2xl:px-10">{product.unit}</td>
+
+                  <td className="px-4 text-left 2xl:px-10 truncate">
+                    {product.unit ? (
+                      <Tooltip
+                        title={
+                          product.unit.length > 5 ? product.unit : undefined
+                        }
+                        placement="top"
+                      >
+                        <span className="cursor-default">
+                          {product.unit.length > 5
+                            ? product.unit.slice(0, 5) + "..."
+                            : product.unit}
+                        </span>
+                      </Tooltip>
+                    ) : (
+                      "-"
+                    )}
+                  </td>
+
                   {(user?.employeeType === "Admin" ||
                     user?.employeeType === "Manager") && (
                     <td>
