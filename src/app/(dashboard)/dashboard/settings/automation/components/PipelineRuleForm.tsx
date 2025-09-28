@@ -41,7 +41,7 @@ const PipelineRuleForm = ({
   companyId,
   user,
 }: PipelineRuleFormProps) => {
-  const [loading, setLoading] = useState(false);
+  // const [loading, setLoading] = useState(false);
   const {
     data: allPipelineRules,
     isLoading: pipelineIsLoading,
@@ -93,7 +93,7 @@ const PipelineRuleForm = ({
           timeDelay: timeDelay,
           // createdBy: data?.data?.createdBy,
         });
-        setLoading(false);
+        // setLoading(false);
       } else {
         setFormData({
           title: "",
@@ -175,7 +175,7 @@ const PipelineRuleForm = ({
         }
         formData.targetColumnId = Number(formData.targetColumnId);
         updateRule({ id, data: formData });
-        setLoading(true);
+        // setLoading(true);
       } else {
         if (formData.timeDelay != null) {
           const seconds = parseTimeDelayToSeconds(formData.timeDelay!);
@@ -214,7 +214,6 @@ const PipelineRuleForm = ({
   );
 
   if (
-    loading ||
     stagesLoading ||
     isLoading ||
     isFetching ||
