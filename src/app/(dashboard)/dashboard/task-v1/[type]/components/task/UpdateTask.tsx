@@ -30,9 +30,13 @@ import moment from "moment";
 import AssignTaskDropDown from "./AssignTaskDropDown";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { useCalendarStore } from "@/stores/calendarStore";
+import { formatTime12Hour } from "@/utils/formateTime12Hours";
+import { Select } from "antd";
 
 export default function UpdateTask() {
   const router = useRouter();
+  const timezone = useCompanyTimezone();
+  const { Option } = Select;
   const { popup, data, close } = usePopupStore();
   const { setUpdateVariable } = useCalendarStore();
   const { companyUsers, task } = data as {
@@ -163,6 +167,15 @@ export default function UpdateTask() {
     }
   }
 
+  // Generate options in 15-min intervals
+  const timeOptions = Array.from({ length: 24 * 4 }, (_, i) => {
+    const hour = Math.floor(i / 4);
+    const minute = (i % 4) * 15;
+    const value = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+    const label = formatTime12Hour(hour, minute, timezone);
+    return { value, label };
+  });
+
   return (
     <Dialog open={popup === "UPDATE_TASK"} onOpenChange={close}>
       <DialogContent className="no-visible-scrollbar #overflow-y-auto">
@@ -208,30 +221,56 @@ export default function UpdateTask() {
                   onChange={(event) => setDate(event.currentTarget.value)}
                 />
                 <div className="flex items-end gap-2">
+                  {/* Start Time */}
                   <label className="flex flex-col items-start">
-                    <span className="mb-1 text-sm font-medium text-gray-700">
+                    <span className="mb-1 text-sm font-medium text-gray-500">
                       Start Time
                     </span>
-                    <input
-                      type="time"
-                      value={startTime}
-                      onChange={(e) => handleTimeChange(e, "start")}
-                      className={cn(slimInputClassName, "h-[34px] px-3")}
-                      // Only disable the time input if the selected date is today, but restrict future time
-                      // Restrict time to future if today
-                    />
+                    <div>
+                      <Select
+                        value={startTime}
+                        onChange={(value) =>
+                          handleTimeChange(
+                            { target: { value } } as any,
+                            "start"
+                          )
+                        }
+                        style={{ width: "100%", height: 34 }}
+                        className="border-slate-400 border text-gray-500 rounded-md"
+                      >
+                        <Option value="">Start Time</Option>
+
+                        {timeOptions.map((time) => (
+                          <Option key={time.value} value={time.value}>
+                            <p className="text-base text-gray-600">
+                              {time.label}
+                            </p>
+                          </Option>
+                        ))}
+                      </Select>
+                    </div>
                   </label>
 
                   <label className="flex flex-col items-start">
-                    <span className="mb-1 text-sm font-medium text-gray-700">
+                    <span className="mb-1 text-sm font-medium text-gray-500">
                       End Time
                     </span>
-                    <input
-                      type="time"
+                    <Select
                       value={endTime}
-                      onChange={(e) => handleTimeChange(e, "end")}
-                      className={cn(slimInputClassName, "h-[34px] px-3")}
-                    />
+                      onChange={(value) =>
+                        handleTimeChange({ target: { value } } as any, "end")
+                      }
+                      style={{ width: "100%", height: 34 }}
+                      className="border-slate-400 border rounded-md"
+                    >
+                      <Option value="">End Time</Option>
+
+                      {timeOptions.map((time) => (
+                        <Option key={time.value} value={time.value}>
+                          {time.label}
+                        </Option>
+                      ))}
+                    </Select>
                   </label>
                 </div>
               </div>

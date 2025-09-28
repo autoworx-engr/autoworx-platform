@@ -65,7 +65,7 @@ export default function ManagePipelines({
       columns.map((column) => ({
         ...column,
         isRestricted: restrictedColumns.includes(column.title),
-      })),
+      }))
     );
   }, [columns]);
 
@@ -129,12 +129,12 @@ export default function ManagePipelines({
     // Check for renamed restricted columns
     const renamedRestrictedColumns = localColumns.filter(
       (column) =>
-        column.isRestricted && !restrictedColumns.includes(column.title.trim()),
+        column.isRestricted && !restrictedColumns.includes(column.title.trim())
     );
 
     if (renamedRestrictedColumns.length > 0) {
       toast.error(
-        `The restricted column "${renamedRestrictedColumns[0].title}" cannot be renamed.`,
+        `The restricted column "${renamedRestrictedColumns[0].title}" cannot be renamed.`
       );
       return;
     }
@@ -142,12 +142,12 @@ export default function ManagePipelines({
     // Check if any non-restricted column has a restricted title
     const invalidColumns = localColumns.filter(
       (column) =>
-        !column.isRestricted && restrictedColumns.includes(column.title.trim()),
+        !column.isRestricted && restrictedColumns.includes(column.title.trim())
     );
 
     if (invalidColumns.length > 0) {
       toast.error(
-        `The column "${invalidColumns[0].title}" is a restricted title and cannot be used.`,
+        `The column "${invalidColumns[0].title}" is a restricted title and cannot be used.`
       );
       return;
     }
@@ -164,7 +164,7 @@ export default function ManagePipelines({
           column.title,
           column.type,
           column.textColor ?? undefined,
-          column.bgColor ?? undefined,
+          column.bgColor ?? undefined
         );
         column.id = newColumn.id;
       } else {
@@ -208,30 +208,34 @@ export default function ManagePipelines({
         onClick={onClose}
       >
         <div
-          className="w-180 rounded-lg bg-background p-6"
+          className="w-180 max-h-[90vh] rounded-lg bg-background p-6 flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >
-          <h2 className="mb-4 text-lg font-semibold">Edit Pipeline</h2>
-          <div className="flex flex-col items-center justify-center">
-            {localColumns.map((column, index) => (
-              <ColumnItem
-                key={column.id ?? `new-${index}`} // Fallback key for new columns
-                index={index}
-                column={column}
-                moveColumn={moveColumn}
-                handleColumnChange={handleColumnChange}
-                handleDeleteColumn={handleDeleteColumn}
-                inputRef={(el) => (inputRefs.current[index] = el)}
-              />
-            ))}
+          <h2 className="mb-4 text-lg font-semibold flex-shrink-0">
+            Edit Pipeline
+          </h2>
+          <div className="flex flex-col items-center justify-center flex-1 min-h-0">
+            <div className="w-full max-h-[60vh] overflow-y-auto pr-2">
+              {localColumns.map((column, index) => (
+                <ColumnItem
+                  key={column.id ?? `new-${index}`} // Fallback key for new columns
+                  index={index}
+                  column={column}
+                  moveColumn={moveColumn}
+                  handleColumnChange={handleColumnChange}
+                  handleDeleteColumn={handleDeleteColumn}
+                  inputRef={(el) => (inputRefs.current[index] = el)}
+                />
+              ))}
+            </div>
             <button
               onClick={handleAddColumn}
-              className="mt-2 w-[75%] rounded border-2 border-blue-500 px-1 py-1 text-center text-sm text-blue-500"
+              className="mt-2 w-[75%] rounded border-2 border-blue-500 px-1 py-1 text-center text-sm text-blue-500 flex-shrink-0"
             >
               + Add New Column
             </button>
           </div>
-          <div className="mt-4 flex justify-end">
+          <div className="mt-4 flex justify-end flex-shrink-0">
             <button
               onClick={onClose}
               className="mr-2 rounded-md bg-gray-200 px-4 py-2"

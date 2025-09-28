@@ -48,14 +48,14 @@ export async function fetchAndTransformData(
   const statusIds = decodedStatus
     ? decodedStatus
         .split(",")
-        .map((id) => {
+        .map(id => {
           if (isNaN(Number(id))) {
             return undefined;
           } else {
             return Number(id);
           }
         })
-        .filter((id) => id !== undefined)
+        .filter(id => id !== undefined)
     : undefined;
 
   if (isNaN(take) || isNaN(page)) {
@@ -64,6 +64,188 @@ export async function fetchAndTransformData(
       data: [],
     };
   }
+
+  console.log("Decoded Status:", decodedSearchTerm);
+
+  const searchConditionOR = decodedSearchTerm
+    ? (() => {
+        const searchTerms = decodedSearchTerm
+          .toLowerCase()
+          .split(/\s+/)
+          .filter(term => term.length > 0);
+        console.log("Search Terms:", searchTerms);
+        const yearNum = parseInt(decodedSearchTerm, 10);
+        const isValidYear = !isNaN(yearNum) && yearNum > 1900 && yearNum < 2100;
+
+        const clientSearchField = ["firstName", "lastName", "email", "mobile"];
+
+        const vehicleSearchField = ["make", "model"];
+
+        return [
+          // Search by invoice ID
+          {
+            id: {
+              contains: decodedSearchTerm,
+            },
+          },
+          // Search by client info
+          {
+            client: {
+              OR: [
+                ...clientSearchField.map(field => ({
+                  [field]: {
+                    contains: decodedSearchTerm,
+                  },
+                })),
+                // capitalize first letter
+                ...clientSearchField.map(field => ({
+                  [field]: {
+                    contains: decodedSearchTerm
+                      .split(" ")
+                      .map(text => text.charAt(0).toUpperCase() + text.slice(1))
+                      .join(" "),
+                  },
+                })),
+                ...clientSearchField.map(field => ({
+                  [field]: {
+                    contains: decodedSearchTerm.toUpperCase(),
+                  },
+                })),
+                // Match any search term in any client field
+                ...(searchTerms.length > 0
+                  ? [
+                      {
+                        OR: searchTerms.flatMap(term => [
+                          { firstName: { contains: term } },
+                          { lastName: { contains: term } },
+                          { email: { contains: term } },
+                          { mobile: { contains: term } },
+                        ]),
+                      },
+                    ]
+                  : []),
+              ],
+            },
+          },
+          // Search by vehicle - COUNT QUERY FLEXIBLE MULTI-TERM
+          {
+            vehicle: {
+              OR: [
+                // Single term searches - ONLY if exactly one term
+                ...(searchTerms.length === 1
+                  ? [
+                      ...vehicleSearchField.map(field => ({
+                        [field]: {
+                          contains: decodedSearchTerm,
+                        },
+                      })),
+                      // capitalize first letter
+                      ...vehicleSearchField.map(field => ({
+                        [field]: {
+                          contains:
+                            decodedSearchTerm.charAt(0).toUpperCase() +
+                            decodedSearchTerm.slice(1),
+                        },
+                      })),
+                      ...vehicleSearchField.map(field => ({
+                        [field]: {
+                          contains: decodedSearchTerm.toUpperCase(),
+                        },
+                      })),
+                      ...(isValidYear
+                        ? [
+                            {
+                              year: {
+                                equals: yearNum,
+                              },
+                            },
+                          ]
+                        : []),
+                    ]
+                  : []),
+
+                // Multi-term search - FLEXIBLE LOGIC
+                ...(searchTerms.length > 1
+                  ? (() => {
+                      // Separate year terms from non-year terms
+                      const yearTerms = searchTerms.filter(term => {
+                        const year = parseInt(term, 10);
+                        return !isNaN(year) && year > 1900 && year < 2100;
+                      });
+                      const nonYearTerms = searchTerms.filter(term => {
+                        const year = parseInt(term, 10);
+                        return isNaN(year) || year <= 1900 || year >= 2100;
+                      });
+
+                      const conditions = [];
+
+                      // Add year conditions (if any)
+                      if (yearTerms.length > 0) {
+                        conditions.push({
+                          OR: yearTerms.map(term => ({
+                            year: { equals: parseInt(term, 10) },
+                          })),
+                        });
+                      }
+
+                      // Add make/model conditions for non-year terms
+                      if (nonYearTerms.length > 0) {
+                        // Try to match all non-year terms in make/model
+                        conditions.push({
+                          AND: nonYearTerms.map(term => ({
+                            OR: [
+                              ...vehicleSearchField.map(field => ({
+                                [field]: {
+                                  contains: term,
+                                },
+                              })),
+                              // capitalize first letter
+                              ...vehicleSearchField.map(field => ({
+                                [field]: {
+                                  contains: term
+                                    .split(" ")
+                                    .map(
+                                      text =>
+                                        text.charAt(0).toUpperCase() +
+                                        text.slice(1)
+                                    )
+                                    .join(" "),
+                                },
+                              })),
+                              ...vehicleSearchField.map(field => ({
+                                [field]: {
+                                  contains: term.toUpperCase(),
+                                },
+                              })),
+                            ],
+                          })),
+                        });
+                      }
+
+                      // If we have both year and non-year terms, combine with AND
+                      if (conditions.length > 1) {
+                        return [{ AND: conditions }];
+                      } else if (conditions.length === 1) {
+                        return [conditions[0]];
+                      }
+
+                      return [];
+                    })()
+                  : []),
+              ],
+            },
+          },
+          // Search by status
+          {
+            column: {
+              title: {
+                contains: decodedSearchTerm,
+              },
+            },
+          },
+        ];
+      })()
+    : undefined;
 
   const totalEstimateCountPromise = db.invoice.count({
     where: {
@@ -76,198 +258,7 @@ export async function fetchAndTransformData(
       columnId: {
         in: statusIds,
       },
-      OR: decodedSearchTerm
-        ? (() => {
-            const searchTerms = decodedSearchTerm
-              .toLowerCase()
-              .split(/\s+/)
-              .filter((term) => term.length > 0);
-            const yearNum = parseInt(decodedSearchTerm, 10);
-            const isValidYear =
-              !isNaN(yearNum) && yearNum > 1900 && yearNum < 2100;
-
-            return [
-              // Search by invoice ID
-              {
-                id: {
-                  contains: decodedSearchTerm,
-                },
-              },
-              // Search by client info
-              {
-                client: {
-                  OR: [
-                    {
-                      firstName: {
-                        contains: decodedSearchTerm,
-                      },
-                    },
-                    {
-                      lastName: {
-                        contains: decodedSearchTerm,
-                      },
-                    },
-                    {
-                      email: {
-                        contains: decodedSearchTerm,
-                      },
-                    },
-                    {
-                      mobile: {
-                        contains: decodedSearchTerm,
-                      },
-                    },
-                    // Handle multi-word name searches
-                    ...(searchTerms.length > 1
-                      ? [
-                          {
-                            AND: searchTerms.map((term) => ({
-                              OR: [
-                                {
-                                  firstName: {
-                                    contains: term,
-                                  },
-                                },
-                                {
-                                  lastName: {
-                                    contains: term,
-                                  },
-                                },
-                              ],
-                            })),
-                          },
-                        ]
-                      : []),
-                    // Handle two-term name combinations (first+last name) - FOR DATA QUERY
-                    ...(searchTerms.length === 2
-                      ? [
-                          {
-                            OR: [
-                              {
-                                AND: [
-                                  {
-                                    firstName: {
-                                      contains: searchTerms[0],
-                                    },
-                                  },
-                                  {
-                                    lastName: {
-                                      contains: searchTerms[1],
-                                    },
-                                  },
-                                ],
-                              },
-                              {
-                                AND: [
-                                  {
-                                    firstName: {
-                                      contains: searchTerms[1],
-                                    },
-                                  },
-                                  {
-                                    lastName: {
-                                      contains: searchTerms[0],
-                                    },
-                                  },
-                                ],
-                              },
-                            ],
-                          },
-                        ]
-                      : []),
-                  ],
-                },
-              },
-              // Search by vehicle - COUNT QUERY FLEXIBLE MULTI-TERM
-              {
-                vehicle: {
-                  OR: [
-                    // Single term searches - ONLY if exactly one term
-                    ...(searchTerms.length === 1
-                      ? [
-                          {
-                            make: {
-                              contains: decodedSearchTerm,
-                            },
-                          },
-                          {
-                            model: {
-                              contains: decodedSearchTerm,
-                            },
-                          },
-                          ...(isValidYear
-                            ? [
-                                {
-                                  year: {
-                                    equals: yearNum,
-                                  },
-                                },
-                              ]
-                            : []),
-                        ]
-                      : []),
-
-                    // Multi-term search - FLEXIBLE LOGIC
-                    ...(searchTerms.length > 1
-                      ? (() => {
-                          // Separate year terms from non-year terms
-                          const yearTerms = searchTerms.filter((term) => {
-                            const year = parseInt(term, 10);
-                            return !isNaN(year) && year > 1900 && year < 2100;
-                          });
-                          const nonYearTerms = searchTerms.filter((term) => {
-                            const year = parseInt(term, 10);
-                            return isNaN(year) || year <= 1900 || year >= 2100;
-                          });
-
-                          const conditions = [];
-
-                          // Add year conditions (if any)
-                          if (yearTerms.length > 0) {
-                            conditions.push({
-                              OR: yearTerms.map((term) => ({
-                                year: { equals: parseInt(term, 10) },
-                              })),
-                            });
-                          }
-
-                          // Add make/model conditions for non-year terms
-                          if (nonYearTerms.length > 0) {
-                            // Try to match all non-year terms in make/model
-                            conditions.push({
-                              AND: nonYearTerms.map((term) => ({
-                                OR: [
-                                  { make: { contains: term } },
-                                  { model: { contains: term } },
-                                ],
-                              })),
-                            });
-                          }
-
-                          // If we have both year and non-year terms, combine with AND
-                          if (conditions.length > 1) {
-                            return [{ AND: conditions }];
-                          } else if (conditions.length === 1) {
-                            return [conditions[0]];
-                          }
-
-                          return [];
-                        })()
-                      : []),
-                  ],
-                },
-              },
-              // Search by status
-              {
-                column: {
-                  title: {
-                    contains: decodedSearchTerm,
-                  },
-                },
-              },
-            ];
-          })()
-        : undefined,
+      OR: searchConditionOR,
     },
   });
 
@@ -326,198 +317,7 @@ export async function fetchAndTransformData(
         in: statusIds,
       },
 
-      OR: decodedSearchTerm
-        ? (() => {
-            const searchTerms = decodedSearchTerm
-              .toLowerCase()
-              .split(/\s+/)
-              .filter((term) => term.length > 0);
-            const yearNum = parseInt(decodedSearchTerm, 10);
-            const isValidYear =
-              !isNaN(yearNum) && yearNum > 1900 && yearNum < 2100;
-
-            return [
-              // Search by invoice ID
-              {
-                id: {
-                  contains: decodedSearchTerm,
-                },
-              },
-              // Search by client info - MAIN QUERY
-              {
-                client: {
-                  OR: [
-                    {
-                      firstName: {
-                        contains: decodedSearchTerm,
-                      },
-                    },
-                    {
-                      lastName: {
-                        contains: decodedSearchTerm,
-                      },
-                    },
-                    {
-                      email: {
-                        contains: decodedSearchTerm,
-                      },
-                    },
-                    {
-                      mobile: {
-                        contains: decodedSearchTerm,
-                      },
-                    },
-                    // Handle multi-word name searches
-                    ...(searchTerms.length > 1
-                      ? [
-                          {
-                            AND: searchTerms.map((term) => ({
-                              OR: [
-                                {
-                                  firstName: {
-                                    contains: term,
-                                  },
-                                },
-                                {
-                                  lastName: {
-                                    contains: term,
-                                  },
-                                },
-                              ],
-                            })),
-                          },
-                        ]
-                      : []),
-                    // Handle two-term name combinations (first+last name) - FOR DATA QUERY
-                    ...(searchTerms.length === 2
-                      ? [
-                          {
-                            OR: [
-                              {
-                                AND: [
-                                  {
-                                    firstName: {
-                                      contains: searchTerms[0],
-                                    },
-                                  },
-                                  {
-                                    lastName: {
-                                      contains: searchTerms[1],
-                                    },
-                                  },
-                                ],
-                              },
-                              {
-                                AND: [
-                                  {
-                                    firstName: {
-                                      contains: searchTerms[1],
-                                    },
-                                  },
-                                  {
-                                    lastName: {
-                                      contains: searchTerms[0],
-                                    },
-                                  },
-                                ],
-                              },
-                            ],
-                          },
-                        ]
-                      : []),
-                  ],
-                },
-              },
-              // Search by vehicle - MAIN QUERY FLEXIBLE MULTI-TERM
-              {
-                vehicle: {
-                  OR: [
-                    // Single term searches - ONLY if exactly one term
-                    ...(searchTerms.length === 1
-                      ? [
-                          {
-                            make: {
-                              contains: decodedSearchTerm,
-                            },
-                          },
-                          {
-                            model: {
-                              contains: decodedSearchTerm,
-                            },
-                          },
-                          ...(isValidYear
-                            ? [
-                                {
-                                  year: {
-                                    equals: yearNum,
-                                  },
-                                },
-                              ]
-                            : []),
-                        ]
-                      : []),
-
-                    // Multi-term search - FLEXIBLE LOGIC
-                    ...(searchTerms.length > 1
-                      ? (() => {
-                          // Separate year terms from non-year terms
-                          const yearTerms = searchTerms.filter((term) => {
-                            const year = parseInt(term, 10);
-                            return !isNaN(year) && year > 1900 && year < 2100;
-                          });
-                          const nonYearTerms = searchTerms.filter((term) => {
-                            const year = parseInt(term, 10);
-                            return isNaN(year) || year <= 1900 || year >= 2100;
-                          });
-
-                          const conditions = [];
-
-                          // Add year conditions (if any)
-                          if (yearTerms.length > 0) {
-                            conditions.push({
-                              OR: yearTerms.map((term) => ({
-                                year: { equals: parseInt(term, 10) },
-                              })),
-                            });
-                          }
-
-                          // Add make/model conditions for non-year terms
-                          if (nonYearTerms.length > 0) {
-                            // Try to match all non-year terms in make/model
-                            conditions.push({
-                              AND: nonYearTerms.map((term) => ({
-                                OR: [
-                                  { make: { contains: term } },
-                                  { model: { contains: term } },
-                                ],
-                              })),
-                            });
-                          }
-
-                          // If we have both year and non-year terms, combine with AND
-                          if (conditions.length > 1) {
-                            return [{ AND: conditions }];
-                          } else if (conditions.length === 1) {
-                            return [conditions[0]];
-                          }
-
-                          return [];
-                        })()
-                      : []),
-                  ],
-                },
-              },
-              // Search by status
-              {
-                column: {
-                  title: {
-                    contains: decodedSearchTerm,
-                  },
-                },
-              },
-            ];
-          })()
-        : undefined,
+      OR: searchConditionOR,
     },
 
     include: {
@@ -565,7 +365,7 @@ export async function fetchAndTransformData(
     Array.isArray(statusIds) &&
     statusIds.length > 1 &&
     statusIds.includes(deliveredStatus.id)
-      ? data.filter((invoice) => {
+      ? data.filter(invoice => {
           const start = convertedStart ? convertedStart.toDate() : null;
           const end = convertedEnd ? convertedEnd.toDate() : null;
 
@@ -603,13 +403,13 @@ export async function fetchAndTransformData(
 
     // Find exact match first
     const exactIndex = statusOrder.findIndex(
-      (status) => status.toLowerCase() === normalizedTitle
+      status => status.toLowerCase() === normalizedTitle
     );
     if (exactIndex !== -1) return exactIndex;
 
     // Find partial match
     const partialIndex = statusOrder.findIndex(
-      (status) =>
+      status =>
         normalizedTitle.includes(status.toLowerCase()) ||
         status.toLowerCase().includes(normalizedTitle)
     );
@@ -619,7 +419,7 @@ export async function fetchAndTransformData(
     return statusOrder.length;
   };
 
-  const transformedData = filteredPromises.map((item) => {
+  const transformedData = filteredPromises.map(item => {
     const vehicle = item.vehicle;
     const client = item.client;
     const status = item.column;

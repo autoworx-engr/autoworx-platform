@@ -42,13 +42,14 @@ export default async function TechnicianReportingPage() {
   });
 
   return (
-    <div className="p-4 sm:p-0">
+    <div className="p-4 sm:p-6">
       <h1 className="my-4 text-2xl font-bold">Technician Reporting</h1>
-      
+
       {/* Unified payout calculation (work-based + salary if available) */}
       <Payout info={technicians} showBreakdown={true} />
-      
+
       <TechnicianDetails info={technicians} employee={employee} />
+
       <TechnicianAttendance currentUserId={currentUser?.id} />
       <PerformanceReport />
     </div>

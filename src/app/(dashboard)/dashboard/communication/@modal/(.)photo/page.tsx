@@ -1,3 +1,5 @@
+"use client";
+
 import {
   DialogContentBlank,
   DialogOverlay,
@@ -5,6 +7,7 @@ import {
   InterceptedDialog,
 } from "@/components/Dialog";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 type TProps = {
   searchParams: {
@@ -13,6 +16,12 @@ type TProps = {
 };
 
 export default function CommunicationHubImageLoad({ searchParams }: TProps) {
+  const router = useRouter();
+
+  const handleImageClick = () => {
+    router.back();
+  };
+
   return (
     <InterceptedDialog>
       <div>
@@ -30,6 +39,7 @@ export default function CommunicationHubImageLoad({ searchParams }: TProps) {
                   width: "100%",
                   height: "auto",
                 }}
+                onClick={handleImageClick}
               />
             </div>
           </DialogContentBlank>

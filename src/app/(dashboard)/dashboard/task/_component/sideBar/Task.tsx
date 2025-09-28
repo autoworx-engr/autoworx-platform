@@ -81,7 +81,6 @@ export default function TaskComponent({ task }: TaskComponentProps) {
 
   const handleUpdate = () => {
     revalidateTaskQueries();
-    successToast("Task updated successfully.");
   };
 
   const handleDeleteTask = (taskId: number) => {

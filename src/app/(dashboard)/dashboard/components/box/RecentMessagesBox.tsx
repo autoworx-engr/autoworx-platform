@@ -1,11 +1,32 @@
 import { fetchRecentMessages } from "@/actions/dashboard/technician/recentMessages";
 import { db } from "@/lib/db";
 import getUser from "@/lib/getUser";
+import getPermissions from "@/lib/getPermissions";
 import BoxTitle from "./BoxTitle";
 import MessageContainer from "./MessageContainer";
 
 export default async function RecentMessagesBox() {
   const user = await getUser();
+
+  // Get permissions to check communicationHubInternal
+  const permissions = await getPermissions();
+  const companyPermissions = permissions?.companyPermissions;
+  const userPermissions = permissions?.userPermissions;
+
+  console.log(
+    "permissions company",
+    companyPermissions,
+    "permissions Users",
+    permissions?.userPermissions
+  );
+
+  // Priority-based permission check: userPermission first, then companyPermission
+  const hasMessagePermission =
+    permissions?.role === "Admin" ||
+    (userPermissions?.communicationHubInternal !== undefined
+      ? userPermissions.communicationHubInternal
+      : companyPermissions?.communicationHubInternal !== false);
+
   const clients = await db.client.findMany({
     where: { companyId: user.companyId },
     include: {
@@ -50,10 +71,15 @@ export default async function RecentMessagesBox() {
         <BoxTitle
           className="mb-4"
           title="Recent Messages"
-          redirectLink="/dashboard/communication/internal"
+          redirectLink={
+            hasMessagePermission
+              ? "/dashboard/communication/internal"
+              : undefined
+          }
         />
         <MessageContainer
           user={user}
+          hasMessagePermission={hasMessagePermission}
           clientMessages={user.employeeType === "Sales" ? sortedClients : []}
           internalMessages={
             user.employeeType === "Technician" || user.employeeType === "Other"

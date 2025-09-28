@@ -26,7 +26,7 @@ export const createProductValidationSchema = z
       })
       .trim()
       .min(3, "Product name must be at least 3 characters")
-      .max(100, "Product name cannot exceed 100 characters"),
+      .max(30, "Product name cannot exceed 30 characters"),
 
     description: z
       .string()
@@ -66,20 +66,24 @@ export const createProductValidationSchema = z
       .positive("Vendor ID must be positive")
       .optional()
       .nullish(),
-    quantity: z.string().refine(
-      (val) => {
-        const num = Number(val);
-        return !isNaN(num) && num >= 0;
-      },
-      {
-        message: "Material Quantity must be a positive number",
-      }
-    ),
+    quantity: z
+      .string()
+      .max(7, "Quantity must be less than 8 characters")
+      .refine(
+        (val) => {
+          const num = Number(val);
+          return !isNaN(num) && num >= 0;
+        },
+        {
+          message: "Material Quantity must be a positive number",
+        }
+      ),
     unit: z
       .string({
         invalid_type_error: "Unit must be a string",
         required_error: "Unit is required",
       })
+      .max(5, "Unit must be less than 5 characters")
       .optional()
       .nullish(),
 
@@ -140,12 +144,12 @@ export const updateProductValidationSchema = z
       })
       .trim()
       .min(3, "Product name must be at least 3 characters")
-      .max(100, "Product name cannot exceed 100 characters"),
+      .max(30, "Product name cannot exceed 30 characters"),
 
     description: z
       .string()
       .trim()
-      .max(1000, "Description cannot exceed 1000 characters")
+      .max(250, "Description cannot exceed 250 characters")
       .optional()
       .nullish(),
 
@@ -156,10 +160,6 @@ export const updateProductValidationSchema = z
       })
       .nonnegative("Price must be non-negative")
       .finite("Price must be finite")
-      .refine(
-        (num) => (num * 100) % 1 === 0,
-        "Price cannot have more than 2 decimal places"
-      )
       .optional()
       .nullable(),
 
@@ -179,6 +179,7 @@ export const updateProductValidationSchema = z
 
     quantity: z
       .string()
+      .max(7, "Quantity must be less than 8 characters")
       .refine(
         (val) => {
           const num = Number(val);
@@ -195,6 +196,7 @@ export const updateProductValidationSchema = z
         invalid_type_error: "Unit must be a string",
         required_error: "Unit is required",
       })
+      .max(5, "Unit must be less than 5 characters")
       .optional()
       .nullish(),
 

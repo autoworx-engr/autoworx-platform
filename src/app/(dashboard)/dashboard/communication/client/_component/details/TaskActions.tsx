@@ -31,7 +31,7 @@ export default function TaskActions({ usersOfCompany, task }: TProps) {
           });
         }}
       >
-        <SquarePen className="w-5 h-5 text-[#6571FF]" />
+        <SquarePen className="w-4 h-4" />
       </button>
 
       <button
@@ -43,7 +43,7 @@ export default function TaskActions({ usersOfCompany, task }: TProps) {
           })
         }
       >
-        <FaRegCheckCircle className="cursor-pointer" />
+        <FaRegCheckCircle className="cursor-pointer text-base" />
       </button>
     </span>
   );
