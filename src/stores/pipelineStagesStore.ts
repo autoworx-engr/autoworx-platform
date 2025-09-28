@@ -10,16 +10,22 @@ type PipelineStagesStore = {
   loading: boolean;
   error: string | null;
   fetchStages: (type: string) => Promise<void>;
+  _cache: Record<string, Stage[]>; // cache by type
 };
 
-export const usePipelineStagesStore = create<PipelineStagesStore>((set) => ({
+export const usePipelineStagesStore = create<PipelineStagesStore>((set, get) => ({
   stages: [],
   loading: false,
   error: null,
+  _cache: {},
 
   fetchStages: async (type) => {
+    const cache = get()._cache;
+    if (cache[type]) {
+      set({ stages: cache[type], loading: false });
+      return;
+    }
     set({ loading: true, error: null });
-
     try {
       const response = await fetch("/api/columns", {
         method: "POST",
@@ -32,7 +38,11 @@ export const usePipelineStagesStore = create<PipelineStagesStore>((set) => ({
       }
 
       const data = await response.json();
-      set({ stages: data, loading: false });
+      set((state) => ({
+        stages: data,
+        loading: false,
+        _cache: { ...state._cache, [type]: data },
+      }));
     } catch (err: any) {
       set({ error: err.message || "Unknown error", loading: false });
     }
