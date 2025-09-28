@@ -32,15 +32,42 @@ type TGetInventoryItem = {
 };
 
 const getInventoryItem = cache(
-  async ({ type, page, limit, search, category }: TGetInventoryItem) => {
+  async ({ type, page, limit, search = "", category }: TGetInventoryItem) => {
     try {
       const companyId = await getCompanyId();
+      const searchTerms = search
+        .toLowerCase()
+        .split(/\s+/)
+        .filter(term => term.length > 0);
+      const searchFilterOR = [
+        { name: { contains: search.trim() } },
+        { name: { contains: search?.trim().toUpperCase() } },
+        { name: { contains: search?.trim().toLowerCase() } },
+        {
+          name: {
+            contains: search
+              .trim()
+              ?.split(" ")
+              .map(t => t.trim().charAt(0).toUpperCase() + t.slice(1))
+              .join(" "),
+          },
+        },
+        ...(searchTerms.length > 0
+          ? [
+              {
+                OR: searchTerms.flatMap(term => [
+                  { name: { contains: term.trim() } },
+                ]),
+              },
+            ]
+          : []),
+      ];
       const items = await db.inventoryProduct.findMany({
         where: {
           companyId,
           type: type,
-          name: { contains: search, mode: "insensitive" },
-          category: { name: { contains: category, mode: "insensitive" } },
+          OR: search ? searchFilterOR : undefined,
+          category: { name: category },
         },
         include: {
           category: true,
@@ -55,8 +82,8 @@ const getInventoryItem = cache(
         where: {
           companyId,
           type: type,
-          name: { contains: search, mode: "insensitive" },
-          category: { name: { contains: category, mode: "insensitive" } },
+          OR: search ? searchFilterOR : undefined,
+          category: { name: category },
         },
       });
       return { data: items, totalItems: totalItems };

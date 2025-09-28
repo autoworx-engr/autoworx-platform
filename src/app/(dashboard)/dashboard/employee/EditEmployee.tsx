@@ -10,7 +10,7 @@ import {
 import FormError from "@/components/FormError";
 import { SlimInput } from "@/components/SlimInput";
 import Submit from "@/components/Submit";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { RxAvatar } from "react-icons/rx";
 
 import { updateEmployee } from "@/actions/employee/update";
@@ -51,6 +51,19 @@ export default function EditEmployee({
   const { data: companyName } = useServerGet(getCompany);
   const [openChangePassword, setOpenChangePassword] = useState(false);
   const { showError, clearError } = useFormErrorStore();
+
+  useEffect(() => {
+    setProfilePic(employee.image !== DEFAULT_IMAGE_URL ? employee.image : null);
+  }, [employee.image]);
+
+  useEffect(() => {
+    if (newProfilePic) {
+      const objectUrl = URL.createObjectURL(newProfilePic);
+      setProfilePic(objectUrl);
+
+      return () => URL.revokeObjectURL(objectUrl);
+    }
+  }, [newProfilePic]);
 
   async function handleSubmit(data: FormData) {
     let photo;
@@ -186,6 +199,7 @@ export default function EditEmployee({
       });
       return;
     } else {
+      setNewProfilePic(null);
       setOpen(false);
     }
   }
@@ -231,15 +245,11 @@ export default function EditEmployee({
         <div className="mt-8 flex items-center justify-between">
           <h1 className="text-2xl font-bold">Edit Employee</h1>
 
-          {newProfilePic || profilePic ? (
+          {profilePic ? (
             <label className="relative cursor-pointer" htmlFor="profilePicture">
               <div className="relative h-20 w-20 rounded-full border border-slate-400 hover:border-dashed hover:opacity-80 overflow-hidden">
                 <Image
-                  src={
-                    newProfilePic
-                      ? URL.createObjectURL(newProfilePic)
-                      : profilePic || ""
-                  }
+                  src={profilePic}
                   width={80}
                   height={80}
                   alt="profile"

@@ -12,6 +12,7 @@ export default function TaskListBox() {
   const { data: tasks, isLoading, isError } = useTasksQueryForDashboard();
   const { permissions } = usePermissionStore();
   const companyEmployeePermissions = permissions?.companyPermissions;
+  const userPermissions = permissions?.userPermissions;
 
   const queryClient = useQueryClient();
 
@@ -30,8 +31,14 @@ export default function TaskListBox() {
 
   let content = null;
 
+
+  const hasTaskPermission =
+    userPermissions?.calendarTask !== undefined
+      ? userPermissions.calendarTask
+      : companyEmployeePermissions?.calendarTask !== false;
+
   // Check permission and show message if no access
-  if (companyEmployeePermissions?.calendarTask === false) {
+  if (!hasTaskPermission) {
     content = (
       <div className="flex flex-1 items-center justify-center self-center text-center">
         <span className="text-sm text-gray-500">
@@ -66,16 +73,12 @@ export default function TaskListBox() {
       >
         <BoxTitle
           title="Task List"
-          redirectLink={
-            companyEmployeePermissions?.calendarTask !== false
-              ? "/dashboard/task/day"
-              : undefined
-          }
+          redirectLink={hasTaskPermission ? "/dashboard/task/day" : undefined}
         />
         <div className="thin-scrollbar my-2 flex max-h-64 flex-1 flex-col space-y-2 overflow-x-hidden lg:max-h-full">
           {content}
         </div>
-        {companyEmployeePermissions?.calendarTask !== false && (
+        {hasTaskPermission && (
           <div className="mt-auto flex w-full justify-center md:w-20 md:justify-start">
             {/* <NewTask companyUsers={companyUsers} /> */}
             <TaskCreateOrEdit
