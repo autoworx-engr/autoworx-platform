@@ -10,7 +10,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Popconfirm, Tooltip } from "antd";
 import moment from "moment-timezone";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { FaRegCheckCircle } from "react-icons/fa";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { useDate } from "../../task/_hook/lib/useDate";
@@ -23,6 +23,7 @@ type TaskProps = {
 
 const Task = ({ task, onTaskDeleted }: TaskProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [popconfirmVisible, setPopconfirmVisible] = useState(false);
   const router = useRouter();
   const { setNavigating, setDate } = useCalendarStore();
   const queryClient = useQueryClient();
@@ -48,6 +49,19 @@ const Task = ({ task, onTaskDeleted }: TaskProps) => {
       queryKey: queryKeys.dashboardTask,
     });
   };
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (popconfirmVisible) {
+        setPopconfirmVisible(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, true);
+    return () => {
+      window.removeEventListener('scroll', handleScroll, true);
+    };
+  }, [popconfirmVisible]);
 
   return (
     <>
@@ -94,17 +108,26 @@ const Task = ({ task, onTaskDeleted }: TaskProps) => {
             description="Are you sure you want to mark this task as completed?"
             okText="Yes"
             cancelText="No"
+            open={popconfirmVisible}
+            onOpenChange={setPopconfirmVisible}
             onConfirm={async (e) => {
               e?.stopPropagation();
               await deleteTask(task.id);
               revalidateTask();
               successToast("Task completed");
+              setPopconfirmVisible(false);
             }}
-            onCancel={(e) => e?.stopPropagation()}
+            onCancel={(e) => {
+              e?.stopPropagation();
+              setPopconfirmVisible(false);
+            }}
           >
             <FaRegCheckCircle
               className="h-4 w-4 cursor-pointer hover:opacity-70 md:h-5 md:w-5"
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                setPopconfirmVisible(true);
+              }}
             />
           </Popconfirm>
         </span>

@@ -148,7 +148,7 @@ export default function PerformanceTable({
         {/* <div className="flex gap-4"> */}
         <div className="hidden gap-6 lg:flex">
           <ConvertedDataGraph data={data?.convertedLeadsPerMonth || []} />
-          <SalesAcitivityGraph />
+          {/* <SalesAcitivityGraph /> */}
         </div>
 
         {/* </div> */}

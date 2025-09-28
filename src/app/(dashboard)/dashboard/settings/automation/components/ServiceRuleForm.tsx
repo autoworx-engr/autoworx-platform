@@ -76,7 +76,7 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
   company,
   twilio,
 }) => {
-  const [loading, setLoading] = useState(false);
+  // const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<Rule>({
     title: "",
     selectedServiceIds: [],
@@ -145,7 +145,7 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
         createdBy: data?.data.createdBy,
       });
       setActiveTemplate(data?.data.templateType);
-      setLoading(false);
+      // setLoading(false);
     } else {
       setFormData({
         title: "",
@@ -297,7 +297,7 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
 
       if (isEdit && id) {
         updateServiceRule({ id: id, data: finalData });
-        setLoading(true);
+        // setLoading(true);
       } else {
         createService(finalData);
         //reset the form data
@@ -326,7 +326,7 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
     handleChange(name as keyof Rule, value);
   };
 
-  if (isLoading || isFetching || serviceLoading || stageLoading || loading) {
+  if (isLoading || isFetching || serviceLoading || stageLoading) {
     return (
       <div className="flex h-[800px] w-full animate-pulse items-center justify-center rounded-md bg-gray-200 p-4 shadow-sm md:p-6">
         <Spin />
