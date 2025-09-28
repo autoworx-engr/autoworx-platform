@@ -119,9 +119,26 @@ export default function PaymentDisplay({
   const startIndex = (currentPage - 1) * pageSize;
   const endIndex = currentPage * pageSize;
 
-  const paymentsToRender = search
-    ? filteredPayments
-    : filteredPayments.slice(startIndex, endIndex);
+  // Filter payments by search term if present
+  const getSearchedPayments = () => {
+    if (!search) return filteredPayments.slice(startIndex, endIndex);
+    const lowerSearch = search.trim().toLowerCase();
+    return filteredPayments.filter((payment) => {
+      // Search in client name, invoiceId, vehicle info, payment method
+      const clientName = `${payment.invoice?.client?.firstName || ""} ${payment.invoice?.client?.lastName || ""}`.toLowerCase();
+      const invoiceIdRaw = payment.invoiceId !== undefined && payment.invoiceId !== null ? String(payment.invoiceId).trim().toLowerCase() : "";
+      const vehicleInfo = `${payment.invoice?.vehicle?.year || ""} ${payment.invoice?.vehicle?.make || ""} ${payment.invoice?.vehicle?.model || ""} ${payment.invoice?.vehicle?.other || ""}`.toLowerCase();
+      // Match invoiceId by includes or exact match
+      const invoiceIdMatch = invoiceIdRaw === lowerSearch || invoiceIdRaw.includes(lowerSearch);
+      return (
+        clientName.includes(lowerSearch) ||
+        invoiceIdMatch ||
+        vehicleInfo.includes(lowerSearch)
+      );
+    });
+  };
+
+  const paymentsToRender = getSearchedPayments();
   if (isDesktop) {
     return (
       <div className="hidden md:block">
