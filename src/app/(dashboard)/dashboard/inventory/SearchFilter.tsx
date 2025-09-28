@@ -59,7 +59,7 @@ export default function SearchFilter({ searchParams }: TSearchFilterProps) {
         <input
           type="text"
           className="h-10 w-full rounded-md border-2 border-slate-400 p-1 px-3 pl-8 lg:w-[70%]"
-          placeholder="Search..."
+          placeholder="Search by name"
           value={search}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
             const value = e.target.value;
