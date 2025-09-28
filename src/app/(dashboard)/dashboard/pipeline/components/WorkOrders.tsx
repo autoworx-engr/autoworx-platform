@@ -11,6 +11,7 @@ import moment from "moment";
 import { useEffect, useState } from "react";
 import Filter from "./Filter";
 import { Spin } from "antd";
+import { normalizeSearch } from "@/utils/normalizeSearch";
 
 const WorkOrders = () => {
   const { data: invoices } = useServerGet(getWorkOrders);
@@ -36,13 +37,21 @@ const WorkOrders = () => {
 
   const filteredInvoices = invoices?.filter((invoice) => {
     const mathcedType = invoice.type === "Invoice";
+
+    const fullName = invoice.client?.firstName + " " + invoice.client?.lastName;
+    const vehicle =
+      invoice.vehicle?.year +
+      " " +
+      invoice.vehicle?.make +
+      " " +
+      invoice.vehicle?.model;
     const matchesSearch =
-      invoice.client?.firstName.toLowerCase().includes(search.toLowerCase()) ||
-      invoice.client?.lastName?.toLowerCase().includes(search.toLowerCase()) ||
-      invoice.vehicle?.make?.toLowerCase().includes(search.toLowerCase()) ||
-      invoice.vehicle?.model?.toLowerCase().includes(search.toLowerCase()) ||
+      normalizeSearch(fullName || "").includes(normalizeSearch(search)) ||
+      normalizeSearch(vehicle || "").includes(normalizeSearch(search)) ||
       invoice.invoiceItems.some((item) =>
-        item.service?.name.toLowerCase().includes(search.toLowerCase())
+        normalizeSearch(item.service?.name || "").includes(
+          normalizeSearch(search)
+        )
       );
 
     const matchesStatus = status ? invoice.column?.title === status : true;
