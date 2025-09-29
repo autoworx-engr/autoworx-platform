@@ -114,9 +114,8 @@ const EmployeeTable = ({
                   className="block h-full w-full"
                   href={`/dashboard/employee/${employee.id}?view=details`}
                 >
-                  {moment
-                    .utc(employee.joinDate || employee.createdAt)
-                    .format("MM/DD/YYYY")}
+                  {employee.joinDate ? moment(employee.joinDate)
+                    .format("MM/DD/YYYY") : "N/A"}
                 </Link>
               </td>
               <td className="border-b px-4 py-2 text-center">
