@@ -52,6 +52,7 @@ const DownloadPDF = dynamic(() => import("./DownloadInvoice"), {
 import { authorizedLeadsConvertion } from "@/actions/estimate/invoice/authorizedLeadsConvertion";
 import WorkOrderModal from "@/components/workorder-modal/WorkOrderModal";
 import { formatCurrency } from "@/utils/formatCurrency";
+import { calculateDue } from "@/utils/calculateDue";
 const InvoiceComponent = ({
   id,
   clientId,
@@ -282,7 +283,15 @@ const InvoiceComponent = ({
                     ["shop supplies", invoice?.serviceFee],
                     ["grand total", invoice.grandTotal],
                     ["deposit", invoice.deposit],
-                    ["due", invoice.due],
+                    ["payment", invoice.totalPayment],
+                    [
+                      "due",
+                      calculateDue(
+                        Number(invoice.grandTotal),
+                        Number(invoice.totalPayment),
+                        Number(invoice.deposit)
+                      ),
+                    ],
                   ] as const
                 ).map(([key, value]) => (
                   <div

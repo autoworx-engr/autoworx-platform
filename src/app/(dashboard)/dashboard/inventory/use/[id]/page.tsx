@@ -57,7 +57,7 @@ export default async function Page({
           <p className="mt-1 text-sm sm:mt-2 sm:text-base">
             <span className="font-semibold">Type: </span> {product.type}
           </p>
-          <p className="mt-1 text-sm sm:mt-2 sm:text-base">
+          <p className="mt-1 text-sm sm:mt-2 sm:text-base truncate">
             <span className="font-semibold">Description: </span>{" "}
             {product.description}
           </p>

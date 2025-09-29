@@ -22,13 +22,14 @@ export default function SearchFilter({ searchParams }: TSearchFilterProps) {
   const params = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
+
   // reset the filter when the search changes
-  useEffect(() => {
-    setFilter({
-      search: searchParams.search ?? "",
-      category: searchParams.category ?? "",
-    });
-  }, [searchParams.search, searchParams.category]);
+  // useEffect(() => {
+  //   setFilter({
+  //     search: searchParams.search ?? "",
+  //     category: searchParams.category ?? "",
+  //   });
+  // }, [searchParams.search, searchParams.category]);
 
   const handleSearchChange = useDebounce((value: string) => {
     const searchParam = new URLSearchParams(params);
@@ -71,7 +72,7 @@ export default function SearchFilter({ searchParams }: TSearchFilterProps) {
         <DropdownSelection
           dropDownValues={[
             "All Categories",
-            ...Array.from(new Set(categories.map(cate => cate.name))),
+            ...Array.from(new Set(categories.map((cate) => cate.name))),
           ]}
           onValueChange={handleCategoryChange}
           changesValue={category || "All Categories"}

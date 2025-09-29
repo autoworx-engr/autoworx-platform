@@ -12,7 +12,7 @@ export const replenishProductValidationSchema = z.object({
     },
     {
       message: "Quantity must be a positive number",
-    },
+    }
   ),
   vendorId: z.number().int("Vendor ID must be an integer").optional(),
   price: z
@@ -27,6 +27,7 @@ export const replenishProductValidationSchema = z.object({
       invalid_type_error: "Unit must be a string",
       required_error: "Unit is required",
     })
+    .max(5, "Unit must be less than 5 characters")
     .optional()
     .nullish(),
   lot: z

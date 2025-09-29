@@ -30,6 +30,7 @@ import React, { useEffect, useState } from "react";
 import { InvoiceItems } from "./InvoiceItems";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { getInspections } from "@/actions/estimate/invoice/getInspections";
+import { calculateDue } from "@/utils/calculateDue";
 // Register Poppins Regular
 Font.register({
   family: "Poppins",
@@ -416,7 +417,15 @@ const PDFComponent = function PDF({
                 ["shop supplies", invoice?.serviceFee],
                 ["grand total", invoice.grandTotal],
                 ["deposit", invoice.deposit],
-                ["due", invoice.due],
+                ["payment", invoice.totalPayment],
+                [
+                  "due",
+                  calculateDue(
+                    Number(invoice.grandTotal),
+                    Number(invoice.totalPayment),
+                    Number(invoice.deposit)
+                  ),
+                ],
               ].map(([field, value], ind) => (
                 <View key={ind} style={styles.total}>
                   {/* @ts-ignore */}

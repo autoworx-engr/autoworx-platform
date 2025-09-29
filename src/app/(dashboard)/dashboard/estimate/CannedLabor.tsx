@@ -380,9 +380,12 @@ const LaborComponent = ({
           </div>
         )}
       </TableCell>
-      <TableCell className="flex">
+      <TableCell className="flex items-center my-auto h-full">
         {isEdit && (
-          <button onClick={() => handleEdit()} className="mr-4 text-green-500">
+          <button
+            onClick={() => handleEdit()}
+            className="mr-4 text-lg text-[#6571FF]"
+          >
             <IoMdCheckmarkCircleOutline />
           </button>
         )}
@@ -390,7 +393,7 @@ const LaborComponent = ({
           onClick={() => setIsEdit(!isEdit)}
           className="text-xl text-[#6571FF]"
         >
-          <SquarePen className="w-5 h-5 text-[#6571FF]" />
+          <SquarePen className="w-4 h-4 text-[#6571FF]" />
         </button>
         <Popconfirm
           title="Delete the Canned Labor"

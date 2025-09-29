@@ -137,6 +137,7 @@ const Leads = ({ salesColumn }: TProps) => {
           setLeads(updatedLeads);
           setTotalCount(count);
           setShowPagination(count > 10);
+          setLoading(false); // Move setLoading(false) here to ensure it runs on success
         }
       } catch (error) {
         if (!controller.signal.aborted) {
@@ -161,9 +162,8 @@ const Leads = ({ salesColumn }: TProps) => {
           errorToast("Failed to load leads. Please refresh the page.");
         }
       } finally {
-        if (!controller.signal.aborted) {
-          setLoading(false);
-        }
+        // Always stop loading, even if aborted, to prevent stuck loading state
+        setLoading(false);
       }
     };
 
@@ -614,12 +614,16 @@ const Leads = ({ salesColumn }: TProps) => {
                 })}
             </tbody>
           </table>
-        ) : (
+        ) : loading ? (
           <div
             className="flex w-full items-center justify-center"
             style={{ height: "calc(100vh - 300px)" }}
           >
             <Spin size="large" />
+          </div>
+        ) : (
+          <div className="my-20 flex w-full justify-center text-gray-500">
+            No leads found.
           </div>
         )}
       </div>
@@ -672,7 +676,7 @@ const SearchTerms = React.memo(function SearchTerms({
       <input
         type="text"
         value={search}
-        placeholder="Search..."
+        placeholder="Search by client, vehicle, services, lead source"
         className="w-full rounded border border-gray-300 p-2 pl-10"
         onChange={handleSearchChange}
       />

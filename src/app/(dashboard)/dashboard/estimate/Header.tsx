@@ -58,8 +58,12 @@ export default function Header({
           <FaSearch className="absolute left-3 text-gray-400" />{" "}
           <input
             type="text"
-            placeholder="Search by ID, name, vehicle, email, or phone"
-            className="h-10 w-full rounded-md border-2 border-slate-400 pl-10 pr-3 focus:outline-none focus:ring-2 focus:ring-blue-600 md:w-64"
+            placeholder={
+              isCanned
+                ? "Search by labor, service, category"
+                : "Search by ID, name, vehicle, email, or phone"
+            }
+            className="h-10 w-full rounded-md border-2 border-slate-400 pl-10 pr-3 focus:outline-none focus:ring-2 focus:ring-blue-600 md:w-[400px]"
             defaultValue={searchTerm || ""}
             onChange={(e) => {
               const searchValue = e.target.value;

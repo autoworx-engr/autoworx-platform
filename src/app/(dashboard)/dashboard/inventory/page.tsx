@@ -10,13 +10,17 @@ import { cache } from "react";
 import { InventoryProductType } from "@prisma/client";
 
 async function getCategories() {
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_APP_URL}/api/inventoryWirehouse/category`,
-    { cache: "no-store" }
-  );
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_APP_URL}/api/inventoryWirehouse/category`,
+      { cache: "no-store" }
+    );
 
-  if (!res.ok) throw new Error("Failed to fetch categories");
-  return res.json();
+    if (!res.ok) throw new Error("Failed to fetch categories");
+    return res.json();
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+  }
 }
 
 type TGetInventoryItem = {
@@ -28,14 +32,41 @@ type TGetInventoryItem = {
 };
 
 const getInventoryItem = cache(
-  async ({ type, page, limit, search, category }: TGetInventoryItem) => {
+  async ({ type, page, limit, search = "", category }: TGetInventoryItem) => {
     try {
       const companyId = await getCompanyId();
+      const searchTerms = search
+        .toLowerCase()
+        .split(/\s+/)
+        .filter(term => term.length > 0);
+      const searchFilterOR = [
+        { name: { contains: search.trim() } },
+        { name: { contains: search?.trim().toUpperCase() } },
+        { name: { contains: search?.trim().toLowerCase() } },
+        {
+          name: {
+            contains: search
+              .trim()
+              ?.split(" ")
+              .map(t => t.trim().charAt(0).toUpperCase() + t.slice(1))
+              .join(" "),
+          },
+        },
+        ...(searchTerms.length > 0
+          ? [
+              {
+                OR: searchTerms.flatMap(term => [
+                  { name: { contains: term.trim() } },
+                ]),
+              },
+            ]
+          : []),
+      ];
       const items = await db.inventoryProduct.findMany({
         where: {
           companyId,
           type: type,
-          name: { contains: search },
+          OR: search ? searchFilterOR : undefined,
           category: { name: category },
         },
         include: {
@@ -51,7 +82,7 @@ const getInventoryItem = cache(
         where: {
           companyId,
           type: type,
-          name: { contains: search },
+          OR: search ? searchFilterOR : undefined,
           category: { name: category },
         },
       });
@@ -92,7 +123,7 @@ export default async function Page({
     category,
   });
 
-  const inventoryCategories = await getCategories();
+  const inventoryCategories = (await getCategories()) ?? [];
 
   const categories = await db.category.findMany({ where: { companyId } });
   const vendors = await db.vendor.findMany({ where: { companyId } });
@@ -131,7 +162,7 @@ export default async function Page({
           view={view}
           productId={parseInt(productId || "0")}
           user={user}
-          inventoryCategories={inventoryCategories.data}
+          inventoryCategories={inventoryCategories?.data}
         />
 
         <Sidebar

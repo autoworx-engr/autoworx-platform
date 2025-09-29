@@ -36,10 +36,10 @@ export const useEmployeeWorkFilterStore = create<EmployeeWorkFilterState>(
       set((state) => ({
         dateRange: dateRange || state.dateRange,
         amount: amount || state.amount,
-        search: search || state.search,
-        service: service || state.service,
-        category: category || state.category,
+        search: search !== undefined ? search : state.search,
+        service: service !== undefined ? service : state.service,
+        category: category !== undefined ? category : state.category,
         status: status !== undefined ? status : state.status,
       })),
-  }),
+  })
 );

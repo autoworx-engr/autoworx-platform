@@ -3,11 +3,10 @@ import { db } from '@/lib/db';
 
 export async function GET(request: NextRequest) {
   try {
-
     const uniqueCategories = await db.inventoryWirehouseProduct.findMany({
       distinct: ['category'], 
       select: {
-        category: true, 
+        category: true,
       },
     });
 

@@ -150,20 +150,20 @@ export default function MobileItemSelector<T>({
           <>
             {onEdit && (
               <button
-                className="absolute -top-2 right-3"
+                className="absolute -top-3 right-3.5"
                 onClick={(e) => {
                   e.stopPropagation();
                   onEdit();
                 }}
               >
                 <div className="rounded-full bg-[#6571FF] p-1 text-white">
-                  <SquarePen className="w-4 h-4 cursor-pointer" />
+                  <SquarePen className="w-3 h-3 cursor-pointer" />
                 </div>
               </button>
             )}
             {onDelete && (alwaysShowDeleteButton || selected) && (
               <button
-                className="absolute -right-2 -top-2"
+                className="absolute -right-2 -top-3"
                 onClick={(e) => {
                   e.stopPropagation();
                   setSelected(null);
