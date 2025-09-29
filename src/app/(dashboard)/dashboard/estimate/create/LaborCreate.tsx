@@ -33,7 +33,7 @@ export default function LaborCreate() {
   useEffect(() => {
     if (currentSelectedCategoryId) {
       setCategory(
-        categories.find((cat) => cat.id === currentSelectedCategoryId)!,
+        categories.find((cat) => cat.id === currentSelectedCategoryId)!
       );
     }
   }, [currentSelectedCategoryId]);
@@ -53,10 +53,10 @@ export default function LaborCreate() {
       setNotes(data.labor.notes);
       setHours(data.labor.hours == 0 ? undefined : data.labor.hours);
       setCharge(
-        data.labor.charge == 0 ? undefined : parseFloat(data.labor.charge),
+        data.labor.charge == 0 ? undefined : parseFloat(data.labor.charge)
       );
       setDiscount(
-        data.labor.discount == 0 ? undefined : parseFloat(data.labor.discount),
+        data.labor.discount == 0 ? undefined : parseFloat(data.labor.discount)
       );
       setAddToCannedLabor(data.labor.addToCannedLabor);
     } else {
@@ -92,7 +92,7 @@ export default function LaborCreate() {
         const res = await newLabor(validatedLaborData);
         if (res.type === "globalError") {
           errorToast(
-            res.errorSource?.length ? res.errorSource[0].message : res.message,
+            res.errorSource?.length ? res.errorSource[0].message : res.message
           );
         }
       }
@@ -149,7 +149,7 @@ export default function LaborCreate() {
       errorToast(
         formattedError.errorSource?.length
           ? formattedError.errorSource[0].message
-          : formattedError.message,
+          : formattedError.message
       );
     }
   }
@@ -247,8 +247,14 @@ export default function LaborCreate() {
         <input
           type="number"
           id="hours"
-          value={hours}
+          value={hours || ""}
           onChange={(e) => setHours(parseFloat(e.target.value))}
+          onKeyDown={(e) => {
+            if (e.key === "-") {
+              e.preventDefault();
+            }
+          }}
+          min="1"
           className="w-full rounded-md border-2 border-slate-400 p-1 text-xs"
           placeholder="0"
         />
