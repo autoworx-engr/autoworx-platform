@@ -28,6 +28,7 @@ import SelectEmployeeType from "./SelectEmployeeType";
 import SlimSalaryManagement from "@/components/employee/SlimSalaryManagement";
 import Image from "next/image";
 import { SquarePen } from "lucide-react";
+import { successToast } from "@/lib/toast";
 
 export default function EditEmployee({
   employee,
@@ -198,9 +199,10 @@ export default function EditEmployee({
             : res.message,
       });
       return;
-    } else {
+    } else if (res.type === "success") {
       setNewProfilePic(null);
       setOpen(false);
+      successToast("Employee updated successfully");
     }
   }
 
