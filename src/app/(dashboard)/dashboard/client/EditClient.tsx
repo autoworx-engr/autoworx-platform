@@ -16,6 +16,7 @@ import SelectClientSource from "@/components/Lists/SelectClientSource";
 import { SelectClientTags } from "@/components/Lists/SelectClientTags";
 import { SlimInput } from "@/components/SlimInput";
 import { DEFAULT_IMAGE_URL } from "@/lib/consts";
+import { successToast } from "@/lib/toast";
 import { useFormErrorStore } from "@/stores/form-error";
 import { Client, Source, Tag } from "@prisma/client";
 import { SquarePen } from "lucide-react";
@@ -164,6 +165,7 @@ export default function EditCustomer({
     } else if (res.type === "success") {
       clearError();
       setOpen(false);
+      successToast("Client updated successfully");
     }
   }
 
@@ -223,8 +225,8 @@ export default function EditCustomer({
                     crossOrigin="anonymous"
                   />
                 </div>
-                <span className="absolute bottom-0 left-2 text-lg text-[#6571FF]">
-                  <SquarePen className="w-5 h-5 cursor-pointer" />
+                <span className="absolute bottom-0 left-1 text-lg p-1 rounded-full bg-[#6571FF]">
+                  <SquarePen className="w-3 h-3 cursor-pointer text-white " />
                 </span>
 
                 <input
