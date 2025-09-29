@@ -62,7 +62,7 @@ export default function MailAttachment({ message, onDownload }: TProps) {
         return (
           <Link
             key={`${att.url}-${i}`}
-            href={`/dashboard/communication/photo?url=${encodeURIComponent(att.url)}`}
+            href={`${att.url}`}
             className={cn(
               "inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm",
               "ring-1 ring-zinc-200 bg-white hover:ring-emerald-400 transition",
