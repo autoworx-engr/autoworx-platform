@@ -70,6 +70,19 @@ export async function newPayment({
     // transaction use for payment process
     const { newPayment, invoice } = await db.$transaction(
       async tx => {
+        // Get current invoice to calculate due after payment
+        const currentInvoice = await tx.invoice.findUnique({
+          where: { id: invoiceId },
+          select: { due: true }
+        });
+
+        if (!currentInvoice) {
+          throw new Error("Invoice not found");
+        }
+
+        const currentDue = Number(currentInvoice.due || 0);
+        const dueAfterPayment = currentDue - amount;
+
         // get all the product materials
         let newPayment;
 
@@ -82,6 +95,7 @@ export async function newPayment({
                 date: new Date(date),
                 notes,
                 amount,
+                dueAfterPayment,
                 type: "CARD",
                 card: {
                   create: {
@@ -104,6 +118,7 @@ export async function newPayment({
                 date: new Date(date),
                 notes,
                 amount,
+                dueAfterPayment,
                 type: "CHECK",
                 check: {
                   create: {
@@ -126,6 +141,7 @@ export async function newPayment({
                 date: new Date(date),
                 notes,
                 amount,
+                dueAfterPayment,
                 type: "CASH",
                 cash: {
                   create: {
@@ -148,6 +164,7 @@ export async function newPayment({
                 date: new Date(date),
                 notes,
                 amount,
+                dueAfterPayment,
                 type: "OTHER",
                 other: {
                   create: {
@@ -176,6 +193,7 @@ export async function newPayment({
                 date: new Date(date),
                 notes,
                 amount,
+                dueAfterPayment,
                 type: "DEPOSIT",
                 deposit: {
                   create: {
