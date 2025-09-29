@@ -38,7 +38,7 @@ export default function SMSAttachment({ message, handleDownload }: TProps) {
             <Link
               key={index}
               className={`#inline-block mx-1 mt-2 cursor-pointer gap-x-2 rounded-md border border-gray-200 px-2 py-1 ${message.sentBy === "Company" && "#float-right"}`}
-              href={`/dashboard/communication/photo?url=${attachment?.url}`}
+              href={`${attachment?.url}`}
             >
               <span>
                 <FaFile />

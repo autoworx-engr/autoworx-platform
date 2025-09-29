@@ -41,12 +41,15 @@ export default function Employee({
   //   setFilteredEmployees(filtered);
   // }, [dateRange, search, type, employees]);
 
+  console.log(dateRange);
+  
+
   const filteredEmployees = useMemo(() => {
     return employees.filter((employee) => {
       const isWithinDateRange =
         dateRange[0] && dateRange[1]
-          ? moment.utc(employee.joinDate).isSameOrAfter(dateRange[0], "day") &&
-            moment.utc(employee.joinDate).isSameOrBefore(dateRange[1], "day")
+          ? moment(employee.joinDate).isSameOrAfter(dateRange[0], "day") &&
+            moment(employee.joinDate).isSameOrBefore(dateRange[1], "day")
           : true;
 
       const isTypeMatch =

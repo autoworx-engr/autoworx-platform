@@ -82,7 +82,9 @@ export default async function RecentMessagesBox() {
           hasMessagePermission={hasMessagePermission}
           clientMessages={user.employeeType === "Sales" ? sortedClients : []}
           internalMessages={
-            user.employeeType === "Technician" || user.employeeType === "Other"
+            user.employeeType === "Technician" ||
+            user.employeeType === "Sales" ||
+            user.employeeType === "Other"
               ? internalMessages
               : []
           }
