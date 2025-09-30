@@ -62,7 +62,7 @@ const FleetListTable = ({ filteredFleets }: { filteredFleets: any }) => {
                   className="text-blue-500"
                   href={`/dashboard/fleet/${client.id}`}
                 >
-                  {padId(client.id)}
+                  {client.id}
                 </Link>
               </td>
               <td className="border-b px-4 py-2 text-left">
