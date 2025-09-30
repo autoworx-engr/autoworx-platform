@@ -48,7 +48,7 @@ import ScheduleTab from "./ScheduleTab";
 import { SelectAppointmentClient } from "./SelectAppointmentClient";
 import { SelectAppointmentVehicle } from "./SelectAppointmentVehicle";
 import { formatTime12Hour } from "@/utils/formateTime12Hours";
-import { Select } from "antd";
+import { Popconfirm, Select } from "antd";
 import { normalizeTime } from "@/utils/normalizeTime";
 enum Tab {
   Schedule = 0,
@@ -987,21 +987,24 @@ export default function AppointmentModalBody({
           )}
         >
           {fromEdit && appointmentId && (
-            <button
-              className="text-xl text-red-500 hover:text-red-700"
-              type="button"
-              onClick={async () => {
+            <Popconfirm
+              title="Delete the appointment"
+              description="Are you sure to delete this appointment?"
+              okText="Yes"
+              cancelText="No"
+              onConfirm={async () => {
                 try {
                   await deleteAppointment(appointmentId);
                   onAppointmentDeleted && onAppointmentDeleted(appointmentId);
                   onModalClose();
+                  successToast("Appointment deleted successfully");
                 } catch (error) {
                   errorToast("Failed to delete appointment");
                 }
               }}
             >
-              <FaTrash />
-            </button>
+              <FaTrash className="text-xl text-red-500 hover:text-red-600 cursor-pointer" />
+            </Popconfirm>
           )}
           <DialogFooter className="justify-end">
             <DialogClose asChild>
