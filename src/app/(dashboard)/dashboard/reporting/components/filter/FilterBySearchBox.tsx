@@ -31,13 +31,15 @@ export default function FilterBySearchBox({ searchText }: TProps) {
 
   const getPlaceholderForPath = () => {
     if (pathname.includes("revenue")) {
-      return "search by invoice, customer, vehicle";
+      return "Search by invoice, customer, vehicle";
     } else if (pathname.includes("inventory")) {
-      return "search by name";
+      return "Search by name";
     } else if (pathname.includes("payments")) {
-      return "search by invoice, client, vehicle";
+      return "Search by invoice, client, vehicle";
     } else if (pathname.includes("teams")) {
-      return "search by employee name";
+      return "Search by employee name";
+    } else {
+      return "Search";
     }
   };
 
@@ -52,7 +54,7 @@ export default function FilterBySearchBox({ searchText }: TProps) {
         value={searchTerm}
         className="w-full rounded-sm border py-1 pl-8 focus:outline-none"
         type="text"
-        placeholder={getPlaceholderForPath()}
+        placeholder={getPlaceholderForPath() + "..."}
       />
     </div>
   );
