@@ -7,12 +7,20 @@ import Task from "./Task";
 import { queryKeys } from "@/lib/queryKeys";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePermissionStore } from "@/stores/permissionStore";
+import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
+import { useGetCompanyPermissions } from "@/hooks/feature-permissions/useGetCompanyPersmissions";
 
 export default function TaskListBox() {
   const { data: tasks, isLoading, isError } = useTasksQueryForDashboard();
   const { permissions } = usePermissionStore();
+  const user = useGetCurrentUser();
+  const companyId = user?.companyId;
   const companyEmployeePermissions = permissions?.companyPermissions;
   const userPermissions = permissions?.userPermissions;
+  const { data } = useGetCompanyPermissions(
+    companyId!
+  );
+
 
   const queryClient = useQueryClient();
 
@@ -31,11 +39,17 @@ export default function TaskListBox() {
 
   let content = null;
 
+  // Check if calendarAndTask feature permission is enabled at company 
+  const calendarAndTaskFeatureEnabled =
+    data?.data?.find(
+      (permission: any) => permission.permission_name === "calendar"
+    )?.enabled !== false;
 
   const hasTaskPermission =
-    userPermissions?.calendarTask !== undefined
+    calendarAndTaskFeatureEnabled &&
+    (userPermissions?.calendarTask !== undefined
       ? userPermissions.calendarTask
-      : companyEmployeePermissions?.calendarTask !== false;
+      : companyEmployeePermissions?.calendarTask !== false);
 
   // Check permission and show message if no access
   if (!hasTaskPermission) {
@@ -47,7 +61,7 @@ export default function TaskListBox() {
         </span>
       </div>
     );
-  } else if (isLoading && !isError) {
+  } else if (isLoading  && !isError) {
     content = <div className="text-center text-gray-500">Loading tasks...</div>;
   } else if (!isLoading && isError) {
     content = (
