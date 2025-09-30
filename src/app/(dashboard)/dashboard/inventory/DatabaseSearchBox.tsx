@@ -21,7 +21,7 @@ export default function DatabaseSearchBox() {
         setSearch(value);
         setPage(1);
       }, 500),
-    [setSearch],
+    [setSearch]
   );
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -43,7 +43,7 @@ export default function DatabaseSearchBox() {
         value={searchTerm}
         className="w-full rounded-sm border focus:outline-none"
         type="text"
-        placeholder="Search"
+        placeholder="Search by name"
         prefix={<CiSearch size={15} />}
       />
     </div>

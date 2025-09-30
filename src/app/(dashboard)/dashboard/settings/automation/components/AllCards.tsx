@@ -48,39 +48,60 @@ export default function AllCards({
   const [id, setId] = useState<string | null>(null);
   const [campaigns, setCampaigns] = useState<any>([]);
 
+  // Only fetch rules for the currently selected automation type
   const {
     data: allPipelineRules,
     isLoading: pipelineIsLoading,
     isFetching: pipelineIsFetching,
-  } = useAllPipelineAutomationRules(companyId);
+  } = useAllPipelineAutomationRules(companyId, type === "pipeline");
   const {
     data: allCommunicationRules,
     isLoading: communicationIsLoading,
     isFetching: communicationIsFetching,
-  } = useAllCommunicationAutomationRules(companyId);
+  } = useAllCommunicationAutomationRules(companyId, type === "communication");
   const {
     data: allMarketingRules,
     isLoading: marketingIsLoading,
     isFetching: marketingIsFetching,
-  } = useAllMarketingAutomationRules(companyId);
+  } = useAllMarketingAutomationRules(companyId, type === "marketing");
   const {
     data: allServiceAutomation,
     isLoading: serviceAutomationIsLoading,
     isFetching: serviceAutomationIsFetching,
-  } = useAllServiceMaintenanceAutomationRules(companyId);
+  } = useAllServiceMaintenanceAutomationRules(companyId, type === "service-maintenance");
   const {
     data: allInvoiceAutomation,
     isLoading: invoiceAutomationIsLoading,
     isFetching: invoiceAutomationIsFetching,
-  } = useAllInvoiceAutomationRules(companyId);
+  } = useAllInvoiceAutomationRules(companyId, type === "invoice");
 
   const {
     data: allInventoryAutomation,
     isLoading: inventoryAutomationIsLoading,
     isFetching: inventoryAutomationIsFetching,
-  } = useAllInventoryAutomationRules(companyId);
+  } = useAllInventoryAutomationRules(companyId, type === "inventory");
 
   const mode = isEdit ? "edit" : "create";
+
+  // Get current loading state based on automation type
+  const getCurrentLoadingState = () => {
+    switch (type) {
+      case "pipeline":
+        return pipelineIsLoading || pipelineIsFetching;
+      case "communication":
+        return communicationIsLoading || communicationIsFetching;
+      case "marketing":
+        return marketingIsLoading || marketingIsFetching;
+      case "service-maintenance":
+        return serviceAutomationIsLoading || serviceAutomationIsFetching;
+      case "invoice":
+        return invoiceAutomationIsLoading || invoiceAutomationIsFetching;
+      case "inventory":
+        return inventoryAutomationIsLoading || inventoryAutomationIsFetching;
+      default:
+        return false;
+    }
+  };
 
   useEffect(() => {
     setCampaigns([
@@ -154,7 +175,7 @@ export default function AllCards({
                   You haven’t added anything yet.
                 </p>
               </div>
-            ) : pipelineIsLoading && pipelineIsFetching ? (
+            ) : getCurrentLoadingState() ? (
               <div className="h-[450px] space-y-5">
                 {[1, 2, 3, 4, 5, 6].map((i) => (
                   <div

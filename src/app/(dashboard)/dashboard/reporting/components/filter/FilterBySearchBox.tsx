@@ -39,7 +39,7 @@ export default function FilterBySearchBox({ searchText }: TProps) {
         value={searchTerm}
         className="w-full rounded-sm border py-1 pl-8 focus:outline-none"
         type="text"
-        placeholder="search"
+        placeholder="search by invoice id, client, vehicle"
       />
     </div>
   );

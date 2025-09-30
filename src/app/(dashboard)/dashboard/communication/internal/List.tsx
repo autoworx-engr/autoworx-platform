@@ -13,7 +13,9 @@ import { fetchUsersWithLatestMessages } from "@/actions/communication/internal/f
 type TListProps = {
   users: (User & { unreadCount: number; latestMessage?: Message | null })[];
   setUsersList: React.Dispatch<
-    React.SetStateAction<(User & { unreadCount: number; latestMessage?: Message | null })[]>
+    React.SetStateAction<
+      (User & { unreadCount: number; latestMessage?: Message | null })[]
+    >
   >;
   setGroupsList: React.Dispatch<
     React.SetStateAction<(Group & { users: User[] })[] | []>
@@ -24,7 +26,7 @@ type TListProps = {
   usersList: (User & { unreadCount: number; latestMessage?: Message | null })[];
   userChatTrack: (ChatTrack & { message?: Message | null })[];
   messages?: Message[]; // Add messages array
-  addChatItem?: (item: any, type: 'user' | 'group') => void; // Add helper function
+  addChatItem?: (item: any, type: "user" | "group") => void; // Add helper function
 };
 
 export default function List({
@@ -43,7 +45,9 @@ export default function List({
   const [searchTerm, setSearchTerm] = useState("");
   const [sideBarGroupsLists, setSideBarGroupLists] = useState(groups);
   const [userState, setUserState] =
-    useState<(User & { unreadCount: number; latestMessage?: Message | null })[]>(users);
+    useState<
+      (User & { unreadCount: number; latestMessage?: Message | null })[]
+    >(users);
   const [chatTrackState, setChatTrackState] =
     useState<(ChatTrack & { message?: Message | null })[]>(userChatTrack);
   const [messagesState, setMessagesState] = useState<Message[]>(messages);
@@ -52,94 +56,143 @@ export default function List({
   const { lastMessage } = useChatTrackStore();
 
   // Combined sorting function for both users and groups based on latest messages
-  const sortUsersAndGroupsByLatestMessage = useCallback((
-    usersToSort: (User & { unreadCount: number; latestMessage?: Message | null })[], 
-    groupsToSort: (Group & { users: User[] })[]
-  ) => {
-    // Create a combined array with type indicators
-    const combinedItems = [
-      ...usersToSort.map(user => ({
-        type: 'user' as const,
-        data: user,
-        latestMessage: (() => {
-          const userMessages = messagesState.filter(
-            (message) => 
-              (message.from === user.id && message.to === parseInt(session?.user?.id!)) ||
-              (message.from === parseInt(session?.user?.id!) && message.to === user.id)
-          );
-          return userMessages.length > 0 ? userMessages[0] : user.latestMessage;
-        })()
-      })),
-      ...groupsToSort.map(group => ({
-        type: 'group' as const,
-        data: group,
-        latestMessage: (() => {
-          const groupMessages = messagesState.filter(
-            (message) => message.groupId === group.id
-          );
-          return groupMessages.length > 0 ? groupMessages[0] : null;
-        })()
-      }))
-    ];
+  const sortUsersAndGroupsByLatestMessage = useCallback(
+    (
+      usersToSort: (User & {
+        unreadCount: number;
+        latestMessage?: Message | null;
+      })[],
+      groupsToSort: (Group & { users: User[] })[]
+    ) => {
+      // Create a combined array with type indicators
+      const combinedItems = [
+        ...usersToSort.map((user) => ({
+          type: "user" as const,
+          data: user,
+          latestMessage: (() => {
+            const userMessages = messagesState.filter(
+              (message) =>
+                (message.from === user.id &&
+                  message.to === parseInt(session?.user?.id!)) ||
+                (message.from === parseInt(session?.user?.id!) &&
+                  message.to === user.id)
+            );
+            return userMessages.length > 0
+              ? userMessages[0]
+              : user.latestMessage;
+          })(),
+        })),
+        ...groupsToSort.map((group) => ({
+          type: "group" as const,
+          data: group,
+          latestMessage: (() => {
+            const groupMessages = messagesState.filter(
+              (message) => message.groupId === group.id
+            );
+            return groupMessages.length > 0 ? groupMessages[0] : null;
+          })(),
+        })),
+      ];
 
-    // Sort the combined array by latest message timestamp
-    const sorted = combinedItems.sort((a, b) => {
-      let aTimestamp = a.latestMessage ? new Date(a.latestMessage.updatedAt).getTime() : 0;
-      let bTimestamp = b.latestMessage ? new Date(b.latestMessage.updatedAt).getTime() : 0;
+      // Sort the combined array by latest message timestamp
+      const sorted = combinedItems.sort((a, b) => {
+        let aTimestamp = a.latestMessage
+          ? new Date(a.latestMessage.updatedAt).getTime()
+          : 0;
+        let bTimestamp = b.latestMessage
+          ? new Date(b.latestMessage.updatedAt).getTime()
+          : 0;
 
-      // Check if lastMessage from store affects these items and use it if it's more recent
-      if (lastMessage && lastMessage.message) {
-        const lastMessageTimestamp = new Date(lastMessage.message.updatedAt).getTime();
-        
-        if (a.type === 'user') {
-          if ((lastMessage.message.from === a.data.id && lastMessage.message.to === parseInt(session?.user?.id!)) ||
-              (lastMessage.message.from === parseInt(session?.user?.id!) && lastMessage.message.to === a.data.id)) {
+        // Check if lastMessage from store affects these items and use it if it's more recent
+        if (lastMessage && lastMessage.message) {
+          const lastMessageTimestamp = new Date(
+            lastMessage.message.updatedAt
+          ).getTime();
+
+          if (a.type === "user") {
+            if (
+              (lastMessage.message.from === a.data.id &&
+                lastMessage.message.to === parseInt(session?.user?.id!)) ||
+              (lastMessage.message.from === parseInt(session?.user?.id!) &&
+                lastMessage.message.to === a.data.id)
+            ) {
+              aTimestamp = Math.max(aTimestamp, lastMessageTimestamp);
+            }
+          } else if (
+            a.type === "group" &&
+            lastMessage.message.groupId === a.data.id
+          ) {
             aTimestamp = Math.max(aTimestamp, lastMessageTimestamp);
           }
-        } else if (a.type === 'group' && lastMessage.message.groupId === a.data.id) {
-          aTimestamp = Math.max(aTimestamp, lastMessageTimestamp);
-        }
-        
-        if (b.type === 'user') {
-          if ((lastMessage.message.from === b.data.id && lastMessage.message.to === parseInt(session?.user?.id!)) ||
-              (lastMessage.message.from === parseInt(session?.user?.id!) && lastMessage.message.to === b.data.id)) {
+
+          if (b.type === "user") {
+            if (
+              (lastMessage.message.from === b.data.id &&
+                lastMessage.message.to === parseInt(session?.user?.id!)) ||
+              (lastMessage.message.from === parseInt(session?.user?.id!) &&
+                lastMessage.message.to === b.data.id)
+            ) {
+              bTimestamp = Math.max(bTimestamp, lastMessageTimestamp);
+            }
+          } else if (
+            b.type === "group" &&
+            lastMessage.message.groupId === b.data.id
+          ) {
             bTimestamp = Math.max(bTimestamp, lastMessageTimestamp);
           }
-        } else if (b.type === 'group' && lastMessage.message.groupId === b.data.id) {
-          bTimestamp = Math.max(bTimestamp, lastMessageTimestamp);
         }
-      }
 
-      // Sort in descending order (most recent first)
-      // Items with messages should always come before items without messages
-      if (aTimestamp === 0 && bTimestamp === 0) return 0;  // Both have no messages
-      if (aTimestamp === 0) return 1; // A has no messages, B should come first
-      if (bTimestamp === 0) return -1; // B has no messages, A should come first
-      
-      return bTimestamp - aTimestamp;
-    });
+        // Sort in descending order (most recent first)
+        // Items with messages should always come before items without messages
+        if (aTimestamp === 0 && bTimestamp === 0) return 0; // Both have no messages
+        if (aTimestamp === 0) return 1; // A has no messages, B should come first
+        if (bTimestamp === 0) return -1; // B has no messages, A should come first
 
-    // Separate back to users and groups
-    const sortedUsers = sorted.filter(item => item.type === 'user').map(item => item.data) as (User & { unreadCount: number; latestMessage?: Message | null })[];
-    const sortedGroups = sorted.filter(item => item.type === 'group').map(item => item.data) as (Group & { users: User[] })[];
+        return bTimestamp - aTimestamp;
+      });
 
-    return { sortedUsers, sortedGroups };
-  }, [messagesState, lastMessage, session?.user?.id]);
+      // Separate back to users and groups
+      const sortedUsers = sorted
+        .filter((item) => item.type === "user")
+        .map((item) => item.data) as (User & {
+        unreadCount: number;
+        latestMessage?: Message | null;
+      })[];
+      const sortedGroups = sorted
+        .filter((item) => item.type === "group")
+        .map((item) => item.data) as (Group & { users: User[] })[];
+
+      return { sortedUsers, sortedGroups };
+    },
+    [messagesState, lastMessage, session?.user?.id]
+  );
 
   // Update states when props change and sort immediately
   useEffect(() => {
     // Sort users and groups together
-    const { sortedUsers, sortedGroups } = sortUsersAndGroupsByLatestMessage(users, groups);
+    const { sortedUsers, sortedGroups } = sortUsersAndGroupsByLatestMessage(
+      users,
+      groups
+    );
     setUserState(sortedUsers);
     setSideBarGroupLists(sortedGroups);
     setChatTrackState(userChatTrack);
     setMessagesState(messages);
-  }, [users, userChatTrack, messages, groups, sortUsersAndGroupsByLatestMessage]);
+  }, [
+    users,
+    userChatTrack,
+    messages,
+    groups,
+    sortUsersAndGroupsByLatestMessage,
+  ]);
 
   // Sort users whenever messagesState changes or when a new message arrives
   useEffect(() => {
     if (userState.length > 0 || sideBarGroupsLists.length > 0) {
-      const { sortedUsers, sortedGroups } = sortUsersAndGroupsByLatestMessage(userState, sideBarGroupsLists);
+      const { sortedUsers, sortedGroups } = sortUsersAndGroupsByLatestMessage(
+        userState,
+        sideBarGroupsLists
+      );
       setUserState(sortedUsers);
       setSideBarGroupLists(sortedGroups);
     }
@@ -201,37 +254,42 @@ export default function List({
 
     const handleNewMessage = (data: any) => {
       // Handle messages for any user (sender or receiver)
-      const isMessageInvolvingCurrentUser = 
-        data.message && (
-          data.message.to === parseInt(session.user.id!) ||
-          data.message.from === parseInt(session.user.id!)
-        );
+      const isMessageInvolvingCurrentUser =
+        data.message &&
+        (data.message.to === parseInt(session.user.id!) ||
+          data.message.from === parseInt(session.user.id!));
 
       // Handle group messages involving current user
-      const isGroupMessageInvolvingCurrentUser = 
-        data.message && data.message.groupId && (
-          data.message.from === parseInt(session.user.id!) ||
+      const isGroupMessageInvolvingCurrentUser =
+        data.message &&
+        data.message.groupId &&
+        (data.message.from === parseInt(session.user.id!) ||
           // Check if current user is in the group (we can enhance this later)
-          true // For now, assume all group messages are relevant
-        );
+          true); // For now, assume all group messages are relevant
 
       if (isMessageInvolvingCurrentUser || isGroupMessageInvolvingCurrentUser) {
         // Add the new message to the messages state
         setMessagesState((prevMessages) => {
-          const messageExists = prevMessages.some(msg => msg.id === data.message.id);
+          const messageExists = prevMessages.some(
+            (msg) => msg.id === data.message.id
+          );
           if (messageExists) {
             return prevMessages;
           }
           // Add new message and sort by most recent first
-          return [data.message, ...prevMessages].sort((a, b) => 
-            new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+          return [data.message, ...prevMessages].sort(
+            (a, b) =>
+              new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
           );
         });
 
         // Handle group message sorting - update group order based on new message
         if (data.message.groupId) {
           setSideBarGroupLists((prevGroups) => {
-            const { sortedGroups } = sortUsersAndGroupsByLatestMessage(userState, prevGroups);
+            const { sortedGroups } = sortUsersAndGroupsByLatestMessage(
+              userState,
+              prevGroups
+            );
             return sortedGroups;
           });
         }
@@ -241,10 +299,10 @@ export default function List({
           setUserState((prevUsers) =>
             prevUsers.map((user) => {
               if (user.id === data.message.from) {
-                return { 
-                  ...user, 
+                return {
+                  ...user,
                   unreadCount: 1,
-                  latestMessage: data.message 
+                  latestMessage: data.message,
                 };
               }
               return user;
@@ -255,9 +313,9 @@ export default function List({
           setUserState((prevUsers) =>
             prevUsers.map((user) => {
               if (user.id === data.message.to) {
-                return { 
-                  ...user, 
-                  latestMessage: data.message 
+                return {
+                  ...user,
+                  latestMessage: data.message,
                 };
               }
               return user;
@@ -352,7 +410,10 @@ export default function List({
                       updatedGroups = prevGroups;
                     }
                     // Sort groups after adding new one
-                    const { sortedGroups } = sortUsersAndGroupsByLatestMessage(userState, updatedGroups);
+                    const { sortedGroups } = sortUsersAndGroupsByLatestMessage(
+                      userState,
+                      updatedGroups
+                    );
                     return sortedGroups;
                   });
                 }
@@ -396,7 +457,10 @@ export default function List({
                       updatedGroups = prevGroups;
                     }
                     // Sort groups after updating
-                    const { sortedGroups } = sortUsersAndGroupsByLatestMessage(userState, updatedGroups);
+                    const { sortedGroups } = sortUsersAndGroupsByLatestMessage(
+                      userState,
+                      updatedGroups
+                    );
                     return sortedGroups;
                   });
                   setGroupsList((groupLists: any) => {
@@ -464,7 +528,10 @@ export default function List({
                     updatedGroups = [...prevGroups, groupFromDb];
                   }
                   // Sort groups after adding/updating member
-                  const { sortedGroups } = sortUsersAndGroupsByLatestMessage(userState, updatedGroups);
+                  const { sortedGroups } = sortUsersAndGroupsByLatestMessage(
+                    userState,
+                    updatedGroups
+                  );
                   return sortedGroups;
                 });
                 setGroupsList((groupLists: any) => {
@@ -490,16 +557,22 @@ export default function List({
   // Sort users whenever chatTrackState changes or when a new message arrives
   useEffect(() => {
     if (userState.length > 0 || sideBarGroupsLists.length > 0) {
-      const { sortedUsers, sortedGroups } = sortUsersAndGroupsByLatestMessage(userState, sideBarGroupsLists);
+      const { sortedUsers, sortedGroups } = sortUsersAndGroupsByLatestMessage(
+        userState,
+        sideBarGroupsLists
+      );
       setUserState(sortedUsers);
       setSideBarGroupLists(sortedGroups);
     }
   }, [chatTrackState, lastMessage]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Also sort when users prop changes (initial load or refresh)  
+  // Also sort when users prop changes (initial load or refresh)
   useEffect(() => {
     if (users.length > 0 || groups.length > 0) {
-      const { sortedUsers, sortedGroups } = sortUsersAndGroupsByLatestMessage(users, groups);
+      const { sortedUsers, sortedGroups } = sortUsersAndGroupsByLatestMessage(
+        users,
+        groups
+      );
       setUserState(sortedUsers);
       setSideBarGroupLists(sortedGroups);
     }
@@ -509,46 +582,62 @@ export default function List({
   const getCombinedSortedList = useCallback(() => {
     // Create combined items with their latest messages
     const combinedItems = [
-      ...sideBarGroupsLists.map(group => {
-        const groupMessages = messagesState.filter(message => message.groupId === group.id);
-        const latestMessage = groupMessages.length > 0 ? groupMessages[0] : null;
-        
+      ...sideBarGroupsLists.map((group) => {
+        const groupMessages = messagesState.filter(
+          (message) => message.groupId === group.id
+        );
+        const latestMessage =
+          groupMessages.length > 0 ? groupMessages[0] : null;
+
         return {
-          type: 'group' as const,
+          type: "group" as const,
           data: group,
           latestMessage,
-          timestamp: latestMessage ? new Date(latestMessage.updatedAt).getTime() : 0
+          timestamp: latestMessage
+            ? new Date(latestMessage.updatedAt).getTime()
+            : 0,
         };
       }),
-      ...userState.map(user => {
+      ...userState.map((user) => {
         const userMessages = messagesState.filter(
-          (message) => 
-            (message.from === user.id && message.to === parseInt(session?.user?.id!)) ||
-            (message.from === parseInt(session?.user?.id!) && message.to === user.id)
+          (message) =>
+            (message.from === user.id &&
+              message.to === parseInt(session?.user?.id!)) ||
+            (message.from === parseInt(session?.user?.id!) &&
+              message.to === user.id)
         );
-        const latestMessage = userMessages.length > 0 ? userMessages[0] : user.latestMessage;
-        
+        const latestMessage =
+          userMessages.length > 0 ? userMessages[0] : user.latestMessage;
+
         return {
-          type: 'user' as const,
+          type: "user" as const,
           data: user,
           latestMessage,
-          timestamp: latestMessage ? new Date(latestMessage.updatedAt).getTime() : 0
+          timestamp: latestMessage
+            ? new Date(latestMessage.updatedAt).getTime()
+            : 0,
         };
-      })
+      }),
     ];
 
     // Check if lastMessage from store affects any items
     if (lastMessage && lastMessage.message) {
-      const lastMessageTimestamp = new Date(lastMessage.message.updatedAt).getTime();
+      const lastMessageTimestamp = new Date(
+        lastMessage.message.updatedAt
+      ).getTime();
       const lastMsg = lastMessage.message; // Store reference to avoid repeated null checks
-      
-      combinedItems.forEach(item => {
-        if (item.type === 'user') {
-          if ((lastMsg.from === item.data.id && lastMsg.to === parseInt(session?.user?.id!)) ||
-              (lastMsg.from === parseInt(session?.user?.id!) && lastMsg.to === item.data.id)) {
+
+      combinedItems.forEach((item) => {
+        if (item.type === "user") {
+          if (
+            (lastMsg.from === item.data.id &&
+              lastMsg.to === parseInt(session?.user?.id!)) ||
+            (lastMsg.from === parseInt(session?.user?.id!) &&
+              lastMsg.to === item.data.id)
+          ) {
             item.timestamp = Math.max(item.timestamp, lastMessageTimestamp);
           }
-        } else if (item.type === 'group' && lastMsg.groupId === item.data.id) {
+        } else if (item.type === "group" && lastMsg.groupId === item.data.id) {
           item.timestamp = Math.max(item.timestamp, lastMessageTimestamp);
         }
       });
@@ -561,12 +650,20 @@ export default function List({
       if (b.timestamp === 0) return -1; // Items without messages go to bottom
       return b.timestamp - a.timestamp;
     });
-  }, [sideBarGroupsLists, userState, messagesState, lastMessage, session?.user?.id]);
+  }, [
+    sideBarGroupsLists,
+    userState,
+    messagesState,
+    lastMessage,
+    session?.user?.id,
+  ]);
 
   // Function to update user state (for unread counts and latest messages)
   const updateUserState = (
     userId: number,
-    updates: Partial<User & { unreadCount: number; latestMessage?: Message | null }>
+    updates: Partial<
+      User & { unreadCount: number; latestMessage?: Message | null }
+    >
   ) => {
     setUserState((prevUsers) =>
       prevUsers.map((user) => {
@@ -609,23 +706,34 @@ export default function List({
         {/* Combined list of groups and users sorted by latest message */}
         {getCombinedSortedList()
           .filter((item) => {
-            if (item.type === 'group') {
-              return item.data.name.toLowerCase().includes(searchTerm.toLowerCase());
+            if (item.type === "group") {
+              return item.data.name
+                .toLowerCase()
+                .includes(searchTerm.toLowerCase());
             } else {
               const user = item.data;
               return (
-                user.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                user.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                user.firstName
+                  ?.toLowerCase()
+                  .includes(searchTerm.toLowerCase()) ||
+                user.lastName
+                  ?.toLowerCase()
+                  .includes(searchTerm.toLowerCase()) ||
+                `${user.firstName?.toLowerCase()} ${user.lastName?.toLowerCase()}`.includes(
+                  searchTerm.toLowerCase()
+                ) ||
                 user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 user.phone?.toLowerCase().includes(searchTerm.toLowerCase())
               );
             }
           })
           .map((item) => {
-            if (item.type === 'group') {
+            if (item.type === "group") {
               const group = item.data;
-              const isSelectedGroup = !!groupsList.find((g) => g.id === group.id);
-              
+              const isSelectedGroup = !!groupsList.find(
+                (g) => g.id === group.id
+              );
+
               return (
                 <button
                   key={`group-${group.id}`}
@@ -636,17 +744,20 @@ export default function List({
                   onClick={() => {
                     // Use the helper function if available, otherwise fallback to old logic
                     if (addChatItem) {
-                      addChatItem(group, 'group');
+                      addChatItem(group, "group");
                     } else {
                       // Fallback logic
                       setGroupsList((groupList) => {
-                        const existingGroupIndex = groupList.findIndex((g) => g?.id === group.id);
-                        
+                        const existingGroupIndex = groupList.findIndex(
+                          (g) => g?.id === group.id
+                        );
+
                         if (existingGroupIndex !== -1) {
                           return groupList;
                         } else {
-                          const totalChatBoxes = groupList.length + usersList.length;
-                          
+                          const totalChatBoxes =
+                            groupList.length + usersList.length;
+
                           if (totalChatBoxes >= 4) {
                             const newGroupList = [...groupList];
                             if (newGroupList.length >= 1) {
@@ -699,7 +810,8 @@ export default function List({
 
               // Get the latest chat track for this user (most recent message)
               const userChatTracks = chatTrackState.filter(
-                (chat) => chat.receiverId === user.id || chat.senderId === user.id
+                (chat) =>
+                  chat.receiverId === user.id || chat.senderId === user.id
               );
 
               const traceLastMessage =

@@ -6,5 +6,6 @@ export const useFindOneServiceMaintenanceAutomationRule = (id: number) => {
     queryKey: ["service-maintenance-automation", id],
     queryFn: async () => findOneServiceMaintenanceAutomationRules(id),
     enabled: !!id,
+    staleTime: 3600 * 1000,
   });
 };

@@ -20,8 +20,6 @@ export default function ContactUs() {
     phone: "",
     email: "",
     businessName: "",
-    subject: "",
-    description: "",
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -31,7 +29,7 @@ export default function ContactUs() {
     const fetchCRMToken = async () => {
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_APP_URL}/api/awx-crm`,
+          `${process.env.NEXT_PUBLIC_APP_URL}/api/awx-crm`
         );
         if (response.ok) {
           const data = await response.json();
@@ -46,7 +44,7 @@ export default function ContactUs() {
   }, []);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
@@ -60,7 +58,7 @@ export default function ContactUs() {
 
     setIsSubmitting(true);
     try {
-      const opportunitySource = `${formData.businessName ?? ""}${formData.subject ?? ""}`;
+      const opportunitySource = `${formData.businessName ?? ""}`;
       const leadResponse = await fetch(
         `${process.env.NEXT_PUBLIC_APP_URL}/api/lead-generate`,
         {
@@ -74,13 +72,10 @@ export default function ContactUs() {
             email: formData.email,
             phone: formData.phone,
             serviceId: 1,
-            message: (formData.description || formData.subject)
-              .split(" ")
-              .slice(0, 6)
-              .join(" "),
+            message: "",
             oppurtunity_source: opportunitySource,
           }),
-        },
+        }
       );
 
       if (leadResponse.ok) {
@@ -93,8 +88,6 @@ export default function ContactUs() {
       Phone: ${formData.phone}
       Email: ${formData.email}
       Business Name: ${formData.businessName}
-      Subject: ${formData.subject}
-      Description: ${formData.description}
 
       Please follow up with the requester as soon as possible.
       Best regards,
@@ -119,8 +112,6 @@ export default function ContactUs() {
           phone: "",
           email: "",
           businessName: "",
-          subject: "",
-          description: "",
         });
       } else {
         const errorData = await leadResponse.json();
@@ -219,29 +210,13 @@ export default function ContactUs() {
                 onChange={handleChange}
                 required
               />
-              <input
-                className={inputClass}
-                type="text"
-                name="subject"
-                placeholder="Subject"
-                onChange={handleChange}
-                required
-              />
-              <textarea
-                className={cn(inputClass, "p` h-32 pt-2")}
-                name="description"
-                placeholder="Description"
-                onChange={handleChange}
-              />
               <button
                 type="submit"
                 disabled={
                   !formData.businessName &&
-                  !formData.description &&
                   !formData.email &&
                   !formData.name &&
-                  !formData.phone &&
-                  !formData.subject
+                  !formData.phone
                 }
                 className="w-full rounded-md bg-gradient-to-r from-[#01A79E] to-[#26AADF] py-2 font-bold text-white disabled:cursor-not-allowed disabled:bg-gray-400 disabled:from-gray-400 disabled:to-gray-400 md:w-96 md:text-2xl"
               >

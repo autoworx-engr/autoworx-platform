@@ -1524,6 +1524,7 @@ model Payment {
   date            DateTime?
   notes           String?
   amount          Decimal? // Original payment amount
+  dueAfterPayment Decimal?        @map("due_after_payment") @db.Decimal(8, 2) // Due amount remaining after this payment
   refundedAmount  Decimal?        @default(0) @map("refunded_amount")
   refundMethod    PaymentType?    @map("refund_method")
   refundReason    String?         @map("refund_reason")

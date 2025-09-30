@@ -103,10 +103,13 @@ export default function MessageContainer({
             {filteredInternalMessages?.map((data: FullMessage) => {
               const userName =
                 user?.id === data?.from?.id
-                  ? (data?.to?.firstName || "") + (data?.to?.lastName || "")
+                  ? (data?.to?.firstName || "") +
+                    " " +
+                    (data?.to?.lastName || "")
                   : (data?.from?.firstName || "") +
+                    " " +
                     (data?.from?.lastName || "");
-              const messageBy = data?.from?.id === user?.id && "You: ";
+              const messageBy = data?.from?.id === user?.id ? "You: " : "";
               return (
                 <Message
                   key={data.id}

@@ -754,7 +754,7 @@ export default function AppointmentModalBody({
       </DialogHeader>
 
       <div className="-mx-6 grid gap-px overflow-y-auto border-solid sm:grid-cols-2 md:border-y md:bg-border">
-        <div className="space-y-4 bg-background p-6">
+        <div className="space-y-4 bg-background p-6 pb-12">
           <FormError />
 
           <AppointmentTitleSelectAndAdd

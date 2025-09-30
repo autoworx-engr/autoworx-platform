@@ -62,7 +62,7 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
   company,
   twilio,
 }) => {
-  const [loading, setLoading] = useState(false);
+  // const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<Rule>({
     companyId: null,
     title: "",
@@ -129,7 +129,7 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
               : data?.data.targetColumnId?.toString() || null,
         });
         setActiveTemplate(data?.data.templateType);
-        setLoading(false);
+        // setLoading(false);
       } else {
         setFormData({
           companyId: null,
@@ -325,7 +325,7 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
         finalData.targetColumnId =
           finalData.targetColumnId! == 0 ? null : finalData.targetColumnId;
         updateRule({ id, companyId: companyId, data: finalData });
-        setLoading(true);
+        // setLoading(true);
       } else {
         createRule(finalData);
         setFormData({
@@ -353,7 +353,7 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
 
   return (
     <>
-      {loading || isLoading || isFetching || stagesLoading ? (
+      { isLoading || isFetching || stagesLoading ? (
         <div className="flex h-[800px] w-full animate-pulse items-center justify-center rounded-md bg-gray-200 p-4 shadow-sm md:p-6">
           <Spin />
         </div>
@@ -404,7 +404,7 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
                   value={formData.targetColumnId!}
                   onChange={(value) => handleChange("targetColumnId", value)}
                   // error={error.targetColumnId}
-                  disabled={loading}
+                  // disabled={loading}
                   isClear={true}
                 />
 

@@ -98,15 +98,16 @@ export default async function PaymentReportPage({ searchParams }: TProps) {
   let filteredPayments =
     searchParams?.search && paymentInfo
       ? paymentInfo.filter((payment: any) => {
-          if (!payment.invoice.client && !payment.invoice.id) {
+          if (!payment.invoice?.client && !payment.invoiceId) {
             return false;
           }
-          const fullName = `${payment.invoice?.client?.firstName} ${payment.invoice?.client?.lastName}`;
+          const fullName = `${payment.invoice?.client?.firstName || ""} ${payment.invoice?.client?.lastName || ""}`;
+          const invoiceId = payment.invoiceId ? String(payment.invoiceId) : "";
           return (
             normalizeSearch(fullName)?.includes(
               normalizeSearch(searchParams?.search || "")
             ) ||
-            normalizeSearch(payment.invoice.id)?.includes(
+            normalizeSearch(invoiceId)?.includes(
               normalizeSearch(searchParams?.search || "")
             )
           );

@@ -74,7 +74,7 @@ const InvoiceRuleForm: React.FC<RuleFormProps> = ({
 }) => {
   const userEmail = user?.email;
 
-  const [loading, setLoading] = useState(false);
+  // const [loading, setLoading] = useState(false);
   // Default empty rule
   const [formData, setFormData] = useState<Rule>(
     initialData || {
@@ -144,7 +144,7 @@ const InvoiceRuleForm: React.FC<RuleFormProps> = ({
             ? "SMS"
             : data?.data.communicationType
         );
-        setLoading(false);
+        // setLoading(false);
       } else {
         setFormData({
           companyId: null,
@@ -323,7 +323,7 @@ const InvoiceRuleForm: React.FC<RuleFormProps> = ({
 
       if (isEdit && id) {
         updateRule({ id: id, data: formData });
-        setLoading(true);
+        // setLoading(true);
       } else {
         createRule(formData);
         setFormData({
@@ -353,7 +353,6 @@ const InvoiceRuleForm: React.FC<RuleFormProps> = ({
     isFetching ||
     isUpdatePending ||
     stageLoading ||
-    loading ||
     isCreatePending
   ) {
     return (
