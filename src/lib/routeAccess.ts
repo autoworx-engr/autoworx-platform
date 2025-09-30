@@ -33,25 +33,35 @@ export function canAccessRoute(
   if (route === "/") return true;
   // If the map defines multiple possible keys, check any of them
   if (Array.isArray(permissionKey)) {
-    const hasDbPermission = permissionKey.some((key) => {
-      //@ts-ignore
-      const hasCompanyPermission = Boolean(permissions.companyPermissions?.[key]);
-      if (hasCompanyPermission && permissions?.userPermissions) {
+    return permissionKey.some((key) => {
+      // If user has individual permissions defined, use those (individual override)
+      if (permissions?.userPermissions) {
         //@ts-ignore
         return Boolean(permissions.userPermissions?.[key]);
       }
-      return hasCompanyPermission;
+      
+      // Fall back to role-based permission if no individual permissions are defined
+      if (permissions.role === "Admin" || permissions.role === "Manager") {
+        //@ts-ignore
+        return Boolean(permissions.companyPermissions?.[key]);
+      }
+      
+      return false;
     });
-    return hasDbPermission;
   }
 
   // Single permission key
-
-  //@ts-ignore
-  const hasCompanyPermission = Boolean(permissions.companyPermissions?.[permissionKey]);
-  if (hasCompanyPermission && permissions?.userPermissions) {
+  // If user has individual permissions defined, use those (individual override)
+  if (permissions?.userPermissions) {
     //@ts-ignore
     return Boolean(permissions.userPermissions?.[permissionKey]);
   }
-  return hasCompanyPermission;
+  
+  // Fall back to role-based permission if no individual permissions are defined
+  if (permissions.role === "Admin" || permissions.role === "Manager") {
+    //@ts-ignore
+    return Boolean(permissions.companyPermissions?.[permissionKey]);
+  }
+  
+  return false;
 }
