@@ -7,6 +7,7 @@ import { getCompany } from "@/actions/settings/getCompany";
 import SecurityPage from "../security/SecurityPage";
 import BookingGenerate from "@/components/BookingGenerate";
 import { TermsAndPolicyEditor } from "@/components/TermsAndPolicyEditor";
+import InfobipConfig from "./InfobipConfig";
 
 export default async function CommunicationPage() {
   const companyId = await getCompanyId();
@@ -38,6 +39,7 @@ export default async function CommunicationPage() {
           </div>
         </div>
       </div>
+      <InfobipConfig />
     </div>
   );
 }
