@@ -997,6 +997,7 @@ export default function AppointmentModalBody({
                   await deleteAppointment(appointmentId);
                   onAppointmentDeleted && onAppointmentDeleted(appointmentId);
                   onModalClose();
+                  successToast("Appointment deleted successfully");
                 } catch (error) {
                   errorToast("Failed to delete appointment");
                 }
