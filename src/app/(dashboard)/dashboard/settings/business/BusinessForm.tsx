@@ -28,7 +28,7 @@ export default function BusinessForm({ company }: TProps) {
 
   const [isPending, startTransition] = useTransition();
 
-  const [businessSettings, setBusinessSettings] = useState({
+  const initialBusinessSettings = {
     legalBusinessName: company?.name || "",
     businessRegistrationIDNumber: company?.businessId || "",
     businessType: company?.businessType || "",
@@ -41,7 +41,21 @@ export default function BusinessForm({ company }: TProps) {
     state: company?.state || "",
     zip: company?.zip || "",
     timezone: company?.timezone
-  });
+  };
+
+  const [businessSettings, setBusinessSettings] = useState(initialBusinessSettings);
+
+  // Check if any values have changed from initial state
+  const hasChanges = () => {
+    // Check if image has changed
+    if (imageSrc !== null) return true;
+    
+    // Check if any business setting has changed
+    return Object.keys(businessSettings).some(key => {
+      return businessSettings[key as keyof typeof businessSettings] !== 
+             initialBusinessSettings[key as keyof typeof initialBusinessSettings];
+    });
+  };
 
   // useEffect(() => {
   //   const fetchImageWithFile = async () => {
@@ -419,7 +433,7 @@ export default function BusinessForm({ company }: TProps) {
 
         <div className="text-right">
           <button
-            disabled={isPending}
+            disabled={isPending || !hasChanges()}
             type="submit"
             className="ml-auto mt-4 rounded-md bg-[#6571FF] px-6 py-1 text-white disabled:bg-gray-400"
           >

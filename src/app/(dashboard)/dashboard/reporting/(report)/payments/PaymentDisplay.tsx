@@ -54,13 +54,11 @@ export default function PaymentDisplay({
   const [currentPage, setCurrentPage] = useState(page || 1);
   const [pageSize, setPageSize] = useState(take || 50); // Default page size set to 50
   const [showPagination, setShowPagination] = useState(false);
-  const [totalPayments, setTotalPayments] = useState(paymentInfo);
-  const [filteredPayments, setFilteredPayments] = useState(paymentInfo);
 
   const pathname = usePathname();
   const router = useRouter();
   const params = useSearchParams();
-  const search = params.get("search");
+
   useEffect(() => {
     if (paymentInfo.length > 0) {
       setShowPagination(true);
@@ -68,39 +66,6 @@ export default function PaymentDisplay({
       setShowPagination(false);
     }
   }, [paymentInfo]);
-
-  useEffect(() => {
-    // Filter payments based on payment method if it exists in the URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const paymentMethodParam = urlParams.get("paymentMethod");
-
-    if (paymentMethodParam && paymentMethodParam !== "All") {
-      // Convert to uppercase for case-insensitive comparison
-      const methodToFilter = paymentMethodParam.toUpperCase();
-
-      const filtered = paymentInfo.filter((payment) => {
-        // Check if the payment type matches the selected method
-        // Handle different naming conventions (Card/CARD, Cash/CASH, etc.)
-        const paymentType = payment.type.toUpperCase();
-
-        if (methodToFilter === "CHEQUE" && paymentType === "CHECK") {
-          return true;
-        } else if (
-          methodToFilter === "REFUND" &&
-          Number(payment?.refundedAmount) > 0
-        ) {
-          return true;
-        }
-
-        return paymentType === methodToFilter;
-      });
-
-      setFilteredPayments(filtered);
-    } else {
-      // If "All" is selected or no filter is applied
-      setFilteredPayments(paymentInfo);
-    }
-  }, [paymentInfo, window.location.search]);
 
   const handlePageChange = (page: number, pageSize?: number) => {
     const searchParams = new URLSearchParams(params.toString());
@@ -119,26 +84,8 @@ export default function PaymentDisplay({
   const startIndex = (currentPage - 1) * pageSize;
   const endIndex = currentPage * pageSize;
 
-  // Filter payments by search term if present
-  const getSearchedPayments = () => {
-    if (!search) return filteredPayments.slice(startIndex, endIndex);
-    const lowerSearch = search.trim().toLowerCase();
-    return filteredPayments.filter((payment) => {
-      // Search in client name, invoiceId, vehicle info, payment method
-      const clientName = `${payment.invoice?.client?.firstName || ""} ${payment.invoice?.client?.lastName || ""}`.toLowerCase();
-      const invoiceIdRaw = payment.invoiceId !== undefined && payment.invoiceId !== null ? String(payment.invoiceId).trim().toLowerCase() : "";
-      const vehicleInfo = `${payment.invoice?.vehicle?.year || ""} ${payment.invoice?.vehicle?.make || ""} ${payment.invoice?.vehicle?.model || ""} ${payment.invoice?.vehicle?.other || ""}`.toLowerCase();
-      // Match invoiceId by includes or exact match
-      const invoiceIdMatch = invoiceIdRaw === lowerSearch || invoiceIdRaw.includes(lowerSearch);
-      return (
-        clientName.includes(lowerSearch) ||
-        invoiceIdMatch ||
-        vehicleInfo.includes(lowerSearch)
-      );
-    });
-  };
-
-  const paymentsToRender = getSearchedPayments();
+  // Use the paymentInfo that's already filtered from the server
+  const paymentsToRender = paymentInfo.slice(startIndex, endIndex);
   if (isDesktop) {
     return (
       <div className="hidden md:block">
@@ -222,7 +169,7 @@ export default function PaymentDisplay({
               className="custom-pagination"
               current={currentPage}
               pageSize={pageSize}
-              total={filteredPayments?.length}
+              total={paymentInfo?.length}
               onChange={handlePageChange}
               showSizeChanger
               onShowSizeChange={handlePageChange}
@@ -235,7 +182,7 @@ export default function PaymentDisplay({
 
   return (
     <div className="space-y-4 md:hidden">
-      {filteredPayments.map((payment, index) => (
+      {paymentInfo.map((payment, index) => (
         <PaymentMobileCard
           key={payment.id}
           payment={payment}
@@ -249,7 +196,7 @@ export default function PaymentDisplay({
             className="custom-pagination"
             current={currentPage}
             pageSize={pageSize}
-            total={filteredPayments.length}
+            total={paymentInfo.length}
             onChange={handlePageChange}
             showSizeChanger
             onShowSizeChange={handlePageChange}
