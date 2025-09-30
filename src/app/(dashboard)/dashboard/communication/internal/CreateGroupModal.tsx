@@ -23,6 +23,7 @@ type TProps = {
   setSideBarGroupLists: React.Dispatch<
     React.SetStateAction<Array<Group & { users: User[] }>>
   >;
+  addChatItem?: (item: any, type: "user" | "group") => void;
 };
 
 type TContactListUser = {
@@ -33,6 +34,7 @@ type TContactListUser = {
 export default function CreateGroupModal({
   users,
   setSideBarGroupLists,
+  addChatItem,
 }: TProps) {
   const [groupUsers, setGroupUsers] = useState(users);
 
@@ -47,6 +49,8 @@ export default function CreateGroupModal({
   const [contactList, setContactList] = useState<Array<TContactListUser>>([]);
 
   const [error, setError] = useState<string | null>(null);
+
+  const [isLoading, setIsLoading] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -63,6 +67,7 @@ export default function CreateGroupModal({
       setGroupUsers(users);
       setOpenUserList(false);
       setError(null);
+      setIsLoading(false);
     }
   }, [open]);
 
@@ -116,30 +121,43 @@ export default function CreateGroupModal({
 
   const handleCreateGroup = async () => {
     if (contactList.length >= 2) {
-      const usersInGroup = contactList.map((user) => ({
-        id: user.id,
-      }));
-      const response = await createGroup({
-        name: groupName,
-        users: [{ id: session?.user.id }, ...usersInGroup],
-      });
-      if (response.status === 200) {
-        setOpen(false);
-        setError("");
-        setGroupName("");
-        setContactList([]);
-        setSideBarGroupLists((prevGroups) => {
-          const isExistInGroup = prevGroups.find(
-            (g) => g.id === response.data.id
-          );
-          if (!isExistInGroup) {
-            return [...prevGroups, response.data];
-          } else {
-            return prevGroups;
-          }
+      setIsLoading(true);
+      try {
+        const usersInGroup = contactList.map((user) => ({
+          id: user.id,
+        }));
+        const response = await createGroup({
+          name: groupName,
+          users: [{ id: session?.user.id }, ...usersInGroup],
         });
-      } else {
+        if (response.status === 200) {
+          setOpen(false);
+          setError("");
+          setGroupName("");
+          setContactList([]);
+          setSideBarGroupLists((prevGroups) => {
+            const isExistInGroup = prevGroups.find(
+              (g) => g.id === response.data.id
+            );
+            if (!isExistInGroup) {
+              return [...prevGroups, response.data];
+            } else {
+              return prevGroups;
+            }
+          });
+          
+          // Automatically open the newly created group in message box
+          // If there are already 4 message boxes open, this will replace the last one (4th position)
+          if (addChatItem) {
+            addChatItem(response.data, "group");
+          }
+        } else {
+          setError("Failed to create group.");
+        }
+      } catch (error) {
         setError("Failed to create group.");
+      } finally {
+        setIsLoading(false);
       }
     } else {
       setError("At least 2 users are required to create a group.");
@@ -258,9 +276,17 @@ export default function CreateGroupModal({
           </DialogClose>
           <button
             onClick={handleCreateGroup}
-            className="rounded-lg border bg-[#6571FF] px-5 py-2 text-white"
+            disabled={isLoading}
+            className={`rounded-lg border px-5 py-2 text-white flex items-center gap-2 ${
+              isLoading 
+                ? "bg-gray-400 cursor-not-allowed" 
+                : "bg-[#6571FF] hover:bg-[#5a67e8]"
+            }`}
           >
-            Add
+            {isLoading && (
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+            )}
+            {isLoading ? "Creating..." : "Add"}
           </button>
         </DialogFooter>
       </DialogContent>

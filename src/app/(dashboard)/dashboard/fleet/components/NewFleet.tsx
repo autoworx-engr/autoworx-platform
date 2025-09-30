@@ -306,6 +306,7 @@ export default function NewFleet({
               }}
             />
             <SlimInput
+              type="tel"
               name="mobile"
               label="Mobile Number"
               required
