@@ -4,16 +4,18 @@ import RedirectToSettings from "../mailgun/RedirectToSettings";
 import SmsContainer from "./SmsContainer";
 
 export default async function SMS({ clientId }: { clientId: number }) {
-  // check if the twilio is setup
   const companyId = await getCompanyId();
   const twilio = await db.twilioCredentials.findFirst({
     where: { companyId },
   });
+  const infobipConfig = await db.infobipConfig.findFirst({
+    where: { companyId },
+  });
 
-  if (!twilio) {
+  if (!twilio && !infobipConfig) {
     return (
       <RedirectToSettings
-        message="Twilio is not setup for this company."
+        message="SMS gateway must be configured to send SMS."
         link="/dashboard/settings/communications"
       />
     );

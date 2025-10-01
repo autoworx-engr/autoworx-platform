@@ -28,12 +28,21 @@ export async function getInvoiceModalData(id: string) {
         Refund: true,
       },
     });
-  
-    const twilioCredentials = await db.twilioCredentials.findFirst({
+
+    const twilioCredential = await db.twilioCredentials.findFirst({
       where: {
         companyId: invoice?.companyId,
       },
     });
+
+    const infobipConfig = await db.infobipConfig.findFirst({
+      where: {
+        companyId: invoice?.companyId,
+      },
+    });
+
+    const twilioCredentials = twilioCredential || infobipConfig || null;
+
     return {
       invoice: JSON.parse(JSON.stringify(invoice)),
       twilioCredentials,

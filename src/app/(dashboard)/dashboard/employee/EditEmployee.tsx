@@ -355,6 +355,7 @@ export default function EditEmployee({
               }}
             />
             <SlimInput
+              type="tel"
               name="mobileNumber"
               defaultValue={employee.phone!}
               onChange={(e) => {

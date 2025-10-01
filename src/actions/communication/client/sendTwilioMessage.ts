@@ -31,7 +31,7 @@ export async function getTwilioCredentialsById(companyId: number) {
   });
 }
 
-export async function sendMessage({
+export async function sendTwilioMessage({
   companyId,
   message,
   clientId,

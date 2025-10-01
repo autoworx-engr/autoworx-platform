@@ -25,6 +25,7 @@ export default function FleetList({
     setFilteredClients(
       clients.filter((client) => {
         const fullName = `${client.firstName} ${client.lastName || ""}`.toLowerCase().replace(/\s+/g, " ");
+        
         return (
           client.id.toString().includes(term) ||
           fullName.includes(term) ||

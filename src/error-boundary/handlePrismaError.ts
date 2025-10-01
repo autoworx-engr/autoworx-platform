@@ -12,10 +12,32 @@ export function handlePrismaError(
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
         // Unique constraint violation
         if (error.code === 'P2002') {
-            return {
-                statusCode: httpStatus.CONFLICT,
-                message: `Duplicate value for ${error.meta?.target}`,
-            };
+            const target = error.meta?.target as string[] | string;
+            let field = '';
+            
+            if (Array.isArray(target)) {
+                field = target[0];
+            } else if (typeof target === 'string') {
+                field = target;
+            }
+            
+            // Provide specific error messages for common fields
+            if (field === 'email' || (Array.isArray(target) && target.includes('email'))) {
+                return {
+                    statusCode: httpStatus.CONFLICT,
+                    message: 'Email already exists. Please use a different email address.',
+                };
+            } else if (field === 'phone' || (Array.isArray(target) && target.includes('phone'))) {
+                return {
+                    statusCode: httpStatus.CONFLICT,
+                    message: 'Phone number already exists. Please use a different phone number.',
+                };
+            } else {
+                return {
+                    statusCode: httpStatus.CONFLICT,
+                    message: `Duplicate value for ${field || 'field'}. Please use a different value.`,
+                };
+            }
         }
 
         // Record not found
