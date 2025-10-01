@@ -3,6 +3,7 @@
 import { deleteTask } from "@/actions/task/deleteTask";
 import { useEstimateCreateStore } from "@/stores/estimate-create";
 import { create } from "mutative";
+import { FaTimes } from "react-icons/fa";
 import { HiOutlinePlusCircle, HiXCircle } from "react-icons/hi2";
 
 export function TasksInput() {
@@ -22,7 +23,7 @@ export function TasksInput() {
                       id: task.id,
                       task: event.currentTarget.value,
                     };
-                  }),
+                  })
                 )
               }
               className="block w-full rounded border border-solid border-slate-500 px-2 py-1"
@@ -38,7 +39,9 @@ export function TasksInput() {
               }}
               className="absolute right-0 top-0 -translate-y-1/2 translate-x-1/2 text-[#6470FF]"
             >
-              <HiXCircle />
+              <div className="rounded-full bg-[#6571FF] p-1 text-white">
+                <FaTimes className="text-[10px]" />
+              </div>
             </button>
           </label>
         ))}
