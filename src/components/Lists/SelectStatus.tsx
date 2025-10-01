@@ -28,6 +28,7 @@ import {
 } from "../DropdownMenu";
 import FormError from "../FormError";
 import Submit from "../Submit";
+import { useEstimateCreateStore } from "@/stores/estimate-create";
 
 type SelectedColor = { textColor: string; bgColor: string } | null;
 
@@ -45,7 +46,7 @@ export function SelectStatus({
   isAllServicesCompleted?: boolean;
 }) {
   const [status, setStatus] = useState<Column | null>(null);
-  const statusList = useListsStore(x => x.statuses);
+  const statusList = useListsStore((x) => x.statuses);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [selectedColor, setSelectedColor] = useState<SelectedColor>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -71,7 +72,7 @@ export function SelectStatus({
     }
   }, [statusList]);
   const filteredShopStatus = statusList.filter(
-    status => status.type === "shop"
+    (status) => status.type === "shop"
   );
   async function handleDelete(event: React.MouseEvent<HTMLButtonElement>) {
     event.stopPropagation();
@@ -79,7 +80,7 @@ export function SelectStatus({
       const res = await deleteColumn(statusToDelete);
       if (res) {
         useListsStore.setState(({ statuses }) => ({
-          statuses: statuses.filter(status => status.id !== statusToDelete),
+          statuses: statuses.filter((status) => status.id !== statusToDelete),
         }));
         if (status?.id === statusToDelete) {
           setStatus(null);
@@ -98,12 +99,14 @@ export function SelectStatus({
     "Completed",
     "Delivered",
   ];
+  const { due } = useEstimateCreateStore();
+
   return (
     <div>
       <input type="hidden" name={name} value={status?.title ?? ""} />
       <DropdownMenu
         open={open}
-        onOpenChange={open => {
+        onOpenChange={(open) => {
           // !open && setOpen && setOpen(open);
         }}
       >
@@ -145,10 +148,15 @@ export function SelectStatus({
             </button>
           </div>
           <div className="space-y-1">
-            {filteredShopStatus.map(statusItem => (
+            {filteredShopStatus.map((statusItem) => (
               <div
                 key={statusItem.id}
                 onClick={() => {
+                  if (statusItem.title === "Delivered" && due > 0) {
+                    return errorToast(
+                      "You cannot update this order to Delivered until all dues are cleared."
+                    );
+                  }
                   if (
                     statusItem.title === "Delivered" &&
                     !isAllServicesCompleted
@@ -175,7 +183,7 @@ export function SelectStatus({
                 {!restrictedColumns.includes(statusItem.title) && (
                   <button
                     className="px-2 text-lg text-[#66738C] hover:text-gray-900"
-                    onClick={event => {
+                    onClick={(event) => {
                       event.stopPropagation();
                       setStatusToDelete(statusItem.id);
                       setDeleteConfirmOpen(true);
@@ -189,7 +197,7 @@ export function SelectStatus({
           </div>
           <FormError />
           <QuickAddForm
-            onSuccess={status => {
+            onSuccess={(status) => {
               setStatus(status);
               if (setOpen) setOpen(false);
               // setOpen(false);

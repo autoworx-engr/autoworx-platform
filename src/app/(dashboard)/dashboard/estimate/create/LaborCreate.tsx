@@ -247,14 +247,21 @@ export default function LaborCreate() {
         <input
           type="number"
           id="hours"
-          value={hours || ""}
-          onChange={(e) => setHours(parseFloat(e.target.value))}
-          onKeyDown={(e) => {
-            if (e.key === "-") {
-              e.preventDefault();
+          min="0"
+          value={hours ?? ""}
+          onChange={(e) => {
+            const inputValue = e.target.value;
+            if (inputValue === "" || inputValue === "-" || inputValue === "0") {
+              setHours(undefined);
+              return;
+            }
+            const value = parseFloat(inputValue);
+            if (isNaN(value) || value <= 0) {
+              setHours(undefined);
+            } else {
+              setHours(value);
             }
           }}
-          min="1"
           className="w-full rounded-md border-2 border-slate-400 p-1 text-xs"
           placeholder="0"
         />
@@ -267,8 +274,21 @@ export default function LaborCreate() {
         <input
           type="number"
           id="perhour"
-          value={charge}
-          onChange={(e) => setCharge(parseFloat(e.target.value))}
+          min="0"
+          value={charge ?? ""}
+          onChange={(e) => {
+            const inputValue = e.target.value;
+            if (inputValue === "" || inputValue === "-" || inputValue === "0") {
+              setCharge(undefined);
+              return;
+            }
+            const value = parseFloat(inputValue);
+            if (isNaN(value) || value <= 0) {
+              setCharge(undefined);
+            } else {
+              setCharge(value);
+            }
+          }}
           className="w-full rounded-md border-2 border-slate-400 p-1 text-xs"
           placeholder="0"
         />
@@ -281,8 +301,21 @@ export default function LaborCreate() {
         <input
           type="number"
           id="discount"
-          value={discount}
-          onChange={(e) => setDiscount(parseFloat(e.target.value))}
+          min="0"
+          value={discount ?? ""}
+          onChange={(e) => {
+            const inputValue = e.target.value;
+            if (inputValue === "" || inputValue === "-" || inputValue === "0") {
+              setDiscount(undefined);
+              return;
+            }
+            const value = parseFloat(inputValue);
+            if (isNaN(value) || value < 0) {
+              setDiscount(undefined);
+            } else {
+              setDiscount(value);
+            }
+          }}
           className="w-full rounded-md border-2 border-slate-400 p-1 text-xs"
           placeholder="0"
         />

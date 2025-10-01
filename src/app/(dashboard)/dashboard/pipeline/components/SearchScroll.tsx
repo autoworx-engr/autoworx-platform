@@ -9,7 +9,7 @@ import { IoCloseOutline } from "react-icons/io5";
 interface SearchScrollProps {
   pipelineData: any[];
   onSearchResult?: (
-    result: { columnIndex: number; leadIndex: number } | null,
+    result: { columnIndex: number; leadIndex: number } | null
   ) => void;
   setSearchTerm?: (term: string) => void;
 }
@@ -31,7 +31,7 @@ export default function SearchScroll({
 
   const pathname = usePathname() || "";
   const isSalesPipeline = pathname.includes(
-    "/dashboard/pipeline/sales/pipeline",
+    "/dashboard/pipeline/sales/pipeline"
   );
 
   const handleSearchChange = useDebounce(async (value: string) => {
@@ -78,10 +78,17 @@ export default function SearchScroll({
       // Unified search logic for both pipelines
       column.leads?.forEach((lead: any, leadIndex: number) => {
         // Search by client name
-        const nameMatch = (lead.name || lead.clientName || "").toLowerCase().includes(searchTerm.toLowerCase());
+        const nameMatch = (lead.name || lead.clientName || "")
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase());
         // Search by vehicle information (year, make, model)
-        const vehicleMatch = lead.vehicle && lead.vehicle.toLowerCase().includes(searchTerm.toLowerCase());
-        if (nameMatch || vehicleMatch) {
+        const vehicleMatch =
+          lead.vehicle &&
+          lead.vehicle.toLowerCase().includes(searchTerm.toLowerCase());
+        const vehicleYearMatch =
+          lead.year &&
+          lead.year.toLowerCase().includes(searchTerm.toLowerCase());
+        if (nameMatch || vehicleMatch || vehicleYearMatch) {
           results.push({ columnIndex, leadIndex });
         }
       });

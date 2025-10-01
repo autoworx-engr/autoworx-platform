@@ -4,11 +4,11 @@ import Selector from '@/components/Selector';
 import { useListsStore } from '@/stores/lists';
 import { Client } from '@prisma/client';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { Dispatch, SetStateAction, useEffect, useState } from 'react';
+import { Dispatch, SetStateAction, useEffect, useMemo, useState, useCallback } from 'react';
 import Avatar from '../Avatar';
 import NewCustomer from './NewCustomer';
 import { SelectProps } from './select-props';
-import useClientListQuery from '@/hooks/query-hook/useClientListQuery';
+import useClientListInfiniteQuery from '@/hooks/query-hook/useClientListInfiniteQuery';
 
 export function SelectClient({
   name = 'clientId',
@@ -20,8 +20,31 @@ export function SelectClient({
 }: SelectProps<Client | null>) {
   const state = useState(value);
   const [client, setClient] = setValue ? [value, setValue] : state;
-  // const clientList = useListsStore((x) => x.customers);
-  const { data: clientList = [] } = useClientListQuery();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+    
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+  
+  // Use infinite query for client list
+  const {
+    data: infiniteData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useClientListInfiniteQuery(debouncedSearchTerm);
+  
+  // Flatten the infinite data into a single array
+  const clientList = useMemo(() => {
+    return infiniteData?.pages.flatMap(page => page.clients) ?? [];
+  }, [infiniteData]);
+  
   const newAddedCustomer = useListsStore((x) => x.newAddedCustomer);
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -40,7 +63,7 @@ export function SelectClient({
   useEffect(() => {
     if (!invoice) {
       const getClient = clientList?.find(
-        (client) => client?.id === Number(clientId)
+        (client: Client) => client?.id === Number(clientId)
       );
       getClient && setClient(getClient);
     }
@@ -48,7 +71,7 @@ export function SelectClient({
 
   useEffect(() => {
     const getClient = clientList?.find(
-      (client) => client?.id === Number(clientId)
+      (client: Client) => client?.id === Number(clientId)
     );
     getClient && useListsStore.setState({ client: getClient });
     getClient && setClient(getClient);
@@ -97,19 +120,20 @@ export function SelectClient({
           </div>
         )}
         items={clientList}
-        onSearch={(search: string) =>
-          clientList.filter((client) =>
-            `${client.firstName} ${client.lastName}`
-              .toLowerCase()
-              .includes(search.toLowerCase())
-          )
-        }
+        onSearch={(search: string) => {
+          setSearchTerm(search);
+          return clientList;
+        }}
         openState={[
           openDropdown as boolean,
           setOpenDropdown as Dispatch<SetStateAction<boolean>>,
         ]}
         selectedItem={client}
         setSelectedItem={setClient}
+        useInfiniteScroll={true}
+        hasNextPage={hasNextPage}
+        fetchNextPage={fetchNextPage}
+        isFetchingNextPage={isFetchingNextPage}
       />
     </>
   );

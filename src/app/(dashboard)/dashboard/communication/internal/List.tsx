@@ -690,6 +690,7 @@ export default function List({
         <CreateGroupModal
           users={users}
           setSideBarGroupLists={setSideBarGroupLists}
+          addChatItem={addChatItem}
         />
       </div>
       {/* Search */}

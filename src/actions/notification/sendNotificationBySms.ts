@@ -1,5 +1,5 @@
 import Twilio from "twilio";
-import { getTwilioCredentials } from "../communication/client/sendMessage";
+import { getTwilioCredentials } from "../communication/client/sendTwilioMessage";
 import { normalizeUSPhoneNumber } from "@/lib/normalizeUSPhoneNumber";
 
 type TSendNotificationBySms = {
@@ -30,7 +30,7 @@ export default async function sendNotificationBySms({
       twilioCredentials.apiKeySecret,
       {
         accountSid: twilioCredentials.accountSid,
-      },
+      }
     );
 
     if (twilioCredentials.phoneNumber && userPhoneNo && description) {

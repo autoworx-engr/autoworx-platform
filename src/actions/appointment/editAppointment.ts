@@ -15,12 +15,13 @@ import moment from "moment";
 import { getServerSession } from "next-auth";
 // import { revalidatePath } from "next/cache";
 import { getGoogleCalendarToken } from "../calendar-settings/getGoogleCalendarAuth";
-import { sendMessage } from "../communication/client/sendMessage";
 import { sendInfobipEmail } from "../estimate/invoice/sendInfobipEmail";
 import createGoogleCalendarEvent from "../task/google-calendar/createGoogleCalendarEvent";
 import updateGoogleCalendarEvent from "../task/google-calendar/updateGoogleCalendarEvent";
 import { scheduleRemindersInNest } from "./addAppointment";
 import { deleteRemindersInNest } from "./deleteAppointment";
+import { sendInfobipMessage } from "../communication/client/sendInfobipMessage";
+import { sendTwilioMessage } from "../communication/client/sendTwilioMessage";
 
 export interface AppointmentToUpdate {
   title: string;
@@ -182,9 +183,9 @@ export async function editAppointment({
         name: true,
         address: true,
         phone: true,
+        smsGateway: true,
       },
     });
-    console.log("🚀 ~ editAppointment ~ company:", company);
 
     if (confirmationEmailTemplate) {
       const appointmentDate = moment(
@@ -247,12 +248,19 @@ export async function editAppointment({
               subject: confirmationSubject,
               text: confirmationMessage,
             });
-            sendMessage({
-              companyId: client.companyId,
-              clientId: client.id,
-              message: confirmationMessage || "",
-              attachments: [],
-            });
+            if (company?.smsGateway === "TWILIO") {
+              sendTwilioMessage({
+                clientId: client.id,
+                message: confirmationMessage,
+                attachments: [],
+              });
+            } else if (company?.smsGateway === "INFOBIP") {
+              sendInfobipMessage({
+                clientId: client.id,
+                message: confirmationMessage,
+                attachments: [],
+              });
+            }
           } catch (error) {
             console.log("🚀 ~ error:", error);
           }

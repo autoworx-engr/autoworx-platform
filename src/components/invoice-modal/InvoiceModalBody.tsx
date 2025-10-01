@@ -17,12 +17,14 @@ import { useServerGet } from "@/hooks/useServerGet";
 import { cn } from "@/lib/cn";
 import { queryKeys } from "@/lib/queryKeys";
 import { errorToast, successToast } from "@/lib/toast";
+import { calculateDue } from "@/utils/calculateDue";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
 import {
   Client,
   Column,
   Company,
+  InfobipConfig,
   Invoice,
   InvoiceItem,
   InvoicePhoto,
@@ -53,8 +55,6 @@ import WorkOrderModal from "../workorder-modal/WorkOrderModal";
 import { InspectionItems } from "./InspectionItems";
 import { InvoiceItems } from "./InvoiceItems";
 import { StripePay } from "./StripePay";
-import { getPaymentSummary } from "@/actions/payment/refundPayment";
-import { calculateDue } from "@/utils/calculateDue";
 const DownloadPDF = dynamic(() => import("./DownloadInvoice"), {
   ssr: false,
 });
@@ -92,8 +92,9 @@ export default function InvoiceModalBody({
 
   // console.log({ isError, error, data });
 
-  const [twilioCredentials, setTwilioCredentials] =
-    useState<TwilioCredentials | null>();
+  const [twilioCredentials, setTwilioCredentials] = useState<
+    TwilioCredentials | InfobipConfig | null
+  >();
   // const [isLoading, setIsLoading] = useState(true);
   const printComponentRef = useRef(null);
   const promiseResolveRef = useRef<any>(null);
