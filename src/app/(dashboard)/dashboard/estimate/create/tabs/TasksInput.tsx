@@ -4,7 +4,7 @@ import { deleteTask } from "@/actions/task/deleteTask";
 import { useEstimateCreateStore } from "@/stores/estimate-create";
 import { create } from "mutative";
 import { FaTimes } from "react-icons/fa";
-import { HiOutlinePlusCircle, HiXCircle } from "react-icons/hi2";
+import { HiOutlinePlusCircle } from "react-icons/hi2";
 
 export function TasksInput() {
   const tasks = useEstimateCreateStore((x) => x.tasks);
