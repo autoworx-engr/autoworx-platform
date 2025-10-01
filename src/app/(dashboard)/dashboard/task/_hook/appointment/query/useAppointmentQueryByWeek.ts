@@ -1,7 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
-import { appointmentQueryKey } from "../../../_constant";
 import getAppointments from "@/actions/task/getAppointments";
 import { Appointment, AppointmentUser, User } from "@prisma/client";
+import { useQuery } from "@tanstack/react-query";
+import { appointmentQueryKey } from "../../../_constant";
 
 export default function useAppointmentQueryByWeek(
   startDate: string,
@@ -41,9 +41,18 @@ export default function useAppointmentQueryByWeek(
           },
         },
       });
-      return response.data as (Appointment & {
+      const appointments = response.data as (Appointment & {
         appointmentUsers: (AppointmentUser & { user: User })[];
       })[];
+      
+      // Transform appointmentUsers to assignedUsers to match CalendarAppointment interface
+      return appointments.map(appointment => {
+        const { appointmentUsers, ...appointmentData } = appointment;
+        return {
+          ...appointmentData,
+          assignedUsers: appointmentUsers.map(appointmentUser => appointmentUser.user)
+        };
+      });
     },
   });
 }

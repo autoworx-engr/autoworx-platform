@@ -378,7 +378,10 @@ export default function Month() {
                         <Tooltip key={i}>
                           <TooltipTrigger asChild>
                             <div
-                              onClick={() => handleRedirectToDay(cell[0])}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRedirectToDay(cell[0]);
+                              }}
                               className="cursor-pointer truncate rounded border px-1 py-0.5 text-xs text-slate-700 lg:block xl:text-sm"
                             >
                               {appointment.title}
@@ -401,20 +404,23 @@ export default function Month() {
                         <Tooltip key={i}>
                           <TooltipTrigger asChild>
                             <div
-                              onClick={() => handleRedirectToDay(cell[0])}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRedirectToDay(cell[0]);
+                              }}
                               className="cursor-pointer truncate rounded px-1 py-2 text-xs text-white lg:block lg:text-sm"
                               style={{
                                 backgroundColor: TASK_COLOR[task.priority],
                               }}
                             >
-                              {/* {task.title} */}
+                              {task.title}
                             </div>
                           </TooltipTrigger>
-                          {/* <TooltipPortal> */}
-                          <CalendarTooltip
-                            event={{ ...task, type: "task" } as any}
-                          />
-                          {/* </TooltipPortal> */}
+                          <TooltipPortal>
+                            <CalendarTooltip
+                              event={{ ...task, type: "task" } as any}
+                            />
+                          </TooltipPortal>
                         </Tooltip>
                       ))}
 

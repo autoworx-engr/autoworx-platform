@@ -16,6 +16,7 @@ import Message from "./Message";
 import toast from "react-hot-toast";
 import { usePathname, useRouter } from "next/navigation";
 import InvoiceEstimateModal from "./collaboration/InvoiceEstimateModal";
+import { Dialog, DialogContent, DialogFooter } from "@/components/Dialog";
 import { getUserInGroup } from "@/actions/communication/internal/query";
 import AddUsersInGroupModal from "./internal/AddUsersInGroupModal";
 import { useChatTrackStore } from "@/stores/chatTrackStore";
@@ -73,6 +74,8 @@ export default function MessageBox({
   const { lastMessage, setLastMessage } = useChatTrackStore();
   const [groupName, setGroupName] = useState(group?.name || "");
   const [isGroupNameEdited, setIsGroupNameEdited] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
   let lastDate = "";
 
   useEffect(() => {
@@ -208,8 +211,24 @@ export default function MessageBox({
               return g;
             })
           );
+        const removedUser = group?.users.find((user) => user.id === userId);
+        const userName = removedUser ? `${removedUser.firstName} ${removedUser.lastName}` : "User";
+        toast.success(`${userName} removed from group successfully!`);
       }
     }
+  };
+
+  const handleConfirmDeleteUser = () => {
+    if (userToDelete) {
+      startTransition(() => handleDeleteUserFromGroupList(userToDelete.id));
+      setDeleteConfirmOpen(false);
+      setUserToDelete(null);
+    }
+  };
+
+  const handleShowDeleteConfirmation = (user: User) => {
+    setUserToDelete(user);
+    setDeleteConfirmOpen(true);
   };
 
   const handleAttachment = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -368,7 +387,7 @@ export default function MessageBox({
               >
                 <p className="text-sm">{user.firstName}</p>
                 <TiDeleteOutline
-                  onClick={() => handleDeleteUserFromGroupList(user.id)}
+                  onClick={() => handleShowDeleteConfirmation(user)}
                   className="size-5 cursor-pointer"
                 />
               </div>
@@ -572,6 +591,24 @@ export default function MessageBox({
           <IoMdSend className="size-6 text-[#006D77]" />
         </button>
       </form>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <DialogContent>
+          <h2 className="mt-5 text-center text-xl font-semibold">
+            Are you sure you want to remove {userToDelete?.firstName} {userToDelete?.lastName} from this group?
+          </h2>
+          <DialogFooter className="py-4">
+            <button
+              disabled={pending}
+              onClick={handleConfirmDeleteUser}
+              className="mx-auto rounded bg-[#6571FF] px-8 py-2 text-white disabled:opacity-50"
+            >
+              {pending ? "Removing..." : "Confirm Remove"}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
