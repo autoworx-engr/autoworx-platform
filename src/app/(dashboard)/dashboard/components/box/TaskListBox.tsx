@@ -22,6 +22,7 @@ export default function TaskListBox() {
   );
 
 
+  
   const queryClient = useQueryClient();
 
   const revalidateTask = () => {
@@ -44,6 +45,10 @@ export default function TaskListBox() {
     data?.data?.find(
       (permission: any) => permission.permission_name === "calendar"
     )?.enabled !== false;
+
+      const shouldHideRedirectLink =
+    permissions?.role !== "Admin" &&
+    companyEmployeePermissions?.calendarTask === false;
 
   const hasTaskPermission =
     calendarAndTaskFeatureEnabled &&
@@ -87,7 +92,7 @@ export default function TaskListBox() {
       >
         <BoxTitle
           title="Task List"
-          redirectLink={hasTaskPermission ? "/dashboard/task/day" : undefined}
+          redirectLink={!shouldHideRedirectLink ? "/dashboard/task/day" : undefined}
         />
         <div className="thin-scrollbar my-2 flex max-h-64 flex-1 flex-col space-y-2 overflow-x-hidden lg:max-h-full">
           {content}
