@@ -1,7 +1,7 @@
 "use client";
 
 import { createTwilioCredentials } from "@/actions/communication/client/createTwilioCredentials";
-import { getTwilioCredentials } from "@/actions/communication/client/sendMessage";
+import { getTwilioCredentials } from "@/actions/communication/client/sendTwilioMessage";
 import { useServerGet } from "@/hooks/useServerGet";
 import { errorToast, successToast } from "@/lib/toast";
 import React, { ChangeEvent, FormEvent, useEffect, useState } from "react";

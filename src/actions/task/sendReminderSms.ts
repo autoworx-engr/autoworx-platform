@@ -1,8 +1,9 @@
 "use server";
 
-import { sendMessage } from "@/actions/communication/client/sendMessage";
 import { db } from "@/lib/db";
 import getUser from "@/lib/getUser";
+import { sendTwilioMessage } from "../communication/client/sendTwilioMessage";
+import { sendInfobipMessage } from "../communication/client/sendInfobipMessage";
 
 export async function sendReminderSms({ invoiceId }: { invoiceId: string }) {
   try {
@@ -78,12 +79,29 @@ export async function sendReminderSms({ invoiceId }: { invoiceId: string }) {
             : "No vehicle Found"
         ) +
       `\n\nInvoice Link: ${process.env.NEXT_PUBLIC_APP_URL}/public-invoice/${invoice.id}`;
-    sendMessage({
-      clientId: invoice.client.id,
-      // subject: variabledSubject,
-      message: variabledBody || "",
-      attachments: [],
+
+    const company = await db.company.findUnique({
+      where: { id: user.companyId },
+      select: { smsGateway: true },
     });
+
+    try {
+      if (company?.smsGateway === "TWILIO") {
+        sendTwilioMessage({
+          clientId: invoice.client.id,
+          message: variabledBody || "",
+          attachments: [],
+        });
+      } else if (company?.smsGateway === "INFOBIP") {
+        sendInfobipMessage({
+          clientId: invoice.client.id,
+          message: variabledBody || "",
+          attachments: [],
+        });
+      }
+    } catch (error) {
+      console.log("🚀 ~ sendReminderSms ~ error:", error);
+    }
     return {
       success: true,
     };

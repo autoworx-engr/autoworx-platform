@@ -58,6 +58,11 @@ export const createInfobipConfig = async ({
       },
     });
 
+    await db.company.update({
+      where: { id: companyId },
+      data: { smsGateway: "INFOBIP" },
+    });
+
     return { success: true, data: infobipConfig };
   } catch (error) {
     console.error("Error creating Infobip config:", error);

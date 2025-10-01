@@ -568,9 +568,14 @@ model Company {
   BugReport                        BugReport[]
   salaryHistory                    SalaryHistory[]
   appointmentTitles                AppointmentTitle[]
-  shortLinks                       ShortLink[] // Short links associated with this company
+  shortLinks                       ShortLink[]
+  smsGateway                       SmsGateway @default(TWILIO)
 }
 
+enum SmsGateway {
+  TWILIO
+  INFOBIP
+}
 
 
 // create model that will handle multiple companies join and collaboration

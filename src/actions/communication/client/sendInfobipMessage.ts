@@ -85,9 +85,6 @@ export async function sendInfobipMessage({
       );
       const normalizedRecipient = normalizeUSPhoneNumber(to);
 
-      console.log("Sender (normalized):", normalizedSender);
-      console.log("Recipient (normalized):", normalizedRecipient);
-
       // Send SMS/MMS via Infobip API
       const infobipApiKey = process.env.INFOBIP_API_KEY;
       const infobipBaseUrl = "https://" + process.env.INFOBIP_BASE_URL;
@@ -157,7 +154,7 @@ export async function sendInfobipMessage({
               sender: normalizedSender || infobipConfig.phoneNumber,
               destinations: [{ to: normalizedRecipient || to }],
               content: {
-                title: "Some title",
+                // title: "Some title",
                 messageSegments: messageSegments,
               },
             },
@@ -210,7 +207,6 @@ export async function sendInfobipMessage({
       }
 
       const infobipResult = await infobipResponse.json();
-      console.log("Infobip API response:", infobipResult);
 
       let dbMessage = await db.clientSMS.create({
         data: {

@@ -1,4 +1,4 @@
-import { sendMessage } from "@/actions/communication/client/sendMessage";
+import { sendTwilioMessage } from "@/actions/communication/client/sendTwilioMessage";
 import { errorToast } from "@/lib/toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { smsQueryKey } from "../_utils/queryKey";

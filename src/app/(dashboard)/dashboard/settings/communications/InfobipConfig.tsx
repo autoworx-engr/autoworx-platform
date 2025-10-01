@@ -5,13 +5,19 @@ import {
 } from "@/actions/communication/client/createInfobipConfig";
 import { useServerGet } from "@/hooks/useServerGet";
 import { successToast, errorToast } from "@/lib/toast";
-import React from "react";
+import React, { useEffect } from "react";
 
 type Props = {};
 
 const InfobipConfig = (props: Props) => {
   const [phone, setPhone] = React.useState("");
   const { data } = useServerGet(getInfobipConfig);
+  useEffect(() => {
+    if (data?.data?.phoneNumber) {
+      setPhone(data.data.phoneNumber);
+    }
+  }, [data]);
+
   return (
     <div className="w-full max-w-2xl rounded-lg bg-background p-10 shadow-lg">
       <form
@@ -43,7 +49,7 @@ const InfobipConfig = (props: Props) => {
             name="phoneNumber"
             placeholder="Enter phone number"
             onChange={(e) => setPhone(e.target.value)}
-            value={data?.data?.phoneNumber || phone}
+            value={phone}
             required
             className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm
                    focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
