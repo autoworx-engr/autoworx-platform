@@ -5,21 +5,23 @@ import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
 import { NotificationSettingsV2 } from "@prisma/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import MySwitch from "./MySwitch";
-import { getTwilioCredentials } from "@/actions/communication/client/sendMessage";
+import { getTwilioCredentials } from "@/actions/communication/client/sendTwilioMessage";
 import { errorToast } from "@/lib/toast";
 
 type TProps = {
   setting: NotificationSettingsV2;
-  isPayment?:boolean;
+  isPayment?: boolean;
 };
 
 type TMutationFnProps = {
   switchKey: "email_enabled" | "push_enabled" | "text_enabled";
   value: boolean;
-  
 };
 
-export default function NotificationTableRow({ setting, isPayment=false }: TProps) {
+export default function NotificationTableRow({
+  setting,
+  isPayment = false,
+}: TProps) {
   const settingTitle = getNotificationTitle(setting.notification_type || "");
   const user = useGetCurrentUser();
 
@@ -77,7 +79,7 @@ export default function NotificationTableRow({ setting, isPayment=false }: TProp
               let twilioCredentials = await getTwilioCredentials();
               if (!twilioCredentials && value) {
                 errorToast(
-                  "Twilio credentials not found, set credentials first",
+                  "Twilio credentials not found, set credentials first"
                 );
                 return;
               }

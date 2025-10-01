@@ -1,6 +1,7 @@
 "use server";
 
-import { sendMessage } from "@/actions/communication/client/sendMessage";
+import { sendInfobipMessage } from "@/actions/communication/client/sendInfobipMessage";
+import { sendTwilioMessage } from "@/actions/communication/client/sendTwilioMessage";
 import { db } from "@/lib/db";
 import getUser from "@/lib/getUser";
 import { getOrCreateInvoiceShortLink } from "@/lib/shortener";
@@ -73,8 +74,10 @@ export async function sendInvoiceSms({ invoiceId }: { invoiceId: string }) {
       user.companyId
     );
 
-    let invoiceLink = shortLinkResult.originalUrl || `${process.env.NEXT_PUBLIC_APP_URL}/public-invoice/${invoice.id}`; // fallback to original URL
-    
+    let invoiceLink =
+      shortLinkResult.originalUrl ||
+      `${process.env.NEXT_PUBLIC_APP_URL}/public-invoice/${invoice.id}`; // fallback to original URL
+
     if (shortLinkResult.success && shortLinkResult.shortUrl) {
       invoiceLink = shortLinkResult.shortUrl;
       console.log("📧 Invoice SMS - Short link:", {
@@ -83,14 +86,17 @@ export async function sendInvoiceSms({ invoiceId }: { invoiceId: string }) {
         shortUrl: shortLinkResult.shortUrl,
         shortCode: shortLinkResult.shortCode,
         invoiceId: invoice.id,
-        clientName: clientName
+        clientName: clientName,
       });
     } else {
-      console.log("⚠️ Invoice SMS - Failed to get/create short link, using original URL:", {
-        error: shortLinkResult.error,
-        originalUrl: shortLinkResult.originalUrl,
-        invoiceId: invoice.id
-      });
+      console.log(
+        "⚠️ Invoice SMS - Failed to get/create short link, using original URL:",
+        {
+          error: shortLinkResult.error,
+          originalUrl: shortLinkResult.originalUrl,
+          invoiceId: invoice.id,
+        }
+      );
     }
 
     let variabledBody =
@@ -111,15 +117,30 @@ export async function sendInvoiceSms({ invoiceId }: { invoiceId: string }) {
         .replace(
           "<BUSINESS_NAME>",
           invoice?.company?.name || "No business name"
-        ) || "") +
-      `\n\n${invoiceLink}`;
+        ) || "") + `\n\n${invoiceLink}`;
 
-    sendMessage({
-      clientId: invoice.client.id,
-      // subject: variabledSubject,
-      message: variabledBody || "",
-      attachments: [],
+    const company = await db.company.findUnique({
+      where: { id: user.companyId },
+      select: { smsGateway: true },
     });
+
+    try {
+      if (company?.smsGateway === "TWILIO") {
+        sendTwilioMessage({
+          clientId: invoice.client.id,
+          message: variabledBody || "",
+          attachments: [],
+        });
+      } else if (company?.smsGateway === "INFOBIP") {
+        sendInfobipMessage({
+          clientId: invoice.client.id,
+          message: variabledBody || "",
+          attachments: [],
+        });
+      }
+    } catch (error) {
+      console.log("Failed to send invoice sms:", error);
+    }
     return {
       success: true,
     };
