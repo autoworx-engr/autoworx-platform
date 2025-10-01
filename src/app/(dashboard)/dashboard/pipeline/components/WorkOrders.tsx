@@ -11,6 +11,7 @@ import moment from "moment";
 import { useEffect, useState } from "react";
 import Filter from "./Filter";
 import { Spin } from "antd";
+import { normalizeSearch } from "@/utils/normalizeSearch";
 
 const WorkOrders = () => {
   const { data: invoices } = useServerGet(getWorkOrders);

@@ -23,7 +23,7 @@ export default function Header() {
             name="search"
             type="text"
             className="w-full rounded-md border border-white px-4 py-1 focus:outline-none"
-            placeholder="Search"
+            placeholder="Search by client ID, name, email or phone..."
             onChange={(e) => setFilter({ search: e.target.value })}
           />
         </div>

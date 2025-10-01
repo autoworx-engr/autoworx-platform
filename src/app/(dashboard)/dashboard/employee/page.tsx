@@ -43,10 +43,13 @@ export default async function Page() {
           startDate: true,
         },
         orderBy: {
-          startDate: "desc",
+          createdAt: "desc",
         },
         take: 1,
       },
+    },
+    orderBy: {
+      joinDate: "desc",
     },
   });
 

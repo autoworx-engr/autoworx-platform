@@ -28,6 +28,21 @@ export default function FilterBySearchBox({ searchText }: TProps) {
     router.replace(newPath);
   };
   const handleSearchChange = useDebounce(handleInputChange, 500);
+
+  const getPlaceholderForPath = () => {
+    if (pathname.includes("revenue")) {
+      return "Search by invoice, customer, vehicle";
+    } else if (pathname.includes("inventory")) {
+      return "Search by name";
+    } else if (pathname.includes("payments")) {
+      return "Search by invoice, client, vehicle";
+    } else if (pathname.includes("teams")) {
+      return "Search by employee name";
+    } else {
+      return "Search";
+    }
+  };
+
   return (
     <div className="relative w-full min-w-[300] max-w-[693px]">
       <CiSearch className="absolute left-[10px] top-[9px]" />
@@ -39,7 +54,7 @@ export default function FilterBySearchBox({ searchText }: TProps) {
         value={searchTerm}
         className="w-full rounded-sm border py-1 pl-8 focus:outline-none"
         type="text"
-        placeholder="search by invoice id, client, vehicle"
+        placeholder={getPlaceholderForPath() + "..."}
       />
     </div>
   );
