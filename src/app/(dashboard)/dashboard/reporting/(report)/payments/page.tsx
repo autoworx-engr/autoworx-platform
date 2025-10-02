@@ -149,7 +149,7 @@ export default async function PaymentReportPage({ searchParams }: TProps) {
     // Convert to uppercase for case-insensitive comparison
     const methodToFilter = searchParams.paymentMethod.toUpperCase();
 
-    filteredPayments = paymentInfo.filter(payment => {
+    filteredPayments = filteredPayments.filter(payment => {
       // Check if the payment type matches the selected method
       // Handle different naming conventions (Card/CARD, Cash/CASH, etc.)
       const paymentType = payment.type.toUpperCase();
