@@ -129,11 +129,11 @@ export default function PaymentDisplay({
                     {payment.invoice?.client?.lastName}
                   </td>
                   <td className="border-b px-4 py-2 text-left">
-                    {payment.invoice?.vehicle?.year || ""} -{" "}
-                    {payment.invoice?.vehicle?.make} -{" "}
+                    {payment.invoice?.vehicle?.year || ""}{" "}
+                    {payment.invoice?.vehicle?.make}{" "}
                     {payment.invoice?.vehicle?.model}{" "}
                     {payment.invoice?.vehicle?.other
-                      ? " - " + payment.invoice?.vehicle?.other
+                      ? payment.invoice?.vehicle?.other
                       : ""}
                   </td>
                   <td className="border-b px-4 py-2 text-left">

@@ -210,13 +210,20 @@ export default function TaskContentModal({
   async function handleSubmit() {
     // Validate form
     if (!title.trim()) {
-      return errorToast("Task title is required!");
+      showError({
+        field: "title",
+        message: "Task title is required.",
+      });
+      return;
     }
 
     if (date && date.trim() !== "" && (!startTime || !endTime)) {
-      return errorToast(
-        "Start time and End time are required when a date is selected!"
-      );
+      showError({
+        field: "all",
+        message:
+          "Start time and End time are required when a date is selected.",
+      });
+      return;
     }
 
     setIsLoading(true);
@@ -360,16 +367,28 @@ export default function TaskContentModal({
       ) : (
         <form>
           <div className="mb-4 flex flex-col">
-            <label htmlFor="title">Title</label>
+            <label htmlFor="title">
+              Title <span className="text-[#E9405F]">*</span>
+            </label>
 
             <input
               type="text"
               name="title"
               className="mt-2 rounded-md border-2 border-gray-500 p-1"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value;
+                setTitle(value);
+                if (!value.trim()) {
+                  showError({
+                    field: "title",
+                    message: "Task title is required.",
+                  });
+                } else {
+                  clearError();
+                }
+              }}
               autoFocus
-              required
             />
           </div>
 

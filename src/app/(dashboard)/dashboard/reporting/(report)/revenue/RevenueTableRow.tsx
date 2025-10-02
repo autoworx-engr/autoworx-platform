@@ -5,7 +5,7 @@ import { Tooltip } from "antd";
 import Link from "next/link";
 import { FaExclamation } from "react-icons/fa";
 import { TInvoice } from "./page";
-import { FormatUtcToTimezone } from "@/utils/FormatUtcToTimezone";
+import moment from "moment-timezone";
 
 type TProps = {
   invoice: TInvoice & {
@@ -34,12 +34,6 @@ export default function RevenueTableRow({
   lossDetails,
   timezone,
 }: TProps) {
-  const formattedDate = FormatUtcToTimezone(
-    invoice?.deliveredAt!,
-    timezone,
-    "MMM Do, YYYY"
-  );
-
   // Display the actual cost (what we spent)
   const displayCost = Number(invoice.costPrice);
 
@@ -73,7 +67,11 @@ export default function RevenueTableRow({
           buttonChildClassName="text-blue-500"
         />
       </td>
-      <td className="border-b px-4 py-2 text-left">{formattedDate}</td>
+      <td className="border-b px-4 py-2 text-left">
+        {invoice?.deliveredAt
+          ? moment.tz(invoice.deliveredAt, timezone).format("MM/DD/YYYY")
+          : ""}
+      </td>
       <td className="border-b px-4 py-2 text-left">
         {formatCurrency(Number(invoice.grandTotal?.toString() || 0))}
       </td>
