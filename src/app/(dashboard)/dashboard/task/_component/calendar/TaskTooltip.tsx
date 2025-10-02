@@ -8,7 +8,10 @@ type TTaskTooltipProps = {
 
 export default function TaskTooltip({ event, onModalOpen }: TTaskTooltipProps) {
   return (
-    <div>
+    <div 
+      onClick={(e) => e.stopPropagation()}
+      onMouseDown={(e) => e.stopPropagation()}
+    >
       <div className="flex items-center justify-between">
         <h3 className="font-semibold">{event.title}</h3>
 
@@ -17,7 +20,11 @@ export default function TaskTooltip({ event, onModalOpen }: TTaskTooltipProps) {
           className="text- rounded-full bg-[#6571FF] p-2 text-white"
           onClick={(e) => {
             e.stopPropagation();
+            e.preventDefault();
             onModalOpen && onModalOpen();
+          }}
+          onMouseDown={(e) => {
+            e.stopPropagation();
           }}
         >
           <SquarePen className="w-4 h-4 cursor-pointer mx-auto" />

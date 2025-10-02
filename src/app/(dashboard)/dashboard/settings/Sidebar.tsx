@@ -86,29 +86,42 @@ const Sidebar = (props: Props) => {
 
   // Helper: Check if user has individual permission for business settings
   function canAccessBusinessSettings(): boolean {
+    console.log('🔍 DEBUG canAccessBusinessSettings:', {
+      permissions,
+      companyFeaturePermission,
+      role: permissions?.role,
+      userPermissions: permissions?.userPermissions,
+      companyPermissions: permissions?.companyPermissions
+    });
+    
     if (!permissions) return false;
     
-    // Admin always has access
+    // Admin always has access (skip company feature check for admin)
     if (permissions.role === "Admin") return true;
     
-    // For managers, check if they have businessSettings permission
-    if (permissions.role === "Manager") {
-      // Check company permission first
+    // First check: Company must have the business settings feature enabled
+    const hasCompanyFeature = companyFeaturePermission?.some(
+      (perm) => perm.permission_name === "businessSettings" && perm.enabled
+    );
+
+    if (!hasCompanyFeature) return false; // Company doesn't have this feature
+    
+    // Second check: User permission hierarchy
+    // Priority: 1. Individual user permission, 2. Role-based permission
+    
+    // If user has individual permissions defined, use those (individual override)
+    if (permissions.userPermissions) {
       //@ts-ignore
-      const hasCompanyPermission = Boolean(permissions.companyPermissions?.businessSettings);
-      if (!hasCompanyPermission) return false;
-      
-      // If company allows it, check user permission
-      if (permissions.userPermissions) {
-        //@ts-ignore
-        return Boolean(permissions.userPermissions?.businessSettings);
-      }
-      
-      // If no user permissions defined, assume company permission is enough
-      return hasCompanyPermission;
+      const individualPermission = Boolean(permissions.userPermissions?.businessSettings);
+      return individualPermission;
     }
     
-    // Other roles don't have access
+    // Fall back to role-based permission if no individual permissions are defined
+    if (permissions.role === "Manager") {
+      //@ts-ignore
+      const rolePermission = Boolean(permissions.companyPermissions?.businessSettings);
+      return rolePermission;
+    }
     return false;
   }
 

@@ -37,22 +37,24 @@ const WorkOrders = () => {
 
   const filteredInvoices = invoices?.filter((invoice) => {
     const mathcedType = invoice.type === "Invoice";
+    const matchesSearch = (() => {
+      if (!search) return true;
 
-    const fullName = invoice.client?.firstName + " " + invoice.client?.lastName;
-    const vehicle =
-      invoice.vehicle?.year +
-      " " +
-      invoice.vehicle?.make +
-      " " +
-      invoice.vehicle?.model;
-    const matchesSearch =
-      normalizeSearch(fullName || "").includes(normalizeSearch(search)) ||
-      normalizeSearch(vehicle || "").includes(normalizeSearch(search)) ||
-      invoice.invoiceItems.some((item) =>
-        normalizeSearch(item.service?.name || "").includes(
-          normalizeSearch(search)
+      const searchLower = search.toLowerCase();
+      const fullName =
+        `${invoice.client?.firstName ?? ""} ${invoice.client?.lastName ?? ""}`.toLowerCase();
+
+      return (
+        fullName.includes(searchLower) ||
+        invoice.client?.firstName?.toLowerCase().includes(searchLower) ||
+        invoice.client?.lastName?.toLowerCase().includes(searchLower) ||
+        invoice.vehicle?.make?.toLowerCase().includes(searchLower) ||
+        invoice.vehicle?.model?.toLowerCase().includes(searchLower) ||
+        invoice.invoiceItems.some((item) =>
+          item.service?.name?.toLowerCase().includes(searchLower)
         )
       );
+    })();
 
     const matchesStatus = status ? invoice.column?.title === status : true;
 
