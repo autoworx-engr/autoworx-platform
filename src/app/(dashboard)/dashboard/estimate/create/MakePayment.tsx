@@ -259,7 +259,8 @@ export default function MakePayment() {
     reset();
     if (payment) {
       setTab(payment.type);
-      setDate(payment.date || new Date());
+      // setDate(payment.date || new Date());
+      setDate(new Date());
       // setNotes(payment.notes || "");
       switch (payment.type) {
         case "CARD":
@@ -351,12 +352,10 @@ export default function MakePayment() {
                       type="date"
                       value={date ? moment(date).format("YYYY-MM-DD") : ""}
                       onChange={(e) => {
-                        const localDate = moment.tz(
-                          e.target.value,
-                          "YYYY-MM-DD",
-                          timezone
-                        );
-                        setDate(localDate.toDate());
+                        const [year, month, day] = e.target.value
+                          .split("-")
+                          .map(Number);
+                        setDate(new Date(year, month - 1, day));
                       }}
                     />
                   </div>
@@ -365,7 +364,7 @@ export default function MakePayment() {
                       labelClassName="text-sm md:text-base"
                       name="card"
                       type="text"
-                      label="Credit Card (Last 4 digits)"
+                      label="Credit Cards (Last 4 digits)"
                       value={card}
                       onChange={(e) => setCard(e.target.value)}
                     />

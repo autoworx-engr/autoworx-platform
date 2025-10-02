@@ -36,7 +36,7 @@ export default function AddNewEmployee({
     salaryType: SalaryType;
     salaryAmount: number;
   } | null>(null);
-  
+
   const { data: companyName } = useServerGet(getCompany);
   const { showError, clearError } = useFormErrorStore();
 
@@ -212,9 +212,9 @@ export default function AddNewEmployee({
       if (res.type === "globalError") {
         console.error(res);
         showError(res);
-        res.errorSource && res.errorSource.length > 0
-          ? errorToast(res.errorSource[0].message)
-          : errorToast(res.message);
+        // res.errorSource && res.errorSource.length > 0
+        //   ? errorToast(res.errorSource[0].message)
+        //   : errorToast(res.message);
         return;
       } else if (res.type === "success") {
         setOpen(false);

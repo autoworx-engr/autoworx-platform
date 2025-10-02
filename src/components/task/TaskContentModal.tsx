@@ -33,6 +33,7 @@ import { formatTime12Hour } from "@/utils/formateTime12Hours";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { Select } from "antd";
 import { normalizeTime } from "@/utils/normalizeTime";
+import TaskSpinner from "@/app/(dashboard)/dashboard/task/_component/ui/TaskSpinner";
 
 type NewTaskProps = {
   onlyOneUser?: boolean;
@@ -79,13 +80,18 @@ export default function TaskContentModal({
   const [startTime, setStartTime] = useState<string>("");
   const [endTime, setEndTime] = useState<string>("");
   const [date, setDate] = useState<string>("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(fromEdit && !!taskId);
   const { showError, clearError } = useFormErrorStore();
 
   const { setUpdateVariable } = useCalendarStore();
 
   // get task task data for update task
   useEffect(() => {
+    if (fromEdit && taskId && !taskData && !isFetched) {
+      setIsLoading(true);
+      return;
+    }
+
     if (taskData && fromEdit) {
       const assignUsers = taskData?.taskUser?.map(
         (taskUserData) => taskUserData.user.id
@@ -117,8 +123,11 @@ export default function TaskContentModal({
         }
       }
       setPriority(taskData?.priority || "Low");
+      setIsLoading(false);
+    } else if (isFetched && !taskData && fromEdit) {
+      setIsLoading(false);
     }
-  }, [taskData, fromEdit]);
+  }, [taskData, fromEdit, taskId, isFetched]);
 
   // Add function to generate a reasonable default end time based on start time
   const getDefaultEndTime = (start: string) => {
@@ -201,13 +210,20 @@ export default function TaskContentModal({
   async function handleSubmit() {
     // Validate form
     if (!title.trim()) {
-      return errorToast("Task title is required!");
+      showError({
+        field: "title",
+        message: "Task title is required.",
+      });
+      return;
     }
 
     if (date && date.trim() !== "" && (!startTime || !endTime)) {
-      return errorToast(
-        "Start time and End time are required when a date is selected!"
-      );
+      showError({
+        field: "all",
+        message:
+          "Start time and End time are required when a date is selected.",
+      });
+      return;
     }
 
     setIsLoading(true);
@@ -337,186 +353,209 @@ export default function TaskContentModal({
   });
 
   return (
-    <DialogContent>
+    <DialogContent
+      className={cn(isLoading ? "block" : "flex flex-col", "min-h-[500px]")}
+    >
       <DialogHeader>
         <DialogTitle>{fromEdit ? "Update Task" : "Add Task"}</DialogTitle>
       </DialogHeader>
       <FormError />
-      <form>
-        <div className="mb-4 flex flex-col">
-          <label htmlFor="title">Title</label>
-
-          <input
-            type="text"
-            name="title"
-            className="mt-2 rounded-md border-2 border-gray-500 p-1"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            autoFocus
-            required
-          />
+      {isLoading ? (
+        <div className="flex min-h-[500px] my-auto items-center justify-center py-10 text-center">
+          <TaskSpinner />
         </div>
+      ) : (
+        <form>
+          <div className="mb-4 flex flex-col">
+            <label htmlFor="title">
+              Title <span className="text-[#E9405F]">*</span>
+            </label>
 
-        <div className="mb-4 flex flex-col">
-          <label htmlFor="description">Description</label>
+            <input
+              type="text"
+              name="title"
+              className="mt-2 rounded-md border-2 border-gray-500 p-1"
+              value={title}
+              onChange={(e) => {
+                const value = e.target.value;
+                setTitle(value);
+                if (!value.trim()) {
+                  showError({
+                    field: "title",
+                    message: "Task title is required.",
+                  });
+                } else {
+                  clearError();
+                }
+              }}
+              autoFocus
+            />
+          </div>
 
-          <textarea
-            name="description"
-            className="mt-2 rounded-md border-2 border-gray-500 p-1"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-        </div>
+          <div className="mb-4 flex flex-col">
+            <label htmlFor="description">Description</label>
 
-        <div id="timer-parent" className="mb-4 flex flex-col">
-          {/* <label htmlFor="time">Time</label> */}
-          <div className="flex items-center space-x-2">
-            <div className="flex w-full flex-col lg:flex-row lg:space-x-2">
-              <SlimInput
-                name="date"
-                label="Date"
-                rootClassName="grow"
-                type="date"
-                value={date ?? ""}
-                // min={minDate}
-                onChange={(event) => setDate(event.currentTarget.value)}
-              />
-              <div className="flex items-end gap-2">
-                {/* Start Time */}
-                <label className="flex flex-col items-start">
-                  <span className="mb-1 text-sm font-medium text-gray-500">
-                    Start Time
-                  </span>
-                  <div>
+            <textarea
+              name="description"
+              className="mt-2 rounded-md border-2 border-gray-500 p-1"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+          </div>
+
+          <div id="timer-parent" className="mb-4 flex flex-col">
+            {/* <label htmlFor="time">Time</label> */}
+            <div className="flex items-center space-x-2">
+              <div className="flex w-full flex-col lg:flex-row lg:space-x-2">
+                <SlimInput
+                  name="date"
+                  label="Date"
+                  rootClassName="grow"
+                  type="date"
+                  value={date ?? ""}
+                  // min={minDate}
+                  onChange={(event) => setDate(event.currentTarget.value)}
+                />
+                <div className="flex items-end gap-2">
+                  {/* Start Time */}
+                  <label className="flex flex-col items-start">
+                    <span className="mb-1 text-sm font-medium text-gray-500">
+                      Start Time
+                    </span>
+                    <div>
+                      <Select
+                        value={startTime}
+                        onChange={(value) =>
+                          handleTimeChange(
+                            { target: { value } } as any,
+                            "start"
+                          )
+                        }
+                        style={{ width: "100%", height: 34 }}
+                        className="border-slate-400 border text-gray-500 rounded-md"
+                      >
+                        <Option value="">Start Time</Option>
+
+                        {timeOptions.map((time) => (
+                          <Option key={time.value} value={time.value}>
+                            <p className="text-base text-gray-600">
+                              {time.label}
+                            </p>
+                          </Option>
+                        ))}
+                      </Select>
+                    </div>
+                  </label>
+
+                  <label className="flex flex-col items-start">
+                    <span className="mb-1 text-sm font-medium text-gray-500">
+                      End Time
+                    </span>
                     <Select
-                      value={startTime}
+                      value={endTime}
                       onChange={(value) =>
-                        handleTimeChange({ target: { value } } as any, "start")
+                        handleTimeChange({ target: { value } } as any, "end")
                       }
                       style={{ width: "100%", height: 34 }}
-                      className="border-slate-400 border text-gray-500 rounded-md"
+                      className="border-slate-400 border rounded-md"
                     >
-                      <Option value="">Start Time</Option>
+                      <Option value="">End Time</Option>
 
                       {timeOptions.map((time) => (
                         <Option key={time.value} value={time.value}>
-                          <p className="text-base text-gray-600">
-                            {time.label}
-                          </p>
+                          {time.label}
                         </Option>
                       ))}
                     </Select>
-                  </div>
-                </label>
-
-                <label className="flex flex-col items-start">
-                  <span className="mb-1 text-sm font-medium text-gray-500">
-                    End Time
-                  </span>
-                  <Select
-                    value={endTime}
-                    onChange={(value) =>
-                      handleTimeChange({ target: { value } } as any, "end")
-                    }
-                    style={{ width: "100%", height: 34 }}
-                    className="border-slate-400 border rounded-md"
-                  >
-                    <Option value="">End Time</Option>
-
-                    {timeOptions.map((time) => (
-                      <Option key={time.value} value={time.value}>
-                        {time.label}
-                      </Option>
-                    ))}
-                  </Select>
-                </label>
+                  </label>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* custom radio. show user name and image (column)*/}
-        {/* TODO: */}
-        {companyUsers?.length > 0 && (
-          <AssignTaskDropDown
-            companyUsers={companyUsers}
-            assignedUsers={assignedUsers}
-            setAssignedUsers={setAssignedUsers}
-            onlyOneUser={onlyOneUser}
-            fromUpdate={fromEdit}
-          />
-        )}
-
-        <div className="mb-4 flex flex-col">
-          <label>Priority</label>
-          <div className="flex items-center gap-5">
-            <button
-              className="relative flex w-full items-center justify-center rounded-md bg-[#6571FF] p-2 text-white"
-              onClick={() => setPriority("Low")}
-              type="button"
-            >
-              Low
-              {priority === "Low" && (
-                <FaCheck className="absolute right-2 text-white" />
-              )}
-            </button>
-            <button
-              className="relative flex w-full items-center justify-center rounded-md bg-[#25AADD] p-2 text-white"
-              onClick={() => setPriority("Medium")}
-              type="button"
-            >
-              Medium
-              {priority === "Medium" && (
-                <FaCheck className="absolute right-2 text-white" />
-              )}
-            </button>
-            <button
-              className="relative flex w-full items-center justify-center rounded-md bg-[#006D77] p-2 text-white"
-              onClick={() => setPriority("High")}
-              type="button"
-            >
-              High
-              {priority === "High" && (
-                <FaCheck className="absolute right-2 text-white" />
-              )}
-            </button>
-          </div>
-        </div>
-
-        <div
-          className={cn(
-            "flex justify-between gap-10 md:gap-0",
-            !fromEdit && "justify-end"
+          {/* custom radio. show user name and image (column)*/}
+          {/* TODO: */}
+          {companyUsers?.length > 0 && (
+            <AssignTaskDropDown
+              companyUsers={companyUsers}
+              assignedUsers={assignedUsers}
+              setAssignedUsers={setAssignedUsers}
+              onlyOneUser={onlyOneUser}
+              fromUpdate={fromEdit}
+            />
           )}
-        >
-          {fromEdit && taskId && (
-            <button
-              className="text-xl text-red-500 hover:text-red-700"
-              type="button"
-              onClick={() => handleDeleteTask(taskId)}
-            >
-              <FaTrash />
-            </button>
-          )}
-          <DialogFooter>
-            <DialogClose asChild>
+
+          <div className="mb-4 flex flex-col">
+            <label>Priority</label>
+            <div className="flex items-center gap-5">
               <button
+                className="relative flex w-full items-center justify-center rounded-md bg-[#6571FF] p-2 text-white"
+                onClick={() => setPriority("Low")}
                 type="button"
-                className="mt-1 rounded-md border px-4 py-1 lg:mt-0"
               >
-                Cancel
+                Low
+                {priority === "Low" && (
+                  <FaCheck className="absolute right-2 text-white" />
+                )}
               </button>
-            </DialogClose>
-            <Submit
-              className="rounded-md border bg-[#6571FF] px-4 py-1 text-white disabled:opacity-50"
-              formAction={handleSubmit}
-              disabled={isLoading || (fromEdit && !isFetched)}
-            >
-              Save
-            </Submit>
-          </DialogFooter>
-        </div>
-      </form>
+              <button
+                className="relative flex w-full items-center justify-center rounded-md bg-[#25AADD] p-2 text-white"
+                onClick={() => setPriority("Medium")}
+                type="button"
+              >
+                Medium
+                {priority === "Medium" && (
+                  <FaCheck className="absolute right-2 text-white" />
+                )}
+              </button>
+              <button
+                className="relative flex w-full items-center justify-center rounded-md bg-[#006D77] p-2 text-white"
+                onClick={() => setPriority("High")}
+                type="button"
+              >
+                High
+                {priority === "High" && (
+                  <FaCheck className="absolute right-2 text-white" />
+                )}
+              </button>
+            </div>
+          </div>
+
+          <div
+            className={cn(
+              "flex justify-between gap-10 md:gap-0",
+              !fromEdit && "justify-end"
+            )}
+          >
+            {fromEdit && taskId && (
+              <button
+                className="text-xl text-red-500 hover:text-red-700"
+                type="button"
+                onClick={() => handleDeleteTask(taskId)}
+              >
+                <FaTrash />
+              </button>
+            )}
+            <DialogFooter>
+              <DialogClose asChild>
+                <button
+                  type="button"
+                  className="mt-1 rounded-md border px-4 py-1 lg:mt-0"
+                >
+                  Cancel
+                </button>
+              </DialogClose>
+              <Submit
+                className="rounded-md border bg-[#6571FF] px-4 py-1 text-white disabled:opacity-50"
+                formAction={handleSubmit}
+                disabled={isLoading || (fromEdit && !isFetched)}
+              >
+                Save
+              </Submit>
+            </DialogFooter>
+          </div>
+        </form>
+      )}
     </DialogContent>
   );
 }

@@ -6,5 +6,6 @@ export const useFindOneMarketingAutomationRule = (id: number) => {
     queryKey: ["marketing-automation", id],
     queryFn: async () => findOneMarketingAutomationRules(id),
     enabled: !!id,
+    staleTime: 3600 * 1000
   });
 };

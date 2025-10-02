@@ -23,6 +23,7 @@ type TProps = {
     search?: string;
     page?: string;
     take?: string;
+    paymentMethod: string;
   };
 };
 
@@ -98,15 +99,16 @@ export default async function PaymentReportPage({ searchParams }: TProps) {
   let filteredPayments =
     searchParams?.search && paymentInfo
       ? paymentInfo.filter((payment: any) => {
-          if (!payment.invoice.client && !payment.invoice.id) {
+          if (!payment.invoice?.client && !payment.invoiceId) {
             return false;
           }
-          const fullName = `${payment.invoice?.client?.firstName} ${payment.invoice?.client?.lastName}`;
+          const fullName = `${payment.invoice?.client?.firstName || ""} ${payment.invoice?.client?.lastName || ""}`;
+          const invoiceId = payment.invoiceId ? String(payment.invoiceId) : "";
           return (
             normalizeSearch(fullName)?.includes(
               normalizeSearch(searchParams?.search || "")
             ) ||
-            normalizeSearch(payment.invoice.id)?.includes(
+            normalizeSearch(invoiceId)?.includes(
               normalizeSearch(searchParams?.search || "")
             )
           );
@@ -130,7 +132,7 @@ export default async function PaymentReportPage({ searchParams }: TProps) {
       ? moment.tz(formattedEndDate!, "MM/DD/YYYY", timezone).endOf("day")
       : null;
 
-    filteredPayments = filteredPayments.filter((payment) => {
+    filteredPayments = filteredPayments.filter(payment => {
       if (!payment?.date) {
         return false;
       }
@@ -140,6 +142,28 @@ export default async function PaymentReportPage({ searchParams }: TProps) {
         paymentDate &&
         paymentDate.isBetween(convertedStart, convertedEnd, null, "[]")
       );
+    });
+  }
+
+  if (searchParams.paymentMethod && searchParams.paymentMethod !== "All") {
+    // Convert to uppercase for case-insensitive comparison
+    const methodToFilter = searchParams.paymentMethod.toUpperCase();
+
+    filteredPayments = filteredPayments.filter(payment => {
+      // Check if the payment type matches the selected method
+      // Handle different naming conventions (Card/CARD, Cash/CASH, etc.)
+      const paymentType = payment.type.toUpperCase();
+
+      if (methodToFilter === "CHEQUE" && paymentType === "CHECK") {
+        return true;
+      } else if (
+        methodToFilter === "REFUND" &&
+        Number(payment?.refundedAmount) > 0
+      ) {
+        return true;
+      }
+
+      return paymentType === methodToFilter;
     });
   }
 
@@ -155,6 +179,11 @@ export default async function PaymentReportPage({ searchParams }: TProps) {
   });
   // find the average value
   const totalAmount = paymentInfo.reduce(
+    (acc, payment) => acc + Number(payment.amount),
+    0
+  );
+
+  const filteredTotalAmount = filteredPayments.reduce(
     (acc, payment) => acc + Number(payment.amount),
     0
   );
@@ -175,10 +204,14 @@ export default async function PaymentReportPage({ searchParams }: TProps) {
         filterMultipleSliders={filterMultipleSliders}
         searchParams={searchParams}
       />
-      <div className="my-7 grid grid-cols-2 gap-4 xl:grid-cols-4">
+      <div className="my-7 grid grid-cols-2 gap-4 xl:grid-cols-5">
         <Calculation content="AVERAGE VALUE" amount={averageValue} />
         <Calculation content="OUTSTANDING PAYMENT" amount={totalDue} />
         <Calculation content="TOTAL PAYMENT" amount={totalAmount} />
+        <Calculation
+          content="TOTAL PAYMENT (Filtered)"
+          amount={filteredTotalAmount}
+        />
         <Calculation content="REFUND RATE" amount={0} />
       </div>
       {/* Replace the existing table and mobile card sections with: */}

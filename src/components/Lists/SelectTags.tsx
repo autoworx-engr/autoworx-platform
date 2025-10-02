@@ -42,9 +42,11 @@ export function SelectTags({
   const [open, setOpen] = openStates || useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [selectedColor, setSelectedColor] = useState<SelectedColor>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useOutsideClick(() => {
     setOpen(false);
+    setSearchQuery("");
   });
 
   useEffect(() => {
@@ -156,14 +158,25 @@ export function SelectTags({
                   placeholder="Search"
                   className="w-full rounded-md border-2 border-slate-400 p-1 pl-6 pr-10 focus:outline-none"
                   onKeyDown={(e) => e.stopPropagation()}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                 />
-                <button onClick={() => setOpen && setOpen(false)}>
+                <button
+                  onClick={() => {
+                    setOpen && setOpen(false);
+                    setSearchQuery("");
+                  }}
+                >
                   <FaChevronUp className="absolute right-2 top-1/2 -translate-y-1/2 transform text-[#797979]" />
                 </button>
               </div>
               <div className="max-h-[calc(100vh-60vh)] space-y-1 overflow-y-scroll">
                 {tagList
                   .filter((x) => !tagIds.has(x.id))
+                  .filter((x) =>
+                    searchQuery
+                      ? x.name.toLowerCase().includes(searchQuery.toLowerCase())
+                      : true
+                  )
                   .map((tag) => {
                     return (
                       <DropdownMenuItem
@@ -182,6 +195,7 @@ export function SelectTags({
                               TAG: [-1, -1],
                             });
                           setOpen(false);
+                          setSearchQuery("");
                         }}
                         key={tag.id}
                       >

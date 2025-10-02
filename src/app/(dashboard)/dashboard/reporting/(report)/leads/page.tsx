@@ -20,28 +20,28 @@ type TSliderData = {
   defaultValue?: [number, number];
   type: "price" | "cost" | "profit";
 };
-const filterMultipleSliders: TSliderData[] = [
-  {
-    id: 1,
-    type: "price",
-    min: 0,
-    max: 300,
-    // defaultValue: [50, 250],
-  },
-  {
-    id: 2,
-    type: "cost",
-    min: 0,
-    max: 400,
-    // defaultValue: [100, 300],
-  },
-  {
-    id: 3,
-    type: "profit",
-    min: 0,
-    max: 500,
-  },
-];
+// const filterMultipleSliders: TSliderData[] = [
+//   {
+//     id: 1,
+//     type: "price",
+//     min: 0,
+//     max: 300,
+//     // defaultValue: [50, 250],
+//   },
+//   {
+//     id: 2,
+//     type: "cost",
+//     min: 0,
+//     max: 400,
+//     // defaultValue: [100, 300],
+//   },
+//   {
+//     id: 3,
+//     type: "profit",
+//     min: 0,
+//     max: 500,
+//   },
+// ];
 
 export default function PipelinePage({ searchParams }: TProps) {
   const isDesktop = useIsDesktop();

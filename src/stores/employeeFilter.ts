@@ -23,7 +23,7 @@ export const useEmployeeFilterStore = create<EmployeeFilterState>((set) => ({
   search: "",
   setFilter: ({ dateRange, type, search }) =>
     set((state) => ({
-      dateRange: dateRange || state.dateRange,
+      dateRange: dateRange !== undefined ? dateRange : state.dateRange,
       type: type || state.type,
       search: search ?? state.search,
     })),

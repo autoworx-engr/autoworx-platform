@@ -20,6 +20,7 @@ import { RxAvatar } from "react-icons/rx";
 import { RotatingLines } from "react-loader-spinner";
 import SelectComponent from "./Select";
 import Image from "next/image";
+import { successToast } from "@/lib/toast";
 
 export default function NewFleet({
   fleet,
@@ -165,6 +166,7 @@ export default function NewFleet({
       setMobile("+1");
       clearError();
       setOpen(false);
+      successToast(`Fleet ${isEdit ? "updated" : "created"} successfully`);
     }
   }
 
@@ -304,6 +306,7 @@ export default function NewFleet({
               }}
             />
             <SlimInput
+              type="tel"
               name="mobile"
               label="Mobile Number"
               required

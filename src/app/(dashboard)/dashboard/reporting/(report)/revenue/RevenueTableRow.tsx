@@ -5,17 +5,21 @@ import { Tooltip } from "antd";
 import Link from "next/link";
 import { FaExclamation } from "react-icons/fa";
 import { TInvoice } from "./page";
-import { FormatUtcToTimezone } from "@/utils/FormatUtcToTimezone";
+import moment from "moment-timezone";
 
 type TProps = {
-  invoice: TInvoice & { 
-    costPrice: number; 
+  invoice: TInvoice & {
+    costPrice: number;
     profitPrice: number;
     inventoryLossAmount: number;
     materialLossAmount: number;
     laborLossAmount: number;
     totalLossAmount: number;
-    materialLossDetails: { name: string; loss: number; isFromInventory: boolean }[];
+    materialLossDetails: {
+      name: string;
+      loss: number;
+      isFromInventory: boolean;
+    }[];
   };
   index: number;
   totalLossAmount?: number;
@@ -30,18 +34,12 @@ export default function RevenueTableRow({
   lossDetails,
   timezone,
 }: TProps) {
-  const formattedDate = FormatUtcToTimezone(
-    invoice?.deliveredAt!,
-    timezone,
-    "MMM Do, YYYY"
-  );
-
   // Display the actual cost (what we spent)
   const displayCost = Number(invoice.costPrice);
-  
+
   // Check if there are any losses to show the exclamation mark
   const hasLosses = (totalLossAmount || 0) > 0;
-  
+
   return (
     <tr
       className={cn(
@@ -58,6 +56,7 @@ export default function RevenueTableRow({
         </Link>
       </td>
       <td className="border-b px-4 py-2 text-left">
+        {invoice.vehicle?.year !== 0 ? invoice.vehicle?.year : ""}{" "}
         {invoice.vehicle?.make} {invoice.vehicle?.model}{" "}
         {invoice.vehicle?.submodel} {invoice.vehicle?.other}
       </td>
@@ -68,7 +67,11 @@ export default function RevenueTableRow({
           buttonChildClassName="text-blue-500"
         />
       </td>
-      <td className="border-b px-4 py-2 text-left">{formattedDate}</td>
+      <td className="border-b px-4 py-2 text-left">
+        {invoice?.deliveredAt
+          ? moment.tz(invoice.deliveredAt, timezone).format("MM/DD/YYYY")
+          : ""}
+      </td>
       <td className="border-b px-4 py-2 text-left">
         {formatCurrency(Number(invoice.grandTotal?.toString() || 0))}
       </td>

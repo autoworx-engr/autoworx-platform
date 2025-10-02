@@ -48,14 +48,14 @@ export async function fetchAndTransformData(
   const statusIds = decodedStatus
     ? decodedStatus
         .split(",")
-        .map(id => {
+        .map((id) => {
           if (isNaN(Number(id))) {
             return undefined;
           } else {
             return Number(id);
           }
         })
-        .filter(id => id !== undefined)
+        .filter((id) => id !== undefined)
     : undefined;
 
   if (isNaN(take) || isNaN(page)) {
@@ -72,7 +72,7 @@ export async function fetchAndTransformData(
         const searchTerms = decodedSearchTerm
           .toLowerCase()
           .split(/\s+/)
-          .filter(term => term.length > 0);
+          .filter((term) => term.length > 0);
         console.log("Search Terms:", searchTerms);
         const yearNum = parseInt(decodedSearchTerm, 10);
         const isValidYear = !isNaN(yearNum) && yearNum > 1900 && yearNum < 2100;
@@ -92,30 +92,35 @@ export async function fetchAndTransformData(
           {
             client: {
               OR: [
-                ...clientSearchField.map(field => ({
+                ...clientSearchField.map((field) => ({
                   [field]: {
                     contains: decodedSearchTerm,
+                    mode: "insensitive",
                   },
                 })),
                 // capitalize first letter
-                ...clientSearchField.map(field => ({
+                ...clientSearchField.map((field) => ({
                   [field]: {
                     contains: decodedSearchTerm
                       .split(" ")
-                      .map(text => text.charAt(0).toUpperCase() + text.slice(1))
+                      .map(
+                        (text) => text.charAt(0).toUpperCase() + text.slice(1)
+                      )
                       .join(" "),
+                    mode: "insensitive",
                   },
                 })),
-                ...clientSearchField.map(field => ({
+                ...clientSearchField.map((field) => ({
                   [field]: {
                     contains: decodedSearchTerm.toUpperCase(),
+                    mode: "insensitive",
                   },
                 })),
                 // Match any search term in any client field
                 ...(searchTerms.length > 0
                   ? [
                       {
-                        OR: searchTerms.flatMap(term => [
+                        OR: searchTerms.flatMap((term) => [
                           { firstName: { contains: term } },
                           { lastName: { contains: term } },
                           { email: { contains: term } },
@@ -134,22 +139,25 @@ export async function fetchAndTransformData(
                 // Single term searches - ONLY if exactly one term
                 ...(searchTerms.length === 1
                   ? [
-                      ...vehicleSearchField.map(field => ({
+                      ...vehicleSearchField.map((field) => ({
                         [field]: {
                           contains: decodedSearchTerm,
+                          mode: "insensitive",
                         },
                       })),
                       // capitalize first letter
-                      ...vehicleSearchField.map(field => ({
+                      ...vehicleSearchField.map((field) => ({
                         [field]: {
                           contains:
                             decodedSearchTerm.charAt(0).toUpperCase() +
                             decodedSearchTerm.slice(1),
+                          mode: "insensitive",
                         },
                       })),
-                      ...vehicleSearchField.map(field => ({
+                      ...vehicleSearchField.map((field) => ({
                         [field]: {
                           contains: decodedSearchTerm.toUpperCase(),
+                          mode: "insensitive",
                         },
                       })),
                       ...(isValidYear
@@ -168,11 +176,11 @@ export async function fetchAndTransformData(
                 ...(searchTerms.length > 1
                   ? (() => {
                       // Separate year terms from non-year terms
-                      const yearTerms = searchTerms.filter(term => {
+                      const yearTerms = searchTerms.filter((term) => {
                         const year = parseInt(term, 10);
                         return !isNaN(year) && year > 1900 && year < 2100;
                       });
-                      const nonYearTerms = searchTerms.filter(term => {
+                      const nonYearTerms = searchTerms.filter((term) => {
                         const year = parseInt(term, 10);
                         return isNaN(year) || year <= 1900 || year >= 2100;
                       });
@@ -182,7 +190,7 @@ export async function fetchAndTransformData(
                       // Add year conditions (if any)
                       if (yearTerms.length > 0) {
                         conditions.push({
-                          OR: yearTerms.map(term => ({
+                          OR: yearTerms.map((term) => ({
                             year: { equals: parseInt(term, 10) },
                           })),
                         });
@@ -192,29 +200,32 @@ export async function fetchAndTransformData(
                       if (nonYearTerms.length > 0) {
                         // Try to match all non-year terms in make/model
                         conditions.push({
-                          AND: nonYearTerms.map(term => ({
+                          AND: nonYearTerms.map((term) => ({
                             OR: [
-                              ...vehicleSearchField.map(field => ({
+                              ...vehicleSearchField.map((field) => ({
                                 [field]: {
                                   contains: term,
+                                  mode: "insensitive",
                                 },
                               })),
                               // capitalize first letter
-                              ...vehicleSearchField.map(field => ({
+                              ...vehicleSearchField.map((field) => ({
                                 [field]: {
                                   contains: term
                                     .split(" ")
                                     .map(
-                                      text =>
+                                      (text) =>
                                         text.charAt(0).toUpperCase() +
                                         text.slice(1)
                                     )
                                     .join(" "),
+                                  mode: "insensitive",
                                 },
                               })),
-                              ...vehicleSearchField.map(field => ({
+                              ...vehicleSearchField.map((field) => ({
                                 [field]: {
                                   contains: term.toUpperCase(),
+                                  mode: "insensitive",
                                 },
                               })),
                             ],
@@ -365,7 +376,7 @@ export async function fetchAndTransformData(
     Array.isArray(statusIds) &&
     statusIds.length > 1 &&
     statusIds.includes(deliveredStatus.id)
-      ? data.filter(invoice => {
+      ? data.filter((invoice) => {
           const start = convertedStart ? convertedStart.toDate() : null;
           const end = convertedEnd ? convertedEnd.toDate() : null;
 
@@ -403,13 +414,13 @@ export async function fetchAndTransformData(
 
     // Find exact match first
     const exactIndex = statusOrder.findIndex(
-      status => status.toLowerCase() === normalizedTitle
+      (status) => status.toLowerCase() === normalizedTitle
     );
     if (exactIndex !== -1) return exactIndex;
 
     // Find partial match
     const partialIndex = statusOrder.findIndex(
-      status =>
+      (status) =>
         normalizedTitle.includes(status.toLowerCase()) ||
         status.toLowerCase().includes(normalizedTitle)
     );
@@ -419,7 +430,7 @@ export async function fetchAndTransformData(
     return statusOrder.length;
   };
 
-  const transformedData = filteredPromises.map(item => {
+  const transformedData = filteredPromises.map((item) => {
     const vehicle = item.vehicle;
     const client = item.client;
     const status = item.column;

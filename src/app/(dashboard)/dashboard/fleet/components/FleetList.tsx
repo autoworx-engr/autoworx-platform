@@ -21,16 +21,20 @@ export default function FleetList({
   const [filteredClients, setFilteredClients] = useState(clients);
 
   useEffect(() => {
+    const term = search.toLowerCase().replace(/\s+/g, " ");
     setFilteredClients(
       clients.filter((client) => {
+        const fullName = `${client.firstName} ${client.lastName || ""}`.toLowerCase().replace(/\s+/g, " ");
+        
         return (
-          client.id.toString().includes(search) ||
-          client.firstName.toLowerCase().includes(search.toLowerCase()) ||
-          client.lastName?.toLowerCase().includes(search.toLowerCase()) ||
-          client.email?.toLowerCase().includes(search.toLowerCase()) ||
-          client.mobile?.toLowerCase().includes(search.toLowerCase())
+          client.id.toString().includes(term) ||
+          fullName.includes(term) ||
+          client.firstName.toLowerCase().includes(term) ||
+          (client.lastName?.toLowerCase().includes(term) ?? false) ||
+          (client.email?.toLowerCase().includes(term) ?? false) ||
+          (client.mobile?.toLowerCase().includes(term) ?? false)
         );
-      }),
+      })
     );
   }, [search, clients]);
 
