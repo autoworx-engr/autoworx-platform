@@ -33,7 +33,11 @@ export default function HeaderSearch({ activeTab }: HeaderSearchProps) {
             <input
               ref={inputRef}
               type="text"
-              placeholder="Search..."
+              placeholder={
+                activeTab === "transactions"
+                  ? "Search by Invoice ID, Customer, Vehicle..."
+                  : "Search..."
+              }
               className="w-full rounded border border-[#66738C] p-2 pl-10"
               onChange={(e) => setFilter({ search: e.target.value })}
             />

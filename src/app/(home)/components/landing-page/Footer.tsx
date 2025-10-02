@@ -50,7 +50,7 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/under-cons" className="hover:text-[#00B8D4]">
+                <Link href="/#crm" className="hover:text-[#00B8D4]">
                   Workflows
                 </Link>
               </li>
