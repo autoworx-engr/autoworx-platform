@@ -113,7 +113,16 @@ export default function EstimateAndInvoicePage() {
 
   const handleUpdateCurrency = async () => {
     try {
-      await updateTaxCurrency({ currency, tax, serviceFee });
+      // Ensure tax and serviceFee are valid numbers or default to 0
+      const validTax = tax && !isNaN(Number(tax)) ? tax : "0";
+      const validServiceFee =
+        serviceFee && !isNaN(Number(serviceFee)) ? serviceFee : "0";
+
+      await updateTaxCurrency({
+        currency,
+        tax: validTax,
+        serviceFee: validServiceFee,
+      });
       successToast("Currency, Shop supplies & Tax updated successfully");
     } catch (error) {
       console.log("Error updating currency in page:", error);
@@ -135,7 +144,11 @@ export default function EstimateAndInvoicePage() {
                   label="Tax Amount"
                   className="w-full"
                   onChange={(e) => {
-                    setTax(String(e.target.value));
+                    const value = e.target.value;
+                    // Allow empty string, numbers, and decimal points
+                    if (value === "" || /^\d*\.?\d*$/.test(value)) {
+                      setTax(value);
+                    }
                   }}
                 />
                 <span className="absolute bottom-1 right-1">%</span>
@@ -149,7 +162,11 @@ export default function EstimateAndInvoicePage() {
                   label="Shop Supplies"
                   className="w-full"
                   onChange={(e) => {
-                    setServiceFee(String(e.target.value));
+                    const value = e.target.value;
+                    // Allow empty string, numbers, and decimal points
+                    if (value === "" || /^\d*\.?\d*$/.test(value)) {
+                      setServiceFee(value);
+                    }
                   }}
                 />
                 <span className="absolute bottom-1 right-1">%</span>
