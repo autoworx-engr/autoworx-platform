@@ -79,6 +79,15 @@ export default function EditProduct({ productData }: TProps) {
   };
 
   async function handleSubmit() {
+    // Add validation check first
+    if (!product.productName?.trim()) {
+      showError({
+        field: "productName",
+        message: "Product name is required.",
+      });
+      return; // Stop submission if validation fails
+    }
+
     const name = product.productName as string;
     const description = product.description as string;
     const price = Number(product.price) as number;
@@ -92,10 +101,10 @@ export default function EditProduct({ productData }: TProps) {
     let hasError = false;
 
     // Product name validation
-    if (!name?.trim()) {
+    if (!name.trim()) {
       showError({
         field: "productName",
-        message: "Product name is required.",
+        message: "Product Name is required.",
       });
       hasError = true;
     }
@@ -224,9 +233,12 @@ export default function EditProduct({ productData }: TProps) {
         {/* <div className="block md:hidden">
           <DialogTrigger>Edit Profile</DialogTrigger>
         </div>   */}
-        <DialogContent className="max-h-[80%] w-[96%] max-w-xl grid-rows-[auto,1fr,auto]">
+        <DialogContent
+          className="max-h-[80%] w-[96%] max-w-xl grid-rows-[auto,1fr,auto]"
+          form
+        >
           <DialogHeader>
-            <DialogTitle>Edit Product</DialogTitle>
+            <DialogTitle>Edit product</DialogTitle>
           </DialogHeader>
 
           <FormError />
@@ -359,7 +371,6 @@ export default function EditProduct({ productData }: TProps) {
                 value={product.price as number}
                 name="price"
                 type="number"
-                label="Price"
                 required={false}
               />
               <SlimInput
@@ -386,17 +397,7 @@ export default function EditProduct({ productData }: TProps) {
                 value={product.unit as string}
                 name="unit"
                 type="text"
-                label="Unit"
                 required
-                onBlur={(e) => {
-                  const value = e.target.value;
-                  if (!value.trim()) {
-                    showError({
-                      field: "unit",
-                      message: "Unit is required.",
-                    });
-                  }
-                }}
               />
               <SlimInput
                 onChange={handleChange}
@@ -461,17 +462,7 @@ export default function EditProduct({ productData }: TProps) {
                 value={product.unit as string}
                 name="unit"
                 type="text"
-                label="Unit"
                 required
-                onBlur={(e) => {
-                  const value = e.target.value;
-                  if (!value.trim()) {
-                    showError({
-                      field: "unit",
-                      message: "Unit is required.",
-                    });
-                  }
-                }}
               />
               <SlimInput
                 onChange={handleChange}
@@ -509,13 +500,12 @@ export default function EditProduct({ productData }: TProps) {
             <DialogClose className="rounded-lg border-2 border-slate-400 p-2">
               Cancel
             </DialogClose>
-            <button
+            <Submit
               className="mb-2 flex items-center justify-center rounded-lg border bg-[#6571FF] px-5 py-2 text-white md:mb-0"
               formAction={handleSubmit}
-              type="button"
             >
               Update
-            </button>
+            </Submit>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -40,7 +40,7 @@ export default async function InvoicesPage({
   const statuses = await db.column.findMany({ where: { companyId } });
 
   return (
-    <>
+    <div>
       <Title>Invoices</Title>
 
       <SyncLists categories={categories} tags={tags} statuses={statuses} />
@@ -58,6 +58,6 @@ export default async function InvoicesPage({
           <div>Loading...</div>
         )}
       </NavigationTabs>
-    </>
+    </div>
   );
 }
