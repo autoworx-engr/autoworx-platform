@@ -106,13 +106,15 @@ export default async function PaymentTab({
 
   // Sort all payments by date (oldest first) for proper due calculation
   const sortedPayments = allPayments.sort(
-    (a, b) => new Date(a.date || a.createdAt).getTime() - new Date(b.date || b.createdAt).getTime()
+    (a, b) =>
+      new Date(a.date || a.createdAt).getTime() -
+      new Date(b.date || b.createdAt).getTime()
   );
 
   // Create payment-based invoice entries with proper due calculation
   for (let i = 0; i < sortedPayments.length; i++) {
     const payment = sortedPayments[i];
-    
+
     // Find the original invoice this payment belongs to
     const originalInvoice = invoices.find(
       (inv) => inv.id === payment.invoiceId
@@ -151,14 +153,17 @@ export default async function PaymentTab({
     );
     const originalAmount = Number(payment?.amount ?? 0);
     const netAmount = originalAmount - actualRefundedAmount;
-  
+
     let dueAfterPayment;
-    if (payment.dueAfterPayment !== null && payment.dueAfterPayment !== undefined) {
+    if (
+      payment.dueAfterPayment !== null &&
+      payment.dueAfterPayment !== undefined
+    ) {
       dueAfterPayment = Number(payment.dueAfterPayment);
     } else {
       const originalInvoiceGrandTotal = Number(originalInvoice.grandTotal || 0);
       const originalInvoiceDeposit = Number(originalInvoice.deposit || 0);
-    
+
       const paymentsUpToThis = sortedPayments.slice(0, i + 1);
       const totalPaidUpToThis = paymentsUpToThis.reduce((sum, pmt) => {
         if (pmt.invoiceId === payment.invoiceId) {
@@ -170,8 +175,9 @@ export default async function PaymentTab({
         }
         return sum;
       }, 0);
-    
-      dueAfterPayment = originalInvoiceGrandTotal - originalInvoiceDeposit - totalPaidUpToThis;
+
+      dueAfterPayment =
+        originalInvoiceGrandTotal - originalInvoiceDeposit - totalPaidUpToThis;
     }
 
     // Add original payment entry
@@ -417,7 +423,7 @@ export default async function PaymentTab({
                 <div className="flex justify-between">
                   <p className="text-sm text-[#66738C]">Date</p>
                   <p className="text-sm font-medium">
-                    {moment.tz(data.paymentDate, timezone).format("DD.MM.YYYY")}
+                    {moment(data.paymentDate).format("DD.MM.YYYY")}
                   </p>
                 </div>
                 <div className="flex justify-between">
@@ -504,7 +510,7 @@ export default async function PaymentTab({
                       : "N/A"}
                   </td>
                   <td className="px-10 text-left">
-                    {moment.tz(transaction.date, timezone).format("DD.MM.YYYY")}
+                    {moment(transaction.date).format("DD.MM.YYYY")}
                   </td>
                   <td className="px-10 text-left">{transaction.method}</td>
                   <td className="px-10 text-left">{transaction.notes}</td>
