@@ -35,10 +35,10 @@ export default function SMSAttachment({ message, handleDownload }: TProps) {
           );
         } else {
           return (
-            <Link
+            <button
               key={index}
               className={`#inline-block mx-1 mt-2 cursor-pointer gap-x-2 rounded-md border border-gray-200 px-2 py-1 ${message.sentBy === "Company" && "#float-right"}`}
-              href={`${attachment?.url}`}
+              onClick={() => handleDownload(attachment?.url, attachment?.name)}
             >
               <span>
                 <FaFile />
@@ -48,7 +48,7 @@ export default function SMSAttachment({ message, handleDownload }: TProps) {
                   ? attachment.name.slice(0, 10) + "..."
                   : attachment.name}
               </p>
-            </Link>
+            </button>
           );
         }
       })}
