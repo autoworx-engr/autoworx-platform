@@ -92,7 +92,7 @@ export const createTwilioCredentials = async ({
       });
 
       let companyIds: string[] | number[] | string = companies?.map(
-        (c) => c.companyId,
+        (c) => c.companyId
       );
       companyIds.sort();
       companyIds = companyIds?.join(",");
@@ -102,7 +102,7 @@ export const createTwilioCredentials = async ({
         twilioCredential.apiKeySecret,
         {
           accountSid: twilioCredential.accountSid,
-        },
+        }
       );
 
       for (const company of companies) {
@@ -130,6 +130,10 @@ export const createTwilioCredentials = async ({
           },
         });
       }
+      await db.company.update({
+        where: { id: companyId },
+        data: { smsGateway: "TWILIO" },
+      });
     }
 
     return { success: true };
@@ -163,7 +167,7 @@ export const buyTwilioNumber = async () => {
 
     const parentClient = Twilio(
       process.env.TWILIO_ACCOUNT_SID!,
-      process.env.TWILIO_AUTH_TOKEN!,
+      process.env.TWILIO_AUTH_TOKEN!
     );
 
     // 1. Create subaccount for the company
@@ -174,7 +178,7 @@ export const buyTwilioNumber = async () => {
     const subClient = Twilio(
       process.env.TWILIO_ACCOUNT_SID!,
       process.env.TWILIO_AUTH_TOKEN!,
-      { accountSid: subaccount.sid },
+      { accountSid: subaccount.sid }
     );
 
     // 2. Create API key for that subaccount (optional, but good practice)
@@ -231,7 +235,7 @@ export const deleteTwilioSubaccount = async () => {
   try {
     const parentClient = Twilio(
       process.env.TWILIO_ACCOUNT_SID!,
-      process.env.TWILIO_AUTH_TOKEN!,
+      process.env.TWILIO_AUTH_TOKEN!
     );
 
     // Close the subaccount (sets status to 'closed')

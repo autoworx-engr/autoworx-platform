@@ -43,6 +43,7 @@ export default async function PaymentTab({
       column: { select: { title: true } },
       grandTotal: true,
       due: true,
+      deposit: true,
       vehicleId: true,
       createdAt: true,
       customerNotes: true,
@@ -71,13 +72,14 @@ export default async function PaymentTab({
 
   // This will hold the payment-based invoice entries for Transaction History
   const invoicesWithFull = [];
-  // Get all payments for all invoices with refund information
+  // Get all payments for all invoices with refund information and due amount
   const allPayments = await db.payment.findMany({
     where: { invoiceId: { in: invoiceIds } },
     select: {
       id: true,
       invoiceId: true,
       amount: true,
+      dueAfterPayment: true,
       refundedAmount: true,
       other: true,
       type: true,
@@ -102,8 +104,17 @@ export default async function PaymentTab({
   // This will hold ALL transaction entries (payments + refunds) for Transaction History
   const allTransactionEntries = [];
 
-  // Create payment-based invoice entries
-  for (const payment of allPayments) {
+  // Sort all payments by date (oldest first) for proper due calculation
+  const sortedPayments = allPayments.sort(
+    (a, b) =>
+      new Date(a.date || a.createdAt).getTime() -
+      new Date(b.date || b.createdAt).getTime()
+  );
+
+  // Create payment-based invoice entries with proper due calculation
+  for (let i = 0; i < sortedPayments.length; i++) {
+    const payment = sortedPayments[i];
+
     // Find the original invoice this payment belongs to
     const originalInvoice = invoices.find(
       (inv) => inv.id === payment.invoiceId
@@ -143,6 +154,32 @@ export default async function PaymentTab({
     const originalAmount = Number(payment?.amount ?? 0);
     const netAmount = originalAmount - actualRefundedAmount;
 
+    let dueAfterPayment;
+    if (
+      payment.dueAfterPayment !== null &&
+      payment.dueAfterPayment !== undefined
+    ) {
+      dueAfterPayment = Number(payment.dueAfterPayment);
+    } else {
+      const originalInvoiceGrandTotal = Number(originalInvoice.grandTotal || 0);
+      const originalInvoiceDeposit = Number(originalInvoice.deposit || 0);
+
+      const paymentsUpToThis = sortedPayments.slice(0, i + 1);
+      const totalPaidUpToThis = paymentsUpToThis.reduce((sum, pmt) => {
+        if (pmt.invoiceId === payment.invoiceId) {
+          const refunds = pmt.Refund.reduce(
+            (refundSum, refund) => refundSum + Number(refund.amount),
+            0
+          );
+          return sum + Number(pmt.amount || 0) - refunds;
+        }
+        return sum;
+      }, 0);
+
+      dueAfterPayment =
+        originalInvoiceGrandTotal - originalInvoiceDeposit - totalPaidUpToThis;
+    }
+
     // Add original payment entry
     invoicesWithFull.push({
       ...originalInvoice,
@@ -162,6 +199,7 @@ export default async function PaymentTab({
             : payment.deposit,
       // Use payment date instead of invoice date if available
       paymentDate: payment.date || originalInvoice.createdAt,
+      due: dueAfterPayment,
     });
 
     // Add payment transaction entry
@@ -273,9 +311,9 @@ export default async function PaymentTab({
             <p className="text-center">{allTransactionEntries?.length || 0}</p>
           </div>
         </div>
-        <div className="border border-slate-400 text-center text-sm md:text-start">
+        <div className="w-full md:w-96 lg:w-[420px] xl:w-[480px] 2xl:w-[520px] border border-slate-400 text-center text-sm md:text-start">
           <h3 className="p-3 py-1 font-semibold">Top Services </h3>
-          <div>
+          <div className="">
             {/* top 4 services */}
             {totalServices
               .sort((a, b) => b.count - a.count)
@@ -284,12 +322,12 @@ export default async function PaymentTab({
                 <div
                   key={service.id}
                   className={cn(
-                    "flex gap-44 p-3 py-1",
+                    "flex justify-between items-center gap-4 p-3 py-1",
                     index % 2 === 0 ? evenColor : oddColor
                   )}
                 >
-                  <p>{service.name}</p>
-                  <p>Ordered {service.count} times</p>
+                  <p className="truncate pr-2">{service.name}</p>
+                  <p className="text-nowrap">Ordered {service.count} times</p>
                 </div>
               ))}
           </div>
@@ -385,7 +423,7 @@ export default async function PaymentTab({
                 <div className="flex justify-between">
                   <p className="text-sm text-[#66738C]">Date</p>
                   <p className="text-sm font-medium">
-                    {moment.tz(data.paymentDate, timezone).format("DD.MM.YYYY")}
+                    {moment(data.paymentDate).format("DD.MM.YYYY")}
                   </p>
                 </div>
                 <div className="flex justify-between">
@@ -472,7 +510,7 @@ export default async function PaymentTab({
                       : "N/A"}
                   </td>
                   <td className="px-10 text-left">
-                    {moment.tz(transaction.date, timezone).format("DD.MM.YYYY")}
+                    {moment(transaction.date).format("DD.MM.YYYY")}
                   </td>
                   <td className="px-10 text-left">{transaction.method}</td>
                   <td className="px-10 text-left">{transaction.notes}</td>

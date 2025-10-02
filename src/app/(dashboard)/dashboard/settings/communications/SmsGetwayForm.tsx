@@ -1,7 +1,7 @@
 "use client";
 
 import { createTwilioCredentials } from "@/actions/communication/client/createTwilioCredentials";
-import { getTwilioCredentials } from "@/actions/communication/client/sendMessage";
+import { getTwilioCredentials } from "@/actions/communication/client/sendTwilioMessage";
 import { useServerGet } from "@/hooks/useServerGet";
 import { errorToast, successToast } from "@/lib/toast";
 import React, { ChangeEvent, FormEvent, useEffect, useState } from "react";
@@ -101,6 +101,9 @@ const SmsGetwayForm: React.FC = () => {
   return (
     // <div className="flex items-center justify-center bg-gray-50">
     <div className="w-full max-w-2xl rounded-lg bg-background p-10 shadow-lg">
+      <h2 className="mb-2 text-xl font-semibold mb-8">
+        Twilio Credentials ( For SMS & Call )
+      </h2>
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
           <label

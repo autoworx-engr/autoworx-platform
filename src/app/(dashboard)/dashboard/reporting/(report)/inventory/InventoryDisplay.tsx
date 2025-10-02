@@ -157,7 +157,7 @@ export default function InventoryDisplay({
         {" "}
         <div className="">
           <table className="max-h-[600px] w-full overflow-y-auto shadow-md">
-            <thead className="sticky top-0 z-10 bg-background">
+            <thead className="sticky top-0 bg-background">
               <tr className="h-10 border-b">
                 <th className="border-b px-4 py-2 text-left">Product #</th>
                 <th className="border-b px-4 py-2 text-left">Name </th>

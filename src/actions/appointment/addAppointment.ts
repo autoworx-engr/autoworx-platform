@@ -15,9 +15,11 @@ import { Client, Lead } from "@prisma/client";
 import axios from "axios";
 import { getServerSession } from "next-auth";
 import { getGoogleCalendarToken } from "../calendar-settings/getGoogleCalendarAuth";
-import { sendMessage } from "../communication/client/sendMessage";
+
 import { sendInfobipEmail } from "../estimate/invoice/sendInfobipEmail";
 import createGoogleCalendarEvent from "../task/google-calendar/createGoogleCalendarEvent";
+import { sendInfobipMessage } from "../communication/client/sendInfobipMessage";
+import { sendTwilioMessage } from "../communication/client/sendTwilioMessage";
 export interface AppointmentToAdd {
   title: string;
   date?: string;
@@ -181,6 +183,7 @@ export async function addAppointment(
         name: true,
         address: true,
         phone: true,
+        smsGateway: true,
       },
     });
 
@@ -265,12 +268,19 @@ export async function addAppointment(
             console.log("🚀 ~ error:", error);
           }
           try {
-            sendMessage({
-              companyId: client.companyId,
-              clientId: client.id,
-              message: confirmationMessage || "",
-              attachments: [],
-            });
+            if (company?.smsGateway === "TWILIO") {
+              sendTwilioMessage({
+                clientId: client.id,
+                message: confirmationMessage,
+                attachments: [],
+              });
+            } else if (company?.smsGateway === "INFOBIP") {
+              sendInfobipMessage({
+                clientId: client.id,
+                message: confirmationMessage,
+                attachments: [],
+              });
+            }
           } catch (error) {
             console.log("🚀 ~ error:", error);
           }

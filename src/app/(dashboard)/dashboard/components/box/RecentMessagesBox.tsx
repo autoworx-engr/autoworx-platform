@@ -27,6 +27,11 @@ export default async function RecentMessagesBox() {
       ? userPermissions.communicationHubInternal
       : companyPermissions?.communicationHubInternal !== false);
 
+  // Hide redirect link if company permission is false (regardless of user permission)
+  const shouldHideRedirectLink =
+    permissions?.role !== "Admin" &&
+    companyPermissions?.communicationHubInternal === false;
+
   const clients = await db.client.findMany({
     where: { companyId: user.companyId },
     include: {
@@ -72,7 +77,7 @@ export default async function RecentMessagesBox() {
           className="mb-4"
           title="Recent Messages"
           redirectLink={
-            hasMessagePermission
+            !shouldHideRedirectLink
               ? "/dashboard/communication/internal"
               : undefined
           }

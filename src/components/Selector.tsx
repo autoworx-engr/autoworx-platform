@@ -10,7 +10,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/Tooltip";
-import React, { ChangeEvent, useEffect, useState } from "react";
+import React, {
+  ChangeEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { FaChevronDown, FaChevronUp, FaSearch } from "react-icons/fa";
 
 interface SelectorProps<T> {
@@ -27,6 +33,12 @@ interface SelectorProps<T> {
   setSelectedItem?: React.Dispatch<React.SetStateAction<T | null>>;
   clickabled?: boolean;
   disabledDropdown?: boolean;
+  className?: string;
+  // Infinite scroll props
+  hasNextPage?: boolean;
+  fetchNextPage?: () => void;
+  isFetchingNextPage?: boolean;
+  useInfiniteScroll?: boolean;
 }
 
 /**
@@ -63,6 +75,12 @@ export default function Selector<T>({
   setSelectedItem,
   clickabled = true,
   disabledDropdown = false,
+  className,
+  // Infinite scroll props
+  hasNextPage = false,
+  fetchNextPage,
+  isFetchingNextPage = false,
+  useInfiniteScroll = false,
 }: SelectorProps<T>): JSX.Element {
   // Using provided open state or setting local state
   const [searchTerm, setSearchTerm] = useState("");
@@ -73,6 +91,9 @@ export default function Selector<T>({
   // Local state to manage the selected item
   const [selected, setSelected] = useState<T | null | undefined>(selectedItem);
 
+  // Ref for the scrollable container
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
   // Update item list when items prop changes
   useEffect(() => {
     setFilteredItems(items);
@@ -82,6 +103,35 @@ export default function Selector<T>({
   useEffect(() => {
     setSelected(selectedItem);
   }, [selectedItem]);
+
+  // Infinite scroll handler
+  const handleScroll = useCallback(() => {
+    if (
+      !useInfiniteScroll ||
+      !scrollContainerRef.current ||
+      !hasNextPage ||
+      isFetchingNextPage
+    ) {
+      return;
+    }
+
+    const { scrollTop, scrollHeight, clientHeight } =
+      scrollContainerRef.current;
+    const isNearBottom = scrollTop + clientHeight >= scrollHeight - 10;
+
+    if (isNearBottom && fetchNextPage) {
+      fetchNextPage();
+    }
+  }, [useInfiniteScroll, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  // Attach scroll event listener
+  useEffect(() => {
+    const scrollContainer = scrollContainerRef.current;
+    if (useInfiniteScroll && scrollContainer) {
+      scrollContainer.addEventListener("scroll", handleScroll);
+      return () => scrollContainer.removeEventListener("scroll", handleScroll);
+    }
+  }, [handleScroll, useInfiniteScroll]);
 
   /**
    * Handle search input change
@@ -139,7 +189,7 @@ export default function Selector<T>({
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-      <div className="w-full max-w-96">
+      <div className={cn("w-full max-w-96", className)}>
         <DropdownMenuTrigger
           disabled={disabledDropdown}
           onClick={() => setIsOpen && setIsOpen(true)}
@@ -197,8 +247,16 @@ export default function Selector<T>({
           </div>
 
           {/* Display list of items */}
-          <div className="mb-5 flex max-h-40 flex-col overflow-y-auto">
+          <div
+            ref={scrollContainerRef}
+            className="mb-5 flex max-h-40 flex-col overflow-y-auto"
+          >
             {filteredItems?.map((item, index) => {
+              // Use a unique key that combines the item's id if available, otherwise fall back to index
+              const key = (item as any)?.id
+                ? `item-${(item as any).id}`
+                : `index-${index}`;
+
               if (clickabled) {
                 return (
                   <button
@@ -206,7 +264,7 @@ export default function Selector<T>({
                       handleSelectItem(item);
                     }}
                     type="button"
-                    key={index}
+                    key={key}
                     className={cn(
                       "w-full p-1 px-2 text-left hover:bg-gray-100",
                       border &&
@@ -219,7 +277,7 @@ export default function Selector<T>({
               } else {
                 return (
                   <div
-                    key={index}
+                    key={key}
                     className={cn(
                       "w-full p-1 px-2 text-left hover:bg-gray-100",
                       border &&
@@ -231,6 +289,20 @@ export default function Selector<T>({
                 );
               }
             })}
+
+            {/* Loading indicator for infinite scroll */}
+            {useInfiniteScroll && isFetchingNextPage && (
+              <div className="flex justify-center py-2">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600"></div>
+              </div>
+            )}
+
+            {/* End of list indicator */}
+            {useInfiniteScroll && !hasNextPage && filteredItems.length > 0 && (
+              <div className="py-2 text-center text-xs text-gray-500">
+                No more items to load
+              </div>
+            )}
           </div>
           {/* Footer content like Clear button */}
           {footer && (

@@ -4,7 +4,7 @@ import { useCalendarStore } from "@/stores/calendarStore";
 import { Task } from "@prisma/client";
 import { Popconfirm, Tooltip } from "antd";
 import moment from "moment";
-import React, { LegacyRef } from "react";
+import React, { LegacyRef, useState, useEffect } from "react";
 import { useDrag } from "react-dnd";
 import { FaRegCheckCircle } from "react-icons/fa";
 import { MdOutlineEdit } from "react-icons/md";
@@ -25,6 +25,7 @@ export default function TaskComponent({ task }: TaskComponentProps) {
   const date = useDate();
   const dateFormat = date.format("YYYY-MM-DD");
   const queryClient = useQueryClient();
+  const [popconfirmVisible, setPopconfirmVisible] = useState(false);
   const [{ isDragging }, drag] = useDrag({
     type: "task",
     item: { type: "task", id: task.id },
@@ -48,11 +49,26 @@ export default function TaskComponent({ task }: TaskComponentProps) {
       queryClient.invalidateQueries({
         queryKey: taskQueryKey.allTaskByScroll,
       });
+      setPopconfirmVisible(false);
     } catch (error) {
       console.error("Failed to delete task:", error);
       errorToast("Failed to delete task. Please try again.");
+      setPopconfirmVisible(false);
     }
   };
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (popconfirmVisible) {
+        setPopconfirmVisible(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, true);
+    return () => {
+      window.removeEventListener('scroll', handleScroll, true);
+    };
+  }, [popconfirmVisible]);
 
   const handleDragEnd = () => {
     const existingDate = queryDate.format("YYYY-MM-DD");
@@ -149,11 +165,14 @@ export default function TaskComponent({ task }: TaskComponentProps) {
         description="Are you sure you want to mark this task as completed?"
         okText="Yes"
         cancelText="No"
+        open={popconfirmVisible}
+        onOpenChange={setPopconfirmVisible}
         onConfirm={handleDelete}
+        onCancel={() => setPopconfirmVisible(false)}
       >
         <FaRegCheckCircle
           className="text-xl text-white hover:text-gray-400"
-          // onClick={handleDelete}
+          onClick={() => setPopconfirmVisible(true)}
         />
       </Popconfirm>
     </div>

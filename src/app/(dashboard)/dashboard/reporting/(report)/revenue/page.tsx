@@ -48,6 +48,7 @@ export type TInvoice = Prisma.InvoiceGetPayload<{
     };
     vehicle: {
       select: {
+        year: true;
         make: true;
         model: true;
         submodel: true;
@@ -115,9 +116,11 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
       },
       vehicle: {
         select: {
+          year: true,
           make: true,
           model: true,
           submodel: true,
+          other: true,
         },
       },
       client: {
@@ -258,7 +261,13 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
     // ) || 0;
     const inventoryLossAmount = 0;
 
-    const { costPrice, profitPrice, materialLossAmount, laborLossAmount, materialLossDetails } = invoice.invoiceItems.reduce(
+    const {
+      costPrice,
+      profitPrice,
+      materialLossAmount,
+      laborLossAmount,
+      materialLossDetails,
+    } = invoice.invoiceItems.reduce(
       (
         acc,
         cur: Prisma.InvoiceItemGetPayload<{
@@ -275,22 +284,38 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
         );
 
         // Calculate material loss and track material names with losses
-        const { totalMaterialLoss, lossDetails } = cur.materials.reduce((acc, material) => {
-          const materialCost = Number(material?.cost || 0) * Number(material?.quantity || 0);
-          const materialRevenue = (Number(material?.sell || 0) * Number(material?.quantity || 0)) - Number(material?.discount || 0);
-          const loss = materialCost > materialRevenue ? materialCost - materialRevenue : 0;
-          
-          if (loss > 0) {
-            acc.lossDetails.push({
-              name: material.name,
-              loss: loss,
-              isFromInventory: !!material.productId
-            });
+        const { totalMaterialLoss, lossDetails } = cur.materials.reduce(
+          (acc, material) => {
+            const materialCost =
+              Number(material?.cost || 0) * Number(material?.quantity || 0);
+            const materialRevenue =
+              Number(material?.sell || 0) * Number(material?.quantity || 0) -
+              Number(material?.discount || 0);
+            const loss =
+              materialCost > materialRevenue
+                ? materialCost - materialRevenue
+                : 0;
+
+            if (loss > 0) {
+              acc.lossDetails.push({
+                name: material.name,
+                loss: loss,
+                isFromInventory: !!material.productId,
+              });
+            }
+
+            acc.totalMaterialLoss += loss;
+            return acc;
+          },
+          {
+            totalMaterialLoss: 0,
+            lossDetails: [] as {
+              name: string;
+              loss: number;
+              isFromInventory: boolean;
+            }[],
           }
-          
-          acc.totalMaterialLoss += loss;
-          return acc;
-        }, { totalMaterialLoss: 0, lossDetails: [] as { name: string; loss: number; isFromInventory: boolean }[] });
+        );
 
         // Calculate labor loss (when technician amount > labor charge)
         // let laborLoss = 0;
@@ -300,7 +325,7 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
         //   const technicianCosts = invoice.technician
         //     .filter(tech => tech.invoiceItemId === cur.id)
         //     .reduce((sum, tech) => sum + Number(tech.amount || 0), 0);
-        //   
+        //
         //   laborLoss = technicianCosts > laborRevenue ? technicianCosts - laborRevenue : 0;
         // }
         const laborLoss = 0;
@@ -317,7 +342,11 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
         profitPrice: 0,
         materialLossAmount: 0,
         laborLossAmount: 0,
-        materialLossDetails: [] as { name: string; loss: number; isFromInventory: boolean }[],
+        materialLossDetails: [] as {
+          name: string;
+          loss: number;
+          isFromInventory: boolean;
+        }[],
       }
     );
 
@@ -325,8 +354,8 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
     const totalCostPrice = costPrice + laborCost;
     // const totalLossAmount = inventoryLossAmount + materialLossAmount + laborLossAmount;
     const totalLossAmount = materialLossAmount; // Only material loss
-    
-    // Profit = Revenue - Total Costs 
+
+    // Profit = Revenue - Total Costs
     const finalProfitPrice = Number(invoice.grandTotal) - totalCostPrice;
 
     (invoice as any).costPrice = totalCostPrice;
@@ -338,12 +367,12 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
     (invoice as any).materialLossDetails = materialLossDetails;
     maxCost = Math.max(maxCost, costPrice);
     maxProfit = Math.max(maxProfit, profitPrice);
-    
+
     // Filter based on filterRevenue selection (Profit filter should show only profitable invoices)
     if (searchParams.filterRevenue === "Profit" && finalProfitPrice <= 0) {
       return false; // Exclude invoices with zero or negative profit
     }
-    
+
     if (!searchParams.price && !searchParams.cost && !searchParams.profit) {
       return true;
     }
@@ -621,7 +650,11 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
             materialLossAmount: number;
             laborLossAmount: number;
             totalLossAmount: number;
-            materialLossDetails: { name: string; loss: number; isFromInventory: boolean }[];
+            materialLossDetails: {
+              name: string;
+              loss: number;
+              isFromInventory: boolean;
+            }[];
           })[]
         }
         timezone={timezone}

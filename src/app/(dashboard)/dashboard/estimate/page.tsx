@@ -53,7 +53,7 @@ export default async function EstimatesPage({
   ]);
 
   return (
-    <div>
+    <>
       <Title>Estimates</Title>
 
       <SyncLists categories={categories} tags={tags} statuses={statuses} />
@@ -69,6 +69,6 @@ export default async function EstimatesPage({
       <NavigationTabs activeTab="a-estimate">
         <Table estimateData={estimates} />
       </NavigationTabs>
-    </div>
+    </>
   );
 }

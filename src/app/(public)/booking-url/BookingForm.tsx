@@ -11,6 +11,7 @@ import { processBooking } from "@/actions/booking/processBooking";
 import { getCompanyCalendarSettings } from "@/actions/booking/getCompanyCalendarSettings";
 import Image from "next/image";
 import { getCompanyById } from "@/actions/settings/getCompnayById";
+import { Select } from "antd";
 
 type FormData = {
   title: string;
@@ -50,10 +51,10 @@ const BookingForm = () => {
   // Predefined title options
   const titleOptions = [
     "Phone Call Request",
-    "Free Consultation", 
+    "Free Consultation",
     "Wrap Design Consultation",
     "Virtual Appointment",
-    "Custom"
+    "Custom",
   ];
 
   const [error, setError] = useState<Record<string, string>>({});
@@ -121,7 +122,7 @@ const BookingForm = () => {
       // Check if the selected time is still available in the current options
       const availableOptions = getTimeOptions();
       const isTimeAvailable = availableOptions.some(
-        option => option.value === formData.startTime
+        (option) => option.value === formData.startTime
       );
 
       if (!isTimeAvailable) {
@@ -161,7 +162,7 @@ const BookingForm = () => {
   // Handle title dropdown selection
   const handleTitleSelection = (value: string) => {
     setSelectedTitleOption(value);
-    
+
     if (value === "Custom") {
       setFormData((prev) => ({ ...prev, title: customTitle }));
     } else {
@@ -227,55 +228,59 @@ const BookingForm = () => {
   const getTimeOptions = () => {
     const options: { value: string; label: string }[] = [];
     const restrictions = getTimeRestrictions();
-    
+
     // Default office hours if no settings
     const dayStart = calendarSettings?.dayStart || "08:00";
     const dayEnd = calendarSettings?.dayEnd || "18:00";
-    
+
     // Parse start and end times
-    const [startHour, startMinute] = dayStart.split(':').map(Number);
-    const [endHour, endMinute] = dayEnd.split(':').map(Number);
-    
+    const [startHour, startMinute] = dayStart.split(":").map(Number);
+    const [endHour, endMinute] = dayEnd.split(":").map(Number);
+
     // Convert to minutes for easier calculation
     const startTimeInMinutes = startHour * 60 + startMinute;
     const endTimeInMinutes = endHour * 60 + endMinute;
-    
+
     // If we have restrictions (for today), use them
     let effectiveStartTime = startTimeInMinutes;
     let effectiveEndTime = endTimeInMinutes;
-    
+
     if (restrictions.min) {
-      const [minHour, minMinute] = restrictions.min.split(':').map(Number);
+      const [minHour, minMinute] = restrictions.min.split(":").map(Number);
       const minTimeInMinutes = minHour * 60 + minMinute;
       effectiveStartTime = Math.max(effectiveStartTime, minTimeInMinutes);
-      
+
       // Round up to next 15-minute interval if needed
       const remainder = effectiveStartTime % 15;
       if (remainder !== 0) {
-        effectiveStartTime += (15 - remainder);
+        effectiveStartTime += 15 - remainder;
       }
     }
-    
+
     if (restrictions.max) {
-      const [maxHour, maxMinute] = restrictions.max.split(':').map(Number);
+      const [maxHour, maxMinute] = restrictions.max.split(":").map(Number);
       const maxTimeInMinutes = maxHour * 60 + maxMinute;
       effectiveEndTime = Math.min(effectiveEndTime, maxTimeInMinutes);
     }
-    
+
     // Generate 15-minute intervals
-    for (let minutes = effectiveStartTime; minutes <= effectiveEndTime; minutes += 15) {
+    for (
+      let minutes = effectiveStartTime;
+      minutes <= effectiveEndTime;
+      minutes += 15
+    ) {
       const hour = Math.floor(minutes / 60);
       const minute = minutes % 60;
-      
+
       // Skip if we've gone past the end time
       if (hour * 60 + minute > effectiveEndTime) break;
-      
+
       const value = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
-      const label = moment(`${hour}:${minute}`, 'HH:mm').format('h:mm A');
-      
+      const label = moment(`${hour}:${minute}`, "HH:mm").format("h:mm A");
+
       options.push({ value, label });
     }
-    
+
     return options;
   };
 
@@ -313,11 +318,12 @@ const BookingForm = () => {
         // Additional validation - check if selected time is still available
         const availableOptions = getTimeOptions();
         const isTimeAvailable = availableOptions.some(
-          option => option.value === formData.startTime
+          (option) => option.value === formData.startTime
         );
-        
+
         if (!isTimeAvailable) {
-          newError.startTime = "Selected time is no longer available. Please choose a different time.";
+          newError.startTime =
+            "Selected time is no longer available. Please choose a different time.";
         }
       }
     }
@@ -432,10 +438,12 @@ const BookingForm = () => {
           {/* Title Selection */}
           <div className="space-y-2">
             <label className="flex gap-1 items-center" htmlFor="title-select">
-              <span className="mb-1 text-sm font-medium">Appointment Title</span>
+              <span className="mb-1 text-sm font-medium">
+                Appointment Title
+              </span>
               <span className="text-red-500">*</span>
             </label>
-            
+
             <select
               id="title-select"
               value={selectedTitleOption}
@@ -495,27 +503,25 @@ const BookingForm = () => {
                   <span className="mb-1 text-sm font-medium ">Start Time </span>{" "}
                   <span className="text-red-500">*</span>
                 </label>
-                <select
+                <Select
                   value={formData.startTime}
-                  onChange={(e) => handleChange("startTime", e.target.value)}
-                  id="start-time"
-                  name="startTime"
-                  required
+                  onChange={(value) => handleChange("startTime", value)}
+                  placeholder="Select time..."
                   className={cn(
-                    slimInputClassName,
-                    "h-[33px] px-3 w-full",
+                    "h-[33px] w-full font-semibold text-gray-600",
                     inputClass,
                     error.startTime &&
                       "border-red-500 focus-visible:ring-red-500"
                   )}
-                >
-                  <option value="">Select time...</option>
-                  {getTimeOptions().map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+                  dropdownStyle={{
+                    maxHeight: "300px",
+                    overflowY: "auto",
+                  }}
+                  options={[
+                    { value: "", label: "Select time..." },
+                    ...getTimeOptions(),
+                  ]}
+                />
 
                 {calendarSettings && formData.date && (
                   <p className="text-xs text-gray-500 mt-1">

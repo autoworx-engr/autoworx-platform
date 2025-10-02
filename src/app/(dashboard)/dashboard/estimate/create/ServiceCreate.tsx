@@ -129,6 +129,7 @@ export default function ServiceCreate() {
         categoryData={category}
         categoryOpen={data.service?.canned ? false : categoryOpen}
         setCategoryOpen={data.service?.canned ? undefined : setCategoryOpen}
+        className="max-w-full "
       />
 
       <textarea

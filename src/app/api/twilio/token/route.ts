@@ -1,4 +1,4 @@
-import { getTwilioCredentials } from "@/actions/communication/client/sendMessage";
+import { getTwilioCredentials } from "@/actions/communication/client/sendTwilioMessage";
 import { NextRequest, NextResponse } from "next/server";
 import twilio from "twilio";
 
@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     if (!twilioCredentials) {
       return NextResponse.json(
         { error: "Twilio credentials not found" },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
       twilioCredentials.accountSid,
       twilioCredentials.apiKeySid,
       twilioCredentials.apiKeySecret,
-      { identity },
+      { identity }
     );
 
     if (twilioCredentials.twimlAppSid) {

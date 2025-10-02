@@ -4,6 +4,7 @@ import { Client, MailgunEmail, User } from "@prisma/client";
 import { FullMessage } from "@/actions/dashboard/technician/recentMessages";
 import { Message } from "./Message";
 import { formatInternalAttachmentMessage } from "@/utils/formatAttachmentMessage";
+import { normalizeSearch } from "@/utils/normalizeSearch";
 
 type TMessageContainerProps = {
   clientMessages?: (Client & {
@@ -34,22 +35,28 @@ export default function MessageContainer({
       setFilteredInternalMessages(internalMessages);
     } else {
       setFilteredClientMessages(
-        clientMessages?.filter(
-          (msg) =>
-            msg?.firstName?.toLowerCase().includes(search.toLowerCase()) ||
-            msg?.lastName?.toLowerCase().includes(search.toLowerCase())
-        )
+        clientMessages?.filter((msg) => {
+          const fullName = `${msg?.firstName} ${msg?.lastName}`;
+
+          return normalizeSearch(fullName)?.includes(
+            normalizeSearch(search.toLowerCase())
+          );
+        })
       );
       setFilteredInternalMessages(
-        internalMessages?.filter(
-          (msg) =>
-            msg?.from?.firstName
-              ?.toLowerCase()
-              .includes(search.toLowerCase()) ||
-            msg?.from?.lastName?.toLowerCase().includes(search.toLowerCase()) ||
-            msg?.to?.firstName?.toLowerCase().includes(search.toLowerCase()) ||
-            msg?.to?.lastName?.toLowerCase().includes(search.toLowerCase())
-        )
+        internalMessages?.filter((msg) => {
+          const fromFullName = `${msg?.from?.firstName} ${msg?.from?.lastName}`;
+          const toFullName = `${msg?.from?.firstName} ${msg?.from?.lastName}`;
+
+          return (
+            normalizeSearch(fromFullName)?.includes(
+              normalizeSearch(search.toLowerCase())
+            ) ||
+            normalizeSearch(toFullName)?.includes(
+              normalizeSearch(search.toLowerCase())
+            )
+          );
+        })
       );
     }
   }, [search]);

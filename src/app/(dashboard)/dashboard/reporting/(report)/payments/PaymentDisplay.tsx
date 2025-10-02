@@ -8,6 +8,7 @@ import { Pagination } from "antd"; // Importing the Pagination component from An
 import { useEffect, useState } from "react";
 import { FormatUtcToTimezone } from "@/utils/FormatUtcToTimezone";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import moment from "moment-timezone";
 
 type TProps = {
   paymentInfo: (Payment & {
@@ -58,7 +59,7 @@ export default function PaymentDisplay({
   const pathname = usePathname();
   const router = useRouter();
   const params = useSearchParams();
-  const search = params.get("search");
+
   useEffect(() => {
     if (paymentInfo.length > 0) {
       setShowPagination(true);
@@ -84,9 +85,8 @@ export default function PaymentDisplay({
   const startIndex = (currentPage - 1) * pageSize;
   const endIndex = currentPage * pageSize;
 
-  const paymentsToRender = search
-    ? paymentInfo
-    : paymentInfo.slice(startIndex, endIndex);
+  // Use the paymentInfo that's already filtered from the server
+  const paymentsToRender = paymentInfo.slice(startIndex, endIndex);
   if (isDesktop) {
     return (
       <div className="hidden md:block">
@@ -116,8 +116,9 @@ export default function PaymentDisplay({
                   )}
                 >
                   <td className="border-b px-4 py-2 text-left">
-                    {payment?.date &&
-                      FormatUtcToTimezone(payment.date, timezone, "YYYY-MM-DD")}
+                    {payment?.date
+                      ? moment.tz(payment.date, timezone).format("MM/DD/YYYY")
+                      : ""}
                   </td>
 
                   <td className="border-b px-4 py-2 text-left">
@@ -197,7 +198,7 @@ export default function PaymentDisplay({
             className="custom-pagination"
             current={currentPage}
             pageSize={pageSize}
-            total={filteredPayments.length}
+            total={paymentInfo.length}
             onChange={handlePageChange}
             showSizeChanger
             onShowSizeChange={handlePageChange}
