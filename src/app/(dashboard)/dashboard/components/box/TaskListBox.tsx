@@ -17,12 +17,8 @@ export default function TaskListBox() {
   const companyId = user?.companyId;
   const companyEmployeePermissions = permissions?.companyPermissions;
   const userPermissions = permissions?.userPermissions;
-  const { data } = useGetCompanyPermissions(
-    companyId!
-  );
+  const { data } = useGetCompanyPermissions(companyId!);
 
-
-  
   const queryClient = useQueryClient();
 
   const revalidateTask = () => {
@@ -40,13 +36,13 @@ export default function TaskListBox() {
 
   let content = null;
 
-  // Check if calendarAndTask feature permission is enabled at company 
+  // Check if calendarAndTask feature permission is enabled at company
   const calendarAndTaskFeatureEnabled =
     data?.data?.find(
       (permission: any) => permission.permission_name === "calendar"
     )?.enabled !== false;
 
-      const shouldHideRedirectLink =
+  const shouldHideRedirectLink =
     permissions?.role !== "Admin" &&
     companyEmployeePermissions?.calendarTask === false;
 
@@ -66,7 +62,7 @@ export default function TaskListBox() {
         </span>
       </div>
     );
-  } else if (isLoading  && !isError) {
+  } else if (isLoading && !isError) {
     content = <div className="text-center text-gray-500">Loading tasks...</div>;
   } else if (!isLoading && isError) {
     content = (
@@ -92,7 +88,11 @@ export default function TaskListBox() {
       >
         <BoxTitle
           title="Task List"
-          redirectLink={!shouldHideRedirectLink ? "/dashboard/task/day" : undefined}
+          redirectLink={
+            !shouldHideRedirectLink && calendarAndTaskFeatureEnabled
+              ? "/dashboard/task/day"
+              : undefined
+          }
         />
         <div className="thin-scrollbar my-2 flex max-h-64 flex-1 flex-col space-y-2 overflow-x-hidden lg:max-h-full">
           {content}
