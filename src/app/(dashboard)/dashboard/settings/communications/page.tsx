@@ -3,9 +3,6 @@ import BookingGenerate from "@/components/BookingGenerate";
 import { TermsAndPolicyEditor } from "@/components/TermsAndPolicyEditor";
 import { getCompanyId } from "@/lib/companyId";
 import SecurityPage from "../security/SecurityPage";
-import InfobipConfig from "./InfobipConfig";
-import SmsGetwayForm from "./SmsGetwayForm";
-import SmsGatewayButton from "./SmsGatewayButton";
 
 export default async function CommunicationPage() {
   const companyId = await getCompanyId();
@@ -17,15 +14,12 @@ export default async function CommunicationPage() {
       <div>
         <SecurityPage company={JSON.parse(JSON.stringify(company))} />
         <BookingGenerate companyId={companyId.toString()} />
-
-        <div className="mt-4">
-          <TermsAndPolicyEditor />
-        </div>
       </div>
       {/* Sidebar */}
       <div className="space-y-4">
-        {/* SMS Gateway Settings */}
-        <SmsGatewayButton smsGateway={company?.smsGateway} />
+        <div className="mt-4">
+          <TermsAndPolicyEditor />
+        </div>
       </div>
     </div>
   );

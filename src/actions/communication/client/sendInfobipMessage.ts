@@ -17,11 +17,12 @@ export async function getInfobipCredentials({
   companyId,
 }: TInfobipConfig = {}) {
   let cId = companyId ?? (await getCompanyId());
-  return await db.infobipConfig.findFirst({
+  const infobipConfig = await db.infobipConfig.findFirst({
     where: {
       companyId: cId,
     },
   });
+  return { success: true, data: infobipConfig };
 }
 
 export async function sendInfobipMessage({
@@ -37,8 +38,8 @@ export async function sendInfobipMessage({
 }) {
   try {
     let infobipConfig = companyId
-      ? await getInfobipConfigById(companyId)
-      : await getInfobipCredentials();
+      ? (await getInfobipConfigById(companyId)).data
+      : (await getInfobipCredentials()).data;
 
     if (!infobipConfig) {
       return {

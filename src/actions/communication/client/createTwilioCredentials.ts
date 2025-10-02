@@ -41,20 +41,23 @@ export const getTwilioCredentials = async (): Promise<{
 };
 
 export const createTwilioCredentials = async ({
+  companyId,
   accountSid,
   phoneNumber,
   apiKeySid,
   apiKeySecret,
   phoneNumberSid,
 }: {
+  companyId: number;
   accountSid: string;
   phoneNumber: string;
   apiKeySid: string;
   apiKeySecret: string;
   phoneNumberSid: string;
 }) => {
+  console.log("🚀 ~ createTwilioCredentials ~ companyId:", companyId);
   try {
-    const companyId = await getCompanyId();
+    // const companyId = await getCompanyId();
 
     const twilioCredential = await db.twilioCredentials.upsert({
       where: {
