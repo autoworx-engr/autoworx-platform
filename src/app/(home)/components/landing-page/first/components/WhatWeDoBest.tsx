@@ -30,7 +30,10 @@ const WhatWeDoBest = () => {
       {/* Text Content */}
       {/* 1sst pair */}
       <div>
-        <div className="mt-10 flex w-full flex-col items-center justify-between gap-10 lg:mt-20 lg:flex-row">
+        <div
+          id="invoicing"
+          className="mt-10 flex w-full flex-col items-center justify-between gap-10 lg:mt-20 lg:flex-row"
+        >
           <div className="space-y-4 lg:w-1/2">
             <p className="bg-gradient-to-r from-[#26AADF] to-[#01A79E] bg-clip-text text-xl font-semibold uppercase text-transparent lg:text-4xl">
               Estimates & Invoices
@@ -75,7 +78,10 @@ const WhatWeDoBest = () => {
             />
           </div>
         </div>
-        <div className="mt-10 flex w-full flex-col-reverse items-center justify-between gap-10 lg:mt-20 lg:flex-row">
+        <div
+          id="task-management"
+          className="mt-10 flex w-full flex-col-reverse items-center justify-between gap-10 lg:mt-20 lg:flex-row"
+        >
           {/* Image */}
           <div className="lg:w-1/2">
             <Image
@@ -125,7 +131,10 @@ const WhatWeDoBest = () => {
 
       {/* 2nd pair */}
       <div>
-        <div className="mt-10 flex w-full flex-col items-center justify-between gap-10 lg:mt-20 lg:flex-row">
+        <div
+          id="team-management"
+          className="mt-10 flex w-full flex-col items-center justify-between gap-10 lg:mt-20 lg:flex-row"
+        >
           <div className="space-y-4 lg:w-1/2">
             <p className="bg-gradient-to-r from-[#26AADF] to-[#01A79E] bg-clip-text text-xl font-semibold uppercase text-transparent lg:text-4xl">
               Workforce Management
@@ -171,7 +180,10 @@ const WhatWeDoBest = () => {
             />
           </div>
         </div>
-        <div className="mt-10 flex w-full flex-col-reverse items-center justify-between gap-10 lg:mt-20 lg:flex-row">
+        <div
+          id="inventory-tracking"
+          className="mt-10 flex w-full flex-col-reverse items-center justify-between gap-10 lg:mt-20 lg:flex-row"
+        >
           {/* Image */}
           <div className="lg:w-1/2">
             <Image
@@ -217,7 +229,10 @@ const WhatWeDoBest = () => {
 
       {/* 3rd pair */}
       <div>
-        <div className="mt-10 flex w-full flex-col items-center justify-between gap-10 lg:mt-20 lg:flex-row">
+        <div
+          id="crm"
+          className="mt-10 flex w-full flex-col items-center justify-between gap-10 lg:mt-20 lg:flex-row"
+        >
           <div className="space-y-4 lg:w-1/2">
             <p className="bg-gradient-to-r from-[#26AADF] to-[#01A79E] bg-clip-text text-xl font-semibold uppercase text-transparent lg:text-4xl">
               CRM

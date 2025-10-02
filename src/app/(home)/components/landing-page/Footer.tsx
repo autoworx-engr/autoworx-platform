@@ -25,27 +25,27 @@ export default function Footer() {
             <h3 className="text-xl font-bold">Solutions</h3>
             <ul className="space-y-2">
               <li>
-                <Link href="/under-cons" className="hover:text-[#00B8D4]">
+                <Link href="/#crm" className="hover:text-[#00B8D4]">
                   CRM
                 </Link>
               </li>
               <li>
-                <Link href="/under-cons" className="hover:text-[#00B8D4]">
+                <Link href="/#invoicing" className="hover:text-[#00B8D4]">
                   Invoicing
                 </Link>
               </li>
               <li>
-                <Link href="/under-cons" className="hover:text-[#00B8D4]">
+                <Link href="/#task-management" className="hover:text-[#00B8D4]">
                   Scheduling
                 </Link>
               </li>
               <li>
-                <Link href="/under-cons" className="hover:text-[#00B8D4]">
+                <Link href="/#task-management" className="hover:text-[#00B8D4]">
                   Task Management
                 </Link>
               </li>
               <li>
-                <Link href="/under-cons" className="hover:text-[#00B8D4]">
+                <Link href="/#team-management" className="hover:text-[#00B8D4]">
                   Team Management
                 </Link>
               </li>
@@ -55,7 +55,10 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/under-cons" className="hover:text-[#00B8D4]">
+                <Link
+                  href="/#inventory-tracking"
+                  className="hover:text-[#00B8D4]"
+                >
                   Inventory
                 </Link>
               </li>
@@ -82,7 +85,10 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/terms-and-conditions" className="hover:text-[#00B8D4]">
+                <Link
+                  href="/terms-and-conditions"
+                  className="hover:text-[#00B8D4]"
+                >
                   Terms & Conditions
                 </Link>
               </li>

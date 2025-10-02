@@ -101,7 +101,7 @@ export function ImagesInput() {
               <Image
                 src={photo.photo ?? ""}
                 fill
-                className="object-contain p-2"
+                className="object-contain p-1 rounded-sm"
                 alt={`image-${i}`}
               />
             }
