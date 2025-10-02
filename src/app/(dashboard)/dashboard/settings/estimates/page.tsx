@@ -54,13 +54,16 @@ export default function EstimateAndInvoicePage() {
 
   useEffect(() => {
     async function getCurrencies() {
-      const response = await fetch("https://restcountries.com/v3.1/all");
-      const countries: Country[] = await response.json();
+      const response = await fetch(
+        "https://restcountries.com/v3.1/all?fields=currencies"
+      );
+      const data: { currencies?: { [currencyCode: string]: CurrencyInfo } }[] =
+        await response.json();
       const currenciesMap: Record<string, CurrencyInfo> = {};
 
-      countries?.forEach((country) => {
-        if (country.currencies) {
-          Object.entries(country.currencies).forEach(([code, currency]) => {
+      data?.forEach((item) => {
+        if (item.currencies) {
+          Object.entries(item.currencies).forEach(([code, currency]) => {
             currenciesMap[code] = {
               name: currency.name,
               symbol: currency.symbol || "",
