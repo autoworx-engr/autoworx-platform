@@ -259,7 +259,8 @@ export default function MakePayment() {
     reset();
     if (payment) {
       setTab(payment.type);
-      setDate(payment.date || new Date());
+      // setDate(payment.date || new Date());
+      setDate(new Date());
       // setNotes(payment.notes || "");
       switch (payment.type) {
         case "CARD":
@@ -365,7 +366,7 @@ export default function MakePayment() {
                       labelClassName="text-sm md:text-base"
                       name="card"
                       type="text"
-                      label="Credit Card (Last 4 digits)"
+                      label="Credit Cards (Last 4 digits)"
                       value={card}
                       onChange={(e) => setCard(e.target.value)}
                     />

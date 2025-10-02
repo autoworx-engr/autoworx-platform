@@ -423,7 +423,7 @@ export default async function PaymentTab({
                 <div className="flex justify-between">
                   <p className="text-sm text-[#66738C]">Date</p>
                   <p className="text-sm font-medium">
-                    {moment.tz(data.paymentDate, timezone).format("DD.MM.YYYY")}
+                    {moment(data.paymentDate).format("DD.MM.YYYY")}
                   </p>
                 </div>
                 <div className="flex justify-between">
@@ -510,7 +510,7 @@ export default async function PaymentTab({
                       : "N/A"}
                   </td>
                   <td className="px-10 text-left">
-                    {moment.tz(transaction.date, timezone).format("DD.MM.YYYY")}
+                    {moment(transaction.date).format("DD.MM.YYYY")}
                   </td>
                   <td className="px-10 text-left">{transaction.method}</td>
                   <td className="px-10 text-left">{transaction.notes}</td>
