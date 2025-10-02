@@ -8,6 +8,7 @@ import { Pagination } from "antd"; // Importing the Pagination component from An
 import { useEffect, useState } from "react";
 import { FormatUtcToTimezone } from "@/utils/FormatUtcToTimezone";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import moment from "moment-timezone";
 
 type TProps = {
   paymentInfo: (Payment & {
@@ -115,8 +116,9 @@ export default function PaymentDisplay({
                   )}
                 >
                   <td className="border-b px-4 py-2 text-left">
-                    {payment?.date &&
-                      FormatUtcToTimezone(payment.date, timezone, "YYYY-MM-DD")}
+                    {payment?.date
+                      ? moment.tz(payment.date, timezone).format("MM/DD/YYYY")
+                      : ""}
                   </td>
 
                   <td className="border-b px-4 py-2 text-left">
