@@ -6,12 +6,14 @@ import {
   permissionModuleForAdminManager,
   permissionModuleForSales,
   permissionModuleForTechnician,
-  permissionModuleForOther
+  permissionModuleForOther,
 } from "@/lib/permissionModule";
 import {
   getUserPermissions,
-  savePermissions
+  savePermissions,
+  getPermissionsForRole,
 } from "@/actions/settings/teamManagement";
+import { errorToast } from "@/lib/toast";
 
 interface CustomizeUserRolesProps {
   user: {
@@ -37,21 +39,55 @@ const CustomizeUserRole = ({ user, onBack }: CustomizeUserRolesProps) => {
   const name = `${user.firstName} ${user.lastName}`;
 
   const [permissions, setPermissions] = useState<PermissionType>({});
+  const [rolePermissions, setRolePermissions] = useState<any>(null);
 
   useEffect(() => {
     // Fetch default and user-specific permissions
-    getUserPermissions(user.id, user.employeeType).then(data => {
-      console.log("Fetched permissions:", data);
+    getUserPermissions(user.id, user.employeeType).then((data) => {
       setPermissions(data || {});
     });
   }, [user.id, user.employeeType]);
 
+  useEffect(() => {
+    // Fetch role-based permissions from UserRolesTable
+    const fetchRolePermissions = async () => {
+      try {
+        const data = await getPermissionsForRole();
+        setRolePermissions(data);
+      } catch (error) {
+        console.error("Error fetching role permissions:", error);
+      }
+    };
+
+    fetchRolePermissions();
+  }, []);
+
+  // Helper function to check if permission is allowed for user's role
+  const isPermissionAllowedForRole = (key: string): boolean => {
+    if (!rolePermissions) return true; // Allow if role permissions not loaded yet
+
+    const roleKey = `${user.employeeType.toLowerCase()}Permissions`;
+    const rolePermission = rolePermissions[roleKey];
+
+    if (!rolePermission) return true; // Allow if role not found
+
+    return rolePermission[key] !== false; // Allow if permission is not explicitly false
+  };
+
   const handlePermissionChange = async (key: string, checked: boolean) => {
-    setPermissions(prev => {
+    // Check if user is trying to enable a permission that's disabled at role level
+    if (checked && !isPermissionAllowedForRole(key)) {
+      errorToast(
+        "Cannot enable this permission because it is disabled for this role in the User Roles table"
+      );
+      return;
+    }
+
+    setPermissions((prev) => {
       const { id, ...prevWithoutId } = prev;
       const updatedPermissions = { ...prevWithoutId, [key]: checked };
       // Upsert the entire permissions object
-      savePermissions(user.id, updatedPermissions).catch(error => {
+      savePermissions(user.id, updatedPermissions).catch((error) => {
         console.error("Failed to update permission:", error);
       });
       return updatedPermissions;
@@ -62,10 +98,18 @@ const CustomizeUserRole = ({ user, onBack }: CustomizeUserRolesProps) => {
     viewOnlyKey: string,
     checked: boolean
   ) => {
-    setPermissions(prev => {
+    // Check if user is trying to enable a view-only permission that's disabled at role level
+    // if (checked && !isPermissionAllowedForRole(viewOnlyKey)) {
+    //   errorToast(
+    //     "Cannot enable this permission because it is disabled for this role in the User Roles table"
+    //   );
+    //   return;
+    // }
+
+    setPermissions((prev) => {
       const updatedPermissions = { ...prev, [viewOnlyKey]: checked };
       // Upsert the entire permissions object
-      savePermissions(user.id, updatedPermissions).catch(error => {
+      savePermissions(user.id, updatedPermissions).catch((error) => {
         console.error("Failed to update view-only permission:", error);
       });
       return updatedPermissions;
@@ -130,7 +174,7 @@ const CustomizeUserRole = ({ user, onBack }: CustomizeUserRolesProps) => {
                 {!module.viewOnly && (
                   <Switch
                     checked={permissions[module.key] ?? false}
-                    onChange={checked =>
+                    onChange={(checked) =>
                       handlePermissionChange(module.key, checked)
                     }
                     className="shadow-md"
@@ -142,7 +186,7 @@ const CustomizeUserRole = ({ user, onBack }: CustomizeUserRolesProps) => {
                   <div className="group">
                     <Checkbox
                       checked={permissions[module.viewOnly] ?? false}
-                      onChange={e =>
+                      onChange={(e) =>
                         handleViewOnlyChange(module.viewOnly!, e.target.checked)
                       }
                     ></Checkbox>

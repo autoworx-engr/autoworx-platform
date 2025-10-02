@@ -17,6 +17,7 @@ export default function SelectCategory({
   setCategoryOpen,
   required = false,
   onBlur,
+  className,
 }: {
   categoryData?: Category | null;
   onCategoryChange: (category: Category) => void;
@@ -25,6 +26,7 @@ export default function SelectCategory({
   setCategoryOpen?: any;
   required?: boolean;
   onBlur?: () => void;
+  className?: string;
 }) {
   const { categories } = useListsStore();
   const [error, setError] = useState<string | null>();
@@ -185,6 +187,7 @@ export default function SelectCategory({
         ]}
         selectedItem={category}
         setSelectedItem={setCategory}
+        className={className}
       />
     </div>
   );

@@ -54,13 +54,16 @@ export default function EstimateAndInvoicePage() {
 
   useEffect(() => {
     async function getCurrencies() {
-      const response = await fetch("https://restcountries.com/v3.1/all");
-      const countries: Country[] = await response.json();
+      const response = await fetch(
+        "https://restcountries.com/v3.1/all?fields=currencies"
+      );
+      const data: { currencies?: { [currencyCode: string]: CurrencyInfo } }[] =
+        await response.json();
       const currenciesMap: Record<string, CurrencyInfo> = {};
 
-      countries?.forEach((country) => {
-        if (country.currencies) {
-          Object.entries(country.currencies).forEach(([code, currency]) => {
+      data?.forEach((item) => {
+        if (item.currencies) {
+          Object.entries(item.currencies).forEach(([code, currency]) => {
             currenciesMap[code] = {
               name: currency.name,
               symbol: currency.symbol || "",
@@ -113,7 +116,16 @@ export default function EstimateAndInvoicePage() {
 
   const handleUpdateCurrency = async () => {
     try {
-      await updateTaxCurrency({ currency, tax, serviceFee });
+      // Ensure tax and serviceFee are valid numbers or default to 0
+      const validTax = tax && !isNaN(Number(tax)) ? tax : "0";
+      const validServiceFee =
+        serviceFee && !isNaN(Number(serviceFee)) ? serviceFee : "0";
+
+      await updateTaxCurrency({
+        currency,
+        tax: validTax,
+        serviceFee: validServiceFee,
+      });
       successToast("Currency, Shop supplies & Tax updated successfully");
     } catch (error) {
       console.log("Error updating currency in page:", error);
@@ -135,7 +147,11 @@ export default function EstimateAndInvoicePage() {
                   label="Tax Amount"
                   className="w-full"
                   onChange={(e) => {
-                    setTax(String(e.target.value));
+                    const value = e.target.value;
+                    // Allow empty string, numbers, and decimal points
+                    if (value === "" || /^\d*\.?\d*$/.test(value)) {
+                      setTax(value);
+                    }
                   }}
                 />
                 <span className="absolute bottom-1 right-1">%</span>
@@ -149,7 +165,11 @@ export default function EstimateAndInvoicePage() {
                   label="Shop Supplies"
                   className="w-full"
                   onChange={(e) => {
-                    setServiceFee(String(e.target.value));
+                    const value = e.target.value;
+                    // Allow empty string, numbers, and decimal points
+                    if (value === "" || /^\d*\.?\d*$/.test(value)) {
+                      setServiceFee(value);
+                    }
                   }}
                 />
                 <span className="absolute bottom-1 right-1">%</span>

@@ -106,13 +106,15 @@ export default async function PaymentTab({
 
   // Sort all payments by date (oldest first) for proper due calculation
   const sortedPayments = allPayments.sort(
-    (a, b) => new Date(a.date || a.createdAt).getTime() - new Date(b.date || b.createdAt).getTime()
+    (a, b) =>
+      new Date(a.date || a.createdAt).getTime() -
+      new Date(b.date || b.createdAt).getTime()
   );
 
   // Create payment-based invoice entries with proper due calculation
   for (let i = 0; i < sortedPayments.length; i++) {
     const payment = sortedPayments[i];
-    
+
     // Find the original invoice this payment belongs to
     const originalInvoice = invoices.find(
       (inv) => inv.id === payment.invoiceId
@@ -151,14 +153,17 @@ export default async function PaymentTab({
     );
     const originalAmount = Number(payment?.amount ?? 0);
     const netAmount = originalAmount - actualRefundedAmount;
-  
+
     let dueAfterPayment;
-    if (payment.dueAfterPayment !== null && payment.dueAfterPayment !== undefined) {
+    if (
+      payment.dueAfterPayment !== null &&
+      payment.dueAfterPayment !== undefined
+    ) {
       dueAfterPayment = Number(payment.dueAfterPayment);
     } else {
       const originalInvoiceGrandTotal = Number(originalInvoice.grandTotal || 0);
       const originalInvoiceDeposit = Number(originalInvoice.deposit || 0);
-    
+
       const paymentsUpToThis = sortedPayments.slice(0, i + 1);
       const totalPaidUpToThis = paymentsUpToThis.reduce((sum, pmt) => {
         if (pmt.invoiceId === payment.invoiceId) {
@@ -170,8 +175,9 @@ export default async function PaymentTab({
         }
         return sum;
       }, 0);
-    
-      dueAfterPayment = originalInvoiceGrandTotal - originalInvoiceDeposit - totalPaidUpToThis;
+
+      dueAfterPayment =
+        originalInvoiceGrandTotal - originalInvoiceDeposit - totalPaidUpToThis;
     }
 
     // Add original payment entry
@@ -305,9 +311,9 @@ export default async function PaymentTab({
             <p className="text-center">{allTransactionEntries?.length || 0}</p>
           </div>
         </div>
-        <div className="border border-slate-400 text-center text-sm md:text-start">
+        <div className="w-full md:w-96 lg:w-[420px] xl:w-[480px] 2xl:w-[520px] border border-slate-400 text-center text-sm md:text-start">
           <h3 className="p-3 py-1 font-semibold">Top Services </h3>
-          <div>
+          <div className="">
             {/* top 4 services */}
             {totalServices
               .sort((a, b) => b.count - a.count)
@@ -316,12 +322,12 @@ export default async function PaymentTab({
                 <div
                   key={service.id}
                   className={cn(
-                    "flex gap-44 p-3 py-1",
+                    "flex justify-between items-center gap-4 p-3 py-1",
                     index % 2 === 0 ? evenColor : oddColor
                   )}
                 >
-                  <p>{service.name}</p>
-                  <p>Ordered {service.count} times</p>
+                  <p className="truncate pr-2">{service.name}</p>
+                  <p className="text-nowrap">Ordered {service.count} times</p>
                 </div>
               ))}
           </div>

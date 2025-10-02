@@ -424,6 +424,7 @@ export default function MaterialCreate() {
         categoryData={category}
         categoryOpen={categoryOpen}
         setCategoryOpen={setCategoryOpen}
+        className="max-w-full pl-0 min-[2000px]:pl-3"
       />
 
       <div className="flex items-center gap-2">
@@ -481,6 +482,7 @@ export default function MaterialCreate() {
           openState={[vendorOpen, setVendorOpen]}
           selectedItem={vendor}
           setSelectedItem={setVendor}
+          className="max-w-full "
         />
       </div>
 

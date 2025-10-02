@@ -148,7 +148,7 @@ export default function ResponsiveEstimateCreateTab({}: TProps) {
                           useEstimateCreateStore.setState((x) =>
                             create(x, (x) => {
                               x.items[i].service = service;
-                            }),
+                            })
                           )
                         }
                         onSearch={(search) => {
@@ -157,7 +157,7 @@ export default function ResponsiveEstimateCreateTab({}: TProps) {
                               (service) =>
                                 service.name
                                   .toLowerCase()
-                                  .includes(search.toLowerCase()),
+                                  .includes(search.toLowerCase())
                             );
 
                             return filteredServices;
@@ -225,7 +225,7 @@ export default function ResponsiveEstimateCreateTab({}: TProps) {
                                       ...material,
                                       quantity: Decimal(0),
                                     };
-                                  }),
+                                  })
                                 );
 
                                 open("MATERIAL", {
@@ -241,7 +241,7 @@ export default function ResponsiveEstimateCreateTab({}: TProps) {
                                     (material) =>
                                       material.name
                                         .toLowerCase()
-                                        .includes(search.toLowerCase()),
+                                        .includes(search.toLowerCase())
                                   );
                                   return filteredMaterials;
                                 } else {
@@ -263,7 +263,7 @@ export default function ResponsiveEstimateCreateTab({}: TProps) {
                                   useEstimateCreateStore.setState((x) =>
                                     create(x, (x) => {
                                       x.items[i].materials.push(null);
-                                    }),
+                                    })
                                   );
                                 }}
                               >
@@ -303,7 +303,7 @@ export default function ResponsiveEstimateCreateTab({}: TProps) {
                                     ...material,
                                     quantity: Decimal(0),
                                   };
-                                }),
+                                })
                               );
 
                               open("MATERIAL", {
@@ -319,7 +319,7 @@ export default function ResponsiveEstimateCreateTab({}: TProps) {
                                   (material) =>
                                     material.name
                                       .toLowerCase()
-                                      .includes(search.toLowerCase()),
+                                      .includes(search.toLowerCase())
                                 );
                                 return filteredMaterials;
                               } else {
@@ -341,7 +341,7 @@ export default function ResponsiveEstimateCreateTab({}: TProps) {
                                 useEstimateCreateStore.setState((x) =>
                                   create(x, (x) => {
                                     x.items[i].materials.push(null);
-                                  }),
+                                  })
                                 );
                               }}
                             >
@@ -373,7 +373,7 @@ export default function ResponsiveEstimateCreateTab({}: TProps) {
                           useEstimateCreateStore.setState((x) =>
                             create(x, (x) => {
                               x.items[i].labor = labor;
-                            }),
+                            })
                           );
 
                           open("LABOR", {
@@ -387,7 +387,7 @@ export default function ResponsiveEstimateCreateTab({}: TProps) {
                             const filteredLabors = labors.filter((labor) =>
                               labor.name
                                 .toLowerCase()
-                                .includes(search.toLowerCase()),
+                                .includes(search.toLowerCase())
                             );
 
                             return filteredLabors;
@@ -415,7 +415,7 @@ export default function ResponsiveEstimateCreateTab({}: TProps) {
                   );
                 case "tags":
                   return (
-                    <div>
+                    <div key={`tags-${i}-${j}`}>
                       <Label className="mb-1 font-bold">Tags</Label>
                       <SelectTags
                         type="TAG"
@@ -427,7 +427,7 @@ export default function ResponsiveEstimateCreateTab({}: TProps) {
                                 tags instanceof Function
                                   ? tags(item.tags)
                                   : tags;
-                            }),
+                            })
                           );
                         }}
                         index={[i, j]}
