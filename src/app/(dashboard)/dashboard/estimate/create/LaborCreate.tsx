@@ -213,6 +213,7 @@ export default function LaborCreate() {
         categoryData={category}
         categoryOpen={categoryOpen}
         setCategoryOpen={setCategoryOpen}
+        className="max-w-full pl-0 min-[2000px]:pl-3"
       />
 
       <div className="flex items-center gap-2">

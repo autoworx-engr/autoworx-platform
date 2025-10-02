@@ -10,7 +10,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/Tooltip";
-import React, { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  ChangeEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { FaChevronDown, FaChevronUp, FaSearch } from "react-icons/fa";
 
 interface SelectorProps<T> {
@@ -27,6 +33,7 @@ interface SelectorProps<T> {
   setSelectedItem?: React.Dispatch<React.SetStateAction<T | null>>;
   clickabled?: boolean;
   disabledDropdown?: boolean;
+  className?: string;
   // Infinite scroll props
   hasNextPage?: boolean;
   fetchNextPage?: () => void;
@@ -68,6 +75,7 @@ export default function Selector<T>({
   setSelectedItem,
   clickabled = true,
   disabledDropdown = false,
+  className,
   // Infinite scroll props
   hasNextPage = false,
   fetchNextPage,
@@ -82,7 +90,7 @@ export default function Selector<T>({
   const [filteredItems, setFilteredItems] = useState<T[]>(items);
   // Local state to manage the selected item
   const [selected, setSelected] = useState<T | null | undefined>(selectedItem);
-  
+
   // Ref for the scrollable container
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -98,11 +106,17 @@ export default function Selector<T>({
 
   // Infinite scroll handler
   const handleScroll = useCallback(() => {
-    if (!useInfiniteScroll || !scrollContainerRef.current || !hasNextPage || isFetchingNextPage) {
+    if (
+      !useInfiniteScroll ||
+      !scrollContainerRef.current ||
+      !hasNextPage ||
+      isFetchingNextPage
+    ) {
       return;
     }
 
-    const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
+    const { scrollTop, scrollHeight, clientHeight } =
+      scrollContainerRef.current;
     const isNearBottom = scrollTop + clientHeight >= scrollHeight - 10;
 
     if (isNearBottom && fetchNextPage) {
@@ -114,8 +128,8 @@ export default function Selector<T>({
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current;
     if (useInfiniteScroll && scrollContainer) {
-      scrollContainer.addEventListener('scroll', handleScroll);
-      return () => scrollContainer.removeEventListener('scroll', handleScroll);
+      scrollContainer.addEventListener("scroll", handleScroll);
+      return () => scrollContainer.removeEventListener("scroll", handleScroll);
     }
   }, [handleScroll, useInfiniteScroll]);
 
@@ -175,7 +189,7 @@ export default function Selector<T>({
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-      <div className="w-full max-w-96">
+      <div className={cn("w-full max-w-96", className)}>
         <DropdownMenuTrigger
           disabled={disabledDropdown}
           onClick={() => setIsOpen && setIsOpen(true)}
@@ -233,14 +247,16 @@ export default function Selector<T>({
           </div>
 
           {/* Display list of items */}
-          <div 
+          <div
             ref={scrollContainerRef}
             className="mb-5 flex max-h-40 flex-col overflow-y-auto"
           >
             {filteredItems?.map((item, index) => {
               // Use a unique key that combines the item's id if available, otherwise fall back to index
-              const key = (item as any)?.id ? `item-${(item as any).id}` : `index-${index}`;
-              
+              const key = (item as any)?.id
+                ? `item-${(item as any).id}`
+                : `index-${index}`;
+
               if (clickabled) {
                 return (
                   <button
@@ -273,14 +289,14 @@ export default function Selector<T>({
                 );
               }
             })}
-            
+
             {/* Loading indicator for infinite scroll */}
             {useInfiniteScroll && isFetchingNextPage && (
               <div className="flex justify-center py-2">
                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600"></div>
               </div>
             )}
-            
+
             {/* End of list indicator */}
             {useInfiniteScroll && !hasNextPage && filteredItems.length > 0 && (
               <div className="py-2 text-center text-xs text-gray-500">
