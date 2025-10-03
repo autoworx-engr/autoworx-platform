@@ -28,7 +28,8 @@
         "./src/*"
       ]
       // "@/components/*": ["components/*"]
-    }
+    },
+    "target": "ES2017"
   },
   "include": [
     "next-env.d.ts",
@@ -39,7 +40,9 @@
     "global.d.ts",
     "src/app/(home)/components/first",
     "src/app/(dashboard)/dashboard/pipeline/shop/shopPipelineLayout.tsc",
-    "src/app/mailgun.js", "test.js"  ],
+    "src/app/mailgun.js",
+    "test.js"
+  ],
   "exclude": [
     "node_modules"
   ]

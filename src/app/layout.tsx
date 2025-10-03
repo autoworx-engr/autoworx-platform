@@ -10,7 +10,8 @@ import { Inter } from "next/font/google";
 import { Toaster } from "react-hot-toast";
 import TopLoader from "../components/TopLoader";
 import "./globals.css";
-import { redirect } from "next/navigation";
+import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/next";
 // import { ThemeProvider } from "@/components/theme-provider";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -76,6 +77,8 @@ export default async function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <PublicEnvScript />
+        <SpeedInsights />
+        <Analytics />
         {/* <link
           rel="apple-touch-icon"
           sizes="512x512"
