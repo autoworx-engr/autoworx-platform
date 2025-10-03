@@ -1,13 +1,13 @@
+import { sendInfobipMessage } from "@/actions/communication/client/sendInfobipMessage";
 import { sendTwilioMessage } from "@/actions/communication/client/sendTwilioMessage";
 import { errorToast } from "@/lib/toast";
+import { ClientSMS, SmsGateway } from "@prisma/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { smsQueryKey } from "../_utils/queryKey";
-import updateFirstContactTimeClient from "@/actions/communication/client/updateFirstContactTimeClient";
-import { ClientSMS } from "@prisma/client";
-import { sendInfobipMessage } from "@/actions/communication/client/sendInfobipMessage";
 
 export default function useSmsSendMutation(clientId: number) {
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async (clientSmsData: {
       id: string;
@@ -17,6 +17,7 @@ export default function useSmsSendMutation(clientId: number) {
       createdAt: string;
       isSending: boolean;
       sentBy: string;
+      smsGateway: SmsGateway;
     }) => {
       const { files } = clientSmsData;
       let mediaUrl: string[] = [];
@@ -40,14 +41,26 @@ export default function useSmsSendMutation(clientId: number) {
           mediaUrl = json?.data;
         }
       }
-      const response = await sendInfobipMessage({
-        clientId: clientSmsData.clientId,
-        message: clientSmsData.message,
-        attachments: mediaUrl.map((file, ind) => ({
-          url: file,
-          name: files[ind].name,
-        })),
-      });
+      let response;
+      if (clientSmsData.smsGateway === "TWILIO") {
+        response = await sendTwilioMessage({
+          clientId: clientSmsData.clientId,
+          message: clientSmsData.message,
+          attachments: mediaUrl.map((file, ind) => ({
+            url: file,
+            name: files[ind].name,
+          })),
+        });
+      } else if (clientSmsData.smsGateway === "INFOBIP") {
+        response = await sendInfobipMessage({
+          clientId: clientSmsData.clientId,
+          message: clientSmsData.message,
+          attachments: mediaUrl.map((file, ind) => ({
+            url: file,
+            name: files[ind].name,
+          })),
+        });
+      }
       return response;
     },
 
