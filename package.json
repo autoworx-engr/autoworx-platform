@@ -160,7 +160,7 @@
     "typescript": "^5"
   },
   "engines": {
-    "node": "18.x"
+    "node": ">=20.x"
   },
   "resolutions": {
     "string-width": "^4.2.3"
