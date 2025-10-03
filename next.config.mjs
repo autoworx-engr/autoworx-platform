@@ -34,10 +34,7 @@ const nextConfig = {
     ],
   },
   reactStrictMode: false,
-  productionBrowserSourceMaps: process.env.NODE_ENV === "development",
-  experimental: {
-    swcMinify: false,
-  },
+  productionBrowserSourceMaps: process.env.NODE_ENV === "development"
 };
 
 export default nextConfig;
