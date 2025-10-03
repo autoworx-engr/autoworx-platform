@@ -1,14 +1,8 @@
 import { cn } from "@/lib/cn";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { FormatUtcToTimezone } from "@/utils/FormatUtcToTimezone";
-import {
-  InventoryProduct,
-  InventoryProductHistory,
-  Prisma,
-} from "@prisma/client";
-import moment from "moment";
+import { InventoryProduct, InventoryProductHistory } from "@prisma/client";
 import Link from "next/link";
-import React from "react";
 
 type TProps = {
   history: TInventoryPurchaseHistory;
