@@ -6,7 +6,6 @@ import {
   InventoryProductHistory,
   Prisma,
 } from "@prisma/client";
-import { String } from "lodash";
 import moment from "moment";
 import Link from "next/link";
 import React from "react";
@@ -48,7 +47,7 @@ export default function InventoryTableRow({
     <tr
       className={cn(
         "cursor-pointer rounded-md py-3",
-        index % 2 === 0 ? "bg-background" : "bg-blue-100",
+        index % 2 === 0 ? "bg-background" : "bg-blue-100"
       )}
     >
       <td className="border-b px-4 py-2 text-left">

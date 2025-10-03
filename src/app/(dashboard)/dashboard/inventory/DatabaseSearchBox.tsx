@@ -2,9 +2,9 @@
 
 import { CiSearch } from "react-icons/ci";
 import { Input } from "antd";
-import debounce from "lodash.debounce";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useInventoryDatabaseSearchStore } from "@/stores/inventoryDatabaseSearchStore";
+import { useDebouncedCallback } from "@/utils/useDebouncedCallback";
 
 export default function DatabaseSearchBox() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -15,12 +15,12 @@ export default function DatabaseSearchBox() {
     setSearchTerm(search || "");
   }, [search]);
 
-  const debouncedSearch = useMemo(
-    () =>
-      debounce((value: string) => {
-        setSearch(value);
-        setPage(1);
-      }, 500),
+  const debouncedSearch = useDebouncedCallback(
+    (value: string) => {
+      setSearch(value);
+      setPage(1);
+    },
+    500,
     [setSearch]
   );
 

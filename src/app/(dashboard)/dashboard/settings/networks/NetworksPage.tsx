@@ -9,9 +9,9 @@ import {
 } from "@/actions/settings/myNetwork";
 import { Switch } from "@/components/Switch";
 import { errorToast, successToast } from "@/lib/toast";
+import { useDebouncedCallback } from "@/utils/useDebouncedCallback";
 import Slider from "@mui/material/Slider";
 import { Company } from "@prisma/client";
-import debounce from "lodash.debounce";
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import { IoSearchOutline } from "react-icons/io5";
@@ -85,10 +85,11 @@ const NetworksPage = ({
   };
 
   // Create a debounced function for updating the slider value
-  const debouncedSetRange = useCallback(
-    debounce((value: [number, number]) => {
+  const debouncedSetRange = useDebouncedCallback(
+    (value: [number, number]) => {
       setNearByCompanyRangeDebounced(value);
-    }, 300), // 300ms debounce delay
+    },
+    300,
     []
   );
 
