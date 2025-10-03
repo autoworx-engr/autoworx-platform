@@ -52,6 +52,7 @@
     "@types/html-to-text": "^9.0.4",
     "@types/react-qr-reader": "^2.1.7",
     "@types/react-resizable": "^3.0.8",
+    "@vercel/analytics": "^1.5.0",
     "@vercel/speed-insights": "^1.2.0",
     "antd": "^5.19.0",
     "aws-sdk": "^2.1692.0",
