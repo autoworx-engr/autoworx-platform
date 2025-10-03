@@ -7,12 +7,12 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "set NODE_OPTIONS=--max-old-space-size=4096 && prisma generate && next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
     "prettier": "prettier --ignore-path .gitignore --write \"**/*.+(js|ts|json)\"",
     "prettier:fix": "npm run prettier --fix",
-    "tsc": "set NODE_OPTIONS=--max-old-space-size=4096 && tsc",
+    "tsc": "tsc",
     "test": "jest",
     "test:watch": "jest --watchAll",
     "prisma:merge": "cat prisma/schema/*.prisma > prisma/schema.prisma"
