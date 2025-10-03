@@ -128,7 +128,7 @@ export default function CreateAndEditLabor({
       });
       setPriority(priority as Priority);
       setStatus(technicianStatus as TStatus);
-      setEmployee(employeeList.find(e => e.id === userId) || null);
+      setEmployee(employeeList.find((e) => e.id === userId) || null);
     }
   }, [technician, employeeList]);
   const handleChange = (
@@ -153,7 +153,7 @@ export default function CreateAndEditLabor({
       return;
     } else {
       setError(null);
-      setInputValues(prevState => ({
+      setInputValues((prevState) => ({
         ...prevState,
         [name]: value,
       }));
@@ -205,8 +205,8 @@ export default function CreateAndEditLabor({
 
         if (response.type === "success") {
           setOpen(false);
-          setTechnicians(prev =>
-            prev.map(tech =>
+          setTechnicians((prev) =>
+            prev.map((tech) =>
               tech.id === technician.id
                 ? {
                     ...response.data,
@@ -239,7 +239,7 @@ export default function CreateAndEditLabor({
         const response = await addTechnician(payload, selectedVehicleParts);
         if (response.type === "success") {
           setOpen(false);
-          setTechnicians(prev => [
+          setTechnicians((prev) => [
             ...prev,
             {
               ...response.data,
@@ -300,12 +300,12 @@ export default function CreateAndEditLabor({
 
   //show only them who are not assigned
   const availableEmployees = employeeList.filter(
-    emp => !technicianList?.some(tech => tech.userId === emp.id)
+    (emp) => !technicianList?.some((tech) => tech.userId === emp.id)
   );
   // parts select handler
   const handleSelectParts = (part: { label: string; value: string }) => {
     if (isTechnician) return; // Prevent technicians from adding parts
-    setSelectedVehicleParts(prev => [
+    setSelectedVehicleParts((prev) => [
       ...prev,
       { partsName: part.value, invoiceId: invoiceId, serviceId: serviceId },
     ]);
@@ -314,8 +314,8 @@ export default function CreateAndEditLabor({
   // parts remove handler
   const handleRemoveParts = (part: { label: string; value: string }) => {
     if (isTechnician) return; // Prevent technicians from removing parts
-    setSelectedVehicleParts(prev =>
-      prev.filter(vPart => vPart.partsName !== part.value)
+    setSelectedVehicleParts((prev) =>
+      prev.filter((vPart) => vPart.partsName !== part.value)
     );
   };
 
@@ -365,7 +365,7 @@ export default function CreateAndEditLabor({
               className={isTechnician ? "pointer-events-none opacity-50" : ""}
             >
               <Selector
-                label={employee =>
+                label={(employee) =>
                   employee?.firstName ? `${employee.firstName}` : "Employee"
                 }
                 newButton={<div></div>}
@@ -376,7 +376,7 @@ export default function CreateAndEditLabor({
                   </p>
                 )}
                 onSearch={(search: string) =>
-                  availableEmployees.filter(employee =>
+                  availableEmployees.filter((employee) =>
                     `${employee.firstName} ${employee.lastName}`
                       .toLowerCase()
                       .includes(search.toLowerCase())
@@ -426,7 +426,7 @@ export default function CreateAndEditLabor({
               className={isTechnician ? "pointer-events-none opacity-50" : ""}
             >
               <Selector
-                label={priority => (priority ? priority : "Priority")}
+                label={(priority) => (priority ? priority : "Priority")}
                 items={["Low", "Medium", "High"]}
                 displayList={(priority: Priority) => <p>{priority}</p>}
                 openState={[priorityOpen, setPriorityOpen]}
@@ -446,7 +446,7 @@ export default function CreateAndEditLabor({
             {/* TODO: use better UI */}
             <DropdownSelection
               dropDownValues={["Pending", "In Progress", "Complete", "Cancel"]}
-              onValueChange={value => setStatus(value as any)}
+              onValueChange={(value) => setStatus(value as any)}
               changesValue={status}
               buttonClassName="h-10 cursor-pointer rounded-md border-2 border-slate-400 p-2 outline-none w-full py-2"
             />
