@@ -93,9 +93,11 @@ export default function PaymentMethodFilter({
     <div className="relative w-full md:w-auto">
       <button
         onClick={() => toggleModal(modalName)}
-        className="flex w-full items-center justify-between gap-2 rounded-sm border border-gray-400 p-1 px-5 text-sm text-gray-400 hover:border-blue-600 md:max-w-80"
+        className={`flex w-full items-center justify-between gap-2 rounded-sm border ${selectedMethod !== "All" ? "border-[#6571FF] bg-[#6571FF] text-white" : "border-gray-400 text-gray-400"} p-1 px-5 text-sm hover:border-blue-600 md:max-w-80`}
       >
-        <span>Filter</span>
+        <span className={``}>
+          {selectedMethod === "All" ? "Filter" : selectedMethod}
+        </span>
       </button>
 
       {activeModal[modalName] && (
