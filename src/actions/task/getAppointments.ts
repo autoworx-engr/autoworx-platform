@@ -5,7 +5,7 @@ import { Appointment, EmployeeType, Prisma } from "@prisma/client";
 import { getServerSession } from "next-auth";
 
 export default async function getAppointments(
-  params?: Prisma.AppointmentFindManyArgs,
+  params?: Prisma.AppointmentFindManyArgs
 ) {
   const session = await getServerSession(authOptions);
   try {

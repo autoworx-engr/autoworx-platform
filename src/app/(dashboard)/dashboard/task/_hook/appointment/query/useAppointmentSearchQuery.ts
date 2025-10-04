@@ -13,6 +13,23 @@ export default function useAppointmentSearchQuery(searchTerm: string = "") {
             {
               title: { contains: searchTerm, mode: "insensitive" },
             },
+            {
+              client: {
+                firstName: { contains: searchTerm, mode: "insensitive" },
+                lastName: { contains: searchTerm, mode: "insensitive" },
+              },
+            },
+            {
+              vehicle: {
+                OR: [
+                  { make: { contains: searchTerm, mode: "insensitive" } },
+                  { model: { contains: searchTerm, mode: "insensitive" } },
+                  ...(Number.isNaN(Number(searchTerm))
+                    ? []
+                    : [{ year: Number(searchTerm) }]),
+                ],
+              },
+            },
           ],
         },
         include: {
