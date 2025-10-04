@@ -1,5 +1,6 @@
 import { cn } from "@/lib/cn";
 import { VehicleParts as Parts } from "@prisma/client";
+import { Popconfirm } from "antd";
 import { useEffect, useState } from "react";
 import { TiDelete, TiTimes } from "react-icons/ti";
 
@@ -157,12 +158,12 @@ export default function VehicleParts({
   // Search filtering
   const filteredParts = searchTerm
     ? parts.filter((part) =>
-        part.label.toLowerCase().includes(searchTerm.toLowerCase()),
+        part.label.toLowerCase().includes(searchTerm.toLowerCase())
       )
     : parts;
 
   const visibleParts = filteredParts.filter(
-    (part) => isWriteAccess || part.selected,
+    (part) => isWriteAccess || part.selected
   );
 
   return (
@@ -195,14 +196,21 @@ export default function VehicleParts({
           visibleParts?.map((part) => (
             <div key={part.id} className="relative">
               {part.selected && isWriteAccess && (
-                <button
-                  className="absolute -right-[4px] -top-[4px] z-20"
-                  onClick={() =>
-                    handleRemoveParts({ label: part.label, value: part.value })
-                  }
+                <Popconfirm
+                  title={`Are you sure you want to delete this vehicle part?`}
+                  onConfirm={async () => {
+                    handleRemoveParts({
+                      label: part.label,
+                      value: part.value,
+                    });
+                  }}
+                  okText="Yes"
+                  cancelText="No"
                 >
-                  <TiDelete className="size-5 rounded-full bg-background text-[#6571FF]" />
-                </button>
+                  <button className="absolute -right-[4px] -top-[4px] z-20">
+                    <TiDelete className="size-5 rounded-full bg-background text-[#6571FF]" />
+                  </button>
+                </Popconfirm>
               )}
               <button
                 onClick={() => {
@@ -212,7 +220,7 @@ export default function VehicleParts({
                 type="button"
                 className={cn(
                   "relative w-full overflow-hidden text-nowrap rounded-full border border-gray-300 px-3 py-1.5 text-[12px]",
-                  part.selected ? "bg-[#6571FF] text-white" : "bg-background",
+                  part.selected ? "bg-[#6571FF] text-white" : "bg-background"
                 )}
               >
                 <span className="w-full">{part.label}</span>

@@ -8,6 +8,8 @@ import { MdSend } from "react-icons/md";
 import useSmsSendMutation from "../../../_hooks/useSmsSendMutation";
 import AttachmentInput from "../AttachmentInput";
 import { useClientCommunicationStore } from "@/stores/client-store";
+import { useServerGet } from "@/hooks/useServerGet";
+import { getCompany } from "@/actions/settings/getCompany";
 
 // Helper function to format attachment message
 const formatAttachmentMessage = (files: File[]) => {
@@ -39,6 +41,8 @@ export default function SendSms({ clientId }: TProps) {
   const { clientConversationTrack, setClientConversationTrack } =
     useClientCommunicationStore();
 
+  const { data } = useServerGet(getCompany);
+
   const [files, setFiles] = useState<File[]>([]);
   const [messageInput, setMessageInput] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
@@ -60,6 +64,7 @@ export default function SendSms({ clientId }: TProps) {
       createdAt: new Date().toISOString(),
       isSending: true,
       sentBy: "Company",
+      smsGateway: data?.smsGateway || "TWILIO",
     };
 
     // Update conversation track optimistically

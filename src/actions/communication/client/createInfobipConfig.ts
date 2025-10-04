@@ -9,11 +9,11 @@ export const getInfobipConfig = async (): Promise<{
   data?: InfobipConfig | null;
 }> => {
   try {
-    const companyId = await getCompanyId();
+    const cId = await getCompanyId();
 
     const infobipConfig = await db.infobipConfig.findFirst({
       where: {
-        companyId,
+        companyId: cId,
       },
     });
 
@@ -26,25 +26,26 @@ export const getInfobipConfig = async (): Promise<{
 
 export const getInfobipConfigById = async (companyId: number) => {
   try {
-    return await db.infobipConfig.findFirst({
+    const infobipConfig = await db.infobipConfig.findFirst({
       where: {
         companyId,
       },
     });
+    return { success: true, data: infobipConfig };
   } catch (error) {
     console.error("Error getting Infobip config by ID:", error);
-    return null;
+    return { success: false };
   }
 };
 
 export const createInfobipConfig = async ({
+  companyId,
   phoneNumber,
 }: {
+  companyId: number;
   phoneNumber: string;
 }) => {
   try {
-    const companyId = await getCompanyId();
-
     const infobipConfig = await db.infobipConfig.upsert({
       where: {
         companyId,

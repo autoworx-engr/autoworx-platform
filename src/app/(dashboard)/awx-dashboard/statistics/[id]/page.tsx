@@ -5,6 +5,7 @@ import Link from "next/link";
 import { IoIosArrowBack } from "react-icons/io";
 import CompanyReportSection from "../../components/CompanyReportSection";
 import FeaturePermission from "../../components/FeaturePermission";
+import { ConfigureCommunicationHub } from "./ConfigureCommunicationHub";
 
 type propsType = {
   params: {
@@ -209,6 +210,8 @@ const Page = async (props: propsType) => {
                 </button>
               </p>
             </div>
+            {/* communication hub configure */}
+            <ConfigureCommunicationHub />
             {/* reports */}
             <CompanyReportSection />
           </div>

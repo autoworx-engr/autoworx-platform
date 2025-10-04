@@ -4,9 +4,17 @@ import { createTwilioCredentials } from "@/actions/communication/client/createTw
 import { getTwilioCredentials } from "@/actions/communication/client/sendTwilioMessage";
 import { useServerGet } from "@/hooks/useServerGet";
 import { errorToast, successToast } from "@/lib/toast";
-import React, { ChangeEvent, FormEvent, useEffect, useState } from "react";
+import React, {
+  ChangeEvent,
+  FormEvent,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { useParams } from "next/navigation";
 
 type FormData = {
+  companyId: number;
   accountSid: string;
   phoneNumber: string;
   apiKeySid: string;
@@ -15,9 +23,13 @@ type FormData = {
 };
 
 const SmsGetwayForm: React.FC = () => {
-  const { data: twilioCredentials } = useServerGet(getTwilioCredentials);
+  const params = useParams<{ id: string }>();
+  const arg = useMemo(() => ({ companyId: Number(params.id) }), []);
+
+  const { data: twilioCredentials } = useServerGet(getTwilioCredentials, arg);
 
   const [formData, setFormData] = useState<FormData>({
+    companyId: Number(params.id),
     accountSid: twilioCredentials?.accountSid ?? "",
     phoneNumber: twilioCredentials?.phoneNumber ?? "",
     apiKeySid: twilioCredentials?.apiKeySid ?? "",
@@ -83,6 +95,7 @@ const SmsGetwayForm: React.FC = () => {
   };
   useEffect(() => {
     setFormData({
+      companyId: Number(params.id),
       accountSid: twilioCredentials?.accountSid ?? "",
       phoneNumber: twilioCredentials?.phoneNumber ?? "",
       apiKeySid: twilioCredentials?.apiKeySid ?? "",
@@ -100,8 +113,8 @@ const SmsGetwayForm: React.FC = () => {
     !formData.phoneNumberSid.trim();
   return (
     // <div className="flex items-center justify-center bg-gray-50">
-    <div className="w-full max-w-2xl rounded-lg bg-background p-10 shadow-lg">
-      <h2 className="mb-2 text-xl font-semibold mb-8">
+    <div className="w-full max-w-2xl rounded-lg bg-background p-10 #shadow-lg">
+      <h2 className="text-xl font-semibold mb-8">
         Twilio Credentials ( For SMS & Call )
       </h2>
       <form onSubmit={handleSubmit}>

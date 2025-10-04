@@ -3,13 +3,9 @@ import { formatCurrency } from "@/utils/formatCurrency";
 import { FormatUtcToTimezone } from "@/utils/FormatUtcToTimezone";
 import {
   InventoryProduct,
-  InventoryProductHistory,
-  Prisma,
+  InventoryProductHistory
 } from "@prisma/client";
-import { String } from "lodash";
-import moment from "moment";
 import Link from "next/link";
-import React from "react";
 
 type TProps = {
   history: TInventoryPurchaseHistory;

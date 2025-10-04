@@ -352,12 +352,10 @@ export default function MakePayment() {
                       type="date"
                       value={date ? moment(date).format("YYYY-MM-DD") : ""}
                       onChange={(e) => {
-                        const localDate = moment.tz(
-                          e.target.value,
-                          "YYYY-MM-DD",
-                          timezone
-                        );
-                        setDate(localDate.toDate());
+                        const [year, month, day] = e.target.value
+                          .split("-")
+                          .map(Number);
+                        setDate(new Date(year, month - 1, day));
                       }}
                     />
                   </div>
