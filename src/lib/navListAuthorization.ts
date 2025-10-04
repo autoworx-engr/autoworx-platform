@@ -51,12 +51,6 @@ export function filterNavList(
           return false;
         }
       }
-      
-      // Admin has access to everything
-      if (permissions?.role === "Admin") {
-        return true;
-      }
-      
       // Permission-based checks
       if (permissions?.companyPermissions) {
         const cp = permissions.companyPermissions as BasePermission;
@@ -66,25 +60,9 @@ export function filterNavList(
           companyKey: K,
           userKey?: K
         ) => {
-          // Company permission is the base requirement
-          if (!cp[companyKey]) {
-            return false;
-          }
-          
-          // If user has individual permissions defined, use those (individual override)
-          if (up && userKey !== undefined) {
-            const individualResult = !!up[userKey];
-            return individualResult;
-          }
-          
-          // Fall back to role-based permission if no individual permissions are defined
-          // For Manager role, company permission is sufficient if no individual restrictions
-          if (permissions.role === "Manager") {
-            return true;
-          }
-          
-          // For other roles, company permission alone is sufficient if no user restrictions
-          return true;
+          if (!cp[companyKey]) return false;
+          if (!up || userKey === undefined) return true;
+          return !!up[userKey];
         };
 
         switch (item.title) {
