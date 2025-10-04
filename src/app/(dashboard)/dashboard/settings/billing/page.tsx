@@ -2,6 +2,8 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import { PricePlans } from "./PricePlans";
+import moment from "moment-timezone";
+import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 
 const paymentHistory = [
   { amount: "$100", method: "Credit Card", date: "2024-08-01" },
@@ -23,6 +25,7 @@ const planColors: { [key: string]: string } = {
 export default function Page() {
   const [plansOpen, setPlansOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState("Autoworx Basic Plan");
+  const timezone = useCompanyTimezone();
 
   return (
     <div className="min-h-screen">
@@ -127,7 +130,11 @@ export default function Page() {
                   >
                     <td className="px-6 py-3">{entry.amount}</td>
                     <td className="px-6 py-3">{entry.method}</td>
-                    <td className="px-6 py-3">{entry.date}</td>
+                    <td className="px-6 py-3">
+                      {entry.date
+                        ? moment.tz(entry.date, timezone).format("MM/DD/YYYY")
+                        : ""}
+                    </td>
                   </tr>
                 ))}
               </tbody>

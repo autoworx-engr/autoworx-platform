@@ -1,17 +1,21 @@
 "use client";
 import {
   createInfobipConfig,
-  getInfobipConfig,
+  getInfobipConfigById,
 } from "@/actions/communication/client/createInfobipConfig";
 import { useServerGet } from "@/hooks/useServerGet";
-import { successToast, errorToast } from "@/lib/toast";
+import { errorToast, successToast } from "@/lib/toast";
+import { useParams } from "next/navigation";
 import React, { useEffect } from "react";
 
 type Props = {};
 
 const InfobipConfig = (props: Props) => {
   const [phone, setPhone] = React.useState("");
-  const { data } = useServerGet(getInfobipConfig);
+
+  const params = useParams<{ id: string }>();
+  const { data } = useServerGet(getInfobipConfigById, Number(params.id));
+
   useEffect(() => {
     if (data?.data?.phoneNumber) {
       setPhone(data.data.phoneNumber);
@@ -23,7 +27,10 @@ const InfobipConfig = (props: Props) => {
       <form
         onSubmit={async (e) => {
           e.preventDefault();
-          const res = await createInfobipConfig({ phoneNumber: phone });
+          const res = await createInfobipConfig({
+            companyId: Number(params.id),
+            phoneNumber: phone,
+          });
           if (res?.success) {
             successToast("Infobip Config Created Successfully");
           } else {
