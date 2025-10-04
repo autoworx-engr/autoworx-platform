@@ -36,6 +36,7 @@ export function canAccessRoute(
     const hasDbPermission = permissionKey.some((key) => {
       //@ts-ignore
       const hasCompanyPermission = Boolean(
+        //@ts-ignore
         permissions.companyPermissions?.[key]
       );
       if (hasCompanyPermission && permissions?.userPermissions) {
@@ -49,8 +50,8 @@ export function canAccessRoute(
 
   // Single permission key
 
-  //@ts-ignore
   const hasCompanyPermission = Boolean(
+    //@ts-ignore
     permissions.companyPermissions?.[permissionKey]
   );
   if (hasCompanyPermission && permissions?.userPermissions) {
