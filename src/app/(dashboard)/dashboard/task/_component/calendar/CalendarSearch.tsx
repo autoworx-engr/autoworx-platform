@@ -84,31 +84,21 @@ export default function CalendarSearch({ type }: { type: string }) {
     const trimmedSearchTerm = searchTerm.trim().toLowerCase();
 
     const filteredResults = allItems.filter((item) => {
-      const title = item.title.toLowerCase();
+      const title = (item.title || "").toLowerCase();
+      const firstName = (item.firstName || "").toLowerCase();
+      const lastName = (item.lastName || "").toLowerCase();
+      const fullName = `${firstName} ${lastName}`.trim();
+      const vehicle = (item.vehicle || "").toLowerCase();
 
-      return (
-        title.includes(trimmedSearchTerm) ||
-        title.startsWith(trimmedSearchTerm) ||
-        title.split(" ").some((word) => word.startsWith(trimmedSearchTerm))
+      const searchFields = [title, firstName, lastName, fullName, vehicle];
+
+      return searchFields.some(
+        (field) =>
+          field.includes(trimmedSearchTerm) ||
+          field.startsWith(trimmedSearchTerm) ||
+          field.split(" ").some((word) => word.startsWith(trimmedSearchTerm))
       );
     });
-
-    // commented to use later
-    // const filteredResults = allItems.filter((item) => {
-    //   const title = item.title.toLowerCase();
-    //   const firstName = item.firstName?.toLowerCase() || "";
-    //   const lastName = item.lastName?.toLowerCase() || "";
-    //   const fullName = `${firstName} ${lastName}`.trim();
-    //   const vehicle = item.vehicle?.toLowerCase() || "";
-
-    //   const searchFields = [title, firstName, lastName, fullName, vehicle];
-
-    //   return searchFields.some(field =>
-    //     field.includes(trimmedSearchTerm) ||
-    //     field.startsWith(trimmedSearchTerm) ||
-    //     field.split(" ").some((word) => word.startsWith(trimmedSearchTerm))
-    //   );
-    // });
 
     filteredResults.sort((a, b) => {
       const dateA = new Date(a.date);
