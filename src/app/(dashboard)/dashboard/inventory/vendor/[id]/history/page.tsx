@@ -102,7 +102,7 @@ export default async function Page({
                     <td className="px-10 text-left">
                       {moment
                         .tz(product.createdAt, timezone)
-                        .format("DD.MM.YYYY")}
+                        .format("MM/DD/YYYY")}
                     </td>
                     <td className="mt-2 flex gap-3 px-5">{product.receipt}</td>
                   </tr>

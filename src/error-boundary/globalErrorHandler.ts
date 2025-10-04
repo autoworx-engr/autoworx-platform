@@ -74,10 +74,14 @@ export const errorHandler = (error: any): TErrorHandler => {
     ) {
         console.error('Prisma error:', error);
         const prismaError = handlePrismaError(error);
-        message =
-            process.env.NODE_ENV === 'development'
-                ? prismaError?.message!
-                : 'Internal server error';
+        
+        // Show user-friendly validation errors (4xx) in both dev and production
+        // Hide only sensitive system errors (5xx) in production
+        const isUserFacingError = prismaError?.statusCode && prismaError.statusCode < 500;
+        
+        message = isUserFacingError || process.env.NODE_ENV === 'development'
+            ? prismaError?.message!
+            : 'Internal server error';
         statusCode = prismaError?.statusCode || 500;
         errorSource = [];
     }
