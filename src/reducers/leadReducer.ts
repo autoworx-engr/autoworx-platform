@@ -360,6 +360,27 @@ export function leadReducer<T>(
                 previousColumnId: number;
             };
 
+            // If the lead is staying in the same column, don't move it
+            if (updatedLead?.columnId === previousColumnId) {
+                return state.map(column => {
+                    if (column.id === previousColumnId) {
+                        return {
+                            ...column,
+                            leads: column.leads.map(lead => {
+                                if (lead?.id === updatedLead?.id) {
+                                    return {
+                                        ...lead,
+                                        columnId: updatedLead?.columnId,
+                                    };
+                                }
+                                return lead;
+                            }),
+                        };
+                    }
+                    return column;
+                });
+            }
+
             const findPrevLead = state
                 .find(column => column?.id === previousColumnId)
                 ?.leads.find(lead => lead?.id === updatedLead?.id);
