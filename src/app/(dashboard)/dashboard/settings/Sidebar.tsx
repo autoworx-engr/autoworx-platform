@@ -50,7 +50,7 @@ const businessSettings = [
     link: "/dashboard/settings/communications",
     label: "Communications Hub",
   },
-  
+
   {
     link: "/dashboard/settings/leadgeneration",
     label: "Lead Capture",
@@ -65,10 +65,11 @@ const Sidebar = (props: Props) => {
   const path = usePathname();
   const { permissions } = usePermissionStore();
   const { companyFeaturePermission } = useCompanyFeaturePermissionStore();
-  
+
   // Helper: Check if company feature permission allows access to this route
   function canAccessCompanyFeatureRoute(route: string): boolean {
-    if (!companyFeaturePermission || companyFeaturePermission.length === 0) return true;
+    if (!companyFeaturePermission || companyFeaturePermission.length === 0)
+      return true;
     const routeWithoutQuery = route.split("?")[0];
     const featureKey = FEATURE_PERMISSIONS_MAP[routeWithoutQuery];
     if (!featureKey) return true;
@@ -86,48 +87,40 @@ const Sidebar = (props: Props) => {
 
   // Helper: Check if user has individual permission for business settings
   function canAccessBusinessSettings(): boolean {
-    console.log('🔍 DEBUG canAccessBusinessSettings:', {
-      permissions,
-      companyFeaturePermission,
-      role: permissions?.role,
-      userPermissions: permissions?.userPermissions,
-      companyPermissions: permissions?.companyPermissions
-    });
-    
     if (!permissions) return false;
-    
-    // Admin always has access (skip company feature check for admin)
-    if (permissions.role === "Admin") return true;
-    
-    // First check: Company must have the business settings feature enabled
-    const hasCompanyFeature = companyFeaturePermission?.some(
-      (perm) => perm.permission_name === "businessSettings" && perm.enabled
-    );
 
-    if (!hasCompanyFeature) return false; // Company doesn't have this feature
-    
-    // Second check: User permission hierarchy
-    // Priority: 1. Individual user permission, 2. Role-based permission
-    
-    // If user has individual permissions defined, use those (individual override)
-    if (permissions.userPermissions) {
-      //@ts-ignore
-      const individualPermission = Boolean(permissions.userPermissions?.businessSettings);
-      return individualPermission;
-    }
-    
-    // Fall back to role-based permission if no individual permissions are defined
+    // Admin always has access
+    if (permissions.role === "Admin") return true;
+
+    // For managers, check if they have businessSettings permission
     if (permissions.role === "Manager") {
+      // Check company permission first
       //@ts-ignore
-      const rolePermission = Boolean(permissions.companyPermissions?.businessSettings);
-      return rolePermission;
+      const hasCompanyPermission = Boolean(
+        permissions.companyPermissions?.businessSettings
+      );
+      if (!hasCompanyPermission) return false;
+
+      // If company allows it, check user permission
+      if (permissions.userPermissions) {
+        //@ts-ignore
+        return Boolean(permissions.userPermissions?.businessSettings);
+      }
+
+      // If no user permissions defined, assume company permission is enough
+      return hasCompanyPermission;
     }
+
+    // Other roles don't have access
     return false;
   }
 
-  const filteredAccountSettings = accountSettings.filter((setting) => canAccessCompanyFeatureRoute(setting.link));
-  const filteredBusinessSettings = businessSettings.filter((setting) => 
-    canAccessCompanyFeatureRoute(setting.link) && canAccessBusinessSettings()
+  const filteredAccountSettings = accountSettings.filter((setting) =>
+    canAccessCompanyFeatureRoute(setting.link)
+  );
+  const filteredBusinessSettings = businessSettings.filter(
+    (setting) =>
+      canAccessCompanyFeatureRoute(setting.link) && canAccessBusinessSettings()
   );
   // State to handle sidebar visibility on small screens
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -173,7 +166,7 @@ const Sidebar = (props: Props) => {
               "-translate-x-full": !isSidebarOpen,
               "sm:ml-14 md:ml-14 lg:ml-14": isSidebarOpen, // Margin applied when sidebar is open
               "sm:ml-0 md:ml-0": !isSidebarOpen, // No margin when sidebar is closed
-            },
+            }
           )}
         >
           <div className="flex items-end justify-end align-middle">
@@ -193,7 +186,7 @@ const Sidebar = (props: Props) => {
                     "block px-4 py-2 hover:bg-gray-100 hover:text-gray-900",
                     {
                       "font-medium text-[#6571FF]": path === setting.link,
-                    },
+                    }
                   )}
                   key={index}
                   href={setting.link}
@@ -217,7 +210,7 @@ const Sidebar = (props: Props) => {
                           "block px-4 py-2 hover:bg-gray-100 hover:text-gray-900",
                           {
                             "font-medium text-[#6571FF]": path === setting.link,
-                          },
+                          }
                         )}
                         key={index}
                         href={setting.link}
@@ -243,7 +236,7 @@ const Sidebar = (props: Props) => {
                   "block px-4 py-2 hover:bg-gray-100 hover:text-gray-900",
                   {
                     "font-medium text-[#6571FF]": path === setting.link,
-                  },
+                  }
                 )}
                 key={index}
                 href={setting.link}
@@ -268,7 +261,7 @@ const Sidebar = (props: Props) => {
                         "block px-4 py-2 hover:bg-gray-100 hover:text-gray-900",
                         {
                           "font-medium text-[#6571FF]": path === setting.link,
-                        },
+                        }
                       )}
                       key={index}
                       href={setting.link}
