@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { getTechniciansWithPermission } from "@/actions/estimate/technician/getTechniciansWithPermission";
 import { queryKeys } from "@/lib/queryKeys";
 import { useQueryClient } from "@tanstack/react-query";
+import { Popconfirm } from "antd";
 
 export default function LaborItems({
   invoiceItemId,
@@ -64,7 +65,7 @@ export default function LaborItems({
       }
 
       const updatedTechnicians = technicians.filter(
-        technician => technician.id !== technicianId
+        (technician) => technician.id !== technicianId
       );
       setTechnicians(updatedTechnicians);
       setError("");
@@ -92,7 +93,7 @@ export default function LaborItems({
           writePermission={writePermission}
         />
 
-        {technicians.map(technician => (
+        {technicians.map((technician) => (
           <button
             key={technician.id}
             className={cn(
@@ -109,16 +110,20 @@ export default function LaborItems({
               setTechnicians={setTechnicians}
               writePermission={writePermission}
             />
-            {writePermission && (
-              <button
-                disabled={pending}
-                onClick={() =>
-                  startTransition(() => handleTechnicianDelete(technician.id))
-                }
-              >
-                <TiDeleteOutline className="text-xl text-white" />
-              </button>
-            )}
+            <Popconfirm
+              title={`Are you sure you want to delete this technician?`}
+              onConfirm={async () => {
+                startTransition(() => handleTechnicianDelete(technician.id));
+              }}
+              okText="Yes"
+              cancelText="No"
+            >
+              {writePermission && (
+                <button disabled={pending}>
+                  <TiDeleteOutline className="text-xl text-white" />
+                </button>
+              )}
+            </Popconfirm>
           </button>
         ))}
       </div>

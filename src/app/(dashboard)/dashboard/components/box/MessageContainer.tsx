@@ -110,11 +110,18 @@ export default function MessageContainer({
                     " " +
                     (data?.from?.lastName || "");
               const messageBy = data?.from?.id === user?.id ? "You: " : "";
+              
+              // Format the message to include attachment information
+              const formattedMessage = formatInternalAttachmentMessage(
+                data.message,
+                data.attachment
+              );
+              
               return (
                 <Message
                   key={data.id}
                   userName={userName}
-                  message={`${messageBy} ${data.message}`}
+                  message={`${messageBy}${formattedMessage}`}
                   redirectUrl={`/dashboard/communication/internal/?id=${data?.from?.id === user?.id ? data?.to?.id : data?.from?.id}`}
                   communicationType="Internal"
                   photoUrl={data?.from?.image}
