@@ -46,8 +46,8 @@ const WorkOrders = () => {
 
       return (
         fullName.includes(searchLower) ||
-        invoice.client?.firstName?.toLowerCase().includes(searchLower) ||
-        invoice.client?.lastName?.toLowerCase().includes(searchLower) ||
+        invoice.id?.toString().toLowerCase().includes(searchLower) ||
+        invoice.vehicle?.year?.toString().toLowerCase().includes(searchLower) ||
         invoice.vehicle?.make?.toLowerCase().includes(searchLower) ||
         invoice.vehicle?.model?.toLowerCase().includes(searchLower) ||
         invoice.invoiceItems.some((item) =>
