@@ -99,7 +99,7 @@ export default function AppointmentModalBody({
   const { data: settings, isFetched: settingsIsFetched } = useSettingsQuery();
 
   const queryClient = useQueryClient();
-  const { showError } = useFormErrorStore();
+  const { showError, clearError } = useFormErrorStore();
   const { setUpdateVariable } = useCalendarStore();
 
   const [client, setClient] = useState<Partial<
@@ -373,29 +373,47 @@ export default function AppointmentModalBody({
       // Add validation for date and time - title is always a string now
       if (!title || !title.trim()) {
         setIsSubmitting(false);
-        return errorToast("Appointment title is required!");
+        showError({
+          field: "title",
+          message: "Appointment title is required!",
+        });
+        return;
       }
 
       if (date && (!startTime || !endTime)) {
         setIsSubmitting(false);
-        return errorToast(
-          "Start time and End time are required when a date is selected!"
-        );
+        showError({
+          field: "all",
+          message:
+            "Start time and End time are required when a date is selected!",
+        });
+        return;
       }
 
       if (client && confirmationTemplateStatus && !confirmationTemplate) {
         setIsSubmitting(false);
-        return errorToast("No confirmation template is selected");
+        showError({
+          field: "all",
+          message: "No confirmation template is selected",
+        });
+        return;
       } else if (client && reminderTemplateStatus && !reminderTemplate) {
         setIsSubmitting(false);
-        return errorToast("No reminder template is selected");
+        showError({
+          field: "all",
+          message: "No reminder template is selected",
+        });
+        return;
       }
 
       if (client && reminderTemplateStatus && reminderTemplate && !timezone) {
         setIsSubmitting(false);
-        return errorToast(
-          "Set company timezone in Settings > Business Profile to send client reminders."
-        );
+        showError({
+          field: "all",
+          message:
+            "Set company timezone in Settings > Business Profile to send client reminders.",
+        });
+        return;
       }
 
       let res;
@@ -573,6 +591,7 @@ export default function AppointmentModalBody({
     setTimes([]);
     setAllDay(false);
     setIsSubmitting(false);
+    clearError();
     // remove the clientId from the url
     // router.push(pathname);
   }
