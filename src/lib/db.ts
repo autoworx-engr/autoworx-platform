@@ -43,9 +43,13 @@ function serializeResult(input: any): any {
 
   return input;
 }
-
+const datasourceUrl =
+  process.env.PRISMA_ACCELERATE_URL ?? process.env.DATABASE_URL;
 // Extend Prisma to serialize Decimal in all model operations
-const extendedPrisma = new PrismaClient().$extends({
+const extendedPrisma = new PrismaClient({
+    datasourceUrl,
+    log: ["error", "warn"],
+  }).$extends({
   query: {
     $allModels: {
       $allOperations({ args, query }) {
