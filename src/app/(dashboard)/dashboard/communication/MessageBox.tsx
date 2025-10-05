@@ -212,7 +212,9 @@ export default function MessageBox({
             })
           );
         const removedUser = group?.users.find((user) => user.id === userId);
-        const userName = removedUser ? `${removedUser.firstName} ${removedUser.lastName}` : "User";
+        const userName = removedUser
+          ? `${removedUser.firstName} ${removedUser.lastName}`
+          : "User";
         toast.success(`${userName} removed from group successfully!`);
       }
     }
@@ -265,7 +267,7 @@ export default function MessageBox({
   return (
     <div
       className={cn(
-        "app-shadow flex h-[calc(100vh-50px)] w-full flex-col overflow-hidden border bg-background max-[1400px]:w-[100%] sm:h-full sm:rounded-lg",
+        "app-shadow flex h-[calc(100vh-50px)] w-full flex-col justify-between overflow-hidden border bg-background max-[1400px]:w-[100%] sm:h-full sm:rounded-lg",
         totalMessageBox > 2 && "sm:h-[44vh]"
       )}
     >
@@ -596,7 +598,8 @@ export default function MessageBox({
       <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
         <DialogContent>
           <h2 className="mt-5 text-center text-xl font-semibold">
-            Are you sure you want to remove {userToDelete?.firstName} {userToDelete?.lastName} from this group?
+            Are you sure you want to remove {userToDelete?.firstName}{" "}
+            {userToDelete?.lastName} from this group?
           </h2>
           <DialogFooter className="py-4">
             <button
