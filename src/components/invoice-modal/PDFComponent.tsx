@@ -316,6 +316,29 @@ const PDFComponent = function PDF({
     "There is no damage notes"
   );
   const [inspectionData, setInspectionData] = useState<InvoiceInspection[]>([]);
+  const [imageData, setImageData] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchImage = async () => {
+      const url = companyDetails?.image;
+      if (!url) return;
+
+      try {
+        const res = await fetch(url);
+        const blob = await res.blob();
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64data = reader.result as string;
+          setImageData(base64data);
+        };
+        reader.readAsDataURL(blob);
+      } catch (err) {
+        console.error("Error fetching image for PDF:", err);
+      }
+    };
+
+    fetchImage();
+  }, [companyDetails?.image]);
 
   useEffect(() => {
     // Fetch inspection data and damage notes from the backend
@@ -345,16 +368,14 @@ const PDFComponent = function PDF({
       >
         <View style={styles.header}>
           <View style={styles.logo}>
-            <Image
-              src={`${companyDetails?.image}`}
-              style={{
-                width: 110,
-                height: 90,
-                objectFit: "fit",
-              }}
-              // @ts-ignore
-              alt="logo"
-            />
+            {imageData ? (
+              <Image
+                src={imageData}
+                style={{ width: 110, height: 90, objectFit: "contain" }}
+              />
+            ) : (
+              <Text>No Logo</Text>
+            )}
           </View>
           <View style={styles.textRight}>
             <Text style={styles.boldText}>Contact Information:</Text>
