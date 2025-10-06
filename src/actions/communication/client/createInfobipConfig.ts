@@ -4,6 +4,24 @@ import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import { InfobipConfig } from "@prisma/client";
 
+export const getSmsGateway = async (): Promise<string | null> => {
+  try {
+    const cId = await getCompanyId();
+
+    const company = await db.company.findFirst({
+      where: {
+        id: cId,
+      },
+      select: { smsGateway: true },
+    });
+
+    return company?.smsGateway || "TWILIO";
+  } catch (error) {
+    console.error("Error getting SMS gateway:", error);
+    return null;
+  }
+};
+
 export const getInfobipConfig = async (): Promise<{
   success: boolean;
   data?: InfobipConfig | null;

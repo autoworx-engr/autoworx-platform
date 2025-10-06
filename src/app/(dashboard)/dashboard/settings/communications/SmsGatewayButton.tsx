@@ -1,14 +1,20 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import SmsGetwayForm from "./SmsGetwayForm";
 import InfobipConfig from "./InfobipConfig";
+import { useServerGet } from "@/hooks/useServerGet";
+import { getSmsGateway } from "@/actions/communication/client/createInfobipConfig";
 
-export default function SmsGatewayButton({
-  smsGateway,
-}: {
-  smsGateway?: string | null;
-}) {
-  const [selected, setSelected] = useState(smsGateway || "TWILIO");
+export default function SmsGatewayButton() {
+  const [selected, setSelected] = useState("TWILIO");
+
+  const { data } = useServerGet(getSmsGateway);
+
+  useEffect(() => {
+    if (data) {
+      setSelected(data);
+    }
+  }, [data]);
 
   return (
     <>

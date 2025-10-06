@@ -9,10 +9,18 @@ import {
 type TProps = {
   content: string;
   amount: number;
+  isRate?: boolean;
 };
 
-export default function Calculation({ content, amount }: TProps) {
-  const formattedAmount = formatCurrency(Number(amount));
+export default function Calculation({
+  content,
+  amount,
+  isRate = false,
+}: TProps) {
+  const formattedAmount = isRate
+    ? `${Number(amount).toFixed(2)}%`
+    : formatCurrency(Number(amount));
+
   const shouldShowTooltip = formattedAmount.length > 15;
   const displayAmount = shouldShowTooltip
     ? formattedAmount.slice(0, 15) + "..."
