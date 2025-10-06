@@ -354,7 +354,7 @@ export default async function PaymentTab({
             </thead>
 
             <tbody>
-              {invoicesWithFull.slice(0, 4).map((data, index) => (
+              {invoicesWithFull?.map((data, index) => (
                 <tr
                   key={data.id}
                   className={cn("py-3", index % 2 === 0 ? evenColor : oddColor)}

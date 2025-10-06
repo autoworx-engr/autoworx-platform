@@ -132,7 +132,7 @@ export default async function PaymentReportPage({ searchParams }: TProps) {
       ? moment.tz(formattedEndDate!, "MM/DD/YYYY", timezone).endOf("day")
       : null;
 
-    filteredPayments = filteredPayments.filter(payment => {
+    filteredPayments = filteredPayments.filter((payment) => {
       if (!payment?.date) {
         return false;
       }
@@ -149,7 +149,7 @@ export default async function PaymentReportPage({ searchParams }: TProps) {
     // Convert to uppercase for case-insensitive comparison
     const methodToFilter = searchParams.paymentMethod.toUpperCase();
 
-    filteredPayments = filteredPayments.filter(payment => {
+    filteredPayments = filteredPayments.filter((payment) => {
       // Check if the payment type matches the selected method
       // Handle different naming conventions (Card/CARD, Cash/CASH, etc.)
       const paymentType = payment.type.toUpperCase();
@@ -177,23 +177,42 @@ export default async function PaymentReportPage({ searchParams }: TProps) {
       },
     },
   });
-  // find the average value
-  const totalAmount = paymentInfo.reduce(
-    (acc, payment) => acc + Number(payment.amount),
-    0
-  );
 
-  const filteredTotalAmount = filteredPayments.reduce(
-    (acc, payment) => acc + Number(payment.amount),
-    0
-  );
+  function calculateTotal(payments: any[]) {
+    return payments.reduce((acc, payment) => {
+      const amount = Number(payment.amount || 0);
+      const refunded = Number(payment.refundedAmount || 0);
+      return acc + (amount - refunded);
+    }, 0);
+  }
+
+  const totalAmount = calculateTotal(paymentInfo);
+  const filteredTotalAmount = calculateTotal(filteredPayments);
 
   const averageValue =
     totalAmount && paymentInfo.length ? totalAmount / paymentInfo.length : 0;
 
-  // find the outstanding payment (total due)
-  const totalDue = outStandingPayment.reduce(
-    (acc, payment) => acc + Math.abs(Number(payment.invoice?.due)),
+  const totalRefunded = paymentInfo.reduce(
+    (acc, payment) => acc + Number(payment.refundedAmount || 0),
+    0
+  );
+
+  const refundRate =
+    totalAmount + totalRefunded > 0
+      ? (totalRefunded / (totalAmount + totalRefunded)) * 100
+      : 0;
+
+  const uniqueInvoices = new Map();
+
+  outStandingPayment.forEach((payment) => {
+    const invoiceId = payment.invoiceId;
+    if (!uniqueInvoices.has(invoiceId)) {
+      uniqueInvoices.set(invoiceId, payment.invoice?.due || 0);
+    }
+  });
+
+  const totalDue = Array.from(uniqueInvoices.values()).reduce(
+    (acc, due) => acc + Math.abs(Number(due)),
     0
   );
 
@@ -212,7 +231,7 @@ export default async function PaymentReportPage({ searchParams }: TProps) {
           content="TOTAL PAYMENT (Filtered)"
           amount={filteredTotalAmount}
         />
-        <Calculation content="REFUND RATE" amount={0} />
+        <Calculation content="REFUND RATE" amount={refundRate} isRate={true} />
       </div>
       {/* Replace the existing table and mobile card sections with: */}
       <PaymentDisplay
