@@ -241,11 +241,11 @@ export default async function PaymentTab({
   // Calculate total paid amount (net of refunds) using actual refund data
   const totalCustomerPaidAmount = allPayments.reduce((acc, payment) => {
     const originalAmount = Number(payment?.amount ?? 0);
-    const actualRefundedAmount = payment.Refund.reduce(
-      (sum, refund) => sum + Number(refund.amount),
-      0
-    );
-    const netAmount = originalAmount - actualRefundedAmount;
+    // const actualRefundedAmount = payment.Refund.reduce(
+    //   (sum, refund) => sum + Number(refund.amount),
+    //   0
+    // );
+    const netAmount = originalAmount;
     return acc + netAmount;
   }, 0);
 
