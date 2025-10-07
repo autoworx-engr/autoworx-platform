@@ -6,16 +6,21 @@ import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
 import { FormatUtcToTimezone } from "@/utils/FormatUtcToTimezone";
 import { Tooltip } from "antd";
 import { FaExclamation } from "react-icons/fa";
+import { ArrowDown } from "lucide-react";
 
 type TProps = {
-  invoice: TInvoice & { 
-    costPrice: number; 
+  invoice: TInvoice & {
+    costPrice: number;
     profitPrice: number;
     inventoryLossAmount: number;
     materialLossAmount: number;
     laborLossAmount: number;
     totalLossAmount: number;
-    materialLossDetails: { name: string; loss: number; isFromInventory: boolean }[];
+    materialLossDetails: {
+      name: string;
+      loss: number;
+      isFromInventory: boolean;
+    }[];
   };
   index: number;
   timezone: string;
@@ -26,21 +31,30 @@ export default function RevenueMobileCard({
   index,
   timezone,
 }: TProps) {
+  const refundedAmount =
+    invoice?.Refund?.reduce(
+      (acc, refund) => acc + Number(refund.amount || 0),
+      0
+    ) || 0;
+
+  const profit = Number(invoice.profitPrice?.toString() || 0);
+  const hasRefund = refundedAmount > 0;
+
   const formattedDate = FormatUtcToTimezone(
     invoice.deliveredAt,
     timezone,
-    "MMM Do, YYYY",
+    "MMM Do, YYYY"
   );
 
   // Display the actual cost (what we spent)
   const displayCost = Number(invoice.costPrice);
-  
+
   // Check if there are any losses to show the exclamation mark
   const hasLosses = invoice.totalLossAmount > 0;
-  
+
   // Generate loss details for tooltip
   const lossDetails = [];
-  
+
   // Inventory losses (lost products)
   if (invoice.inventoryLossAmount > 0) {
     const inventoryMaterialNames = invoice.InventoryProductHistory?.map(
@@ -48,18 +62,23 @@ export default function RevenueMobileCard({
     ).filter(Boolean);
     lossDetails.push(`Inventory Loss: ${inventoryMaterialNames?.join(", ")}`);
   }
-  
+
   // Material losses (show actual material names with losses)
-  if (invoice.materialLossAmount > 0 && invoice.materialLossDetails?.length > 0) {
-    const materialNames = invoice.materialLossDetails.map(detail => 
-      `${detail.name} ($${detail.loss.toFixed(2)})`
+  if (
+    invoice.materialLossAmount > 0 &&
+    invoice.materialLossDetails?.length > 0
+  ) {
+    const materialNames = invoice.materialLossDetails.map(
+      (detail) => `${detail.name} ($${detail.loss.toFixed(2)})`
     );
     lossDetails.push(`Material Loss: ${materialNames.join(", ")}`);
   }
-  
+
   // Labor losses
   if (invoice.laborLossAmount > 0) {
-    lossDetails.push(`Labor Loss: Technician cost exceeds charges ($${invoice.laborLossAmount.toFixed(2)})`);
+    lossDetails.push(
+      `Labor Loss: Technician cost exceeds charges ($${invoice.laborLossAmount.toFixed(2)})`
+    );
   }
 
   return (
@@ -115,8 +134,15 @@ export default function RevenueMobileCard({
         </div>
         <div>
           <div className="text-sm text-gray-500">Profit</div>
-          <div className="font-semibold text-[#66738C]">
-            {formatCurrency(Number(invoice.profitPrice.toString()))}
+          <div className="flex flex-col items-center gap-1 font-semibold text-[#66738C]">
+            <span>{formatCurrency(profit)}</span>
+
+            {hasRefund && (
+              <div className="flex items-center gap-1 text-red-500 text-xs font-normal">
+                <ArrowDown size={16} strokeWidth={2} />
+                <span>{formatCurrency(refundedAmount)}</span>
+              </div>
+            )}
           </div>
         </div>
       </div>

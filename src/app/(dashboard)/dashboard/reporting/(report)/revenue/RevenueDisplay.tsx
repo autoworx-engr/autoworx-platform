@@ -3,20 +3,25 @@ import { useMediaQuery } from "react-responsive";
 import { TInvoice } from "./page";
 import RevenueTableRow from "./RevenueTableRow";
 import RevenueMobileCard from "./RevenueMobileCard";
-import { InventoryProductHistory } from "@prisma/client";
+import { InventoryProductHistory, Refund } from "@prisma/client";
 import { Pagination } from "antd";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 type TProps = {
   filteredInvoice: (TInvoice & {
+    refund: Refund;
     costPrice: number;
     profitPrice: number;
     inventoryLossAmount: number;
     materialLossAmount: number;
     laborLossAmount: number;
     totalLossAmount: number;
-    materialLossDetails: { name: string; loss: number; isFromInventory: boolean }[];
+    materialLossDetails: {
+      name: string;
+      loss: number;
+      isFromInventory: boolean;
+    }[];
   })[];
   timezone: string | Date;
   page?: number;
@@ -86,26 +91,34 @@ export default function RevenueDisplay({
             {invoicesToRender?.map((invoice, index) => {
               // Generate loss details for tooltip
               const lossDetails = [];
-              
+
               // Inventory losses (lost products)
               if (invoice.inventoryLossAmount > 0) {
-                const inventoryMaterialNames = invoice.InventoryProductHistory?.map(
-                  (item) => item.product?.name
-                ).filter(Boolean);
-                lossDetails.push(`Inventory Loss: ${inventoryMaterialNames?.join(", ")}`);
+                const inventoryMaterialNames =
+                  invoice.InventoryProductHistory?.map(
+                    (item) => item.product?.name
+                  ).filter(Boolean);
+                lossDetails.push(
+                  `Inventory Loss: ${inventoryMaterialNames?.join(", ")}`
+                );
               }
-              
+
               // Material losses (show actual material names with losses)
-              if (invoice.materialLossAmount > 0 && invoice.materialLossDetails?.length > 0) {
-                const materialNames = invoice.materialLossDetails.map(detail => 
-                  `${detail.name} ($${detail.loss.toFixed(2)})`
+              if (
+                invoice.materialLossAmount > 0 &&
+                invoice.materialLossDetails?.length > 0
+              ) {
+                const materialNames = invoice.materialLossDetails.map(
+                  (detail) => `${detail.name} ($${detail.loss.toFixed(2)})`
                 );
                 lossDetails.push(`Material Loss: ${materialNames.join(", ")}`);
               }
-              
+
               // Labor losses
               if (invoice.laborLossAmount > 0) {
-                lossDetails.push(`Labor Loss: Technician cost exceeds charges ($${invoice.laborLossAmount.toFixed(2)})`);
+                lossDetails.push(
+                  `Labor Loss: Technician cost exceeds charges ($${invoice.laborLossAmount.toFixed(2)})`
+                );
               }
 
               return (

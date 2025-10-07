@@ -44,10 +44,10 @@ const FilterforPayment = () => {
   return (
     <div className="relative" ref={ref}>
       <button
-        className="flex h-[40px] w-[150px] items-center justify-center rounded-lg border border-[#66738C] p-2 text-gray-400 md:w-[100px] [@media(max-width:320px)]:w-fit"
+        className={`flex h-[40px] w-[150px] items-center justify-center rounded-lg  md:w-[100px] [@media(max-width:320px)]:w-fit ${paymentMethod === "All" ? "border border-gray-300" : "bg-[#6571ff] text-white"}`}
         onClick={() => setShowFilter((prev) => !prev)}
       >
-        Filter
+        {paymentMethod === "All" ? "Filter" : paymentMethod}
       </button>
 
       {showFilter && (
@@ -63,14 +63,14 @@ const FilterforPayment = () => {
                       className={cn(
                         "flex items-center justify-center rounded border px-3 py-1 text-base",
                         paymentMethod === method
-                          ? "bg-blue-500 text-[white]"
-                          : "border-gray-300 text-[#66738C]",
+                          ? "bg-[#6571ff] text-[white]"
+                          : "border-gray-300 text-[#66738C]"
                       )}
                       onClick={() => setPaymentMethod(method as PaymentMethod)}
                     >
                       {method}
                     </button>
-                  ),
+                  )
                 )}
               </div>
             </div>
@@ -103,7 +103,7 @@ const FilterforPayment = () => {
             </div>
             <div className="flex space-x-2">
               <button
-                className="rounded bg-blue-500 px-4 py-2 text-white"
+                className="rounded bg-[#6571ff] px-4 py-2 text-white"
                 onClick={onApply}
               >
                 Apply

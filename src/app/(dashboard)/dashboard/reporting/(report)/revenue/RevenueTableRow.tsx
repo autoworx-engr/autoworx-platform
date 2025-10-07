@@ -6,9 +6,12 @@ import Link from "next/link";
 import { FaExclamation } from "react-icons/fa";
 import { TInvoice } from "./page";
 import moment from "moment-timezone";
+import { Refund } from "@prisma/client";
+import { ArrowDown } from "lucide-react";
 
 type TProps = {
   invoice: TInvoice & {
+    refund: Refund;
     costPrice: number;
     profitPrice: number;
     inventoryLossAmount: number;
@@ -35,6 +38,17 @@ export default function RevenueTableRow({
   timezone,
 }: TProps) {
   // Display the actual cost (what we spent)
+
+  const refundedAmount =
+    invoice?.Refund?.reduce(
+      (acc, refund) => acc + Number(refund.amount || 0),
+      0
+    ) || 0;
+
+  const totalProfit = Number((invoice as any).profitPrice).toFixed(2);
+
+  const hasRefund = refundedAmount > 0;
+
   const displayCost = Number(invoice.costPrice);
 
   // Check if there are any losses to show the exclamation mark
@@ -86,7 +100,18 @@ export default function RevenueTableRow({
         </div>
       </td>
       <td className="border-b px-4 py-2 text-left">
-        {formatCurrency(Number(invoice.profitPrice.toString()))}
+        <div>
+          <span className="font-medium text-[#66738C]">
+            {formatCurrency(Number(totalProfit))}
+          </span>
+
+          {hasRefund && (
+            <div className="flex items-center gap-1 text-red-500 text-xs font-normal">
+              <ArrowDown size={14} strokeWidth={2} />
+              <span>{formatCurrency(refundedAmount)}</span>
+            </div>
+          )}
+        </div>
       </td>
     </tr>
   );
