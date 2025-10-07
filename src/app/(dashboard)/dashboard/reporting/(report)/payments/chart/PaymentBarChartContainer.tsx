@@ -1,6 +1,8 @@
 "use client";
 import BarChartComponent from "@/app/(dashboard)/dashboard/reporting/components/BarChartComponent";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { formatCurrency } from "@/utils/formatCurrency";
+import { formatLargeNumber } from "@/utils/formatLargeNumber";
 import { Bar, Label, Tooltip, XAxis, YAxis } from "recharts";
 
 const CustomBar = (props: any) => {
@@ -32,25 +34,59 @@ const CustomLabel = (props: any) => {
     </text>
   );
 };
-const CustomTooltip = ({ active, payload }: any) => {
+// const CustomTooltip = ({ active, payload }: any) => {
+//   if (active && payload && payload.length) {
+//     const { payload: data } = payload[0];
+//     return (
+//       <div className="w-56 rounded-lg border border-black bg-background p-4 text-[#03A7A2]">
+//         <p className="text-xl">{data?.method}</p>
+//         <p className="text-2xl">{formatCurrency(data?.payment)}</p>
+//       </div>
+//     );
+//   }
+
+//   return null;
+// };
+
+const CustomTooltip = ({ active, payload, isMobile, labe }: any) => {
   if (active && payload && payload.length) {
     const { payload: data } = payload[0];
+    const payment = data?.payment ? Number(data.payment.toFixed(2)) : 0;
+
+    // Use abbreviated format for very large numbers
+    const displayValue =
+      payment >= 1000
+        ? `$${formatLargeNumber(payment)}`
+        : formatCurrency(payment);
+
     return (
-      <div className="w-56 rounded-lg border border-black bg-background p-4 text-[#03A7A2]">
-        <p className="text-xl">{data?.method}</p>
-        <p className="text-2xl">{formatCurrency(data?.payment)}</p>
+      <div className={`${isMobile ? "min-w-fit" : "min-w-36"} max-w-xs rounded-lg border border-gray-300 bg-white p-3 shadow-lg`}>
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-gray-800 truncate">
+            {data?.method || "Unknown Method"}
+          </p>
+          <div className="border-t border-gray-200 pt-2">
+          
+            <p className="text-lg font-bold text-[#03A7A2]">{displayValue}</p>
+            {payment >= 1000 && (
+              <p className="text-xs text-gray-500 mt-1">
+                Exact: {formatCurrency(payment)}
+              </p>
+            )}
+          </div>
+        </div>
       </div>
     );
   }
 
   return null;
 };
-
 type TProps = {
   paymentData: Array<{ method: string; payment: number }>;
 };
 
 export default function PaymentBarChartContainer({ paymentData }: TProps) {
+    const isMobile = useMediaQuery("(max-width: 640px)");
   return (
     <div className="chart-container">
       <BarChartComponent height={500} title="" data={paymentData}>
@@ -102,7 +138,7 @@ export default function PaymentBarChartContainer({ paymentData }: TProps) {
         />
         <Tooltip
           cursor={{ fill: "transparent" }}
-          content={<CustomTooltip />}
+          content={<CustomTooltip isMobile={isMobile} />}
           label={"Type"}
         />
       </BarChartComponent>
