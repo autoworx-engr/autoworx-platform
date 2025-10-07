@@ -40,7 +40,7 @@ export default async function Analytics({
   const formattedLast30Days = FormatUtcToTimezone(
     last30Days,
     timezone,
-    "YYYY-MM-DD",
+    "YYYY-MM-DD"
   );
   const formattedToday = FormatUtcToTimezone(today, timezone, "YYYY-MM-DD");
 
@@ -85,7 +85,7 @@ export default async function Analytics({
 
   // find unique categories for sales
   const getCategory = Array.from(
-    new Set(inventoryProducts.map((inventory) => inventory?.category?.name)),
+    new Set(inventoryProducts.map((inventory) => inventory?.category?.name))
   );
   console.log("getCategory", getCategory);
   // sales data by category
@@ -104,7 +104,7 @@ export default async function Analytics({
         acc.salePrice = Number(acc.salePrice.toFixed(2));
         return acc;
       },
-      { categoryName: category, salePrice: 0 },
+      { categoryName: category, salePrice: 0 }
     );
   });
   // console.log("salesData", salesData);
@@ -116,7 +116,7 @@ export default async function Analytics({
       acc[day] = { day: day, purchase: 0, sales: 0 };
       return acc;
     },
-    {} as Record<string, { day: string; purchase: number; sales: 0 }>,
+    {} as Record<string, { day: string; purchase: number; sales: 0 }>
   );
 
   inventoryProducts.forEach((inventory) => {
@@ -163,10 +163,9 @@ export default async function Analytics({
           acc.salePrice = Number(acc.salePrice.toFixed(2));
           return acc;
         },
-        { categoryName: category, salePrice: 0 },
+        { categoryName: category, salePrice: 0 }
       );
     });
-    console.log('purchases Data', purchasesData)
     leftSideChart = (
       <InventoryBarChartContainer
         yAxisLabel="Purchase Price"

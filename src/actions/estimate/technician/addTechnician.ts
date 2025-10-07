@@ -41,7 +41,6 @@ export async function addTechnician(
       ? `${year ? year : ""} ${make} ${model}`
       : make || payload.invoiceId;
 
-  console.log("vehicleInfo", vehicleInfo, "or", vehicleName);
   try {
     // if (!payload) {
     //   return { type: "error", message: "Invalid payload" };
