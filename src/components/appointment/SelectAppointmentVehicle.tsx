@@ -87,7 +87,6 @@ export function SelectAppointmentVehicle({
     useListsStore.setState({ vehicle: null, newAddedVehicle: null });
     setIsAppointmentModalOpen && setIsAppointmentModalOpen(true);
   };
-  console.log("vehicle", vehicle);
   return (
     <>
       <input type="hidden" name={name} value={vehicle?.id ?? ""} />
