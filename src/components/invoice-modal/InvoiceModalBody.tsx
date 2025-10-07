@@ -31,6 +31,7 @@ import {
   InvoiceType,
   Labor,
   Material,
+  Refund,
   Service,
   TwilioCredentials,
   User,
@@ -121,7 +122,13 @@ export default function InvoiceModalBody({
     if (isFetched && !isLoading && data) {
       setInvoice(data.invoice);
       setTwilioCredentials(data?.twilioCredentials);
-      const refundAmount = data.invoice.Refund?.[0]?.amount || 0;
+      const refundAmount =
+        data.invoice.Refund?.reduce(
+          (total: number, refund: Refund) =>
+            total + (Number(refund.amount) || 0),
+          0
+        ) || 0;
+
       setRefundAmount(refundAmount);
 
       // Important: Set the authorized name from the server data
