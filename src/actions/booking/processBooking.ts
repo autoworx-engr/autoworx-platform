@@ -105,16 +105,13 @@ export async function createAppointment(data: {
         client: { select: { firstName: true, lastName: true, mobile: true } },
       },
     });
-    console.log("🚀 ~ createAppointment ~ appointment:", appointment);
 
     try {
       const clientName =
         appointment?.client?.firstName || appointment?.client?.lastName || "";
-      console.log("🚀 ~ createAppointment ~ clientName:", clientName);
       const appointmentDate = moment(
         `${data.date}T${data.startTime}:00`
       ).format("dddd, MMMM DD, h:mm A");
-      console.log("🚀 ~ createAppointment ~ appointmentDate:", appointmentDate);
 
       const confirmationTemplate = `Hi ${clientName}, your ${appointment?.company?.name} appt is on ${appointmentDate}. Reply YES to confirm, NO to cancel, or text here to reschedule. STOP to opt out.`;
 
