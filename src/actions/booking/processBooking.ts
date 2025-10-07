@@ -2,10 +2,17 @@
 
 import { db } from "@/lib/db";
 import { Client, Appointment } from "@prisma/client";
-import moment from "moment";
+import moment from "moment-timezone";
 import { sendNewAppointmentNotification } from "@/lib/notification/task-and-appointment-notify";
+import { scheduleRemindersInNest } from "../appointment/addAppointment";
+import { sendInfobipEmail } from "../estimate/invoice/sendInfobipEmail";
+import { sendTwilioMessage } from "../communication/client/sendTwilioMessage";
+import { sendInfobipMessage } from "../communication/client/sendInfobipMessage";
 
-export async function findClientByPhone(phone: string, companyId: string): Promise<Client | null> {
+export async function findClientByPhone(
+  phone: string,
+  companyId: string
+): Promise<Client | null> {
   try {
     const client = await db.client.findFirst({
       where: {
@@ -66,8 +73,8 @@ export async function createAppointment(data: {
   try {
     // Calculate end time (1 hour after start time)
     const startDateTime = moment(`${data.date} ${data.startTime}`);
-    const endDateTime = startDateTime.clone().add(1, 'hour');
-    
+    const endDateTime = startDateTime.clone().add(1, "hour");
+
     // Get a default user for the company if userId not provided
     let userId = data.userId;
     if (!userId) {
@@ -75,25 +82,89 @@ export async function createAppointment(data: {
         where: {
           companyId: parseInt(data.companyId),
           employeeType: {
-            in: ['Admin', 'Manager']
-          }
+            in: ["Admin", "Manager"],
+          },
         },
       });
       userId = defaultUser?.id || 1; // Fallback to user ID 1 if no admin/manager found
     }
-    
+
     const appointment = await db.appointment.create({
       data: {
         title: data.title,
         date: new Date(data.date),
         startTime: data.startTime,
-        endTime: endDateTime.format('HH:mm'),
+        endTime: endDateTime.format("HH:mm"),
         clientId: data.clientId,
         companyId: parseInt(data.companyId),
         userId: userId,
         notes: data.notes,
       },
+      include: {
+        company: { select: { timezone: true, name: true, smsGateway: true } },
+        client: { select: { firstName: true, lastName: true, mobile: true } },
+      },
     });
+    console.log("🚀 ~ createAppointment ~ appointment:", appointment);
+
+    try {
+      const clientName =
+        appointment?.client?.firstName || appointment?.client?.lastName || "";
+      console.log("🚀 ~ createAppointment ~ clientName:", clientName);
+      const appointmentDate = moment(
+        `${data.date}T${data.startTime}:00`
+      ).format("dddd, MMMM DD, h:mm A");
+      console.log("🚀 ~ createAppointment ~ appointmentDate:", appointmentDate);
+
+      const confirmationTemplate = `Hi ${clientName}, your ${appointment?.company?.name} appt is on ${appointmentDate}. Reply YES to confirm, NO to cancel, or text here to reschedule. STOP to opt out.`;
+
+      // Send confirmation email via Infobip
+      try {
+        sendInfobipEmail({
+          clientId: data.clientId,
+          subject: "Appointment Confirmation",
+          text: confirmationTemplate,
+        });
+      } catch (error) {
+        console.log("🚀 ~ error:", error);
+      }
+
+      //send SMS confirmation
+      try {
+        if (appointment?.company?.smsGateway === "TWILIO") {
+          sendTwilioMessage({
+            clientId: data.clientId,
+            message: confirmationTemplate,
+            attachments: [],
+          });
+        } else if (appointment?.company?.smsGateway === "INFOBIP") {
+          sendInfobipMessage({
+            clientId: data.clientId,
+            message: confirmationTemplate,
+            attachments: [],
+          });
+        }
+      } catch (error) {
+        console.log("🚀 ~ error:", error);
+      }
+    } catch (error) {
+      console.log("🚀 ~ createAppointment ~ error:", error);
+    }
+
+    try {
+      appointment.date &&
+        appointment.startTime &&
+        scheduleRemindersInNest({
+          id: appointment.id.toString(),
+          date: appointment.date, // e.g., "2025-07-20"
+          time: appointment.startTime, // e.g., "15:00"
+          timezone:
+            appointment?.company?.timezone || appointment.timezone || "Etc/UTC",
+        });
+    } catch (error) {
+      console.log("🚀 ~ error:", error);
+    }
+
     return appointment;
   } catch (error) {
     console.error("Error creating appointment:", error);
@@ -101,25 +172,28 @@ export async function createAppointment(data: {
   }
 }
 
-export async function processBooking(formData: {
-  title: string;
-  date: string;
-  startTime: string;
-  firstName: string;
-  lastName?: string;
-  email?: string;
-  mobile: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  zip?: string;
-  customerCompany?: string;
-  notes?: string; // Add notes to the formData type
-}, companyId: string) {
+export async function processBooking(
+  formData: {
+    title: string;
+    date: string;
+    startTime: string;
+    firstName: string;
+    lastName?: string;
+    email?: string;
+    mobile: string;
+    address?: string;
+    city?: string;
+    state?: string;
+    zip?: string;
+    customerCompany?: string;
+    notes?: string; // Add notes to the formData type
+  },
+  companyId: string
+) {
   try {
     // First, check if client exists by phone number
     let client = await findClientByPhone(formData.mobile, companyId);
-    
+
     if (!client) {
       // Create new client if not found
       client = await createClient({
@@ -134,7 +208,7 @@ export async function processBooking(formData: {
         customerCompany: formData.customerCompany,
         companyId,
       });
-      
+
       if (!client) {
         return {
           success: false,
@@ -142,7 +216,7 @@ export async function processBooking(formData: {
         };
       }
     }
-    
+
     // Create appointment
     const appointment = await createAppointment({
       title: formData.title,
@@ -152,21 +226,23 @@ export async function processBooking(formData: {
       companyId,
       notes: formData.notes, // Pass the notes to createAppointment
     });
-    
+
     if (!appointment) {
       return {
         success: false,
         message: "Failed to create appointment",
       };
     }
-    
+
     // Send notification after successful appointment creation
     try {
       sendNewAppointmentNotification({
         companyId: parseInt(companyId),
         clientName: `${client.firstName} ${client.lastName || ""}`,
         title: appointment.title,
-        appointmentDate: appointment.date ? appointment.date.toISOString().split('T')[0] : "",
+        appointmentDate: appointment.date
+          ? appointment.date.toISOString().split("T")[0]
+          : "",
         startTime: appointment.startTime || "",
         assignSalesIds: [], // Empty array since processBooking doesn't assign specific users
       });
@@ -174,7 +250,7 @@ export async function processBooking(formData: {
       console.error("Error sending appointment notification:", error);
       // Don't fail the booking if notification fails
     }
-    
+
     return {
       success: true,
       message: "Appointment booked successfully!",
