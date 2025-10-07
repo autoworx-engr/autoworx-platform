@@ -16,7 +16,7 @@ import {
   DialogTrigger,
 } from "@/components/Dialog";
 import { useFormErrorStore } from "@/stores/form-error";
-import { errorToast } from "@/lib/toast";
+import { errorToast, successToast } from "@/lib/toast";
 import toast from "react-hot-toast";
 
 export default function NewService({
@@ -103,7 +103,7 @@ export default function NewService({
       // Validate both service name and category
       const isNameValid = validateName(name);
       const isCategoryValid = validateCategory(category);
-      
+
       if (!isNameValid || !isCategoryValid) {
         setIsLoading(false);
         return;
@@ -139,6 +139,7 @@ export default function NewService({
         resetForm();
         close();
         setOpen(false);
+        successToast("Service added successfully");
       } else if (res.type === "globalError") {
         errorToast(res.message);
         showError({
@@ -160,16 +161,14 @@ export default function NewService({
   async function handleEdit() {
     try {
       setIsLoading(true);
-      console.log(":::: Handle Edit ::::", name);
       // Validate both service name and category
       const isNameValid = validateName(name);
       const isCategoryValid = validateCategory(category);
-      
+
       if (!isNameValid || !isCategoryValid) {
         setIsLoading(false);
         return;
       }
-      console.log(":::: Handle Edit ::::", name);
       // Update the service in the items
       useEstimateCreateStore.setState((state: any) => {
         const items = state.items.map((item: any) => {
@@ -192,6 +191,7 @@ export default function NewService({
       resetForm();
       close();
       setOpen(false);
+      successToast("Service updated successfully");
     } catch (error) {
       console.error("Error editing service:", error);
       errorToast("An error occurred while editing the service");
@@ -286,9 +286,7 @@ export default function NewService({
               onBlur={() => validateCategory(category)}
             />
             {categoryError && (
-              <span className="mt-1 text-xs text-red-500">
-                {categoryError}
-              </span>
+              <span className="mt-1 text-xs text-red-500">{categoryError}</span>
             )}
           </div>
 
