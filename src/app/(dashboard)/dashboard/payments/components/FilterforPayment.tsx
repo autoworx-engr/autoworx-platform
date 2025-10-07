@@ -114,6 +114,12 @@ const FilterforPayment = () => {
                   setPaymentMethod("All");
                   setAmount([1, 30_000]);
                   setStatus("All");
+                  setShowFilter(false);
+                  setFilter({
+                    paidStatus: "All",
+                    amount: [1, 30_000],
+                    paymentMethod: "All",
+                  });
                 }}
               >
                 Clear All
