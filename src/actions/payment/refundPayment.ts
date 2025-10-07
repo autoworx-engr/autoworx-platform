@@ -1,9 +1,9 @@
-'use server';
+"use server";
 
-import { getCompanyId } from '@/lib/companyId';
-import { db } from '@/lib/db';
-import { PaymentType } from '@prisma/client';
-import { revalidatePath } from 'next/cache';
+import { getCompanyId } from "@/lib/companyId";
+import { db } from "@/lib/db";
+import { PaymentType } from "@prisma/client";
+import { revalidatePath } from "next/cache";
 
 interface RefundPaymentParams {
   paymentId: number;
@@ -37,8 +37,8 @@ export async function refundPayment({
 
     if (!payment) {
       return {
-        type: 'globalError' as const,
-        message: 'Payment not found',
+        type: "globalError" as const,
+        message: "Payment not found",
         errorSource: [],
       };
     }
@@ -48,7 +48,7 @@ export async function refundPayment({
     // For validation, check if the new refund amount exceeds the original payment
     if (refundAmount > originalAmount) {
       return {
-        type: 'globalError' as const,
+        type: "globalError" as const,
         message: `Refund amount cannot exceed original payment amount. Maximum: $${originalAmount.toFixed(2)}`,
         errorSource: [],
       };
@@ -56,12 +56,12 @@ export async function refundPayment({
 
     if (refundAmount <= 0) {
       return {
-        type: 'globalError' as const,
-        message: 'Refund amount must be greater than 0',
+        type: "globalError" as const,
+        message: "Refund amount must be greater than 0",
         errorSource: [],
       };
     } // Start transaction - create or update refund record (only one refund per payment)
-    const updatedPayment = await db.$transaction(async tx => {
+    const updatedPayment = await db.$transaction(async (tx) => {
       // Check if a refund record already exists for this payment
       const existingRefund = await tx.refund.findFirst({
         where: { paymentId: paymentId },
@@ -74,7 +74,7 @@ export async function refundPayment({
       });
 
       if (!invoice) {
-        throw new Error('Invoice not found');
+        throw new Error("Invoice not found");
       }
 
       const currentDue = Number(invoice.due) || 0;
@@ -124,13 +124,13 @@ export async function refundPayment({
       }
 
       // Update invoice due amount and totalPayment
-      await tx.invoice.update({
-        where: { id: payment.invoiceId! },
-        data: {
-          due: newDue,
-          totalPayment: newTotalPayment,
-        },
-      });
+      // await tx.invoice.update({
+      //   where: { id: payment.invoiceId! },
+      //   data: {
+      //     due: newDue,
+      //     totalPayment: newTotalPayment,
+      //   },
+      // });
 
       // Update payment's refunded amount for quick access (but don't modify original amount)
       const updatedPayment = await tx.payment.update({
@@ -145,18 +145,18 @@ export async function refundPayment({
       });
       return updatedPayment;
     });
-    revalidatePath('/dashboard/estimate/edit');
-    revalidatePath('/dashboard/payments');
+    revalidatePath("/dashboard/estimate/edit");
+    revalidatePath("/dashboard/payments");
     return {
-      type: 'success' as const,
-      message: 'Refund processed successfully',
+      type: "success" as const,
+      message: "Refund processed successfully",
       data: updatedPayment,
     };
   } catch (error) {
-    console.error('Error processing refund:', error);
+    console.error("Error processing refund:", error);
     return {
-      type: 'globalError' as const,
-      message: 'Failed to process refund',
+      type: "globalError" as const,
+      message: "Failed to process refund",
       errorSource: [],
     };
   }
@@ -175,13 +175,13 @@ export async function deleteRefund({ paymentId }: { paymentId: number }) {
 
     if (!payment) {
       return {
-        type: 'globalError' as const,
-        message: 'Payment not found',
+        type: "globalError" as const,
+        message: "Payment not found",
         errorSource: [],
       };
     }
 
-    const updatedPayment = await db.$transaction(async tx => {
+    const updatedPayment = await db.$transaction(async (tx) => {
       // Get the refund amount before deleting to adjust the invoice due and totalPayment
       const refundToDelete = await tx.refund.findFirst({
         where: { paymentId },
@@ -205,13 +205,13 @@ export async function deleteRefund({ paymentId }: { paymentId: number }) {
           const newTotalPayment = currentTotalPayment + refundAmount;
 
           // Update invoice due amount and totalPayment by restoring the refunded amount
-          await tx.invoice.update({
-            where: { id: payment.invoiceId! },
-            data: {
-              due: newDue,
-              totalPayment: newTotalPayment,
-            },
-          });
+          // await tx.invoice.update({
+          //   where: { id: payment.invoiceId! },
+          //   data: {
+          //     due: newDue,
+          //     totalPayment: newTotalPayment,
+          //   },
+          // });
         }
       }
 
@@ -234,18 +234,18 @@ export async function deleteRefund({ paymentId }: { paymentId: number }) {
       return updatedPayment;
     });
 
-    revalidatePath('/dashboard/estimate/edit');
-    revalidatePath('/dashboard/payments');
+    revalidatePath("/dashboard/estimate/edit");
+    revalidatePath("/dashboard/payments");
     return {
-      type: 'success' as const,
-      message: 'Refund deleted successfully',
+      type: "success" as const,
+      message: "Refund deleted successfully",
       data: updatedPayment,
     };
   } catch (error) {
-    console.error('Error deleting refund:', error);
+    console.error("Error deleting refund:", error);
     return {
-      type: 'globalError' as const,
-      message: 'Failed to delete refund',
+      type: "globalError" as const,
+      message: "Failed to delete refund",
       errorSource: [],
     };
   }
@@ -292,19 +292,19 @@ export async function getPaymentSummary(invoiceIds: string[]) {
     },
   });
 
-  return payments.map(payment => ({
+  return payments.map((payment) => ({
     ...payment,
     originalAmount: Number(payment.amount) || 0,
     refundedAmount: Number(payment.refundedAmount) || 0,
     netAmount:
       (Number(payment.amount) || 0) - (Number(payment.refundedAmount) || 0),
     paymentMethod:
-      payment.type === 'CARD'
-        ? payment.card?.cardType || 'CARD'
-        : payment.type === 'CASH'
-          ? 'CASH'
-          : payment.type === 'OTHER'
-            ? payment.other?.paymentMethod?.name || 'OTHER'
+      payment.type === "CARD"
+        ? payment.card?.cardType || "CARD"
+        : payment.type === "CASH"
+          ? "CASH"
+          : payment.type === "OTHER"
+            ? payment.other?.paymentMethod?.name || "OTHER"
             : payment.type,
   }));
 }

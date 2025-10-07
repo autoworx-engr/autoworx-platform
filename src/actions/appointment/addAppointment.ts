@@ -398,8 +398,6 @@ export async function scheduleRemindersInNest({
   reminderIndex?: number;
 }) {
   try {
-    console.log("🚀 ~ scheduleRemindersInNest ~ start:");
-
     const { data } = await axios.post(
       `${process.env.NEXT_PUBLIC_API_BASE_URL}/reminder/schedule`,
       {
@@ -417,10 +415,7 @@ export async function scheduleRemindersInNest({
         },
       }
     );
-    console.log("🚀 ~ scheduleRemindersInNest ~ end:");
   } catch (error) {
-    console.log("🚀 ~ scheduleRemindersInNest ~ end:");
-
     console.log("error from scheduleRemindersInNest", error);
   }
 }

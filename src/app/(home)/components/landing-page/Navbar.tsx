@@ -126,7 +126,7 @@ export default function Navbar() {
           fill: "linear-gradient(90deg, #26AADF 0%, #01A79E 100%)",
           filter: "drop-shadow(0px 4px 20px rgba(38, 170, 223, 0.58))",
         }}
-        className="hidden w-full items-center justify-between bg-gradient-to-r from-[#26AADF] to-[#01A79E] px-4 py-3 md:flex xl:px-[15rem]"
+        className="hidden w-full items-center justify-between bg-gradient-to-r from-[#26AADF] to-[#01A79E] px-4 py-3 md:flex xl:px-[12rem] 2xl:px-[15rem]"
       >
         <Link href="/" className="flex items-center gap-4">
           <Image
