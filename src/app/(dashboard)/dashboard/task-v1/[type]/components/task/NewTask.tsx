@@ -241,7 +241,9 @@ export default function NewTask({
         <FormError />
         <form>
           <div className="mb-4 flex flex-col">
-            <label htmlFor="title">Title</label>
+            <label htmlFor="title">
+              Title <span className="text-[#E9405F]">*</span>
+            </label>
 
             <input
               type="text"
@@ -275,6 +277,7 @@ export default function NewTask({
                   rootClassName="grow"
                   type="date"
                   value={date ?? ""}
+                  required
                   // min={minDate}
                   onChange={(event) => setDate(event.currentTarget.value)}
                 />
@@ -282,7 +285,7 @@ export default function NewTask({
                   {/* Start Time */}
                   <label className="flex flex-col items-start">
                     <span className="mb-1 text-sm font-medium text-gray-500">
-                      Start Time
+                      Start Time <span className="text-[#E9405F]">*</span>
                     </span>
                     <div>
                       <Select
@@ -311,7 +314,7 @@ export default function NewTask({
 
                   <label className="flex flex-col items-start">
                     <span className="mb-1 text-sm font-medium text-gray-500">
-                      End Time
+                      End Time <span className="text-[#E9405F]">*</span>
                     </span>
                     <Select
                       value={endTime}

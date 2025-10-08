@@ -16,7 +16,7 @@ export default async function ReputationBox({ className }: ReputationBoxProps) {
           <div className="flex flex-1 flex-col items-center justify-center py-2 text-center">
             <div className="relative">
               <span className="animate-gradient-x bg-gradient-to-r from-blue-600 to-teal-500 bg-clip-text text-xl font-semibold text-transparent">
-                Something Great is Coming...
+                In The Worx
               </span>
               <span className="absolute -bottom-1 left-0 h-0.5 w-full animate-pulse bg-gradient-to-r from-blue-600 to-teal-500"></span>
             </div>
