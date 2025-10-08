@@ -6,13 +6,9 @@ import { v4 as uuidv4 } from "uuid";
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
-    console.log("🚀 ~ POST ~ formData:", formData);
     const from = formData.get("From") as string; // Caller's phone number
-    console.log("🚀 ~ POST ~ from:", from);
     const to = formData.get("To") as string; // Your Twilio number
-    console.log("🚀 ~ POST ~ to:", to);
     const callSid = formData.get("CallSid") as string;
-    console.log("🚀 ~ POST ~ callSid:", callSid);
 
     if (!from || !to) {
       return NextResponse.json(
@@ -29,7 +25,6 @@ export async function POST(request: Request) {
         },
       },
     });
-    console.log("🚀 ~ POST ~ twilioCredentials:", twilioCredentials);
 
     if (!twilioCredentials) {
       return NextResponse.json(
@@ -47,7 +42,6 @@ export async function POST(request: Request) {
         },
       },
     });
-    console.log("🚀 ~ POST ~ client:", client);
 
     // If client doesn't exist, create a new one
     if (!client) {
@@ -62,7 +56,6 @@ export async function POST(request: Request) {
     }
 
     const callId = callSid || uuidv4();
-    console.log("🚀 ~ POST ~ callId:", callId);
 
     // Create ClientCall record for incoming call
     await db.clientCall.create({
@@ -96,11 +89,9 @@ export async function POST(request: Request) {
     // If you have multiple users, you need to determine which device to ring
     // For now, using the Twilio phone number as the identity
     const clientIdentity = twilioCredentials.phoneNumber;
-    console.log("📱 Dialing to client identity:", clientIdentity);
     dial.client(clientIdentity);
 
     const twimlResponse = voiceResponse.toString();
-    console.log("🚀 ~ TwiML Response:", twimlResponse);
 
     return new Response(twimlResponse, {
       headers: { "Content-Type": "text/xml" },
