@@ -49,7 +49,7 @@ type TProps = {
 
 const Leads = ({ salesColumn }: TProps) => {
   const [initialLeads, setInitialLeads] = useState<LeadWithSalesUser[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
   const [leads, setLeads] = useState<LeadWithSalesUser[]>([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -84,6 +84,7 @@ const Leads = ({ salesColumn }: TProps) => {
 
   // Ref to track processed search/filter combinations to prevent duplicate requests
   const processedFiltersRef = useRef(new Set<string>());
+  const isFirstFilterEffectRun = useRef(true);
 
   // Memoize clearFilters to prevent unnecessary re-creation
   const clearFilters = useCallback(() => {
@@ -220,12 +221,20 @@ const Leads = ({ salesColumn }: TProps) => {
     if (isSearchEmpty) {
       processedFiltersRef.current.clear();
     }
-    setCurrentPage(1);
+    if (isFirstFilterEffectRun.current) {
+      isFirstFilterEffectRun.current = false;
+      return;
+    }
 
-    // Increased debounce time to 800ms to reduce API calls
     const debounceTimeout = setTimeout(() => {
       processedFiltersRef.current.add(filterKey);
-      setRefreshKey((prev) => prev + 1);
+      setCurrentPage((prevPage) => {
+        if (prevPage === 1) {
+          setRefreshKey((r) => r + 1);
+          return prevPage;
+        }
+        return 1;
+      });
     }, 800);
 
     return () => {
