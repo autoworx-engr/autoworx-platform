@@ -8,7 +8,7 @@ import { EmployeeType } from "@prisma/client";
 import { Spin } from "antd";
 import { Session } from "next-auth";
 import { redirect, usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import MobileNav from "./mobile-responsive/MobileNav";
 import PopupState from "./PopupState";
 import PrivateRoute from "./PrivateRoute";
@@ -19,6 +19,8 @@ import { signOut } from "next-auth/react";
 import { useSetCompanyFeaturePermission } from "@/hooks/useSetCompanyFeaturePermission";
 import { superAdminNavList } from "@/app/(dashboard)/awx-dashboard/_utils/superAdminNavList";
 import UserBugReport from "./bug-report/UserBugReport";
+import { TwilioDeviceProvider } from "@/context/TwilioDeviceContext";
+import TwilioAutoSetup from "./TwilioAutoSetup";
 
 const navbarList = [
   {
@@ -171,6 +173,9 @@ export default function Layout({
   useSetCompanyFeaturePermission(session); // Set user permissions based on session
   const { permissions } = usePermissionStore();
   const currentUser = useGetCurrentUser();
+  const [twilioPhoneNumber, setTwilioPhoneNumber] = useState<string | null>(
+    null
+  );
 
   useEffect(() => {
     const uploadNotificationData = async () => {
@@ -196,6 +201,26 @@ export default function Layout({
       });
     }
   }, [session?.error]);
+
+  // Fetch Twilio phone number for incoming calls
+  useEffect(() => {
+    const fetchTwilioNumber = async () => {
+      try {
+        const response = await fetch("/api/twilio/get-phone-number");
+        if (response.ok) {
+          const data = await response.json();
+          setTwilioPhoneNumber(data.phoneNumber);
+          console.log("📱 Twilio phone number loaded:", data.phoneNumber);
+        }
+      } catch (error) {
+        console.error("❌ Error fetching Twilio phone number:", error);
+      }
+    };
+
+    if (session && currentUser?.companyId) {
+      fetchTwilioNumber();
+    }
+  }, [session, currentUser?.companyId]);
 
   // onesignal icon moveable
   useEffect(() => {
@@ -266,24 +291,27 @@ export default function Layout({
   }
 
   return (
-    <div className="w-full overflow-y-hidden">
-      <SideNavbar
-        navList={isSuperAdminRoute ? superAdminNavList : navbarList}
-        permissions={permissions}
-      />
-      <MobileNav
-        navList={isSuperAdminRoute ? mobileSuperAdminNav : mobileNav}
-        permissions={permissions}
-      />
-      <div className="sm:ml-[5%]">
-        <TopNavbar />
-        <PopupState />
-        <main className="relative mt-14 max-h-[calc(100vh-56px)] overflow-y-auto bg-[#F8F9FA] sm:mt-0 sm:p-2 sm:px-4 md:h-[93vh]">
-          <InitOneSignalProvider />
-          <PrivateRoute session={session}>{children}</PrivateRoute>
-          <UserBugReport />
-        </main>
+    <TwilioDeviceProvider>
+      <div className="w-full overflow-y-hidden">
+        <TwilioAutoSetup twilioPhoneNumber={twilioPhoneNumber} />
+        <SideNavbar
+          navList={isSuperAdminRoute ? superAdminNavList : navbarList}
+          permissions={permissions}
+        />
+        <MobileNav
+          navList={isSuperAdminRoute ? mobileSuperAdminNav : mobileNav}
+          permissions={permissions}
+        />
+        <div className="sm:ml-[5%]">
+          <TopNavbar />
+          <PopupState />
+          <main className="relative mt-14 max-h-[calc(100vh-56px)] overflow-y-auto bg-[#F8F9FA] sm:mt-0 sm:p-2 sm:px-4 md:h-[93vh]">
+            <InitOneSignalProvider />
+            <PrivateRoute session={session}>{children}</PrivateRoute>
+            <UserBugReport />
+          </main>
+        </div>
       </div>
-    </div>
+    </TwilioDeviceProvider>
   );
 }

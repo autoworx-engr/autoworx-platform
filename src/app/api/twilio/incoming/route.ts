@@ -87,6 +87,8 @@ export async function POST(request: Request) {
       record: "record-from-answer",
       recordingStatusCallback: `${process.env.NEXT_PUBLIC_APP_URL}/api/twilio/call-recording?callId=${callId}`,
       recordingStatusCallbackMethod: "POST",
+      timeout: 60, // Give 60 seconds for the call to be answered
+      answerOnBridge: true, // Only answer when the call is bridged (connected)
     });
 
     // Connect to the user's device
@@ -94,7 +96,7 @@ export async function POST(request: Request) {
     // If you have multiple users, you need to determine which device to ring
     // For now, using the Twilio phone number as the identity
     const clientIdentity = twilioCredentials.phoneNumber;
-    console.log("� Dialing to client identity:", clientIdentity);
+    console.log("📱 Dialing to client identity:", clientIdentity);
     dial.client(clientIdentity);
 
     const twimlResponse = voiceResponse.toString();
