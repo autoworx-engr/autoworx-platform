@@ -166,11 +166,11 @@ export default function ChatHead({
         <IoCall className="text-[20px] text-white" />
       </button>
 
-      <PremiumModal
+      {/* <PremiumModal
         open={showPremiumModal}
         onClose={() => setShowPremiumModal(false)}
         featureName="calling feature"
-      />
+      /> */}
     </div>
   );
 }
