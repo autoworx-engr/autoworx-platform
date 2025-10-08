@@ -414,13 +414,14 @@ export default function TaskContentModal({
                   type="date"
                   value={date ?? ""}
                   // min={minDate}
+                  required
                   onChange={(event) => setDate(event.currentTarget.value)}
                 />
                 <div className="flex items-end gap-2">
                   {/* Start Time */}
                   <label className="flex flex-col items-start">
                     <span className="mb-1 text-sm font-medium text-gray-500">
-                      Start Time
+                      Start Time <span className="text-[#E9405F]">*</span>
                     </span>
                     <div>
                       <Select
@@ -449,7 +450,7 @@ export default function TaskContentModal({
 
                   <label className="flex flex-col items-start">
                     <span className="mb-1 text-sm font-medium text-gray-500">
-                      End Time
+                      End Time <span className="text-[#E9405F]">*</span>
                     </span>
                     <Select
                       value={endTime}
