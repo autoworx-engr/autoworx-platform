@@ -412,230 +412,234 @@ const Leads = ({ salesColumn }: TProps) => {
         </div>
       </div>
 
-      {/* card list view  */}
-      <div className="overflow-y-auto lg:hidden">
-        {leads &&
-          leads.map((lead, index) => {
-            return (
-              <ResponsiveSalesPipelineCard
-                key={index}
-                lead={lead as any}
-                index={index}
-              />
-            );
-          })}
-      </div>
+      {leads.length > 0 && !loading ? (
+        <>
+          <div className="hidden lg:block">
+            <table className="w-full shadow-md">
+              <thead className="bg-background">
+                <tr className="h-10 border-b">
+                  <th className="border-b px-4 py-2 text-left">Lead#</th>
+                  <th className="border-b px-4 py-2 text-left">Client </th>
+                  <th className="border-b px-4 py-2 text-left">Vehicle Info</th>
+                  <th className="border-b px-4 py-2 text-left">Services</th>
+                  <th className="border-b px-4 py-2 text-left">Assigned To</th>
+                  <th className="border-b px-4 py-2 text-left">Lead Source</th>
+                  <th className="border-b px-4 py-2 text-left">Status</th>
+                  <th className="border-b px-4 py-2 text-left">Actions</th>
+                  <th className="border-b px-4 py-2 text-left">Time Created</th>
+                </tr>
+              </thead>
 
-      <div className="hidden lg:block">
-        {leads.length > 0 && !loading ? (
-          <table className="w-full shadow-md">
-            <thead className="bg-background">
-              <tr className="h-10 border-b">
-                <th className="border-b px-4 py-2 text-left">Lead#</th>
-                <th className="border-b px-4 py-2 text-left">Client </th>
-                <th className="border-b px-4 py-2 text-left">Vehicle Info</th>
-                <th className="border-b px-4 py-2 text-left">Services</th>
-                <th className="border-b px-4 py-2 text-left">Assigned To</th>
-                <th className="border-b px-4 py-2 text-left">Lead Source</th>
-                <th className="border-b px-4 py-2 text-left">Status</th>
-                <th className="border-b px-4 py-2 text-left">Actions</th>
-                <th className="border-b px-4 py-2 text-left">Time Created</th>
-              </tr>
-            </thead>
+              <tbody>
+                {leads &&
+                  leads.map((lead, index) => {
+                    const timeCreated = moment(lead.createdAt).format(
+                      "MM/DD/YYYY"
+                    );
 
-            <tbody>
-              {leads &&
-                leads.map((lead, index) => {
-                  const timeCreated = moment(lead.createdAt).format(
-                    "MM/DD/YYYY"
-                  );
-
-                  return (
-                    <tr
-                      key={lead.id + 1}
-                      className={cn(
-                        "rounded-md",
-                        index % 2 === 0 ? "bg-background" : "bg-blue-100"
-                      )}
-                    >
-                      <td className="border-b px-4 py-2 text-left">
-                        <Link
-                          href="#"
-                          className="block h-full w-full text-[#6571FF]"
-                        >
-                          {(currentPage - 1) * pageSize + index + 1}
-                        </Link>
-                      </td>
-                      <td className="border-b px-4 py-2 text-left">
-                        <Link href="#" className="block h-full w-full">
-                          {lead.clientName}
-                        </Link>
-                      </td>
-                      <td className="border-b px-4 py-2 text-left">
-                        <Link href="#" className="block h-full w-full">
-                          {lead.vehicleInfo}
-                        </Link>
-                      </td>
-                      <td className="border-b px-4 py-2 text-left">
-                        <Link href="#" className="block h-full w-full">
-                          {lead.services}
-                        </Link>
-                      </td>
-                      <td className="border-b px-4 py-2 text-left">
-                        <Link href="#" className="block h-full w-full">
-                          {lead.salesUser?.firstName}{" "}
-                          {lead.salesUser?.lastName ?? ""}
-                        </Link>
-                      </td>
-                      <td className="border-b px-4 py-2 text-left">
-                        <Link href="#" className="block h-full w-full">
-                          {lead.source}
-                        </Link>
-                      </td>
-                      <td className="border-b px-4 py-2 text-left">
-                        {lead?.isQualified ? (
-                          <Select
-                            showSearch
-                            value={lead.column?.id ?? " "}
-                            style={{ width: 150 }}
-                            placeholder="Search to Select"
-                            optionFilterProp="label"
-                            disabled={pending}
-                            filterSort={(optionA, optionB) =>
-                              (optionA?.label ?? "")
-                                .toLowerCase()
-                                .localeCompare(
-                                  (optionB?.label ?? "").toLowerCase()
-                                )
-                            }
-                            options={salesColumn.map((column) => ({
-                              value: column.id,
-                              label: column.title,
-                            }))}
-                            onSelect={(value) =>
-                              startTransition(() =>
-                                handleColumnChange({
-                                  leadId: lead.id,
-                                  newColumnId: value as number,
-                                })
-                              )
-                            }
-                          />
-                        ) : (
-                          "Unqualified"
+                    return (
+                      <tr
+                        key={lead.id + 1}
+                        className={cn(
+                          "rounded-md",
+                          index % 2 === 0 ? "bg-background" : "bg-blue-100"
                         )}
-                      </td>
-
-                      <td className="border-b px-4 py-2 text-left">
-                        <div className="flex items-center gap-2">
+                      >
+                        <td className="border-b px-4 py-2 text-left">
                           <Link
-                            href={`/dashboard/communication/client/${lead?.client?.id}?source=lead`}
-                            className="group relative"
+                            href="#"
+                            className="block h-full w-full text-[#6571FF]"
                           >
-                            <PiWechatLogoLight
-                              size={21}
-                              className="duration-300 hover:text-[#6571FF]"
-                            />
-                            <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
-                              Communications
-                            </span>
+                            {(currentPage - 1) * pageSize + index + 1}
                           </Link>
-                          <button
-                            onClick={() =>
-                              handleCreateDraftEstimate({
-                                leadId: lead.id,
-                                clientId: lead?.client?.id,
-                                vehicleId: lead?.client?.vehicle?.id,
-                              })
-                            }
-                            className="group relative"
-                          >
-                            {lead.isEstimateCreated ? (
-                              <div className="relative h-6 w-4">
-                                <Image
-                                  alt="draftEstimateDone"
-                                  src="/icons/estimateDone.png"
-                                  fill
-                                  className="object-contain"
-                                  loading="lazy"
-                                  sizes="24px"
-                                />
-                              </div>
-                            ) : (
-                              <div className="relative h-4 w-4">
-                                <Image
-                                  src="/icons/draftEstimate.png"
-                                  alt="draftEstimate"
-                                  fill
-                                  sizes="16px"
-                                  className="object-contain duration-300 hover:opacity-80"
-                                  loading="lazy"
-                                />
-                              </div>
-                            )}
-                            <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
-                              Draft estimate
-                            </span>
-                          </button>
-                          <AppointmentBtn
-                            onOpenAppointment={() => {
-                              if (lead?.client?.id) {
-                                const params = new URLSearchParams(
-                                  searchParams!
-                                );
-                                params.set(
-                                  "clientId",
-                                  lead?.client?.id?.toString()
-                                );
-                                router.push(`${pathname}?${params.toString()}`);
-                                setSelectedClientId(lead?.client?.id);
+                        </td>
+                        <td className="border-b px-4 py-2 text-left">
+                          <Link href="#" className="block h-full w-full">
+                            {lead.clientName}
+                          </Link>
+                        </td>
+                        <td className="border-b px-4 py-2 text-left">
+                          <Link href="#" className="block h-full w-full">
+                            {lead.vehicleInfo}
+                          </Link>
+                        </td>
+                        <td className="border-b px-4 py-2 text-left">
+                          <Link href="#" className="block h-full w-full">
+                            {lead.services}
+                          </Link>
+                        </td>
+                        <td className="border-b px-4 py-2 text-left">
+                          <Link href="#" className="block h-full w-full">
+                            {lead.salesUser?.firstName}{" "}
+                            {lead.salesUser?.lastName ?? ""}
+                          </Link>
+                        </td>
+                        <td className="border-b px-4 py-2 text-left">
+                          <Link href="#" className="block h-full w-full">
+                            {lead.source}
+                          </Link>
+                        </td>
+                        <td className="border-b px-4 py-2 text-left">
+                          {lead?.isQualified ? (
+                            <Select
+                              showSearch
+                              value={lead.column?.id ?? " "}
+                              style={{ width: 150 }}
+                              placeholder="Search to Select"
+                              optionFilterProp="label"
+                              disabled={pending}
+                              filterSort={(optionA, optionB) =>
+                                (optionA?.label ?? "")
+                                  .toLowerCase()
+                                  .localeCompare(
+                                    (optionB?.label ?? "").toLowerCase()
+                                  )
                               }
-                              lead?.client?.vehicle?.id &&
-                                setSelectedVehicleId(lead?.client?.vehicle?.id);
-                              open("ADD_TASK");
-                            }}
-                            appointment={
-                              (lead?.client?.appointments?.length ?? 0) > 0
-                                ? lead?.client?.appointments?.[0]
-                                : undefined
-                            }
-                          />
-
-                          <div className="group relative mt-1.5">
-                            <TaskForm
-                              companyUsers={companyUsers}
-                              leadId={lead.id}
-                              previousTasks={lead.tasks || []}
+                              options={salesColumn.map((column) => ({
+                                value: column.id,
+                                label: column.title,
+                              }))}
+                              onSelect={(value) =>
+                                startTransition(() =>
+                                  handleColumnChange({
+                                    leadId: lead.id,
+                                    newColumnId: value as number,
+                                  })
+                                )
+                              }
                             />
-                            <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
-                              Add Task
-                            </span>
+                          ) : (
+                            "Unqualified"
+                          )}
+                        </td>
+
+                        <td className="border-b px-4 py-2 text-left">
+                          <div className="flex items-center gap-2">
+                            <Link
+                              href={`/dashboard/communication/client/${lead?.client?.id}?source=lead`}
+                              className="group relative"
+                            >
+                              <PiWechatLogoLight
+                                size={21}
+                                className="duration-300 hover:text-[#6571FF]"
+                              />
+                              <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
+                                Communications
+                              </span>
+                            </Link>
+                            <button
+                              onClick={() =>
+                                handleCreateDraftEstimate({
+                                  leadId: lead.id,
+                                  clientId: lead?.client?.id,
+                                  vehicleId: lead?.client?.vehicle?.id,
+                                })
+                              }
+                              className="group relative"
+                            >
+                              {lead.isEstimateCreated ? (
+                                <div className="relative h-6 w-4">
+                                  <Image
+                                    alt="draftEstimateDone"
+                                    src="/icons/estimateDone.png"
+                                    fill
+                                    className="object-contain"
+                                    loading="lazy"
+                                    sizes="24px"
+                                  />
+                                </div>
+                              ) : (
+                                <div className="relative h-4 w-4">
+                                  <Image
+                                    src="/icons/draftEstimate.png"
+                                    alt="draftEstimate"
+                                    fill
+                                    sizes="16px"
+                                    className="object-contain duration-300 hover:opacity-80"
+                                    loading="lazy"
+                                  />
+                                </div>
+                              )}
+                              <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
+                                Draft estimate
+                              </span>
+                            </button>
+                            <AppointmentBtn
+                              onOpenAppointment={() => {
+                                if (lead?.client?.id) {
+                                  const params = new URLSearchParams(
+                                    searchParams!
+                                  );
+                                  params.set(
+                                    "clientId",
+                                    lead?.client?.id?.toString()
+                                  );
+                                  router.push(
+                                    `${pathname}?${params.toString()}`
+                                  );
+                                  setSelectedClientId(lead?.client?.id);
+                                }
+                                lead?.client?.vehicle?.id &&
+                                  setSelectedVehicleId(
+                                    lead?.client?.vehicle?.id
+                                  );
+                                open("ADD_TASK");
+                              }}
+                              appointment={
+                                (lead?.client?.appointments?.length ?? 0) > 0
+                                  ? lead?.client?.appointments?.[0]
+                                  : undefined
+                              }
+                            />
+
+                            <div className="group relative mt-1.5">
+                              <TaskForm
+                                companyUsers={companyUsers}
+                                leadId={lead.id}
+                                previousTasks={lead.tasks || []}
+                              />
+                              <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
+                                Add Task
+                              </span>
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="border-b px-4 py-2 text-left">
-                        <Link href="#" className="block h-full w-full">
-                          {timeCreated}
-                        </Link>
-                      </td>
-                    </tr>
-                  );
-                })}
-            </tbody>
-          </table>
-        ) : loading ? (
-          <div
-            className="flex w-full items-center justify-center"
-            style={{ height: "calc(100vh - 300px)" }}
-          >
-            <Spin size="large" />
+                        </td>
+                        <td className="border-b px-4 py-2 text-left">
+                          <Link href="#" className="block h-full w-full">
+                            {timeCreated}
+                          </Link>
+                        </td>
+                      </tr>
+                    );
+                  })}
+              </tbody>
+            </table>
           </div>
-        ) : (
-          <div className="my-20 flex w-full justify-center text-gray-500">
-            No leads found.
+          <div className="overflow-y-auto lg:hidden">
+            {leads &&
+              leads.map((lead, index) => {
+                return (
+                  <ResponsiveSalesPipelineCard
+                    key={index}
+                    lead={lead as any}
+                    index={index}
+                  />
+                );
+              })}
           </div>
-        )}
-      </div>
+        </>
+      ) : loading ? (
+        <div
+          className="flex w-full items-center justify-center"
+          style={{ height: "calc(100vh - 300px)" }}
+        >
+          <Spin size="large" />
+        </div>
+      ) : (
+        <div className="my-20 flex w-full justify-center text-gray-500">
+          No leads found.
+        </div>
+      )}
 
       {/* Pagination */}
       {showPagination && (
