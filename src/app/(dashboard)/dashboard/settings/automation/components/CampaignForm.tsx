@@ -29,7 +29,7 @@ import {
   useGetMake,
   useGetModelsByYearAndMake,
 } from "@/hooks/useCarData";
-import { Company, TwilioCredentials } from "@prisma/client";
+import { Company, TwilioCredentials, InfobipConfig } from "@prisma/client";
 import { useCalendarSettingsStore } from "@/stores/calendarSettingsStore";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import moment from "moment-timezone";
@@ -65,7 +65,7 @@ type CampaignFormProps = {
   companyId: any;
   user: any;
   company: Company;
-  twilio: TwilioCredentials | null;
+  twilio: TwilioCredentials | InfobipConfig | null;
 };
 
 const CampaignForm = ({
@@ -349,7 +349,7 @@ const CampaignForm = ({
       }
 
       if (twilio === null) {
-        newErrors.twilio = "To send SMS, you must sign in with Twilio.";
+        newErrors.twilio = "SMS gateway not available";
         errorToast(newErrors.twilio);
       }
     }
@@ -359,7 +359,7 @@ const CampaignForm = ({
       }
 
       if (twilio === null) {
-        newErrors.twilio = "To send SMS, you must sign in with Twilio.";
+        newErrors.twilio = "";
         errorToast(newErrors.twilio);
       }
     }

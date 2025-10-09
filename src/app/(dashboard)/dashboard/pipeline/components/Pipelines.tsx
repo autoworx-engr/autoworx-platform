@@ -29,6 +29,7 @@ import SearchScroll from "./SearchScroll";
 import ServiceSelector from "./ServiceSelector";
 import ShopColumnDropdown from "./ShopColumnDropdown";
 import TaskForm from "./TaskForm";
+import { errorToast, successToast } from "@/lib/toast";
 
 interface PipelinesProps {
   pipelinesTitle: string;
@@ -101,7 +102,7 @@ export default function Pipelines({
     category: number;
     index: number;
   } | null>(null);
-  
+
   // State for appointment modal
   const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
 
@@ -499,10 +500,13 @@ export default function Pipelines({
       try {
         const response = await updateInvoiceStatus(invoiceId, newStatusId);
         if (response.type === "success") {
+          successToast("Lead moved successfully");
         } else {
+          errorToast("Failed to update invoice status");
           console.error("Failed to update invoice status:", response.message);
         }
       } catch (error) {
+        errorToast("Failed to update invoice status");
         console.error("Error updating invoice status:", error);
       }
     } else {
@@ -912,13 +916,13 @@ export default function Pipelines({
           vehicleId={selectedVehicleId}
           isModalOpen={isAppointmentModalOpen}
           setIsModalOpen={setIsAppointmentModalOpen}
-          onAppointmentCreated={(appointment) => {
+          onAppointmentCreated={appointment => {
             // Handle appointment created
             setIsAppointmentModalOpen(false);
             setSelectedClientId(null);
             setSelectedVehicleId(null);
           }}
-          onAppointmentUpdated={(appointment) => {
+          onAppointmentUpdated={appointment => {
             // Handle appointment updated
             setIsAppointmentModalOpen(false);
             setSelectedClientId(null);

@@ -592,7 +592,7 @@ const Leads = ({ salesColumn }: TProps) => {
                               }
                             />
 
-                            <div className="group relative mt-1.5">
+                            <div className="group relative ">
                               <TaskForm
                                 companyUsers={companyUsers}
                                 leadId={lead.id}
