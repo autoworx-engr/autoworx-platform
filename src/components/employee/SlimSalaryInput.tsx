@@ -7,40 +7,54 @@ import { useFormErrorStore } from "@/stores/form-error";
 import SelectEmployeeSalaryType from "@/app/(dashboard)/dashboard/employee/SelectEmployeeSalaryType";
 
 interface SlimSalaryInputProps {
-  onSalaryChange?: (salaryData: { salaryType: SalaryType; salaryAmount: number } | null) => void;
+  onSalaryChange?: (
+    salaryData: { salaryType: SalaryType; salaryAmount: number } | null
+  ) => void;
   salaryTypeOpen: boolean;
   setSalaryTypeOpen: React.Dispatch<React.SetStateAction<boolean>>;
   initialSalaryType?: SalaryType;
   initialSalaryAmount?: number;
 }
 
-export default function SlimSalaryInput({ 
+export default function SlimSalaryInput({
   onSalaryChange,
   salaryTypeOpen,
   setSalaryTypeOpen,
   initialSalaryType,
-  initialSalaryAmount
+  initialSalaryAmount,
 }: SlimSalaryInputProps) {
   const { showError, clearError } = useFormErrorStore();
 
   const handleSalaryAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    if (value && !/^(\d*\.?\d+|\d+\.?\d*)$/.test(value)) {
+
+    // Check for negative numbers or invalid format
+    if (
+      value &&
+      (!/^(\d*\.?\d+|\d+\.?\d*)$/.test(value) || Number(value) < 0)
+    ) {
       showError({
         field: "salaryAmount",
-        message: "Salary amount must be a valid number.",
+        message: "Salary amount must be a valid positive number.",
       });
+      // Set value to 0 if negative
+      if (Number(value) < 0) {
+        e.target.value = "0";
+      }
+      return;
     } else {
       clearError();
-      
+
       // Get current salary type from the form
-      const salaryTypeElement = document.querySelector<HTMLInputElement>("[name='salaryType']");
+      const salaryTypeElement = document.querySelector<HTMLInputElement>(
+        "[name='salaryType']"
+      );
       const salaryType = salaryTypeElement?.value as SalaryType;
-      
+
       if (onSalaryChange && salaryType && value) {
         onSalaryChange({
           salaryType,
-          salaryAmount: Number(value)
+          salaryAmount: Number(value),
         });
       } else if (onSalaryChange && (!salaryType || !value)) {
         onSalaryChange(null);
@@ -66,7 +80,9 @@ export default function SlimSalaryInput({
             step="0.01"
             min="0"
             placeholder="Enter salary amount"
-            defaultValue={initialSalaryAmount ? initialSalaryAmount.toString() : ""}
+            defaultValue={
+              initialSalaryAmount ? initialSalaryAmount.toString() : ""
+            }
             onChange={handleSalaryAmountChange}
           />
         </div>

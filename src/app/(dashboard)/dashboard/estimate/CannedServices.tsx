@@ -204,14 +204,11 @@ const ServiceComponent = ({
   };
 
   async function handleUpdateService() {
-    console.log(":::: Handle Edit ::::", name);
-
     // Validate the service name before proceeding
     if (!validateName(name)) {
       return;
     }
 
-    console.log(":::: Handle Edit ::::", name);
     const res = await updateService({
       id: service.id,
       name: name,

@@ -18,6 +18,7 @@ import {
 } from "@/components/Dialog";
 import FormError from "@/components/FormError";
 import { useFormErrorStore } from "@/stores/form-error";
+import { successToast } from "@/lib/toast";
 
 export default function NewLabor({
   newButton,
@@ -159,6 +160,7 @@ export default function NewLabor({
       });
 
       handleDialogClose();
+      successToast("Labor added successfully");
     } else if (res.type === "globalError") {
       showError({
         field: res.field,
@@ -197,6 +199,7 @@ export default function NewLabor({
       return { items };
     });
     handleDialogClose();
+    successToast("Labor updated successfully");
   }
 
   return (

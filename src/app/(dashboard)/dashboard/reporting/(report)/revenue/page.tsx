@@ -1,6 +1,6 @@
 import { authOptions } from "@/authOptions";
 import { db } from "@/lib/db";
-import { Invoice, Prisma } from "@prisma/client";
+import { Invoice, Prisma, Refund } from "@prisma/client";
 import moment from "moment-timezone";
 import { getServerSession } from "next-auth";
 import { Suspense } from "react";
@@ -13,6 +13,7 @@ import RevenueDisplay from "./RevenueDisplay";
 import { FormatUtcToTimezone } from "@/utils/FormatUtcToTimezone";
 import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
 import { normalizeSearch } from "@/utils/normalizeSearch";
+import { Decimal } from "@prisma/client/runtime/library";
 
 type TProps = {
   searchParams: {
@@ -40,6 +41,7 @@ export type TSliderData = {
 
 export type TInvoice = Prisma.InvoiceGetPayload<{
   include: {
+    Refund: true;
     invoiceItems: {
       include: {
         materials: true;
@@ -108,6 +110,7 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
       OR: filterOR.length > 0 ? filterOR : undefined,
     },
     include: {
+      Refund: {},
       invoiceItems: {
         include: {
           materials: true,
@@ -515,7 +518,16 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
         return total + (Number((invoice as any)?.costPrice) || 0);
       } else if (searchParams?.filterRevenue === "Profit") {
         // Only sum positive profits since we've already filtered out losses
-        const profit = Number((invoice as any).profitPrice.toString());
+        const refundedAmount =
+          invoice?.Refund?.reduce(
+            (acc, refund) => acc.plus(refund.amount || new Decimal(0)),
+            new Decimal(0)
+          ) || new Decimal(0);
+
+        const totalProfit =
+          Number((invoice as any).profitPrice) - Number(refundedAmount);
+        const profit = Number(totalProfit?.toString());
+
         return total + (profit > 0 ? profit : 0);
       }
       return total;
@@ -644,6 +656,7 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
       <RevenueDisplay
         filteredInvoice={
           filteredInvoice as (TInvoice & {
+            refund: Refund;
             costPrice: number;
             profitPrice: number;
             inventoryLossAmount: number;
