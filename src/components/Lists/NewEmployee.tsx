@@ -70,11 +70,11 @@ export default function AddNewEmployee({
       document.querySelector<HTMLInputElement>("[name='type']")?.value;
     // const startDate =
     //   document.querySelector<HTMLInputElement>("[name='startDate']")?.value;
-    // const salaryType = document.querySelector<HTMLInputElement>(
-    //   "[name='salaryType']"
-    // )?.value;
-    // const salary =
-    //   document.querySelector<HTMLInputElement>("[name='salary']")?.value;
+    const salaryType = document.querySelector<HTMLInputElement>(
+      "[name='salaryType']"
+    )?.value;
+    const salary =
+      document.querySelector<HTMLInputElement>("[name='salary']")?.value;
 
     const password =
       document.querySelector<HTMLInputElement>("[name='password']")?.value;
