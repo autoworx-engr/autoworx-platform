@@ -11,6 +11,7 @@ import {
 } from "@/components/Dialog";
 import FormError from "@/components/FormError";
 import { formatTime } from "@/utils/taskAndActivity";
+import AppointmentTitleSelectAndAdd from "@/components/appointment/AppointmentTitleSelectAndAdd";
 
 import { SelectClient } from "@/components/Lists/SelectClient";
 import { SelectVehicle } from "@/components/Lists/SelectVehicle";
@@ -18,6 +19,7 @@ import Selector from "@/components/Selector";
 import { SlimInput, slimInputClassName } from "@/components/SlimInput";
 import Submit from "@/components/Submit";
 import { cn } from "@/lib/cn";
+import { Select } from "antd";
 import { useFormErrorStore } from "@/stores/form-error";
 import { useListsStore } from "@/stores/lists";
 import type {
@@ -28,7 +30,7 @@ import type {
   User,
   Vehicle,
 } from "@prisma/client";
-import moment from "moment";
+import moment from "moment-timezone";
 import { customAlphabet } from "nanoid";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -52,6 +54,7 @@ import { IoCloseSharp } from "react-icons/io5";
 import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { FormatUtcToTimezone } from "@/utils/FormatUtcToTimezone";
+import { formatTime12Hour } from "@/utils/formateTime12Hours";
 
 enum Tab {
   Schedule = 0,
@@ -91,6 +94,7 @@ export function NewAppointmentPipeline({
   // employees: User[];
   // templates: EmailTemplate[];
 }) {
+  const { Option } = Select;
   const timezone = useCompanyTimezone();
 
   // fetching necessary data to implement New Appointment
@@ -110,12 +114,13 @@ export function NewAppointmentPipeline({
   const { estimates } = useListsStore();
 
   const [tab, setTab] = useState(Tab.Reminder);
+  const [title, setTitle] = useState<string>("");
 
   const [date, setDate] = useState<string | undefined>(
     moment().toISOString().split("T")[0]
   );
-  const [startTime, setStartTime] = useState<string | undefined>();
-  const [endTime, setEndTime] = useState<string | undefined>();
+  const [startTime, setStartTime] = useState("00:00");
+  const [endTime, setEndTime] = useState("00:00");
 
   const [minDate, setMinDate] = useState<string>("");
   const [allDay, setAllDay] = useState(false);
@@ -161,6 +166,7 @@ export function NewAppointmentPipeline({
 
   const clientParamId = params.get("clientId");
 
+  const today = moment.tz(timezone).format("YYYY-MM-DD");
   // const { reset } = useEstimateCreateStore();
   let data = useListsStore();
 
@@ -246,10 +252,9 @@ export function NewAppointmentPipeline({
 
   const handleSubmit = async (data: FormData) => {
     try {
-      const title = data.get("title") as string;
       const notes = data.get("notes") as string;
 
-      if (!title.trim()) {
+      if (!title || !title.trim()) {
         return errorToast("Appointment title is required!");
       }
 
@@ -353,9 +358,10 @@ export function NewAppointmentPipeline({
   };
 
   function resetAll() {
-    setDate(undefined);
-    setStartTime(undefined);
-    setEndTime(undefined);
+    setTitle("");
+    setDate(today);
+    setStartTime("00:00");
+    setEndTime("00:00");
     setClient(null);
     setVehicle(null);
     setDraft(null);
@@ -466,29 +472,24 @@ export function NewAppointmentPipeline({
   ) => {
     let timeValue = e.target.value;
 
-    // Check if date exists and is today
-    // const isToday =
-    //   date === formatDateToToday(date ?? new Date().toISOString());
-    // const currentTime = getCurrentTime(); // Always in 24-hour HH:mm format
+    // Regex: HH:mm (00:00 - 23:59)
+    const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
+    if (!timeRegex.test(timeValue)) {
+      errorToast("Invalid time format! Please enter time as HH:mm");
+      return;
+    }
 
     if (type === "start") {
-      // ❌ Restrict past times if a date is present (today)
-      // if (isToday && timeValue < currentTime) {
-      //   errorToast("Start time cannot be in the past!");
-      //   timeValue = currentTime; // Reset to current time
-      // }
-
       setStartTime(timeValue);
 
-      // ✅ Set `endTime` to 1 hour after `startTime`
+      // Auto set endTime = startTime + 1 hour
       setEndTime(addOneHour(timeValue));
     } else if (type === "end") {
-      // ❌ Prevent selecting past time of `startTime`
-      // if (timeValue < startTime!) {
-      //   errorToast("End time cannot be before start time!");
-      //   return;
-      // }
-
+      if (startTime && timeValue < startTime) {
+        errorToast("End time cannot be before start time!");
+        return;
+      }
       setEndTime(timeValue);
     }
   };
@@ -598,6 +599,28 @@ export function NewAppointmentPipeline({
     );
     setFilteredTechnicians(filteredTechnicians);
   }, [newAppointmentData, assignedUsers]);
+
+  useEffect(() => {
+    let now = moment.tz(timezone);
+
+    const roundedMinutes = Math.ceil(now.minute() / 15) * 15;
+    now.minute(roundedMinutes).second(0).millisecond(0);
+
+    setStartTime(now.format("HH:mm"));
+
+    const end = now.clone().add(1, "hours");
+    setEndTime(end.format("HH:mm"));
+  }, [timezone]);
+
+  // Generate options in 15-min intervals
+  const timeOptions = Array.from({ length: 24 * 4 }, (_, i) => {
+    const hour = Math.floor(i / 4);
+    const minute = (i % 4) * 15;
+    const value = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+    const label = formatTime12Hour(hour, minute, timezone);
+    return { value, label };
+  });
+
   return (
     <Dialog open={popup === "ADD_TASK"} onOpenChange={setOpen}>
       {showButton && (
@@ -654,7 +677,10 @@ export function NewAppointmentPipeline({
           <div className="space-y-4 bg-background p-6">
             <FormError />
 
-            <SlimInput name="title" label="Appointment Title" required />
+            <AppointmentTitleSelectAndAdd
+              value={title}
+              onChange={(value) => setTitle(value)}
+            />
 
             <div className="flex flex-wrap items-end gap-2 2xl:flex-nowrap">
               <SlimInput
@@ -673,28 +699,45 @@ export function NewAppointmentPipeline({
                   <span className="mb-1 text-sm font-medium text-gray-700">
                     Start Time
                   </span>
-                  <input
-                    type="time"
-                    value={startTime}
-                    onChange={(e) => handleTimeChange(e, "start")}
-                    step={900}
-                    className={cn(slimInputClassName, "h-[34px] px-3")}
-                    // Only disable the time input if the selected date is today, but restrict future time
-                    // min={isToday ? getCurrentTime() : undefined} // Restrict time to future if today
-                  />
+                  <div>
+                    <Select
+                      value={startTime}
+                      onChange={(value) =>
+                        handleTimeChange({ target: { value } } as any, "start")
+                      }
+                      style={{ width: "100%", height: 34 }}
+                      className="border-slate-400 border rounded-md"
+                    >
+                      {timeOptions.map((time) => (
+                        <Option key={time.value} value={time.value}>
+                          <p className="text-base text-gray-600">
+                            {" "}
+                            {time.label}
+                          </p>
+                        </Option>
+                      ))}
+                    </Select>
+                  </div>
                 </label>
 
                 <label className="flex flex-col items-start">
                   <span className="mb-1 text-sm font-medium text-gray-700">
                     End Time
                   </span>
-                  <input
-                    type="time"
+                  <Select
                     value={endTime}
-                    step={900}
-                    onChange={(e) => handleTimeChange(e, "end")}
-                    className={cn(slimInputClassName, "h-[34px] px-3")}
-                  />
+                    onChange={(value) =>
+                      handleTimeChange({ target: { value } } as any, "end")
+                    }
+                    style={{ width: "100%", height: 34 }}
+                    className="border-slate-400 border rounded-md"
+                  >
+                    {timeOptions.map((time) => (
+                      <Option key={time.value} value={time.value}>
+                        {time.label}
+                      </Option>
+                    ))}
+                  </Select>
                 </label>
               </div>
             </div>
