@@ -8,7 +8,12 @@ import { Skeleton } from "@mui/material";
 import { useAllCommunicationAutomationRules } from "@/hooks/communication-automation/useAllCommunicationAutomationRules";
 import { useAllMarketingAutomationRules } from "@/hooks/marketing-automation/useAllMarketingAutomationRules";
 import { useAllServiceMaintenanceAutomationRules } from "@/hooks/service-maintenance-automation/useAllServiceMaintenanceAutomationRules";
-import { Company, TwilioCredentials, User } from "@prisma/client";
+import {
+  Company,
+  TwilioCredentials,
+  User,
+  InfobipConfig,
+} from "@prisma/client";
 import { useAllInvoiceAutomationRules } from "@/hooks/invoice-automation/useAllInvoiceAutomationRules";
 import { useAllInventoryAutomationRules } from "../../../../../../hooks/inventory-automation/useAllInventoryAutomationRules";
 const CommunicationRuleForm = dynamic(() => import("./CommunicationRuleForm"));
@@ -40,7 +45,7 @@ export default function AllCards({
   companyId: any;
   user: any;
   company: Company | null;
-  twilio: TwilioCredentials;
+  twilio: TwilioCredentials | InfobipConfig;
   employees?: User[] | null;
 }) {
   const [isEdit, setIsEdit] = useState(false);
@@ -68,7 +73,10 @@ export default function AllCards({
     data: allServiceAutomation,
     isLoading: serviceAutomationIsLoading,
     isFetching: serviceAutomationIsFetching,
-  } = useAllServiceMaintenanceAutomationRules(companyId, type === "service-maintenance");
+  } = useAllServiceMaintenanceAutomationRules(
+    companyId,
+    type === "service-maintenance"
+  );
   const {
     data: allInvoiceAutomation,
     isLoading: invoiceAutomationIsLoading,
