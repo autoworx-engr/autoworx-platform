@@ -9,7 +9,7 @@ import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
 import { FormatUtcToTimezone } from "@/utils/FormatUtcToTimezone";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import RefundModal from "./RefundModal";
-
+// refundedAmount
 export default function PaymentTable({
   data,
   onRefreshPayments,
@@ -30,7 +30,8 @@ export default function PaymentTable({
       return true;
     } else if (method === paymentMethod) {
       return true;
-    } else if (
+    } else if (paymentMethod === "Refund") return true;
+    else if (
       paymentMethod === "Other" &&
       method !== "Card" &&
       method !== "Cash" &&
@@ -82,12 +83,15 @@ export default function PaymentTable({
             item.client.name?.toLowerCase().includes(search.toLowerCase())
           : true;
 
+        const isRefundMatch =
+          paymentMethod === "Refund" ? Number(item.refundedAmount) > 0 : true;
+
         return (
           isWithinDateRange &&
           isWithinAmountRange &&
-          isPaymentMethodMatch &&
           isPaidStatusMatch &&
-          isSearchMatch
+          isSearchMatch &&
+          (paymentMethod === "Refund" ? isRefundMatch : isPaymentMethodMatch)
         );
       })
     );

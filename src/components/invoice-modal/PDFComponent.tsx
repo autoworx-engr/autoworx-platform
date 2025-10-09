@@ -321,17 +321,16 @@ const PDFComponent = function PDF({
   useEffect(() => {
     const fetchImage = async () => {
       const url = companyDetails?.image;
-      if (!url) return;
+      console.log("url", url);
 
       try {
-        const res = await fetch(url);
-        const blob = await res.blob();
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const base64data = reader.result as string;
-          setImageData(base64data);
-        };
-        reader.readAsDataURL(blob);
+        const res = await fetch(companyDetails?.image ?? "");
+        const buffer = await res.arrayBuffer();
+        const base64 = `data:image/jpeg;base64,${Buffer.from(buffer).toString("base64")}`;
+
+        setImageData(base64);
+
+        // reader.readAsDataURL(blob);
       } catch (err) {
         console.error("Error fetching image for PDF:", err);
       }
@@ -374,7 +373,11 @@ const PDFComponent = function PDF({
                 style={{ width: 110, height: 90, objectFit: "contain" }}
               />
             ) : (
-              <Text>No Logo</Text>
+              <View
+                style={{ width: 128, backgroundColor: "#6B7280", padding: 10 }}
+              >
+                <Text style={{ color: "white" }}>Logo</Text>
+              </View>
             )}
           </View>
           <View style={styles.textRight}>
