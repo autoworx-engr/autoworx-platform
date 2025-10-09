@@ -5,6 +5,46 @@ import { db } from "@/lib/db";
 import { TwilioCredentials } from "@prisma/client";
 import Twilio from "twilio";
 
+export const isSmsAvailable = async () => {
+  try {
+    const companyId = await getCompanyId();
+    const company = await db.company.findFirst({
+      where: {
+        id: companyId,
+      },
+      select: {
+        smsGateway: true,
+      },
+    });
+    let smsGateway;
+
+    if (company?.smsGateway === "TWILIO") {
+      smsGateway = await db.twilioCredentials.findFirst({
+        where: {
+          companyId,
+        },
+      });
+    } else if (company?.smsGateway === "INFOBIP") {
+      smsGateway = await db.infobipConfig.findFirst({
+        where: {
+          companyId,
+        },
+      });
+    }
+
+    if (smsGateway)
+      return {
+        success: true,
+        data: smsGateway,
+      };
+    throw new Error("SMS gateway not found");
+  } catch (error) {
+    console.error("Error getting from number", error);
+    return {
+      success: false,
+    };
+  }
+};
 export const getFromNumber = async () => {
   try {
     const companyId = await getCompanyId();
@@ -35,7 +75,7 @@ export const getTwilioCredentials = async (): Promise<{
 
     return { success: true, data: twilioCredential };
   } catch (error) {
-    console.error("", error);
+    console.error("Error getting Twilio credentials", error);
     return { success: false };
   }
 };

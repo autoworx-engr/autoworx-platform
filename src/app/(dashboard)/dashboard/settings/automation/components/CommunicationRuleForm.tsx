@@ -21,7 +21,7 @@ import {
   uploadAllAttachments,
 } from "@/utils/handleFileAttachment";
 import CustomRadioGroup from "./CustomRadioGroup";
-import { Company, TwilioCredentials } from "@prisma/client";
+import { Company, TwilioCredentials, InfobipConfig } from "@prisma/client";
 import { useCharacterLimit } from "@/hooks/useCharecterLimit";
 
 type RuleFormProps = {
@@ -31,7 +31,7 @@ type RuleFormProps = {
   companyId: any;
   user: any;
   company: Company;
-  twilio: TwilioCredentials | null;
+  twilio: TwilioCredentials | InfobipConfig | null;
 };
 
 export type Rule = {
@@ -271,7 +271,7 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
       }
 
       if (twilio === null) {
-        newError.twilio = "To send SMS, you must sign in with Twilio.";
+        newError.twilio = "SMS gateway not available";
         errorToast(newError.twilio);
       }
     }
@@ -281,7 +281,7 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
       }
 
       if (twilio === null) {
-        newError.twilio = "To send SMS, you must sign in with Twilio.";
+        newError.twilio = "SMS gateway not available";
         errorToast(newError.twilio);
       }
     }
@@ -353,7 +353,7 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
 
   return (
     <>
-      { isLoading || isFetching || stagesLoading ? (
+      {isLoading || isFetching || stagesLoading ? (
         <div className="flex h-[800px] w-full animate-pulse items-center justify-center rounded-md bg-gray-200 p-4 shadow-sm md:p-6">
           <Spin />
         </div>
