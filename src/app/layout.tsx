@@ -27,7 +27,7 @@ export const metadata: Metadata = {
       "Autoworx makes running your shop easier than ever! From hassle-free client management to streamlining garage operations...",
     images: [
       {
-        url: `${env("NEXT_PUBLIC_SITE_URL")}/icons/autoworx-logo.png`,
+        url: `${env("NEXT_PUBLIC_SITE_URL")}/icons/autoworx-logo.webp`,
         alt: "AutoWorx Logo",
       },
     ],

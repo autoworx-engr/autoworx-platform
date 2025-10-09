@@ -1,6 +1,8 @@
 "use client";
 import BarChartComponent from "@/app/(dashboard)/dashboard/reporting/components/BarChartComponent";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { formatCurrency } from "@/utils/formatCurrency";
+import { formatLargeNumber } from "@/utils/formatLargeNumber";
 import { Bar, Label, Tooltip, XAxis, YAxis } from "recharts";
 
 const CustomBar = (props: any) => {
@@ -38,13 +40,47 @@ const CustomLabel = ({ x, y, width, value, data }: any) => {
   );
 };
 
-const CustomTooltip = ({ active, payload }: any) => {
+// const CustomTooltip = ({ active, payload }: any) => {
+//   if (active && payload && payload.length) {
+//     const { payload: data } = payload[0];
+//     return (
+//       <div className="w-fit rounded-lg border border-black bg-background p-4 text-[#03A7A2]">
+//         <p className="text-xl">{data?.categoryName}</p>
+//         <p className="text-2xl">{formatCurrency(data?.salePrice)}</p>
+//       </div>
+//     );
+//   }
+
+//   return null;
+// };
+
+const CustomTooltip = ({ active, payload, isMobile, labe }: any) => {
   if (active && payload && payload.length) {
     const { payload: data } = payload[0];
+    const salePrice = data?.salePrice ? Number(data.salePrice.toFixed(2)) : 0;
+
+    // Use abbreviated format for very large numbers
+    const displayValue =
+      salePrice >= 1000
+        ? `$${formatLargeNumber(salePrice)}`
+        : formatCurrency(salePrice);
+
     return (
-      <div className="w-fit rounded-lg border border-black bg-background p-4 text-[#03A7A2]">
-        <p className="text-xl">{data?.categoryName}</p>
-        <p className="text-2xl">{formatCurrency(data?.salePrice)}</p>
+      <div className={`${isMobile ? "min-w-fit" : "min-w-36"} max-w-xs rounded-lg border border-gray-300 bg-white p-3 shadow-lg`}>
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-gray-800 truncate">
+            {data?.categoryName || "Unknown Category"}
+          </p>
+          <div className="border-t border-gray-200 pt-2">
+          
+            <p className="text-lg font-bold text-[#03A7A2]">{displayValue}</p>
+            {salePrice >= 1000 && (
+              <p className="text-xs text-gray-500 mt-1">
+                Exact: {formatCurrency(salePrice)}
+              </p>
+            )}
+          </div>
+        </div>
       </div>
     );
   }
@@ -60,6 +96,7 @@ type TProps = {
 };
 
 export default function RevenueBarChartContainer({ data }: TProps) {
+    const isMobile = useMediaQuery("(max-width: 640px)");
   const transformedData = data.map((item) => ({
     ...item,
     absoluteSalePrice: Math.abs(item.salePrice),
@@ -81,7 +118,7 @@ export default function RevenueBarChartContainer({ data }: TProps) {
             Category
           </Label>
         </XAxis>
-        <Tooltip cursor={{ fill: "transparent" }} content={<CustomTooltip />} />
+        <Tooltip cursor={{ fill: "transparent" }} content={<CustomTooltip isMobile={isMobile} />} />
         <YAxis tick={false} dataKey={"absoluteSalePrice"}>
           <Label
             angle={270}

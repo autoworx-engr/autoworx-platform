@@ -21,7 +21,7 @@ import { IoMdCheckmarkCircleOutline } from "react-icons/io";
 import NewLabor from "./NewLabor";
 import { Pagination, Popconfirm, message } from "antd"; // Added message for notifications
 import { formatCurrency } from "@/utils/formatCurrency";
-import { errorToast } from "@/lib/toast";
+import { errorToast, successToast } from "@/lib/toast";
 import { useEstimateFilterStore } from "@/stores/estimate-filter";
 import { SquarePen } from "lucide-react";
 
@@ -217,6 +217,7 @@ const LaborComponent = ({
       charge: parseFloat(hours) || 0,
       categoryId: category?.id,
     });
+    if (res.success) successToast("Labor updated successfully");
     if (!res?.success)
       return errorToast(res?.message || "Failed to update labor");
     setIsEdit(false);

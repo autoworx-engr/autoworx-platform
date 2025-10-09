@@ -56,22 +56,28 @@ const FilterforPayment = () => {
             <div className="mb-4">
               <div className="font-Inter mb-2">Payment Method</div>
               <div className="flex flex-wrap gap-2">
-                {["All", "Cash", "Card", "Cheque", "Deposit", "Other"].map(
-                  (method) => (
-                    <button
-                      key={method}
-                      className={cn(
-                        "flex items-center justify-center rounded border px-3 py-1 text-base",
-                        paymentMethod === method
-                          ? "bg-[#6571ff] text-[white]"
-                          : "border-gray-300 text-[#66738C]"
-                      )}
-                      onClick={() => setPaymentMethod(method as PaymentMethod)}
-                    >
-                      {method}
-                    </button>
-                  )
-                )}
+                {[
+                  "All",
+                  "Cash",
+                  "Card",
+                  "Cheque",
+                  "Deposit",
+                  "Other",
+                  "Refund",
+                ].map((method) => (
+                  <button
+                    key={method}
+                    className={cn(
+                      "flex items-center justify-center rounded border px-3 py-1 text-base",
+                      paymentMethod === method
+                        ? "bg-[#6571ff] text-[white]"
+                        : "border-gray-300 text-[#66738C]"
+                    )}
+                    onClick={() => setPaymentMethod(method as PaymentMethod)}
+                  >
+                    {method}
+                  </button>
+                ))}
               </div>
             </div>
             <div className="mb-4">
@@ -114,6 +120,12 @@ const FilterforPayment = () => {
                   setPaymentMethod("All");
                   setAmount([1, 30_000]);
                   setStatus("All");
+                  setShowFilter(false);
+                  setFilter({
+                    paidStatus: "All",
+                    amount: [1, 30_000],
+                    paymentMethod: "All",
+                  });
                 }}
               >
                 Clear All
