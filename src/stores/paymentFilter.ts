@@ -6,7 +6,8 @@ export type PaymentMethod =
   | "Cheque"
   | "Other"
   | "All"
-  | "Deposit";
+  | "Deposit"
+  | "Refund";
 export type PaymentStatus = "All" | "Paid" | "Unpaid";
 
 interface PaymentFilterState {
