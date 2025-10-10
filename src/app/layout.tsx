@@ -1,34 +1,33 @@
-import { authOptions } from "@/authOptions";
-import { AuthSessionProvider } from "@/components/AuthSessionProvider";
-import Layout from "@/components/Layout";
-import QueryProvider from "@/components/QueryProvider";
-import { TooltipProvider } from "@/components/Tooltip";
-import type { Metadata, Viewport } from "next";
-import { getServerSession } from "next-auth";
-import { env, PublicEnvScript } from "next-runtime-env";
-import { Inter } from "next/font/google";
-import { Toaster } from "react-hot-toast";
-import TopLoader from "../components/TopLoader";
-import "./globals.css";
-import { SpeedInsights } from "@vercel/speed-insights/next";
-import { Analytics } from "@vercel/analytics/next";
+import { authOptions } from '@/authOptions';
+import { AuthSessionProvider } from '@/components/AuthSessionProvider';
+import Layout from '@/components/Layout';
+import QueryProvider from '@/components/QueryProvider';
+import { TooltipProvider } from '@/components/Tooltip';
+import type { Metadata, Viewport } from 'next';
+import { getServerSession } from 'next-auth';
+import { env, PublicEnvScript } from 'next-runtime-env';
+import { Inter } from 'next/font/google';
+import { Toaster } from 'react-hot-toast';
+import TopLoader from '../components/TopLoader';
+import './globals.css';
+
 // import { ThemeProvider } from "@/components/theme-provider";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: {
     template: `%s | AutoWorx`,
-    default: "AutoWorx",
+    default: 'AutoWorx',
   },
   openGraph: {
-    url: env("NEXT_PUBLIC_SITE_URL"),
+    url: env('NEXT_PUBLIC_SITE_URL'),
     description:
-      "Autoworx makes running your shop easier than ever! From hassle-free client management to streamlining garage operations...",
+      'Autoworx makes running your shop easier than ever! From hassle-free client management to streamlining garage operations...',
     images: [
       {
-        url: `${env("NEXT_PUBLIC_SITE_URL")}/icons/autoworx-logo.webp`,
-        alt: "AutoWorx Logo",
+        url: `${env('NEXT_PUBLIC_SITE_URL')}/icons/autoworx-logo.webp`,
+        alt: 'AutoWorx Logo',
       },
     ],
   },
@@ -36,31 +35,31 @@ export const metadata: Metadata = {
   // for PWA specific behavior
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
-    title: "AutoWorx",
+    statusBarStyle: 'default',
+    title: 'AutoWorx',
     startupImage: [
       {
-        url: `${env("NEXT_PUBLIC_SITE_URL")}/icons/pwa/icon-512x512.png`,
-        media: "(device-width: 768px) and (device-height: 1024px)",
+        url: `${env('NEXT_PUBLIC_SITE_URL')}/icons/pwa/icon-512x512.png`,
+        media: '(device-width: 768px) and (device-height: 1024px)',
       },
     ],
   },
 
   // for better touch behavior
   other: {
-    "apple-mobile-web-app-capable": "yes",
-    "format-detection": "telephone=no",
-    "mobile-web-app-capable": "yes",
+    'apple-mobile-web-app-capable': 'yes',
+    'format-detection': 'telephone=no',
+    'mobile-web-app-capable': 'yes',
     // "apple-touch-icon": `${env("NEXT_PUBLIC_SITE_URL")}/icons/autoworx-logo-180x180.png`,
   },
 };
 
 export const viewport: Viewport = {
-  width: "device-width",
+  width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  viewportFit: "cover",
+  viewportFit: 'cover',
 };
 
 export default async function RootLayout({
@@ -77,8 +76,7 @@ export default async function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <PublicEnvScript />
-        <SpeedInsights />
-        <Analytics />
+
         {/* <link
           rel="apple-touch-icon"
           sizes="512x512"
@@ -120,12 +118,12 @@ export default async function RootLayout({
           toastOptions={{
             success: {
               style: {
-                border: "1px solid rgba(0, 255, 0, 0.5)",
+                border: '1px solid rgba(0, 255, 0, 0.5)',
               },
             },
             error: {
               style: {
-                border: "1px solid rgba(255, 0, 0, 0.5)",
+                border: '1px solid rgba(255, 0, 0, 0.5)',
               },
             },
           }}
