@@ -17,7 +17,12 @@ import {
 import { useCreateServiceMaintenanceAutomationRule } from "@/hooks/service-maintenance-automation/useCreateServiceMaintenanceAutomationRule";
 import { usePipelineStagesStore } from "@/stores/pipelineStagesStore";
 
-import { Company, Service, TwilioCredentials } from "@prisma/client";
+import {
+  Company,
+  Service,
+  TwilioCredentials,
+  InfobipConfig,
+} from "@prisma/client";
 import { useServiceStore } from "@/stores/serviceStore";
 import { parseTimeDelayToSeconds } from "@/utils/parseTimeDelayToSeconds";
 import { useFindOneServiceMaintenanceAutomationRule } from "@/hooks/service-maintenance-automation/useFindOneServiceMaintenanceAutomationRule";
@@ -34,7 +39,7 @@ type RuleFormProps = {
   user: any;
   companyId: any;
   company: Company;
-  twilio: TwilioCredentials | null;
+  twilio: TwilioCredentials | InfobipConfig | null;
 };
 
 export type Rule = {
@@ -257,7 +262,7 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
       }
 
       if (twilio === null) {
-        newError.twilio = "To send SMS, you must sign in with Twilio.";
+        newError.twilio = "SMS gateway not available";
         errorToast(newError.twilio);
       }
     }

@@ -12,6 +12,9 @@ import { getCompanyCalendarSettings } from "@/actions/booking/getCompanyCalendar
 import Image from "next/image";
 import { getCompanyById } from "@/actions/settings/getCompnayById";
 import { Select } from "antd";
+import useSettingsQuery from "@/app/(dashboard)/dashboard/task/_hook/settings/query/useSettingsQuery";
+import { CalendarSettings } from "@prisma/client";
+import { errorToast } from "@/lib/toast";
 
 type FormData = {
   title: string;
@@ -31,7 +34,8 @@ const BookingForm = () => {
 
   // Add state for company info if needed
   const [companyInfo, setCompanyInfo] = useState<any>(null);
-  const [calendarSettings, setCalendarSettings] = useState<any>(null);
+  const [calendarSettings, setCalendarSettings] =
+    useState<CalendarSettings | null>(null);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -99,7 +103,7 @@ const BookingForm = () => {
       console.log("Decoded company ID:", companyId);
 
       // Fetch calendar settings for the company
-      getCompanyCalendarSettings(companyId.toString()).then((settings) => {
+      getCompanyCalendarSettings(companyId.toString()).then(settings => {
         setCalendarSettings(settings);
       });
     }
@@ -122,7 +126,7 @@ const BookingForm = () => {
       // Check if the selected time is still available in the current options
       const availableOptions = getTimeOptions();
       const isTimeAvailable = availableOptions.some(
-        (option) => option.value === formData.startTime
+        option => option.value === formData.startTime
       );
 
       if (!isTimeAvailable) {
@@ -148,10 +152,10 @@ const BookingForm = () => {
       }
     }
 
-    setFormData((prev) => ({ ...prev, [field]: processedValue }));
+    setFormData(prev => ({ ...prev, [field]: processedValue }));
 
     if (error[field]) {
-      setError((prev) => {
+      setError(prev => {
         const newErrors = { ...prev };
         delete newErrors[field];
         return newErrors;
@@ -164,15 +168,15 @@ const BookingForm = () => {
     setSelectedTitleOption(value);
 
     if (value === "Custom") {
-      setFormData((prev) => ({ ...prev, title: customTitle }));
+      setFormData(prev => ({ ...prev, title: customTitle }));
     } else {
-      setFormData((prev) => ({ ...prev, title: value }));
+      setFormData(prev => ({ ...prev, title: value }));
       setCustomTitle(""); // Clear custom title when selecting predefined option
     }
 
     // Clear title error if exists
     if (error.title) {
-      setError((prev) => {
+      setError(prev => {
         const newErrors = { ...prev };
         delete newErrors.title;
         return newErrors;
@@ -183,11 +187,11 @@ const BookingForm = () => {
   // Handle custom title input
   const handleCustomTitleChange = (value: string) => {
     setCustomTitle(value);
-    setFormData((prev) => ({ ...prev, title: value }));
+    setFormData(prev => ({ ...prev, title: value }));
 
     // Clear title error if exists
     if (error.title) {
-      setError((prev) => {
+      setError(prev => {
         const newErrors = { ...prev };
         delete newErrors.title;
         return newErrors;
@@ -318,7 +322,7 @@ const BookingForm = () => {
         // Additional validation - check if selected time is still available
         const availableOptions = getTimeOptions();
         const isTimeAvailable = availableOptions.some(
-          (option) => option.value === formData.startTime
+          option => option.value === formData.startTime
         );
 
         if (!isTimeAvailable) {
@@ -355,6 +359,19 @@ const BookingForm = () => {
     if (!companyId) {
       setError({
         general: "Invalid booking link. Please contact the company directly.",
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    const dayName = moment(formData.date).format("dddd").toLowerCase();
+    if (
+      calendarSettings?.weekend1.toLowerCase() === dayName ||
+      calendarSettings?.weekend2.toLowerCase() === dayName
+    ) {
+      setError({
+        general:
+          "The selected date falls on a weekend. Please choose a weekday.",
       });
       setIsLoading(false);
       return;
@@ -447,7 +464,7 @@ const BookingForm = () => {
             <select
               id="title-select"
               value={selectedTitleOption}
-              onChange={(e) => handleTitleSelection(e.target.value)}
+              onChange={e => handleTitleSelection(e.target.value)}
               className={cn(
                 slimInputClassName,
                 "h-[33px] px-3 w-full",
@@ -457,7 +474,7 @@ const BookingForm = () => {
               required
             >
               <option value="">Select appointment type...</option>
-              {titleOptions.map((option) => (
+              {titleOptions.map(option => (
                 <option key={option} value={option}>
                   {option === "Custom" ? "Custom (Enter your own)" : option}
                 </option>
@@ -468,7 +485,7 @@ const BookingForm = () => {
             {selectedTitleOption === "Custom" && (
               <SlimInput
                 value={customTitle}
-                onChange={(e) => handleCustomTitleChange(e.target.value)}
+                onChange={e => handleCustomTitleChange(e.target.value)}
                 name="customTitle"
                 label="Enter Custom Title"
                 placeholder="Enter your custom appointment title"
@@ -487,7 +504,7 @@ const BookingForm = () => {
               error={error.date}
               min={minDate}
               value={formData.date}
-              onChange={(e) => handleChange("date", e.target.value)}
+              onChange={e => handleChange("date", e.target.value)}
               name="date"
               label="Date"
               type="date"
@@ -505,7 +522,7 @@ const BookingForm = () => {
                 </label>
                 <Select
                   value={formData.startTime}
-                  onChange={(value) => handleChange("startTime", value)}
+                  onChange={value => handleChange("startTime", value)}
                   placeholder="Select time..."
                   className={cn(
                     "h-[33px] w-full font-semibold text-gray-600",
@@ -561,7 +578,7 @@ const BookingForm = () => {
               <SlimInput
                 error={error.firstName}
                 value={formData.firstName}
-                onChange={(e) => handleChange("firstName", e.target.value)}
+                onChange={e => handleChange("firstName", e.target.value)}
                 name="firstName"
                 label="First Name"
                 className={`${inputClass}`}
@@ -569,7 +586,7 @@ const BookingForm = () => {
               />
               <SlimInput
                 value={formData.lastName}
-                onChange={(e) => handleChange("lastName", e.target.value)}
+                onChange={e => handleChange("lastName", e.target.value)}
                 name="lastName"
                 label="Last Name"
                 className={`${inputClass}`}
@@ -581,7 +598,7 @@ const BookingForm = () => {
               <SlimInput
                 error={error.email}
                 value={formData.email}
-                onChange={(e) => handleChange("email", e.target.value)}
+                onChange={e => handleChange("email", e.target.value)}
                 name="email"
                 label="Email"
                 className={`${inputClass}`}
@@ -591,7 +608,7 @@ const BookingForm = () => {
                 type="tel"
                 error={error.mobile}
                 value={formData.mobile}
-                onChange={(e) => handleChange("mobile", e.target.value)}
+                onChange={e => handleChange("mobile", e.target.value)}
                 name="mobile"
                 label="Mobile"
                 className={`${inputClass}`}
@@ -607,7 +624,7 @@ const BookingForm = () => {
                 id="notes"
                 name="notes"
                 value={formData.notes}
-                onChange={(e) => handleChange("notes", e.target.value)}
+                onChange={e => handleChange("notes", e.target.value)}
                 placeholder="Add any additional notes for your appointment..."
                 rows={3}
                 className={cn(

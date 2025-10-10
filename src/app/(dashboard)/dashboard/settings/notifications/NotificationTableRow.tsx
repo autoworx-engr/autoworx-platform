@@ -7,6 +7,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import MySwitch from "./MySwitch";
 import { getTwilioCredentials } from "@/actions/communication/client/sendTwilioMessage";
 import { errorToast } from "@/lib/toast";
+import { isSmsAvailable } from "@/actions/communication/client/createTwilioCredentials";
 
 type TProps = {
   setting: NotificationSettingsV2;
@@ -76,11 +77,9 @@ export default function NotificationTableRow({
           <MySwitch
             checked={setting["text_enabled"] as boolean}
             onChecked={async (value) => {
-              let twilioCredentials = await getTwilioCredentials();
+              let twilioCredentials = await isSmsAvailable();
               if (!twilioCredentials && value) {
-                errorToast(
-                  "Twilio credentials not found, set credentials first"
-                );
+                errorToast("SMS gateway not available");
                 return;
               }
               mutate({ switchKey: "text_enabled", value });
