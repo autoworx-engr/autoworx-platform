@@ -52,10 +52,10 @@ export async function getSignedURL({
     return { error: "File size too large" };
   }
 
-  // const randomFileName = generateFileName();
+  const baseName = originalFileName.split(".")[0];
   const extension = path.extname(originalFileName);
-  const fileName =
-    originalFileName.split(".")[0] + "-" + Date.now() + extension;
+  const uniqueSuffix = `${Date.now()}-${crypto.randomBytes(6).toString("hex")}`;
+  const fileName = `${baseName}-${uniqueSuffix}${extension}`;
 
   const putObjectCommand = new PutObjectCommand({
     Bucket: process.env.AWS_BUCKET_NAME!,
