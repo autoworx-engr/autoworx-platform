@@ -28,6 +28,7 @@ import { UpdatePurchase } from "../../../../actions/inventory/updatePurchase";
 import moment from "moment-timezone";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { SquarePen } from "lucide-react";
+import { successToast } from "@/lib/toast";
 
 type TProps = {
   productId: number;
@@ -184,6 +185,10 @@ export default function EditSalePurchaseList({
       isIncreasing,
       type: history?.type || "Purchase",
     });
+
+    if (res.type === "success") {
+      successToast(`${fromSales ? "Sales" : "Purchase"} updated successfully`);
+    }
 
     if (res.type === "globalError") {
       showError({

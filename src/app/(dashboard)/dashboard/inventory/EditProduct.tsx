@@ -25,7 +25,7 @@ import {
 import { useEffect, useState } from "react";
 import { editProduct } from "../../../../actions/inventory/edit";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
-import { errorToast } from "@/lib/toast";
+import { errorToast, successToast } from "@/lib/toast";
 import { useFormErrorStore } from "@/stores/form-error";
 import { SquarePen } from "lucide-react";
 
@@ -189,6 +189,7 @@ export default function EditProduct({ productData }: TProps) {
       if (res.type === "success") {
         setOpen(false);
         clearError();
+        successToast("Product updated successfully");
       } else if (res.type === "globalError") {
         showError({
           field: res.field ?? "all",
