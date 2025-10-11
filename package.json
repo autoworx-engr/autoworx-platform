@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "next dev",
     "build": " prisma generate && NODE_OPTIONS='--max-old-space-size=8192' next build",
-    "start": "next start -p 3000",
+    "start": "next start",
     "lint": "next lint",
     "prettier": "prettier --ignore-path .gitignore --write \"**/*.+(js|ts|json)\"",
     "prettier:fix": "npm run prettier --fix",
