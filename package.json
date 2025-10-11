@@ -7,8 +7,8 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
-    "start": "next start",
+    "build": " prisma generate && NODE_OPTIONS='--max-old-space-size=8192' next build",
+    "start": "next start -p 3000",
     "lint": "next lint",
     "prettier": "prettier --ignore-path .gitignore --write \"**/*.+(js|ts|json)\"",
     "prettier:fix": "npm run prettier --fix",
@@ -52,8 +52,7 @@
     "@types/html-to-text": "^9.0.4",
     "@types/react-qr-reader": "^2.1.7",
     "@types/react-resizable": "^3.0.8",
-    "@vercel/analytics": "^1.5.0",
-    "@vercel/speed-insights": "^1.2.0",
+    "@yudiel/react-qr-scanner": "^2.3.1",
     "antd": "^5.19.0",
     "aws-sdk": "^2.1692.0",
     "axios": "^1.9.0",
@@ -110,7 +109,6 @@
     "react-loader-spinner": "^6.1.6",
     "react-multi-date-picker": "^4.5.2",
     "react-onesignal": "^3.2.2",
-    "react-qr-reader": "github:bettercallsundim/forked-react-qr-reader#master",
     "react-quill": "^2.0.0",
     "react-resizable": "^3.0.5",
     "react-responsive": "^10.0.0",
@@ -160,7 +158,7 @@
     "typescript": "^5"
   },
   "engines": {
-    "node": "20.x"
+    "node": ">=20.x"
   },
   "resolutions": {
     "string-width": "^4.2.3"

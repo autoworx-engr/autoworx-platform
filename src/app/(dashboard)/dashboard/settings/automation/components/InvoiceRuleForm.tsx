@@ -20,7 +20,7 @@ import { useFindOneInvoiceAutomationRule } from "@/hooks/invoice-automation/useF
 import { parseTimeDelayToSeconds } from "@/utils/parseTimeDelayToSeconds";
 import { parseSecondsToTimeDelay } from "@/utils/parseSecondsToTimeDelay";
 import { Spin } from "antd";
-import { Company, TwilioCredentials } from "@prisma/client";
+import { Company, TwilioCredentials, InfobipConfig } from "@prisma/client";
 import { useCharacterLimit } from "@/hooks/useCharecterLimit";
 
 type RuleFormProps = {
@@ -31,7 +31,7 @@ type RuleFormProps = {
   companyId: any;
   user: any;
   company: Company;
-  twilio: TwilioCredentials | null;
+  twilio: TwilioCredentials | InfobipConfig | null;
 };
 
 export type Rule = {
@@ -107,7 +107,7 @@ const InvoiceRuleForm: React.FC<RuleFormProps> = ({
     Number(id)
   );
 
-    const maxLength = 160;
+  const maxLength = 160;
   const { length, isLimitExceeded } = useCharacterLimit(
     formData?.emailBody! || formData?.smsBody!,
     maxLength
@@ -285,7 +285,7 @@ const InvoiceRuleForm: React.FC<RuleFormProps> = ({
       }
 
       if (twilio === null) {
-        newError.twilio = "To send SMS, you must sign in with Twilio.";
+        newError.twilio = "SMS gateway not available";
         errorToast(newError.twilio);
       }
     }
@@ -295,7 +295,7 @@ const InvoiceRuleForm: React.FC<RuleFormProps> = ({
       }
 
       if (twilio === null) {
-        newError.twilio = "To send SMS, you must sign in with Twilio.";
+        newError.twilio = "SMS gateway not available";
         errorToast(newError.twilio);
       }
     }
@@ -468,9 +468,9 @@ const InvoiceRuleForm: React.FC<RuleFormProps> = ({
                     error={
                       error.smsBody || error.emailBody || error.emailSubject
                     }
-                     maxLength={maxLength}
-                        characterLength={length}
-                        isLimitExceeded={isLimitExceeded}
+                    maxLength={maxLength}
+                    characterLength={length}
+                    isLimitExceeded={isLimitExceeded}
                   />
                 </Box>
               )}
@@ -499,9 +499,9 @@ const InvoiceRuleForm: React.FC<RuleFormProps> = ({
                       error.emailBody || error.emailSubject || error.smsBody
                     }
                     subjectError={!!error.emailSubject}
-                     maxLength={maxLength}
-                        characterLength={length}
-                        isLimitExceeded={isLimitExceeded}
+                    maxLength={maxLength}
+                    characterLength={length}
+                    isLimitExceeded={isLimitExceeded}
                   />
                 </Box>
               )}

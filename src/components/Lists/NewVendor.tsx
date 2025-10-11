@@ -17,7 +17,7 @@ import { Vendor } from "@prisma/client";
 import { useState } from "react";
 import { SlimInput } from "../SlimInput";
 import { SlimTextarea } from "../SlimTextarea";
-import { errorToast } from "@/lib/toast";
+import { errorToast, successToast } from "@/lib/toast";
 
 export default function NewVendor({
   bgShadow,
@@ -98,7 +98,7 @@ export default function NewVendor({
     if (
       website &&
       !/^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/.test(
-        website,
+        website
       )
     ) {
       showError({
@@ -129,6 +129,7 @@ export default function NewVendor({
       afterSubmit && afterSubmit(res.data);
       clearError();
       setOpen(false);
+      successToast("Vendor added successfully.");
     } else if (res.type === "globalError") {
       if (res.errorSource && res.errorSource.length > 0) {
         showError({
@@ -178,7 +179,7 @@ export default function NewVendor({
               onChange={(e) => {
                 const value = e.target.value;
                 setCompanyName(value);
-                
+
                 if (!value.trim()) {
                   showError({
                     field: "companyName",
@@ -266,7 +267,7 @@ export default function NewVendor({
                 if (
                   value &&
                   !/^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/.test(
-                    value,
+                    value
                   )
                 ) {
                   showError({
