@@ -2,22 +2,41 @@
 import { useState } from "react";
 import AllCards from "./AllCards";
 import AutomationSidebar from "./AutomationSidebar";
-import { Company, TwilioCredentials, User } from "@prisma/client";
-
+import {
+  Company,
+  TwilioCredentials,
+  InfobipConfig,
+  User,
+} from "@prisma/client";
 
 type AutomationMainProps = {
-  companyId: any
-  user: any
-  company: Company | null
-  twilio: TwilioCredentials | null
-  employees?: User[] | null
-}
-const AutomationMain = ({ companyId, user, company, twilio, employees }: AutomationMainProps) => {
+  companyId: any;
+  user: any;
+  company: Company | null;
+  twilio: TwilioCredentials | InfobipConfig | null;
+  employees?: User[] | null;
+};
+const AutomationMain = ({
+  companyId,
+  user,
+  company,
+  twilio,
+  employees,
+}: AutomationMainProps) => {
   const [type, setType] = useState<string | null>(null);
 
   const RenderPage = () => {
     if (!type) return null;
-    return <AllCards type={type} companyId={companyId} user={user} company={company} twilio={twilio!} employees={employees}/>;
+    return (
+      <AllCards
+        type={type}
+        companyId={companyId}
+        user={user}
+        company={company}
+        twilio={twilio!}
+        employees={employees}
+      />
+    );
   };
 
   return (
