@@ -17,11 +17,16 @@ import { editVendor } from "@/actions/vendor/editVendor";
 import { SlimTextarea } from "../SlimTextarea";
 import FormError from "@/components/FormError";
 import { useFormErrorStore } from "@/stores/form-error";
+import { successToast } from "@/lib/toast";
 
 type ServerAction =
   | { type: "success"; data: Vendor }
   | { type: "error"; message: string }
-  | { type: "globalError"; errorSource?: { message: string }[]; message?: string };
+  | {
+      type: "globalError";
+      errorSource?: { message: string }[];
+      message?: string;
+    };
 
 export default function EditVendor({
   button,
@@ -41,10 +46,10 @@ export default function EditVendor({
 
     // Get values directly from DOM using document.querySelector
     const name = document.querySelector<HTMLInputElement>(
-      "[name='contactName']",
+      "[name='contactName']"
     )?.value as string;
     const company = document.querySelector<HTMLInputElement>(
-      "[name='companyName']",
+      "[name='companyName']"
     )?.value;
     const phone =
       document.querySelector<HTMLInputElement>("[name='phone']")?.value;
@@ -111,7 +116,7 @@ export default function EditVendor({
     if (
       website &&
       !/^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/.test(
-        website,
+        website
       )
     ) {
       showError({
@@ -154,7 +159,8 @@ export default function EditVendor({
       afterSubmit && afterSubmit(res.data);
       clearError();
       setOpen(false);
-    } 
+      successToast("Vendor updated successfully.");
+    }
     // else if (res.type === "globalError") {
     //   const errorMessage =
     //     res.errorSource && res.errorSource.length > 0
@@ -194,7 +200,7 @@ export default function EditVendor({
           <SlimInput
             name="contactName"
             defaultValue={vendor.name ?? ""}
-            required = {false}
+            required={false}
           />
           <div className="space-y-1">
             <SlimInput
@@ -205,7 +211,7 @@ export default function EditVendor({
               onChange={(e) => {
                 const value = e.target.value;
                 setCompanyName(value);
-                
+
                 if (!value.trim()) {
                   showError({
                     field: "companyName",
@@ -306,7 +312,7 @@ export default function EditVendor({
                 if (
                   value &&
                   !/^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/.test(
-                    value,
+                    value
                   )
                 ) {
                   showError({
