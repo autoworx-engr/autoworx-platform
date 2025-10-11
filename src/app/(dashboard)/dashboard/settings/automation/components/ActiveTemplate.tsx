@@ -4,7 +4,6 @@ import { Close as CloseIcon } from "@mui/icons-material";
 import { Box, IconButton, TextField } from "@mui/material";
 import { ImAttachment } from "react-icons/im";
 import Image from "next/image";
-import { useCharacterLimit } from "@/hooks/useCharecterLimit";
 
 type TemplateProps = {
   activeTemplate: string;
