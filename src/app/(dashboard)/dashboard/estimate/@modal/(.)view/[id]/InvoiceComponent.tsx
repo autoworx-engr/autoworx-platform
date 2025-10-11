@@ -86,7 +86,7 @@ const InvoiceComponent = ({
   const [userType, setUserType] = useState<User>();
 
   const handlePrint = useReactToPrint({
-    content: () => componentRef.current,
+    contentRef: componentRef,
   });
 
   const handleEdit = () => {
@@ -352,7 +352,7 @@ const InvoiceComponent = ({
                       className="rounded-md border border-gray-300 px-2 py-1 text-sm"
                       placeholder="Your Name"
                       value={authorizedName}
-                      onChange={(e) => setAuthorizedName(e.target.value)}
+                      onChange={e => setAuthorizedName(e.target.value)}
                     />
 
                     <button
@@ -454,7 +454,7 @@ const InvoiceComponent = ({
                 Attachments
               </h2>
               <div className="flex grid-cols-1 gap-4 overflow-x-auto md:grid">
-                {invoice.photos.map((x) => {
+                {invoice.photos.map(x => {
                   return (
                     <Link
                       href={`/dashboard/estimate/photo?url=${x.photo}`}
