@@ -1,4 +1,6 @@
 import { getFromNumber } from "@/actions/communication/client/createTwilioCredentials";
+import { getFromNumberInfobip } from "@/actions/communication/client/createInfobipConfig";
+import { getSmsGateway } from "@/actions/communication/client/createInfobipConfig";
 import { db } from "@/lib/db";
 import { getClientById } from "../../_actions/getClientById";
 import { CallList } from "./CallList";
@@ -6,7 +8,16 @@ import SendCall from "./SendCall";
 
 export default async function Phone({ clientId }: { clientId: number }) {
   const client = clientId && (await getClientById(clientId));
-  let phoneNumber = await getFromNumber();
+
+  // Determine which provider to use
+  const smsGateway = await getSmsGateway();
+  const provider = (smsGateway as "TWILIO" | "INFOBIP") || "TWILIO";
+
+  // Get phone number based on provider
+  let phoneNumber =
+    provider === "TWILIO"
+      ? await getFromNumber()
+      : await getFromNumberInfobip();
 
   let calls = await db.clientCall.findMany({
     where: {
@@ -34,7 +45,7 @@ export default async function Phone({ clientId }: { clientId: number }) {
   return (
     <div className="mx-auto flex h-[90%] w-full max-w-md flex-col items-center justify-center rounded-lg bg-gray-100 px-2 py-6 shadow-lg">
       <CallList data={enrichedCalls} twilioNumber={phoneNumber ?? ""} />
-      <SendCall client={client} phoneNumber={phoneNumber} />
+      <SendCall client={client} phoneNumber={phoneNumber} provider={provider} />
     </div>
   );
 }

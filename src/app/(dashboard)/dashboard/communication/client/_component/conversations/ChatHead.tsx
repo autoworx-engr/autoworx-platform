@@ -49,10 +49,10 @@ export default function ChatHead({
   );
 
   const handleTabChange = (tab: string) => {
-    if (tab === "PHONE" && !isCallingAccess?.enabled) {
-      setShowPremiumModal(true);
-      return;
-    }
+    // if (tab === "PHONE" && !isCallingAccess?.enabled) {
+    //   setShowPremiumModal(true);
+    //   return;
+    // }
 
     setSelected(tab);
     if (searchParams) {

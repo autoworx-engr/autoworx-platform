@@ -5,14 +5,19 @@ import { Call } from "@twilio/voice-sdk";
 import { useEffect, useState } from "react";
 import CallStatus from "./CallStatus";
 import { useRouter } from "next/navigation";
-import { useTwilioDevice } from "@/context/TwilioDeviceContext";
+import { useVoiceDevice } from "@/context/VoiceDeviceContext";
 
 type TProps = {
   client?: Client | null;
   phoneNumber?: string | null;
+  provider?: "TWILIO" | "INFOBIP";
 };
 
-export default function SendCall({ client, phoneNumber }: TProps) {
+export default function SendCall({
+  client,
+  phoneNumber,
+  provider = "TWILIO",
+}: TProps) {
   const router = useRouter();
   const {
     device,
@@ -22,7 +27,9 @@ export default function SendCall({ client, phoneNumber }: TProps) {
     callStatus: globalCallStatus,
     callDuration: globalCallDuration,
     endCall: globalEndCall,
-  } = useTwilioDevice();
+    makeCall: globalMakeCall,
+    provider: activeProvider,
+  } = useVoiceDevice();
 
   const [localConnection, setLocalConnection] = useState<Call | null>(null);
   const [localCallStatus, setLocalCallStatus] = useState("");
@@ -52,43 +59,52 @@ export default function SendCall({ client, phoneNumber }: TProps) {
     if (!client?.mobile) return;
 
     try {
-      // 🔐 Ensure mic permission is requested before connecting
-      await navigator.mediaDevices.getUserMedia({ audio: true });
-      const options = { params: { To: client?.mobile } };
-      const connection = await device.connect(options);
+      // Update first contact time
+      await updateFirstContactTimeClient(client?.id);
 
-      if (connection) {
-        connection.on("accept", async () => {
-          setLocalCallStatus("Call connected");
-          await updateFirstContactTimeClient(client?.id);
-          setLocalCallDuration(0);
-          const interval = setInterval(() => {
-            setLocalCallDuration((prev) => prev + 1);
-          }, 1000);
-          setTimer(interval);
-        });
+      // Use unified makeCall function that handles both providers
+      if (activeProvider === "TWILIO") {
+        // Twilio-specific call logic (existing)
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+        const options = { params: { To: client?.mobile } };
+        const connection = await device.connect(options);
 
-        connection.on("disconnect", () => {
-          setLocalCallStatus("Call ended");
-          setLocalConnection(null);
-          if (timer) clearInterval(timer);
-          setTimeout(() => {
-            router.refresh();
-          }, 3000);
-        });
+        if (connection) {
+          connection.on("accept", async () => {
+            setLocalCallStatus("Call connected");
+            setLocalCallDuration(0);
+            const interval = setInterval(() => {
+              setLocalCallDuration((prev) => prev + 1);
+            }, 1000);
+            setTimer(interval);
+          });
 
-        connection.on("cancel", () => {
-          setLocalCallStatus("Call canceled");
-          setLocalConnection(null);
-          if (timer) clearInterval(timer);
-        });
+          connection.on("disconnect", () => {
+            setLocalCallStatus("Call ended");
+            setLocalConnection(null);
+            if (timer) clearInterval(timer);
+            setTimeout(() => {
+              router.refresh();
+            }, 3000);
+          });
 
-        connection.on("error", (error) => {
-          console.error("Connection Error:", error);
-          setLocalCallStatus("Call error occurred");
-        });
+          connection.on("cancel", () => {
+            setLocalCallStatus("Call canceled");
+            setLocalConnection(null);
+            if (timer) clearInterval(timer);
+          });
 
-        setLocalConnection(connection);
+          connection.on("error", (error: any) => {
+            console.error("Connection Error:", error);
+            setLocalCallStatus("Call error occurred");
+          });
+
+          setLocalConnection(connection);
+        }
+      } else if (activeProvider === "INFOBIP") {
+        // Use the global makeCall for Infobip
+        await globalMakeCall(client.mobile, client.id);
+        setLocalCallStatus("Calling...");
       }
     } catch (error) {
       console.error("Error making call:", error);
@@ -117,7 +133,7 @@ export default function SendCall({ client, phoneNumber }: TProps) {
 
   const handleSetupDevice = async () => {
     if (phoneNumber) {
-      await globalSetupDevice(phoneNumber);
+      await globalSetupDevice(phoneNumber, provider);
     }
   };
 

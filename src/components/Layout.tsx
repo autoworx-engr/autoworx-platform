@@ -19,8 +19,8 @@ import { signOut } from "next-auth/react";
 import { useSetCompanyFeaturePermission } from "@/hooks/useSetCompanyFeaturePermission";
 import { superAdminNavList } from "@/app/(dashboard)/awx-dashboard/_utils/superAdminNavList";
 import UserBugReport from "./bug-report/UserBugReport";
-import { TwilioDeviceProvider } from "@/context/TwilioDeviceContext";
-import TwilioAutoSetup from "./TwilioAutoSetup";
+import { VoiceDeviceProvider } from "@/context/VoiceDeviceContext";
+import VoiceAutoSetup from "./VoiceAutoSetup";
 
 const navbarList = [
   {
@@ -173,8 +173,9 @@ export default function Layout({
   useSetCompanyFeaturePermission(session); // Set user permissions based on session
   const { permissions } = usePermissionStore();
   const currentUser = useGetCurrentUser();
-  const [twilioPhoneNumber, setTwilioPhoneNumber] = useState<string | null>(
-    null
+  const [voicePhoneNumber, setVoicePhoneNumber] = useState<string | null>(null);
+  const [voiceProvider, setVoiceProvider] = useState<"TWILIO" | "INFOBIP">(
+    "TWILIO"
   );
 
   useEffect(() => {
@@ -202,23 +203,37 @@ export default function Layout({
     }
   }, [session?.error]);
 
-  // Fetch Twilio phone number for incoming calls
+  // Fetch voice provider phone number (Twilio or Infobip)
   useEffect(() => {
-    const fetchTwilioNumber = async () => {
+    const fetchVoiceConfig = async () => {
       try {
-        const response = await fetch("/api/twilio/get-phone-number");
-        if (response.ok) {
-          const data = await response.json();
-          setTwilioPhoneNumber(data.phoneNumber);
-          console.log("📱 Twilio phone number loaded:", data.phoneNumber);
+        // First, determine which provider the company uses
+        const companyResponse = await fetch("/api/company/sms-gateway");
+        if (companyResponse.ok) {
+          const companyData = await companyResponse.json();
+          const gateway = companyData.smsGateway || "TWILIO";
+          setVoiceProvider(gateway);
+
+          // Fetch phone number based on provider
+          const endpoint =
+            gateway === "TWILIO"
+              ? "/api/twilio/get-phone-number"
+              : "/api/infobip/get-phone-number";
+
+          const response = await fetch(endpoint);
+          if (response.ok) {
+            const data = await response.json();
+            setVoicePhoneNumber(data.phoneNumber);
+            console.log(`📱 ${gateway} phone number loaded:`, data.phoneNumber);
+          }
         }
       } catch (error) {
-        console.error("❌ Error fetching Twilio phone number:", error);
+        console.error("❌ Error fetching voice configuration:", error);
       }
     };
 
     if (session && currentUser?.companyId) {
-      fetchTwilioNumber();
+      fetchVoiceConfig();
     }
   }, [session, currentUser?.companyId]);
 
@@ -291,9 +306,12 @@ export default function Layout({
   }
 
   return (
-    <TwilioDeviceProvider>
+    <VoiceDeviceProvider>
       <div className="w-full overflow-y-hidden">
-        <TwilioAutoSetup twilioPhoneNumber={twilioPhoneNumber} />
+        <VoiceAutoSetup
+          phoneNumber={voicePhoneNumber}
+          provider={voiceProvider}
+        />
         <SideNavbar
           navList={isSuperAdminRoute ? superAdminNavList : navbarList}
           permissions={permissions}
@@ -312,6 +330,6 @@ export default function Layout({
           </main>
         </div>
       </div>
-    </TwilioDeviceProvider>
+    </VoiceDeviceProvider>
   );
 }
