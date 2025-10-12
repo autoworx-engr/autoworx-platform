@@ -19,7 +19,7 @@ const ResponsiveEmployeeCard = ({
   const clientName = (data.firstName ?? "") + " " + (data.lastName ?? "");
   const clientEmail = data.email;
   const clientPhone = data.phone || data.mobile;
-  const clientImage = data.image;
+  const clientImage = data.image || data.photo || "/default-avatar.png";
   const role = data.role;
   // const joinDate =
   //   data.role === "admin"
@@ -43,7 +43,10 @@ const ResponsiveEmployeeCard = ({
   const oddColor = "bg-[#EEF4FF]";
 
   return (
-    <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 overflow-hidden group mb-4">
+    <div
+      key={index}
+      className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 overflow-hidden group mb-4"
+    >
       <div className="p-4 sm:p-5">
         <div className="flex items-start justify-between mb-3 sm:mb-4">
           <div className="flex items-start space-x-3 flex-1 min-w-0">
@@ -69,11 +72,13 @@ const ResponsiveEmployeeCard = ({
                   : clientName}
               </h3>
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2">
-                <span
-                  className={`px-2 py-0.5 text-xs font-medium rounded-full whitespace-nowrap bg-[#6571FF]/10 text-[#6571FF]`}
-                >
-                  {role}
-                </span>
+                {role && (
+                  <span
+                    className={`px-2 py-0.5 text-xs font-medium rounded-full whitespace-nowrap bg-[#6571FF]/10 text-[#6571FF]`}
+                  >
+                    {role}
+                  </span>
+                )}
                 <span className="text-xs sm:text-sm text-gray-400 hidden xs:inline">
                   •
                 </span>
@@ -108,11 +113,12 @@ const ResponsiveEmployeeCard = ({
           </div>
 
           {/* Chat Icon */}
-          <button className="p-2 hover:bg-blue-50 rounded-lg transition-colors flex-shrink-0 ml-2">
-            <Link href={communicationUrl}>
-              <MessageCircle className="w-5 h-5 text-[#6571FF]" />
-            </Link>
-          </button>
+          <Link
+            href={communicationUrl}
+            className="p-2 hover:bg-blue-50 rounded-lg transition-colors flex-shrink-0 ml-2 inline-flex items-center"
+          >
+            <MessageCircle className="w-5 h-5 text-[#6571FF]" />
+          </Link>
         </div>
 
         {/* Footer */}
