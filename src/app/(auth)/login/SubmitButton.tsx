@@ -41,7 +41,7 @@ export default function SubmitButton() {
     };
     return (
         <Submit
-            className="mx-auto mt-4 block rounded-md bg-blue-500 px-10 py-2 text-white"
+            className="mx-auto mt-4 rounded-md bg-blue-500 px-10 py-2 text-white border-0 outline-none focus:outline-none active:outline-none min-h-[42px] flex items-center justify-center"
             formAction={handler}
         >
             Login
