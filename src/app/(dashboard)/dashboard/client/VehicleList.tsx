@@ -24,9 +24,7 @@ export default function VehicleList({
   const vehicleId = Number(searchParams?.get("vehicleId"));
 
   return (
-    <div
-      className={`${selectedVehicle && "hidden lg:block"} h-full w-full space-y-2`}
-    >
+    <div className={`${selectedVehicle && "hidden lg:block"} w-full space-y-2`}>
       <div className="flex items-center justify-between px-4">
         <div className="flex items-center gap-x-8">
           <h3 className="text-lg font-semibold">Vehicle List</h3>

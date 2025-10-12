@@ -26,7 +26,7 @@ export const createProductValidationSchema = z
       })
       .trim()
       .min(3, "Product name must be at least 3 characters")
-      .max(30, "Product name cannot exceed 30 characters"),
+      .max(100, "Product name cannot exceed 100 characters"),
 
     description: z
       .string()
