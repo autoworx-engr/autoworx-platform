@@ -70,8 +70,35 @@ export default function FeaturePermission({
       );
 
       setPermissions(sortedPermissions);
+
+      // Auto-create Communication Hub if it doesn't exist and should be enabled by default
+      const communicationHubExists = sortedPermissions.some(
+        (p: PermissionItem) => p.permission_name === "communicationHub"
+      );
+
+      const communicationHubStatic = staticPermissions.find(
+        (sp) => sp.permission_name === "communicationHub"
+      );
+
+      // If Communication Hub doesn't exist, create it
+      if (!communicationHubExists && communicationHubStatic?.status === true) {
+        const permissionsToCreate: PermissionCreate[] = [
+          {
+            companyId,
+            permission_name: "communicationHub",
+            title: communicationHubStatic.title,
+            enabled: true,
+          },
+        ];
+
+        try {
+          createPermissionMutation(permissionsToCreate);
+        } catch (error) {
+          console.error("Failed to auto-create Communication Hub:", error);
+        }
+      }
     }
-  }, [data, companyId]);
+  }, [data, companyId, createPermissionMutation]);
 
   const formatted = formatPermissions(permissions as any);
 
@@ -400,9 +427,9 @@ export default function FeaturePermission({
     }
   };
 
-  // Master Toggle functionality 
+  // Master Toggle functionality
   const handleMasterToggle = (enabled: boolean) => {
-    // Recursive function to get all permission 
+    // Recursive function to get all permission
     const getAllPermissionNames = (
       items: PermissionItem[] | StaticPermissionItem[]
     ): Array<{
