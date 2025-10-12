@@ -21,7 +21,7 @@ export const lossProductValidationSchema = z.object({
     .string()
     .max(7, "Quantity must be less than 8 characters")
     .refine(
-      (val) => {
+      val => {
         const num = Number(val);
         return !isNaN(num) && num >= 0;
       },
@@ -54,7 +54,7 @@ export const updateSalesInventoryHistorySchema = z.object({
     .string()
     .max(7, "Quantity must be less than 8 characters")
     .refine(
-      (val) => {
+      val => {
         const num = Number(val);
         return !isNaN(num) && num >= 0;
       },
@@ -95,7 +95,7 @@ export const updatePurchaseInventoryHistorySchema = z.object({
     .string()
     .max(7, "Quantity must be less than 8 characters")
     .refine(
-      (val) => {
+      val => {
         const num = Number(val);
         return !isNaN(num) && num >= 0;
       },

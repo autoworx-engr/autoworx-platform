@@ -70,7 +70,8 @@ export default function VehicleList({
                     "border-2 border-[#6571FF]"
                 )}
                 onClick={() => {
-                  router.push(
+                  // use replace to avoid adding a new history entry for each selection
+                  router.replace(
                     `/dashboard/client/${clientId}?vehicleId=${vehicle.id}`
                   );
                 }}
@@ -93,15 +94,20 @@ export default function VehicleList({
                 <td className="px-4 py-1 text-left 2xl:px-10">
                   <div className="flex items-center gap-x-4 text-xl">
                     {" "}
-                    <EditVehicle vehicle={vehicle} />
+                    <span onClick={(e) => e.stopPropagation()}>
+                      <EditVehicle vehicle={vehicle} />
+                    </span>
                     <Popconfirm
                       title="Delete the Vehicle"
                       description="Are you sure to delete this Vehicle?"
                       okText="Yes"
                       cancelText="No"
                       onConfirm={() => deleteVehicle(vehicle.id, clientId)}
+                      onCancel={(e) => e && e.stopPropagation()}
                     >
-                      <FaTimes color="#f87171" size={16} />
+                      <span onClick={(e) => e.stopPropagation()}>
+                        <FaTimes color="#f87171" size={16} />
+                      </span>
                     </Popconfirm>
                     {/* <button
                       type="button"

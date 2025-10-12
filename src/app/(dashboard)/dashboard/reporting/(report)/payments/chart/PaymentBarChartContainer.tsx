@@ -60,13 +60,14 @@ const CustomTooltip = ({ active, payload, isMobile, labe }: any) => {
         : formatCurrency(payment);
 
     return (
-      <div className={`${isMobile ? "min-w-fit" : "min-w-36"} max-w-xs rounded-lg border border-gray-300 bg-white p-3 shadow-lg`}>
+      <div
+        className={`${isMobile ? "min-w-fit" : "min-w-36"} max-w-xs rounded-lg border border-gray-300 bg-white p-3 shadow-lg`}
+      >
         <div className="space-y-2">
           <p className="text-sm font-medium text-gray-800 truncate">
             {data?.method || "Unknown Method"}
           </p>
           <div className="border-t border-gray-200 pt-2">
-          
             <p className="text-lg font-bold text-[#03A7A2]">{displayValue}</p>
             {payment >= 1000 && (
               <p className="text-xs text-gray-500 mt-1">
@@ -86,7 +87,7 @@ type TProps = {
 };
 
 export default function PaymentBarChartContainer({ paymentData }: TProps) {
-    const isMobile = useMediaQuery("(max-width: 640px)");
+  const isMobile = useMediaQuery("(max-width: 640px)");
   return (
     <div className="chart-container">
       <BarChartComponent height={500} title="" data={paymentData}>
@@ -139,7 +140,6 @@ export default function PaymentBarChartContainer({ paymentData }: TProps) {
         <Tooltip
           cursor={{ fill: "transparent" }}
           content={<CustomTooltip isMobile={isMobile} />}
-          label={"Type"}
         />
       </BarChartComponent>
     </div>
