@@ -10,6 +10,7 @@ import { Inter } from 'next/font/google';
 import { Toaster } from 'react-hot-toast';
 import TopLoader from '../components/TopLoader';
 import './globals.css';
+import Script from 'next/script';
 
 // import { ThemeProvider } from "@/components/theme-provider";
 
@@ -75,6 +76,12 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <Script
+          defer
+          src="https://statistics.autoworx.tech/script.js"
+          data-website-id="2123305e-6384-415f-adf6-79271e62313f"
+          strategy="afterInteractive"
+        />
         <PublicEnvScript />
 
         {/* <link
