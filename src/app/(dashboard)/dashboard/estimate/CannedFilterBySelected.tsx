@@ -1,22 +1,30 @@
 "use client";
 import { cn } from "@/lib/cn";
-
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-
 import { capitalCase } from "change-case";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { IoMdArrowDropdown } from "react-icons/io";
-import { TFilterModalState } from "../../(report)/revenue/FilterHeader";
+
+type TFilterModalState = {
+  [key: string]: boolean;
+};
+
+type CategoryType = {
+  id: number | string;
+  name: string;
+};
+
 type TProps = {
   selectedItem: string;
-  items: string[];
+  items: CategoryType[];
   type: string;
   modalName: string;
   closeModal: (modalName: string) => void;
   toggleModal: (modalName: string) => void;
   activeModal: TFilterModalState;
 };
-export default function FilterBySelection({
+
+export default function CannedFilterBySelection({
   selectedItem,
   items,
   type,
@@ -27,7 +35,6 @@ export default function FilterBySelection({
 }: TProps) {
   const dropdownRef = useRef<HTMLDivElement | null>(null);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
-  // const [show, setShow] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const params = useSearchParams();
@@ -44,10 +51,8 @@ export default function FilterBySelection({
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [closeModal, modalName]);
 
   const handleSelection = (value: string) => {
     const searchParams = new URLSearchParams(params!);
@@ -64,13 +69,14 @@ export default function FilterBySelection({
     router.replace(newPath);
     closeModal(modalName);
   };
+
   return (
     <div className="relative w-full md:w-auto">
       <button
         ref={buttonRef}
         onClick={() => toggleModal(modalName)}
         className={cn(
-          `flex w-full items-center justify-center gap-2 border border-gray-400 p-1 px-5 text-sm text-gray-400 hover:border-blue-600 md:w-44`,
+          "flex w-full items-center justify-center gap-2 border border-gray-400 p-1 px-5 text-sm text-gray-400 hover:border-blue-600 md:w-44",
           activeModal ? "rounded-tl-sm rounded-tr-sm" : "rounded-sm"
         )}
       >
@@ -83,20 +89,21 @@ export default function FilterBySelection({
         </span>
         <IoMdArrowDropdown />
       </button>
-      {activeModal[modalName as keyof TFilterModalState] && (
+
+      {activeModal[modalName] && (
         <div
           ref={dropdownRef}
           className="absolute left-0 right-0 z-50 flex max-h-52 w-full flex-col space-y-1 overflow-y-auto rounded-bl-sm rounded-br-sm border border-t-0 border-gray-400 bg-background p-3 pb-0 md:w-44"
         >
           {items.map((item) => (
             <button
-              onClick={() => handleSelection(item)}
-              key={item}
+              key={item.id}
+              onClick={() => handleSelection(item.name)}
               className={`text-md flex items-center gap-2 text-start hover:text-blue-600 ${
-                item === selectedItem ? "text-blue-600" : "text-gray-400"
+                item.name === selectedItem ? "text-blue-600" : "text-gray-400"
               }`}
             >
-              {item}
+              {item.name}
             </button>
           ))}
           <button

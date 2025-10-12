@@ -27,7 +27,6 @@
     "@emotion/styled": "^11.13.0",
     "@hello-pangea/dnd": "^16.6.0",
     "@iconify/react": "^5.2.0",
-    "@mui/icons-material": "^5.18.0",
     "@mui/material": "^5.13.7",
     "@mui/system": "^5.13.7",
     "@mui/x-date-pickers": "^5.0.17",

@@ -5,8 +5,9 @@ import { useEffect, useState } from "react";
 import { CiSearch } from "react-icons/ci";
 type TProps = {
   searchText: string;
+  paramKey?: string; // 👈 unique key: "serviceSearch" or "laborSearch"
 };
-export default function FilterBySearchBox({ searchText }: TProps) {
+export default function FilterBySearchBox({ searchText, paramKey }: TProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const router = useRouter();
   const pathname = usePathname();
@@ -20,9 +21,17 @@ export default function FilterBySearchBox({ searchText }: TProps) {
     const searchTerm = e.target.value;
     const searchParams = new URLSearchParams(params!);
     if (searchTerm === "") {
-      searchParams.delete("search");
+      if (paramKey) {
+        searchParams.delete(paramKey);
+      } else {
+        searchParams.delete("search");
+      }
     } else {
-      searchParams.set("search", searchTerm);
+      if (paramKey) {
+        searchParams.set(paramKey, searchTerm);
+      } else {
+        searchParams.set("search", searchTerm);
+      }
     }
     const newPath = `${pathname}?${searchParams.toString()}`;
     router.replace(newPath);
