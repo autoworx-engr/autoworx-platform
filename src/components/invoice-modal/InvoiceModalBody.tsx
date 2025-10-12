@@ -148,9 +148,9 @@ export default function InvoiceModalBody({
   }, [isPrinting]);
 
   const handlePrint = useReactToPrint({
-    content: () => printComponentRef.current,
-    onBeforeGetContent: () => {
-      return new Promise((resolve) => {
+    contentRef: printComponentRef,
+    onBeforePrint: () => {
+      return new Promise(resolve => {
         promiseResolveRef.current = resolve;
         setIsPrinting(true);
       });
@@ -508,7 +508,7 @@ export default function InvoiceModalBody({
                     </h2>
                     <div className="mt-2 flex w-full items-center justify-center">
                       <div className="grid w-full grid-cols-3 gap-4 px-2 sm:px-4 [@media(max-width:374px)]:grid-cols-2">
-                        {invoice.photos.map((x) => {
+                        {invoice.photos.map(x => {
                           return (
                             <Link
                               href={
@@ -652,7 +652,7 @@ export default function InvoiceModalBody({
                       className="rounded-md border border-gray-300 px-2 py-1 text-sm"
                       placeholder="Your Name"
                       value={authorizedNameInput}
-                      onChange={(e) => setAuthorizedNameInput(e.target.value)}
+                      onChange={e => setAuthorizedNameInput(e.target.value)}
                     />
                     <button
                       className="absolute -right-[10px] -top-4 text-red-700 print:hidden"
@@ -674,7 +674,7 @@ export default function InvoiceModalBody({
                         setAuthorizedName(authorizedNameInput);
 
                         // Update the invoice object in state to reflect the change
-                        setInvoice((prev) => {
+                        setInvoice(prev => {
                           if (!prev) return prev;
                           return {
                             ...prev,
@@ -798,7 +798,7 @@ export default function InvoiceModalBody({
                   Attachments
                 </h2>
                 <div className="flex grid-cols-1 gap-4 overflow-x-auto md:grid">
-                  {invoice.photos.map((x) => {
+                  {invoice.photos.map(x => {
                     return (
                       <Link
                         href={
@@ -852,7 +852,7 @@ export default function InvoiceModalBody({
                       const updatedInvoice = await getIsWorkorderCreated(
                         invoice.id
                       );
-                      setInvoice((prevInvoice) => {
+                      setInvoice(prevInvoice => {
                         if (!prevInvoice) return prevInvoice;
                         return {
                           ...prevInvoice,

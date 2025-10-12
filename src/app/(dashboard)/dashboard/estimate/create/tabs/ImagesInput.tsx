@@ -2,10 +2,9 @@
 
 import { errorToast, successToast } from "@/lib/toast";
 import { useEstimateCreateStore } from "@/stores/estimate-create";
-import { ChangeEvent, useTransition } from "react";
-import { HiXCircle } from "react-icons/hi2";
 import imageCompression from "browser-image-compression";
 import Image from "next/image";
+import { ChangeEvent, useTransition } from "react";
 import { FaTimes } from "react-icons/fa";
 
 export function ImagesInput() {
@@ -17,7 +16,7 @@ export function ImagesInput() {
       console.log({ files });
       if (!files?.length) return;
       const compressPhotos = await Promise.all(
-        Array.from(files).map(async (file) =>
+        Array.from(files).map(async file =>
           imageCompression(file, {
             maxSizeMB: 1, // max size in MB
             maxWidthOrHeight: 1920, // limit resolution
@@ -27,7 +26,7 @@ export function ImagesInput() {
       );
       console.log({ compressPhotos });
       const formData = new FormData();
-      compressPhotos.forEach((file) => {
+      compressPhotos.forEach(file => {
         formData.append("file", file);
       });
 
@@ -64,7 +63,7 @@ export function ImagesInput() {
           hidden
           accept="image/*"
           multiple
-          onChange={(event) => startTransition(() => handleUploadImage(event))}
+          onChange={event => startTransition(() => handleUploadImage(event))}
         />
         <svg
           width="72"
