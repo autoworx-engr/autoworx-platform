@@ -9,7 +9,10 @@ import {
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { useCreateCompanyPermission } from "@/hooks/feature-permissions/useCreateCompanyPermission";
 import { useGetCompanyPermissions } from "@/hooks/feature-permissions/useGetCompanyPersmissions";
-import { useUpdateCompanyPermission } from "@/hooks/feature-permissions/useUpdateCompanyPermission";
+import {
+  useUpdateCompanyPermission,
+  useBulkUpdatePermissions,
+} from "@/hooks/feature-permissions/useUpdateCompanyPermission";
 import {
   PermissionCreate,
   PermissionItem,
@@ -17,7 +20,7 @@ import {
   StaticPermissionItem,
 } from "@/types/feature-permission";
 import getMissing, { formatPermissions } from "@/utils/formatPermission";
-import { Spin } from "antd";
+import { Spin, Switch } from "antd";
 import { useEffect, useState } from "react";
 import { PermissionItemComponent } from "./PermissionItemComponent";
 import { MissingPermissionItemComponent } from "./MissingPermissionItemComponent";
@@ -37,6 +40,8 @@ export default function FeaturePermission({
   const { mutate: createPermissionMutation, isPending: isCreatePending } =
     useCreateCompanyPermission();
   const { mutate: updatePermission, isPending } = useUpdateCompanyPermission();
+  const { mutate: bulkUpdatePermissions, isPending: isBulkPending } =
+    useBulkUpdatePermissions();
 
   useEffect(() => {
     if (data) {
@@ -395,6 +400,131 @@ export default function FeaturePermission({
     }
   };
 
+  // Master Toggle functionality 
+  const handleMasterToggle = (enabled: boolean) => {
+    // Recursive function to get all permission 
+    const getAllPermissionNames = (
+      items: PermissionItem[] | StaticPermissionItem[]
+    ): Array<{
+      permission_name: string;
+      title: string;
+    }> => {
+      const result: Array<{ permission_name: string; title: string }> = [];
+      items?.forEach((item) => {
+        result.push({
+          permission_name: item.permission_name,
+          title: item.title,
+        });
+        if (item.children && item.children.length > 0) {
+          result.push(...getAllPermissionNames(item.children));
+        }
+      });
+      return result;
+    };
+
+    // Get permissions from existing and missing separately
+    const existingPermissions = getAllPermissionNames(sortedFormatted || []);
+    const missingPermissions = getAllPermissionNames(
+      finalMissingPermissions || []
+    );
+
+    // Update state optimistically for all permissions
+    const allUpdates = [
+      ...existingPermissions.map((p) => ({
+        permission_name: p.permission_name,
+        enabled: enabled,
+      })),
+      ...missingPermissions.map((p) => ({
+        permission_name: p.permission_name,
+        enabled: enabled,
+      })),
+    ];
+    updatePermissionInState(allUpdates);
+
+    // Handle existing permissions - use BULK UPDATE API
+    if (existingPermissions.length > 0) {
+      const permissionsToUpdate = existingPermissions.map((p) => ({
+        permission_name: p.permission_name,
+        enabled: enabled,
+      }));
+
+      try {
+        bulkUpdatePermissions({
+          companyId,
+          permissions: permissionsToUpdate,
+        });
+      } catch (error) {
+        errorHandler(error);
+      }
+    }
+
+    // Handle missing permissions
+    if (missingPermissions.length > 0) {
+      const permissionsToCreate: PermissionCreate[] = missingPermissions.map(
+        (p) => ({
+          companyId,
+          permission_name: p.permission_name,
+          title: p.title,
+          enabled: enabled,
+        })
+      );
+
+      try {
+        createPermissionMutation(permissionsToCreate);
+      } catch (error) {
+        errorHandler(error);
+      }
+    }
+  };
+
+  // Calculate if all permissions are enabled for master toggle state
+  const allPermissionsEnabled = () => {
+    // Recursive function to count enabled permissions including children
+    const countEnabledPermissions = (
+      items: PermissionItem[],
+      isExisting = true
+    ): number => {
+      let count = 0;
+      items?.forEach((item) => {
+        if (isExisting ? item.enabled : (item as any).status) {
+          count++;
+        }
+        if (item.children && item.children.length > 0) {
+          count += countEnabledPermissions(item.children, isExisting);
+        }
+      });
+      return count;
+    };
+
+    // Recursive function to count total permissions including children
+    const countTotalPermissions = (
+      items: PermissionItem[] | StaticPermissionItem[]
+    ): number => {
+      let count = 0;
+      items?.forEach((item) => {
+        count++;
+        if (item.children && item.children.length > 0) {
+          count += countTotalPermissions(item.children);
+        }
+      });
+      return count;
+    };
+
+    const enabledExistingCount = countEnabledPermissions(sortedFormatted || []);
+    const enabledMissingCount = countEnabledPermissions(
+      finalMissingPermissions || ([] as any),
+      false
+    );
+    const totalExistingCount = countTotalPermissions(sortedFormatted || []);
+    const totalMissingCount = countTotalPermissions(
+      finalMissingPermissions || []
+    );
+    const totalCount = totalExistingCount + totalMissingCount;
+    const totalEnabledCount = enabledExistingCount + enabledMissingCount;
+
+    return totalEnabledCount === totalCount && totalCount > 0;
+  };
+
   if (isLoading) {
     return (
       <div className="flex h-screen w-full animate-pulse items-center justify-center rounded-md bg-gray-200 p-4 shadow-sm md:p-6">
@@ -406,10 +536,23 @@ export default function FeaturePermission({
   return (
     <div className="mx-auto min-w-full rounded-lg border border-gray-200 bg-white px-2 py-4 shadow-sm lg:p-8">
       <div className="space-y-1 px-4">
-        {/* Header */}
+        {/* Header with Master Toggle */}
         <div className="flex items-center justify-between border-b-2 border-[#66738C] pb-3">
           <span className="text-xl font-semibold text-[#66738C]">Modules</span>
-          <span className="text-xl font-semibold text-[#66738C]">Toggle</span>
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <span className="text-xl font-semibold text-[#66738C]">
+                Master Toggle:
+              </span>
+              <Switch
+                checked={allPermissionsEnabled()}
+                disabled={isPending || isCreatePending || isBulkPending}
+                onChange={(checked) => handleMasterToggle(checked)}
+                className="shadow-md"
+              />
+            </div>
+            {/* <span className="text-xl font-semibold text-[#66738C]">Toggle</span> */}
+          </div>
         </div>
 
         {sortedFormatted?.map((item: PermissionItem) => (
