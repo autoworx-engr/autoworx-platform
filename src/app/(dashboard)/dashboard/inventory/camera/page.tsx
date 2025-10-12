@@ -1,40 +1,41 @@
-"use client";
+'use client';
 
-import { useRouter } from "next/navigation";
-import React, { useRef, useState } from "react";
-import { QrReader } from "react-qr-reader";
+import { useRouter } from 'next/navigation';
+import React, { useState } from 'react';
+import { Scanner } from '@yudiel/react-qr-scanner';
 
-// qr code scannar page
 export default function Page() {
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<string | null>(null);
   const router = useRouter();
-  const qrRef: any = useRef(null);
 
-  const handleScan = (result: any, error: any) => {
-    if (!!result) {
-      setResult(result?.text);
-      router.push(result?.text);
-      qrRef?.current?.stop();
-    }
-  }
+  const handleDecode = (detectedCodes: { rawValue?: string }[]) => {
+    const text = detectedCodes[0]?.rawValue;
+    if (!text) return;
+    setResult(text);
+    router.push(text);
+  };
 
   return (
     <div className="flex h-screen flex-col items-center justify-center">
       <h1 className="text-2xl font-bold">Scan QR Code</h1>
 
       {result ? (
-        <h2>Redirecting to {result.text}</h2>
+        <h2>Redirecting to {result}</h2>
       ) : (
-        <>
-          <QrReader
-            className="h-[300px] w-[300px] lg:h-[400px] lg:w-[400px]"
-            onResult={handleScan}
-            constraints={{ facingMode: "environment" }}
-            // @ts-ignore
-            style={{ width: "40%", height: "40%" }}
-            ref={qrRef}
+        <div className="h-[300px] w-[300px] lg:h-[400px] lg:w-[400px]">
+          <Scanner
+            constraints={{ facingMode: 'environment' }}
+            onScan={handleDecode}
+            onError={(err: unknown) => {
+              if (err && typeof err === 'object' && 'message' in err) {
+                console.error((err as any).message);
+              } else {
+                console.error(err);
+              }
+            }}
+            // You can adjust styles/sizes as needed
           />
-        </>
+        </div>
       )}
     </div>
   );

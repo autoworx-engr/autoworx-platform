@@ -48,19 +48,23 @@ export default function CouponDateComponent({
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Box>
-        <Box>
-          <DatePicker
-            label={customTitle}
-            value={value}
-            onChange={(newValue) => {
-              setValue(newValue);
-              if (newValue && onDateChange) {
-                onDateChange(newValue.toISOString());
-              }
-            }}
-            renderInput={(params) => <TextField {...params} />}
-          />
-        </Box>
+        <DatePicker
+          label={customTitle}
+          value={value}
+          onChange={(newValue) => {
+            setValue(newValue);
+            if (newValue && onDateChange) {
+              onDateChange(newValue.toISOString());
+            }
+          }}
+          slotProps={{
+            textField: {
+              fullWidth: true,
+              variant: "outlined",
+              name: name,
+            } as TextFieldProps,
+          }}
+        />
       </Box>
     </LocalizationProvider>
   );

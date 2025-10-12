@@ -8,7 +8,7 @@ import { useReactToPrint } from "react-to-print";
 export default function QRcode({ imgUrl }: { imgUrl: string }) {
   const contentRef = useRef<HTMLImageElement>(null);
   const reactToPrintFn = useReactToPrint({
-    content: () => contentRef.current,
+    contentRef: contentRef,
   });
 
   return (
