@@ -57,6 +57,13 @@ export default function NewVendor({
       });
       return;
     }
+    if (!phone) {
+      showError({
+        field: "phone",
+        message: "Phone number is required.",
+      });
+      return;
+    }
 
     // Validate character limit (50 characters)
     if (company && company.trim().length > 50) {
@@ -207,7 +214,7 @@ export default function NewVendor({
           <SlimInput
             id="phone"
             name="phone"
-            required={false}
+            required
             onChange={(e) => {
               const value = e.target.value;
               if (value && !/^\+?\d*$/.test(value)) {
