@@ -13,12 +13,6 @@ export default async function RecentMessagesBox() {
   const companyPermissions = permissions?.companyPermissions;
   const userPermissions = permissions?.userPermissions;
 
-  console.log(
-    "permissions company",
-    companyPermissions,
-    "permissions Users",
-    permissions?.userPermissions
-  );
 
   // Priority-based permission check: userPermission first, then companyPermission
   const hasMessagePermission =
