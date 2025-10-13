@@ -148,7 +148,7 @@ export default function InvoiceModalBody({
   }, [isPrinting]);
 
   const handlePrint = useReactToPrint({
-    contentRef: printComponentRef,
+    content: () => printComponentRef.current,
     onBeforePrint: () => {
       return new Promise(resolve => {
         promiseResolveRef.current = resolve;
