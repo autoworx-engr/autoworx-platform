@@ -1,4 +1,4 @@
-import { TextFieldProps } from "@mui/material";
+import { TextField } from "@mui/material";
 import Box from "@mui/material/Box";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -57,7 +57,7 @@ export default function CouponDateComponent({
               onDateChange(newValue.toISOString());
             }
           }}
-            renderInput={(params) => <TextField {...params} />}
+          renderInput={(params) => <TextField {...params} />}
         />
       </Box>
     </LocalizationProvider>
