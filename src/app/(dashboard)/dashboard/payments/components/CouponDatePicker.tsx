@@ -57,13 +57,7 @@ export default function CouponDateComponent({
               onDateChange(newValue.toISOString());
             }
           }}
-          slotProps={{
-            textField: {
-              fullWidth: true,
-              variant: "outlined",
-              name: name,
-            } as TextFieldProps,
-          }}
+            renderInput={(params) => <TextField {...params} />}
         />
       </Box>
     </LocalizationProvider>

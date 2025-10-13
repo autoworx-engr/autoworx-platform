@@ -16,7 +16,7 @@ import BugReport from "../bug-report/BugReport";
 import LogoutBtn from "../LogoutBtn";
 import { NotificationsPopover } from "../NotificationProvider";
 import QuickLink from "../QuickLink";
-import ThemeSwitch from "../ThemeSwitch";
+
 import MobileNavList from "./MobileNavList";
 
 type TProps = {
@@ -155,7 +155,7 @@ export default function MobileNav({ navList, permissions }: TProps) {
 
             <NotificationsPopover className="text-white" />
             <div className="text-white">
-              <ThemeSwitch />
+              {/* <ThemeSwitch /> */}
             </div>
             <LogoutBtn className="text-[1.7rem] font-bold text-white" />
           </div>
