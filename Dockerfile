@@ -1,14 +1,8 @@
-
-
-FROM node:20-slim AS base
+FROM node:18-slim AS base
 
 # Install dependencies only when needed
 FROM base AS deps
-# Install required system dependencies including OpenSSL
-RUN apt-get update && apt-get install -y \
-    openssl \
-    ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
+# No need for manual OpenSSL installation since node:18-slim has libssl1.1
 WORKDIR /app
 
 # Install dependencies based on the preferred package manager
@@ -38,12 +32,6 @@ RUN \
 # Production image, copy all the files and run next
 FROM base AS runner
 WORKDIR /app
-
-# Install OpenSSL for Prisma in the runtime image
-RUN apt-get update && apt-get install -y \
-    openssl \
-    ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
