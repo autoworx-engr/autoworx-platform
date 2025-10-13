@@ -78,7 +78,7 @@ const InvoiceComponent = ({
   invoiceTechnicians: Technician[];
 }) => {
   const router = useRouter();
-  const componentRef = useRef(null);
+  const componentRef = useRef<HTMLDivElement | null>(null);
   const [showAuthorizedName, setShowAuthorizedName] = useState(false);
   const [authorizedName, setAuthorizedName] = useState(
     invoice?.authorizedName || ""
@@ -86,7 +86,7 @@ const InvoiceComponent = ({
   const [userType, setUserType] = useState<User>();
 
   const handlePrint = useReactToPrint({
-    contentRef: componentRef,
+    content: () => componentRef.current,
   });
 
   const handleEdit = () => {
