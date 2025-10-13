@@ -1,11 +1,14 @@
-# syntax=docker.io/docker/dockerfile:1
 
-FROM node:20-alpine AS base
+
+FROM node:20-slim AS base
 
 # Install dependencies only when needed
 FROM base AS deps
 # Install required system dependencies including OpenSSL
-RUN apk add --no-cache libc6-compat openssl1.1-compat
+RUN apt-get update && apt-get install -y \
+    openssl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 
 # Install dependencies based on the preferred package manager
@@ -37,13 +40,16 @@ FROM base AS runner
 WORKDIR /app
 
 # Install OpenSSL for Prisma in the runtime image
-RUN apk add --no-cache openssl1.1-compat
+RUN apt-get update && apt-get install -y \
+    openssl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+RUN groupadd --system --gid 1001 nodejs
+RUN useradd --system --uid 1001 nextjs
 
 COPY --from=builder /app/public ./public
 
