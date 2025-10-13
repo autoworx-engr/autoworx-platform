@@ -1,9 +1,6 @@
 "use client";
-
-import { starUnstarClient } from "@/actions/communication/client/starUnstarClient";
-import { Client } from "@prisma/client";
-import React, { useState, useTransition } from "react";
-import { MdOutlineStar, MdOutlineStarBorder } from "react-icons/md";
+import { Star } from "lucide-react";
+import React, { useTransition } from "react";
 
 type TProps = {
   isStarred: boolean;
@@ -11,7 +8,7 @@ type TProps = {
   onStarChange: (
     event: React.MouseEvent<HTMLButtonElement>,
     isStarred: boolean,
-    clientId: number,
+    clientId: number
   ) => void;
 };
 
@@ -28,10 +25,14 @@ export default function StarOrUnStarAction({
       onClick={(event) =>
         startTransaction(() => onStarChange(event, isStarred, clientId!))
       }
-      className="text-2xl text-yellow-500 disabled:text-gray-600"
+      className="text-2xl "
       type="button"
     >
-      {isStarred ? <MdOutlineStar /> : <MdOutlineStarBorder />}
+      {isStarred ? (
+        <Star fill="#eab308" className="text-yellow-400" />
+      ) : (
+        <Star />
+      )}
     </button>
   );
 }

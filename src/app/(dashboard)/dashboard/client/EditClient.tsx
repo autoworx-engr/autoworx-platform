@@ -3,9 +3,8 @@
 import { Dialog, DialogTrigger } from "@/components/Dialog";
 import { useFormErrorStore } from "@/stores/form-error";
 import { Client, Source, Tag } from "@prisma/client";
-import { SquarePen } from "lucide-react";
+import { Settings, SquarePen } from "lucide-react";
 import { useState } from "react";
-import { IoMdSettings } from "react-icons/io";
 import EditClientModalBody from "./EditClientModalBody";
 
 export default function EditCustomer({
@@ -31,7 +30,7 @@ export default function EditCustomer({
     <>
       <Dialog
         open={open}
-        onOpenChange={isOpen => {
+        onOpenChange={(isOpen) => {
           if (!isOpen) handleClose();
           setOpen(isOpen);
         }}
@@ -41,7 +40,7 @@ export default function EditCustomer({
             className={`${settingIcon ? "text-gray-600" : ""} text-[#6571FF]"`}
           >
             {settingIcon ? (
-              <IoMdSettings />
+              <Settings className="w-4 h-4 text-[#6571FF]" />
             ) : (
               <SquarePen className="w-5 h-5 text-[#6571FF]" />
             )}

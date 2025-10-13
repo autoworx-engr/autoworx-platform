@@ -3,14 +3,13 @@ import ChatHead from "../conversations/ChatHead";
 import MailGunEmail from "../conversations/mailgun/MailgunEmail";
 import SMS from "./sms/SMS";
 import { getClientById } from "../../_actions/getClientById";
-import { MdOutlineStar } from "react-icons/md";
 import Phone from "../phone/Phone";
 import NoClientFound from "../NoClientFound";
-import { redirect } from "next/navigation";
 import DetailsBtn from "./DetailsBtn";
 import BackDetailsBtn from "./BackDetailsBtn";
 import { getCompanyId } from "@/lib/companyId";
 import { cn } from "@/lib/cn";
+import { Star } from "lucide-react";
 
 type TProps = {
   selectedConversation?: string;
@@ -99,7 +98,7 @@ export default async function ConversationsBox({
                     className="inline-flex items-center rounded-full bg-white/15 px-1.5 py-0.5 text-[10px] leading-none text-yellow-300 ring-1 ring-white/30 ml-2"
                     title="Favorite client"
                   >
-                    <MdOutlineStar className="mr-0.5" />
+                    <Star className="mr-0.5 w-2.5 h-2.5 fill-yellow-400" />
                     Starred
                   </span>
                 )}

@@ -6,9 +6,8 @@ import VehicleCard from "@/components/mobile-responsive/client/VehicleCard";
 import { cn } from "@/lib/cn";
 import { Vehicle } from "@prisma/client";
 import { Popconfirm } from "antd";
+import { X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import React from "react";
-import { FaTimes } from "react-icons/fa";
 
 export default function VehicleList({
   clientId,
@@ -104,18 +103,9 @@ export default function VehicleList({
                       onCancel={(e) => e && e.stopPropagation()}
                     >
                       <span onClick={(e) => e.stopPropagation()}>
-                        <FaTimes color="#f87171" size={16} />
+                        <X color="#f87171" size={20} />
                       </span>
                     </Popconfirm>
-                    {/* <button
-                      type="button"
-                      onClick={() => {
-                        deleteVehicle(vehicle.id, clientId);
-                      }}
-                      className="text-xs text-red-500"
-                    >
-                      <FaTimes />
-                    </button> */}
                   </div>
                 </td>
               </tr>
