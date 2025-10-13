@@ -6,6 +6,7 @@ import {
   getPermissionsForRole,
   updatePermissionForRole,
 } from "@/actions/settings/teamManagement";
+import { useTeamManagementStore } from "@/stores/teamManagementStore";
 
 interface PermissionWithIndexSignature {
   [key: string]: boolean;
@@ -19,8 +20,7 @@ interface Permissions {
 }
 
 export default function UserRolesTable() {
-  const [permissions, setPermissions] = useState<Permissions | null>(null);
-
+  const [permissions, setPermissions] = useState<Permissions | null>(null); // To trigger re-render when serviceStore changes
   const roles = ["Manager", "Sales", "Technician", "Other"];
 
   useEffect(() => {
@@ -44,7 +44,7 @@ export default function UserRolesTable() {
     role: string,
     moduleKey: string,
     value: boolean,
-    isViewOnly = false,
+    isViewOnly = false
   ) => {
     if (!permissions) return;
 
@@ -58,6 +58,8 @@ export default function UserRolesTable() {
         updatedPermissions[roleKey]![fieldKey] = value; // Update locally
         setPermissions(updatedPermissions);
         await updatePermissionForRole({ role, moduleKey, value, isViewOnly }); // Update the database
+        const refetch = useTeamManagementStore.getState().refetch;
+        useTeamManagementStore.setState({ refetch: !refetch });
       }
     } catch (error) {
       console.log("Error updating permission:", error);
@@ -66,7 +68,7 @@ export default function UserRolesTable() {
 
   const getPermissionForRole = (
     role: string,
-    moduleKey: string,
+    moduleKey: string
   ): boolean | null => {
     if (!permissions) return null;
 
@@ -116,7 +118,7 @@ export default function UserRolesTable() {
               <th className="border-b-2 border-black py-2 text-left">
                 Modules
               </th>
-              {roles.map((role) => (
+              {roles.map(role => (
                 <th
                   key={role}
                   className="border-b-2 border-black py-2 text-center"
@@ -130,7 +132,7 @@ export default function UserRolesTable() {
             {permissionModuleForAdminManager.map((module, index) => (
               <tr key={index + 1}>
                 <td className="py-2 text-left">{module.label}</td>
-                {roles.map((role) => {
+                {roles.map(role => {
                   const permission = getPermissionForRole(role, module.key);
                   const isViewOnly = isViewOnlyForRole(role, module.key);
                   const canViewOnly =
@@ -149,7 +151,7 @@ export default function UserRolesTable() {
                           <Switch
                             checked={permission}
                             className="max-w-2 shadow-md"
-                            onChange={(checked) =>
+                            onChange={checked =>
                               handleToggle(role, module.key, checked)
                             }
                           />
@@ -161,12 +163,12 @@ export default function UserRolesTable() {
                           <Checkbox
                             className="relative left-0"
                             checked={isViewOnly}
-                            onChange={(e) =>
+                            onChange={e =>
                               handleToggle(
                                 role,
                                 module.key,
                                 e.target.checked,
-                                true,
+                                true
                               )
                             }
                           />

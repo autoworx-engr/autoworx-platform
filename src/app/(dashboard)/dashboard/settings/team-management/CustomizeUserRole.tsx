@@ -14,6 +14,7 @@ import {
   getPermissionsForRole,
 } from "@/actions/settings/teamManagement";
 import { errorToast } from "@/lib/toast";
+import { useTeamManagementStore } from "@/stores/teamManagementStore";
 
 interface CustomizeUserRolesProps {
   user: {
@@ -36,6 +37,7 @@ interface PermissionType {
 }
 
 const CustomizeUserRole = ({ user, onBack }: CustomizeUserRolesProps) => {
+  const refetch = useTeamManagementStore().refetch;
   const name = `${user.firstName} ${user.lastName}`;
 
   const [permissions, setPermissions] = useState<PermissionType>({});
@@ -43,10 +45,10 @@ const CustomizeUserRole = ({ user, onBack }: CustomizeUserRolesProps) => {
 
   useEffect(() => {
     // Fetch default and user-specific permissions
-    getUserPermissions(user.id, user.employeeType).then((data) => {
+    getUserPermissions(user.id, user.employeeType).then(data => {
       setPermissions(data || {});
     });
-  }, [user.id, user.employeeType]);
+  }, [user.id, user.employeeType, refetch]);
 
   useEffect(() => {
     // Fetch role-based permissions from UserRolesTable
@@ -83,11 +85,11 @@ const CustomizeUserRole = ({ user, onBack }: CustomizeUserRolesProps) => {
       return;
     }
 
-    setPermissions((prev) => {
+    setPermissions(prev => {
       const { id, ...prevWithoutId } = prev;
       const updatedPermissions = { ...prevWithoutId, [key]: checked };
       // Upsert the entire permissions object
-      savePermissions(user.id, updatedPermissions).catch((error) => {
+      savePermissions(user.id, updatedPermissions).catch(error => {
         console.error("Failed to update permission:", error);
       });
       return updatedPermissions;
@@ -106,10 +108,10 @@ const CustomizeUserRole = ({ user, onBack }: CustomizeUserRolesProps) => {
     //   return;
     // }
 
-    setPermissions((prev) => {
+    setPermissions(prev => {
       const updatedPermissions = { ...prev, [viewOnlyKey]: checked };
       // Upsert the entire permissions object
-      savePermissions(user.id, updatedPermissions).catch((error) => {
+      savePermissions(user.id, updatedPermissions).catch(error => {
         console.error("Failed to update view-only permission:", error);
       });
       return updatedPermissions;
@@ -174,7 +176,7 @@ const CustomizeUserRole = ({ user, onBack }: CustomizeUserRolesProps) => {
                 {!module.viewOnly && (
                   <Switch
                     checked={permissions[module.key] ?? false}
-                    onChange={(checked) =>
+                    onChange={checked =>
                       handlePermissionChange(module.key, checked)
                     }
                     className="shadow-md"
@@ -186,7 +188,7 @@ const CustomizeUserRole = ({ user, onBack }: CustomizeUserRolesProps) => {
                   <div className="group">
                     <Checkbox
                       checked={permissions[module.viewOnly] ?? false}
-                      onChange={(e) =>
+                      onChange={e =>
                         handleViewOnlyChange(module.viewOnly!, e.target.checked)
                       }
                     ></Checkbox>
