@@ -30,9 +30,14 @@ type ProductProps = {
     category?: string;
   };
   isDatabase?: boolean;
+  view?: string;
 };
 
-export default function AddNewProduct({ product, isDatabase }: ProductProps) {
+export default function AddNewProduct({
+  product,
+  isDatabase,
+  view,
+}: ProductProps) {
   const [open, setOpen] = useState(false);
   const { vendors } = useListsStore();
   const [vendor, setVendor] = useState<Vendor | null>(null);
@@ -51,7 +56,9 @@ export default function AddNewProduct({ product, isDatabase }: ProductProps) {
   const [databaseUnit, setDatabaseUnit] = useState(product?.unit || "");
   // New state for product type
   const [productType, setProductType] = useState<InventoryProductType>(
-    InventoryProductType.Product
+    view === "supply"
+      ? InventoryProductType.Supply
+      : InventoryProductType.Product
   );
 
   // New validation states for numeric fields
@@ -254,7 +261,11 @@ export default function AddNewProduct({ product, isDatabase }: ProductProps) {
     setProductNameError("");
     setVendor(null);
     setCategory(null);
-    setProductType(InventoryProductType.Product);
+    setProductType(
+      view === "supplies"
+        ? InventoryProductType.Supply
+        : InventoryProductType.Product
+    );
     setQuantity("");
     setPrice("");
     setUnit("");
