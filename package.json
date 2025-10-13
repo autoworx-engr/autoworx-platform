@@ -98,7 +98,7 @@
     "react-loader-spinner": "^7.0.3",
     "react-multi-date-picker": "^4.5.2",
     "react-onesignal": "^3.2.2",
-    "react-quill": "^2.0.0",
+    "react-quill": "^0.0.2",
     "react-responsive": "^10.0.0",
     "react-timezone-select": "^3.2.8",
     "react-to-print": "^3.1.1",
