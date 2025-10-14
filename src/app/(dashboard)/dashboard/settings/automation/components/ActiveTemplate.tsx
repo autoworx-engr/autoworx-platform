@@ -1,9 +1,9 @@
 "use client";
-import React, { ChangeEvent } from "react";
-import { Close as CloseIcon } from "@mui/icons-material";
 import { Box, IconButton, TextField } from "@mui/material";
-import { ImAttachment } from "react-icons/im";
+import { X } from "lucide-react";
 import Image from "next/image";
+import React, { ChangeEvent } from "react";
+import { ImAttachment } from "react-icons/im";
 
 type TemplateProps = {
   activeTemplate: string;
@@ -144,7 +144,7 @@ const ActiveTemplate = ({
                 onClick={(e) => handleDeleteAttachment(e, file)}
                 className="absolute right-0 top-0 bg-white"
               >
-                <CloseIcon className="text-red-500" />
+                <X className="text-red-500" />
               </button>
             </Box>
           ))}

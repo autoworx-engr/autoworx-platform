@@ -2,6 +2,7 @@
 import { deleteService } from "@/actions/estimate/service/deleteService";
 import { updateService } from "@/actions/estimate/service/updateService";
 import SelectCategory from "@/components/Lists/SelectCategory";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -10,26 +11,22 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-} from "@/components/ui/card";
 import { cn } from "@/lib/cn";
+import { errorToast, successToast } from "@/lib/toast";
 import { useEstimateCreateStore } from "@/stores/estimate-create";
+import { useFormErrorStore } from "@/stores/form-error";
 import { useListsStore } from "@/stores/lists";
 import { Category, Service } from "@prisma/client";
-import React, { useEffect, useState } from "react";
+import { Pagination, Popconfirm } from "antd";
+import { SquarePen } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { FaTimes } from "react-icons/fa";
 import { IoMdCheckmarkCircleOutline } from "react-icons/io";
+import FilterBySearchBox from "../reporting/components/filter/FilterBySearchBox";
+import CannedFilterBySelection from "./CannedFilterBySelected";
 import NewService from "./NewService";
-import { Pagination, Popconfirm } from "antd";
-import { useFormErrorStore } from "@/stores/form-error";
-import { useEstimateFilterStore } from "@/stores/estimate-filter";
-import { errorToast, successToast } from "@/lib/toast";
-import toast from "react-hot-toast";
-import { SquarePen } from "lucide-react";
 
 const evenColor = "bg-background";
 const oddColor = "bg-[#F8FAFF]";
@@ -39,40 +36,45 @@ export default function CannedServices({
 }: {
   services: (Service & { category: Category })[];
 }) {
+  const params = useSearchParams();
+  const selectedCategory = params.get("serviceCategory") || "";
+  const serviceSearch = params.get("serviceSearch") || "";
+
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(50);
   const [showPagination, setShowPagination] = useState(false);
-  const [filteredData, setFilteredData] = useState<Service[]>(services);
-  const { search } = useEstimateFilterStore();
+  const [filteredData, setFilteredData] =
+    useState<(Service & { category: Category })[]>(services);
 
+  const [activeModal, setActiveModal] = useState<{ [key: string]: boolean }>(
+    {}
+  );
+
+  //  Filter logic
   useEffect(() => {
     const filtered = services.filter((row) => {
-      if (search) {
-        const searchValue = search.toLowerCase();
-        return (
-          row.category?.name.toLowerCase().includes(searchValue) ||
-          row.name.toLowerCase().includes(searchValue)
-        );
-      }
-      return true;
+      const matchesSearch = serviceSearch
+        ? row.name.toLowerCase().includes(serviceSearch.toLowerCase()) ||
+          row.category?.name.toLowerCase().includes(serviceSearch.toLowerCase())
+        : true;
+
+      const matchesCategory = selectedCategory
+        ? row.category?.name === selectedCategory
+        : true;
+
+      return matchesSearch && matchesCategory;
     });
 
     setFilteredData(filtered);
-  }, [search, services]);
+  }, [services, serviceSearch, selectedCategory]);
 
   useEffect(() => {
-    if (filteredData.length > 10) {
-      setShowPagination(true);
-    } else {
-      setShowPagination(false);
-    }
+    setShowPagination(filteredData.length > 10);
   }, [filteredData]);
 
   const handlePageChange = (page: number, pageSize?: number) => {
     setCurrentPage(page);
-    if (pageSize) {
-      setPageSize(pageSize);
-    }
+    if (pageSize) setPageSize(pageSize);
   };
 
   const paginatedServices = filteredData.slice(
@@ -80,20 +82,60 @@ export default function CannedServices({
     currentPage * pageSize
   );
 
+  //  Unique categories for filter modal
+  const uniqueCategories = services
+    .map((l) => l.category)
+    .filter(
+      (c, i, arr) => c && arr.findIndex((a) => a.id === c.id) === i
+    ) as any;
+
+  const toggleModal = (modalName: string) => {
+    setActiveModal((prev) => ({
+      ...prev,
+      [modalName]: !prev[modalName],
+    }));
+  };
+
+  const closeModal = (modalName: string) => {
+    setActiveModal((prev) => ({
+      ...prev,
+      [modalName]: false,
+    }));
+  };
+
   return (
     <div className="h-full w-full md:px-4">
-      <div className="flex items-center justify-between pb-3 lg:pb-0">
+      <section className="  pb-3 lg:pb-0">
         <div className="flex items-center gap-x-8">
           <h3 className="text-xl font-bold md:text-2xl">Canned Services</h3>
         </div>
-        <NewService
-          newButton={
-            <button className="rounded-md bg-[#6571FF] p-2 px-3 text-white md:px-5">
-              + Add Service
-            </button>
-          }
-        />
-      </div>
+
+        <div className="flex flex-col md:flex-row gap-3 py-1">
+          <div className="flex items-center justify-between gap-3">
+            <FilterBySearchBox
+              searchText={serviceSearch as string}
+              paramKey="serviceSearch"
+            />
+            <CannedFilterBySelection
+              selectedItem={selectedCategory}
+              items={uniqueCategories}
+              type="serviceCategory" // unique param for services
+              modalName="serviceCategory"
+              closeModal={closeModal}
+              activeModal={activeModal}
+              toggleModal={toggleModal}
+            />
+          </div>
+
+          <NewService
+            newButton={
+              <button className="rounded-md bg-[#6571FF]   w-full md:w-32 p-1 text-white">
+                + Add Service
+              </button>
+            }
+          />
+        </div>
+      </section>
       {/* Desktop View */}
       <div className="overflow-y-auto hidden max-h-[600px] md:block">
         <Table className="h-full">
