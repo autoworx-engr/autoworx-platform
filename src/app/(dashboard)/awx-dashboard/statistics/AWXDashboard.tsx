@@ -1,14 +1,14 @@
 "use client";
 import { cn } from "@/lib/cn";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { CompanyStat } from "../page";
 import { Card, CardContent } from "@/components/ui/card";
 import Avatar from "@/components/Avatar";
 import Link from "next/link";
 import ReportsSection from "../components/ReportsSection";
-import { IoIosSearch } from "react-icons/io";
 import { useGetAllBugReports } from "@/hooks/bug-reports/useGetAllBugReports";
 import { useDebounce } from "@/hooks/useDebounce";
+import { Search } from "lucide-react";
 
 type Props = {
   companies: CompanyStat[];
@@ -80,7 +80,7 @@ const AWXDashboard = ({ companies }: Props) => {
 
           {/* Search */}
           <div className="relative min-w-0 flex-1 pb-12">
-            <IoIosSearch className="absolute left-3 top-3 text-gray-400" />
+            <Search className="absolute w-4 h-4 left-2 top-2 text-gray-400 2xl:left-3 2xl:top-3" />
             <input
               type="text"
               value={inputValue}

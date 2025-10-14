@@ -1,8 +1,8 @@
 "use client";
 
-import { FaTimes } from "react-icons/fa";
 import { deleteClient } from "@/actions/client/delete";
 import { Popconfirm } from "antd";
+import { X } from "lucide-react";
 
 export default function DeleteClient({ id }: { id: number }) {
   return (
@@ -13,7 +13,7 @@ export default function DeleteClient({ id }: { id: number }) {
       cancelText="No"
       onConfirm={() => deleteClient(id)}
     >
-      <FaTimes cursor={"pointer"} color="#f87171" className="text-xl" />
+      <X cursor={"pointer"} color="#f87171" className="w-6 h-6" />
     </Popconfirm>
   );
 }

@@ -13,11 +13,9 @@ import { DEFAULT_IMAGE_URL } from "@/lib/consts";
 import { successToast } from "@/lib/toast";
 import { useFormErrorStore } from "@/stores/form-error";
 import { Client, Source, Tag } from "@prisma/client";
-import { SquarePen } from "lucide-react";
+import { CircleUserRound, SquarePen, X } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState, useTransition } from "react";
-import { FaTimes } from "react-icons/fa";
-import { RxAvatar } from "react-icons/rx";
 import { RotatingLines } from "react-loader-spinner";
 
 type TEditClientModalBodyProps = {
@@ -64,7 +62,7 @@ export default function EditClientModalBody({
     await deleteSource(id);
 
     setClientSources((prev: Source[]) => {
-      return prev.filter(source => source.id !== id);
+      return prev.filter((source) => source.id !== id);
     });
 
     if (clientSource?.id === id) {
@@ -200,7 +198,7 @@ export default function EditClientModalBody({
               id="profilePicture"
               hidden
               accept="image/*"
-              onChange={e => {
+              onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) {
                   setNewProfilePic(file);
@@ -219,7 +217,7 @@ export default function EditClientModalBody({
               id="profilePicture"
               hidden
               accept="image/*"
-              onChange={e => {
+              onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) {
                   setNewProfilePic(file);
@@ -228,7 +226,7 @@ export default function EditClientModalBody({
             />
             <span className="lg:hidden">Upload picture</span>
             <span className="hidden lg:block">Upload a profile picture</span>
-            <RxAvatar size={48} />
+            <CircleUserRound size={48} className="text-gray-400" />
           </label>
         )}
       </div>
@@ -242,7 +240,7 @@ export default function EditClientModalBody({
             label="First Name"
             required
             defaultValue={client.firstName!}
-            onChange={e => {
+            onChange={(e) => {
               const value = e.target.value;
 
               // Validate on input change
@@ -268,7 +266,7 @@ export default function EditClientModalBody({
             name="email"
             label="Email"
             defaultValue={client.email!}
-            onChange={e => {
+            onChange={(e) => {
               const value = e.target.value;
 
               // Validate on input change
@@ -287,7 +285,7 @@ export default function EditClientModalBody({
             label="Mobile"
             required={false}
             defaultValue={client.mobile!}
-            onChange={e => {
+            onChange={(e) => {
               const value = e.target.value;
               // Allow only numeric values
               if (!/^\+?\d*$/.test(value)) {
@@ -335,7 +333,7 @@ export default function EditClientModalBody({
             {/* TODO: use `Selector` component and make the hieght auto */}
             <SelectClientSource
               clickabled={false}
-              label={clientSrc =>
+              label={(clientSrc) =>
                 clientSource ? clientSource.name : "Client Source"
               }
               newButton={
@@ -365,7 +363,7 @@ export default function EditClientModalBody({
                         deleteClientSource(clientSource.id);
                       }}
                     >
-                      <FaTimes />
+                      <X className="w-5 h-5" />
                     </button>
                   </div>
                 </div>
@@ -397,7 +395,7 @@ export default function EditClientModalBody({
               <input
                 type="checkbox"
                 checked={isPremium}
-                onChange={e => setIsPremium(e.target.checked)}
+                onChange={(e) => setIsPremium(e.target.checked)}
                 className="h-4 w-4 accent-[#6571FF]"
               />
               <span className="font-medium">Add as a Fleet</span>
