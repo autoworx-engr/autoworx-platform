@@ -4,7 +4,7 @@ import SubmitButton from "./SubmitButton";
 import Link from "next/link";
 import Input from "@/components/Input";
 import { Metadata } from "next";
-import LightTheme from "@/components/LightTheme";
+
 
 export const metadata: Metadata = {
   title: "Login",
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 export default function Page() {
   return (
-    <LightTheme>
+  
     <form className="mx-auto mt-56 max-w-md rounded-md border p-6">
       {/* Title */}
       <h1 className="mb-4 text-center text-2xl font-semibold">Login</h1>
@@ -72,6 +72,6 @@ export default function Page() {
         Don&rsquo;t have an account? Register
       </Link>
     </form>
-    </LightTheme>
+    
   );
 }

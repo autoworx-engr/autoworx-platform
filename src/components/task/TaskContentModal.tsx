@@ -537,11 +537,11 @@ export default function TaskContentModal({
                 <FaTrash />
               </button>
             )}
-            <DialogFooter>
+            <DialogFooter className=" flex flex-row justify-end space-x-2 " >
               <DialogClose asChild>
                 <button
                   type="button"
-                  className="mt-1 rounded-md border px-4 py-1 lg:mt-0"
+                  className=" rounded-md border px-4 py-1 lg:mt-0"
                 >
                   Cancel
                 </button>

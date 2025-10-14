@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
+import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import { twiml } from "twilio";
-import { v4 as uuidv4 } from "uuid"; // for generating temporary callSid if needed
 
 export async function POST(request: Request) {
   try {
@@ -16,7 +16,7 @@ export async function POST(request: Request) {
     if (!to || !from) {
       return NextResponse.json(
         { error: "Both 'To' and 'From' parameters are required." },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -24,7 +24,7 @@ export async function POST(request: Request) {
     if (to === from) {
       return NextResponse.json(
         { error: "Cannot call the same Twilio number." },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
     if (!twilioCredentials) {
       return NextResponse.json(
         { error: "Twilio credentials not found" },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -78,7 +78,7 @@ export async function POST(request: Request) {
         recordingStatusCallback: `${process.env.NEXT_PUBLIC_APP_URL}/api/twilio/call-recording?callId=${callId}`,
         recordingStatusCallbackMethod: "POST",
       },
-      to,
+      to
     );
 
     return new Response(voiceResponse.toString(), {

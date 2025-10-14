@@ -1,24 +1,24 @@
-'use client';
+"use client";
 
-import ItemSelector from '@/components/ItemSelector';
-import { SelectTags } from '@/components/Lists/SelectTags';
-import ResponsiveEstimateCreateTab from '@/components/mobile-responsive/estimate/ResponsiveEstimateCreateTab';
-import { cn } from '@/lib/cn';
-import { useEstimateCreateStore } from '@/stores/estimate-create';
-import { useEstimatePopupStore } from '@/stores/estimate-popup';
-import { useListsStore } from '@/stores/lists';
-import { Decimal } from 'decimal.js';
-import { create } from 'mutative';
-import { nanoid } from 'nanoid';
-import React, { useState, useEffect } from 'react';
-import { HiOutlinePlusCircle, HiOutlineXCircle } from 'react-icons/hi2';
-import { useMediaQuery } from 'react-responsive';
+import ItemSelector from "@/components/ItemSelector";
+import { SelectTags } from "@/components/Lists/SelectTags";
+import ResponsiveEstimateCreateTab from "@/components/mobile-responsive/estimate/ResponsiveEstimateCreateTab";
+import { cn } from "@/lib/cn";
+import { useEstimateCreateStore } from "@/stores/estimate-create";
+import { useEstimatePopupStore } from "@/stores/estimate-popup";
+import { useListsStore } from "@/stores/lists";
+import { Decimal } from "decimal.js";
+import { create } from "mutative";
+import { nanoid } from "nanoid";
+import React, { useState, useEffect } from "react";
+import { HiOutlinePlusCircle, HiOutlineXCircle } from "react-icons/hi2";
+import { useMediaQuery } from "react-responsive";
 
 export function CreateTab() {
   const { items, removeMaterial } = useEstimateCreateStore();
   const { open, close } = useEstimatePopupStore();
 
-  const isMax640 = useMediaQuery({ query: '(max-width: 640px)' });
+  const isMax640 = useMediaQuery({ query: "(max-width: 640px)" });
 
   const services = useListsStore(x => x.services);
   const materials = useListsStore(x => x.materials);
@@ -43,7 +43,7 @@ export function CreateTab() {
           materials: [null],
           labor: null,
           tags: [],
-          serviceDesc: '',
+          serviceDesc: "",
         },
       ],
     }));
@@ -53,7 +53,7 @@ export function CreateTab() {
       setTimeout(() => {
         window.scrollTo({
           top: document.body.scrollHeight,
-          behavior: 'smooth',
+          behavior: "smooth",
         });
       }, 100);
     }
@@ -77,7 +77,7 @@ export function CreateTab() {
           <table className="w-full border-separate border-spacing-x-8 border-spacing-y-5">
             <thead>
               <tr>
-                {['Services', 'Materials/Parts', 'Labor', 'Tags'].map(x => (
+                {["Services", "Materials/Parts", "Labor", "Tags"].map(x => (
                   <th key={x}>{x}</th>
                 ))}
                 <th>
@@ -88,13 +88,14 @@ export function CreateTab() {
             <tbody>
               {items.map((item, i) => (
                 <tr key={`item-${i}`}>
-                  {['service', 'materials', 'labor', 'tags'].map(
+                  {["service", "materials", "labor", "tags"].map(
                     (itemKey, j) => {
                       switch (itemKey) {
-                        case 'service':
+                        case "service":
                           return (
-                            <td>
+                            <td key={itemKey + i}>
                               <ItemSelector
+                                key={itemKey + i}
                                 type="SERVICE"
                                 label="Service"
                                 item={item}
@@ -102,12 +103,12 @@ export function CreateTab() {
                                   .filter(
                                     service =>
                                       service?.name &&
-                                      service.name.trim() !== ''
+                                      service.name.trim() !== ""
                                   )
                                   .reverse()}
                                 display="name"
                                 onEdit={() =>
-                                  open('SERVICE', {
+                                  open("SERVICE", {
                                     itemId: item.id,
                                     edit: true,
                                     service: item.service,
@@ -125,7 +126,7 @@ export function CreateTab() {
                                   const validServices = services.filter(
                                     service =>
                                       service?.name &&
-                                      service.name.trim() !== ''
+                                      service.name.trim() !== ""
                                   );
 
                                   if (search) {
@@ -157,13 +158,13 @@ export function CreateTab() {
                               />
                             </td>
                           );
-                        case 'materials':
+                        case "materials":
                           return item.materials.length >= 0 ? (
-                            <td className="relative">
+                            <td className="relative" key={`materials-${j}`}>
                               {item.materials.length > 0 &&
                                 item.materials.map((material, j) => (
                                   <div
-                                    className={cn('mt-2.5', j === 0 && 'mt-0')}
+                                    className={cn("mt-2.5", j === 0 && "mt-0")}
                                     key={`material-${j}`}
                                   >
                                     <ItemSelector
@@ -185,7 +186,7 @@ export function CreateTab() {
                                         close();
                                       }}
                                       onEdit={() => {
-                                        open('MATERIAL', {
+                                        open("MATERIAL", {
                                           itemId: item.id,
                                           edit: true,
                                           material,
@@ -202,7 +203,7 @@ export function CreateTab() {
                                           })
                                         );
 
-                                        open('MATERIAL', {
+                                        open("MATERIAL", {
                                           itemId: item.id,
                                           edit: true,
                                           material: {
@@ -253,7 +254,7 @@ export function CreateTab() {
 
                               {item.materials.length == 0 && (
                                 <div
-                                  className={cn('mt-2.5', j === 0 && 'mt-0')}
+                                  className={cn("mt-2.5", j === 0 && "mt-0")}
                                   key={`material-${j}`}
                                 >
                                   <ItemSelector
@@ -284,7 +285,7 @@ export function CreateTab() {
                                         })
                                       );
 
-                                      open('MATERIAL', {
+                                      open("MATERIAL", {
                                         itemId: item.id,
                                         edit: true,
                                         material: { ...material, quantity: 0 },
@@ -331,11 +332,11 @@ export function CreateTab() {
                               )}
                             </td>
                           ) : (
-                            <td></td>
+                            <td key={`materials-${j}`}></td>
                           );
-                        case 'labor':
+                        case "labor":
                           return (
-                            <td>
+                            <td key={`labor-${j}`}>
                               <ItemSelector
                                 type="LABOR"
                                 label="Labor"
@@ -343,7 +344,7 @@ export function CreateTab() {
                                 list={[...labors].reverse()}
                                 display="name"
                                 onEdit={() =>
-                                  open('LABOR', {
+                                  open("LABOR", {
                                     itemId: item.id,
                                     edit: true,
                                     labor: item.labor,
@@ -359,7 +360,7 @@ export function CreateTab() {
                                     })
                                   );
 
-                                  open('LABOR', {
+                                  open("LABOR", {
                                     itemId: item.id,
                                     edit: true,
                                     labor: {
@@ -401,9 +402,9 @@ export function CreateTab() {
                               />
                             </td>
                           );
-                        case 'tags':
+                        case "tags":
                           return (
-                            <td>
+                            <td key={`tags-${j}`}>
                               <SelectTags
                                 type="TAG"
                                 value={item.tags}

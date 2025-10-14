@@ -7,7 +7,7 @@ import LogoutBtn from "./LogoutBtn";
 // import { NotificationsPopover } from './NotificationProvider';
 import QuickLink from "./QuickLink";
 import dynamic from "next/dynamic";
-// import ThemeSwitch from "./ThemeSwitch";
+
 
 const NotificationsPopover = dynamic(
   () => import("./NotificationProvider").then(mod => mod.NotificationsPopover),
@@ -28,7 +28,6 @@ export default function TopNavbarIcons() {
         isDashboard && <QuickLink />}
       {!isDashboard && <BugReport />}
 
-      {/* <NewUserFeedback /> */}
       {/* <button className="bg-background text-[1.7rem] font-bold text-[#6571FF]">
         <MdOutlineNotifications />
       </button> */}

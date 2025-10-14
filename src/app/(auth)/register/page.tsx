@@ -5,7 +5,7 @@ import Link from "next/link";
 import FormError from "@/components/FormError";
 import { Metadata } from "next";
 
-import LightTheme from "@/components/LightTheme";
+
 
 export const metadata: Metadata = {
   title: "Register",
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 
 export default function Page() {
   return (
-    <LightTheme>
+    
       <form className="mx-auto mt-44 max-w-md rounded-lg border p-6">
         <h1 className="mb-4 text-center text-2xl font-semibold">Register</h1>
 
@@ -113,6 +113,6 @@ export default function Page() {
           Already registered? Login
         </Link>
       </form>
-    </LightTheme>
+    
   );
 }

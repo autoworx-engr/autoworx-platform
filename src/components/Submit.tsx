@@ -42,6 +42,12 @@ export default function Submit({
       onClick={(e) => {
         e.stopPropagation();
       }}
+      style={{
+        WebkitAppearance: "none",
+        appearance: "none",
+        border: "none",
+        outline: "none",
+      }}
     >
        {pending || transitionPending ? (
         <div className="flex items-center justify-center h-6">

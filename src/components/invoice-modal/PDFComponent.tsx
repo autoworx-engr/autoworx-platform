@@ -316,28 +316,6 @@ const PDFComponent = function PDF({
     "There is no damage notes"
   );
   const [inspectionData, setInspectionData] = useState<InvoiceInspection[]>([]);
-  const [imageData, setImageData] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchImage = async () => {
-      const url = companyDetails?.image;
-      console.log("url", url);
-
-      try {
-        const res = await fetch(companyDetails?.image ?? "");
-        const buffer = await res.arrayBuffer();
-        const base64 = `data:image/jpeg;base64,${Buffer.from(buffer).toString("base64")}`;
-
-        setImageData(base64);
-
-        // reader.readAsDataURL(blob);
-      } catch (err) {
-        console.error("Error fetching image for PDF:", err);
-      }
-    };
-
-    fetchImage();
-  }, [companyDetails?.image]);
 
   useEffect(() => {
     // Fetch inspection data and damage notes from the backend
@@ -367,9 +345,9 @@ const PDFComponent = function PDF({
       >
         <View style={styles.header}>
           <View style={styles.logo}>
-            {imageData ? (
+            {companyDetails?.image ? (
               <Image
-                src={imageData}
+                src={companyDetails?.image}
                 style={{ width: 110, height: 90, objectFit: "contain" }}
               />
             ) : (

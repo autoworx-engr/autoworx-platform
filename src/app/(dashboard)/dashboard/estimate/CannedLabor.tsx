@@ -2,6 +2,7 @@
 import { deleteLabor } from "@/actions/estimate/labor/deleteLabor";
 import { updateLabor } from "@/actions/estimate/labor/updateLabor";
 import SelectCategory from "@/components/Lists/SelectCategory";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -10,60 +11,70 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { cn } from "@/lib/cn";
+import { errorToast, successToast } from "@/lib/toast";
 import { useEstimateCreateStore } from "@/stores/estimate-create";
 import { useListsStore } from "@/stores/lists";
+import { formatCurrency } from "@/utils/formatCurrency";
 import { Category, Labor } from "@prisma/client";
+import { Pagination, Popconfirm, message } from "antd"; // Added message for notifications
+import { SquarePen } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { FaTimes } from "react-icons/fa";
 import { IoMdCheckmarkCircleOutline } from "react-icons/io";
+import FilterBySearchBox from "../reporting/components/filter/FilterBySearchBox";
+import CannedFilterBySelection from "./CannedFilterBySelected";
 import NewLabor from "./NewLabor";
-import { Pagination, Popconfirm, message } from "antd"; // Added message for notifications
-import { formatCurrency } from "@/utils/formatCurrency";
-import { errorToast, successToast } from "@/lib/toast";
-import { useEstimateFilterStore } from "@/stores/estimate-filter";
-import { SquarePen } from "lucide-react";
+
+export type TFilterModalState = {
+  category: boolean;
+};
 
 export default function CannedLabor({
   labors,
 }: {
   labors: (Labor & { category: Category })[];
 }) {
+  //
+
+  const params = useSearchParams();
+  const selectedCategory = params.get("laborCategory") || "";
+  const laborSearch = params.get("laborSearch") || "";
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(50);
   const [showPagination, setShowPagination] = useState(false);
-  const [filteredData, setFilteredData] = useState<Labor[]>(labors);
-  const { search } = useEstimateFilterStore();
+  const [filteredData, setFilteredData] =
+    useState<(Labor & { category: Category })[]>(labors);
+  const [activeModal, setActiveModal] = useState<{ [key: string]: boolean }>(
+    {}
+  );
 
+  // Filter logic: search + category
   useEffect(() => {
     const filtered = labors.filter((row) => {
-      if (search) {
-        const searchValue = search.toLowerCase();
-        return (
-          row.category?.name.toLowerCase().includes(searchValue) ||
-          row.name.toLowerCase().includes(searchValue)
-        );
-      }
-      return true;
+      const matchesSearch = laborSearch
+        ? row.name.toLowerCase().includes(laborSearch.toLowerCase()) ||
+          row.category?.name.toLowerCase().includes(laborSearch.toLowerCase())
+        : true;
+
+      const matchesCategory = selectedCategory
+        ? row.category?.name === selectedCategory
+        : true;
+
+      return matchesSearch && matchesCategory;
     });
-
     setFilteredData(filtered);
-  }, [search, labors]);
+  }, [laborSearch, selectedCategory, labors]);
 
+  //  Show pagination if many labors
   useEffect(() => {
-    if (filteredData.length > 10) {
-      setShowPagination(true);
-    } else {
-      setShowPagination(false);
-    }
+    setShowPagination(filteredData.length > 10);
   }, [filteredData]);
 
   const handlePageChange = (page: number, pageSize?: number) => {
     setCurrentPage(page);
-    if (pageSize) {
-      setPageSize(pageSize);
-    }
+    if (pageSize) setPageSize(pageSize);
   };
 
   const paginatedLabors = filteredData.slice(
@@ -71,22 +82,63 @@ export default function CannedLabor({
     currentPage * pageSize
   );
 
+  //  Category names for dropdown
+  const uniqueCategories = labors
+    .map((l) => l.category)
+    .filter(
+      (c, i, arr) => c && arr.findIndex((a) => a.id === c.id) === i
+    ) as any;
+
+  const toggleModal = (modalName: string) => {
+    setActiveModal((prev) => ({
+      ...prev,
+      [modalName]: !prev[modalName],
+    }));
+  };
+
+  const closeModal = (modalName: string) => {
+    setActiveModal((prev) => ({
+      ...prev,
+      [modalName]: false,
+    }));
+  };
+
+  console.log("search params==>", laborSearch);
+
   return (
     <div className="h-full w-full md:px-4">
-      <div className="flex items-center justify-between pb-3 lg:pb-0">
+      <section className=" pb-3 lg:pb-0">
         <div className="flex items-center gap-x-8">
           <h3 className="text-xl font-bold md:text-2xl">Canned Labor</h3>
         </div>
-        <NewLabor
-          newButton={
-            <button className="rounded-md bg-[#6571FF] p-2 px-3 text-white md:px-5">
-              + Add Labor
-            </button>
-          }
-          isCanned={true}
-          fromCanned={true}
-        />
-      </div>
+        <div className="flex flex-col md:flex-row gap-3 py-1">
+          <div className="flex items-center justify-between gap-3">
+            <FilterBySearchBox
+              searchText={laborSearch as string}
+              paramKey="laborSearch"
+            />
+            <CannedFilterBySelection
+              selectedItem={selectedCategory}
+              items={uniqueCategories}
+              type="laborCategory" // unique param for labors
+              modalName="laborCategory"
+              closeModal={closeModal}
+              activeModal={activeModal}
+              toggleModal={toggleModal}
+            />
+          </div>
+
+          <NewLabor
+            newButton={
+              <button className="rounded-md  bg-[#6571FF] w-full md:w-32 p-1 text-white ">
+                + Add Labor
+              </button>
+            }
+            isCanned={true}
+            fromCanned={true}
+          />
+        </div>
+      </section>
       {/* Desktop View */}
       <div className="hidden overflow-y-auto thin-scrollbar md:block">
         <Table className="h-full">

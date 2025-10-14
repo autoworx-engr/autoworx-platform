@@ -1,7 +1,7 @@
 import { cn } from "@/lib/cn";
+import { File } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { FaFile } from "react-icons/fa";
 
 type Attachment = {
   name: string;
@@ -70,7 +70,7 @@ export default function MailAttachment({ message, onDownload }: TProps) {
             )}
             title={att.name}
           >
-            <FaFile className="text-zinc-500 dark:text-zinc-300" />
+            <File className="w-5 h-5 text-zinc-500 dark:text-zinc-300" />
             <span className="max-w-[12rem] truncate text-zinc-700 dark:text-zinc-200">
               {att.name || "file"}
             </span>

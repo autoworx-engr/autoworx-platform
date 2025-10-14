@@ -1,29 +1,29 @@
-'use client';
+"use client";
 
-import Submit from '@/components/Submit';
-import { useFormErrorStore } from '@/stores/form-error';
-import { getSession, signIn } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import Submit from "@/components/Submit";
+import { useFormErrorStore } from "@/stores/form-error";
+import { getSession, signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 export default function SubmitButton() {
-    const { showError } = useFormErrorStore();
-    const router = useRouter();
+  const { showError } = useFormErrorStore();
+  const router = useRouter();
 
-    const handler = async (formData: FormData) => {
-        const email = formData.get('email') as string;
-        const password = formData.get('password') as string;
-        try {
-            console.log('login button click');
-            const res = await signIn('credentials', {
-                email,
-                password,
-                redirect: false,
-            });
-            
-            if (res?.error) {
-                showError({ message: 'Invalid credentials', field: 'all' });
-                return;
-            }
+  const handler = async (formData: FormData) => {
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+    try {
+      console.log("login button click");
+      const res = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (res?.error) {
+        showError({ message: "Invalid credentials", field: "all" });
+        return;
+      }
 
             if (res?.status === 200) {
                 const session = await getSession();

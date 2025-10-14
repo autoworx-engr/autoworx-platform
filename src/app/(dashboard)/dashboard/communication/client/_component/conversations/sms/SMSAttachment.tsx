@@ -2,8 +2,8 @@ import { ClientSMS, ClientSmsAttachments } from "@prisma/client";
 import React from "react";
 import { isImage } from "../../../_utils";
 import Image from "next/image";
-import { FaFile } from "react-icons/fa";
 import Link from "next/link";
+import { File } from "lucide-react";
 
 type TProps = {
   message: ClientSMS & {
@@ -41,7 +41,7 @@ export default function SMSAttachment({ message, handleDownload }: TProps) {
               onClick={() => handleDownload(attachment?.url, attachment?.name)}
             >
               <span>
-                <FaFile />
+                <File className="w-5 h-5" />
               </span>
               <p>
                 {attachment.name?.length > 10

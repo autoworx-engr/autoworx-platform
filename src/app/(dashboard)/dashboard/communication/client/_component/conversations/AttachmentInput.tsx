@@ -1,7 +1,7 @@
 import { cn } from "@/lib/cn";
+import { CircleX } from "lucide-react";
 import Image from "next/image";
 import React from "react";
-import { TiDeleteOutline } from "react-icons/ti";
 
 type TProps = {
   multiAttachmentFile: File[];
@@ -32,7 +32,7 @@ export default function AttachmentInput({
           className="rounded-full bg-red-500/10 p-1.5 text-red-600 hover:bg-red-500/20 transition-colors"
           aria-label="Remove all attachments"
         >
-          <TiDeleteOutline size={22} />
+          <CircleX size={20} />
         </button>
       </div>
 
@@ -56,7 +56,7 @@ export default function AttachmentInput({
                 className="absolute -right-1 -top-1 opacity-0 group-hover:opacity-100 rounded-full bg-white p-1 text-gray-700 shadow-md hover:text-red-500 hover:shadow-lg transition-all z-10 border border-gray-200"
                 aria-label={`Remove ${attachmentFile.name}`}
               >
-                <TiDeleteOutline size={16} />
+                <CircleX size={14} />
               </button>
 
               {/* File preview container */}
