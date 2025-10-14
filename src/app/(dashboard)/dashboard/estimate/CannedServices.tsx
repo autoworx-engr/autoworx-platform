@@ -53,13 +53,15 @@ export default function CannedServices({
   //  Filter logic
   useEffect(() => {
     const filtered = services.filter((row) => {
+      const categoryName = row.category?.name?.toLowerCase() || "";
+
       const matchesSearch = serviceSearch
         ? row.name.toLowerCase().includes(serviceSearch.toLowerCase()) ||
-          row.category?.name.toLowerCase().includes(serviceSearch.toLowerCase())
+          categoryName.includes(serviceSearch.toLowerCase())
         : true;
 
       const matchesCategory = selectedCategory
-        ? row.category?.name === selectedCategory
+        ? categoryName === selectedCategory.toLowerCase()
         : true;
 
       return matchesSearch && matchesCategory;
@@ -82,12 +84,12 @@ export default function CannedServices({
     currentPage * pageSize
   );
 
-  //  Unique categories for filter modal
   const uniqueCategories = services
-    .map((l) => l.category)
+    .map((l) => l?.category)
+    .filter((c): c is Category => !!c) // remove null or undefined categories
     .filter(
-      (c, i, arr) => c && arr.findIndex((a) => a.id === c.id) === i
-    ) as any;
+      (c, i, arr) => arr.findIndex((a) => a?.id === c?.id) === i // now all have .id safely
+    );
 
   const toggleModal = (modalName: string) => {
     setActiveModal((prev) => ({
@@ -266,7 +268,7 @@ const ServiceComponent = ({
     } else {
       // Handle error if needed (e.g., show a toast)
       errorToast(res?.message ?? "Update failed. Please try again.");
-      console.error("Update failed:", res);
+      // console.error("Update failed:", res);
     }
   }
 

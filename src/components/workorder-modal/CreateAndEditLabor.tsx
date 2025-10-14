@@ -118,7 +118,7 @@ export default function CreateAndEditLabor({
         status: technicianStatus,
       } = technician;
 
-      const formattedDate = moment(date).format("YYYY-MM-DD");
+      const formattedDate = moment(date).utc().format("YYYY-MM-DD");
       const formattedDue = moment(due).utc().format("YYYY-MM-DD");
       setInputValues({
         date: formattedDate,

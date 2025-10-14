@@ -34,20 +34,11 @@ export const updateTechnician = async (
     // }
     await updateTechnicianValidationSchema.parseAsync(payload);
     // Ensure the date includes both date and time
-    const dateWithTime = new Date(payload.date);
-    const currentTime = new Date();
-    dateWithTime.setHours(
-      currentTime.getHours(),
-      currentTime.getMinutes(),
-      currentTime.getSeconds(),
-      currentTime.getMilliseconds()
-    );
 
     const updatedTechnician = await db.technician.update({
       where: { id: technicianId },
       data: {
         ...payload,
-        date: dateWithTime,
         dateClosed: payload.status === "Complete" ? new Date() : null,
       },
     });
