@@ -49,7 +49,7 @@ export default function Submit({
         outline: "none",
       }}
     >
-      {pending || transitionPending ? (
+       {pending || transitionPending ? (
         <div className="flex items-center justify-center h-6">
           <RotatingLines strokeColor="#fff" strokeWidth="5" width="25" />
         </div>

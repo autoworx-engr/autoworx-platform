@@ -25,26 +25,26 @@ export default function SubmitButton() {
         return;
       }
 
-      if (res?.status === 200) {
-        const session = await getSession();
-        const isSuperAdmin = session?.user?.isSuperAdmin;
-        if (isSuperAdmin) {
-          router.push("/awx-dashboard");
-        } else {
-          router.push("/dashboard");
+            if (res?.status === 200) {
+                const session = await getSession();
+                const isSuperAdmin = session?.user?.isSuperAdmin;
+                if (isSuperAdmin) {
+                    router.push('/awx-dashboard');
+                } else {
+                    router.push('/dashboard');
+                }
+                router.refresh();
+            }
+        } catch (err) {
+            console.log('log in page error', err);
         }
-        router.refresh();
-      }
-    } catch (err) {
-      console.log("log in page error", err);
-    }
-  };
-  return (
-    <Submit
-      className="mx-auto mt-4 rounded-md bg-blue-500 px-10 py-2 text-white border-0 outline-none focus:outline-none active:outline-none min-h-[42px] flex items-center justify-center"
-      formAction={handler}
-    >
-      Login
-    </Submit>
-  );
+    };
+    return (
+        <Submit
+            className="mx-auto mt-4 rounded-md bg-blue-500 px-10 py-2 text-white border-0 outline-none focus:outline-none active:outline-none min-h-[42px] flex items-center justify-center"
+            formAction={handler}
+        >
+            Login
+        </Submit>
+    );
 }
