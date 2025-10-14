@@ -19,7 +19,7 @@ type TProps = {
 
 export default async function CannedPage({ searchParams }: TProps) {
   const session = await getServerSession(authOptions);
-  const companyId = session?.user.companyId;
+  const companyId = session?.user?.companyId;
 
   if (!companyId) {
     throw new Error("Company ID is required to create an email template.");
@@ -44,7 +44,7 @@ export default async function CannedPage({ searchParams }: TProps) {
   });
 
   const categories = await db.category.findMany({ where: { companyId } });
-  console.log("categories ==>", categories);
+
   const tags = await db.tag.findMany({ where: { companyId, type: "GENERAL" } });
   const statuses = await db.column.findMany({ where: { companyId } });
 
@@ -53,28 +53,28 @@ export default async function CannedPage({ searchParams }: TProps) {
     : "";
 
   const filteredLabors = labors.filter((labor) => {
-    const nameMatch = normalizeSearch(labor.name).includes(searchTerm);
-    const categoryMatch = normalizeSearch(labor.category?.name || "").includes(
+    const nameMatch = normalizeSearch(labor?.name).includes(searchTerm);
+    const categoryMatch = normalizeSearch(labor?.category?.name || "").includes(
       searchTerm
     );
 
     let categoryFilter = true;
     if (searchParams.category) {
-      categoryFilter = labor.category?.name === searchParams.category;
+      categoryFilter = labor?.category?.name === searchParams?.category;
     }
 
     return (nameMatch || categoryMatch) && categoryFilter;
   });
 
   const filteredServices = services.filter((service) => {
-    const nameMatch = normalizeSearch(service.name).includes(searchTerm);
+    const nameMatch = normalizeSearch(service?.name).includes(searchTerm);
     const categoryMatch = normalizeSearch(
       service.category?.name || ""
     ).includes(searchTerm);
 
     let categoryFilter = true;
     if (searchParams.category) {
-      categoryFilter = service.category?.name === searchParams.category;
+      categoryFilter = service?.category?.name === searchParams.category;
     }
 
     return (nameMatch || categoryMatch) && categoryFilter;

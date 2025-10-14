@@ -50,26 +50,29 @@ export default function CannedLabor({
     {}
   );
 
-  // Filter logic: search + category
   useEffect(() => {
     const filtered = labors.filter((row) => {
+      const categoryName = row?.category?.name?.toLowerCase() || "";
+      const laborName = row?.name.toLowerCase();
+
       const matchesSearch = laborSearch
-        ? row.name.toLowerCase().includes(laborSearch.toLowerCase()) ||
-          row.category?.name.toLowerCase().includes(laborSearch.toLowerCase())
+        ? laborName.includes(laborSearch.toLowerCase()) ||
+          categoryName.includes(laborSearch.toLowerCase())
         : true;
 
       const matchesCategory = selectedCategory
-        ? row.category?.name === selectedCategory
+        ? categoryName === selectedCategory.toLowerCase()
         : true;
 
       return matchesSearch && matchesCategory;
     });
+
     setFilteredData(filtered);
   }, [laborSearch, selectedCategory, labors]);
 
   //  Show pagination if many labors
   useEffect(() => {
-    setShowPagination(filteredData.length > 10);
+    setShowPagination(filteredData?.length > 10);
   }, [filteredData]);
 
   const handlePageChange = (page: number, pageSize?: number) => {
@@ -84,9 +87,9 @@ export default function CannedLabor({
 
   //  Category names for dropdown
   const uniqueCategories = labors
-    .map((l) => l.category)
+    .map((l) => l?.category)
     .filter(
-      (c, i, arr) => c && arr.findIndex((a) => a.id === c.id) === i
+      (c, i, arr) => c && arr.findIndex((a) => a?.id === c?.id) === i
     ) as any;
 
   const toggleModal = (modalName: string) => {
