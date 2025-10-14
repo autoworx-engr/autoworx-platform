@@ -4,25 +4,27 @@ import Image from "next/image";
 import React, { useRef, useState } from "react";
 import { MailgunEmail, MailgunEmailAttachment } from "@prisma/client";
 import AttachmentInput from "../AttachmentInput";
-import { MdSend } from "react-icons/md";
 import { clientListStore } from "@/stores/client-store";
 import { useClientCommunicationStore } from "@/stores/client-store";
+import { SendHorizontal } from "lucide-react";
 
 // Helper function to format attachment message
 const formatAttachmentMessage = (files: File[]) => {
   if (files.length === 0) return "";
-  
-  const images = files.filter(file => file.type.startsWith('image/'));
-  const otherFiles = files.filter(file => !file.type.startsWith('image/'));
-  
+
+  const images = files.filter((file) => file.type.startsWith("image/"));
+  const otherFiles = files.filter((file) => !file.type.startsWith("image/"));
+
   const parts = [];
   if (images.length > 0) {
     parts.push(images.length === 1 ? "1 image" : `${images.length} images`);
   }
   if (otherFiles.length > 0) {
-    parts.push(otherFiles.length === 1 ? "1 file" : `${otherFiles.length} files`);
+    parts.push(
+      otherFiles.length === 1 ? "1 file" : `${otherFiles.length} files`
+    );
   }
-  
+
   return parts.join(", ");
 };
 
@@ -38,7 +40,8 @@ export default function SendMail({
   >;
 }) {
   const { clientList, setClientList } = clientListStore();
-  const { clientConversationTrack, setClientConversationTrack } = useClientCommunicationStore();
+  const { clientConversationTrack, setClientConversationTrack } =
+    useClientCommunicationStore();
   const [pending, startTransition] = React.useTransition();
   const [messageInput, setMessageInput] = useState("");
 
@@ -56,9 +59,8 @@ export default function SendMail({
     if (!messageInput.trim() && files.length === 0) return;
 
     // Update conversation track optimistically
-    const lastMessage = files.length > 0 
-      ? formatAttachmentMessage(files)
-      : messageInput.trim();
+    const lastMessage =
+      files.length > 0 ? formatAttachmentMessage(files) : messageInput.trim();
 
     if (clientConversationTrack) {
       setClientConversationTrack({
@@ -203,7 +205,7 @@ export default function SendMail({
             aria-label="Send message"
             title="Send"
           >
-            <MdSend className="text-xl" />
+            <SendHorizontal className="w-5 h-5" />
           </button>
         </div>
       </form>

@@ -1,12 +1,9 @@
 import Title from "@/components/Title";
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
-import Link from "next/link";
 import React from "react";
 import "react-date-range/dist/styles.css"; // main style file
 import "react-date-range/dist/theme/default.css"; // theme css file
-import { IoPieChartOutline } from "react-icons/io5";
-import TotalPayouts from "../../dashboard/employee/TotalPayouts";
 import EmployeeFilter from "../../dashboard/employee/components/EmployeeFilter";
 import Employee from "../../dashboard/employee/Employee";
 

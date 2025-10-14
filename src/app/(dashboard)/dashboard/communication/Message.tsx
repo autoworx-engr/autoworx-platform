@@ -2,13 +2,13 @@ import Avatar from "@/components/Avatar";
 import { Message as TMessage } from "./internal/UsersArea";
 import { cn } from "@/lib/cn";
 import Image from "next/image";
-import { IoCloudDownloadOutline } from "react-icons/io5";
 import { useEffect, useState } from "react";
 import { getUserById } from "@/actions/user/getUserById";
 import { User } from "@prisma/client";
 import Link from "next/link";
 import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
 import { format } from "date-fns";
+import { CloudDownload } from "lucide-react";
 
 type TProps = {
   message: TMessage;
@@ -93,7 +93,7 @@ export default function Message({
                     </div>
                   )}
                   <button onClick={() => onDownload(attachment?.fileUrl!)}>
-                    <IoCloudDownloadOutline
+                    <CloudDownload
                       size={30}
                       className={cn(
                         "cursor-pointer",

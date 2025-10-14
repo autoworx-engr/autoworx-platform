@@ -6,11 +6,10 @@ import { Card } from "@/components/ui/card";
 import getUser from "@/lib/getUser";
 import { stateStore } from "@/stores/stateStore";
 import { User } from "@prisma/client";
+import { Bug, Mail, RefreshCcw, ServerCrash } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { LuMail, LuRefreshCcw, LuServerCrash } from "react-icons/lu";
-import { MdBugReport } from "react-icons/md";
 
 export default function ServerError({ error }: { error: Error }) {
   console.error("Server Error Log:", error);
@@ -32,7 +31,7 @@ export default function ServerError({ error }: { error: Error }) {
     <div className="flex min-h-screen w-full items-center justify-center bg-gradient-to-br from-white to-gray-100 p-4">
       <Card className="w-full max-w-3xl space-y-8 p-6 md:p-12">
         <div className="space-y-4 text-center">
-          <LuServerCrash className="mx-auto h-16 w-16 text-[#00b8b0]" />
+          <ServerCrash className="mx-auto h-16 w-16 text-[#00b8b0]" />
           <h1 className="bg-gradient-to-r from-[#00b8b0] to-[#0098da] bg-clip-text text-4xl font-bold tracking-tight text-transparent md:text-5xl">
             500 - Server Error
           </h1>
@@ -44,7 +43,7 @@ export default function ServerError({ error }: { error: Error }) {
 
         <div className="mx-auto grid max-w-2xl gap-6 md:grid-cols-2">
           <div className="space-y-2 rounded-lg border border-[#00b8b0]/30 bg-[#00b8b0]/5 p-4 text-center">
-            <LuRefreshCcw className="mx-auto h-6 w-6 text-[#00b8b0]" />
+            <RefreshCcw className="mx-auto h-6 w-6 text-[#00b8b0]" />
             <p className="text-gray-600">Try</p>
             <button
               onClick={() => window.location.reload()}
@@ -55,7 +54,7 @@ export default function ServerError({ error }: { error: Error }) {
           </div>
           {user ? (
             <div className="space-y-2 rounded-lg border border-gray-200 p-4 text-center">
-              <MdBugReport className="mx-auto h-6 w-6 text-[#00b8b0]" />
+              <Bug className="mx-auto h-6 w-6 text-[#00b8b0]" />
               <p className="text-gray-600">Found an issue?</p>
               <button
                 onClick={() => setIsNewBugOpen(true)}
@@ -66,7 +65,7 @@ export default function ServerError({ error }: { error: Error }) {
             </div>
           ) : (
             <div className="space-y-2 rounded-lg border border-[#00b8b0]/30 bg-[#00b8b0]/5 p-4 text-center">
-              <LuMail className="mx-auto h-6 w-6 text-[#00b8b0]" />
+              <Mail className="mx-auto h-6 w-6 text-[#00b8b0]" />
               <p className="text-gray-600">Contact support at</p>
               <p className="break-all text-lg font-semibold text-[#00b8b0]">
                 {process.env.INFO_EMAIL}

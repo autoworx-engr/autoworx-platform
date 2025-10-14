@@ -2,9 +2,8 @@
 import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
 import { cn } from "@/lib/cn";
 import { Column, Invoice, Vehicle } from "@prisma/client";
-import Link from "next/link";
+import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { IoClose } from "react-icons/io5";
 
 const OrderList = ({
   vehicle,
@@ -23,7 +22,7 @@ const OrderList = ({
             router.replace(`/dashboard/client/${vehicle.clientId}`);
           }}
         >
-          <IoClose className="text-2xl" />
+          <X />
         </span>
       </div>
 
