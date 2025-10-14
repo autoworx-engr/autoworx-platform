@@ -1,12 +1,10 @@
 "use client";
-import { getLeadInfo } from "@/actions/dashboard/data/getLeadInfo";
-import { useServerGet } from "@/hooks/useServerGet";
 import { formatCurrency } from "@/utils/formatCurrency";
-import PipelineReportCard from "./PipelineReportCard";
+import { useEffect, useState } from "react";
 import FilterByDateRange from "../../components/filter/FilterByDateRange";
-import { useState, useEffect } from "react";
 import { TFilterModalState } from "../revenue/FilterHeader";
-import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
+import useGetLeadInfoQuery from "./_hook/useGetLeadInfoQuery";
+import PipelineReportCard from "./PipelineReportCard";
 
 type TProps = {
   searchParams: {
@@ -28,25 +26,11 @@ export default function PipelineCardContainer({ searchParams }: TProps) {
     setStartDate(searchParams?.startDate);
     setEndDate(searchParams?.endDate);
   }, [searchParams?.startDate, searchParams?.endDate]);
-  const timezone = useCompanyTimezone();
-
-  // Pass date parameters to getLeadInfo
-  const { data, setData } = useServerGet(() =>
-    getLeadInfo(
-      timezone,
-      startDate ? decodeURIComponent(startDate) : undefined,
-      endDate ? decodeURIComponent(endDate) : undefined
-    )
-  );
-
-  // Re-fetch data when date parameters change
-  useEffect(() => {
-    getLeadInfo(
-      timezone,
-      startDate ? decodeURIComponent(startDate) : undefined,
-      endDate ? decodeURIComponent(endDate) : undefined
-    ).then(setData);
-  }, [startDate, endDate]);
+  
+  const { data } = useGetLeadInfoQuery({
+    startDate: startDate ? decodeURIComponent(startDate) : undefined,
+    endDate: endDate ? decodeURIComponent(endDate) : undefined,
+  });
 
   //converting hours into days and hours
   const dayHours = (time: number = 0) => {

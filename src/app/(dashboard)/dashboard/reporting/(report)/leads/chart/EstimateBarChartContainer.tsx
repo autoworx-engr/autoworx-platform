@@ -1,10 +1,8 @@
 "use client";
-import { getLeadInfo } from "@/actions/dashboard/data/getLeadInfo";
 import BarChartComponent from "@/app/(dashboard)/dashboard/reporting/components/BarChartComponent";
-import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
-import { useServerGet } from "@/hooks/useServerGet";
 import { useEffect, useState } from "react";
 import { Bar, Label, Tooltip, XAxis, YAxis } from "recharts";
+import useGetLeadInfoQuery from "../_hook/useGetLeadInfoQuery";
 
 type TProps = {
   searchParams: {
@@ -42,15 +40,18 @@ const CustomLabel = (props: any) => {
   );
 };
 export default function EstimateBarChartContainer({ searchParams }: TProps) {
-  const [data, setData] = useState<any>();
-  const timezone = useCompanyTimezone();
   const [startDate, setStartDate] = useState<string | undefined>(
-    searchParams?.startDate,
+    searchParams?.startDate
   );
   const [endDate, setEndDate] = useState<string | undefined>(
-    searchParams?.endDate,
+    searchParams?.endDate
   );
   const [isFiltered, setIsFiltered] = useState<boolean>(false);
+
+  const { data } = useGetLeadInfoQuery({
+    startDate: startDate ? decodeURIComponent(startDate) : undefined,
+    endDate: endDate ? decodeURIComponent(endDate) : undefined,
+  });
 
   // Update local state when searchParams change
   useEffect(() => {
@@ -58,49 +59,6 @@ export default function EstimateBarChartContainer({ searchParams }: TProps) {
     setEndDate(searchParams?.endDate);
     setIsFiltered(!!searchParams?.startDate || !!searchParams?.endDate);
   }, [searchParams?.startDate, searchParams?.endDate]);
-
-  // Fetch data with date filters
-  // const { data, setData } = useServerGet(() =>
-  //   getLeadInfo(
-  //     timezone,
-  //     startDate ? decodeURIComponent(startDate) : undefined,
-  //     endDate ? decodeURIComponent(endDate) : undefined,
-  //   ),
-  // );
-
-  // Re-fetch data when date parameters change
-  useEffect(() => {
-    let isMounted = true;
-    // setLoading(true);
-
-    const fetchData = async () => {
-      try {
-        const result = await getLeadInfo(
-          timezone,
-          startDate ? decodeURIComponent(startDate) : undefined,
-          endDate ? decodeURIComponent(endDate) : undefined,
-        );
-        if (isMounted) {
-          setData(result);
-        }
-      } catch (error) {
-        if (isMounted) {
-          // setError(error as Error);
-          setData(null); // Reset the data if there's an error
-        }
-      } finally {
-        if (isMounted) {
-          // setLoading(false);
-        }
-      }
-    };
-
-    fetchData();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [startDate, endDate, timezone]);
 
   return (
     <div className="chart-container">

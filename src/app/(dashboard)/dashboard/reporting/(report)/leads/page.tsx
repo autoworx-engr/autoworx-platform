@@ -45,7 +45,7 @@ type TSliderData = {
 
 export default function PipelinePage({ searchParams }: TProps) {
   const isDesktop = useIsDesktop();
-
+  
   return (
     <div className="grid grid-cols-1 gap-x-6 lg:grid-cols-5">
       <div className="space-y-5 col-span-1 lg:col-span-2">

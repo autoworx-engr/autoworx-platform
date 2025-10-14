@@ -102,7 +102,7 @@ export const createTechnicianValidationSchema = z
       .positive("Invoice item ID must be positive"),
   })
   .refine(
-    data => {
+    (data) => {
       if (data.date && data.due) {
         // Ensure date is not after due date
         return data.date <= data.due;
@@ -110,7 +110,7 @@ export const createTechnicianValidationSchema = z
       return true;
     },
     {
-      message: "Date cannot be after due date",
+      message: "Assigned date cannot be after due date",
       path: ["date"],
     }
   );
@@ -190,7 +190,7 @@ export const updateTechnicianValidationSchema = z
       .nonempty("Invoice Must be required"),
   })
   .refine(
-    data => {
+    (data) => {
       if (data?.date && data?.due) {
         // Ensure date is not after due date
         return data.date <= data.due;
@@ -198,7 +198,7 @@ export const updateTechnicianValidationSchema = z
       return true;
     },
     {
-      message: "Date cannot be after due date",
+      message: "Assigned date cannot be after due date",
       path: ["date"],
     }
   );
