@@ -42,10 +42,11 @@ export default function TaskListBox() {
       (permission: any) => permission.permission_name === "calendar"
     )?.enabled !== false;
 
-  const shouldHideRedirectLink =
-    permissions?.role !== "Admin" &&
-    companyEmployeePermissions?.calendarTask === false;
-
+  // const shouldHideRedirectLink =
+  //   permissions?.role !== "Admin" &&
+  //   companyEmployeePermissions?.calendarTask === false;
+  
+    
   const hasTaskPermission =
     calendarAndTaskFeatureEnabled &&
     (userPermissions?.calendarTask !== undefined
@@ -89,7 +90,7 @@ export default function TaskListBox() {
         <BoxTitle
           title="Task List"
           redirectLink={
-            !shouldHideRedirectLink && calendarAndTaskFeatureEnabled
+            hasTaskPermission
               ? "/dashboard/task/day"
               : undefined
           }

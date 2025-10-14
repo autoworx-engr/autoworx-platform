@@ -142,7 +142,7 @@ export default async function Page({
         {(user?.employeeType === "Admin" ||
           user?.employeeType === "Manager") && (
           <div className="mt-2">
-            <AddNewProduct />
+            <AddNewProduct view={view}/>
           </div>
         )}
       </header>
