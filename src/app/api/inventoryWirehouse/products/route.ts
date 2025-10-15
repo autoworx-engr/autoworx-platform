@@ -12,7 +12,6 @@ export async function GET(request: NextRequest) {
     const categoryName = searchParams.get("categoryName") || "";
     const skip = (page - 1) * limit;
 
-    // 🧠 Clean up search string for flexible matching
     const normalizedSearch = search.replace(/\s+/g, " ").toLowerCase();
 
     let query = `
@@ -29,21 +28,19 @@ export async function GET(request: NextRequest) {
     const params: any[] = [];
 
     if (search) {
-      const words = normalizedSearch.split(/\s+/); // split into words
+      const words = normalizedSearch.split(/\s+/);
       const wordConditions: string[] = [];
 
       words.forEach((word, index) => {
         params.push(`%${word}%`);
         const paramIndex = params.length;
 
-        // each word must appear in at least one field
         wordConditions.push(`(
       LOWER("productName") ILIKE $${paramIndex} OR
       LOWER("category") ILIKE $${paramIndex}
     )`);
       });
 
-      // combine all words with AND
       conditions.push(wordConditions.join(" AND "));
     }
 
