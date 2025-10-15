@@ -1,12 +1,10 @@
-import Link from "next/link";
-import { FaExternalLinkAlt } from "react-icons/fa";
 import ChartData from "../ChartData";
 import BoxTitle from "./BoxTitle";
 import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
 import { getConvertedLeadsPerMonth } from "@/actions/dashboard/data/getAdminInfo";
 import getUser from "@/lib/getUser";
 import { getSalespersonLeads } from "@/actions/dashboard/data/getSalesWinRate";
-import { getDateRanges, growthRate } from "@/actions/dashboard/data/lib";
+import { getDateRanges } from "@/actions/dashboard/data/lib";
 import { db } from "@/lib/db";
 import { getCompanyId } from "@/lib/companyId";
 

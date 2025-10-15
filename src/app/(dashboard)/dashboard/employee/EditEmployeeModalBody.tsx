@@ -5,7 +5,6 @@ import FormError from "@/components/FormError";
 import { SlimInput } from "@/components/SlimInput";
 import Submit from "@/components/Submit";
 import { useEffect, useState } from "react";
-import { RxAvatar } from "react-icons/rx";
 
 import { updateEmployee } from "@/actions/employee/update";
 import { getCompany } from "@/actions/settings/getCompany";
@@ -16,11 +15,10 @@ import { DEFAULT_IMAGE_URL } from "@/lib/consts";
 import { successToast } from "@/lib/toast";
 import { useFormErrorStore } from "@/stores/form-error";
 import { EmployeeType, SalaryType, User } from "@prisma/client";
-import { SquarePen } from "lucide-react";
+import { CircleUserRound, SquarePen, X } from "lucide-react";
 import moment from "moment";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
-import { FiX } from "react-icons/fi";
 import SelectEmployeeType from "./SelectEmployeeType";
 
 type TEditClientModalBodyProps = {
@@ -231,7 +229,7 @@ export default function EditClientModalBody({
               id="profilePicture"
               hidden
               accept="image/*"
-              onChange={e => {
+              onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) {
                   setNewProfilePic(file);
@@ -250,7 +248,7 @@ export default function EditClientModalBody({
               id="profilePicture"
               hidden
               accept="image/*"
-              onChange={e => {
+              onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) {
                   setNewProfilePic(file);
@@ -261,7 +259,7 @@ export default function EditClientModalBody({
             <span className="hidden lg:block">
               Upload a profile picture
             </span>{" "}
-            <RxAvatar size={48} />
+            <CircleUserRound size={48} className="text-gray-400" />
           </label>
         )}
       </div>
@@ -274,7 +272,7 @@ export default function EditClientModalBody({
             name="firstName"
             required
             defaultValue={employee.firstName}
-            onChange={e => {
+            onChange={(e) => {
               const value = e.target.value;
               if (!value.trim()) {
                 showError({
@@ -297,7 +295,7 @@ export default function EditClientModalBody({
             name="email"
             defaultValue={employee.email}
             required
-            onChange={e => {
+            onChange={(e) => {
               const value = e.target.value;
               if (!value.trim()) {
                 showError({
@@ -318,7 +316,7 @@ export default function EditClientModalBody({
             type="tel"
             name="mobileNumber"
             defaultValue={employee.phone!}
-            onChange={e => {
+            onChange={(e) => {
               const value = e.target.value;
               if (!/^\+?\d*$/.test(value)) {
                 showError({
@@ -346,7 +344,7 @@ export default function EditClientModalBody({
               <label htmlFor="password" className="mb-1 px-2 font-medium">
                 Change Password
               </label>
-              <FiX
+              <X
                 size={20}
                 className="flex-shrink-0 cursor-pointer text-red-400"
                 onClick={() => setOpenChangePassword(false)}
@@ -382,7 +380,7 @@ export default function EditClientModalBody({
             name="zip"
             defaultValue={employee.zip!}
             required={false}
-            onChange={e => {
+            onChange={(e) => {
               const value = e.target.value;
               if (value && !/^\d*$/.test(value)) {
                 showError({
@@ -405,7 +403,7 @@ export default function EditClientModalBody({
             name="commission"
             defaultValue={Number(employee.commission!)}
             required={false}
-            onChange={e => {
+            onChange={(e) => {
               const value = e.target.value;
               if (value && !/^(\d*\.?\d+|\d+\.?\d*)$/.test(value)) {
                 showError({

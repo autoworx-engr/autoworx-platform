@@ -18,11 +18,9 @@ import { useListsStore } from "@/stores/lists";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { Category, Labor } from "@prisma/client";
 import { Pagination, Popconfirm, message } from "antd"; // Added message for notifications
-import { SquarePen } from "lucide-react";
+import { CircleCheckBig, SquarePen, X } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { FaTimes } from "react-icons/fa";
-import { IoMdCheckmarkCircleOutline } from "react-icons/io";
 import FilterBySearchBox from "../reporting/components/filter/FilterBySearchBox";
 import CannedFilterBySelection from "./CannedFilterBySelected";
 import NewLabor from "./NewLabor";
@@ -311,7 +309,7 @@ const LaborComponent = ({
             <div className="flex items-center gap-2">
               {isEdit && (
                 <button onClick={handleEdit} className="text-xl text-green-500">
-                  <IoMdCheckmarkCircleOutline />
+                  <CircleCheckBig className="w-5 h-5" />
                 </button>
               )}
               <button
@@ -328,7 +326,7 @@ const LaborComponent = ({
                   cancelText="No"
                   onConfirm={() => deleteLabor(labor.id)}
                 >
-                  <FaTimes cursor={"pointer"} color="#f87171" fontSize={20} />
+                  <X cursor={"pointer"} color="#f87171" fontSize={20} />
                 </Popconfirm>
               )}
             </div>
@@ -438,7 +436,7 @@ const LaborComponent = ({
             onClick={() => handleEdit()}
             className="mr-4 text-lg text-[#6571FF]"
           >
-            <IoMdCheckmarkCircleOutline />
+            <CircleCheckBig className="w-4 h-4" />
           </button>
         )}
         <button
@@ -455,7 +453,7 @@ const LaborComponent = ({
           className="ml-3"
           onConfirm={() => deleteLabor(labor.id)}
         >
-          <FaTimes cursor={"pointer"} color="#f87171" className="text-lg" />
+          <X cursor={"pointer"} color="#f87171" className="w-5 h-5" />
         </Popconfirm>
       </TableCell>
     </TableRow>

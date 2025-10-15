@@ -22,11 +22,11 @@ import { useListsStore } from "@/stores/lists";
 import { additionalDataValidation } from "@/validations/schemas/payment/payment.validation";
 import { CardType, PaymentMethod, PaymentType } from "@prisma/client";
 import * as Tabs from "@radix-ui/react-tabs";
+import { CreditCard } from "lucide-react";
 import moment from "moment-timezone";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import React, { useEffect, useState, useTransition } from "react";
-import { FaRegCreditCard } from "react-icons/fa6";
+import React, { useState, useTransition } from "react";
 
 function TabTrigger({
   value,
@@ -304,7 +304,7 @@ export default function MakePayment() {
           <Tabs.Root className="mt-5" value={tab} onValueChange={setTab as any}>
             <Tabs.List className="grid grid-cols-3 justify-between gap-3 md:flex">
               <TabTrigger value="CARD" tab={tab}>
-                <FaRegCreditCard />
+                <CreditCard size={20} />
                 Card
               </TabTrigger>
 

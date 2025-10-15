@@ -18,12 +18,10 @@ import { useFormErrorStore } from "@/stores/form-error";
 import { useListsStore } from "@/stores/lists";
 import { Category, Service } from "@prisma/client";
 import { Pagination, Popconfirm } from "antd";
-import { SquarePen } from "lucide-react";
+import { CircleCheckBig, SquarePen, X } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { FaTimes } from "react-icons/fa";
-import { IoMdCheckmarkCircleOutline } from "react-icons/io";
 import FilterBySearchBox from "../reporting/components/filter/FilterBySearchBox";
 import CannedFilterBySelection from "./CannedFilterBySelected";
 import NewService from "./NewService";
@@ -334,7 +332,7 @@ const ServiceComponent = ({
                   onClick={handleUpdateService}
                   className="text-2xl text-[#6571FF]"
                 >
-                  <IoMdCheckmarkCircleOutline />
+                  <CircleCheckBig size={24} />
                 </button>
               )}
               <button
@@ -354,7 +352,7 @@ const ServiceComponent = ({
                     setIsEdit(false);
                   }}
                 >
-                  <FaTimes cursor={"pointer"} color="#f87171" fontSize={20} />
+                  <X cursor={"pointer"} color="#f87171" fontSize={20} />
                 </Popconfirm>
               )}
             </div>
@@ -479,7 +477,7 @@ const ServiceComponent = ({
             onClick={handleUpdateService}
             className="mr-4 text-lg text-[#6571FF]"
           >
-            <IoMdCheckmarkCircleOutline />
+            <CircleCheckBig size={18} />
           </button>
         )}
         <button
@@ -499,7 +497,7 @@ const ServiceComponent = ({
             setIsEdit(false);
           }}
         >
-          <FaTimes cursor={"pointer"} color="#f87171" className="text-lg" />
+          <X cursor={"pointer"} color="#f87171" className="w-5 h-5" />
         </Popconfirm>
       </TableCell>
     </TableRow>

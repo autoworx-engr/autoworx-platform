@@ -1,12 +1,10 @@
 import { useState } from "react";
-import { CiCircleInfo } from "react-icons/ci";
-import { IoMdArrowDropdown, IoMdArrowDropup } from "react-icons/io";
 import ConvertedDataGraph from "./ConvertedDataGraph";
-import SalesAcitivityGraph from "./SalesAcitivityGraph";
 import { useServerGet } from "@/hooks/useServerGet";
 import { salesUserData } from "@/actions/employee/salesUserData";
 import { useParams } from "next/navigation";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
+import { Info } from "lucide-react";
 
 interface MetricData {
   label: string;
@@ -103,7 +101,7 @@ export default function SalesPerformanceTable() {
                     setInfoIndex(infoIndex === index ? null : index)
                   }
                 >
-                  <CiCircleInfo className="absolute left-1 top-0 h-3 w-3" />
+                  <Info className="absolute left-1 top-0 h-3 w-3" />
                 </button>
                 <div className="w-[80%] text-lg font-bold text-gray-700">
                   {metric.label}
@@ -116,9 +114,27 @@ export default function SalesPerformanceTable() {
                 >
                   <div>
                     {metric.isPositive ? (
-                      <IoMdArrowDropup />
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        width="16"
+                        height="16"
+                        aria-hidden="true"
+                        role="img"
+                      >
+                        <path d="M12 8.5l7 7H5l7-7z" fill="currentColor" />
+                      </svg>
                     ) : (
-                      <IoMdArrowDropdown />
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        width="16"
+                        height="16"
+                        aria-hidden="true"
+                        role="img"
+                      >
+                        <path d="M12 15.5L5 8.5h14l-7 7z" fill="currentColor" />
+                      </svg>
                     )}
                   </div>
                   <div>{Math.abs(metric.percentage)}%</div>
