@@ -1,8 +1,6 @@
-import LeadsBarChartContainer from "./chart/LeadsBarChartContainer";
 import EstimateBarChartContainer from "./chart/EstimateBarChartContainer";
 import InvoicesBarChartContainer from "./chart/InvoicesBarChartContainer";
-import SalesActivityChartContainer from "./chart/SalesActivityChartContainer";
-import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
+import LeadsBarChartContainer from "./chart/LeadsBarChartContainer";
 
 type TProps = {
   searchParams: {
