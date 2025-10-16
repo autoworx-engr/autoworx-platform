@@ -1,9 +1,9 @@
 import { deleteHoliday } from "@/actions/task/deleteHoliday";
 import { Dialog, DialogContent, DialogFooter } from "@/components/Dialog";
+import { Trash2 } from "lucide-react";
 import moment from "moment";
 import { useState, useTransition } from "react";
 import toast from "react-hot-toast";
-import { RiDeleteBin6Line } from "react-icons/ri";
 
 type TProps = {
   holidayId: number;
@@ -20,7 +20,7 @@ export default function HolidayDeleteConfirmation({
       const response = await deleteHoliday(holidayId);
       if (response?.status === 200) {
         const removedHoliday = moment(response.data.date).format(
-          "MMMM DD, YYYY",
+          "MMMM DD, YYYY"
         );
         toast.success(`${removedHoliday} - Holiday removed successfully!`);
         setOpen(false);
@@ -38,7 +38,7 @@ export default function HolidayDeleteConfirmation({
         onClick={() => setOpen(true)}
         className={`rounded-full ${!isMonthly && "bg-red-200"} p-2`}
       >
-        <RiDeleteBin6Line
+        <Trash2
           size={20}
           className={`cursor-pointer ${!isMonthly && "text-red-500"} `}
         />

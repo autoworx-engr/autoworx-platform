@@ -1,10 +1,9 @@
 "use client";
 import { useState } from "react";
-import { RxCopy } from "react-icons/rx";
 import { successToast } from "@/lib/toast";
-import { TbQrcode } from "react-icons/tb";
 import { encodeCompanyId } from "@/utils/companyIdEncoder";
 import Image from "next/image";
+import { Copy, QrCode } from "lucide-react";
 
 const baseUrl = window.location.origin;
 
@@ -49,7 +48,7 @@ const BookingGenerate = ({ companyId }: { companyId?: string }) => {
                         aria-label="Copy link"
                         title="Copy link"
                       >
-                        <RxCopy className="h-5 w-5 text-gray-800" />
+                        <Copy className="h-5 w-5 text-gray-800" />
                       </button>
                       <button
                         className={`rounded-full p-2 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 ${
@@ -59,7 +58,7 @@ const BookingGenerate = ({ companyId }: { companyId?: string }) => {
                         aria-label="Show QR code"
                         title="Show QR code"
                       >
-                        <TbQrcode
+                        <QrCode
                           className={`h-5 w-5 ${showQR ? "text-blue-500" : "text-gray-800"}`}
                         />
                       </button>

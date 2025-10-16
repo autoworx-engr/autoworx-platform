@@ -259,7 +259,11 @@ export default function EditClientModalBody({
             <span className="hidden lg:block">
               Upload a profile picture
             </span>{" "}
-            <CircleUserRound size={48} className="text-gray-400" />
+            <CircleUserRound
+              size={48}
+              strokeWidth={1.5}
+              className="text-gray-400"
+            />
           </label>
         )}
       </div>

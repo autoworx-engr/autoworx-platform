@@ -1,6 +1,6 @@
+import { ChevronDown, ChevronUp } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { HiChevronDown, HiChevronUp } from "react-icons/hi2";
 
 export default function MobileNavList({ item, setOpenNav }: any) {
   const [showSubnav, setShowSubnav] = useState(false);
@@ -27,7 +27,7 @@ export default function MobileNavList({ item, setOpenNav }: any) {
           <span>{item.title}</span>
         )}
         {item.subnav && (
-          <span>{showSubnav ? <HiChevronUp /> : <HiChevronDown />}</span>
+          <span>{showSubnav ? <ChevronUp /> : <ChevronDown />}</span>
         )}
       </div>
 

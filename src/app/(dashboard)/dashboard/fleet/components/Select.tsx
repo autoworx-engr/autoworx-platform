@@ -1,6 +1,6 @@
 import * as Select from "@radix-ui/react-select";
-import { FaChevronDown } from "react-icons/fa";
 import React from "react";
+import { ChevronDown } from "lucide-react";
 
 type Item = {
   id: string;
@@ -33,7 +33,7 @@ const SelectComponent = ({
         <Select.Trigger className="flex w-full items-center justify-between rounded border border-slate-400 bg-white px-2 py-2 text-sm text-slate-500 outline-none">
           <Select.Value placeholder={`Select ${label}`} />
           <Select.Icon>
-            <FaChevronDown className="text-xs text-slate-500" />
+            <ChevronDown size={18} className="text-slate-500" />
           </Select.Icon>
         </Select.Trigger>
 

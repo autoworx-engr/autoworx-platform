@@ -5,9 +5,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/cn";
 import { db } from "@/lib/db";
 import { formatCurrency } from "@/utils/formatCurrency";
+import { ChevronLeft } from "lucide-react";
 import moment from "moment-timezone";
 import Link from "next/link";
-import { IoIosArrowBack } from "react-icons/io";
 
 const evenColor = "bg-background";
 const oddColor = "bg-[#F8FAFF]";
@@ -54,7 +54,7 @@ export default async function Page({
     <div className="h-full">
       <Title className="flex items-center">
         <Link href="/dashboard/inventory/vendor">
-          <IoIosArrowBack />
+          <ChevronLeft size={28} />
         </Link>
         Vendor - Purchase product
       </Title>

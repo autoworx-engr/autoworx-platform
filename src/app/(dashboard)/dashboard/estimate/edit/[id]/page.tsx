@@ -12,7 +12,6 @@ import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";
-import { FaSave } from "react-icons/fa";
 import { BillSummary } from "../../create/BillSummary";
 import ConvertButton from "../../create/ConvertButton";
 import Create from "../../create/Create";
@@ -21,6 +20,7 @@ import SyncEstimate from "../../create/SyncEstimate";
 import { AttachmentTab } from "../../create/tabs/AttachmentTab";
 import { CreateTab } from "../../create/tabs/CreateTab";
 import PaymentTab from "../../create/tabs/PaymentTab";
+import { Save } from "lucide-react";
 
 export default async function Page({
   params,
@@ -330,7 +330,7 @@ export default async function Page({
           <ConvertButton
             type={invoice.type}
             text={`Update ${invoice.type}`}
-            icon={<FaSave />}
+            icon={<Save size={18} />}
             className="border-none bg-[#6571FF] px-8 text-white"
           />
           {/* <ConvertTo invoice={invoice} /> */}

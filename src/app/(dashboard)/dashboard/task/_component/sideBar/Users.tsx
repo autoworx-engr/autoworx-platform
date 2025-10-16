@@ -7,13 +7,13 @@ import { User } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useInView } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
-import { FaUser } from "react-icons/fa";
 import { userQueryKey } from "../../_constant";
 import useInfinityUsersQuery from "../../_hook/useInfinityUsersQuery";
 import TaskSpinner from "../ui/TaskSpinner";
 import { MinimizeButton } from "./MinimizeButton";
 import UserComponent from "./UserComponent";
 import { useDebounce } from "@/hooks/useDebounce";
+import { User as UserIcon } from "lucide-react";
 
 export default function Users() {
   const ref = useRef<HTMLDivElement | null>(null);
@@ -61,7 +61,7 @@ export default function Users() {
   } else if (!isLoading && isError) {
     content = (
       <div className="flex flex-col items-center justify-center py-10 text-center">
-        <FaUser className="mb-4 h-12 w-12 text-gray-400" />
+        <UserIcon className="mb-4 h-12 w-12 text-gray-400" />
         <h3 className="text-lg font-semibold text-red-600 md:text-[#797979]">
           Error loading users
         </h3>
@@ -73,7 +73,7 @@ export default function Users() {
   } else if (!isLoading && !isError && users && users.length === 0) {
     content = (
       <div className="flex flex-col items-center justify-center py-10 text-center">
-        <FaUser className="mb-4 h-12 w-12 text-gray-400" />
+        <UserIcon className="mb-4 h-12 w-12 text-gray-400" />
         <h3 className="text-lg font-semibold text-gray-700 md:text-[#797979]">
           No users found
         </h3>

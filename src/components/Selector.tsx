@@ -17,7 +17,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { FaChevronDown, FaChevronUp, FaSearch } from "react-icons/fa";
+import { ChevronDown, ChevronUp, Search } from "lucide-react";
 
 interface SelectorProps<T> {
   label: (item: T | null) => string;
@@ -217,9 +217,7 @@ export default function Selector<T>({
               )}
             </Tooltip>
           </TooltipProvider>
-          {!disabledDropdown && (
-            <FaChevronDown className="ms-4 text-[#797979]" />
-          )}
+          {!disabledDropdown && <ChevronDown className="ms-4 text-[#797979]" />}
         </DropdownMenuTrigger>
 
         <DropdownMenuContent
@@ -233,7 +231,10 @@ export default function Selector<T>({
         >
           {/* Search input */}
           <div className="relative m-2">
-            <FaSearch className="absolute left-2 top-1/2 -translate-y-1/2 transform text-[#797979]" />
+            <Search
+              size={18}
+              className="absolute left-2 top-1/2 -translate-y-1/2 transform text-[#797979]"
+            />
             <input
               type="text"
               placeholder="Search"
@@ -242,7 +243,7 @@ export default function Selector<T>({
               value={searchTerm}
             />
             <button onClick={handleCloseDropdown}>
-              <FaChevronUp className="absolute right-2 top-1/2 -translate-y-1/2 transform text-[#797979]" />
+              <ChevronUp className="absolute right-2 top-1/2 -translate-y-1/2 transform text-[#797979]" />
             </button>
           </div>
 

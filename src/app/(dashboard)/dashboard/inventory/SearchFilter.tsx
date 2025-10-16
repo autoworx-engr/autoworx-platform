@@ -4,10 +4,9 @@ import { DropdownSelection } from "@/components/DropDownSelection";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useInventoryFilterStore } from "@/stores/inventoryFilter";
 import { useListsStore } from "@/stores/lists";
+import { Search } from "lucide-react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
-import { FaSearch } from "react-icons/fa";
 
 type TSearchFilterProps = {
   searchParams: {
@@ -55,7 +54,10 @@ export default function SearchFilter({ searchParams }: TSearchFilterProps) {
   return (
     <div className="flex w-full items-center justify-between gap-5">
       <div className="relative w-full">
-        <FaSearch className="absolute top-1/2 ml-2 -translate-y-1/2 text-lg text-slate-400" />
+        <Search
+          size={18}
+          className="absolute top-1/2 ml-2 -translate-y-1/2 text-slate-400"
+        />
         <input
           type="text"
           className="h-10 w-full rounded-md border-2 border-slate-400 p-1 px-3 pl-8 lg:w-[70%]"

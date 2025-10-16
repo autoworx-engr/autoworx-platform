@@ -1,36 +1,34 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useRef, useEffect } from "react"
-import type { ReactNode } from "react"
-import { FaChevronDown, FaTimes, FaPlus } from "react-icons/fa"
-import { cn } from "@/lib/utils"
-import SelectCategory from "./Lists/SelectCategory"
-import { Category } from "@prisma/client"
-
+import { useState, useRef, useEffect } from "react";
+import type { ReactNode } from "react";
+import { cn } from "@/lib/utils";
+import SelectCategory from "./Lists/SelectCategory";
+import { Category } from "@prisma/client";
+import { ChevronDown, Plus, X } from "lucide-react";
 
 export type SelectorWithAddProps = {
-  label?: ReactNode
-  name: string
-  options: string[] | number[] | { id: string | number; title: string }[]
-  value?: string | { id: string | number; title: string; }
-   onChange?: (value: string | { id: string | number; title: string }) => void
-  rootClassName?: string
-  labelClassName?: string
-  required?: boolean
-  error?: string
-  placeholder?: string
-  isSearch?: boolean
-  disabled?: boolean
-  allowClear?: boolean
-  allowAddNew?: boolean
-  addNewLabel?: string
-  onAddNew?: (newItem: string, category?: Category) => void
-  addNewPlaceholder?: string
-  selectCategory?:boolean
-}
-
+  label?: ReactNode;
+  name: string;
+  options: string[] | number[] | { id: string | number; title: string }[];
+  value?: string | { id: string | number; title: string };
+  onChange?: (value: string | { id: string | number; title: string }) => void;
+  rootClassName?: string;
+  labelClassName?: string;
+  required?: boolean;
+  error?: string;
+  placeholder?: string;
+  isSearch?: boolean;
+  disabled?: boolean;
+  allowClear?: boolean;
+  allowAddNew?: boolean;
+  addNewLabel?: string;
+  onAddNew?: (newItem: string, category?: Category) => void;
+  addNewPlaceholder?: string;
+  selectCategory?: boolean;
+};
 
 const sentenceCase = (str: string) => {
   return (
@@ -39,8 +37,8 @@ const sentenceCase = (str: string) => {
       .slice(1)
       .toLowerCase()
       .replace(/([A-Z])/g, " $1")
-  )
-}
+  );
+};
 
 export function SelectorWithAdd({
   label,
@@ -60,144 +58,153 @@ export function SelectorWithAdd({
   addNewLabel = "Add new item",
   onAddNew,
   addNewPlaceholder = "Enter new item",
-  selectCategory = false
+  selectCategory = false,
 }: SelectorWithAddProps) {
-  const [isOpen, setIsOpen] = useState(false)
-  const [selectedValue, setSelectedValue] = useState(value?.toString() || "")
-  const [searchTerm, setSearchTerm] = useState("")
-  const [isAddingNew, setIsAddingNew] = useState(false)
-  const [newItemValue, setNewItemValue] = useState("")
-  const dropdownRef = useRef<HTMLDivElement>(null)
-  const searchInputRef = useRef<HTMLInputElement>(null)
-  const addNewInputRef = useRef<HTMLInputElement>(null)
+  const [isOpen, setIsOpen] = useState(false);
+  const [selectedValue, setSelectedValue] = useState(value?.toString() || "");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isAddingNew, setIsAddingNew] = useState(false);
+  const [newItemValue, setNewItemValue] = useState("");
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const addNewInputRef = useRef<HTMLInputElement>(null);
 
- const [category, setCategory] = useState<Category | undefined>(undefined)
+  const [category, setCategory] = useState<Category | undefined>(undefined);
 
-  const [categoryOpen, setCategoryOpen] = useState(false)
+  const [categoryOpen, setCategoryOpen] = useState(false);
   useEffect(() => {
     if (value !== undefined) {
-      setSelectedValue(value?.toString())
+      setSelectedValue(value?.toString());
     }
-  }, [value])
+  }, [value]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false)
-        setSearchTerm("")
-        setIsAddingNew(false)
-        setNewItemValue("")
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+        setSearchTerm("");
+        setIsAddingNew(false);
+        setNewItemValue("");
       }
-    }
+    };
 
-    document.addEventListener("mousedown", handleClickOutside)
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
-    }
-  }, [])
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   // Focus search input when dropdown opens
   useEffect(() => {
     if (isOpen && isSearch && searchInputRef.current && !isAddingNew) {
-      searchInputRef.current.focus()
+      searchInputRef.current.focus();
     }
-  }, [isOpen, isSearch, isAddingNew])
+  }, [isOpen, isSearch, isAddingNew]);
 
   // Focus add new input when adding new item
   useEffect(() => {
     if (isAddingNew && addNewInputRef.current) {
-      addNewInputRef.current.focus()
+      addNewInputRef.current.focus();
     }
-  }, [isAddingNew])
+  }, [isAddingNew]);
 
   const normalizeOptions = () => {
     if (typeof options?.[0] === "string" || typeof options?.[0] === "number") {
       return (options as (string | number)[]).map((opt) => ({
         id: opt?.toString(),
         title: opt?.toString(),
-      }))
+      }));
     }
-    return options as { id: string | number; title: string }[]
-  }
+    return options as { id: string | number; title: string }[];
+  };
 
-  const normalizedOptions = normalizeOptions()
+  const normalizedOptions = normalizeOptions();
 
   const filteredOptions = searchTerm
-    ? normalizedOptions.filter((opt) => opt.title.toLowerCase().includes(searchTerm.toLowerCase()))
-    : normalizedOptions
+    ? normalizedOptions.filter((opt) =>
+        opt.title.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : normalizedOptions;
 
   const handleSelect = (id: string) => {
-    setSelectedValue(id)
-    setIsOpen(false)
-    setSearchTerm("")
-    setIsAddingNew(false)
-    setNewItemValue("")
-    setCategory(undefined)
-    setCategoryOpen(false)
+    setSelectedValue(id);
+    setIsOpen(false);
+    setSearchTerm("");
+    setIsAddingNew(false);
+    setNewItemValue("");
+    setCategory(undefined);
+    setCategoryOpen(false);
     if (onChange) {
-      const selectedOption = normalizedOptions.find((opt) => opt.id.toString() === id)
-      onChange(selectedOption || id)
+      const selectedOption = normalizedOptions.find(
+        (opt) => opt.id.toString() === id
+      );
+      onChange(selectedOption || id);
     }
-  }
+  };
 
   const handleClear = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    setSelectedValue("")
+    e.stopPropagation();
+    setSelectedValue("");
     if (onChange) {
-      onChange("")
+      onChange("");
     }
-  }
+  };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value)
-  }
+    setSearchTerm(e.target.value);
+  };
 
   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    e.stopPropagation()
-  }
+    e.stopPropagation();
+  };
 
   const handleAddNewClick = () => {
-    setIsAddingNew(true)
-    setSearchTerm("")
-    setCategoryOpen(false)
-  }
+    setIsAddingNew(true);
+    setSearchTerm("");
+    setCategoryOpen(false);
+  };
 
   const handleAddNewSubmit = () => {
     if (newItemValue.trim() && onAddNew) {
-      onAddNew(newItemValue.trim(), category)
-      setNewItemValue("")
-        setCategory(undefined)
-      setIsAddingNew(false)
-       setIsOpen(false)
-      setCategoryOpen(false)
+      onAddNew(newItemValue.trim(), category);
+      setNewItemValue("");
+      setCategory(undefined);
+      setIsAddingNew(false);
+      setIsOpen(false);
+      setCategoryOpen(false);
     }
-  }
+  };
 
   const handleAddNewKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    e.stopPropagation()
+    e.stopPropagation();
     if (e.key === "Enter") {
-      handleAddNewSubmit()
+      handleAddNewSubmit();
     } else if (e.key === "Escape") {
-      setIsAddingNew(false)
-      setNewItemValue("")
-      setCategory(undefined)
-      setCategoryOpen(false)
+      setIsAddingNew(false);
+      setNewItemValue("");
+      setCategory(undefined);
+      setCategoryOpen(false);
     }
-  }
+  };
 
   const handleAddNewCancel = () => {
-    setIsAddingNew(false)
-    setNewItemValue("")
-    setCategory(undefined)
-    setCategoryOpen(false)
-  }
+    setIsAddingNew(false);
+    setNewItemValue("");
+    setCategory(undefined);
+    setCategoryOpen(false);
+  };
 
-   const handleCategoryChange = (newCategory: Category | undefined) => {
-    setCategory(newCategory)
-  }
-  const selectedLabel = normalizedOptions?.find((opt) => opt?.id?.toString() === selectedValue)?.title
+  const handleCategoryChange = (newCategory: Category | undefined) => {
+    setCategory(newCategory);
+  };
+  const selectedLabel = normalizedOptions?.find(
+    (opt) => opt?.id?.toString() === selectedValue
+  )?.title;
 
-  const hasValue = selectedValue && selectedValue !== ""
+  const hasValue = selectedValue && selectedValue !== "";
 
   return (
     <div className={cn("block", rootClassName)} ref={dropdownRef}>
@@ -211,13 +218,15 @@ export function SelectorWithAdd({
           className={cn(
             "flex w-full items-center justify-between rounded-sm border border-slate-400 bg-background px-2 py-0.5 text-left leading-6 outline-none",
             error && "border-red-500 focus:border-red-500",
-            disabled && "cursor-not-allowed bg-gray-100 opacity-50",
+            disabled && "cursor-not-allowed bg-gray-100 opacity-50"
           )}
           onClick={() => !disabled && setIsOpen(!isOpen)}
           id={name}
           disabled={disabled}
         >
-          <span className={selectedLabel ? "" : "text-gray-400"}>{selectedLabel || placeholder}</span>
+          <span className={selectedLabel ? "" : "text-gray-400"}>
+            {selectedLabel || placeholder}
+          </span>
           <div className="flex items-center gap-1">
             {hasValue && allowClear && !disabled && (
               <button
@@ -226,10 +235,10 @@ export function SelectorWithAdd({
                 className="flex h-4 w-4 items-center justify-center rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600"
                 title="Clear selection"
               >
-                <FaTimes className="h-2 w-2" />
+                <X strokeWidth={2} className="h-2 w-2" />
               </button>
             )}
-            <FaChevronDown className="text-gray-500" />
+            <ChevronDown className="text-gray-500" />
           </div>
         </button>
 
@@ -240,7 +249,7 @@ export function SelectorWithAdd({
                 <input
                   ref={searchInputRef}
                   type="text"
-                   className="w-full rounded-sm border border-slate-400 bg-background px-2 py-0.5 leading-6 outline-none"
+                  className="w-full rounded-sm border border-slate-400 bg-background px-2 py-0.5 leading-6 outline-none"
                   placeholder="Search..."
                   value={searchTerm}
                   onChange={handleSearchChange}
@@ -256,32 +265,35 @@ export function SelectorWithAdd({
                   <input
                     ref={addNewInputRef}
                     type="text"
-                     className="w-full rounded-sm border border-slate-400 bg-background px-2 py-0.5 leading-6 outline-none"
+                    className="w-full rounded-sm border border-slate-400 bg-background px-2 py-0.5 leading-6 outline-none"
                     placeholder={addNewPlaceholder}
                     value={newItemValue}
                     onChange={(e) => setNewItemValue(e.target.value)}
                     onKeyDown={handleAddNewKeyDown}
                     onClick={(e) => e.stopPropagation()}
-
                   />
-                {selectCategory && (<SelectCategory
-                          onCategoryChange={handleCategoryChange}
-                          labelPosition="none"
-                          categoryData={category}
-                          categoryOpen={categoryOpen}
-                          setCategoryOpen={setCategoryOpen}
-                        />)}
-                  
+                  {selectCategory && (
+                    <SelectCategory
+                      onCategoryChange={handleCategoryChange}
+                      labelPosition="none"
+                      categoryData={category}
+                      categoryOpen={categoryOpen}
+                      setCategoryOpen={setCategoryOpen}
+                    />
+                  )}
+
                   <div className="flex gap-2">
                     <button
-    
                       onClick={handleAddNewSubmit}
                       disabled={!newItemValue.trim()}
                       className="h-6 text-xs bg-[#6571FF] px-2 text-white rounded-md"
                     >
                       Add
                     </button>
-                    <button  onClick={handleAddNewCancel} className="h-6 text-xs px-2  border rounded-md">
+                    <button
+                      onClick={handleAddNewCancel}
+                      className="h-6 text-xs px-2  border rounded-md"
+                    >
                       Cancel
                     </button>
                   </div>
@@ -296,7 +308,8 @@ export function SelectorWithAdd({
                         key={opt?.id}
                         className={cn(
                           "cursor-pointer px-3 py-2 hover:bg-slate-100",
-                          selectedValue === opt?.id?.toString() && "bg-blue-50 text-blue-700",
+                          selectedValue === opt?.id?.toString() &&
+                            "bg-blue-50 text-blue-700"
                         )}
                         onClick={() => handleSelect(opt?.id.toString())}
                       >
@@ -304,7 +317,9 @@ export function SelectorWithAdd({
                       </div>
                     ))
                   ) : (
-                    <div className="px-3 py-2 text-sm text-gray-500">No matching options</div>
+                    <div className="px-3 py-2 text-sm text-gray-500">
+                      No matching options
+                    </div>
                   )}
                 </div>
 
@@ -314,7 +329,7 @@ export function SelectorWithAdd({
                       className="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm text-blue-600 hover:bg-blue-50"
                       onClick={handleAddNewClick}
                     >
-                      <FaPlus className="h-3 w-3" />
+                      <Plus className="h-3 w-3" />
                       {addNewLabel}
                     </div>
                   </div>
@@ -326,7 +341,7 @@ export function SelectorWithAdd({
       </div>
       {error && <div className="mt-1 px-2 text-xs text-red-500">{error}</div>}
     </div>
-  )
+  );
 }
 
-export default SelectorWithAdd
+export default SelectorWithAdd;

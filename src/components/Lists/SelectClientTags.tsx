@@ -4,9 +4,6 @@ import { INVOICE_COLORS } from "@/lib/consts";
 import { useFormErrorStore } from "@/stores/form-error";
 import { Tag } from "@prisma/client";
 import React, { useEffect, useRef, useState } from "react";
-import { FaChevronDown, FaChevronUp, FaSearch } from "react-icons/fa";
-import { IoMdClose } from "react-icons/io";
-import { PiPaletteBold } from "react-icons/pi";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,6 +14,7 @@ import Submit from "../Submit";
 import newTag from "@/actions/tag/newTag";
 import { getTags } from "../../actions/tag/getTags";
 import { deleteTag } from "../../actions/tag/deleteTag";
+import { ChevronDown, ChevronUp, Palette, Search, X } from "lucide-react";
 
 type SelectedColor = { textColor: string; bgColor: string } | null;
 
@@ -54,8 +52,8 @@ export function SelectClientTags({
     if (search) {
       setFilteredTagList(
         tags.filter((tag) =>
-          tag.name.toLowerCase().includes(search.toLowerCase()),
-        ),
+          tag.name.toLowerCase().includes(search.toLowerCase())
+        )
       );
     } else {
       setFilteredTagList(tags);
@@ -125,10 +123,8 @@ export function SelectClientTags({
             setOpen && setOpen(!open);
           }}
         >
-          <span>{
-            showPlaceholder ? tag?.name ?? "Select Tag" : ""
-          }</span>
-          <FaChevronDown />
+          <span>{showPlaceholder ? (tag?.name ?? "Select Tag") : ""}</span>
+          <ChevronDown />
         </DropdownMenuTrigger>
 
         <DropdownMenuContent
@@ -140,14 +136,17 @@ export function SelectClientTags({
         >
           {/* Search */}
           <div className="relative m-2">
-            <FaSearch className="absolute left-2 top-1/2 -translate-y-1/2 transform text-[#797979]" />
+            <Search
+              size={18}
+              className="absolute left-2 top-1/2 -translate-y-1/2 transform text-[#797979]"
+            />
             <Input search={search} setSearch={setSearch} key="search" />
             <button
               onClick={() => {
                 setOpen && setOpen(!open);
               }}
             >
-              <FaChevronUp className="absolute right-2 top-1/2 -translate-y-1/2 transform text-[#797979]" />
+              <ChevronUp className="absolute right-2 top-1/2 -translate-y-1/2 transform text-[#797979]" />
             </button>
           </div>
 
@@ -176,7 +175,7 @@ export function SelectClientTags({
                   className="text-lg text-[#66738C]"
                   onClick={() => handleDelete(tagItem.id)}
                 >
-                  <IoMdClose />
+                  <X size={20} />
                 </button>
               </div>
             ))}
@@ -290,7 +289,7 @@ function QuickAddForm({
         onClick={() => setPickerOpen((prev: boolean) => !prev)}
         type="button"
       >
-        <PiPaletteBold />
+        <Palette size={18} />
       </button>
 
       <Submit
