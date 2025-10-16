@@ -169,7 +169,8 @@ export default function TaskComponent({ task }: TaskComponentProps) {
         onCancel={() => setPopconfirmVisible(false)}
       >
         <CircleCheckBig
-          className="text-xl text-white hover:text-gray-400"
+          size={20}
+          className="text-white hover:text-gray-400"
           onClick={() => setPopconfirmVisible(true)}
         />
       </Popconfirm>
