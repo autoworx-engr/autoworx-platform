@@ -1,8 +1,8 @@
 "use client";
 
 import type { db } from "@/lib/db";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
-import { FaChevronDown, FaChevronUp } from "react-icons/fa6";
 
 export function InvoiceItems({
   items,
@@ -58,7 +58,7 @@ export function InvoiceItems({
             className="flex items-center gap-1"
           >
             <p>${materialCost + laborCost}</p>
-            {openService === item.id ? <FaChevronUp /> : <FaChevronDown />}
+            {openService === item.id ? <ChevronUp /> : <ChevronDown />}
           </button>
         </div>
 

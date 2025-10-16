@@ -4,9 +4,8 @@ import DateRange from "@/app/(dashboard)/dashboard/payments/components/PaymentDa
 import { usePaymentFilterStore } from "@/stores/paymentFilter";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
-import { IoIosSearch } from "react-icons/io";
-import { IoPieChartOutline } from "react-icons/io5";
 import FilterforPayment from "./FilterforPayment";
+import { PieChart, Search } from "lucide-react";
 
 interface HeaderSearchProps {
   activeTab?: string;
@@ -29,7 +28,7 @@ export default function HeaderSearch({ activeTab }: HeaderSearchProps) {
       <div className="flex w-full max-w-4xl rounded-md border border-gray-300 bg-background p-2">
         <div className="flex w-full flex-col items-center gap-4 md:flex-row">
           <div className="relative w-full min-w-0 flex-1">
-            <IoIosSearch className="absolute left-3 top-3 text-gray-400" />
+            <Search size={20} className="absolute left-3 top-3 text-gray-400" />
             <input
               ref={inputRef}
               type="text"
@@ -58,7 +57,7 @@ export default function HeaderSearch({ activeTab }: HeaderSearchProps) {
         <Link href="/dashboard/reporting/payments">
           <div>
             <button className="flex items-center gap-x-2 rounded border border-[#66738C] bg-background p-2 px-5 text-[#6571FF] shadow-md">
-              <IoPieChartOutline />
+              <PieChart size={20} />
               Payment Reporting
             </button>
           </div>

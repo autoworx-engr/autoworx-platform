@@ -1,10 +1,7 @@
-import { searchCompanyQuery } from "@/actions/communication/collaboration/searchQuery";
 import { useDebounce } from "@/hooks/useDebounce";
-import { errorToast } from "@/lib/toast";
 import { Company, User } from "@prisma/client";
-import React, { SetStateAction, useState } from "react";
-import { CiSearch } from "react-icons/ci";
-import { RiArrowUpSLine } from "react-icons/ri";
+import { ChevronUp, Search } from "lucide-react";
+import React, { SetStateAction } from "react";
 
 type TProps = {
   setOpenUserList: React.Dispatch<React.SetStateAction<boolean>>;
@@ -24,7 +21,7 @@ type TProps = {
 
 const SearchBox = React.forwardRef(function SearchBox(
   { setOpenUserList, onSearch }: TProps,
-  ref: React.Ref<HTMLInputElement>,
+  ref: React.Ref<HTMLInputElement>
 ) {
   // const [searchText, setSearchText] = useState("");
 
@@ -40,11 +37,11 @@ const SearchBox = React.forwardRef(function SearchBox(
         type="text"
         className="w-full rounded-sm border border-primary-foreground bg-background py-0.5 pl-7 leading-6 outline-none text-base"
       />
-      <RiArrowUpSLine
+      <ChevronUp
         onClick={() => setOpenUserList((prev) => !prev)}
         className="absolute right-0 top-[5px] size-6 cursor-pointer"
       />
-      <CiSearch className="absolute left-1 top-[5px] size-5 cursor-pointer" />
+      <Search className="absolute left-1 top-[5px] size-5 cursor-pointer" />
     </div>
   );
 });

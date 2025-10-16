@@ -3,10 +3,9 @@ import { Item } from "@/stores/estimate-create";
 import { useEstimatePopupStore } from "@/stores/estimate-popup";
 import { DropdownMenuContent } from "@radix-ui/react-dropdown-menu";
 import { useEffect, useRef, useState } from "react";
-import { FaChevronDown, FaChevronUp, FaSearch, FaTimes } from "react-icons/fa";
 import { DropdownMenu, DropdownMenuTrigger } from "./DropdownMenu";
 import { useMediaQuery } from "react-responsive";
-import { SquarePen } from "lucide-react";
+import { ChevronDown, ChevronUp, Search, SquarePen, X } from "lucide-react";
 
 export default function ItemSelector<T>({
   label,
@@ -145,7 +144,7 @@ export default function ItemSelector<T>({
               }}
             >
               <div className="rounded-full bg-[#6571FF] p-1 text-white">
-                <FaTimes className="text-[10px]" />
+                <X size={10} />
               </div>
             </button>
           )}
@@ -159,7 +158,7 @@ export default function ItemSelector<T>({
               )}
             >
               <p className="text-sm font-medium text-slate-400">{label}</p>
-              <FaChevronDown className="text-[#797979]" />
+              <ChevronDown className="text-[#797979]" />
             </DropdownMenuTrigger>
           ) : (
             <div
@@ -206,7 +205,7 @@ export default function ItemSelector<T>({
                 }}
               >
                 <div className="rounded-full bg-[#6571FF] p-1 text-white">
-                  <FaTimes className="text-[10px]" />
+                  <X size={10} />
                 </div>
               </button>
             </div>
@@ -220,7 +219,10 @@ export default function ItemSelector<T>({
           >
             {/* Search */}
             <div className="relative m-2">
-              <FaSearch className="absolute left-2 top-1/2 -translate-y-1/2 transform text-[#797979]" />
+              <Search
+                size={18}
+                className="absolute left-2 top-1/2 -translate-y-1/2 transform text-[#797979]"
+              />
               <input
                 ref={searchRef}
                 type="text"
@@ -236,7 +238,7 @@ export default function ItemSelector<T>({
                 }}
               />
               <button onClick={() => setOpen(false)}>
-                <FaChevronUp className="absolute right-2 top-1/2 -translate-y-1/2 transform text-[#797979]" />
+                <ChevronUp className="absolute right-2 top-1/2 -translate-y-1/2 transform text-[#797979]" />
               </button>
             </div>
 

@@ -1,10 +1,9 @@
 "use client";
 import { useState, useEffect } from "react";
-import { HiOutlineBars3 } from "react-icons/hi2";
-import { FaXmark } from "react-icons/fa6";
 import Link from "next/link";
 import MobileNavList from "./MobileNavList";
 import Image from "next/image";
+import { Menu, X } from "lucide-react";
 
 const links = [
   { title: "Home", link: "/" },
@@ -27,7 +26,7 @@ export default function Navbar() {
       <div className="sm:hidden">
         <div className="relative flex items-center justify-between bg-white p-2 shadow-md">
           <button onClick={() => setOpenNav(true)}>
-            <HiOutlineBars3 size={30} className="text-[#26AADF]" />
+            <Menu size={30} className="text-[#26AADF]" />
           </button>
           <div className="absolute left-1/2 flex -translate-x-1/2 items-center justify-center gap-4">
             <Link href="/">
@@ -58,7 +57,7 @@ export default function Navbar() {
               onClick={() => setOpenNav(false)}
               className="p-6 text-white"
             >
-              <FaXmark size={36} />
+              <X strokeWidth={3} size={36} />
             </button>
           </div>
           <div className="mt-16 flex h-screen flex-col items-center">

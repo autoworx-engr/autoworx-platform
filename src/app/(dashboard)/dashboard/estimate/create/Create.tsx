@@ -3,12 +3,12 @@
 import { useEstimateCreateStore } from "@/stores/estimate-create";
 import { useEstimatePopupStore } from "@/stores/estimate-popup";
 import { useState } from "react";
-import { FaChevronDown, FaChevronUp } from "react-icons/fa";
 import LaborCreate from "./LaborCreate";
 import MaterialCreate from "./MaterialCreate";
 import ServiceCreate from "./ServiceCreate";
 import { useMediaQuery } from "react-responsive";
 import { formatCurrency } from "@/utils/formatCurrency";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 export default function Create() {
   const { type } = useEstimatePopupStore();
@@ -58,7 +58,7 @@ export default function Create() {
         return (
           <div
             key={item.id}
-            className="rounded-md border border-[#6571FF] px-5 py-1"
+            className="rounded-md border border-[#6571FF] px-2 py-1"
           >
             <div className="flex w-full justify-between text-[#6571FF]">
               <p>{item.service.name}</p>
@@ -66,13 +66,13 @@ export default function Create() {
                 type="button"
                 onClick={() =>
                   setOpenService(
-                    openService === item.id ? null : (item.id as string),
+                    openService === item.id ? null : (item.id as string)
                   )
                 }
                 className="flex items-center gap-1"
               >
                 <p>{formatCurrency(serviceTotal)}</p>
-                {openService === item.id ? <FaChevronUp /> : <FaChevronDown />}
+                {openService === item.id ? <ChevronUp /> : <ChevronDown />}
               </button>
             </div>
 
@@ -91,7 +91,7 @@ export default function Create() {
                               material.sell
                                 ? parseFloat(material.sell.toString()) *
                                     Number(material.quantity!)
-                                : 0,
+                                : 0
                             )}
                           </p>
                         </div>
@@ -108,7 +108,7 @@ export default function Create() {
                         item.labor?.charge
                           ? parseFloat(item.labor?.charge.toString()) *
                               Number(item.labor?.hours)
-                          : 0,
+                          : 0
                       )}
                     </p>
                   </div>

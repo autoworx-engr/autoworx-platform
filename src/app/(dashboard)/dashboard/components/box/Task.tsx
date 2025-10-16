@@ -10,11 +10,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Popconfirm, Tooltip } from "antd";
 import moment from "moment-timezone";
 import { useRouter } from "next/navigation";
-import { useState, useEffect, useRef } from "react";
-import { FaRegCheckCircle } from "react-icons/fa";
+import { useState, useEffect } from "react";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { useDate } from "../../task/_hook/lib/useDate";
-import { SquarePen } from "lucide-react";
+import { CircleCheckBig, SquarePen } from "lucide-react";
 
 type TaskProps = {
   task: TaskType;
@@ -57,9 +56,9 @@ const Task = ({ task, onTaskDeleted }: TaskProps) => {
       }
     };
 
-    window.addEventListener('scroll', handleScroll, true);
+    window.addEventListener("scroll", handleScroll, true);
     return () => {
-      window.removeEventListener('scroll', handleScroll, true);
+      window.removeEventListener("scroll", handleScroll, true);
     };
   }, [popconfirmVisible]);
 
@@ -122,7 +121,7 @@ const Task = ({ task, onTaskDeleted }: TaskProps) => {
               setPopconfirmVisible(false);
             }}
           >
-            <FaRegCheckCircle
+            <CircleCheckBig
               className="h-4 w-4 cursor-pointer hover:opacity-70 md:h-5 md:w-5"
               onClick={(e) => {
                 e.stopPropagation();

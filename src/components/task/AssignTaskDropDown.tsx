@@ -2,9 +2,9 @@ import Avatar from "@/components/Avatar";
 import Selector from "@/components/Selector";
 import { User } from "@prisma/client";
 import { useState, useMemo } from "react";
-import { IoCloseSharp } from "react-icons/io5";
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser.ts";
 import { useIsAdminOrManager } from "@/utils/useIsAdminOrManager.ts";
+import { X } from "lucide-react";
 
 type TProps = {
   companyUsers: Partial<User>[];
@@ -76,7 +76,7 @@ export default function AssignTaskDropDown({
               className="flex items-center gap-x-2 rounded-sm border px-3 py-2 shadow-md"
             >
               <span>{fullName}</span>
-              <IoCloseSharp
+              <X
                 onClick={() => handleRemoveUser(userInfo?.id!)}
                 className="size-6 flex-shrink-0 cursor-pointer text-red-300 hover:text-red-500"
               />

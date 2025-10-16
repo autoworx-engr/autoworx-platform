@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { NavItem } from "./docsNavigation";
-
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { LuChevronDown, LuChevronRight } from "react-icons/lu";
+import { ChevronDown, ChevronRight } from "lucide-react";
 
 interface SidebarNavItemProps {
   item: NavItem;
@@ -42,7 +41,7 @@ const SidebarNavItem = ({
           isActive
             ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
             : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground",
-          hasChildren && "mb-1",
+          hasChildren && "mb-1"
         )}
         onClick={handleClick}
       >
@@ -58,9 +57,9 @@ const SidebarNavItem = ({
         </div>
         {hasChildren &&
           (isExpanded ? (
-            <LuChevronDown className="h-4 w-4" />
+            <ChevronDown className="h-4 w-4" />
           ) : (
-            <LuChevronRight className="h-4 w-4" />
+            <ChevronRight className="h-4 w-4" />
           ))}
       </div>
 

@@ -87,15 +87,6 @@ const Page = async (props: Props) => {
               />
             </div>
           </div>
-          <div className="mt-2 self-end">
-            <NewCustomer
-              buttonElement={
-                <button className="rounded-md bg-[#6571FF] p-2 px-5 text-white">
-                  + Add New Client
-                </button>
-              }
-            />
-          </div>
         </div>
       </div>
 

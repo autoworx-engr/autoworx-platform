@@ -9,10 +9,8 @@ import type { Client, EmailTemplate, Vehicle } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
 import moment from "moment";
 import { useEffect, useState } from "react";
-import { FaTimes, FaTrash } from "react-icons/fa";
 import UpdateTemplate from "./UpdateTemplate";
-import { TbUserX } from "react-icons/tb";
-import { IoAlertCircleOutline } from "react-icons/io5";
+import { CircleAlert, Trash2, UserRoundX, X } from "lucide-react";
 
 type TReminderProps = {
   client: Partial<Client> | null;
@@ -164,7 +162,7 @@ export function Reminder({
   if (!client) {
     return (
       <div className="grid h-full place-content-center place-items-center gap-2 border-[1.5rem] border-solid border-white bg-neutral-300 text-center text-slate-500">
-        <TbUserX size={64} />
+        <UserRoundX size={64} />
         <span>No Client Selected</span>
       </div>
     );
@@ -227,7 +225,7 @@ export function Reminder({
                     handleDelete({ id: template.id, type: "Confirmation" })
                   }
                 >
-                  <FaTimes />
+                  <X size={20} />
                 </button>
               </div>
             </div>
@@ -297,7 +295,7 @@ export function Reminder({
                     handleDelete({ id: template.id, type: "Reminder" })
                   }
                 >
-                  <FaTimes />
+                  <X size={20} />
                 </button>
               </div>
             </div>
@@ -383,7 +381,7 @@ export function Reminder({
                   type="button"
                   onClick={() => setTimes(times.filter((_, i) => i !== index))}
                 >
-                  <FaTrash />
+                  <Trash2 size={20} className="text-red-400" />
                 </button>
               </div>
             );
@@ -391,7 +389,7 @@ export function Reminder({
         </div>
       </div>
       <div className="flex items-start gap-2 p-2 text-sm text-yellow-800">
-        <IoAlertCircleOutline className="mt-1 h-5 w-5 flex-shrink-0 text-yellow-600" />
+        <CircleAlert className="mt-1 h-5 w-5 flex-shrink-0 text-yellow-600" />
         <div className="flex-1 min-w-0">
           <p className="leading-relaxed break-words">
             Your client will receive automated reminders{" "}

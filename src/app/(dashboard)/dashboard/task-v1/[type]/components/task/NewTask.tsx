@@ -11,21 +11,20 @@ import {
   DialogTrigger,
 } from "@/components/Dialog";
 import FormError from "@/components/FormError";
-import { SlimInput, slimInputClassName } from "@/components/SlimInput";
+import { SlimInput } from "@/components/SlimInput";
 import Submit from "@/components/Submit";
-import { cn } from "@/lib/cn";
 import { errorToast } from "@/lib/toast";
 import { useFormErrorStore } from "@/stores/form-error";
-import { addOneHour, formatDateToToday, getCurrentTime } from "@/utils/time";
+import { addOneHour } from "@/utils/time";
 import { Priority, User } from "@prisma/client";
 import { useEffect, useRef, useState } from "react";
-import { FaCheck, FaPlus } from "react-icons/fa6";
 import AssignTaskDropDown from "./AssignTaskDropDown";
 import { useCalendarStore } from "@/stores/calendarStore";
 import { useRouter } from "next/navigation";
 import { Select } from "antd";
 import { formatTime12Hour } from "@/utils/formateTime12Hours";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
+import { Check, Plus } from "lucide-react";
 
 export default function NewTask({
   companyUsers,
@@ -224,12 +223,12 @@ export default function NewTask({
         {/* if its a task which will be created from C.Hub Client, then it will show a different styled button  */}
         {isClientTask ? (
           <button className="flex items-center justify-center gap-1 rounded-full bg-blue-600 px-6 py-2 text-[15px] text-white">
-            <FaPlus className="" />
+            <Plus className="" />
             <span>Add task</span>
           </button>
         ) : (
           <button className="flex w-full min-w-32 items-center justify-center gap-1 rounded-md bg-blue-600 px-2 py-2 text-[15px] text-white max-[1300px]:py-1">
-            <FaPlus className="" />
+            <Plus className="" />
             <span className="block">Add Task</span>
           </button>
         )}
@@ -358,7 +357,7 @@ export default function NewTask({
               >
                 Low
                 {priority === "Low" && (
-                  <FaCheck className="absolute right-2 text-white" />
+                  <Check className="absolute right-2 text-white" />
                 )}
               </button>
               <button
@@ -368,7 +367,7 @@ export default function NewTask({
               >
                 Medium
                 {priority === "Medium" && (
-                  <FaCheck className="absolute right-2 text-white" />
+                  <Check className="absolute right-2 text-white" />
                 )}
               </button>
               <button
@@ -378,7 +377,7 @@ export default function NewTask({
               >
                 High
                 {priority === "High" && (
-                  <FaCheck className="absolute right-2 text-white" />
+                  <Check className="absolute right-2 text-white" />
                 )}
               </button>
             </div>

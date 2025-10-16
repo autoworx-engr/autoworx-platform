@@ -13,10 +13,10 @@ import { useEstimatePopupStore } from "@/stores/estimate-popup";
 import { useListsStore } from "@/stores/lists";
 import { create } from "mutative";
 import { useEffect, useState } from "react";
-import { HiOutlinePlusCircle, HiOutlineXCircle } from "react-icons/hi2";
 import { useMediaQuery } from "react-responsive";
 import MobileItemSelector from "@/components/MobileItemSelector";
 import Decimal from "decimal.js";
+import { CirclePlus, CircleX } from "lucide-react";
 
 type TProps = {};
 
@@ -272,7 +272,7 @@ export default function ResponsiveEstimateCreateTab({}: TProps) {
                                   );
                                 }}
                               >
-                                <HiOutlinePlusCircle size="1.2em" /> Add More
+                                <CirclePlus size="1.2em" /> Add More
                               </button>
                             ) : null}
                           </div>
@@ -350,7 +350,7 @@ export default function ResponsiveEstimateCreateTab({}: TProps) {
                                 );
                               }}
                             >
-                              <HiOutlinePlusCircle size="1.2em" /> Add More
+                              <CirclePlus size="1.2em" /> Add More
                             </button>
                           ) : null}
                         </div>
@@ -454,7 +454,7 @@ export default function ResponsiveEstimateCreateTab({}: TProps) {
               }}
             >
               Remove
-              <HiOutlineXCircle size="1.2em" />
+              <CircleX size="1.2em" />
             </Button>
           </CardFooter>
         </Card>

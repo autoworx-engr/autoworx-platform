@@ -10,17 +10,16 @@ import {
 } from "@/components/Dialog";
 import FormError from "@/components/FormError";
 import { SelectClientTags } from "@/components/Lists/SelectClientTags";
-import SelectorWithSearch from "@/components/Lists/SelectorWithSearch";
 import { SlimInput } from "@/components/SlimInput";
 import { useFormErrorStore } from "@/stores/form-error";
 import { useListsStore } from "@/stores/lists";
 import { Client, Fleet, Tag } from "@prisma/client";
 import { useEffect, useState, useTransition } from "react";
-import { RxAvatar } from "react-icons/rx";
 import { RotatingLines } from "react-loader-spinner";
 import SelectComponent from "./Select";
 import Image from "next/image";
 import { successToast } from "@/lib/toast";
+import { CircleUserRound } from "lucide-react";
 
 export default function NewFleet({
   fleet,
@@ -249,7 +248,11 @@ export default function NewFleet({
               />
               <span className="hidden lg:block">Upload a profile picture</span>
               <span className="lg:hidden">Upload picture</span>{" "}
-              <RxAvatar size={48} />
+              <CircleUserRound
+                size={48}
+                strokeWidth={1.5}
+                className="text-gray-400"
+              />
             </label>
           )}
         </div>

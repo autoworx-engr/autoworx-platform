@@ -12,26 +12,22 @@ import Submit from "@/components/Submit";
 import { usePopupStore } from "@/stores/popup";
 import type { CalendarTask } from "@/types/db";
 import type { Priority, User } from "@prisma/client";
-// import { TimePicker } from "antd";
 import { editTask } from "@/actions/task/editTask.ts";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { FaTrash } from "react-icons/fa";
-import { FaCheck } from "react-icons/fa6";
 // @ts-ignore
 import { deleteTask } from "@/actions/task/deleteTask.ts";
 import FormError from "@/components/FormError";
-import { SlimInput, slimInputClassName } from "@/components/SlimInput";
-import { cn } from "@/lib/cn";
-import { errorToast } from "@/lib/toast";
+import { SlimInput } from "@/components/SlimInput";
 import { useFormErrorStore } from "@/stores/form-error";
-import { addOneHour, formatDateToToday, getCurrentTime } from "@/utils/time";
+import { addOneHour } from "@/utils/time";
 import moment from "moment";
 import AssignTaskDropDown from "./AssignTaskDropDown";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { useCalendarStore } from "@/stores/calendarStore";
 import { formatTime12Hour } from "@/utils/formateTime12Hours";
 import { Select } from "antd";
+import { Check, Trash2 } from "lucide-react";
 
 export default function UpdateTask() {
   const router = useRouter();
@@ -298,7 +294,7 @@ export default function UpdateTask() {
               >
                 Low
                 {priority === "Low" && (
-                  <FaCheck className="absolute right-2 text-white" />
+                  <Check className="absolute right-2 text-white" />
                 )}
               </button>
               <button
@@ -308,7 +304,7 @@ export default function UpdateTask() {
               >
                 Medium
                 {priority === "Medium" && (
-                  <FaCheck className="absolute right-2 text-white" />
+                  <Check className="absolute right-2 text-white" />
                 )}
               </button>
               <button
@@ -318,7 +314,7 @@ export default function UpdateTask() {
               >
                 High
                 {priority === "High" && (
-                  <FaCheck className="absolute right-2 text-white" />
+                  <Check className="absolute right-2 text-white" />
                 )}
               </button>
             </div>
@@ -335,7 +331,7 @@ export default function UpdateTask() {
                 router.refresh();
               }}
             >
-              <FaTrash />
+              <Trash2 />
             </button>
 
             <DialogFooter className="w-full">

@@ -1,11 +1,11 @@
 import Link from "next/link";
 import React from "react";
-import { IoArrowBack } from "react-icons/io5";
 import FleetDetails from "../components/FleetDetails";
 import InvoiceAndStatementList from "../components/InvoiceAndStatementList";
 import NewFleet from "@/app/(dashboard)/dashboard/fleet/components/NewFleet";
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
+import { ArrowLeft } from "lucide-react";
 
 type PropsType = {
   params: {
@@ -42,7 +42,7 @@ const page = async (props: PropsType) => {
         },
       },
       tag: {
-        where: { type: "CLIENT" }
+        where: { type: "CLIENT" },
       },
     },
   });
@@ -51,7 +51,7 @@ const page = async (props: PropsType) => {
     <div className="p-2">
       <div className="w-fit rounded border p-1.5 md:hidden">
         <Link href="/dashboard/fleet">
-          <IoArrowBack className="text-lg" />
+          <ArrowLeft size={18} />
         </Link>
       </div>
       <div className="flex items-center justify-between">

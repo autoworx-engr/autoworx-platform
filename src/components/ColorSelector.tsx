@@ -17,8 +17,8 @@ import Submit from "@/components/Submit";
 import { errorToast } from "@/lib/toast";
 import { useFormErrorStore } from "@/stores/form-error";
 import { VehicleColor } from "@prisma/client";
+import { ChevronDown, ChevronUp, Search } from "lucide-react";
 import { useEffect, useState } from "react";
-import { FaChevronDown, FaChevronUp, FaSearch } from "react-icons/fa";
 
 interface ColorSelectorProps {
   selectedColor: VehicleColor | null;
@@ -103,14 +103,17 @@ export default function ColorSelector({
               setColorOpen(!colorOpen);
             }}
           >
-            {colorOpen ? <FaChevronUp /> : <FaChevronDown />}
+            {colorOpen ? <ChevronUp /> : <ChevronDown />}
           </button>
         </div>
 
         {colorOpen && (
           <div className="absolute left-0 top-full z-50 mt-1 w-full rounded-lg border-2 border-slate-400 bg-background shadow-lg">
             <div className="relative m-2">
-              <FaSearch className="absolute left-2 top-1/2 -translate-y-1/2 transform text-[#797979]" />
+              <Search
+                size={18}
+                className="absolute left-2 top-1/2 -translate-y-1/2 transform text-[#797979]"
+              />
               <input
                 type="text"
                 placeholder="Search"

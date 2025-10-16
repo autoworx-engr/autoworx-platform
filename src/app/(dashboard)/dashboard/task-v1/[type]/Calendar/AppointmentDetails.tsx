@@ -1,7 +1,7 @@
 "use client";
 import moment from "moment-timezone";
-import { LuCalendarX2 } from "react-icons/lu";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
+import { CalendarX2 } from "lucide-react";
 
 export default function AppointmentDetails({
   appointments,
@@ -9,9 +9,9 @@ export default function AppointmentDetails({
   appointments: any;
 }) {
   const timezone = useCompanyTimezone();
-  
+
   // Get current date in company timezone
-  const inputDate = moment.tz(timezone).startOf('day').toDate();
+  const inputDate = moment.tz(timezone).startOf("day").toDate();
 
   const filteredAppointments = appointments.filter((a: any) => {
     return new Date(a.date) >= inputDate;
@@ -31,7 +31,10 @@ export default function AppointmentDetails({
         filteredAppointments.map((appointment: any) => {
           const start = moment(appointment.startTime, "HH:mm");
           const end = moment(appointment.endTime, "HH:mm");
-          const date = moment.utc(appointment?.date)?.tz(timezone).format("Do MMMM YYYY");
+          const date = moment
+            .utc(appointment?.date)
+            ?.tz(timezone)
+            .format("Do MMMM YYYY");
 
           return (
             <div
@@ -80,7 +83,7 @@ export default function AppointmentDetails({
                     ? appointment.assignedUsers
                         .map(
                           (user: any) =>
-                            `${user?.firstName ?? ""} ${user?.lastName ?? ""}`,
+                            `${user?.firstName ?? ""} ${user?.lastName ?? ""}`
                         )
                         .join(", ")
                     : "N/A"}
@@ -99,7 +102,7 @@ export default function AppointmentDetails({
         })
       ) : (
         <div className="mt-10 flex flex-col items-center justify-center text-center">
-          <LuCalendarX2 className="mb-4 h-12 w-12 text-gray-400" />
+          <CalendarX2 className="mb-4 h-12 w-12 text-gray-400" />
           <h3 className="text-lg font-semibold text-gray-700">
             No appointments found
           </h3>

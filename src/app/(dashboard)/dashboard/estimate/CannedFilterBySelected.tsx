@@ -1,9 +1,9 @@
 "use client";
 import { cn } from "@/lib/cn";
 import { capitalCase } from "change-case";
+import { ChevronDown } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef } from "react";
-import { IoMdArrowDropdown } from "react-icons/io";
 
 type TFilterModalState = {
   [key: string]: boolean;
@@ -87,7 +87,7 @@ export default function CannedFilterBySelection({
               ? "Types"
               : capitalCase(type)}
         </span>
-        <IoMdArrowDropdown />
+        <ChevronDown className="w-4 h-4" />
       </button>
 
       {activeModal[modalName] && (

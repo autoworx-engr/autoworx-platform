@@ -1,9 +1,9 @@
 "use client";
 import VendorListStore from "@/stores/vendorListStore";
 import { Vendor } from "@prisma/client";
+import { X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { IoClose } from "react-icons/io5";
 
 export default function Details({ vendor }: { vendor: Vendor | undefined }) {
   const { isActive, setActive } = VendorListStore();
@@ -20,7 +20,7 @@ export default function Details({ vendor }: { vendor: Vendor | undefined }) {
           router.back();
         }}
       >
-        <IoClose className="text-2xl" />
+        <X size={24} />
       </div>
       <h3 className="text-xl font-bold">Vendor Details</h3>
 
