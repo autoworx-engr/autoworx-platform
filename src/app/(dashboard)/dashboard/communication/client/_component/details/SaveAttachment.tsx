@@ -1,8 +1,7 @@
 "use client";
 import Link from "next/link";
 import { MailgunEmailAttachment, ClientSmsAttachments } from "@prisma/client";
-import React from "react";
-import { FaFile } from "react-icons/fa";
+import { File } from "lucide-react";
 
 type TProps = {
   attachment: MailgunEmailAttachment | ClientSmsAttachments;
@@ -20,7 +19,7 @@ export default function SaveAttachment({ attachment }: TProps) {
         // onClick={() => handleDownload(attachment.url, attachment.name)}
       >
         <span>
-          <FaFile />
+          <File className="w-5 h-5" />
         </span>
 
         <p>

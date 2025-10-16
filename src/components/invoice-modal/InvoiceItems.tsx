@@ -2,8 +2,8 @@
 
 import type { db } from "@/lib/db";
 import { formatCurrency } from "@/utils/formatCurrency";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
-import { FaChevronDown, FaChevronUp } from "react-icons/fa6";
 
 type InvoiceItemsProps = {
   isPrinting?: boolean;
@@ -70,7 +70,7 @@ export function InvoiceItems({ items, isPrinting = false }: InvoiceItemsProps) {
             className="flex items-center gap-1"
           >
             <p>{formatCurrency(serviceTotal)}</p>
-            {openService === item.id ? <FaChevronUp /> : <FaChevronDown />}
+            {openService === item.id ? <ChevronUp /> : <ChevronDown />}
           </button>
         </div>
         {(openService === item.id || isPrinting) && (
@@ -89,7 +89,7 @@ export function InvoiceItems({ items, isPrinting = false }: InvoiceItemsProps) {
                           material.sell
                             ? parseFloat(material.sell.toString()) *
                                 Number(material.quantity ?? 0)
-                            : 0,
+                            : 0
                         )}
                       </p>
                     </div>
@@ -106,7 +106,7 @@ export function InvoiceItems({ items, isPrinting = false }: InvoiceItemsProps) {
                     item.labor?.charge
                       ? parseFloat(item.labor?.charge.toString()) *
                           Number(item.labor?.hours)
-                      : 0,
+                      : 0
                   )}
                 </p>
               </div>

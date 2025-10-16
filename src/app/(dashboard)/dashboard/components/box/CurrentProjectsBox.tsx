@@ -1,13 +1,10 @@
-import {
-  CurrentProject,
-  getCurrentProjects,
-} from "@/actions/dashboard/data/getTechnicianInfo";
+import { getCurrentProjects } from "@/actions/dashboard/data/getTechnicianInfo";
 import WorkOrderModal from "@/components/workorder-modal/WorkOrderModal";
 import moment from "moment-timezone";
 import Link from "next/link";
 import React from "react";
-import { FaExternalLinkAlt } from "react-icons/fa";
 import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
+import { ExternalLink } from "lucide-react";
 
 export default async function CurrentProjectsBox() {
   const companyTimezone = await getCompanyTimezone();
@@ -21,7 +18,7 @@ export default async function CurrentProjectsBox() {
       <div className="mb-8 flex items-center justify-between">
         <span className="text-xl font-bold">Current Projects</span>{" "}
         <Link href="/dashboard/pipeline/shop/pipeline">
-          <FaExternalLinkAlt />
+          <ExternalLink />
         </Link>
       </div>
       <div className="custom-scrollbar flex flex-1 flex-col space-y-4">

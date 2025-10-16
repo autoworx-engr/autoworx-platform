@@ -18,8 +18,8 @@ import Submit from "@/components/Submit";
 import { useFormErrorStore } from "@/stores/form-error";
 import { useListsStore } from "@/stores/lists";
 import { Vendor } from "@prisma/client";
+import { SquarePen } from "lucide-react";
 import { useState } from "react";
-import { FaEdit } from "react-icons/fa";
 
 export default function EditHistory({
   productId,
@@ -87,7 +87,7 @@ export default function EditHistory({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <button className="text-[#6571FF]">
-          <FaEdit />
+          <SquarePen size={20} />
         </button>
       </DialogTrigger>
 
@@ -139,8 +139,8 @@ export default function EditHistory({
                       ?.toLowerCase()
                       ?.includes(search.toLowerCase()) ||
                     (vendor?.name?.toLowerCase() || "").includes(
-                      search.toLowerCase(),
-                    ),
+                      search.toLowerCase()
+                    )
                 )
               }
               openState={[vendorOpen, setVendorOpen]}

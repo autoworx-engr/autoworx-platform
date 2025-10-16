@@ -4,8 +4,8 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@radix-ui/react-dropdown-menu";
+import { ChevronDown, ChevronUp, Search } from "lucide-react";
 import React, { ChangeEvent, useEffect, useState } from "react";
-import { FaChevronDown, FaChevronUp, FaSearch } from "react-icons/fa";
 
 interface SelectorProps<T> {
   label: (item: T | null) => string;
@@ -110,14 +110,14 @@ export default function SelectClientSource<T>({
           onClick={() => setIsOpen(true)}
           className={cn(
             "flex h-auto w-full items-center justify-between rounded-md border-2 border-slate-400 px-4 py-1",
-            isOpen && "invisible",
+            isOpen && "invisible"
           )}
         >
           {/* Display selected item or label */}
           <p className="text-sm font-medium text-slate-400">
             {selected ? label(selected) : label(null)}
           </p>
-          <FaChevronDown className="text-[#797979]" />
+          <ChevronDown className="text-[#797979]" />
         </DropdownMenuTrigger>
 
         <DropdownMenuContent
@@ -131,7 +131,10 @@ export default function SelectClientSource<T>({
         >
           {/* Search input */}
           <div className="relative m-2">
-            <FaSearch className="absolute left-2 top-1/2 -translate-y-1/2 transform text-[#797979]" />
+            <Search
+              size={16}
+              className="absolute left-2 top-1/2 -translate-y-1/2 transform text-[#797979]"
+            />
             <input
               type="text"
               placeholder="Search"
@@ -139,7 +142,7 @@ export default function SelectClientSource<T>({
               onChange={handleSearchChange}
             />
             <button onClick={handleCloseDropdown}>
-              <FaChevronUp className="absolute right-2 top-1/2 -translate-y-1/2 transform text-[#797979]" />
+              <ChevronUp className="absolute right-2 top-1/2 -translate-y-1/2 transform text-[#797979]" />
             </button>
           </div>
 
@@ -155,7 +158,7 @@ export default function SelectClientSource<T>({
                     className={cn(
                       "w-full p-1 px-2 text-left hover:bg-gray-100",
                       border &&
-                        "relative left-1/2 my-1 w-[95%] -translate-x-1/2 rounded-md border-2 border-slate-400 py-[0.3rem]",
+                        "relative left-1/2 my-1 w-[95%] -translate-x-1/2 rounded-md border-2 border-slate-400 py-[0.3rem]"
                     )}
                   >
                     {displayList(item)}
@@ -168,7 +171,7 @@ export default function SelectClientSource<T>({
                     className={cn(
                       "w-full p-1 px-2 text-left hover:bg-gray-100",
                       border &&
-                        "relative left-1/2 my-1 w-[95%] -translate-x-1/2 rounded-md border-2 border-slate-400 py-[0.3rem]",
+                        "relative left-1/2 my-1 w-[95%] -translate-x-1/2 rounded-md border-2 border-slate-400 py-[0.3rem]"
                     )}
                   >
                     {displayList(item)}

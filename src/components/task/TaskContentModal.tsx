@@ -18,22 +18,21 @@ import { errorToast, successToast } from "@/lib/toast";
 import { useCalendarStore } from "@/stores/calendarStore";
 import { useFormErrorStore } from "@/stores/form-error";
 import { addOneHour } from "@/utils/time";
-import { Priority, Task, User } from "@prisma/client";
+import { Priority, Task } from "@prisma/client";
 import moment from "moment";
 import { useEffect, useRef, useState } from "react";
-import { FaCheck } from "react-icons/fa6";
 import AssignTaskDropDown from "./AssignTaskDropDown";
 import useTaskById from "@/hooks/query-hook/useTaskById";
 import { useQueryClient } from "@tanstack/react-query";
 import { taskQueryKey } from "@/app/(dashboard)/dashboard/task/_constant";
 import { queryKeys } from "@/lib/queryKeys";
-import { FaTrash } from "react-icons/fa";
 import { deleteTask } from "@/actions/task/deleteTask";
 import { formatTime12Hour } from "@/utils/formateTime12Hours";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { Select } from "antd";
 import { normalizeTime } from "@/utils/normalizeTime";
 import TaskSpinner from "@/app/(dashboard)/dashboard/task/_component/ui/TaskSpinner";
+import { Check, Trash2 } from "lucide-react";
 
 type NewTaskProps = {
   onlyOneUser?: boolean;
@@ -496,7 +495,7 @@ export default function TaskContentModal({
               >
                 Low
                 {priority === "Low" && (
-                  <FaCheck className="absolute right-2 text-white" />
+                  <Check className="absolute right-2 text-white" />
                 )}
               </button>
               <button
@@ -506,7 +505,7 @@ export default function TaskContentModal({
               >
                 Medium
                 {priority === "Medium" && (
-                  <FaCheck className="absolute right-2 text-white" />
+                  <Check className="absolute right-2 text-white" />
                 )}
               </button>
               <button
@@ -516,7 +515,7 @@ export default function TaskContentModal({
               >
                 High
                 {priority === "High" && (
-                  <FaCheck className="absolute right-2 text-white" />
+                  <Check className="absolute right-2 text-white" />
                 )}
               </button>
             </div>
@@ -530,14 +529,14 @@ export default function TaskContentModal({
           >
             {fromEdit && taskId && (
               <button
-                className="text-xl text-red-500 hover:text-red-700"
+                className="text-red-500 hover:text-red-700"
                 type="button"
                 onClick={() => handleDeleteTask(taskId)}
               >
-                <FaTrash />
+                <Trash2 size={20} />
               </button>
             )}
-            <DialogFooter className=" flex flex-row justify-end space-x-2 " >
+            <DialogFooter className=" flex flex-row justify-end space-x-2 ">
               <DialogClose asChild>
                 <button
                   type="button"

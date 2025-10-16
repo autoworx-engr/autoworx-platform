@@ -2,11 +2,9 @@
 
 import { deleteInventory } from "@/actions/inventory/delete";
 import { cn } from "@/lib/cn";
-import getUser from "@/lib/getUser";
 import { Category, InventoryProduct, User, Vendor } from "@prisma/client";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
-import { FaTimes } from "react-icons/fa";
 import EditProduct from "./EditProduct";
 import InventoryResponsiveCard from "@/components/mobile-responsive/inventory/ResponsiveInventoryCard";
 import { ProductCardProps } from "@/types/inventory";
@@ -17,6 +15,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/Tooltip";
+import { X } from "lucide-react";
 
 const evenColor = "bg-background";
 const oddColor = "bg-blue-100";
@@ -256,7 +255,11 @@ export default function ProductTable({
                           okText="Yes"
                           cancelText="No"
                         >
-                          <FaTimes className="text-xl text-red-400" />
+                          <X
+                            size={20}
+                            strokeWidth={3}
+                            className="text-red-400"
+                          />
                         </Popconfirm>
                       </div>
                     </td>

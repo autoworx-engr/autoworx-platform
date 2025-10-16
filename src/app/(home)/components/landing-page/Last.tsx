@@ -1,5 +1,5 @@
+import { ChevronDown } from "lucide-react";
 import React, { useState } from "react";
-import { FaChevronDown } from "react-icons/fa";
 
 const faqs = [
   {
@@ -66,7 +66,7 @@ const FAQSection = () => {
                 className="flex w-full items-center justify-between p-3 text-left font-semibold hover:cursor-pointer focus:outline-none lg:p-6 lg:text-3xl"
               >
                 {faq?.question}
-                <FaChevronDown
+                <ChevronDown
                   className={`transition-transform duration-300 ${openIndex === index ? "rotate-180 transform" : ""}`}
                 />
               </button>

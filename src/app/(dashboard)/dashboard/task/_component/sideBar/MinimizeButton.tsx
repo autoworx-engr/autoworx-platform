@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/cn";
 import { useCalendarSidebarStore } from "@/stores/calendarSidebar";
-import { LuArrowLeftToLine } from "react-icons/lu";
+import { ArrowLeftFromLine } from "lucide-react";
 
 export function MinimizeButton() {
   const minimized = useCalendarSidebarStore((x) => x.minimized);
@@ -13,10 +13,10 @@ export function MinimizeButton() {
       onClick={toggleMinimized}
       className={cn(
         "rounded-lg p-2 transition-transform ease-in hover:bg-gray-300",
-        minimized ? "mx-auto rotate-180" : "rotate-0",
+        minimized ? "mx-auto rotate-180" : "rotate-0"
       )}
     >
-      <LuArrowLeftToLine />
+      <ArrowLeftFromLine size={18} />
     </button>
   );
 }

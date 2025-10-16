@@ -2,8 +2,8 @@
 
 import { useClientFilterStore } from "@/stores/clientFilter";
 import React, { useEffect } from "react";
-import { IoSearchOutline } from "react-icons/io5";
 import NewFleet from "./NewFleet";
+import { Search } from "lucide-react";
 
 export default function Header() {
   const { setFilter } = useClientFilterStore();
@@ -17,7 +17,7 @@ export default function Header() {
       <div className="flex w-full items-center gap-x-8 bg-background lg:w-fit">
         <div className="flex w-full items-center gap-x-2 rounded-md border border-gray-300 px-4 py-1 text-gray-400 lg:w-[500px]">
           <span className="">
-            <IoSearchOutline />
+            <Search size={20} />
           </span>
           <input
             name="search"

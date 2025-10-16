@@ -3,13 +3,12 @@ import { deleteCoupon } from "@/actions/coupon/new";
 import { Coupon } from "@prisma/client";
 import moment from "moment";
 import React, { useState, useEffect } from "react";
-import { FaTimes } from "react-icons/fa";
 import EditCoupon from "./EditCoupon";
 import NewCoupon from "./NewCoupon";
 import QrCodeForCoupon from "./QrCodeForCoupon";
 import { Pagination, Popconfirm } from "antd"; // Importing the Pagination component from Ant Design
 import { useMediaQuery } from "react-responsive";
-import { SquarePen } from "lucide-react";
+import { SquarePen, X } from "lucide-react";
 
 // Define the props for the CouponTable component
 interface CouponTableProps {
@@ -171,10 +170,11 @@ const CuponComponet = ({ coupons, setCoupons }: CouponTableProps) => {
                               : handleDelete({} as React.MouseEvent, coupon)
                           }
                         >
-                          <FaTimes
+                          <X
+                            size={20}
+                            strokeWidth={3}
                             cursor={"pointer"}
                             color="#f87171"
-                            fontSize={20}
                           />
                         </Popconfirm>
                       </div>
@@ -213,10 +213,11 @@ const CuponComponet = ({ coupons, setCoupons }: CouponTableProps) => {
                             : handleDelete({} as React.MouseEvent, coupon)
                         }
                       >
-                        <FaTimes
+                        <X
+                          size={20}
+                          strokeWidth={3}
                           cursor={"pointer"}
                           color="#f87171"
-                          fontSize={20}
                         />
                       </Popconfirm>
                     </div>

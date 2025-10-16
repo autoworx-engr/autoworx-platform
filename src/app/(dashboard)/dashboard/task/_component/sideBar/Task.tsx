@@ -6,8 +6,6 @@ import { Popconfirm, Tooltip } from "antd";
 import moment from "moment";
 import React, { LegacyRef, useState, useEffect } from "react";
 import { useDrag } from "react-dnd";
-import { FaRegCheckCircle } from "react-icons/fa";
-import { MdOutlineEdit } from "react-icons/md";
 import TaskCreateOrEdit from "@/components/task/TaskCreateOrEdit";
 import { errorToast, successToast } from "@/lib/toast";
 import { useQueryClient } from "@tanstack/react-query";
@@ -15,7 +13,7 @@ import { useRouter } from "next/navigation";
 import { useDate } from "../../../task-v1/[type]/Calendar/Day";
 import { taskQueryKey } from "../../_constant";
 import useWeekStartEndDays from "../../_hook/lib/useWeekStartEndDays";
-import { SquarePen } from "lucide-react";
+import { CircleCheckBig, SquarePen } from "lucide-react";
 
 type TaskComponentProps = {
   task: Task;
@@ -64,9 +62,9 @@ export default function TaskComponent({ task }: TaskComponentProps) {
       }
     };
 
-    window.addEventListener('scroll', handleScroll, true);
+    window.addEventListener("scroll", handleScroll, true);
     return () => {
-      window.removeEventListener('scroll', handleScroll, true);
+      window.removeEventListener("scroll", handleScroll, true);
     };
   }, [popconfirmVisible]);
 
@@ -170,7 +168,7 @@ export default function TaskComponent({ task }: TaskComponentProps) {
         onConfirm={handleDelete}
         onCancel={() => setPopconfirmVisible(false)}
       >
-        <FaRegCheckCircle
+        <CircleCheckBig
           className="text-xl text-white hover:text-gray-400"
           onClick={() => setPopconfirmVisible(true)}
         />

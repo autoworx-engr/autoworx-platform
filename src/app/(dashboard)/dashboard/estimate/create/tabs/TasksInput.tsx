@@ -2,9 +2,8 @@
 
 import { deleteTask } from "@/actions/task/deleteTask";
 import { useEstimateCreateStore } from "@/stores/estimate-create";
+import { CirclePlus, X } from "lucide-react";
 import { create } from "mutative";
-import { FaTimes } from "react-icons/fa";
-import { HiOutlinePlusCircle } from "react-icons/hi2";
 
 export function TasksInput() {
   const tasks = useEstimateCreateStore((x) => x.tasks);
@@ -40,7 +39,7 @@ export function TasksInput() {
               className="absolute right-0 top-0 -translate-y-1/2 translate-x-1/2 text-[#6470FF]"
             >
               <div className="rounded-full bg-[#6571FF] p-1 text-white">
-                <FaTimes className="text-[10px]" />
+                <X size={10} />
               </div>
             </button>
           </label>
@@ -54,7 +53,7 @@ export function TasksInput() {
           }}
           className="flex items-center gap-1 text-[#6571FF]"
         >
-          <HiOutlinePlusCircle size="1.2em" />
+          <CirclePlus size={20} />
           Task
         </button>
       </div>

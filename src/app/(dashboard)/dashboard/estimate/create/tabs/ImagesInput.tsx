@@ -3,9 +3,9 @@
 import { errorToast, successToast } from "@/lib/toast";
 import { useEstimateCreateStore } from "@/stores/estimate-create";
 import imageCompression from "browser-image-compression";
+import { X } from "lucide-react";
 import Image from "next/image";
 import { ChangeEvent, useTransition } from "react";
-import { FaTimes } from "react-icons/fa";
 
 export function ImagesInput() {
   const { photos, setPhotos } = useEstimateCreateStore();
@@ -16,7 +16,7 @@ export function ImagesInput() {
       console.log({ files });
       if (!files?.length) return;
       const compressPhotos = await Promise.all(
-        Array.from(files).map(async file =>
+        Array.from(files).map(async (file) =>
           imageCompression(file, {
             maxSizeMB: 1, // max size in MB
             maxWidthOrHeight: 1920, // limit resolution
@@ -26,7 +26,7 @@ export function ImagesInput() {
       );
       console.log({ compressPhotos });
       const formData = new FormData();
-      compressPhotos.forEach(file => {
+      compressPhotos.forEach((file) => {
         formData.append("file", file);
       });
 
@@ -63,7 +63,7 @@ export function ImagesInput() {
           hidden
           accept="image/*"
           multiple
-          onChange={event => startTransition(() => handleUploadImage(event))}
+          onChange={(event) => startTransition(() => handleUploadImage(event))}
         />
         <svg
           width="72"
@@ -110,7 +110,7 @@ export function ImagesInput() {
               className="absolute right-0 top-0 -translate-y-1/2 translate-x-1/2 text-[#6470FF]"
             >
               <div className="rounded-full bg-[#6571FF] p-1 text-white">
-                <FaTimes className="text-[10px]" />
+                <X size={10} />
               </div>
             </button>
           </div>

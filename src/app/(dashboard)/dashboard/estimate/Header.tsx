@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { FaSearch } from "react-icons/fa";
 import { Filter } from "./Filter";
 import Link from "next/link";
 import { useEstimateFilterStore } from "@/stores/estimate-filter";
@@ -12,6 +11,7 @@ import { useListsStore } from "@/stores/lists";
 import { useEstimateCreateStore } from "@/stores/estimate-create";
 import { useEstimatePopupStore } from "@/stores/estimate-popup";
 import { useDebounce } from "@/hooks/useDebounce";
+import { Search } from "lucide-react";
 
 type THeaderProps = {
   searchTerm?: string;
@@ -55,7 +55,7 @@ export default function Header({
       <div className="app-shadow gap-3 rounded-md p-3 md:flex">
         {/* Search */}
         <div className="relative flex items-center">
-          <FaSearch className="absolute left-3 text-gray-400" />{" "}
+          <Search size={20} className="absolute left-3 text-gray-400" />{" "}
           <input
             type="text"
             placeholder={

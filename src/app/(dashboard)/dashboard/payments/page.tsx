@@ -2,7 +2,6 @@
 import { getPayments } from "@/actions/payment/getPayments";
 import Title from "@/components/Title";
 import { useServerGetWithRefresh } from "@/hooks/useServerGetWithRefresh";
-import { CiClock2 } from "react-icons/ci";
 import HeaderSearch from "./components/HeaderSearch";
 import {
   PaymentTab,
@@ -12,6 +11,7 @@ import {
 } from "./components/PaymentTab";
 import PaymentTable from "./components/PaymentTable";
 import { useState } from "react";
+import { Clock } from "lucide-react";
 
 export default function Page() {
   const { data: payments, refresh: refreshPayments } =
@@ -74,7 +74,11 @@ export default function Page() {
           <div className="flex min-h-[65vh] flex-col items-center justify-center rounded-md bg-background p-8">
             <div className="w-full max-w-2xl text-center">
               <div className="mb-4 flex items-center justify-center">
-                <CiClock2 className="mr-2 text-blue-500" size={28} />
+                <Clock
+                  strokeWidth={3}
+                  className="mr-2 text-blue-500"
+                  size={30}
+                />
                 <h2 className="text-xl font-bold text-gray-800 md:text-2xl">
                   Coupons Coming Soon
                 </h2>

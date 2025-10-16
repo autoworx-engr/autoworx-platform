@@ -1,6 +1,5 @@
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/Tooltip";
 import { formatCurrency } from "@/utils/formatCurrency";
-import { FaCaretDown, FaCaretUp } from "react-icons/fa";
 
 const ChartData = ({
   heading,
@@ -52,11 +51,29 @@ const ChartData = ({
           {rate != 0 &&
             (isPositive ? (
               <div className="text-lg text-[#4DB6AC]">
-                <FaCaretUp />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  width="20"
+                  height="20"
+                  aria-hidden="true"
+                  role="img"
+                >
+                  <path d="M12 8.5l7 7H5l7-7z" fill="currentColor" />
+                </svg>
               </div>
             ) : (
               <div className="text-lg text-red-500">
-                <FaCaretDown />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  width="20"
+                  height="20"
+                  aria-hidden="true"
+                  role="img"
+                >
+                  <path d="M12 15.5L5 8.5h14l-7 7z" fill="currentColor" />
+                </svg>
               </div>
             ))}
           <div

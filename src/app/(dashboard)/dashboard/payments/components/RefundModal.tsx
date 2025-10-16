@@ -16,12 +16,9 @@ import * as Tabs from "@radix-ui/react-tabs";
 import moment from "moment";
 import Image from "next/image";
 import React, { useState, useTransition, useEffect } from "react";
-import { FaRegCreditCard } from "react-icons/fa6";
-import { FaTrash } from "react-icons/fa";
-import { FiTrash2 } from "react-icons/fi";
-import { IoSettingsOutline, IoSettingsSharp } from "react-icons/io5";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
+import { Settings, Trash2 } from "lucide-react";
 
 function TabTrigger({
   value,
@@ -248,7 +245,7 @@ export default function RefundModal({
             disabled={isDisabled}
           >
             <span>Refund</span>
-            {hasRefund && <IoSettingsOutline color="#6571FF" />}
+            {hasRefund && <Settings size={16} color="#6571FF" />}
           </button>
         </DialogTrigger>
 
@@ -263,7 +260,7 @@ export default function RefundModal({
                     onClick={() => setDeleteConfirmOpen(true)}
                     className="flex items-center gap-1 rounded-lg border bg-[#FF7575] p-2 text-sm text-white self-start sm:self-auto"
                   >
-                    <FiTrash2 size={18} />
+                    <Trash2 size={18} />
                   </button>
                 )}
               </DialogTitle>
@@ -305,7 +302,29 @@ export default function RefundModal({
               <p className="mb-2 mt-5">Method</p>
               <Tabs.List className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
                 <TabTrigger value="CARD" tab={tab}>
-                  <FaRegCreditCard />
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    height="24"
+                    width="24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                    <g
+                      id="SVGRepo_tracerCarrier"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    ></g>
+                    <g id="SVGRepo_iconCarrier">
+                      {" "}
+                      <path
+                        fill-rule="evenodd"
+                        clip-rule="evenodd"
+                        d="M3.75 5.25L3 6V17.25L3.75 18H19.5L20.25 17.25V6L19.5 5.25H3.75ZM4.5 9V6.75H18.75V9H4.5ZM4.5 10.5V16.5H18.75V10.5H4.5ZM6.10217 14.25H7.67035V12.75H6.10217V14.25ZM13.1589 14.25H8.45435V12.75H13.1589V14.25Z"
+                        fill={tab === "CARD" ? "#ffffff" : "#6571ff"}
+                      ></path>{" "}
+                    </g>
+                  </svg>
                   Card
                 </TabTrigger>
 

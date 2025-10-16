@@ -1,8 +1,8 @@
 "use client";
 
 import { useFormErrorStore } from "@/stores/form-error";
-import { useState, useRef } from "react";
-import { FiEye, FiEyeOff } from "react-icons/fi";
+import { Eye, EyeOff } from "lucide-react";
+import { useState } from "react";
 
 export default function Input({
   name,
@@ -42,7 +42,7 @@ export default function Input({
         onClick={() => setShowPassword(!showPassword)}
         className="absolute inset-y-0 right-0 flex items-center pr-3 text-sm leading-5"
       >
-        {showPassword ? <FiEyeOff /> : <FiEye />}
+        {showPassword ? <EyeOff /> : <Eye />}
       </button>
 
       {error && error.field === name && (

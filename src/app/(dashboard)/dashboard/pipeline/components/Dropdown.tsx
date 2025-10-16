@@ -6,8 +6,8 @@ import { useServerGet } from "@/hooks/useServerGet";
 import { usePipelineFilterStore } from "@/stores/PipelineFilterStore";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useEffect, useState } from "react";
-import { FaChevronDown } from "react-icons/fa";
 import Select from "./Select";
+import { ChevronDown } from "lucide-react";
 interface DropdownProps {
   pipelineType: string;
 }
@@ -49,7 +49,7 @@ const DropdownMenuDemo = ({ pipelineType }: DropdownProps) => {
           aria-label="Customise options"
         >
           <span>Filter</span>
-          <FaChevronDown />
+          <ChevronDown />
         </button>
       </DropdownMenu.Trigger>
 

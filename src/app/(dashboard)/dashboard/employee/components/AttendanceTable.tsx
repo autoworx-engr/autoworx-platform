@@ -1,7 +1,4 @@
 "use client";
-import { CiCircleInfo } from "react-icons/ci";
-import { IoMdArrowDropdown, IoMdArrowDropup } from "react-icons/io";
-import { FiEdit2, FiSave, FiX } from "react-icons/fi";
 // @ts-ignore
 import { getAttendanceInfo } from "@/actions/employee/getAttendanceInfo";
 // @ts-ignore
@@ -17,6 +14,7 @@ import { useParams } from "next/navigation";
 import React, { useState, useEffect } from "react";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import moment from "moment-timezone";
+import { Info, Pencil, Save, X } from "lucide-react";
 
 interface AttendanceRecord {
   id?: number;
@@ -101,7 +99,7 @@ const Dashboard = () => {
     employeeId,
     startDate || undefined,
     endDate || undefined,
-    refetch,
+    refetch
   );
 
   const getInfoContent = (label: string): string | undefined => {
@@ -111,7 +109,7 @@ const Dashboard = () => {
 
   const handleEditClick = (
     rowIndex: number,
-    field: "clockedIn" | "clockedOut",
+    field: "clockedIn" | "clockedOut"
   ) => {
     const data = attendanceInfo?.attInfo[rowIndex];
     if (!data || !isEditable(data, field)) return;
@@ -159,7 +157,7 @@ const Dashboard = () => {
         date,
         editingState.field,
         timeWithDate,
-        data.id,
+        data.id
       );
 
       if (result.success) {
@@ -199,7 +197,7 @@ const Dashboard = () => {
 
   const isEditable = (
     data: AttendanceData | AttendanceRecord,
-    field: "clockedIn" | "clockedOut",
+    field: "clockedIn" | "clockedOut"
   ) => {
     // Check if the field exists and is not a string (like "Absent", "No Show", etc.)
     return (
@@ -210,7 +208,7 @@ const Dashboard = () => {
   const renderTimeCell = (
     data: AttendanceData | AttendanceRecord,
     field: "clockedIn" | "clockedOut",
-    rowIndex: number,
+    rowIndex: number
   ) => {
     const isCurrentlyEditing =
       editingState?.rowIndex === rowIndex && editingState?.field === field;
@@ -233,7 +231,7 @@ const Dashboard = () => {
               className="flex items-center justify-center text-green-600 hover:text-green-800 disabled:opacity-50"
               title="Save"
             >
-              <FiSave size={14} />
+              <Save size={14} />
             </button>
             <button
               onClick={handleCancelEdit}
@@ -241,7 +239,7 @@ const Dashboard = () => {
               className="flex items-center justify-center text-red-600 hover:text-red-800 disabled:opacity-50"
               title="Cancel"
             >
-              <FiX size={14} />
+              <X size={14} />
             </button>
           </div>
           {updateError && (
@@ -266,7 +264,7 @@ const Dashboard = () => {
             className="text-blue-600 opacity-0 transition-opacity hover:text-blue-800 group-hover:opacity-100"
             title="Edit time"
           >
-            <FiEdit2 size={12} />
+            <Pencil size={12} />
           </button>
         )}
       </div>
@@ -316,7 +314,11 @@ const Dashboard = () => {
               // Process start date
               if (start instanceof Date) {
                 startDateObj = start;
-              } else if (start && typeof start === "object" && typeof start.toDate === "function") {
+              } else if (
+                start &&
+                typeof start === "object" &&
+                typeof start.toDate === "function"
+              ) {
                 startDateObj = start.toDate();
               } else if (start && typeof start.toString === "function") {
                 startDateObj = new Date(start.toString());
@@ -327,7 +329,11 @@ const Dashboard = () => {
               // Process end date
               if (end instanceof Date) {
                 endDateObj = end;
-              } else if (end && typeof end === "object" && typeof end.toDate === "function") {
+              } else if (
+                end &&
+                typeof end === "object" &&
+                typeof end.toDate === "function"
+              ) {
                 endDateObj = end.toDate();
               } else if (end && typeof end.toString === "function") {
                 endDateObj = new Date(end.toString());
@@ -348,7 +354,8 @@ const Dashboard = () => {
               // When user selects dates from DateRangePicker, they're in local browser time
               // We need to ensure these dates are interpreted correctly by the server
               // Format as YYYY-MM-DD which will be interpreted by the server in company timezone
-              const formattedStartDate = moment(startDateObj).format("YYYY-MM-DD");
+              const formattedStartDate =
+                moment(startDateObj).format("YYYY-MM-DD");
               const formattedEndDate = moment(endDateObj).format("YYYY-MM-DD");
 
               // Update state with the new dates
@@ -404,7 +411,7 @@ const Dashboard = () => {
                           // Fix date processing to avoid timezone shifts
                           // If data.date is a string in YYYY-MM-DD format, parse it as local date
                           let dateMoment;
-                          if (typeof data.date === 'string') {
+                          if (typeof data.date === "string") {
                             // Parse as local date to avoid timezone shifts
                             dateMoment = moment.tz(data.date, timezone);
                           } else {
@@ -419,7 +426,7 @@ const Dashboard = () => {
                           const effectiveHours = isNaN(Number(data.hours))
                             ? data.hours
                             : convertDuration(
-                                Number(data.hours) - Number(data.totalBreaks),
+                                Number(data.hours) - Number(data.totalBreaks)
                               );
 
                           return (
@@ -467,11 +474,13 @@ const Dashboard = () => {
                         onMouseEnter={() => setInfoIndex(index)}
                         onMouseLeave={() => setInfoIndex(null)}
                       >
-                        <CiCircleInfo className="h-3 w-3 cursor-pointer" />
+                        <Info className="h-3 w-3 cursor-pointer" />
                       </div>
                       {infoIndex === index && (
                         <div
-                          style={{ backgroundColor: "rgba(102, 115, 140, 0.9)" }}
+                          style={{
+                            backgroundColor: "rgba(102, 115, 140, 0.9)",
+                          }}
                           className="absolute left-5 top-0 z-10 flex h-auto min-h-[60px] w-[200px] items-center justify-center rounded-lg p-2 text-sm text-white"
                         >
                           {getInfoContent(metric.label)}
@@ -489,9 +498,30 @@ const Dashboard = () => {
                     >
                       <div>
                         {metric.isPositive ? (
-                          <IoMdArrowDropup />
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            width="16"
+                            height="16"
+                            aria-hidden="true"
+                            role="img"
+                          >
+                            <path d="M12 8.5l7 7H5l7-7z" fill="currentColor" />
+                          </svg>
                         ) : (
-                          <IoMdArrowDropdown />
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            width="16"
+                            height="16"
+                            aria-hidden="true"
+                            role="img"
+                          >
+                            <path
+                              d="M12 15.5L5 8.5h14l-7 7z"
+                              fill="currentColor"
+                            />
+                          </svg>
                         )}
                       </div>
                       <div className="text-nowrap">{metric.percentage}</div>
