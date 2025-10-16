@@ -1,50 +1,68 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
-export const dynamic = "force-dynamic"; // 👈 important
+export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
-    const search = searchParams.get("search") || "";
+    const search = (searchParams.get("search") || "").trim();
     const categoryName = searchParams.get("categoryName") || "";
     const skip = (page - 1) * limit;
 
-    let where: any = {};
+    const normalizedSearch = search.replace(/\s+/g, " ").toLowerCase();
+
+    let query = `
+      SELECT * FROM "inventoryWirehouseProduct"
+      WHERE TRUE
+    `;
+
+    let countQuery = `
+      SELECT COUNT(*)::int AS "count" FROM "inventoryWirehouseProduct"
+      WHERE TRUE
+    `;
+
+    const conditions: string[] = [];
+    const params: any[] = [];
 
     if (search) {
-      where.OR = [
-        { productName: { contains: search, mode: "insensitive" } },
-        { category: { contains: search, mode: "insensitive" } },
-        { unit: { contains: search, mode: "insensitive" } },
-      ];
+      const words = normalizedSearch.split(/\s+/);
+      const wordConditions: string[] = [];
+
+      words.forEach((word, index) => {
+        params.push(`%${word}%`);
+        const paramIndex = params.length;
+
+        wordConditions.push(`(
+      LOWER("productName") ILIKE $${paramIndex} OR
+      LOWER("category") ILIKE $${paramIndex}
+    )`);
+      });
+
+      conditions.push(wordConditions.join(" AND "));
     }
 
     if (categoryName) {
-      if (search) {
-        where = {
-          AND: [
-            { OR: where.OR },
-            { category: { contains: categoryName, mode: "insensitive" } },
-          ],
-        };
-      } else {
-        where.category = { contains: categoryName, mode: "insensitive" };
-      }
+      params.push(`%${categoryName.toLowerCase()}%`);
+      conditions.push(`LOWER("category") ILIKE $${params.length}`);
     }
 
-    const [totalCount, products] = await Promise.all([
-      db.inventoryWirehouseProduct.count({ where }),
-      db.inventoryWirehouseProduct.findMany({
-        where,
-        take: limit,
-        skip,
-      }),
+    if (conditions.length > 0) {
+      const conditionStr = " AND " + conditions.join(" AND ");
+      query += conditionStr;
+      countQuery += conditionStr;
+    }
+
+    query += ` ORDER BY "id" ASC LIMIT ${limit} OFFSET ${skip}`;
+
+    const [products, countResult] = await Promise.all([
+      db.$queryRawUnsafe(query, ...params),
+      db.$queryRawUnsafe(countQuery, ...params),
     ]);
 
+    const totalCount = Number((countResult as any)[0]?.count || 0);
     const totalPages = Math.ceil(totalCount / limit);
 
     return NextResponse.json({
