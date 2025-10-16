@@ -99,7 +99,7 @@ export async function updateInvoice(
 
     // use prisma transaction for better performance or safely save data in db
     const updatedInvoice = await db.$transaction(
-      async txDb => {
+      async (txDb) => {
         // await wait(21000);
 
         // merge all the same products and sum the quantity
@@ -111,7 +111,7 @@ export async function updateInvoice(
           if (itemMaterials) {
             materials = [
               ...materials,
-              ...itemMaterials.filter(material => material !== null),
+              ...itemMaterials.filter((material) => material !== null),
             ];
           }
         }
@@ -177,7 +177,7 @@ export async function updateInvoice(
 
         // create or update photos
         const updatedInvoicePhotos = await Promise.all(
-          data?.photos?.map(async photo => {
+          data?.photos?.map(async (photo) => {
             if (!photo.id) {
               return txDb.invoicePhoto.create({
                 data: {
@@ -196,7 +196,7 @@ export async function updateInvoice(
             invoiceId: data.id,
             id: {
               notIn: updatedInvoicePhotos
-                ?.map(photo => photo.id)
+                ?.map((photo) => photo.id)
                 .filter(Boolean) as number[],
             },
           },
@@ -209,23 +209,34 @@ export async function updateInvoice(
           },
         });
 
-        // create new inspections
-        await Promise.all(
-          data.inspections.map(async inspection => {
-            return txDb.invoiceInspection.create({
-              data: {
-                invoiceId: data.id,
-                title: inspection.title,
-                driver: inspection.driver,
-                passenger: inspection.passenger,
-                notes: inspection.notes,
-              },
-            });
-          })
-        );
+        // create new inspections 
+        const inspectionsToSave = data.inspections.filter((inspection) => {
+          const hasTitle =
+            !!inspection.title && inspection.title.toString().trim() !== "";
+          const hasFlags = !!inspection.driver || !!inspection.passenger;
+          const hasNotes =
+            !!inspection.notes && inspection.notes.toString().trim() !== "";
+          return hasTitle || hasFlags || hasNotes;
+        });
+
+        if (inspectionsToSave.length > 0) {
+          await Promise.all(
+            inspectionsToSave.map(async (inspection) => {
+              return txDb.invoiceInspection.create({
+                data: {
+                  invoiceId: data.id,
+                  title: inspection.title,
+                  driver: inspection.driver,
+                  passenger: inspection.passenger,
+                  notes: inspection.notes,
+                },
+              });
+            })
+          );
+        }
 
         const updatedInvoiceItem = await Promise.all(
-          data.items?.map(async item => {
+          data.items?.map(async (item) => {
             let findExistingItem = null;
             if (Number(item?.id)) {
               findExistingItem = await txDb.invoiceItem.findUnique({
@@ -297,7 +308,7 @@ export async function updateInvoice(
 
               if (item?.materials?.length > 0) {
                 materials = await Promise.all(
-                  item.materials.map(async material => {
+                  item.materials.map(async (material) => {
                     const hasMaterialInInvoice = await txDb.material.findFirst({
                       where: {
                         id: material?.id,
@@ -363,14 +374,14 @@ export async function updateInvoice(
                   id: {
                     notIn: materials
                       ?.filter(Boolean)
-                      .map(material => material?.id),
+                      .map((material) => material?.id),
                   },
                 },
               });
 
               const tags = item.tags;
 
-              const tagsCreatePromise = tags.map(async tag => {
+              const tagsCreatePromise = tags.map(async (tag) => {
                 let hasTagsExist = await txDb.itemTag.findFirst({
                   where: {
                     tagId: tag?.id,
@@ -395,7 +406,7 @@ export async function updateInvoice(
                 where: {
                   itemId: findExistingItem.id,
                   tagId: {
-                    notIn: tags.map(tag => tag.id),
+                    notIn: tags.map((tag) => tag.id),
                   },
                 },
               });
@@ -429,7 +440,7 @@ export async function updateInvoice(
 
               item?.materials?.length > 0 &&
                 (await Promise.all(
-                  item.materials.map(async material => {
+                  item.materials.map(async (material) => {
                     if (!material || !material.name) return;
                     if (Number(material?.quantity || 0) <= 0) {
                       throw new Error(
@@ -457,7 +468,7 @@ export async function updateInvoice(
 
               const tags = item.tags;
 
-              const tagsCreatePromise = tags.map(async tag => {
+              const tagsCreatePromise = tags.map(async (tag) => {
                 await txDb.itemTag.create({
                   data: {
                     itemId: newInvoiceItem.id,
@@ -479,7 +490,7 @@ export async function updateInvoice(
             NOT: {
               id: {
                 in: updatedInvoiceItem
-                  .map(item => item.id)
+                  .map((item) => item.id)
                   .filter(Boolean) as number[],
               },
             },
@@ -517,7 +528,7 @@ export async function updateInvoice(
             damageNotes: data.damageNotes,
             serviceIndex: JSON.stringify(
               updatedInvoiceItem
-                .map(item => item?.id)
+                .map((item) => item?.id)
                 .filter(Boolean)
                 .sort((a, b) => a - b)
             ),
@@ -593,7 +604,7 @@ export async function updateInvoice(
 
     // task create or update this section
     const invoiceTasks = await Promise.all(
-      data?.tasks?.map(async task => {
+      data?.tasks?.map(async (task) => {
         // if task.id is undefined, create a new task
         if (task.id === undefined) {
           const response = await createTask({
@@ -629,7 +640,9 @@ export async function updateInvoice(
       where: {
         invoiceId: data.id,
         id: {
-          notIn: invoiceTasks.map(task => task?.id).filter(Boolean) as number[],
+          notIn: invoiceTasks
+            .map((task) => task?.id)
+            .filter(Boolean) as number[],
         },
       },
     });
@@ -679,7 +692,7 @@ export async function updateInvoice(
           );
 
           // Wait before retry (exponential backoff)
-          await new Promise(resolve =>
+          await new Promise((resolve) =>
             setTimeout(resolve, Math.pow(2, retryCount) * 1000)
           );
 
