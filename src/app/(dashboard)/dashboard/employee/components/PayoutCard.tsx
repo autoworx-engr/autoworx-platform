@@ -23,12 +23,12 @@ const PayoutCard = ({
 }: PayoutCardProps) => {
   return (
     <div
-      className={`h-full w-full rounded-lg border border-gray-300 bg-background p-2 text-sm sm:box-border lg:mx-0 lg:w-full lg:p-5 ${customStyles}`}
+      className={`h-full w-full rounded-lg border border-gray-300 bg-background p-2 text-sm sm:box-border lg:mx-0 2xl:w-full lg:p-5 ${customStyles}`}
     >
-      <p className="font-inter mb-4 text-xs font-bold text-gray-500 lg:w-[300px] lg:text-xl">
+      <p className="font-inter mb-4 text-xs font-bold text-gray-500 lg:w-fit 2xl:w-[300px] lg:text-lg 2xl:text-xl">
         {title}
       </p>
-      <div className="font-inter mb-4 text-[28px] font-semibold text-gray-500 lg:text-6xl">
+      <div className="font-inter mb-4 text-[28px] font-semibold text-gray-500 lg:text-4xl 2xl:text-6xl">
         {!hideDollar ? formatCurrency(amount) : amount}
       </div>
 
