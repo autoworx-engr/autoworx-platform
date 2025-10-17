@@ -22,6 +22,7 @@ type TProps = {};
 
 export default function ResponsiveEstimateCreateTab({}: TProps) {
   const { items, removeMaterial } = useEstimateCreateStore();
+
   const {
     open: originalOpen,
     type,
@@ -142,12 +143,16 @@ export default function ResponsiveEstimateCreateTab({}: TProps) {
                             itemId: item.id,
                             edit: true,
                             service: item.service,
+                            serviceDesc: item?.serviceDesc,
                           });
                         }}
                         onSelect={(service) =>
                           useEstimateCreateStore.setState((x) =>
                             create(x, (x) => {
-                              x.items[i].service = service;
+                              x.items[i].service = {
+                                ...x.items[i].service,
+                                ...service,
+                              };
                             })
                           )
                         }
