@@ -157,7 +157,8 @@ export default function ColorSelector({
 }
 
 // NewVehicleColor component to create a new color
-function NewVehicleColor({
+
+export function NewVehicleColor({
   setColors,
   setColor,
   setColorOpen,
@@ -167,23 +168,32 @@ function NewVehicleColor({
   setColorOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   const [open, setOpen] = useState(false);
-  const { showError } = useFormErrorStore();
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   async function handleSubmit(data: FormData) {
-    const name = data.get("name") as string;
+    const name = (data.get("name") as string)?.trim();
+
+    // Simple client-side validation
+    if (!name) {
+      setError("Color name is required");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
 
     const res = await addVehicleColor(name);
+    setLoading(false);
 
     if (res.type === "success") {
       setColors((colors) => [...colors, res.data]);
       setOpen(false);
       setColor(res.data);
       setColorOpen(false);
-    } else if (res.type === "globalError") {
-      showError({
-        field: res.field || "name",
-        message: res.message || "",
-      });
+    } else {
+      // show error under input
+      setError(res.message || "Something went wrong");
     }
   }
 
@@ -195,27 +205,32 @@ function NewVehicleColor({
         </button>
       </DialogTrigger>
 
-      <DialogContent className="max-w-md grid-rows-[auto,1fr,auto]" form>
+      <DialogContent className="max-w-md grid-rows-[auto,1fr,auto]">
         <DialogHeader>
           <DialogTitle>Create Color</DialogTitle>
         </DialogHeader>
 
-        <div className="grid gap-2">
-          <FormError />
-          <SlimInput name="name" label={""} />
-        </div>
+        <form action={handleSubmit} className="grid gap-3">
+          <div className="flex flex-col gap-1">
+            <SlimInput name="name" label="" placeholder="Enter color name" />
+            {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
+          </div>
 
-        <DialogFooter>
-          <DialogClose className="rounded-lg border-2 border-slate-400 p-2">
-            Cancel
-          </DialogClose>
-          <Submit
-            className="rounded-lg border bg-[#6571FF] px-5 py-2 text-white"
-            formAction={handleSubmit}
-          >
-            Add
-          </Submit>
-        </DialogFooter>
+          <DialogFooter>
+            {" "}
+            <DialogClose className="rounded-lg border-2 border-slate-400 p-2">
+              {" "}
+              Cancel{" "}
+            </DialogClose>{" "}
+            <Submit
+              className="rounded-lg border bg-[#6571FF] px-5 py-2 text-white"
+              formAction={handleSubmit}
+            >
+              {" "}
+              Add{" "}
+            </Submit>{" "}
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );
