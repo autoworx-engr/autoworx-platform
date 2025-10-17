@@ -18,6 +18,7 @@ export async function POST(request: NextRequest) {
     const infobipBaseUrl = process.env.INFOBIP_BASE_URL;
     const infobipApplicationId =
       infobipCredentials.data.applicationId || process.env.INFOBIP_APP_ID;
+    const callsConfigurationId = infobipCredentials.data.callsConfigurationId;
 
     if (!infobipApiKey || !infobipBaseUrl || !infobipApplicationId) {
       return NextResponse.json(
@@ -25,6 +26,12 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
+
+    console.log("📋 [Infobip Token] Configuration:", {
+      applicationId: infobipApplicationId,
+      callsConfigurationId: callsConfigurationId,
+      identity: identity,
+    });
 
     // Generate Infobip WebRTC token using their API
     const tokenResponse = await fetch(
@@ -39,6 +46,7 @@ export async function POST(request: NextRequest) {
         body: JSON.stringify({
           identity: identity,
           applicationId: infobipApplicationId,
+          callsConfigurationId: callsConfigurationId, // <-- THIS IS THE FIX
           displayName: identity,
           capabilities: {
             recording: "ALWAYS",
@@ -60,10 +68,26 @@ export async function POST(request: NextRequest) {
 
     const tokenData = await tokenResponse.json();
 
+    // Debug: log the tokenData returned by Infobip so we can inspect its structure
+    try {
+      console.log('📋 [Infobip Token] tokenData:', tokenData);
+      if (tokenData?.token && typeof tokenData.token === 'string') {
+        // Try to decode JWT payload if token looks like a JWT
+        const parts = tokenData.token.split('.');
+        if (parts.length === 3) {
+          const payload = Buffer.from(parts[1], 'base64').toString('utf8');
+          console.log('📋 [Infobip Token] decoded token payload:', payload);
+        }
+      }
+    } catch (err) {
+      console.warn('Unable to decode tokenData for inspection', err);
+    }
+
     return NextResponse.json({
       token: tokenData.token,
       expirationTime: tokenData.expirationTime,
       applicationId: infobipApplicationId,
+      callsConfigurationId: callsConfigurationId,
     });
   } catch (error: any) {
     console.error("Token generation error:", error);

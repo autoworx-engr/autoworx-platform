@@ -54,6 +54,9 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
   const [infobipPhoneNumber, setInfobipPhoneNumber] = useState<string | null>(
     null
   );
+  const [infobipCallsConfigId, setInfobipCallsConfigId] = useState<
+    string | null
+  >(null);
 
   // Cleanup timer on unmount
   useEffect(() => {
@@ -158,7 +161,42 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
         throw new Error("No token received from Infobip server");
       }
 
-      console.log("🔑 [Infobip] Token received, initializing WebRTC...");
+      console.log("🔑 [Infobip] Token received:", {
+        hasToken: !!data.token,
+        applicationId: data.applicationId,
+        callsConfigurationId: data.callsConfigurationId,
+      });
+      try {
+        if (data?.token && typeof data.token === "string") {
+          console.log(
+            "🔑 [Infobip] Raw token (first 200 chars):",
+            data.token.slice(0, 200)
+          );
+          const parts = data.token.split(".");
+          if (parts.length === 3) {
+            const payload = atob(
+              parts[1].replace(/-/g, "+").replace(/_/g, "/")
+            );
+            console.log("🔑 [Infobip] Decoded token payload:", payload);
+          }
+        }
+      } catch (err) {
+        console.warn("Unable to decode token in client", err);
+      }
+      console.log("🔑 [Infobip] Initializing WebRTC...");
+
+      // Store the calls configuration ID for making calls
+      if (data.callsConfigurationId) {
+        setInfobipCallsConfigId(data.callsConfigurationId);
+        console.log(
+          "✅ [Infobip] Calls Configuration ID stored:",
+          data.callsConfigurationId
+        );
+      } else {
+        console.warn(
+          "⚠️ [Infobip] No Calls Configuration ID received - calls may fail"
+        );
+      }
 
       // Dynamic import of Infobip RTC client
       const createInfobipRTC = (await import("@/lib/infobip-rtc")).default;
@@ -250,10 +288,17 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
           const { PhoneCallOptions } = await import("infobip-rtc");
 
           // Create call options with from number
+          // Note: callsConfigurationId must be configured in Infobip portal and linked to the Application ID
           const callOptions = PhoneCallOptions.builder()
             .setFrom(infobipPhoneNumber)
             .setAudio(true)
             .build();
+
+          console.log("📋 [Infobip] Call options:", {
+            from: infobipPhoneNumber,
+            to: to,
+            note: "Calls Configuration must be linked to Application ID in Infobip portal",
+          });
 
           // Use callPhone for calling regular phone numbers
           const infobipCall = device.callPhone(to, callOptions);
