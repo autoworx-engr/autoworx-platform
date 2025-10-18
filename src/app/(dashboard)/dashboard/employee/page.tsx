@@ -1,56 +1,21 @@
+import { getEmployeesForPaginate } from "@/actions/employee/get";
 import Title from "@/components/Title";
 import { getCompanyId } from "@/lib/companyId";
-import { db } from "@/lib/db";
+import { SalaryHistory, User } from "@prisma/client";
+import { PieChart } from "lucide-react";
 import Link from "next/link";
-import React from "react";
 import "react-date-range/dist/styles.css"; // main style file
 import "react-date-range/dist/theme/default.css"; // theme css file
 import EmployeeFilter from "./components/EmployeeFilter";
+import EmployeeTable from "./components/EmployeeTable";
 import TotalPayouts from "./TotalPayouts";
-import Employee from "./Employee";
-import { PieChart } from "lucide-react";
 
 export default async function Page() {
   const companyId = await getCompanyId();
-  const employees = await db.user.findMany({
-    where: {
-      companyId,
-    },
-    select: {
-      id: true,
-      email: true,
-      firstName: true,
-      lastName: true,
-      role: true,
-      joinDate: true,
-      createdAt: true,
-      employeeType: true,
-      phone: true,
-      commission: true,
-      address: true,
-      city: true,
-      state: true,
-      zip: true,
-      companyName: true,
-      image: true,
-      salaryHistory: {
-        where: {
-          isActive: true,
-        },
-        select: {
-          salaryType: true,
-          salaryAmount: true,
-          startDate: true,
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
-        take: 1,
-      },
-    },
-    orderBy: {
-      joinDate: "desc",
-    },
+  const { employees, totalEmployees } = await getEmployeesForPaginate({
+    companyId,
+    take: 20,
+    page: 1,
   });
 
   return (
@@ -73,7 +38,12 @@ export default async function Page() {
 
       <EmployeeFilter />
 
-      <Employee employees={employees as any} />
+      <EmployeeTable
+        filteredEmployees={
+          employees as (User & { salaryHistory: SalaryHistory[] })[]
+        }
+        totalEmployees={totalEmployees}
+      />
     </div>
   );
 }
