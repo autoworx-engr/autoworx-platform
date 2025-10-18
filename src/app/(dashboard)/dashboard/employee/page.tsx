@@ -14,7 +14,7 @@ export default async function Page() {
   const companyId = await getCompanyId();
   const { employees, totalEmployees } = await getEmployeesForPaginate({
     companyId,
-    take: 20,
+    take: 50,
     page: 1,
   });
 
