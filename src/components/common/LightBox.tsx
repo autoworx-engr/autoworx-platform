@@ -7,10 +7,7 @@ import Zoom from "yet-another-react-lightbox/plugins/zoom";
 import "yet-another-react-lightbox/styles.css";
 
 type ImageItem = {
-  id: string;
   src: string;
-  description: string;
-  title: string;
 };
 
 type LightboxProps = {
