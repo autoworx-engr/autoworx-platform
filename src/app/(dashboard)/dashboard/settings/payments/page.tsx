@@ -3,17 +3,17 @@ import { useServerGet } from "@/hooks/useServerGet";
 /* eslint-disable @next/next/no-img-element */
 import { useSession } from "next-auth/react";
 import { useState } from "react";
-import { FiCheckCircle } from "react-icons/fi";
 import { getStripeAccount } from "./stripe";
 import StripeStatus from "./StripeStatus";
 import Image from "next/image";
+import { CircleCheckBig } from "lucide-react";
 
 export default function PaymentsPage() {
   const { data: session } = useSession();
   const { data: stripeData, loading } = useServerGet(
     getStripeAccount,
     // @ts-ignore
-    session?.user?.companyId,
+    session?.user?.companyId
   );
   const [isLoading, setIsLoading] = useState(false);
   return (
@@ -22,9 +22,21 @@ export default function PaymentsPage() {
 
       <div className="payment-integration-card rounded-lg border bg-background p-6 text-center shadow-lg">
         <div className="my-4 flex items-center justify-center">
-          <Image src="/icons/Logo2.png" alt="Autoworx" width={48} height={48} className="h-12 w-12" />
+          <Image
+            src="/icons/Logo2.png"
+            alt="Autoworx"
+            width={48}
+            height={48}
+            className="h-12 w-12"
+          />
           <span className="mx-4 text-2xl">↔️</span>
-          <Image src="/icons/stripe.png" alt="Stripe" width={48} height={48}  className="h-12 w-12" />
+          <Image
+            src="/icons/stripe.png"
+            alt="Stripe"
+            width={48}
+            height={48}
+            className="h-12 w-12"
+          />
         </div>
         <p className="my-2 text-xl font-medium">Connect Autoworx to Stripe</p>
         <p className="mb-4 text-gray-500">
@@ -38,7 +50,7 @@ export default function PaymentsPage() {
               disabled
               className="flex items-center rounded-lg border bg-gray-200 px-4 py-2 text-green-600 hover:bg-blue-50"
             >
-              <FiCheckCircle className="mr-2 h-5 w-5" />
+              <CircleCheckBig className="mr-2 h-5 w-5" />
               <span> Connected</span>
             </button>
           )}

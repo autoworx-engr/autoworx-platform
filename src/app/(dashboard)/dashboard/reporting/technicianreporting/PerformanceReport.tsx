@@ -1,12 +1,11 @@
 "use client";
-import { CiCircleInfo } from "react-icons/ci";
 import { cn } from "@/lib/cn.ts";
-import { useParams } from "next/navigation";
 import { useServerGet } from "@/hooks/useServerGet";
 import { getPerformanceInfo } from "@/actions/employee/getPerformanceInfo";
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import BarChartComponent from "../../employee/components/BarChartComponent";
+import { Info } from "lucide-react";
 
 interface MetricData {
   label: string;
@@ -22,7 +21,7 @@ export default function PerformanceReport() {
   const { data: currentUser } = useSession();
   const { data } = useServerGet(
     getPerformanceInfo,
-    Number(currentUser?.user?.id),
+    Number(currentUser?.user?.id)
   );
   const {
     averageJobTime,
@@ -94,7 +93,7 @@ export default function PerformanceReport() {
                   onMouseEnter={() => setInfoIndex(index)}
                   onMouseLeave={() => setInfoIndex(null)}
                 >
-                  <CiCircleInfo className="h-3 w-3 cursor-pointer" />
+                  <Info className="h-3 w-3 cursor-pointer" />
                 </div>
                 {infoIndex === index && (
                   <div
@@ -115,7 +114,7 @@ export default function PerformanceReport() {
                 <div
                   className={cn(
                     "font-inter text-xl font-semibold",
-                    metric.percentage ? "text-green-500" : "text-red-500",
+                    metric.percentage ? "text-green-500" : "text-red-500"
                   )}
                 >
                   {metric.percentage}%

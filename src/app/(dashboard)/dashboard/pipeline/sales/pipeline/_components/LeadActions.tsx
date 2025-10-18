@@ -8,7 +8,6 @@ import { Appointment } from "@prisma/client";
 import { customAlphabet } from "nanoid";
 import Image from "next/image";
 import { useState, useTransition } from "react";
-import { LuCalendar, LuCalendarCheck } from "react-icons/lu";
 import CommunicationsNoti from "../../../components/CommunicationsNoti";
 import PipelineInvoiceModal from "../../../components/PipelineInvoiceModal";
 import AddTaskComponent from "./AddTaskComponent";
@@ -16,6 +15,7 @@ import LeadAssign from "./LeadAssign";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { createDraftEstimate } from "@/actions/estimate/invoice/createDraft";
 import { createLeadDraftEstimate } from "@/actions/pipelines/createLeadDraftEstimate";
+import { Calendar, CalendarCheck } from "lucide-react";
 
 type TProps = {
   lead: LeadWithSalesUser;
@@ -200,9 +200,9 @@ export default function LeadActions({ lead }: TProps) {
             triggerIcon={
               <button className="group relative">
                 {!!appointment ? (
-                  <LuCalendarCheck size={18} color="#6571FF" />
+                  <CalendarCheck size={18} color="#6571FF" />
                 ) : (
-                  <LuCalendar size={18} color="#66738C" />
+                  <Calendar size={18} color="#66738C" />
                 )}
 
                 <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">

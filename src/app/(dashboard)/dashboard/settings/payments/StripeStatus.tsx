@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FiAlertCircle, FiCheckCircle } from "react-icons/fi";
+import { CircleAlert, CircleCheckBig } from "lucide-react";
 
 export default function StripeStatus({
   data,
@@ -60,11 +60,11 @@ Please complete your verification in Stripe to start processing payments.`}
           <div className="#mt-2 flex items-center justify-between rounded-lg bg-gray-100 p-4">
             {stripeData?.charges_enabled ? (
               <div className="flex items-center font-medium text-green-600">
-                <FiCheckCircle className="mr-2 h-5 w-5" /> Payments Enabled
+                <CircleCheckBig className="mr-2 h-5 w-5" /> Payments Enabled
               </div>
             ) : (
               <div className="flex items-center font-medium text-red-500">
-                <FiAlertCircle className="mr-2 h-5 w-5" /> Payments Not Enabled
+                <CircleAlert className="mr-2 h-5 w-5" /> Payments Not Enabled
               </div>
             )}
             {/* {!stripeData?.charges_enabled && (

@@ -31,13 +31,6 @@
 // import moment from "moment";
 // import { customAlphabet } from "nanoid";
 // import { useCallback, useEffect, useState } from "react";
-// import {
-//   FaChevronLeft,
-//   FaChevronRight,
-//   FaSearch,
-//   FaTimes,
-// } from "react-icons/fa";
-// import { TbBell, TbCalendar } from "react-icons/tb";
 
 // // @ts-ignore
 // import { addAppointment } from "@/actions/appointment/addAppointment";
@@ -48,7 +41,6 @@
 // import { StdioNull } from "child_process";
 // import dayjs from "dayjs";
 // import { usePathname, useRouter, useSearchParams } from "next/navigation";
-// import { IoCloseSharp } from "react-icons/io5";
 
 // enum Tab {
 //   Schedule = 0,

@@ -1,11 +1,11 @@
 "use client";
 import moment from "moment-timezone";
-import { LuCalendarX2 } from "react-icons/lu";
 import useAppointmentQueryByDate from "../../_hook/appointment/query/useAppointmentQueryByDate";
 import { useDate } from "../../_hook/lib/useDate";
 import TaskError from "../ui/TaskError";
 import TaskSpinner from "../ui/TaskSpinner";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
+import { CalendarX2 } from "lucide-react";
 
 export default function AppointmentLists() {
   const date = useDate();
@@ -34,7 +34,7 @@ export default function AppointmentLists() {
   ) {
     content = (
       <div className="mt-10 flex flex-col items-center justify-center text-center">
-        <LuCalendarX2 className="mb-4 h-12 w-12 text-gray-400" />
+        <CalendarX2 className="mb-4 h-12 w-12 text-gray-400" />
         <h3 className="text-lg font-semibold text-gray-700">
           No appointments found
         </h3>

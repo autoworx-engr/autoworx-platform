@@ -33,13 +33,6 @@ import type {
 import moment from "moment-timezone";
 import { customAlphabet } from "nanoid";
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  FaChevronLeft,
-  FaChevronRight,
-  FaSearch,
-  FaTimes,
-} from "react-icons/fa";
-import { TbBell, TbCalendar } from "react-icons/tb";
 
 // @ts-ignore
 import { addAppointment } from "@/actions/appointment/addAppointment";
@@ -50,11 +43,10 @@ import { useServerGet } from "@/hooks/useServerGet";
 import { errorToast } from "@/lib/toast";
 import { addOneHour, formatDateToToday, getCurrentTime } from "@/utils/time";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { IoCloseSharp } from "react-icons/io5";
 import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
-import { FormatUtcToTimezone } from "@/utils/FormatUtcToTimezone";
 import { formatTime12Hour } from "@/utils/formateTime12Hours";
+import { Calendar1, ChevronLeft, ChevronRight, Search, X } from "lucide-react";
 
 enum Tab {
   Schedule = 0,
@@ -655,7 +647,7 @@ export function NewAppointmentPipeline({
               )}
               onClick={() => setTab(Tab.Schedule)}
             >
-              <TbCalendar className="mr-2 inline" size={24} />
+              <Calendar1 className="mr-2 inline" size={24} />
               Schedule
             </button>
 
@@ -667,7 +659,25 @@ export function NewAppointmentPipeline({
               )}
               onClick={() => setTab(Tab.Reminder)}
             >
-              <TbBell className="mr-2 inline" size={24} />
+              <svg
+                viewBox="-1.28 -1.28 18.56 18.56"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="currentColor"
+                className="h-6 w-6 inline mr-2"
+                stroke="currentColor"
+                stroke-width="0.41600000000000004"
+              >
+                <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                <g
+                  id="SVGRepo_tracerCarrier"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                ></g>
+                <g id="SVGRepo_iconCarrier">
+                  {" "}
+                  <path d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2zM8 1.918l-.797.161A4.002 4.002 0 0 0 4 6c0 .628-.134 2.197-.459 3.742-.16.767-.376 1.566-.663 2.258h10.244c-.287-.692-.502-1.49-.663-2.258C12.134 8.197 12 6.628 12 6a4.002 4.002 0 0 0-3.203-3.92L8 1.917zM14.22 12c.223.447.481.801.78 1H1c.299-.199.557-.553.78-1C2.68 10.2 3 6.88 3 6c0-2.42 1.72-4.44 4.005-4.901a1 1 0 1 1 1.99 0A5.002 5.002 0 0 1 13 6c0 .88.32 4.2 1.22 6z"></path>{" "}
+                </g>
+              </svg>
               Reminder
             </button>
           </div>
@@ -791,7 +801,7 @@ export function NewAppointmentPipeline({
                           setAssignedUsers(filteredAssignedUser);
                         }}
                       >
-                        <IoCloseSharp size={16} />
+                        <X size={16} strokeWidth={3} />
                       </button>
                     </div>
                   );
@@ -803,7 +813,10 @@ export function NewAppointmentPipeline({
               <div className="#w-[200px] relative space-y-4 rounded-lg border-2 border-slate-400">
                 {/* Search */}
                 <div className="%mx-auto relative mx-2 my-3 h-[35px] w-[85%] rounded-lg border-2 border-slate-400">
-                  <FaSearch className="absolute left-2 top-1/2 -translate-y-1/2 transform text-slate-400" />
+                  <Search
+                    size={18}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 transform text-slate-400"
+                  />
                   <input
                     name="search"
                     className="h-full w-full rounded-lg pl-7 pr-2 focus:outline-none"
@@ -815,7 +828,8 @@ export function NewAppointmentPipeline({
                     }}
                   />
                 </div>
-                <FaTimes
+                <X
+                  size={18}
                   className="absolute right-3 top-3 -translate-y-1/2 transform cursor-pointer text-xl text-red-400"
                   onClick={() => setAddSalesPersonOpen(false)}
                 />
@@ -874,7 +888,7 @@ export function NewAppointmentPipeline({
                           setAssignedUsers(filteredAssignedUser);
                         }}
                       >
-                        <IoCloseSharp size={16} />
+                        <X size={16} strokeWidth={3} />
                       </button>
                     </div>
                   );
@@ -886,7 +900,10 @@ export function NewAppointmentPipeline({
               <div className="#w-[200px] relative space-y-4 rounded-lg border-2 border-slate-400">
                 {/* Search */}
                 <div className="%mx-auto relative mx-2 my-3 h-[35px] w-[85%] rounded-lg border-2 border-slate-400">
-                  <FaSearch className="absolute left-2 top-1/2 -translate-y-1/2 transform text-slate-400" />
+                  <Search
+                    size={18}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 transform text-slate-400"
+                  />
                   <input
                     name="search"
                     className="h-full w-full rounded-lg pl-7 pr-2 focus:outline-none"
@@ -898,7 +915,8 @@ export function NewAppointmentPipeline({
                     }}
                   />
                 </div>
-                <FaTimes
+                <X
+                  size={18}
                   className="absolute right-3 top-3 -translate-y-1/2 transform cursor-pointer text-xl text-red-400"
                   onClick={() => setAddTechnicianOpen(false)}
                 />
@@ -986,13 +1004,13 @@ export function NewAppointmentPipeline({
               >
                 <div className="sticky top-0 z-10 flex items-center gap-4 bg-background px-8 py-2">
                   <button type="button" onClick={() => handleDate("-")}>
-                    <FaChevronLeft />
+                    <ChevronLeft size={18} />
                   </button>
                   <div className="mx-auto text-center">
                     {moment(date).format("dddd, MMMM YYYY")}
                   </div>
                   <button type="button" onClick={() => handleDate("+")}>
-                    <FaChevronRight />
+                    <ChevronRight size={18} />
                   </button>
                 </div>
                 <div className="relative divide-y">

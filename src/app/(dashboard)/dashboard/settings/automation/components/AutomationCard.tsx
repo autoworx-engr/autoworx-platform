@@ -1,26 +1,21 @@
 "use client";
-import { FC, useState } from "react";
-import { BiSolidEditAlt } from "react-icons/bi";
-import { FaRegCirclePause } from "react-icons/fa6";
-import { FiTrash2 } from "react-icons/fi";
-import { IoPlayCircleOutline } from "react-icons/io5";
+import { FC } from "react";
 import { useDeletePipelineAutomationRule } from "../../../../../../hooks/pipeline-automation/useDeletePipelineAutomationRule";
 import { useUpdatePipelineAutomationRule } from "../../../../../../hooks/pipeline-automation/useUpdatePipelineAutomationRule";
 import { useUpdateCommunicationAutomationRule } from "@/hooks/communication-automation/useUpdateCommunicationAutomationRule";
 import { useDeleteCommunicationAutomationRule } from "@/hooks/communication-automation/useDeleteCommunicationAutomationRule";
-import { getTitleById, targetOptions } from "./constants";
 import moment from "moment";
 import { useDeleteMarketingAutomationRule } from "@/hooks/marketing-automation/useDeleteMarketingAutomationRule";
 import { useUpdateMarketingAutomationRule } from "@/hooks/marketing-automation/useUpdateMarketingAutomationRule";
 import { errorToast } from "@/lib/toast";
 import { useUpdateServiceMaintenanceAutomationRule } from "@/hooks/service-maintenance-automation/useUpdateServiceMaintenanceAutomationRule";
 import { useDeleteServiceMaintenanceAutomationRule } from "@/hooks/service-maintenance-automation/useDeleteServicemaintenanceAutomationRule";
-import { RiLoader2Fill } from "react-icons/ri";
 import { Popconfirm, Spin } from "antd";
 import { useDeleteInvoiceAutomationRule } from "@/hooks/invoice-automation/useDeleteInvoiceAutomationRule";
 import { useUpdateInvoiceAutomationRule } from "@/hooks/invoice-automation/useUpdateInvoiceAutomationRule";
 import { useDeleteInventoryAutomationRule } from "@/hooks/inventory-automation/useDeleteInventoryAutomationRule";
 import { useUpdateInventoryAutomationRule } from "@/hooks/inventory-automation/useUpdateInventoryAutomationRule";
+import { CirclePause, CirclePlay, SquarePen, Trash2 } from "lucide-react";
 
 interface Item {
   id: string;
@@ -116,7 +111,7 @@ const AutomationCard: FC<AutomationCardProps> = ({
         ruleDate.getDate(),
         startTime.getHours(),
         startTime.getMinutes(),
-        startTime.getSeconds(),
+        startTime.getSeconds()
       ).getTime();
 
       const delay = Math.max(0, scheduledDateTime - now);
@@ -132,7 +127,7 @@ const AutomationCard: FC<AutomationCardProps> = ({
           setIsCreate(false);
           setIsEdit(true);
           errorToast(
-            "Please update the campaign start date and then resume the rule!",
+            "Please update the campaign start date and then resume the rule!"
           );
           return;
         }
@@ -208,9 +203,9 @@ const AutomationCard: FC<AutomationCardProps> = ({
               className="text-[#6571FF] hover:text-indigo-700"
             >
               {item?.isPaused ? (
-                <IoPlayCircleOutline className="h-5 w-5" />
+                <CirclePlay size={20} />
               ) : (
-                <FaRegCirclePause />
+                <CirclePause size={20} />
               )}
             </button>
           )}
@@ -219,7 +214,7 @@ const AutomationCard: FC<AutomationCardProps> = ({
             onClick={() => handleSetIsEdit(item.id)}
             className="text-[#6571FF] hover:text-indigo-700"
           >
-            <BiSolidEditAlt />
+            <SquarePen size={20} />
           </button>
 
           {isPipelineDeleting ||
@@ -238,7 +233,7 @@ const AutomationCard: FC<AutomationCardProps> = ({
               onConfirm={() => handleDelete(item.id)}
             >
               <span>
-                <FiTrash2 cursor="pointer" color="#f87171" fontSize={20} />
+                <Trash2 cursor="pointer" color="#f87171" size={20} />
               </span>
             </Popconfirm>
           )}

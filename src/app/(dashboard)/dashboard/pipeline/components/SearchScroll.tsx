@@ -1,10 +1,8 @@
 import { useDebounce } from "@/hooks/useDebounce";
 import { usePipelineFilterStore } from "@/stores/PipelineFilterStore";
-import { SalesPipelineData, ShopPipelineData } from "@/types/invoiceLead";
+import { Funnel, Search, X } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { ChangeEvent, useEffect, useRef, useState } from "react";
-import { FiFilter, FiSearch } from "react-icons/fi";
-import { IoCloseOutline } from "react-icons/io5";
+import { useEffect, useRef, useState } from "react";
 
 interface SearchScrollProps {
   pipelineData: any[];
@@ -158,7 +156,7 @@ export default function SearchScroll({
     <div className="flex flex-col gap-2 rounded-md border bg-background p-2 shadow-sm sm:flex-row sm:items-center sm:justify-between">
       {/* Search input */}
       <div className="flex h-10 w-full items-center rounded-md border px-3 sm:w-auto">
-        <FiSearch className="mr-2 text-gray-500" />
+        <Search size={18} className="mr-2 text-gray-500" />
         <input
           type="text"
           value={searchTerm}
@@ -175,7 +173,7 @@ export default function SearchScroll({
             onClick={handleClearSearch}
             className="ml-2 text-gray-400 hover:text-gray-600"
           >
-            <IoCloseOutline size={18} />
+            <X size={18} strokeWidth={3} />
           </button>
         )}
       </div>
@@ -191,7 +189,7 @@ export default function SearchScroll({
             }`}
             aria-label="Filter by column"
           >
-            <FiFilter size={16} className="mr-1" />
+            <Funnel size={16} className="mr-1" />
             <span className="text-sm">
               {selectedColumnId !== null
                 ? pipelineData.find((col) => col.id === selectedColumnId)

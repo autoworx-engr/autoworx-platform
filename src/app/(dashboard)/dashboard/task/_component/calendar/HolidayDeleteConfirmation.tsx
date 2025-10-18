@@ -4,10 +4,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import moment from "moment";
 import { useState, useTransition } from "react";
 import toast from "react-hot-toast";
-import { RiDeleteBin6Line } from "react-icons/ri";
 import { calenderQueryKey } from "../../_constant";
 import { Holiday } from "@prisma/client";
 import { useCalendarStore } from "@/stores/calendarStore";
+import { Trash2 } from "lucide-react";
 
 type TProps = {
   holidayId: number;
@@ -29,7 +29,7 @@ export default function HolidayDeleteConfirmation({
       const response = await deleteHoliday(holidayId);
       if (response?.status === 200) {
         const removedHoliday = moment(response.data.date).format(
-          "MMMM DD, YYYY",
+          "MMMM DD, YYYY"
         );
         console.log("removedHoliday", removedHoliday);
         queryClient.setQueryData(
@@ -38,7 +38,7 @@ export default function HolidayDeleteConfirmation({
             return oldData
               ? oldData.filter((holiday) => holiday.id !== holidayId)
               : [];
-          },
+          }
         );
         queryClient.invalidateQueries({
           queryKey: [calenderQueryKey.holidays, selectedMonth, selectedYear],
@@ -59,7 +59,7 @@ export default function HolidayDeleteConfirmation({
         onClick={() => setOpen(true)}
         className={`rounded-full ${!isMonthly && "bg-red-200"} p-2`}
       >
-        <RiDeleteBin6Line
+        <Trash2
           size={20}
           className={`cursor-pointer ${!isMonthly && "text-red-500"} `}
         />
