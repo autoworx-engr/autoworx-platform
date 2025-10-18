@@ -33,6 +33,7 @@ export async function replenish({
       lot,
       notes,
     });
+
     const companyId = await getCompanyId();
 
     const product = await db.inventoryProduct.findUnique({
@@ -53,7 +54,7 @@ export async function replenish({
         quantity: +quantity,
         notes,
         type: "Purchase",
-        price: price || product?.price,
+        price: price,
         vendorId: vendor?.id,
       },
     });
@@ -65,7 +66,7 @@ export async function replenish({
       where: { id: productId },
       data: {
         quantity: newQuantity,
-        price: price || product?.price,
+        price: price,
         unit: unit || product?.unit,
         lot: lot || product?.lot,
       },
