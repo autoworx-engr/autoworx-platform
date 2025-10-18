@@ -35,7 +35,9 @@ export async function POST(request: NextRequest) {
     const serviceId = +body.serviceId;
     const oppurtunity = body.oppurtunity_source;
     const crmMsg = body.message;
+    const multipleServices = body.multiServices as number[] | undefined;
 
+    console.log("crmMsg", crmMsg);
     //check if crm company
     const isCRMCompany = company.isCRMEnabled || false;
     if (isCRMCompany) {
@@ -65,6 +67,14 @@ export async function POST(request: NextRequest) {
               },
             })
           )?.id,
+          multipleServices:
+            multipleServices && multipleServices.length > 0
+              ? {
+                  connect: multipleServices.map((service: any) => ({
+                    id: Number(service.id),
+                  })),
+                }
+              : undefined,
         },
       });
 
@@ -178,6 +188,14 @@ export async function POST(request: NextRequest) {
         serviceId,
         companyId: company.id,
         columnId: newLeadsColumn.id,
+        multipleServices:
+          multipleServices && multipleServices.length > 0
+            ? {
+                connect: multipleServices.map((service: any) => ({
+                  id: Number(service.id),
+                })),
+              }
+            : undefined,
       },
     });
 
@@ -307,6 +325,7 @@ export async function POST(request: NextRequest) {
     );
   } catch (error: any) {
     // check if this is json parse error
+
     if (error instanceof SyntaxError) {
       return Response.json({ error: "Invalid input" }, { status: 400 });
     } else {
