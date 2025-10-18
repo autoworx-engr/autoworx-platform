@@ -7,9 +7,6 @@ import { useFormErrorStore } from "@/stores/form-error";
 import { useListsStore } from "@/stores/lists";
 import { Tag } from "@prisma/client";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FaChevronUp, FaSearch, FaTimes } from "react-icons/fa";
-import { FaChevronDown } from "react-icons/fa6";
-import { PiPaletteBold } from "react-icons/pi";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,6 +18,7 @@ import {
 import FormError from "../FormError";
 import Submit from "../Submit";
 import { SelectProps } from "./select-props";
+import { ChevronDown, ChevronUp, Palette, Search, X } from "lucide-react";
 type SelectedColor = { textColor: string; bgColor: string } | null;
 
 export function SelectTags({
@@ -95,7 +93,7 @@ export function SelectTags({
                 className="absolute right-0 top-0 -translate-y-1/2 translate-x-1/2 text-[#6470FF]"
               >
                 <div className="rounded-full bg-[#6571FF] p-1 text-white">
-                  <FaTimes className="text-[10px]" />
+                  <X size={10} strokeWidth={3} />
                 </div>
               </button>
             </div>
@@ -137,7 +135,7 @@ export function SelectTags({
           className="flex min-h-10 w-full items-center justify-between rounded-md border-2 border-slate-400 px-4"
         >
           <p className="text-sm font-medium text-slate-400">Tags</p>
-          <FaChevronDown className="text-[#797979]" />
+          <ChevronDown size={24} className="text-[#797979]" />
         </DropdownMenuTrigger>
         {/* <div> */}
         <DropdownMenuPortal>
@@ -151,7 +149,10 @@ export function SelectTags({
               {" "}
               {/* Search */}
               <div className="relative m-2">
-                <FaSearch className="absolute left-2 top-1/2 -translate-y-1/2 transform text-[#797979]" />
+                <Search
+                  size={16}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 transform text-[#797979]"
+                />
                 <input
                   ref={searchRef}
                   type="text"
@@ -166,7 +167,10 @@ export function SelectTags({
                     setSearchQuery("");
                   }}
                 >
-                  <FaChevronUp className="absolute right-2 top-1/2 -translate-y-1/2 transform text-[#797979]" />
+                  <ChevronUp
+                    size={24}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 transform text-[#797979]"
+                  />
                 </button>
               </div>
               <div className="max-h-[calc(100vh-60vh)] space-y-1 overflow-y-scroll">
@@ -321,7 +325,7 @@ function QuickAddForm({
           onClick={() => setPickerOpen((prev: boolean) => !prev)}
           type="button"
         >
-          <PiPaletteBold />
+          <Palette size={20} />
         </button>
 
         <Submit

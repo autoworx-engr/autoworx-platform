@@ -1,8 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useDrag, useDrop, DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
-import { IoReorderTwoSharp } from "react-icons/io5";
-import { RxCross2 } from "react-icons/rx";
 
 import {
   createColumn,
@@ -14,6 +12,7 @@ import {
 import { toast } from "react-hot-toast";
 import { INVOICE_COLORS } from "@/lib/consts";
 import { Column } from "@prisma/client";
+import { Tally2, X } from "lucide-react";
 
 interface LocalColumn {
   id: number | null;
@@ -297,7 +296,7 @@ function ColumnItem({
         isDragging ? "opacity-50" : "opacity-100"
       }`}
     >
-      <IoReorderTwoSharp className="mr-2 text-gray-600" size={20} />
+      <Tally2 className="mr-2 text-gray-600 rotate-90 mt-3" size={20} />
       <input
         type="text"
         ref={inputRef}
@@ -311,7 +310,7 @@ function ColumnItem({
           onClick={() => handleDeleteColumn(index)}
           className="ml-2 text-[#FF6262] hover:text-red-700"
         >
-          <RxCross2 size={20} />
+          <X size={20} strokeWidth={3} />
         </button>
       ) : (
         <div className="m-0 w-7"></div>

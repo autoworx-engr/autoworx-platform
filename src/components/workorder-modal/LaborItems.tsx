@@ -1,6 +1,5 @@
 "use client";
 import React, { useEffect, useState, useTransition } from "react";
-import { TiDeleteOutline } from "react-icons/ti";
 import { Technician, VehicleParts } from "@prisma/client";
 import { deleteTechnician } from "@/actions/estimate/technician/deleteTechnician";
 import CreateAndEditLabor from "./CreateAndEditLabor";
@@ -9,6 +8,7 @@ import { getTechniciansWithPermission } from "@/actions/estimate/technician/getT
 import { queryKeys } from "@/lib/queryKeys";
 import { useQueryClient } from "@tanstack/react-query";
 import { Popconfirm } from "antd";
+import { CircleX } from "lucide-react";
 
 export default function LaborItems({
   invoiceItemId,
@@ -120,7 +120,7 @@ export default function LaborItems({
             >
               {writePermission && (
                 <button disabled={pending}>
-                  <TiDeleteOutline className="text-xl text-white" />
+                  <CircleX size={20} className="text-white" />
                 </button>
               )}
             </Popconfirm>

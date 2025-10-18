@@ -1,8 +1,8 @@
 "use client";
 
-import { FaTimes } from "react-icons/fa";
 import { Popconfirm } from "antd";
 import { deleteFleet } from "@/actions/fleet/delete";
+import { X } from "lucide-react";
 
 export default function DeleteFleet({ id }: { id: number }) {
   return (
@@ -13,7 +13,7 @@ export default function DeleteFleet({ id }: { id: number }) {
       cancelText="No"
       onConfirm={() => deleteFleet(id)}
     >
-      <FaTimes cursor={"pointer"} color="#f87171" className="text-xl" />
+      <X size={22} strokeWidth={3} cursor={"pointer"} color="#f87171" />
     </Popconfirm>
   );
 }

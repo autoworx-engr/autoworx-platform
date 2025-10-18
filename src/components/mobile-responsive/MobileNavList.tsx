@@ -1,10 +1,7 @@
+import { ChevronDown, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import {
-  MdOutlineKeyboardArrowRight,
-  MdOutlineKeyboardArrowDown,
-} from "react-icons/md";
 
 type TProps = {
   item: {
@@ -45,9 +42,9 @@ export default function MobileNavList({ item, setOpenNav }: TProps) {
             <span>{item.title}</span>
 
             {isOpenSubNav ? (
-              <MdOutlineKeyboardArrowDown size={25} className="text-white" />
+              <ChevronDown size={25} className="text-white" />
             ) : (
-              <MdOutlineKeyboardArrowRight size={25} className="text-white" />
+              <ChevronRight size={25} className="text-white" />
             )}
           </p>
         )}

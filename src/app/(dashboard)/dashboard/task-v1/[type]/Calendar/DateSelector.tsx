@@ -5,7 +5,6 @@ import { CalendarType } from "@/types/calendar";
 import moment from "moment";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { IoCalendarOutline, IoChevronDown } from "react-icons/io5";
 import DayCalendar from "./DayCalendar";
 import MonthCalendar from "./MonthCalendar";
 import {
@@ -13,6 +12,7 @@ import {
   getWeekStartNumber,
 } from "./utils.DateSelector";
 import WeekCalendar from "./WeekCalendar";
+import { CalendarDays, ChevronDown } from "lucide-react";
 
 const BUTTON_STYLE = "app-shadow rounded-md p-2 text-[#797979]";
 
@@ -24,7 +24,7 @@ type DateSelectorProps = {
 // Custom hook for detecting clicks outside an element
 function useOnClickOutside(
   ref: React.RefObject<HTMLElement>,
-  handler: () => void,
+  handler: () => void
 ) {
   useEffect(() => {
     const listener = (event: MouseEvent | TouchEvent) => {
@@ -177,10 +177,10 @@ function DateSelector({ type, weekStart = 1 }: DateSelectorProps) {
         onClick={() => setIsOpen(!isOpen)}
       >
         <span className="flex items-center gap-2">
-          <IoCalendarOutline className="text-lg" />
+          <CalendarDays className="text-lg" />
           <span>{getDisplayValue()}</span>
         </span>
-        <IoChevronDown
+        <ChevronDown
           className={`transition-transform ${isOpen ? "rotate-180" : ""}`}
         />
       </button>

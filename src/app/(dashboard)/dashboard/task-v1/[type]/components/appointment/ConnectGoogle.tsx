@@ -1,7 +1,7 @@
 "use client";
-import { FaCheck } from "react-icons/fa";
 import { generateAuthURL, getGoogleCalendarToken } from "./googleCalendarAuth";
 import { useServerGet } from "@/hooks/useServerGet";
+import { Check } from "lucide-react";
 
 type Props = {};
 
@@ -28,7 +28,7 @@ const ConnectGoogle = (props: Props) => {
       <div className="flex gap-5">
         <div className="flex items-center gap-2">
           <span className="text-green-500">
-            <FaCheck />
+            <Check />
           </span>
           <span className="text-[#6571FF]">Connected with Google Calendar</span>
         </div>

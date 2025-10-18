@@ -2,10 +2,9 @@
 
 import { Dialog, DialogTrigger } from "@/components/Dialog";
 import { useState } from "react";
-import { FaPlus } from "react-icons/fa6";
 import TaskContentModal from "./TaskContentModal";
 import { Task } from "@prisma/client";
-import { SquarePen } from "lucide-react";
+import { Plus, SquarePen } from "lucide-react";
 
 type NewTaskProps = {
   onlyOneUser?: boolean;
@@ -49,7 +48,7 @@ export default function TaskCreateOrEdit({
   if (isClientTask) {
     openButtonIcon = (
       <button className="flex items-center justify-center gap-1 rounded-full bg-blue-600 px-6 py-2 text-[15px] text-white">
-        <FaPlus className="" />
+        <Plus size={20} />
         <span>Add task</span>
       </button>
     );
@@ -61,7 +60,7 @@ export default function TaskCreateOrEdit({
         {fromEdit ? (
           <SquarePen className="w-5 h-5 text-[#6571FF] mr-2 cursor-pointer" />
         ) : (
-          <FaPlus className="" />
+          <Plus size={20} className="" />
         )}
         <span className="block">{fromEdit ? "Update Task" : "Add Task"}</span>
       </button>

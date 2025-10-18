@@ -5,11 +5,10 @@ import EditVendor from "@/components/Lists/EditVendor";
 import { deleteVendor } from "@/actions/vendor/deleteVendor";
 import { useRouter } from "next/navigation";
 import { Vendor } from "@prisma/client";
-import { FaTimes } from "react-icons/fa";
 import moment from "moment";
 import VendorListStore from "@/stores/vendorListStore";
 import { Popconfirm } from "antd";
-import { SquarePen } from "lucide-react";
+import { SquarePen, X } from "lucide-react";
 
 const VendorCard = ({
   vendors,
@@ -71,7 +70,7 @@ const VendorCard = ({
                     okText="Yes"
                     cancelText="No"
                   >
-                    <FaTimes className="text-xl text-red-400" />
+                    <X size={20} strokeWidth={3} className="text-red-400" />
                   </Popconfirm>
                 </div>
               </div>

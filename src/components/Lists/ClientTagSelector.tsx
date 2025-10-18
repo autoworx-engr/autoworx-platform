@@ -4,9 +4,6 @@ import { INVOICE_COLORS } from "@/lib/consts";
 import { useFormErrorStore } from "@/stores/form-error";
 import { Tag } from "@prisma/client";
 import React, { useEffect, useRef, useState } from "react";
-import { FaChevronDown, FaChevronUp, FaSearch } from "react-icons/fa";
-import { IoMdClose } from "react-icons/io";
-import { PiPaletteBold } from "react-icons/pi";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,7 +11,12 @@ import {
 } from "../DropdownMenu";
 import FormError from "../FormError";
 import Submit from "../Submit";
-import { getClientTags, createClientTag, deleteClientTag } from "@/actions/client/clientTag";
+import {
+  getClientTags,
+  createClientTag,
+  deleteClientTag,
+} from "@/actions/client/clientTag";
+import { ChevronDown, ChevronUp, Palette, Search, X } from "lucide-react";
 
 type SelectedColor = { textColor: string; bgColor: string } | null;
 
@@ -52,8 +54,8 @@ export function ClientTagSelector({
     if (search) {
       setFilteredTagList(
         tags.filter((tag) =>
-          tag.name.toLowerCase().includes(search.toLowerCase()),
-        ),
+          tag.name.toLowerCase().includes(search.toLowerCase())
+        )
       );
     } else {
       setFilteredTagList(tags);
@@ -119,10 +121,10 @@ export function ClientTagSelector({
             setOpen && setOpen(!open);
           }}
         >
-          <span>{
-            showPlaceholder ? tag?.name ?? "Select Client Tag" : ""
-          }</span>
-          <FaChevronDown />
+          <span>
+            {showPlaceholder ? (tag?.name ?? "Select Client Tag") : ""}
+          </span>
+          <ChevronDown />
         </DropdownMenuTrigger>
 
         <DropdownMenuContent
@@ -134,14 +136,17 @@ export function ClientTagSelector({
         >
           {/* Search */}
           <div className="relative m-2">
-            <FaSearch className="absolute left-2 top-1/2 -translate-y-1/2 transform text-[#797979]" />
+            <Search
+              size={18}
+              className="absolute left-2 top-1/2 -translate-y-1/2 transform text-[#797979]"
+            />
             <Input search={search} setSearch={setSearch} key="search" />
             <button
               onClick={() => {
                 setOpen && setOpen(!open);
               }}
             >
-              <FaChevronUp className="absolute right-2 top-1/2 -translate-y-1/2 transform text-[#797979]" />
+              <ChevronUp className="absolute right-2 top-1/2 -translate-y-1/2 transform text-[#797979]" />
             </button>
           </div>
 
@@ -169,7 +174,7 @@ export function ClientTagSelector({
                   onClick={() => handleDelete(tagItem.id)}
                   className="text-lg text-[#66738C]"
                 >
-                  <IoMdClose />
+                  <X size={20} />
                 </button>
               </div>
             ))}
@@ -255,7 +260,10 @@ function QuickAddClientTagForm({
 
     const res = await createClientTag({ name, ...selectedColor });
     if (res.type === "error") {
-      showError({ field: "name", message: res.message || "Failed to create client tag" });
+      showError({
+        field: "name",
+        message: res.message || "Failed to create client tag",
+      });
     } else {
       formRef.current?.reset();
       if (res.data) {
@@ -278,7 +286,7 @@ function QuickAddClientTagForm({
         className="rounded bg-[#6470FF] p-2 text-white"
         onClick={() => setColorPickerVisible((prev) => !prev)}
       >
-        <PiPaletteBold />
+        <Palette size={18} />
       </button>
       <Submit
         className="rounded bg-slate-500 p-1 text-xs leading-3 text-white"

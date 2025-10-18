@@ -11,13 +11,13 @@ import {
 } from "@/components/Dialog";
 import Submit from "@/components/Submit";
 import { useState } from "react";
-import { HiTrash } from "react-icons/hi2";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { deleteInvoice } from "@/actions/estimate/invoice/delete";
 import { Checkbox } from "antd";
 import { errorToast } from "@/lib/toast";
 import { InvoiceType } from "@prisma/client";
 import { useEstimateCreateStore } from "@/stores/estimate-create";
+import { Trash2 } from "lucide-react";
 
 export default function DeleteEstimateButton() {
   const [open, setOpen] = useState(false);
@@ -27,7 +27,6 @@ export default function DeleteEstimateButton() {
   const params = useParams();
 
   const invoiceType = useEstimateCreateStore((state) => state.type);
-
 
   async function handleDelete() {
     if (pathname?.includes("/dashboard/estimate/edit/")) {
@@ -55,7 +54,7 @@ export default function DeleteEstimateButton() {
           className="flex items-center gap-2 rounded-md bg-red-400 px-3 py-1 text-white hover:bg-red-500"
           aria-label="Delete"
         >
-          <HiTrash />
+          <Trash2 size={18} />
         </button>
       </DialogTrigger>
 

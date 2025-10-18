@@ -5,10 +5,10 @@ import Link from "next/link";
 import React from "react";
 import "react-date-range/dist/styles.css"; // main style file
 import "react-date-range/dist/theme/default.css"; // theme css file
-import { IoPieChartOutline } from "react-icons/io5";
 import EmployeeFilter from "./components/EmployeeFilter";
 import TotalPayouts from "./TotalPayouts";
 import Employee from "./Employee";
+import { PieChart } from "lucide-react";
 
 export default async function Page() {
   const companyId = await getCompanyId();
@@ -65,7 +65,7 @@ export default async function Page() {
             href="/dashboard/reporting/teams"
             className="flex items-center gap-x-2 rounded-md bg-slate-100 p-2 px-5 text-[#6571FF] shadow-md"
           >
-            <IoPieChartOutline />
+            <PieChart className="w-5 h-5" />
             <span>Teams Reporting</span>
           </Link>
         </div>

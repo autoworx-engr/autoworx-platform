@@ -2,10 +2,8 @@
 
 import { Dialog, DialogTrigger } from "@/components/Dialog";
 import { useState } from "react";
-
 import { User } from "@prisma/client";
-import { SquarePen } from "lucide-react";
-import { IoMdSettings } from "react-icons/io";
+import { Settings, SquarePen } from "lucide-react";
 import EditClientModalBody from "./EditEmployeeModalBody";
 
 export default function EditEmployee({
@@ -20,7 +18,7 @@ export default function EditEmployee({
   return (
     <Dialog
       open={open}
-      onOpenChange={isOpen => {
+      onOpenChange={(isOpen) => {
         if (!isOpen) setOpen(false);
         setOpen(isOpen);
       }}
@@ -31,7 +29,7 @@ export default function EditEmployee({
             className={`${settingIcon ? "text-gray-600" : ""} text-[#6571FF]"`}
           >
             {settingIcon ? (
-              <IoMdSettings />
+              <Settings className="w-4 h-4 text-[#6571FF]" />
             ) : (
               <SquarePen className="w-5 h-5 text-[#6571FF]" />
             )}

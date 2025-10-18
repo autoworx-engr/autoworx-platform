@@ -1,6 +1,5 @@
 "use client";
 
-// import FilterImage from "@/../public/icons/Filter.svg";
 import {
   Dialog,
   DialogContent,
@@ -14,14 +13,12 @@ import Submit from "@/components/Submit";
 import { cn } from "@/lib/cn";
 import { useListsStore } from "@/stores/lists";
 import { Column } from "@prisma/client";
+import { Funnel, Search, X, XCircle } from "lucide-react";
 import { matchSorter } from "match-sorter";
 import moment from "moment";
 import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { BiXCircle } from "react-icons/bi";
-import { FaTimes } from "react-icons/fa";
-import { HiMagnifyingGlass, HiOutlineFunnel } from "react-icons/hi2";
 
 type TFilterProps = {
   startDate?: string;
@@ -45,7 +42,7 @@ export function Filter({ startDate, endDate, status }: TFilterProps) {
       statusSearch
         ? matchSorter(allStatuses, statusSearch, { keys: ["title"] })
         : allStatuses,
-    [allStatuses, statusSearch],
+    [allStatuses, statusSearch]
   );
 
   const [statuses, setStatuses] = useState<Column[] | null>([]);
@@ -56,7 +53,7 @@ export function Filter({ startDate, endDate, status }: TFilterProps) {
       const decodedStatuses = decodeURIComponent(status).split(",");
       const getStatuses = useListsStore.getState().statuses;
       const selectedStatuses = getStatuses.filter((s) =>
-        decodedStatuses.includes(s.id.toString()),
+        decodedStatuses.includes(s.id.toString())
       );
       // If no statuses are found, set to an empty array
       setStatuses(selectedStatuses);
@@ -77,7 +74,7 @@ export function Filter({ startDate, endDate, status }: TFilterProps) {
     }
     if (statuses && statuses.length > 0) {
       const encodedStatuses = encodeURIComponent(
-        statuses.map((x) => x.id).join(","),
+        statuses.map((x) => x.id).join(",")
       );
       searchParams.set("status", encodedStatuses);
     } else {
@@ -123,7 +120,7 @@ export function Filter({ startDate, endDate, status }: TFilterProps) {
                   setEnd(
                     moment(event.currentTarget.value)
                       .add(1, "day")
-                      .format("YYYY-MM-DD"),
+                      .format("YYYY-MM-DD")
                   );
                 }}
                 className={slimInputClassName}
@@ -133,7 +130,7 @@ export function Filter({ startDate, endDate, status }: TFilterProps) {
                 onClick={() => setStart("")}
                 className="rounded-full p-2 transition-colors hover:bg-red-200 hover:text-red-500"
               >
-                <FaTimes />
+                <X size={20} />
               </button>
             </div>
           </div>
@@ -160,7 +157,7 @@ export function Filter({ startDate, endDate, status }: TFilterProps) {
                 }}
                 className="rounded-full p-2 transition-colors hover:bg-red-200 hover:text-red-500"
               >
-                <FaTimes />
+                <X size={20} />
               </button>
             </div>
           </div>
@@ -169,7 +166,7 @@ export function Filter({ startDate, endDate, status }: TFilterProps) {
             <div className="relative rounded border border-solid border-slate-500 p-2">
               <div className="flex flex-col gap-x-2">
                 <div>
-                  <HiMagnifyingGlass className="absolute m-2" />
+                  <Search size={16} className="absolute m-2" />
                   <input
                     type="search"
                     value={statusSearch}
@@ -191,10 +188,10 @@ export function Filter({ startDate, endDate, status }: TFilterProps) {
                       }}
                     >
                       {status.title}
-                      <BiXCircle
+                      <XCircle
                         onClick={() => {
                           setStatuses((prev) =>
-                            prev ? prev.filter((s) => s.id !== status.id) : [],
+                            prev ? prev.filter((s) => s.id !== status.id) : []
                           );
                         }}
                         size={18}
@@ -235,7 +232,7 @@ export function Filter({ startDate, endDate, status }: TFilterProps) {
             className="mx-auto flex items-center gap-2 rounded-md bg-[#6571FF] px-4 py-1 text-white"
             formAction={handleFilter}
           >
-            <HiOutlineFunnel />
+            <Funnel size={16} />
             Filter
           </Submit>
         </DialogFooter>

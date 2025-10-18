@@ -22,9 +22,9 @@ import {
 import { useEffect, useState, useTransition, useRef } from "react";
 import { useProduct as productUse } from "../../../../actions/inventory/useProduct";
 import { useFormErrorStore } from "@/stores/form-error";
-import { FaEdit } from "react-icons/fa";
 import moment from "moment-timezone";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone"; // ← adjust path if needed
+import { SquarePen } from "lucide-react";
 
 interface EditSalesListProps {
   productId: number;
@@ -158,7 +158,7 @@ export default function EditSalesList({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <button className="flex w-full items-center justify-end text-[#6571FF] md:justify-center">
-          <FaEdit />
+          <SquarePen size={20} />
         </button>
       </DialogTrigger>
 

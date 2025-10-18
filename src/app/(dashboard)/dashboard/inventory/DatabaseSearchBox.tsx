@@ -1,10 +1,10 @@
 "use client";
 
-import { CiSearch } from "react-icons/ci";
 import { Input } from "antd";
 import debounce from "lodash.debounce";
 import { useEffect, useMemo, useState } from "react";
 import { useInventoryDatabaseSearchStore } from "@/stores/inventoryDatabaseSearchStore";
+import { Search } from "lucide-react";
 
 export default function DatabaseSearchBox() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -44,7 +44,7 @@ export default function DatabaseSearchBox() {
         className="w-full rounded-sm border focus:outline-none"
         type="text"
         placeholder="Search by name"
-        prefix={<CiSearch size={15} />}
+        prefix={<Search size={15} className="text-gray-400" />}
       />
     </div>
   );

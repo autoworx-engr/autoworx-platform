@@ -3,9 +3,8 @@
 import { deleteTask } from "@/actions/task/deleteTask";
 import { usePopupStore } from "@/stores/popup";
 import { Task, User } from "@prisma/client";
-import { SquarePen } from "lucide-react";
+import { CircleCheckBig, SquarePen } from "lucide-react";
 import { useTransition } from "react";
-import { FaRegCheckCircle } from "react-icons/fa";
 
 type TaskWithAssignedUsers = Task & {
   assignedUsers: User[];
@@ -43,7 +42,7 @@ export default function TaskActions({ usersOfCompany, task }: TProps) {
           })
         }
       >
-        <FaRegCheckCircle className="cursor-pointer text-base" />
+        <CircleCheckBig className="cursor-pointer w-4 h-4" />
       </button>
     </span>
   );

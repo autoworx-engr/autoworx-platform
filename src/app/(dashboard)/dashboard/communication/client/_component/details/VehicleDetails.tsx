@@ -2,8 +2,8 @@
 
 import { useClientCommunicationStore } from "@/stores/client-store";
 import type { Service, Vehicle } from "@prisma/client";
-import { FaArrowLeft, FaArrowRight } from "react-icons/fa";
 import { cn } from "@/lib/cn";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 
 type TProps = {
   vehicles: Partial<Vehicle>[];
@@ -86,7 +86,7 @@ export default function VehicleDetails({
             )}
             aria-label="Previous vehicle"
           >
-            <FaArrowLeft className="h-3.5 w-3.5" />
+            <ArrowLeft className="h-4 w-4" />
           </button>
 
           <button
@@ -99,7 +99,7 @@ export default function VehicleDetails({
             )}
             aria-label="Next vehicle"
           >
-            <FaArrowRight className="h-3.5 w-3.5" />
+            <ArrowRight className="h-4 w-4" />
           </button>
         </div>
       </div>

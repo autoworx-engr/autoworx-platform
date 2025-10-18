@@ -35,18 +35,18 @@ import { addOneHour, formatDateToToday, getCurrentTime } from "@/utils/time";
 import moment from "moment";
 import { customAlphabet } from "nanoid";
 import { useEffect, useRef, useState } from "react";
-import {
-  FaChevronLeft,
-  FaChevronRight,
-  FaSearch,
-  FaTimes,
-  FaTrash,
-} from "react-icons/fa";
-import { IoCloseSharp } from "react-icons/io5";
-import { TbBell, TbCalendar } from "react-icons/tb";
 import { Reminder } from "./Reminder";
 import { useServerGet } from "@/hooks/useServerGet";
 import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
+import {
+  Bell,
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  Search,
+  Trash2,
+  X,
+} from "lucide-react";
 
 enum Tab {
   Schedule = 0,
@@ -72,10 +72,10 @@ export function UpdateAppointment() {
   const [title, setTitle] = useState(appointment?.title);
   const [notes, setNotes] = useState(appointment?.notes || "");
   const [date, setDate] = useState<string | null>(
-    moment.utc(appointment?.date).format("YYYY-MM-DD"),
+    moment.utc(appointment?.date).format("YYYY-MM-DD")
   );
   const [startTime, setStartTime] = useState<string | null>(
-    appointment?.startTime,
+    appointment?.startTime
   );
 
   const [endTime, setEndTime] = useState<string | null>(appointment?.endTime);
@@ -89,14 +89,14 @@ export function UpdateAppointment() {
   const [client, setClient] = useState<Client | null>(appointment?.client);
   const [vehicle, setVehicle] = useState<Vehicle | null>(appointment?.vehicle);
   const [assignedUsers, setAssignedUsers] = useState<User[]>(
-    appointment?.assignedUsers,
+    appointment?.assignedUsers
   );
 
   const [employeesToDisplay, setEmployeesToDisplay] =
     useState<User[]>(employees);
 
   const [times, setTimes] = useState<{ time: string; date: string }[]>(
-    appointment?.times as any,
+    appointment?.times as any
   );
   const [confirmationTemplate, setConfirmationTemplate] =
     useState<EmailTemplate | null>(appointment?.confirmationEmailTemplate);
@@ -164,7 +164,7 @@ export function UpdateAppointment() {
     if (estimates) {
       // filter all estimates where clientId is client.id
       const filteredEstimates = estimates.filter(
-        (estimate) => estimate.clientId === client?.id,
+        (estimate) => estimate.clientId === client?.id
       );
       // map the filtered estimates to get the id
       const estimateIds = filteredEstimates.map((estimate) => estimate.id);
@@ -211,7 +211,7 @@ export function UpdateAppointment() {
 
     if (date && (!startTime || !endTime)) {
       return errorToast(
-        "Start time and End time are required when a date is selected!",
+        "Start time and End time are required when a date is selected!"
       );
     }
 
@@ -228,7 +228,7 @@ export function UpdateAppointment() {
       !company?.timezone
     ) {
       return errorToast(
-        "Set company timezone in Settings > Business Profile to send client reminders.",
+        "Set company timezone in Settings > Business Profile to send client reminders."
       );
     }
 
@@ -403,7 +403,7 @@ export function UpdateAppointment() {
 
   const handleTimeChange = (
     e: React.ChangeEvent<HTMLInputElement>,
-    type: "start" | "end",
+    type: "start" | "end"
   ) => {
     let timeValue = e.target.value;
 
@@ -560,11 +560,11 @@ export function UpdateAppointment() {
               type="button"
               className={cn(
                 "rounded-full px-4 py-1 font-semibold",
-                tab === Tab.Schedule && "bg-background",
+                tab === Tab.Schedule && "bg-background"
               )}
               onClick={() => setTab(Tab.Schedule)}
             >
-              <TbCalendar className="mr-2 inline" size={24} />
+              <Calendar className="mr-2 inline" size={24} />
               Schedule
             </button>
 
@@ -572,11 +572,11 @@ export function UpdateAppointment() {
               type="button"
               className={cn(
                 "rounded-full px-4 py-1 font-semibold",
-                tab === Tab.Reminder && "bg-background",
+                tab === Tab.Reminder && "bg-background"
               )}
               onClick={() => setTab(Tab.Reminder)}
             >
-              <TbBell className="mr-2 inline" size={24} />
+              <Bell className="mr-2 inline" size={24} />
               Reminder
             </button>
           </div>
@@ -677,12 +677,12 @@ export function UpdateAppointment() {
                     <button
                       onClick={() => {
                         let filteredAssignedUser = assignedUsers.filter(
-                          (assignedUser) => user.id != assignedUser.id,
+                          (assignedUser) => user.id != assignedUser.id
                         );
                         setAssignedUsers(filteredAssignedUser);
                       }}
                     >
-                      <IoCloseSharp size={16} />
+                      <X size={16} />
                     </button>
                   </div>
                 );
@@ -693,7 +693,10 @@ export function UpdateAppointment() {
               <div className="#w-[200px] relative space-y-4 rounded-lg border-2 border-slate-400">
                 {/* Search */}
                 <div className="%mx-auto relative mx-2 my-3 h-[35px] w-[85%] rounded-lg border-2 border-slate-400">
-                  <FaSearch className="absolute left-2 top-1/2 -translate-y-1/2 transform text-slate-400" />
+                  <Search
+                    size={18}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 transform text-slate-400"
+                  />
                   <input
                     name="search"
                     className="h-full w-full rounded-lg pl-7 pr-2 focus:outline-none"
@@ -705,7 +708,7 @@ export function UpdateAppointment() {
                     }}
                   />
                 </div>
-                <FaTimes
+                <X
                   className="absolute right-3 top-3 -translate-y-1/2 transform cursor-pointer text-xl text-red-400"
                   onClick={() => setAddSalesPersonOpen(false)}
                 />
@@ -758,12 +761,12 @@ export function UpdateAppointment() {
                     <button
                       onClick={() => {
                         let filteredAssignedUser = assignedUsers.filter(
-                          (assignedUser) => user.id != assignedUser.id,
+                          (assignedUser) => user.id != assignedUser.id
                         );
                         setAssignedUsers(filteredAssignedUser);
                       }}
                     >
-                      <IoCloseSharp size={16} />
+                      <X size={16} />
                     </button>
                   </div>
                 );
@@ -774,7 +777,10 @@ export function UpdateAppointment() {
               <div className="#w-[200px] relative space-y-4 rounded-lg border-2 border-slate-400">
                 {/* Search */}
                 <div className="%mx-auto relative mx-2 my-3 h-[35px] w-[85%] rounded-lg border-2 border-slate-400">
-                  <FaSearch className="absolute left-2 top-1/2 -translate-y-1/2 transform text-slate-400" />
+                  <Search
+                    size={18}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 transform text-slate-400"
+                  />
                   <input
                     name="search"
                     className="h-full w-full rounded-lg pl-7 pr-2 focus:outline-none"
@@ -786,7 +792,7 @@ export function UpdateAppointment() {
                     }}
                   />
                 </div>
-                <FaTimes
+                <X
                   className="absolute right-3 top-3 -translate-y-1/2 transform cursor-pointer text-xl text-red-400"
                   onClick={() => setAddTechnicianOpen(false)}
                 />
@@ -853,7 +859,7 @@ export function UpdateAppointment() {
               displayList={(item) => <p className="text-[#6571FF]">{item}</p>}
               onSearch={(search) => {
                 return draftEstimates.filter((draft) =>
-                  draft.toLowerCase().includes(search.toLowerCase()),
+                  draft.toLowerCase().includes(search.toLowerCase())
                 );
               }}
             />
@@ -876,13 +882,13 @@ export function UpdateAppointment() {
               >
                 <div className="sticky top-0 z-10 flex items-center gap-4 bg-background px-8 py-2">
                   <button type="button" onClick={() => handleDate("-")}>
-                    <FaChevronLeft />
+                    <ChevronLeft />
                   </button>
                   <div className="mx-auto text-center text-gray-500">
                     {moment(date).format("dddd, MMMM YYYY")}
                   </div>
                   <button type="button" onClick={() => handleDate("+")}>
-                    <FaChevronRight />
+                    <ChevronRight />
                   </button>
                 </div>
 
@@ -955,7 +961,7 @@ export function UpdateAppointment() {
               close();
             }}
           >
-            <FaTrash />
+            <Trash2 />
           </button>
 
           <DialogFooter className="w-full">

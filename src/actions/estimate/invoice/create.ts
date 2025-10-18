@@ -52,7 +52,7 @@ type TCreateInvoiceProps = {
   customerNotes: string;
   customerComments: string;
 
-  photos: { id?: number;  photo?: string}[];
+  photos: { id?: number; photo?: string }[];
   items: {
     service: Service | null;
     materials: ((Material & { tags: Tag[] }) | null)[];
@@ -261,20 +261,30 @@ export async function createInvoice({
         }
       }
       //save the inspections
-      // Step 7: Create the inspections records
-      await Promise.all(
-        inspections.map(async (inspection) => {
-          return db.invoiceInspection.create({
-            data: {
-              invoiceId: newInvoice.id,
-              title: inspection.title,
-              driver: inspection.driver,
-              passenger: inspection.passenger,
-              notes: inspection.notes,
-            },
-          });
-        })
-      );
+      const inspectionsToSave = inspections.filter((inspection) => {
+        const hasTitle =
+          !!inspection.title && inspection.title.toString().trim() !== "";
+        const hasFlags = !!inspection.driver || !!inspection.passenger;
+        const hasNotes =
+          !!inspection.notes && inspection.notes.toString().trim() !== "";
+        return hasTitle || hasFlags || hasNotes;
+      });
+
+      if (inspectionsToSave.length > 0) {
+        await Promise.all(
+          inspectionsToSave.map(async (inspection) => {
+            return db.invoiceInspection.create({
+              data: {
+                invoiceId: newInvoice.id,
+                title: inspection.title,
+                driver: inspection.driver,
+                passenger: inspection.passenger,
+                notes: inspection.notes,
+              },
+            });
+          })
+        );
+      }
       // Check if inventory product quantities are available when status is not "Pending"
       if (newInvoice.type === InvoiceType.Invoice) {
         // merge all the same products and sum the quantity

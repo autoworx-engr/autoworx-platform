@@ -11,7 +11,6 @@ import {
 import FormError from "@/components/FormError";
 import Selector from "@/components/Selector";
 import { SlimInput, slimInputClassName } from "@/components/SlimInput";
-import Submit from "@/components/Submit";
 import { cn } from "@/lib/cn";
 import { useFormErrorStore } from "@/stores/form-error";
 import AppointmentTitleSelectAndAdd from "./AppointmentTitleSelectAndAdd";
@@ -40,8 +39,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import moment from "moment-timezone";
 import { customAlphabet } from "nanoid";
 import { useEffect, useRef, useState } from "react";
-import { FaTrash } from "react-icons/fa";
-import { TbBell, TbCalendar } from "react-icons/tb";
 import AssignUsers from "./AssignUsers";
 import { Reminder } from "./Reminder";
 import ScheduleTab from "./ScheduleTab";
@@ -50,6 +47,7 @@ import { SelectAppointmentVehicle } from "./SelectAppointmentVehicle";
 import { formatTime12Hour } from "@/utils/formateTime12Hours";
 import { Popconfirm, Select } from "antd";
 import { normalizeTime } from "@/utils/normalizeTime";
+import { Bell, Calendar, Trash2 } from "lucide-react";
 enum Tab {
   Schedule = 0,
   Reminder = 1,
@@ -754,7 +752,7 @@ export default function AppointmentModalBody({
             )}
             onClick={() => setTab(Tab.Schedule)}
           >
-            <TbCalendar className="mr-2 inline" size={24} />
+            <Calendar className="mr-2 inline" size={24} />
             Schedule
           </button>
 
@@ -766,7 +764,7 @@ export default function AppointmentModalBody({
             )}
             onClick={() => setTab(Tab.Reminder)}
           >
-            <TbBell className="mr-2 inline" size={24} />
+            <Bell className="mr-2 inline" size={24} />
             Reminder
           </button>
         </div>
@@ -1022,7 +1020,10 @@ export default function AppointmentModalBody({
                 }
               }}
             >
-              <FaTrash className="text-xl text-red-500 hover:text-red-600 cursor-pointer" />
+              <Trash2
+                size={20}
+                className="text-red-500 hover:text-red-600 cursor-pointer"
+              />
             </Popconfirm>
           )}
           <DialogFooter className="justify-end">

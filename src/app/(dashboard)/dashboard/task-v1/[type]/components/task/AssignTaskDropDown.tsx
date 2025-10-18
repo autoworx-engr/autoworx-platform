@@ -1,13 +1,11 @@
 import Avatar from "@/components/Avatar";
 import { User } from "@prisma/client";
 import { useEffect, useRef, useState } from "react";
-import { FaChevronDown, FaChevronUp } from "react-icons/fa";
-import { TiDeleteOutline } from "react-icons/ti";
-
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser.ts";
 import { useIsAdminOrManager } from "@/utils/useIsAdminOrManager.ts";
+import { ChevronDown, ChevronUp, CircleX } from "lucide-react";
 
 type TProps = {
   companyUsers: Partial<User>[];
@@ -28,7 +26,7 @@ export default function AssignTaskDropDown({
   const [showUsers, setShowUsers] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const userDivRef = useRef<HTMLDivElement>(null);
-  
+
   const handleTrigger = () => {
     setShowUsers(!showUsers);
   };
@@ -75,7 +73,7 @@ export default function AssignTaskDropDown({
     const findUser = companyUsers.find((user) => user.id === userId);
     setUsers((prevUsers) => prevUsers.concat(findUser as User));
     setAssignedUsers((prevAssignUserId) =>
-      prevAssignUserId.filter((id) => id !== userId),
+      prevAssignUserId.filter((id) => id !== userId)
     );
   };
 
@@ -106,11 +104,11 @@ export default function AssignTaskDropDown({
                   key={userId}
                   className={cn(
                     //   buttonVariants({ variant: "outline" }),
-                    "flex items-center gap-x-2 rounded-sm border px-3 py-2 shadow-md",
+                    "flex items-center gap-x-2 rounded-sm border px-3 py-2 shadow-md"
                   )}
                 >
                   <span>{fullName}</span>
-                  <TiDeleteOutline
+                  <CircleX
                     onClick={() => handleRemoveUser(userId)}
                     className="size-6 flex-shrink-0 cursor-pointer text-red-300"
                   />
@@ -140,7 +138,7 @@ export default function AssignTaskDropDown({
                 className={cn(
                   "#no-visible-scrollbar mt-2 flex max-h-56 w-full flex-col gap-2 overflow-y-auto p-2 font-bold lg:w-[460px]",
                   "#overflow-hidden absolute top-[45px] z-50 min-w-[8rem] rounded-md border bg-popover p-1 text-popover-foreground shadow-md",
-                  "p-3 pt-6",
+                  "p-3 pt-6"
                 )}
               >
                 <button
@@ -148,7 +146,7 @@ export default function AssignTaskDropDown({
                   type="button"
                   className="sticky right-2 top-0 z-50 ml-auto"
                 >
-                  <TiDeleteOutline size={30} className="text-red-300" />
+                  <CircleX size={30} className="text-red-300" />
                 </button>
                 {userForAssign
                   .filter((user) => {
@@ -165,7 +163,7 @@ export default function AssignTaskDropDown({
                       onClick={() => {
                         setAssignedUsers([...assignedUsers, user?.id!]);
                         setUsers((prevUser) =>
-                          prevUser.filter((u) => user.id !== u.id),
+                          prevUser.filter((u) => user.id !== u.id)
                         );
                       }}
                     >
@@ -175,13 +173,6 @@ export default function AssignTaskDropDown({
                       </span>
                     </label>
                   ))}
-                {/* <button
-                  onClick={() => setShowUsers(false)}
-                  type="button"
-                  className="$right-2 sticky top-2"
-                >
-                  <TiDeleteOutline size={30} className="text-red-300" />
-                </button> */}
               </div>
             )}
           </div>
@@ -193,9 +184,9 @@ export default function AssignTaskDropDown({
             className="flex w-full items-center justify-end rounded-md border-2 border-gray-500 p-2"
           >
             {showUsers ? (
-              <FaChevronUp className="text-[#797979]" />
+              <ChevronUp className="text-[#797979]" />
             ) : (
-              <FaChevronDown className="text-[#797979]" />
+              <ChevronDown className="text-[#797979]" />
             )}
           </Button>
         )}

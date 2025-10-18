@@ -4,10 +4,9 @@ import { useColumnDispatch } from "@/context/sales-pipeline.context";
 // import { getClientMessageCount } from "@/actions/pipelines/getClinetMessageCount";
 import { pusher } from "@/lib/pusher/client";
 import { LeadWithSalesUser } from "@/types/invoiceLead";
-import { Lead } from "@prisma/client";
+import { MessageCircleMore } from "lucide-react";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
-import { PiWechatLogoLight } from "react-icons/pi";
 
 type TProps = {
   lead: LeadWithSalesUser;
@@ -15,7 +14,7 @@ type TProps = {
 
 export default function CommunicationsNoti({ lead }: TProps) {
   const [totalClientMessage, setTotalClientMessage] = useState(
-    lead.totalMessage ?? 0,
+    lead.totalMessage ?? 0
   );
 
   const dispatch = useColumnDispatch();
@@ -38,7 +37,7 @@ export default function CommunicationsNoti({ lead }: TProps) {
               },
             });
           }
-        },
+        }
       );
     return () => {
       pusher.unbind(`client`);
@@ -56,7 +55,7 @@ export default function CommunicationsNoti({ lead }: TProps) {
       prefetch={false}
     >
       <div className="relative">
-        <PiWechatLogoLight size={22} color="#1f2937 " />
+        <MessageCircleMore size={20} color="#66738C" />
         {isShowTaskCount && (
           <span className="absolute left-[0.8rem] top-[-0.5rem] rounded-full bg-red-400 px-1 py-0.5 text-[10px] text-white">
             {totalClientMessage}

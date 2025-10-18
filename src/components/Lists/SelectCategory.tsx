@@ -6,8 +6,8 @@ import { useListsStore } from "@/stores/lists";
 import { Category } from "@prisma/client";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { FaTimes } from "react-icons/fa";
 import { Popconfirm } from "antd";
+import { X } from "lucide-react";
 
 export default function SelectCategory({
   categoryData = null,
@@ -163,7 +163,7 @@ export default function SelectCategory({
                   e.stopPropagation();
                 }}
               >
-                <FaTimes cursor="pointer" color="#f87171" fontSize={20} />
+                <X size={20} cursor="pointer" color="#f87171" />
               </span>
             </Popconfirm>
           </div>

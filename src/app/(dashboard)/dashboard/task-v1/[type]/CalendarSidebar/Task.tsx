@@ -7,10 +7,9 @@ import { Tooltip } from "antd";
 import moment from "moment";
 import React, { LegacyRef } from "react";
 import { useDrag } from "react-dnd";
-import { FaRegCheckCircle } from "react-icons/fa";
 import { useDate } from "../Calendar/Day";
 import { useRouter } from "next/navigation";
-import { SquarePen } from "lucide-react";
+import { CircleCheckBig, SquarePen } from "lucide-react";
 
 export default function TaskComponent({
   task,
@@ -100,8 +99,9 @@ export default function TaskComponent({
           });
         }}
       />
-      <FaRegCheckCircle
-        className="text-xl text-white hover:text-gray-400"
+      <CircleCheckBig
+        size={20}
+        className="text-white hover:text-gray-400"
         onClick={handleDelete}
       />
     </div>

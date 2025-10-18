@@ -1,9 +1,9 @@
 import { formatTime } from "@/utils/taskAndActivity";
 import { getHours } from "@/utils/time";
 import { CalendarSettings } from "@prisma/client";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import moment from "moment";
 import React from "react";
-import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 
 type TScheduleTabProps = {
   rows: string[];
@@ -26,13 +26,13 @@ export default function ScheduleTab({
     <>
       <div className="sticky top-0 z-10 flex items-center gap-4 bg-background px-8 py-2">
         <button type="button" onClick={() => onDateUpDown("-")}>
-          <FaChevronLeft />
+          <ChevronLeft />
         </button>
         <div className="mx-auto text-center">
           {moment(date).format("dddd, MMMM YYYY")}
         </div>
         <button type="button" onClick={() => onDateUpDown("+")}>
-          <FaChevronRight />
+          <ChevronRight />
         </button>
       </div>
       {/* TODO:  */}

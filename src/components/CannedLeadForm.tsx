@@ -1,15 +1,12 @@
 "use client";
 import { useEffect, useState } from "react";
-import { LuFolderX, LuTrash2 } from "react-icons/lu";
-import { RxCopy } from "react-icons/rx";
-import { TbQrcode } from "react-icons/tb";
-
 import { useLeadLinkStore } from "@/stores/useLeadLinkStore";
 import { deleteLeadLink } from "@/actions/lead/deleteLeadLink";
 import Image from "next/image";
 import { successToast } from "@/lib/toast";
 import { Skeleton } from "@mui/material";
 import moment from "moment";
+import { Copy, QrCode, Trash2, X } from "lucide-react";
 
 type LeadFormEntry = {
   id: number;
@@ -127,7 +124,7 @@ const CannedLeadForm = ({ companyId }: { companyId: number }) => {
             </div>
           ) : entries.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
-              <LuFolderX className="mb-4 h-16 w-16 text-gray-400" />
+              <X className="mb-4 h-16 w-16 text-gray-400" />
               <h3 className="mb-2 text-lg font-medium text-gray-700">
                 No Lead Links Found
               </h3>
@@ -170,7 +167,7 @@ const CannedLeadForm = ({ companyId }: { companyId: number }) => {
                                 aria-label="Copy link"
                                 title="Copy link"
                               >
-                                <RxCopy className="h-5 w-5 text-gray-800" />
+                                <Copy className="h-5 w-5 text-gray-800" />
                               </button>
                               <button
                                 className={`rounded-full p-2 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 ${
@@ -182,7 +179,7 @@ const CannedLeadForm = ({ companyId }: { companyId: number }) => {
                                 aria-label="Show QR code"
                                 title="Show QR code"
                               >
-                                <TbQrcode
+                                <QrCode
                                   className={`h-5 w-5 ${entry.showQR ? "text-blue-500" : "text-gray-800"}`}
                                 />
                               </button>
@@ -192,7 +189,7 @@ const CannedLeadForm = ({ companyId }: { companyId: number }) => {
                                 aria-label="Delete link"
                                 title="Delete link"
                               >
-                                <LuTrash2 className="h-5 w-5 text-red-500" />
+                                <Trash2 className="h-5 w-5 text-red-500" />
                               </button>
                             </div>
                           </div>

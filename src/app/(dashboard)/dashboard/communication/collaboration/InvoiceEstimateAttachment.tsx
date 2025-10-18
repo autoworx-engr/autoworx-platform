@@ -1,5 +1,5 @@
+import { CircleX } from "lucide-react";
 import Image from "next/image";
-import { HiXCircle } from "react-icons/hi2";
 
 type TProps = {
   photos: File[];
@@ -59,7 +59,7 @@ export default function InvoiceEstimateAttachment({
             onClick={() => setPhotos(photos.toSpliced(i, 1))}
             className="absolute right-0 top-0 -translate-y-1/2 translate-x-1/2 text-[#6470FF]"
           >
-            <HiXCircle size={20} />
+            <CircleX size={18} />
           </button>
         </div>
       ))}

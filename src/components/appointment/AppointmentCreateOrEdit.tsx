@@ -5,9 +5,9 @@ import { Appointment, Lead } from "@prisma/client";
 import { useSession } from "next-auth/react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { FaPlus } from "react-icons/fa";
 import AppointmentModalBody from "./AppointmentModalBody";
 import { AppointModalBodyTechnician } from "./AppointModalBodyTechnician";
+import { Plus } from "lucide-react";
 
 type TAppointmentCreateOrEditProps = {
   fromLead?: boolean;
@@ -74,7 +74,7 @@ export function AppointmentCreateOrEdit({
           {fromEdit ? "Edit" : "New"} Appointment
         </span>
         <span className="inline lg:hidden">
-          <FaPlus />
+          <Plus size={20} />
         </span>
       </button>
     );

@@ -1,11 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useMemo } from "react";
-import { FaChevronDown, FaChevronUp, FaSearch } from "react-icons/fa";
-import { IoMdClose } from "react-icons/io";
-import { PiPaletteBold } from "react-icons/pi";
 import { Tag, User } from "@prisma/client";
-
 import { INVOICE_COLORS } from "@/lib/consts";
 import { useFormErrorStore } from "@/stores/form-error";
 import {
@@ -19,6 +15,7 @@ import newTag from "@/actions/tag/newTag";
 import { getTags } from "@/actions/tag/getTags";
 import { deleteTag } from "@/actions/tag/deleteTag";
 import getUser from "@/lib/getUser";
+import { ChevronDown, ChevronUp, Palette, Search, X } from "lucide-react";
 
 type SelectedColor = { textColor: string; bgColor: string } | null;
 
@@ -99,7 +96,7 @@ export function EmployeeTagSelector({
     <>
       <DropdownMenu open={open} onOpenChange={setOpen}>
         <DropdownMenuTrigger onClick={() => setOpen?.(!open)}>
-          <FaChevronDown />
+          {/* <ChevronDown /> */}
         </DropdownMenuTrigger>
 
         <DropdownMenuContent
@@ -111,7 +108,10 @@ export function EmployeeTagSelector({
         >
           {/* Search Box */}
           <div className="relative m-2">
-            <FaSearch className="absolute left-2 top-1/2 -translate-y-1/2 text-[#797979]" />
+            <Search
+              size={16}
+              className="absolute left-2 top-1/2 -translate-y-1/2 text-[#797979]"
+            />
             <input
               type="text"
               placeholder="Search"
@@ -120,7 +120,7 @@ export function EmployeeTagSelector({
               onChange={(e) => setSearch(e.target.value)}
             />
             <button onClick={() => setOpen?.(false)}>
-              <FaChevronUp className="absolute right-2 top-1/2 -translate-y-1/2 text-[#797979]" />
+              <ChevronUp className="absolute right-2 top-1/2 -translate-y-1/2 text-[#797979]" />
             </button>
           </div>
 
@@ -153,7 +153,7 @@ export function EmployeeTagSelector({
                     onClick={() => handleDeleteTag(tagItem.id)}
                     className={`text-lg text-[#66738C] disabled:cursor-not-allowed disabled:text-[#66738C] ${isRestrictedUser ? "hidden" : ""}`}
                   >
-                    <IoMdClose />
+                    <X size={16} />
                   </button>
                 </div>
               ))}
@@ -240,10 +240,10 @@ function QuickAddForm({
       />
       <button
         type="button"
-        className="rounded bg-[#6470FF] p-2 text-white"
+        className="rounded bg-[#6470FF] px-2 text-white"
         onClick={() => setColorPickerVisible((prev) => !prev)}
       >
-        <PiPaletteBold />
+        <Palette size={20} />
       </button>
       <Submit
         className="rounded bg-slate-500 p-1 text-xs leading-3 text-white"

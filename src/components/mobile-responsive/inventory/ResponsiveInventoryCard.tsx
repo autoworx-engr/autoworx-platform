@@ -4,9 +4,8 @@ import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/cn";
 import { ProductCardProps } from "@/types/inventory";
 import { Popconfirm, Tooltip } from "antd";
+import { CircleAlert, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { FaTimes } from "react-icons/fa";
-import { FaCircleExclamation } from "react-icons/fa6";
 
 interface InventoryResponsiveCardProps {
   product: ProductCardProps;
@@ -32,7 +31,7 @@ const InventoryResponsiveCard: React.FC<InventoryResponsiveCardProps> = ({
       <Card
         className={cn(
           "mt min-h-[110px] rounded-[5px] border border-[#BFC4FF] px-4 py-2 shadow-sm",
-          (index + 1) % 2 === 0 ? evenColor : oddColor,
+          (index + 1) % 2 === 0 ? evenColor : oddColor
         )}
       >
         <div className="flex flex-col gap-2 text-[#66738C] lg:flex-row lg:items-center lg:justify-between">
@@ -40,17 +39,18 @@ const InventoryResponsiveCard: React.FC<InventoryResponsiveCardProps> = ({
             <div className="flex items-center gap-2">
               {product.quantity === 0 ? (
                 <Tooltip title="Product is out of stock" placement="top">
-                  <FaCircleExclamation className="size-4 text-xl text-red-600" />
+                  <CircleAlert className="size-4 text-xl text-red-600" />
                 </Tooltip>
-              ) : Number( product.quantity )<= Number(product.lowInventoryAlert) ? (
+              ) : Number(product.quantity) <=
+                Number(product.lowInventoryAlert) ? (
                 <Tooltip title="Product has low inventory" placement="top">
-                  <FaCircleExclamation className="size-4 text-xl text-yellow-600" />
+                  <CircleAlert className="size-4 text-xl text-yellow-600" />
                 </Tooltip>
               ) : null}
               <h3
                 onClick={() =>
                   router.push(
-                    `/dashboard/inventory?view=${search?.get("view")}&productId=${product.id}`,
+                    `/dashboard/inventory?view=${search?.get("view")}&productId=${product.id}`
                   )
                 }
                 className="cursor-pointer truncate text-xl font-bold"
@@ -66,7 +66,7 @@ const InventoryResponsiveCard: React.FC<InventoryResponsiveCardProps> = ({
           <div className="mt-1 h-[70px] rounded-[2px] border border-[#BFC4FF] px-2 py-1 text-right font-semibold sm:mt-0">
             <p className="text-3xl">
               {product?.quantity}
-              <span className="text-[10px]">{" "}/{product?.unit}</span>
+              <span className="text-[10px]"> /{product?.unit}</span>
             </p>
             <p className="text-[10px]">Remaining</p>
           </div>
@@ -85,13 +85,17 @@ const InventoryResponsiveCard: React.FC<InventoryResponsiveCardProps> = ({
                   onConfirm={async () => {
                     await deleteInventory(product.id);
                     router.push(
-                      `/dashboard/inventory?view=${search?.get("view")}`,
+                      `/dashboard/inventory?view=${search?.get("view")}`
                     );
                   }}
                   okText="Yes"
                   cancelText="No"
                 >
-                  <FaTimes size={18} className="text-xl text-red-400" />
+                  <X
+                    size={20}
+                    strokeWidth={3}
+                    className="text-xl text-red-400"
+                  />
                 </Popconfirm>
               </div>
             )}

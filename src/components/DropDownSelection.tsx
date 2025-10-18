@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -13,8 +12,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/cn";
-
-import { IoMdArrowDropdown } from "react-icons/io";
 
 type TProps = {
   changesValue?: string;
@@ -50,11 +47,24 @@ export function DropdownSelection({
             variant="outline"
             className={cn(
               "flex items-center justify-center gap-x-1 text-xs lg:gap-x-2 lg:text-base",
-              buttonClassName,
+              buttonClassName
             )}
           >
             {changesValue || defaultValue}
-            {dropdownIcon ? dropdownIcon : <IoMdArrowDropdown />}
+            {dropdownIcon ? (
+              dropdownIcon
+            ) : (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                width="24"
+                height="24"
+                aria-hidden="true"
+                role="img"
+              >
+                <path d="M12 15.5L5 8.5h14l-7 7z" fill="currentColor" />
+              </svg>
+            )}
           </Button>
         )}
       </DropdownMenuTrigger>

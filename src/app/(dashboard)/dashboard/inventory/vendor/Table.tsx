@@ -7,9 +7,8 @@ import { Vendor } from "@prisma/client";
 import { Popconfirm } from "antd";
 import moment from "moment-timezone";
 import { useRouter } from "next/navigation";
-import { FaTimes } from "react-icons/fa";
 import { deleteVendor } from "../../../../../actions/vendor/deleteVendor";
-import { SquarePen } from "lucide-react";
+import { SquarePen, X } from "lucide-react";
 
 const evenColor = "bg-background";
 const oddColor = "bg-[#F8FAFF]";
@@ -89,7 +88,7 @@ export default function Table({
                   okText="Yes"
                   cancelText="No"
                 >
-                  <FaTimes className="text-xl text-red-400" />
+                  <X size={20} strokeWidth={3} className="text-red-400" />
                 </Popconfirm>
               </td>
             </tr>
