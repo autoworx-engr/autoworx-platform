@@ -19,7 +19,7 @@ const SalesSelector: React.FC<SalesSelectorProps> = ({
     <Select
       disabled={disabled}
       showSearch
-      style={{ width: 200 }}
+      style={{ width: "100%", minWidth: 150 }}
       placeholder="Search"
       optionFilterProp="label"
       filterSort={(optionA, optionB) =>
