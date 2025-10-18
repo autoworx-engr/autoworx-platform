@@ -1,13 +1,13 @@
 // This file contains the navigation structure for the documentation
-import { GrHomeRounded } from "react-icons/gr";
 import {
-  LuBook,
-  LuCode,
-  LuGlobe,
-  LuLayers,
-  LuLightbulb,
-  LuSettings,
-} from "react-icons/lu";
+  Book,
+  Code,
+  Globe,
+  Home,
+  Layers,
+  Lightbulb,
+  Settings,
+} from "lucide-react";
 
 export interface NavItem {
   title: string;
@@ -21,7 +21,7 @@ export const docsNavigation: NavItem[] = [
   {
     title: "Getting Started",
     href: "/",
-    icon: GrHomeRounded,
+    icon: Home,
     children: [
       { title: "Introduction", href: "/" },
       { title: "Installation", href: "/installation" },
@@ -31,7 +31,7 @@ export const docsNavigation: NavItem[] = [
   {
     title: "Components",
     href: "/components",
-    icon: LuLayers,
+    icon: Layers,
     children: [
       { title: "Buttons", href: "/components/buttons" },
       { title: "Cards", href: "/components/cards" },
@@ -42,7 +42,7 @@ export const docsNavigation: NavItem[] = [
   {
     title: "API Reference",
     href: "/api",
-    icon: LuCode,
+    icon: Code,
     children: [
       { title: "Authentication", href: "/api/auth" },
       { title: "Endpoints", href: "/api/endpoints" },
@@ -52,7 +52,7 @@ export const docsNavigation: NavItem[] = [
   {
     title: "Guides",
     href: "/guides",
-    icon: LuBook,
+    icon: Book,
     children: [
       { title: "Deployment", href: "/guides/deployment" },
       { title: "Configuration", href: "/guides/configuration" },
@@ -62,7 +62,7 @@ export const docsNavigation: NavItem[] = [
   {
     title: "Examples",
     href: "/examples",
-    icon: LuLightbulb,
+    icon: Lightbulb,
     children: [
       { title: "Simple App", href: "/examples/simple" },
       { title: "Advanced App", href: "/examples/advanced" },
@@ -71,7 +71,7 @@ export const docsNavigation: NavItem[] = [
   {
     title: "Resources",
     href: "/resources",
-    icon: LuGlobe,
+    icon: Globe,
     children: [
       { title: "Community", href: "/resources/community" },
       { title: "Support", href: "/resources/support" },
@@ -80,6 +80,6 @@ export const docsNavigation: NavItem[] = [
   {
     title: "Settings",
     href: "/settings",
-    icon: LuSettings,
+    icon: Settings,
   },
 ];

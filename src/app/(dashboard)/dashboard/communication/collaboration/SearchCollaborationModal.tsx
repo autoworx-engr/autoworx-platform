@@ -7,15 +7,13 @@ import {
 } from "@/components/Dialog";
 import { SlimInput } from "@/components/SlimInput";
 import { SetStateAction, useEffect, useRef, useState } from "react";
-import { RiArrowDownSLine, RiArrowUpSLine } from "react-icons/ri";
-import { CiSearch } from "react-icons/ci";
 import { Company, User } from "@prisma/client";
 import Avatar from "@/components/Avatar";
-import { FaPlus } from "react-icons/fa";
 import { errorToast, successToast } from "@/lib/toast";
 import { connectWithCompany } from "@/actions/settings/myNetwork";
 import SearchBox from "./SearchBox";
 import { searchCompanyQuery } from "@/actions/communication/collaboration/searchQuery";
+import { ChevronDown, Plus } from "lucide-react";
 
 type TProps = {
   companyAdmins: Partial<
@@ -65,7 +63,7 @@ export default function SearchCollaborationModal({
     try {
       const result = await connectWithCompany(
         companyId,
-        "/communication/collaboration", // path revalidated
+        "/communication/collaboration" // path revalidated
       );
       // @ts-ignore
       setCompanyAdmins((prevAdmin) => {
@@ -172,7 +170,7 @@ export default function SearchCollaborationModal({
                               }
                               className="flex items-center space-x-1 rounded-md bg-[#006D77] px-1 py-1 text-[14px] text-white shadow-md"
                             >
-                              <FaPlus size={8} />
+                              <Plus size={8} />
                               <span className="text-sm">Send Invite</span>
                             </button>
                           )}
@@ -193,7 +191,7 @@ export default function SearchCollaborationModal({
                   setOpenUserList((prev) => !prev);
                 }}
               />
-              <RiArrowDownSLine
+              <ChevronDown
                 onClick={() => setOpenUserList((prev) => !prev)}
                 className="absolute right-1 top-[32px] size-6 cursor-pointer"
               />

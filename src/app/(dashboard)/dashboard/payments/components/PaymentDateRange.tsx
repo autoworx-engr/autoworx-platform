@@ -1,10 +1,10 @@
 "use client";
 import { format } from "date-fns";
+import { Calendar } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import { DateRangePicker } from "react-date-range";
 import "react-date-range/dist/styles.css"; // main style file
 import "react-date-range/dist/theme/default.css"; // theme css file
-import { CiCalendar } from "react-icons/ci";
 
 const DateRange = ({
   onOk,
@@ -96,7 +96,7 @@ const DateRange = ({
             ? formatRange(state.selection.startDate, state.selection.endDate)
             : "Date Range"}
         </span>
-        <CiCalendar className="ml-3 text-lg md:ml-0 md:text-base" />
+        <Calendar size={16} className="ml-3 text-lg md:ml-0 md:text-base" />
       </button>
 
       {showPicker && (

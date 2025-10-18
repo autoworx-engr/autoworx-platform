@@ -29,11 +29,11 @@ import {
   useState,
   useTransition,
 } from "react";
-import { FaTimes } from "react-icons/fa";
 import { Circles } from "react-loader-spinner"; // Importing the spinner
 import VehicleParts from "./VehicleParts";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
+import { X } from "lucide-react";
 
 type TProps = {
   invoiceItemId: number;
@@ -350,7 +350,7 @@ export default function CreateAndEditLabor({
           <div className="mb-4 flex items-center justify-between rounded-md bg-red-700 px-4 py-1 text-white">
             <p>{error}</p>
             <button type="button" onClick={() => setError("")}>
-              <FaTimes />
+              <X size={20} strokeWidth={3} />
             </button>
           </div>
         )}

@@ -4,10 +4,9 @@ import InputDetails from "./InputDetails";
 import FleetStatistics from "./FleetStatistics";
 import FleetSubHeading from "./FleetSubHeading";
 import NewFleet from "./NewFleet";
-import { IoMdSettings } from "react-icons/io";
 import { Client, Fleet, Invoice, Tag } from "@prisma/client";
 import ResponsiveEmployeeCard from "@/components/mobile-responsive/employee/ResponsiveEmployeeCard";
-import Image from "next/image";
+import { Settings } from "lucide-react";
 
 const InfoDetails = ({
   client,
@@ -20,36 +19,36 @@ const InfoDetails = ({
 }) => {
   const unpaidInvoices = client?.Invoice?.filter(
     (invoice: any) =>
-      invoice?.grandTotal == 0 || (invoice?.grandTotal > 0 && invoice?.due > 0),
+      invoice?.grandTotal == 0 || (invoice?.grandTotal > 0 && invoice?.due > 0)
   );
 
   const paidInvoices = client?.Invoice?.filter(
-    (invoice: any) => invoice?.grandTotal > 0 && invoice?.due == 0,
+    (invoice: any) => invoice?.grandTotal > 0 && invoice?.due == 0
   );
 
   const totalValue = client.Invoice?.reduce(
     (sum, invoice: Invoice) => sum + Number(invoice?.grandTotal || 0),
-    0,
+    0
   );
 
   return (
     <div className="flex w-full flex-col justify-between gap-3 lg:flex-row lg:gap-5">
       <div className="relative lg:hidden">
-        <div className="absolute right-2 top-1">
+        <div className="absolute left-1 top-1">
           {/* <EditClient client={client} settingIcon /> */}
           <NewFleet
             fleet={client}
-            buttonElement={<IoMdSettings />}
+            buttonElement={<Settings size={14} />}
             isEdit={true}
           />
         </div>
         <ResponsiveEmployeeCard data={client} index={0} />
       </div>
       <div className="clients-center relative hidden flex-[0.4] rounded border border-gray-300 bg-background p-3 pt-10 lg:flex lg:gap-3">
-        <div className="absolute left-2 top-1 cursor-pointer">
+        <div className="absolute left-1 top-1 cursor-pointer">
           <NewFleet
             fleet={client}
-            buttonElement={<IoMdSettings />}
+            buttonElement={<Settings size={16} />}
             isEdit={true}
           />
         </div>

@@ -3,10 +3,10 @@ import { createDraftEstimate } from "@/actions/estimate/invoice/createDraft";
 import { useClientCommunicationStore } from "@/stores/client-store";
 import { Invoice, Vehicle } from "@prisma/client";
 import { Popconfirm } from "antd";
+import { Plus } from "lucide-react";
 import { customAlphabet } from "nanoid";
 import Link from "next/link";
 import React, { useState } from "react";
-import { FaPlus } from "react-icons/fa";
 
 type TProps = {
   estimates?: Partial<Invoice>[] | null;
@@ -74,7 +74,7 @@ export default function ClientEstimates({
           className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-600 text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
           aria-label="Create new estimate"
         >
-          <FaPlus className="h-3.5 w-3.5" />
+          <Plus className="h-5 w-5" />
         </button>
       </Popconfirm>
     </div>

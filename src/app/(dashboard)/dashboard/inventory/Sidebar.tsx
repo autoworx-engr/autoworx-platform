@@ -9,10 +9,10 @@ import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import getUser from "@/lib/getUser";
 import { formatCurrency } from "@/utils/formatCurrency";
+import { CircleAlert } from "lucide-react";
 import { env } from "next-runtime-env";
 import Image from "next/image";
 import QRCode from "qrcode";
-import { FaCircleExclamation } from "react-icons/fa6";
 import EditProduct from "./EditProduct";
 import QRcode from "./QRcode";
 import ReplenishProductForm from "./ReplenishProductForm";
@@ -255,7 +255,7 @@ export default async function Sidebar({
                   <div className="relative hidden text-nowrap rounded-lg border p-4 text-center font-semibold md:block">
                     {isWarningForQuantity && (
                       <div className="absolute right-2 top-2">
-                        <FaCircleExclamation className="text-2xl text-red-600" />
+                        <CircleAlert size={24} className="text-red-600" />
                       </div>
                     )}
                     <div>

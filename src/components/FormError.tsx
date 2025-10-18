@@ -1,9 +1,8 @@
 "use client";
 
 import { useFormErrorStore } from "@/stores/form-error";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, X } from "lucide-react";
 import { useRef } from "react";
-import { FaTimes } from "react-icons/fa";
 
 export default function FormError() {
   const { error, clearError } = useFormErrorStore();
@@ -40,7 +39,7 @@ export default function FormError() {
 
         <div>
           <button type="button" onClick={handleClose}>
-            <FaTimes className="text-red-400" />
+            <X className="text-red-400" />
           </button>
         </div>
       </div>

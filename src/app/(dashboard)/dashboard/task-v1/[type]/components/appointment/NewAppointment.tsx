@@ -1,6 +1,5 @@
 "use client";
 
-import { addAppointment } from "@/actions/appointment/addAppointment";
 import {
   Dialog,
   DialogClose,
@@ -30,33 +29,28 @@ import type {
 import moment from "moment-timezone";
 import { customAlphabet } from "nanoid";
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  FaChevronLeft,
-  FaChevronRight,
-  FaPlus,
-  FaSearch,
-  FaTimes,
-} from "react-icons/fa";
-import { TbBell, TbCalendar } from "react-icons/tb";
 import { Reminder } from "./Reminder";
 // @ts-ignore
 import Avatar from "@/components/Avatar";
 import { errorToast } from "@/lib/toast";
 import { formatTime } from "@/utils/taskAndActivity";
-import {
-  addOneHour,
-  formatDateToToday,
-  getCurrentTime,
-  getHours,
-} from "@/utils/time";
+import { addOneHour, getHours } from "@/utils/time";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { IoCloseSharp } from "react-icons/io5";
 import { useServerGet } from "@/hooks/useServerGet";
 import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { useCalendarStore } from "@/stores/calendarStore";
 import { formatTime12Hour } from "@/utils/formateTime12Hours";
 import { Select } from "antd";
+import {
+  Bell,
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  Search,
+  X,
+} from "lucide-react";
 
 enum Tab {
   Schedule = 0,
@@ -609,7 +603,7 @@ export function NewAppointment({
           >
             <span className="hidden lg:inline">New Appointment</span>
             <span className="inline lg:hidden">
-              <FaPlus />
+              <Plus />
             </span>
           </button>
         </DialogTrigger>
@@ -632,7 +626,7 @@ export function NewAppointment({
                 )}
                 onClick={() => setTab(Tab.Schedule)}
               >
-                <TbCalendar className="mr-2 inline" size={24} />
+                <Calendar className="mr-2 inline" size={24} />
                 Schedule
               </button>
 
@@ -644,7 +638,7 @@ export function NewAppointment({
                 )}
                 onClick={() => setTab(Tab.Reminder)}
               >
-                <TbBell className="mr-2 inline" size={24} />
+                <Bell className="mr-2 inline" size={24} />
                 Reminder
               </button>
             </div>
@@ -768,7 +762,7 @@ export function NewAppointment({
                             setAssignedUsers(filteredAssignedUser);
                           }}
                         >
-                          <IoCloseSharp size={16} />
+                          <X size={16} />
                         </button>
                       </div>
                     );
@@ -780,7 +774,10 @@ export function NewAppointment({
                 <div className="#w-[200px] relative space-y-4 rounded-lg border-2 border-slate-400">
                   {/* Search */}
                   <div className="%mx-auto relative mx-2 my-3 h-[35px] w-[85%] rounded-lg border-2 border-slate-400">
-                    <FaSearch className="absolute left-2 top-1/2 -translate-y-1/2 transform text-slate-400" />
+                    <Search
+                      size={18}
+                      className="absolute left-2 top-1/2 -translate-y-1/2 transform text-slate-400"
+                    />
                     <input
                       name="search"
                       className="h-full w-full rounded-lg pl-7 pr-2 focus:outline-none"
@@ -792,7 +789,7 @@ export function NewAppointment({
                       }}
                     />
                   </div>
-                  <FaTimes
+                  <X
                     className="absolute right-3 top-3 -translate-y-1/2 transform cursor-pointer text-xl text-red-400"
                     onClick={() => setAddSalesPersonOpen(false)}
                   />
@@ -851,7 +848,7 @@ export function NewAppointment({
                             setAssignedUsers(filteredAssignedUser);
                           }}
                         >
-                          <IoCloseSharp size={16} />
+                          <X size={16} />
                         </button>
                       </div>
                     );
@@ -863,7 +860,10 @@ export function NewAppointment({
                 <div className="#w-[200px] relative space-y-4 rounded-lg border-2 border-slate-400">
                   {/* Search */}
                   <div className="%mx-auto relative mx-2 my-3 h-[35px] w-[85%] rounded-lg border-2 border-slate-400">
-                    <FaSearch className="absolute left-2 top-1/2 -translate-y-1/2 transform text-slate-400" />
+                    <Search
+                      size={18}
+                      className="absolute left-2 top-1/2 -translate-y-1/2 transform text-slate-400"
+                    />
                     <input
                       name="search"
                       className="h-full w-full rounded-lg pl-7 pr-2 focus:outline-none"
@@ -875,7 +875,7 @@ export function NewAppointment({
                       }}
                     />
                   </div>
-                  <FaTimes
+                  <X
                     className="absolute right-3 top-3 -translate-y-1/2 transform cursor-pointer text-xl text-red-400"
                     onClick={() => setAddTechnicianOpen(false)}
                   />
@@ -963,13 +963,13 @@ export function NewAppointment({
                 >
                   <div className="sticky top-0 z-10 flex items-center gap-4 bg-background px-8 py-2">
                     <button type="button" onClick={() => handleDate("-")}>
-                      <FaChevronLeft />
+                      <ChevronLeft />
                     </button>
                     <div className="mx-auto text-center">
                       {moment(date).format("dddd, MMMM YYYY")}
                     </div>
                     <button type="button" onClick={() => handleDate("+")}>
-                      <FaChevronRight />
+                      <ChevronRight />
                     </button>
                   </div>
                   {/* TODO:  */}

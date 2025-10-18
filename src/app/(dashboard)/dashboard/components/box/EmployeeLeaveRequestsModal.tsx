@@ -11,8 +11,8 @@ import {
 } from "@/components/Dialog";
 import { LeaveRequest, User } from "@prisma/client";
 import { useState } from "react";
-import { FaExternalLinkAlt } from "react-icons/fa";
 import { EmployeeLeaveRequest } from "./EmployeeLeaveRequest";
+import { ExternalLink } from "lucide-react";
 
 type TEmployeeLeaveRequestsModalProps = {
   pendingLeaveRequests: (LeaveRequest & { user: User })[];
@@ -27,7 +27,7 @@ export default function EmployeeLeaveRequestsModal({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <button type="button" className="text-xs text-[#6571FF]">
-          <FaExternalLinkAlt />
+          <ExternalLink />
         </button>
       </DialogTrigger>
 

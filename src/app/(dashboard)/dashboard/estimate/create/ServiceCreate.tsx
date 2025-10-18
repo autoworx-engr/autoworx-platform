@@ -15,6 +15,7 @@ export default function ServiceCreate() {
   const { close, data } = useEstimatePopupStore();
   const itemId = data?.itemId;
   const edit = data?.edit as boolean | undefined;
+
   const { categories } = useListsStore();
 
   const [name, setName] = useState("");
@@ -25,8 +26,10 @@ export default function ServiceCreate() {
   useEffect(() => {
     if (data?.service && data.edit) {
       setName(data.service.name);
+
       setCategory(categories.find((cat) => cat.id === data.service.categoryId));
-      setDescription(data.serviceDesc || data.service.description);
+
+      setDescription(data?.serviceDesc);
     } else {
       setName("");
       setCategory(undefined);
@@ -102,6 +105,7 @@ export default function ServiceCreate() {
         }
         return item;
       });
+
       return { items };
     });
 

@@ -4,8 +4,8 @@ import EmployeeInformation from "../components/EmployeeInformation";
 import EmployeeWorkInformation from "../components/EmployeeWorkInformation";
 import Header from "../components/Header";
 import { getCompanyId } from "@/lib/companyId";
-import { IoArrowBack } from "react-icons/io5";
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
 export default async function Page({ params }: { params: { id: string } }) {
   const companyId = await getCompanyId();
@@ -84,7 +84,7 @@ export default async function Page({ params }: { params: { id: string } }) {
     <div className="p-2">
       <div className="w-fit rounded border p-1.5 md:hidden">
         <Link href="/dashboard/employee">
-          <IoArrowBack className="text-lg" />
+          <ArrowLeft className="w-5 h-5" />
         </Link>
       </div>
       <Header />

@@ -45,17 +45,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { FaCopy, FaPrint, FaRegEdit } from "react-icons/fa";
-import { FaCommentSms, FaRegShareFromSquare } from "react-icons/fa6";
-import { HiXMark } from "react-icons/hi2";
-import { IoCloseCircleSharp } from "react-icons/io5";
-import { MdOutlineMail } from "react-icons/md";
-import { PiWechatLogoLight } from "react-icons/pi";
 import { useReactToPrint } from "react-to-print";
 import WorkOrderModal from "../workorder-modal/WorkOrderModal";
 import { InspectionItems } from "./InspectionItems";
 import { InvoiceItems } from "./InvoiceItems";
 import { StripePay } from "./StripePay";
+import { Files, Mail, MessageCircleMore, SquarePen, X } from "lucide-react";
 const DownloadPDF = dynamic(() => import("./DownloadInvoice"), {
   ssr: false,
 });
@@ -150,7 +145,7 @@ export default function InvoiceModalBody({
   const handlePrint = useReactToPrint({
     content: () => printComponentRef.current,
     onBeforePrint: () => {
-      return new Promise(resolve => {
+      return new Promise((resolve) => {
         promiseResolveRef.current = resolve;
         setIsPrinting(true);
       });
@@ -272,14 +267,17 @@ export default function InvoiceModalBody({
                   className="flex items-center justify-center gap-1 rounded bg-[#6571FF] px-2 py-1 text-sm text-white md:px-4 md:text-base"
                   href={`/dashboard/estimate/edit/${invoice.id}?clientId=${invoice.clientId}`}
                 >
-                  <FaRegEdit className="h-3 w-3 md:h-4 md:w-4" />
+                  <SquarePen className="h-3 w-3 md:h-4 md:w-4" />
                   <span className="hidden md:inline">Edit</span>
                 </Link>
                 <Link
                   href={`/dashboard/communication/client/${invoice.clientId}?chat=true`}
                   className="flex items-center justify-center gap-1 rounded bg-[#6571FF] px-2 py-1 text-sm text-white md:px-4 md:text-base"
                 >
-                  <PiWechatLogoLight className="text-sm text-white md:text-xl" />
+                  <MessageCircleMore
+                    size={22}
+                    className="text-sm text-white md:text-xl"
+                  />
                   <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
                     Communications
                   </span>
@@ -288,7 +286,27 @@ export default function InvoiceModalBody({
                   className="flex items-center justify-center gap-1 rounded bg-[#6571FF] px-2 py-1 text-sm text-white md:px-4 md:text-base"
                   onClick={handlePrint}
                 >
-                  <FaPrint className="h-3 w-3 md:h-4 md:w-4" />
+                  <svg
+                    fill="#ffffff"
+                    viewBox="0 0 32 32"
+                    height="16"
+                    width="16"
+                    version="1.1"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                    <g
+                      id="SVGRepo_tracerCarrier"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    ></g>
+                    <g id="SVGRepo_iconCarrier">
+                      {" "}
+                      <title>print</title>{" "}
+                      <path d="M30 13.75h-2.75v-7.75c0-0 0-0.001 0-0.001 0-0.345-0.14-0.657-0.365-0.883l-4-4c-0.226-0.226-0.539-0.366-0.885-0.366-0 0-0 0-0 0h-17c-0.69 0-1.25 0.56-1.25 1.25v0 11.75h-1.75c-0.69 0-1.25 0.56-1.25 1.25v0 9c0 0.69 0.56 1.25 1.25 1.25s1.25-0.56 1.25-1.25v0-7.75h25.5v7.75c0 0.69 0.56 1.25 1.25 1.25s1.25-0.56 1.25-1.25v0-9c-0-0.69-0.56-1.25-1.25-1.25h-0zM6.25 3.25h15.232l3.268 3.268v7.232h-18.5zM26 20.75h-20c-0.69 0-1.25 0.56-1.25 1.25v8c0 0.69 0.56 1.25 1.25 1.25h20c0.69-0.001 1.249-0.56 1.25-1.25v-8c-0.001-0.69-0.56-1.249-1.25-1.25h-0zM24.75 28.75h-17.5v-5.5h17.5zM26.879 17.62c-0.228-0.228-0.544-0.37-0.893-0.37-0.168 0-0.329 0.033-0.475 0.093l0.008-0.003c-0.16 0.060-0.295 0.156-0.399 0.279l-0.001 0.001c-0.119 0.109-0.213 0.242-0.277 0.392l-0.003 0.007c-0.059 0.142-0.095 0.306-0.1 0.479l-0 0.002c0.002 0.346 0.147 0.657 0.378 0.878l0 0c0.226 0.223 0.537 0.361 0.88 0.361s0.654-0.138 0.88-0.361l-0 0c0.233-0.222 0.378-0.533 0.381-0.878v-0c-0.005-0.174-0.041-0.339-0.103-0.49l0.003 0.009c-0.066-0.158-0.161-0.291-0.28-0.399l-0.001-0.001z"></path>{" "}
+                    </g>
+                  </svg>
+
                   <span className="hidden md:inline">Print</span>
                 </button>
 
@@ -321,7 +339,7 @@ export default function InvoiceModalBody({
                     cancelText="No"
                   >
                     <button className="flex items-center justify-center gap-1 rounded bg-[#6571FF] px-2 py-1 text-sm text-white md:px-4 md:text-base">
-                      <MdOutlineMail className="h-4 w-4 md:h-4 md:w-4" />
+                      <Mail className="h-4 w-4 md:h-4 md:w-4" />
                       <span className="hidden md:inline">Email</span>
                     </button>
                   </Popconfirm>
@@ -333,7 +351,31 @@ export default function InvoiceModalBody({
                       cancelText="No"
                     >
                       <button className="flex items-center justify-center gap-1 rounded bg-[#6571FF] px-2 py-1 text-sm text-white md:px-4 md:text-base">
-                        <FaCommentSms className="h-4 w-4 md:h-4 md:w-4" />
+                        <svg
+                          fill="#ffffff"
+                          height="24"
+                          width="24"
+                          version="1.1"
+                          id="Icon"
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="-5.28 -5.28 34.56 34.56"
+                          enable-background="new 0 0 24 24"
+                          stroke="#ffffff"
+                          stroke-width="0.36"
+                        >
+                          <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                          <g
+                            id="SVGRepo_tracerCarrier"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke="#CCCCCC"
+                            stroke-width="0.144"
+                          ></g>
+                          <g id="SVGRepo_iconCarrier">
+                            {" "}
+                            <path d="M12,1C5.37,1,0,5.58,0,10.55c0,2.92,1.86,5.95,4.72,7.59L3,23l5.85-3.32C9.86,19.88,10.91,20,12,20c6.63,0,12-4.48,12-9.45 C24,5.58,18.63,1,12,1z M6.55,13.8c-0.53,0.47-1.24,0.7-2.14,0.7c-0.52,0-0.97-0.06-1.36-0.17c-0.39-0.11-0.75-0.26-1.09-0.43v-1.84 h0.16c0.34,0.33,0.71,0.58,1.12,0.76c0.41,0.18,0.8,0.26,1.19,0.26c0.1,0,0.23-0.01,0.38-0.04c0.16-0.02,0.29-0.06,0.38-0.11 c0.12-0.06,0.22-0.14,0.3-0.25c0.08-0.1,0.12-0.24,0.12-0.42c0-0.19-0.07-0.35-0.2-0.47s-0.29-0.21-0.48-0.26 c-0.23-0.07-0.47-0.13-0.73-0.2c-0.26-0.06-0.51-0.14-0.73-0.23c-0.52-0.21-0.9-0.49-1.12-0.85c-0.23-0.36-0.34-0.8-0.34-1.34 c0-0.72,0.27-1.31,0.8-1.75c0.53-0.45,1.2-0.67,2-0.67c0.4,0,0.8,0.05,1.2,0.14c0.4,0.09,0.75,0.22,1.06,0.38v1.76H6.93 C6.68,8.54,6.37,8.33,6.01,8.16C5.65,7.99,5.28,7.9,4.9,7.9c-0.15,0-0.28,0.01-0.4,0.04C4.38,7.97,4.26,8.01,4.13,8.08 c-0.11,0.06-0.2,0.14-0.27,0.25C3.78,8.44,3.74,8.56,3.74,8.69c0,0.2,0.06,0.35,0.18,0.47c0.12,0.12,0.36,0.22,0.71,0.31 c0.23,0.06,0.44,0.12,0.66,0.17C5.49,9.7,5.72,9.78,5.96,9.87c0.47,0.19,0.82,0.45,1.04,0.78c0.23,0.33,0.34,0.76,0.34,1.29 C7.34,12.72,7.08,13.33,6.55,13.8z M15.33,14.36h-1.68V9.24l-1.23,3.3h-1.16l-1.23-3.3v5.12H8.44V6.64h1.95l1.5,3.81l1.49-3.81h1.95 V14.36z M21.18,13.8c-0.53,0.47-1.24,0.7-2.14,0.7c-0.52,0-0.97-0.06-1.36-0.17c-0.39-0.11-0.75-0.26-1.09-0.43v-1.84h0.16 c0.34,0.33,0.71,0.58,1.12,0.76c0.41,0.18,0.8,0.26,1.19,0.26c0.1,0,0.23-0.01,0.38-0.04c0.16-0.02,0.29-0.06,0.38-0.11 c0.12-0.06,0.22-0.14,0.3-0.25c0.08-0.1,0.12-0.24,0.12-0.42c0-0.19-0.07-0.35-0.2-0.47s-0.29-0.21-0.48-0.26 c-0.23-0.07-0.47-0.13-0.73-0.2c-0.26-0.06-0.51-0.14-0.73-0.23c-0.52-0.21-0.9-0.49-1.12-0.85c-0.23-0.36-0.34-0.8-0.34-1.34 c0-0.72,0.27-1.31,0.8-1.75c0.53-0.45,1.2-0.67,2-0.67c0.4,0,0.8,0.05,1.2,0.14c0.4,0.09,0.75,0.22,1.06,0.38v1.76h-0.15 c-0.25-0.25-0.56-0.45-0.92-0.62C20.27,7.99,19.9,7.9,19.52,7.9c-0.15,0-0.28,0.01-0.4,0.04C19,7.97,18.88,8.01,18.75,8.08 c-0.11,0.06-0.2,0.14-0.27,0.25c-0.08,0.11-0.12,0.23-0.12,0.37c0,0.2,0.06,0.35,0.18,0.47c0.12,0.12,0.36,0.22,0.71,0.31 c0.23,0.06,0.44,0.12,0.66,0.17c0.21,0.06,0.43,0.13,0.67,0.23c0.47,0.19,0.82,0.45,1.04,0.78c0.23,0.33,0.34,0.76,0.34,1.29 C21.97,12.72,21.7,13.33,21.18,13.8z"></path>{" "}
+                          </g>
+                        </svg>
                         <span className="hidden md:inline">SMS</span>
                       </button>
                     </Popconfirm>
@@ -343,7 +385,32 @@ export default function InvoiceModalBody({
                   className="flex items-center justify-center gap-1 rounded bg-[#6571FF] px-2 py-1 text-sm text-white md:px-4 md:text-base"
                   onClick={handleCopyLink}
                 >
-                  <FaCopy className="h-3 w-3 md:h-4 md:w-4" />
+                  <svg
+                    viewBox="0 0 32 32"
+                    height="16"
+                    width="16"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="#ffffff"
+                  >
+                    <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                    <g
+                      id="SVGRepo_tracerCarrier"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    ></g>
+                    <g id="SVGRepo_iconCarrier">
+                      {" "}
+                      <g fill="none" fill-rule="evenodd">
+                        {" "}
+                        <path d="m0 0h32v32h-32z"></path>{" "}
+                        <path
+                          d="m24.110782 0 5.889218 8.76607872v19.23392128h-4v4h-24v-28h4v-4zm-18.110782 6h-2v24h20v-2h-18z"
+                          fill="#ffffff"
+                          fill-rule="nonzero"
+                        ></path>{" "}
+                      </g>{" "}
+                    </g>
+                  </svg>
                   <span className="hidden md:inline">Copy Link</span>
                 </button>
               </div>
@@ -390,7 +457,7 @@ export default function InvoiceModalBody({
           <DialogClose
             className={`absolute right-4 top-1 rounded-sm font-bold opacity-90 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground md:right-2 md:top-3 print:hidden ${isPublic ? "hidden" : ""}`}
           >
-            <HiXMark className="h-6 w-6 font-bold text-slate-500" />
+            <X className="h-6 w-6 font-bold text-slate-500" />
             <span className="sr-only">Close</span>
           </DialogClose>
 
@@ -508,7 +575,7 @@ export default function InvoiceModalBody({
                     </h2>
                     <div className="mt-2 flex w-full items-center justify-center">
                       <div className="grid w-full grid-cols-3 gap-4 px-2 sm:px-4 [@media(max-width:374px)]:grid-cols-2">
-                        {invoice.photos.map(x => {
+                        {invoice.photos.map((x) => {
                           return (
                             <Link
                               href={
@@ -652,13 +719,13 @@ export default function InvoiceModalBody({
                       className="rounded-md border border-gray-300 px-2 py-1 text-sm"
                       placeholder="Your Name"
                       value={authorizedNameInput}
-                      onChange={e => setAuthorizedNameInput(e.target.value)}
+                      onChange={(e) => setAuthorizedNameInput(e.target.value)}
                     />
                     <button
-                      className="absolute -right-[10px] -top-4 text-red-700 print:hidden"
+                      className="absolute -right-[10px] -top-4 bg-red-700 rounded-full print:hidden"
                       onClick={() => setShowAuthorizedName(false)}
                     >
-                      <IoCloseCircleSharp size={24} />
+                      <X size={20} className="text-white p-1" />
                     </button>
                   </div>
                   <button
@@ -674,7 +741,7 @@ export default function InvoiceModalBody({
                         setAuthorizedName(authorizedNameInput);
 
                         // Update the invoice object in state to reflect the change
-                        setInvoice(prev => {
+                        setInvoice((prev) => {
                           if (!prev) return prev;
                           return {
                             ...prev,
@@ -798,7 +865,7 @@ export default function InvoiceModalBody({
                   Attachments
                 </h2>
                 <div className="flex grid-cols-1 gap-4 overflow-x-auto md:grid">
-                  {invoice.photos.map(x => {
+                  {invoice.photos.map((x) => {
                     return (
                       <Link
                         href={
@@ -852,7 +919,7 @@ export default function InvoiceModalBody({
                       const updatedInvoice = await getIsWorkorderCreated(
                         invoice.id
                       );
-                      setInvoice(prevInvoice => {
+                      setInvoice((prevInvoice) => {
                         if (!prevInvoice) return prevInvoice;
                         return {
                           ...prevInvoice,
@@ -874,7 +941,33 @@ export default function InvoiceModalBody({
                 className="flex w-full items-center justify-center gap-2 rounded-md bg-background py-2 text-[#6571FF]"
               >
                 Share Invoice
-                <FaRegShareFromSquare />
+                <svg
+                  viewBox="0 0 24 24"
+                  height="16"
+                  width="16"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                  <g
+                    id="SVGRepo_tracerCarrier"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  ></g>
+                  <g id="SVGRepo_iconCarrier">
+                    {" "}
+                    <path
+                      fill-rule="evenodd"
+                      clip-rule="evenodd"
+                      d="M19.6495 0.799565C18.4834 -0.72981 16.0093 0.081426 16.0093 1.99313V3.91272C12.2371 3.86807 9.65665 5.16473 7.9378 6.97554C6.10034 8.9113 5.34458 11.3314 5.02788 12.9862C4.86954 13.8135 5.41223 14.4138 5.98257 14.6211C6.52743 14.8191 7.25549 14.7343 7.74136 14.1789C9.12036 12.6027 11.7995 10.4028 16.0093 10.5464V13.0069C16.0093 14.9186 18.4834 15.7298 19.6495 14.2004L23.3933 9.29034C24.2022 8.2294 24.2022 6.7706 23.3933 5.70966L19.6495 0.799565ZM7.48201 11.6095C9.28721 10.0341 11.8785 8.55568 16.0093 8.55568H17.0207C17.5792 8.55568 18.0319 9.00103 18.0319 9.55037L18.0317 13.0069L21.7754 8.09678C22.0451 7.74313 22.0451 7.25687 21.7754 6.90322L18.0317 1.99313V4.90738C18.0317 5.4567 17.579 5.90201 17.0205 5.90201H16.0093C11.4593 5.90201 9.41596 8.33314 9.41596 8.33314C8.47524 9.32418 7.86984 10.502 7.48201 11.6095Z"
+                      fill="#6571ff"
+                    ></path>{" "}
+                    <path
+                      d="M7 1.00391H4C2.34315 1.00391 1 2.34705 1 4.00391V20.0039C1 21.6608 2.34315 23.0039 4 23.0039H20C21.6569 23.0039 23 21.6608 23 20.0039V17.0039C23 16.4516 22.5523 16.0039 22 16.0039C21.4477 16.0039 21 16.4516 21 17.0039V20.0039C21 20.5562 20.5523 21.0039 20 21.0039H4C3.44772 21.0039 3 20.5562 3 20.0039V4.00391C3 3.45162 3.44772 3.00391 4 3.00391H7C7.55228 3.00391 8 2.55619 8 2.00391C8 1.45162 7.55228 1.00391 7 1.00391Z"
+                      fill="#6571ff"
+                    ></path>{" "}
+                  </g>
+                </svg>
               </button>
             </>
           )}

@@ -10,13 +10,12 @@ import {
 import Submit from "@/components/Submit";
 import { CalendarSettings, EmployeeType, Holiday } from "@prisma/client";
 import React, { useEffect, useRef, useState, useTransition } from "react";
-import { GoGear } from "react-icons/go";
+import { Settings as SettingsIcon } from "lucide-react";
 import { updateCalendarSettings } from "@/actions/appointment/updateCalendarSettings";
 import ConnectGoogle from "./ConnectGoogle";
 import getHoliday from "@/actions/task/getHoliday";
 import { useSession } from "next-auth/react";
 import { DateObject } from "react-multi-date-picker";
-import DatePanel from "react-multi-date-picker/plugins/date_panel";
 import moment from "moment";
 import HolidayButton from "../../Calendar/HolidayButton";
 import HolidayDeleteConfirmation from "../../Calendar/HolidayDeleteConfiramtion";
@@ -51,7 +50,7 @@ export default function Settings({
   const [loading, setLoading] = useState(false);
   const [pending, startTransition] = useTransition();
   const [selectedMonth, setSelectedMonth] = useState<string>(
-    moment().format("MMMM"),
+    moment().format("MMMM")
   );
   const [selectedYear, setSelectedYear] = useState<number>(moment().year());
   const authUser = session;
@@ -97,7 +96,7 @@ export default function Settings({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
           <button className="app-shadow rounded-md p-[5px] text-xl text-[#797979] md:p-2">
-            <GoGear />
+            <SettingsIcon />
           </button>
         </DialogTrigger>
         <DialogContent className="max-w-xl grid-rows-[auto,1fr,auto]">

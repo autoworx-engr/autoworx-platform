@@ -7,16 +7,13 @@ import {
 } from "@/components/Dialog";
 import { SlimInput } from "@/components/SlimInput";
 import React, { useEffect, useRef, useState } from "react";
-import { MdGroupAdd } from "react-icons/md";
-import { RiArrowDownSLine, RiArrowUpSLine } from "react-icons/ri";
-import { CiSearch } from "react-icons/ci";
-import { TiDeleteOutline } from "react-icons/ti";
 import { Group, User } from "@prisma/client";
 import { createGroup } from "@/actions/communication/internal/creategroup";
 import { useSession } from "next-auth/react";
 import Avatar from "@/components/Avatar";
 import { useDebounce } from "@/hooks/useDebounce";
 import { searchUsers } from "@/actions/communication/internal/searchUser";
+import { ChevronDown, ChevronUp, CircleX, Search, Users } from "lucide-react";
 
 type TProps = {
   users: User[];
@@ -145,7 +142,7 @@ export default function CreateGroupModal({
               return prevGroups;
             }
           });
-          
+
           // Automatically open the newly created group in message box
           // If there are already 4 message boxes open, this will replace the last one (4th position)
           if (addChatItem) {
@@ -166,8 +163,9 @@ export default function CreateGroupModal({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button className="rounded-md bg-[#006D77] px-2 py-0.5">
-          <MdGroupAdd className="size-5 text-white" />
+        <button className="relative rounded-md bg-[#006D77] px-2 py-0.5 pr-3">
+          <Users className="size-5 text-white fill-current" />
+          <span className="text-white absolute right-1 top-0 text-sm ">+</span>
         </button>
       </DialogTrigger>
       <DialogContent className="w-[350px] sm:w-full">
@@ -196,11 +194,11 @@ export default function CreateGroupModal({
                     type="text"
                     className="w-full rounded-sm border border-primary-foreground bg-background py-0.5 pl-7 leading-6 outline-none"
                   />
-                  <RiArrowUpSLine
+                  <ChevronUp
                     onClick={() => setOpenUserList((prev) => !prev)}
                     className="absolute right-0 top-[5px] size-6 cursor-pointer"
                   />
-                  <CiSearch className="absolute left-1 top-[5px] size-5 cursor-pointer" />
+                  <Search className="absolute left-1 top-[5px] size-5 cursor-pointer" />
                 </div>
                 {/* user list */}
                 <div className="flex h-72 flex-col items-start space-y-2 overflow-y-auto p-1">
@@ -245,7 +243,7 @@ export default function CreateGroupModal({
                 }}
                 className="cursor-pointer"
               />
-              <RiArrowDownSLine
+              <ChevronDown
                 onClick={() => {
                   setOpenUserList((prev) => !prev);
                   getFindUsers();
@@ -260,7 +258,7 @@ export default function CreateGroupModal({
                     className="flex items-center justify-between space-x-1 rounded-full bg-[#006D77] px-2 py-1 text-white"
                   >
                     <p className="text-sm">{groupUser.name}</p>
-                    <TiDeleteOutline
+                    <CircleX
                       onClick={() => handleDeleteFromContactList(groupUser)}
                       className="size-5 cursor-pointer"
                     />
@@ -278,8 +276,8 @@ export default function CreateGroupModal({
             onClick={handleCreateGroup}
             disabled={isLoading}
             className={`rounded-lg border px-5 py-2 text-white flex items-center gap-2 ${
-              isLoading 
-                ? "bg-gray-400 cursor-not-allowed" 
+              isLoading
+                ? "bg-gray-400 cursor-not-allowed"
                 : "bg-[#6571FF] hover:bg-[#5a67e8]"
             }`}
           >

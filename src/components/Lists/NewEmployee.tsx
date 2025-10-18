@@ -10,7 +10,6 @@ import {
 import FormError from "@/components/FormError";
 import { SlimInput } from "@/components/SlimInput";
 import React, { useState, useRef } from "react";
-import { RxAvatar } from "react-icons/rx";
 import SelectEmployeeType from "@/app/(dashboard)/dashboard/employee/SelectEmployeeType";
 import { useServerGet } from "@/hooks/useServerGet";
 import { getCompany } from "@/actions/settings/getCompany";
@@ -20,6 +19,7 @@ import { EmployeeType, User, SalaryType } from "@prisma/client";
 import { errorToast } from "@/lib/toast";
 import Password from "@/components/Password";
 import SlimSalaryInput from "@/components/employee/SlimSalaryInput";
+import { CircleUserRound as UserIcon } from "lucide-react";
 
 export default function AddNewEmployee({
   onSuccess,
@@ -289,7 +289,7 @@ export default function AddNewEmployee({
                 <span className="hidden lg:inline">
                   Upload a profile picture
                 </span>{" "}
-                <RxAvatar size={48} />
+                <UserIcon size={48} strokeWidth={1.5} />
               </label>
             )}
           </div>

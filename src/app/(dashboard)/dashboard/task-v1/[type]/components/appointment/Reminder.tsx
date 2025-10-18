@@ -3,15 +3,13 @@ import { Switch } from "@/components/Switch";
 import { useListsStore } from "@/stores/lists";
 import type { Client, EmailTemplate, Vehicle } from "@prisma/client";
 import moment from "moment";
-import { useEffect, useState, useRef } from "react";
-import { FaTimes, FaTrash } from "react-icons/fa";
-import { TbUserX } from "react-icons/tb";
+import { useEffect, useState } from "react";
 import { deleteTemplate } from "@/actions/appointment/deleteTemplate";
 import NewTemplate from "@/components/Lists/NewTemplate";
 import UpdateTemplate from "./UpdateTemplateComponent";
 import { TimeInput } from "@/components/TimeInput";
 import { errorToast } from "@/lib/toast";
-import useTemplatesQuery from "@/hooks/query-hook/useTemplatesQuery";
+import { Trash2, UserRoundX, X } from "lucide-react";
 
 export function Reminder({
   client,
@@ -140,7 +138,7 @@ export function Reminder({
     // Check if reminder is before the appointment
     const appointmentDateTime = moment(
       `${date} ${startTime}`,
-      "YYYY-MM-DD HH:mm",
+      "YYYY-MM-DD HH:mm"
     );
     const reminderDateTime = moment(`${dateInput} ${time}`, "YYYY-MM-DD HH:mm");
 
@@ -159,7 +157,7 @@ export function Reminder({
 
   return client === null ? (
     <div className="grid h-full place-content-center place-items-center gap-2 border-[1.5rem] border-solid border-white bg-neutral-300 text-center text-slate-500">
-      <TbUserX size={64} />
+      <UserRoundX size={64} />
       <span>No Client Selected</span>
     </div>
   ) : (
@@ -193,7 +191,7 @@ export function Reminder({
             />
           }
           items={templates.filter(
-            (template: EmailTemplate) => template.type === "Confirmation",
+            (template: EmailTemplate) => template.type === "Confirmation"
           )}
           displayList={(template: EmailTemplate) => (
             <div className="flex">
@@ -219,7 +217,7 @@ export function Reminder({
                     handleDelete({ id: template.id, type: "Confirmation" })
                   }
                 >
-                  <FaTimes />
+                  <X strokeWidth={2} />
                 </button>
               </div>
             </div>
@@ -228,7 +226,7 @@ export function Reminder({
           setSelectedItem={setConfirmationTemplate}
           onSearch={(search: string) =>
             templates.filter((template) =>
-              template.subject.toLowerCase().includes(search.toLowerCase()),
+              template.subject.toLowerCase().includes(search.toLowerCase())
             )
           }
           openState={[openConfirmation, setOpenConfirmation]}
@@ -263,7 +261,7 @@ export function Reminder({
             />
           }
           items={templates.filter(
-            (template: EmailTemplate) => template.type === "Reminder",
+            (template: EmailTemplate) => template.type === "Reminder"
           )}
           displayList={(template: EmailTemplate) => (
             <div className="flex">
@@ -289,7 +287,7 @@ export function Reminder({
                     handleDelete({ id: template.id, type: "Reminder" })
                   }
                 >
-                  <FaTimes />
+                  <X strokeWidth={2} />
                 </button>
               </div>
             </div>
@@ -298,7 +296,7 @@ export function Reminder({
           setSelectedItem={setReminderTemplate}
           onSearch={(search: string) =>
             templates.filter((template) =>
-              template.subject.toLowerCase().includes(search.toLowerCase()),
+              template.subject.toLowerCase().includes(search.toLowerCase())
             )
           }
           openState={[openReminder, setOpenReminder]}
@@ -352,11 +350,11 @@ export function Reminder({
 
             const timeObjMoment = moment(
               `${timeObj.date} ${timeObj.time}`,
-              "YYYY-MM-DD HH:mm",
+              "YYYY-MM-DD HH:mm"
             );
 
             const formattedTime = moment(timeObjMoment).format(
-              "MMMM Do YYYY, h:mm A",
+              "MMMM Do YYYY, h:mm A"
             );
 
             // const diff = moment.duration(appointmentTime.diff(timeObjMoment));
@@ -375,7 +373,7 @@ export function Reminder({
                   type="button"
                   onClick={() => setTimes(times.filter((_, i) => i !== index))}
                 >
-                  <FaTrash />
+                  <Trash2 />
                 </button>
               </div>
             );

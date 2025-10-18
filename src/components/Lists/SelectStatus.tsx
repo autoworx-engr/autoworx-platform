@@ -18,9 +18,6 @@ import { useFormErrorStore } from "@/stores/form-error";
 import { useListsStore } from "@/stores/lists";
 import { Column } from "@prisma/client";
 import { useEffect, useRef, useState } from "react";
-import { FaChevronUp, FaSearch } from "react-icons/fa";
-import { IoMdClose } from "react-icons/io";
-import { PiPaletteBold, PiPulse } from "react-icons/pi";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,6 +26,7 @@ import {
 import FormError from "../FormError";
 import Submit from "../Submit";
 import { useEstimateCreateStore } from "@/stores/estimate-create";
+import { Activity, ChevronUp, Palette, Search, X } from "lucide-react";
 
 type SelectedColor = { textColor: string; bgColor: string } | null;
 
@@ -121,7 +119,7 @@ export function SelectStatus({
           }}
           disabled={isDelivered}
         >
-          <PiPulse />
+          <Activity size={18} />
           {status?.title ?? "Status"}
         </DropdownMenuTrigger>
 
@@ -133,7 +131,10 @@ export function SelectStatus({
         >
           {/* Search */}
           <div className="relative m-2">
-            <FaSearch className="absolute left-2 top-1/2 -translate-y-1/2 transform text-[#797979]" />
+            <Search
+              size={18}
+              className="absolute left-2 top-1/2 -translate-y-1/2 transform text-[#797979]"
+            />
             <input
               type="text"
               placeholder="Search"
@@ -144,7 +145,7 @@ export function SelectStatus({
                 setOpen && setOpen(!open);
               }}
             >
-              <FaChevronUp className="absolute right-2 top-1/2 -translate-y-1/2 transform text-[#797979]" />
+              <ChevronUp className="absolute right-2 top-1/2 -translate-y-1/2 transform text-[#797979]" />
             </button>
           </div>
           <div className="space-y-1">
@@ -189,7 +190,7 @@ export function SelectStatus({
                       setDeleteConfirmOpen(true);
                     }}
                   >
-                    <IoMdClose />
+                    <X size={18} />
                   </button>
                 )}
               </div>
@@ -303,7 +304,7 @@ function QuickAddForm({
         onClick={() => setPickerOpen((prev: boolean) => !prev)}
         type="button"
       >
-        <PiPaletteBold />
+        <Palette size={18} />
       </button>
 
       <Submit

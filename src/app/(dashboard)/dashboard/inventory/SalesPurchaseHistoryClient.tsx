@@ -12,13 +12,12 @@ import {
   Vendor,
 } from "@prisma/client";
 import * as Tabs from "@radix-ui/react-tabs";
-import moment from "moment";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { FaEdit } from "react-icons/fa";
 import EditSalePurchaseList from "./EditSalePurchaseList";
 import { FormatUtcToTimezone } from "@/utils/FormatUtcToTimezone";
+import { SquarePen } from "lucide-react";
 
 enum Tab {
   Sales = "sales",
@@ -60,7 +59,7 @@ export default function SalesPurchaseHistoryClient({
               "rounded-md p-2 px-5 text-sm 2xl:text-lg",
               tab === Tab.Sales
                 ? "bg-[#6571FF] text-white"
-                : "border border-[#6571FF] text-[#6571FF]",
+                : "border border-[#6571FF] text-[#6571FF]"
             )}
           >
             {/* Use List */}
@@ -72,7 +71,7 @@ export default function SalesPurchaseHistoryClient({
               "rounded-md p-2 px-5 text-sm 2xl:text-lg",
               tab === Tab.Purchase
                 ? "bg-[#6571FF] text-white"
-                : "border border-[#6571FF] text-[#6571FF]",
+                : "border border-[#6571FF] text-[#6571FF]"
             )}
           >
             Purchase List
@@ -92,7 +91,7 @@ export default function SalesPurchaseHistoryClient({
           <Tabs.Content value={Tab.Purchase}>
             <Table
               histories={histories.filter(
-                (history) => history.type === "Purchase",
+                (history) => history.type === "Purchase"
               )}
               user={user}
               type="Purchase"
@@ -193,8 +192,8 @@ function Table({
                     (
                       parseFloat(history.price?.toString() ?? "0") *
                       Number(history.quantity)
-                    ).toFixed(2),
-                  ),
+                    ).toFixed(2)
+                  )
                 )}
               </td>
               <td className="text-center">
@@ -235,7 +234,7 @@ function Table({
             key={history.id}
             className={cn(
               "rounded-lg border border-[#BFC4FF] p-4 shadow-sm",
-              index % 2 === 0 ? evenColor : oddColor,
+              index % 2 === 0 ? evenColor : oddColor
             )}
           >
             <div className="flex items-center justify-between">
@@ -290,7 +289,7 @@ function Table({
               <span className="font-bold">
                 {formatCurrency(
                   parseFloat(history.price?.toString() ?? "0") *
-                    Number(history.quantity),
+                    Number(history.quantity)
                 )}
               </span>
             </div>
@@ -303,7 +302,7 @@ function Table({
                     href={`/dashboard/estimate/edit/${history.invoiceId}?clientId=${history.client?.id}`}
                     className="text-[#6571FF]"
                   >
-                    <FaEdit className="mt-1 h-4 w-4" />
+                    <SquarePen className="mt-1 h-4 w-4" />
                   </Link>
                 ) : (
                   <EditSalePurchaseList

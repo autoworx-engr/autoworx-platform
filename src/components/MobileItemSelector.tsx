@@ -2,9 +2,8 @@
 import { cn } from "@/lib/cn";
 import { Item } from "@/stores/estimate-create";
 import { useEstimatePopupStore } from "@/stores/estimate-popup";
-import { SquarePen } from "lucide-react";
+import { ChevronDown, ChevronUp, Search, SquarePen, X } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
-import { FaTimes, FaSearch, FaChevronDown, FaChevronUp } from "react-icons/fa";
 
 type MobileItemSelectorProps<T> = {
   label: string;
@@ -140,9 +139,9 @@ export default function MobileItemSelector<T>({
           {selected ? (selected as any)[display] : label}
         </span>
         {isOpen ? (
-          <FaChevronUp className="ml-2" />
+          <ChevronUp className="ml-2" />
         ) : (
-          <FaChevronDown className="ml-2" />
+          <ChevronDown className="ml-2" />
         )}
 
         {/* Edit/Delete buttons for selected items */}
@@ -171,7 +170,7 @@ export default function MobileItemSelector<T>({
                 }}
               >
                 <div className="rounded-full bg-[#6571FF] p-1 text-white">
-                  <FaTimes className="text-[10px]" />
+                  <X size={10} />
                 </div>
               </button>
             )}
@@ -185,7 +184,10 @@ export default function MobileItemSelector<T>({
           {/* Search Input */}
           {onSearch && (
             <div className="relative m-2">
-              <FaSearch className="absolute left-2 top-1/2 -translate-y-1/2 text-[#797979]" />
+              <Search
+                size={18}
+                className="absolute left-2 top-1/2 -translate-y-1/2 text-[#797979]"
+              />
               <input
                 type="text"
                 ref={searchRef}

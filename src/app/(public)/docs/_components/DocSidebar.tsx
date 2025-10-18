@@ -1,9 +1,9 @@
 import { cn } from "@/lib/utils";
 import React, { useEffect } from "react";
-import { LuLaptop } from "react-icons/lu";
 import { useIsMobile } from "../hooks/use-mobile";
 import { docsNavigation } from "./docsNavigation";
 import SidebarGroup from "./SidebarGroup";
+import { Laptop } from "lucide-react";
 
 interface DocSidebarProps {
   isOpen: boolean;
@@ -68,12 +68,12 @@ const DocSidebar = ({ isOpen, setIsOpen }: DocSidebarProps) => {
           isMobile
             ? "fixed bottom-0 top-16 z-50 w-3/4 max-w-xs border-r"
             : "sticky top-16 w-64 border-r",
-          isMobile && !isOpen ? "-translate-x-full" : "translate-x-0",
+          isMobile && !isOpen ? "-translate-x-full" : "translate-x-0"
         )}
       >
         <div className="px-3 py-6">
           <div className="mb-6 flex items-center px-3">
-            <LuLaptop className="text-sidebar-primary mr-2 h-6 w-6" />
+            <Laptop className="text-sidebar-primary mr-2 h-6 w-6" />
             <h2 className="text-sidebar-foreground text-lg font-bold">
               DocGlide
             </h2>

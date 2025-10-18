@@ -25,7 +25,6 @@ import {
 } from "@react-pdf/renderer";
 import moment from "moment";
 import React from "react";
-import { InvoiceItems } from "./InvoiceItems";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { calculateDue } from "@/utils/calculateDue";
 // Register Poppins Regular

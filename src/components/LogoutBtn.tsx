@@ -1,6 +1,5 @@
 "use client";
 
-import { IoMdLogOut } from "react-icons/io";
 import { env } from "next-runtime-env";
 import { cn } from "@/lib/cn";
 import { useRouter } from "next/navigation";
@@ -8,6 +7,7 @@ import { useTransition } from "react";
 import { errorToast } from "@/lib/toast";
 import { signOut } from "next-auth/react";
 import { IOneSignalOneSignal } from "react-onesignal";
+import { LogOut } from "lucide-react";
 
 type TProps = {
   className?: string;
@@ -69,7 +69,7 @@ export default function LogoutBtn({ className, ...props }: TProps) {
       {pending ? (
         <div className="size-6 animate-spin rounded-full border-4 border-gray-300 border-t-[#6571FF]"></div>
       ) : (
-        <IoMdLogOut className="h-5 w-5 sm:h-7 sm:w-7" />
+        <LogOut className="h-5 w-5 sm:h-7 sm:w-7" />
       )}
     </button>
   );

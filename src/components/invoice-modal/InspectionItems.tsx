@@ -2,8 +2,8 @@
 
 import { getInspections } from "@/actions/estimate/invoice/getInspections";
 import { InvoiceInspection } from "@prisma/client";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { useEffect, useState } from "react";
-import { HiChevronDown, HiChevronUp } from "react-icons/hi2";
 
 interface InspectionItemsProps {
   damageNotes?: string;
@@ -47,7 +47,7 @@ export function InspectionItems({
         <h3 className="text-sm font-medium md:text-base">
           Vehicle Inspection Details
         </h3>
-        <span>{isExpanded ? <HiChevronUp /> : <HiChevronDown />}</span>
+        <span>{isExpanded ? <ChevronUp /> : <ChevronDown />}</span>
       </div>
 
       {/* Expanded content */}

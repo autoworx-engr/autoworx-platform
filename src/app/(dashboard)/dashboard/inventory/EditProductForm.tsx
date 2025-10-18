@@ -15,9 +15,9 @@ import Submit from "@/components/Submit";
 import { useEffect, useState } from "react";
 import Selector from "@/components/Selector";
 import { InventoryProductHistory, InventoryProductType } from "@prisma/client";
-import { FaEdit } from "react-icons/fa";
 import { editUseProduct } from "@/actions/inventory/editUseProduct";
 import { useFormErrorStore } from "@/stores/form-error";
+import { SquarePen } from "lucide-react";
 
 export default function EditProductForm({
   productId,
@@ -73,7 +73,7 @@ export default function EditProductForm({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <button className="flex w-full items-center justify-end text-[#6571FF] md:justify-center">
-          <FaEdit />
+          <SquarePen size={20} />
         </button>
       </DialogTrigger>
 
