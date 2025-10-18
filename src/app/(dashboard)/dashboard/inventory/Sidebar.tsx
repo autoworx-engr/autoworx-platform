@@ -1,23 +1,23 @@
-import { cn } from "@/lib/cn";
-import { getCompanyId } from "@/lib/companyId";
-import { db } from "@/lib/db";
-import getUser from "@/lib/getUser";
-import { env } from "next-runtime-env";
-import QRCode from "qrcode";
-import { FaCircleExclamation } from "react-icons/fa6";
-import QRcode from "./QRcode";
-import ReplenishProductForm from "./ReplenishProductForm";
-import SalesPurchaseHistory from "./SalesPurchaseHistory";
-import UseProductForm from "./UseProductForm";
-import { formatCurrency } from "@/utils/formatCurrency";
-import EditProduct from "./EditProduct";
-import Image from "next/image";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/Tooltip";
+import { cn } from "@/lib/cn";
+import { getCompanyId } from "@/lib/companyId";
+import { db } from "@/lib/db";
+import getUser from "@/lib/getUser";
+import { formatCurrency } from "@/utils/formatCurrency";
+import { env } from "next-runtime-env";
+import Image from "next/image";
+import QRCode from "qrcode";
+import { FaCircleExclamation } from "react-icons/fa6";
+import EditProduct from "./EditProduct";
+import QRcode from "./QRcode";
+import ReplenishProductForm from "./ReplenishProductForm";
+import SalesPurchaseHistory from "./SalesPurchaseHistory";
+import UseProductForm from "./UseProductForm";
 
 export default async function Sidebar({
   productId,

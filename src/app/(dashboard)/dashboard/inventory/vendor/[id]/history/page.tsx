@@ -39,16 +39,28 @@ export default async function Page({
     },
   });
 
-  const totalPurchaseAmount =
-    inventoryProducts?.reduce((acc, product) => {
-      return acc + Number(product.price || 0) * Number(product.quantity || 0);
-    }, 0) ?? 0;
+  // const totalPurchaseAmount =
+  //   inventoryProducts?.reduce((acc, product) => {
+  //     return acc + Number(product.price || 0) * Number(product.quantity || 0);
+  //   }, 0) ?? 0;
 
-  // const totalPurchaseAmount = histories.reduce((acc, product) => {
-  //   return acc + (product.product.price as any) * product.quantity;
-  // }, 0);
+  const vendorTransactions = await db.inventoryProductHistory.findMany({
+    where: {
+      vendorId: parseInt(id),
+      type: "Purchase",
+    },
+    include: {
+      product: true,
+    },
+    orderBy: {
+      date: "desc",
+    },
+  });
 
-  // const totalAmountSpent = 0;
+  const totalPurchaseAmount = vendorTransactions.reduce(
+    (sum, t) => sum + Number(t.price) * Number(t.quantity),
+    0
+  );
 
   return (
     <div className="h-full">
@@ -76,7 +88,7 @@ export default async function Page({
             </thead>
 
             <tbody>
-              {inventoryProducts?.map((product, index) => {
+              {vendorTransactions?.map((product, index) => {
                 const total = Number(product.price) * Number(product.quantity);
                 return (
                   <tr
@@ -87,24 +99,26 @@ export default async function Page({
                     )}
                   >
                     <td className="h-12 px-10 text-left">
-                      <p>{product.id}</p>
+                      <p>{product?.id}</p>
                     </td>
                     <td className="text-nowrap px-10 text-left">
-                      {product.name}
+                      {product?.product?.name}
                     </td>
                     <td className="text-nowrap px-10 text-left">
-                      {formatCurrency(Number(product.price))}
+                      {formatCurrency(Number(product?.price))}
                     </td>
                     <td className="px-10 text-left">
-                      {Number(product.quantity)}
+                      {Number(product?.quantity)}
                     </td>
                     <td className="px-10 text-left">{formatCurrency(total)}</td>
                     <td className="px-10 text-left">
                       {moment
-                        .tz(product.createdAt, timezone)
+                        .tz(product?.createdAt, timezone)
                         .format("MM/DD/YYYY")}
                     </td>
-                    <td className="mt-2 flex gap-3 px-5">{product.receipt}</td>
+                    <td className="mt-2 flex gap-3 px-5">
+                      {product?.product?.receipt}
+                    </td>
                   </tr>
                 );
               })}
@@ -120,16 +134,18 @@ export default async function Page({
                   <div className="space-y-3">
                     <div>
                       <div className="text-muted-foreground">Name</div>
-                      <div className="font-medium">{product.name}</div>
+                      <div className="font-medium">{product?.name}</div>
                     </div>
                     <div>
                       <div className="text-muted-foreground">Price</div>
-                      <div className="font-medium">{Number(product.price)}</div>
+                      <div className="font-medium">
+                        {Number(product?.price)}
+                      </div>
                     </div>
                     <div>
                       <div className="text-muted-foreground">Quantity</div>
                       <div className="font-medium">
-                        {Number(product.quantity)}
+                        {Number(product?.quantity)}
                       </div>
                     </div>
                   </div>
@@ -137,18 +153,18 @@ export default async function Page({
                     <div>
                       <div className="text-muted-foreground">Date</div>
                       <div className="font-medium">
-                        {moment.utc(product.createdAt).format("DD.MM.YYYY")}
+                        {moment.utc(product?.createdAt).format("DD.MM.YYYY")}
                       </div>
                     </div>
                     <div>
                       <div className="text-muted-foreground">Total</div>
                       <div className="font-medium">
-                        {Number(product.price) * Number(product.quantity)}
+                        {Number(product?.price) * Number(product?.quantity)}
                       </div>
                     </div>
                     <div>
                       <div className="text-muted-foreground">Receipt</div>
-                      <div className="font-medium">{product.receipt}</div>
+                      <div className="font-medium">{product?.receipt}</div>
                     </div>
                   </div>
                 </div>
@@ -175,7 +191,7 @@ export default async function Page({
                   Total Number of purchase
                 </h3>
                 <p className="mt-2 text-center text-4xl font-bold">
-                  {inventoryProducts.length}
+                  {vendorTransactions?.length}
                 </p>
               </div>
             </div>
