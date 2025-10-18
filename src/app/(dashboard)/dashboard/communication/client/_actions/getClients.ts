@@ -15,49 +15,35 @@ type TGetClientsProps = {
 export const getClients = cache(
   async ({ companyId, filter, search, take = 20 }: TGetClientsProps) => {
     const user = await getUserFromSession();
-    
+
     // Base query object
     const baseWhere: Prisma.ClientWhereInput = {
       companyId,
     };
-    
-    // Add search conditions to the base where clause if search is provided
-    if (search && search.trim()) {
-      baseWhere.OR = [
-        {
-          firstName: {
-            contains: search,
-            mode: "insensitive"
-          }
-        },
-        {
-          lastName: {
-            contains: search,
-            mode: "insensitive"
-          }
-        },
-        {
-          email: {
-            contains: search,
-            mode: "insensitive"
-          }
-        },
-        {
-          mobile: {
-            contains: search,
-            mode: "insensitive"
-          }
-        }
-      ];
+
+    const searchTerm = search?.trim();
+
+    if (searchTerm) {
+      const tokens = searchTerm.split(/\s+/).filter(Boolean);
+
+      baseWhere.AND = tokens.map((token) => ({
+        OR: [
+          { firstName: { contains: token, mode: "insensitive" } },
+          { lastName: { contains: token, mode: "insensitive" } },
+          { email: { contains: token, mode: "insensitive" } },
+          { mobile: { contains: token, mode: "insensitive" } },
+        ],
+      }));
     }
-    
+
     const queryObj: Prisma.ClientFindManyArgs = {
       where: baseWhere,
       include: {
         conversationsTrack: true,
       },
     };
-    let clients: (Client & { conversationsTrack?: ClientConversationTrack })[] = [];
+    let clients: (Client & { conversationsTrack?: ClientConversationTrack })[] =
+      [];
     try {
       switch (filter) {
         case "Unread":
@@ -71,11 +57,12 @@ export const getClients = cache(
               },
             },
           });
-          const sortedUnreadClients = clientSortByUpdatedMessage(allUnreadClients);
+          const sortedUnreadClients =
+            clientSortByUpdatedMessage(allUnreadClients);
           clients = sortedUnreadClients.slice(0, take) as typeof clients;
           break;
         case "Starred":
-          // Get all starred clients, then sort and limit  
+          // Get all starred clients, then sort and limit
           const allStarredClients = await db.client.findMany({
             ...queryObj,
             where: {
@@ -83,7 +70,8 @@ export const getClients = cache(
               isStarred: true,
             },
           });
-          const sortedStarredClients = clientSortByUpdatedMessage(allStarredClients);
+          const sortedStarredClients =
+            clientSortByUpdatedMessage(allStarredClients);
           clients = sortedStarredClients.slice(0, take) as typeof clients;
           break;
         case "Assigned":
@@ -99,21 +87,22 @@ export const getClients = cache(
               },
             },
           });
-          const sortedAssignedClients = clientSortByUpdatedMessage(allAssignedClients);
+          const sortedAssignedClients =
+            clientSortByUpdatedMessage(allAssignedClients);
           clients = sortedAssignedClients.slice(0, take) as typeof clients;
           break;
         default:
           // For the initial load, we need to get ALL clients, sort them properly,
           // and then take the top 'take' number of clients
           // This ensures we get the actual top clients, not just a random 20
-          const allClients = await db.client.findMany({ 
-            ...queryObj, 
+          const allClients = await db.client.findMany({
+            ...queryObj,
             // Remove the 'take' limit here - we need all clients to sort properly
           });
-          
+
           // Apply proper sorting to get the actual top clients
           const sortedAllClients = clientSortByUpdatedMessage(allClients);
-          
+
           // Now take only the top 'take' number of clients
           clients = sortedAllClients.slice(0, take) as typeof clients;
           break;

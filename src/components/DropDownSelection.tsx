@@ -68,7 +68,12 @@ export function DropdownSelection({
           </Button>
         )}
       </DropdownMenuTrigger>
-      <DropdownMenuContent className={cn("w-56", contentClassName)}>
+      <DropdownMenuContent
+        className={cn(
+          "w-56 max-h-80 overflow-y-auto thin-scrollbar",
+          contentClassName
+        )}
+      >
         {menuLabel && (
           <>
             <DropdownMenuLabel>{menuLabel}</DropdownMenuLabel>

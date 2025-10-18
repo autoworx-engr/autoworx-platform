@@ -24,7 +24,7 @@ export default async function EmployeeInformation({
     company?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
   return (
     <div className="my-8 flex w-full flex-col justify-between gap-3 lg:flex-row lg:gap-5">
-      <div className="relative hidden w-full items-center rounded border border-gray-300 bg-background p-3 pt-10 lg:flex">
+      <div className="relative hidden min-w-[400px] items-center rounded border border-gray-300 bg-background p-3 pt-10 lg:flex">
         <div className="absolute right-2 top-1">
           <EditEmployee employee={employee} settingIcon />
         </div>
