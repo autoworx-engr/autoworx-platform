@@ -15,8 +15,7 @@ import React, { useState, useEffect } from "react";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import moment from "moment-timezone";
 import { Info, Pencil, Save, X } from "lucide-react";
-import AttendanceTableSkeleton from "@/components/ui/TableSkeleton";
-
+import AttendanceTableSkeleton from "@/components/ui/AttendanceTableSkeleton";
 
 interface AttendanceRecord {
   id?: number;

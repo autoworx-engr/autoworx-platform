@@ -3,6 +3,7 @@ import { getWorkOrders } from "@/actions/pipelines/getWorkOrders";
 import ResponsiveShopPipelineCard from "@/components/mobile-responsive/pipeline/ResponsiveShopPipelineCard";
 import WorkOrderModal from "@/components/workorder-modal/WorkOrderModal";
 import { useServerGet } from "@/hooks/useServerGet";
+import WorkOrdersTableSkeleton from "@/components/ui/WorkOrdersTableSkeleton";
 import { cn } from "@/lib/cn";
 import { useEstimateFilterStore } from "@/stores/estimate-filter";
 import { usePipelineFilterStore } from "@/stores/PipelineFilterStore";
@@ -121,7 +122,9 @@ const WorkOrders = () => {
               );
             })}
         </div>
-        {!filteredInvoices ? (
+        {!invoices ? (
+          <WorkOrdersTableSkeleton rows={6} />
+        ) : !filteredInvoices ? (
           <div className="flex h-[70vh] pb-10 w-full items-center justify-center">
             <Spin size="large" />
           </div>
