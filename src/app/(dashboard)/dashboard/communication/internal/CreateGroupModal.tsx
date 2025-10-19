@@ -163,7 +163,7 @@ export default function CreateGroupModal({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button className="relative rounded-md bg-[#006D77] px-2 py-0.5 pr-3">
+        <button className="relative rounded-md bg-gradient-to-r from-teal-700 to-teal-600 px-2 py-0.5 pr-3">
           <Users className="size-5 text-white fill-current" />
           <span className="text-white absolute right-1 top-0 text-sm ">+</span>
         </button>

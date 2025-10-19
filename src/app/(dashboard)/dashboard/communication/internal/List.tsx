@@ -9,6 +9,7 @@ import { getGroupById } from "@/actions/communication/internal/query";
 import UserSelectButton from "./UserSelectButton";
 import { useChatTrackStore } from "@/stores/chatTrackStore";
 import { fetchUsersWithLatestMessages } from "@/actions/communication/internal/fetchUsersWithLatestMessages";
+import { Search } from "lucide-react";
 
 type TListProps = {
   users: (User & { unreadCount: number; latestMessage?: Message | null })[];
@@ -678,7 +679,7 @@ export default function List({
   return (
     <div
       className={cn(
-        "app-shadow max-h-[92vh] w-full rounded-lg bg-background p-3 sm:block sm:w-[20%]",
+        "app-shadow max-h-[92vh] w-full rounded-lg bg-background p-3 sm:block sm:w-[25%]",
         className
       )}
     >
@@ -694,12 +695,20 @@ export default function List({
         />
       </div>
       {/* Search */}
-      <div>
+      <div className="relative mt-4">
+        <Search
+          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400"
+          size={18}
+        />
         <input
           onChange={(e) => setSearchTerm(e.target.value)}
           type="text"
           placeholder="Search here..."
-          className="my-3 mr-2 w-full rounded-md border-2 border-[#006D77] p-2 text-[12px] text-[#797979] focus:outline-none max-[1822px]:w-full"
+          className={cn(
+            "w-full rounded-md border bg-white pl-9 pr-9 py-2 text-sm text-zinc-700 placeholder-zinc-400 outline-none",
+            "border-zinc-300 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20",
+            "dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+          )}
         />
       </div>
 
@@ -739,8 +748,17 @@ export default function List({
                 <button
                   key={`group-${group.id}`}
                   className={cn(
-                    "flex items-center gap-2 rounded-md border border-[#006D77] bg-[#F2F2F2] p-2 hover:bg-gray-300 sm:border-0",
-                    isSelectedGroup && "bg-[#006D77]"
+                    "flex items-center gap-2 rounded-md border border-[#006D77] bg-[#FFFFFF] p-2 hover:bg-gray-300 sm:border-0",
+                    isSelectedGroup
+                      ? [
+                          "bg-gradient-to-r from-teal-700 to-teal-600",
+                          "ring-1 ring-teal-500/60",
+                        ].join(" ")
+                      : [
+                          "bg-white dark:bg-zinc-900/60",
+                          "border-zinc-200/70 dark:border-white/10",
+                          "hover:border-zinc-300/80 dark:hover:border-white/20",
+                        ].join(" ")
                   )}
                   onClick={() => {
                     // Use the helper function if available, otherwise fallback to old logic
