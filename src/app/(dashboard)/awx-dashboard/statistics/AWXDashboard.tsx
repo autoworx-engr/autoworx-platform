@@ -126,6 +126,7 @@ const AWXDashboard = ({ companies }: Props) => {
                         <p className="text-lg md:text-xl  font-semibold">
                           {company.name}
                         </p>
+                        <p className="text-sm italic">{company.adminEmail}</p>
                         <p>Users : {company.stats.users}</p>
                         <p>Clients : {company.stats.clients}</p>
                         <p>Employee : {company.stats.employees}</p>
