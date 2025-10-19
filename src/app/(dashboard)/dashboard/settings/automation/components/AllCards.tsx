@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from "react";
 import AutomationCard from "./AutomationCard";
 import dynamic from "next/dynamic";
-import { FiInbox } from "react-icons/fi";
 import { useAllPipelineAutomationRules } from "@/hooks/pipeline-automation/useAllPipelineAutomationRules";
 import { Skeleton } from "@mui/material";
 import { useAllCommunicationAutomationRules } from "@/hooks/communication-automation/useAllCommunicationAutomationRules";
@@ -16,6 +15,7 @@ import {
 } from "@prisma/client";
 import { useAllInvoiceAutomationRules } from "@/hooks/invoice-automation/useAllInvoiceAutomationRules";
 import { useAllInventoryAutomationRules } from "../../../../../../hooks/inventory-automation/useAllInventoryAutomationRules";
+import { Inbox } from "lucide-react";
 const CommunicationRuleForm = dynamic(() => import("./CommunicationRuleForm"));
 const PipelineRuleForm = dynamic(() => import("./PipelineRuleForm"));
 const InventoryRuleForm = dynamic(() => import("./InventoryRulesForm"));
@@ -175,7 +175,7 @@ export default function AllCards({
 
             {items?.length < 1 ? (
               <div className="flex h-[450px] flex-col items-center justify-center text-center text-gray-500">
-                <FiInbox className="mb-3 text-4xl text-indigo-400" />
+                <Inbox className="mb-3 text-4xl text-indigo-400" />
                 <p className="text-lg font-medium capitalize">
                   No {`${type} Automation`}
                 </p>

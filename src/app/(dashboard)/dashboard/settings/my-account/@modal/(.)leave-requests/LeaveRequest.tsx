@@ -7,8 +7,8 @@ import {
   InterceptedDialog,
 } from "@/components/Dialog";
 import { LeaveRequest as TLeaveRequest, User } from "@prisma/client";
-import { HiXMark } from "react-icons/hi2";
 import EmployeeLeaveRequests from "../../EmployeeLeaveRequests";
+import { X } from "lucide-react";
 
 const LeaveRequest = ({
   leaveRequests,
@@ -33,7 +33,7 @@ const LeaveRequest = ({
               </div>
 
               <DialogClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground print:hidden">
-                <HiXMark className="h-6 w-6 text-slate-500" />
+                <X strokeWidth={3} className="h-6 w-6 text-slate-500" />
                 <span className="sr-only">Close</span>
               </DialogClose>
             </div>

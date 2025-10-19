@@ -1,15 +1,15 @@
 import { Company } from "@prisma/client";
 import crypto from "crypto";
 import { google } from "googleapis";
+import { Check } from "lucide-react";
 import { env } from "next-runtime-env";
 import Link from "next/link";
-import { FaCheck } from "react-icons/fa";
 
 function generateAuthURL() {
   const oauth2Client = new google.auth.OAuth2(
     process.env.GMAIL_CLIENT_ID,
     process.env.GMAIL_CLIENT_SECRET,
-    `${env("NEXT_PUBLIC_APP_URL")}/dashboard/communication/client/auth`,
+    `${env("NEXT_PUBLIC_APP_URL")}/dashboard/communication/client/auth`
   );
   const scopes = [
     "https://www.googleapis.com/auth/gmail.readonly",
@@ -46,7 +46,7 @@ const ConnectGoogle = ({ company }: { company: Company | null }) => {
           {/* <p className="text-gray-500">{company?.googleEmail}</p> */}
           <p className="flex items-center text-[#6571FF]">
             <span className="mr-2 text-green-500">
-              <FaCheck />
+              <Check size={20} />
             </span>
             <span> Connected with Google</span>
           </p>

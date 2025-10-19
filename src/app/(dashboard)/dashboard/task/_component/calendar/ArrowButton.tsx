@@ -1,9 +1,9 @@
 "use client";
 
 import { memo } from "react";
-import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
 import { useCalendarStore } from "@/stores/calendarStore";
 import { CalendarType } from "@/types/calendar";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const BUTTON_STYLE = "app-shadow rounded-md p-2 text-[#797979]";
 
@@ -18,7 +18,11 @@ function ArrowButton({ direction, type, calenderQueryType }: ArrowButtonProps) {
 
   const amount = direction === "back" ? -1 : 1;
   const icon =
-    direction === "back" ? <IoIosArrowBack /> : <IoIosArrowForward />;
+    direction === "back" ? (
+      <ChevronLeft size={20} />
+    ) : (
+      <ChevronRight size={20} />
+    );
 
   const isDay = calenderQueryType === "date";
   const isWeek = calenderQueryType === "week";

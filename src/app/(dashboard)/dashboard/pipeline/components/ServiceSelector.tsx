@@ -1,7 +1,10 @@
+import {
+  AlertCircle,
+  CircleAlert,
+  CircleCheckBig,
+  UserRoundX,
+} from "lucide-react";
 import { useEffect, useRef } from "react";
-import { IoIosCheckmarkCircleOutline } from "react-icons/io";
-import { MdErrorOutline } from "react-icons/md";
-import { RiUserUnfollowLine } from "react-icons/ri";
 
 interface ServiceSelectorProps {
   services: string[] | string;
@@ -55,7 +58,7 @@ function ServiceSelector({
         {hasServices && (
           <div
             onClick={handleServiceDropdownToggle}
-            className="flex w-[60%] cursor-pointer justify-between rounded-md border border-[#6571FF] px-2 py-1 text-xs"
+            className="flex w-[62%] cursor-pointer justify-between rounded-md border border-[#6571FF] px-2 py-1 text-xs"
             style={{
               visibility: isServiceDropdownOpen ? "hidden" : "visible",
             }}
@@ -75,22 +78,28 @@ function ServiceSelector({
 
         {type === "Shop Pipelines" && (
           <div
-            className="flex gap-1"
+            className="flex gap-3"
             style={{
               visibility: isServiceDropdownOpen ? "hidden" : "visible",
             }}
           >
-            <div className="flex items-center gap-1 text-green-600">
-              <IoIosCheckmarkCircleOutline />
-              <span>{completedServices.length}</span>
+            <div className="relative flex items-center gap-1 text-green-600">
+              <CircleCheckBig size={16} />
+              <span className="absolute -top-1.5 -right-2 text-xs">
+                {completedServices.length}
+              </span>
             </div>
-            <div className="flex items-center gap-1 text-yellow-500">
-              <MdErrorOutline />
-              <span>{incompleteServices.length}</span>
+            <div className="relative flex items-center gap-1 text-yellow-500">
+              <AlertCircle size={16} />
+              <span className="absolute -top-1.5 -right-2 text-xs">
+                {incompleteServices.length}
+              </span>
             </div>
-            <div className="flex items-center gap-1 text-gray-600">
-              <RiUserUnfollowLine size={15} />
-              <span>{unAssignedServices.length}</span>
+            <div className="relative flex items-center gap-1 text-gray-600">
+              <UserRoundX size={16} />
+              <span className="absolute -top-1.5 -right-2 text-xs">
+                {unAssignedServices.length}
+              </span>
             </div>
           </div>
         )}
@@ -105,7 +114,7 @@ function ServiceSelector({
                   className="flex items-center gap-1 px-2 py-1 font-bold text-[#03A7A2]"
                   onClick={handleServiceDropdownToggle}
                 >
-                  Complete <IoIosCheckmarkCircleOutline />
+                  Complete <CircleCheckBig size={16} strokeWidth={3} />
                 </p>
               )}
               {completedServices.map((service, index) => (
@@ -128,7 +137,7 @@ function ServiceSelector({
                   className="flex items-center gap-1 px-2 py-1 font-bold text-yellow-500"
                   onClick={handleServiceDropdownToggle}
                 >
-                  Incomplete <MdErrorOutline />
+                  Incomplete <CircleAlert size={16} strokeWidth={3} />
                 </p>
               )}
               {incompleteServices.map((service, index) => (
@@ -151,7 +160,7 @@ function ServiceSelector({
                   className="flex items-center gap-1 px-2 py-1 font-bold text-gray-600"
                   onClick={handleServiceDropdownToggle}
                 >
-                  Unassigned <RiUserUnfollowLine size={15} />
+                  Unassigned <UserRoundX size={15} strokeWidth={3} />
                 </p>
               )}
               {unAssignedServices.map((service, index) => (

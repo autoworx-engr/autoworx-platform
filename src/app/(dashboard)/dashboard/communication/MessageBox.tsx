@@ -285,7 +285,7 @@ export default function MessageBox({
       </div>
 
       {/* Chat Header */}
-      <div className="flex items-center justify-between gap-2 bg-[#006D77] p-3 text-white sm:rounded-sm">
+      <div className="flex items-center justify-between gap-2 bg-gradient-to-r from-[#006D77] to-[#008c99] p-3 text-white sm:rounded-sm">
         <div className="flex items-center gap-1">
           <button onClick={handleBack} className="flex-shrink-0 sm:hidden">
             <ArrowLeft size={20} className="font-bold" />

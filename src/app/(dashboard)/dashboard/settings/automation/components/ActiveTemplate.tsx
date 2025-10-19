@@ -1,9 +1,8 @@
 "use client";
 import { Box, IconButton, TextField } from "@mui/material";
-import { X } from "lucide-react";
+import { Paperclip, X } from "lucide-react";
 import Image from "next/image";
 import React, { ChangeEvent } from "react";
-import { ImAttachment } from "react-icons/im";
 
 type TemplateProps = {
   activeTemplate: string;
@@ -101,7 +100,7 @@ const ActiveTemplate = ({
                 size="small"
                 className={iconBtnClassName}
               >
-                <ImAttachment />
+                <Paperclip size={18} />
                 <input
                   type="file"
                   hidden

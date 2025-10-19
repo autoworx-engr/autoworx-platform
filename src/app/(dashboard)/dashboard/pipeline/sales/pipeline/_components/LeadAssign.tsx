@@ -1,7 +1,6 @@
 import { Tooltip } from "antd";
 import React, { useEffect, useRef, useState } from "react";
 import SalesSelector from "../../../components/SalesSelector";
-import { IoIosAddCircleOutline } from "react-icons/io";
 import { User } from "@prisma/client";
 import { LeadWithSalesUser } from "@/types/invoiceLead";
 import { updateLeadSalesUser } from "@/actions/pipelines/updateLeadSalesUser";
@@ -12,6 +11,7 @@ import {
 import { actionTypes } from "@/constants/lead.constant";
 import { errorToast, successToast } from "@/lib/toast";
 import useCompanyUsersQuery from "@/hooks/query-hook/useCompanyUsersQuery";
+import { CirclePlus } from "lucide-react";
 
 type TSalesUserSelect = {
   leadId: number;
@@ -96,9 +96,9 @@ export default function LeadAssign({ lead, salesUser }: TProps) {
           </div>
         </Tooltip>
       ) : (
-        <IoIosAddCircleOutline
-          className="mt-1 cursor-pointer text-2xl"
-          fontSize="medium"
+        <CirclePlus
+          size={22}
+          className="mt-1 cursor-pointer"
           onClick={() => setIsSalesSelectorOpen((prev) => !prev)}
         />
       )}

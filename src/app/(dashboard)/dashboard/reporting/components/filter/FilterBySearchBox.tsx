@@ -1,8 +1,8 @@
 "use client";
 import { useDebounce } from "@/hooks/useDebounce";
+import { Search } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { CiSearch } from "react-icons/ci";
 type TProps = {
   searchText: string;
   paramKey?: string; // 👈 unique key: "serviceSearch" or "laborSearch"
@@ -54,7 +54,7 @@ export default function FilterBySearchBox({ searchText, paramKey }: TProps) {
 
   return (
     <div className="relative w-full min-w-[300] max-w-[693px]">
-      <CiSearch className="absolute left-[10px] top-[9px]" />
+      <Search size={16} className="absolute left-[10px] top-[9px]" />
       <input
         onChange={(e) => {
           handleSearchChange(e);

@@ -1,9 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState, useMemo } from "react";
-import { FaChevronDown, FaChevronUp, FaSearch } from "react-icons/fa";
-import { IoMdClose } from "react-icons/io";
-import { PiPaletteBold } from "react-icons/pi";
 import { Tag, User } from "@prisma/client";
 
 import { INVOICE_COLORS } from "@/lib/consts";
@@ -21,6 +18,7 @@ import {
   deleteSalesTag,
 } from "@/actions/pipelines/leadTag";
 import getUser from "@/lib/getUser";
+import { ChevronDown, ChevronUp, Palette, Search, X } from "lucide-react";
 
 type SelectedColor = { textColor: string; bgColor: string } | null;
 
@@ -102,7 +100,7 @@ export function SalesTagSelector({
     <>
       <DropdownMenu open={open} onOpenChange={setOpen}>
         <DropdownMenuTrigger onClick={() => setOpen?.(!open)}>
-          <FaChevronDown />
+          <ChevronDown size={16} />
         </DropdownMenuTrigger>
 
         <DropdownMenuContent
@@ -114,7 +112,10 @@ export function SalesTagSelector({
         >
           {/* Search Box */}
           <div className="relative m-2">
-            <FaSearch className="absolute left-2 top-1/2 -translate-y-1/2 text-[#797979]" />
+            <Search
+              size={18}
+              className="absolute left-2 top-1/2 -translate-y-1/2 text-[#797979]"
+            />
             <input
               type="text"
               placeholder="Search sales tags"
@@ -123,7 +124,10 @@ export function SalesTagSelector({
               onChange={(e) => setSearch(e.target.value)}
             />
             <button onClick={() => setOpen?.(false)}>
-              <FaChevronUp className="absolute right-2 top-1/2 -translate-y-1/2 text-[#797979]" />
+              <ChevronUp
+                size={16}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-[#797979]"
+              />
             </button>
           </div>
 
@@ -156,7 +160,7 @@ export function SalesTagSelector({
                     onClick={() => handleDeleteTag(tagItem.id)}
                     className={`text-lg text-[#66738C] disabled:cursor-not-allowed disabled:text-[#66738C] ${isRestrictedUser ? "hidden" : ""}`}
                   >
-                    <IoMdClose />
+                    <X size={18} strokeWidth={3} />
                   </button>
                 </div>
               ))}
@@ -248,7 +252,7 @@ function QuickAddSalesTagForm({
         className="rounded bg-[#6470FF] p-2 text-white"
         onClick={() => setColorPickerVisible((prev) => !prev)}
       >
-        <PiPaletteBold />
+        <Palette size={18} />
       </button>
       <Submit
         className="rounded bg-slate-500 p-1 text-xs leading-3 text-white"

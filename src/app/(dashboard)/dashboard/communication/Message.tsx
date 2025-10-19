@@ -110,8 +110,8 @@ export default function Message({
               className={cn(
                 "max-w-[220px] rounded-xl p-2 text-base",
                 message.sender === "CLIENT"
-                  ? "bg-[#D9D9D9] text-slate-800"
-                  : "bg-[#006D77] text-white"
+                  ? "bg-zinc-200 text-zinc-900 ring-zinc-300 dark:bg-zinc-800 dark:text-zinc-100 dark:ring-white/10"
+                  : "bg-gradient-to-br from-[#0a8a95] to-[#006D77] text-white ring-white/20"
               )}
             >
               {message.message}

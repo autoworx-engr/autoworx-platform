@@ -3,7 +3,6 @@ import { cn } from "@/lib/cn";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { Tooltip } from "antd";
 import Link from "next/link";
-import { FaExclamation } from "react-icons/fa";
 import { TInvoice } from "./page";
 import moment from "moment-timezone";
 import { Refund } from "@prisma/client";
@@ -94,7 +93,32 @@ export default function RevenueTableRow({
           {formatCurrency(displayCost)}
           {hasLosses && (
             <Tooltip title={lossDetails?.join(" | ") || "Loss detected"}>
-              <FaExclamation color="red" size={12} />
+              <svg
+                viewBox="0 0 64 64"
+                aria-hidden="true"
+                role="img"
+                width="12"
+                height="12"
+                preserveAspectRatio="xMidYMid meet"
+                fill="#000000"
+              >
+                <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                <g
+                  id="SVGRepo_tracerCarrier"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                ></g>
+                <g id="SVGRepo_iconCarrier">
+                  {" "}
+                  <g fill="#ff0000">
+                    {" "}
+                    <path d="M37 42.4H27L23 2h18z"> </path>{" "}
+                    <ellipse cx="32" cy="54.4" rx="7.7" ry="7.6">
+                      {" "}
+                    </ellipse>{" "}
+                  </g>{" "}
+                </g>
+              </svg>
             </Tooltip>
           )}
         </div>
