@@ -1,10 +1,11 @@
-import { Service } from '@prisma/client';
-import SelectorWithAdd from './SelectorWithAdd';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { getCannedServicesByToken } from '@/actions/services/getCannedServicesByToken';
-import { errorToast, successToast } from '@/lib/toast';
-import newServiceByToken from '@/actions/estimate/service/newServiceByToken';
-import { errorHandler } from '@/error-boundary/globalErrorHandler';
+import { Service } from "@prisma/client";
+import SelectorWithAdd from "./SelectorWithAdd";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { getCannedServicesByToken } from "@/actions/services/getCannedServicesByToken";
+import { errorToast, successToast } from "@/lib/toast";
+import newServiceByToken from "@/actions/estimate/service/newServiceByToken";
+import { errorHandler } from "@/error-boundary/globalErrorHandler";
+import MultiSelectorWithAdd from "./MultiSelectorWithAdd";
 
 export interface Option {
   id: number;
@@ -12,8 +13,8 @@ export interface Option {
 }
 
 export interface ServiceSelectAndAddPublicProps {
-  value: string | { id: string | number; title: string };
-  onChange: (value: string | { id: string | number; title: string }) => void;
+  value: Array<{ id: string | number; title: string }>;
+  onChange: (value: Array<{ id: string | number; title: string }>) => void;
   disabled?: boolean;
   token: string; // Required for public access
 }
@@ -42,44 +43,39 @@ const ServiceSelectAndAddPublic = ({
         const res = await newServiceByToken({
           name: newItem,
           token,
-          canned: false, // Set canned to false for one-time services from public form
-          // No categoryId required for public form
+          canned: false,
         });
 
-        if (res.type === 'success') {
-          // Update local state with the new service
+        if (res.type === "success") {
           setServices((prev) => [...prev, res.data]);
-          successToast('New Service Created');
+          successToast("New Service Created");
 
-          // Update form data immediately
-          onChange({
-            id: res.data.id,
-            title: res.data.name,
-          });
+          // Append new service to current selected services
+          onChange([...value, { id: res.data.id, title: res.data.name }]);
         } else {
-          errorToast(res.message || 'Failed to create new service');
+          errorToast(res.message || "Failed to create new service");
         }
       } catch (error) {
         errorHandler(error);
-        errorToast('Failed to create new service');
+        errorToast("Failed to create new service");
       }
     },
-    [onChange, token]
+    [onChange, token, value]
   );
 
   // Fetch only canned services
   useEffect(() => {
     const fetchData = async () => {
       // Don't fetch if token is empty or services already loaded
-      if (!token || token.trim() === '' || services.length > 0) return;
+      if (!token || token.trim() === "" || services.length > 0) return;
 
       setIsLoading(true);
       try {
         const cannedServices = await getCannedServicesByToken(token);
         setServices(cannedServices);
       } catch (err) {
-        console.error('Failed to fetch data:', err);
-        errorToast('Failed to load services');
+        console.error("Failed to fetch data:", err);
+        errorToast("Failed to load services");
       } finally {
         setIsLoading(false);
       }
@@ -89,7 +85,7 @@ const ServiceSelectAndAddPublic = ({
   }, [token, services.length]);
 
   return (
-    <SelectorWithAdd
+    <MultiSelectorWithAdd
       label="Service Needed"
       name="searchable"
       options={options}

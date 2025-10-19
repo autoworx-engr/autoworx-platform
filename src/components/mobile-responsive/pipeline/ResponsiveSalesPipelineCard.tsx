@@ -22,7 +22,7 @@ const ResponsiveSalesPipelineCard = ({
     (lead.client?.firstName ?? "") + " " + (lead.client?.lastName ?? "");
   const clientEmail = lead.client?.email;
   const vehicle = lead?.vehicleInfo;
-  const services = lead?.services;
+  const services = lead?.services?.split(",");
   const status = lead.column?.title;
   // console.log(lead);
   const timeCreated = moment(lead.createdAt).format("MM/DD/YYYY");
@@ -38,7 +38,7 @@ const ResponsiveSalesPipelineCard = ({
       key={index}
       className={cn(
         "mt mb-4 rounded-[5px] border border-[#BFC4FF] text-[#66738C] shadow-sm",
-        (index + 1) % 2 === 0 ? evenColor : oddColor,
+        (index + 1) % 2 === 0 ? evenColor : oddColor
       )}
     >
       <CardHeader className="flex flex-row items-center justify-between p-4 pb-0">
@@ -61,9 +61,10 @@ const ResponsiveSalesPipelineCard = ({
             </Link>
             <Link href="#">
               <p className="line-clamp-1">
-                {services.length > 20
-                  ? services.slice(0, 20) + "..."
-                  : services}
+                {services?.length > 0 &&
+                  services?.map((s: string) =>
+                    s.length > 20 ? s.slice(0, 20) + "..." : s
+                  )}
               </p>
             </Link>
           </div>

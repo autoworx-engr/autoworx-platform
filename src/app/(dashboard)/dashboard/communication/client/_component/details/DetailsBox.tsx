@@ -18,6 +18,7 @@ export default async function DetailsBox({ clientId, showDetails }: Props) {
       year: true,
       make: true,
       model: true,
+      other: true,
     },
   });
   const [client, vehicles] = await Promise.all([
