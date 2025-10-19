@@ -34,7 +34,7 @@ export function LeadsTableSkeleton() {
           </tr>
         </thead>
         <tbody>
-          {Array.from({ length: 6 }).map((_, i) => (
+          {Array.from({ length: 15 }).map((_, i) => (
             <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F3F8FF]"}>
               <td className="border-b px-4 py-4 align-top">
                 <div className="h-6 w-6 rounded bg-gray-200 animate-pulse" />
