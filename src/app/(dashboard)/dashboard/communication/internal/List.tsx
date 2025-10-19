@@ -748,7 +748,11 @@ export default function List({
                 <button
                   key={`group-${group.id}`}
                   className={cn(
-                    "flex items-center gap-2 rounded-md border border-[#006D77] bg-[#FFFFFF] p-2 hover:bg-gray-300 sm:border-0",
+                    `group relative flex items-center w-full gap-2 rounded-2xl p-3 sm:p-4`,
+                    // base card feel
+                    "border border-transparent shadow-sm transition-all duration-200",
+                    // hover/active polish
+                    "hover:shadow-md active:scale-[0.99]",
                     isSelectedGroup
                       ? [
                           "bg-gradient-to-r from-teal-700 to-teal-600",
