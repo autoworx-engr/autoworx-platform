@@ -1,62 +1,87 @@
-import { Skeleton } from "antd";
-
-
 export function LeadsTableSkeleton() {
   return (
     <div className="hidden lg:block">
       <table className="w-full shadow-md">
-        <thead className="bg-background">
-          <tr className="h-10 border-b">
-            <th className="border-b px-4 py-2 text-left">Lead#</th>
-            <th className="border-b px-4 py-2 text-left">Client</th>
-            <th className="border-b px-4 py-2 text-left">Vehicle Info</th>
-            <th className="border-b px-4 py-2 text-left">Services</th>
-            <th className="border-b px-4 py-2 text-left">Assigned To</th>
-            <th className="border-b px-4 py-2 text-left">Lead Source</th>
-            <th className="border-b px-4 py-2 text-left">Status</th>
-            <th className="border-b px-4 py-2 text-left">Actions</th>
-            <th className="border-b px-4 py-2 text-left">Time Created</th>
+        <thead>
+          <tr className="h-12 bg-[#F6F8FF] border-b">
+            <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">
+              Lead#
+            </th>
+            <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">
+              Client
+            </th>
+            <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">
+              Vehicle Info
+            </th>
+            <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">
+              Services
+            </th>
+            <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">
+              Assigned To
+            </th>
+            <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">
+              Lead Source
+            </th>
+            <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">
+              Status
+            </th>
+            <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">
+              Actions
+            </th>
+            <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">
+              Time Created
+            </th>
           </tr>
         </thead>
         <tbody>
-          {Array.from({ length: 10 }).map((_, index) => (
-            <tr key={index} className={index % 2 === 0 ? "bg-background" : "bg-blue-100"}>
-              <td className="border-b px-4 py-2">
-                <Skeleton className="h-4 w-6" />
+          {Array.from({ length: 6 }).map((_, i) => (
+            <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F3F8FF]"}>
+              <td className="border-b px-4 py-4 align-top">
+                <div className="h-6 w-6 rounded bg-gray-200 animate-pulse" />
               </td>
-              <td className="border-b px-4 py-2">
-                <Skeleton className="h-4 w-32" />
+
+              <td className="border-b px-4 py-4 align-top">
+                <div className="h-3 w-28 rounded bg-gray-200 animate-pulse" />
               </td>
-              <td className="border-b px-4 py-2">
-                <Skeleton className="h-4 w-40" />
+
+              <td className="border-b px-4 py-4 align-top">
+                <div className="h-4 w-56 rounded bg-gray-200 animate-pulse" />
               </td>
-              <td className="border-b px-4 py-2">
-                <Skeleton className="h-4 w-24" />
+
+              <td className="border-b px-4 py-4 align-top">
+                <div className="h-4 w-32 rounded bg-gray-200 animate-pulse" />
               </td>
-              <td className="border-b px-4 py-2">
-                <Skeleton className="h-4 w-28" />
-              </td>
-              <td className="border-b px-4 py-2">
-                <Skeleton className="h-4 w-24" />
-              </td>
-              <td className="border-b px-4 py-2">
-                <Skeleton className="h-8 w-28" />
-              </td>
-              <td className="border-b px-4 py-2">
-                <div className="flex gap-2">
-                  <Skeleton className="h-5 w-5 rounded" />
-                  <Skeleton className="h-5 w-5 rounded" />
-                  <Skeleton className="h-5 w-5 rounded" />
-                  <Skeleton className="h-5 w-5 rounded" />
+
+              <td className="border-b px-4 py-4 align-top">
+                <div className="flex items-center gap-3">
+                  <div className="h-4 w-28 rounded bg-gray-200 animate-pulse" />
                 </div>
               </td>
-              <td className="border-b px-4 py-2">
-                <Skeleton className="h-4 w-20" />
+
+              <td className="border-b px-4 py-4 align-top">
+                <div className="h-4 w-32 rounded bg-gray-200 animate-pulse" />
+              </td>
+
+              <td className="border-b px-4 py-4 align-top">
+                <div className="h-8 w-28 rounded-md bg-gray-200 animate-pulse" />
+              </td>
+
+              <td className="border-b px-4 py-4 align-top">
+                <div className="flex items-center gap-2">
+                  <div className="h-6 w-6 rounded bg-gray-200 animate-pulse" />
+                  <div className="h-6 w-6 rounded bg-gray-200 animate-pulse" />
+                  <div className="h-6 w-6 rounded bg-gray-200 animate-pulse" />
+                  <div className="h-6 w-6 rounded bg-gray-200 animate-pulse" />
+                </div>
+              </td>
+
+              <td className="border-b px-4 py-4 align-top">
+                <div className="h-4 w-20 rounded bg-gray-200 animate-pulse" />
               </td>
             </tr>
           ))}
         </tbody>
       </table>
     </div>
-  )
+  );
 }
