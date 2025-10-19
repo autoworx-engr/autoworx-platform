@@ -7,10 +7,10 @@ export default function WorkOrdersTableSkeleton({
   rows?: number;
 }) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Mobile card skeletons */}
       <div className="lg:hidden space-y-3">
-        {Array.from({ length: 3 }).map((_, i) => (
+        {Array.from({ length: 4 }).map((_, i) => (
           <div key={i} className="rounded-lg border bg-white p-3 shadow-sm">
             <div className="h-4 w-32 rounded bg-gray-200 animate-pulse mb-2" />
             <div className="h-3 w-48 rounded bg-gray-100 animate-pulse" />
