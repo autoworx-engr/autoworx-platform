@@ -8,13 +8,36 @@ export default function WorkOrdersTableSkeleton({
 }) {
   return (
     <div className="space-y-6">
-      {/* Mobile card skeletons */}
+      {/* Mobile card skeletons (improved to match ResponsiveShopPipelineCard layout) */}
       <div className="lg:hidden space-y-3">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="rounded-lg border bg-white p-3 shadow-sm">
-            <div className="h-4 w-32 rounded bg-gray-200 animate-pulse mb-2" />
-            <div className="h-3 w-48 rounded bg-gray-100 animate-pulse" />
-            <div className="mt-2 h-3 w-28 rounded bg-gray-100 animate-pulse" />
+          <div
+            key={i}
+            className="relative rounded-[5px] border border-[#BFC4FF] bg-white px-3 py-3 shadow-sm"
+          >
+            {/* Header: id placeholder (left) and date (right) */}
+            <div className="flex items-center justify-between mb-2">
+              <div className="h-4 w-12 rounded bg-gray-200 animate-pulse" />
+              <div className="h-4 w-20 rounded bg-gray-200 animate-pulse" />
+            </div>
+
+            {/* Client (bold) */}
+            <div className="mb-3">
+              <div className="h-5 w-3/4 rounded bg-gray-200 animate-pulse" />
+            </div>
+
+            {/* Vehicle and service lines */}
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <div className="h-3 w-full rounded bg-gray-100 animate-pulse mb-2" />
+                <div className="h-3 w-3/4 rounded bg-gray-100 animate-pulse" />
+              </div>
+
+              {/* Status pill placeholder */}
+              <div className="ml-4 flex-shrink-0">
+                <div className="h-6 w-20 rounded bg-gray-200 animate-pulse" />
+              </div>
+            </div>
           </div>
         ))}
       </div>
@@ -47,7 +70,7 @@ export default function WorkOrdersTableSkeleton({
               {Array.from({ length: rows }).map((_, r) => (
                 <tr
                   key={r}
-                  className={r % 2 === 0 ? "bg-background" : "bg-blue-100"}
+                  className={r % 2 === 0 ? "bg-background" : "bg-[#DBEAFE]"}
                 >
                   <td className="px-4 py-3">
                     <div className="h-4 w-12 rounded bg-gray-200 animate-pulse" />

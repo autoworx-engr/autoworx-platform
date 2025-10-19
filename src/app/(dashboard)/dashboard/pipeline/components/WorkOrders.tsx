@@ -123,7 +123,7 @@ const WorkOrders = () => {
             })}
         </div>
         {!invoices ? (
-          <WorkOrdersTableSkeleton rows={6} />
+          <WorkOrdersTableSkeleton rows={15} />
         ) : !filteredInvoices ? (
           <div className="flex h-[70vh] pb-10 w-full items-center justify-center">
             <Spin size="large" />
