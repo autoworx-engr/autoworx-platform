@@ -20,7 +20,7 @@ import { Category, Labor } from "@prisma/client";
 import { Pagination, Popconfirm, message } from "antd"; // Added message for notifications
 import { CircleCheckBig, SquarePen, X } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import FilterBySearchBox from "../reporting/components/filter/FilterBySearchBox";
 import CannedFilterBySelection from "./CannedFilterBySelected";
 import NewLabor from "./NewLabor";
@@ -34,8 +34,6 @@ export default function CannedLabor({
 }: {
   labors: (Labor & { category: Category })[];
 }) {
-  //
-
   const params = useSearchParams();
   const selectedCategory = params.get("laborCategory") || "";
   const laborSearch = params.get("laborSearch") || "";
@@ -247,6 +245,8 @@ const LaborComponent = ({
     return true;
   };
 
+  const [isPending, startTransition] = useTransition();
+
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.value.length > 50) {
       setNameError("Labor name must be less than 50 characters");
@@ -311,7 +311,11 @@ const LaborComponent = ({
             )}
             <div className="flex items-center gap-2">
               {isEdit && (
-                <button onClick={handleEdit} className="text-xl text-green-500">
+                <button
+                  onClick={() => startTransition(() => handleEdit())}
+                  className="text-xl text-green-500"
+                  disabled={isPending}
+                >
                   <CircleCheckBig className="w-5 h-5" />
                 </button>
               )}
@@ -377,6 +381,8 @@ const LaborComponent = ({
     );
   }
 
+  console.log(isPending, "isPending");
+
   return (
     <TableRow
       className={cn(index % 2 === 0 ? "bg-background" : "bg-[#F8FAFF]")}
@@ -436,10 +442,11 @@ const LaborComponent = ({
       <TableCell className="flex items-center my-auto h-full">
         {isEdit && (
           <button
-            onClick={() => handleEdit()}
-            className="mr-4 text-lg text-[#6571FF]"
+            onClick={() => startTransition(() => handleEdit())}
+            className="mr-4 text-lg text-[#6571FF] disabled:cursor-not-allowed disabled:text-gray-400"
+            disabled={isPending}
           >
-            <CircleCheckBig className="w-4 h-4" />
+            <CircleCheckBig className="w-4 h-4" strokeWidth={2.5} />
           </button>
         )}
         <button
