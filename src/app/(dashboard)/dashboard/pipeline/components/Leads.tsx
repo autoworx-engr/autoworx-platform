@@ -35,6 +35,8 @@ import SelectComponent from "./Select";
 import TaskForm from "./TaskForm";
 import { createLeadDraftEstimate } from "@/actions/pipelines/createLeadDraftEstimate";
 import { ChevronDown, MessageCircleMore, Search } from "lucide-react";
+import { LeadsTableSkeleton } from "./LeadsTableSkeleton";
+import { LeadsMobileSkeleton } from "./LeadsMobileSkeleton";
 
 type TProps = {
   salesColumn: Column[];
@@ -622,12 +624,17 @@ const Leads = ({ salesColumn }: TProps) => {
           </div>
         </>
       ) : loading ? (
-        <div
-          className="flex w-full items-center justify-center"
-          style={{ height: "calc(100vh - 300px)" }}
-        >
-          <Spin size="large" />
-        </div>
+        // <div
+        //   className="flex w-full items-center justify-center"
+        //   style={{ height: "calc(100vh - 300px)" }}
+        // >
+        //   <Spin size="large" />
+        // </div>
+
+        <>
+         <LeadsTableSkeleton/>
+         <LeadsMobileSkeleton/>
+        </>
       ) : (
         <div className="my-20 flex w-full justify-center text-gray-500">
           No leads found.
