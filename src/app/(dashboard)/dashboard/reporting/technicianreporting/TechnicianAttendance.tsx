@@ -7,6 +7,7 @@ import { convertDuration } from "@/lib/convertDurations";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import moment from "moment-timezone";
 import { useState, useEffect } from "react";
+import AttendanceTableSkeleton from "@/components/ui/TableSkeleton";
 
 const daysOfWeek = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 
@@ -100,9 +101,11 @@ const TechnicianAttendance = ({ currentUserId }: { currentUserId: string }) => {
         <div className="">
           {/* Show loading state when dates are not initialized or data is not available */}
           {!startDate || !endDate || !attendanceInfo ? (
-            <div className="flex h-40 items-center justify-center">
-              <div className="text-gray-500">Loading attendance data...</div>
-            </div>
+            // <div className="flex h-40 items-center justify-center">
+            //   <div className="text-gray-500">Loading attendance data...</div>
+            // </div>
+
+            <AttendanceTableSkeleton rows={7} />
           ) : (
             <>
               {/* Attendance Table */}
