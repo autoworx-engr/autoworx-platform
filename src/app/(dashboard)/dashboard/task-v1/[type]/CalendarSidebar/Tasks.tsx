@@ -5,6 +5,7 @@ import { MinimizeButton } from "./MinimiseButton";
 import TaskComponent from "./Task";
 import NewTask from "@/components/task/TaskCreateOrEdit";
 import { Clipboard } from "lucide-react";
+import TaskListSkeleton from "@/components/ui/TaskListSkeleton";
 
 export default function Tasks({
   tasks,
@@ -37,8 +38,10 @@ export default function Tasks({
 
       {!minimized && (
         <div className="thin-scrollbar space-y-2 overflow-y-auto">
-          {tasks?.length > 0 ? (
-            tasks?.map((task) => (
+          {!tasks ? (
+            <TaskListSkeleton rows={4} />
+          ) : tasks.length > 0 ? (
+            tasks.map((task) => (
               <TaskComponent
                 key={task.id}
                 task={task}
