@@ -7,6 +7,7 @@ import { convertDuration } from "@/lib/convertDurations";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import moment from "moment-timezone";
 import { useState, useEffect } from "react";
+import AttendanceTableSkeleton from "@/components/ui/AttendanceTableSkeleton";
 
 const daysOfWeek = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 
@@ -32,7 +33,7 @@ const TechnicianAttendance = ({ currentUserId }: { currentUserId: string }) => {
     Number(currentUserId),
     startDate || undefined,
     endDate || undefined,
-    refetch,
+    refetch
   );
 
   return (
@@ -48,7 +49,11 @@ const TechnicianAttendance = ({ currentUserId }: { currentUserId: string }) => {
               // Process start date
               if (start instanceof Date) {
                 startDateObj = start;
-              } else if (start && typeof start === "object" && typeof start.toDate === "function") {
+              } else if (
+                start &&
+                typeof start === "object" &&
+                typeof start.toDate === "function"
+              ) {
                 startDateObj = start.toDate();
               } else if (start && typeof start.toString === "function") {
                 startDateObj = new Date(start.toString());
@@ -59,7 +64,11 @@ const TechnicianAttendance = ({ currentUserId }: { currentUserId: string }) => {
               // Process end date
               if (end instanceof Date) {
                 endDateObj = end;
-              } else if (end && typeof end === "object" && typeof end.toDate === "function") {
+              } else if (
+                end &&
+                typeof end === "object" &&
+                typeof end.toDate === "function"
+              ) {
                 endDateObj = end.toDate();
               } else if (end && typeof end.toString === "function") {
                 endDateObj = new Date(end.toString());
@@ -77,7 +86,8 @@ const TechnicianAttendance = ({ currentUserId }: { currentUserId: string }) => {
               }
 
               // Format as YYYY-MM-DD which will be interpreted by the server in company timezone
-              const formattedStartDate = moment(startDateObj).format("YYYY-MM-DD");
+              const formattedStartDate =
+                moment(startDateObj).format("YYYY-MM-DD");
               const formattedEndDate = moment(endDateObj).format("YYYY-MM-DD");
 
               // Update state with the new dates
@@ -100,9 +110,11 @@ const TechnicianAttendance = ({ currentUserId }: { currentUserId: string }) => {
         <div className="">
           {/* Show loading state when dates are not initialized or data is not available */}
           {!startDate || !endDate || !attendanceInfo ? (
-            <div className="flex h-40 items-center justify-center">
-              <div className="text-gray-500">Loading attendance data...</div>
-            </div>
+            // <div className="flex h-40 items-center justify-center">
+            //   <div className="text-gray-500">Loading attendance data...</div>
+            // </div>
+
+            <AttendanceTableSkeleton rows={7} />
           ) : (
             <>
               {/* Attendance Table */}
@@ -124,7 +136,7 @@ const TechnicianAttendance = ({ currentUserId }: { currentUserId: string }) => {
                       {attendanceInfo?.attInfo?.map((data, index) => {
                         // Fix date processing to avoid timezone shifts
                         let dateMoment;
-                        if (typeof data.date === 'string') {
+                        if (typeof data.date === "string") {
                           // Parse as local date to avoid timezone shifts
                           dateMoment = moment.tz(data.date, timezone);
                         } else {
@@ -139,14 +151,16 @@ const TechnicianAttendance = ({ currentUserId }: { currentUserId: string }) => {
                         const effectiveHours = isNaN(Number(data.hours))
                           ? data.hours
                           : convertDuration(
-                              Number(data.hours) - Number(data.totalBreaks),
+                              Number(data.hours) - Number(data.totalBreaks)
                             );
-                        
+
                         return (
                           <tr
                             key={index}
                             className={
-                              index % 2 === 0 ? "border-b bg-blue-100" : "border-b"
+                              index % 2 === 0
+                                ? "border-b bg-blue-100"
+                                : "border-b"
                             }
                           >
                             <td className="bg-background px-2 py-2 sm:px-4 font-medium">
@@ -155,17 +169,25 @@ const TechnicianAttendance = ({ currentUserId }: { currentUserId: string }) => {
                             <td className="px-2 py-2 sm:px-4">
                               {typeof data.clockedIn === "string"
                                 ? data.clockedIn
-                                : moment.utc(data.clockedIn).tz(timezone).format("hh:mm A")}
+                                : moment
+                                    .utc(data.clockedIn)
+                                    .tz(timezone)
+                                    .format("hh:mm A")}
                             </td>
                             <td className="px-2 py-2 sm:px-4">
                               {typeof data?.clockedOut === "string"
                                 ? data?.clockedOut
-                                : moment.utc(data?.clockedOut).tz(timezone).format("hh:mm A")}
+                                : moment
+                                    .utc(data?.clockedOut)
+                                    .tz(timezone)
+                                    .format("hh:mm A")}
                             </td>
                             <td className="hidden justify-center px-2 py-2 sm:px-4 lg:flex">
                               {data.totalBreaks}
                             </td>
-                            <td className="px-2 py-2 lg:px-4">{effectiveHours}</td>
+                            <td className="px-2 py-2 lg:px-4">
+                              {effectiveHours}
+                            </td>
                           </tr>
                         );
                       })}

@@ -15,6 +15,7 @@ import React, { useState, useEffect } from "react";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import moment from "moment-timezone";
 import { Info, Pencil, Save, X } from "lucide-react";
+import AttendanceTableSkeleton from "@/components/ui/AttendanceTableSkeleton";
 
 interface AttendanceRecord {
   id?: number;
@@ -385,9 +386,7 @@ const Dashboard = () => {
         <div className="">
           {/* Show loading state when dates are not initialized or data is not available */}
           {!startDate || !endDate || !attendanceInfo ? (
-            <div className="flex h-40 items-center justify-center">
-              <div className="text-gray-500">Loading attendance data...</div>
-            </div>
+            <AttendanceTableSkeleton rows={7} />
           ) : (
             <>
               {/* Attendance Table */}

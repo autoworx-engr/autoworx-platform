@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useMediaQuery } from "react-responsive";
 import { Bar, Label, LabelList, Legend, Tooltip, XAxis, YAxis } from "recharts";
 import useGetLeadInfoQuery from "../_hook/useGetLeadInfoQuery";
+import LeadsChartSkeleton from "@/components/ui/LeadsChartSkeleton";
+
 
 type TProps = {
   searchParams: {
@@ -73,6 +75,10 @@ export default function LeadsBarChartContainer({ searchParams }: TProps) {
     setEndDate(searchParams?.endDate);
     setIsFiltered(!!searchParams?.startDate || !!searchParams?.endDate);
   }, [searchParams?.startDate, searchParams?.endDate]);
+  // Chart skeleton while loading
+  if (!data || !data.monthlyQualifiedAndUnqualifiedLeads) {
+    return <LeadsChartSkeleton variant="stacked" bars={8} height={350} />;
+  }
 
   return (
     <div className="chart-container">
@@ -128,10 +134,6 @@ export default function LeadsBarChartContainer({ searchParams }: TProps) {
           shape={(props: any) => {
             const { x, y, width, height, ...rest } = props;
             const barWidth = Math.min(width * 1.5, 30);
-
-            // const xPosition = isFiltered
-            //   ? x - width * 1
-            //   : x - width * (dummyData.length <= 10 ? 0.4 : 0.3);
 
             let multiplier;
             if (isFiltered) {

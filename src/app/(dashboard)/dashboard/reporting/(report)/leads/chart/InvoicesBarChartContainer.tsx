@@ -1,12 +1,14 @@
 "use client";
 import { Bar, Label, Tooltip, XAxis, YAxis } from "recharts";
 import BarChartComponent from "@/app/(dashboard)/dashboard/reporting/components/BarChartComponent";
+
 import { useServerGet } from "@/hooks/useServerGet";
 import { getLeadInfo } from "@/actions/dashboard/data/getLeadInfo";
 import { useEffect, useState } from "react";
 import { endOfMonth, format, startOfMonth } from "date-fns";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import useGetLeadInfoQuery from "../_hook/useGetLeadInfoQuery";
+import LeadsChartSkeleton from "@/components/ui/LeadsChartSkeleton";
 
 type TProps = {
   searchParams: {
@@ -66,6 +68,7 @@ export default function InvoicesBarChartContainer({ searchParams }: TProps) {
   }, [searchParams?.startDate, searchParams?.endDate]);
 
   // Fetch data with date filters
+  if (!data) return <LeadsChartSkeleton variant="single" bars={8} height={350} />;
 
   return (
     <div

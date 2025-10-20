@@ -3,6 +3,7 @@ import BarChartComponent from "@/app/(dashboard)/dashboard/reporting/components/
 import { useEffect, useState } from "react";
 import { Bar, Label, Tooltip, XAxis, YAxis } from "recharts";
 import useGetLeadInfoQuery from "../_hook/useGetLeadInfoQuery";
+import LeadsChartSkeleton from "@/components/ui/LeadsChartSkeleton";
 
 type TProps = {
   searchParams: {
@@ -62,39 +63,44 @@ export default function EstimateBarChartContainer({ searchParams }: TProps) {
 
   return (
     <div className="chart-container">
-      <BarChartComponent
-        height={350}
-        title="Leads Converted per Month"
-        data={data?.convertedLeadsPerMonth || []}
-      >
-        <XAxis tickLine={false} dataKey={"month"} />
-        <YAxis tick={false}>
-          <Label
-            angle={-90}
-            value="Number of Jobs"
-            position="top"
-            offset={30}
-            style={{
-              textAnchor: "middle",
-              transform: "translateX(3px)",
-              fontWeight: "bold",
-              fontSize: ".9rem",
-            }}
-          >
-            Leads
-          </Label>
-        </YAxis>
-        <Tooltip />
-        <Bar
-          dataKey={"converted"}
-          name="Converted"
-          fill="#03A7A2"
-          shape={<CustomBar />}
-          label={<CustomLabel />}
-          barSize={isFiltered ? 30 : 28}
-          height={200}
-        />
-      </BarChartComponent>
+      {/* Chart skeleton while loading */}
+      {!data || !data.convertedLeadsPerMonth ? (
+        <LeadsChartSkeleton variant="stacked" bars={8} height={350} />
+      ) : (
+        <BarChartComponent
+          height={350}
+          title="Leads Converted per Month"
+          data={data?.convertedLeadsPerMonth || []}
+        >
+          <XAxis tickLine={false} dataKey={"month"} />
+          <YAxis tick={false}>
+            <Label
+              angle={-90}
+              value="Number of Jobs"
+              position="top"
+              offset={30}
+              style={{
+                textAnchor: "middle",
+                transform: "translateX(3px)",
+                fontWeight: "bold",
+                fontSize: ".9rem",
+              }}
+            >
+              Leads
+            </Label>
+          </YAxis>
+          <Tooltip />
+          <Bar
+            dataKey={"converted"}
+            name="Converted"
+            fill="#03A7A2"
+            shape={<CustomBar />}
+            label={<CustomLabel />}
+            barSize={isFiltered ? 30 : 28}
+            height={200}
+          />
+        </BarChartComponent>
+      )}
     </div>
   );
 }
