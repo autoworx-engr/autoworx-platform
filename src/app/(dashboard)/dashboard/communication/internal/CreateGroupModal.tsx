@@ -92,11 +92,34 @@ export default function CreateGroupModal({
   );
 
   // add user in contact list
+  // const handleAddContactList = (user: User) => {
+  //   const modifyUser = {
+  //     id: user.id,
+  //     name: user.firstName + " " + user.lastName,
+  //   };
+  //   setGroupUsers((prevContact) =>
+  //     prevContact.filter((prevUser) => prevUser.id !== user.id)
+  //   );
+
+  //   setError(null);
+  //   setContactList((prev) => [...prev, modifyUser]);
+  //   setOpenUserList(false);
+  // };
+
   const handleAddContactList = (user: User) => {
+    const name = user.firstName + " " + user.lastName;
+
+    const alreadyExists = contactList.some((u) => u.name === name);
+    if (alreadyExists) {
+      setError(`User "${name}" is already in the contact list.`);
+      return;
+    }
+
     const modifyUser = {
       id: user.id,
-      name: user.firstName + " " + user.lastName,
+      name,
     };
+
     setGroupUsers((prevContact) =>
       prevContact.filter((prevUser) => prevUser.id !== user.id)
     );
