@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { usePathname } from "next/navigation";
 
 const resources = [
   {
@@ -10,7 +11,7 @@ const resources = [
     label: "dashboard",
   },
   {
-    link: "/dashboard/resources/communications_hub",
+    link: "/dashboard/resources/communication",
     label: "communications hub",
   },
   {
@@ -60,7 +61,7 @@ const resources = [
 ];
 
 export default function Sidebar() {
-  const path = typeof window === "undefined" ? "" : window.location.pathname;
+  const path = usePathname();
 
   // mobile sidebar state
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -123,9 +124,7 @@ export default function Sidebar() {
                 href={r.link}
                 className={cn(
                   "block px-4 py-2 hover:bg-gray-100 hover:text-gray-900",
-                  {
-                    "font-medium text-[#6571FF]": path === r.link,
-                  }
+                  `${path === r.link && "font-medium text-[#6571FF]"}`
                 )}
               >
                 {toTitleCase(r.label)}
