@@ -46,17 +46,9 @@ export default function LeadsChartSkeleton({
                     }}
                   />
 
-                  {/* inner small rounded capsule at bottom (slightly larger) */}
-                  <div
-                    className="bg-gray-400 animate-pulse absolute"
-                    style={{
-                      bottom: 8,
-                      height: Math.max(40, Math.round(height * 0.12)),
-                      width: "30px",
-                      borderRadius: 9999,
-                    }}
-                  />
+                 
                 </div>
+
               ) : (
                 <div
                   className="rounded-t-lg bg-gray-300 animate-pulse w-full"

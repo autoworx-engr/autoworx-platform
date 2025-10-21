@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import UserComponent from "./User";
+import UserListSkeleton from "@/components/ui/UserListSkeleton";
 import { Task, User } from "@prisma/client";
 import { MinimizeButton } from "./MinimiseButton";
 import { useCalendarSidebarStore } from "@/stores/calendarSidebar";
@@ -70,7 +71,10 @@ export default function Users({
 
       <div className="thin-scrollbar my-2 flex-grow overflow-y-auto">
         {!minimized &&
-          (usersToDisplay.length > 0 ? (
+          // Show a skeleton while users prop is loading (undefined/null)
+          (!users ? (
+            <UserListSkeleton rows={6} />
+          ) : usersToDisplay.length > 0 ? (
             usersToDisplay.map((user, index) => {
               const isSelected = selectedUser === index;
 

@@ -68,7 +68,8 @@ export default function InvoicesBarChartContainer({ searchParams }: TProps) {
   }, [searchParams?.startDate, searchParams?.endDate]);
 
   // Fetch data with date filters
-  if (!data) return <LeadsChartSkeleton variant="single" bars={8} height={350} />;
+  if (!data)
+    return <LeadsChartSkeleton variant="single" bars={12} height={400} />;
 
   return (
     <div
