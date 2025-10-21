@@ -209,16 +209,18 @@ export default async function Page({
                 vendor={vendor!}
               />
             </div>
-            <div className="flex flex-col gap-1 p-3">
-              <p>Contact Name: {vendor?.name}</p>
-              <p>Company Name: {vendor?.companyName}</p>
-              <p>Phone: {vendor?.phone}</p>
-              <p>Email: {vendor?.email}</p>
-              <p>Address: {vendor?.address}</p>
-              <p>City: {vendor?.city}</p>
-              <p>State: {vendor?.state}</p>
-              <p>Zip: {vendor?.zip}</p>
-              <p>Website: {vendor?.website}</p>
+            <div className="flex flex-col gap-1 p-3 ">
+              {vendor?.name && <p>Contact Name: {vendor?.name}</p>}
+              {vendor?.companyName && (
+                <p>Company Name: {vendor?.companyName}</p>
+              )}
+              {vendor?.phone && <p>Phone: {vendor?.phone}</p>}
+              {vendor?.email && <p>Email: {vendor?.email}</p>}
+              {vendor?.address && <p>Address: {vendor?.address}</p>}
+              {vendor?.city && <p>City: {vendor?.city}</p>}
+              {vendor?.state && <p>State: {vendor?.state}</p>}
+              {vendor?.zip && <p>Zip: {vendor?.zip}</p>}
+              {vendor?.website && <p>Website: {vendor?.website}</p>}
             </div>
           </div>
         </div>
