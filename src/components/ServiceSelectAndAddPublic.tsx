@@ -1,11 +1,11 @@
 import { Service } from "@prisma/client";
 import SelectorWithAdd from "./SelectorWithAdd";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { getCannedServicesByToken } from "@/actions/services/getCannedServicesByToken";
 import { errorToast, successToast } from "@/lib/toast";
 import newServiceByToken from "@/actions/estimate/service/newServiceByToken";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import MultiSelectorWithAdd from "./MultiSelectorWithAdd";
+import { getCannedServicesByCompanyId } from "@/actions/services/getCannedServicesByCompanyId";
 
 export interface Option {
   id: number;
@@ -17,6 +17,7 @@ export interface ServiceSelectAndAddPublicProps {
   onChange: (value: Array<{ id: string | number; title: string }>) => void;
   disabled?: boolean;
   token: string; // Required for public access
+  companyId: number;
 }
 
 const ServiceSelectAndAddPublic = ({
@@ -24,6 +25,7 @@ const ServiceSelectAndAddPublic = ({
   onChange,
   disabled = false,
   token,
+  companyId,
 }: ServiceSelectAndAddPublicProps) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [services, setServices] = useState<Service[]>([]);
@@ -68,10 +70,10 @@ const ServiceSelectAndAddPublic = ({
     const fetchData = async () => {
       // Don't fetch if token is empty or services already loaded
       if (!token || token.trim() === "" || services.length > 0) return;
-
+      console.log("token", token);
       setIsLoading(true);
       try {
-        const cannedServices = await getCannedServicesByToken(token);
+        const cannedServices = await getCannedServicesByCompanyId(companyId);
         setServices(cannedServices);
       } catch (err) {
         console.error("Failed to fetch data:", err);
