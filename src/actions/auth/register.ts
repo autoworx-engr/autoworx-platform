@@ -1,4 +1,5 @@
-"use server";
+import { create } from "mutative";
+("use server");
 import { AppError } from "@/error-boundary/error";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { db } from "@/lib/db";
@@ -12,6 +13,7 @@ import bcrypt from "bcryptjs";
 import httpStatus from "http-status";
 import { env } from "next-runtime-env";
 import { uploadNotificationSettings } from "../settings/updateNotification";
+import { encodeCompanyId } from "@/utils/companyIdEncoder";
 
 interface RegisterData {
   firstName: string;
@@ -69,7 +71,6 @@ export async function register({
     if (accessCode !== ACCESS_CODE) {
       throw new AppError(httpStatus.BAD_REQUEST, "Invalid access code");
     }
-
 
     const lowerCaseEmail = userInfo.email.toLowerCase();
 
@@ -289,6 +290,24 @@ export async function register({
         subject: `Estimate for services requested at <BUSINESS_NAME>`,
         message: `Hey <CLIENT>, your estimate for <VEHICLE> is ready.  – <BUSINESS_NAME>`,
         companyId: newCompany.id,
+      },
+    });
+
+    // Generate booking URL with encoded company_id as query parameter
+    const encodedCompanyId = newCompany.id
+      ? encodeCompanyId(newCompany.id.toString())
+      : "default";
+    const bookingUrl = `${process.env.NEXT_PUBLIC_APP_URL}/booking-url?ref=${encodedCompanyId}`;
+
+    // Generate QR code URL
+    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(bookingUrl)}`;
+
+    await db.bookingForm.create({
+      data: {
+        companyId: newCompany.id,
+        bookingUrl: bookingUrl,
+        qrCodeUrl: qrCodeUrl,
+        stack: 1,
       },
     });
 
