@@ -304,6 +304,7 @@ export async function register({
 
     await db.bookingForm.create({
       data: {
+        title: "Appointment Booking Form",
         companyId: newCompany.id,
         bookingUrl: bookingUrl,
         qrCodeUrl: qrCodeUrl,

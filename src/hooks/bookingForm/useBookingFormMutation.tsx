@@ -30,6 +30,8 @@ export function useBookingFormCreateMutation() {
     ) => {
       try {
         const newBookingForm = await createBookingForm({
+          title: data.title,
+          description: data.description,
           bookingUrl: data.bookingUrl,
           isActive: data.isActive,
           qrCodeUrl: data.qrCodeUrl,

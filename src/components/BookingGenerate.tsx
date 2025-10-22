@@ -37,6 +37,8 @@ const BookingGenerate = ({ companyId }: { companyId?: string }) => {
         const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(bookingUrl)}`;
 
         await createMutation({
+          title: "Appointment Booking Form",
+          description: "",
           bookingUrl,
           qrCodeUrl,
           stack: 1,

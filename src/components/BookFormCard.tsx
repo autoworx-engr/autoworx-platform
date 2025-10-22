@@ -2,9 +2,11 @@
 import { useBookingFormUpdateMutation } from "@/hooks/bookingForm/useBookingFormMutation";
 import { successToast } from "@/lib/toast";
 import { BookingForm } from "@prisma/client";
+import { Tooltip } from "@radix-ui/react-tooltip";
 import { Copy, Power, QrCode, Upload } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
+import { TooltipContent, TooltipTrigger } from "./Tooltip";
 
 type BookingFormCardProps = {
   bookingForm: BookingForm;
@@ -67,7 +69,12 @@ export default function BookingFormCard({ bookingForm }: BookingFormCardProps) {
     <div className="p-2 sm:p-3">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div className="max-w-full truncate text-sm font-medium text-gray-500 sm:max-w-xs sm:text-base md:max-w-sm">
-          Appointment booking form
+          <Tooltip>
+            <TooltipTrigger>{bookingForm?.title}</TooltipTrigger>
+            <TooltipContent className="bg-gradient-to-r from-[#006D77] to-[#0a8a95] text-white">
+              <p>{bookingForm?.title}</p>
+            </TooltipContent>
+          </Tooltip>
           <span
             className={`ml-2 inline-block px-2 py-1 rounded text-xs font-semibold ${
               isActive
