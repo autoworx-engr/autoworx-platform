@@ -1,6 +1,5 @@
 // Simple encoding/decoding utility for hiding company IDs in URLs
 export function encodeCompanyId(companyId: string): string {
-  console.log("Encoding companyId:", companyId);
   // Base64 encode the company ID with a prefix to make it less obvious
   const encoded = Buffer.from(
     `awx_${companyId}_${Date.now().toString(36)}`
@@ -17,7 +16,6 @@ export function decodeCompanyId(encodedId: string): string[] | [] {
 
     // Extract company ID from the decoded string
     const match = decoded.match(/^awx_(\d+)_(\d+)_/);
-    console.log("Decoded companyId:", decoded, match);
     return match ? [match[1], match[2]] : [];
   } catch (error) {
     return [];

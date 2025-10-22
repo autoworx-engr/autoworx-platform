@@ -29,13 +29,11 @@ type FormData = {
 const BookingForm = () => {
   const searchParams = useSearchParams();
   const refParam = searchParams.get("ref");
-  console.log("ref param in BookingForm:", refParam);
   const [companyId, bookingFormId] = refParam ? decodeCompanyId(refParam) : [];
-  console.log("Decoded company ID in BookingForm:", bookingFormId);
 
-  const { data: bookingForm , isLoading: bookingFromLoading} = useBookingFormQueryById(Number(bookingFormId));
-  
-  console.log("Booking Form Data:", bookingForm);
+  const { data: bookingForm, isLoading: bookingFromLoading } =
+    useBookingFormQueryById(Number(bookingFormId));
+
 
   // Add state for company info if needed
   const [companyInfo, setCompanyInfo] = useState<any>(null);
@@ -105,7 +103,6 @@ const BookingForm = () => {
     if (companyId) {
       // TODO: Implement company info fetching if needed
       // fetchCompanyInfo(companyId).then(setCompanyInfo);
-      console.log("Decoded company ID:", companyId);
 
       // Fetch calendar settings for the company
       getCompanyCalendarSettings(companyId.toString()).then(settings => {
@@ -384,7 +381,11 @@ const BookingForm = () => {
 
     try {
       // Process the booking
-      const result = await processBooking(formData, companyId);
+      const result = await processBooking(
+        formData,
+        companyId,
+        bookingForm?.id!
+      );
 
       if (result.success) {
         // Reset form on success
@@ -411,10 +412,14 @@ const BookingForm = () => {
       }
     } catch (error) {
       console.error("Submission error:", error);
-      setError({
-        general:
-          "An error occurred while booking your appointment. Please try again.",
-      });
+      if (error instanceof Error) {
+        setError({ general: error.message });
+      } else {
+        setError({
+          general:
+            "An error occurred while booking your appointment. Please try again.",
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -422,7 +427,7 @@ const BookingForm = () => {
 
   const inputClass =
     "focus:border-[#00B4B5] focus:outline-none focus:ring-2 focus:ring-[#00B4B5]";
-  
+
   if (!bookingFromLoading && !isLoading && !bookingForm?.isActive) {
     return (
       <div className="max-w-xl mx-auto bg-white rounded-2xl shadow-lg border border-gray-100 p-6 text-center">
@@ -474,244 +479,242 @@ const BookingForm = () => {
       </div>
     );
   }
-    return (
-      <div className="max-w-xl scale-90 mx-auto bg-white rounded-2xl shadow-lg border border-gray-100">
-        <div className="flex items-center gap-4 bg-gradient-to-r from-[#00b8b0] to-[#0098da] text-white p-6 rounded-t-2xl">
-          <Image
-            src={companyInfo?.image || "/icons/business.png"}
-            alt="Company Logo"
-            width={56}
-            height={56}
-            className={cn(
-              !companyInfo?.image && "bg-white",
-              "w-14 h-14 rounded-full border-2 border-white"
-            )}
-          />
-          <div>
-            <h3 className="text-2xl font-bold">
-              {companyInfo?.name || "Book Your Appointment"}
-            </h3>
-            <p className="text-blue-100 mt-1">Fill in the details below</p>
-          </div>
+  return (
+    <div className="max-w-xl scale-90 mx-auto bg-white rounded-2xl shadow-lg border border-gray-100">
+      <div className="flex items-center gap-4 bg-gradient-to-r from-[#00b8b0] to-[#0098da] text-white p-6 rounded-t-2xl">
+        <Image
+          src={companyInfo?.image || "/icons/business.png"}
+          alt="Company Logo"
+          width={56}
+          height={56}
+          className={cn(
+            !companyInfo?.image && "bg-white",
+            "w-14 h-14 rounded-full border-2 border-white"
+          )}
+        />
+        <div>
+          <h3 className="text-2xl font-bold">
+            {companyInfo?.name || "Book Your Appointment"}
+          </h3>
+          <p className="text-blue-100 mt-1">Fill in the details below</p>
         </div>
+      </div>
 
-        <div className="p-6">
-          {successMessage && (
-            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md">
-              <p className="text-sm text-green-600">{successMessage}</p>
-            </div>
-          )}
+      <div className="p-6">
+        {successMessage && (
+          <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md">
+            <p className="text-sm text-green-600">{successMessage}</p>
+          </div>
+        )}
 
-          {error.general && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
-              <p className="text-sm text-red-600">{error.general}</p>
-            </div>
-          )}
+        {error.general && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+            <p className="text-sm text-red-600">{error.general}</p>
+          </div>
+        )}
 
-          <form onSubmit={handleFormSubmit} className="grid gap-6">
-            {/* Title Selection */}
-            <div className="space-y-2">
-              <label className="flex gap-1 items-center" htmlFor="title-select">
-                <span className="mb-1 text-sm font-medium">
-                  Appointment Title
-                </span>
-                <span className="text-red-500">*</span>
-              </label>
+        <form onSubmit={handleFormSubmit} className="grid gap-6">
+          {/* Title Selection */}
+          <div className="space-y-2">
+            <label className="flex gap-1 items-center" htmlFor="title-select">
+              <span className="mb-1 text-sm font-medium">
+                Appointment Title
+              </span>
+              <span className="text-red-500">*</span>
+            </label>
 
-              <select
-                id="title-select"
-                value={selectedTitleOption}
-                onChange={e => handleTitleSelection(e.target.value)}
-                className={cn(
-                  slimInputClassName,
-                  "h-[33px] px-3 w-full",
-                  inputClass,
-                  error.title && "border-red-500 focus-visible:ring-red-500"
-                )}
+            <select
+              id="title-select"
+              value={selectedTitleOption}
+              onChange={e => handleTitleSelection(e.target.value)}
+              className={cn(
+                slimInputClassName,
+                "h-[33px] px-3 w-full",
+                inputClass,
+                error.title && "border-red-500 focus-visible:ring-red-500"
+              )}
+              required
+            >
+              <option value="">Select appointment type...</option>
+              {titleOptions.map(option => (
+                <option key={option} value={option}>
+                  {option === "Custom" ? "Custom (Enter your own)" : option}
+                </option>
+              ))}
+            </select>
+
+            {/* Custom title input - only show when "Custom" is selected */}
+            {selectedTitleOption === "Custom" && (
+              <SlimInput
+                value={customTitle}
+                onChange={e => handleCustomTitleChange(e.target.value)}
+                name="customTitle"
+                label="Enter Custom Title"
+                placeholder="Enter your custom appointment title"
                 required
-              >
-                <option value="">Select appointment type...</option>
-                {titleOptions.map(option => (
-                  <option key={option} value={option}>
-                    {option === "Custom" ? "Custom (Enter your own)" : option}
-                  </option>
-                ))}
-              </select>
+                className={`${inputClass}`}
+              />
+            )}
 
-              {/* Custom title input - only show when "Custom" is selected */}
-              {selectedTitleOption === "Custom" && (
-                <SlimInput
-                  value={customTitle}
-                  onChange={e => handleCustomTitleChange(e.target.value)}
-                  name="customTitle"
-                  label="Enter Custom Title"
-                  placeholder="Enter your custom appointment title"
-                  required
-                  className={`${inputClass}`}
+            {error.title && (
+              <p className="text-sm text-red-600 mt-1">{error.title}</p>
+            )}
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <SlimInput
+              error={error.date}
+              min={minDate}
+              value={formData.date}
+              onChange={e => handleChange("date", e.target.value)}
+              name="date"
+              label="Date"
+              type="date"
+              className={`${inputClass}`}
+              required
+            />
+            <div className="space-y-2 mt-1">
+              <div className="">
+                <label
+                  className="flex gap-1  items-center"
+                  htmlFor="start-time"
+                >
+                  <span className="mb-1 text-sm font-medium ">Start Time </span>{" "}
+                  <span className="text-red-500">*</span>
+                </label>
+                <Select
+                  value={formData.startTime}
+                  onChange={value => handleChange("startTime", value)}
+                  placeholder="Select time..."
+                  className={cn(
+                    "h-[33px] w-full font-semibold text-gray-600",
+                    inputClass,
+                    error.startTime &&
+                      "border-red-500 focus-visible:ring-red-500"
+                  )}
+                  dropdownStyle={{
+                    maxHeight: "300px",
+                    overflowY: "auto",
+                  }}
+                  options={[
+                    { value: "", label: "Select time..." },
+                    ...getTimeOptions(),
+                  ]}
                 />
-              )}
 
-              {error.title && (
-                <p className="text-sm text-red-600 mt-1">{error.title}</p>
-              )}
+                {calendarSettings && formData.date && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    {(() => {
+                      const selectedDate = moment(formData.date);
+                      const isSelectedDateToday = selectedDate.isSame(
+                        moment(),
+                        "day"
+                      );
+                      const dayStart = calendarSettings.dayStart || "08:00";
+                      const dayEnd = calendarSettings.dayEnd || "18:00";
+
+                      if (isSelectedDateToday) {
+                        const currentTime = getCurrentTime();
+                        const effectiveStartTime =
+                          currentTime > dayStart ? currentTime : dayStart;
+                        return `Available hours: ${moment(effectiveStartTime, "HH:mm").format("h:mm A")} - ${moment(dayEnd, "HH:mm").format("h:mm A")}`;
+                      } else {
+                        return `Available hours: ${moment(dayStart, "HH:mm").format("h:mm A")} - ${moment(dayEnd, "HH:mm").format("h:mm A")}`;
+                      }
+                    })()}
+                  </p>
+                )}
+
+                {error.startTime && (
+                  <p id="start-time-error" className="text-sm text-red-500">
+                    {error.startTime}
+                  </p>
+                )}
+              </div>
             </div>
+          </div>
 
+          <div className="space-y-4">
+            <h4 className="text-lg font-semibold">Client Information</h4>
             <div className="grid gap-4 md:grid-cols-2">
               <SlimInput
-                error={error.date}
-                min={minDate}
-                value={formData.date}
-                onChange={e => handleChange("date", e.target.value)}
-                name="date"
-                label="Date"
-                type="date"
+                error={error.firstName}
+                value={formData.firstName}
+                onChange={e => handleChange("firstName", e.target.value)}
+                name="firstName"
+                label="First Name"
                 className={`${inputClass}`}
                 required
               />
-              <div className="space-y-2 mt-1">
-                <div className="">
-                  <label
-                    className="flex gap-1  items-center"
-                    htmlFor="start-time"
-                  >
-                    <span className="mb-1 text-sm font-medium ">
-                      Start Time{" "}
-                    </span>{" "}
-                    <span className="text-red-500">*</span>
-                  </label>
-                  <Select
-                    value={formData.startTime}
-                    onChange={value => handleChange("startTime", value)}
-                    placeholder="Select time..."
-                    className={cn(
-                      "h-[33px] w-full font-semibold text-gray-600",
-                      inputClass,
-                      error.startTime &&
-                        "border-red-500 focus-visible:ring-red-500"
-                    )}
-                    dropdownStyle={{
-                      maxHeight: "300px",
-                      overflowY: "auto",
-                    }}
-                    options={[
-                      { value: "", label: "Select time..." },
-                      ...getTimeOptions(),
-                    ]}
-                  />
-
-                  {calendarSettings && formData.date && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      {(() => {
-                        const selectedDate = moment(formData.date);
-                        const isSelectedDateToday = selectedDate.isSame(
-                          moment(),
-                          "day"
-                        );
-                        const dayStart = calendarSettings.dayStart || "08:00";
-                        const dayEnd = calendarSettings.dayEnd || "18:00";
-
-                        if (isSelectedDateToday) {
-                          const currentTime = getCurrentTime();
-                          const effectiveStartTime =
-                            currentTime > dayStart ? currentTime : dayStart;
-                          return `Available hours: ${moment(effectiveStartTime, "HH:mm").format("h:mm A")} - ${moment(dayEnd, "HH:mm").format("h:mm A")}`;
-                        } else {
-                          return `Available hours: ${moment(dayStart, "HH:mm").format("h:mm A")} - ${moment(dayEnd, "HH:mm").format("h:mm A")}`;
-                        }
-                      })()}
-                    </p>
-                  )}
-
-                  {error.startTime && (
-                    <p id="start-time-error" className="text-sm text-red-500">
-                      {error.startTime}
-                    </p>
-                  )}
-                </div>
-              </div>
+              <SlimInput
+                value={formData.lastName}
+                onChange={e => handleChange("lastName", e.target.value)}
+                name="lastName"
+                label="Last Name"
+                className={`${inputClass}`}
+                required
+                error={error.lastName}
+              />
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <SlimInput
+                error={error.email}
+                value={formData.email}
+                onChange={e => handleChange("email", e.target.value)}
+                name="email"
+                label="Email"
+                className={`${inputClass}`}
+                type="email"
+              />
+              <SlimInput
+                type="tel"
+                error={error.mobile}
+                value={formData.mobile}
+                onChange={e => handleChange("mobile", e.target.value)}
+                name="mobile"
+                label="Mobile"
+                className={`${inputClass}`}
+                required
+              />
             </div>
 
-            <div className="space-y-4">
-              <h4 className="text-lg font-semibold">Client Information</h4>
-              <div className="grid gap-4 md:grid-cols-2">
-                <SlimInput
-                  error={error.firstName}
-                  value={formData.firstName}
-                  onChange={e => handleChange("firstName", e.target.value)}
-                  name="firstName"
-                  label="First Name"
-                  className={`${inputClass}`}
-                  required
-                />
-                <SlimInput
-                  value={formData.lastName}
-                  onChange={e => handleChange("lastName", e.target.value)}
-                  name="lastName"
-                  label="Last Name"
-                  className={`${inputClass}`}
-                  required
-                  error={error.lastName}
-                />
-              </div>
-              <div className="grid gap-4 md:grid-cols-2">
-                <SlimInput
-                  error={error.email}
-                  value={formData.email}
-                  onChange={e => handleChange("email", e.target.value)}
-                  name="email"
-                  label="Email"
-                  className={`${inputClass}`}
-                  type="email"
-                />
-                <SlimInput
-                  type="tel"
-                  error={error.mobile}
-                  value={formData.mobile}
-                  onChange={e => handleChange("mobile", e.target.value)}
-                  name="mobile"
-                  label="Mobile"
-                  className={`${inputClass}`}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="flex gap-1 items-center" htmlFor="notes">
-                  <span className="mb-1 text-sm font-medium">Notes</span>
-                </label>
-                <textarea
-                  id="notes"
-                  name="notes"
-                  value={formData.notes}
-                  onChange={e => handleChange("notes", e.target.value)}
-                  placeholder="Add any additional notes for your appointment..."
-                  rows={3}
-                  className={cn(
-                    "w-full px-3 py-2 border border-gray-300 rounded-md resize-none",
-                    "focus:border-[#00B4B5] focus:outline-none focus:ring-2 focus:ring-[#00B4B5]",
-                    inputClass
-                  )}
-                />
-              </div>
+            <div className="space-y-2">
+              <label className="flex gap-1 items-center" htmlFor="notes">
+                <span className="mb-1 text-sm font-medium">Notes</span>
+              </label>
+              <textarea
+                id="notes"
+                name="notes"
+                value={formData.notes}
+                onChange={e => handleChange("notes", e.target.value)}
+                placeholder="Add any additional notes for your appointment..."
+                rows={3}
+                className={cn(
+                  "w-full px-3 py-2 border border-gray-300 rounded-md resize-none",
+                  "focus:border-[#00B4B5] focus:outline-none focus:ring-2 focus:ring-[#00B4B5]",
+                  inputClass
+                )}
+              />
             </div>
+          </div>
 
-            <div className="p-0 pt-3">
-              <button
-                type="submit"
-                disabled={isLoading}
-                className={`w-full py-3 text-center rounded-md font-medium transition-colors ${
-                  isLoading
-                    ? "bg-gray-400 text-gray-200 cursor-not-allowed"
-                    : "bg-gradient-to-r from-[#00b8b0] to-[#0098da] hover:bg-[#00b8b0] text-white"
-                }`}
-              >
-                {isLoading ? "Booking..." : "Book Appointment"}
-              </button>
-            </div>
-          </form>
-        </div>
+          <div className="p-0 pt-3">
+            <button
+              type="submit"
+              disabled={isLoading}
+              className={`w-full py-3 text-center rounded-md font-medium transition-colors ${
+                isLoading
+                  ? "bg-gray-400 text-gray-200 cursor-not-allowed"
+                  : "bg-gradient-to-r from-[#00b8b0] to-[#0098da] hover:bg-[#00b8b0] text-white"
+              }`}
+            >
+              {isLoading ? "Booking..." : "Book Appointment"}
+            </button>
+          </div>
+        </form>
       </div>
-    );
+    </div>
+  );
 };
 
 export default BookingForm;
