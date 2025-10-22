@@ -16,7 +16,8 @@ export function decodeCompanyId(encodedId: string): string[] | [] {
     const decoded = Buffer.from(padded, "base64").toString();
 
     // Extract company ID from the decoded string
-    const match = decoded.match(/^awx_(\d+)_/);
+    const match = decoded.match(/^awx_(\d+)_(\d+)_/);
+    console.log("Decoded companyId:", decoded, match);
     return match ? [match[1], match[2]] : [];
   } catch (error) {
     return [];

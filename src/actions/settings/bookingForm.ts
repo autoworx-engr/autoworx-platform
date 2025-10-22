@@ -17,6 +17,19 @@ export async function getBooking(companyId: number) {
   }
 }
 
+
+export async function getBookingFormById(bookingFormId: number) {
+  try {
+    const booking = await db.bookingForm.findUnique({
+      where: { id: bookingFormId },
+    });
+    return booking;
+  } catch (error) {
+    console.log("Error fetching booking form settings", error);
+    throw error;
+  }
+}
+
 export async function updateBookingForm(
   bookingId: number,
   data: Partial<
