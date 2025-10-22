@@ -386,6 +386,7 @@ const ZapForm = ({ company }: ZapFormProps) => {
                   value={formData.multiServices}
                   onChange={handleServiceChange}
                   token={formData.token}
+                  companyId={company?.companyId}
                 />
               ) : (
                 <div className="w-full rounded-sm border border-slate-400 bg-background px-2 py-0.5 leading-6 outline-none text-gray-400">
