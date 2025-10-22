@@ -1,34 +1,32 @@
 "use client";
-
 import ResourceCard from "@/components/resources/ResourceCard";
 import ResourceHeader from "@/components/resources/ResourceHeader";
 import React from "react";
 
-const CommunicationResourcePage = () => {
+const LeadPage = () => {
   const [filter, setFilter] = React.useState({ search: "" });
 
   const resourcesData = [
     {
-      content: "/images/resources/communication.png",
+      content: "/images/resources/lead.png",
       type: "image",
-      title: "Communication Hub Overview",
-      description: "Get an overview of the communication hub and its features.",
+      title: "Lead Overview",
+      description: "An overview of lead principles and practices.",
     },
     {
       content:
-        "https://drive.google.com/file/d/1yhlZSEZsQ8JA0ZtD0a8phzMZo5iGwsUm/preview",
+        "https://drive.google.com/file/d/1oAvjro7Yx1Jg3CjooMYwAmKE4TMzksIw/preview",
       type: "video",
-      title: "Tutorial: Using the Communication Hub",
-      description:
-        "Watch this tutorial to learn how to use the communication hub effectively.",
+      title: "Managing Leads Effectively",
+      description: "A guide to advanced techniques in lead management.",
     },
   ];
 
   return (
     <div>
       <ResourceHeader
-        title="Communication Hub Resources"
-        description="Explore the various resources available for managing your communication hub. From messaging to video conferencing, find all the tools you need to optimize your workflow."
+        title="Lead Resources"
+        description="Explore the various resources available for lead management."
         setFilter={setFilter}
       />
       <div className="mt-4">
@@ -44,4 +42,4 @@ const CommunicationResourcePage = () => {
   );
 };
 
-export default CommunicationResourcePage;
+export default LeadPage;
