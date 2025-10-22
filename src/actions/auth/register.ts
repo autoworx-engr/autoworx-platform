@@ -14,6 +14,7 @@ import httpStatus from "http-status";
 import { env } from "next-runtime-env";
 import { uploadNotificationSettings } from "../settings/updateNotification";
 import { encodeCompanyId } from "@/utils/companyIdEncoder";
+import { initialCreateBookingForm } from "../settings/bookingForm";
 
 interface RegisterData {
   firstName: string;
@@ -293,24 +294,7 @@ export async function register({
       },
     });
 
-    // Generate booking URL with encoded company_id as query parameter
-    const encodedCompanyId = newCompany.id
-      ? encodeCompanyId(newCompany.id.toString())
-      : "default";
-    const bookingUrl = `${process.env.NEXT_PUBLIC_APP_URL}/booking-url?ref=${encodedCompanyId}`;
-
-    // Generate QR code URL
-    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(bookingUrl)}`;
-
-    await db.bookingForm.create({
-      data: {
-        title: "Appointment Booking Form",
-        companyId: newCompany.id,
-        bookingUrl: bookingUrl,
-        qrCodeUrl: qrCodeUrl,
-        stack: 1,
-      },
-    });
+    await initialCreateBookingForm();
 
     return { success: true };
   } catch (err) {

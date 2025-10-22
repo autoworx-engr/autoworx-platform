@@ -1,17 +1,10 @@
 "use client";
-import { useEffect, useState } from "react";
-import { successToast } from "@/lib/toast";
-import { encodeCompanyId } from "@/utils/companyIdEncoder";
-import Image from "next/image";
-import { Copy, QrCode, Upload, Power } from "lucide-react";
-import useBookingFormQuery from "@/hooks/bookingForm/useBookingFormQuery";
 import {
   useBookingFormCreateMutation,
-  useBookingFormUpdateMutation,
 } from "@/hooks/bookingForm/useBookingFormMutation";
+import useBookingFormQuery from "@/hooks/bookingForm/useBookingFormQuery";
+import { useEffect, useState } from "react";
 import BookingFormCard from "./BookFormCard";
-
-const baseUrl = window.location.origin;
 
 const BookingGenerate = ({ companyId }: { companyId?: string }) => {
   const [showQR, setShowQR] = useState(false);
@@ -26,25 +19,7 @@ const BookingGenerate = ({ companyId }: { companyId?: string }) => {
   useEffect(() => {
     const initializeForm = async () => {
       if (bookingForms && bookingForms.length <= 0) {
-        // Generate booking URL with encoded company_id as query parameter
-        const defaultStack = 1;
-        const encodedCompanyId = companyId
-          ? encodeCompanyId(companyId + "-" + defaultStack)
-          : "default";
-        const bookingUrl = `${baseUrl}/booking-url?ref=${encodedCompanyId}`;
-
-        // Generate QR code URL
-        const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(bookingUrl)}`;
-
-        await createMutation({
-          title: "Appointment Booking Form",
-          description: "",
-          bookingUrl,
-          qrCodeUrl,
-          stack: 1,
-          companyId: Number(companyId),
-          isActive: true,
-        });
+        await createMutation();
         refetch();
       }
     };

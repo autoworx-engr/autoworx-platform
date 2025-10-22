@@ -1,5 +1,5 @@
 import {
-  createBookingForm,
+  initialCreateBookingForm,
   updateBookingForm,
 } from "@/actions/settings/bookingForm";
 import { BookingForm } from "@prisma/client";
@@ -25,19 +25,9 @@ export function useBookingFormUpdateMutation() {
 
 export function useBookingFormCreateMutation() {
   return useMutation({
-    mutationFn: async (
-      data: Omit<BookingForm, "id" | "createdAt" | "updatedAt">
-    ) => {
+    mutationFn: async () => {
       try {
-        const newBookingForm = await createBookingForm({
-          title: data.title,
-          description: data.description,
-          bookingUrl: data.bookingUrl,
-          isActive: data.isActive,
-          qrCodeUrl: data.qrCodeUrl,
-          stack: data.stack,
-          companyId: data.companyId,
-        });
+        const newBookingForm = await initialCreateBookingForm();
         return newBookingForm;
       } catch (error) {
         console.log("Error creating booking form", error);

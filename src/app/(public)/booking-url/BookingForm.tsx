@@ -30,7 +30,9 @@ type FormData = {
 const BookingForm = () => {
   const searchParams = useSearchParams();
   const refParam = searchParams.get("ref");
-  const companyId = refParam ? decodeCompanyId(refParam) : null;
+  console.log("ref param in BookingForm:", refParam);
+  const [companyId, bookingFormId] = refParam ? decodeCompanyId(refParam) : [];
+  console.log("Decoded company ID in BookingForm:", companyId);
 
   // Add state for company info if needed
   const [companyInfo, setCompanyInfo] = useState<any>(null);

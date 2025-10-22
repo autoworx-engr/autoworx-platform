@@ -1,6 +1,8 @@
 "use server";
 
+import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
+import { encodeCompanyId } from "@/utils/companyIdEncoder";
 import { BookingForm } from "@prisma/client";
 
 export async function getBooking(companyId: number) {
@@ -33,16 +35,37 @@ export async function updateBookingForm(
   }
 }
 
-export async function createBookingForm(
-  data: Omit<BookingForm, "id" | "createdAt" | "updatedAt">
+export async function initialCreateBookingForm(
 ) {
   try {
-    const newBookingForm = await db.bookingForm.create({
+    const companyId = await getCompanyId();
+    // Generate booking URL with encoded company_id as query parameter
+    const bookingForm = await db.bookingForm.create({
       data: {
-        ...data,
+        title: "Appointment Booking Form",
+        companyId: companyId,
+        stack: 1,
+        qrCodeUrl: "",
+        bookingUrl: "",
       },
     });
-    return newBookingForm;
+    // Generate booking URL with encoded company_id as query parameter
+    const encodedCompanyId = companyId
+      ? encodeCompanyId(companyId.toString() + "_" + bookingForm.id)
+      : "default";
+    const bookingUrl = `${process.env.NEXT_PUBLIC_APP_URL}/booking-url?ref=${encodedCompanyId}`;
+
+    // Generate QR code URL
+    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(bookingUrl)}`;
+
+    const updatedBookingForm = await db.bookingForm.update({
+      where: { id: bookingForm.id },
+      data: {
+        bookingUrl,
+        qrCodeUrl,
+      },
+    });
+    return updatedBookingForm;
   } catch (error) {
     console.log("Error creating booking form", error);
     throw error;
