@@ -79,17 +79,19 @@ export default function BookingFormCard({ bookingForm }: BookingFormCardProps) {
           </span>
         </div>{" "}
         <div className="flex space-x-1 self-end sm:space-x-2 sm:self-auto">
-          <button
-            className="rounded-full p-2 transition-colors duration-200 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
-            onClick={() => {
-              navigator.clipboard.writeText(bookingUrl);
-              successToast("Copied to clipboard!");
-            }}
-            aria-label="Copy link"
-            title="Copy link"
-          >
-            <Copy className="h-5 w-5 text-gray-800" />
-          </button>
+          {!hasChanges && (
+            <button
+              className="rounded-full p-2 transition-colors duration-200 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              onClick={() => {
+                navigator.clipboard.writeText(bookingUrl);
+                successToast("Copied to clipboard!");
+              }}
+              aria-label="Copy link"
+              title="Copy link"
+            >
+              <Copy className="h-5 w-5 text-gray-800" />
+            </button>
+          )}
 
           {/* Stack/Quantity Dropdown */}
           <select
@@ -106,36 +108,40 @@ export default function BookingFormCard({ bookingForm }: BookingFormCardProps) {
             ))}
           </select>
 
-          <button
-            className={`rounded-full p-2 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 ${
-              showQR ? "bg-blue-50" : "hover:bg-gray-100"
-            }`}
-            onClick={() => setShowQR(!showQR)}
-            aria-label="Show QR code"
-            title="Show QR code"
-          >
-            <QrCode
-              className={`h-5 w-5 ${showQR ? "text-blue-500" : "text-gray-800"}`}
-            />
-          </button>
+          {!hasChanges && (
+            <button
+              className={`rounded-full p-2 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 ${
+                showQR ? "bg-blue-50" : "hover:bg-gray-100"
+              }`}
+              onClick={() => setShowQR(!showQR)}
+              aria-label="Show QR code"
+              title="Show QR code"
+            >
+              <QrCode
+                className={`h-5 w-5 ${showQR ? "text-blue-500" : "text-gray-800"}`}
+              />
+            </button>
+          )}
 
           {/* Active/Inactive Toggle Button */}
-          <button
-            onClick={handleActiveToggle}
-            className={`rounded-full p-2 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 ${
-              isActive
-                ? "bg-green-50 hover:bg-green-100"
-                : "bg-red-50 hover:bg-red-100"
-            }`}
-            aria-label={
-              isActive ? "Deactivate booking form" : "Activate booking form"
-            }
-            title={isActive ? "Deactivate" : "Activate"}
-          >
-            <Power
-              className={`h-5 w-5 ${isActive ? "text-green-600" : "text-red-600"}`}
-            />
-          </button>
+          {!hasChanges && (
+            <button
+              onClick={handleActiveToggle}
+              className={`rounded-full p-2 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 ${
+                isActive
+                  ? "bg-green-50 hover:bg-green-100"
+                  : "bg-red-50 hover:bg-red-100"
+              }`}
+              aria-label={
+                isActive ? "Deactivate booking form" : "Activate booking form"
+              }
+              title={isActive ? "Deactivate" : "Activate"}
+            >
+              <Power
+                className={`h-5 w-5 ${isActive ? "text-green-600" : "text-red-600"}`}
+              />
+            </button>
+          )}
 
           {/* Upload Button - Shows when changes are made */}
           {hasChanges && (
