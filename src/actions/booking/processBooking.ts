@@ -170,10 +170,15 @@ export async function createAppointment(data: {
   }
 }
 
-export async function getAppointmentByDateTime(date: string, time: string) {
+export async function getAppointmentByDateTime(
+  companyId: number,
+  date: string,
+  time: string
+) {
   try {
     const appointment = await db.appointment.findMany({
       where: {
+        companyId: companyId,
         date: new Date(date),
         startTime: time,
       },
@@ -208,6 +213,7 @@ export async function processBooking(
     // First, check if client exists by phone number
     let client = await findClientByPhone(formData.mobile, companyId);
     const alreadyBookedAppointment = await getAppointmentByDateTime(
+      parseInt(companyId),
       formData.date,
       formData.startTime
     );
@@ -288,7 +294,8 @@ export async function processBooking(
     console.error("Error processing booking:", error);
     return {
       success: false,
-      message: error instanceof Error ? error.message : "Error processing booking",
+      message:
+        error instanceof Error ? error.message : "Error processing booking",
     };
   }
 }
