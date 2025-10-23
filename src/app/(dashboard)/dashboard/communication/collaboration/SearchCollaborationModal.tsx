@@ -113,7 +113,7 @@ export default function SearchCollaborationModal({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button className="rounded-md bg-[#006D77] px-1 py-1 text-[14px] text-white shadow-md">
+        <button className="rounded-md bg-gradient-to-r from-teal-700 to-teal-600 px-2 py-1 text-[14px] text-white shadow-md">
           Search for Collaborators
         </button>
       </DialogTrigger>

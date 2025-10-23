@@ -15,6 +15,7 @@ import TaskNotFound from "../ui/TaskNotFound";
 import TaskSpinner from "../ui/TaskSpinner";
 import { MinimizeButton } from "./MinimizeButton";
 import TaskComponent from "./Task";
+import TaskListSkeleton from "@/components/ui/TaskListSkeleton";
 
 export default function Tasks() {
   const ref = useRef<HTMLDivElement | null>(null);
@@ -47,7 +48,8 @@ export default function Tasks() {
   let content = null;
 
   if (isLoading && !isError) {
-    content = <TaskSpinner />;
+    // content = <TaskSpinner />;
+    content = <TaskListSkeleton rows={11} />;
   } else if (!isLoading && isError) {
     content = <TaskError message="Failed to load task" />;
   } else if (!isLoading && !isError && tasks && tasks?.length === 0) {
@@ -100,7 +102,7 @@ export default function Tasks() {
             ) : hasNextPage ? (
               "Scroll to load more"
             ) : (
-              "No more tasks"
+              tasks.length !== 0 && "No more tasks"
             )}
           </div>
         </div>

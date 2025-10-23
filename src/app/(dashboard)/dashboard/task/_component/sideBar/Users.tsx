@@ -14,6 +14,7 @@ import { MinimizeButton } from "./MinimizeButton";
 import UserComponent from "./UserComponent";
 import { useDebounce } from "@/hooks/useDebounce";
 import { User as UserIcon } from "lucide-react";
+import UserListSkeleton from "@/components/ui/UserListSkeleton";
 
 export default function Users() {
   const ref = useRef<HTMLDivElement | null>(null);
@@ -51,12 +52,14 @@ export default function Users() {
   let content = null;
   if (isLoading && !isError) {
     content = (
-      <div className="flex flex-col items-center justify-center py-10 text-center">
-        <TaskSpinner />
-        <h3 className="text-lg font-semibold text-gray-700 md:text-[#797979]">
-          Loading users...
-        </h3>
-      </div>
+      // <div className="flex flex-col items-center justify-center py-10 text-center">
+      //   <TaskSpinner />
+      //   <h3 className="text-lg font-semibold text-gray-700 md:text-[#797979]">
+      //     Loading users...
+      //   </h3>
+      // </div>
+
+      <UserListSkeleton rows={8} />
     );
   } else if (!isLoading && isError) {
     content = (
