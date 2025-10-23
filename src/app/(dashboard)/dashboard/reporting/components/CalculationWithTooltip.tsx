@@ -1,7 +1,7 @@
 "use client";
 import { formatCurrency } from "@/utils/formatCurrency";
+import { Info } from "lucide-react";
 import { useState } from "react";
-import { CiCircleInfo } from "react-icons/ci";
 
 type TProps = {
   content: string;
@@ -38,7 +38,7 @@ export default function CalculationWithTooltip({
           onMouseEnter={() => setShowTooltip(true)}
           onMouseLeave={() => setShowTooltip(false)}
         >
-          <CiCircleInfo className="h-3 w-3 cursor-pointer" />
+          <Info className="h-3 w-3 cursor-pointer" />
         </div>
         {showTooltip && (
           <div

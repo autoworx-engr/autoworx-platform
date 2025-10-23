@@ -2,11 +2,10 @@
 
 import { errorToast, successToast } from "@/lib/toast";
 import { useEstimateCreateStore } from "@/stores/estimate-create";
-import { ChangeEvent, useTransition } from "react";
-import { HiXCircle } from "react-icons/hi2";
 import imageCompression from "browser-image-compression";
+import { X } from "lucide-react";
 import Image from "next/image";
-import { FaTimes } from "react-icons/fa";
+import { ChangeEvent, useTransition } from "react";
 
 export function ImagesInput() {
   const { photos, setPhotos } = useEstimateCreateStore();
@@ -111,7 +110,7 @@ export function ImagesInput() {
               className="absolute right-0 top-0 -translate-y-1/2 translate-x-1/2 text-[#6470FF]"
             >
               <div className="rounded-full bg-[#6571FF] p-1 text-white">
-                <FaTimes className="text-[10px]" />
+                <X size={10} />
               </div>
             </button>
           </div>

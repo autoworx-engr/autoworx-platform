@@ -2,8 +2,8 @@
 
 import { useClientCommunicationStore } from "@/stores/client-store";
 import type { Service, Vehicle } from "@prisma/client";
-import { FaArrowLeft, FaArrowRight } from "react-icons/fa";
 import { cn } from "@/lib/cn";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 
 type TProps = {
   vehicles: Partial<Vehicle>[];
@@ -56,6 +56,11 @@ export default function VehicleDetails({
     hasVehicles &&
     setVehicleIndex(currentIndex < total - 1 ? currentIndex + 1 : 0);
 
+  const multipleServices = singleService?.split(",");
+  const vehicleInfo = vehicle?.other
+    ? vehicle.other
+    : `${vehicle?.year ?? ""} ${vehicle?.make ?? ""} ${vehicle?.model ?? ""}`.trim();
+
   return (
     <div className="space-y-4 rounded-xl bg-[#63a6ac]/95 p-4 text-sm text-white shadow-sm">
       <div className="flex items-center justify-between gap-x-4">
@@ -64,9 +69,7 @@ export default function VehicleDetails({
             {hasVehicles ? `Vehicle ${currentIndex + 1} / ${total}` : "Vehicle"}
           </span>
           <span className="truncate">
-            {hasVehicles
-              ? `${vehicle?.year ?? ""} ${vehicle?.make ?? ""} ${vehicle?.model ?? ""}`.trim()
-              : "No vehicles added"}
+            {hasVehicles ? vehicleInfo : "No vehicles added"}
           </span>
           {isLeadClient && (
             <span className="rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-medium">
@@ -86,7 +89,7 @@ export default function VehicleDetails({
             )}
             aria-label="Previous vehicle"
           >
-            <FaArrowLeft className="h-3.5 w-3.5" />
+            <ArrowLeft className="h-4 w-4" />
           </button>
 
           <button
@@ -99,7 +102,7 @@ export default function VehicleDetails({
             )}
             aria-label="Next vehicle"
           >
-            <FaArrowRight className="h-3.5 w-3.5" />
+            <ArrowRight className="h-4 w-4" />
           </button>
         </div>
       </div>
@@ -109,7 +112,9 @@ export default function VehicleDetails({
 
         {hasVehicles ? (
           <ul className="thin-scrollbar max-h-40 list-inside list-disc overflow-y-auto pr-2">
-            {singleService && <li>{singleService} (requested)</li>}
+            {multipleServices &&
+              multipleServices?.length > 0 &&
+              multipleServices?.map((s) => <li>{s} (requested)</li>)}
             {services.length
               ? services.map((s, i) => <li key={`${s.id}-${i}`}>{s.name}</li>)
               : null}

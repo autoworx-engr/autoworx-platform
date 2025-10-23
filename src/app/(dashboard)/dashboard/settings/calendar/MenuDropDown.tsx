@@ -1,7 +1,6 @@
 "use client";
-import { cn } from "@/lib/cn";
+import { ChevronDown } from "lucide-react";
 import { useState } from "react";
-import { MdKeyboardArrowDown } from "react-icons/md";
 
 type TProps = {
   dropDownItems: string[];
@@ -34,7 +33,7 @@ export default function MenuDropDown({
           }}
         >
           {selected}
-          <MdKeyboardArrowDown className="size-5 text-gray-400" />
+          <ChevronDown className="size-5 text-gray-400" />
         </button>
       </div>
       {open && (

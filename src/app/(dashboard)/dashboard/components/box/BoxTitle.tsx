@@ -1,8 +1,7 @@
 import React from "react";
-
 import Link from "next/link";
-import { FaExternalLinkAlt } from "react-icons/fa";
 import { cn } from "@/lib/cn";
+import { ExternalLink } from "lucide-react";
 
 type TBoxTitleProps = {
   title: string;
@@ -20,7 +19,7 @@ export default function BoxTitle({
       <span className="text-xl font-bold">{title}</span>{" "}
       {!!redirectLink && (
         <Link href={redirectLink}>
-          <FaExternalLinkAlt />
+          <ExternalLink />
         </Link>
       )}
     </div>

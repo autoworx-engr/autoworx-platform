@@ -10,14 +10,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { HiOutlineBars3, HiXCircle } from "react-icons/hi2";
-import { IoReload } from "react-icons/io5";
 import BugReport from "../bug-report/BugReport";
 import LogoutBtn from "../LogoutBtn";
 import { NotificationsPopover } from "../NotificationProvider";
 import QuickLink from "../QuickLink";
-import ThemeSwitch from "../ThemeSwitch";
+
 import MobileNavList from "./MobileNavList";
+import { CircleX, Menu, RotateCw } from "lucide-react";
 
 type TProps = {
   navList: {
@@ -125,7 +124,7 @@ export default function MobileNav({ navList, permissions }: TProps) {
             onClick={() => setOpenNav((prev) => !prev)}
             className="w-20 flex-shrink-0"
           >
-            <HiOutlineBars3 size={30} className="text-white" />
+            <Menu size={30} className="text-white" />
           </div>
           <div className="flex w-full items-center justify-center">
             <Link href="/">
@@ -144,7 +143,7 @@ export default function MobileNav({ navList, permissions }: TProps) {
           <div className="flex items-center gap-1 px-3">
             {isIOS && (
               <button className="mr-3" onClick={() => window.location.reload()}>
-                <IoReload className="size-6 text-white lg:size-8" />
+                <RotateCw className="size-6 text-white lg:size-8" />
               </button>
             )}
             {(currentUser?.employeeType == "Admin" ||
@@ -154,9 +153,7 @@ export default function MobileNav({ navList, permissions }: TProps) {
             {!isDashboard && <BugReport />}
 
             <NotificationsPopover className="text-white" />
-            <div className="text-white">
-              <ThemeSwitch />
-            </div>
+            <div className="text-white">{/* <ThemeSwitch /> */}</div>
             <LogoutBtn className="text-[1.7rem] font-bold text-white" />
           </div>
         </div>
@@ -186,7 +183,7 @@ export default function MobileNav({ navList, permissions }: TProps) {
                 onClick={() => setOpenNav(false)}
                 className="absolute right-5 top-5 text-2xl text-white hover:text-gray-400"
               >
-                <HiXCircle size={30} />
+                <CircleX strokeWidth={2} size={24} />
               </button>
             </div>
             <ul className="mt-10 flex flex-col items-center justify-center gap-y-8">

@@ -1,13 +1,12 @@
-
 import { useEstimateFilterStore } from "@/stores/estimate-filter";
-import { IoIosSearch } from "react-icons/io";
+import { Search } from "lucide-react";
 
 export default function SearchTerms() {
   const { setFilter } = useEstimateFilterStore();
 
   return (
     <div className="relative min-w-0 flex-1">
-      <IoIosSearch className="absolute left-3 top-3 text-gray-400" />
+      <Search size={18} className="absolute left-3 top-3 text-gray-400" />
       <input
         type="text"
         placeholder="Search..."

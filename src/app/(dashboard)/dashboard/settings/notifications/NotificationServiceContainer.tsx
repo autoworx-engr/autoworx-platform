@@ -1,8 +1,8 @@
 "use client";
 import { NotificationSection } from "@prisma/client";
 import React from "react";
-import { IoIosArrowDown } from "react-icons/io";
 import CategoryItems from "./CategoryItems";
+import { ChevronDown } from "lucide-react";
 
 type Props = {
   title?: string;
@@ -43,7 +43,7 @@ const NotificationServiceContainer = ({
           {title === "work force" ? "Job Tracking" : title}
         </span>
         <button>
-          <IoIosArrowDown />
+          <ChevronDown size={20} />
         </button>
       </div>
       {openService?.[category as NotificationSection] && (

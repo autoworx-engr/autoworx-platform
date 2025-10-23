@@ -1,22 +1,20 @@
 "use client";
 import { cn } from "@/lib/cn";
 import type React from "react";
-
 import type { Client, ClientConversationTrack } from "@prisma/client";
 import Image from "next/image";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { MdKeyboardArrowDown } from "react-icons/md";
 import { errorToast } from "@/lib/toast";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
-import { 
-  readClientSmsAndEmail, 
-  unreadClientSmsAndEmail 
+import {
+  readClientSmsAndEmail,
+  unreadClientSmsAndEmail,
 } from "@/actions/communication/client/chat-track";
 
 import { starUnstarClient } from "@/actions/communication/client/starUnstarClient";
@@ -25,6 +23,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import StarOrUnStarAction from "./StarOrUnStarAction";
 import { useClientCommunicationStore } from "@/stores/client-store";
+import { ChevronDown } from "lucide-react";
 
 type TClient = Client & {
   conversationsTrack?: ClientConversationTrack | null;
@@ -312,7 +311,7 @@ export default function ClientItem({
                 )}
                 aria-label="More actions"
               >
-                <MdKeyboardArrowDown className="h-4 w-4" />
+                <ChevronDown className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
 

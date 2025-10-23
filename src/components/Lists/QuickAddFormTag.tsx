@@ -1,8 +1,8 @@
 import Submit from "@/components/Submit";
 import { useFormErrorStore } from "@/stores/form-error";
 import { Status } from "@prisma/client";
+import { Palette } from "lucide-react";
 import { useRef } from "react";
-import { PiPaletteBold } from "react-icons/pi";
 type SelectedColor = { textColor: string; bgColor: string } | null;
 
 export default function QuickAddForm({
@@ -54,7 +54,7 @@ export default function QuickAddForm({
         onClick={() => setPickerOpen((prev: boolean) => !prev)}
         type="button"
       >
-        <PiPaletteBold />
+        <Palette size={18} />
       </button>
 
       <Submit

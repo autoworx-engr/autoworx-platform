@@ -81,7 +81,9 @@ export default function Holidays() {
       <HolidayCalendar />
       <div>
         <h3 className="text-xl font-medium lg:text-2xl">Holidays List:</h3>
-        <div className="overflow-auto 2xl:h-20">{content}</div>
+        <div className="overflow-auto h-60 [@media(min-width:426px)]:h-52 2xl:h-36 thin-scrollbar pb-2">
+          {content}
+        </div>
       </div>
     </>
   );

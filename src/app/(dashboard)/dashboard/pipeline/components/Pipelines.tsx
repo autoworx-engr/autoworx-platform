@@ -17,11 +17,6 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { SetStateAction, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { CiCalendar } from "react-icons/ci";
-import { FaExchangeAlt } from "react-icons/fa";
-import { IoIosAddCircleOutline } from "react-icons/io";
-import { IoAddCircleOutline } from "react-icons/io5";
-import { PiWechatLogoLight } from "react-icons/pi";
 import { EmployeeSelector } from "./EmployeeSelector";
 import { EmployeeTagSelector } from "./EmployeeTagSelector";
 import PipelineLoadingSkeleton from "./PipelineLoadingSkeleton";
@@ -30,6 +25,12 @@ import ServiceSelector from "./ServiceSelector";
 import ShopColumnDropdown from "./ShopColumnDropdown";
 import TaskForm from "./TaskForm";
 import { errorToast, successToast } from "@/lib/toast";
+import {
+  ArrowRightLeft,
+  Calendar,
+  CirclePlus,
+  MessageCircleMore,
+} from "lucide-react";
 
 interface PipelinesProps {
   pipelinesTitle: string;
@@ -192,7 +193,7 @@ export default function Pipelines({
         typeof value === "function" ? value(selectedEmployees[key]) : value;
 
       // Update the selected employee in the state
-      setSelectedEmployees(prevState => ({
+      setSelectedEmployees((prevState) => ({
         ...prevState,
         [key]: resolvedValue,
       }));
@@ -231,7 +232,7 @@ export default function Pipelines({
     leadIndex: number
   ) => {
     const key = `${categoryIndex}-${leadIndex}`;
-    setTagDropdownStates(prevState => ({
+    setTagDropdownStates((prevState) => ({
       ...prevState,
       [key]: !prevState[key],
     }));
@@ -287,7 +288,7 @@ export default function Pipelines({
         const updatedPipelineData = [...pipelineData];
         updatedPipelineData[categoryIndex].leads[leadIndex].tags =
           updatedPipelineData[categoryIndex].leads[leadIndex].tags.filter(
-            tag => tag.tag.id !== tagToRemove.id
+            (tag) => tag.tag.id !== tagToRemove.id
           );
         setPipelineData(updatedPipelineData);
         // setLeadTags((prevState) => {
@@ -311,7 +312,7 @@ export default function Pipelines({
     leadIndex: number
   ) => {
     const key = `${categoryIndex}-${leadIndex}`;
-    setOpenServiceDropdown(prevState => ({
+    setOpenServiceDropdown((prevState) => ({
       ...prevState,
       [key]: !prevState[key],
     }));
@@ -322,11 +323,11 @@ export default function Pipelines({
     leadIndex: number
   ) => {
     const key = `${categoryIndex}-${leadIndex}`;
-    setShowColumnSelect(prevState => ({
+    setShowColumnSelect((prevState) => ({
       ...prevState,
       [key]: !prevState[key],
     }));
-    setColumnDropdownOpen(prevState => ({
+    setColumnDropdownOpen((prevState) => ({
       ...prevState,
       [key]: !prevState[key],
     }));
@@ -341,8 +342,8 @@ export default function Pipelines({
     const lead = pipelineData[categoryIndex].leads[leadIndex];
 
     if (!newColumnId || newColumnId === categoryIndex.toString()) {
-      setShowColumnSelect(prev => ({ ...prev, [key]: false }));
-      setColumnDropdownOpen(prev => ({ ...prev, [key]: false }));
+      setShowColumnSelect((prev) => ({ ...prev, [key]: false }));
+      setColumnDropdownOpen((prev) => ({ ...prev, [key]: false }));
       return;
     }
 
@@ -396,8 +397,8 @@ export default function Pipelines({
         }
       }
 
-      setShowColumnSelect(prev => ({ ...prev, [key]: false }));
-      setColumnDropdownOpen(prev => ({ ...prev, [key]: false }));
+      setShowColumnSelect((prev) => ({ ...prev, [key]: false }));
+      setColumnDropdownOpen((prev) => ({ ...prev, [key]: false }));
     } catch (error) {
       toast.error("Failed to move lead. Please try again.");
       console.error("Error moving lead:", error);
@@ -536,10 +537,10 @@ export default function Pipelines({
                   key={categoryIndex.toString() + 1}
                   isDropDisabled={screenWidth < 768}
                 >
-                  {provided => (
+                  {(provided) => (
                     <div
                       {...provided.droppableProps}
-                      ref={el => {
+                      ref={(el) => {
                         provided.innerRef(el);
                         columnRefs.current[categoryIndex] = el;
                       }}
@@ -579,11 +580,11 @@ export default function Pipelines({
                               index={leadIndex}
                               isDragDisabled={screenWidth < 768}
                             >
-                              {provided => (
+                              {(provided) => (
                                 <li
                                   {...provided.draggableProps}
                                   {...provided.dragHandleProps}
-                                  ref={el => {
+                                  ref={(el) => {
                                     provided.innerRef(el);
                                     // Store a reference to this lead element
                                     if (el) leadRefs.current.set(key, el);
@@ -607,7 +608,9 @@ export default function Pipelines({
                                         className="cursor-pointer text-xl mr-2 hover:text-blue-600 transition-colors md:hidden"
                                         title="Move to different column"
                                       >
-                                        <FaExchangeAlt
+                                        <ArrowRightLeft
+                                          size={24}
+                                          strokeWidth={2}
                                           style={{ color: "#6571FFed" }}
                                         />
                                       </button>
@@ -631,7 +634,7 @@ export default function Pipelines({
                                                   )}
                                                 </div>
                                               ) : (
-                                                <IoAddCircleOutline size={26} />
+                                                <CirclePlus size={26} />
                                               )}
                                             </div>
                                           )}
@@ -669,11 +672,11 @@ export default function Pipelines({
                                         .map((col, idx) => ({
                                           id: col.id,
                                           value: pipelineData
-                                            .findIndex(p => p.id === col.id)
+                                            .findIndex((p) => p.id === col.id)
                                             .toString(),
                                           label: col.title || "Untitled Column",
                                         }))}
-                                      onSelect={columnId =>
+                                      onSelect={(columnId) =>
                                         handleColumnChange(
                                           categoryIndex,
                                           leadIndex,
@@ -682,11 +685,11 @@ export default function Pipelines({
                                       }
                                       onClose={() => {
                                         const key = `${categoryIndex}-${leadIndex}`;
-                                        setShowColumnSelect(prev => ({
+                                        setShowColumnSelect((prev) => ({
                                           ...prev,
                                           [key]: false,
                                         }));
-                                        setColumnDropdownOpen(prev => ({
+                                        setColumnDropdownOpen((prev) => ({
                                           ...prev,
                                           [key]: false,
                                         }));
@@ -702,7 +705,7 @@ export default function Pipelines({
                                   <div className="mb-1 flex flex-wrap items-center gap-1">
                                     {pipelineData[categoryIndex].leads[
                                       leadIndex
-                                    ].tags.map(invoiceTag => (
+                                    ].tags.map((invoiceTag) => (
                                       <span
                                         key={`tag-${invoiceTag.id}`}
                                         className="mr-2 inline-flex h-[20px] items-center rounded bg-gray-300 px-1 py-1 text-xs font-semibold text-black"
@@ -746,9 +749,9 @@ export default function Pipelines({
                                         employeeTags={pipelineData[
                                           categoryIndex
                                         ].leads[leadIndex].tags.map(
-                                          invoiceTag => invoiceTag.tag
+                                          (invoiceTag) => invoiceTag.tag
                                         )}
-                                        setValue={selectedTag =>
+                                        setValue={(selectedTag) =>
                                           handleTagSelect(
                                             categoryIndex,
                                             leadIndex,
@@ -805,13 +808,10 @@ export default function Pipelines({
                                     <div className="flex items-center gap-2">
                                       <Link
                                         href={`/dashboard/communication/client/${lead.clientId}?chat=true`}
-                                        className={`group relative ${isTechnician ? "hidden" : ""}`}
+                                        className={`group relative mt-1 ${isTechnician ? "hidden" : ""}`}
                                       >
-                                        <PiWechatLogoLight
-                                          size={22}
-                                          className="text-gray-800"
-                                        />
-                                        <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
+                                        <MessageCircleMore size={20} />
+                                        <span className="invisible absolute bottom-full left-14 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
                                           Communications
                                         </span>
                                       </Link>
@@ -863,9 +863,9 @@ export default function Pipelines({
                                         }}
                                         className="group relative"
                                       >
-                                        <CiCalendar
-                                          size={22}
-                                          className={`mt-.5 text-gray-800 ${isTechnician ? "hidden" : ""}`}
+                                        <Calendar
+                                          size={18}
+                                          className={`mt-1 ${isTechnician ? "hidden" : ""}`}
                                         />
                                         <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
                                           Appointment
@@ -888,9 +888,10 @@ export default function Pipelines({
                                     </div>
                                     <div className="group relative">
                                       {/* button */}
-                                      <IoIosAddCircleOutline
-                                        className="mt-1 cursor-pointer text-2xl"
-                                        fontSize="medium"
+                                      <CirclePlus
+                                        size={24}
+                                        strokeWidth={1.5}
+                                        className="mt-1 cursor-pointer"
                                       />
                                     </div>
                                   </div>
@@ -916,13 +917,13 @@ export default function Pipelines({
           vehicleId={selectedVehicleId}
           isModalOpen={isAppointmentModalOpen}
           setIsModalOpen={setIsAppointmentModalOpen}
-          onAppointmentCreated={appointment => {
+          onAppointmentCreated={(appointment) => {
             // Handle appointment created
             setIsAppointmentModalOpen(false);
             setSelectedClientId(null);
             setSelectedVehicleId(null);
           }}
-          onAppointmentUpdated={appointment => {
+          onAppointmentUpdated={(appointment) => {
             // Handle appointment updated
             setIsAppointmentModalOpen(false);
             setSelectedClientId(null);

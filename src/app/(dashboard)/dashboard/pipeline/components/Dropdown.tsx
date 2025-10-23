@@ -5,8 +5,8 @@ import { getColumnsByType } from "@/actions/pipelines/pipelinesColumn";
 import { useServerGet } from "@/hooks/useServerGet";
 import { usePipelineFilterStore } from "@/stores/PipelineFilterStore";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { ChevronDown } from "lucide-react";
 import { useEffect, useState } from "react";
-import { FaChevronDown } from "react-icons/fa";
 import Select from "./Select";
 interface DropdownProps {
   pipelineType: string;
@@ -16,7 +16,8 @@ const DropdownMenuDemo = ({ pipelineType }: DropdownProps) => {
   const [columnStatus, setColumnStatus] = useState<
     { id: number; title: string; type: string }[]
   >([]);
-  const { setFilter, status, service, dateRange } = usePipelineFilterStore();
+  const { setFilter, status, service, dateRange, resetStatus } =
+    usePipelineFilterStore();
   useEffect(() => {
     const fetchShopColumns = async () => {
       const columns = await getColumnsByType(pipelineType);
@@ -49,7 +50,7 @@ const DropdownMenuDemo = ({ pipelineType }: DropdownProps) => {
           aria-label="Customise options"
         >
           <span>Filter</span>
-          <FaChevronDown />
+          <ChevronDown />
         </button>
       </DropdownMenu.Trigger>
 
@@ -86,6 +87,14 @@ const DropdownMenuDemo = ({ pipelineType }: DropdownProps) => {
               }
               value={service}
             />
+            <button
+              className="rounded border border-gray-300 px-2 py-2"
+              onClick={() => {
+                resetStatus();
+              }}
+            >
+              Clear All
+            </button>
           </div>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>

@@ -32,22 +32,32 @@ export const updateTechnician = async (
     // if (!payload) {
     //   return { type: "error", message: "Invalid payload" };
     // }
-    await updateTechnicianValidationSchema.parseAsync(payload);
+
     // Ensure the date includes both date and time
-    const dateWithTime = new Date(payload.date);
-    const currentTime = new Date();
-    dateWithTime.setHours(
-      currentTime.getHours(),
-      currentTime.getMinutes(),
-      currentTime.getSeconds(),
-      currentTime.getMilliseconds()
-    );
+
+    // Normalize the assigned date to 00:00:00 like the due date
+    const normalizedDate = payload.date
+      ? new Date(
+          payload.date.getFullYear(),
+          payload.date.getMonth(),
+          payload.date.getDate(),
+          0,
+          0,
+          0,
+          0
+        )
+      : payload.date;
+
+    await updateTechnicianValidationSchema.parseAsync({
+      ...payload,
+      date: normalizedDate,
+    });
 
     const updatedTechnician = await db.technician.update({
       where: { id: technicianId },
       data: {
         ...payload,
-        date: dateWithTime,
+        date: normalizedDate,
         dateClosed: payload.status === "Complete" ? new Date() : null,
       },
     });

@@ -44,6 +44,30 @@ export const updatePermission = async (
   }
 };
 
+export const bulkUpdatePermissions = async (
+  companyId: number,
+  permissions: Array<{
+    permission_name: string;
+    enabled: boolean;
+  }>
+) => {
+  // Create payload with all permissions as key-value pairs
+  const payload = permissions.reduce((acc, perm) => {
+    acc[perm.permission_name] = perm.enabled;
+    return acc;
+  }, {} as Record<string, boolean>);
+
+  try {
+    const response = await serverAxios.put(
+      `/admin/permissions/companies/${companyId}`,
+      payload
+    );
+    return response.data.data || response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 
 export const createPermission = async (
   companyId: number,

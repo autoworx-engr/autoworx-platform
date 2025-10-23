@@ -1,8 +1,7 @@
 import { cn } from "@/lib/cn";
 import * as Select from "@radix-ui/react-select";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import React from "react";
-import { FaChevronDown, FaChevronUp } from "react-icons/fa";
-import { FiChevronDown } from "react-icons/fi";
 
 type item = {
   [key: string]: any;
@@ -32,13 +31,13 @@ const SelectComponent = ({
         >
           <Select.Value placeholder={`Select ${label}`} />
           <Select.Icon className="text-violet11">
-            <FaChevronDown />
+            <ChevronDown size={16} />
           </Select.Icon>
         </Select.Trigger>
         <Select.Portal>
           <Select.Content className="overflow-hidden rounded-md bg-background p-4 shadow-[0px_10px_38px_-10px_rgba(22,_23,_24,_0.35),0px_10px_20px_-15px_rgba(22,_23,_24,_0.2)]">
             <Select.ScrollUpButton className="text-violet11 flex h-[25px] cursor-default items-center justify-center bg-background">
-              <FaChevronUp />
+              <ChevronUp size={16} />
             </Select.ScrollUpButton>
             <Select.Viewport className="p-[5px]">
               <Select.Group>
@@ -50,7 +49,7 @@ const SelectComponent = ({
               </Select.Group>
             </Select.Viewport>
             <Select.ScrollDownButton className="text-violet11 flex h-[25px] cursor-default items-center justify-center bg-background">
-              <FiChevronDown />
+              <ChevronDown size={16} />
             </Select.ScrollDownButton>
           </Select.Content>
         </Select.Portal>
@@ -66,7 +65,7 @@ const SelectItem = React.forwardRef(
       <Select.Item
         className={cn(
           "relative z-50 flex min-w-[200px] cursor-pointer select-none items-center rounded-[3px] border-b px-2 py-4 leading-none data-[disabled]:pointer-events-none data-[highlighted]:outline-none",
-          className,
+          className
         )}
         {...props}
         ref={forwardedRef}
@@ -77,7 +76,7 @@ const SelectItem = React.forwardRef(
         </Select.ItemIndicator> */}
       </Select.Item>
     );
-  },
+  }
 );
 
 export default SelectComponent;

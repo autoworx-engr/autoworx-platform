@@ -3,13 +3,13 @@ import updateFirstContactTimeClient from "@/actions/communication/client/updateF
 import { errorToast } from "@/lib/toast";
 import { clientListStore } from "@/stores/client-store";
 import Image from "next/image";
-import React, { useRef, useState, useTransition } from "react";
-import { MdSend } from "react-icons/md";
+import React, { useRef, useState } from "react";
 import useSmsSendMutation from "../../../_hooks/useSmsSendMutation";
 import AttachmentInput from "../AttachmentInput";
 import { useClientCommunicationStore } from "@/stores/client-store";
 import { useServerGet } from "@/hooks/useServerGet";
 import { getCompany } from "@/actions/settings/getCompany";
+import { SendHorizontal } from "lucide-react";
 
 // Helper function to format attachment message
 const formatAttachmentMessage = (files: File[]) => {
@@ -181,7 +181,7 @@ export default function SendSms({ clientId }: TProps) {
             className="mr-1 inline-flex h-9 w-9 items-center justify-center rounded-md text-emerald-700 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:text-zinc-400 disabled:hover:bg-transparent dark:text-emerald-400 dark:hover:bg-emerald-400/10"
             aria-label="Send message"
           >
-            <MdSend className="text-xl" />
+            <SendHorizontal className="w-5 h-5" />
           </button>
         </div>
       </form>

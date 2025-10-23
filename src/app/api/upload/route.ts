@@ -21,12 +21,12 @@ export async function POST(req: NextRequest, res: NextResponse) {
 
     const formData = await req.formData();
     const files = formData.getAll("file") as File[];
-    const uploadPromises = files.map(async (file) => {
+    const uploadPromises = files.map(async file => {
       const response = await getSignedURL({
         fileType: file.type,
         fileSize: file.size,
         checksum: "", // Optional
-        fileName: file.name,
+        fileName: file.name + "-" + Math.random().toString(36).substring(2, 15), // Optional
       });
 
       if (response.error) {

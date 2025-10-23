@@ -1,9 +1,8 @@
 "use client";
 import { useDebounce } from "@/hooks/useDebounce";
+import { Search, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { FiSearch } from "react-icons/fi";
-import { IoCloseOutline } from "react-icons/io5";
 
 type TSearchSectionProps = {
   searchValue?: string;
@@ -39,7 +38,7 @@ export default function SearchSection({
     <div className="flex flex-col gap-2 rounded-md border bg-background p-2 shadow-sm sm:flex-row sm:items-center sm:justify-between">
       {/* Search input */}
       <div className="flex h-10 w-full items-center rounded-md border px-3 sm:w-auto">
-        <FiSearch className="mr-2 text-gray-500" />
+        <Search size={18} className="mr-2 text-gray-500" />
         <input
           type="text"
           value={searchTerm}
@@ -56,7 +55,7 @@ export default function SearchSection({
             onClick={handleClearSearch}
             className="ml-2 text-gray-400 hover:text-gray-600"
           >
-            <IoCloseOutline size={18} />
+            <X size={18} strokeWidth={2} />
           </button>
         )}
       </div>

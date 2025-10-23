@@ -1,6 +1,9 @@
+import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
 import { authOptions } from "@/authOptions";
 import { db } from "@/lib/db";
+import { normalizeSearch } from "@/utils/normalizeSearch";
 import { Invoice, Prisma, Refund } from "@prisma/client";
+import { Decimal } from "@prisma/client/runtime/library";
 import moment from "moment-timezone";
 import { getServerSession } from "next-auth";
 import { Suspense } from "react";
@@ -10,10 +13,6 @@ import Analytics from "./Analytics";
 import AnalyticsVisibility from "./AnalyticsVisibility";
 import FilterHeader from "./FilterHeader";
 import RevenueDisplay from "./RevenueDisplay";
-import { FormatUtcToTimezone } from "@/utils/FormatUtcToTimezone";
-import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
-import { normalizeSearch } from "@/utils/normalizeSearch";
-import { Decimal } from "@prisma/client/runtime/library";
 
 type TProps = {
   searchParams: {
@@ -172,6 +171,7 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
     servicesPromise,
     categoriesPromise,
   ]);
+
   let filteredInvoicesWithOutDate: Invoice[] = [];
   let filteredInvoices =
     searchParams?.search && invoices
@@ -212,10 +212,6 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
     const convertedEnd = formattedEndDate
       ? moment.tz(formattedEndDate!, "MM/DD/YYYY", timezone).endOf("day")
       : null;
-
-    // console.log("formattedStartDate", convertedStart);
-    // console.log("formattedEndDate", convertedEnd);
-    // console.log("timezone", timezone);
     filteredInvoicesWithOutDate = filteredInvoices;
 
     filteredInvoices = filteredInvoices.filter((invoice) => {
@@ -243,7 +239,6 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
 
   const getService = services.map((service) => service.name);
   const getCategory = categories.map((category) => category.name);
-
   const maxPrice = Math.max(
     ...filteredInvoices.map((invoice) => Number(invoice.grandTotal))
   );

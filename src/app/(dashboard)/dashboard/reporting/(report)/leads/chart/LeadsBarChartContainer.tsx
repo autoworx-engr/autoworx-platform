@@ -1,10 +1,11 @@
 "use client";
-import { getLeadInfo } from "@/actions/dashboard/data/getLeadInfo";
 import BarChartComponent from "@/app/(dashboard)/dashboard/reporting/components/BarChartComponent";
-import { Bar, Label, LabelList, Legend, Tooltip, XAxis, YAxis } from "recharts";
-import { useMediaQuery } from "react-responsive";
 import { useEffect, useState } from "react";
-import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
+import { useMediaQuery } from "react-responsive";
+import { Bar, Label, LabelList, Legend, Tooltip, XAxis, YAxis } from "recharts";
+import useGetLeadInfoQuery from "../_hook/useGetLeadInfoQuery";
+import LeadsChartSkeleton from "@/components/ui/LeadsChartSkeleton";
+
 
 type TProps = {
   searchParams: {
@@ -54,7 +55,7 @@ const CustomLabel = (props: any) => {
   );
 };
 export default function LeadsBarChartContainer({ searchParams }: TProps) {
-  const [data, setData] = useState<any>();
+  // const [data, setData] = useState<any>();
   const isExtraLargeScreen = useMediaQuery({ minWidth: 2001 });
 
   // State for startDate and endDate
@@ -66,56 +67,18 @@ export default function LeadsBarChartContainer({ searchParams }: TProps) {
   );
   const [isFiltered, setIsFiltered] = useState<boolean>(false);
 
+  const { data } = useGetLeadInfoQuery({ startDate, endDate });
+
   // Update local state when searchParams change
   useEffect(() => {
     setStartDate(searchParams?.startDate);
     setEndDate(searchParams?.endDate);
     setIsFiltered(!!searchParams?.startDate || !!searchParams?.endDate);
   }, [searchParams?.startDate, searchParams?.endDate]);
-  const timezone = useCompanyTimezone();
-
-  // Fetch data with date filters
-  // const { data, setData } = useServerGet(() =>
-  //   getLeadInfo(
-  //     timezone,
-  //     startDate ? decodeURIComponent(startDate) : undefined,
-  //     endDate ? decodeURIComponent(endDate) : undefined,
-  //   ),
-  // );
-
-  // Re-fetch data when date parameters change
-  useEffect(() => {
-    let isMounted = true;
-    // setLoading(true);
-
-    const fetchData = async () => {
-      try {
-        const result = await getLeadInfo(
-          timezone,
-          startDate ? decodeURIComponent(startDate) : undefined,
-          endDate ? decodeURIComponent(endDate) : undefined
-        );
-        if (isMounted) {
-          setData(result);
-        }
-      } catch (error) {
-        if (isMounted) {
-          // setError(error as Error);
-          setData(null); // Reset the data if there's an error
-        }
-      } finally {
-        if (isMounted) {
-          // setLoading(false);
-        }
-      }
-    };
-
-    fetchData();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [startDate, endDate, timezone]);
+  // Chart skeleton while loading
+  if (!data || !data.monthlyQualifiedAndUnqualifiedLeads) {
+    return <LeadsChartSkeleton variant="stacked" bars={8} height={350} />;
+  }
 
   return (
     <div className="chart-container">
@@ -172,10 +135,6 @@ export default function LeadsBarChartContainer({ searchParams }: TProps) {
             const { x, y, width, height, ...rest } = props;
             const barWidth = Math.min(width * 1.5, 30);
 
-            // const xPosition = isFiltered
-            //   ? x - width * 1
-            //   : x - width * (dummyData.length <= 10 ? 0.4 : 0.3);
-
             let multiplier;
             if (isFiltered) {
               multiplier = 1;
@@ -183,7 +142,7 @@ export default function LeadsBarChartContainer({ searchParams }: TProps) {
               multiplier = 0.4; // Extra value for screens wider than 2000px
             } else {
               multiplier =
-                data?.monthlyQualifiedAndUnqualifiedLeads.length <= 10
+                (data?.monthlyQualifiedAndUnqualifiedLeads?.length ?? 0) <= 10
                   ? 0.4
                   : 0.5;
             }

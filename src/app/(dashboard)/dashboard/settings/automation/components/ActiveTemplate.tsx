@@ -1,10 +1,8 @@
 "use client";
-import React, { ChangeEvent } from "react";
-import { Close as CloseIcon } from "@mui/icons-material";
 import { Box, IconButton, TextField } from "@mui/material";
-import { ImAttachment } from "react-icons/im";
+import { Paperclip, X } from "lucide-react";
 import Image from "next/image";
-import { useCharacterLimit } from "@/hooks/useCharecterLimit";
+import React, { ChangeEvent } from "react";
 
 type TemplateProps = {
   activeTemplate: string;
@@ -102,7 +100,7 @@ const ActiveTemplate = ({
                 size="small"
                 className={iconBtnClassName}
               >
-                <ImAttachment />
+                <Paperclip size={18} />
                 <input
                   type="file"
                   hidden
@@ -145,7 +143,7 @@ const ActiveTemplate = ({
                 onClick={(e) => handleDeleteAttachment(e, file)}
                 className="absolute right-0 top-0 bg-white"
               >
-                <CloseIcon className="text-red-500" />
+                <X className="text-red-500" />
               </button>
             </Box>
           ))}

@@ -1,12 +1,10 @@
-import { CiCircleInfo } from "react-icons/ci";
-import { IoMdArrowDropdown, IoMdArrowDropup } from "react-icons/io";
 import { useState } from "react";
 import BarChartComponent from "./BarChartComponent";
 import { useParams } from "next/navigation";
 import { useServerGet } from "@/hooks/useServerGet";
 import { getPerformanceInfo } from "@/actions/employee/getPerformanceInfo";
 import { cn } from "@/lib/cn";
-import { formatCurrency } from "@/utils/formatCurrency";
+import { Info } from "lucide-react";
 
 interface AttendanceData {
   day: string;
@@ -49,7 +47,9 @@ export default function PerformanceTable() {
     {
       label: "Average Time to Complete a Job",
       value: Math.floor(averageJobTime || 0) + " hours",
-      percentage:  Number(averageJobTimeGrowthRate ? averageJobTimeGrowthRate?.toFixed(2) : 0) ,
+      percentage: Number(
+        averageJobTimeGrowthRate ? averageJobTimeGrowthRate?.toFixed(2) : 0
+      ),
       isPositive: (averageJobTimeGrowthRate || 0) > 0,
       isZeroGrowth: averageJobTimeGrowthRate === 0,
     },
@@ -107,7 +107,7 @@ export default function PerformanceTable() {
                     onMouseEnter={() => setInfoIndex(index)}
                     onMouseLeave={() => setInfoIndex(null)}
                   >
-                    <CiCircleInfo className="h-3 w-3 cursor-pointer" />
+                    <Info className="h-3 w-3 cursor-pointer" />
                   </div>
                   {infoIndex === index && (
                     <div
@@ -128,7 +128,7 @@ export default function PerformanceTable() {
                   <div
                     className={cn(
                       "font-inter text-xl font-semibold",
-                      metric.percentage ? "text-green-500" : "text-red-500",
+                      metric.percentage ? "text-green-500" : "text-red-500"
                     )}
                   >
                     {metric.percentage}%

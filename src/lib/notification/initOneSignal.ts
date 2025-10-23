@@ -1,8 +1,9 @@
 import detectBrowser from "@/utils/detectBrowser";
 import { env } from "next-runtime-env";
 import { IOneSignalOneSignal } from "react-onesignal";
-import { errorToast, successToast } from "../toast";
+import {  successToast } from "../toast";
 import { isIosPwa } from "@/utils/isIosPwa";
+import { showOneSignalErrorToast } from "@/components/ui/CustomToast";
 
 // Environment validation
 const ONESIGNAL_APP_ID = env("NEXT_PUBLIC_ONESIGNAL_APP_ID") as string;
@@ -166,9 +167,11 @@ export const initOneSignal = async (
     console.log("OneSignal setup completed successfully");
   } catch (error) {
     console.error("OneSignal initialization error:", error);
-    errorToast(
-      `Notification setup failed: ${error instanceof Error ? error.message : "Unknown error"}`
-    );
+
+    // Show OneSignal error toast with dismiss button (no default cross button)
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+    showOneSignalErrorToast(`Notification setup failed: ${errorMessage}`);
     throw error; // Re-throw if you want calling code to handle it
   }
 };

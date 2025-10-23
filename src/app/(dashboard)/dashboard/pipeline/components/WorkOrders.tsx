@@ -3,6 +3,7 @@ import { getWorkOrders } from "@/actions/pipelines/getWorkOrders";
 import ResponsiveShopPipelineCard from "@/components/mobile-responsive/pipeline/ResponsiveShopPipelineCard";
 import WorkOrderModal from "@/components/workorder-modal/WorkOrderModal";
 import { useServerGet } from "@/hooks/useServerGet";
+import WorkOrdersTableSkeleton from "@/components/ui/WorkOrdersTableSkeleton";
 import { cn } from "@/lib/cn";
 import { useEstimateFilterStore } from "@/stores/estimate-filter";
 import { usePipelineFilterStore } from "@/stores/PipelineFilterStore";
@@ -11,7 +12,6 @@ import moment from "moment";
 import { useEffect, useState } from "react";
 import Filter from "./Filter";
 import { Spin } from "antd";
-import { normalizeSearch } from "@/utils/normalizeSearch";
 
 const WorkOrders = () => {
   const { data: invoices } = useServerGet(getWorkOrders);
@@ -122,7 +122,9 @@ const WorkOrders = () => {
               );
             })}
         </div>
-        {!filteredInvoices ? (
+        {!invoices ? (
+          <WorkOrdersTableSkeleton rows={15} />
+        ) : !filteredInvoices ? (
           <div className="flex h-[70vh] pb-10 w-full items-center justify-center">
             <Spin size="large" />
           </div>

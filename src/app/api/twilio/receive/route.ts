@@ -1,19 +1,21 @@
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 import { twiml } from "twilio";
-import { v4 as uuidv4 } from "uuid"; // for generating temporary callSid if needed
-
+import { v4 as uuidv4 } from "uuid";
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
+    console.log("🚀 ~ POST ~ formData:", formData)
     const to = formData.get("To") as string;
+    console.log("🚀 ~ POST ~ to:", to)
     //@ts-ignore
     const from = (formData.get("From") ?? "")?.split(":")[1] as string; // Ensure correct retrieval
+    console.log("🚀 ~ POST ~ from:", from)
 
     if (!to || !from) {
       return NextResponse.json(
         { error: "Both 'To' and 'From' parameters are required." },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -21,7 +23,7 @@ export async function POST(request: Request) {
     if (to === from) {
       return NextResponse.json(
         { error: "Cannot call the same Twilio number." },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -32,11 +34,12 @@ export async function POST(request: Request) {
         },
       },
     });
+    console.log("🚀 ~ POST ~ twilioCredentials:", twilioCredentials)
 
     if (!twilioCredentials) {
       return NextResponse.json(
         { error: "Twilio credentials not found" },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -48,8 +51,10 @@ export async function POST(request: Request) {
         },
       },
     });
+    console.log("🚀 ~ POST ~ client:", client)
 
     let callId = uuidv4();
+    console.log("🚀 ~ POST ~ callId:", callId)
     // Prepare database insert for ClientCall
     await db.clientCall.create({
       data: {
@@ -72,7 +77,7 @@ export async function POST(request: Request) {
         recordingStatusCallback: `${process.env.NEXT_PUBLIC_APP_URL}/api/twilio/call-recording?callId=${callId}`,
         recordingStatusCallbackMethod: "POST",
       },
-      to,
+      to
     );
 
     return new Response(voiceResponse.toString(), {

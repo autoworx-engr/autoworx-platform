@@ -1,8 +1,8 @@
 import { cn } from "@/lib/cn";
 import { VehicleParts as Parts } from "@prisma/client";
 import { Popconfirm } from "antd";
+import { CircleX, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { TiDelete, TiTimes } from "react-icons/ti";
 
 const vehiclePartsItem = [
   { id: 1, label: "Front Bumper", value: "front-bumper", selected: false },
@@ -186,7 +186,7 @@ export default function VehicleParts({
               className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
               onClick={() => setSearchTerm("")}
             >
-              <TiTimes className="size-4" />
+              <X className="size-4" strokeWidth={3} />
             </button>
           )}
         </div>
@@ -208,7 +208,7 @@ export default function VehicleParts({
                   cancelText="No"
                 >
                   <button className="absolute -right-[4px] -top-[4px] z-20">
-                    <TiDelete className="size-5 rounded-full bg-background text-[#6571FF]" />
+                    <CircleX className="size-5 rounded-full bg-background text-[#6571FF]" />
                   </button>
                 </Popconfirm>
               )}

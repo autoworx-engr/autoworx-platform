@@ -38,8 +38,8 @@ export default function ReplenishProductForm({
 
   // Helper for YYYY-MM-DD in company's timezone
   const todayInCompanyTz = moment().tz(companyTz).format("YYYY-MM-DD");
-
   const { showError, clearError } = useFormErrorStore();
+
   async function handleSubmit(formData: FormData) {
     const date = formData.get("date") as string;
     // Convert "YYYY-MM-DD" in company TZ to Date
@@ -50,8 +50,11 @@ export default function ReplenishProductForm({
     const lot = formData.get("lot") as string;
     const notes = formData.get("notes") as string;
 
+    console.log("Inside handler function==>", vendor);
+
     const perUnitPrice = parseFloat(price) / Number(quantity);
     const roundedPerUnitPrice = parseFloat(perUnitPrice.toFixed(2));
+
     const res = await replenish({
       productId,
       date: zonedDate, // ✅ aligned with company timezone
@@ -92,9 +95,7 @@ export default function ReplenishProductForm({
         <DialogHeader>
           <DialogTitle>Replenish Product</DialogTitle>
         </DialogHeader>
-
         <FormError />
-
         <div className="flex flex-col gap-3 p-2">
           <SlimInput
             name="date"
@@ -164,7 +165,11 @@ export default function ReplenishProductForm({
               </div>
             </div>
 
-            <SlimInput defaultValue={lastUnit || ""} name="unit" required={false} />
+            <SlimInput
+              defaultValue={lastUnit || ""}
+              name="unit"
+              required={false}
+            />
             <SlimInput name="lot" required={false} />
           </div>
 

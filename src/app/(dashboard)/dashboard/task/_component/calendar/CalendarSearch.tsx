@@ -1,11 +1,10 @@
 "use client";
 
 import { useCalendarStore } from "@/stores/calendarStore";
-import { Calendar, Car, Clock, User } from "lucide-react";
+import { Calendar, Car, Clock, Search, User } from "lucide-react";
 import moment from "moment";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { BiSearch } from "react-icons/bi";
 import useAppointmentSearchQuery from "../../_hook/appointment/query/useAppointmentSearchQuery";
 import useTaskSearchQuery from "../../_hook/task/query/useTaskSearchQuery";
 
@@ -198,7 +197,10 @@ export default function CalendarSearch({ type }: { type: string }) {
           placeholder="Search tasks and appointments..."
           className="w-full rounded-md border border-input bg-background px-3 py-2 pl-10 text-sm"
         />
-        <BiSearch className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Search
+          size={16}
+          className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+        />
       </div>
 
       {isDropdownOpen &&

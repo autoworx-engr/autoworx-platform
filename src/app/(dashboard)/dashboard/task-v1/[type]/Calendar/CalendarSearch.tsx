@@ -3,9 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import type { CalendarAppointment, CalendarTask } from "@/types/db";
 import moment from "moment";
-import { BiSearch } from "react-icons/bi";
 import { useRouter } from "next/navigation";
 import { useCalendarStore } from "@/stores/calendarStore";
+import { Search } from "lucide-react";
 
 type SearchResult = {
   id: number;
@@ -61,7 +61,7 @@ export default function CalendarSearch({
     }
 
     const filteredResults = allItems.current.filter((item) =>
-      item.title.toLowerCase().includes(searchTerm.toLowerCase()),
+      item.title.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     filteredResults.sort((a, b) => {
@@ -131,7 +131,10 @@ export default function CalendarSearch({
           placeholder="Search tasks and appointments..."
           className="w-full rounded-md border border-input bg-background px-3 py-2 pl-10 text-sm"
         />
-        <BiSearch className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Search
+          size={18}
+          className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+        />
       </div>
 
       {isDropdownOpen && searchResults.length > 0 && (

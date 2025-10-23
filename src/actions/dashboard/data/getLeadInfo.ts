@@ -1,16 +1,16 @@
-'use server';
+"use server";
 
-import { getCompanyId } from '@/lib/companyId';
-import { db } from '@/lib/db';
+import { getCompanyId } from "@/lib/companyId";
+import { db } from "@/lib/db";
 
 import {
   differenceInHours,
   eachMonthOfInterval,
   endOfMonth,
   startOfMonth,
-} from 'date-fns';
-import moment from 'moment';
-import { difference, getDateRanges, growthRate } from './lib';
+} from "date-fns";
+import moment from "moment";
+import { difference, getDateRanges, growthRate } from "./lib";
 
 export async function getLeadInfo(
   timezone: string,
@@ -24,8 +24,8 @@ export async function getLeadInfo(
 
   if (startDate && endDate) {
     // Use moment to handle date formatting consistently
-    startDateObj = moment(startDate, 'MM/DD/YYYY').startOf('day').toDate();
-    endDateObj = moment(endDate, 'MM/DD/YYYY').endOf('day').toDate();
+    startDateObj = moment(startDate).startOf("day").toDate();
+    endDateObj = moment(endDate).endOf("day").toDate();
   }
   //  else {
   //   // Default to current month if no dates are provided
@@ -33,55 +33,71 @@ export async function getLeadInfo(
   //   endDateObj = currentMonthEnd;
   // }
 
-  const monthlyQualifiedAndUnqualifiedLeads =
-    await getMonthlyQualifiedAndUnqualifiedLeads(
-      startDateObj,
-      endDateObj,
-      timezone
-    );
+  const monthlyQualifiedAndUnqualifiedLeadsPromise =
+    getMonthlyQualifiedAndUnqualifiedLeads(startDateObj, endDateObj, timezone);
 
-  const convertedLeadsPerMonth = await getConvertedLeadsPerMonth(
+  const convertedLeadsPerMonthPromise = getConvertedLeadsPerMonth(
     startDateObj,
     endDateObj
   );
-  const leadsBySource = await getLeadsBySource(
+  const leadsBySourcePromise = getLeadsBySource(
     timezone,
     startDateObj,
     endDateObj
   );
-  const averageConversionTime = await getAverageConversionTime(
+  const averageConversionTimePromise = getAverageConversionTime(
     startDateObj,
     endDateObj
   );
-  const leadToOpportunityRatio = await getLeadToOpportunityRatio(
+  const leadToOpportunityRatioPromise = getLeadToOpportunityRatio(
     timezone,
     startDateObj,
     endDateObj
   );
-  const avgResponseTime = await getAverageTimeToContact(
+  const avgResponseTimePromise = getAverageTimeToContact(
     startDateObj,
     endDateObj
   );
 
-  let lostLeads;
+  let lostLeadsPromise;
   if (startDateObj && endDateObj) {
-    lostLeads = await getLeadsLost(startDateObj, endDateObj);
+    lostLeadsPromise = getLeadsLost(startDateObj, endDateObj);
   } else {
-    lostLeads = await getLeadsLost(currentMonthStart, currentMonthEnd);
+    lostLeadsPromise = getLeadsLost(currentMonthStart, currentMonthEnd);
   }
 
-  const averageDealSize = await getAverageDealSize(
+  const averageDealSizePromise = getAverageDealSize(
     timezone,
     startDateObj,
     endDateObj
   );
 
   // For growth rate calculation, handle same-day ranges with moment
-  const growthRateData =
+  const growthRateDataPromise =
     startDate && endDate
-      ? await getCustomRangeGrowthRates(startDateObj!, endDateObj!, timezone)
-      : await getGrowthRates(timezone);
-
+      ? getCustomRangeGrowthRates(startDateObj!, endDateObj!, timezone)
+      : getGrowthRates(timezone);
+  const [
+    monthlyQualifiedAndUnqualifiedLeads,
+    convertedLeadsPerMonth,
+    leadsBySource,
+    averageConversionTime,
+    leadToOpportunityRatio,
+    avgResponseTime,
+    lostLeads,
+    averageDealSize,
+    growthRateData,
+  ] = await Promise.all([
+    monthlyQualifiedAndUnqualifiedLeadsPromise,
+    convertedLeadsPerMonthPromise,
+    leadsBySourcePromise,
+    averageConversionTimePromise,
+    leadToOpportunityRatioPromise,
+    avgResponseTimePromise,
+    lostLeadsPromise,
+    averageDealSizePromise,
+    growthRateDataPromise,
+  ]);
   return {
     monthlyQualifiedAndUnqualifiedLeads,
     convertedLeadsPerMonth,
@@ -112,7 +128,7 @@ export async function getAverageDealSize(
     where: {
       companyId,
       column: {
-        title: 'Converted',
+        title: "Converted",
       },
       createdAt: {
         gte: startDate ?? currentMonthStart,
@@ -124,7 +140,7 @@ export async function getAverageDealSize(
         include: {
           Invoice: {
             where: {
-              type: 'Invoice',
+              type: "Invoice",
             },
           },
         },
@@ -142,7 +158,7 @@ export async function getAverageDealSize(
         include: {
           Invoice: {
             where: {
-              type: 'Invoice',
+              type: "Invoice",
             },
           },
         },
@@ -170,20 +186,20 @@ export async function getAverageDealSize(
 export const getMonthlyQualifiedAndUnqualifiedLeads = async (
   startDate?: Date,
   endDate?: Date,
-  timezone: string = 'America/Detroit'
+  timezone: string = "America/Detroit"
 ): Promise<{ month: string; qualified: number; unqualified: number }[]> => {
   const companyId = await getCompanyId();
 
   // Default to start and end of current year in given timezone
-  const start = moment(startDate ?? moment().startOf('year'));
-  const end = moment(endDate ?? moment().endOf('year'));
+  const start = moment(startDate ?? moment().startOf("year"));
+  const end = moment(endDate ?? moment().endOf("year"));
 
   const months: moment.Moment[] = [];
-  let current = start.clone().startOf('month');
+  let current = start.clone().startOf("month");
 
-  while (current.isSameOrBefore(end, 'month')) {
+  while (current.isSameOrBefore(end, "month")) {
     months.push(current.clone());
-    current.add(1, 'month');
+    current.add(1, "month");
   }
 
   const leadsData = await Promise.all(
@@ -195,14 +211,14 @@ export const getMonthlyQualifiedAndUnqualifiedLeads = async (
 
       const effectiveStartDate = monthStart
         .clone()
-        .startOf('month')
-        .startOf('day')
+        .startOf("month")
+        .startOf("day")
         .toDate();
       const effectiveEndDate = monthStart
         .clone()
-        .add(1, 'month')
-        .startOf('month')
-        .subtract(1, 'second')
+        .add(1, "month")
+        .startOf("month")
+        .subtract(1, "second")
         .toDate();
 
       const qualifiedLeads = await db.lead.count({
@@ -228,7 +244,7 @@ export const getMonthlyQualifiedAndUnqualifiedLeads = async (
       });
 
       return {
-        month: month.format('MMM'),
+        month: month.format("MMM"),
         qualified: qualifiedLeads,
         unqualified: unqualifiedLeads,
       };
@@ -265,7 +281,7 @@ export const getConvertedLeadsPerMonth = async (
         where: {
           companyId,
           column: {
-            title: 'Converted',
+            title: "Converted",
           },
           columnChangedAt: {
             gte: effectiveStartDate,
@@ -275,7 +291,7 @@ export const getConvertedLeadsPerMonth = async (
       });
 
       return {
-        month: month.toLocaleString('default', { month: 'short' }),
+        month: month.toLocaleString("default", { month: "short" }),
         converted: convertedLeads,
       };
     })
@@ -295,8 +311,22 @@ export async function getLeadsBySource(
     previousMonthEnd,
   } = getDateRanges(timezone);
   // Default to the current month's start and end dates if no custom range is provided
-  const effectiveStartDate = startDate ?? currentMonthStart;
-  const effectiveEndDate = endDate ?? currentMonthEnd;
+  // Validate that startDate is before endDate and both are valid dates, otherwise fallback to current month
+  let effectiveStartDate = startDate ?? currentMonthStart;
+  let effectiveEndDate = endDate ?? currentMonthEnd;
+
+  // Check for invalid dates
+  const isInvalidDate = (date: Date | undefined) =>
+    !date || isNaN(date.getTime());
+
+  if (
+    isInvalidDate(effectiveStartDate) ||
+    isInvalidDate(effectiveEndDate) ||
+    effectiveStartDate > effectiveEndDate
+  ) {
+    effectiveStartDate = currentMonthStart;
+    effectiveEndDate = currentMonthEnd;
+  }
 
   const leadsBySource = await db.lead.groupBy({
     where: {
@@ -306,7 +336,7 @@ export async function getLeadsBySource(
         lte: effectiveEndDate,
       },
     },
-    by: ['source'],
+    by: ["source"],
     _count: {
       id: true,
     },
@@ -327,7 +357,7 @@ export const getAverageConversionTime = async (
   const convertedColumn = await db.column.findFirst({
     where: {
       companyId: companyId,
-      title: 'Converted',
+      title: "Converted",
     },
     select: {
       id: true,
@@ -421,7 +451,7 @@ export const getAverageTimeToContact = async (
   const ongoingColumn = await db.column.findFirst({
     where: {
       companyId: await getCompanyId(),
-      title: 'Ongoing',
+      title: "Ongoing",
     },
     select: {
       id: true,
@@ -468,7 +498,7 @@ export const getLeadsLost = async (
   const lostColumn = await db.column.findFirst({
     where: {
       companyId: await getCompanyId(),
-      title: 'Lead Lost',
+      title: "Lead Lost",
     },
     select: { id: true },
   });
@@ -570,13 +600,13 @@ async function getCustomRangeGrowthRates(
   timezone: string
 ) {
   // For same-day selections, use previous day as comparison
-  if (moment(startDate).isSame(endDate, 'day')) {
+  if (moment(startDate).isSame(endDate, "day")) {
     const previousEndDate = moment(startDate)
-      .subtract(1, 'millisecond')
+      .subtract(1, "millisecond")
       .toDate();
     const previousStartDate = moment(startDate)
-      .subtract(1, 'day')
-      .startOf('day')
+      .subtract(1, "day")
+      .startOf("day")
       .toDate();
 
     // Get metrics for both periods
@@ -648,7 +678,7 @@ async function getCustomRangeGrowthRates(
   } else {
     const duration = moment(endDate).diff(startDate);
     const previousEndDate = moment(startDate)
-      .subtract(1, 'millisecond')
+      .subtract(1, "millisecond")
       .toDate();
     const previousStartDate = moment(previousEndDate)
       .subtract(duration)

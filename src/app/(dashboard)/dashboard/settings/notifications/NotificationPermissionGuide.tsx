@@ -4,8 +4,8 @@ import {
   DialogPortal,
 } from "@/components/Dialog";
 import { Button } from "@/components/ui/button";
+import { CircleX } from "lucide-react";
 import Image from "next/image";
-import { FiX } from "react-icons/fi";
 // import permissionGuideImage from "@/public/images/notification-permission.png";
 
 export default function NotificationPermissionGuide({
@@ -24,7 +24,7 @@ export default function NotificationPermissionGuide({
               className="absolute right-4 top-4 text-gray-500 hover:text-gray-700"
               aria-label="Close"
             >
-              <FiX className="h-5 w-5" />
+              <CircleX className="h-5 w-5" />
             </button>
 
             <h2 className="mb-4 pr-6 text-xl font-semibold text-gray-800">

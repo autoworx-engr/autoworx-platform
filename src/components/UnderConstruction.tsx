@@ -1,16 +1,15 @@
 import { Card } from "@/components/ui/card";
 import { INFO_EMAIL } from "@/lib/consts";
+import { Construction, Home, Mail } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { FaHome } from "react-icons/fa";
-import { LuConstruction, LuMail } from "react-icons/lu";
 
 export default function UnderConstruction() {
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-gradient-to-br from-white to-gray-100 p-4">
       <Card className="w-full max-w-3xl space-y-8 p-6 md:p-12">
         <div className="space-y-4 text-center">
-          <LuConstruction className="mx-auto h-16 w-16 text-[#00b8b0]" />
+          <Construction className="mx-auto h-16 w-16 text-[#00b8b0]" />
           <h1 className="bg-gradient-to-r from-[#00b8b0] to-[#0098da] bg-clip-text text-4xl font-bold tracking-tight text-transparent md:text-5xl">
             Under Construction
           </h1>
@@ -22,7 +21,7 @@ export default function UnderConstruction() {
 
         <div className="mx-auto grid max-w-2xl gap-6 md:grid-cols-1">
           <div className="space-y-2 rounded-lg border border-gray-200 p-4 text-center">
-            <LuMail className="mx-auto h-6 w-6 text-[#00b8b0]" />
+            <Mail className="mx-auto h-6 w-6 text-[#00b8b0]" />
             <p className="text-gray-600">Email us at</p>
             <p className="break-all text-lg font-semibold">{INFO_EMAIL}</p>
           </div>
@@ -42,7 +41,7 @@ export default function UnderConstruction() {
             href="/"
             className="mx-auto flex w-fit items-center gap-2 rounded-lg bg-gradient-to-r from-[#00b8b0] to-[#0098da] px-10 py-3 text-white transition-opacity hover:opacity-90"
           >
-            <FaHome />
+            <Home />
             Go Home
           </Link>
         </div>

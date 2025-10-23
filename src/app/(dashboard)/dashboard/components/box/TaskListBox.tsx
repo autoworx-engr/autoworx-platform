@@ -1,7 +1,6 @@
 "use client";
 import TaskCreateOrEdit from "@/components/task/TaskCreateOrEdit";
 import useTasksQueryForDashboard from "@/hooks/query-hook/useTasksQueryForDashboard";
-import { FaPlus } from "react-icons/fa";
 import BoxTitle from "./BoxTitle";
 import Task from "./Task";
 import { queryKeys } from "@/lib/queryKeys";
@@ -9,6 +8,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { usePermissionStore } from "@/stores/permissionStore";
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
 import { useGetCompanyPermissions } from "@/hooks/feature-permissions/useGetCompanyPersmissions";
+import { Plus } from "lucide-react";
 
 export default function TaskListBox() {
   const { data: tasks, isLoading, isError } = useTasksQueryForDashboard();
@@ -42,9 +42,9 @@ export default function TaskListBox() {
       (permission: any) => permission.permission_name === "calendar"
     )?.enabled !== false;
 
-  const shouldHideRedirectLink =
-    permissions?.role !== "Admin" &&
-    companyEmployeePermissions?.calendarTask === false;
+  // const shouldHideRedirectLink =
+  //   permissions?.role !== "Admin" &&
+  //   companyEmployeePermissions?.calendarTask === false;
 
   const hasTaskPermission =
     calendarAndTaskFeatureEnabled &&
@@ -88,11 +88,7 @@ export default function TaskListBox() {
       >
         <BoxTitle
           title="Task List"
-          redirectLink={
-            !shouldHideRedirectLink && calendarAndTaskFeatureEnabled
-              ? "/dashboard/task/day"
-              : undefined
-          }
+          redirectLink={hasTaskPermission ? "/dashboard/task/day" : undefined}
         />
         <div className="thin-scrollbar my-2 flex max-h-64 flex-1 flex-col space-y-2 overflow-x-hidden lg:max-h-full">
           {content}
@@ -103,7 +99,7 @@ export default function TaskListBox() {
             <TaskCreateOrEdit
               triggerIcon={
                 <button className="flex w-full min-w-32 items-center justify-center gap-1 rounded-md bg-blue-600 px-2 py-2 text-[15px] text-white max-[1300px]:py-1">
-                  <FaPlus className="" />
+                  <Plus className="" />
                   <span className="block">Add Task</span>
                 </button>
               }

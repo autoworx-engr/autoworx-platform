@@ -38,7 +38,7 @@ const ZapForm = ({ company }: ZapFormProps) => {
     vehicle_make: "",
     vehicle_model: "",
     others: "",
-    service: "" as string | { id: string | number; title: string },
+    multiServices: [] as { id: string | number; title: string }[],
     source: "",
     token: "",
   });
@@ -55,10 +55,10 @@ const ZapForm = ({ company }: ZapFormProps) => {
   }: any = useGetMake();
   const { data: models, isError: isModelsFetchError }: any =
     useGetModelsByYearAndMake(formData.vehicle_year!, formData.vehicle_make!);
-  const [selectedService, setSelectedService] = useState<{
-    id: string | number;
-    title: string;
-  } | null>(null);
+  // const [selectedService, setSelectedService] = useState<{
+  //   id: string | number;
+  //   title: string;
+  // } | null>(null);
   const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -156,18 +156,9 @@ const ZapForm = ({ company }: ZapFormProps) => {
   };
 
   const handleServiceChange = (
-    value: string | { id: string | number; title: string }
+    value: { id: string | number; title: string }[]
   ) => {
-    if (typeof value === "object") {
-      // Store the full object separately
-      setSelectedService(value);
-      // Store only the ID in formData
-      setFormData((prev) => ({ ...prev, service: value.id.toString() }));
-    } else {
-      // If it's just a string (ID), store it directly
-      setSelectedService(null);
-      setFormData((prev) => ({ ...prev, service: value }));
-    }
+    setFormData((prev) => ({ ...prev, multiServices: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -176,7 +167,13 @@ const ZapForm = ({ company }: ZapFormProps) => {
     setFormStatus({ message: "", type: null });
 
     try {
-      const serviceTitle = selectedService?.title || formData.service;
+      const serviceTitle =
+        formData.multiServices && formData.multiServices.length > 0
+          ? formData.multiServices
+              .map((s: { title: string }) => s.title)
+              .join(", ")
+          : "";
+
       // Use 'others' as vehicle info if filled, else use year/make/model
       let vehicleInfo = "";
       if (formData.others) {
@@ -201,6 +198,7 @@ const ZapForm = ({ company }: ZapFormProps) => {
           email: formData.email,
           phone: formData.phone,
           oppurtunity_source: opportunitySource,
+          multiServices: formData?.multiServices,
         }),
       });
 
@@ -220,7 +218,7 @@ const ZapForm = ({ company }: ZapFormProps) => {
           vehicle_make: "",
           vehicle_model: "",
           others: "",
-          service: "",
+          multiServices: [],
         });
       } else {
         setFormStatus({
@@ -385,9 +383,10 @@ const ZapForm = ({ company }: ZapFormProps) => {
             <div className="space-y-2">
               {formData.token ? (
                 <ServiceSelectAndAddPublic
-                  value={formData.service}
+                  value={formData.multiServices}
                   onChange={handleServiceChange}
                   token={formData.token}
+                  companyId={company?.companyId}
                 />
               ) : (
                 <div className="w-full rounded-sm border border-slate-400 bg-background px-2 py-0.5 leading-6 outline-none text-gray-400">

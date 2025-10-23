@@ -6,7 +6,7 @@ import { FEATURE_PERMISSIONS_MAP } from "@/lib/routePermissionsMap";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { FaBars, FaTimes } from "react-icons/fa";
+import { Menu, X } from "lucide-react";
 
 type Props = {};
 
@@ -155,7 +155,11 @@ const Sidebar = (props: Props) => {
       {" "}
       <div className="block lg:hidden">
         <button className={`ml-5 text-xl`} onClick={toggleSidebar}>
-          {isSidebarOpen ? <FaTimes /> : <FaBars />}
+          {isSidebarOpen ? (
+            <X size={20} strokeWidth={3} />
+          ) : (
+            <Menu size={24} strokeWidth={3} />
+          )}
         </button>
         <div
           ref={sidebarRef}
@@ -171,7 +175,11 @@ const Sidebar = (props: Props) => {
         >
           <div className="flex items-end justify-end align-middle">
             <button className="text-end text-xl" onClick={toggleSidebar}>
-              {isSidebarOpen ? <FaTimes /> : <FaBars />}
+              {isSidebarOpen ? (
+                <X size={20} strokeWidth={3} />
+              ) : (
+                <Menu size={24} strokeWidth={3} />
+              )}
             </button>
           </div>
 

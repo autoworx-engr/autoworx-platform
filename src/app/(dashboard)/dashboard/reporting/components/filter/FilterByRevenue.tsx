@@ -1,9 +1,6 @@
 "use client";
 import { cn } from "@/lib/cn";
-
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-
-import { IoMdArrowDropdown } from "react-icons/io";
 import { TFilterModalState } from "../../(report)/revenue/FilterHeader";
 import { useEffect, useRef } from "react";
 type TProps = {
@@ -70,13 +67,22 @@ export default function FilterByRevenue({
         onClick={() => toggleModal(modalName)}
         className={cn(
           `flex w-full items-center justify-center gap-2 border border-gray-400 p-1 px-5 text-sm text-gray-400 hover:border-blue-600 md:w-44`,
-          activeModal ? "rounded-tl-sm rounded-tr-sm" : "rounded-sm",
+          activeModal ? "rounded-tl-sm rounded-tr-sm" : "rounded-sm"
         )}
       >
         <span className="truncate">
           {selectedItem ? selectedItem : "Filter"}
         </span>
-        <IoMdArrowDropdown />
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          width="14"
+          height="14"
+          aria-hidden="true"
+          role="img"
+        >
+          <path d="M12 15.5L5 8.5h14l-7 7z" fill="currentColor" />
+        </svg>
       </button>
       {activeModal[modalName as keyof TFilterModalState] && (
         <div

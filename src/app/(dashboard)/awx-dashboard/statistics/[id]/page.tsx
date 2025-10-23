@@ -2,10 +2,10 @@ import ChartData from "@/app/(dashboard)/dashboard/components/ChartData";
 import Avatar from "@/components/Avatar";
 import { db } from "@/lib/db";
 import Link from "next/link";
-import { IoIosArrowBack } from "react-icons/io";
 import CompanyReportSection from "../../components/CompanyReportSection";
 import FeaturePermission from "../../components/FeaturePermission";
 import { ConfigureCommunicationHub } from "./ConfigureCommunicationHub";
+import { ArrowLeft } from "lucide-react";
 
 type propsType = {
   params: {
@@ -61,7 +61,7 @@ const Page = async (props: propsType) => {
             <div>
               <div className="flex items-center gap-2">
                 <Link href="/awx-dashboard">
-                  <IoIosArrowBack className="text-lg" />
+                  <ArrowLeft className="text-lg" />
                 </Link>
                 <h3 className="my-4 text-lg font-bold md:text-xl lg:text-2xl">
                   Company Details

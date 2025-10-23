@@ -2,9 +2,9 @@
 
 import { useState, useRef, useEffect } from "react";
 import type { ReactNode } from "react";
-import { FaChevronDown } from "react-icons/fa6";
 import { cn } from "@/lib/cn";
 import { sentenceCase } from "change-case";
+import { ChevronDown } from "lucide-react";
 
 export type SelectorProps = {
   label?: ReactNode;
@@ -19,7 +19,7 @@ export type SelectorProps = {
   placeholder?: string;
   isSearch?: boolean;
   disabled?: boolean;
-   isClear?:boolean;
+  isClear?: boolean;
 };
 
 export function SelectorWithSearch({
@@ -87,7 +87,7 @@ export function SelectorWithSearch({
 
   const filteredOptions = searchTerm
     ? normalizedOptions.filter((opt) =>
-        opt.title.toLowerCase().includes(searchTerm.toLowerCase()),
+        opt.title.toLowerCase().includes(searchTerm.toLowerCase())
       )
     : normalizedOptions;
 
@@ -109,18 +109,16 @@ export function SelectorWithSearch({
     e.stopPropagation();
   };
 
-   const handleClear = () => {
+  const handleClear = () => {
     setSelectedValue("");
     setSearchTerm("");
     setIsOpen(false);
     onChange?.("");
   };
 
-  const selectedLabel = normalizedOptions?.find(
-    (opt) => opt?.id?.toString() === selectedValue,
-  )?.title || (selectedValue ? selectedValue : "");
-
-
+  const selectedLabel =
+    normalizedOptions?.find((opt) => opt?.id?.toString() === selectedValue)
+      ?.title || (selectedValue ? selectedValue : "");
 
   return (
     <div className={cn("block", rootClassName)} ref={dropdownRef}>
@@ -134,7 +132,7 @@ export function SelectorWithSearch({
           className={cn(
             "flex w-full items-center justify-between rounded-sm border border-slate-400 bg-background px-2 py-0.5 text-left leading-6 outline-none",
             error && "border-red-500 focus:border-red-500",
-            disabled && "cursor-not-allowed bg-gray-100 opacity-50",
+            disabled && "cursor-not-allowed bg-gray-100 opacity-50"
           )}
           onClick={() => !disabled && setIsOpen(!isOpen)}
           id={name}
@@ -143,7 +141,7 @@ export function SelectorWithSearch({
           <span className={selectedLabel ? "" : "text-gray-400"}>
             {selectedLabel || placeholder}
           </span>
-          <FaChevronDown className="text-gray-500" />
+          <ChevronDown className="text-gray-500" />
         </button>
 
         {isOpen && (
@@ -171,7 +169,7 @@ export function SelectorWithSearch({
                     className={cn(
                       "cursor-pointer px-2 py-1 hover:bg-slate-100",
                       selectedValue === opt?.id.toString() &&
-                        "bg-blue-50 text-blue-700",
+                        "bg-blue-50 text-blue-700"
                     )}
                     onClick={() => handleSelect(opt?.id.toString())}
                   >
@@ -191,7 +189,7 @@ export function SelectorWithSearch({
                 </div>
               )}
             </div>
-             {isClear && value && (
+            {isClear && value && (
               <div className="border-t border-slate-200 px-2 py-1">
                 <button
                   onClick={handleClear}

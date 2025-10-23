@@ -12,9 +12,9 @@ import { errorToast, successToast } from "@/lib/toast";
 import Slider from "@mui/material/Slider";
 import { Company } from "@prisma/client";
 import debounce from "lodash.debounce";
+import { Search } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
-import { IoSearchOutline } from "react-icons/io5";
 function formatDate(date: Date) {
   const options: Intl.DateTimeFormatOptions = {
     year: "numeric",
@@ -331,7 +331,7 @@ const NetworksPage = ({
             </h3>
             <div className="relative h-[35px] w-full rounded-md border border-gray-300 text-gray-400">
               <span className="absolute left-2 top-1/2 -translate-y-1/2 transform">
-                <IoSearchOutline />
+                <Search size={18} />
               </span>
               <input
                 name="search"

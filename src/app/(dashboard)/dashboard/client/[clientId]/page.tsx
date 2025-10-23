@@ -6,12 +6,11 @@ import { db } from "@/lib/db";
 import { Vehicle } from "@prisma/client";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { IoArrowBack, IoSearchOutline } from "react-icons/io5";
 import EditClient from "../../client/EditClient";
 import ClientInformation from "../ClientInformation";
 import OrderList from "../OrderList";
 import VehicleList from "../VehicleList";
-
+import { ArrowLeft, Search } from "lucide-react";
 
 type Props = {
   params: {
@@ -33,7 +32,7 @@ const Page = async (props: Props) => {
     include: {
       source: true,
       tag: {
-        where: { type: "CLIENT" }
+        where: { type: "CLIENT" },
       },
     },
   });
@@ -64,18 +63,21 @@ const Page = async (props: Props) => {
   return (
     <div className="mb-2 h-fit p-2">
       <div className="">
-        <div className="w-fit rounded border p-1.5 md:hidden">
-          <Link href="/dashboard/client">
-            <IoArrowBack className="text-lg" />
+        <div className="flex items-center gap-5 w-fit ">
+          <Link
+            href="/dashboard/client"
+            className="rounded border p-1.5 md:hidden"
+          >
+            <ArrowLeft className="w-5 h-5" />
           </Link>
+          <Title>Client</Title>
         </div>
-        <Title>Client</Title>
 
         <div className="my-4 flex flex-col justify-between lg:flex-row lg:items-center">
           <div className="flex items-center gap-x-8 bg-background">
             <div className="flex w-full items-center gap-x-2 rounded-md border border-gray-300 px-4 py-1 text-gray-400 lg:w-[500px]">
               <span className="">
-                <IoSearchOutline />
+                <Search className="w-5 h-5" />
               </span>
               <input
                 name="search"
@@ -84,15 +86,6 @@ const Page = async (props: Props) => {
                 placeholder="Search"
               />
             </div>
-          </div>
-          <div className="mt-2 self-end">
-            <NewCustomer
-              buttonElement={
-                <button className="rounded-md bg-[#6571FF] p-2 px-5 text-white">
-                  + Add New Client
-                </button>
-              }
-            />
           </div>
         </div>
       </div>

@@ -47,10 +47,10 @@ export default function UserMessageBox({
   useEffect(() => {
     const fetchMessages = async function () {
       const findUserMessage = await getUserMessagesById(
-        parseInt(session?.user?.id!),
+        parseInt(session?.user?.id!)
       );
       const userMessages = findUserMessage.filter(
-        (m) => m.from === user.id || m.to === user.id,
+        (m) => m.from === user.id || m.to === user.id
       );
 
       setMessages(
@@ -63,7 +63,7 @@ export default function UserMessageBox({
             requestEstimate: m.requestEstimate,
             createdAt: m.createdAt,
           };
-        }),
+        })
       );
     };
     fetchMessages();
@@ -137,7 +137,7 @@ export default function UserMessageBox({
               );
             }
           }
-        },
+        }
       );
     return () => {
       channel.unbind("message");

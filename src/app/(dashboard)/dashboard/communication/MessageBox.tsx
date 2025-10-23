@@ -1,12 +1,7 @@
-import { FaTimes } from "react-icons/fa";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { cn } from "@/lib/cn";
 import Image from "next/image";
 import { Message as TMessage } from "./internal/UsersArea";
-import { FiMessageCircle } from "react-icons/fi";
-import { IoIosArrowBack, IoMdSend, IoMdSettings } from "react-icons/io";
-import { TiDeleteOutline } from "react-icons/ti";
-import { MdModeEdit, MdCheck } from "react-icons/md";
 import { sendType } from "@/types/Chat";
 import { Attachment, Group, User } from "@prisma/client";
 import { deleteUserFromGroup } from "@/actions/communication/internal/deleteUserFromGroup";
@@ -25,8 +20,15 @@ import { updateChatTrack } from "@/actions/communication/internal/updateChatTrac
 import { format } from "date-fns";
 import { formatDate } from "./client/_component/conversations/mailgun/MailgunConversation";
 import { renameGroup } from "@/actions/communication/internal/renameGroup";
-import { SlimInput } from "@/components/SlimInput";
-// import Message from "./Message";
+import {
+  ArrowLeft,
+  CircleCheckBig,
+  CircleX,
+  SendHorizontal,
+  Settings,
+  SquarePen,
+  X,
+} from "lucide-react";
 
 type TSection = "collaboration" | "internal";
 
@@ -276,17 +278,17 @@ export default function MessageBox({
         <p className="text-sm">
           {fromGroup ? "Group Message" : "User Message"}
         </p>
-        <FaTimes
-          className="cursor-pointer text-sm"
+        <X
+          className="cursor-pointer w-5 h-5"
           onClick={fromGroup ? handleGroupClose : handleUserClose}
         />
       </div>
 
       {/* Chat Header */}
-      <div className="flex items-center justify-between gap-2 bg-[#006D77] p-3 text-white sm:rounded-sm">
+      <div className="flex items-center justify-between gap-2 bg-gradient-to-r from-[#006D77] to-[#008c99] p-3 text-white sm:rounded-sm">
         <div className="flex items-center gap-1">
           <button onClick={handleBack} className="flex-shrink-0 sm:hidden">
-            <IoIosArrowBack size={20} className="font-bold" />
+            <ArrowLeft size={20} className="font-bold" />
           </button>
           {fromGroup ? (
             <div className="flex items-center">
@@ -338,7 +340,7 @@ export default function MessageBox({
                 <>
                   {isGroupNameEdited ? (
                     <>
-                      <MdCheck
+                      <CircleCheckBig
                         className="ml-3 size-6 cursor-pointer"
                         onClick={async () => {
                           setIsGroupNameEdited(false);
@@ -352,7 +354,7 @@ export default function MessageBox({
                     </>
                   ) : (
                     <>
-                      <MdModeEdit
+                      <SquarePen
                         className="ml-3 size-6 cursor-pointer"
                         onClick={() => setIsGroupNameEdited(true)}
                       />
@@ -360,7 +362,7 @@ export default function MessageBox({
                   )}
                 </>
               ) : (
-                <IoMdSettings
+                <Settings
                   onClick={() => setOpenSettings(true)}
                   className="ml-3 size-6 cursor-pointer"
                 />
@@ -388,9 +390,9 @@ export default function MessageBox({
                 className="flex items-center justify-between space-x-1 rounded-full bg-[#006D77] px-2 py-1 text-white"
               >
                 <p className="text-sm">{user.firstName}</p>
-                <TiDeleteOutline
+                <CircleX
                   onClick={() => handleShowDeleteConfirmation(user)}
-                  className="size-5 cursor-pointer"
+                  className="size-4 cursor-pointer"
                 />
               </div>
             ))}
@@ -401,9 +403,9 @@ export default function MessageBox({
             />
           </div>
           <p>
-            <TiDeleteOutline
+            <CircleX
               onClick={() => setOpenSettings(false)}
-              className="size-10 cursor-pointer text-[#006D77]"
+              className="size-8 cursor-pointer text-[#006D77]"
             />
           </p>
         </div>
@@ -466,7 +468,7 @@ export default function MessageBox({
               className="rounded-full bg-red-500/10 p-1.5 text-red-600 hover:bg-red-500/20 transition-colors"
               aria-label="Remove all attachments"
             >
-              <TiDeleteOutline size={22} />
+              <CircleX size={20} />
             </button>
           </div>
 
@@ -491,7 +493,7 @@ export default function MessageBox({
                     className="absolute -right-1 -top-1 opacity-0 group-hover:opacity-100 rounded-full bg-white p-1 text-gray-700 shadow-md hover:text-red-500 hover:shadow-lg transition-all z-10 border border-gray-200"
                     aria-label={`Remove ${attachmentFile.name}`}
                   >
-                    <TiDeleteOutline size={16} />
+                    <CircleX size={14} />
                   </button>
 
                   {/* File preview container */}
@@ -590,7 +592,7 @@ export default function MessageBox({
         />
         <button disabled={pending} className="" type="submit">
           {/* <Image src="/icons/Send.svg" width={20} height={20} alt="send" /> */}
-          <IoMdSend className="size-6 text-[#006D77]" />
+          <SendHorizontal className="text-[#006D77]" />
         </button>
       </form>
 

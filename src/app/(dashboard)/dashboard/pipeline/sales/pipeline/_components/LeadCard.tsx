@@ -9,12 +9,11 @@ import { cn } from "@/lib/cn";
 import { LeadWithSalesUser } from "@/types/invoiceLead";
 import { Popconfirm } from "antd";
 import { memo, useState } from "react";
-import { MdCancel } from "react-icons/md";
-import { FaExchangeAlt } from "react-icons/fa";
 import { errorToast, successToast } from "@/lib/toast";
 import ColumnDropdown from "./ColumnDropdown";
 import LeadActions from "./LeadActions";
 import LeadTags from "./LeadTags";
+import { ArrowRightLeft, CircleX, X } from "lucide-react";
 
 type LeadCardProps = {
   leadData: LeadWithSalesUser;
@@ -84,7 +83,7 @@ export default memo(function LeadCard({
           draggableId: leadData.id.toString(),
         },
       });
-      
+
       successToast("Lead moved successfully");
       await updateLeadColumn(leadData.id, parseInt(newColumnId));
       setShowColumnSelect(false);
@@ -122,7 +121,11 @@ export default memo(function LeadCard({
             className="cursor-pointer hover:text-blue-600 transition-colors md:hidden text-xl"
             title="Move to different column"
           >
-            <FaExchangeAlt style={{ color: "#6571FFed" }} />
+            <ArrowRightLeft
+              size={24}
+              strokeWidth={2}
+              style={{ color: "#6571FFed" }}
+            />
           </button>
 
           <Popconfirm
@@ -134,11 +137,13 @@ export default memo(function LeadCard({
             className="disabled:cursor-not-allowed disabled:opacity-50"
             onConfirm={() => handleRemoveLead(leadData.id, leadData?.columnId!)}
           >
-            <MdCancel
-              fontSize="medium"
-              className="-mr-4 -mt-10 cursor-pointer text-2xl"
-              style={{ color: "#6571FFed" }}
-            />
+            <div className="-mr-4 -mt-10 bg-[#6571FFed] rounded-full">
+              <X
+                size={18}
+                strokeWidth={3}
+                className=" cursor-pointer text-white p-0.5"
+              />
+            </div>
           </Popconfirm>
         </div>
       </div>

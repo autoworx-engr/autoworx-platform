@@ -16,8 +16,6 @@ import { useFormErrorStore } from "@/stores/form-error";
 import { useListsStore } from "@/stores/lists";
 import { Client, Source, Tag } from "@prisma/client";
 import { useEffect, useState, useTransition } from "react";
-import { FaTimes } from "react-icons/fa";
-import { RxAvatar } from "react-icons/rx";
 import { deleteSource } from "../../actions/source/deleteSource";
 import { getSources } from "../../actions/source/getSources";
 import NewClientSource from "./NewClientSource";
@@ -25,6 +23,7 @@ import Submit from "../Submit";
 import { RotatingLines } from "react-loader-spinner";
 import { stateStore } from "@/stores/stateStore";
 import { usePathname } from "next/navigation";
+import { CircleUserRound, X } from "lucide-react";
 
 export default function NewCustomer({
   buttonElement,
@@ -65,7 +64,7 @@ export default function NewCustomer({
     await deleteSource(id);
 
     setClientSources((prev: Source[]) => {
-      return prev.filter(source => source.id !== id);
+      return prev.filter((source) => source.id !== id);
     });
 
     if (clientSource?.id === id) {
@@ -196,7 +195,7 @@ export default function NewCustomer({
   return (
     <Dialog
       open={isClientOpen}
-      onOpenChange={isClientOpen => {
+      onOpenChange={(isClientOpen) => {
         if (!isClientOpen) handleClose();
         setIsClientOpen(isClientOpen);
       }}
@@ -236,7 +235,7 @@ export default function NewCustomer({
                 id="profilePicture"
                 hidden
                 accept="image/*"
-                onChange={e => {
+                onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) {
                     setProfilePic(file);
@@ -245,7 +244,7 @@ export default function NewCustomer({
               />
               <span className="hidden lg:block">Upload a profile picture</span>
               <span className="lg:hidden">Upload picture</span>{" "}
-              <RxAvatar size={48} />
+              <CircleUserRound size={48} strokeWidth={1.5} />
             </label>
           )}
         </div>
@@ -259,10 +258,10 @@ export default function NewCustomer({
               label="First Name"
               required
               value={clientInfo.firstName}
-              onChange={e => {
+              onChange={(e) => {
                 const value = e.target.value;
                 // Always update the state to allow normal editing
-                setClientInfo(prev => ({ ...prev, firstName: value }));
+                setClientInfo((prev) => ({ ...prev, firstName: value }));
                 // Clear any existing errors when user is typing
                 clearError();
               }}
@@ -271,9 +270,9 @@ export default function NewCustomer({
               name="lastName"
               required={false}
               value={clientInfo.lastName}
-              onChange={e => {
+              onChange={(e) => {
                 const value = e.target.value;
-                setClientInfo(prev => ({ ...prev, lastName: value }));
+                setClientInfo((prev) => ({ ...prev, lastName: value }));
               }}
             />
           </div>
@@ -284,9 +283,9 @@ export default function NewCustomer({
               label="Email"
               value={clientInfo.email}
               // required
-              onChange={e => {
+              onChange={(e) => {
                 const value = e.target.value;
-                setClientInfo(prev => ({ ...prev, email: value }));
+                setClientInfo((prev) => ({ ...prev, email: value }));
 
                 // Validate on input change
                 // if (!value.trim()) {
@@ -304,7 +303,7 @@ export default function NewCustomer({
               label="Mobile"
               required
               value={mobile}
-              onChange={e => {
+              onChange={(e) => {
                 const value = e.target.value;
                 // Always update the state to allow editing
                 setMobile(value);
@@ -320,9 +319,9 @@ export default function NewCustomer({
               rootClassName="flex-1"
               name="address"
               required={false}
-              onChange={e => {
+              onChange={(e) => {
                 const value = e.target.value;
-                setClientInfo(prev => ({ ...prev, address: value }));
+                setClientInfo((prev) => ({ ...prev, address: value }));
               }}
             />
           </div>
@@ -332,24 +331,24 @@ export default function NewCustomer({
               value={clientInfo.city}
               name="city"
               required={false}
-              onChange={e => {
-                setClientInfo(prev => ({ ...prev, city: e.target.value }));
+              onChange={(e) => {
+                setClientInfo((prev) => ({ ...prev, city: e.target.value }));
               }}
             />
             <SlimInput
               value={clientInfo.state}
               name="state"
               required={false}
-              onChange={e => {
-                setClientInfo(prev => ({ ...prev, state: e.target.value }));
+              onChange={(e) => {
+                setClientInfo((prev) => ({ ...prev, state: e.target.value }));
               }}
             />
             <SlimInput
               name="zip"
               value={clientInfo.zip}
               required={false}
-              onChange={e => {
-                setClientInfo(prev => ({ ...prev, zip: e.target.value }));
+              onChange={(e) => {
+                setClientInfo((prev) => ({ ...prev, zip: e.target.value }));
               }}
             />
           </div>
@@ -360,9 +359,9 @@ export default function NewCustomer({
               required={false}
               label="Company"
               value={clientInfo.customerCompany}
-              onChange={e => {
+              onChange={(e) => {
                 const value = e.target.value;
-                setClientInfo(prev => ({ ...prev, customerCompany: value }));
+                setClientInfo((prev) => ({ ...prev, customerCompany: value }));
               }}
             />
 
@@ -371,7 +370,7 @@ export default function NewCustomer({
               {/* TODO: use `Selector` component and make the hieght auto */}
               <SelectClientSource
                 clickabled={false}
-                label={clientSrc =>
+                label={(clientSrc) =>
                   clientSource ? clientSource.name : "Client Source"
                 }
                 newButton={
@@ -401,7 +400,7 @@ export default function NewCustomer({
                           deleteClientSource(clientSource.id);
                         }}
                       >
-                        <FaTimes />
+                        <X size={20} />
                       </button>
                     </div>
                   </div>

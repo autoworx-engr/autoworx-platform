@@ -44,10 +44,7 @@ export async function updateLabor({
       data: {
         name,
         categoryId,
-        notes,
-        hours,
         charge,
-        discount,
       },
     });
 
@@ -67,8 +64,8 @@ export async function updateLabor({
               laborId: id,
               tagId: tag.id,
             },
-          }),
-        ),
+          })
+        )
       );
     }
 

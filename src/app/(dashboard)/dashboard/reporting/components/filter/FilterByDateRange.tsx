@@ -5,8 +5,8 @@ import React, { useEffect, useRef, useState } from "react";
 import { DateRangePicker } from "react-date-range";
 import "react-date-range/dist/styles.css"; // main style file
 import "react-date-range/dist/theme/default.css"; // theme css file
-import { CiCalendar } from "react-icons/ci";
 import { TFilterModalState } from "../../(report)/revenue/FilterHeader";
+import { Calendar } from "lucide-react";
 type TProps = {
   startDate: string;
   endDate: string;
@@ -126,7 +126,7 @@ export default function FilterDateRange({
         <span className="truncate">
           {formatRange(state.selection.startDate, state.selection.endDate)}
         </span>
-        <CiCalendar />
+        <Calendar size={16} />
       </button>
 
       {activeModal[modalName as keyof TFilterModalState] && (

@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import UserComponent from "./User";
+import UserListSkeleton from "@/components/ui/UserListSkeleton";
 import { Task, User } from "@prisma/client";
 import { MinimizeButton } from "./MinimiseButton";
 import { useCalendarSidebarStore } from "@/stores/calendarSidebar";
 import { cn } from "@/lib/cn";
 import NewEmployee from "@/components/Lists/NewEmployee";
-import { FaUser } from "react-icons/fa";
+import { User as UserIcon } from "lucide-react";
 
 export default function Users({
   users,
@@ -26,7 +27,7 @@ export default function Users({
     const filteredUsers = users.filter((user) =>
       `${user.firstName} ${user.lastName}`
         .toLowerCase()
-        .includes(searchValue.toLowerCase()),
+        .includes(searchValue.toLowerCase())
     );
     setUsersToDisplay(filteredUsers);
   }
@@ -35,7 +36,7 @@ export default function Users({
     <div
       className={cn(
         "md:app-shadow relative mt-5 flex flex-grow flex-col gap-2 overflow-hidden rounded-[12px] md:bg-background",
-        minimized || "p-3",
+        minimized || "p-3"
       )}
     >
       <div>
@@ -70,7 +71,10 @@ export default function Users({
 
       <div className="thin-scrollbar my-2 flex-grow overflow-y-auto">
         {!minimized &&
-          (usersToDisplay.length > 0 ? (
+          // Show a skeleton while users prop is loading (undefined/null)
+          (!users ? (
+            <UserListSkeleton rows={6} />
+          ) : usersToDisplay.length > 0 ? (
             usersToDisplay.map((user, index) => {
               const isSelected = selectedUser === index;
 
@@ -98,7 +102,7 @@ export default function Users({
             })
           ) : (
             <div className="flex flex-col items-center justify-center py-10 text-center">
-              <FaUser className="mb-4 h-12 w-12 text-gray-400" />
+              <UserIcon className="mb-4 h-12 w-12 text-gray-400" />
               <h3 className="text-lg font-semibold text-gray-700 md:text-[#797979]">
                 No users found
               </h3>

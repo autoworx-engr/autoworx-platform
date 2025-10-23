@@ -3,8 +3,8 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@radix-ui/react-dropdown-menu";
+import { ChevronUp, Search } from "lucide-react";
 import React, { ChangeEvent, useEffect, useState } from "react";
-import { FaChevronDown, FaChevronUp, FaSearch } from "react-icons/fa";
 
 interface SelectorProps<T> {
   label: (item: T | null) => string;
@@ -80,7 +80,10 @@ export default function Selector<T>({
           }}
         >
           <div className="relative m-2">
-            <FaSearch className="absolute left-2 top-1/2 -translate-y-1/2 transform text-[#797979]" />
+            <Search
+              size={18}
+              className="absolute left-2 top-1/2 -translate-y-1/2 transform text-[#797979]"
+            />
             <input
               type="text"
               placeholder="Search"
@@ -88,7 +91,10 @@ export default function Selector<T>({
               onChange={handleSearchChange}
             />
             <button onClick={handleCloseDropdown}>
-              <FaChevronUp className="absolute right-2 top-1/2 -translate-y-1/2 transform text-[#797979]" />
+              <ChevronUp
+                size={16}
+                className="absolute right-2 top-1/2 -translate-y-1/2 transform text-[#797979]"
+              />
             </button>
           </div>
 

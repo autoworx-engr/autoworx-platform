@@ -11,13 +11,11 @@ import React, {
   useRef,
 } from "react";
 import {
-  getLeads,
   getLeadsWithCountOptimized as getLeadsWithCount,
   updateLeadColumn,
 } from "@/actions/pipelines/getLeads";
 import { getCompanyUser } from "@/actions/user/getCompanyUser";
 import DateRange from "@/components/DateRange";
-import { OptimizedLoading } from "@/components/OptimizedLoading";
 import ResponsiveSalesPipelineCard from "@/components/mobile-responsive/pipeline/ResponsiveSalesPipelineCard";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { errorToast, successToast } from "@/lib/toast";
@@ -31,17 +29,14 @@ import { customAlphabet } from "nanoid";
 import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
-import { FaChevronDown } from "react-icons/fa";
-import { IoIosSearch } from "react-icons/io";
-import { PiWechatLogoLight } from "react-icons/pi";
-import AddLeads from "./AddLeads";
 import AppointmentBtn from "./AppointmentBtn";
 import { NewAppointmentPipeline } from "./NewAppointmentPipeline";
 import SelectComponent from "./Select";
 import TaskForm from "./TaskForm";
-import { TableCell, TableRow } from "@/components/ui/table";
-import { createDraftEstimate } from "@/actions/estimate/invoice/createDraft";
 import { createLeadDraftEstimate } from "@/actions/pipelines/createLeadDraftEstimate";
+import { ChevronDown, MessageCircleMore, Search } from "lucide-react";
+import { LeadsTableSkeleton } from "./LeadsTableSkeleton";
+import { LeadsMobileSkeleton } from "./LeadsMobileSkeleton";
 
 type TProps = {
   salesColumn: Column[];
@@ -519,8 +514,8 @@ const Leads = ({ salesColumn }: TProps) => {
                               href={`/dashboard/communication/client/${lead?.client?.id}?source=lead`}
                               className="group relative"
                             >
-                              <PiWechatLogoLight
-                                size={21}
+                              <MessageCircleMore
+                                size={20}
                                 className="duration-300 hover:text-[#6571FF]"
                               />
                               <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
@@ -629,12 +624,17 @@ const Leads = ({ salesColumn }: TProps) => {
           </div>
         </>
       ) : loading ? (
-        <div
-          className="flex w-full items-center justify-center"
-          style={{ height: "calc(100vh - 300px)" }}
-        >
-          <Spin size="large" />
-        </div>
+        // <div
+        //   className="flex w-full items-center justify-center"
+        //   style={{ height: "calc(100vh - 300px)" }}
+        // >
+        //   <Spin size="large" />
+        // </div>
+
+        <>
+         <LeadsTableSkeleton/>
+         <LeadsMobileSkeleton/>
+        </>
       ) : (
         <div className="my-20 flex w-full justify-center text-gray-500">
           No leads found.
@@ -685,7 +685,7 @@ const SearchTerms = React.memo(function SearchTerms({
 
   return (
     <div className="relative min-w-0 flex-1">
-      <IoIosSearch className="absolute left-3 top-3 text-gray-400" />
+      <Search size={20} className="absolute left-3 top-2.5 text-gray-400" />
       <input
         type="text"
         value={search}
@@ -770,7 +770,7 @@ const DropdownMenuDemo = React.memo(function DropdownMenuDemo({
           aria-label="Customise options"
         >
           <span>Filter</span>
-          <FaChevronDown />
+          <ChevronDown />
         </button>
       </DropdownMenu.Trigger>
 

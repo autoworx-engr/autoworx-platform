@@ -1,11 +1,14 @@
 "use client";
 import { Bar, Label, Tooltip, XAxis, YAxis } from "recharts";
 import BarChartComponent from "@/app/(dashboard)/dashboard/reporting/components/BarChartComponent";
+
 import { useServerGet } from "@/hooks/useServerGet";
 import { getLeadInfo } from "@/actions/dashboard/data/getLeadInfo";
 import { useEffect, useState } from "react";
 import { endOfMonth, format, startOfMonth } from "date-fns";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
+import useGetLeadInfoQuery from "../_hook/useGetLeadInfoQuery";
+import LeadsChartSkeleton from "@/components/ui/LeadsChartSkeleton";
 
 type TProps = {
   searchParams: {
@@ -35,19 +38,24 @@ const CustomLabel = (props: any) => {
 };
 export default function InvoicesBarChartContainer({ searchParams }: TProps) {
   const [startDate, setStartDate] = useState<string | undefined>(
-    searchParams?.startDate,
+    searchParams?.startDate
   );
   const [endDate, setEndDate] = useState<string | undefined>(
-    searchParams?.endDate,
+    searchParams?.endDate
   );
-  const [isFiltered, setIsFiltered] = useState<boolean>(false);
+  // const [isFiltered, setIsFiltered] = useState<boolean>(false);
+
+  const { data } = useGetLeadInfoQuery({
+    startDate: startDate ? decodeURIComponent(startDate) : undefined,
+    endDate: endDate ? decodeURIComponent(endDate) : undefined,
+  });
 
   // Update local state when searchParams change
   useEffect(() => {
     if (searchParams?.startDate && searchParams?.endDate) {
       setStartDate(searchParams.startDate);
       setEndDate(searchParams.endDate);
-      setIsFiltered(true);
+      // setIsFiltered(true);
     } else {
       const now = new Date();
       const firstDay = startOfMonth(now);
@@ -55,28 +63,13 @@ export default function InvoicesBarChartContainer({ searchParams }: TProps) {
 
       setStartDate(format(firstDay, "yyyy-MM-dd"));
       setEndDate(format(lastDay, "yyyy-MM-dd"));
-      setIsFiltered(false);
+      // setIsFiltered(false);
     }
   }, [searchParams?.startDate, searchParams?.endDate]);
-  const timezone = useCompanyTimezone();
 
   // Fetch data with date filters
-  const { data, setData } = useServerGet(() =>
-    getLeadInfo(
-      timezone,
-      startDate ? decodeURIComponent(startDate) : undefined,
-      endDate ? decodeURIComponent(endDate) : undefined,
-    ),
-  );
-
-  // Re-fetch data when date parameters change
-  useEffect(() => {
-    getLeadInfo(
-      timezone,
-      startDate ? decodeURIComponent(startDate) : undefined,
-      endDate ? decodeURIComponent(endDate) : undefined,
-    ).then(setData);
-  }, [startDate, endDate]);
+  if (!data)
+    return <LeadsChartSkeleton variant="single" bars={12} height={400} />;
 
   return (
     <div

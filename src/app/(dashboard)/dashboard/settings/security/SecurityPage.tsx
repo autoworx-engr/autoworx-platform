@@ -1,9 +1,8 @@
 "use client";
 import { regenerateZapierToken } from "@/actions/settings/regenerateZapierToken";
 import { successToast } from "@/lib/toast";
+import { Copy, Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
-import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
-import { BsCopy } from "react-icons/bs";
 
 export default function SecurityPage({ company }: { company: any }) {
   const [showToken, setShowToken] = useState(false);
@@ -41,7 +40,7 @@ export default function SecurityPage({ company }: { company: any }) {
                 type="button"
                 className="mr-6 rounded-md bg-[#6571FF] px-6 py-1.5 text-white"
               >
-                {showToken ? <AiFillEyeInvisible /> : <AiFillEye />}
+                {showToken ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
 
               <button
@@ -53,7 +52,7 @@ export default function SecurityPage({ company }: { company: any }) {
                   successToast("Token Copied to Clipboard");
                 }}
               >
-                <BsCopy />
+                <Copy size={20} />
               </button>
               <button
                 type="button"
