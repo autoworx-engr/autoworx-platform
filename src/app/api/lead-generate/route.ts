@@ -323,7 +323,7 @@ export async function POST(request: NextRequest) {
         email: clientEmail,
         phone: clientPhone,
         customer_country: customerCountry,
-        oppurtunitySource: oppurtunity,
+        opportunitySource: oppurtunity,
         vehicle: vehicleInfo,
         service: services,
       },
