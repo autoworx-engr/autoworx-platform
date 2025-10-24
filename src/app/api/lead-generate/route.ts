@@ -324,6 +324,8 @@ export async function POST(request: NextRequest) {
         phone: clientPhone,
         customer_country: customerCountry,
         oppurtunity_source: oppurtunity,
+        vehicle: vehicleInfo,
+        service: services,
       },
       { status: 201 }
     );
