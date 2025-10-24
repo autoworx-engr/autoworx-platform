@@ -330,6 +330,7 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error: any) {
+    console.log("🚀 ~ POST ~ error:", error);
     // check if this is json parse error
 
     if (error instanceof SyntaxError) {
