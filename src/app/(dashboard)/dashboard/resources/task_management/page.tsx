@@ -1,17 +1,22 @@
-"use client";
-import ResourceCard from "@/components/resources/ResourceCard";
-import ResourceHeader from "@/components/resources/ResourceHeader";
-import React from "react";
+import TaskManagementClient from "./TaskManagementClient";
+import { Metadata } from "next";
+
+export const dynamic = "force-static";
+
+export const metadata: Metadata = {
+  title: "Task Management Resources | AutoWorx",
+  description:
+    "Explore the various resources available for managing your tasks effectively. Learn about task management principles, best practices, and collaboration techniques.",
+};
 
 const TaskManagementPage = () => {
-  const [filter, setFilter] = React.useState({ search: "" });
-
   const resourcesData = [
     {
       content: "/images/resources/task_management.png",
       type: "image",
       title: "Task Management Overview",
-      description: "An overview of task management principles and practices.",
+      description:
+        "An overview of task management principles and practices. Covers prioritization, delegation, and progress tracking techniques. Includes tips, tools, and workflows to improve team collaboration.",
     },
     {
       content:
@@ -23,22 +28,11 @@ const TaskManagementPage = () => {
   ];
 
   return (
-    <div>
-      <ResourceHeader
-        title="Task Management Resources"
-        description="Explore the various resources available for managing your tasks effectively."
-        setFilter={setFilter}
-      />
-      <div className="mt-4">
-        {resourcesData
-          .filter((resource) =>
-            resource.title.toLowerCase().includes(filter.search.toLowerCase())
-          )
-          .map((resource, index) => (
-            <ResourceCard resource={resource} index={index} />
-          ))}
-      </div>
-    </div>
+    <TaskManagementClient
+      resourcesData={resourcesData}
+      pageTitle="Task Management Resources"
+      pageDescription="Explore the various resources available for managing your tasks effectively."
+    />
   );
 };
 

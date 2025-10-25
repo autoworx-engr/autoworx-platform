@@ -26,7 +26,7 @@ const ResourceCard = ({ resource, index }: Props) => {
               alt={resource.title}
               width={800}
               height={500}
-              className="rounded-md object-contain border lg:min-w-[480px]"
+              className="rounded-md object-contain border lg:min-w-[480px] lg:max-w-[480px]"
             />
           </div>
         ) : (
@@ -40,7 +40,12 @@ const ResourceCard = ({ resource, index }: Props) => {
           </div>
         )}
       </div>
-      <div className={cn(`${resource.type === "image" && "text-center"}`)}>
+      <div
+        className={cn(
+          `${resource.type === "image" && "text-center"}`,
+          "pr-6 sm:pr-10 lg:pr-20"
+        )}
+      >
         <h2
           className={cn(
             `${resource.type === "image" ? "font-bold text-[22px]" : "text-lg font-semibold"}`
