@@ -34,6 +34,9 @@ const BookingForm = () => {
   const { data: bookingForm, isLoading: bookingFromLoading } =
     useBookingFormQueryById(Number(bookingFormId));
 
+  const [timeOptions, setTimeOptions] = useState<
+    { value: string; label: string }[]
+  >([]);
 
   // Add state for company info if needed
   const [companyInfo, setCompanyInfo] = useState<any>(null);
@@ -75,6 +78,12 @@ const BookingForm = () => {
     ? moment(date).toDate().toDateString() ===
       moment(date).toDate().toDateString()
     : false;
+
+  useEffect(() => {
+    setTimeOptions(getTimeOptions());
+  }, [calendarSettings, formData.date]);
+
+  console.log("timeOptions:", timeOptions);
 
   useEffect(() => {
     const fetchCompany = async () => {
@@ -598,12 +607,18 @@ const BookingForm = () => {
                   }}
                   options={[
                     { value: "", label: "Select time..." },
-                    ...getTimeOptions(),
+                    // ...getTimeOptions(),
+                    ...timeOptions,
                   ]}
                 />
 
                 {calendarSettings && formData.date && (
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p
+                    className={cn(
+                      "text-xs text-gray-500 mt-1",
+                      timeOptions.length === 0 && "text-red-500"
+                    )}
+                  >
                     {(() => {
                       const selectedDate = moment(formData.date);
                       const isSelectedDateToday = selectedDate.isSame(
@@ -613,13 +628,18 @@ const BookingForm = () => {
                       const dayStart = calendarSettings.dayStart || "08:00";
                       const dayEnd = calendarSettings.dayEnd || "18:00";
 
-                      if (isSelectedDateToday) {
+                      if (isSelectedDateToday && timeOptions.length > 0) {
                         const currentTime = getCurrentTime();
                         const effectiveStartTime =
                           currentTime > dayStart ? currentTime : dayStart;
                         return `Available hours: ${moment(effectiveStartTime, "HH:mm").format("h:mm A")} - ${moment(dayEnd, "HH:mm").format("h:mm A")}`;
-                      } else {
+                      } else if (
+                        !isSelectedDateToday &&
+                        timeOptions.length > 0
+                      ) {
                         return `Available hours: ${moment(dayStart, "HH:mm").format("h:mm A")} - ${moment(dayEnd, "HH:mm").format("h:mm A")}`;
+                      } else if (timeOptions.length === 0) {
+                        return "No available time slots for the selected date.";
                       }
                     })()}
                   </p>
