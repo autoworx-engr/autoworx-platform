@@ -34,20 +34,10 @@ export async function POST(request: NextRequest) {
     const customerCountry = body.customer_country;
     const serviceId = +body.serviceId;
     const oppurtunity = body.oppurtunity_source;
-    const vehicleName =
-      body?.vehicle || oppurtunity?.split(")")[1]?.split("|")[0].trim();
-    const serviceName =
-      body?.serviceName || oppurtunity?.split(")")[1]?.split("|")[1].trim();
     const crmMsg = body.message;
     const multipleServices = body.multiServices as number[] | undefined;
 
-    // now extract the source, services and vehicle info from opportunity
-    // the format is this: (source) vehicle | service
-    const source =
-      body?.opportunitySource ||
-      oppurtunity?.split(")")[0].replace("(", "").trim();
-    const vehicleInfo = vehicleName;
-    const services = serviceName;
+    console.log("crmMsg", crmMsg);
     //check if crm company
     const isCRMCompany = company.isCRMEnabled || false;
     if (isCRMCompany) {
@@ -88,7 +78,7 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      const clientNameParts = clientName.trim()?.split(" ");
+      const clientNameParts = clientName.trim().split(" ");
       const firstName = clientNameParts.shift() || "";
       const lastName = clientNameParts.join(" ");
 
@@ -158,6 +148,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // now extract the source, services and vehicle info from opportunity
+    // the format is this: (source) vehicle | service
+    const source = oppurtunity.split(")")[0].replace("(", "").trim();
+    const vehicleInfo = oppurtunity.split(")")[1].split("|")[0].trim();
+    const services = oppurtunity.split(")")[1].split("|")[1].trim();
+
     // check if the required fields are provided
     if (!clientName || !vehicleInfo || !services || !source) {
       return Response.json({ error: "Invalid input" }, { status: 400 });
@@ -204,7 +200,7 @@ export async function POST(request: NextRequest) {
     });
 
     //naming correction for the client from lead
-    const clientNameParts = clientName.trim()?.split(" ");
+    const clientNameParts = clientName.trim().split(" ");
     const firstName = clientNameParts.shift() || "";
     const lastName = clientNameParts.join(" ");
 
@@ -323,14 +319,11 @@ export async function POST(request: NextRequest) {
         email: clientEmail,
         phone: clientPhone,
         customer_country: customerCountry,
-        opportunitySource: oppurtunity,
-        vehicle: vehicleInfo,
-        service: services,
+        oppurtunity_source: oppurtunity,
       },
       { status: 201 }
     );
   } catch (error: any) {
-    console.log("🚀 ~ POST ~ error:", error);
     // check if this is json parse error
 
     if (error instanceof SyntaxError) {
