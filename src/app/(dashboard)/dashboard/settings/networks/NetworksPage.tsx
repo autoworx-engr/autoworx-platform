@@ -8,10 +8,10 @@ import {
   togglePhoneVisibility,
 } from "@/actions/settings/myNetwork";
 import { Switch } from "@/components/Switch";
+import { useDebounceCallback } from "@/hooks/useDebounceCallback";
 import { errorToast, successToast } from "@/lib/toast";
 import Slider from "@mui/material/Slider";
 import { Company } from "@prisma/client";
-import debounce from "lodash.debounce";
 import { Search } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
@@ -85,12 +85,9 @@ const NetworksPage = ({
   };
 
   // Create a debounced function for updating the slider value
-  const debouncedSetRange = useCallback(
-    debounce((value: [number, number]) => {
-      setNearByCompanyRangeDebounced(value);
-    }, 300), // 300ms debounce delay
-    []
-  );
+  const debouncedSetRange = useDebounceCallback((value: [number, number]) => {
+    setNearByCompanyRangeDebounced(value);
+  }, 300);
 
   useEffect(() => {
     if (location.latitude && location.longitude) {
