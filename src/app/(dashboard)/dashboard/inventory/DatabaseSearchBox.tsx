@@ -1,10 +1,11 @@
 "use client";
 
 import { Input } from "antd";
-import debounce from "lodash.debounce";
 import { useEffect, useMemo, useState } from "react";
 import { useInventoryDatabaseSearchStore } from "@/stores/inventoryDatabaseSearchStore";
 import { Search } from "lucide-react";
+import { debounce } from "../../../../utils/debounce";
+import { useDebounceCallback } from "@/hooks/useDebounceCallback";
 
 export default function DatabaseSearchBox() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -15,14 +16,10 @@ export default function DatabaseSearchBox() {
     setSearchTerm(search || "");
   }, [search]);
 
-  const debouncedSearch = useMemo(
-    () =>
-      debounce((value: string) => {
-        setSearch(value);
-        setPage(1);
-      }, 500),
-    [setSearch]
-  );
+  const debouncedSearch = useDebounceCallback((value: string) => {
+    setSearch(value);
+    setPage(1);
+  }, 500);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
