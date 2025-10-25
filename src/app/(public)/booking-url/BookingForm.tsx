@@ -90,17 +90,20 @@ const BookingForm = () => {
           Number(companyId),
           formData.date
         );
-        console.log("Existing appointments on this date:", getAppointmentByDate);
-        
+        console.log(
+          "Existing appointments on this date:",
+          getAppointmentByDate
+        );
+
         const options = getTimeOptions();
         // Filter out already booked times
-        const filteredOptions = options.filter(
-          option => {
-            const isBooked = getAppointmentByDate?.filter((appt) => appt.startTime === option.value).length ?? 0;
-            return isBooked < (bookingForm?.stack || 6);
-          }
-        );
-        console.log("Filtered time options:", filteredOptions);
+        const filteredOptions = options.filter(option => {
+          const isBooked =
+            getAppointmentByDate?.filter(
+              appt => appt.startTime === option.value
+            ).length ?? 0;
+          return isBooked < (bookingForm?.stack || 6);
+        });
         setTimeOptions(filteredOptions);
       } else {
         setTimeOptions(getTimeOptions());
@@ -619,6 +622,7 @@ const BookingForm = () => {
                   value={formData.startTime}
                   onChange={value => handleChange("startTime", value)}
                   placeholder="Select time..."
+                  disabled={!formData.date || timeOptions.length === 0}
                   className={cn(
                     "h-[33px] w-full font-semibold text-gray-600",
                     inputClass,
