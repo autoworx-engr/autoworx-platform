@@ -1,7 +1,10 @@
 "use client";
 
 import { getCompanyCalendarSettings } from "@/actions/booking/getCompanyCalendarSettings";
-import { processBooking } from "@/actions/booking/processBooking";
+import {
+  getAppointmentByDateTime,
+  processBooking,
+} from "@/actions/booking/processBooking";
 import { getCompanyById } from "@/actions/settings/getCompnayById";
 import { SlimInput, slimInputClassName } from "@/components/SlimInput";
 import useBookingFormQueryById from "@/hooks/bookingForm/useBookingFormQueryById";
@@ -80,10 +83,31 @@ const BookingForm = () => {
     : false;
 
   useEffect(() => {
-    setTimeOptions(getTimeOptions());
+    const updateTimeOptions = async () => {
+      if (formData.date) {
+        console.log("Updating time options for date:", formData.date);
+        const getAppointmentByDate = await getAppointmentByDateTime(
+          Number(companyId),
+          formData.date
+        );
+        console.log("Existing appointments on this date:", getAppointmentByDate);
+        
+        const options = getTimeOptions();
+        // Filter out already booked times
+        const filteredOptions = options.filter(
+          option => {
+            const isBooked = getAppointmentByDate?.filter((appt) => appt.startTime === option.value).length ?? 0;
+            return isBooked < (bookingForm?.stack || 6);
+          }
+        );
+        console.log("Filtered time options:", filteredOptions);
+        setTimeOptions(filteredOptions);
+      } else {
+        setTimeOptions(getTimeOptions());
+      }
+    };
+    updateTimeOptions();
   }, [calendarSettings, formData.date]);
-
-  console.log("timeOptions:", timeOptions);
 
   useEffect(() => {
     const fetchCompany = async () => {
@@ -135,7 +159,7 @@ const BookingForm = () => {
       }
 
       // Check if the selected time is still available in the current options
-      const availableOptions = getTimeOptions();
+      const availableOptions = timeOptions;
       const isTimeAvailable = availableOptions.some(
         option => option.value === formData.startTime
       );
@@ -331,7 +355,7 @@ const BookingForm = () => {
         newError.startTime = "Appointment time must be in the future.";
       } else {
         // Additional validation - check if selected time is still available
-        const availableOptions = getTimeOptions();
+        const availableOptions = timeOptions;
         const isTimeAvailable = availableOptions.some(
           option => option.value === formData.startTime
         );

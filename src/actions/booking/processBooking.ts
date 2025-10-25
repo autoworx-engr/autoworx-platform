@@ -173,7 +173,7 @@ export async function createAppointment(data: {
 export async function getAppointmentByDateTime(
   companyId: number,
   date: string,
-  time: string
+  time?: string
 ) {
   try {
     const appointment = await db.appointment.findMany({
