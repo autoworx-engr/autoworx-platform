@@ -415,7 +415,7 @@ const Dashboard = () => {
                             dateMoment = moment.tz(data.date, timezone);
                           } else {
                             // If it's a Date object, convert it properly
-                            dateMoment = moment(data.date).tz(timezone);
+                            dateMoment = moment.utc(data.date).tz(timezone);
                           }
 
                           const dayOfWeek = dateMoment.day();

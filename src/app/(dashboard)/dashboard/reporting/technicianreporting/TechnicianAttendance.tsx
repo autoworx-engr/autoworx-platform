@@ -141,8 +141,8 @@ const TechnicianAttendance = ({ currentUserId }: { currentUserId: string }) => {
                           // Parse as local date to avoid timezone shifts
                           dateMoment = moment.tz(data.date, timezone);
                         } else {
-                          // If it's a Date object, convert it properly
-                          dateMoment = moment(data.date).tz(timezone);
+                          // If it's a Date object, parse as UTC first to preserve the actual date
+                          dateMoment = moment.utc(data.date).tz(timezone);
                         }
 
                         const dayOfWeek = dateMoment.day();
