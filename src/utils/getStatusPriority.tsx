@@ -14,14 +14,12 @@ const statusOrder = [
 
 export const getStatusPriority = (statusTitle: string): number => {
   const normalizedTitle = statusTitle?.toLowerCase().trim();
-  console.log("normalizedTitle", normalizedTitle);
-  // Find exact match first
+
   const exactIndex = statusOrder.findIndex(
     (status) => status.toLowerCase() === normalizedTitle
   );
   if (exactIndex !== -1) return exactIndex;
 
-  // Find partial match
   const partialIndex = statusOrder.findIndex(
     (status) =>
       normalizedTitle?.includes(status.toLowerCase()) ||
@@ -29,6 +27,5 @@ export const getStatusPriority = (statusTitle: string): number => {
   );
   if (partialIndex !== -1) return partialIndex;
 
-  // Unknown statuses go to the end
   return statusOrder.length;
 };
