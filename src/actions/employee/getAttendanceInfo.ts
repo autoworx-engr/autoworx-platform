@@ -201,7 +201,7 @@ export async function getAttendanceInfo(
 
         attInfo.push({
           id: clockInOut.id,
-          date: currentDate.toDate(),
+          date: new Date(currentDate.format("YYYY-MM-DD")),
           clockedIn: clockInOut.clockIn,
           clockedOut: clockInOut.clockOut ?? "N/A",
           hours: totalHours,
@@ -221,7 +221,7 @@ export async function getAttendanceInfo(
     date: Moment,
     status: string
   ): AttendanceRecord => ({
-    date: date.toDate(),
+    date: new Date(date.format("YYYY-MM-DD")),
     clockedIn: status,
     clockedOut: status,
     hours: status,
