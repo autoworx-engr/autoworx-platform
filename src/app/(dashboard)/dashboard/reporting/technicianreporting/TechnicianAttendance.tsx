@@ -135,14 +135,23 @@ const TechnicianAttendance = ({ currentUserId }: { currentUserId: string }) => {
                     </thead>
                     <tbody>
                       {attendanceInfo?.attInfo?.map((data, index) => {
-                        // Fix date processing to avoid timezone shifts
+                        // Parse the date in the company timezone
                         let dateMoment;
                         if (typeof data.date === "string") {
-                          // Parse as local date to avoid timezone shifts
+                          // If string, parse it as-is in the company timezone
                           dateMoment = moment.tz(data.date, timezone);
                         } else {
-                          // If it's a Date object, parse as UTC first to preserve the actual date
-                          dateMoment = moment.utc(data.date).tz(timezone);
+                          // If Date object, extract just the date portion to avoid timezone shifts
+                          // The server sends dates as UTC midnight, so we parse as UTC and extract the date
+                          const utcDate = moment.utc(data.date);
+                          dateMoment = moment.tz(
+                            {
+                              year: utcDate.year(),
+                              month: utcDate.month(),
+                              date: utcDate.date(),
+                            },
+                            timezone
+                          );
                         }
 
                         const dayOfWeek = dateMoment.day();

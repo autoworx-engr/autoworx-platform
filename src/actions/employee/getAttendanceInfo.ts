@@ -165,7 +165,7 @@ export async function getAttendanceInfo(
 
       // 6. Check if the user has clocked in and out on the current date
       const clockInOut = user.ClockInOut.find((clock) =>
-        moment(clock.clockIn).isSame(currentDate, "day")
+        moment.utc(clock.clockIn).tz(companyTimezone).isSame(currentDate, "day")
       );
 
       if (clockInOut) {
