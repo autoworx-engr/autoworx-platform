@@ -35,6 +35,7 @@ const TechnicianAttendance = ({ currentUserId }: { currentUserId: string }) => {
     endDate || undefined,
     refetch
   );
+  console.log("🚀 ~ TechnicianAttendance ~ attendanceInfo:", attendanceInfo);
 
   return (
     <div className="my-4 box-border flex flex-col lg:w-full">
