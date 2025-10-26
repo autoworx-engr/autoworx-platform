@@ -58,7 +58,7 @@ function ServiceSelector({
         {hasServices && (
           <div
             onClick={handleServiceDropdownToggle}
-            className="flex w-[62%] 2xl:w-[55%] cursor-pointer justify-between rounded-md border border-[#6571FF] px-2 py-1 text-xs"
+            className="flex w-[62%] cursor-pointer justify-between rounded-md border border-[#6571FF] px-2 py-1 text-xs"
             style={{
               visibility: isServiceDropdownOpen ? "hidden" : "visible",
             }}
