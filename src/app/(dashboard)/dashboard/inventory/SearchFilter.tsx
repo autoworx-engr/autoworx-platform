@@ -7,6 +7,7 @@ import { useListsStore } from "@/stores/lists";
 import { Search } from "lucide-react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 type TSearchFilterProps = {
   searchParams: {
@@ -23,12 +24,12 @@ export default function SearchFilter({ searchParams }: TSearchFilterProps) {
   const router = useRouter();
 
   // reset the filter when the search changes
-  // useEffect(() => {
-  //   setFilter({
-  //     search: searchParams.search ?? "",
-  //     category: searchParams.category ?? "",
-  //   });
-  // }, [searchParams.search, searchParams.category]);
+  useEffect(() => {
+    setFilter({
+      search: searchParams.search ?? "",
+      category: searchParams.category ?? "",
+    });
+  }, [searchParams.search, searchParams.category]);
 
   const handleSearchChange = useDebounce((value: string) => {
     const searchParam = new URLSearchParams(params);

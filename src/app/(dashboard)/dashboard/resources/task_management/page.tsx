@@ -1,8 +1,6 @@
 import TaskManagementClient from "./TaskManagementClient";
 import { Metadata } from "next";
 
-export const dynamic = "force-static";
-
 export const metadata: Metadata = {
   title: "Task Management Resources | AutoWorx",
   description:
