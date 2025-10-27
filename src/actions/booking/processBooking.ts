@@ -8,6 +8,7 @@ import { scheduleRemindersInNest } from "../appointment/addAppointment";
 import { sendInfobipEmail } from "../estimate/invoice/sendInfobipEmail";
 import { sendTwilioMessage } from "../communication/client/sendTwilioMessage";
 import { sendInfobipMessage } from "../communication/client/sendInfobipMessage";
+import { getBookingFormById } from "../settings/bookingForm";
 
 export async function findClientByPhone(
   phone: string,
@@ -169,6 +170,26 @@ export async function createAppointment(data: {
   }
 }
 
+export async function getAppointmentByDateTime(
+  companyId: number,
+  date: string,
+  time?: string
+) {
+  try {
+    const appointment = await db.appointment.findMany({
+      where: {
+        companyId: companyId,
+        date: new Date(date),
+        startTime: time,
+      },
+    });
+    return appointment;
+  } catch (error) {
+    console.error("Error fetching appointment by date and time:", error);
+    return null;
+  }
+}
+
 export async function processBooking(
   formData: {
     title: string;
@@ -185,12 +206,25 @@ export async function processBooking(
     customerCompany?: string;
     notes?: string; // Add notes to the formData type
   },
-  companyId: string
+  companyId: string,
+  bookingId: number
 ) {
   try {
     // First, check if client exists by phone number
     let client = await findClientByPhone(formData.mobile, companyId);
-
+    const alreadyBookedAppointment = await getAppointmentByDateTime(
+      parseInt(companyId),
+      formData.date,
+      formData.startTime
+    );
+    console.log("Already booked appointments:", alreadyBookedAppointment);
+    const bookingForm = await getBookingFormById(bookingId);
+    const stack = bookingForm?.stack ?? 6;
+    if (alreadyBookedAppointment && alreadyBookedAppointment.length >= stack) {
+      throw new Error(
+        "Selected time slot is fully booked. Please choose another time."
+      );
+    }
     if (!client) {
       // Create new client if not found
       client = await createClient({
@@ -260,7 +294,8 @@ export async function processBooking(
     console.error("Error processing booking:", error);
     return {
       success: false,
-      message: "An error occurred while processing your booking",
+      message:
+        error instanceof Error ? error.message : "Error processing booking",
     };
   }
 }

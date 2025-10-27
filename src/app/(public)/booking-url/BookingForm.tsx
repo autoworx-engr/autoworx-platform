@@ -1,20 +1,22 @@
 "use client";
 
-import { SlimInput, slimInputClassName } from "@/components/SlimInput";
-import { cn } from "@/lib/utils";
-import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
-import moment from "moment";
-import { getCurrentTime } from "@/utils/time";
-import { decodeCompanyId } from "@/utils/companyIdEncoder";
-import { processBooking } from "@/actions/booking/processBooking";
 import { getCompanyCalendarSettings } from "@/actions/booking/getCompanyCalendarSettings";
-import Image from "next/image";
+import {
+  getAppointmentByDateTime,
+  processBooking,
+} from "@/actions/booking/processBooking";
 import { getCompanyById } from "@/actions/settings/getCompnayById";
-import { Select } from "antd";
-import useSettingsQuery from "@/app/(dashboard)/dashboard/task/_hook/settings/query/useSettingsQuery";
+import { SlimInput, slimInputClassName } from "@/components/SlimInput";
+import useBookingFormQueryById from "@/hooks/bookingForm/useBookingFormQueryById";
+import { cn } from "@/lib/utils";
+import { decodeCompanyId } from "@/utils/companyIdEncoder";
+import { getCurrentTime } from "@/utils/time";
 import { CalendarSettings } from "@prisma/client";
-import { errorToast } from "@/lib/toast";
+import { Select } from "antd";
+import moment from "moment";
+import Image from "next/image";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 type FormData = {
   title: string;
@@ -30,7 +32,14 @@ type FormData = {
 const BookingForm = () => {
   const searchParams = useSearchParams();
   const refParam = searchParams.get("ref");
-  const companyId = refParam ? decodeCompanyId(refParam) : null;
+  const [companyId, bookingFormId] = refParam ? decodeCompanyId(refParam) : [];
+
+  const { data: bookingForm, isLoading: bookingFromLoading } =
+    useBookingFormQueryById(Number(bookingFormId));
+
+  const [timeOptions, setTimeOptions] = useState<
+    { value: string; label: string }[]
+  >([]);
 
   // Add state for company info if needed
   const [companyInfo, setCompanyInfo] = useState<any>(null);
@@ -74,6 +83,36 @@ const BookingForm = () => {
     : false;
 
   useEffect(() => {
+    const updateTimeOptions = async () => {
+      if (formData.date) {
+        console.log("Updating time options for date:", formData.date);
+        const getAppointmentByDate = await getAppointmentByDateTime(
+          Number(companyId),
+          formData.date
+        );
+        console.log(
+          "Existing appointments on this date:",
+          getAppointmentByDate
+        );
+
+        const options = getTimeOptions();
+        // Filter out already booked times
+        const filteredOptions = options.filter(option => {
+          const isBooked =
+            getAppointmentByDate?.filter(
+              appt => appt.startTime === option.value
+            ).length ?? 0;
+          return isBooked < (bookingForm?.stack || 6);
+        });
+        setTimeOptions(filteredOptions);
+      } else {
+        setTimeOptions(getTimeOptions());
+      }
+    };
+    updateTimeOptions();
+  }, [calendarSettings, formData.date]);
+
+  useEffect(() => {
     const fetchCompany = async () => {
       try {
         const company = await getCompanyById({ companyId: `${companyId}` });
@@ -100,7 +139,6 @@ const BookingForm = () => {
     if (companyId) {
       // TODO: Implement company info fetching if needed
       // fetchCompanyInfo(companyId).then(setCompanyInfo);
-      console.log("Decoded company ID:", companyId);
 
       // Fetch calendar settings for the company
       getCompanyCalendarSettings(companyId.toString()).then(settings => {
@@ -124,7 +162,7 @@ const BookingForm = () => {
       }
 
       // Check if the selected time is still available in the current options
-      const availableOptions = getTimeOptions();
+      const availableOptions = timeOptions;
       const isTimeAvailable = availableOptions.some(
         option => option.value === formData.startTime
       );
@@ -320,7 +358,7 @@ const BookingForm = () => {
         newError.startTime = "Appointment time must be in the future.";
       } else {
         // Additional validation - check if selected time is still available
-        const availableOptions = getTimeOptions();
+        const availableOptions = timeOptions;
         const isTimeAvailable = availableOptions.some(
           option => option.value === formData.startTime
         );
@@ -379,7 +417,11 @@ const BookingForm = () => {
 
     try {
       // Process the booking
-      const result = await processBooking(formData, companyId);
+      const result = await processBooking(
+        formData,
+        companyId,
+        bookingForm?.id!
+      );
 
       if (result.success) {
         // Reset form on success
@@ -406,10 +448,14 @@ const BookingForm = () => {
       }
     } catch (error) {
       console.error("Submission error:", error);
-      setError({
-        general:
-          "An error occurred while booking your appointment. Please try again.",
-      });
+      if (error instanceof Error) {
+        setError({ general: error.message });
+      } else {
+        setError({
+          general:
+            "An error occurred while booking your appointment. Please try again.",
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -417,6 +463,58 @@ const BookingForm = () => {
 
   const inputClass =
     "focus:border-[#00B4B5] focus:outline-none focus:ring-2 focus:ring-[#00B4B5]";
+
+  if (!bookingFromLoading && !isLoading && !bookingForm?.isActive) {
+    return (
+      <div className="max-w-xl mx-auto bg-white rounded-2xl shadow-lg border border-gray-100 p-6 text-center">
+        <Image
+          src={companyInfo?.image || "/icons/business.png"}
+          alt="Company Logo"
+          width={80}
+          height={80}
+          className={cn(
+            !companyInfo?.image && "bg-white",
+            "w-20 h-20 rounded-full mx-auto mb-4"
+          )}
+        />
+
+        <h3 className="text-2xl font-bold mb-2">
+          {companyInfo?.name || "Appointments Unavailable"}
+        </h3>
+
+        <p className="text-gray-600 mb-4">
+          No appointment slots are available at this time. Please try again
+          later or contact the company directly to schedule an appointment.
+        </p>
+
+        <div className="flex flex-col sm:flex-row justify-center gap-3">
+          {companyInfo?.email && (
+            <a
+              href={`mailto:${companyInfo.email}`}
+              className="px-4 py-2 bg-gradient-to-r from-[#00b8b0] to-[#0098da] text-white rounded-md"
+            >
+              Email Us
+            </a>
+          )}
+
+          {companyInfo?.phone && (
+            <a
+              href={`tel:${companyInfo.phone}`}
+              className="px-4 py-2 border border-gray-300 rounded-md"
+            >
+              Call Us
+            </a>
+          )}
+
+          {!companyInfo?.email && !companyInfo?.phone && (
+            <span className="px-4 py-2 text-sm text-gray-500">
+              Please check back later for available slots.
+            </span>
+          )}
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="max-w-xl scale-90 mx-auto bg-white rounded-2xl shadow-lg border border-gray-100">
       <div className="flex items-center gap-4 bg-gradient-to-r from-[#00b8b0] to-[#0098da] text-white p-6 rounded-t-2xl">
@@ -524,6 +622,7 @@ const BookingForm = () => {
                   value={formData.startTime}
                   onChange={value => handleChange("startTime", value)}
                   placeholder="Select time..."
+                  disabled={!formData.date || timeOptions.length === 0}
                   className={cn(
                     "h-[33px] w-full font-semibold text-gray-600",
                     inputClass,
@@ -536,12 +635,18 @@ const BookingForm = () => {
                   }}
                   options={[
                     { value: "", label: "Select time..." },
-                    ...getTimeOptions(),
+                    // ...getTimeOptions(),
+                    ...timeOptions,
                   ]}
                 />
 
                 {calendarSettings && formData.date && (
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p
+                    className={cn(
+                      "text-xs text-gray-500 mt-1",
+                      timeOptions.length === 0 && "text-red-500"
+                    )}
+                  >
                     {(() => {
                       const selectedDate = moment(formData.date);
                       const isSelectedDateToday = selectedDate.isSame(
@@ -551,13 +656,18 @@ const BookingForm = () => {
                       const dayStart = calendarSettings.dayStart || "08:00";
                       const dayEnd = calendarSettings.dayEnd || "18:00";
 
-                      if (isSelectedDateToday) {
+                      if (isSelectedDateToday && timeOptions.length > 0) {
                         const currentTime = getCurrentTime();
                         const effectiveStartTime =
                           currentTime > dayStart ? currentTime : dayStart;
                         return `Available hours: ${moment(effectiveStartTime, "HH:mm").format("h:mm A")} - ${moment(dayEnd, "HH:mm").format("h:mm A")}`;
-                      } else {
+                      } else if (
+                        !isSelectedDateToday &&
+                        timeOptions.length > 0
+                      ) {
                         return `Available hours: ${moment(dayStart, "HH:mm").format("h:mm A")} - ${moment(dayEnd, "HH:mm").format("h:mm A")}`;
+                      } else if (timeOptions.length === 0) {
+                        return "No available time slots for the selected date.";
                       }
                     })()}
                   </p>

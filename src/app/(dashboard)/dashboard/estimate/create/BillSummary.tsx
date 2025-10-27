@@ -10,8 +10,6 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { RotatingLines } from "react-loader-spinner";
 import MakePayment from "./MakePayment";
-import { is } from "date-fns/locale";
-import { calculateDue } from "@/utils/calculateDue";
 
 export function BillSummary({
   isEstimateTax = true,
@@ -89,7 +87,7 @@ export function BillSummary({
     let newServicesTotal = 0;
     let newDiscountTotal = 0;
 
-    items.forEach((item) => {
+    items.forEach(item => {
       const { service, materials, labor } = item;
 
       if (!service) return;
@@ -217,7 +215,7 @@ export function BillSummary({
 
               {isToggleItem && (
                 <div
-                  onClick={() => toggleSetter((prev) => !prev)}
+                  onClick={() => toggleSetter(prev => !prev)}
                   className={`ml-2 flex h-5 w-10 cursor-pointer items-center rounded-full px-1 transition-colors ${
                     toggleState ? "bg-[#6571FF]" : "bg-gray-400"
                   }`}
@@ -262,7 +260,7 @@ export function BillSummary({
               placeholder="Add Coupon"
               className="w-full bg-transparent p-2 focus:outline-none"
               value={couponInput}
-              onChange={(e) => setCouponInput(e.target.value)}
+              onChange={e => setCouponInput(e.target.value)}
             />
             {couponLoading ? (
               <RotatingLines width="24" strokeColor="#fff" />

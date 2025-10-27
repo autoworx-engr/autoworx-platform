@@ -1,4 +1,5 @@
-"use server";
+import { create } from "mutative";
+("use server");
 import { AppError } from "@/error-boundary/error";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { db } from "@/lib/db";
@@ -12,6 +13,8 @@ import bcrypt from "bcryptjs";
 import httpStatus from "http-status";
 import { env } from "next-runtime-env";
 import { uploadNotificationSettings } from "../settings/updateNotification";
+import { encodeCompanyId } from "@/utils/companyIdEncoder";
+import { initialCreateBookingForm } from "../settings/bookingForm";
 
 interface RegisterData {
   firstName: string;
@@ -69,7 +72,6 @@ export async function register({
     if (accessCode !== ACCESS_CODE) {
       throw new AppError(httpStatus.BAD_REQUEST, "Invalid access code");
     }
-
 
     const lowerCaseEmail = userInfo.email.toLowerCase();
 
@@ -291,6 +293,8 @@ export async function register({
         companyId: newCompany.id,
       },
     });
+
+    await initialCreateBookingForm();
 
     return { success: true };
   } catch (err) {
