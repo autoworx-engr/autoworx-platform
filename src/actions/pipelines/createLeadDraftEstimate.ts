@@ -9,6 +9,7 @@ import { ServerAction } from "@/types/action";
 import { TErrorHandler } from "@/types/globalError";
 import { TCreateDraftEstimateValidationSchema } from "@/validations/schemas/pipeline/draftEstimate.validation";
 import { getServerSession } from "next-auth";
+import { updatePipelineAutomationTrigger } from "../automation/pipeline/triggerPipelineAutomation";
 
 export const createLeadDraftEstimate = async function (
   draftEstimate: TCreateDraftEstimateValidationSchema
@@ -59,7 +60,6 @@ export const createLeadDraftEstimate = async function (
         if (!findDraftEstimate) {
           const newDraftEstimate = await db.invoice.create({
             data: {
-              id: draftEstimate.id,
               type: "Estimate",
               clientId: draftEstimate.clientId,
               vehicleId: draftEstimate.vehicleId,
@@ -77,6 +77,13 @@ export const createLeadDraftEstimate = async function (
             },
           });
 
+          // Trigger pipeline automation
+          await updatePipelineAutomationTrigger({
+            condition: "ESTIMATE_CREATED",
+            companyId: newDraftEstimate.companyId,
+            leadId: draftEstimate?.leadId,
+            columnId: newDraftEstimate?.columnId!,
+          });
           // Trigger automation
           updateInvoiceAutomationTrigger({
             companyId: newDraftEstimate.companyId,

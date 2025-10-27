@@ -50,6 +50,8 @@ export default function LeadActions({ lead }: TProps) {
         vehicleId: vehicleId,
         type: "Estimate",
       });
+      console.log("res of draft estimate", res);
+      console.log("res type", res?.type);
       if (res.type === "success") {
         successToast(res?.message || "Draft estimate created");
         //updating the pipelien data with the draft estimate flag
@@ -63,22 +65,22 @@ export default function LeadActions({ lead }: TProps) {
         });
 
         // Trigger pipeline automation
-        const response = await updatePipelineAutomationTrigger({
-          condition: "ESTIMATE_CREATED",
-          companyId: res?.data.companyId,
-          leadId,
-          columnId,
-        });
+        // const response = await updatePipelineAutomationTrigger({
+        //   condition: "ESTIMATE_CREATED",
+        //   companyId: res?.data.companyId,
+        //   leadId,
+        //   columnId,
+        // });
 
-        if (response.statusCode === 200) {
-          dispatch({
-            type: actionTypes.AUTOMATION_TRIGGER,
-            payload: {
-              updatedLead: response.data,
-              previousColumnId: columnId,
-            },
-          });
-        }
+        // if (response.statusCode === 200) {
+        //   dispatch({
+        //     type: actionTypes.AUTOMATION_TRIGGER,
+        //     payload: {
+        //       updatedLead: response.data,
+        //       previousColumnId: columnId,
+        //     },
+        //   });
+        // }
 
         // Trigger communication automation
         // updateCommunicationAutomationTrigger({
@@ -96,7 +98,7 @@ export default function LeadActions({ lead }: TProps) {
         );
       }
     } catch (err) {
-      // console.error("Error creating draft estimate:", err);
+      console.error("Error creating draft estimate:", err);
       errorHandler(err);
       errorToast("Failed to create draft estimate. Please try again.");
     }
