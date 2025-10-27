@@ -19,7 +19,7 @@ import { RotatingLines } from "react-loader-spinner";
 import SelectComponent from "./Select";
 import Image from "next/image";
 import { successToast } from "@/lib/toast";
-import { CircleUserRound } from "lucide-react";
+import { CircleUserRound, SquarePen } from "lucide-react";
 
 export default function NewFleet({
   fleet,
@@ -209,25 +209,41 @@ export default function NewFleet({
           </h1>
 
           {profilePic ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <div className="relative h-14 w-14 rounded-full border border-slate-400 hover:border-dashed hover:opacity-80 overflow-hidden">
-              <Image
-                src={
-                  typeof profilePic === "string"
-                    ? profilePic
-                    : URL.createObjectURL(profilePic)
-                }
-                alt="profile"
-                width={56}
-                height={56}
-                className="h-full w-full cursor-pointer object-cover"
-                onClick={() => {
-                  setProfilePic(null);
+            <label className="relative cursor-pointer" htmlFor="profilePicture">
+              <div className="relative h-20 w-20 rounded-full border border-slate-400 hover:border-dashed hover:opacity-80 overflow-hidden">
+                <Image
+                  src={
+                    typeof profilePic === "string"
+                      ? profilePic
+                      : URL.createObjectURL(profilePic)
+                  }
+                  width={80}
+                  height={80}
+                  alt="profile"
+                  className="h-full w-full object-cover"
+                  unoptimized={profilePic !== null}
+                  crossOrigin="anonymous"
+                />
+              </div>
+
+              <span className="absolute bottom-0 left-1 text-lg p-1 rounded-full bg-[#6571FF]">
+                <SquarePen className="w-3 h-3 cursor-pointer text-white " />
+              </span>
+
+              <input
+                type="file"
+                name="profilePicture"
+                id="profilePicture"
+                hidden
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    setProfilePic(file);
+                  }
                 }}
-                unoptimized={profilePic !== null}
-                crossOrigin="anonymous"
               />
-            </div>
+            </label>
           ) : (
             <label
               className="flex cursor-pointer items-center justify-center gap-x-2 rounded-full border border-slate-400 pl-2"
@@ -246,8 +262,10 @@ export default function NewFleet({
                   }
                 }}
               />
-              <span className="hidden lg:block">Upload a profile picture</span>
-              <span className="lg:hidden">Upload picture</span>{" "}
+              <span className="lg:hidden">Upload picture</span>
+              <span className="hidden lg:block">
+                Upload a profile picture
+              </span>{" "}
               <CircleUserRound
                 size={48}
                 strokeWidth={1.5}
