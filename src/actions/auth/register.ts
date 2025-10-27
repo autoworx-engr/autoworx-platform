@@ -1,5 +1,4 @@
-import { create } from "mutative";
-("use server");
+"use server";
 import { AppError } from "@/error-boundary/error";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { db } from "@/lib/db";
@@ -12,9 +11,8 @@ import { createUserValidation } from "@/validations/schemas/auth/user.validation
 import bcrypt from "bcryptjs";
 import httpStatus from "http-status";
 import { env } from "next-runtime-env";
-import { uploadNotificationSettings } from "../settings/updateNotification";
-import { encodeCompanyId } from "@/utils/companyIdEncoder";
 import { initialCreateBookingForm } from "../settings/bookingForm";
+import { uploadNotificationSettings } from "../settings/updateNotification";
 
 interface RegisterData {
   firstName: string;
