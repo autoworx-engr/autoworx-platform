@@ -14,7 +14,7 @@ import { getCompanyId } from "@/lib/companyId";
 import { useEmployeeFilterStore } from "@/stores/employeeFilter";
 import ResponsiveEmployeeCard from "@/components/mobile-responsive/employee/ResponsiveEmployeeCard";
 
-const defaultPageSize = 10;
+const defaultPageSize = 20;
 type UserWithSalaryHistory = (User & { salaryHistory: SalaryHistory[] })[];
 
 const EmployeeTable = ({
