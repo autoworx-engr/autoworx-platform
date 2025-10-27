@@ -97,7 +97,7 @@ export default function SalesPipelineSection() {
                     provided.innerRef(el);
                     columnRefs.current[columnIndex] = el;
                   }}
-                  className="mx-2 w-[calc(100vw-2rem)] flex-shrink-0 rounded-md border sm:min-w-80 sm:flex-1 lg:min-w-[calc(100%/3-1.5rem)] xl:min-w-[calc(100%/4-1.5rem)] 2xl:min-w-[calc(100%/5-1.5rem)] 3xl:min-w-[calc(100%/6-1.5rem)]"
+                  className="mx-2 w-[calc(100vw-2rem)] flex-shrink-0 rounded-md border sm:min-w-80 sm:flex-1 lg:min-w-[calc(100%/3-1.5rem)] xl:min-w-[calc(100%/4-1.5rem)] 2xl:min-w-[calc(100%/6-1.5rem)]"
                   style={{
                     backgroundColor: "rgba(101, 113, 255, 0.15)",
                     padding: "0",
