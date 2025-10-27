@@ -196,7 +196,7 @@ export function Reminder({
           displayList={(template: EmailTemplate) => (
             <div className="flex">
               <button
-                className="w-full text-left text-sm font-bold"
+                className="w-full text-left  text-sm font-bold"
                 onClick={() => {
                   setConfirmationTemplate(template);
                   setOpenConfirmation(false);

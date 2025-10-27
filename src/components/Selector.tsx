@@ -194,7 +194,7 @@ export default function Selector<T>({
           disabled={disabledDropdown}
           onClick={() => setIsOpen && setIsOpen(true)}
           className={cn(
-            "flex h-10 w-full items-center justify-between rounded-md border-2 border-slate-400 px-4",
+            "flex h-10 w-full items-center  justify-between rounded-md border-2 border-slate-400 px-4",
             isOpen && "invisible"
           )}
         >
@@ -202,7 +202,7 @@ export default function Selector<T>({
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <p className="text-sm font-medium text-slate-400 cursor-default">
+                <p className="text-sm font-medium text-slate-700 cursor-default">
                   {selected
                     ? label(selected).length > 25
                       ? label(selected).substring(0, 25) + "..."
