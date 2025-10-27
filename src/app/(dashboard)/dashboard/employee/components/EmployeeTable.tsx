@@ -14,7 +14,7 @@ import { getCompanyId } from "@/lib/companyId";
 import { useEmployeeFilterStore } from "@/stores/employeeFilter";
 import ResponsiveEmployeeCard from "@/components/mobile-responsive/employee/ResponsiveEmployeeCard";
 
-const defaultPageSize = 20;
+const defaultPageSize = 10;
 type UserWithSalaryHistory = (User & { salaryHistory: SalaryHistory[] })[];
 
 const EmployeeTable = ({
@@ -181,21 +181,20 @@ const EmployeeTable = ({
             ))}
           </tbody>
         </table>
-
-        {showPagination && (
-          <div className="mt-4 flex justify-end">
-            <Pagination
-              className="custom-pagination"
-              current={currentPage}
-              pageSize={pageSize}
-              total={totalEmployeeCount}
-              onChange={handlePageChange}
-              showSizeChanger
-              onShowSizeChange={handlePageChange}
-            />
-          </div>
-        )}
       </div>
+      {showPagination && (
+        <div className="mt-4 pb-6 lg:pb-0 flex justify-end">
+          <Pagination
+            className="custom-pagination"
+            current={currentPage}
+            pageSize={pageSize}
+            total={totalEmployeeCount}
+            onChange={handlePageChange}
+            showSizeChanger
+            onShowSizeChange={handlePageChange}
+          />
+        </div>
+      )}
     </>
   );
 };
