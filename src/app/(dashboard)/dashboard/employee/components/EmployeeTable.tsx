@@ -1,25 +1,25 @@
 "use client";
 
+import ResponsiveEmployeeCard from "@/components/mobile-responsive/employee/ResponsiveEmployeeCard";
 import { cn } from "@/lib/cn";
-import moment from "moment";
-import Link from "next/link";
-import React, { useEffect, useState } from "react";
-import EditEmployee from "../EditEmployee";
-import DeleteEmployee from "../DeleteEmployee";
+import { padId } from "@/lib/padId";
+import { useEmployeeFilterStore } from "@/stores/employeeFilter";
 import { SalaryHistory, User } from "@prisma/client";
 import { Pagination } from "antd"; // Importing the Pagination component from Ant Design
-import { padId } from "@/lib/padId";
-import { getEmployeesForPaginate } from "@/actions/employee/get";
-import { getCompanyId } from "@/lib/companyId";
-import { useEmployeeFilterStore } from "@/stores/employeeFilter";
-import ResponsiveEmployeeCard from "@/components/mobile-responsive/employee/ResponsiveEmployeeCard";
+import moment from "moment";
+import Link from "next/link";
+import { usePathname, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import DeleteEmployee from "../DeleteEmployee";
+import EditEmployee from "../EditEmployee";
 
 const defaultPageSize = 20;
 type UserWithSalaryHistory = (User & { salaryHistory: SalaryHistory[] })[];
 
 const EmployeeTable = ({
-  filteredEmployees,
-  totalEmployees,
+  filteredEmployees: employees,
+  totalEmployees: totalEmployeeCount,
   needCompanyName = false,
 }: {
   filteredEmployees: UserWithSalaryHistory;
@@ -30,9 +30,9 @@ const EmployeeTable = ({
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(defaultPageSize);
   const [showPagination, setShowPagination] = useState(false);
-  const [totalEmployeeCount, setTotalEmployeeCount] = useState(totalEmployees);
-  const [employees, setEmployees] =
-    useState<UserWithSalaryHistory>(filteredEmployees);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
 
   console.log({ dateRange, search, type });
 
@@ -44,39 +44,47 @@ const EmployeeTable = ({
     }
   }, [totalEmployeeCount]);
 
-  useEffect(() => {
-    const fetchedEmployees = async () => {
-      try {
-        const companyId = await getCompanyId();
-        const response = await getEmployeesForPaginate({
-          companyId,
-          page: currentPage,
-          take: pageSize,
-          filter: {
-            type: type !== "All" ? (type as any) : undefined,
-            searchParams: search || undefined,
-            dateRange:
-              dateRange[0] && dateRange[1]
-                ? [{ startDate: dateRange[0], endDate: dateRange[1] }]
-                : undefined,
-          },
-        });
-        const { employees, totalEmployees } = response || {};
-        console.log("Fetched Employees:", employees);
-        setEmployees(employees as UserWithSalaryHistory);
-        setTotalEmployeeCount(totalEmployees);
-      } catch (error) {
-        console.error("Error fetching employees for pagination:", error);
-      }
-    };
-    fetchedEmployees();
-  }, [pageSize, currentPage, type, search, dateRange]);
+  // useEffect(() => {
+  //   const fetchedEmployees = async () => {
+  //     try {
+  //       const companyId = await getCompanyId();
+  //       const response = await getEmployeesForPaginate({
+  //         companyId,
+  //         page: currentPage,
+  //         take: pageSize,
+  //         filter: {
+  //           type: type !== "All" ? (type as any) : undefined,
+  //           searchParams: search || undefined,
+  //           dateRange:
+  //             dateRange[0] && dateRange[1]
+  //               ? [{ startDate: dateRange[0], endDate: dateRange[1] }]
+  //               : undefined,
+  //         },
+  //       });
+  //       const { employees, totalEmployees } = response || {};
+  //       console.log("Fetched Employees:", employees);
+  //       setEmployees(employees as UserWithSalaryHistory);
+  //       setTotalEmployeeCount(totalEmployees);
+  //     } catch (error) {
+  //       console.error("Error fetching employees for pagination:", error);
+  //     }
+  //   };
+  //   fetchedEmployees();
+  // }, [pageSize, currentPage, type, search, dateRange]);
 
   const handlePageChange = (page: number, pageSize?: number) => {
     setCurrentPage(page);
     if (pageSize) {
       setPageSize(pageSize);
     }
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("page", page.toString());
+    if (pageSize) {
+      params.set("pageSize", pageSize.toString());
+    }
+    const queryString = params.toString();
+    const newPathname = queryString ? `${pathname}?${queryString}` : pathname;
+    router.push(newPathname);
   };
 
   return (

@@ -40,7 +40,7 @@ export default function ChatHead({
   const { companyFeaturePermission } = useCompanyFeaturePermissionStore();
 
   const isCallingAccess = companyFeaturePermission.find(
-    (permission) =>
+    permission =>
       permission.permission_name === companyPermissionModule.CALLING_ACCESS
   );
 
@@ -62,7 +62,7 @@ export default function ChatHead({
   };
 
   const clientConversationTrack = useClientCommunicationStore(
-    (state) => state.clientConversationTrack
+    state => state.clientConversationTrack
   );
 
   // useEffect(() => {
@@ -158,7 +158,7 @@ export default function ChatHead({
           <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
           <g
             id="SVGRepo_tracerCarrier"
-            stroke-linecap="round"
+            strokeLinecap="round"
             stroke-linejoin="round"
             stroke="#CCCCCC"
             stroke-width="0.144"

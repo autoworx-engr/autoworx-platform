@@ -9,14 +9,18 @@ import "react-date-range/dist/theme/default.css"; // theme css file
 const DateRange = ({
   onOk,
   onCancel,
+  startDate,
+  endDate,
 }: {
   onOk: (start: Date, end: Date) => void;
   onCancel: () => void;
+  startDate?: Date;
+  endDate?: Date;
 }) => {
   const [state, setState] = useState({
     selection: {
-      startDate: new Date(),
-      endDate: new Date(),
+      startDate: startDate ? startDate : new Date(),
+      endDate: endDate ? endDate : new Date(),
       key: "selection",
     },
   });
@@ -24,7 +28,9 @@ const DateRange = ({
 
   const [showPicker, setShowPicker] = useState(false);
   const [tempRange, setTempRange] = useState(state.selection);
-  const [isRangeSelected, setIsRangeSelected] = useState(false);
+  const [isRangeSelected, setIsRangeSelected] = useState(
+    startDate && endDate ? true : false
+  );
 
   useEffect(() => {
     document.addEventListener("mousedown", handleClickOutside);

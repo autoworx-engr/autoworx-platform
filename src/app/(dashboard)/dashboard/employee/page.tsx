@@ -9,13 +9,40 @@ import "react-date-range/dist/theme/default.css"; // theme css file
 import EmployeeFilter from "./components/EmployeeFilter";
 import EmployeeTable from "./components/EmployeeTable";
 import TotalPayouts from "./TotalPayouts";
+import moment from "moment";
 
-export default async function Page() {
+type TSearchParams = {
+  type?: string;
+  search?: string;
+  startDate?: string;
+  endDate?: string;
+};
+
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: TSearchParams;
+}) {
+  console.log("searchParams", searchParams);
   const companyId = await getCompanyId();
+  const { type = "All", search = "", startDate, endDate } = searchParams;
   const { employees, totalEmployees } = await getEmployeesForPaginate({
     companyId,
     take: 50,
     page: 1,
+    filter: {
+      type: type !== "All" ? (type as any) : undefined,
+      searchParams: search || undefined,
+      dateRange:
+        startDate && endDate
+          ? [
+              {
+                startDate: moment(startDate).toDate(),
+                endDate: moment(endDate).toDate(),
+              },
+            ]
+          : undefined,
+    },
   });
 
   return (
@@ -36,7 +63,12 @@ export default async function Page() {
         </div>
       </div>
 
-      <EmployeeFilter />
+      <EmployeeFilter
+        search={search}
+        startDate={startDate}
+        endDate={endDate}
+        type={type}
+      />
 
       <EmployeeTable
         filteredEmployees={

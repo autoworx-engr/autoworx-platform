@@ -233,10 +233,10 @@ export function NewAppointmentPipeline({
     if (estimates) {
       // filter all estimates where clientId is client.id
       const filteredEstimates = estimates.filter(
-        (estimate) => estimate.clientId === client?.id
+        estimate => estimate.clientId === client?.id
       );
       // map the filtered estimates to get the id
-      const estimateIds = filteredEstimates.map((estimate) => estimate.id);
+      const estimateIds = filteredEstimates.map(estimate => estimate.id);
       // set the draft estimates
       setDraftEstimates(estimateIds);
     }
@@ -278,7 +278,7 @@ export function NewAppointmentPipeline({
         date,
         startTime,
         endTime,
-        assignedUsers: assignedUsers.map((user) => user.id),
+        assignedUsers: assignedUsers.map(user => user.id),
         clientId: client ? client.id : undefined,
         vehicleId: vehicle ? vehicle.id : undefined,
         draftEstimate: draft,
@@ -489,7 +489,7 @@ export function NewAppointmentPipeline({
   useEffect(() => {
     const scrollToStartTime = () => {
       if (containerRef.current) {
-        const startTimeIndex = rows.findIndex((row) => {
+        const startTimeIndex = rows.findIndex(row => {
           const rowTime = formatTime(row);
           return rowTime === newAppointmentData?.settings?.dayStart;
         });
@@ -520,10 +520,10 @@ export function NewAppointmentPipeline({
 
   useEffect(() => {
     if (assignedTechnicianSearch) {
-      let val = (newAppointmentData?.employees || [])?.filter((employee) => {
+      let val = (newAppointmentData?.employees || [])?.filter(employee => {
         return (
           employee.employeeType === "Technician" &&
-          !assignedUsers.find((user) => user.id === employee.id) &&
+          !assignedUsers.find(user => user.id === employee.id) &&
           (employee?.firstName
             ?.toLowerCase()
             .includes(assignedTechnicianSearch.toLowerCase()) ||
@@ -534,10 +534,10 @@ export function NewAppointmentPipeline({
       });
       setFilteredTechnicians(val);
     } else {
-      let val = (newAppointmentData?.employees || [])?.filter((employee) => {
+      let val = (newAppointmentData?.employees || [])?.filter(employee => {
         return (
           employee.employeeType === "Technician" &&
-          !assignedUsers.find((user) => user.id === employee.id)
+          !assignedUsers.find(user => user.id === employee.id)
         );
       });
       setFilteredTechnicians(val);
@@ -546,10 +546,10 @@ export function NewAppointmentPipeline({
 
   useEffect(() => {
     if (assignedSalesSearch) {
-      let val = (newAppointmentData?.employees || [])?.filter((employee) => {
+      let val = (newAppointmentData?.employees || [])?.filter(employee => {
         return (
           employee.employeeType === "Sales" &&
-          !assignedUsers.find((user) => user.id === employee.id) &&
+          !assignedUsers.find(user => user.id === employee.id) &&
           (employee?.firstName
             ?.toLowerCase()
             .includes(assignedSalesSearch.toLowerCase()) ||
@@ -560,10 +560,10 @@ export function NewAppointmentPipeline({
       });
       setFilteredSales(val);
     } else {
-      let val = (newAppointmentData?.employees || [])?.filter((employee) => {
+      let val = (newAppointmentData?.employees || [])?.filter(employee => {
         return (
           employee.employeeType === "Sales" &&
-          !assignedUsers.find((user) => user.id === employee.id)
+          !assignedUsers.find(user => user.id === employee.id)
         );
       });
       setFilteredSales(val);
@@ -572,20 +572,20 @@ export function NewAppointmentPipeline({
 
   useEffect(() => {
     const filteredSalesPersons = (newAppointmentData?.employees || [])?.filter(
-      (employee) => {
+      employee => {
         return (
           employee.employeeType === "Sales" &&
-          !assignedUsers.find((user) => user.id === employee.id)
+          !assignedUsers.find(user => user.id === employee.id)
         );
       }
     );
     setFilteredSales(filteredSalesPersons);
 
     const filteredTechnicians = (newAppointmentData?.employees || [])?.filter(
-      (employee) => {
+      employee => {
         return (
           employee.employeeType === "Technician" &&
-          !assignedUsers.find((user) => user.id === employee.id)
+          !assignedUsers.find(user => user.id === employee.id)
         );
       }
     );
@@ -670,7 +670,7 @@ export function NewAppointmentPipeline({
                 <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
                 <g
                   id="SVGRepo_tracerCarrier"
-                  stroke-linecap="round"
+                  strokeLinecap="round"
                   stroke-linejoin="round"
                 ></g>
                 <g id="SVGRepo_iconCarrier">
@@ -689,7 +689,7 @@ export function NewAppointmentPipeline({
 
             <AppointmentTitleSelectAndAdd
               value={title}
-              onChange={(value) => setTitle(value)}
+              onChange={value => setTitle(value)}
             />
 
             <div className="flex flex-wrap items-end gap-2 2xl:flex-nowrap">
@@ -701,7 +701,7 @@ export function NewAppointmentPipeline({
                 value={date ?? ""}
                 // min={minDate}
                 required
-                onChange={(event) => setDate(event.currentTarget.value)}
+                onChange={event => setDate(event.currentTarget.value)}
               />
 
               <div className="flex items-end gap-2">
@@ -712,13 +712,13 @@ export function NewAppointmentPipeline({
                   <div>
                     <Select
                       value={startTime}
-                      onChange={(value) =>
+                      onChange={value =>
                         handleTimeChange({ target: { value } } as any, "start")
                       }
                       style={{ width: "100%", height: 34 }}
                       className="border-slate-400 border rounded-md"
                     >
-                      {timeOptions.map((time) => (
+                      {timeOptions.map(time => (
                         <Option key={time.value} value={time.value}>
                           <p className="text-base text-gray-600">
                             {" "}
@@ -736,13 +736,13 @@ export function NewAppointmentPipeline({
                   </span>
                   <Select
                     value={endTime}
-                    onChange={(value) =>
+                    onChange={value =>
                       handleTimeChange({ target: { value } } as any, "end")
                     }
                     style={{ width: "100%", height: 34 }}
                     className="border-slate-400 border rounded-md"
                   >
-                    {timeOptions.map((time) => (
+                    {timeOptions.map(time => (
                       <Option key={time.value} value={time.value}>
                         {time.label}
                       </Option>
@@ -780,7 +780,7 @@ export function NewAppointmentPipeline({
 
             {
               // Assigned users
-              assignedUsers.map((user) => {
+              assignedUsers.map(user => {
                 if (user.employeeType === "Sales") {
                   return (
                     <div
@@ -796,7 +796,7 @@ export function NewAppointmentPipeline({
                       <button
                         onClick={() => {
                           let filteredAssignedUser = assignedUsers.filter(
-                            (assignedUser) => user.id != assignedUser.id
+                            assignedUser => user.id != assignedUser.id
                           );
                           setAssignedUsers(filteredAssignedUser);
                         }}
@@ -823,7 +823,7 @@ export function NewAppointmentPipeline({
                     type="text"
                     placeholder="Search"
                     value={assignedSalesSearch}
-                    onChange={(e) => {
+                    onChange={e => {
                       setAssignedSalesSearch(e.target.value);
                     }}
                   />
@@ -834,7 +834,7 @@ export function NewAppointmentPipeline({
                   onClick={() => setAddSalesPersonOpen(false)}
                 />
                 <div className="max-h-[220px] overflow-y-auto">
-                  {filteredSales.map((employee) => (
+                  {filteredSales.map(employee => (
                     <button
                       key={employee.id}
                       className="flex w-full cursor-pointer items-center gap-3 rounded-md p-2 hover:bg-gray-100"
@@ -867,7 +867,7 @@ export function NewAppointmentPipeline({
 
             {
               // Assigned users
-              assignedUsers.map((user) => {
+              assignedUsers.map(user => {
                 if (user.employeeType === "Technician") {
                   return (
                     <div
@@ -883,7 +883,7 @@ export function NewAppointmentPipeline({
                       <button
                         onClick={() => {
                           let filteredAssignedUser = assignedUsers.filter(
-                            (assignedUser) => user.id != assignedUser.id
+                            assignedUser => user.id != assignedUser.id
                           );
                           setAssignedUsers(filteredAssignedUser);
                         }}
@@ -910,7 +910,7 @@ export function NewAppointmentPipeline({
                     type="text"
                     placeholder="Search"
                     value={assignedTechnicianSearch}
-                    onChange={(e) => {
+                    onChange={e => {
                       setAssignedTechnicianSearch(e.target.value);
                     }}
                   />
@@ -921,7 +921,7 @@ export function NewAppointmentPipeline({
                   onClick={() => setAddTechnicianOpen(false)}
                 />
                 <div className="max-h-[220px] overflow-y-auto">
-                  {filteredTechnicians.map((employee) => (
+                  {filteredTechnicians.map(employee => (
                     <button
                       key={employee.id}
                       className="flex w-full cursor-pointer items-center gap-3 rounded-md p-2 hover:bg-gray-100"
@@ -980,9 +980,9 @@ export function NewAppointmentPipeline({
               items={draftEstimates}
               selectedItem={draft}
               setSelectedItem={setDraft}
-              displayList={(item) => <p className="text-[#6571FF]">{item}</p>}
-              onSearch={(search) => {
-                return draftEstimates.filter((draft) =>
+              displayList={item => <p className="text-[#6571FF]">{item}</p>}
+              onSearch={search => {
+                return draftEstimates.filter(draft =>
                   draft.toLowerCase().includes(search.toLowerCase())
                 );
               }}
@@ -1098,6 +1098,6 @@ export function NewAppointmentPipeline({
 
 function getHours(time: string) {
   if (!time) return 0;
-  const [h, m] = time.split(":").map((x) => +x);
+  const [h, m] = time.split(":").map(x => +x);
   return h + m / 60;
 }

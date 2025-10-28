@@ -116,8 +116,8 @@ export function NotificationsPopover({
       .subscribe(`noti-${userId}`)
       .bind("notification", function (data: Notification) {
         if (!ignore) {
-          setNotifications((prev) => [data, ...prev]);
-          setTotalUnRead((prev) => prev + 1);
+          setNotifications(prev => [data, ...prev]);
+          setTotalUnRead(prev => prev + 1);
         }
       });
     return () => {
@@ -149,7 +149,7 @@ export function NotificationsPopover({
   const handleMarkAllAsRead = useCallback(async () => {
     const updated = await markAsAllRead(Number(userId));
     if (updated.type === "success") {
-      setNotifications(notifications.map((n) => ({ ...n, isUnRead: false })));
+      setNotifications(notifications.map(n => ({ ...n, isUnRead: false })));
       setOpenPopover(null);
       setTotalUnRead(0);
     } else {
@@ -161,9 +161,9 @@ export function NotificationsPopover({
     const updated = await markAsReadById(id);
     if (updated.type === "success") {
       setNotifications(
-        notifications.map((n) => (n.id === id ? { ...n, isUnRead: false } : n))
+        notifications.map(n => (n.id === id ? { ...n, isUnRead: false } : n))
       );
-      setTotalUnRead((prev) => prev - 1);
+      setTotalUnRead(prev => prev - 1);
     } else {
       errorToast("Failed to mark all as read");
     }
@@ -189,7 +189,7 @@ export function NotificationsPopover({
             <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
             <g
               id="SVGRepo_tracerCarrier"
-              stroke-linecap="round"
+              strokeLinecap="round"
               stroke-linejoin="round"
             ></g>
             <g id="SVGRepo_iconCarrier">

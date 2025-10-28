@@ -1,6 +1,6 @@
 "use client";
 
-import { EmployeeType, User } from "@prisma/client";
+import {  User } from "@prisma/client";
 import { useSearchParams } from "next/navigation";
 import AttendancePerformance from "./AttendancePerformance";
 import EmployeeInfoTable from "./EmployeeInfoTable";

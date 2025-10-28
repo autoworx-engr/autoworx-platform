@@ -314,7 +314,7 @@ export default function MakePayment() {
                   <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
                   <g
                     id="SVGRepo_tracerCarrier"
-                    stroke-linecap="round"
+                    strokeLinecap="round"
                     stroke-linejoin="round"
                   ></g>
                   <g id="SVGRepo_iconCarrier">
@@ -373,7 +373,7 @@ export default function MakePayment() {
                       name="date"
                       type="date"
                       value={date ? moment(date).format("YYYY-MM-DD") : ""}
-                      onChange={(e) => {
+                      onChange={e => {
                         const [year, month, day] = e.target.value
                           .split("-")
                           .map(Number);
@@ -388,7 +388,7 @@ export default function MakePayment() {
                       type="text"
                       label="Credit Cards (Last 4 digits)"
                       value={card}
-                      onChange={(e) => setCard(e.target.value)}
+                      onChange={e => setCard(e.target.value)}
                     />
                   </div>
                 </div>
@@ -400,8 +400,8 @@ export default function MakePayment() {
                       name="amount"
                       type="text"
                       value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
-                      onBlur={(e) => setAmount(formatAmount(e.target.value))}
+                      onChange={e => setAmount(e.target.value)}
+                      onBlur={e => setAmount(formatAmount(e.target.value))}
                     />
                   </div>
 
@@ -483,7 +483,7 @@ export default function MakePayment() {
                     id="notes"
                     className="h-20 w-full rounded-md border-2 border-slate-400 p-2 outline-none"
                     value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
+                    onChange={e => setNotes(e.target.value)}
                   />
                 </div>
               </div>
@@ -497,7 +497,7 @@ export default function MakePayment() {
                     name="date"
                     type="date"
                     value={date ? moment(date).format("YYYY-MM-DD") : ""}
-                    onChange={(e) => {
+                    onChange={e => {
                       const localDate = moment.tz(
                         e.target.value,
                         "YYYY-MM-DD",
@@ -515,7 +515,7 @@ export default function MakePayment() {
                     type="text"
                     label="Check #"
                     value={check}
-                    onChange={(e) => setCheck(e.target.value)}
+                    onChange={e => setCheck(e.target.value)}
                   />
                 </div>
               </div>
@@ -526,8 +526,8 @@ export default function MakePayment() {
                   name="amount"
                   type="text"
                   value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  onBlur={(e) => setAmount(formatAmount(e.target.value))}
+                  onChange={e => setAmount(e.target.value)}
+                  onBlur={e => setAmount(formatAmount(e.target.value))}
                 />
               </div>
 
@@ -543,7 +543,7 @@ export default function MakePayment() {
                   id="notes"
                   className="h-20 w-full rounded-md border-2 border-slate-400 p-2 outline-none"
                   value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
+                  onChange={e => setNotes(e.target.value)}
                 />
               </div>
             </Tabs.Content>
@@ -556,7 +556,7 @@ export default function MakePayment() {
                     name="date"
                     type="date"
                     value={date ? moment(date).format("YYYY-MM-DD") : ""}
-                    onChange={(e) => {
+                    onChange={e => {
                       const localDate = moment.tz(
                         e.target.value,
                         "YYYY-MM-DD",
@@ -574,7 +574,7 @@ export default function MakePayment() {
                     type="text"
                     label="Cash Received"
                     value={cash}
-                    onChange={(e) => setCash(e.target.value)}
+                    onChange={e => setCash(e.target.value)}
                   />
                 </div>
               </div>
@@ -585,7 +585,7 @@ export default function MakePayment() {
                   name="amount"
                   type="text"
                   value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
+                  onChange={e => setAmount(e.target.value)}
                 />
               </div>
 
@@ -601,7 +601,7 @@ export default function MakePayment() {
                   id="notes"
                   className="h-20 w-full rounded-md border-2 border-slate-400 p-2 outline-none"
                   value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
+                  onChange={e => setNotes(e.target.value)}
                 />
               </div>
             </Tabs.Content>
@@ -625,7 +625,7 @@ export default function MakePayment() {
                         type="text"
                         placeholder="Payment Method Name"
                         value={paymentMethodInput}
-                        onChange={(e) => setPaymentMethodInput(e.target.value)}
+                        onChange={e => setPaymentMethodInput(e.target.value)}
                         className="w-full rounded-md border-2 border-slate-400 p-1"
                       />
                       <button
@@ -643,7 +643,7 @@ export default function MakePayment() {
                   }
                   items={paymentMethods}
                   onSearch={(search: string) =>
-                    paymentMethods.filter((method) =>
+                    paymentMethods.filter(method =>
                       method.name.toLowerCase().includes(search.toLowerCase())
                     )
                   }
@@ -663,7 +663,7 @@ export default function MakePayment() {
                     name="date"
                     type="date"
                     value={date ? moment(date).format("YYYY-MM-DD") : ""}
-                    onChange={(e) => {
+                    onChange={e => {
                       const localDate = moment.tz(
                         e.target.value,
                         "YYYY-MM-DD",
@@ -680,7 +680,7 @@ export default function MakePayment() {
                     name="amount"
                     type="text"
                     value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
+                    onChange={e => setAmount(e.target.value)}
                   />
                 </div>
               </div>
@@ -697,7 +697,7 @@ export default function MakePayment() {
                   id="notes"
                   className="h-20 w-full rounded-md border-2 border-slate-400 p-2 outline-none"
                   value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
+                  onChange={e => setNotes(e.target.value)}
                 />
               </div>
             </Tabs.Content>
@@ -709,7 +709,7 @@ export default function MakePayment() {
                     name="date"
                     type="date"
                     value={date ? moment(date).format("YYYY-MM-DD") : ""}
-                    onChange={(e) => {
+                    onChange={e => {
                       const localDate = moment.tz(
                         e.target.value,
                         "YYYY-MM-DD",
@@ -727,7 +727,7 @@ export default function MakePayment() {
                     type="text"
                     label="Deposit Amount"
                     value={deposit}
-                    onChange={(e) => setDeposit(e.target.value)}
+                    onChange={e => setDeposit(e.target.value)}
                   />
                 </div>
               </div>
@@ -739,7 +739,7 @@ export default function MakePayment() {
                   type="text"
                   label="Deposit Method"
                   value={depositMethod}
-                  onChange={(e) => setDepositMethod(e.target.value)}
+                  onChange={e => setDepositMethod(e.target.value)}
                   required={true}
                 />
               </div>
@@ -756,7 +756,7 @@ export default function MakePayment() {
                   id="depositNotes"
                   className="h-20 w-full rounded-md border-2 border-slate-400 p-2 outline-none"
                   value={depositNotes}
-                  onChange={(e) => setDepositNotes(e.target.value)}
+                  onChange={e => setDepositNotes(e.target.value)}
                 />
               </div>
             </Tabs.Content>

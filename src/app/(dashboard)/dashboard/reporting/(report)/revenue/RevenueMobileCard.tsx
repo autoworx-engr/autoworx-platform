@@ -57,7 +57,7 @@ export default function RevenueMobileCard({
   // Inventory losses (lost products)
   if (invoice.inventoryLossAmount > 0) {
     const inventoryMaterialNames = invoice.InventoryProductHistory?.map(
-      (item) => item.product?.name
+      item => item.product?.name
     ).filter(Boolean);
     lossDetails.push(`Inventory Loss: ${inventoryMaterialNames?.join(", ")}`);
   }
@@ -68,7 +68,7 @@ export default function RevenueMobileCard({
     invoice.materialLossDetails?.length > 0
   ) {
     const materialNames = invoice.materialLossDetails.map(
-      (detail) => `${detail.name} ($${detail.loss.toFixed(2)})`
+      detail => `${detail.name} ($${detail.loss.toFixed(2)})`
     );
     lossDetails.push(`Material Loss: ${materialNames.join(", ")}`);
   }
@@ -138,7 +138,7 @@ export default function RevenueMobileCard({
                   <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
                   <g
                     id="SVGRepo_tracerCarrier"
-                    stroke-linecap="round"
+                    strokeLinecap="round"
                     stroke-linejoin="round"
                   ></g>
                   <g id="SVGRepo_iconCarrier">

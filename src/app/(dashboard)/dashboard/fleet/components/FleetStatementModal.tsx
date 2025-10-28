@@ -74,7 +74,7 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
     setPaymentModalOpen(false);
     // Reload statement data instead of full page reload
     if (statementId) {
-      getFleetStatement(statementId).then((result) => {
+      getFleetStatement(statementId).then(result => {
         if (result.type === "success") {
           setStatement(result.data);
         }
@@ -192,7 +192,7 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
                 <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
                 <g
                   id="SVGRepo_tracerCarrier"
-                  stroke-linecap="round"
+                  strokeLinecap="round"
                   stroke-linejoin="round"
                 ></g>
                 <g id="SVGRepo_iconCarrier">
@@ -240,7 +240,7 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
                       <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
                       <g
                         id="SVGRepo_tracerCarrier"
-                        stroke-linecap="round"
+                        strokeLinecap="round"
                         stroke-linejoin="round"
                         stroke="#CCCCCC"
                         stroke-width="0.144"

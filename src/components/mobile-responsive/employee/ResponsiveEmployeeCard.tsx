@@ -1,5 +1,3 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { cn } from "@/lib/cn";
 import { padId } from "@/lib/padId";
 import { Calendar, Mail, MessageCircle, Phone } from "lucide-react";
 import moment from "moment";

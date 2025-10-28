@@ -280,7 +280,7 @@ export default function RefundModal({
                     type="date"
                     label="Date"
                     value={moment(date).format("YYYY-MM-DD")}
-                    onChange={(e) => setDate(new Date(e.target.value))}
+                    onChange={e => setDate(new Date(e.target.value))}
                   />
                 </div>
                 <div className="w-full">
@@ -290,10 +290,8 @@ export default function RefundModal({
                     type="number"
                     label="Amount"
                     value={refundAmount}
-                    onChange={(e) => setRefundAmount(e.target.value)}
-                    onBlur={(e) =>
-                      setRefundAmount(formatAmount(e.target.value))
-                    }
+                    onChange={e => setRefundAmount(e.target.value)}
+                    onBlur={e => setRefundAmount(formatAmount(e.target.value))}
                     max={availableToRefund}
                   />
                 </div>
@@ -312,7 +310,7 @@ export default function RefundModal({
                     <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
                     <g
                       id="SVGRepo_tracerCarrier"
-                      stroke-linecap="round"
+                      strokeLinecap="round"
                       stroke-linejoin="round"
                     ></g>
                     <g id="SVGRepo_iconCarrier">
@@ -382,7 +380,7 @@ export default function RefundModal({
                   name="refundReason"
                   value={refundReasonInput}
                   placeholder="Enter reason for refund..."
-                  onChange={(e) => setRefundReasonInput(e.target.value)}
+                  onChange={e => setRefundReasonInput(e.target.value)}
                   rows={3}
                   className="w-full p-2 sm:p-3 border border-gray-500 rounded-md shadow-sm focus:outline-none   resize-none"
                 />

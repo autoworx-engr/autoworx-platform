@@ -194,7 +194,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
                   <g
                     id="SVGRepo_tracerCarrier"
-                    stroke-linecap="round"
+                    strokeLinecap="round"
                     stroke-linejoin="round"
                   ></g>
                   <g id="SVGRepo_iconCarrier">
@@ -250,7 +250,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                       name="date"
                       type="date"
                       value={date ? moment(date).format("YYYY-MM-DD") : ""}
-                      onChange={(e) => {
+                      onChange={e => {
                         const localDate = moment.tz(
                           e.target.value,
                           "YYYY-MM-DD",
@@ -267,7 +267,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                       type="text"
                       label="Credit Card (Last 4 digits)"
                       value={card}
-                      onChange={(e) => setCard(e.target.value)}
+                      onChange={e => setCard(e.target.value)}
                     />
                   </div>
                 </div>
@@ -279,8 +279,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                       name="amount"
                       type="text"
                       value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
-                      onBlur={(e) => setAmount(formatAmount(e.target.value))}
+                      onChange={e => setAmount(e.target.value)}
+                      onBlur={e => setAmount(formatAmount(e.target.value))}
                     />
                   </div>
 
@@ -362,7 +362,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                     id="notes"
                     className="h-20 w-full rounded-md border-2 border-slate-400 p-2 outline-none"
                     value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
+                    onChange={e => setNotes(e.target.value)}
                   />
                 </div>
               </div>
@@ -376,7 +376,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                     name="date"
                     type="date"
                     value={date ? moment(date).format("YYYY-MM-DD") : ""}
-                    onChange={(e) => {
+                    onChange={e => {
                       const localDate = moment.tz(
                         e.target.value,
                         "YYYY-MM-DD",
@@ -394,7 +394,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                     type="text"
                     label="Check #"
                     value={check}
-                    onChange={(e) => setCheck(e.target.value)}
+                    onChange={e => setCheck(e.target.value)}
                   />
                 </div>
               </div>
@@ -405,8 +405,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   name="amount"
                   type="text"
                   value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  onBlur={(e) => setAmount(formatAmount(e.target.value))}
+                  onChange={e => setAmount(e.target.value)}
+                  onBlur={e => setAmount(formatAmount(e.target.value))}
                 />
               </div>
 
@@ -422,7 +422,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   id="notes"
                   className="h-20 w-full rounded-md border-2 border-slate-400 p-2 outline-none"
                   value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
+                  onChange={e => setNotes(e.target.value)}
                 />
               </div>
             </Tabs.Content>
@@ -435,7 +435,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                     name="date"
                     type="date"
                     value={date ? moment(date).format("YYYY-MM-DD") : ""}
-                    onChange={(e) => {
+                    onChange={e => {
                       const localDate = moment.tz(
                         e.target.value,
                         "YYYY-MM-DD",
@@ -453,7 +453,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                     type="text"
                     label="Cash Received"
                     value={cash}
-                    onChange={(e) => setCash(e.target.value)}
+                    onChange={e => setCash(e.target.value)}
                   />
                 </div>
               </div>
@@ -464,8 +464,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   name="amount"
                   type="text"
                   value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  onBlur={(e) => setAmount(formatAmount(e.target.value))}
+                  onChange={e => setAmount(e.target.value)}
+                  onBlur={e => setAmount(formatAmount(e.target.value))}
                 />
               </div>
 
@@ -481,7 +481,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   id="notes"
                   className="h-20 w-full rounded-md border-2 border-slate-400 p-2 outline-none"
                   value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
+                  onChange={e => setNotes(e.target.value)}
                 />
               </div>
             </Tabs.Content>
@@ -505,7 +505,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                         type="text"
                         placeholder="Payment Method Name"
                         value={paymentMethodInput}
-                        onChange={(e) => setPaymentMethodInput(e.target.value)}
+                        onChange={e => setPaymentMethodInput(e.target.value)}
                         className="w-full rounded-md border-2 border-slate-400 p-1"
                       />
                       <button
@@ -523,7 +523,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   }
                   items={paymentMethods}
                   onSearch={(search: string) =>
-                    paymentMethods.filter((method) =>
+                    paymentMethods.filter(method =>
                       method.name.toLowerCase().includes(search.toLowerCase())
                     )
                   }
@@ -543,7 +543,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                     name="date"
                     type="date"
                     value={date ? moment(date).format("YYYY-MM-DD") : ""}
-                    onChange={(e) => {
+                    onChange={e => {
                       const localDate = moment.tz(
                         e.target.value,
                         "YYYY-MM-DD",
@@ -560,8 +560,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                     name="amount"
                     type="text"
                     value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    onBlur={(e) => setAmount(formatAmount(e.target.value))}
+                    onChange={e => setAmount(e.target.value)}
+                    onBlur={e => setAmount(formatAmount(e.target.value))}
                   />
                 </div>
               </div>
@@ -578,7 +578,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   id="notes"
                   className="h-20 w-full rounded-md border-2 border-slate-400 p-2 outline-none"
                   value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
+                  onChange={e => setNotes(e.target.value)}
                 />
               </div>
             </Tabs.Content>
