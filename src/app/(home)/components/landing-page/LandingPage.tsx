@@ -1,8 +1,7 @@
 "use client";
 import dynamic from "next/dynamic";
-import Hero from "./first/components/Hero";
 
-// const Hero = dynamic(() => import("./first/components/Hero"));
+const Hero = dynamic(() => import("./first/components/Hero"));
 const ReviewSection = dynamic(() => import("./first/components/ReviewSection"));
 const Success = dynamic(() => import("./first/components/Success"));
 const WhatWeDoBest = dynamic(() => import("./first/components/WhatWeDoBest"));
