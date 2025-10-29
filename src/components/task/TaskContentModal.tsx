@@ -29,7 +29,7 @@ import { queryKeys } from "@/lib/queryKeys";
 import { deleteTask } from "@/actions/task/deleteTask";
 import { formatTime12Hour } from "@/utils/formateTime12Hours";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
-import { Select } from "antd";
+import { Popconfirm, Select } from "antd";
 import { normalizeTime } from "@/utils/normalizeTime";
 import TaskSpinner from "@/app/(dashboard)/dashboard/task/_component/ui/TaskSpinner";
 import { Check, Trash2 } from "lucide-react";
@@ -315,7 +315,6 @@ export default function TaskContentModal({
       const result = await deleteTask(taskId);
 
       if (result.type === "success") {
-        successToast("Task deleted successfully");
         // Invalidate multiple query caches to ensure UI updates everywhere
         queryClient.invalidateQueries({
           queryKey: taskQueryKey.taskById(taskId.toString()),
@@ -528,13 +527,21 @@ export default function TaskContentModal({
             )}
           >
             {fromEdit && taskId && (
-              <button
-                className="text-red-500 hover:text-red-700"
-                type="button"
-                onClick={() => handleDeleteTask(taskId)}
+              <Popconfirm
+                title="Delete Task"
+                description="Are you sure you want to delete this task?"
+                onConfirm={() => handleDeleteTask(taskId)}
+                okText="Yes"
+                cancelText="No"
+                okButtonProps={{ danger: true }}
               >
-                <Trash2 size={20} />
-              </button>
+                <button
+                  className="text-red-500 hover:text-red-700"
+                  type="button"
+                >
+                  <Trash2 size={20} />
+                </button>
+              </Popconfirm>
             )}
             <DialogFooter className=" flex flex-row justify-end space-x-2 ">
               <DialogClose asChild>

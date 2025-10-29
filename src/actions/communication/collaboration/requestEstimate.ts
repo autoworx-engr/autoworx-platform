@@ -1,7 +1,6 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { sendType } from "@/types/Chat";
 import { InvoiceType, Prisma } from "@prisma/client";
 import { customAlphabet } from "nanoid";
 import { headers } from "next/headers";
@@ -22,7 +21,7 @@ type TEstimateData = {
 
 export const requestEstimate = async (
   formDataForPhoto: FormData,
-  requestEstimateData: TEstimateData,
+  requestEstimateData: TEstimateData
 ) => {
   try {
     // const isAlreadyExistsEstimate = await db.client.findFirst({
@@ -35,7 +34,7 @@ export const requestEstimate = async (
     //   throw new Error("Estimate for this client already exists");
     // }
 
-    const { requestEstimateFromDB } = await db.$transaction(async (prisma) => {
+    const { requestEstimateFromDB } = await db.$transaction(async prisma => {
       const origin = headers().get("origin");
 
       const receiverCompanyDataFormDB = await prisma.company.findUnique({
@@ -190,14 +189,14 @@ export const requestEstimate = async (
       photoPaths.push(...data);
 
       await Promise.all(
-        photoPaths.map((photoPath) =>
+        photoPaths.map(photoPath =>
           prisma.invoicePhoto.create({
             data: {
               invoiceId: estimate?.id,
               photo: photoPath,
             },
-          }),
-        ),
+          })
+        )
       );
 
       return { requestEstimateFromDB };

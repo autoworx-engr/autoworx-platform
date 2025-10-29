@@ -11,6 +11,7 @@ import { createUserValidation } from "@/validations/schemas/auth/user.validation
 import bcrypt from "bcryptjs";
 import httpStatus from "http-status";
 import { env } from "next-runtime-env";
+import { initialCreateBookingForm } from "../settings/bookingForm";
 import { uploadNotificationSettings } from "../settings/updateNotification";
 
 interface RegisterData {
@@ -69,7 +70,6 @@ export async function register({
     if (accessCode !== ACCESS_CODE) {
       throw new AppError(httpStatus.BAD_REQUEST, "Invalid access code");
     }
-
 
     const lowerCaseEmail = userInfo.email.toLowerCase();
 
@@ -291,6 +291,8 @@ export async function register({
         companyId: newCompany.id,
       },
     });
+
+    await initialCreateBookingForm();
 
     return { success: true };
   } catch (err) {

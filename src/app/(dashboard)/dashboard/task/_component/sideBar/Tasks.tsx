@@ -79,12 +79,12 @@ export default function Tasks() {
     <div
       className={cn(
         "md:app-shadow relative mt-5 flex flex-grow flex-col gap-2 overflow-hidden rounded-[12px] md:bg-background",
-        minimized || "p-3",
+        minimized || "p-3"
       )}
     >
       <h2 className="-mt-4 flex items-center justify-between md:-mt-0">
         {!minimized && (
-          <div className="mb-4 text-base font-semibold text-gray-900 md:text-[16px] md:text-[#797979]">
+          <div className=" text-base font-semibold text-gray-900 md:text-[16px] md:text-[#797979]">
             Task List
           </div>
         )}
