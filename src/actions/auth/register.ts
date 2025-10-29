@@ -292,7 +292,7 @@ export async function register({
       },
     });
 
-    await initialCreateBookingForm();
+    await initialCreateBookingForm(newCompany.id);
 
     return { success: true };
   } catch (err) {
