@@ -80,6 +80,7 @@ export default async function PaymentReportPage({ searchParams }: TProps) {
       cash: true,
       invoice: {
         select: {
+          Refund: true,
           due: true,
           vehicle: true,
           client: {
