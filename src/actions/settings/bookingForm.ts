@@ -47,7 +47,7 @@ export async function updateBookingForm(
   }
 }
 
-export async function initialCreateBookingForm(cId: number) {
+export async function initialCreateBookingForm(cId?: number) {
   try {
     const companyId = cId ? cId : await getCompanyId();
     // Generate booking URL with encoded company_id as query parameter
