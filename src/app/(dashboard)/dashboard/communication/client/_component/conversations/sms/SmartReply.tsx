@@ -9,6 +9,7 @@ type Props = {
   companyId: number;
   onPick: (text: string) => void;
   draft?: string;
+  context?: "sms" | "email";
 };
 
 export default function SmartReplyBar({
@@ -16,6 +17,7 @@ export default function SmartReplyBar({
   companyId,
   onPick,
   draft,
+  context = "sms",
 }: Props) {
   const [loading, setLoading] = React.useState<null | "suggest" | "enhance">(
     null
@@ -23,12 +25,33 @@ export default function SmartReplyBar({
   const [items, setItems] = React.useState<{ text: string }[]>([]);
   const [error, setError] = React.useState<string | null>(null);
 
-  const normalize = (res: unknown) =>
-    Array.isArray(res)
+  const normalize = (res: unknown) => {
+    // Debug: Check what we're actually receiving
+    console.log("[SmartReply] Received response:", res);
+    console.log("[SmartReply] Response type:", typeof res);
+
+    // If it's a string, try to parse it as JSON
+    if (typeof res === "string") {
+      try {
+        const parsed = JSON.parse(res);
+        if (parsed.suggestions && Array.isArray(parsed.suggestions)) {
+          return parsed.suggestions
+            .filter((x: any) => x?.text)
+            .map((x: any) => ({ text: String(x.text) }));
+        }
+      } catch (e) {
+        console.error("[SmartReply] Failed to parse string response:", e);
+        return [];
+      }
+    }
+
+    // Normal array handling
+    return Array.isArray(res)
       ? res
           .filter((x: any) => x?.text)
           .map((x: any) => ({ text: String(x.text) }))
       : [];
+  };
 
   const handleSuggest = async () => {
     try {
@@ -41,10 +64,11 @@ export default function SmartReplyBar({
         maxSuggestions: 3,
         tone: "friendly",
         mode: "suggest",
-      } as any);
+        context,
+      });
       setItems(normalize(res));
     } catch {
-      setError("Couldn’t load smart replies.");
+      setError("Couldn't load smart replies.");
     } finally {
       setLoading(null);
     }
@@ -66,10 +90,11 @@ export default function SmartReplyBar({
         tone: "friendly",
         mode: "enhance",
         draft,
-      } as any);
+        context,
+      });
       setItems(normalize(res));
     } catch {
-      setError("Couldn’t enhance draft.");
+      setError("Couldn't enhance draft.");
     } finally {
       setLoading(null);
     }
@@ -86,7 +111,7 @@ export default function SmartReplyBar({
           className="flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-60"
         >
           <MessageSquare className="h-4 w-4" />
-          {loading === "suggest" ? "Generating…" : "Generate replies"}
+          {loading === "suggest" ? "Generating…" : "Generate AI Smart Replies"}
         </button>
 
         <button
@@ -106,16 +131,25 @@ export default function SmartReplyBar({
       {/* Suggestions list */}
       {items.length > 0 && (
         <div className="flex flex-col gap-2">
-          {items.map((s, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => onPick(s.text)}
-              className="w-fit rounded-lg border border-gray-300 bg-gray-100 px-3 py-2 text-sm text-left hover:bg-gray-200"
-            >
-              {s.text}
-            </button>
-          ))}
+          {items.map((s, i) => {
+            console.log(
+              `[SmartReply] Rendering suggestion ${i}:`,
+              s.text.substring(0, 50)
+            );
+            return (
+              <button
+                key={i}
+                type="button"
+                onClick={() => {
+                  console.log("[SmartReply] Picked text:", s.text);
+                  onPick(s.text);
+                }}
+                className="w-fit rounded-lg border border-gray-300 bg-gray-100 px-3 py-2 text-sm text-left hover:bg-gray-200"
+              >
+                {s.text}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
