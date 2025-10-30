@@ -25,7 +25,7 @@ const ComponentsLightbox = ({ getItems = [], startIndex = 0 }: LightboxProps) =>
     router.back();
   };
 
-  console.log("getItems", getItems);
+  
 
   return (
     <div className="mt-10 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
