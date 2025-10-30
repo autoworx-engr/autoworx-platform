@@ -330,6 +330,8 @@ export async function POST(request: NextRequest) {
       'Access-Control-Allow-Headers',
       'Content-Type, X-TOKEN'
     );
+
+    return response;
   } catch (error: any) {
     // check if this is json parse error
     const errorResponse = Response.json(
