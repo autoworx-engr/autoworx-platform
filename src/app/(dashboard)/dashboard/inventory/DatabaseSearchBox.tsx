@@ -1,37 +1,31 @@
 "use client";
 
 import { Input } from "antd";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useInventoryDatabaseSearchStore } from "@/stores/inventoryDatabaseSearchStore";
 import { Search } from "lucide-react";
 import { debounce } from "../../../../utils/debounce";
-import { useDebounceCallback } from "@/hooks/useDebounceCallback";
 
 export default function DatabaseSearchBox() {
   const [searchTerm, setSearchTerm] = useState("");
 
-  const { search, setSearch, setPage } = useInventoryDatabaseSearchStore();
+  const { setSearch, setPage } = useInventoryDatabaseSearchStore();
 
-  useEffect(() => {
-    setSearchTerm(search || "");
-  }, [search]);
+  const debouncedSearchRef = useRef(
+    debounce((value: string) => {
+      setSearch(value);
+      setPage(1);
+    }, 500)
+  );
 
-  const debouncedSearch = useDebounceCallback((value: string) => {
-    setSearch(value);
-    setPage(1);
-  }, 500);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setSearchTerm(value);
-    debouncedSearch(value);
-  };
-
-  useEffect(() => {
-    return () => {
-      debouncedSearch.cancel();
-    };
-  }, [debouncedSearch]);
+  const handleInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value;
+      setSearchTerm(value);
+      debouncedSearchRef.current(value);
+    },
+    []
+  );
 
   return (
     <div className="w-full min-w-[300px] max-w-[693px]">

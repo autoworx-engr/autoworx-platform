@@ -10,14 +10,17 @@ type TProps = {
 };
 
 export default function DatabaseFilterHeader({ categories }: TProps) {
-  const categoryName = useInventoryDatabaseSearchStore((state) => state.categoryName);
-  const setCategoryName = useInventoryDatabaseSearchStore((state) => state.setCategoryName);
+  const { setSearch, setPage, categoryName, setCategoryName } =
+    useInventoryDatabaseSearchStore();
 
-  const [selectedCategory, setSelectedCategory] = useState<string | undefined>(categoryName);
+  const [selectedCategory, setSelectedCategory] = useState<string | undefined>(
+    categoryName
+  );
 
   const handleCategoryChange = (value: string | undefined) => {
     setSelectedCategory(value);
     setCategoryName(value ?? "");
+    setPage(1);
   };
 
   useEffect(() => {
