@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     const clientPhone = body?.phone;
     const customerCountry = body.customer_country;
     const serviceId = +body.serviceId;
-    const oppurtunity = body.oppurtunity_source;
+    const opportunity = body.opportunity_source;
     const crmMsg = body.message;
     const multipleServices = body.multiServices as number[] | undefined;
 
@@ -142,7 +142,7 @@ export async function POST(request: NextRequest) {
           email: clientEmail,
           phone: clientPhone,
           type: 'demo_request',
-          oppurtunity_source: oppurtunity,
+          opportunity_source: opportunity,
         },
         { status: 201 }
       );
@@ -150,9 +150,9 @@ export async function POST(request: NextRequest) {
 
     // now extract the source, services and vehicle info from opportunity
     // the format is this: (source) vehicle | service
-    const source = oppurtunity.split(')')[0].replace('(', '').trim();
-    const vehicleInfo = oppurtunity.split(')')[1].split('|')[0].trim();
-    const services = oppurtunity.split(')')[1].split('|')[1].trim();
+    const source = opportunity.split(')')[0].replace('(', '').trim();
+    const vehicleInfo = opportunity.split(')')[1].split('|')[0].trim();
+    const services = opportunity.split(')')[1].split('|')[1].trim();
 
     // check if the required fields are provided
     if (!clientName || !vehicleInfo || !services || !source) {
@@ -319,7 +319,7 @@ export async function POST(request: NextRequest) {
         email: clientEmail,
         phone: clientPhone,
         customer_country: customerCountry,
-        oppurtunity_source: oppurtunity,
+        opportunity_source: opportunity,
       },
       { status: 201 }
     );
