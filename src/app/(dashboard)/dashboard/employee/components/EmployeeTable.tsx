@@ -57,7 +57,7 @@ const EmployeeTable = ({
             searchParams: search || undefined,
             dateRange:
               dateRange[0] && dateRange[1]
-                ? [{ startDate: dateRange[0], endDate: dateRange[1] }]
+                ? { startDate: dateRange[0], endDate: dateRange[1] }
                 : undefined,
           },
         });
@@ -70,7 +70,7 @@ const EmployeeTable = ({
       }
     };
     fetchedEmployees();
-  }, [pageSize, currentPage, type, search, dateRange]);
+  }, [pageSize, currentPage, type, search, dateRange[0], dateRange[1]]);
 
   const handlePageChange = (page: number, pageSize?: number) => {
     setCurrentPage(page);

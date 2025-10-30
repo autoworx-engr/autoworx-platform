@@ -51,6 +51,7 @@ import { InspectionItems } from "./InspectionItems";
 import { InvoiceItems } from "./InvoiceItems";
 import { StripePay } from "./StripePay";
 import { Files, Mail, MessageCircleMore, SquarePen, X } from "lucide-react";
+import SignatureCanvas from "react-signature-canvas";
 const DownloadPDF = dynamic(() => import("./DownloadInvoice"), {
   ssr: false,
 });
@@ -94,9 +95,12 @@ export default function InvoiceModalBody({
   // const [isLoading, setIsLoading] = useState(true);
   const printComponentRef = useRef(null);
   const promiseResolveRef = useRef<any>(null);
+  const sigCanvas = useRef<any>(null);
   const [showAuthorizedName, setShowAuthorizedName] = useState(false);
   const [authorizedName, setAuthorizedName] = useState("");
   const [authorizedNameInput, setAuthorizedNameInput] = useState("");
+  const [sigImageURL, setSigImageURL] = useState(null);
+  const [showSignaturePad, setShowSignaturePad] = useState(false);
   const [activeTab, setActiveTab] = useState<
     "estimate" | "attachments" | "inspections"
   >("estimate");
@@ -811,6 +815,71 @@ export default function InvoiceModalBody({
                 </button>
               )}
             </div>
+          </div>
+          {!showSignaturePad && !sigImageURL && (
+            <div className="flex justify-end">
+              <button
+                onClick={() => {
+                  setShowSignaturePad(true);
+                }}
+                className="rounded bg-[#6571FF] px-8 pb-1 text-white print:hidden"
+              >
+                Signature
+              </button>
+            </div>
+          )}
+          <div className="flex justify-end items-center">
+            {showSignaturePad && !sigImageURL && (
+              <div className="flex justify-end items-center gap-4">
+                <SignatureCanvas
+                  ref={sigCanvas}
+                  penColor="black"
+                  backgroundColor="#f9fafb"
+                  canvasProps={{
+                    width: 300,
+                    height: 100,
+                    className: "border border-gray-400 rounded-md",
+                  }}
+                />
+
+                <div className="flex flex-col gap-3">
+                  <button
+                    onClick={() => {
+                      const dataURL = sigCanvas.current
+                        .getCanvas()
+                        .toDataURL("image/png");
+                      setSigImageURL(dataURL);
+                    }}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={() => {
+                      sigCanvas.current.clear();
+                      setSigImageURL(null);
+                    }}
+                    className="px-4 py-2 bg-gray-500 text-white rounded-md"
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
+            )}
+            {sigImageURL && (
+              <div className="mt-2 text-center flex flex-col items-end gap-2">
+                <Image
+                  src={sigImageURL}
+                  width={200}
+                  height={50}
+                  alt="signature"
+                  className="border border-gray-300 rounded-md"
+                />
+                <span className="rounded-sm border border-[#6571ff] px-4 py-1 text-sm text-[#6571ff]">
+                  Signatured
+                </span>
+              </div>
+            )}
           </div>
           {!isPrinting && (
             <div className="text-right">
