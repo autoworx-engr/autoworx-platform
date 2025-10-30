@@ -12,7 +12,7 @@ type ImageItem = {
 
 type LightboxProps = {
   getItems: ImageItem[];
-  startIndex: number;
+  startIndex?: number;
 };
 
 const ComponentsLightbox = ({ getItems = [], startIndex = 0 }: LightboxProps) => {
