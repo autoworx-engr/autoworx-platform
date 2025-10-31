@@ -109,7 +109,7 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
       OR: filterOR.length > 0 ? filterOR : undefined,
     },
     include: {
-      Refund: {},
+      Refund: true,
       invoiceItems: {
         include: {
           materials: true,

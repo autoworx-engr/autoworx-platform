@@ -103,7 +103,7 @@ export default function PerformanceTable({
                 key={index}
                 className="relative flex items-center justify-center gap-4 rounded-lg border border-gray-300 bg-background p-4"
               >
-                <div className="absolute left-1 top-1">
+                {/* <div className="absolute left-1 top-1">
                   <div
                     onMouseEnter={() => setInfoIndex(index)}
                     onMouseLeave={() => setInfoIndex(null)}
@@ -118,7 +118,8 @@ export default function PerformanceTable({
                       {getPerformanceContent(metric.label)}
                     </div>
                   )}
-                </div>
+                </div> */}
+
                 <div className="w-[80%] text-lg font-bold text-gray-700">
                   {metric.label}
                 </div>
@@ -155,7 +156,7 @@ export default function PerformanceTable({
                       </svg>
                     )}
                   </div>
-                  <div>{Math.abs(metric.percentage)}%s</div>
+                  <div>{Math.abs(metric.percentage)}%</div>
                 </div>
               </div>
             ))}
