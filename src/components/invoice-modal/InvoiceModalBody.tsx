@@ -101,6 +101,7 @@ export default function InvoiceModalBody({
   const sigCanvas = useRef<any>(null);
   const [showAuthorizedName, setShowAuthorizedName] = useState(false);
   const [authorizedName, setAuthorizedName] = useState("");
+  const [signImage, setSignImage] = useState(null);
   const [authorizedNameInput, setAuthorizedNameInput] = useState("");
   const [sigImageURL, setSigImageURL] = useState(null);
   const [showSignaturePad, setShowSignaturePad] = useState(false);
@@ -137,6 +138,9 @@ export default function InvoiceModalBody({
       if (data.invoice?.authorizedName) {
         setAuthorizedName(data.invoice.authorizedName);
         setAuthorizedNameInput(data.invoice.authorizedName);
+      }
+      if (data.invoice?.signatureImage) {
+        setSignImage(data.invoice?.signatureImage);
       }
     }
   }, [isLoading, data, isFetched]);
@@ -284,9 +288,17 @@ export default function InvoiceModalBody({
       const json = await res.json();
       const data = json.data;
 
-      await uploadSignature(invoiceId, data[0]);
+      const response = await uploadSignature(invoiceId, data[0]);
+
+      if (response.type === "success") {
+        successToast("Invoice Authorized");
+      } else {
+        errorToast("Signature upload failed");
+        console.error("Signature upload failed:", response.message);
+      }
     } catch (err) {
-      console.error("Failed to save signature:", err);
+      errorToast("Signature upload failed");
+      console.error("Signature upload failed:", err);
     }
   };
 
@@ -358,6 +370,7 @@ export default function InvoiceModalBody({
                       vehicle={vehicle}
                       companyDetails={company}
                       authorizedName={authorizedName}
+                      signImageUrl={signImage ?? undefined}
                       isStripe={
                         (stripeAccountData?.success &&
                           stripeAccountData?.enabled &&
@@ -845,6 +858,7 @@ export default function InvoiceModalBody({
                   <button
                     onClick={() => {
                       setShowAuthorizedName(true);
+                      setShowSignaturePad(true);
                     }}
                     className="rounded bg-[#6571FF] px-8 pb-1 text-white print:hidden"
                   >
@@ -853,18 +867,7 @@ export default function InvoiceModalBody({
                 )}
             </div>
           </div>
-          {!showSignaturePad && !sigImageURL && !invoice?.signatureImage && (
-            <div className="flex justify-end">
-              <button
-                onClick={() => {
-                  setShowSignaturePad(true);
-                }}
-                className="rounded bg-[#6571FF] px-8 pb-1 text-white print:hidden"
-              >
-                Signature
-              </button>
-            </div>
-          )}
+
           <div className="flex justify-end items-center">
             {showSignaturePad && !sigImageURL && !invoice?.signatureImage && (
               <div className="flex justify-end items-center gap-4">
