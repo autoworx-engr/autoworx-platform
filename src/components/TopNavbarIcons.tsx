@@ -8,7 +8,7 @@ import LogoutBtn from "./LogoutBtn";
 import QuickLink from "./QuickLink";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { SquarePlay } from "lucide-react";
+import { Layers, SquarePlay } from "lucide-react";
 
 const NotificationsPopover = dynamic(
   () =>
@@ -23,8 +23,8 @@ export default function TopNavbarIcons() {
 
   return (
     <div className="flex items-center gap-x-3">
-      <Link href="/dashboard/resources" className="px-1">
-        <SquarePlay className="size-5 sm:size-7  text-[#6571FF]" />
+      <Link href="/dashboard/resources" className="px-2">
+        <Layers className="size-5 sm:size-7  text-[#6571FF]" />
       </Link>
       {/* <SwitchDashboard /> */}
       {(currentUser?.employeeType == "Admin" ||

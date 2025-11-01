@@ -272,17 +272,14 @@ export default function InvoiceModalBody({
                   className="flex items-center justify-center gap-1 rounded bg-[#6571FF] px-2 py-1 text-sm text-white md:px-4 md:text-base"
                   href={`/dashboard/estimate/edit/${invoice.id}?clientId=${invoice.clientId}`}
                 >
-                  <SquarePen className="h-3 w-3 md:h-4 md:w-4" />
+                  <SquarePen className="h-4 w-4 md:h-4 md:w-4" />
                   <span className="hidden md:inline">Edit</span>
                 </Link>
                 <Link
                   href={`/dashboard/communication/client/${invoice.clientId}?chat=true`}
                   className="flex items-center justify-center gap-1 rounded bg-[#6571FF] px-2 py-1 text-sm text-white md:px-4 md:text-base"
                 >
-                  <MessageCircleMore
-                    size={22}
-                    className="text-sm text-white md:text-xl"
-                  />
+                  <MessageCircleMore className="size-4 md:size-[22px] text-white md:text-xl" />
                   <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
                     Communications
                   </span>
@@ -315,7 +312,7 @@ export default function InvoiceModalBody({
                   <span className="hidden md:inline">Print</span>
                 </button>
 
-                <button className="flex items-center justify-center gap-1 rounded bg-[#6571FF] px-2 py-0.5 text-xs text-white md:px-4 md:py-1 md:text-base">
+                <button className="flex items-center justify-center gap-1 rounded bg-[#6571FF] px-2 py-1 text-xs text-white md:px-4 md:py-1 md:text-base">
                   {client && (
                     <DownloadPDF
                       id={invoice.id}
@@ -335,15 +332,17 @@ export default function InvoiceModalBody({
                   )}
                 </button>
 
-                <div className="flex items-center gap-x-2 rounded-md border border-gray-300 px-2 py-1">
-                  <span className="mr-1 font-semibold">Share via</span>
+                <div className="flex items-center gap-x-2 rounded-md border border-gray-300 px-2 py-0.5">
+                  <span className="mr-1 font-semibold text-sm md:text-base">
+                    Share via
+                  </span>
                   <Popconfirm
                     title="Send invoice via Email now?"
                     onConfirm={handleEmail}
                     okText="Yes"
                     cancelText="No"
                   >
-                    <button className="flex items-center justify-center gap-1 rounded bg-[#6571FF] px-2 py-1 text-sm text-white md:px-4 md:text-base">
+                    <button className="flex items-center justify-center gap-1 rounded bg-[#6571FF] px-1 py-0.5 text-sm text-white md:px-4 md:text-base">
                       <Mail className="h-4 w-4 md:h-4 md:w-4" />
                       <span className="hidden md:inline">Email</span>
                     </button>
