@@ -54,6 +54,7 @@ import { Files, Mail, MessageCircleMore, SquarePen, X } from "lucide-react";
 import SignatureCanvas from "react-signature-canvas";
 import { uploadSignature } from "@/actions/estimate/invoice/uploadSignature";
 import { getFileFromCanvas } from "@/utils/getFileFromCanvas";
+
 const DownloadPDF = dynamic(() => import("./DownloadInvoice"), {
   ssr: false,
 });

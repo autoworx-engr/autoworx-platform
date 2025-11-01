@@ -116,6 +116,11 @@ export default function MobileNav({ navList, permissions }: TProps) {
 
   const isIOS = isIosPwa();
 
+  const isAndroidPwa =
+    /Android/i.test(navigator.userAgent) &&
+    window.matchMedia("(display-mode: standalone)").matches;
+  const showReloadButton = isIOS || isAndroidPwa;
+
   return (
     <div className="z-50 sm:hidden">
       <div className="fixed top-0 z-50 w-full bg-[#0C1427]">
@@ -144,7 +149,7 @@ export default function MobileNav({ navList, permissions }: TProps) {
             <Link href="/dashboard/resources" className="px-3">
               <SquarePlay className="size-5 text-white" />
             </Link>
-            {isIOS && (
+            {showReloadButton && (
               <button className="mr-3" onClick={() => window.location.reload()}>
                 <RotateCw className="size-6 text-white lg:size-8" />
               </button>
