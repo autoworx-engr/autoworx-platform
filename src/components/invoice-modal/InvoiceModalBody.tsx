@@ -52,6 +52,7 @@ import { InvoiceItems } from "./InvoiceItems";
 import { StripePay } from "./StripePay";
 import { Files, Mail, MessageCircleMore, SquarePen, X } from "lucide-react";
 import SignatureCanvas from "react-signature-canvas";
+
 const DownloadPDF = dynamic(() => import("./DownloadInvoice"), {
   ssr: false,
 });

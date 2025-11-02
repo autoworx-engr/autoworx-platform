@@ -160,7 +160,7 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
             email: formData.email,
             phone: formData.phone,
             serviceId: formData.service,
-            oppurtunity_source: opportunitySource,
+            opportunity_source: opportunitySource,
           }),
         }
       );
