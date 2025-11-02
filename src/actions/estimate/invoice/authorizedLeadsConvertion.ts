@@ -31,7 +31,7 @@ export async function authorizedLeadsConvertion(invoiceId: string) {
     }
 
     // Step 2: Check if the Invoice has an authorizedName present
-    if (invoice.authorizedName) {
+    if (invoice.authorizedName || invoice.signatureImage) {
       const lead = invoice.client?.Lead;
 
       if (lead) {
@@ -42,7 +42,7 @@ export async function authorizedLeadsConvertion(invoiceId: string) {
             columnChangedAt: new Date(),
           },
         });
-        // Step 2: Update the Lead's columnId to "Converted" if the invoice has an authorizedName
+        // Step 2: Update the Lead's columnId to "Converted" if the invoice has an authorizedName / Signature
 
         await sendLeadStageChangeOrCloseNotification({
           companyId: invoice?.companyId,
@@ -52,7 +52,7 @@ export async function authorizedLeadsConvertion(invoiceId: string) {
         });
       } else {
         console.error(
-          "No lead found for the client associated with the invoice",
+          "No lead found for the client associated with the invoice"
         );
       }
     } else {
