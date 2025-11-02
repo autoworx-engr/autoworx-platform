@@ -12,18 +12,21 @@ export async function uploadSignature(invoiceId: string, url: string) {
       },
       data: {
         signatureImage: url,
+        type: "Invoice",
       },
       include: {
         client: true,
       },
     });
-    await authorizedLeadsConvertion(invoiceId);
-    await sendLeadStageChangeOrCloseNotification({
-      companyId: invoice?.companyId,
-      description: `Lead "${invoice?.client?.firstName}" has been closed. Track it in your pipeline.`,
-      title: "Lead Closed",
-      notificationType: "LEADS_CLOSED",
-    });
+    if (invoice) {
+      await authorizedLeadsConvertion(invoiceId);
+      await sendLeadStageChangeOrCloseNotification({
+        companyId: invoice?.companyId,
+        description: `Lead "${invoice?.client?.firstName}" has been closed. Track it in your pipeline.`,
+        title: "Lead Closed",
+        notificationType: "LEADS_CLOSED",
+      });
+    }
     revalidatePath("/estimate");
     return { type: "success" };
   } catch (error) {

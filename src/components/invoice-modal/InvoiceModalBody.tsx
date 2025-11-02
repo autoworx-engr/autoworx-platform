@@ -893,6 +893,8 @@ export default function InvoiceModalBody({
                         .toDataURL("image/png");
                       setSigImageURL(dataURL);
                       handleSaveSignature(invoice.id);
+                      setShowAuthorizedName(false);
+                      setShowSignaturePad(false);
                     }}
                     className="px-4 py-2 bg-blue-600 text-white rounded-md"
                   >
@@ -910,25 +912,34 @@ export default function InvoiceModalBody({
                 </div>
               </div>
             )}
-            {sigImageURL ||
-              (invoice?.signatureImage && (
-                <div className="mt-2 text-center flex flex-col items-end gap-2">
-                  <Image
-                    src={
-                      ((invoice?.signatureImage && invoice?.signatureImage) ||
-                        sigImageURL) ??
-                      ""
-                    }
-                    width={200}
-                    height={50}
-                    alt="signature"
-                    className="border border-gray-300 rounded-md"
-                  />
-                  <span className="rounded-sm border border-[#6571ff] px-4 py-1 text-sm text-[#6571ff]">
-                    Signatured
-                  </span>
-                </div>
-              ))}
+            {sigImageURL && (
+              <div className="mt-2 text-center flex flex-col items-end gap-2">
+                <Image
+                  src={sigImageURL}
+                  width={200}
+                  height={50}
+                  alt="signature"
+                  className="border border-gray-300 rounded-md"
+                />
+                <span className="rounded-sm border border-[#6571ff] px-4 py-1 text-sm text-[#6571ff]">
+                  Signatured
+                </span>
+              </div>
+            )}
+            {invoice?.signatureImage && (
+              <div className="mt-2 text-center flex flex-col items-end gap-2">
+                <Image
+                  src={invoice?.signatureImage}
+                  width={200}
+                  height={50}
+                  alt="signature"
+                  className="border border-gray-300 rounded-md"
+                />
+                <span className="rounded-sm border border-[#6571ff] px-4 py-1 text-sm text-[#6571ff]">
+                  Signatured
+                </span>
+              </div>
+            )}
           </div>
           {!isPrinting && (
             <div className="text-right">
