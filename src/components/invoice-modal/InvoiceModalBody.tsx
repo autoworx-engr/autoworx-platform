@@ -775,7 +775,10 @@ export default function InvoiceModalBody({
                     />
                     <button
                       className="absolute -right-[10px] -top-4 bg-red-700 rounded-full print:hidden"
-                      onClick={() => setShowAuthorizedName(false)}
+                      onClick={() => {
+                        setShowAuthorizedName(false);
+                        setShowSignaturePad(false);
+                      }}
                     >
                       <X size={20} className="text-white p-1" />
                     </button>
@@ -884,7 +887,13 @@ export default function InvoiceModalBody({
 
                 <div className="flex flex-col gap-3">
                   <button
-                    onClick={() => handleSaveSignature(invoice.id)}
+                    onClick={() => {
+                      const dataURL = sigCanvas.current
+                        .getCanvas()
+                        .toDataURL("image/png");
+                      setSigImageURL(dataURL);
+                      handleSaveSignature(invoice.id);
+                    }}
                     className="px-4 py-2 bg-blue-600 text-white rounded-md"
                   >
                     Save
