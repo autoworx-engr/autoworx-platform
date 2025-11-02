@@ -114,7 +114,7 @@ const ActiveTemplate = ({
         />
 
         <div
-          className={`absolute bottom-1 left-2 text-xs font-medium 
+          className={`absolute ${error ? "bottom-7" : "bottom-1"}  left-2 text-xs font-medium 
              ${isLimitExceeded ? "text-red-500 " : "text-gray-500 dark:text-gray-400"}`}
         >
           {characterLength}/{maxLength}
