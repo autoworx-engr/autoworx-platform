@@ -38,14 +38,14 @@ const resources = [
     link: "/dashboard/resources/inventory",
     label: "inventory",
   },
-  {
-    link: "/dashboard/resources/directory",
-    label: "directory",
-  },
-  {
-    link: "/dashboard/resources/reputation_management",
-    label: "reputation management",
-  },
+  // {
+  //   link: "/dashboard/resources/directory",
+  //   label: "directory",
+  // },
+  // {
+  //   link: "/dashboard/resources/reputation_management",
+  //   label: "reputation management",
+  // },
   {
     link: "/dashboard/resources/settings",
     label: "settings",
@@ -54,10 +54,10 @@ const resources = [
     link: "/dashboard/resources/automation",
     label: "automation",
   },
-  {
-    link: "/dashboard/resources/lead_capture",
-    label: "lead capture",
-  },
+  // {
+  //   link: "/dashboard/resources/lead",
+  //   label: "lead capture",
+  // },
 ];
 
 export default function Sidebar() {

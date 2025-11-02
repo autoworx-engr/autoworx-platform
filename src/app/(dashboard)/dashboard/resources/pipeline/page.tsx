@@ -5,7 +5,7 @@ import React from "react";
 
 const resourcesData = [
   {
-    content: "/images/resources/pipeline.png",
+    content: "/images/resources/shop_pipeline.png",
     type: "image",
     title: "Learn How to Use the AutoWorx Pipeline",
     description:

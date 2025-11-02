@@ -2,20 +2,39 @@
 
 import { db } from "@/lib/db";
 import getUser from "@/lib/getUser";
-import { revalidatePath } from "next/cache";
 import moment from "moment-timezone";
+import { revalidatePath } from "next/cache";
 
 export async function clockIn({ timezone }: { timezone: string }) {
   try {
     const user = await getUser();
     const clockedIn = await db.clockInOut.create({
       data: {
-        userId: user.id,
-        companyId: user.companyId,
+        userId: user?.id,
+        companyId: user?.companyId,
         clockIn: new Date(),
         timezone,
       },
     });
+
+    //  Automatically schedule the clock-out at 7:00 PM
+    await fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/auto-clockout/schedule`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          clockInOutId: clockedIn?.id,
+          userId: user?.id,
+          companyId: user?.companyId,
+          clockIn: clockedIn?.clockIn,
+          timezone,
+        }),
+      }
+    );
+
     revalidatePath("/");
 
     return { success: true, message: "Clocked In", data: clockedIn };
@@ -46,7 +65,7 @@ export async function getLastClockInOutForUser({
 
   if (lastClockInOut) {
     const clockInDay = moment(lastClockInOut.clockIn).tz(
-      lastClockInOut?.timezone || moment.tz.guess(),
+      lastClockInOut?.timezone || moment.tz.guess()
     );
 
     const now = moment.tz(timezone);

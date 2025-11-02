@@ -32,6 +32,10 @@ export default function Message({
       });
     }
   }, []);
+
+  const allImageUrls = message.attachment
+    ?.filter((att) => att.fileType.includes("image"))
+    .map((att) => att.fileUrl);
   return (
     <div
       className={cn(
@@ -61,6 +65,10 @@ export default function Message({
                   setIsImageLoaded(true);
                 }
               };
+
+              const currentImageIndex = allImageUrls?.indexOf(
+                attachment?.fileUrl
+              );
               return (
                 <div
                   key={attachment.fileName}
@@ -73,7 +81,9 @@ export default function Message({
                 >
                   {attachment.fileType.includes("image") ? (
                     <Link
-                      href={`/dashboard/communication/photo?url=${attachment.fileUrl}`}
+                      href={`/dashboard/communication/photo?urls=${encodeURIComponent(
+                        JSON.stringify(allImageUrls)
+                      )}&index=${currentImageIndex}`}
                     >
                       <Image
                         src={attachment.fileUrl}

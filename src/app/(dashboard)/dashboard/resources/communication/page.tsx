@@ -9,7 +9,7 @@ const CommunicationResourcePage = () => {
 
   const resourcesData = [
     {
-      content: "/images/resources/communication_hub.png",
+      content: "/images/resources/communication.png",
       type: "image",
       title: "Communication Hub Overview",
       description: "Get an overview of the communication hub and its features.",

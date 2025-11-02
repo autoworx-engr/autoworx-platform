@@ -29,6 +29,14 @@ const reviews = [
     role: "Co owner Luxe Wrap Stars",
     rating: 5,
   },
+  {
+    id: 4,
+    avatar: "/landing/beckscarcare.png",
+    text: `“AutoWorks Transformed My Business. I’ve tried various software over the years, but nothing compares to AutoWorks. Their all-in-one platform covers booking, invoicing, estimates, inventory, customer management, and more, all in one easy-to-use dashboard. It’s streamlined my workflow, saved me hours each week, and helped me stay organized. If you want to level up your business, this is the tool to get.”`,
+    author: "Steven B",
+    role: "Owner of Becks Car Care",
+    rating: 5,
+  },
 ];
 
 export default function ReviewSection() {
@@ -64,7 +72,7 @@ export default function ReviewSection() {
     setCurrentIndex((prevIndex) =>
       dir === "right"
         ? (prevIndex + 1) % reviews.length
-        : (prevIndex - 1 + reviews.length) % reviews.length,
+        : (prevIndex - 1 + reviews.length) % reviews.length
     );
   };
 

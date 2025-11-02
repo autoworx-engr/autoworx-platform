@@ -274,7 +274,7 @@ export default function Layout({
       bell.addEventListener("mousedown", handleMouseDown);
       document.addEventListener("mousemove", handleMouseMove);
       document.addEventListener("mouseup", handleMouseUp);
-    }, 3000);
+    }, 5000);
     // cleanup
     return () => {
       clearTimeout(timeoutId);

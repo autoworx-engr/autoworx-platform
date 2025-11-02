@@ -64,6 +64,7 @@ export function InvoiceItems({
 
         {openService === item.id && (
           <>
+          <p>{item.serviceDesc || item.service.description}</p>
             <div className="mt-2 text-[#6571FF]">
               <div>
                 {item.materials.map((material, index) => {

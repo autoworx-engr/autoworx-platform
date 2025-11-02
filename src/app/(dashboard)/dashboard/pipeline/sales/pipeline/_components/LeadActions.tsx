@@ -16,6 +16,7 @@ import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { createDraftEstimate } from "@/actions/estimate/invoice/createDraft";
 import { createLeadDraftEstimate } from "@/actions/pipelines/createLeadDraftEstimate";
 import { Calendar, CalendarCheck } from "lucide-react";
+import { updateInvoiceAutomationTrigger } from "@/service/invoice-automation-trigger/api";
 
 type TProps = {
   lead: LeadWithSalesUser;
@@ -50,6 +51,8 @@ export default function LeadActions({ lead }: TProps) {
         vehicleId: vehicleId,
         type: "Estimate",
       });
+      console.log("res of draft estimate", res);
+      console.log("res type", res?.type);
       if (res.type === "success") {
         successToast(res?.message || "Draft estimate created");
         //updating the pipelien data with the draft estimate flag
@@ -80,14 +83,16 @@ export default function LeadActions({ lead }: TProps) {
           });
         }
 
-        // Trigger communication automation
-        // updateCommunicationAutomationTrigger({
-        //   companyId: lead?.companyId,
-        //   leadId,
-        //   columnId,
-        // });
+        // Invoice automation
+        await updateInvoiceAutomationTrigger({
+          companyId: res?.data.companyId,
+          invoiceId: res?.data?.id,
+          columnId: columnId!,
+          type: res?.data?.type,
+        });
       } else if (res.type === "error") {
         setInvoiceId(res.data.id);
+        errorToast(res.message || "Draft estimate already exists!");
       } else if (res.type === "globalError") {
         errorToast(
           res?.errorSource && res?.errorSource.length > 0
@@ -96,7 +101,7 @@ export default function LeadActions({ lead }: TProps) {
         );
       }
     } catch (err) {
-      // console.error("Error creating draft estimate:", err);
+      console.error("Error creating draft estimate:", err);
       errorHandler(err);
       errorToast("Failed to create draft estimate. Please try again.");
     }

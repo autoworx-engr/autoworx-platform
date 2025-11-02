@@ -103,7 +103,7 @@ const FleetListTable = ({ filteredFleets }: { filteredFleets: any }) => {
                     fleet={client}
                     isEdit={true}
                     buttonElement={
-                      <SquarePen className="w-5 h-5 cursor-pointer" />
+                      <SquarePen className="w-5 h-5 cursor-pointer text-[#6571ff]" />
                     }
                   />
                   <DeleteFleet id={client.fleet.clientId} />

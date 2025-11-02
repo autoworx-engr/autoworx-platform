@@ -9,9 +9,9 @@ import Avatar from "@/components/Avatar";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { taskQueryKey } from "../../_constant";
 import TaskSpinner from "../ui/TaskSpinner";
-import getTasks from "@/actions/task/getTasks";
 import TaskError from "../ui/TaskError";
 import TaskNotFound from "../ui/TaskNotFound";
+import getAllTasks from "@/actions/task/getAllTasks";
 
 export default function AssignTask() {
   const {
@@ -21,7 +21,7 @@ export default function AssignTask() {
   } = useQuery({
     queryKey: [taskQueryKey.allTasks],
     queryFn: async () => {
-      const response = await getTasks({
+      const response = await getAllTasks({
         select: {
           id: true,
           title: true,
@@ -29,7 +29,6 @@ export default function AssignTask() {
           date: true,
           startTime: true,
           endTime: true,
-          
         },
       });
       return response.data;
@@ -50,7 +49,7 @@ export default function AssignTask() {
       tasks.map((task) => ({
         taskId: task.id,
         assigned: assignedUserTasks.some((userTask) => userTask.id === task.id),
-      })),
+      }))
     );
   }, [tasks, assignedUserTasks]);
 
@@ -62,10 +61,10 @@ export default function AssignTask() {
       () => {
         return tasks.filter((task) =>
           taskDataInput.some(
-            (inputTask) => inputTask.taskId === task.id && inputTask.assigned,
-          ),
+            (inputTask) => inputTask.taskId === task.id && inputTask.assigned
+          )
         );
-      },
+      }
     );
 
     close();
@@ -96,7 +95,7 @@ export default function AssignTask() {
                     };
                   }
                   return prevTask;
-                }),
+                })
               );
             }}
           />

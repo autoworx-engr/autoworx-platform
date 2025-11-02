@@ -4,113 +4,128 @@ import { authOptions } from "@/authOptions";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { db } from "@/lib/db";
 import { sendEstimateCreateNotification } from "@/lib/notification/invoice-notify";
-import { updateInvoiceAutomationTrigger } from "@/service/invoice-automation-trigger/api";
 import { ServerAction } from "@/types/action";
 import { TErrorHandler } from "@/types/globalError";
 import { TCreateDraftEstimateValidationSchema } from "@/validations/schemas/pipeline/draftEstimate.validation";
 import { getServerSession } from "next-auth";
 
+async function getClientByLead(leadId: number) {
+  const client = await db.client.findFirst({
+    where: { leadId },
+    include: {
+      Lead: {
+        select: { id: true, columnId: true },
+      },
+    },
+  });
+
+  if (!client) {
+    throw new Error(
+      "No client found for this lead. Please attach a client before creating an estimate."
+    );
+  }
+
+  return client;
+}
+
+async function getPendingColumn(companyId: number) {
+  const column = await db.column.findFirst({
+    where: {
+      companyId,
+      title: "Pending",
+      type: "shop",
+    },
+  });
+
+  if (!column) {
+    throw new Error(
+      "Pending column not found. Please configure your pipeline columns properly."
+    );
+  }
+
+  return column;
+}
+
+// Main
 export const createLeadDraftEstimate = async function (
   draftEstimate: TCreateDraftEstimateValidationSchema
-  // @ts-ignore
 ): Promise<ServerAction | TErrorHandler> {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) {
-      throw new Error("Session ID is required");
+    if (!session)
+      throw new Error("Session is required to create a draft estimate.");
+
+    const { leadId, clientId, vehicleId, id: estimateId } = draftEstimate;
+
+    if (!leadId || !clientId) {
+      throw new Error(
+        "Lead ID and Client ID are required to create an estimate."
+      );
     }
 
-    const response = await db.$transaction(async (db) => {
-      if (draftEstimate.leadId) {
-        const hasClient = await db.client.findFirst({
-          where: {
-            leadId: draftEstimate.leadId,
-          },
-          include: {
-            Lead: {
-              select: {
-                id: true,
-                columnId: true,
-              },
-            },
-          },
-        });
-        if (!hasClient) {
-          throw new Error("This lead does not have a client");
-        }
-        const findDraftEstimate = await db.invoice.findFirst({
-          where: {
-            clientId: hasClient.id,
-          },
-        });
-        const columnId = await db.column.findFirst({
-          where: {
-            companyId: session.user.companyId,
-            title: "Pending",
-            type: "shop",
-          },
-        });
-        // Update the lead to set estimateCreated to true
-        await db.lead.update({
-          where: { id: draftEstimate.leadId },
-          data: { isEstimateCreated: true },
-        });
+    const response = await db.$transaction(async (tx) => {
+      const client = await getClientByLead(leadId);
 
-        if (!findDraftEstimate) {
-          const newDraftEstimate = await db.invoice.create({
-            data: {
-              id: draftEstimate.id,
-              type: "Estimate",
-              clientId: draftEstimate.clientId,
-              vehicleId: draftEstimate.vehicleId,
-              userId: Number(session.user.id),
-              companyId: session.user.companyId,
-              columnId: columnId?.id,
-            },
-            include: {
-              client: {
-                select: {
-                  firstName: true,
-                  lastName: true,
-                },
-              },
-            },
-          });
+      const existingEstimate = await tx.invoice.findFirst({
+        where: { clientId: client.id },
+      });
 
-          // Trigger automation
-          updateInvoiceAutomationTrigger({
-            companyId: newDraftEstimate.companyId,
-            invoiceId: newDraftEstimate.id,
-            columnId: newDraftEstimate.columnId!,
-            type: newDraftEstimate.type,
-          });
-
-          // send notification for invoice creation
-          sendEstimateCreateNotification({
-            companyId: session.user.companyId,
-            invoiceId: newDraftEstimate.id,
-            invoiceType: newDraftEstimate.type,
-            clientName:
-              newDraftEstimate.client?.firstName +
-              " " +
-              newDraftEstimate.client?.lastName,
-          });
-
-          return {
-            type: "success",
-            message: "Draft estimate created",
-            data: newDraftEstimate,
-          };
-        } else {
-          return {
-            type: "error",
-            message: "Draft estimate already exists",
-            data: findDraftEstimate,
-          };
-        }
+      if (existingEstimate) {
+        return {
+          type: "error",
+          message: "A draft estimate already exists for this client.",
+          data: existingEstimate,
+        } satisfies ServerAction;
       }
+
+      const pendingColumn = await getPendingColumn(session.user.companyId);
+
+      await tx.lead.update({
+        where: { id: leadId },
+        data: { isEstimateCreated: true },
+      });
+
+      const newEstimate = await tx.invoice.create({
+        data: {
+          id: estimateId,
+          type: "Estimate",
+          clientId,
+          vehicleId,
+          userId: Number(session.user.id),
+          companyId: session.user.companyId,
+          columnId: pendingColumn.id,
+        },
+        include: {
+          client: { select: { firstName: true, lastName: true } },
+        },
+      });
+
+      await sendEstimateCreateNotification({
+        companyId: newEstimate?.companyId,
+        invoiceId: newEstimate.id,
+        invoiceType: newEstimate.type,
+        clientName:
+          `${newEstimate.client?.firstName ?? ""} ${newEstimate.client?.lastName ?? ""}`.trim(),
+      });
+
+      return {
+        type: "success",
+        message: "Draft estimate successfully created.",
+        data: newEstimate,
+      } satisfies ServerAction;
     });
-    return response as ServerAction;
+
+    if (response?.type === "success") {
+      sendEstimateCreateNotification({
+        companyId: session.user.companyId,
+        invoiceId: response?.data.id,
+        invoiceType: response?.data.type,
+        clientName:
+          `${response?.data.client?.firstName ?? ""} ${response?.data.client?.lastName ?? ""}`.trim(),
+      });
+    }
+
+    return response;
   } catch (err) {
     return errorHandler(err);
   }

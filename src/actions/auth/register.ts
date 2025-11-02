@@ -11,6 +11,7 @@ import { createUserValidation } from "@/validations/schemas/auth/user.validation
 import bcrypt from "bcryptjs";
 import httpStatus from "http-status";
 import { env } from "next-runtime-env";
+import { initialCreateBookingForm } from "../settings/bookingForm";
 import { uploadNotificationSettings } from "../settings/updateNotification";
 
 interface RegisterData {
@@ -32,10 +33,10 @@ const ACCESS_CODE = env("ACCESS_CODE");
 
 const insertDefaultColumns = async (columnId: number, type: string) => {
   const columnsFortypes = defaultColumnWithColor.filter(
-    column => column.type === type
+    (column) => column.type === type
   );
 
-  const columnsWithCompany = columnsFortypes.map(column => ({
+  const columnsWithCompany = columnsFortypes.map((column) => ({
     ...column,
     companyId: columnId,
   }));
@@ -69,7 +70,6 @@ export async function register({
     if (accessCode !== ACCESS_CODE) {
       throw new AppError(httpStatus.BAD_REQUEST, "Invalid access code");
     }
-
 
     const lowerCaseEmail = userInfo.email.toLowerCase();
 
@@ -210,7 +210,7 @@ export async function register({
     ];
 
     await Promise.all(
-      defaultPermissions.map(perm =>
+      defaultPermissions.map((perm) =>
         db.companyPermissionModule.create({
           data: {
             companyId: newCompany.id,
@@ -228,8 +228,9 @@ export async function register({
         lastName: userInfo.lastName,
         email: lowerCaseEmail,
         password: hashedPassword,
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone, // TODO: temporary solution
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         companyId: newCompany.id,
+        joinDate: new Date(),
       },
     });
 
@@ -291,6 +292,8 @@ export async function register({
         companyId: newCompany.id,
       },
     });
+
+    await initialCreateBookingForm();
 
     return { success: true };
   } catch (err) {

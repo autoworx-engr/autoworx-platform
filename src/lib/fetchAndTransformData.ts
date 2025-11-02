@@ -1,4 +1,5 @@
 "use server";
+import { getStatusPriority } from "@/utils/getStatusPriority";
 import { db } from "./db";
 import { InvoiceType } from "@prisma/client";
 import moment from "moment-timezone";
@@ -31,12 +32,20 @@ export async function fetchAndTransformData(
     ? moment.tz(endDate, "YYYY-MM-DD", timezone).endOf("day").toDate()
     : null;
 
-  const statusIds = status
-    ? status
+  const decodedStatus = decodeURIComponent(status || "");
+
+  const statusIds = decodedStatus
+    ? decodedStatus
         .split(",")
-        .map((id) => Number(id))
-        .filter((id) => !isNaN(id))
-    : [];
+        .map((id) => {
+          if (isNaN(Number(id))) {
+            return undefined;
+          } else {
+            return Number(id);
+          }
+        })
+        .filter((id) => id !== undefined)
+    : undefined;
 
   const decodedSearchTerm = decodeURIComponent(searchTerm || "").trim();
 
@@ -46,7 +55,9 @@ export async function fetchAndTransformData(
       : "";
 
   const statusFilter =
-    statusIds.length > 0 ? `AND i."column_id" IN (${statusIds.join(",")})` : "";
+    statusIds && statusIds.length > 0
+      ? `AND i."column_id" IN (${statusIds.join(",")})`
+      : "";
 
   const searchFilter = decodedSearchTerm
     ? `
@@ -109,9 +120,14 @@ export async function fetchAndTransformData(
   const totalResult = await db.$queryRawUnsafe<{ total: number }[]>(countQuery);
   const totalEstimate = Number(totalResult[0]?.total || 0);
 
+  const sortedData = data.sort(
+    (a: { status: string }, b: { status: string }) =>
+      getStatusPriority(a?.status) - getStatusPriority(b?.status)
+  );
+
   return {
     totalEstimate,
-    data: data?.map((item: any) => ({
+    data: sortedData?.map((item: any) => ({
       id: item.id,
       clientName: item.clientName?.trim() || "",
       vehicle: [item.year, item.make, item.model].filter(Boolean).join(" "),
