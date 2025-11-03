@@ -108,7 +108,7 @@ export default function PaymentDisplay({
             {paymentsToRender?.map((payment, index) => {
               const paymentStatus =
                 Number(payment.invoice?.due) <= 0 ? "paid" : "due";
-              console.log("payment?.Refund", payment?.invoice?.Refund);
+
               const refundedAmount =
                 payment?.invoice?.Refund?.reduce(
                   (acc: number, refund: Refund) =>

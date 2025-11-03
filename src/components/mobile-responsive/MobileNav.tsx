@@ -16,7 +16,7 @@ import { NotificationsPopover } from "../NotificationProvider";
 import QuickLink from "../QuickLink";
 
 import MobileNavList from "./MobileNavList";
-import { CircleX, Menu, RotateCw, SquarePlay } from "lucide-react";
+import { CircleX, Layers, Menu, RotateCw, SquarePlay } from "lucide-react";
 
 type TProps = {
   navList: {
@@ -116,10 +116,10 @@ export default function MobileNav({ navList, permissions }: TProps) {
 
   const isIOS = isIosPwa();
 
-  const isAndroidPwa =
-    /Android/i.test(navigator.userAgent) &&
-    window.matchMedia("(display-mode: standalone)").matches;
-  const showReloadButton = isIOS || isAndroidPwa;
+  // const isAndroidPwa =
+  //   /Android/i.test(navigator.userAgent) &&
+  //   window.matchMedia("(display-mode: standalone)").matches;
+  // const showReloadButton = isIOS || isAndroidPwa;
 
   return (
     <div className="z-50 sm:hidden">
@@ -146,14 +146,12 @@ export default function MobileNav({ navList, permissions }: TProps) {
             </Link>
           </div>
           <div className="flex items-center gap-1 px-3">
+            <button className="" onClick={() => window.location.reload()}>
+              <RotateCw className="size-5 text-white" />
+            </button>
             <Link href="/dashboard/resources" className="px-3">
-              <SquarePlay className="size-5 text-white" />
+              <Layers className="size-5 text-white" />
             </Link>
-            {showReloadButton && (
-              <button className="mr-3" onClick={() => window.location.reload()}>
-                <RotateCw className="size-6 text-white lg:size-8" />
-              </button>
-            )}
             {(currentUser?.employeeType == "Admin" ||
               currentUser?.employeeType == "Manager" ||
               currentUser?.employeeType == "Sales") &&
