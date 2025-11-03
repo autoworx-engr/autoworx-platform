@@ -8,7 +8,7 @@ import LogoutBtn from "./LogoutBtn";
 import QuickLink from "./QuickLink";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { Layers, SquarePlay } from "lucide-react";
+import { Layers, RotateCw, SquarePlay } from "lucide-react";
 
 const NotificationsPopover = dynamic(
   () =>
@@ -23,6 +23,9 @@ export default function TopNavbarIcons() {
 
   return (
     <div className="flex items-center gap-x-3">
+      <button className="lg:hidden" onClick={() => window.location.reload()}>
+        <RotateCw className="size-7 text-[#6571FF]" />
+      </button>
       <Link href="/dashboard/resources" className="px-2">
         <Layers className="size-5 sm:size-7  text-[#6571FF]" />
       </Link>
