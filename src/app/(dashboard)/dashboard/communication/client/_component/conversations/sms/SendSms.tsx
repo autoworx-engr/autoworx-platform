@@ -10,6 +10,7 @@ import { useClientCommunicationStore } from "@/stores/client-store";
 import { useServerGet } from "@/hooks/useServerGet";
 import { getCompany } from "@/actions/settings/getCompany";
 import { SendHorizontal } from "lucide-react";
+import SmartReplyBar from "./SmartReply";
 
 // Helper function to format attachment message
 const formatAttachmentMessage = (files: File[]) => {
@@ -33,9 +34,10 @@ const formatAttachmentMessage = (files: File[]) => {
 
 type TProps = {
   clientId: number;
+  companyId: number;
 };
 
-export default function SendSms({ clientId }: TProps) {
+export default function SendSms({ clientId, companyId }: TProps) {
   const { clientList, setClientList } = clientListStore();
   const { mutate, isSuccess, isPending } = useSmsSendMutation(clientId);
   const { clientConversationTrack, setClientConversationTrack } =
@@ -113,6 +115,16 @@ export default function SendSms({ clientId }: TProps) {
           setFiles((prev) => prev.filter((f) => f.name !== attachmentName))
         }
       />
+
+      {/* 👇 AI Smart Replies */}
+      <div className="bg-[#F3F4F6] px-2 pt-2">
+        <SmartReplyBar
+          clientId={clientId}
+          companyId={companyId}
+          draft={messageInput} // <-- pass the textarea value here
+          onPick={(text) => setMessageInput(text)} // or append if you prefer
+        />
+      </div>
 
       <form
         className="flex items-center gap-2 rounded-b-md bg-zinc-100 px-2 pb-1 pt-2 dark:bg-zinc-800/60"

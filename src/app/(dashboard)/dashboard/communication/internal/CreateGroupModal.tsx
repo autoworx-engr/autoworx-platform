@@ -140,6 +140,11 @@ export default function CreateGroupModal({
   };
 
   const handleCreateGroup = async () => {
+    if (groupName.trim() === "") {
+      setError("Group name is required.");
+      return;
+    }
+
     if (contactList.length >= 2) {
       setIsLoading(true);
       try {
@@ -198,7 +203,12 @@ export default function CreateGroupModal({
           {/* group name */}
           <SlimInput
             value={groupName}
-            onChange={(e) => setGroupName(e.target.value)}
+            onChange={(e) => {
+              setGroupName(e.target.value);
+              if (e.target.value.trim() !== "") {
+                setError(null);
+              }
+            }}
             label="Group name"
             name="groupName"
             type="text"

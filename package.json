@@ -6,7 +6,7 @@
     "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
   },
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --turbo",
     "build": "prisma generate && NODE_OPTIONS='--max-old-space-size=8192' next build",
     "start": "next start",
     "lint": "next lint",
@@ -69,6 +69,7 @@
     "framer-motion": "^11.2.13",
     "fs": "^0.0.1-security",
     "googleapis": "^134.0.0",
+    "groq-sdk": "^0.34.0",
     "html-to-text": "^9.0.5",
     "http-status": "^2.0.0",
     "jsonwebtoken": "^9.0.2",
