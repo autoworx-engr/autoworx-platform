@@ -163,7 +163,7 @@ export default async function PaymentReportPage({ searchParams }: TProps) {
       ) {
         return true;
       }
-
+      console.log("payment?.refundedAmount", payment?.refundedAmount);
       return paymentType === methodToFilter;
     });
   }
@@ -230,7 +230,11 @@ export default async function PaymentReportPage({ searchParams }: TProps) {
         <Calculation content="TOTAL PAYMENT" amount={totalAmount} />
         <Calculation
           content="TOTAL PAYMENT (Filtered)"
-          amount={filteredTotalAmount}
+          amount={
+            searchParams?.paymentMethod === "Refund"
+              ? totalRefunded
+              : filteredTotalAmount
+          }
         />
         <Calculation content="REFUND RATE" amount={refundRate} isRate={true} />
       </div>
