@@ -148,3 +148,25 @@ export const InventoryActions = [
   { id: "SMS", title: "Send Re-order List by SMS" },
   { id: "BOTH", title: "Send Re-order List by Both" },
 ];
+
+
+export const PipelineType = [
+  { id: "shop", title: "Shop Pipeline" },
+  { id: "sales", title: "Sales Pipeline" },
+  
+];
+
+export const Funnels = [
+  {id: "all", title: "All Funnels"},
+  {id: "lead", title: "Lead Funnels"},
+  {id: "qualified", title: "Qualified"},
+  {id: "proposal", title: "Proposal"},
+  {id: "negotiation", title: "Negotiation"},
+  {id: "closed", title: "Closed"},
+]
+
+export const Conditions = [
+  {id: "pipeline", title: "Pipeline"},
+  {id: "communication", title: "Communication"},
+  {id: "post-tag", title: "Post-Tag"}
+]
