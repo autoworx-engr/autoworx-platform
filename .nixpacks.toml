@@ -2,10 +2,7 @@
 nixPkgs = ['nodejs_20', 'bash', 'npm', 'openssl']
 
 [phases.install]
-cmds = [
-  'rm -rf node_modules package-lock.json',  # 👈 Delete node_modules & lock file
-  'npm i --legacy-peer-deps'
-]
+cmds = ['npm i --legacy-peer-deps']
 
 [phases.build]
 cmds = ['npm run build']
