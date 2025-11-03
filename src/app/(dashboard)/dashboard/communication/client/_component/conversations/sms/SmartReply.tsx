@@ -1,8 +1,9 @@
 "use client";
 
-import * as React from "react";
-import { MessageSquare, Wand2 } from "lucide-react";
 import { getSmartReplies } from "@/actions/communication/ai-reply/smart-reply";
+import { useGetCompanyPermissions } from "@/hooks/feature-permissions/useGetCompanyPersmissions";
+import { MessageSquare, Wand2 } from "lucide-react";
+import * as React from "react";
 
 type Props = {
   clientId: number;
@@ -10,6 +11,16 @@ type Props = {
   onPick: (text: string) => void;
   draft?: string;
   context?: "sms" | "email";
+};
+
+export type Permission = {
+  id: number;
+  companyId: number;
+  permission_name: string;
+  title: string;
+  enabled: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 export default function SmartReplyBar({
@@ -24,6 +35,15 @@ export default function SmartReplyBar({
   );
   const [items, setItems] = React.useState<{ text: string }[]>([]);
   const [error, setError] = React.useState<string | null>(null);
+  const { data, isFetching } = useGetCompanyPermissions(companyId);
+  // if feature is not enabled, don't show the smart reply bar
+  const permission = data?.data?.find(
+    (perm: Permission) => perm?.permission_name === "aiSmartReplies"
+  );
+
+  if (!permission?.enabled) {
+    return null;
+  }
 
   const normalize = (res: unknown) => {
     // Debug: Check what we're actually receiving
