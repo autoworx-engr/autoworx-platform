@@ -52,6 +52,8 @@ import { InvoiceItems } from "./InvoiceItems";
 import { StripePay } from "./StripePay";
 import { Files, Mail, MessageCircleMore, SquarePen, X } from "lucide-react";
 import SignatureCanvas from "react-signature-canvas";
+import { uploadSignature } from "@/actions/estimate/invoice/uploadSignature";
+import { getFileFromCanvas } from "@/utils/getFileFromCanvas";
 
 const DownloadPDF = dynamic(() => import("./DownloadInvoice"), {
   ssr: false,
@@ -99,6 +101,7 @@ export default function InvoiceModalBody({
   const sigCanvas = useRef<any>(null);
   const [showAuthorizedName, setShowAuthorizedName] = useState(false);
   const [authorizedName, setAuthorizedName] = useState("");
+  const [signImage, setSignImage] = useState(null);
   const [authorizedNameInput, setAuthorizedNameInput] = useState("");
   const [sigImageURL, setSigImageURL] = useState(null);
   const [showSignaturePad, setShowSignaturePad] = useState(false);
@@ -135,6 +138,9 @@ export default function InvoiceModalBody({
       if (data.invoice?.authorizedName) {
         setAuthorizedName(data.invoice.authorizedName);
         setAuthorizedNameInput(data.invoice.authorizedName);
+      }
+      if (data.invoice?.signatureImage) {
+        setSignImage(data.invoice?.signatureImage);
       }
     }
   }, [isLoading, data, isFetched]);
@@ -256,6 +262,46 @@ export default function InvoiceModalBody({
       successToast("Link copied to clipboard");
     }
   };
+
+  const handleSaveSignature = async (invoiceId: string) => {
+    if (!sigCanvas.current) return;
+
+    try {
+      const file = getFileFromCanvas(
+        sigCanvas.current.getCanvas(),
+        `signature-${invoiceId}.png`
+      );
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch(`/api/upload`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        console.error("Failed to upload photos");
+        throw new Error("Failed to upload photos");
+      }
+
+      const json = await res.json();
+      const data = json.data;
+
+      const response = await uploadSignature(invoiceId, data[0]);
+
+      if (response.type === "success") {
+        successToast("Invoice Authorized");
+      } else {
+        errorToast("Signature upload failed");
+        console.error("Signature upload failed:", response.message);
+      }
+    } catch (err) {
+      errorToast("Signature upload failed");
+      console.error("Signature upload failed:", err);
+    }
+  };
+
   return (
     <DialogPortal>
       <DialogOverlay />
@@ -324,6 +370,7 @@ export default function InvoiceModalBody({
                       vehicle={vehicle}
                       companyDetails={company}
                       authorizedName={authorizedName}
+                      signImageUrl={signImage ?? undefined}
                       isStripe={
                         (stripeAccountData?.success &&
                           stripeAccountData?.enabled &&
@@ -728,7 +775,10 @@ export default function InvoiceModalBody({
                     />
                     <button
                       className="absolute -right-[10px] -top-4 bg-red-700 rounded-full print:hidden"
-                      onClick={() => setShowAuthorizedName(false)}
+                      onClick={() => {
+                        setShowAuthorizedName(false);
+                        setShowSignaturePad(false);
+                      }}
                     >
                       <X size={20} className="text-white p-1" />
                     </button>
@@ -805,32 +855,24 @@ export default function InvoiceModalBody({
                   </div>
                 </div>
               )}
-              {!showAuthorizedName && !authorizedName && (
-                <button
-                  onClick={() => {
-                    setShowAuthorizedName(true);
-                  }}
-                  className="rounded bg-[#6571FF] px-8 pb-1 text-white print:hidden"
-                >
-                  Authorize
-                </button>
-              )}
+              {!showAuthorizedName &&
+                !authorizedName &&
+                !invoice?.signatureImage && (
+                  <button
+                    onClick={() => {
+                      setShowAuthorizedName(true);
+                      setShowSignaturePad(true);
+                    }}
+                    className="rounded bg-[#6571FF] px-8 pb-1 text-white print:hidden"
+                  >
+                    Authorize
+                  </button>
+                )}
             </div>
           </div>
-          {!showSignaturePad && !sigImageURL && (
-            <div className="flex justify-end">
-              <button
-                onClick={() => {
-                  setShowSignaturePad(true);
-                }}
-                className="rounded bg-[#6571FF] px-8 pb-1 text-white print:hidden"
-              >
-                Signature
-              </button>
-            </div>
-          )}
+
           <div className="flex justify-end items-center">
-            {showSignaturePad && !sigImageURL && (
+            {showSignaturePad && !sigImageURL && !invoice?.signatureImage && (
               <div className="flex justify-end items-center gap-4">
                 <SignatureCanvas
                   ref={sigCanvas}
@@ -850,6 +892,9 @@ export default function InvoiceModalBody({
                         .getCanvas()
                         .toDataURL("image/png");
                       setSigImageURL(dataURL);
+                      handleSaveSignature(invoice.id);
+                      setShowAuthorizedName(false);
+                      setShowSignaturePad(false);
                     }}
                     className="px-4 py-2 bg-blue-600 text-white rounded-md"
                   >
@@ -871,6 +916,20 @@ export default function InvoiceModalBody({
               <div className="mt-2 text-center flex flex-col items-end gap-2">
                 <Image
                   src={sigImageURL}
+                  width={200}
+                  height={50}
+                  alt="signature"
+                  className="border border-gray-300 rounded-md"
+                />
+                <span className="rounded-sm border border-[#6571ff] px-4 py-1 text-sm text-[#6571ff]">
+                  Signatured
+                </span>
+              </div>
+            )}
+            {invoice?.signatureImage && (
+              <div className="mt-2 text-center flex flex-col items-end gap-2">
+                <Image
+                  src={invoice?.signatureImage}
                   width={200}
                   height={50}
                   alt="signature"
