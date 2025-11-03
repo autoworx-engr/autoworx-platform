@@ -212,13 +212,14 @@ export default function CreateGroupModal({
             label="Group name"
             name="groupName"
             type="text"
+            className="w-full"
           />
         </div>
         <div>
           {openUserList ? (
             <>
               <div className="mb-1 px-2 font-medium">Contact List</div>
-              <div className="h-fit w-full space-y-4 rounded-md border border-gray-500 p-4">
+              <div className="w-full space-y-4 rounded-md border border-gray-500 p-4 max-h-[50vh] overflow-y-auto sm:max-h-[60vh]">
                 {/* Search box */}
                 <div className="relative">
                   <input
