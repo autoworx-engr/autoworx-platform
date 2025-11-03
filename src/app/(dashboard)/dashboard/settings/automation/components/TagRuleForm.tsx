@@ -9,7 +9,7 @@ import {
 } from "./constants";
 import { ChangeEvent, useEffect, useState } from "react";
 import { getSalesTags } from "@/actions/pipelines/leadTag";
-import { Tag } from "@prisma/client";
+import { Company, InfobipConfig, Tag, TwilioCredentials } from "@prisma/client";
 import MultiSelect from "./MultiSelect";
 import { getInvoiceTags } from "@/actions/pipelines/invoiceTag";
 import { usePipelineStagesStore } from "@/stores/pipelineStagesStore";
@@ -20,6 +20,16 @@ import ActiveTemplate from "./ActiveTemplate";
 import TemplateVariable from "./TemplateVariable";
 import { useCharacterLimit } from "@/hooks/useCharecterLimit";
 import { handleFileSelection } from "@/utils/handleFileAttachment";
+
+type RuleFormProps = {
+  mode: "create" | "edit" | undefined;
+  id?: string | null;
+  isEdit: boolean;
+  companyId: any;
+  user: any;
+  company: Company;
+  twilio: TwilioCredentials | InfobipConfig | null;
+};
 
 type Rule = {
   title: string;
@@ -40,7 +50,15 @@ type Rule = {
   ruleType: string;
 };
 
-const TagRuleForm = () => {
+const TagRuleForm = ({
+  mode,
+  id,
+  isEdit,
+  companyId,
+  user,
+  company,
+  twilio,
+}: RuleFormProps) => {
   const [formData, setFormData] = useState<Rule>({
     title: "",
     pipelineType: "",
@@ -249,10 +267,6 @@ const TagRuleForm = () => {
     }
     if (Object.keys(newErrors).length > 0) {
       setError(newErrors);
-      // scroll to top so user sees errors
-      if (typeof window !== "undefined")
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      return;
     }
 
     setError({});
@@ -260,8 +274,6 @@ const TagRuleForm = () => {
     console.log("Form Data Submitted:", formData);
   };
 
-  const isEdit = false;
-  const id = null;
   const isCreatePending = false;
   const isUpdatePending = false;
   return (
@@ -467,9 +479,9 @@ const TagRuleForm = () => {
                       handleChange={handleTemplateChange}
                       handleFileAttachment={handleFileAttachment}
                       attachmentType="sms"
-                      // error={
-                      //   error.smsBody || error.emailBody || error.emailSubject
-                      // }
+                      error={
+                        error.smsBody || error.emailBody || error.emailSubject
+                      }
                       maxLength={maxLength}
                       characterLength={length}
                       isLimitExceeded={isLimitExceeded}
@@ -497,10 +509,10 @@ const TagRuleForm = () => {
                       handleChange={handleTemplateChange}
                       handleFileAttachment={handleFileAttachment}
                       attachmentType="email"
-                      // error={
-                      //   error.emailBody || error.emailSubject || error.smsBody
-                      // }
-                      // subjectError={!!error.emailSubject}
+                      error={
+                        error.emailBody || error.emailSubject || error.smsBody
+                      }
+                      subjectError={!!error.emailSubject}
                       maxLength={maxLength}
                       characterLength={length}
                       isLimitExceeded={isLimitExceeded}
