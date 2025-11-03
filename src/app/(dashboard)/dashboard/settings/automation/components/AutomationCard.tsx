@@ -175,8 +175,8 @@ const AutomationCard: FC<AutomationCardProps> = ({
 
         {item.startTime && type == "marketing" ? (
           <div className="absolute left-1/2 top-0 flex w-[85%] -translate-x-1/2 -translate-y-1/2 items-center justify-center gap-2 rounded-md bg-[#6571FF] px-4 py-0.5 text-xs text-white shadow-md 2xl:w-[60%]">
-            <span className="font-semibold">Starts:</span>
-            <span>
+            <span className="font-semibold text-xs">Starts:</span>
+            <span className="text-xs">
               {moment(item.startTime).format("MMM-DD-YY, h:mm A")}{" "}
               {item.isActive && (
                 <span

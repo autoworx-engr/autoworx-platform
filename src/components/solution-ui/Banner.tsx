@@ -56,7 +56,7 @@ export default function Banner() {
             muted
           >
             <source
-              src="/videos/IMG_1660.MOV"
+              src="/videos/solution_video.mp4"
               type="video/mp4"
               className="rounded-2xl"
             />
