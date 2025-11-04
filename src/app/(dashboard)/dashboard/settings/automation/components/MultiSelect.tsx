@@ -63,8 +63,8 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
     }
   }, [open]);
   const handleSelect = (id: string | number) => {
-    if (value.includes(id)) {
-      onChange(value.filter((v) => v !== id));
+    if (value?.includes(id)) {
+      onChange(value?.filter((v) => v !== id));
     } else {
       onChange([...value, id]);
     }
@@ -92,7 +92,7 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
   // ADDED: Filter options based on search query
   const filteredOptions = searchTerm
     ? options.filter((opt) =>
-        opt.title.toLowerCase().includes(searchTerm.toLowerCase())
+        opt.title.toLowerCase()?.includes(searchTerm.toLowerCase())
       )
     : options;
   return (

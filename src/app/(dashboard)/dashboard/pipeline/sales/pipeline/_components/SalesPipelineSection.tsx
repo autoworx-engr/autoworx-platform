@@ -1,13 +1,13 @@
 "use client";
-import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd";
-import { useRef, useState, useEffect } from "react";
-import {
-  useColumnState,
-  useColumnDispatch,
-} from "@/context/sales-pipeline.context";
-import { actionTypes } from "@/constants/lead.constant";
 import { updateLeadColumn } from "@/actions/pipelines/getLeads";
+import { actionTypes } from "@/constants/lead.constant";
+import {
+  useColumnDispatch,
+  useColumnState,
+} from "@/context/sales-pipeline.context";
 import { errorToast, successToast } from "@/lib/toast";
+import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd";
+import { useEffect, useRef, useState } from "react";
 import LeadCard from "./LeadCard";
 import LeadInfinityScroll from "./LeadInfinityScroll";
 
@@ -107,7 +107,7 @@ export default function SalesPipelineSection() {
                     <p className="text-base font-bold">
                       {column.title || ""}
                       <span className="ml-2 rounded-lg bg-[#3F49B9] px-2">
-                        {column.totalLeads}
+                        {column?.leads?.length || 0}
                       </span>
                     </p>
                   </h2>

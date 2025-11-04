@@ -36,6 +36,7 @@ type DownloadInvoiceProps = {
   companyDetails: Company;
   authorizedName: string;
   isStripe: boolean;
+  signImageUrl?: string;
 };
 
 export default function DownloadInvoice({
@@ -46,6 +47,7 @@ export default function DownloadInvoice({
   companyDetails,
   authorizedName,
   isStripe,
+  signImageUrl,
 }: DownloadInvoiceProps) {
   const [isClient, setIsClient] = useState(false);
   const [isPdfReady, setIsPdfReady] = useState(false);
@@ -84,6 +86,7 @@ export default function DownloadInvoice({
               vehicle={vehicle}
               companyDetails={companyDetails}
               authorizedName={authorizedName}
+              signImageUrl={signImageUrl}
               isStripe={isStripe}
             />
           }
