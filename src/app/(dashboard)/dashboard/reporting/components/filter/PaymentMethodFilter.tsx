@@ -72,6 +72,7 @@ export default function PaymentMethodFilter({
     const params = new URLSearchParams(searchParams?.toString());
 
     if (selectedMethod && selectedMethod !== "All") {
+      params.set("page", "1");
       params.set("paymentMethod", selectedMethod);
     } else {
       params.delete("paymentMethod");

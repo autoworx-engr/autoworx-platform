@@ -14,7 +14,7 @@ export const useUpdatePipelineAutomationRule = () => {
       queryClient.invalidateQueries({ queryKey: ["pipeline-automation"] });
     },
     onError: (error) => {
-      errorToast("Filed to update pipeline automation rule!");
+      errorToast("Failed to update pipeline automation rule!");
       console.error(error);
     },
   });

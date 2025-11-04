@@ -14,7 +14,7 @@ export const useUpdateInvoiceAutomationRule = () => {
       queryClient.invalidateQueries({ queryKey: ["invoice-automation"] });
     },
     onError: (error) => {
-      errorToast("Filed to update invoice automation rule!");
+      errorToast("Failed to update invoice automation rule!");
       console.error(error);
     },
   });

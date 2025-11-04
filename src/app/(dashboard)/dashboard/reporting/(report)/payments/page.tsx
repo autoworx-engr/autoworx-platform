@@ -163,7 +163,7 @@ export default async function PaymentReportPage({ searchParams }: TProps) {
       ) {
         return true;
       }
-      console.log("payment?.refundedAmount", payment?.refundedAmount);
+
       return paymentType === methodToFilter;
     });
   }

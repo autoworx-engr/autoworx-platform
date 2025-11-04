@@ -48,6 +48,7 @@ export default function FilterBySelection({
 
   const handleSelection = (value: string) => {
     const searchParams = new URLSearchParams(params!);
+    searchParams.set("page", "1");
     searchParams.set(type, value);
     const newPath = `${pathname}?${searchParams.toString()}`;
     router.push(newPath);
