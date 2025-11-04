@@ -9,6 +9,7 @@ import ReportsSection from "../components/ReportsSection";
 import { useGetAllBugReports } from "@/hooks/bug-reports/useGetAllBugReports";
 import { useDebounce } from "@/hooks/useDebounce";
 import { Search } from "lucide-react";
+import moment from "moment";
 
 type Props = {
   companies: CompanyStat[];
@@ -143,12 +144,14 @@ const AWXDashboard = ({ companies }: Props) => {
                       </p>
                       <p className="text-base md:text-lg italic">
                         Activated On :{" "}
-                        <i className="font-semibold">8 August, 2024</i>
+                        <i className="font-semibold">
+                          {moment(company.createdAt).format("D MMMM, YYYY")}
+                        </i>
                       </p>
-                      <p className=" text-base md:text-lg italic">
+                      {/* <p className=" text-base md:text-lg italic">
                         Expires On :{" "}
                         <i className="font-semibold">8 August, 2024</i>
-                      </p>
+                      </p> */}
                       <p className="pt-2 text-base md:text-lg font-semibold">
                         Payment Status : PAID
                       </p>
