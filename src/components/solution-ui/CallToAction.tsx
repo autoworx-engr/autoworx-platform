@@ -57,7 +57,7 @@ export default function CallToAction() {
       const opportunitySource = `(Demo Request) ${formData.shopName || "Unknown Shop"} | Demo Request`;
 
       const leadResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_APP_URL}/api/lead-generate`,
+        `${process.env.NEXT_PUBLIC_APP_URL }/api/lead-generate`,
         {
           method: "POST",
           headers: {

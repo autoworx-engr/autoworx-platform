@@ -1,25 +1,25 @@
-"use client";
-import { cn } from "@/lib/cn";
-import { INFO_EMAIL } from "@/lib/consts";
-import { sendMail } from "@/lib/mailgun";
-import { Chakra_Petch } from "next/font/google";
-import Image from "next/image";
-import { useEffect, useState } from "react";
-import toast from "react-hot-toast";
+'use client';
+import { cn } from '@/lib/cn';
+import { INFO_EMAIL } from '@/lib/consts';
+import { sendMail } from '@/lib/mailgun';
+import { Chakra_Petch } from 'next/font/google';
+import Image from 'next/image';
+import { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 const chakra_petch = Chakra_Petch({
-  subsets: ["latin"],
-  weight: ["500"],
+  subsets: ['latin'],
+  weight: ['500'],
 });
 
 const inputClass =
-  "h-10 md:w-96 w-full rounded-md border border-[#26AADF] pl-2 placeholder:text-xl focus:border-[#bde7f1] focus:outline-none focus:ring-1 focus:ring-[#bde7f1]";
+  'h-10 md:w-96 w-full rounded-md border border-[#26AADF] pl-2 placeholder:text-xl focus:border-[#bde7f1] focus:outline-none focus:ring-1 focus:ring-[#bde7f1]';
 
 export default function ContactUs() {
   const [formData, setFormData] = useState({
-    name: "",
-    phone: "",
-    email: "",
-    businessName: "",
+    name: '',
+    phone: '',
+    email: '',
+    businessName: '',
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -28,15 +28,13 @@ export default function ContactUs() {
   useEffect(() => {
     const fetchCRMToken = async () => {
       try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_APP_URL}/api/awx-crm`
-        );
+        const response = await fetch('/api/awx-crm');
         if (response.ok) {
           const data = await response.json();
           setDemoToken(data.token);
         }
       } catch (error) {
-        console.error("Failed to fetch awx-crm token:", error);
+        console.error('Failed to fetch awx-crm token:', error);
       }
     };
 
@@ -52,34 +50,31 @@ export default function ContactUs() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!demoToken) {
-      toast.error("Service unavailable. Please try again later.");
+      toast.error('Service unavailable. Please try again later.');
       return;
     }
 
     setIsSubmitting(true);
     try {
-      const opportunitySource = `${formData.businessName ?? ""}`;
-      const leadResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_APP_URL}/api/lead-generate`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-TOKEN": demoToken,
-          },
-          body: JSON.stringify({
-            name: formData.name,
-            email: formData.email,
-            phone: formData.phone,
-            serviceId: 1,
-            message: "",
-            opportunity_source: opportunitySource,
-          }),
-        }
-      );
+      const opportunitySource = `${formData.businessName ?? ''}`;
+      const leadResponse = await fetch('/api/lead-generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-TOKEN': demoToken,
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          serviceId: 1,
+          message: '',
+          opportunity_source: opportunitySource,
+        }),
+      });
 
       if (leadResponse.ok) {
-        toast.success("Contact request submitted successfully!");
+        toast.success('Contact request submitted successfully!');
         const emailBody = `
       Hello,
       A new demo request has been submitted with the following details:
@@ -94,32 +89,32 @@ export default function ContactUs() {
       Autoworx.
     `;
 
-        await fetch("/api/contactus", {
-          method: "POST",
+        await fetch('/api/contactus', {
+          method: 'POST',
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            to: "info@autoworx.tech",
-            subject: "Demo Request",
+            to: 'info@autoworx.tech',
+            subject: 'Demo Request',
             text: emailBody,
           }),
         });
 
         // Reset form
         setFormData({
-          name: "",
-          phone: "",
-          email: "",
-          businessName: "",
+          name: '',
+          phone: '',
+          email: '',
+          businessName: '',
         });
       } else {
         const errorData = await leadResponse.json();
         toast.error(`Failed to submit contact request: ${errorData.error}`);
       }
     } catch (error) {
-      console.error("Error sending email:", error);
-      toast.error("Failed to send email. Please try again.");
+      console.error('Error sending email:', error);
+      toast.error('Failed to send email. Please try again.');
     }
   };
   return (
@@ -132,7 +127,7 @@ export default function ContactUs() {
         <div
           className="mx-5 max-w-4xl rounded-md px-5 py-12 text-white shadow-md md:mx-0 md:px-20"
           style={{
-            background: "linear-gradient(to right, #083D45, #0B5662, #1497AB)",
+            background: 'linear-gradient(to right, #083D45, #0B5662, #1497AB)',
           }}
         >
           <h3 className="mb-10 text-center text-xl font-bold">
@@ -140,28 +135,28 @@ export default function ContactUs() {
           </h3>
           <ul className="flex flex-col gap-y-8 text-center md:text-start md:text-xl">
             <li>
-              {" "}
+              {' '}
               • Accuracy You Can Trust: Avoid manual errors and provide precise
               quotes every time.
             </li>
             <li>
-              {" "}
+              {' '}
               • Efficiency Boost: Free up time for your team to focus on what
               matters—serving your customers.
             </li>
             <li>
-              {" "}
+              {' '}
               • Reduced Training Costs: Eliminate the need for extensive
               employee training. New team members can start generating estimates
               confidently from day one.
             </li>
             <li>
-              {" "}
+              {' '}
               • Professional Image: Impress your customers with polished,
               consistent, and reliable estimates.
             </li>
             <li>
-              {" "}
+              {' '}
               • Flexible Scaling: Perfect for small shops or multi-location
               enterprises.
             </li>
@@ -220,7 +215,7 @@ export default function ContactUs() {
                 }
                 className="w-full rounded-md bg-gradient-to-r from-[#01A79E] to-[#26AADF] py-2 font-bold text-white disabled:cursor-not-allowed disabled:bg-gray-400 disabled:from-gray-400 disabled:to-gray-400 md:w-96 md:text-2xl"
               >
-                {isSubmitting ? "Sending..." : "Contact Us"}
+                {isSubmitting ? 'Sending...' : 'Contact Us'}
               </button>
             </form>
           </div>
