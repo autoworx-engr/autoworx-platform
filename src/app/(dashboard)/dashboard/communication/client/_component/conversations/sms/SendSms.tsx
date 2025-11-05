@@ -48,6 +48,14 @@ export default function SendSms({ clientId, companyId }: TProps) {
   const [files, setFiles] = useState<File[]>([]);
   const [messageInput, setMessageInput] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const adjustTextareaHeight = (ta?: HTMLTextAreaElement | null) => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  };
 
   const handleSendMessage = async (
     e: React.FormEvent<HTMLFormElement | HTMLTextAreaElement>
@@ -85,6 +93,7 @@ export default function SendSms({ clientId, companyId }: TProps) {
 
     setMessageInput("");
     setFiles([]);
+    setTimeout(() => adjustTextareaHeight(), 0);
 
     try {
       mutate(optimisticMessage);
@@ -168,14 +177,22 @@ export default function SendSms({ clientId, companyId }: TProps) {
         <div className="flex w-full items-center gap-2 rounded-md bg-white ring-1 ring-zinc-200 focus-within:ring-emerald-500 dark:bg-zinc-900 dark:ring-white/10">
           <textarea
             placeholder="Send message…"
+            ref={textareaRef}
             className="max-h-28 min-h-10 w-full resize-none rounded-md border-none bg-transparent px-3 py-2 text-[15px] leading-5 text-zinc-800 outline-none placeholder:text-zinc-400 focus:outline-none dark:text-zinc-100 dark:placeholder:text-zinc-500"
             value={messageInput}
             style={{
               WebkitAppearance: "none",
               WebkitTextSizeAdjust: "100%",
               touchAction: "manipulation",
+              height: "auto",
             }}
-            onChange={(e) => setMessageInput(e.target.value)}
+            onChange={(e) => {
+              setMessageInput(e.target.value);
+              adjustTextareaHeight(e.target);
+            }}
+            onInput={(e: React.FormEvent<HTMLTextAreaElement>) =>
+              adjustTextareaHeight(e.currentTarget)
+            }
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault(); // no newline
