@@ -1,17 +1,18 @@
-import { updateCommunicationAutomationTrigger } from '@/actions/automation/communication/triggerCommunicationAutomation';
-import { updatePipelineAutomationTrigger } from '@/actions/automation/pipeline/triggerPipelineAutomation';
-import { initialCreateClientChatTrack } from '@/actions/communication/client/chat-track';
-import { companyWithUser } from '@/actions/settings/getCompanyWithUser';
-import { db } from '@/lib/db';
-import { sendNewLeadNotification } from '@/lib/notification/pipeline-notify';
-import { NextRequest, NextResponse } from 'next/server';
+import { updateCommunicationAutomationTrigger } from "@/actions/automation/communication/triggerCommunicationAutomation";
+import { updatePipelineAutomationTrigger } from "@/actions/automation/pipeline/triggerPipelineAutomation";
+import { initialCreateClientChatTrack } from "@/actions/communication/client/chat-track";
+import { companyWithUser } from "@/actions/settings/getCompanyWithUser";
+import { db } from "@/lib/db";
+import { sendNewLeadNotification } from "@/lib/notification/pipeline-notify";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
   try {
-    const token = request.headers.get('X-TOKEN');
+    const token = request.headers.get("X-TOKEN");
+    console.log("🚀 ~ POST ~ token:", token);
 
     if (!token) {
-      return NextResponse.json('Invalid token', { status: 401 });
+      return NextResponse.json("Invalid token", { status: 401 });
     }
 
     // Check if there any company with the token
@@ -20,13 +21,15 @@ export async function POST(request: NextRequest) {
         zapierToken: token,
       },
     });
+    console.log("🚀 ~ POST ~ company:", company);
 
     if (!company) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
     }
 
     // take data from the body
     const body = await request.json();
+    console.log("🚀 ~ POST ~ body:", body);
 
     const clientName = body.name;
     const clientEmail = body?.email;
@@ -37,15 +40,15 @@ export async function POST(request: NextRequest) {
     const crmMsg = body.message;
     const multipleServices = body.multiServices as number[] | undefined;
 
-    console.log('crmMsg', crmMsg);
+    console.log("crmMsg", crmMsg);
     //check if crm company
     const isCRMCompany = company.isCRMEnabled || false;
     if (isCRMCompany) {
       // For demo requests
-      const source = 'Marketing Site';
+      const source = "Marketing Site";
 
-      let vehicleInfo = 'N/A';
-      let services = crmMsg || 'Service Request';
+      let vehicleInfo = "N/A";
+      let services = crmMsg || "Service Request";
 
       // Create lead with demo-specific handling
       const newLead = await db.lead.create({
@@ -61,9 +64,9 @@ export async function POST(request: NextRequest) {
           columnId: (
             await db.column.findFirst({
               where: {
-                title: 'New Leads',
+                title: "New Leads",
                 companyId: company.id,
-                type: 'sales',
+                type: "sales",
               },
             })
           )?.id,
@@ -78,9 +81,9 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      const clientNameParts = clientName.trim().split(' ');
-      const firstName = clientNameParts.shift() || '';
-      const lastName = clientNameParts.join(' ');
+      const clientNameParts = clientName.trim().split(" ");
+      const firstName = clientNameParts.shift() || "";
+      const lastName = clientNameParts.join(" ");
 
       let newClient = clientPhone
         ? await db.client.findFirst({
@@ -141,7 +144,7 @@ export async function POST(request: NextRequest) {
           name: clientName,
           email: clientEmail,
           phone: clientPhone,
-          type: 'demo_request',
+          type: "demo_request",
           opportunity_source: opportunity,
         },
         { status: 201 }
@@ -150,28 +153,40 @@ export async function POST(request: NextRequest) {
 
     // now extract the source, services and vehicle info from opportunity
     // the format is this: (source) vehicle | service
-    const source = opportunity.split(')')[0].replace('(', '').trim();
-    const vehicleInfo = opportunity.split(')')[1].split('|')[0].trim();
-    const services = opportunity.split(')')[1].split('|')[1].trim();
+    const source = opportunity.split(")")[0].replace("(", "").trim();
+    console.log("🚀 ~ POST ~ source:", source);
+    const vehicleInfo = opportunity.split(")")[1].split("|")[0].trim();
+    console.log("🚀 ~ POST ~ vehicleInfo:", vehicleInfo);
+    const services = opportunity.split(")")[1].split("|")[1].trim();
+    console.log("🚀 ~ POST ~ services:", services);
 
     // check if the required fields are provided
     if (!clientName || !vehicleInfo || !services || !source) {
-      return Response.json({ error: 'Invalid input' }, { status: 400 });
+      console.log(
+        "name vehicle services source missing",
+        clientName,
+        vehicleInfo,
+        services,
+        source
+      );
+      return Response.json({ error: "Invalid input" }, { status: 400 });
     }
 
     const companyId = company.id;
+    console.log("🚀 ~ POST ~ companyId:", companyId);
     // Fetch the ID of the "New Leads" column
     const newLeadsColumn = await db.column.findFirst({
       where: {
-        title: 'New Leads',
+        title: "New Leads",
         companyId: companyId,
-        type: 'sales',
+        type: "sales",
       },
     });
+    console.log("🚀 ~ POST ~ newLeadsColumn:", newLeadsColumn);
 
     if (!newLeadsColumn) {
       return new Response(
-        JSON.stringify({ error: 'New Leads column not found' }),
+        JSON.stringify({ error: "New Leads column not found" }),
         { status: 404 }
       );
     }
@@ -198,11 +213,12 @@ export async function POST(request: NextRequest) {
             : undefined,
       },
     });
+    console.log("🚀 ~ POST ~ newLead:", newLead);
 
     //naming correction for the client from lead
-    const clientNameParts = clientName.trim().split(' ');
-    const firstName = clientNameParts.shift() || '';
-    const lastName = clientNameParts.join(' ');
+    const clientNameParts = clientName.trim().split(" ");
+    const firstName = clientNameParts.shift() || "";
+    const lastName = clientNameParts.join(" ");
 
     let newClient = clientPhone
       ? await db.client.findFirst({
@@ -259,13 +275,13 @@ export async function POST(request: NextRequest) {
 
     const vehicleParts = vehicleInfo?.split(/\s+/) || [];
     const year = parseInt(vehicleParts[0]) || undefined;
-    const make = vehicleParts[1] || '';
+    const make = vehicleParts[1] || "";
 
-    const model = vehicleParts.slice(2).join(' ') || '';
+    const model = vehicleParts.slice(2).join(" ") || "";
     const newVehicle = await db.vehicle.create({
       data: {
         year: year,
-        make: make ? make : vehicleParts?.length > 0 ? vehicleParts[0] : '',
+        make: make ? make : vehicleParts?.length > 0 ? vehicleParts[0] : "",
         model: model,
         companyId: company.id,
         clientId: newClient.id,
@@ -296,7 +312,7 @@ export async function POST(request: NextRequest) {
       if (newLead) {
         await updatePipelineAutomationTrigger({
           companyId: newClient.companyId,
-          condition: 'TIME_DELAY',
+          condition: "TIME_DELAY",
           leadId: newLead.id,
           columnId: +(newLead?.columnId ?? 0),
         });
@@ -324,11 +340,11 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
     // Add CORS headers
-    response.headers.set('Access-Control-Allow-Origin', '*');
-    response.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    response.headers.set("Access-Control-Allow-Origin", "*");
+    response.headers.set("Access-Control-Allow-Methods", "POST, OPTIONS");
     response.headers.set(
-      'Access-Control-Allow-Headers',
-      'Content-Type, X-TOKEN'
+      "Access-Control-Allow-Headers",
+      "Content-Type, X-TOKEN"
     );
 
     return response;
@@ -338,7 +354,7 @@ export async function POST(request: NextRequest) {
       { error: error.message },
       { status: 500 }
     );
-    errorResponse.headers.set('Access-Control-Allow-Origin', '*');
+    errorResponse.headers.set("Access-Control-Allow-Origin", "*");
     return errorResponse;
     // if (error instanceof SyntaxError) {
     //   return Response.json({ error: 'Invalid input' }, { status: 400 });
@@ -352,9 +368,9 @@ export async function OPTIONS(request: NextRequest) {
   return new Response(null, {
     status: 200,
     headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, X-TOKEN',
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, X-TOKEN",
     },
   });
 }

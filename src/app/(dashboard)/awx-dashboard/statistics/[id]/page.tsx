@@ -6,6 +6,7 @@ import CompanyReportSection from "../../components/CompanyReportSection";
 import FeaturePermission from "../../components/FeaturePermission";
 import { ConfigureCommunicationHub } from "./ConfigureCommunicationHub";
 import { ArrowLeft } from "lucide-react";
+import moment from "moment";
 
 type propsType = {
   params: {
@@ -191,15 +192,15 @@ const Page = async (props: propsType) => {
               <p className="italic">
                 Activated On :{" "}
                 <i>
-                  <b>8 August, 2024</b>
+                  <b>{moment(company?.createdAt).format("D MMMM, YYYY")}</b>
                 </i>
               </p>
-              <p className="italic">
+              {/* <p className="italic">
                 Expires On :{" "}
                 <i>
                   <b>8 August, 2024</b>
                 </i>
-              </p>
+              </p> */}
               <p className="font-semibold">Payment Status : PAID</p>
               <p className="mt-4 flex items-center gap-x-4">
                 <button className="rounded bg-[#6571ff] px-2 py-1 text-white">
