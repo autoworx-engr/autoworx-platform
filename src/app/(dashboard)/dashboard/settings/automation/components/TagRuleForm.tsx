@@ -35,7 +35,7 @@ type Rule = {
   title: string;
   pipelineType: "sales" | "shop" | "";
   tagIds: number[];
-  funnel: string;
+  // funnel: string;
   timeDelay: number | null | string;
   condition: "pipeline" | "communication" | "post-tag" | "";
   action: number | number[] | null;
@@ -63,7 +63,7 @@ const TagRuleForm = ({
     title: "",
     pipelineType: "",
     tagIds: [],
-    funnel: "",
+    // funnel: "",
     timeDelay: null,
     condition: "",
     action: null,
@@ -128,6 +128,12 @@ const TagRuleForm = ({
   const shopTagOptions = shopTags.map((tag) => ({
     id: tag.id,
     title: tag.name,
+  }));
+
+  // Stage options for post-tag condition (stages are fetched based on pipelineType)
+  const stageOptions = stages.map((s: any) => ({
+    id: s.id,
+    title: s.title || s.name,
   }));
 
   // Handle form field changes
@@ -219,9 +225,9 @@ const TagRuleForm = ({
     if (!Array.isArray(formData.tagIds) || formData.tagIds.length === 0) {
       newErrors.tagIds = "At least one tag is required.";
     }
-    if (!formData.funnel) {
-      newErrors.funnel = "Funnel is required.";
-    }
+    // if (!formData.funnel) {
+    //   newErrors.funnel = "Funnel is required.";
+    // }
     if (!formData.condition) {
       newErrors.condition = "Condition is required.";
     }
@@ -322,7 +328,7 @@ const TagRuleForm = ({
             />
           )}
 
-          <Selector
+          {/* <Selector
             name="funnel"
             label="Funnel"
             options={Funnels}
@@ -331,7 +337,7 @@ const TagRuleForm = ({
             required
             placeholder="Select a funnel"
             error={error.funnel}
-          />
+          /> */}
           <Selector
             name="delay"
             label="Time Delay"
@@ -371,12 +377,8 @@ const TagRuleForm = ({
 
           {formData.condition === "post-tag" && (
             <MultiSelect
-              // Use tag options here (post-tag should select tags)
-              options={
-                formData.pipelineType === "shop"
-                  ? shopTagOptions
-                  : salesTagOptions
-              }
+              // For post-tag condition we need to pick stages (columns) from the pipeline
+              options={stageOptions}
               value={
                 Array.isArray(formData.action)
                   ? formData.action
@@ -385,11 +387,11 @@ const TagRuleForm = ({
                     : []
               }
               onChange={(value) => handleChange("action", value)}
-              label="Select Tags to Trigger Rule"
+              label="Select Stages to Trigger Rule"
               placeholder={
                 formData.pipelineType === "shop"
-                  ? "Select shop tags"
-                  : "Select sales tags"
+                  ? "Select shop stages"
+                  : "Select sales stages"
               }
               required
               error={error.action}

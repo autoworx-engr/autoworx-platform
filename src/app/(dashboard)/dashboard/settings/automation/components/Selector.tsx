@@ -160,13 +160,13 @@ export function Selector({
                 />
               </div>
             )}
-            <div className="h-[100px] overflow-y-auto pl-2">
+            <div className="h-[200px] overflow-y-auto ">
               {filteredOptions?.length > 0 ? (
                 filteredOptions?.map((opt) => (
                   <div
                     key={opt?.id}
                     className={cn(
-                      "cursor-pointer px-2 py-1 hover:bg-slate-100",
+                      "cursor-pointer px-4 py-1  hover:bg-indigo-100",
                       selectedValue === opt?.id.toString() &&
                         "bg-blue-50 text-blue-700"
                     )}
