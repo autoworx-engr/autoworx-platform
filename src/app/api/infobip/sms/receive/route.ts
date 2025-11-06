@@ -92,7 +92,7 @@ export async function POST(req: NextRequest) {
         console.log(`Processing for company ${infobipConfig.companyId}`);
 
         // Find client by the "from" phone number (client's phone)
-        const client = await db.client.findFirst({
+        let client = await db.client.findFirst({
           where: {
             mobile: {
               endsWith: from.replace("+", ""),
@@ -101,6 +101,15 @@ export async function POST(req: NextRequest) {
           },
         });
 
+        if (!client) {
+          client = await db.client.create({
+            data: {
+              firstName: body.From.replace("+", ""),
+              mobile: body.From.replace("+", ""),
+              companyId: infobipConfig.companyId,
+            },
+          });
+        }
         console.log(`Client found: ${client ? client.id : "none"}`);
 
         if (client) {
