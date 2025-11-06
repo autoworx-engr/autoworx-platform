@@ -79,7 +79,7 @@ export async function POST(
 
     // Process for each matching company configuration
     for (const infobipConfig of infobipConfigs) {
-      const client = await db.client.findFirst({
+      let client = await db.client.findFirst({
         where: {
           mobile: {
             endsWith: from.replace("+", ""),
@@ -95,6 +95,24 @@ export async function POST(
           },
         },
       });
+
+      if (!client) {
+        client = await db.client.create({
+          data: {
+            firstName: body.From.replace("+", ""),
+            mobile: body.From.replace("+", ""),
+            companyId: infobipConfig.companyId,
+          },
+          include: {
+            Lead: {
+              select: {
+                id: true,
+                columnId: true,
+              },
+            },
+          },
+        });
+      }
 
       if (client) {
         // Create SMS record in database
