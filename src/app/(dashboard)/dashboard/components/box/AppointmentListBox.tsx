@@ -4,6 +4,8 @@ import getUser from "@/lib/getUser";
 import moment from "moment-timezone";
 import AppointmentDetails from "./AppointmentDetails";
 import BoxTitle from "./BoxTitle";
+import { cn } from "@/lib/cn"; // Ensure cn utility is imported
+import { CalendarCheck } from "lucide-react"; // Icon for the empty state
 
 const fetchWithAppointment = {
   include: {
@@ -37,17 +39,10 @@ export default async function AppointmentListBox() {
   const user = await getUser();
   const { timezone } = await getCompanyTimezone();
 
-  // let tasks;
   let appointments = [];
 
-  // Get all appointments
-  // Start of today in company timezone
-  const startOfToday = moment.tz(timezone).utc().startOf("day");
-
-  // const startOfYesterday = moment
-  //   .tz(timezone)
-  //   .subtract(1, "day")
-  //   .startOf("day");
+  // Start of today in company timezone (converted to UTC for database query)
+  const startOfToday = moment.tz(timezone).startOf("day").utc();
 
   if (
     user.employeeType === "Admin" ||
@@ -66,19 +61,8 @@ export default async function AppointmentListBox() {
       },
       ...fetchWithAppointment,
     });
-    // Filter appointments by time
-    // appointments = appointments.filter((appointment) => {
-    //   // Convert appointment end time to moment with timezone
-    //   const appointmentEndTime = combineDateTimeWithTimezone(
-    //     appointment?.date!,
-    //     appointment?.endTime!,
-    //     timezone!
-    //   );
-
-    //   // Keep appointment if its end time is in the future
-    //   return appointmentEndTime.utc().isAfter(currentDateTime);
-    // });
   } else {
+    // Logic for Technician or Other role
     appointments = await db.appointment.findMany({
       where: {
         companyId: user.companyId,
@@ -103,31 +87,55 @@ export default async function AppointmentListBox() {
       },
       ...fetchWithAppointment,
     });
-    // Filter appointments by time
-    // appointments = appointments.filter((appointment) => {
-    //   // Convert appointment end time to moment with timezone
-    //   const appointmentEndTime = combineDateTimeWithTimezone(
-    //     appointment?.date!,
-    //     appointment?.endTime!,
-    //     timezone!
-    //   );
-
-    //   // Keep appointment if its end time is in the future
-    //   return appointmentEndTime.utc().isAfter(currentDateTime);
-    // });
   }
+
   return (
-    <div className="overflow-y-hidden h-full p-6 md:pb-20 shadow-md">
-      <div className="h-full">
-        <BoxTitle title="Appointments" redirectLink="/dashboard/task/day" />
-        <div className="custom-scrollbar flex h-full flex-1 flex-col space-y-4 overflow-x-hidden pb-4">
+    // Outer Container: Apply full Glassmorphism style and ensure flex-1 stretching
+    <div
+      className={cn(
+        `
+          flex flex-1 flex-col p-4 md:p-6 rounded-2xl transition-all duration-300 h-full
+
+          // Glassmorphism aesthetic (Replaces old overflow-y-hidden h-full p-6 md:pb-20 shadow-md)
+          bg-white/50 dark:bg-slate-900/50
+          backdrop-blur-md
+
+          // Subtle border and lift
+          ring-1 ring-slate-900/5 dark:ring-white/10
+          shadow-lg dark:shadow-2xl dark:shadow-blue-900/20
+
+          // Hover effect for interactivity
+          hover:shadow-xl hover:shadow-blue-500/10 dark:hover:shadow-indigo-500/10
+
+          overflow-hidden // Crucial for containing the scrollable list
+        `
+      )}
+    >
+      <div className="flex flex-col h-full">
+        <BoxTitle
+          title="Appointments" // Enhanced title
+          redirectLink="/dashboard/task/day"
+          className="mb-4 md:mb-6 flex-shrink-0"
+        />
+
+        {/* Scrollable Appointment List Container */}
+        <div className="custom-scrollbar flex flex-1 flex-col space-y-4 overflow-y-auto w-full pr-1 pb-4 min-h-0">
           {appointments.map((appointment: any, idx: any) => (
+            // Note: AppointmentDetails needs its own premium styling update
             <AppointmentDetails appointment={appointment} key={idx} />
           ))}
+
+          {/* Redesigned Empty State */}
           {appointments.length === 0 && (
-            <span className="my-auto self-center text-center">
-              You have no upcoming appointments
-            </span>
+            <div className="flex flex-1 flex-col items-center justify-center p-8 text-center my-auto">
+              <CalendarCheck className="w-8 h-8 text-indigo-500 mb-3" />
+              <span className="text-lg font-semibold text-slate-700 dark:text-slate-300">
+                Schedule Clear
+              </span>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                You have no upcoming appointments for today.
+              </p>
+            </div>
           )}
         </div>
       </div>

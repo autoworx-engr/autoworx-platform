@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import React from "react";
+import BoxTitle from "./BoxTitle";
 
 type ReputationBoxProps = {
   className?: string;
@@ -9,9 +10,14 @@ export default async function ReputationBox({ className }: ReputationBoxProps) {
   return (
     <div className={cn("h-full flex-1 overflow-y-auto shadow-md", className)}>
       <div className={"flex h-full flex-col rounded-md p-6 shadow-lg"}>
-        <div className="mb-4 flex items-center justify-between">
+        {/* <div className="mb-4 flex items-center justify-between">
           <span className="text-xl font-bold">Reputation Management</span>
-        </div>
+        </div> */}
+
+        <BoxTitle
+          title="Reputation Management"
+          redirectLink="/dashboard/task/day"
+        />
         <div className="custom-scrollbar flex flex-1 flex-col space-y-4">
           <div className="flex flex-1 flex-col items-center justify-center py-2 text-center">
             <div className="relative">

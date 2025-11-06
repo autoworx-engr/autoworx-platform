@@ -14,26 +14,63 @@ export default async function InventoryBox({ className }: TInventoryBoxProps) {
   const timezone =
     companyTimezone?.timezone ||
     Intl.DateTimeFormat().resolvedOptions().timeZone;
+
   const inventory = await getInventory(timezone);
+
+  // Clean data extraction and parsing
+  const totalValue = inventory?.totalValue || 0;
+  const currentMonthTotal = inventory?.currentMonthTotal || 0;
+  const inventoryGrowthRate = parseFloat(
+    (inventory?.growth?.rate ?? 0).toFixed(2)
+  );
+  const isInventoryPositive = inventory?.growth?.isPositive ?? false;
+
   return (
-    <div className={cn("flex-1 rounded-md p-4 shadow-lg 2xl:px-6", className)}>
+    <div
+      className={cn(
+        `
+          flex-1 flex flex-col p-4 md:p-6 rounded-2xl transition-all duration-300
+
+          // Glassmorphism aesthetic
+          bg-white/50 dark:bg-slate-900/50
+          backdrop-blur-md
+
+          // Subtle border and lift
+          ring-1 ring-slate-900/5 dark:ring-white/10
+          shadow-lg dark:shadow-2xl dark:shadow-blue-900/20
+
+          // Hover effect for interactivity
+          hover:shadow-xl hover:shadow-blue-500/10 dark:hover:shadow-indigo-500/10
+
+        `,
+        className
+      )}
+    >
+      {/* Title and Link */}
       <BoxTitle
         title="Inventory"
         redirectLink="/dashboard/reporting/inventory"
+        className="mb-4 md:mb-6" // Consistent spacing
       />
-      <div className="#px-4">
+
+      {/* Metric Content Area */}
+      {/* Using 'flex-col' and relying on ChartData's internal border for separation */}
+      <div className="flex flex-col">
         <ChartData
-          heading="Total Value"
+          heading="Total Stock Value" // Enhanced heading for clarity
+          subHeading="As of today"
           dollarSign={true}
-          number={inventory?.totalValue || 0}
-          noRate
+          number={totalValue}
+          noRate={true} // Total value is a static snapshot, growth rate applies to flow
         />
         <ChartData
-          heading="Current Monthly Total"
-          number={inventory?.currentMonthTotal || 0}
+          heading="Monthly Flow Value" // Enhanced heading to represent change/movement
+          subHeading="Value added/removed this month"
           dollarSign={true}
-          isPositive={inventory?.growth?.isPositive || false}
-          rate={inventory?.growth?.rate || 0}
+          number={currentMonthTotal}
+          // The rate shows the trend of inventory flow vs. last period
+          isPositive={isInventoryPositive}
+          rate={inventoryGrowthRate}
         />
       </div>
     </div>

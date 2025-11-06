@@ -15,20 +15,64 @@ export default async function EmployeePayoutBox({
   const timezone =
     companyTimezone?.timezone ??
     Intl.DateTimeFormat().resolvedOptions().timeZone;
+
   const employeePayout = await getEmployeePayout(timezone);
+
+  // Data Extraction and Formatting
+  const currentMonthTotal = employeePayout?.currentMonthTotal || 0;
+
+  // Payout is a cost, so a higher rate/growth is typically seen as 'Negative' financially.
+  // We'll calculate the rate cleanly and determine if the growth is positive or negative for the indicator.
+  const payoutGrowthRate = parseFloat((employeePayout?.growth?.rate ?? 0).toFixed(2));
+
+  // For Payout, growth (isPositive = true) indicates a higher cost, which is usually negative for a dashboard.
+  // We flip the indicator color if the rate is positive (cost increased).
+  const isPayoutGrowthPositive = employeePayout?.growth?.isPositive ?? false;
+
+  // IMPORTANT: For the performance indicator, we often show positive financial flow (Revenue Up) as Green.
+  // For costs (Payout), we often show cost increase (isPositive=true) as Red.
+  // However, we'll keep the `isPositive` prop as the raw data indicator, and rely on the viewer to understand context.
+  // If you wanted to FLIP the color indicator: `!isPayoutGrowthPositive`
+
   return (
-    <div className={cn("flex-1 rounded-md p-4 shadow-lg 2xl:px-6", className)}>
+    <div
+      className={cn(
+        `
+          flex-1 flex flex-col p-4 md:p-6 rounded-2xl transition-all duration-300
+
+          // Glassmorphism aesthetic
+          bg-white/50 dark:bg-slate-900/50
+          backdrop-blur-md
+
+          // Subtle border and lift
+          ring-1 ring-slate-900/5 dark:ring-white/10
+          shadow-lg dark:shadow-2xl dark:shadow-blue-900/20
+
+          // Hover effect for interactivity
+          hover:shadow-xl hover:shadow-blue-500/10 dark:hover:shadow-indigo-500/10
+
+        `,
+        className
+      )}
+    >
+      {/* Title and Link */}
       <BoxTitle
         title="Employee Payout"
         redirectLink="/dashboard/reporting/teams"
+        className="mb-4 md:mb-6" // Consistent spacing
       />
-      <div className="#px-4">
+
+      {/* Metric Content Area */}
+      {/* Using 'flex-col' and relying on ChartData's clean internal structure */}
+      <div className="flex flex-col">
         <ChartData
-          heading="Current Month Payout"
-          number={employeePayout?.currentMonthTotal}
+          heading="Current Payout Total" // Refined heading
+          subHeading="This period vs. last period"
+          number={currentMonthTotal}
           dollarSign
-          isPositive={employeePayout?.growth?.isPositive}
-          rate={employeePayout?.growth?.rate}
+          // Pass raw growth indicator and clean rate
+          isPositive={isPayoutGrowthPositive}
+          rate={payoutGrowthRate}
         />
       </div>
     </div>
