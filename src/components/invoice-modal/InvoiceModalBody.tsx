@@ -811,7 +811,7 @@ export default function InvoiceModalBody({
                   </button>
                 </div>
               )}
-              {authorizedName && !showAuthorizedName && (
+              {authorizedName && (
                 <div className="flex flex-col items-center gap-y-2">
                   <span className="font-semibold italic">{authorizedName}</span>
 
@@ -855,16 +855,16 @@ export default function InvoiceModalBody({
                 </div>
               )}
               {!showAuthorizedName &&
-                !authorizedName &&
+                !sigImageURL &&
                 !invoice?.signatureImage && (
                   <button
                     onClick={() => {
-                      setShowAuthorizedName(true);
+                      // setShowAuthorizedName(true);
                       setShowSignaturePad(true);
                     }}
                     className="rounded bg-[#6571FF] px-8 pb-1 text-white print:hidden"
                   >
-                    Authorize
+                    Signature
                   </button>
                 )}
             </div>
@@ -887,6 +887,12 @@ export default function InvoiceModalBody({
                 <div className="flex flex-col gap-3">
                   <button
                     onClick={() => {
+                      if (!sigCanvas.current || sigCanvas.current.isEmpty()) {
+                        errorToast(
+                          "Please provide your signature before saving."
+                        );
+                        return;
+                      }
                       const dataURL = sigCanvas.current
                         .getCanvas()
                         .toDataURL("image/png");
@@ -902,6 +908,7 @@ export default function InvoiceModalBody({
                   <button
                     onClick={() => {
                       sigCanvas.current.clear();
+                      setShowSignaturePad(false);
                       setSigImageURL(null);
                     }}
                     className="px-4 py-2 bg-gray-500 text-white rounded-md"
