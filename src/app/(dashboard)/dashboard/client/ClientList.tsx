@@ -4,6 +4,7 @@ import ResponsiveEmployeeCard from "@/components/mobile-responsive/employee/Resp
 import { useClientFilterStore } from "@/stores/clientFilter";
 import useClientQuery from "./_hook/useClientQuery";
 import ClientListTable from "./ClientListTable";
+import { ClientTableSkeleton } from "./ClientTableSkeleton";
 
 export default function ClientList({
   needCompanyName = false,
@@ -22,7 +23,7 @@ export default function ClientList({
 
   let content;
   if (isLoading && !isError) {
-    content = <div>Loading...</div>;
+    content = <ClientTableSkeleton />;
   } else if (isError && !isLoading) {
     content = <div>Error loading clients.</div>;
   } else if (!isError && !isLoading && clients.length === 0) {
