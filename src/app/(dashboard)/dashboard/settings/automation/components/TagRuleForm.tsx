@@ -20,6 +20,7 @@ import ActiveTemplate from "./ActiveTemplate";
 import TemplateVariable from "./TemplateVariable";
 import { useCharacterLimit } from "@/hooks/useCharecterLimit";
 import { handleFileSelection } from "@/utils/handleFileAttachment";
+import { parseTimeDelayToSeconds } from "@/utils/parseTimeDelayToSeconds";
 
 type RuleFormProps = {
   mode: "create" | "edit" | undefined;
@@ -32,13 +33,14 @@ type RuleFormProps = {
 };
 
 type Rule = {
+  companyId: any;
   title: string;
   pipelineType: "sales" | "shop" | "";
   tagIds: number[];
   // funnel: string;
   timeDelay: number | null | string;
-  condition: "pipeline" | "communication" | "post-tag" | "";
-  action: number | number[] | null;
+  condition_type: "pipeline" | "communication" | "post-tag" | "";
+  targetColumnId: number | number[] | null;
   communicationType: "SMS" | "EMAIL" | "BOTH";
   templateType: "SMS" | "EMAIL";
   isSendWeekDays: boolean;
@@ -60,13 +62,14 @@ const TagRuleForm = ({
   twilio,
 }: RuleFormProps) => {
   const [formData, setFormData] = useState<Rule>({
+    companyId: companyId,
     title: "",
     pipelineType: "",
     tagIds: [],
     // funnel: "",
     timeDelay: null,
-    condition: "",
-    action: null,
+    condition_type: "",
+    targetColumnId: null,
     communicationType: "SMS",
     templateType: "SMS",
     isSendWeekDays: false,
@@ -130,7 +133,7 @@ const TagRuleForm = ({
     title: tag.name,
   }));
 
-  // Stage options for post-tag condition (stages are fetched based on pipelineType)
+  // Stage options for post-tag condition_type (stages are fetched based on pipelineType)
   const stageOptions = stages.map((s: any) => ({
     id: s.id,
     title: s.title || s.name,
@@ -142,7 +145,7 @@ const TagRuleForm = ({
       const newState: any = { ...prev };
 
       // Normalize action value depending on the field source
-      if (field === "action") {
+      if (field === "targetColumnId") {
         // If the incoming value is an array (from MultiSelect), use it directly
         if (Array.isArray(value)) {
           newState.action = value;
@@ -159,8 +162,8 @@ const TagRuleForm = ({
         newState[field] = value;
       }
 
-      // If condition changed, reset action
-      if (field === "condition" && prev.condition !== value) {
+      // If condition_type changed, reset action
+      if (field === "condition_type" && prev.condition_type !== value) {
         newState.action = null;
       }
 
@@ -228,21 +231,21 @@ const TagRuleForm = ({
     // if (!formData.funnel) {
     //   newErrors.funnel = "Funnel is required.";
     // }
-    if (!formData.condition) {
+    if (!formData.condition_type) {
       newErrors.condition = "Condition is required.";
     }
 
     // condition-specific
-    if (formData.condition === "pipeline") {
-      if (formData.action === null || formData.action === undefined) {
+    if (formData.condition_type === "pipeline") {
+      if (formData.targetColumnId === null || formData.targetColumnId === undefined) {
         newErrors.action = "Action is required for pipeline condition.";
       }
     }
-    if (formData.condition === "post-tag") {
-      const actions = Array.isArray(formData.action)
-        ? formData.action
-        : formData.action
-          ? [formData.action]
+    if (formData.condition_type === "post-tag") {
+      const actions = Array.isArray(formData.targetColumnId)
+        ? formData.targetColumnId
+        : formData.targetColumnId
+          ? [formData.targetColumnId]
           : [];
       if (actions.length === 0) {
         newErrors.action =
@@ -250,7 +253,7 @@ const TagRuleForm = ({
       }
     }
 
-    if (formData.condition === "communication") {
+    if (formData.condition_type === "communication") {
       if (formData.communicationType === "EMAIL") {
         const isSubjectEmpty = !formData.subject || !formData.subject.trim();
         const isBodyEmpty = !formData.emailBody || !formData.emailBody.trim();
@@ -275,6 +278,20 @@ const TagRuleForm = ({
       setError(newErrors);
     }
 
+    if (formData.timeDelay != null) {
+      const seconds = parseTimeDelayToSeconds(formData.timeDelay!);
+      formData.timeDelay = seconds;
+    }
+
+
+    try {
+      const finalData = {
+        ...formData,
+        companyId: companyId,
+        
+      }
+
+    } catch (err) {}
     setError({});
     // Submit formData to server or perform desired action
     console.log("Form Data Submitted:", formData);
@@ -351,42 +368,42 @@ const TagRuleForm = ({
             name="condition"
             label="Condition"
             options={Conditions}
-            value={formData.condition!}
-            onChange={(value) => handleChange("condition", value)}
+            value={formData.condition_type!}
+            onChange={(value) => handleChange("condition_type", value)}
             required
             placeholder="Select a condition"
-            error={error.condition}
+            error={error.condition_type}
           />
 
-          {formData.condition === "pipeline" && (
+          {formData.condition_type === "pipeline" && (
             <Selector
               name="action"
               label="Action"
               options={stages}
               value={
-                Array.isArray(formData.action)
+                Array.isArray(formData.targetColumnId)
                   ? undefined
-                  : (formData.action ?? undefined)
+                  : (formData.targetColumnId ?? undefined)
               }
-              onChange={(value) => handleChange("action", value)}
+              onChange={(value) => handleChange("targetColumnId", value)}
               required
               placeholder="Select a action"
               error={error.action}
             />
           )}
 
-          {formData.condition === "post-tag" && (
+          {formData.condition_type === "post-tag" && (
             <MultiSelect
               // For post-tag condition we need to pick stages (columns) from the pipeline
               options={stageOptions}
               value={
-                Array.isArray(formData.action)
-                  ? formData.action
-                  : formData.action
-                    ? [formData.action]
+                Array.isArray(formData.targetColumnId)
+                  ? formData.targetColumnId
+                  : formData.targetColumnId
+                    ? [formData.targetColumnId]
                     : []
               }
-              onChange={(value) => handleChange("action", value)}
+              onChange={(value) => handleChange("targetColumnId", value)}
               label="Select Stages to Trigger Rule"
               placeholder={
                 formData.pipelineType === "shop"
@@ -398,7 +415,7 @@ const TagRuleForm = ({
             />
           )}
 
-          {formData.condition === "communication" && (
+          {formData.condition_type === "communication" && (
             <>
               {/* Communication Type */}
               <CustomRadioGroup
@@ -528,7 +545,7 @@ const TagRuleForm = ({
             </>
           )}
 
-          {formData.condition === "post-tag" && (
+          {formData.condition_type === "post-tag" && (
             <CustomRadioGroup
               name="ruleType"
               label="Rule Type"
