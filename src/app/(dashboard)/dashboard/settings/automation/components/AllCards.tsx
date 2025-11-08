@@ -16,6 +16,7 @@ import {
 import { useAllInvoiceAutomationRules } from "@/hooks/invoice-automation/useAllInvoiceAutomationRules";
 import { useAllInventoryAutomationRules } from "../../../../../../hooks/inventory-automation/useAllInventoryAutomationRules";
 import { Inbox } from "lucide-react";
+import { useAllTagAutomationRules } from "@/hooks/tag-automation/useAllTagAutomationRules";
 const CommunicationRuleForm = dynamic(() => import("./CommunicationRuleForm"));
 const PipelineRuleForm = dynamic(() => import("./PipelineRuleForm"));
 const InventoryRuleForm = dynamic(() => import("./InventoryRulesForm"));
@@ -90,6 +91,11 @@ export default function AllCards({
     isLoading: inventoryAutomationIsLoading,
     isFetching: inventoryAutomationIsFetching,
   } = useAllInventoryAutomationRules(companyId, type === "inventory");
+  const {
+    data: allTagAAutomation,
+    isLoading: tagAutomationIsLoading,
+    isFetching: tagAutomationIsFetching,
+  } = useAllTagAutomationRules(companyId, type === "tag");
 
   const mode = isEdit ? "edit" : "create";
 
@@ -141,7 +147,9 @@ export default function AllCards({
               ? allInvoiceAutomation?.data
               : type === "inventory"
                 ? allInventoryAutomation?.data
-                : campaigns;
+                : type === "tag"
+                  ? allTagAAutomation?.data
+                  : campaigns;
 
   const allowedCompany = [4, 14];
   useEffect(() => {
