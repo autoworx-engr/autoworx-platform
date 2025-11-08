@@ -33,8 +33,12 @@ const Dashboard = async () => {
       </div>
       {/* col 4*/}
       <div className="flex h-full w-full flex-1 flex-col space-y-4 lg:w-[30%]">
-        <TaskListBox />
-        <ReputationBox />
+        <div className="flex-1 min-h-0">
+          <TaskListBox />
+        </div>
+        <div className="flex-1 min-h-0">
+          <ReputationBox />
+        </div>
       </div>
     </div>
   );

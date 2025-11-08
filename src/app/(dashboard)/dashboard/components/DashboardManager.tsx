@@ -11,11 +11,11 @@ import TaskListBox from "./box/TaskListBox";
 const DashboardManager = () => {
   return (
     // Outer Container: Set items-start/items-stretch and consistent gap
-    <div className="flex w-full min-h-full flex-col gap-4 lg:flex-row lg:items-stretch xl:gap-6 2xl:gap-8">
+    <div className="flex w-full h-full min-h-0 flex-col gap-4 lg:flex-row lg:items-stretch xl:gap-6 2xl:gap-8">
       {/* Col 1: Pipeline Boxes (20%)
         (Sales & Shop)
       */}
-      <div className="order-1 flex w-full flex-col gap-4 lg:w-[20%]">
+      <div className="order-1 flex w-full flex-col h-full min-h-0 gap-4 lg:w-[20%]">
         <SalesPipelineBox />
         <ShopPipelineBox />
       </div>
@@ -23,21 +23,25 @@ const DashboardManager = () => {
       {/* Col 2: Task List (20%)
         (The `flex-1` component must stretch to fill height)
       */}
-      <div className="order-4 flex w-full flex-col gap-4 lg:order-2 lg:w-[20%]">
-        <TaskListBox /> {/* ADDED flex-1 */}
+      <div className="order-4 flex w-full flex-col h-full min-h-0 gap-4 lg:order-2 lg:w-[20%]">
+        <div className="flex-1 min-h-0">
+          <TaskListBox />
+        </div>
       </div>
 
       {/* Col 3: Appointments List (20%)
         (The `flex-1` component must stretch to fill height)
       */}
-      <div className="order-3 flex w-full flex-col gap-4 lg:w-[20%]">
-        <AppointmentListBox /> {/* ADDED flex-1 */}
+      <div className="order-3 flex w-full flex-col h-full min-h-0 gap-4 lg:w-[20%]">
+        <div className="flex-1 min-h-0">
+          <AppointmentListBox />
+        </div>
       </div>
 
       {/* Col 4: Metrics & Actions (40%)
         (Revenue, Inventory, Payout, Leave Requests)
       */}
-      <div className="order-2 flex w-full flex-col gap-4 lg:order-4 lg:w-[40%]">
+      <div className="order-2 flex w-full flex-col h-full min-h-0 gap-4 lg:order-4 lg:w-[40%]">
         {/* Row 1: Revenue & Inventory (Must share space) */}
         <div className="flex flex-col items-start gap-4 lg:flex-row">
           {/* NOTE: We must remove the redundant shadow/padding/rounded classes from the parent and rely on the child component */}
