@@ -135,7 +135,7 @@ export default function MessageContainer({
                   redirectUrl={`/dashboard/communication/client/${data.id}`}
                   communicationType="Client"
                   photoUrl={data.photo}
-                  timestamp={latestEmail.createdAt} // Pass timestamp for sorting/display
+                  // timestamp={latestEmail.createdAt} // Pass timestamp for sorting/display
                 />
               );
             })}
@@ -161,7 +161,7 @@ export default function MessageContainer({
                   redirectUrl={`/dashboard/communication/internal/?id=${targetUser?.id}`}
                   communicationType="Internal"
                   photoUrl={targetUser?.image} // Use the target user's image
-                  timestamp={data.createdAt} // Pass timestamp for sorting/display
+                  // timestamp={data.createdAt} // Pass timestamp for sorting/display
                 />
               );
             })}
