@@ -9,42 +9,32 @@ import TaskListBox from "./box/TaskListBox";
 
 const Dashboard = async () => {
   return (
-    <div
-      className="
-        flex w-full min-h-full flex-col gap-4 p-4 lg:flex-row lg:items-stretch xl:gap-6
-        bg-slate-50 dark:bg-slate-900/90 overflow-y-auto overflow-x-hidden
-      "
-    >
-      {/* Column 1: Sales & Shop Pipelines (2 items) */}
-      <div className="flex w-full flex-col gap-4 lg:w-1/4 xl:w-[23%]">
+    <div className="flex h-full flex-col gap-4 lg:flex-row xl:gap-x-8 bg-slate-50 dark:bg-slate-900/90 overflow-y-auto overflow-x-hidden">
+      {/* col 1 */}
+      <div className="flex h-full w-full flex-col justify-around space-y-4 lg:w-[23%]">
+        {/* sales pipeline */}
         <SalesPipelineBox />
+        {/* Shop pipeline */}
         <ShopPipelineBox />
       </div>
-
-      {/* Column 2: Core Metrics - Revenue, Inventory, Payout (3 items)
-         Using 'flex-1' on children inside 'flex-col' would equalize height if needed
-      */}
-      <div className="flex w-full flex-col gap-4 lg:w-1/4 xl:w-[23%]">
+      {/* col 2 */}
+      <div className="flex h-full w-full flex-col justify-around space-y-4 lg:w-[23%]">
+        {/* Revenue */}
         <RevenueBox />
+        {/* Inventory */}
         <InventoryBox />
+        {/* Employee Payout */}
         <EmployeePayoutBox />
       </div>
 
-      {/* Column 3: Appointments List (1 item - Must stretch) */}
-      <div className="flex w-full flex-col gap-4 lg:w-1/4 xl:w-[23%]">
-        {/* The list box must use flex-1 to fill the height of the column */}
+      {/* col 3 */}
+      <div className="flex h-full w-full flex-1 flex-col space-y-4 lg:w-[23%]">
         <AppointmentListBox />
       </div>
-
-      {/* Column 4: Task List & Reputation (Wider column for list/focal elements) */}
-      {/* Left side content */}
-      <div className="flex w-full flex-col gap-4 lg:w-1/4 xl:w-[31%] h-full min-h-0">
-        <div className="flex-1 min-h-0">
-          <TaskListBox />
-        </div>
-        <div className="flex-1 min-h-0">
-          <ReputationBox />
-        </div>
+      {/* col 4*/}
+      <div className="flex h-full w-full flex-1 flex-col space-y-4 lg:w-[30%]">
+        <TaskListBox />
+        <ReputationBox />
       </div>
     </div>
   );

@@ -99,7 +99,7 @@ export default function TaskListBox() {
   }
 
   return (
-    <div className="flex-1 h-full shadow-lg transition-all duration-300">
+    <div className="flex-1 h-full shadow-lg transition-all duration-300 rounded-xl">
       <div
         className={cn(
           `
