@@ -487,7 +487,7 @@ const CampaignForm = ({
                     format="h:mm A"
                     placeholder="1:00 AM"
                     use12Hours
-                    needConfirm={false}
+                    // needConfirm={false}
                     onChange={handleStartTimeChange}
                     allowClear={false}
                     suffixIcon={null}

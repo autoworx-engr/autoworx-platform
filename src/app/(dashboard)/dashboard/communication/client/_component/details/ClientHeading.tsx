@@ -2,9 +2,13 @@ import { db } from "@/lib/db";
 import { Client, Vehicle, User } from "@prisma/client";
 import Image from "next/image";
 import dynamic from "next/dynamic";
+import Link from "next/link";
+import { Edit } from "lucide-react";
 import BackBtn from "../conversations/BackBtn";
 import { cn } from "@/lib/cn";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/Tooltip";
+import { useState } from "react";
+import EditClientModalTrigger from "./EditClientModalTrigger";
 
 type TProps = { client?: Client | null; vehicles?: Partial<Vehicle>[] };
 
@@ -85,16 +89,23 @@ export default async function ClientHeading({ client, vehicles = [] }: TProps) {
 
             <div className="mt-1 flex min-w-0 flex-col">
               <h3 className="truncate text-base font-semibold">
-                <Tooltip>
-                  <TooltipTrigger>
-                    {client.firstName} {client.lastName}
-                  </TooltipTrigger>
-                  <TooltipContent className="bg-gradient-to-r from-[#006D77] to-[#0a8a95] text-white">
-                    <p>
-                      {client.firstName} {client.lastName}
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
+                <div className="flex items-center gap-2">
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <span className="truncate">
+                        {client.firstName} {client.lastName}
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent className="bg-gradient-to-r from-[#006D77] to-[#0a8a95] text-white">
+                      <p>
+                        {client.firstName} {client.lastName}
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+
+                  {/* Edit modal trigger */}
+                  <EditClientModalTrigger client={client} />
+                </div>
               </h3>
 
               {client.email && (
