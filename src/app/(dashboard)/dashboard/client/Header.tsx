@@ -1,16 +1,22 @@
 "use client";
 
 import NewCustomer from "@/components/Lists/NewCustomer";
+import { useDebounce } from "@/hooks/useDebounce";
 import { useClientFilterStore } from "@/stores/clientFilter";
 import { Search } from "lucide-react";
 import React, { useEffect } from "react";
 
 export default function Header() {
   const { setFilter } = useClientFilterStore();
+  const [searchTerm, setSearchTerm] = React.useState("");
 
   useEffect(() => {
     setFilter({ search: "" });
   }, []);
+
+  const handleSearchChange = useDebounce((value: string) => {
+    setFilter({ search: value });
+  }, 500);
 
   return (
     <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between lg:gap-0">
@@ -27,7 +33,12 @@ export default function Header() {
             type="text"
             className="w-full rounded-md border border-white px-4 py-1 focus:outline-none"
             placeholder="Search by client ID, name, email or phone..."
-            onChange={(e) => setFilter({ search: e.target.value })}
+            value={searchTerm}
+            onChange={event => {
+              const value = event.target.value;
+              handleSearchChange(value);
+              setSearchTerm(value);
+            }}
             autoComplete="off"
             autoCorrect="off"
             spellCheck="false"

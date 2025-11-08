@@ -1,59 +1,51 @@
 "use client";
 
-import { Client, Source, Tag } from "@prisma/client";
-import React, { useEffect, useState } from "react";
-import { useClientFilterStore } from "@/stores/clientFilter";
 import ResponsiveEmployeeCard from "@/components/mobile-responsive/employee/ResponsiveEmployeeCard";
+import { useClientFilterStore } from "@/stores/clientFilter";
+import useClientQuery from "./_hook/useClientQuery";
 import ClientListTable from "./ClientListTable";
-import { padId } from "@/lib/padId";
-// import * as PusherPushNotifications from "@pusher/push-notifications-web";
 
 export default function ClientList({
-  clients,
   needCompanyName = false,
 }: {
-  clients: (Client & { tag: Tag | null; source: Source | null })[];
   needCompanyName?: boolean;
 }) {
-  const randomIds: { [key: number]: string } = {};
-  const { search } = useClientFilterStore();
-  const [filteredClients, setFilteredClients] = useState(clients);
+  const { search, currentPage, pageSize } = useClientFilterStore();
+  const { data, isLoading, isError } = useClientQuery({
+    search,
+    currentPage,
+    pageSize,
+  });
 
-  useEffect(() => {
-    const searchWords = (search || "").toLowerCase().trim().split(/\s+/);
+  const clients = data?.clients || [];
+  const totalClients = data?.totalClients || 0;
 
-    setFilteredClients(
-      clients.filter((client: any) => {
-        const fullName =
-          `${client.firstName || ""} ${client.lastName || ""}`.toLowerCase();
-        const email = client?.email?.toLowerCase() || "";
-        const mobile = client?.mobile?.toLowerCase() || "";
-        const id = padId(client.id);
-
-        return searchWords.every(
-          (word) =>
-            id.includes(word) ||
-            fullName.includes(word) ||
-            email.includes(word) ||
-            mobile.includes(word)
-        );
-      })
+  let content;
+  if (isLoading && !isError) {
+    content = <div>Loading...</div>;
+  } else if (isError && !isLoading) {
+    content = <div>Error loading clients.</div>;
+  } else if (!isError && !isLoading && clients.length === 0) {
+    content = <div>No clients found.</div>;
+  } else {
+    content = (
+      <ClientListTable
+        clients={clients}
+        needCompanyName={needCompanyName}
+        totalClients={totalClients}
+      />
     );
-  }, [search, clients]);
+  }
 
   return (
     <div>
       <div className="h-[60%] overflow-y-auto lg:hidden">
-        {filteredClients.map((employee, index) => (
+        {clients.map((employee, index) => (
           <ResponsiveEmployeeCard key={index} data={employee} index={index} />
         ))}
       </div>
 
-      <ClientListTable
-        filteredClients={filteredClients}
-        randomIds={randomIds}
-        needCompanyName={needCompanyName}
-      />
+      {content}
     </div>
   );
 }
