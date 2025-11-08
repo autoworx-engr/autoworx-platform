@@ -91,10 +91,11 @@ export default async function AppointmentListBox() {
 
   return (
     // Outer Container: Apply full Glassmorphism style and ensure flex-1 stretching
-    <div
-      className={cn(
-        `
-          flex flex-1 flex-col p-4 md:p-6 rounded-2xl transition-all duration-300 h-full
+    <div className="flex-1 h-full shadow-lg transition-all duration-300 rounded-xl">
+      <div
+        className={cn(
+          `
+          flex flex-1 flex-col md:p-6 rounded-2xl transition-all duration-300
 
           // Glassmorphism aesthetic (Replaces old overflow-y-hidden h-full p-6 md:pb-20 shadow-md)
           bg-white/50 dark:bg-slate-900/50
@@ -109,34 +110,35 @@ export default async function AppointmentListBox() {
 
           overflow-hidden // Crucial for containing the scrollable list
         `
-      )}
-    >
-      <div className="flex flex-col h-full">
-        <BoxTitle
-          title="Appointments" // Enhanced title
-          redirectLink="/dashboard/task/day"
-          className="mb-4 md:mb-6 flex-shrink-0"
-        />
+        )}
+      >
+        <div className="flex-1 flex flex-col h-full">
+          <BoxTitle
+            title="Appointments" // Enhanced title
+            redirectLink="/dashboard/task/day"
+            className="mb-4 md:mb-6 flex-shrink-0"
+          />
 
-        {/* Scrollable Appointment List Container */}
-        <div className="custom-scrollbar flex flex-1 flex-col space-y-4 overflow-y-auto w-full pr-1 pb-4 min-h-0">
-          {appointments.map((appointment: any, idx: any) => (
-            // Note: AppointmentDetails needs its own premium styling update
-            <AppointmentDetails appointment={appointment} key={idx} />
-          ))}
+          {/* Scrollable Appointment List Container */}
+          <div className="custom-scrollbar flex flex-1 flex-col space-y-4 overflow-y-auto w-full pr-1 pb-4 min-h-0">
+            {appointments.map((appointment: any, idx: any) => (
+              // Note: AppointmentDetails needs its own premium styling update
+              <AppointmentDetails appointment={appointment} key={idx} />
+            ))}
 
-          {/* Redesigned Empty State */}
-          {appointments.length === 0 && (
-            <div className="flex flex-1 flex-col items-center justify-center p-8 text-center my-auto">
-              <CalendarCheck className="w-8 h-8 text-indigo-500 mb-3" />
-              <span className="text-lg font-semibold text-slate-700 dark:text-slate-300">
-                Schedule Clear
-              </span>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                You have no upcoming appointments for today.
-              </p>
-            </div>
-          )}
+            {/* Redesigned Empty State */}
+            {appointments.length === 0 && (
+              <div className="flex flex-1 flex-col items-center justify-center p-8 text-center my-auto">
+                <CalendarCheck className="w-8 h-8 text-indigo-500 mb-3" />
+                <span className="text-lg font-semibold text-slate-700 dark:text-slate-300">
+                  Schedule Clear
+                </span>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                  You have no upcoming appointments for today.
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
