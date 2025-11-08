@@ -33,7 +33,7 @@ const Hero = () => {
           width={800}
           height={500}
           className="h-auto w-full"
-          // sizes="(max-width: 640px) 95vw, (max-width: 768px) 85vw, (max-width: 1024px) 75vw, 65vw"
+          sizes="(max-width: 640px) 95vw, (max-width: 768px) 85vw, (max-width: 1024px) 75vw, 65vw"
         />
         <div className="mt-16 flex gap-7">
           <ButtonPrimary text={"Request a demo"} href="/contact" />
