@@ -2,6 +2,8 @@ import Avatar from "@/components/Avatar";
 import { Client, Source, Tag } from "@prisma/client";
 import React from "react";
 import EditClient from "./EditClient";
+import Link from "next/link";
+import { MessageCircleMore } from "lucide-react";
 
 export default function ClientInformation({
   client,
@@ -14,7 +16,14 @@ export default function ClientInformation({
       <div className="rounded-md border border-gray-200 p-3">
         <div className="relative flex w-full items-center rounded pt-8">
           <div className="absolute right-1 top-0">
-            <EditClient client={client} settingIcon />
+            <div className="flex items-center gap-2">
+              <Link
+                href={`/dashboard/communication/client/${client.id}?chat=true`}
+              >
+                <MessageCircleMore className="w-4 h-4 text-[#6571FF]" />
+              </Link>
+              <EditClient client={client} settingIcon />
+            </div>
           </div>
           <div className="mr-8 flex flex-col items-center">
             <Avatar photo={client.photo} width={100} height={100} />
