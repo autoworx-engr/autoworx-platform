@@ -7,6 +7,7 @@ import Title from "@/components/Title";
 import NewVendor from "@/components/Lists/NewVendor";
 import TopVendors from "./TopVendors";
 import VendorCard from "./VendorCard";
+import { Search } from "lucide-react";
 
 export default async function Page({
   searchParams: { vendorId },
@@ -31,7 +32,26 @@ export default async function Page({
           }
         />
       </div>
-
+      {/* <div className="flex w-full items-center gap-x-8 bg-background lg:w-fit">
+        <form
+          autoComplete="off"
+          className="flex w-full items-center gap-x-2 rounded-md border border-gray-300 px-4 py-1 text-gray-400 lg:w-[500px]"
+        >
+          <span className="">
+            <Search className="w-5 h-5" />
+          </span>
+          <input
+            name="search"
+            type="text"
+            className="w-full rounded-md border border-white px-4 py-1 focus:outline-none"
+            placeholder="Search by name, company name or phone..."
+            // onChange={(e) => setFilter({ search: e.target.value })}
+            autoComplete="off"
+            autoCorrect="off"
+            spellCheck="false"
+          />
+        </form>
+      </div> */}
       <div className="mt-5 flex h-full flex-col gap-3 lg:flex-row">
         <div className="lg:hidden">
           <VendorCard vendors={vendors} vendorId={parseInt(vendorId)} />
