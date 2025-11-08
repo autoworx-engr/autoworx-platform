@@ -97,7 +97,7 @@ export default async function AppointmentListBox() {
           `
           flex flex-1 flex-col md:p-6 rounded-2xl transition-all duration-300
 
-          // Glassmorphism aesthetic (Replaces old overflow-y-hidden h-full p-6 md:pb-20 shadow-md)
+          // Glassmorphism aesthetic (Replaces old overflow-y-hidden h-full p-6 #md:pb-20 shadow-md)
           bg-white/50 dark:bg-slate-900/50
           backdrop-blur-md
 

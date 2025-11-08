@@ -28,11 +28,11 @@ const Dashboard = async () => {
       </div>
 
       {/* col 3 */}
-      <div className="flex h-full w-full flex-1 flex-col space-y-4 lg:w-[23%]">
+      <div className="flex h-full w-full flex-1 flex-col space-y-4 lg:w-[26%]">
         <AppointmentListBox />
       </div>
       {/* col 4*/}
-      <div className="flex h-full w-full flex-1 flex-col space-y-4 lg:w-[30%]">
+      <div className="flex h-full w-full flex-1 flex-col space-y-4 lg:w-[27%]">
         <div className="flex-1 min-h-0">
           <TaskListBox />
         </div>

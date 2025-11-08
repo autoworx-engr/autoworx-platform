@@ -143,7 +143,7 @@ const Task = ({ task, onTaskDeleted }: TaskProps) => {
             </div>
           </Tooltip>
           {/* Subtle Date for Mobile (kept, but redundant now with summary) */}
-          <div className="mt-0.5 text-xs opacity-80 md:hidden">{datePart}</div>
+          {/* <div className="mt-0.5 text-xs opacity-80 md:hidden">{datePart}</div> */}
         </div>
 
         {/* Action Icons & Date/Time Summary */}
