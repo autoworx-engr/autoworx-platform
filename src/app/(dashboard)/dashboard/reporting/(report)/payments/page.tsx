@@ -80,6 +80,7 @@ export default async function PaymentReportPage({ searchParams }: TProps) {
       cash: true,
       invoice: {
         select: {
+          Refund: true,
           due: true,
           vehicle: true,
           client: {
@@ -229,7 +230,11 @@ export default async function PaymentReportPage({ searchParams }: TProps) {
         <Calculation content="TOTAL PAYMENT" amount={totalAmount} />
         <Calculation
           content="TOTAL PAYMENT (Filtered)"
-          amount={filteredTotalAmount}
+          amount={
+            searchParams?.paymentMethod === "Refund"
+              ? totalRefunded
+              : filteredTotalAmount
+          }
         />
         <Calculation content="REFUND RATE" amount={refundRate} isRate={true} />
       </div>

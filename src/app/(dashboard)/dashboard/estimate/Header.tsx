@@ -31,6 +31,7 @@ export default function Header({
   const pathname = usePathname();
   const router = useRouter();
   const params = useSearchParams();
+  const windowWidth = window.innerWidth;
 
   const { reset: resetEstimateCreate } = useEstimateCreateStore();
   const { reset: resetLists } = useListsStore();
@@ -48,11 +49,9 @@ export default function Header({
     router.push(newPath);
   }, 500);
 
-  console.log(pathname, "pathname in estimate header");
-
   return (
-    <div className="mt-5 flex flex-col-reverse justify-between md:flex-row">
-      <div className="app-shadow gap-3 rounded-md p-3 md:flex">
+    <div className={`mt-5 flex justify-between flex-col-reverse lg:flex-row `}>
+      <div className={`app-shadow gap-3 rounded-md p-3 md:flex`}>
         {/* Search */}
         <div className="relative flex items-center">
           <Search size={20} className="absolute left-3 text-gray-400" />{" "}
@@ -79,21 +78,23 @@ export default function Header({
       </div>
 
       {/* Create Estimate */}
-      {!isCanned && (
-        <Link
-          href="/dashboard/estimate/create"
-          className="app-shadow mx-3 flex h-10 items-center justify-center rounded-md bg-[#6571FF] px-5 text-white md:mx-0 md:max-w-max"
-          onClick={() => {
-            setActionType("create");
+      <div className="flex items-end justify-end">
+        {!isCanned && (
+          <Link
+            href="/dashboard/estimate/create"
+            className="app-shadow mx-3 flex h-10 items-center justify-center rounded-md bg-[#6571FF] px-5 text-white md:mx-0 lg:max-w-max"
+            onClick={() => {
+              setActionType("create");
 
-            resetEstimateCreate();
-            resetLists();
-            close();
-          }}
-        >
-          + Create Estimate
-        </Link>
-      )}
+              resetEstimateCreate();
+              resetLists();
+              close();
+            }}
+          >
+            + Create Estimate
+          </Link>
+        )}
+      </div>
     </div>
   );
 }

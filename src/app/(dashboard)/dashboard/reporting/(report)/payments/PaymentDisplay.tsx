@@ -1,18 +1,19 @@
 "use client";
 import { useMediaQuery } from "react-responsive";
-import { Payment, Prisma } from "@prisma/client";
+import { Payment, Prisma, Refund } from "@prisma/client";
 import { cn } from "@/lib/cn";
 import { formatCurrency } from "@/utils/formatCurrency";
 import PaymentMobileCard from "./PaymentMobileCard";
 import { Pagination } from "antd"; // Importing the Pagination component from Ant Design
 import { useEffect, useState } from "react";
-import { FormatUtcToTimezone } from "@/utils/FormatUtcToTimezone";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import moment from "moment-timezone";
+import { ArrowDown } from "lucide-react";
 
 type TProps = {
   paymentInfo: (Payment & {
     invoice: {
+      Refund: any;
       client: {
         firstName: string;
         lastName: string | null;
@@ -53,12 +54,17 @@ export default function PaymentDisplay({
 }: TProps) {
   const isDesktop = useMediaQuery({ query: "(min-width: 640px)" });
   const [currentPage, setCurrentPage] = useState(page || 1);
-  const [pageSize, setPageSize] = useState(take || 50); // Default page size set to 50
+  const [pageSize, setPageSize] = useState(take || 50);
   const [showPagination, setShowPagination] = useState(false);
 
   const pathname = usePathname();
   const router = useRouter();
   const params = useSearchParams();
+
+  useEffect(() => {
+    setCurrentPage(Number(page));
+    setPageSize(Number(take));
+  }, [page, take]);
 
   useEffect(() => {
     if (paymentInfo.length > 0) {
@@ -107,6 +113,15 @@ export default function PaymentDisplay({
             {paymentsToRender?.map((payment, index) => {
               const paymentStatus =
                 Number(payment.invoice?.due) <= 0 ? "paid" : "due";
+
+              const refundedAmount =
+                payment?.invoice?.Refund?.reduce(
+                  (acc: number, refund: Refund) =>
+                    acc + Number(refund.amount || 0),
+                  0
+                ) || 0;
+
+              const hasRefund = refundedAmount > 0;
               return (
                 <tr
                   key={payment.id}
@@ -145,6 +160,12 @@ export default function PaymentDisplay({
                   </td>
                   <td className="border-b px-4 py-2 text-left">
                     {formatCurrency(Number(payment.amount))}
+                    {hasRefund && (
+                      <div className="flex items-center gap-1 text-red-500 text-xs font-normal">
+                        <ArrowDown size={14} strokeWidth={2} />
+                        <span>{formatCurrency(refundedAmount)}</span>
+                      </div>
+                    )}
                   </td>
                   <td className="border-b px-4 py-2 text-left">
                     {payment.cash?.receivedCash

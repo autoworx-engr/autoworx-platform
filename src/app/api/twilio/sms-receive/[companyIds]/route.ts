@@ -91,6 +91,23 @@ export async function POST(
         },
       });
 
+      if (!client) {
+        client = await db.client.create({
+          data: {
+            firstName: body.From.replace("+", ""),
+            mobile: body.From.replace("+", ""),
+            companyId: companyId,
+          },
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            companyId: true,
+            Lead: true,
+          },
+        });
+      }
+
       if (client) {
         const dbMessage = await db.clientSMS.create({
           data: {

@@ -33,10 +33,10 @@ const ACCESS_CODE = env("ACCESS_CODE");
 
 const insertDefaultColumns = async (columnId: number, type: string) => {
   const columnsFortypes = defaultColumnWithColor.filter(
-    column => column.type === type
+    (column) => column.type === type
   );
 
-  const columnsWithCompany = columnsFortypes.map(column => ({
+  const columnsWithCompany = columnsFortypes.map((column) => ({
     ...column,
     companyId: columnId,
   }));
@@ -210,7 +210,7 @@ export async function register({
     ];
 
     await Promise.all(
-      defaultPermissions.map(perm =>
+      defaultPermissions.map((perm) =>
         db.companyPermissionModule.create({
           data: {
             companyId: newCompany.id,
@@ -228,8 +228,9 @@ export async function register({
         lastName: userInfo.lastName,
         email: lowerCaseEmail,
         password: hashedPassword,
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone, // TODO: temporary solution
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         companyId: newCompany.id,
+        joinDate: new Date(),
       },
     });
 

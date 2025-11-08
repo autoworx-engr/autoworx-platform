@@ -1,3 +1,5 @@
+"use client";
+
 import { padId } from "@/lib/padId";
 import { Calendar, Mail, MessageCircle, Phone } from "lucide-react";
 import moment from "moment";

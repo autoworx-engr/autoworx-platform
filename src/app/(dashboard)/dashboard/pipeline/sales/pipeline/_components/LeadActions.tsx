@@ -16,6 +16,7 @@ import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { createDraftEstimate } from "@/actions/estimate/invoice/createDraft";
 import { createLeadDraftEstimate } from "@/actions/pipelines/createLeadDraftEstimate";
 import { Calendar, CalendarCheck } from "lucide-react";
+import { updateInvoiceAutomationTrigger } from "@/service/invoice-automation-trigger/api";
 
 type TProps = {
   lead: LeadWithSalesUser;
@@ -65,29 +66,30 @@ export default function LeadActions({ lead }: TProps) {
         });
 
         // Trigger pipeline automation
-        // const response = await updatePipelineAutomationTrigger({
-        //   condition: "ESTIMATE_CREATED",
-        //   companyId: res?.data.companyId,
-        //   leadId,
-        //   columnId,
-        // });
+        const response = await updatePipelineAutomationTrigger({
+          condition: "ESTIMATE_CREATED",
+          companyId: res?.data.companyId,
+          leadId,
+          columnId,
+        });
 
-        // if (response.statusCode === 200) {
-        //   dispatch({
-        //     type: actionTypes.AUTOMATION_TRIGGER,
-        //     payload: {
-        //       updatedLead: response.data,
-        //       previousColumnId: columnId,
-        //     },
-        //   });
-        // }
+        if (response.statusCode === 200) {
+          dispatch({
+            type: actionTypes.AUTOMATION_TRIGGER,
+            payload: {
+              updatedLead: response.data,
+              previousColumnId: columnId,
+            },
+          });
+        }
 
-        // Trigger communication automation
-        // updateCommunicationAutomationTrigger({
-        //   companyId: lead?.companyId,
-        //   leadId,
-        //   columnId,
-        // });
+        // Invoice automation
+        await updateInvoiceAutomationTrigger({
+          companyId: res?.data.companyId,
+          invoiceId: res?.data?.id,
+          columnId: columnId!,
+          type: res?.data?.type,
+        });
       } else if (res.type === "error") {
         setInvoiceId(res.data.id);
         errorToast(res.message || "Draft estimate already exists!");

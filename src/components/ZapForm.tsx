@@ -197,7 +197,7 @@ const ZapForm = ({ company }: ZapFormProps) => {
           name: formData.name,
           email: formData.email,
           phone: formData.phone,
-          oppurtunity_source: opportunitySource,
+          opportunity_source: opportunitySource,
           multiServices: formData?.multiServices,
         }),
       });

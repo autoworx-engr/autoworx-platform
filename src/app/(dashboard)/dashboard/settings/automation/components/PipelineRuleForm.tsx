@@ -206,12 +206,31 @@ const PipelineRuleForm = ({
     rule?.stages?.map((s: any) => s?.columnId) || []
   ).filter((id: number) => id != formData?.targetColumnId);
 
-  const actionOptions = stages?.filter(
+  let actionOptions = stages?.filter(
     (stage) =>
       !ruleColumnIds?.includes(stage?.id) &&
       !formData?.stageIds?.includes(stage?.id) &&
       formData.targetColumnId !== stage.id,
   );
+
+    try {
+    const selectedTargetId =
+      formData?.targetColumnId !== null && formData?.targetColumnId !== undefined
+        ? Number(formData.targetColumnId)
+        : null;
+
+    if (selectedTargetId && stages && Array.isArray(stages)) {
+      const alreadyPresent = actionOptions?.some((s) => s.id === selectedTargetId);
+      if (!alreadyPresent) {
+        const selectedStage = stages.find((s) => s.id === selectedTargetId);
+        if (selectedStage) {
+          actionOptions = [selectedStage, ...(actionOptions || [])];
+        }
+      }
+    }
+  } catch (err) {
+    console.error("Error adjusting action options:", err);
+  }
 
   if (
     stagesLoading ||

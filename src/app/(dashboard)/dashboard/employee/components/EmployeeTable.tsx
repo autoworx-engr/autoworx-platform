@@ -27,14 +27,16 @@ const EmployeeTable = ({
   needCompanyName?: boolean;
 }) => {
   const { dateRange, search, type } = useEmployeeFilterStore();
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(5);
   const [pageSize, setPageSize] = useState(defaultPageSize);
   const [showPagination, setShowPagination] = useState(false);
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
 
-  console.log({ dateRange, search, type });
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [type, search, dateRange[0], dateRange[1]]);
 
   useEffect(() => {
     if (totalEmployeeCount > defaultPageSize) {

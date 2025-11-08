@@ -10,8 +10,8 @@ import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { useCreateCompanyPermission } from "@/hooks/feature-permissions/useCreateCompanyPermission";
 import { useGetCompanyPermissions } from "@/hooks/feature-permissions/useGetCompanyPersmissions";
 import {
-  useUpdateCompanyPermission,
   useBulkUpdatePermissions,
+  useUpdateCompanyPermission,
 } from "@/hooks/feature-permissions/useUpdateCompanyPermission";
 import {
   PermissionCreate,
@@ -22,8 +22,8 @@ import {
 import getMissing, { formatPermissions } from "@/utils/formatPermission";
 import { Spin, Switch } from "antd";
 import { useEffect, useState } from "react";
-import { PermissionItemComponent } from "./PermissionItemComponent";
 import { MissingPermissionItemComponent } from "./MissingPermissionItemComponent";
+import { PermissionItemComponent } from "./PermissionItemComponent";
 
 export default function FeaturePermission({
   companyId,
