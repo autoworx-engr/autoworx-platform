@@ -1,3 +1,4 @@
+import getClients from "@/actions/client/get";
 import getClientList from "@/actions/client/getClientList";
 import { Client, Source, Tag } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
@@ -13,7 +14,6 @@ type TClientQueryResult = {
   totalClients: number;
 };
 
-
 export const CLIENT_LIST_KEY = "clients";
 
 export default function useClientQuery({
@@ -24,29 +24,11 @@ export default function useClientQuery({
   return useQuery({
     queryKey: [CLIENT_LIST_KEY, search, currentPage, pageSize],
     queryFn: async () => {
-      const { clients, totalClients } = await getClientList(
-        {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-            mobile: true,
-            tag: {
-              where: { type: "CLIENT" },
-            },
-            source: true,
-          },
-
-          orderBy: {
-            createdAt: "desc",
-          },
-          skip: (currentPage - 1) * pageSize,
-          take: pageSize,
-        },
-        search
-      );
-      console.log({ clients, totalClients });
+      const { clients, totalClients } = await getClients({
+        search,
+        currentPage,
+        pageSize,
+      });
       return { clients, totalClients } as TClientQueryResult;
     },
   });

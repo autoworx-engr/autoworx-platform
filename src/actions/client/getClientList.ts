@@ -73,13 +73,7 @@ export default async function getClientList(
       },
     });
 
-    const totalClients = await db.client.count({
-      where: {
-        AND: whereConditions,
-      },
-    });
-
-    return { clients, totalClients };
+    return { clients };
   } catch (error) {
     console.error("Error fetching clients:", error);
     throw new Error("Failed to get clients");
