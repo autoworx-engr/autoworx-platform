@@ -16,6 +16,8 @@ import { useUpdateInvoiceAutomationRule } from "@/hooks/invoice-automation/useUp
 import { useDeleteInventoryAutomationRule } from "@/hooks/inventory-automation/useDeleteInventoryAutomationRule";
 import { useUpdateInventoryAutomationRule } from "@/hooks/inventory-automation/useUpdateInventoryAutomationRule";
 import { CirclePause, CirclePlay, SquarePen, Trash2 } from "lucide-react";
+import { useUpdateTagAutomationRule } from "@/hooks/tag-automation/useUpdateTagAutomationRule";
+import { useDeleteTagAutomationRule } from "@/hooks/tag-automation/useDeleteTagAutomationRule";
 
 interface Item {
   id: string;
@@ -73,11 +75,15 @@ const AutomationCard: FC<AutomationCardProps> = ({
 
   const { mutate: deleteInventoryRule, isPending: isInventoryDeleting } =
     useDeleteInventoryAutomationRule();
+  const { mutate: deleteTagRule, isPending: isTagDeleting } =
+    useDeleteTagAutomationRule();
 
   const { mutate: updateInvoiceRule, isPending: isInvoiceUpdating } =
     useUpdateInvoiceAutomationRule();
   const { mutate: updateInventory, isPending: isInventoryUpdating } =
     useUpdateInventoryAutomationRule();
+  const { mutate: updateTagRule, isPending: isTagUpdating } =
+    useUpdateTagAutomationRule();
 
   const handleSetIsEdit = (id: any) => {
     setId(id);
@@ -99,7 +105,9 @@ const AutomationCard: FC<AutomationCardProps> = ({
       updateInvoiceRule({ id: id, data: data });
     } else if (type === "inventory") {
       updateInventory({ id, data: data });
-    } else if (type == "marketing") {
+    } else if (type === "tag") {
+      updateTagRule({ id, companyId, data });
+    }else if (type == "marketing") {
       const now = Date.now();
 
       const ruleDate = new Date(item.date!);
@@ -157,6 +165,8 @@ const AutomationCard: FC<AutomationCardProps> = ({
       deleteInvoiceRule(id);
     } else if (type == "inventory") {
       deleteInventoryRule(id);
+    } else if (type === "tag") {
+      deleteTagRule(id);
     }
 
     setIsCreate(false);

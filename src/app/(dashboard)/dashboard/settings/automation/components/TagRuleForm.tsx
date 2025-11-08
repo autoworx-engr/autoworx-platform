@@ -19,9 +19,15 @@ import { Box, Paper, Switch, Typography } from "@mui/material";
 import ActiveTemplate from "./ActiveTemplate";
 import TemplateVariable from "./TemplateVariable";
 import { useCharacterLimit } from "@/hooks/useCharecterLimit";
-import { handleFileSelection } from "@/utils/handleFileAttachment";
+import {
+  handleFileSelection,
+  uploadAllAttachments,
+} from "@/utils/handleFileAttachment";
 import { parseTimeDelayToSeconds } from "@/utils/parseTimeDelayToSeconds";
 import { useCreateTagAutomationRule } from "@/hooks/tag-automation/useCreateTagAutomationRule";
+import { parseSecondsToTimeDelay } from "@/utils/parseSecondsToTimeDelay";
+import { useFindOneTagAutomationRule } from "@/hooks/tag-automation/useFindOneTagAutomationRule";
+import { useUpdateTagAutomationRule } from "@/hooks/tag-automation/useUpdateTagAutomationRule";
 
 type RuleFormProps = {
   mode: "create" | "edit" | undefined;
@@ -42,6 +48,7 @@ type Rule = {
   timeDelay: number | null | string;
   condition_type: "pipeline" | "communication" | "post-tag" | "";
   targetColumnId: number | number[] | null;
+  columnIds?: number[];
   communicationType: "SMS" | "EMAIL" | "BOTH";
   templateType: "SMS" | "EMAIL";
   isSendWeekDays: boolean;
@@ -71,6 +78,7 @@ const TagRuleForm = ({
     timeDelay: null,
     condition_type: "",
     targetColumnId: null,
+    columnIds: [],
     communicationType: "SMS",
     templateType: "SMS",
     isSendWeekDays: false,
@@ -99,6 +107,69 @@ const TagRuleForm = ({
   } = usePipelineStagesStore();
 
   const { mutate: createRule, isPending } = useCreateTagAutomationRule();
+  const { data, isLoading, isFetching } = useFindOneTagAutomationRule(
+    Number(id)
+  );
+  const { mutate: updateRule, isPending: isUpdatePending } =
+    useUpdateTagAutomationRule();
+
+  useEffect(() => {
+    const loadData = async () => {
+      if (isEdit && id && data && data.data) {
+        const payload = data.data;
+
+        const timeDelay = parseSecondsToTimeDelay(payload.timeDelay);
+
+        // derive pipelineType in uppercase to match form enum (only allow SALES or SHOP)
+        const rawPipeline = payload.pipelineType
+          ? String(payload.pipelineType).toUpperCase()
+          : "";
+        const pipelineTypeValue: Rule["pipelineType"] =
+          rawPipeline === "SALES"
+            ? "SALES"
+            : rawPipeline === "SHOP"
+              ? "SHOP"
+              : "";
+
+        // derive columnIds: prefer explicit columnIds, fall back to stages' columnId or stage ids
+        let columnIds: number[] = [];
+        if (Array.isArray(payload.columnIds) && payload.columnIds.length > 0) {
+          columnIds = payload.columnIds;
+        } else if (Array.isArray(payload.stages) && payload.stages.length > 0) {
+          // stages may contain columnId or id
+          columnIds = payload.stages
+            .map((s: any) => s.columnId ?? s.id)
+            .filter((v: any) => typeof v === "number");
+        }
+
+        setFormData({
+          companyId: payload.companyId ?? companyId,
+          title: payload.title ?? "",
+          pipelineType: pipelineTypeValue,
+          tagIds: Array.isArray(payload.tagIds) ? payload.tagIds : [],
+          timeDelay: timeDelay ?? null,
+          condition_type: payload.condition_type ?? payload.conditionType ?? "",
+          targetColumnId:
+            payload.targetColumnId !== undefined &&
+            payload.targetColumnId !== null
+              ? Number(payload.targetColumnId)
+              : null,
+          columnIds,
+          communicationType: payload.communicationType ?? "SMS",
+          templateType: payload.templateType ?? "SMS",
+          isSendWeekDays: !!payload.isSendWeekDays,
+          isSendOfficeHours: !!payload.isSendOfficeHours,
+          subject: payload.subject ?? "",
+          emailBody: payload.emailBody ?? "",
+          smsBody: payload.smsBody ?? "",
+          attachments: payload.attachments ?? [],
+          ruleType: payload.ruleType ?? "",
+        });
+      }
+    };
+
+    loadData();
+  }, [isEdit, id, data, companyId]);
   // sales tag
   useEffect(() => {
     const fetchTags = async () => {
@@ -123,7 +194,7 @@ const TagRuleForm = ({
     if (pipelineTypeLower === "sales" || pipelineTypeLower === "SHOP") {
       fetchStages(pipelineTypeLower);
     }
-  }, [formData.pipelineType, fetchStages])
+  }, [formData.pipelineType, fetchStages]);
 
   // Prepare tag options for MultiSelect
   const salesTagOptions = salesTags.map((tag) => ({
@@ -142,14 +213,12 @@ const TagRuleForm = ({
     title: s.title || s.name,
   }));
 
-  console.log("stages", stageOptions);
-;
   // Handle form field changes
   const handleChange = (field: keyof Rule, value: any) => {
     setFormData((prev) => {
       const newState: any = { ...prev };
 
-      // Normalize targetColumnId value depending on the field source
+      // Normalize targetColumnId / columnIds value depending on the field source
       if (field === "targetColumnId") {
         // If the incoming value is an array (from MultiSelect), use it directly
         if (Array.isArray(value)) {
@@ -163,13 +232,24 @@ const TagRuleForm = ({
         } else {
           newState.targetColumnId = value;
         }
+      } else if (field === "columnIds") {
+        // columnIds should always be an array (from MultiSelect)
+        if (Array.isArray(value)) {
+          newState.columnIds = value;
+        } else if (value === null || value === undefined) {
+          newState.columnIds = [];
+        } else {
+          // coerce single value to array
+          newState.columnIds = [value];
+        }
       } else {
         newState[field] = value;
       }
 
-      // If condition_type changed, reset targetColumnId
+      // If condition_type changed, reset targetColumnId and columnIds
       if (field === "condition_type" && prev.condition_type !== value) {
         newState.targetColumnId = null;
+        newState.columnIds = [];
       }
 
       return newState as Rule;
@@ -219,7 +299,7 @@ const TagRuleForm = ({
     handleChange(name as keyof Rule, value);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const newErrors: Record<string, string> = {};
@@ -250,14 +330,14 @@ const TagRuleForm = ({
       }
     }
     if (formData.condition_type === "post-tag") {
-      const actions = Array.isArray(formData.targetColumnId)
-        ? formData.targetColumnId
-        : formData.targetColumnId
-          ? [formData.targetColumnId]
+      const actions = Array.isArray(formData.columnIds)
+        ? formData.columnIds
+        : formData.columnIds
+          ? formData.columnIds
           : [];
       if (actions.length === 0) {
-        newErrors.targetColumnId =
-          "At least one tag is required for post-tag condition.";
+        newErrors.columnIds =
+          "At least one stage is required for post-tag condition.";
       }
     }
 
@@ -292,20 +372,63 @@ const TagRuleForm = ({
     }
 
     try {
-      const finalData = {
+      const uploadedAttachments = await uploadAllAttachments(
+        formData.attachments!
+      );
+
+      const images = uploadedAttachments.map((img) => ({ fileUrl: img })) || [];
+
+      // Prepare final payload
+      const finalData: any = {
         ...formData,
         companyId: companyId,
+        attachments: images,
       };
 
-      createRule(finalData);
-    } catch (err) {}
+      // normalize fields for API
+      if (finalData.timeDelay != null) {
+        finalData.timeDelay = parseTimeDelayToSeconds(finalData.timeDelay);
+      }
+
+      // targetColumnId should be a number or null
+      if (
+        finalData.condition_type === "pipeline" &&
+        finalData.targetColumnId !== null &&
+        finalData.targetColumnId !== undefined
+      ) {
+        finalData.targetColumnId = Number(finalData.targetColumnId);
+      }
+
+      // columnIds should be an array of numbers for post-tag
+      if (finalData.condition_type === "post-tag") {
+        finalData.columnIds = Array.isArray(finalData.columnIds)
+          ? finalData.columnIds.map((v: any) => Number(v))
+          : [];
+      } else {
+        // if not post-tag, ensure columnIds is empty
+        delete finalData.columnIds;
+      }
+
+      if (isEdit && id) {
+        // Update existing rule
+        updateRule({
+          id: String(id),
+          companyId: String(companyId),
+          data: finalData,
+        });
+      } else {
+        createRule(finalData);
+      }
+    } catch (err) {
+      console.error(err);
+    }
     setError({});
     // Submit formData to server or perform desired action
     console.log("Form Data Submitted:", formData);
   };
 
   const isCreatePending = false;
-  const isUpdatePending = false;
+
   return (
     <div className="rounded-md border bg-white p-4 shadow-sm md:p-6">
       <Paper elevation={0} className="mx-auto max-w-lg rounded-lg">
@@ -403,14 +526,8 @@ const TagRuleForm = ({
             <MultiSelect
               // For post-tag condition we need to pick stages (columns) from the pipeline
               options={stageOptions}
-              value={
-                Array.isArray(formData.targetColumnId)
-                  ? formData.targetColumnId
-                  : formData.targetColumnId
-                    ? [formData.targetColumnId]
-                    : []
-              }
-              onChange={(value) => handleChange("targetColumnId", value)}
+              value={formData.columnIds || []}
+              onChange={(value) => handleChange("columnIds", value)}
               label="Select Stages to Trigger Rule"
               placeholder={
                 formData.pipelineType === "SHOP"
@@ -418,7 +535,7 @@ const TagRuleForm = ({
                   : "Select sales stages"
               }
               required
-              error={error.targetColumnId}
+              error={error.columnIds}
             />
           )}
 
