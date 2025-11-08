@@ -151,8 +151,8 @@ export const InventoryActions = [
 
 
 export const PipelineType = [
-  { id: "shop", title: "Shop Pipeline" },
-  { id: "sales", title: "Sales Pipeline" },
+  { id: "SALES", title: "Sales Pipeline" },
+  { id: "SHOP", title: "Shop Pipeline" },
   
 ];
 

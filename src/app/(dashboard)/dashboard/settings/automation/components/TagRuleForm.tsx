@@ -21,6 +21,7 @@ import TemplateVariable from "./TemplateVariable";
 import { useCharacterLimit } from "@/hooks/useCharecterLimit";
 import { handleFileSelection } from "@/utils/handleFileAttachment";
 import { parseTimeDelayToSeconds } from "@/utils/parseTimeDelayToSeconds";
+import { useCreateTagAutomationRule } from "@/hooks/tag-automation/useCreateTagAutomationRule";
 
 type RuleFormProps = {
   mode: "create" | "edit" | undefined;
@@ -35,7 +36,7 @@ type RuleFormProps = {
 type Rule = {
   companyId: any;
   title: string;
-  pipelineType: "sales" | "shop" | "";
+  pipelineType: "SALES" | "SHOP" | "";
   tagIds: number[];
   // funnel: string;
   timeDelay: number | null | string;
@@ -97,6 +98,7 @@ const TagRuleForm = ({
     loading: stagesLoading,
   } = usePipelineStagesStore();
 
+  const { mutate: createRule, isPending } = useCreateTagAutomationRule();
   // sales tag
   useEffect(() => {
     const fetchTags = async () => {
@@ -117,10 +119,11 @@ const TagRuleForm = ({
 
   // fetch stages when pipelineType changes
   useEffect(() => {
-    if (formData.pipelineType === "sales" || formData.pipelineType === "shop") {
-      fetchStages(formData.pipelineType);
+    const pipelineTypeLower = formData.pipelineType.toLowerCase();
+    if (pipelineTypeLower === "sales" || pipelineTypeLower === "SHOP") {
+      fetchStages(pipelineTypeLower);
     }
-  }, [formData.pipelineType, fetchStages]);
+  }, [formData.pipelineType, fetchStages])
 
   // Prepare tag options for MultiSelect
   const salesTagOptions = salesTags.map((tag) => ({
@@ -139,32 +142,34 @@ const TagRuleForm = ({
     title: s.title || s.name,
   }));
 
+  console.log("stages", stageOptions);
+;
   // Handle form field changes
   const handleChange = (field: keyof Rule, value: any) => {
     setFormData((prev) => {
       const newState: any = { ...prev };
 
-      // Normalize action value depending on the field source
+      // Normalize targetColumnId value depending on the field source
       if (field === "targetColumnId") {
         // If the incoming value is an array (from MultiSelect), use it directly
         if (Array.isArray(value)) {
-          newState.action = value;
+          newState.targetColumnId = value;
         } else if (typeof value === "string" && value !== "") {
           // If it's a string (from Selector), convert to number
           const parsed = Number(value);
-          newState.action = Number.isNaN(parsed) ? value : parsed;
+          newState.targetColumnId = Number.isNaN(parsed) ? value : parsed;
         } else if (value === "" || value === null || value === undefined) {
-          newState.action = null;
+          newState.targetColumnId = null;
         } else {
-          newState.action = value;
+          newState.targetColumnId = value;
         }
       } else {
         newState[field] = value;
       }
 
-      // If condition_type changed, reset action
+      // If condition_type changed, reset targetColumnId
       if (field === "condition_type" && prev.condition_type !== value) {
-        newState.action = null;
+        newState.targetColumnId = null;
       }
 
       return newState as Rule;
@@ -237,8 +242,11 @@ const TagRuleForm = ({
 
     // condition-specific
     if (formData.condition_type === "pipeline") {
-      if (formData.targetColumnId === null || formData.targetColumnId === undefined) {
-        newErrors.action = "Action is required for pipeline condition.";
+      if (
+        formData.targetColumnId === null ||
+        formData.targetColumnId === undefined
+      ) {
+        newErrors.targetColumnId = "Action is required for pipeline condition.";
       }
     }
     if (formData.condition_type === "post-tag") {
@@ -248,7 +256,7 @@ const TagRuleForm = ({
           ? [formData.targetColumnId]
           : [];
       if (actions.length === 0) {
-        newErrors.action =
+        newErrors.targetColumnId =
           "At least one tag is required for post-tag condition.";
       }
     }
@@ -283,14 +291,13 @@ const TagRuleForm = ({
       formData.timeDelay = seconds;
     }
 
-
     try {
       const finalData = {
         ...formData,
         companyId: companyId,
-        
-      }
+      };
 
+      createRule(finalData);
     } catch (err) {}
     setError({});
     // Submit formData to server or perform desired action
@@ -327,7 +334,7 @@ const TagRuleForm = ({
           {formData.pipelineType !== "" && (
             <MultiSelect
               options={
-                formData.pipelineType === "shop"
+                formData.pipelineType === "SHOP"
                   ? shopTagOptions
                   : salesTagOptions
               }
@@ -336,7 +343,7 @@ const TagRuleForm = ({
               label="Tag"
               isSearch
               placeholder={
-                formData.pipelineType === "shop"
+                formData.pipelineType === "SHOP"
                   ? "Select shop tags"
                   : "Select sales tags"
               }
@@ -377,7 +384,7 @@ const TagRuleForm = ({
 
           {formData.condition_type === "pipeline" && (
             <Selector
-              name="action"
+              name="targetColumnId"
               label="Action"
               options={stages}
               value={
@@ -388,7 +395,7 @@ const TagRuleForm = ({
               onChange={(value) => handleChange("targetColumnId", value)}
               required
               placeholder="Select a action"
-              error={error.action}
+              error={error.targetColumnId}
             />
           )}
 
@@ -406,12 +413,12 @@ const TagRuleForm = ({
               onChange={(value) => handleChange("targetColumnId", value)}
               label="Select Stages to Trigger Rule"
               placeholder={
-                formData.pipelineType === "shop"
+                formData.pipelineType === "SHOP"
                   ? "Select shop stages"
                   : "Select sales stages"
               }
               required
-              error={error.action}
+              error={error.targetColumnId}
             />
           )}
 
