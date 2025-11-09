@@ -40,7 +40,7 @@ export const updateTagAutomationRule = async (
 ) => {
   try {
     const response = await axiosInstance.patch(
-      `/tag-automation-ru;es/${id}?companyId=${companyId}`,
+      `/tag-automation-rules/${id}?companyId=${companyId}`,
       data,
     );
     return response.data;

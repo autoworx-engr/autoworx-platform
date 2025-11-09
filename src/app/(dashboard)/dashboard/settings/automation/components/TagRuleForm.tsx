@@ -28,6 +28,10 @@ import { useCreateTagAutomationRule } from "@/hooks/tag-automation/useCreateTagA
 import { parseSecondsToTimeDelay } from "@/utils/parseSecondsToTimeDelay";
 import { useFindOneTagAutomationRule } from "@/hooks/tag-automation/useFindOneTagAutomationRule";
 import { useUpdateTagAutomationRule } from "@/hooks/tag-automation/useUpdateTagAutomationRule";
+import {
+  convertSecondsToTime,
+  convertTimeToSeconds,
+} from "@/utils/timeConvertToSeconds";
 
 type RuleFormProps = {
   mode: "create" | "edit" | undefined;
@@ -46,11 +50,11 @@ type Rule = {
   tagIds: number[];
   // funnel: string;
   timeDelay: number | null | string;
-  condition_type: "pipeline" | "communication" | "post-tag" | "";
+  condition_type: "pipeline" | "communication" | "post_tag" | "";
   targetColumnId: number | number[] | null;
   columnIds?: number[];
   communicationType: "SMS" | "EMAIL" | "BOTH";
-  templateType: "SMS" | "EMAIL";
+  // templateType: "SMS" | "EMAIL";
   isSendWeekDays: boolean;
   isSendOfficeHours: boolean;
   subject?: string | null;
@@ -80,7 +84,7 @@ const TagRuleForm = ({
     targetColumnId: null,
     columnIds: [],
     communicationType: "SMS",
-    templateType: "SMS",
+    // templateType: "SMS",
     isSendWeekDays: false,
     isSendOfficeHours: false,
     subject: "",
@@ -113,12 +117,13 @@ const TagRuleForm = ({
   const { mutate: updateRule, isPending: isUpdatePending } =
     useUpdateTagAutomationRule();
 
+  console.log("formData update", data);
   useEffect(() => {
     const loadData = async () => {
       if (isEdit && id && data && data.data) {
         const payload = data.data;
 
-        const timeDelay = parseSecondsToTimeDelay(payload.timeDelay);
+        const timeDelay = convertSecondsToTime(payload?.timeDelay);
 
         // derive pipelineType in uppercase to match form enum (only allow SALES or SHOP)
         const rawPipeline = payload.pipelineType
@@ -142,28 +147,60 @@ const TagRuleForm = ({
             .filter((v: any) => typeof v === "number");
         }
 
+        const tagAutomationCommunication = payload.tagAutomationCommunication || {};
+        const tagAutomationPipeline = payload.tagAutomationPipeline || {};
         setFormData({
           companyId: payload.companyId ?? companyId,
           title: payload.title ?? "",
           pipelineType: pipelineTypeValue,
-          tagIds: Array.isArray(payload.tagIds) ? payload.tagIds : [],
-          timeDelay: timeDelay ?? null,
+          tagIds: payload.tag.map((tag: any) => tag.id),
+          timeDelay:
+            data?.data?.timeDelay === "Instant"
+              ? data?.data?.timeDelay
+              : timeDelay,
           condition_type: payload.condition_type ?? payload.conditionType ?? "",
           targetColumnId:
-            payload.targetColumnId !== undefined &&
-            payload.targetColumnId !== null
-              ? Number(payload.targetColumnId)
+            tagAutomationPipeline !== undefined &&
+            tagAutomationPipeline !== null
+              ? Number(tagAutomationPipeline?.targetColumnId)
               : null,
           columnIds,
-          communicationType: payload.communicationType ?? "SMS",
-          templateType: payload.templateType ?? "SMS",
-          isSendWeekDays: !!payload.isSendWeekDays,
-          isSendOfficeHours: !!payload.isSendOfficeHours,
-          subject: payload.subject ?? "",
-          emailBody: payload.emailBody ?? "",
-          smsBody: payload.smsBody ?? "",
-          attachments: payload.attachments ?? [],
+          communicationType: tagAutomationCommunication?.communicationType ?? "SMS",
+          // templateType: payload.templateType ?? "SMS",
+          isSendWeekDays: !!tagAutomationCommunication?.isSendWeekDays,
+          isSendOfficeHours: !!tagAutomationCommunication?.isSendOfficeHours,
+          subject: tagAutomationCommunication?.subject ?? "",
+          emailBody: tagAutomationCommunication?.emailBody ?? "",
+          smsBody: tagAutomationCommunication?.smsBody ?? "",
+          attachments: tagAutomationCommunication?.attachments ?? [],
           ruleType: payload.ruleType ?? "",
+        });
+
+        setActiveTemplate(
+          tagAutomationCommunication?.communicationType === "BOTH"
+            ? "SMS"
+            : tagAutomationCommunication?.communicationType
+        );
+      } else {
+        setFormData({
+          companyId: companyId,
+          title: "",
+          pipelineType: "",
+          tagIds: [],
+          // funnel: "",
+          timeDelay: null,
+          condition_type: "",
+          targetColumnId: null,
+          columnIds: [],
+          communicationType: "SMS",
+          // templateType: "SMS",
+          isSendWeekDays: false,
+          isSendOfficeHours: false,
+          subject: "",
+          emailBody: "",
+          smsBody: "",
+          attachments: [],
+          ruleType: "",
         });
       }
     };
@@ -232,7 +269,9 @@ const TagRuleForm = ({
         } else {
           newState.targetColumnId = value;
         }
-      } else if (field === "columnIds") {
+      } 
+      
+      if (field === "columnIds") {
         // columnIds should always be an array (from MultiSelect)
         if (Array.isArray(value)) {
           newState.columnIds = value;
@@ -329,7 +368,7 @@ const TagRuleForm = ({
         newErrors.targetColumnId = "Action is required for pipeline condition.";
       }
     }
-    if (formData.condition_type === "post-tag") {
+    if (formData.condition_type === "post_tag") {
       const actions = Array.isArray(formData.columnIds)
         ? formData.columnIds
         : formData.columnIds
@@ -367,8 +406,7 @@ const TagRuleForm = ({
     }
 
     if (formData.timeDelay != null) {
-      const seconds = parseTimeDelayToSeconds(formData.timeDelay!);
-      formData.timeDelay = seconds;
+      formData.timeDelay = convertTimeToSeconds(formData.timeDelay as string);
     }
 
     try {
@@ -383,12 +421,13 @@ const TagRuleForm = ({
         ...formData,
         companyId: companyId,
         attachments: images,
+        ruleType: "one_time",
       };
 
       // normalize fields for API
-      if (finalData.timeDelay != null) {
-        finalData.timeDelay = parseTimeDelayToSeconds(finalData.timeDelay);
-      }
+      // if (finalData.timeDelay != null) {
+      //   finalData.timeDelay = parseTimeDelayToSeconds(finalData?.timeDelay);
+      // }
 
       // targetColumnId should be a number or null
       if (
@@ -399,13 +438,14 @@ const TagRuleForm = ({
         finalData.targetColumnId = Number(finalData.targetColumnId);
       }
 
-      // columnIds should be an array of numbers for post-tag
-      if (finalData.condition_type === "post-tag") {
+      // columnIds should be an array of numbers for post_tag
+      if (finalData.condition_type === "post_tag") {
+        finalData.ruleType === formData.ruleType;
         finalData.columnIds = Array.isArray(finalData.columnIds)
           ? finalData.columnIds.map((v: any) => Number(v))
           : [];
       } else {
-        // if not post-tag, ensure columnIds is empty
+        // if not post_tag, ensure columnIds is empty
         delete finalData.columnIds;
       }
 
@@ -522,7 +562,7 @@ const TagRuleForm = ({
             />
           )}
 
-          {formData.condition_type === "post-tag" && (
+          {formData.condition_type === "post_tag" && (
             <MultiSelect
               // For post-tag condition we need to pick stages (columns) from the pipeline
               options={stageOptions}
@@ -669,7 +709,7 @@ const TagRuleForm = ({
             </>
           )}
 
-          {formData.condition_type === "post-tag" && (
+          {formData.condition_type === "post_tag" && (
             <CustomRadioGroup
               name="ruleType"
               label="Rule Type"

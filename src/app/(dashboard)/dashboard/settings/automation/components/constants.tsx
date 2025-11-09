@@ -168,5 +168,5 @@ export const Funnels = [
 export const Conditions = [
   {id: "pipeline", title: "Pipeline"},
   {id: "communication", title: "Communication"},
-  {id: "post-tag", title: "Post-Tag"}
+  {id: "post_tag", title: "Post-Tag"}
 ]
