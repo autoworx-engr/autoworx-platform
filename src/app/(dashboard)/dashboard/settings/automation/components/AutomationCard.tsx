@@ -203,7 +203,10 @@ const AutomationCard: FC<AutomationCardProps> = ({
           {isPipelineUpdating ||
           isCommunicationUpdating ||
           isMarketingUpdating ||
-          isServiceUpdating ? (
+          isServiceUpdating || 
+          isTagUpdating || 
+          isInventoryUpdating || 
+          isInvoiceUpdating ? (
             <button>
               <Spin />
             </button>
@@ -230,7 +233,10 @@ const AutomationCard: FC<AutomationCardProps> = ({
           {isPipelineDeleting ||
           isCommunicationDeleting ||
           isMarketingDeleting ||
-          isServiceDeleting ? (
+          isServiceDeleting || 
+          isTagDeleting || 
+          isInventoryDeleting || 
+          isInvoiceDeleting ? (
             <button>
               <Spin />
             </button>

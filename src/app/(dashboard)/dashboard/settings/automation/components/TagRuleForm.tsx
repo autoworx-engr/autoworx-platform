@@ -149,6 +149,7 @@ const TagRuleForm = ({
 
         const tagAutomationCommunication = payload.tagAutomationCommunication || {};
         const tagAutomationPipeline = payload.tagAutomationPipeline || {};
+        const tagAutomationPostTag = payload.PostTagAutomationColumn || {};
         setFormData({
           companyId: payload.companyId ?? companyId,
           title: payload.title ?? "",
@@ -164,7 +165,7 @@ const TagRuleForm = ({
             tagAutomationPipeline !== null
               ? Number(tagAutomationPipeline?.targetColumnId)
               : null,
-          columnIds,
+          columnIds: tagAutomationPostTag?.map((item: any) => item.id) || [],
           communicationType: tagAutomationCommunication?.communicationType ?? "SMS",
           // templateType: payload.templateType ?? "SMS",
           isSendWeekDays: !!tagAutomationCommunication?.isSendWeekDays,
@@ -421,7 +422,7 @@ const TagRuleForm = ({
         ...formData,
         companyId: companyId,
         attachments: images,
-        ruleType: "one_time",
+        ruleType: formData.ruleType ? formData.ruleType : "one_time",
       };
 
       // normalize fields for API
@@ -440,7 +441,6 @@ const TagRuleForm = ({
 
       // columnIds should be an array of numbers for post_tag
       if (finalData.condition_type === "post_tag") {
-        finalData.ruleType === formData.ruleType;
         finalData.columnIds = Array.isArray(finalData.columnIds)
           ? finalData.columnIds.map((v: any) => Number(v))
           : [];

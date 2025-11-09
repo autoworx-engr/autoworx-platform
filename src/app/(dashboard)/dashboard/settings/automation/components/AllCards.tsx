@@ -92,7 +92,7 @@ export default function AllCards({
     isFetching: inventoryAutomationIsFetching,
   } = useAllInventoryAutomationRules(companyId, type === "inventory");
   const {
-    data: allTagAAutomation,
+    data: allTagAutomation,
     isLoading: tagAutomationIsLoading,
     isFetching: tagAutomationIsFetching,
   } = useAllTagAutomationRules(companyId, type === "tag");
@@ -114,6 +114,8 @@ export default function AllCards({
         return invoiceAutomationIsLoading || invoiceAutomationIsFetching;
       case "inventory":
         return inventoryAutomationIsLoading || inventoryAutomationIsFetching;
+      case "tag":
+        return tagAutomationIsLoading || tagAutomationIsFetching;
       default:
         return false;
     }
@@ -148,7 +150,7 @@ export default function AllCards({
               : type === "inventory"
                 ? allInventoryAutomation?.data
                 : type === "tag"
-                  ? allTagAAutomation?.data
+                  ? allTagAutomation?.data
                   : campaigns;
 
   const allowedCompany = [4, 14];

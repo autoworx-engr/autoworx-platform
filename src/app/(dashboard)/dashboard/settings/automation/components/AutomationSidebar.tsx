@@ -40,7 +40,7 @@ const items = [
   {
     name: "tag",
     path: "tag",
-    // permissionName: companyPermissionModule.TAG_AUTOMATION,
+    permissionName: companyPermissionModule.TAG_AUTOMATION,
   },
 ];
 
@@ -63,43 +63,39 @@ const AutomationSidebar = ({
     return permission?.enabled === true;
   };
 
-  // const handleClick = (item: (typeof items)[0], isDisabled: boolean) => () => {
-  //   if (isDisabled) {
-  //     setShowPremiumModal(true);
-  //     setPendingFeature(item.name);
-  //   } else {
-  //     setType(item.path);
-  //   }
-  // };
-  const handleClick = (item: (typeof items)[0]) => () => {
-    setType(item.path);
+  const handleClick = (item: (typeof items)[0], isDisabled: boolean) => () => {
+    if (isDisabled) {
+      setShowPremiumModal(true);
+      setPendingFeature(item.name);
+    } else {
+      setType(item.path);
+    }
   };
 
-  // if (isLoading) {
-  //   return (
-  //     <div className="mx-auto w-full lg:max-w-[700px]">
-  //       <div className="space-y-4">
-  //         {items.map((item) => (
-  //           <Skeleton key={item.path} className="h-16 py-5 w-full rounded-sm" />
-  //         ))}
-  //       </div>
-  //     </div>
-  //   );
-  // }
+  if (isLoading) {
+    return (
+      <div className="mx-auto w-full lg:max-w-[700px]">
+        <div className="space-y-4">
+          {items.map((item) => (
+            <Skeleton key={item.path} className="h-16 py-5 w-full rounded-sm" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto w-full lg:max-w-[700px]">
       <div className="space-y-4">
         {items?.map((item) => {
           const isActive = type == item.path;
-          // const isDisabled = !hasPermission(item.permissionName);
-          
+          const isDisabled = !hasPermission(item.permissionName);
 
           return (
             <div key={item.path} className="">
               <button
-                // onClick={handleClick(item, isDisabled)}
-                onClick={handleClick(item)}
+                onClick={handleClick(item, isDisabled)}
+                // onClick={handleClick(item)}
                 // disabled={isLoading}
                 className={cn(
                   "flex w-full flex-col items-center justify-center text-nowrap rounded-sm border border-gray-200 bg-white px-14 py-4 font-medium capitalize transition-colors",
