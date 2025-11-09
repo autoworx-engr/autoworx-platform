@@ -864,7 +864,7 @@ export default function InvoiceModalBody({
                     }}
                     className="rounded bg-[#6571FF] px-8 pb-1 text-white print:hidden"
                   >
-                    Signature
+                    Authorize
                   </button>
                 )}
             </div>
@@ -928,7 +928,7 @@ export default function InvoiceModalBody({
                   className="border border-gray-300 rounded-md"
                 />
                 <span className="rounded-sm border border-[#6571ff] px-4 py-1 text-sm text-[#6571ff]">
-                  Signatured
+                  Authorized
                 </span>
               </div>
             )}
@@ -942,7 +942,7 @@ export default function InvoiceModalBody({
                   className="border border-gray-300 rounded-md"
                 />
                 <span className="rounded-sm border border-[#6571ff] px-4 py-1 text-sm text-[#6571ff]">
-                  Signatured
+                  Authorized
                 </span>
               </div>
             )}
