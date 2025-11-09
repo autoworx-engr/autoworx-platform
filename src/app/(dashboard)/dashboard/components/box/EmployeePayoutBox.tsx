@@ -23,7 +23,9 @@ export default async function EmployeePayoutBox({
 
   // Payout is a cost, so a higher rate/growth is typically seen as 'Negative' financially.
   // We'll calculate the rate cleanly and determine if the growth is positive or negative for the indicator.
-  const payoutGrowthRate = parseFloat((employeePayout?.growth?.rate ?? 0).toFixed(2));
+  const payoutGrowthRate = parseFloat(
+    (employeePayout?.growth?.rate ?? 0).toFixed(2)
+  );
 
   // For Payout, growth (isPositive = true) indicates a higher cost, which is usually negative for a dashboard.
   // We flip the indicator color if the rate is positive (cost increased).
@@ -66,8 +68,8 @@ export default async function EmployeePayoutBox({
       {/* Using 'flex-col' and relying on ChartData's clean internal structure */}
       <div className="flex flex-col">
         <ChartData
-          heading="Current Payout Total" // Refined heading
-          subHeading="This period vs. last period"
+          heading="Current Month Payout" // Refined heading
+          // subHeading="This period vs. last period"
           number={currentMonthTotal}
           dollarSign
           // Pass raw growth indicator and clean rate

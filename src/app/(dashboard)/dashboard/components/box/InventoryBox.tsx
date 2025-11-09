@@ -64,8 +64,8 @@ export default async function InventoryBox({ className }: TInventoryBoxProps) {
           noRate={true} // Total value is a static snapshot, growth rate applies to flow
         />
         <ChartData
-          heading="Monthly Flow Value" // Enhanced heading to represent change/movement
-          subHeading="Value added/removed this month"
+          heading="Current Monthly Total" // Enhanced heading to represent change/movement
+          // subHeading="Value added/removed this month"
           dollarSign={true}
           number={currentMonthTotal}
           // The rate shows the trend of inventory flow vs. last period
