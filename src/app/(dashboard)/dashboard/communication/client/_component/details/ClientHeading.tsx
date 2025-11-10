@@ -59,6 +59,8 @@ export default async function ClientHeading({ client, vehicles = [] }: TProps) {
         <h2 className="px-1 text-sm font-semibold tracking-tight xl:p-3 xl:text-base">
           Client Data
         </h2>
+        {/* Edit modal trigger */}
+        <EditClientModalTrigger client={client} />
       </div>
 
       {/* Body */}
@@ -89,10 +91,10 @@ export default async function ClientHeading({ client, vehicles = [] }: TProps) {
 
             <div className="mt-1 flex min-w-0 flex-col">
               <h3 className="truncate text-base font-semibold">
-                <div className="flex items-center gap-2">
+                <div className="min-w-0 truncate">
                   <Tooltip>
                     <TooltipTrigger>
-                      <span className="truncate">
+                      <span className="">
                         {client.firstName} {client.lastName}
                       </span>
                     </TooltipTrigger>
@@ -102,9 +104,6 @@ export default async function ClientHeading({ client, vehicles = [] }: TProps) {
                       </p>
                     </TooltipContent>
                   </Tooltip>
-
-                  {/* Edit modal trigger */}
-                  <EditClientModalTrigger client={client} />
                 </div>
               </h3>
 
