@@ -19,12 +19,12 @@ export default function ClientList({
     search,
     currentPage,
     pageSize,
-    enabled: clients.length === 0,
+    enabled: clients?.length === 0,
   });
 
   let clientData = clients;
   let totalClients = clients?.length;
-  if (clientData.length === 0 && data) {
+  if (clients.length === 0 && data && data?.clients.length > 0) {
     clientData = data.clients;
     totalClients = data?.totalClients || 0;
   }
@@ -34,7 +34,7 @@ export default function ClientList({
     content = <ClientTableSkeleton />;
   } else if (isError && !isLoading) {
     content = <div>Error loading clients.</div>;
-  } else if (!isError && !isLoading && clients.length === 0) {
+  } else if (!isError && !isLoading && clientData.length === 0) {
     content = <div>No clients found.</div>;
   } else {
     content = (
@@ -49,7 +49,7 @@ export default function ClientList({
   return (
     <div>
       <div className="h-[60%] overflow-y-auto lg:hidden">
-        {clients.map((employee, index) => (
+        {clientData.map((employee, index) => (
           <ResponsiveEmployeeCard key={index} data={employee} index={index} />
         ))}
       </div>
