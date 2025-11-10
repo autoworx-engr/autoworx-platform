@@ -89,22 +89,22 @@ export default async function PerformanceBoxForTechnician({
         <ChartData
           heading="Total Jobs Completed"
           number={totalJobsCount}
-          subHeading="/this period"
+          // subHeading="/this period"
           isPositive={isTotalJobsPositive}
           rate={totalJobsGrowthRate}
         />
         <ChartData
           heading="On-Time Completion"
           number={onTimeRate}
-          subHeading="Target: >95%"
+          // subHeading="Target: >95%"
           isPositive={isOnTimePositive}
           rate={onTimeGrowthRate}
           isNumberPercent
         />
         <ChartData
-          heading="Rework/Return Rate"
+          heading="Jobs Return Rate"
           number={redoJobsRate}
-          subHeading="Lower is better"
+          // subHeading="Lower is better"
           // Using the corrected, flipped indicator logic
           isPositive={isPerformancePositiveForRedo}
           rate={redoGrowthRate}

@@ -74,7 +74,7 @@ export default async function MonthlyPayoutBox({
         {/* 1. TOTAL PAYOUT (Highest Emphasis) */}
         {/* We use ChartData but override its styles to make the total stand out */}
         <ChartData
-          heading="Total Current Payout"
+          heading="Total Payout"
           number={totalPayout}
           dollarSign={true}
           noRate
@@ -84,7 +84,7 @@ export default async function MonthlyPayoutBox({
 
         {/* 2. JOB PAYOUT */}
         <ChartData
-          heading="Job-Based Payout"
+          heading="Job Payout"
           number={jobPayout}
           dollarSign={true}
           isPositive={monthlyPayout?.growth?.isPositive || false}
@@ -95,7 +95,7 @@ export default async function MonthlyPayoutBox({
         {/* 3. SALARY PAYOUT (Conditional) */}
         {hasValidSalaryInfo && (
           <ChartData
-            heading="Fixed Salary Payout"
+            heading="Salary Payout"
             number={salaryPayout}
             dollarSign={true}
             noRate
@@ -137,7 +137,7 @@ export default async function MonthlyPayoutBox({
         {/* 5. EXPECTED JOB PAYOUT (If pending) */}
         {!!monthlyPayout?.pendingPayout && monthlyPayout.pendingPayout > 0 && (
           <ChartData
-            heading="Expected Pending Payout"
+            heading="Expected Job Payout"
             number={monthlyPayout.pendingPayout}
             dollarSign={true}
             noRate

@@ -69,7 +69,7 @@ export default async function RecentMessagesBox() {
     <div
       className={cn(
         `
-          flex flex-1 flex-col p-4 md:p-6 rounded-2xl transition-all duration-300 h-full
+          flex flex-1 flex-col p-4 md:p-6 rounded-2xl transition-all duration-300 #h-full
 
           // Glassmorphism aesthetic (Replaces old p-6 shadow-md)
           bg-white/50 dark:bg-slate-900/50

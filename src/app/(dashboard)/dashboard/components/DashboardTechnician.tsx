@@ -45,23 +45,28 @@ export default async function DashboardTechnician() {
       </div>
 
       {/* Col 3: Attendance, Performance, Payout, Messages (45%) */}
-      <div className="flex w-full flex-col gap-4 lg:w-[45%]">
+      <div className="flex w-full h-full flex-col gap-4 lg:w-[45%]">
         {/* attendance buttons desktop */}
         <div className="hidden lg:block flex-shrink-0">
           <AttendanceButtonsBox lastClockInOut={lastClockInOut} />
         </div>
 
         {/* Inner Grid/Layout for Performance/Payout/Messages */}
-        <div className="flex flex-1 flex-col gap-4 lg:flex-row">
+        <div className="flex flex-1 flex-col gap-4 #h-full lg:flex-row overflow-y-auto">
           {/* Inner Col 1: Performance & Payout (50%) */}
-          <div className="order-2 flex w-full flex-col gap-4 lg:order-none lg:w-1/2">
-            <PerformanceBoxForTechnician />
-            <MonthlyPayoutBox />
-          </div>
 
+          <div className="flex #h-full w-full flex-1 flex-col space-y-4 lg:w-[27%]">
+            <div className="flex-1 min-h-0">
+              <PerformanceBoxForTechnician />
+            </div>
+            <div className="flex-1 min-h-0">
+              <MonthlyPayoutBox />
+            </div>
+          </div>
           {/* Inner Col 2: Recent Messages (50%) */}
           {/* This list must stretch to fill the height beside Performance/Payout */}
-          <div className="order-1 flex w-full flex-col gap-4 lg:order-none lg:w-1/2">
+          <div className="flex #h-full w-full flex-1 flex-col space-y-4 lg:w-[27%]">
+            {/* <div className="order-1 flex w-full flex-col gap-4 lg:order-none lg:w-1/2"> */}
             <RecentMessagesBox /> {/* ADDED flex-1 */}
           </div>
         </div>

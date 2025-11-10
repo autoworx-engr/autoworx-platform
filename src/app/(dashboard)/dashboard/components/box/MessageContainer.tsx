@@ -141,7 +141,7 @@ export default function MessageContainer({
             })}
 
             {/* 2. Internal Messages (Technician focus) */}
-            {filteredInternalMessages.map((data: FullMessage) => {
+            {filteredInternalMessages?.map((data: FullMessage) => {
               const targetUser =
                 user?.id === data?.from?.id ? data?.to : data?.from;
               const userName = `${targetUser?.firstName || ""} ${targetUser?.lastName || ""}`;

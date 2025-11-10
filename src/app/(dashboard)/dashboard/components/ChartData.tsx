@@ -20,8 +20,8 @@ const ChartData = ({
 
   // Container classes for layout
   const containerLayout = columnView
-    ? "flex flex-col mb-4"
-    : "flex items-start justify-between gap-x-2 mb-4"; // Changed items-center to items-start for better alignment in row view
+    ? "flex flex-col #mb-4"
+    : "flex items-start justify-between gap-x-2 #mb-4"; // Changed items-center to items-start for better alignment in row view
 
   return (
     <div className={containerLayout}>
