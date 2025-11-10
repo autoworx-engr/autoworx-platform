@@ -7,6 +7,7 @@ type TClientQueryParam = {
   search?: string;
   currentPage?: number;
   pageSize?: number;
+  enabled?: boolean;
 };
 
 type TClientQueryResult = {
@@ -20,6 +21,7 @@ export default function useClientQuery({
   search,
   currentPage = 1,
   pageSize = 50,
+  enabled = true,
 }: TClientQueryParam) {
   return useQuery({
     queryKey: [CLIENT_LIST_KEY, search, currentPage, pageSize],
@@ -31,5 +33,6 @@ export default function useClientQuery({
       });
       return { clients, totalClients } as TClientQueryResult;
     },
+    enabled,
   });
 }

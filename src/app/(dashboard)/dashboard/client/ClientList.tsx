@@ -5,21 +5,29 @@ import { useClientFilterStore } from "@/stores/clientFilter";
 import useClientQuery from "./_hook/useClientQuery";
 import ClientListTable from "./ClientListTable";
 import { ClientTableSkeleton } from "./ClientTableSkeleton";
+import { Client, Source, Tag } from "@prisma/client";
 
 export default function ClientList({
+  clients = [],
   needCompanyName = false,
 }: {
   needCompanyName?: boolean;
+  clients?: (Client & { tag: Tag | null; source: Source | null })[];
 }) {
   const { search, currentPage, pageSize } = useClientFilterStore();
   const { data, isLoading, isError } = useClientQuery({
     search,
     currentPage,
     pageSize,
+    enabled: clients.length === 0,
   });
 
-  const clients = data?.clients || [];
-  const totalClients = data?.totalClients || 0;
+  let clientData = clients;
+  let totalClients = clients?.length;
+  if (clientData.length === 0 && data) {
+    clientData = data.clients;
+    totalClients = data?.totalClients || 0;
+  }
 
   let content;
   if (isLoading && !isError) {
@@ -31,7 +39,7 @@ export default function ClientList({
   } else {
     content = (
       <ClientListTable
-        clients={clients}
+        clients={clientData}
         needCompanyName={needCompanyName}
         totalClients={totalClients}
       />
