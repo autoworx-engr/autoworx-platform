@@ -23,9 +23,9 @@ import {
   handleFileSelection,
   uploadAllAttachments,
 } from "@/utils/handleFileAttachment";
-import { parseTimeDelayToSeconds } from "@/utils/parseTimeDelayToSeconds";
+
 import { useCreateTagAutomationRule } from "@/hooks/tag-automation/useCreateTagAutomationRule";
-import { parseSecondsToTimeDelay } from "@/utils/parseSecondsToTimeDelay";
+
 import { useFindOneTagAutomationRule } from "@/hooks/tag-automation/useFindOneTagAutomationRule";
 import { useUpdateTagAutomationRule } from "@/hooks/tag-automation/useUpdateTagAutomationRule";
 import {
@@ -110,7 +110,8 @@ const TagRuleForm = ({
     loading: stagesLoading,
   } = usePipelineStagesStore();
 
-  const { mutate: createRule, isPending } = useCreateTagAutomationRule();
+  const { mutate: createRule, isPending: isCreatePending } =
+    useCreateTagAutomationRule();
   const { data, isLoading, isFetching } = useFindOneTagAutomationRule(
     Number(id)
   );
@@ -147,7 +148,8 @@ const TagRuleForm = ({
             .filter((v: any) => typeof v === "number");
         }
 
-        const tagAutomationCommunication = payload.tagAutomationCommunication || {};
+        const tagAutomationCommunication =
+          payload.tagAutomationCommunication || {};
         const tagAutomationPipeline = payload.tagAutomationPipeline || {};
         const tagAutomationPostTag = payload.PostTagAutomationColumn || {};
         setFormData({
@@ -165,8 +167,9 @@ const TagRuleForm = ({
             tagAutomationPipeline !== null
               ? Number(tagAutomationPipeline?.targetColumnId)
               : null,
-          columnIds: tagAutomationPostTag?.map((item: any) => item.id) || [],
-          communicationType: tagAutomationCommunication?.communicationType ?? "SMS",
+          columnIds: tagAutomationPostTag?.map((item: any) => item?.id) || [],
+          communicationType:
+            tagAutomationCommunication?.communicationType ?? "SMS",
           // templateType: payload.templateType ?? "SMS",
           isSendWeekDays: !!tagAutomationCommunication?.isSendWeekDays,
           isSendOfficeHours: !!tagAutomationCommunication?.isSendOfficeHours,
@@ -228,8 +231,9 @@ const TagRuleForm = ({
 
   // fetch stages when pipelineType changes
   useEffect(() => {
-    const pipelineTypeLower = formData.pipelineType.toLowerCase();
-    if (pipelineTypeLower === "sales" || pipelineTypeLower === "SHOP") {
+    const pipelineTypeLower = String(formData.pipelineType || "").toLowerCase();
+    // fetch stages for both sales and shop pipelines
+    if (pipelineTypeLower === "sales" || pipelineTypeLower === "shop") {
       fetchStages(pipelineTypeLower);
     }
   }, [formData.pipelineType, fetchStages]);
@@ -270,8 +274,8 @@ const TagRuleForm = ({
         } else {
           newState.targetColumnId = value;
         }
-      } 
-      
+      }
+
       if (field === "columnIds") {
         // columnIds should always be an array (from MultiSelect)
         if (Array.isArray(value)) {
@@ -467,8 +471,6 @@ const TagRuleForm = ({
     console.log("Form Data Submitted:", formData);
   };
 
-  const isCreatePending = false;
-
   return (
     <div className="rounded-md border bg-white p-4 shadow-sm md:p-6">
       <Paper elevation={0} className="mx-auto max-w-lg rounded-lg">
@@ -576,6 +578,7 @@ const TagRuleForm = ({
               }
               required
               error={error.columnIds}
+              disabled={stagesLoading}
             />
           )}
 
