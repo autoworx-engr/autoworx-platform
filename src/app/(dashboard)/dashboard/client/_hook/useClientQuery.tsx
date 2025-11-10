@@ -27,7 +27,7 @@ export default function useClientQuery({
     queryKey: [CLIENT_LIST_KEY, search, currentPage, pageSize],
     queryFn: async () => {
       const { clients, totalClients } = await getClients({
-        search,
+        search: search?.trim() || "",
         currentPage,
         pageSize,
       });
