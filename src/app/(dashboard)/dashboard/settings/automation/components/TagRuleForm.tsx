@@ -118,7 +118,6 @@ const TagRuleForm = ({
   const { mutate: updateRule, isPending: isUpdatePending } =
     useUpdateTagAutomationRule();
 
-  console.log("formData update", data);
   useEffect(() => {
     const loadData = async () => {
       if (isEdit && id && data && data.data) {
@@ -167,7 +166,9 @@ const TagRuleForm = ({
             tagAutomationPipeline !== null
               ? Number(tagAutomationPipeline?.targetColumnId)
               : null,
-          columnIds: tagAutomationPostTag?.map((item: any) => item?.id) || [],
+          columnIds:
+            tagAutomationPostTag[0].columnIds.map((item: any) => item?.id) ||
+            [],
           communicationType:
             tagAutomationCommunication?.communicationType ?? "SMS",
           // templateType: payload.templateType ?? "SMS",
