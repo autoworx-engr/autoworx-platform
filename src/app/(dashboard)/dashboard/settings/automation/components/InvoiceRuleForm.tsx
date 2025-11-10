@@ -322,7 +322,17 @@ const InvoiceRuleForm: React.FC<RuleFormProps> = ({
       formData.companyId = companyId;
 
       if (isEdit && id) {
-        updateRule({ id: id, data: formData });
+        const { attachments, ...remainingData } = formData;
+        const attachmentsFormat = formData?.attachments?.map((attach) => ({
+          fileUrl: attach?.fileUrl,
+        }));
+
+        const payload = {
+          ...remainingData,
+          attachments: attachmentsFormat,
+        };
+
+        updateRule({ id: id, data: payload });
         // setLoading(true);
       } else {
         createRule(formData);

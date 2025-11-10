@@ -16,7 +16,7 @@ export const useUpdateServiceMaintenanceAutomationRule = () => {
       });
     },
     onError: (error) => {
-      errorToast("Filed to update service-maintenance automation rule!");
+      errorToast("Failed to update service-maintenance automation rule!");
       console.error(error);
     },
   });

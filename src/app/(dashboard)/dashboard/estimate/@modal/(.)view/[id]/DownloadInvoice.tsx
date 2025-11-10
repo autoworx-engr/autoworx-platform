@@ -11,6 +11,7 @@ export default function DownloadInvoice({
   vehicle,
   companyDetails,
   authorizedName,
+  signImageUrl,
 }: any) {
   const [isClient, setIsClient] = useState(false);
   // `attempt` is used as a key to force remounting of the PDFDownloadLink on retry
@@ -41,6 +42,7 @@ export default function DownloadInvoice({
               vehicle={vehicle}
               companyDetails={companyDetails}
               authorizedName={authorizedName}
+              signImageUrl={signImageUrl}
             />
           }
           fileName="invoice.pdf"

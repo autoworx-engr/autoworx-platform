@@ -54,12 +54,17 @@ export default function PaymentDisplay({
 }: TProps) {
   const isDesktop = useMediaQuery({ query: "(min-width: 640px)" });
   const [currentPage, setCurrentPage] = useState(page || 1);
-  const [pageSize, setPageSize] = useState(take || 50); // Default page size set to 50
+  const [pageSize, setPageSize] = useState(take || 50);
   const [showPagination, setShowPagination] = useState(false);
 
   const pathname = usePathname();
   const router = useRouter();
   const params = useSearchParams();
+
+  useEffect(() => {
+    setCurrentPage(Number(page));
+    setPageSize(Number(take));
+  }, [page, take]);
 
   useEffect(() => {
     if (paymentInfo.length > 0) {
@@ -108,7 +113,7 @@ export default function PaymentDisplay({
             {paymentsToRender?.map((payment, index) => {
               const paymentStatus =
                 Number(payment.invoice?.due) <= 0 ? "paid" : "due";
-              console.log("payment?.Refund", payment?.invoice?.Refund);
+
               const refundedAmount =
                 payment?.invoice?.Refund?.reduce(
                   (acc: number, refund: Refund) =>

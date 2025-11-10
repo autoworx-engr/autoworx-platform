@@ -1,11 +1,10 @@
+import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
+import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
 import { cn } from "@/lib/cn";
 import { db } from "@/lib/db";
+import { formatCurrency } from "@/utils/formatCurrency";
 import { Service } from "@prisma/client";
 import moment from "moment-timezone";
-import React from "react";
-import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
-import { formatCurrency } from "@/utils/formatCurrency";
-import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
 
 const evenColor = "bg-background";
 const oddColor = "bg-[#F8FAFF]";
@@ -346,6 +345,7 @@ export default async function PaymentTab({
                 <th className="px-10 text-left">Vehicle</th>
                 <th className="px-10 text-left">Amount</th>
                 <th className="px-10 text-left">Cash Received</th>
+                <th className="px-10 text-left">Method</th>
                 <th className="px-10 text-left">Date</th>
                 <th className="text-nowrap px-10 text-left">Due</th>
                 <th className="text-nowrap px-10 text-left">Status</th>
@@ -378,6 +378,7 @@ export default async function PaymentTab({
                       ? data.paymentMethodInfo.receivedCash
                       : "N/A"}
                   </td>
+                  <td className="px-10 text-left">{data.paymentMethod}</td>
                   <td className="px-10 text-left">
                     {moment(data.paymentDate).format("MM.DD.YYYY")}
                   </td>

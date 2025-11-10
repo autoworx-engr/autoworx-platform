@@ -300,6 +300,7 @@ type PDFComponentProps = {
   vehicle: Vehicle | null;
   companyDetails: Company | null;
   authorizedName: string;
+  signImageUrl?: string;
   isStripe: boolean;
 };
 
@@ -311,6 +312,7 @@ const PDFComponent = function PDF({
   companyDetails,
   authorizedName,
   isStripe,
+  signImageUrl,
 }: PDFComponentProps) {
   const [damageNotes, setDamageNotes] = useState<string>(
     "There is no damage notes"
@@ -481,25 +483,33 @@ const PDFComponent = function PDF({
               {invoice.user.firstName} {invoice.user.lastName}
             </Text>
           </View>
-          {authorizedName && (
-            <View style={{ marginTop: 20 }}>
+          <View style={{ marginTop: 20, alignItems: "center" }}>
+            {signImageUrl ? (
+              <Image
+                src={signImageUrl}
+                style={{ width: 110, height: 90, objectFit: "contain" }}
+              />
+            ) : authorizedName ? (
               <Text style={[styles.boldText, styles.fontSize10]}>
-                {authorizedName || ""}
+                {authorizedName}
               </Text>
+            ) : null}
+
+            {(authorizedName || signImageUrl) && (
               <Text
                 style={[
                   styles.fontSize10,
                   {
                     color: "#6571FF",
-                    // border: "3px solid #6571FF",
-                    padding: "4px 2px",
+                    paddingVertical: 4,
                   },
                 ]}
               >
                 Authorized
               </Text>
-            </View>
-          )}
+            )}
+          </View>
+
           {/* {isStripe && (
             <View style={{ marginTop: 20 }}>
               <Link

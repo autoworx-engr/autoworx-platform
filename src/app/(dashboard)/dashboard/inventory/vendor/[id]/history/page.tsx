@@ -1,6 +1,12 @@
 import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
 import EditVendor from "@/components/Lists/EditVendor";
 import Title from "@/components/Title";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/Tooltip";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/cn";
 import { db } from "@/lib/db";
@@ -180,9 +186,23 @@ export default async function Page({
                 <h3 className="text-nowrap text-center font-semibold">
                   Total Purchase Amount
                 </h3>
-                <p className="mt-2 text-center text-4xl font-bold">
-                  {formatCurrency(totalPurchaseAmount)}
-                </p>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="text-4xl mx-auto block mt-2 font-bold text-center">
+                        {formatCurrency(totalPurchaseAmount).toString().length >
+                        12
+                          ? formatCurrency(totalPurchaseAmount)
+                              .toString()
+                              .slice(0, 12) + "..."
+                          : formatCurrency(totalPurchaseAmount)}
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {formatCurrency(totalPurchaseAmount)}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             </div>
             <div className="app-shadow w-full rounded-lg bg-background p-6 px-6">

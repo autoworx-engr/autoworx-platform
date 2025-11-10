@@ -97,6 +97,11 @@ export const staticPermissions = [
   //   permission_name: 'reputationManagement',
   //   status: false,
   // },
+  {
+    title: "AI Smart Replies",
+    permission_name: "aiSmartReplies",
+    status: false,
+  },
 ];
 
 export const CHILD_PERMISSIONS = [

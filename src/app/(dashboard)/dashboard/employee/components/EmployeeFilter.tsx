@@ -31,7 +31,7 @@ export default function EmployeeFilter() {
             type="text"
             className="w-full rounded-md px-4 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Search by employee ID, name, email or phone"
-            onChange={e => {
+            onChange={(e) => {
               setSearchInput(e.target.value);
               handleSearchChange(e.target.value.trim());
             }}
@@ -45,7 +45,7 @@ export default function EmployeeFilter() {
 
           <DropdownSelection
             dropDownValues={["All", "Sales", "Technician", "Manager", "Other"]}
-            onValueChange={value => setFilter({ type: value as any })}
+            onValueChange={(value) => setFilter({ type: value as any })}
             changesValue={type}
             buttonClassName="min-w-[100px] shadow-md"
           />

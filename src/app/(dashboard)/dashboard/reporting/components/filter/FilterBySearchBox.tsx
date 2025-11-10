@@ -47,13 +47,20 @@ export default function FilterBySearchBox({ searchText, paramKey }: TProps) {
       return "Search by invoice, client, vehicle";
     } else if (pathname.includes("teams")) {
       return "Search by employee name";
+    } else if (paramKey === "laborSearch") {
+      return "Search by labor name, category";
+    } else if (paramKey === "serviceSearch") {
+      return "Search by service name, category";
     } else {
       return "Search";
     }
   };
 
   return (
-    <div className="relative w-full min-w-[300] max-w-[693px]">
+    <form
+      autoComplete="false"
+      className="relative w-full min-w-[300] max-w-[693px]"
+    >
       <Search size={16} className="absolute left-[10px] top-[9px]" />
       <input
         onChange={(e) => {
@@ -65,6 +72,6 @@ export default function FilterBySearchBox({ searchText, paramKey }: TProps) {
         type="text"
         placeholder={getPlaceholderForPath() + "..."}
       />
-    </div>
+    </form>
   );
 }

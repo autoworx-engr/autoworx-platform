@@ -1327,6 +1327,7 @@ model Invoice {
   invoiceItems            InvoiceItem[]
   vehicleParts            VehicleParts[]
   photos                  InvoicePhoto[]
+  signatureImage          String?
   tasks                   Task[]
   status                  Status?                   @relation(fields: [statusId], references: [id])
   payments                Payment[]
