@@ -19,7 +19,7 @@ export async function updateTagAutomationTrigger(
   payload: TUpdateTagAutomationTrigger
 ) {
   const { generatedToken, ...payloadData } = payload;
-  console.log("payloadData", payloadData);
+
   try {
     const session = await getServerSession(authOptions);
     const token = session?.accessToken || generatedToken;
@@ -37,7 +37,7 @@ export async function updateTagAutomationTrigger(
       }
     );
     const data = await response.json();
-    console.log("data", data);
+
     return {
       success: "ok",
       data: data.data,
