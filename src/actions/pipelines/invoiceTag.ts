@@ -11,6 +11,9 @@ export const saveInvoiceTag = async (invoiceId: string, tagId: number) => {
         invoiceId: invoiceId,
         tagId: tagId,
       },
+      include: {
+        invoice: true,
+      },
     });
     return result;
   } catch (error) {

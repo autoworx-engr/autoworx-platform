@@ -8,12 +8,14 @@ const SECONDS_IN = {
 };
 
 export function convertTimeToSeconds(timeString: string): number {
-  if (timeString.toLowerCase() === "instant") {
+  if (timeString?.toLowerCase() === "instant") {
     return 0;
   }
 
   // Regex to capture value and unit, allowing for decimals
-  const match = timeString.match(/^(\d*\.?\d+)\s+(second|minute|hour|day|month|year)s?$/i);
+  const match = timeString.match(
+    /^(\d*\.?\d+)\s+(second|minute|hour|day|month|year)s?$/i
+  );
 
   if (!match) {
     console.warn(`Could not parse time string: ${timeString}`);
@@ -31,20 +33,19 @@ export function convertTimeToSeconds(timeString: string): number {
   return 0;
 }
 
-
 export function convertSecondsToTime(totalSeconds: number): string {
   if (totalSeconds === 0) {
     return "Instant";
   }
 
   // Units array, from largest to smallest, using the same constants
-  const units: Array<{ name: string, seconds: number }> = [
-    { name: 'year', seconds: SECONDS_IN.year },
-    { name: 'month', seconds: SECONDS_IN.month },
-    { name: 'day', seconds: SECONDS_IN.day },
-    { name: 'hour', seconds: SECONDS_IN.hour },
-    { name: 'minute', seconds: SECONDS_IN.minute },
-    { name: 'second', seconds: SECONDS_IN.second },
+  const units: Array<{ name: string; seconds: number }> = [
+    { name: "year", seconds: SECONDS_IN.year },
+    { name: "month", seconds: SECONDS_IN.month },
+    { name: "day", seconds: SECONDS_IN.day },
+    { name: "hour", seconds: SECONDS_IN.hour },
+    { name: "minute", seconds: SECONDS_IN.minute },
+    { name: "second", seconds: SECONDS_IN.second },
   ];
 
   for (const unit of units) {

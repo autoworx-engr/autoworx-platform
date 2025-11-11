@@ -31,6 +31,7 @@ import {
   CirclePlus,
   MessageCircleMore,
 } from "lucide-react";
+import { updateTagAutomationTrigger } from "@/service/tag-automation-trigger/api";
 
 interface PipelinesProps {
   pipelinesTitle: string;
@@ -264,6 +265,14 @@ export default function Pipelines({
           //     [key]: [...existingTags, selectedTag],
           //   };
           // });
+
+          updateTagAutomationTrigger({
+            columnId: result?.invoice?.columnId!,
+            companyId: result?.invoice?.companyId,
+            pipelineType: "SHOP",
+            tagId: result?.tagId,
+            invoiceId: result?.invoiceId,
+          });
         }
       } catch (error) {
         console.error("Error saving tag:", error);

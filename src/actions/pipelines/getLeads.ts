@@ -5,9 +5,10 @@ import { sendLeadStageChangeOrCloseNotification } from "@/lib/notification/pipel
 import { LeadWithSalesUser } from "@/types/invoiceLead";
 import { Prisma } from "@prisma/client";
 import moment from "moment-timezone";
-import { updateCommunicationAutomationTrigger } from "../automation/communication/triggerCommunicationAutomation";
 import { updatePipelineAutomationTrigger } from "../automation/pipeline/triggerPipelineAutomation";
 import { getCompanyTimezone } from "../settings/getCompanyTimezone";
+import { updateCommunicationAutomationTrigger } from "../automation/communication/triggerCommunicationAutomation";
+import { updateTagAutomationTrigger } from "../automation/tag/triggerTagAutomation";
 
 type TGetLeads = {
   columnId?: number;
@@ -700,6 +701,14 @@ export async function updateLeadColumn(leadId: number, newColumnId: number) {
     } catch (error) {
       console.log("updateCommunicationAutomationTrigger error", error);
     }
+
+    updateTagAutomationTrigger({
+      columnId: newColumnId,
+      companyId: companyId,
+      pipelineType: "SALES",
+      leadId: leadId,
+      conditionType: "post_tag",
+    });
 
     // revalidatePath("/dashboard/pipeline/sales/lead");
     // revalidatePath("/dashboard/pipeline/sales/pipeline");

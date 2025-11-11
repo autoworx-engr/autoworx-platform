@@ -1,5 +1,6 @@
 import { updateCommunicationAutomationTrigger } from "@/actions/automation/communication/triggerCommunicationAutomation";
 import { updatePipelineAutomationTrigger } from "@/actions/automation/pipeline/triggerPipelineAutomation";
+import { updateTagAutomationTrigger } from "@/actions/automation/tag/triggerTagAutomation";
 import { initialCreateClientChatTrack } from "@/actions/communication/client/chat-track";
 import { companyWithUser } from "@/actions/settings/getCompanyWithUser";
 import { db } from "@/lib/db";
@@ -330,6 +331,15 @@ export async function POST(request: NextRequest) {
       companyId: newLead.companyId,
       leadId: newLead.id,
       columnId: +(newLead?.columnId ?? 0),
+      generatedToken: newToken,
+    });
+
+    updateTagAutomationTrigger({
+      columnId: +(newLead?.columnId ?? 0),
+      companyId: newLead.companyId,
+      pipelineType: "SALES",
+      leadId: newLead.id,
+      conditionType: "post_tag",
       generatedToken: newToken,
     });
 

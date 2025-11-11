@@ -167,8 +167,7 @@ const TagRuleForm = ({
               ? Number(tagAutomationPipeline?.targetColumnId)
               : null,
           columnIds:
-            tagAutomationPostTag[0].columnIds.map((item: any) => item?.id) ||
-            [],
+            tagAutomationPostTag?.columnIds?.map((item: any) => item?.id) || [],
           communicationType:
             tagAutomationCommunication?.communicationType ?? "SMS",
           // templateType: payload.templateType ?? "SMS",
@@ -720,7 +719,7 @@ const TagRuleForm = ({
               value={formData.ruleType}
               onChange={handleChange}
               options={[
-                { label: "One-time", value: "one-time" },
+                { label: "One-time", value: "one_time" },
                 {
                   label: "Recurring (after condition is met)",
                   value: "recurring",

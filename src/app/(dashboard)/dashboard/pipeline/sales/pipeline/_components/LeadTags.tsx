@@ -7,6 +7,9 @@ import { LeadWithSalesUser } from "@/types/invoiceLead";
 import { removeLeadTag, saveLeadTag } from "@/actions/pipelines/leadTag";
 import { useColumnDispatch } from "@/context/sales-pipeline.context";
 import { actionTypes } from "@/constants/lead.constant";
+import { updateTagAutomationTrigger } from "@/service/tag-automation-trigger/api";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/authOptions";
 
 type TLeadTagsProps = {
   leadTags: {
@@ -51,6 +54,14 @@ export default function LeadTags({ leadTags, lead }: TLeadTagsProps) {
             leadId,
             tag: selectedTag,
           },
+        });
+
+        updateTagAutomationTrigger({
+          columnId: columnId,
+          companyId: result?.lead?.companyId,
+          pipelineType: "SALES",
+          tagId: result?.tagId,
+          leadId: result?.leadId,
         });
       }
     } catch (error) {
