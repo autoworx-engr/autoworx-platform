@@ -196,7 +196,7 @@ export default function CreateGroupModal({
           <span className="text-white absolute right-1 top-0 text-sm ">+</span>
         </button>
       </DialogTrigger>
-      <DialogContent className="w-[350px] sm:w-full">
+      <DialogContent className="max-w-[350px] sm:w-full sm:max-w-lg">
         {error && <p className="text-center text-sm text-red-400">{error}</p>}
         <h2 className="mb-5 text-2xl font-bold">Create Group</h2>
         <div className="grid grid-cols-1">
@@ -276,6 +276,7 @@ export default function CreateGroupModal({
                   getFindUsers();
                 }}
                 className="cursor-pointer"
+                rootClassName="overflow-hidden"
               />
               <ChevronDown
                 onClick={() => {

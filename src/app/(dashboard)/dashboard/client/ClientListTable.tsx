@@ -1,45 +1,36 @@
 "use client";
 
 import { cn } from "@/lib/cn";
+import { padId } from "@/lib/padId";
+import { useClientFilterStore } from "@/stores/clientFilter";
+import { Client, Source, Tag } from "@prisma/client";
+import { Pagination } from "antd"; // Importing the Pagination component from Ant Design
 import Link from "next/link";
-import React, { useEffect, useState } from "react";
 import DeleteClient from "./DeleteClient";
 import EditClient from "./EditClient";
-import { Pagination } from "antd"; // Importing the Pagination component from Ant Design
-import { padId } from "@/lib/padId";
+
+type TClientListTable = {
+  clients: (Client & { tag: Tag | null; source: Source | null })[];
+  needCompanyName?: boolean;
+  totalClients?: number;
+};
 
 const ClientListTable = ({
-  filteredClients,
-  randomIds,
+  clients,
   needCompanyName = false,
-}: {
-  filteredClients: any;
-  randomIds: { [key: number]: string };
-  needCompanyName?: boolean;
-}) => {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(50);
-  const [showPagination, setShowPagination] = useState(false);
-
-  useEffect(() => {
-    if (filteredClients.length > 10) {
-      setShowPagination(true);
-    } else {
-      setShowPagination(false);
-    }
-  }, [filteredClients]);
+  totalClients = 0,
+}: TClientListTable) => {
+  const { currentPage, setCurrentPage, pageSize, setPageSize } =
+    useClientFilterStore();
 
   const handlePageChange = (page: number, pageSize?: number) => {
-    setCurrentPage(page);
+    setCurrentPage(page ?? 0);
     if (pageSize) {
       setPageSize(pageSize);
     }
   };
 
-  const paginatedClients = filteredClients.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize,
-  );
+  const showPagination = totalClients > pageSize;
 
   return (
     <div className="app-shadow hidden w-full overflow-x-auto rounded-lg bg-background p-3 lg:block">
@@ -58,12 +49,12 @@ const ClientListTable = ({
         </thead>
 
         <tbody>
-          {paginatedClients.map((client: any, index: number) => (
+          {clients.map((client: any, index: number) => (
             <tr
               key={index}
               className={cn(
                 "py-3",
-                index % 2 === 0 ? "bg-background" : "bg-[#EEF4FF]",
+                index % 2 === 0 ? "bg-background" : "bg-[#EEF4FF]"
               )}
             >
               <td className="border-b px-4 py-2 text-left">
@@ -125,7 +116,7 @@ const ClientListTable = ({
             className="custom-pagination"
             current={currentPage}
             pageSize={pageSize}
-            total={filteredClients.length}
+            total={totalClients ?? 0}
             onChange={handlePageChange}
             showSizeChanger
             onShowSizeChange={handlePageChange}
