@@ -25,13 +25,9 @@ const EmployeeTable = ({
   totalEmployees?: number;
   needCompanyName?: boolean;
 }) => {
-  const { dateRange, search, type } = useEmployeeFilterStore();
-  const [currentPage, setCurrentPage] = useState(5);
-  const [pageSize, setPageSize] = useState(defaultPageSize);
+  const { dateRange, search, type, setPaginate, currentPage, pageSize } =
+    useEmployeeFilterStore();
   const [showPagination, setShowPagination] = useState(false);
-  // const [totalEmployeeCount, setTotalEmployeeCount] = useState(totalEmployees);
-  // const [employees, setEmployees] =
-  //   useState<UserWithSalaryHistory>(filteredEmployees);
 
   const { data, isLoading, isError } = useEmployeeQuery({
     currentPage,
@@ -42,8 +38,10 @@ const EmployeeTable = ({
     },
     searchTerm: search,
     type: type as any,
-    enabled: totalEmployees === 0,
+    enabled: filteredEmployees?.length === 0,
   });
+
+  console.log("Employee Table - Fetched Data:", data);
 
   let employees = filteredEmployees;
   let totalEmployeeCount = totalEmployees;
@@ -53,7 +51,7 @@ const EmployeeTable = ({
   }
 
   useEffect(() => {
-    setCurrentPage(1);
+    setPaginate({ currentPage: 1 });
   }, [type, search, dateRange[0], dateRange[1]]);
 
   useEffect(() => {
@@ -93,9 +91,9 @@ const EmployeeTable = ({
   // }, [pageSize, currentPage, type, search, dateRange[0], dateRange[1]]);
 
   const handlePageChange = (page: number, pageSize?: number) => {
-    setCurrentPage(page);
+    setPaginate({ currentPage: page });
     if (pageSize) {
-      setPageSize(pageSize);
+      setPaginate({ pageSize: pageSize });
     }
   };
   let content = null;
