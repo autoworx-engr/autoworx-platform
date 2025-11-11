@@ -44,8 +44,13 @@ export default function EditClientModalBody({
   const [openChangePassword, setOpenChangePassword] = useState(false);
   const { showError, clearError } = useFormErrorStore();
 
-  const { dateRange, search, type, currentPage, pageSize } =
-    useEmployeeFilterStore();
+  const {
+    dateRange,
+    search,
+    type: employeeType,
+    currentPage,
+    pageSize,
+  } = useEmployeeFilterStore();
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -203,7 +208,7 @@ export default function EditClientModalBody({
           EMPLOYEE_LIST_KEY,
           currentPage,
           pageSize,
-          type,
+          employeeType,
           search,
           dateRange[0],
           dateRange[1],
