@@ -44,7 +44,6 @@ type EmployeeParams = {
 };
 export const getEmployeesForPaginate = cache(
   async ({ companyId, page, take, filter }: EmployeeParams) => {
-    console.log({ filter: filter?.dateRange });
     const whereClause: Prisma.UserWhereInput = {
       companyId,
     };

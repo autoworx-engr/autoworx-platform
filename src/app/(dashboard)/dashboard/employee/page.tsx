@@ -1,7 +1,4 @@
-import { getEmployeesForPaginate } from "@/actions/employee/get";
 import Title from "@/components/Title";
-import { getCompanyId } from "@/lib/companyId";
-import { SalaryHistory, User } from "@prisma/client";
 import { PieChart } from "lucide-react";
 import Link from "next/link";
 import "react-date-range/dist/styles.css"; // main style file
@@ -11,13 +8,6 @@ import EmployeeTable from "./components/EmployeeTable";
 import TotalPayouts from "./TotalPayouts";
 
 export default async function Page() {
-  const companyId = await getCompanyId();
-  const { employees, totalEmployees } = await getEmployeesForPaginate({
-    companyId,
-    take: 50,
-    page: 1,
-  });
-
   return (
     <div className="h-full w-full space-y-8 px-2">
       <Title>Employee List</Title>
@@ -38,12 +28,7 @@ export default async function Page() {
 
       <EmployeeFilter />
 
-      <EmployeeTable
-        filteredEmployees={
-          employees as (User & { salaryHistory: SalaryHistory[] })[]
-        }
-        totalEmployees={totalEmployees}
-      />
+      <EmployeeTable />
     </div>
   );
 }
