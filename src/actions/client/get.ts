@@ -33,18 +33,13 @@ export default async function getClients({
 
     const clients = await db.client.findMany({
       where: whereConditions,
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-        mobile: true,
+      include: {
         tag: {
-          where: { type: "CLIENT" },
+          where: {
+            type: "CLIENT",
+          },
         },
-        source: true,
       },
-
       orderBy: {
         createdAt: "desc",
       },
