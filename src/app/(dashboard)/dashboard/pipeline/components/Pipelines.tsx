@@ -270,7 +270,7 @@ export default function Pipelines({
             columnId: result?.invoice?.columnId!,
             companyId: result?.invoice?.companyId,
             pipelineType: "SHOP",
-            tagId: result?.tagId,
+            tagId: selectedTag?.id,
             invoiceId: result?.invoiceId,
           });
         }

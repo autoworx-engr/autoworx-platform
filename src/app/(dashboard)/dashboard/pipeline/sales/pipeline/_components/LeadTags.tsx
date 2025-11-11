@@ -60,7 +60,7 @@ export default function LeadTags({ leadTags, lead }: TLeadTagsProps) {
           columnId: columnId,
           companyId: result?.lead?.companyId,
           pipelineType: "SALES",
-          tagId: result?.tagId,
+          tagId: selectedTag?.id,
           leadId: result?.leadId,
         });
       }
