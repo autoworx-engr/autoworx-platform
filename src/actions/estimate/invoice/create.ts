@@ -8,6 +8,7 @@ import { getProductWithQuantity } from "@/lib/getProductWithQuantity";
 import { sendEstimateCreateNotification } from "@/lib/notification/invoice-notify";
 import { updateInvoiceAutomationTrigger } from "@/service/invoice-automation-trigger/api";
 import { updateServiceAutomationTrigger } from "@/service/service-maintenance-automation-trigger/api";
+import { updateTagAutomationTrigger } from "@/service/tag-automation-trigger/api";
 import { InspectionType } from "@/stores/estimate-create";
 import { ServerAction } from "@/types/action";
 import { TErrorHandler } from "@/types/globalError";
@@ -506,6 +507,14 @@ export async function createInvoice({
         companyId: invoice?.companyId,
         estimateId: invoice?.id,
         columnId: invoice?.columnId!,
+      });
+
+      updateTagAutomationTrigger({
+        columnId: invoice?.columnId!,
+        companyId: invoice?.companyId,
+        pipelineType: "SHOP",
+        conditionType: "post_tag",
+        invoiceId: invoice?.id,
       });
     }
 
