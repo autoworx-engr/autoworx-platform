@@ -1,11 +1,10 @@
+import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
+import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
 import { cn } from "@/lib/cn";
 import { db } from "@/lib/db";
+import { formatCurrency } from "@/utils/formatCurrency";
 import { Service } from "@prisma/client";
 import moment from "moment-timezone";
-import React from "react";
-import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
-import { formatCurrency } from "@/utils/formatCurrency";
-import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
 
 const evenColor = "bg-background";
 const oddColor = "bg-[#F8FAFF]";
@@ -284,6 +283,15 @@ export default async function PaymentTab({
     });
   });
 
+  const paymentData = {
+    invoicesWithFull,
+    totalCustomerPaidAmount,
+    totalRefundedAmount,
+    totalAmount,
+    allTransactionEntries,
+    totalServices,
+  };
+
   return (
     <div className="w-full mx-auto h-full">
       {/* Section 1 */}
@@ -335,7 +343,10 @@ export default async function PaymentTab({
       </div>
 
       {/* Section 2 */}
-      <h3 className="mb-1 mt-3 lg:mt-12 font-semibold">Invoice Payments</h3>
+      <div className="flex items-center justify-between">
+        <h3 className="mb-1 mt-3 lg:mt-12 font-semibold">Invoice Payments</h3>
+        {/* <EditPayment paymentData={paymentData} /> */}
+      </div>
       <div className="h-[30%] overflow-scroll rounded-lg border md:rounded-none">
         {/* Desktop View */}
         <div className="hidden md:block ">
@@ -345,6 +356,7 @@ export default async function PaymentTab({
                 <th className="px-10 text-left">Invoice ID</th>
                 <th className="px-10 text-left">Vehicle</th>
                 <th className="px-10 text-left">Amount</th>
+                <th className="px-10 text-left">Method</th>
                 <th className="px-10 text-left">Cash Received</th>
                 <th className="px-10 text-left">Date</th>
                 <th className="text-nowrap px-10 text-left">Due</th>
@@ -371,6 +383,7 @@ export default async function PaymentTab({
                   <td className="px-10 text-left">
                     {formatCurrency(data.amountPaid)}
                   </td>
+                  <td className="px-10 text-left">{data.paymentMethod}</td>
                   <td className="px-10 text-left">
                     {data.paymentMethodInfo &&
                     "receivedCash" in data.paymentMethodInfo &&

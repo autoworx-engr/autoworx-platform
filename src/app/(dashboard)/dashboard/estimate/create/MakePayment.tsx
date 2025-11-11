@@ -22,7 +22,6 @@ import { useListsStore } from "@/stores/lists";
 import { additionalDataValidation } from "@/validations/schemas/payment/payment.validation";
 import { CardType, PaymentMethod, PaymentType } from "@prisma/client";
 import * as Tabs from "@radix-ui/react-tabs";
-import { CreditCard } from "lucide-react";
 import moment from "moment-timezone";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";

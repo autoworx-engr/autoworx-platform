@@ -381,7 +381,7 @@ const ServiceComponent = ({
             <div>
               <p className="mb-1 text-sm text-[#66738C]">Description</p>
               {!isEdit ? (
-                <p className="break-all text-[#66738C]">
+                <p className="break-all whitespace-pre-wrap text-[#66738C] ">
                   {service.description}
                 </p>
               ) : (
@@ -453,7 +453,9 @@ const ServiceComponent = ({
       </TableCell>
       <TableCell>
         {!isEdit ? (
-          <span className="max-w-[2rem] break-all">{service.description}</span>
+          <span className="max-w-[2rem] whitespace-pre-wrap break-all">
+            {service.description}
+          </span>
         ) : (
           <div>
             <textarea
