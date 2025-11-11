@@ -21,14 +21,53 @@ export default async function getClients({
     };
 
     if (search) {
-      whereConditions.OR = search
-        .split(" ")
-        .flatMap(searchText => [
-          { firstName: { contains: searchText } },
-          { lastName: { contains: searchText } },
-          { email: { contains: searchText } },
-          { mobile: { contains: searchText } },
-        ]);
+      const [first, last] = search.trim().split(" ");
+      whereConditions.OR = [
+        {
+          firstName: {
+            contains: search,
+            mode: "insensitive",
+          },
+        },
+        {
+          lastName: {
+            contains: search,
+            mode: "insensitive",
+          },
+        },
+        {
+          AND: [
+            first
+              ? {
+                  firstName: {
+                    contains: first,
+                    mode: "insensitive",
+                  },
+                }
+              : {},
+            last
+              ? {
+                  lastName: {
+                    contains: last,
+                    mode: "insensitive",
+                  },
+                }
+              : {},
+          ],
+        },
+        {
+          mobile: {
+            contains: search,
+            mode: "insensitive",
+          },
+        },
+        {
+          email: {
+            contains: search,
+            mode: "insensitive",
+          },
+        },
+      ];
     }
 
     const clients = await db.client.findMany({

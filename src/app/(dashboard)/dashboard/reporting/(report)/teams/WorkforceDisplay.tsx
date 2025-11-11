@@ -35,6 +35,7 @@ export default function WorkforceDisplay({
   take,
 }: TProps) {
   const isDesktop = useMediaQuery({ query: "(min-width: 640px)" });
+
   const [currentPage, setCurrentPage] = useState(page ?? 1);
   const [pageSize, setPageSize] = useState(take ?? 50); // Default page size set to 50
   const [showPagination, setShowPagination] = useState(false);
@@ -42,6 +43,14 @@ export default function WorkforceDisplay({
   const params = useSearchParams();
   const search = params.get("search");
   const pathname = usePathname();
+
+  useEffect(() => {
+    setCurrentPage(page ?? 1);
+  }, [page]);
+
+  useEffect(() => {
+    setPageSize(take ?? 50);
+  }, [take]);
 
   useEffect(() => {
     if (employees.length > 0) {
@@ -53,6 +62,7 @@ export default function WorkforceDisplay({
 
   const handlePageChange = (page: number, pageSize?: number) => {
     const searchParams = new URLSearchParams(params.toString());
+    setCurrentPage(page);
     searchParams.set("page", page.toString());
     if (pageSize) {
       setPageSize(pageSize);

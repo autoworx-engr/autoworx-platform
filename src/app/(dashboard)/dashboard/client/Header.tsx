@@ -21,10 +21,7 @@ export default function Header() {
   return (
     <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between lg:gap-0">
       <div className="flex w-full items-center gap-x-8 bg-background lg:w-fit">
-        <form
-          autoComplete="off"
-          className="flex w-full items-center gap-x-2 rounded-md border border-gray-300 px-4 py-1 text-gray-400 lg:w-[500px]"
-        >
+        <div className="flex w-full items-center gap-x-2 rounded-md border border-gray-300 px-4 py-1 text-gray-400 lg:w-[500px]">
           <span className="">
             <Search className="w-5 h-5" />
           </span>
@@ -43,7 +40,7 @@ export default function Header() {
             autoCorrect="off"
             spellCheck="false"
           />
-        </form>
+        </div>
       </div>
       <NewCustomer
         buttonElement={
