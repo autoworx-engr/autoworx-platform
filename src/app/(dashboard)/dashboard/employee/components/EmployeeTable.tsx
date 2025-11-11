@@ -12,6 +12,7 @@ import { padId } from "@/lib/padId";
 import { useEmployeeFilterStore } from "@/stores/employeeFilter";
 import ResponsiveEmployeeCard from "@/components/mobile-responsive/employee/ResponsiveEmployeeCard";
 import useEmployeeQuery from "../_hook/useEmployeeQuery";
+import { EmployeeTableSkeleton } from "./EmployeeTableSkeleton";
 
 const defaultPageSize = 20;
 type UserWithSalaryHistory = (User & { salaryHistory: SalaryHistory[] })[];
@@ -98,7 +99,7 @@ const EmployeeTable = ({
   };
   let content = null;
   if (isLoading && !isError) {
-    content = <div>Loading employees...</div>;
+    content = <EmployeeTableSkeleton />;
   } else if (isError && !isLoading) {
     content = <div>Error loading employees.</div>;
   } else if (!isError && !isLoading && employees.length === 0) {

@@ -32,7 +32,8 @@ export default function useEmployeeQuery({
       pageSize,
       type,
       searchTerm,
-      dateRange,
+      dateRange.startDate,
+      dateRange.endDate,
     ],
     queryFn: async () => {
       const companyId = await getCompanyId();

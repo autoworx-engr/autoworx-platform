@@ -7,10 +7,14 @@ import AddNewEmployee from "@/components/Lists/NewEmployee";
 import { useEffect, useState } from "react";
 import { Search } from "lucide-react";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useQueryClient } from "@tanstack/react-query";
+import { EMPLOYEE_LIST_KEY } from "../_hook/useEmployeeQuery";
 
 // filter component for /employee page
 export default function EmployeeFilter() {
-  const { setFilter, type } = useEmployeeFilterStore();
+  const { dateRange, search, type, currentPage, pageSize, setFilter } =
+    useEmployeeFilterStore();
+  const queryClient = useQueryClient();
   const [searchInput, setSearchInput] = useState("");
 
   useEffect(() => {
@@ -19,6 +23,19 @@ export default function EmployeeFilter() {
   const handleSearchChange = useDebounce((value: string) => {
     setFilter({ search: value });
   }, 500);
+  const handleAddEmployeeSuccess = () => {
+    queryClient.invalidateQueries({
+      queryKey: [
+        EMPLOYEE_LIST_KEY,
+        currentPage,
+        pageSize,
+        type,
+        search,
+        dateRange[0],
+        dateRange[1],
+      ],
+    });
+  };
   return (
     <div className="flex flex-col items-end gap-4 lg:flex-row lg:items-center lg:justify-between">
       <div className="flex w-full flex-wrap items-center gap-x-8 gap-y-4 lg:w-fit">
@@ -31,7 +48,7 @@ export default function EmployeeFilter() {
             type="text"
             className="w-full rounded-md px-4 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Search by employee ID, name, email or phone"
-            onChange={(e) => {
+            onChange={e => {
               setSearchInput(e.target.value);
               handleSearchChange(e.target.value.trim());
             }}
@@ -45,13 +62,13 @@ export default function EmployeeFilter() {
 
           <DropdownSelection
             dropDownValues={["All", "Sales", "Technician", "Manager", "Other"]}
-            onValueChange={(value) => setFilter({ type: value as any })}
+            onValueChange={value => setFilter({ type: value as any })}
             changesValue={type}
             buttonClassName="min-w-[100px] shadow-md"
           />
         </div>
       </div>
-      <AddNewEmployee />
+      <AddNewEmployee onSuccess={handleAddEmployeeSuccess} />
     </div>
   );
 }
