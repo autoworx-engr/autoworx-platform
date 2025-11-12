@@ -29,7 +29,7 @@ type TProps = {
       name: string;
       hasPermission: boolean;
       vehicleParts: VehicleParts[];
-      images: TechnicianImage[];
+      images?: TechnicianImage[];
     })[]
   >;
 };
@@ -101,7 +101,7 @@ export function InvoiceItems({
               invoiceId={item?.invoiceId as string}
               serviceId={item?.serviceId as number}
               writePermission={writePermission}
-              technicianList={techniciansPerItem[item.id] || []}
+              technicianList={(techniciansPerItem[item.id] || []) as any}
             />
           </div>
         )}

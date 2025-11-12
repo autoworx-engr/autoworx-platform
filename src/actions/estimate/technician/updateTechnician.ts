@@ -89,7 +89,6 @@ export const updateTechnician = async (
             fileUrl: url,
             uploadedAt: new Date(),
           })),
-         
         },
       },
     });
@@ -103,24 +102,6 @@ export const updateTechnician = async (
     });
 
     await addVehicleParts(vehicleParts, updatedTechnician.id);
-
-    // await db.technicianImage.deleteMany({
-    //   where: {
-    //     technicianId: updatedTechnician.id,
-    //   },
-    // });
-
-    // if (imageUrls && imageUrls.length > 0) {
-    //   const imageRecords = imageUrls
-    //   .filter(url => url)
-    //   .map((url) => ({
-    //     technicianId: updatedTechnician.id,
-    //     fileUrl: url,
-    //   }));
-    //   await db.technicianImage.createMany({
-    //     data: imageRecords,
-    //   });
-    // }
 
     const user = await db.user.findUnique({
       where: { id: payload.userId },

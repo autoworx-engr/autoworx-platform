@@ -36,7 +36,10 @@ import VehicleParts from "./VehicleParts";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import { ImageIcon, X } from "lucide-react";
-import { handleFileSelection, uploadAllAttachments } from "@/utils/handleFileAttachment";
+import {
+  handleFileSelection,
+  uploadAllAttachments,
+} from "@/utils/handleFileAttachment";
 
 type LocalAttachment = {
   fileUrl: string;
@@ -112,11 +115,9 @@ export default function CreateAndEditLabor({
   const [formData, setFormData] = useState<{
     attachments: (TechnicianImage | LocalAttachment)[];
   }>({
-    attachments: (technician?.images as (TechnicianImage | LocalAttachment)[]) || []
+    attachments:
+      (technician?.images as (TechnicianImage | LocalAttachment)[]) || [],
   });
-  const [uploadedImages, setUploadedImages] = useState<
-  { fileUrl: string; id?: number; uploadedAt?: Date }[]
->(technician?.images || []);
 
   const [imageUploadIsLoading, setImageUploadIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -162,7 +163,6 @@ export default function CreateAndEditLabor({
       setPriority(priority as Priority);
       setStatus(technicianStatus as TStatus);
       setEmployee(employeeList.find((e) => e.id === userId) || null);
-      setUploadedImages(images || []);
 
       setTechnicianNote(technicianNote as string);
       setFormData({ attachments: images || [] });
@@ -531,82 +531,92 @@ export default function CreateAndEditLabor({
             </div>
           </div>
         )}
+        {isTechnician ||
+        (isAdminOrManger &&
+          ((technicianNote && technicianNote.length > 0) ||
+            formData.attachments.length > 0)) ? (
+          <div className="space-y-4 mb-6 pb-4 border-b border-slate-200">
+            <h3 className="text-left text-lg font-bold">
+              Technician Work Details
+            </h3>
 
-        
-        <div className="space-y-4 mb-6 pb-4 border-b border-slate-200">
-          
-          
-          <div className="space-y-2">
-            <label className="mb-1 px-2 text-sm font-medium md:text-base">
-               Technician Work Details
-            </label>
-            {isTechnician ? (
-              <textarea
-                value={technicianNote}
-                onChange={(e) => setTechnicianNote(e.target.value)}
-                className="w-full h-28 resize-none rounded-lg border border-slate-300 bg-white p-3 text-sm shadow-sm transition-all focus:border-[#6571FF] focus:ring-2 focus:ring-[#6571FF]/20 placeholder:text-slate-400"
-                placeholder="Add work details, observations, and findings..."
-              />
-            ) : (
-              <div className="min-h-28 w-full rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600 shadow-sm">
-                {(technician as any)?.technicianNote ? (
-                  <p className="whitespace-pre-wrap text-slate-700">
-                    {(technician as any).technicianNote}
-                  </p>
-                ) : (
-                  <p className="text-slate-400">No work note added</p>
-                )}
-              </div>
-            )}
-          </div>
-
-     
-          <div className="space-y-2">
-            <label className="block text-xs font-medium text-slate-600">
-              Photo Attachments
-            </label>
-            <div className="rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 p-4">
-              <div className="flex flex-col gap-3">
-            
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className={`flex items-center justify-center gap-2 rounded-lg border-2 py-2.5 px-3 text-sm font-medium transition-all ${
-                    isTechnician
-                      ? "border-[#6571FF] bg-blue-50 text-[#6571FF] hover:bg-blue-100 cursor-pointer"
-                      : "border-slate-300 bg-slate-100 text-slate-500 cursor-not-allowed opacity-50"
-                  }`}
-                  disabled={!isTechnician}
-                >
-                  <ImageIcon size={16} />
-                  <span>{imageUploadIsLoading ? 'Uploading...' : isTechnician ? "Upload Photos" : "View Photos"}</span>
-                </button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  className="hidden"
-                  onChange={(e) =>
-                    handleFileSelection({
-                      event: e as any,
-                      formData,
-                      setFormData,
-                    })
-                  }
+            {/* Technician Note Input */}
+            <div className="space-y-2">
+              <label className="block text-base font-medium text-slate-600">
+                Work Note
+              </label>
+              {isTechnician ? (
+                <textarea
+                  value={technicianNote}
+                  onChange={(e) => setTechnicianNote(e.target.value)}
+                  className="h-32 w-full resize-none rounded-md border-2 border-slate-400 p-2 outline-none"
+                  placeholder="Add work details, observations, and findings..."
                 />
+              ) : isAdminOrManger &&
+                ((technicianNote && technicianNote.length > 0) ||
+                  (technician as any)?.images?.length > 0) ? (
+                <div className="min-h-28 w-full rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600 shadow-sm">
+                  {/* show technician note if exists */}
+                  {(technician as any)?.technicianNote || technicianNote ? (
+                    <p className="whitespace-pre-wrap text-slate-700">
+                      {(technician as any)?.technicianNote || technicianNote}
+                    </p>
+                  ) : (
+                    <p className="text-slate-400">No work note added</p>
+                  )}
+                </div>
+              ) : null}
+            </div>
 
-           
-                {formData.attachments && formData.attachments.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {formData.attachments.slice(0, 4).map((att, idx) => (
-                      <div key={idx} className="group relative">
-                        <img
-                          src={att.fileUrl || "/placeholder.svg"}
-                          alt={`attachment-${idx}`}
-                          className="h-20 w-20 rounded-md border border-slate-200 object-cover shadow-sm transition-transform group-hover:scale-105"
-                        />
-                        {isTechnician && (
+            {/* Photo Attachments Section */}
+            <div className="space-y-2">
+              <label className="block text-base font-medium text-slate-600">
+                Photo Attachments
+              </label>
+              <div className="rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 p-4">
+                <div className="flex flex-col gap-3">
+                  {/* Upload Button */}
+                  {isTechnician && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="flex items-center justify-center gap-2 rounded-lg border-2 border-[#6571FF] bg-blue-50 text-[#6571FF] hover:bg-blue-100 cursor-pointer py-2.5 px-3 text-sm font-medium transition-all"
+                      >
+                        <ImageIcon size={16} />
+                        <span>
+                          {imageUploadIsLoading
+                            ? "Uploading Photos"
+                            : "Upload Photo"}
+                        </span>
+                      </button>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        onChange={(e) =>
+                          handleFileSelection({
+                            event: e as any,
+                            formData,
+                            setFormData,
+                          })
+                        }
+                      />
+                    </>
+                  )}
+
+                  {/* Attachments Gallery */}
+                  {formData.attachments && formData.attachments.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {formData.attachments.map((att, idx) => (
+                        <div key={idx} className="group relative">
+                          <img
+                            src={att.fileUrl || "/placeholder.svg"}
+                            alt={`attachment-${idx}`}
+                            className="h-20 w-20 rounded-md border border-slate-200 object-cover shadow-sm transition-transform group-hover:scale-105"
+                          />
                           <button
                             type="button"
                             onClick={() => {
@@ -620,24 +630,19 @@ export default function CreateAndEditLabor({
                           >
                             <X size={14} strokeWidth={3} />
                           </button>
-                        )}
-                      </div>
-                    ))}
-                    {formData.attachments.length > 4 && (
-                      <div className="flex h-20 w-20 items-center justify-center rounded-md border-2 border-slate-300 bg-slate-100 text-xs font-semibold text-slate-600">
-                        +{formData.attachments.length - 4}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-center text-xs text-slate-400">
-                    No photos uploaded
-                  </p>
-                )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-center text-xs text-slate-400">
+                      No photos uploaded
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        ) : null}
         {/* select vehicle parts item */}{" "}
         <VehicleParts
           fromEdit={!!technician}
