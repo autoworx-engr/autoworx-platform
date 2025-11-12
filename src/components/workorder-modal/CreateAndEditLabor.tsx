@@ -19,6 +19,7 @@ import {
   VehicleParts as Parts,
   Priority,
   Technician,
+  TechnicianImage,
   User,
 } from "@prisma/client";
 import moment from "moment";
@@ -26,6 +27,7 @@ import {
   Dispatch,
   SetStateAction,
   useEffect,
+  useRef,
   useState,
   useTransition,
 } from "react";
@@ -33,7 +35,16 @@ import { Circles } from "react-loader-spinner"; // Importing the spinner
 import VehicleParts from "./VehicleParts";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
-import { X } from "lucide-react";
+import { ImageIcon, X } from "lucide-react";
+import { handleFileSelection, uploadAllAttachments } from "@/utils/handleFileAttachment";
+
+type LocalAttachment = {
+  fileUrl: string;
+  file?: File;
+  id: number | string;
+  isLocal?: boolean;
+  uploadedAt?: Date;
+};
 
 type TProps = {
   invoiceItemId: number;
@@ -43,6 +54,7 @@ type TProps = {
     name: string;
     hasPermission: boolean;
     vehicleParts: Parts[];
+    images: TechnicianImage[];
   };
   setTechnicians: Dispatch<
     SetStateAction<
@@ -50,6 +62,7 @@ type TProps = {
         name: string;
         hasPermission: boolean;
         vehicleParts: Parts[];
+        images: TechnicianImage[];
       })[]
     >
   >;
@@ -89,7 +102,24 @@ export default function CreateAndEditLabor({
     due: "",
     amount: "",
     note: "",
+    technicianNote: "",
   });
+
+  const [technicianNote, setTechnicianNote] = useState(
+    technician?.technicianNote || ""
+  );
+
+  const [formData, setFormData] = useState<{
+    attachments: (TechnicianImage | LocalAttachment)[];
+  }>({
+    attachments: (technician?.images as (TechnicianImage | LocalAttachment)[]) || []
+  });
+  const [uploadedImages, setUploadedImages] = useState<
+  { fileUrl: string; id?: number; uploadedAt?: Date }[]
+>(technician?.images || []);
+
+  const [imageUploadIsLoading, setImageUploadIsLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [priority, setPriority] = useState<Priority>("Low");
   const [loading, setLoading] = useState(false); // Loading state
 
@@ -116,6 +146,8 @@ export default function CreateAndEditLabor({
         priority,
         userId,
         status: technicianStatus,
+        technicianNote,
+        images,
       } = technician;
 
       const formattedDate = moment(date).utc().format("YYYY-MM-DD");
@@ -125,10 +157,15 @@ export default function CreateAndEditLabor({
         due: formattedDue,
         amount: amount?.toString() as string,
         note: note as string,
+        technicianNote: technicianNote as string,
       });
       setPriority(priority as Priority);
       setStatus(technicianStatus as TStatus);
       setEmployee(employeeList.find((e) => e.id === userId) || null);
+      setUploadedImages(images || []);
+
+      setTechnicianNote(technicianNote as string);
+      setFormData({ attachments: images || [] });
     }
   }, [technician, employeeList]);
   const handleChange = (
@@ -137,7 +174,7 @@ export default function CreateAndEditLabor({
     const { name, value } = event.target;
 
     // If user is a technician, don't allow changes to any field except status
-    if (isTechnician && name !== "status") {
+    if (isTechnician && name !== "status" && name !== "technicianNote") {
       return;
     }
 
@@ -170,8 +207,12 @@ export default function CreateAndEditLabor({
       setLoading(false); // Hide spinner
       return;
     }
+    let finalImageUrls: string[] = [];
     try {
+      finalImageUrls = await uploadAllAttachments(formData.attachments);
+      setImageUploadIsLoading(false);
       if (technician) {
+        setImageUploadIsLoading(true);
         // For technicians, only allow updating status, keep other fields from the original technician
         const updatedPayload = isTechnician
           ? {
@@ -179,6 +220,7 @@ export default function CreateAndEditLabor({
               due: new Date(technician.due || new Date()),
               amount: Number(technician.amount) || 0,
               note: technician.note || "",
+              technicianNote: technicianNote || "",
               userId: technician.userId,
               status,
               priority: technician.priority || "Low",
@@ -190,6 +232,7 @@ export default function CreateAndEditLabor({
               due: new Date(inputValues.due),
               amount: Number(inputValues.amount),
               note: inputValues.note,
+              technicianNote: technicianNote,
               userId: employee?.id,
               status,
               priority,
@@ -200,7 +243,8 @@ export default function CreateAndEditLabor({
         const response = await updateTechnician(
           technician.id,
           updatedPayload,
-          isTechnician ? technician.vehicleParts || [] : selectedVehicleParts
+          isTechnician ? technician.vehicleParts || [] : selectedVehicleParts,
+          finalImageUrls
         );
 
         if (response.type === "success") {
@@ -235,6 +279,7 @@ export default function CreateAndEditLabor({
           status,
           invoiceId,
           invoiceItemId,
+          technicianNote: technicianNote,
         };
         const response = await addTechnician(payload, selectedVehicleParts);
         if (response.type === "success") {
@@ -271,6 +316,7 @@ export default function CreateAndEditLabor({
         queryKey: queryKeys.getWorkOrderDataKey(invoiceId),
       });
       setLoading(false); // Hide spinner
+      setImageUploadIsLoading(false);
     }
   };
 
@@ -284,7 +330,10 @@ export default function CreateAndEditLabor({
       due: "",
       amount: "",
       note: "",
+      technicianNote: "",
     });
+    setTechnicianNote("");
+    setFormData({ attachments: [] });
     setStatus("Pending");
     setPriority("Low");
     setError("");
@@ -482,6 +531,113 @@ export default function CreateAndEditLabor({
             </div>
           </div>
         )}
+
+        
+        <div className="space-y-4 mb-6 pb-4 border-b border-slate-200">
+          
+          
+          <div className="space-y-2">
+            <label className="mb-1 px-2 text-sm font-medium md:text-base">
+               Technician Work Details
+            </label>
+            {isTechnician ? (
+              <textarea
+                value={technicianNote}
+                onChange={(e) => setTechnicianNote(e.target.value)}
+                className="w-full h-28 resize-none rounded-lg border border-slate-300 bg-white p-3 text-sm shadow-sm transition-all focus:border-[#6571FF] focus:ring-2 focus:ring-[#6571FF]/20 placeholder:text-slate-400"
+                placeholder="Add work details, observations, and findings..."
+              />
+            ) : (
+              <div className="min-h-28 w-full rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600 shadow-sm">
+                {(technician as any)?.technicianNote ? (
+                  <p className="whitespace-pre-wrap text-slate-700">
+                    {(technician as any).technicianNote}
+                  </p>
+                ) : (
+                  <p className="text-slate-400">No work note added</p>
+                )}
+              </div>
+            )}
+          </div>
+
+     
+          <div className="space-y-2">
+            <label className="block text-xs font-medium text-slate-600">
+              Photo Attachments
+            </label>
+            <div className="rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 p-4">
+              <div className="flex flex-col gap-3">
+            
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className={`flex items-center justify-center gap-2 rounded-lg border-2 py-2.5 px-3 text-sm font-medium transition-all ${
+                    isTechnician
+                      ? "border-[#6571FF] bg-blue-50 text-[#6571FF] hover:bg-blue-100 cursor-pointer"
+                      : "border-slate-300 bg-slate-100 text-slate-500 cursor-not-allowed opacity-50"
+                  }`}
+                  disabled={!isTechnician}
+                >
+                  <ImageIcon size={16} />
+                  <span>{imageUploadIsLoading ? 'Uploading...' : isTechnician ? "Upload Photos" : "View Photos"}</span>
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={(e) =>
+                    handleFileSelection({
+                      event: e as any,
+                      formData,
+                      setFormData,
+                    })
+                  }
+                />
+
+           
+                {formData.attachments && formData.attachments.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {formData.attachments.slice(0, 4).map((att, idx) => (
+                      <div key={idx} className="group relative">
+                        <img
+                          src={att.fileUrl || "/placeholder.svg"}
+                          alt={`attachment-${idx}`}
+                          className="h-20 w-20 rounded-md border border-slate-200 object-cover shadow-sm transition-transform group-hover:scale-105"
+                        />
+                        {isTechnician && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFormData((prev) => ({
+                                attachments: prev.attachments.filter(
+                                  (_, i) => i !== idx
+                                ),
+                              }));
+                            }}
+                            className="absolute -top-2 -right-2 rounded-full bg-red-500 p-1 text-white shadow-md opacity-0 transition-opacity group-hover:opacity-100"
+                          >
+                            <X size={14} strokeWidth={3} />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    {formData.attachments.length > 4 && (
+                      <div className="flex h-20 w-20 items-center justify-center rounded-md border-2 border-slate-300 bg-slate-100 text-xs font-semibold text-slate-600">
+                        +{formData.attachments.length - 4}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-center text-xs text-slate-400">
+                    No photos uploaded
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
         {/* select vehicle parts item */}{" "}
         <VehicleParts
           fromEdit={!!technician}

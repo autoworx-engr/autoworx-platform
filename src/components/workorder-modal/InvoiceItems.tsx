@@ -5,7 +5,7 @@ import type { db } from "@/lib/db";
 import React, { useState } from "react";
 import LaborItems from "./LaborItems";
 import ReDoModal from "./ReDoModal";
-import { Technician, VehicleParts } from "@prisma/client";
+import { Technician, TechnicianImage, VehicleParts } from "@prisma/client";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
 type TProps = {
@@ -29,6 +29,7 @@ type TProps = {
       name: string;
       hasPermission: boolean;
       vehicleParts: VehicleParts[];
+      images: TechnicianImage[];
     })[]
   >;
 };

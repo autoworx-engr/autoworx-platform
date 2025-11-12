@@ -21,12 +21,14 @@ type TechnicianInput = {
   userId: number;
   serviceId: number;
   invoiceId: string;
+  technicianNote: string;
 };
 
 export const updateTechnician = async (
   technicianId: number,
   payload: TechnicianInput,
-  vehicleParts: Partial<VehicleParts>[]
+  vehicleParts: Partial<VehicleParts>[],
+  imageUrls: string[]
 ): Promise<ServerAction | TErrorHandler> => {
   try {
     // if (!payload) {
@@ -53,12 +55,42 @@ export const updateTechnician = async (
       date: normalizedDate,
     });
 
+    const existingTechnician = await db.technician.findUnique({
+      where: { id: technicianId },
+      include: {
+        images: true,
+        user: true,
+      },
+    });
+
+    if (!existingTechnician) {
+      return { type: "globalError", message: "Technician record not found." };
+    }
+
+    const existingUrls = existingTechnician.images.map((img) => img.fileUrl);
+
+    const urlsToAdd = imageUrls.filter((url) => !existingUrls.includes(url));
+
+    const urlsToRemove = existingUrls.filter((url) => !imageUrls.includes(url));
+
     const updatedTechnician = await db.technician.update({
       where: { id: technicianId },
       data: {
         ...payload,
         date: normalizedDate,
         dateClosed: payload.status === "Complete" ? new Date() : null,
+        images: {
+          deleteMany: {
+            fileUrl: {
+              in: urlsToRemove,
+            },
+          },
+          create: urlsToAdd.map((url) => ({
+            fileUrl: url,
+            uploadedAt: new Date(),
+          })),
+         
+        },
       },
     });
 
@@ -71,6 +103,24 @@ export const updateTechnician = async (
     });
 
     await addVehicleParts(vehicleParts, updatedTechnician.id);
+
+    // await db.technicianImage.deleteMany({
+    //   where: {
+    //     technicianId: updatedTechnician.id,
+    //   },
+    // });
+
+    // if (imageUrls && imageUrls.length > 0) {
+    //   const imageRecords = imageUrls
+    //   .filter(url => url)
+    //   .map((url) => ({
+    //     technicianId: updatedTechnician.id,
+    //     fileUrl: url,
+    //   }));
+    //   await db.technicianImage.createMany({
+    //     data: imageRecords,
+    //   });
+    // }
 
     const user = await db.user.findUnique({
       where: { id: payload.userId },
