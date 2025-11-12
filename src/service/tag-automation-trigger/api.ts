@@ -13,7 +13,6 @@ type TUpdateTagAutomationTrigger = {
 export const updateTagAutomationTrigger = async function (
   payload: TUpdateTagAutomationTrigger
 ) {
-  console.log("payload", payload);
   try {
     const response = await axiosInstance.patch(
       "/tag-automation-trigger",

@@ -10,6 +10,8 @@ import { getCompanyTimezone } from "../settings/getCompanyTimezone";
 import { updateCommunicationAutomationTrigger } from "../automation/communication/triggerCommunicationAutomation";
 import { updateTagAutomationTrigger } from "../automation/tag/triggerTagAutomation";
 
+import { actionTypes } from "@/constants/lead.constant";
+
 type TGetLeads = {
   columnId?: number;
   searchTerm?: string;
@@ -38,6 +40,7 @@ export const getLeads = async ({
   const companyId = await getCompanyId();
   const companyTimezone = await getCompanyTimezone();
   const timezone = companyTimezone?.timezone;
+
   try {
     const query: Prisma.LeadWhereInput = {
       companyId,
@@ -702,13 +705,25 @@ export async function updateLeadColumn(leadId: number, newColumnId: number) {
       console.log("updateCommunicationAutomationTrigger error", error);
     }
 
-    updateTagAutomationTrigger({
+    const response = await updateTagAutomationTrigger({
       columnId: newColumnId,
       companyId: companyId,
       pipelineType: "SALES",
       leadId: leadId,
       conditionType: "post_tag",
     });
+
+    // if (response?.success) {
+    //   console.log("response", response?.data);
+    //   dispatch({
+    //     type: actionTypes.AUTOMATION_TRIGGER,
+    //     payload: {
+    //       columnId: newColumnId,
+    //       leadId,
+    //       tag: selectedTag,
+    //     },
+    //   });
+    // }
 
     // revalidatePath("/dashboard/pipeline/sales/lead");
     // revalidatePath("/dashboard/pipeline/sales/pipeline");
