@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
+import { useEffect, useMemo, useState } from "react";
 import moment from "moment";
 import { TechnicianPhoto } from "./workorder-modal/WorkOrderModalBody";
 import { deleteTechnicianImage } from "@/actions/estimate/technician/deleteTechnicianImage";
@@ -20,19 +19,31 @@ export function ImagesDialogContent({
 }) {
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
-  // local state so we can optimistically delete
   const [photosState, setPhotosState] = useState<TechnicianPhoto[]>(
     technicianPhotos || []
   );
   const queryClient = useQueryClient();
   const currentUser = useGetCurrentUser();
-   const isAdminOrManager = useIsAdminOrManager();
-  console.log("currentUser", currentUser);
+  const isAdminOrManager = useIsAdminOrManager();
+
   useEffect(() => {
     if (technicianPhotos) {
       setPhotosState(technicianPhotos);
+      setSelectedIds([]);
     }
   }, [technicianPhotos]);
+
+  const selectableIds = useMemo(
+    () =>
+      photosState
+        .filter((p) => currentUser?.id === p.technicianId || isAdminOrManager)
+        .map((p) => p.id as number),
+    [photosState, currentUser?.id, isAdminOrManager]
+  );
+
+  const allSelectableSelected =
+    selectableIds.length > 0 &&
+    selectableIds.every((id) => selectedIds.includes(id));
 
   function toggleSelect(id?: number) {
     if (!id) return;
@@ -121,37 +132,83 @@ export function ImagesDialogContent({
 
   const twilioCredentials = true;
   return (
-    <div>
-      <div className="flex flex-col gap-4 border-b border-border pb-4 p-4 md:flex-row md:items-center md:justify-between">
-        <div className="flex-1">
-          <h2 className="text-xl font-bold text-foreground md:text-2xl">
+    <div className="flex flex-col gap-4">
+      {/* Header */}
+      <div className="flex flex-col gap-4 border-b border-border bg-background p-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-1">
+          <h2 className="text-xl font-semibold text-foreground md:text-2xl">
             Images
           </h2>
-          <p className="text-xs text-muted-foreground mt-1 md:text-sm">
+          <p className="text-xs text-muted-foreground md:text-sm">
             {photosState.length} {photosState.length === 1 ? "photo" : "photos"}{" "}
             total
           </p>
         </div>
 
         {selectedIds.length > 0 && (
-          <ImagesDialogueShareButtons
-            handleCopyShare={handleCopyShare}
-            handleEmailShare={handleEmailShare}
-            handleSmsShare={handleSmsShare}
-            twilioCredentials={twilioCredentials}
-          />
+          <div className="flex flex-col items-start gap-2 md:items-end">
+            <span className="text-xs text-muted-foreground md:text-sm">
+              {selectedIds.length} selected
+            </span>
+            <ImagesDialogueShareButtons
+              handleCopyShare={handleCopyShare}
+              handleEmailShare={handleEmailShare}
+              handleSmsShare={handleSmsShare}
+              twilioCredentials={twilioCredentials}
+            />
+          </div>
         )}
       </div>
 
-      <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {/* Selection toolbar */}
+      <div className="flex items-center justify-between px-4">
+        <div className="flex flex-col gap-0.5">
+          <h3 className="text-sm font-medium text-foreground">
+            Selected images
+          </h3>
+          <p className="text-xs text-muted-foreground">
+            {selectedIds.length} of {photosState.length} selected
+          </p>
+        </div>
+
+        <button
+          onClick={() => {
+            if (selectableIds.length === 0) return;
+
+            if (allSelectableSelected) {
+              // unselect all selectable
+              setSelectedIds((s) =>
+                s.filter((id) => !selectableIds.includes(id))
+              );
+            } else {
+              // add all selectable ids
+              setSelectedIds((s) =>
+                Array.from(new Set([...s, ...selectableIds]))
+              );
+            }
+          }}
+          disabled={selectableIds.length === 0}
+          className="rounded-md px-3 py-1 text-xs font-medium text-white disabled:cursor-not-allowed disabled:opacity-60 md:text-sm bg-[#6571FF]"
+        >
+          {selectableIds.length === 0
+            ? "No selectable images"
+            : allSelectableSelected
+              ? "Unselect all"
+              : "Select all"}
+        </button>
+      </div>
+
+      {/* Images grid */}
+      <div className="mt-1 grid grid-cols-1 gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3">
         {photosState.length === 0 && (
-          <p className="col-span-full text-sm text-muted-foreground">
+          <p className="col-span-full rounded-md border border-dashed border-border bg-muted/30 p-4 text-sm text-muted-foreground text-center">
             No images available
           </p>
         )}
 
         {photosState.map((img) => (
           <ImageContentCard
+            key={img.id}
             img={img}
             selectedIds={selectedIds}
             toggleSelect={toggleSelect}
