@@ -24,7 +24,16 @@ import SaveWorkOrderBtn from "./SaveWorkOrderBtn";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import { time } from "console";
+import { TechnicianImage } from "@prisma/client";
 
+export interface TechnicianPhoto {
+  id: number | string;
+  photo: string;
+  technicianName: string;
+  timestamp: string;
+  invoiceId?: string;
+  technicianId?: number;
+}
 export default function WorkOrderModalBody({
   invoiceId,
   setOpen,
@@ -79,6 +88,38 @@ export default function WorkOrderModalBody({
     techniciansPerItem,
   } = data as IWorkOrderData;
 
+  console.log("work order data:", techniciansPerItem);
+
+  const getTechnicianPhotos = (): TechnicianPhoto[] => {
+    const finalPhotosArray: TechnicianPhoto[] = [];
+
+    const allTechnicians = Object.values(techniciansPerItem).flat();
+
+    allTechnicians.forEach((t) => {
+      const technicianName = t.name || "Unknown Technician";
+  
+
+      if (t.images && t.images.length > 0) {
+        t.images.forEach((image) => {
+          finalPhotosArray.push({
+            id: image.id,
+            photo: image.fileUrl,
+            technicianName: technicianName,
+            invoiceId: invoice?.id,
+            technicianId: image.technicianId,
+            timestamp: image.uploadedAt
+              ? new Date(image.uploadedAt).toISOString()
+              : new Date().toISOString(),
+          });
+        });
+      }
+    });
+
+    return finalPhotosArray;
+  };
+
+  const technicianPhotos = getTechnicianPhotos();
+  console.log("Technician Photos:", technicianPhotos);
   return (
     <DialogContent className="h-full min-w-fit overflow-y-auto sm:max-w-[740px] lg:h-fit">
       <div className="mt-4 flex items-center justify-between gap-1 lg:mt-4">
@@ -187,12 +228,9 @@ export default function WorkOrderModalBody({
               </button>
             </DialogTrigger>
 
-            <DialogPortal>
-              <DialogOverlay />
-              <DialogContent className="min-w-[560px] max-w-3xl">
-                <ImagesDialogContent />
-              </DialogContent>
-            </DialogPortal>
+            <DialogContent className="min-w-[560px] max-w-3xl overflow-y-auto h-full lg:h-fit">
+              <ImagesDialogContent technicianPhotos={technicianPhotos} />
+            </DialogContent>
           </Dialog>
         </div> */}
       </div>
