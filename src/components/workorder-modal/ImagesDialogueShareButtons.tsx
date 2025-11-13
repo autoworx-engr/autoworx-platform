@@ -15,7 +15,7 @@ export const ImagesDialogueShareButtons = ({handleEmailShare,handleSmsShare,  ha
                         Share via
                       </span>
                       <Popconfirm
-                        title="Send invoice via Email now?"
+                        title="Send image via Email now?"
                         onConfirm={handleEmailShare}
                         okText="Yes"
                         cancelText="No"
@@ -27,7 +27,7 @@ export const ImagesDialogueShareButtons = ({handleEmailShare,handleSmsShare,  ha
                       </Popconfirm>
                       {twilioCredentials && (
                         <Popconfirm
-                          title="Send invoice via SMS now?"
+                          title="Send image via SMS now?"
                           onConfirm={handleSmsShare}
                           okText="Yes"
                           cancelText="No"
