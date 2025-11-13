@@ -62,9 +62,6 @@ export const ImageContentCard = ({
           <p className="text-muted-foreground">
             {moment(img.timestamp).format("MMM DD, YYYY hh:mm A")}
           </p>
-          {img.invoiceId && (
-            <p className="text-muted-foreground">Invoice: {img.invoiceId}</p>
-          )}
         </div>
       </div>
     </div>
