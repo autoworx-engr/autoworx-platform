@@ -55,6 +55,7 @@ export const updateTechnician = async (
       date: normalizedDate,
     });
 
+
     const existingTechnician = await db.technician.findUnique({
       where: { id: technicianId },
       include: {
@@ -64,7 +65,7 @@ export const updateTechnician = async (
     });
 
     if (!existingTechnician) {
-      return { type: "globalError", message: "Technician record not found." };
+      return {success: false, message:"Technician not exist in database"}
     }
 
     const existingUrls = existingTechnician.images.map((img) => img.fileUrl);
