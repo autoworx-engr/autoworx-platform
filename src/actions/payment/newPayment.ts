@@ -5,6 +5,7 @@ import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import { sendPaymentReceivedNotification } from "@/lib/notification/payment-notify";
 import { updateInvoiceAutomationTrigger } from "@/service/invoice-automation-trigger/api";
+import { updateTagAutomationTrigger } from "@/service/tag-automation-trigger/api";
 import { ServerAction } from "@/types/action";
 import { TErrorHandler } from "@/types/globalError";
 import { createPaymentValidationSchema } from "@/validations/schemas/payment/payment.validation";
@@ -69,11 +70,11 @@ export async function newPayment({
 
     // transaction use for payment process
     const { newPayment, invoice } = await db.$transaction(
-      async tx => {
+      async (tx) => {
         // Get current invoice to calculate due after payment
         const currentInvoice = await tx.invoice.findUnique({
           where: { id: invoiceId },
-          select: { due: true }
+          select: { due: true },
         });
 
         if (!currentInvoice) {
@@ -261,6 +262,14 @@ export async function newPayment({
           invoiceId: invoice?.id!,
           columnId: invoice?.columnId!,
           type: invoice?.type!,
+        });
+
+        updateTagAutomationTrigger({
+          columnId: invoice?.columnId!,
+          companyId: invoice?.companyId!,
+          pipelineType: "SHOP",
+          conditionType: "post_tag",
+          invoiceId: invoice?.id!,
         });
 
         return { newPayment, invoice };

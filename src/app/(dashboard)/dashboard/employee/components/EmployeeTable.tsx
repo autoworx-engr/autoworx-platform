@@ -9,33 +9,50 @@ import DeleteEmployee from "../DeleteEmployee";
 import { SalaryHistory, User } from "@prisma/client";
 import { Pagination } from "antd"; // Importing the Pagination component from Ant Design
 import { padId } from "@/lib/padId";
-import { getEmployeesForPaginate } from "@/actions/employee/get";
-import { getCompanyId } from "@/lib/companyId";
 import { useEmployeeFilterStore } from "@/stores/employeeFilter";
 import ResponsiveEmployeeCard from "@/components/mobile-responsive/employee/ResponsiveEmployeeCard";
+import useEmployeeQuery from "../_hook/useEmployeeQuery";
+import { EmployeeTableSkeleton } from "./EmployeeTableSkeleton";
 
 const defaultPageSize = 20;
 type UserWithSalaryHistory = (User & { salaryHistory: SalaryHistory[] })[];
 
 const EmployeeTable = ({
-  filteredEmployees,
-  totalEmployees,
+  filteredEmployees = [],
   needCompanyName = false,
+  totalEmployees = 0,
 }: {
-  filteredEmployees: UserWithSalaryHistory;
-  totalEmployees: number;
+  filteredEmployees?: UserWithSalaryHistory;
+  totalEmployees?: number;
   needCompanyName?: boolean;
 }) => {
-  const { dateRange, search, type } = useEmployeeFilterStore();
-  const [currentPage, setCurrentPage] = useState(5);
-  const [pageSize, setPageSize] = useState(defaultPageSize);
+  const { dateRange, search, type, setPaginate, currentPage, pageSize } =
+    useEmployeeFilterStore();
   const [showPagination, setShowPagination] = useState(false);
-  const [totalEmployeeCount, setTotalEmployeeCount] = useState(totalEmployees);
-  const [employees, setEmployees] =
-    useState<UserWithSalaryHistory>(filteredEmployees);
+
+  const { data, isLoading, isError } = useEmployeeQuery({
+    currentPage,
+    pageSize,
+    dateRange: {
+      startDate: dateRange[0],
+      endDate: dateRange[1],
+    },
+    searchTerm: search,
+    type: type as any,
+    enabled: filteredEmployees?.length === 0,
+  });
+
+  console.log("Employee Table - Fetched Data:", data);
+
+  let employees = filteredEmployees;
+  let totalEmployeeCount = totalEmployees;
+  if (filteredEmployees?.length === 0 && data && data?.employees.length > 0) {
+    employees = data.employees as UserWithSalaryHistory;
+    totalEmployeeCount = data?.totalEmployees || 0;
+  }
 
   useEffect(() => {
-    setCurrentPage(1);
+    setPaginate({ currentPage: 1 });
   }, [type, search, dateRange[0], dateRange[1]]);
 
   useEffect(() => {
@@ -46,48 +63,50 @@ const EmployeeTable = ({
     }
   }, [totalEmployeeCount]);
 
-  useEffect(() => {
-    const fetchedEmployees = async () => {
-      try {
-        const companyId = await getCompanyId();
-        const response = await getEmployeesForPaginate({
-          companyId,
-          page: currentPage,
-          take: pageSize,
-          filter: {
-            type: type !== "All" ? (type as any) : undefined,
-            searchParams: search || undefined,
-            dateRange:
-              dateRange[0] && dateRange[1]
-                ? { startDate: dateRange[0], endDate: dateRange[1] }
-                : undefined,
-          },
-        });
-        const { employees, totalEmployees } = response || {};
-        console.log("Fetched Employees:", employees);
-        setEmployees(employees as UserWithSalaryHistory);
-        setTotalEmployeeCount(totalEmployees);
-      } catch (error) {
-        console.error("Error fetching employees for pagination:", error);
-      }
-    };
-    fetchedEmployees();
-  }, [pageSize, currentPage, type, search, dateRange[0], dateRange[1]]);
+  // useEffect(() => {
+  //   const fetchedEmployees = async () => {
+  //     try {
+  //       const companyId = await getCompanyId();
+  //       const response = await getEmployeesForPaginate({
+  //         companyId,
+  //         page: currentPage,
+  //         take: pageSize,
+  //         filter: {
+  //           type: type !== "All" ? (type as any) : undefined,
+  //           searchParams: search || undefined,
+  //           dateRange:
+  //             dateRange[0] && dateRange[1]
+  //               ? { startDate: dateRange[0], endDate: dateRange[1] }
+  //               : undefined,
+  //         },
+  //       });
+  //       const { employees, totalEmployees } = response || {};
+  //       console.log("Fetched Employees:", employees);
+  //       setEmployees(employees as UserWithSalaryHistory);
+  //       setTotalEmployeeCount(totalEmployees);
+  //     } catch (error) {
+  //       console.error("Error fetching employees for pagination:", error);
+  //     }
+  //   };
+  //   fetchedEmployees();
+  // }, [pageSize, currentPage, type, search, dateRange[0], dateRange[1]]);
 
   const handlePageChange = (page: number, pageSize?: number) => {
-    setCurrentPage(page);
+    setPaginate({ currentPage: page });
     if (pageSize) {
-      setPageSize(pageSize);
+      setPaginate({ pageSize: pageSize });
     }
   };
-
-  return (
-    <>
-      <div className="h-[60%] overflow-y-auto lg:hidden">
-        {employees.map((employee, index) => (
-          <ResponsiveEmployeeCard key={index} data={employee} index={index} />
-        ))}
-      </div>
+  let content = null;
+  if (isLoading && !isError) {
+    content = <EmployeeTableSkeleton />;
+  } else if (isError && !isLoading) {
+    content = <div>Error loading employees.</div>;
+  } else if (!isError && !isLoading && employees.length === 0) {
+    content = <div>No employees found.</div>;
+  } else {
+    // continue to render the table
+    content = (
       <div className="app-shadow hidden overflow-x-auto rounded-lg bg-background p-2 lg:block">
         <table className="w-full">
           <thead>
@@ -184,6 +203,17 @@ const EmployeeTable = ({
           </tbody>
         </table>
       </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="h-[60%] overflow-y-auto lg:hidden">
+        {employees.map((employee, index) => (
+          <ResponsiveEmployeeCard key={index} data={employee} index={index} />
+        ))}
+      </div>
+      {content}
       {showPagination && (
         <div className="mt-4 pb-6 lg:pb-0 flex justify-end">
           <Pagination

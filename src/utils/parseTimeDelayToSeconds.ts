@@ -1,5 +1,5 @@
 export const parseTimeDelayToSeconds = (input: any): number | null => {
-  const [rawTime, ...unitParts] = input.trim().toLowerCase().split(" ");
+  const [rawTime, ...unitParts] = input?.trim()?.toLowerCase().split(" ");
   const time = parseFloat(rawTime);
   const unit = unitParts.join(" ").replace(/s$/, "");
 
