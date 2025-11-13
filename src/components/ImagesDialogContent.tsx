@@ -11,6 +11,7 @@ import { ImagesDialogueShareButtons } from "./workorder-modal/ImagesDialogueShar
 import { ImageContentCard } from "./workorder-modal/ImageContentCard";
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
 import { useIsAdminOrManager } from "@/utils/useIsAdminOrManager";
+import { SelectionToolbar } from "./workorder-modal/SelectionToolbar";
 
 export function ImagesDialogContent({
   technicianPhotos,
@@ -146,57 +147,23 @@ export function ImagesDialogContent({
         </div>
 
         {selectedIds.length > 0 && (
-          <div className="flex flex-col items-start gap-2 md:items-end">
-            <span className="text-xs text-muted-foreground md:text-sm">
-              {selectedIds.length} selected
-            </span>
-            <ImagesDialogueShareButtons
-              handleCopyShare={handleCopyShare}
-              handleEmailShare={handleEmailShare}
-              handleSmsShare={handleSmsShare}
-              twilioCredentials={twilioCredentials}
-            />
-          </div>
+          <ImagesDialogueShareButtons
+            handleCopyShare={handleCopyShare}
+            handleEmailShare={handleEmailShare}
+            handleSmsShare={handleSmsShare}
+            twilioCredentials={twilioCredentials}
+          />
         )}
       </div>
 
       {/* Selection toolbar */}
-      <div className="flex items-center justify-between px-4">
-        <div className="flex flex-col gap-0.5">
-          <h3 className="text-sm font-medium text-foreground">
-            Selected images
-          </h3>
-          <p className="text-xs text-muted-foreground">
-            {selectedIds.length} of {photosState.length} selected
-          </p>
-        </div>
-
-        <button
-          onClick={() => {
-            if (selectableIds.length === 0) return;
-
-            if (allSelectableSelected) {
-              // unselect all selectable
-              setSelectedIds((s) =>
-                s.filter((id) => !selectableIds.includes(id))
-              );
-            } else {
-              // add all selectable ids
-              setSelectedIds((s) =>
-                Array.from(new Set([...s, ...selectableIds]))
-              );
-            }
-          }}
-          disabled={selectableIds.length === 0}
-          className="rounded-md px-3 py-1 text-xs font-medium text-white disabled:cursor-not-allowed disabled:opacity-60 md:text-sm bg-[#6571FF]"
-        >
-          {selectableIds.length === 0
-            ? "No selectable images"
-            : allSelectableSelected
-              ? "Unselect all"
-              : "Select all"}
-        </button>
-      </div>
+      <SelectionToolbar
+        selectedIds={selectedIds}
+        photosState={photosState}
+        selectableIds={selectableIds}
+        allSelectableSelected={allSelectableSelected}
+        setSelectedIds={setSelectedIds}
+      />
 
       {/* Images grid */}
       <div className="mt-1 grid grid-cols-1 gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3">
