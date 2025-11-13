@@ -56,13 +56,23 @@ export default function LeadTags({ leadTags, lead }: TLeadTagsProps) {
           },
         });
 
-        updateTagAutomationTrigger({
+        const response = await updateTagAutomationTrigger({
           columnId: columnId,
           companyId: result?.lead?.companyId,
           pipelineType: "SALES",
           tagId: selectedTag?.id,
           leadId: result?.leadId,
         });
+        // console.log("response", response?.data);
+        // if (response?.success) {
+        //   dispatch({
+        //     type: actionTypes.AUTOMATION_TRIGGER,
+        //     payload: {
+        //       updatedLead: response.data,
+        //       previousColumnId: columnId,
+        //     },
+        //   });
+        // }
       }
     } catch (error) {
       console.error("Error adding tag:", error);
