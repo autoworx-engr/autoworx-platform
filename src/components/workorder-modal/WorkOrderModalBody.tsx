@@ -179,7 +179,7 @@ export default function WorkOrderModalBody({
         />
 
         {/* see images dialog trigger (uses its own internal state) */}
-        <div className="absolute right-16 top-0">
+        {/* <div className="absolute right-16 top-0">
           <Dialog>
             <DialogTrigger asChild>
               <button className="bg-[#6571ff] text-white px-5 py-0.5 rounded-md">
@@ -194,7 +194,7 @@ export default function WorkOrderModalBody({
               </DialogContent>
             </DialogPortal>
           </Dialog>
-        </div>
+        </div> */}
       </div>
 
       {writePermission && (
