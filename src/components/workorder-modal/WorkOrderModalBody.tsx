@@ -93,11 +93,12 @@ export default function WorkOrderModalBody({
   const getTechnicianPhotos = (): TechnicianPhoto[] => {
     const finalPhotosArray: TechnicianPhoto[] = [];
 
-    const allTechnicians = Object.values(techniciansPerItem).flat();
+    const allTechnicians = techniciansPerItem
+      ? Object.values(techniciansPerItem).flat()
+      : [];
 
     allTechnicians.forEach((t) => {
       const technicianName = t.name || "Unknown Technician";
-  
 
       if (t.images && t.images.length > 0) {
         t.images.forEach((image) => {
@@ -220,7 +221,7 @@ export default function WorkOrderModalBody({
         />
 
         {/* see images dialog trigger (uses its own internal state) */}
-        {/* <div className="absolute right-16 top-0">
+        <div className="absolute right-16 top-0">
           <Dialog>
             <DialogTrigger asChild>
               <button className="bg-[#6571ff] text-white px-5 py-0.5 rounded-md">
@@ -229,10 +230,14 @@ export default function WorkOrderModalBody({
             </DialogTrigger>
 
             <DialogContent className="min-w-[560px] max-w-3xl overflow-y-auto h-full lg:h-fit">
-              <ImagesDialogContent technicianPhotos={technicianPhotos} />
+              <ImagesDialogContent
+                technicianPhotos={technicianPhotos}
+                clientId={invoice?.client?.id}
+                invoiceId={invoice?.id}
+              />
             </DialogContent>
           </Dialog>
-        </div> */}
+        </div>
       </div>
 
       {writePermission && (

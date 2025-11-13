@@ -12,13 +12,19 @@ import { ImageContentCard } from "./workorder-modal/ImageContentCard";
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
 import { useIsAdminOrManager } from "@/utils/useIsAdminOrManager";
 import { SelectionToolbar } from "./workorder-modal/SelectionToolbar";
+import { sendInfobipEmailWithAttachments } from "@/actions/estimate/invoice/sendInfobipEmail";
 
 export function ImagesDialogContent({
   technicianPhotos,
+  clientId,
+  invoiceId,
 }: {
   technicianPhotos?: TechnicianPhoto[];
+  clientId?: number;
+  invoiceId?: string;
 }) {
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [isSending, setIsSending] = useState(false);
 
   const [photosState, setPhotosState] = useState<TechnicianPhoto[]>(
     technicianPhotos || []
@@ -35,9 +41,7 @@ export function ImagesDialogContent({
   }, [technicianPhotos]);
 
   const selectableIds = useMemo(
-    () =>
-      photosState
-        .map((p) => p.id as number),
+    () => photosState.map((p) => p.id as number),
     [photosState, currentUser?.id, isAdminOrManager]
   );
 
@@ -100,14 +104,67 @@ export function ImagesDialogContent({
     return lines.join("\n\n");
   }
   async function handleEmailShare() {
-    const shareText = generateShareText();
-    if (!shareText) return;
+    if (!clientId) {
+      errorToast("Client information not available");
+      return;
+    }
 
-    const subject = encodeURIComponent(
-      `Technician Photos (${selectedIds.length} images)`
+    const selected = photosState.filter((i) =>
+      selectedIds.includes(i.id as number)
     );
-    const body = encodeURIComponent(shareText);
-    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+
+    if (selected.length === 0) {
+      errorToast("Please select at least one image");
+      return;
+    }
+
+    setIsSending(true);
+
+    try {
+      // Prepare attachment URLs from selected photos
+      const attachmentUrls = selected.map((photo) => {
+        const fileName =
+          photo.photo.split("/").pop() || `technician-photo-${photo.id}.jpg`;
+        return {
+          url: photo.photo,
+          name: fileName,
+        };
+      });
+
+      // Generate email text content
+      const lines = selected.map((s) => {
+        const time = s.timestamp
+          ? moment(s.timestamp).format("MMM DD, YYYY hh:mm A")
+          : "Unknown time";
+        const invoicePart = s.invoiceId ? `Invoice: ${s.invoiceId}\n` : "";
+        return `${invoicePart}Uploaded: ${time}\nReported by: ${s.technicianName}`;
+      });
+
+      const emailText = lines.join("\n\n");
+      const subject = `Technician Photos (${selectedIds.length} ${selectedIds.length === 1 ? "image" : "images"})`;
+
+      // Send email with attachments
+      const result = await sendInfobipEmailWithAttachments({
+        clientId,
+        subject,
+        text: emailText,
+        attachmentUrls,
+      });
+
+      if (result.success) {
+        successToast(
+          `Email sent successfully with ${attachmentUrls.length} ${attachmentUrls.length === 1 ? "attachment" : "attachments"}`
+        );
+        setSelectedIds([]); // Clear selection after successful send
+      } else {
+        errorToast(result.message || "Failed to send email");
+      }
+    } catch (error: any) {
+      console.error("Email send error:", error);
+      errorToast(error.message || "Failed to send email");
+    } finally {
+      setIsSending(false);
+    }
   }
 
   async function handleSmsShare() {
