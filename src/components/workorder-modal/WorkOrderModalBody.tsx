@@ -92,13 +92,13 @@ export default function WorkOrderModalBody({
   const getTechnicianPhotos = (): TechnicianPhoto[] => {
     const finalPhotosArray: TechnicianPhoto[] = [];
 
-    const allTechnicianJobs = Object.values(techniciansPerItem).flat();
+    const allTechnicians = Object.values(techniciansPerItem).flat();
 
-    allTechnicianJobs.forEach((job) => {
-      const technicianName = job.name || "Unknown Technician";
+    allTechnicians.forEach((t) => {
+      const technicianName = t.name || "Unknown Technician";
 
-      if (job.images && job.images.length > 0) {
-        job.images.forEach((image) => {
+      if (t.images && t.images.length > 0) {
+        t.images.forEach((image) => {
           finalPhotosArray.push({
             id: image.id,
             photo: image.fileUrl,
@@ -225,12 +225,9 @@ export default function WorkOrderModalBody({
               </button>
             </DialogTrigger>
 
-            <DialogPortal>
-              <DialogOverlay />
-              <DialogContent className="min-w-[560px] max-w-3xl">
-                <ImagesDialogContent technicianPhotos={technicianPhotos} />
-              </DialogContent>
-            </DialogPortal>
+            <DialogContent className="min-w-[560px] max-w-3xl">
+              <ImagesDialogContent technicianPhotos={technicianPhotos} />
+            </DialogContent>
           </Dialog>
         </div>
       </div>

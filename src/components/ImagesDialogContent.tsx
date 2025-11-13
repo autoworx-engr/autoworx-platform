@@ -1,16 +1,15 @@
 "use client";
 
-import Image from "next/image";
-import { DialogClose } from "@/components/Dialog";
 import { useEffect, useState } from "react";
-import { Check, Share2, Square, Trash2 } from "lucide-react";
-import toast from "react-hot-toast";
+
 import moment from "moment";
 import { TechnicianPhoto } from "./workorder-modal/WorkOrderModalBody";
 import { deleteTechnicianImage } from "@/actions/estimate/technician/deleteTechnicianImage";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import { errorToast, successToast } from "@/lib/toast";
+import { ImagesDialogueShareButtons } from "./workorder-modal/ImagesDialogueShareButtons";
+import { ImageContentCard } from "./workorder-modal/ImageContentCard";
 
 export function ImagesDialogContent({
   technicianPhotos,
@@ -68,11 +67,11 @@ export function ImagesDialogContent({
     }
   }
 
-  async function handleShareSelected() {
+  function generateShareText() {
     const selected = photosState.filter((i) =>
       selectedIds.includes(i.id as number)
     );
-    if (selected.length === 0) return;
+    if (selected.length === 0) return "";
 
     const lines = selected.map((s) => {
       const time = s.timestamp
@@ -82,36 +81,60 @@ export function ImagesDialogContent({
       return `${invoicePart}Uploaded: ${time}\nReported by: ${s.technicianName}\nImage: ${s.photo}`;
     });
 
-    const shareText = lines.join("\n\n");
+    return lines.join("\n\n");
+  }
+  async function handleEmailShare() {
+    const shareText = generateShareText();
+    if (!shareText) return;
 
-    if (navigator.share) {
-      try {
-        await navigator.share({ text: shareText });
-      } catch (err) {
-        // user cancelled or failed
-      }
-      return;
-    }
+    const subject = encodeURIComponent(
+      `Technician Photos (${selectedIds.length} images)`
+    );
+    const body = encodeURIComponent(shareText);
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  }
+
+  async function handleSmsShare() {
+    const shareText = generateShareText();
+    if (!shareText) return;
+
+    const smsBody = encodeURIComponent(shareText);
+    window.location.href = `sms:?body=${smsBody}`;
+  }
+
+  async function handleCopyShare() {
+    const shareText = generateShareText();
+    if (!shareText) return;
 
     try {
       await navigator.clipboard.writeText(shareText);
-      toast.success("Copied image info and links to clipboard");
+      successToast("Copied to clipboard");
     } catch (err) {
-      toast.error("Unable to copy image info");
+      errorToast("Failed to copy to clipboard");
     }
   }
 
+  const twilioCredentials = true;
   return (
     <div>
-      <div className="flex items-center gap-4">
-        <h3 className="text-lg font-semibold">Images</h3>
+      <div className="flex flex-col gap-4 border-b border-border pb-4 p-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex-1">
+          <h2 className="text-xl font-bold text-foreground md:text-2xl">
+            Images
+          </h2>
+          <p className="text-xs text-muted-foreground mt-1 md:text-sm">
+            {photosState.length} {photosState.length === 1 ? "photo" : "photos"}{" "}
+            total
+          </p>
+        </div>
+
         {selectedIds.length > 0 && (
-          <button
-            onClick={handleShareSelected}
-            className="flex items-center gap-2 rounded bg-green-600 px-3 py-1 text-sm text-white"
-          >
-            <Share2 className="h-4 w-4" /> Share ({selectedIds.length})
-          </button>
+          <ImagesDialogueShareButtons
+            handleCopyShare={handleCopyShare}
+            handleEmailShare={handleEmailShare}
+            handleSmsShare={handleSmsShare}
+            twilioCredentials={twilioCredentials}
+          />
         )}
       </div>
 
@@ -123,52 +146,12 @@ export function ImagesDialogContent({
         )}
 
         {photosState.map((img) => (
-          <div key={img.id} className="relative rounded border p-2 shadow-sm">
-            <div className="h-40 w-full overflow-hidden rounded relative">
-              <Image
-                src={img.photo}
-                alt={`photo-${img.id}`}
-                width={800}
-                height={400}
-                className="h-full w-full object-cover"
-              />
-              <div className="absolute top-2 right-2 flex items-center gap-2">
-                <button
-                  onClick={() => toggleSelect(img.id as number)}
-                  className={`flex items-center gap-1 rounded text-sm px-0.5 py-0.5 transition-all ${selectedIds.includes(img.id as number) ? "bg-green-600 text-white" : "bg-gray-200 text-gray-700"}`}
-                >
-                  {selectedIds.includes(img.id as number) ? (
-                    <Check className="h-5 w-5" />
-                  ) : (
-                    <Square className="h-5 w-5" />
-                  )}
-                </button>
-
-                <button
-                  onClick={() => handleDelete(img.id as number)}
-                  className="flex items-center gap-1 rounded bg-red-500 px-2 py-1 text-sm text-white"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-
-            <div className="mt-2 flex items-center justify-between text-xs">
-              <div>
-                <p className="font-semibold">
-                  Reported By: {img.technicianName}
-                </p>
-                <p className="text-muted-foreground">
-                  {moment(img.timestamp).format("MMM DD, YYYY hh:mm A")}
-                </p>
-                {img.invoiceId && (
-                  <p className="text-muted-foreground">
-                    Invoice: {img.invoiceId}
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
+          <ImageContentCard
+            img={img}
+            selectedIds={selectedIds}
+            toggleSelect={toggleSelect}
+            handleDelete={handleDelete}
+          />
         ))}
       </div>
     </div>

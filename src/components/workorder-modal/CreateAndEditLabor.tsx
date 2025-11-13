@@ -543,7 +543,7 @@ export default function CreateAndEditLabor({
             {/* Technician Note Input */}
             <div className="space-y-2">
               <label className="block text-base font-medium text-slate-600">
-                Work Note
+                Technician Work Note
               </label>
               {isTechnician ? (
                 <textarea
