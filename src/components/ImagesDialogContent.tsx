@@ -37,7 +37,6 @@ export function ImagesDialogContent({
   const selectableIds = useMemo(
     () =>
       photosState
-        .filter((p) => currentUser?.id === p.technicianId || isAdminOrManager)
         .map((p) => p.id as number),
     [photosState, currentUser?.id, isAdminOrManager]
   );
