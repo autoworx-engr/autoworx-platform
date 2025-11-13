@@ -1,3 +1,5 @@
+import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
+import { useIsAdminOrManager } from "@/utils/useIsAdminOrManager";
 import { Popconfirm } from "antd";
 import { Check, Square, Trash2 } from "lucide-react";
 import moment from "moment";
@@ -10,6 +12,7 @@ interface ImageContentCardProps {
     technicianName: string;
     timestamp: string;
     invoiceId?: string;
+    technicianId?: number;
   };
   selectedIds: number[];
   toggleSelect: (id: number) => void;
@@ -21,6 +24,10 @@ export const ImageContentCard = ({
   toggleSelect,
   handleDelete,
 }: ImageContentCardProps) => {
+  const currentUser = useGetCurrentUser();
+  const isAdminOrManager = useIsAdminOrManager();
+
+  const isDisabled = !isAdminOrManager && currentUser?.id !== img.technicianId;
   return (
     <div key={img.id} className="relative rounded border p-2 shadow-sm">
       <div className="h-40 w-full overflow-hidden rounded relative">
@@ -49,7 +56,9 @@ export const ImageContentCard = ({
             okText="Yes"
             cancelText="No"
           >
-            <button className="flex items-center gap-1 rounded bg-red-500 px-2 py-1 text-sm text-white">
+            <button disabled={isDisabled} 
+            className={`flex items-center gap-1 rounded bg-red-500 px-2 py-1 text-sm text-white 
+            ${isDisabled ? "opacity-50 cursor-not-allowed" : "hover:bg-red-600 transition-all"}`}>
               <Trash2 className="h-4 w-4" />
             </button>
           </Popconfirm>

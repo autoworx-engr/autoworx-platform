@@ -10,6 +10,8 @@ import { queryKeys } from "@/lib/queryKeys";
 import { errorToast, successToast } from "@/lib/toast";
 import { ImagesDialogueShareButtons } from "./workorder-modal/ImagesDialogueShareButtons";
 import { ImageContentCard } from "./workorder-modal/ImageContentCard";
+import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
+import { useIsAdminOrManager } from "@/utils/useIsAdminOrManager";
 
 export function ImagesDialogContent({
   technicianPhotos,
@@ -23,7 +25,9 @@ export function ImagesDialogContent({
     technicianPhotos || []
   );
   const queryClient = useQueryClient();
-
+  const currentUser = useGetCurrentUser();
+   const isAdminOrManager = useIsAdminOrManager();
+  console.log("currentUser", currentUser);
   useEffect(() => {
     if (technicianPhotos) {
       setPhotosState(technicianPhotos);
@@ -46,6 +50,7 @@ export function ImagesDialogContent({
     const prev = photosState;
     const img = photosState.find((p) => p.id === id);
     const invoiceId = img?.invoiceId;
+    if (currentUser?.id !== img?.technicianId && !isAdminOrManager) return;
     setPhotosState((p) => p.filter((x) => x.id !== id));
 
     try {

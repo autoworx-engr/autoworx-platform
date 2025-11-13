@@ -32,6 +32,7 @@ export interface TechnicianPhoto {
   technicianName: string;
   timestamp: string;
   invoiceId?: string;
+  technicianId?: number;
 }
 export default function WorkOrderModalBody({
   invoiceId,
@@ -96,6 +97,7 @@ export default function WorkOrderModalBody({
 
     allTechnicians.forEach((t) => {
       const technicianName = t.name || "Unknown Technician";
+  
 
       if (t.images && t.images.length > 0) {
         t.images.forEach((image) => {
@@ -104,6 +106,7 @@ export default function WorkOrderModalBody({
             photo: image.fileUrl,
             technicianName: technicianName,
             invoiceId: invoice?.id,
+            technicianId: image.technicianId,
             timestamp: image.uploadedAt
               ? new Date(image.uploadedAt).toISOString()
               : new Date().toISOString(),
@@ -225,7 +228,7 @@ export default function WorkOrderModalBody({
               </button>
             </DialogTrigger>
 
-            <DialogContent className="min-w-[560px] max-w-3xl">
+            <DialogContent className="min-w-[560px] max-w-3xl overflow-y-auto h-full lg:h-fit">
               <ImagesDialogContent technicianPhotos={technicianPhotos} />
             </DialogContent>
           </Dialog>
