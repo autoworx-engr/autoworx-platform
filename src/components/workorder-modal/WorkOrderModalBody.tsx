@@ -1,13 +1,17 @@
 "use client";
+
 import {
   getWorkOrderData,
   IWorkOrderData,
 } from "@/actions/estimate/invoice/getWorkOrderData";
 import {
+  Dialog,
+  DialogTrigger,
   DialogContent,
   DialogOverlay,
   DialogPortal,
 } from "@/components/Dialog";
+import { ImagesDialogContent } from "@/components/ImagesDialogContent";
 import { useServerGet } from "@/hooks/useServerGet";
 import { cn } from "@/lib/cn";
 import moment from "moment";
@@ -19,6 +23,7 @@ import { InvoiceItems } from "./InvoiceItems";
 import SaveWorkOrderBtn from "./SaveWorkOrderBtn";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
+import { time } from "console";
 
 export default function WorkOrderModalBody({
   invoiceId,
@@ -30,13 +35,6 @@ export default function WorkOrderModalBody({
   onWorkOrderCreated?: () => void;
 }) {
   const [dueDate, setDueDate] = useState<string | null>("");
-  // const [refreshKey, setRefreshKey] = useState(0);
-
-  // const { data, error, loading } = useServerGet(
-  //   getWorkOrderData,
-  //   invoiceId,
-  //   refreshKey
-  // );
 
   const { data, error, isLoading, isFetched } = useQuery({
     queryKey: queryKeys.getWorkOrderDataKey(invoiceId),
@@ -71,11 +69,8 @@ export default function WorkOrderModalBody({
     return null;
   }
 
-  if (!data) {
-    return null;
-  }
+  if (!data) return null;
 
-  // Now it's safe to destructure after we've confirmed data exists
   const {
     invoice,
     company,
@@ -83,8 +78,6 @@ export default function WorkOrderModalBody({
     writePermission,
     techniciansPerItem,
   } = data as IWorkOrderData;
-
-  // console.log("invoiceTechnicians", invoiceTechnicians);
 
   return (
     <DialogContent className="h-full min-w-fit overflow-y-auto sm:max-w-[740px] lg:h-fit">
@@ -107,6 +100,7 @@ export default function WorkOrderModalBody({
             "Logo"
           )}
         </div>
+
         <div className="text-right text-xs">
           <h2 className="font-bold">Contact Information:</h2>
           <p>
@@ -119,7 +113,6 @@ export default function WorkOrderModalBody({
             {company?.zip && `${company.zip}`}
           </p>
           <p>{company?.phone}</p>
-          <p>{company?.email}</p>
           <div className="flex justify-end text-right">
             {writePermission ? (
               <DueDate dueDate={dueDate} setDueDate={setDueDate} />
@@ -136,9 +129,6 @@ export default function WorkOrderModalBody({
 
       <hr />
 
-      {/**
-       * Information
-       */}
       <div className="flex">
         <div className="grid grow grid-cols-3 gap-2 text-xs">
           <h1 className="col-span-full text-3xl font-bold uppercase text-slate-500">
@@ -160,11 +150,6 @@ export default function WorkOrderModalBody({
               {invoice?.vehicle?.other}
               {invoice?.vehicle?.type}
             </p>
-            {/* <p>{invoice?.vehicle?.year}</p>
-            <p>{invoice?.vehicle?.make}</p>
-            <p>{invoice?.vehicle?.model}</p>
-            <p>{invoice?.vehicle?.submodel}</p>
-            <p>{invoice?.vehicle?.type}</p> */}
           </div>
           <div>
             <h2 className="font-bold text-slate-500">Estimate Details:</h2>
@@ -184,7 +169,7 @@ export default function WorkOrderModalBody({
         </div>
       </div>
 
-      <div className="space-y-2">
+      <div className="relative space-y-2">
         <InvoiceItems
           items={JSON.parse(JSON.stringify(invoice?.invoiceItems ?? ""))}
           invoiceTechnicians={invoiceTechnicians}
@@ -192,6 +177,24 @@ export default function WorkOrderModalBody({
           writePermission={writePermission}
           techniciansPerItem={techniciansPerItem}
         />
+
+        {/* see images dialog trigger (uses its own internal state) */}
+        <div className="absolute right-16 top-0">
+          <Dialog>
+            <DialogTrigger asChild>
+              <button className="bg-[#6571ff] text-white px-5 py-0.5 rounded-md">
+                see images
+              </button>
+            </DialogTrigger>
+
+            <DialogPortal>
+              <DialogOverlay />
+              <DialogContent className="min-w-[560px] max-w-3xl">
+                <ImagesDialogContent />
+              </DialogContent>
+            </DialogPortal>
+          </Dialog>
+        </div>
       </div>
 
       {writePermission && (
