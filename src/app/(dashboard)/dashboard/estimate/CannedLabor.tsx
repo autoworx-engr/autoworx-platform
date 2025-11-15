@@ -18,7 +18,7 @@ import { useListsStore } from "@/stores/lists";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { Category, Labor } from "@prisma/client";
 import { Pagination, Popconfirm, message } from "antd"; // Added message for notifications
-import { CircleCheckBig, SquarePen, X } from "lucide-react";
+import { CircleCheckBig, SquarePen, Trash2, X } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import FilterBySearchBox from "../reporting/components/filter/FilterBySearchBox";
@@ -441,13 +441,23 @@ const LaborComponent = ({
       </TableCell>
       <TableCell className="flex items-center my-auto h-full">
         {isEdit && (
-          <button
-            onClick={() => startTransition(() => handleEdit())}
-            className="mr-4 text-lg text-[#6571FF] disabled:cursor-not-allowed disabled:text-gray-400"
-            disabled={isPending}
-          >
-            <CircleCheckBig className="w-4 h-4" strokeWidth={2.5} />
-          </button>
+          <div className="flex items-center  ">
+            <button>
+              <X
+                cursor={"pointer"}
+                color="#f87171"
+                className="w-4 h-4 mr-2"
+                onClick={() => setIsEdit(false)}
+              />
+            </button>
+            <button
+              onClick={() => startTransition(() => handleEdit())}
+              className="mr-4 text-lg text-[#6571FF] disabled:cursor-not-allowed disabled:text-gray-400"
+              disabled={isPending}
+            >
+              <CircleCheckBig className="w-4 h-4" strokeWidth={2.5} />
+            </button>
+          </div>
         )}
         <button
           onClick={() => setIsEdit(!isEdit)}
@@ -463,7 +473,7 @@ const LaborComponent = ({
           className="ml-3"
           onConfirm={() => deleteLabor(labor.id)}
         >
-          <X cursor={"pointer"} color="#f87171" className="w-5 h-5" />
+          <Trash2 cursor={"pointer"} color="#f87171" className="w-5 h-5" />
         </Popconfirm>
       </TableCell>
     </TableRow>
