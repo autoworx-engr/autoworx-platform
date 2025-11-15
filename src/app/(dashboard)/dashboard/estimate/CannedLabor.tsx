@@ -18,7 +18,7 @@ import { useListsStore } from "@/stores/lists";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { Category, Labor } from "@prisma/client";
 import { Pagination, Popconfirm, message } from "antd"; // Added message for notifications
-import { CircleCheckBig, SquarePen, X } from "lucide-react";
+import { CircleCheckBig, SquarePen, Trash2, X } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import FilterBySearchBox from "../reporting/components/filter/FilterBySearchBox";
@@ -105,7 +105,7 @@ export default function CannedLabor({
   console.log("search params==>", laborSearch);
 
   return (
-    <div className="h-full w-full md:px-4">
+    <div className="h-full w-full md:px-4 flex flex-col">
       <section className=" pb-3 lg:pb-0">
         <div className="flex items-center gap-x-8">
           <h3 className="text-xl font-bold md:text-2xl">Canned Labor</h3>
@@ -139,7 +139,7 @@ export default function CannedLabor({
         </div>
       </section>
       {/* Desktop View */}
-      <div className="hidden overflow-y-auto thin-scrollbar md:block">
+      <div className="hidden flex-1 h-full overflow-y-auto thin-scrollbar md:block">
         <Table className="h-full">
           <TableHeader className="sticky top-0 bg-background">
             <TableRow>
@@ -190,7 +190,7 @@ export default function CannedLabor({
         )}
       </div>
       {showPagination && (
-        <div className="mt-4 hidden h-10 justify-end lg:flex">
+        <div className=" hidden h-10 justify-end lg:flex flex-shrink-0">
           <Pagination
             className="custom-pagination"
             current={currentPage}
@@ -441,13 +441,23 @@ const LaborComponent = ({
       </TableCell>
       <TableCell className="flex items-center my-auto h-full">
         {isEdit && (
-          <button
-            onClick={() => startTransition(() => handleEdit())}
-            className="mr-4 text-lg text-[#6571FF] disabled:cursor-not-allowed disabled:text-gray-400"
-            disabled={isPending}
-          >
-            <CircleCheckBig className="w-4 h-4" strokeWidth={2.5} />
-          </button>
+          <div className="flex items-center  ">
+            <button>
+              <X
+                cursor={"pointer"}
+                color="#f87171"
+                className="w-4 h-4 mr-2"
+                onClick={() => setIsEdit(false)}
+              />
+            </button>
+            <button
+              onClick={() => startTransition(() => handleEdit())}
+              className="mr-4 text-lg text-[#6571FF] disabled:cursor-not-allowed disabled:text-gray-400"
+              disabled={isPending}
+            >
+              <CircleCheckBig className="w-4 h-4" strokeWidth={2.5} />
+            </button>
+          </div>
         )}
         <button
           onClick={() => setIsEdit(!isEdit)}
@@ -463,7 +473,7 @@ const LaborComponent = ({
           className="ml-3"
           onConfirm={() => deleteLabor(labor.id)}
         >
-          <X cursor={"pointer"} color="#f87171" className="w-5 h-5" />
+          <Trash2 cursor={"pointer"} color="#f87171" className="w-5 h-5" />
         </Popconfirm>
       </TableCell>
     </TableRow>
