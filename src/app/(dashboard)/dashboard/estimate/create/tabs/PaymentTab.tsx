@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { Service } from "@prisma/client";
 import moment from "moment-timezone";
+import EditPaymentModal from "../EditPayment";
 
 const evenColor = "bg-background";
 const oddColor = "bg-[#F8FAFF]";
@@ -283,15 +284,6 @@ export default async function PaymentTab({
     });
   });
 
-  const paymentData = {
-    invoicesWithFull,
-    totalCustomerPaidAmount,
-    totalRefundedAmount,
-    totalAmount,
-    allTransactionEntries,
-    totalServices,
-  };
-
   return (
     <div className="w-full mx-auto h-full">
       {/* Section 1 */}
@@ -345,7 +337,10 @@ export default async function PaymentTab({
       {/* Section 2 */}
       <div className="flex items-center justify-between">
         <h3 className="mb-1 mt-3 lg:mt-12 font-semibold">Invoice Payments</h3>
-        {/* <EditPayment paymentData={paymentData} /> */}
+        <EditPaymentModal
+          allTransactionEntries={allTransactionEntries}
+          invoicesWithFull={invoicesWithFull}
+        />
       </div>
       <div className="h-[30%] overflow-scroll rounded-lg border md:rounded-none">
         {/* Desktop View */}

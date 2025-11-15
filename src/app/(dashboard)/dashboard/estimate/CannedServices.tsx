@@ -18,10 +18,9 @@ import { useFormErrorStore } from "@/stores/form-error";
 import { useListsStore } from "@/stores/lists";
 import { Category, Service } from "@prisma/client";
 import { Pagination, Popconfirm } from "antd";
-import { CircleCheckBig, SquarePen, X } from "lucide-react";
+import { CircleCheckBig, SquarePen, Trash2, X } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import toast from "react-hot-toast";
 import FilterBySearchBox from "../reporting/components/filter/FilterBySearchBox";
 import CannedFilterBySelection from "./CannedFilterBySelected";
 import NewService from "./NewService";
@@ -224,6 +223,7 @@ const ServiceComponent = ({
   const [description, setDescription] = useState(service.description);
   const { showError, clearError } = useFormErrorStore();
   const [nameError, setNameError] = useState(""); // Added state for name error
+  const [descriptionError, setDescriptionError] = useState(""); // Added state for description error
 
   // Validation function
   const validateName = (value: string) => {
@@ -465,24 +465,36 @@ const ServiceComponent = ({
                 const value = e.target.value;
 
                 if (value.length > 250) {
-                  toast.error("Description must be less than 250 characters");
-                  return false;
+                  setDescriptionError(
+                    "Description must be less than 250 characters"
+                  );
+                  return;
                 }
                 setDescription(value);
               }}
-              className="h-20 max-w-[150px] rounded-md border-2 border-slate-400 p-2"
+              className={`h-20 max-w-[150px] rounded-md border-2 p-2 ${
+                descriptionError ? "border-red-500" : "border-slate-400"
+              }`}
             />
+            {descriptionError && (
+              <p className="mt-1 text-xs text-red-500">{descriptionError}</p>
+            )}
           </div>
         )}
       </TableCell>
       <TableCell className="flex items-center my-auto h-full">
         {isEdit && (
-          <button
-            onClick={handleUpdateService}
-            className="mr-4 text-lg text-[#6571FF]"
-          >
-            <CircleCheckBig size={18} />
-          </button>
+          <div className="flex items-center">
+            <button onClick={() => setIsEdit(false)}>
+              <X cursor={"pointer"} color="#f87171" className="w-5 h-5 mr-2 " />
+            </button>
+            <button
+              onClick={handleUpdateService}
+              className="mr-4 text-lg text-[#6571FF]"
+            >
+              <CircleCheckBig size={18} />
+            </button>
+          </div>
         )}
         <button
           onClick={() => setIsEdit(!isEdit)}
@@ -501,7 +513,7 @@ const ServiceComponent = ({
             setIsEdit(false);
           }}
         >
-          <X cursor={"pointer"} color="#f87171" className="w-5 h-5" />
+          <Trash2 cursor={"pointer"} color="#f87171" className="w-5 h-5" />
         </Popconfirm>
       </TableCell>
     </TableRow>
