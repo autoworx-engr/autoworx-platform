@@ -1,5 +1,6 @@
 import { updateCommunicationAutomationTrigger } from "@/actions/automation/communication/triggerCommunicationAutomation";
 import { updatePipelineAutomationTrigger } from "@/actions/automation/pipeline/triggerPipelineAutomation";
+import { updateTagAutomationTrigger } from "@/actions/automation/tag/triggerTagAutomation";
 import { initialCreateClientChatTrack } from "@/actions/communication/client/chat-track";
 import { companyWithUser } from "@/actions/settings/getCompanyWithUser";
 import { db } from "@/lib/db";
@@ -32,17 +33,23 @@ export async function POST(request: NextRequest) {
     console.log("🚀 ~ POST ~ body:", body);
 
     const clientName = body.name;
+    console.log("🚀 ~ POST ~ clientName:", clientName);
     const clientEmail = body?.email;
     const clientPhone = body?.phone;
+    console.log("🚀 ~ POST ~ clientPhone:", clientPhone);
     const customerCountry = body.customer_country;
+    console.log("🚀 ~ POST ~ customerCountry:", customerCountry);
     const serviceId = +body.serviceId;
+    console.log("🚀 ~ POST ~ serviceId:", serviceId);
     const opportunity = body.opportunity_source;
+    console.log("🚀 ~ POST ~ opportunity:", opportunity);
     const crmMsg = body.message;
     const multipleServices = body.multiServices as number[] | undefined;
 
     console.log("crmMsg", crmMsg);
     //check if crm company
     const isCRMCompany = company.isCRMEnabled || false;
+    console.log("🚀 ~ POST ~ isCRMCompany:", isCRMCompany);
     if (isCRMCompany) {
       // For demo requests
       const source = "Marketing Site";
@@ -324,6 +331,15 @@ export async function POST(request: NextRequest) {
       companyId: newLead.companyId,
       leadId: newLead.id,
       columnId: +(newLead?.columnId ?? 0),
+      generatedToken: newToken,
+    });
+
+    updateTagAutomationTrigger({
+      columnId: +(newLead?.columnId ?? 0),
+      companyId: newLead.companyId,
+      pipelineType: "SALES",
+      leadId: newLead.id,
+      conditionType: "post_tag",
       generatedToken: newToken,
     });
 

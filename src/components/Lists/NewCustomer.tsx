@@ -24,6 +24,9 @@ import { RotatingLines } from "react-loader-spinner";
 import { stateStore } from "@/stores/stateStore";
 import { usePathname } from "next/navigation";
 import { CircleUserRound, X } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useClientFilterStore } from "@/stores/clientFilter";
+import { CLIENT_LIST_KEY } from "@/app/(dashboard)/dashboard/client/_hook/useClientQuery";
 
 export default function NewCustomer({
   buttonElement,
@@ -45,6 +48,8 @@ export default function NewCustomer({
   const { showError, clearError } = useFormErrorStore();
   const [mobile, setMobile] = useState("+1");
   const pathname = usePathname();
+  const queryClient = useQueryClient();
+  const { search, currentPage, pageSize } = useClientFilterStore();
   const [clientInfo, setClientInfo] = useState({
     firstName: "",
     lastName: "",
@@ -64,7 +69,7 @@ export default function NewCustomer({
     await deleteSource(id);
 
     setClientSources((prev: Source[]) => {
-      return prev.filter((source) => source.id !== id);
+      return prev.filter(source => source.id !== id);
     });
 
     if (clientSource?.id === id) {
@@ -169,6 +174,9 @@ export default function NewCustomer({
         message: res.message,
       });
     } else if (res?.type === "success") {
+      queryClient.invalidateQueries({
+        queryKey: [CLIENT_LIST_KEY, search, currentPage, pageSize],
+      });
       useListsStore.setState(({ customers }) => ({
         customers: [...customers, res.data],
         newAddedCustomer: res.data,
@@ -195,7 +203,7 @@ export default function NewCustomer({
   return (
     <Dialog
       open={isClientOpen}
-      onOpenChange={(isClientOpen) => {
+      onOpenChange={isClientOpen => {
         if (!isClientOpen) handleClose();
         setIsClientOpen(isClientOpen);
       }}
@@ -235,7 +243,7 @@ export default function NewCustomer({
                 id="profilePicture"
                 hidden
                 accept="image/*"
-                onChange={(e) => {
+                onChange={e => {
                   const file = e.target.files?.[0];
                   if (file) {
                     setProfilePic(file);
@@ -258,10 +266,10 @@ export default function NewCustomer({
               label="First Name"
               required
               value={clientInfo.firstName}
-              onChange={(e) => {
+              onChange={e => {
                 const value = e.target.value;
                 // Always update the state to allow normal editing
-                setClientInfo((prev) => ({ ...prev, firstName: value }));
+                setClientInfo(prev => ({ ...prev, firstName: value }));
                 // Clear any existing errors when user is typing
                 clearError();
               }}
@@ -270,9 +278,9 @@ export default function NewCustomer({
               name="lastName"
               required={false}
               value={clientInfo.lastName}
-              onChange={(e) => {
+              onChange={e => {
                 const value = e.target.value;
-                setClientInfo((prev) => ({ ...prev, lastName: value }));
+                setClientInfo(prev => ({ ...prev, lastName: value }));
               }}
             />
           </div>
@@ -283,9 +291,9 @@ export default function NewCustomer({
               label="Email"
               value={clientInfo.email}
               // required
-              onChange={(e) => {
+              onChange={e => {
                 const value = e.target.value;
-                setClientInfo((prev) => ({ ...prev, email: value }));
+                setClientInfo(prev => ({ ...prev, email: value }));
 
                 // Validate on input change
                 // if (!value.trim()) {
@@ -303,7 +311,7 @@ export default function NewCustomer({
               label="Mobile"
               required
               value={mobile}
-              onChange={(e) => {
+              onChange={e => {
                 const value = e.target.value;
                 // Always update the state to allow editing
                 setMobile(value);
@@ -319,9 +327,9 @@ export default function NewCustomer({
               rootClassName="flex-1"
               name="address"
               required={false}
-              onChange={(e) => {
+              onChange={e => {
                 const value = e.target.value;
-                setClientInfo((prev) => ({ ...prev, address: value }));
+                setClientInfo(prev => ({ ...prev, address: value }));
               }}
             />
           </div>
@@ -331,24 +339,24 @@ export default function NewCustomer({
               value={clientInfo.city}
               name="city"
               required={false}
-              onChange={(e) => {
-                setClientInfo((prev) => ({ ...prev, city: e.target.value }));
+              onChange={e => {
+                setClientInfo(prev => ({ ...prev, city: e.target.value }));
               }}
             />
             <SlimInput
               value={clientInfo.state}
               name="state"
               required={false}
-              onChange={(e) => {
-                setClientInfo((prev) => ({ ...prev, state: e.target.value }));
+              onChange={e => {
+                setClientInfo(prev => ({ ...prev, state: e.target.value }));
               }}
             />
             <SlimInput
               name="zip"
               value={clientInfo.zip}
               required={false}
-              onChange={(e) => {
-                setClientInfo((prev) => ({ ...prev, zip: e.target.value }));
+              onChange={e => {
+                setClientInfo(prev => ({ ...prev, zip: e.target.value }));
               }}
             />
           </div>
@@ -359,9 +367,9 @@ export default function NewCustomer({
               required={false}
               label="Company"
               value={clientInfo.customerCompany}
-              onChange={(e) => {
+              onChange={e => {
                 const value = e.target.value;
-                setClientInfo((prev) => ({ ...prev, customerCompany: value }));
+                setClientInfo(prev => ({ ...prev, customerCompany: value }));
               }}
             />
 
@@ -370,7 +378,7 @@ export default function NewCustomer({
               {/* TODO: use `Selector` component and make the hieght auto */}
               <SelectClientSource
                 clickabled={false}
-                label={(clientSrc) =>
+                label={clientSrc =>
                   clientSource ? clientSource.name : "Client Source"
                 }
                 newButton={

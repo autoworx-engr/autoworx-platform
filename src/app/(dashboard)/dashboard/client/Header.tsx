@@ -1,24 +1,27 @@
 "use client";
 
 import NewCustomer from "@/components/Lists/NewCustomer";
+import { useDebounce } from "@/hooks/useDebounce";
 import { useClientFilterStore } from "@/stores/clientFilter";
 import { Search } from "lucide-react";
 import React, { useEffect } from "react";
 
 export default function Header() {
   const { setFilter } = useClientFilterStore();
+  const [searchTerm, setSearchTerm] = React.useState("");
 
   useEffect(() => {
     setFilter({ search: "" });
   }, []);
 
+  const handleSearchChange = useDebounce((value: string) => {
+    setFilter({ search: value });
+  }, 500);
+
   return (
     <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between lg:gap-0">
       <div className="flex w-full items-center gap-x-8 bg-background lg:w-fit">
-        <form
-          autoComplete="off"
-          className="flex w-full items-center gap-x-2 rounded-md border border-gray-300 px-4 py-1 text-gray-400 lg:w-[500px]"
-        >
+        <div className="flex w-full items-center gap-x-2 rounded-md border border-gray-300 px-4 py-1 text-gray-400 lg:w-[500px]">
           <span className="">
             <Search className="w-5 h-5" />
           </span>
@@ -27,12 +30,17 @@ export default function Header() {
             type="text"
             className="w-full rounded-md border border-white px-4 py-1 focus:outline-none"
             placeholder="Search by client ID, name, email or phone..."
-            onChange={(e) => setFilter({ search: e.target.value })}
+            value={searchTerm}
+            onChange={event => {
+              const value = event.target.value;
+              handleSearchChange(value);
+              setSearchTerm(value);
+            }}
             autoComplete="off"
             autoCorrect="off"
             spellCheck="false"
           />
-        </form>
+        </div>
       </div>
       <NewCustomer
         buttonElement={
