@@ -225,7 +225,7 @@ export default function WorkOrderModalBody({
           <Dialog>
             <DialogTrigger asChild>
               <button className="bg-[#6571ff] text-white px-5 py-0.5 rounded-md">
-                see images
+                Attachments
               </button>
             </DialogTrigger>
 

@@ -13,6 +13,7 @@ import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
 import { useIsAdminOrManager } from "@/utils/useIsAdminOrManager";
 import { SelectionToolbar } from "./workorder-modal/SelectionToolbar";
 import { sendInfobipEmailWithAttachments } from "@/actions/estimate/invoice/sendInfobipEmail";
+import { sendWorkOrderAttachments } from "@/actions/communication/client/chat-track/sendWorkOrderAttachments";
 
 export function ImagesDialogContent({
   technicianPhotos,
@@ -168,11 +169,53 @@ export function ImagesDialogContent({
   }
 
   async function handleSmsShare() {
-    const shareText = generateShareText();
-    if (!shareText) return;
+    if (!clientId) {
+      errorToast("Client information not available");
+      return;
+    }
 
-    const smsBody = encodeURIComponent(shareText);
-    window.location.href = `sms:?body=${smsBody}`;
+    const selected = photosState.filter((i) =>
+      selectedIds.includes(i.id as number)
+    );
+
+    if (selected.length === 0) {
+      errorToast("Please select at least one image");
+      return;
+    }
+
+    setIsSending(true);
+
+    try {
+      // Prepare attachment URLs from selected photos
+      const attachmentUrls = selected.map((photo) => {
+        const fileName =
+          photo.photo.split("/").pop() || `technician-photo-${photo.id}.jpg`;
+        return {
+          url: photo.photo,
+          name: fileName,
+        };
+      });
+
+      // Send SMS/MMS with attachments
+      const result = await sendWorkOrderAttachments({
+        clientId,
+        attachments: attachmentUrls,
+      });
+
+      if (result.success) {
+        successToast(
+          `SMS sent successfully with ${attachmentUrls.length} ${attachmentUrls.length === 1 ? "attachment" : "attachments"}`
+        );
+        setSelectedIds([]); // Clear selection after successful send
+      } else {
+        errorToast(result.error || "Failed to send SMS");
+      }
+    } catch (error: any) {
+      console.error("SMS send error:", error);
+      errorToast(error.message || "Failed to send SMS");
+    } finally {
+      setIsSending(false);
+    }
   }
 
   async function handleCopyShare() {
