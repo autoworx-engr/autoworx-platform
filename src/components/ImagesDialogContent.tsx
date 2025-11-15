@@ -230,7 +230,6 @@ export function ImagesDialogContent({
     }
   }
 
-  const twilioCredentials = true;
   return (
     <div className="flex flex-col gap-4">
       {/* Header */}
@@ -250,7 +249,6 @@ export function ImagesDialogContent({
             handleCopyShare={handleCopyShare}
             handleEmailShare={handleEmailShare}
             handleSmsShare={handleSmsShare}
-            twilioCredentials={twilioCredentials}
           />
         )}
       </div>

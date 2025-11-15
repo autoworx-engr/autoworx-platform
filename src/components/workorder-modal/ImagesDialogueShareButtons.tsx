@@ -1,18 +1,46 @@
+import { isSmsAvailable } from "@/actions/communication/client/createTwilioCredentials";
+import { InfobipConfig, TwilioCredentials } from "@prisma/client";
 import { Popconfirm } from "antd";
 import { Mail } from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface ImagesDialogueShareButtonsProps {
   handleEmailShare: () => void;
   handleSmsShare: () => void;
   handleCopyShare: () => void;
-  twilioCredentials: boolean;
 }
-export const ImagesDialogueShareButtons = ({
+export const ImagesDialogueShareButtons =  ({
   handleEmailShare,
   handleSmsShare,
   handleCopyShare,
-  twilioCredentials,
 }: ImagesDialogueShareButtonsProps) => {
+  const [twilioCredentials, setTwilioCredentials] = useState<
+    TwilioCredentials | InfobipConfig | null
+  >(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchTwilioData() {
+      try {
+        setIsLoading(true);
+
+        const { data } = await isSmsAvailable();
+
+        setTwilioCredentials(data || null);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchTwilioData();
+  }, []);
+
+  if (isLoading) {
+    return <p>Loading SMS status...</p>;
+  }
+
   return (
     <div className="flex flex-wrap gap-2 w-full md:w-auto">
       <div className="flex items-center gap-x-2 rounded-md border border-gray-300 px-2 py-0.5">
@@ -68,7 +96,7 @@ export const ImagesDialogueShareButtons = ({
           </Popconfirm>
         )}
       </div>
-      <button
+      {/* <button
         className="flex items-center justify-center gap-1 rounded bg-[#6571FF] px-2 py-1 text-sm text-white md:px-4 md:text-base"
         onClick={handleCopyShare}
       >
@@ -99,7 +127,7 @@ export const ImagesDialogueShareButtons = ({
           </g>
         </svg>
         <span className="hidden md:inline">Copy Link</span>
-      </button>
+      </button> */}
     </div>
   );
 };
