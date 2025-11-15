@@ -410,9 +410,33 @@ const TagRuleForm = ({
       setError(newErrors);
     }
 
-    if (formData.timeDelay != null) {
-      formData.timeDelay = convertTimeToSeconds(formData.timeDelay as string);
-    }
+    // Parse selected timeDelay (label or option id) without mutating form state
+    const parseSelectedTimeDelay = (value: any) => {
+      if (value === null || value === undefined || value === "") return null;
+
+      const optId = (o: any) =>
+        o && typeof o === "object" && "id" in o ? o.id : o;
+      const optTitle = (o: any) =>
+        o && typeof o === "object" && "title" in o ? o.title : o;
+
+      const match = invoiceTimeDelays.find(
+        (o: any) =>
+          String(optId(o)) === String(value) ||
+          String(optTitle(o)) === String(value)
+      );
+      if (match) {
+        const idVal = optId(match);
+        const n = Number(idVal);
+        if (!Number.isNaN(n)) return n;
+        return convertTimeToSeconds(String(optTitle(match)));
+      }
+
+      const n = Number(value);
+      if (!Number.isNaN(n)) return n;
+      return convertTimeToSeconds(String(value));
+    };
+
+    const parsedTimeDelay = parseSelectedTimeDelay(formData.timeDelay);
 
     try {
       const uploadedAttachments = await uploadAllAttachments(
@@ -424,6 +448,7 @@ const TagRuleForm = ({
       // Prepare final payload
       const finalData: any = {
         ...formData,
+        timeDelay: parsedTimeDelay,
         companyId: companyId,
         attachments: images,
         ruleType: formData.ruleType ? formData.ruleType : "one_time",
