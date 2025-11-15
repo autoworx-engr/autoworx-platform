@@ -25,6 +25,7 @@ import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import { time } from "console";
 import { TechnicianImage } from "@prisma/client";
+import { useIsAdminOrManager } from "@/utils/useIsAdminOrManager";
 
 export interface TechnicianPhoto {
   id: number | string;
@@ -44,7 +45,7 @@ export default function WorkOrderModalBody({
   onWorkOrderCreated?: () => void;
 }) {
   const [dueDate, setDueDate] = useState<string | null>("");
-
+  const isAdminOrManager = useIsAdminOrManager();
   const { data, error, isLoading, isFetched } = useQuery({
     queryKey: queryKeys.getWorkOrderDataKey(invoiceId),
     queryFn: () => getWorkOrderData(invoiceId),
@@ -221,23 +222,25 @@ export default function WorkOrderModalBody({
         />
 
         {/* see images dialog trigger (uses its own internal state) */}
-        <div className="absolute right-16 top-0">
-          <Dialog>
-            <DialogTrigger asChild>
-              <button className="bg-[#6571ff] text-white px-5 py-0.5 rounded-md">
-                Attachments
-              </button>
-            </DialogTrigger>
+        {isAdminOrManager && (
+          <div className="absolute right-16 top-0">
+            <Dialog>
+              <DialogTrigger asChild>
+                <button className="bg-[#6571ff] text-white px-5 py-0.5 rounded-md">
+                  Attachments
+                </button>
+              </DialogTrigger>
 
-            <DialogContent className="min-w-[560px] max-w-3xl overflow-y-auto h-full lg:h-fit">
-              <ImagesDialogContent
-                technicianPhotos={technicianPhotos}
-                clientId={invoice?.client?.id}
-                invoiceId={invoice?.id}
-              />
-            </DialogContent>
-          </Dialog>
-        </div>
+              <DialogContent className="min-w-[560px] max-w-3xl overflow-y-auto h-full lg:h-fit">
+                <ImagesDialogContent
+                  technicianPhotos={technicianPhotos}
+                  clientId={invoice?.client?.id}
+                  invoiceId={invoice?.id}
+                />
+              </DialogContent>
+            </Dialog>
+          </div>
+        )}
       </div>
 
       {writePermission && (
