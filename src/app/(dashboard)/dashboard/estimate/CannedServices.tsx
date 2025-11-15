@@ -104,7 +104,7 @@ export default function CannedServices({
   };
 
   return (
-    <div className="h-full w-full md:px-4">
+    <div className="h-full w-full md:px-4 flex flex-col">
       <section className="  pb-3 lg:pb-0">
         <div className="flex items-center gap-x-8">
           <h3 className="text-xl font-bold md:text-2xl">Canned Services</h3>
@@ -137,7 +137,7 @@ export default function CannedServices({
         </div>
       </section>
       {/* Desktop View */}
-      <div className="overflow-y-auto hidden max-h-[600px] md:block">
+      <div className="overflow-y-auto hidden flex-1 h-full md:block">
         <Table className="h-full">
           <TableHeader className="sticky top-0 bg-background">
             <TableRow>
@@ -188,7 +188,7 @@ export default function CannedServices({
         )}
       </div>
       {showPagination && (
-        <div className="mt-4 hidden justify-end lg:flex">
+        <div className=" h-10 hidden justify-end lg:flex">
           <Pagination
             className="custom-pagination"
             current={currentPage}

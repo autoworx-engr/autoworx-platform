@@ -105,7 +105,7 @@ export default function CannedLabor({
   console.log("search params==>", laborSearch);
 
   return (
-    <div className="h-full w-full md:px-4">
+    <div className="h-full w-full md:px-4 flex flex-col">
       <section className=" pb-3 lg:pb-0">
         <div className="flex items-center gap-x-8">
           <h3 className="text-xl font-bold md:text-2xl">Canned Labor</h3>
@@ -139,7 +139,7 @@ export default function CannedLabor({
         </div>
       </section>
       {/* Desktop View */}
-      <div className="hidden overflow-y-auto thin-scrollbar md:block">
+      <div className="hidden flex-1 h-full overflow-y-auto thin-scrollbar md:block">
         <Table className="h-full">
           <TableHeader className="sticky top-0 bg-background">
             <TableRow>
@@ -190,7 +190,7 @@ export default function CannedLabor({
         )}
       </div>
       {showPagination && (
-        <div className="mt-4 hidden h-10 justify-end lg:flex">
+        <div className=" hidden h-10 justify-end lg:flex flex-shrink-0">
           <Pagination
             className="custom-pagination"
             current={currentPage}
