@@ -123,8 +123,8 @@ export default function TaskListBox() {
           className="mb-4 flex-shrink-0"
         />
 
-        {/* Task List Content Area - Uses min-h-0 to allow scrolling */}
-        <div className="thin-scrollbar flex flex-1 flex-col space-y-3 overflow-y-auto overflow-x-hidden min-h-0">
+        {/* Task List Content Area - Uses min-h-0 to allow scrolling  */}
+        <div className="thin-scrollbar flex flex-1 flex-col space-y-3 overflow-y-auto overflow-x-hidden min-h-0 max-h-[40vh] md:max-h-none">
           {content}
         </div>
 

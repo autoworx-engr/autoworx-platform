@@ -119,8 +119,8 @@ export default async function AppointmentListBox() {
             className="mb-4 md:mb-6 flex-shrink-0"
           />
 
-          {/* Scrollable Appointment List Container */}
-          <div className="custom-scrollbar flex flex-1 flex-col space-y-4 overflow-y-auto w-full pr-1 pb-4 min-h-0">
+          {/* Scrollable Appointment List Container  */}
+          <div className="custom-scrollbar flex flex-1 flex-col space-y-4 overflow-y-auto w-full pr-1 pb-4 min-h-0 max-h-[60vh] md:max-h-none">
             {appointments.map((appointment: any, idx: any) => (
               // Note: AppointmentDetails needs its own premium styling update
               <AppointmentDetails appointment={appointment} key={idx} />
