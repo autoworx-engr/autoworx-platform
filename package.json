@@ -124,7 +124,6 @@
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.5.0",
-    "@types/antd": "^0.12.32",
     "@types/bcrypt": "^5.0.2",
     "@types/jest": "^29.5.12",
     "@types/jsonwebtoken": "^9.0.10",
