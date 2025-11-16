@@ -48,9 +48,9 @@ export default function FilterBySearchBox({ searchText, paramKey }: TProps) {
     } else if (pathname.includes("teams")) {
       return "Search by employee name";
     } else if (paramKey === "laborSearch") {
-      return "Search by labor name, category";
+      return "labour name,category";
     } else if (paramKey === "serviceSearch") {
-      return "Search by service name, category";
+      return "service name,category";
     } else {
       return "Search";
     }
