@@ -382,6 +382,46 @@ export async function getOrCreateInvoiceShortLink(
     };
   }
 }
+/**
+ * Get or create a short link for an fleet
+ */
+export async function getOrCreateFleetShortLink(
+  statementId: string,
+  clientName?: string,
+  createdBy?: number,
+  companyId?: number
+): Promise<{
+  success: boolean;
+  shortCode?: string;
+  shortUrl?: string;
+  originalUrl?: string;
+  isExisting?: boolean;
+  error?: string;
+}> {
+  try {
+    const originalUrl = `${process.env.NEXT_PUBLIC_APP_URL}/public-invoice/${statementId}?fleet=true`;
+
+    const result = await createShortLink({
+      originalUrl,
+      title: `Fleet Statement ${statementId}${clientName ? ` - ${clientName}` : ""}`,
+      description: `Public fleet statement link${clientName ? ` for ${clientName}` : ""}`,
+      createdBy,
+      companyId,
+    });
+
+    return {
+      ...result,
+      originalUrl,
+    };
+  } catch (error) {
+    console.error("Error getting/creating fleet statement short link:", error);
+    return {
+      success: false,
+      error: "Failed to get/create fleet statement short link",
+      originalUrl: `${process.env.NEXT_PUBLIC_APP_URL}/public-invoice/${statementId}?fleet=true`,
+    };
+  }
+}
 
 /**
  * List short links for a user or company
