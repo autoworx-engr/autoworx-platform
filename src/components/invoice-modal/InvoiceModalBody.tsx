@@ -288,13 +288,21 @@ export default function InvoiceModalBody({
       const json = await res.json();
       const data = json.data;
 
-      const response = await uploadSignature(invoiceId, data[0]);
+      // const response = await uploadSignature(invoiceId, data[0]);
 
-      if (response.type === "success") {
+      const response = await authorizeInvoice(
+        invoice.id,
+        authorizedNameInput,
+        data[0],
+        invoice.type
+      );
+
+      if (response?.type === "success") {
         successToast("Invoice Authorized");
+        await authorizedLeadsConvertion(invoice.id);
       } else {
         errorToast("Signature upload failed");
-        console.error("Signature upload failed:", response.message);
+        console.error("Signature upload failed:");
       }
     } catch (err) {
       errorToast("Signature upload failed");
@@ -783,28 +791,28 @@ export default function InvoiceModalBody({
                     </button>
                   </div>
                   <button
-                    onClick={async () => {
-                      const res = await authorizeInvoice(
-                        invoice.id,
-                        authorizedNameInput,
-                        invoice.type
-                      );
-                      if (res?.type === "success") {
-                        successToast("Invoice Authorized");
-                        await authorizedLeadsConvertion(invoice.id);
-                        setAuthorizedName(authorizedNameInput);
+                    // onClick={async () => {
+                    //   const res = await authorizeInvoice(
+                    //     invoice.id,
+                    //     authorizedNameInput,
+                    //     invoice.type
+                    //   );
+                    //   if (res?.type === "success") {
+                    //     successToast("Invoice Authorized");
+                    //     await authorizedLeadsConvertion(invoice.id);
+                    //     setAuthorizedName(authorizedNameInput);
 
-                        // Update the invoice object in state to reflect the change
-                        setInvoice((prev) => {
-                          if (!prev) return prev;
-                          return {
-                            ...prev,
-                            authorizedName: authorizedNameInput,
-                          };
-                        });
-                      }
-                      setShowAuthorizedName(false);
-                    }}
+                    //     // Update the invoice object in state to reflect the change
+                    //     setInvoice((prev) => {
+                    //       if (!prev) return prev;
+                    //       return {
+                    //         ...prev,
+                    //         authorizedName: authorizedNameInput,
+                    //       };
+                    //     });
+                    //   }
+                    //   setShowAuthorizedName(false);
+                    // }}
                     className="text-md rounded bg-green-500 px-1.5 pb-1 text-center text-white print:hidden"
                   >
                     Authorize
