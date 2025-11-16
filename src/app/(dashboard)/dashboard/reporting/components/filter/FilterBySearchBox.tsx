@@ -47,6 +47,10 @@ export default function FilterBySearchBox({ searchText, paramKey }: TProps) {
       return "Search by invoice, client, vehicle";
     } else if (pathname.includes("teams")) {
       return "Search by employee name";
+    } else if (paramKey === "laborSearch") {
+      return "labour name,category";
+    } else if (paramKey === "serviceSearch") {
+      return "service name,category";
     } else {
       return "Search";
     }

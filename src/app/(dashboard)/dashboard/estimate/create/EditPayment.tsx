@@ -263,7 +263,8 @@ export default function EditPaymentModal({
               name="amount"
               type="number"
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              // readonly={true}
+              // onChange={(e) => setAmount(e.target.value)}
             />
           </div>
 
