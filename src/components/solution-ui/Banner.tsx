@@ -1,8 +1,8 @@
+"use client";
+
 import React from "react";
-import Image from "next/image";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
-import Link from "next/link";
 
 const chaosStyles = `
   @keyframes chaosRotate {
@@ -39,8 +39,18 @@ export default function Banner() {
           </p>
           <div className="flex max-w-md flex-col gap-4 sm:flex-row">
             <Input placeholder="Enter your email" className="flex-1" />
-            <Button className="bg-teal-600 px-6 hover:bg-teal-700">
-              <Link href={"#call-to-action"}>Book Demo →</Link>
+            <Button
+              className="bg-teal-600 px-6 hover:bg-teal-700"
+              onClick={() => {
+                const el = document.getElementById("call-to-action");
+                if (el) {
+                  el.scrollIntoView({ behavior: "smooth" });
+                } else {
+                  window.location.hash = "call-to-action";
+                }
+              }}
+            >
+              Book Demo →
             </Button>
           </div>
           <p className="text-sm text-gray-500">
@@ -56,7 +66,7 @@ export default function Banner() {
             muted
           >
             <source
-              src="/videos/IMG_1660.MOV"
+              src="/videos/solution_video.mp4"
               type="video/mp4"
               className="rounded-2xl"
             />

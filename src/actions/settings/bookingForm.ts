@@ -17,7 +17,6 @@ export async function getBooking(companyId: number) {
   }
 }
 
-
 export async function getBookingFormById(bookingFormId: number) {
   try {
     const booking = await db.bookingForm.findUnique({
@@ -48,10 +47,9 @@ export async function updateBookingForm(
   }
 }
 
-export async function initialCreateBookingForm(
-) {
+export async function initialCreateBookingForm(cId?: number) {
   try {
-    const companyId = await getCompanyId();
+    const companyId = cId ? cId : await getCompanyId();
     // Generate booking URL with encoded company_id as query parameter
     const bookingForm = await db.bookingForm.create({
       data: {

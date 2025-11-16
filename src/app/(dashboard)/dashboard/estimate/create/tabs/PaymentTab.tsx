@@ -353,6 +353,7 @@ export default async function PaymentTab({
                 <th className="px-10 text-left">Amount</th>
                 <th className="px-10 text-left">Method</th>
                 <th className="px-10 text-left">Cash Received</th>
+                <th className="px-10 text-left">Method</th>
                 <th className="px-10 text-left">Date</th>
                 <th className="text-nowrap px-10 text-left">Due</th>
                 <th className="text-nowrap px-10 text-left">Status</th>
@@ -386,6 +387,7 @@ export default async function PaymentTab({
                       ? data.paymentMethodInfo.receivedCash
                       : "N/A"}
                   </td>
+                  <td className="px-10 text-left">{data.paymentMethod}</td>
                   <td className="px-10 text-left">
                     {moment(data.paymentDate).format("MM.DD.YYYY")}
                   </td>

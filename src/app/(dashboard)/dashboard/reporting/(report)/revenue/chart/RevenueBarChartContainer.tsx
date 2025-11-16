@@ -14,6 +14,8 @@ const CustomBar = (props: any) => {
       width={width}
       height={Math.abs(height)}
       fill={fill}
+      rx={6}
+      ry={6}
       style={style}
     />
   );
@@ -66,13 +68,14 @@ const CustomTooltip = ({ active, payload, isMobile, labe }: any) => {
         : formatCurrency(salePrice);
 
     return (
-      <div className={`${isMobile ? "min-w-fit" : "min-w-36"} max-w-xs rounded-lg border border-gray-300 bg-white p-3 shadow-lg`}>
+      <div
+        className={`${isMobile ? "min-w-fit" : "min-w-36"} max-w-xs rounded-lg border border-gray-300 bg-white p-3 shadow-lg`}
+      >
         <div className="space-y-2">
           <p className="text-sm font-medium text-gray-800 truncate">
             {data?.categoryName || "Unknown Category"}
           </p>
           <div className="border-t border-gray-200 pt-2">
-          
             <p className="text-lg font-bold text-[#03A7A2]">{displayValue}</p>
             {salePrice >= 1000 && (
               <p className="text-xs text-gray-500 mt-1">
@@ -96,14 +99,14 @@ type TProps = {
 };
 
 export default function RevenueBarChartContainer({ data }: TProps) {
-    const isMobile = useMediaQuery("(max-width: 640px)");
+  const isMobile = useMediaQuery("(max-width: 640px)");
   const transformedData = data.map((item) => ({
     ...item,
     absoluteSalePrice: Math.abs(item.salePrice),
   }));
 
   return (
-    <div className="chart-container border-none">
+    <div className="chart-container border-none w-[95%] max-w-3xl mx-auto rounded-lg overflow-hidden">
       <BarChartComponent height={500} title="" data={transformedData}>
         <XAxis tick={false} dataKey={"categoryName"}>
           <Label
@@ -118,7 +121,10 @@ export default function RevenueBarChartContainer({ data }: TProps) {
             Category
           </Label>
         </XAxis>
-        <Tooltip cursor={{ fill: "transparent" }} content={<CustomTooltip isMobile={isMobile} />} />
+        <Tooltip
+          cursor={{ fill: "transparent" }}
+          content={<CustomTooltip isMobile={isMobile} />}
+        />
         <YAxis tick={false} dataKey={"absoluteSalePrice"}>
           <Label
             angle={270}
@@ -136,7 +142,7 @@ export default function RevenueBarChartContainer({ data }: TProps) {
         </YAxis>
         <Bar
           dataKey={"absoluteSalePrice"}
-          fill="#ffffff"
+          fill="#03A7A2"
           style={{ stroke: "#03A7A2", strokeWidth: 2 }}
           shape={<CustomBar />}
           label={(props) => <CustomLabel {...props} data={transformedData} />}

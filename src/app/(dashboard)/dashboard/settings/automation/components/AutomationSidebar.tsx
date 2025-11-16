@@ -37,6 +37,11 @@ const items = [
     path: "inventory",
     permissionName: companyPermissionModule.INVENTORY_AUTOMATION,
   },
+  {
+    name: "tag",
+    path: "tag",
+    permissionName: companyPermissionModule.TAG_AUTOMATION,
+  },
 ];
 
 const AutomationSidebar = ({
@@ -90,6 +95,7 @@ const AutomationSidebar = ({
             <div key={item.path} className="">
               <button
                 onClick={handleClick(item, isDisabled)}
+                // onClick={handleClick(item)}
                 // disabled={isLoading}
                 className={cn(
                   "flex w-full flex-col items-center justify-center text-nowrap rounded-sm border border-gray-200 bg-white px-14 py-4 font-medium capitalize transition-colors",

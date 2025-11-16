@@ -12,6 +12,7 @@ import {
   InvoicePhoto,
   Task,
   Technician,
+  TechnicianImage,
   User,
   Vehicle,
   VehicleParts,
@@ -38,6 +39,7 @@ export interface IWorkOrderData {
       name: string;
       hasPermission: boolean;
       vehicleParts: VehicleParts[];
+      images: TechnicianImage[];
     })[]
   >;
 }
@@ -80,6 +82,7 @@ export async function getWorkOrderData(id: string) {
       include: {
         user: true,
         vehicleParts: true,
+        images: true,
       },
     });
 
@@ -89,6 +92,7 @@ export async function getWorkOrderData(id: string) {
         name: string;
         hasPermission: boolean;
         vehicleParts: VehicleParts[];
+        images: TechnicianImage[];
       })[]
     > = {};
 

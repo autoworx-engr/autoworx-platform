@@ -20,6 +20,9 @@ import moment from "moment";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import SelectEmployeeType from "./SelectEmployeeType";
+import { useQueryClient } from "@tanstack/react-query";
+import { useEmployeeFilterStore } from "@/stores/employeeFilter";
+import { EMPLOYEE_LIST_KEY } from "./_hook/useEmployeeQuery";
 
 type TEditClientModalBodyProps = {
   employee: User;
@@ -40,6 +43,15 @@ export default function EditClientModalBody({
   const { data: companyName } = useServerGet(getCompany);
   const [openChangePassword, setOpenChangePassword] = useState(false);
   const { showError, clearError } = useFormErrorStore();
+
+  const {
+    dateRange,
+    search,
+    type: employeeType,
+    currentPage,
+    pageSize,
+  } = useEmployeeFilterStore();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     setProfilePic(employee.image !== DEFAULT_IMAGE_URL ? employee.image : null);
@@ -190,6 +202,18 @@ export default function EditClientModalBody({
     } else if (res.type === "success") {
       setNewProfilePic(null);
       onClose();
+      //employees 1 50 Admin  null null
+      queryClient.invalidateQueries({
+        queryKey: [
+          EMPLOYEE_LIST_KEY,
+          currentPage,
+          pageSize,
+          employeeType,
+          search,
+          dateRange[0],
+          dateRange[1],
+        ],
+      });
       successToast("Employee updated successfully");
     }
   }
@@ -229,7 +253,7 @@ export default function EditClientModalBody({
               id="profilePicture"
               hidden
               accept="image/*"
-              onChange={(e) => {
+              onChange={e => {
                 const file = e.target.files?.[0];
                 if (file) {
                   setNewProfilePic(file);
@@ -248,7 +272,7 @@ export default function EditClientModalBody({
               id="profilePicture"
               hidden
               accept="image/*"
-              onChange={(e) => {
+              onChange={e => {
                 const file = e.target.files?.[0];
                 if (file) {
                   setNewProfilePic(file);
@@ -276,7 +300,7 @@ export default function EditClientModalBody({
             name="firstName"
             required
             defaultValue={employee.firstName}
-            onChange={(e) => {
+            onChange={e => {
               const value = e.target.value;
               if (!value.trim()) {
                 showError({
@@ -299,7 +323,7 @@ export default function EditClientModalBody({
             name="email"
             defaultValue={employee.email}
             required
-            onChange={(e) => {
+            onChange={e => {
               const value = e.target.value;
               if (!value.trim()) {
                 showError({
@@ -320,7 +344,7 @@ export default function EditClientModalBody({
             type="tel"
             name="mobileNumber"
             defaultValue={employee.phone!}
-            onChange={(e) => {
+            onChange={e => {
               const value = e.target.value;
               if (!/^\+?\d*$/.test(value)) {
                 showError({
@@ -384,7 +408,7 @@ export default function EditClientModalBody({
             name="zip"
             defaultValue={employee.zip!}
             required={false}
-            onChange={(e) => {
+            onChange={e => {
               const value = e.target.value;
               if (value && !/^\d*$/.test(value)) {
                 showError({
@@ -407,7 +431,7 @@ export default function EditClientModalBody({
             name="commission"
             defaultValue={Number(employee.commission!)}
             required={false}
-            onChange={(e) => {
+            onChange={e => {
               const value = e.target.value;
               if (value && !/^(\d*\.?\d+|\d+\.?\d*)$/.test(value)) {
                 showError({

@@ -60,7 +60,7 @@ export default function FilterBySearchBox({ searchText, paramKey }: TProps) {
     <div className="relative w-full min-w-[300] max-w-[693px]">
       <Search size={16} className="absolute left-[10px] top-[9px]" />
       <input
-        onChange={(e) => {
+        onChange={e => {
           handleSearchChange(e);
           setSearchTerm(e.target.value);
         }}

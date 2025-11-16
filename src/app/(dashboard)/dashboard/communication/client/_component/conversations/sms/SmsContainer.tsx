@@ -96,7 +96,7 @@ export default function SmsContainer({ clientId }: TProps) {
       </div>
       {/* Input area - always stays at bottom */}
       <div className="flex-shrink-0">
-        <SendSms clientId={clientId} />
+        <SendSms clientId={clientId} companyId={user?.companyId!} />
       </div>
     </div>
   );

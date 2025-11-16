@@ -8,7 +8,7 @@ export default function useClientListInfiniteQuery(search?: string) {
   return useInfiniteQuery({
     queryKey: [queryKeys.clientList, "infinite", search],
     queryFn: async ({ pageParam = 0 }) => {
-      const clients = await getClientList(
+      const { clients } = await getClientList(
         {
           select: {
             id: true,
@@ -39,7 +39,7 @@ export default function useClientListInfiniteQuery(search?: string) {
         nextPage: clients?.length === PAGE_SIZE ? pageParam + 1 : undefined,
       };
     },
-    getNextPageParam: (lastPage) => lastPage.nextPage,
+    getNextPageParam: lastPage => lastPage.nextPage,
     initialPageParam: 0,
   });
 }

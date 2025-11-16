@@ -16,12 +16,14 @@ import {
 import { useAllInvoiceAutomationRules } from "@/hooks/invoice-automation/useAllInvoiceAutomationRules";
 import { useAllInventoryAutomationRules } from "../../../../../../hooks/inventory-automation/useAllInventoryAutomationRules";
 import { Inbox } from "lucide-react";
+import { useAllTagAutomationRules } from "@/hooks/tag-automation/useAllTagAutomationRules";
 const CommunicationRuleForm = dynamic(() => import("./CommunicationRuleForm"));
 const PipelineRuleForm = dynamic(() => import("./PipelineRuleForm"));
 const InventoryRuleForm = dynamic(() => import("./InventoryRulesForm"));
 const CampaignForm = dynamic(() => import("./CampaignForm"));
 const ServiceRuleForm = dynamic(() => import("./ServiceRuleForm"));
 const InvoiceRuleForm = dynamic(() => import("./InvoiceRuleForm"));
+const TagRuleForm = dynamic(() => import("./TagRuleForm"));
 
 // Form component map
 const formComponents: Record<string, React.ComponentType<any>> = {
@@ -31,6 +33,7 @@ const formComponents: Record<string, React.ComponentType<any>> = {
   "service-maintenance": ServiceRuleForm,
   invoice: InvoiceRuleForm,
   inventory: InventoryRuleForm,
+  tag: TagRuleForm,
 };
 
 export default function AllCards({
@@ -88,6 +91,11 @@ export default function AllCards({
     isLoading: inventoryAutomationIsLoading,
     isFetching: inventoryAutomationIsFetching,
   } = useAllInventoryAutomationRules(companyId, type === "inventory");
+  const {
+    data: allTagAutomation,
+    isLoading: tagAutomationIsLoading,
+    isFetching: tagAutomationIsFetching,
+  } = useAllTagAutomationRules(companyId, type === "tag");
 
   const mode = isEdit ? "edit" : "create";
 
@@ -106,6 +114,8 @@ export default function AllCards({
         return invoiceAutomationIsLoading || invoiceAutomationIsFetching;
       case "inventory":
         return inventoryAutomationIsLoading || inventoryAutomationIsFetching;
+      case "tag":
+        return tagAutomationIsLoading || tagAutomationIsFetching;
       default:
         return false;
     }
@@ -139,9 +149,11 @@ export default function AllCards({
               ? allInvoiceAutomation?.data
               : type === "inventory"
                 ? allInventoryAutomation?.data
-                : campaigns;
+                : type === "tag"
+                  ? allTagAutomation?.data
+                  : campaigns;
 
-  const allowedCompany = [4, 14];
+  const allowedCompany = [4, 14, 1];
   useEffect(() => {
     if (items?.length >= 3 && !allowedCompany.includes(companyId)) {
       setIsCreate(false);

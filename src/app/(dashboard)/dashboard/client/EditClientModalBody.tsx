@@ -13,10 +13,13 @@ import { DEFAULT_IMAGE_URL } from "@/lib/consts";
 import { successToast } from "@/lib/toast";
 import { useFormErrorStore } from "@/stores/form-error";
 import { Client, Source, Tag } from "@prisma/client";
+import { useQueryClient } from "@tanstack/react-query";
 import { CircleUserRound, SquarePen, X } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState, useTransition } from "react";
 import { RotatingLines } from "react-loader-spinner";
+import { CLIENT_LIST_KEY } from "./_hook/useClientQuery";
+import { useClientFilterStore } from "@/stores/clientFilter";
 
 type TEditClientModalBodyProps = {
   client: Client & {
@@ -34,6 +37,9 @@ export default function EditClientModalBody({
     client.source
   );
   const [pending, startTransition] = useTransition();
+
+  const queryClient = useQueryClient();
+  const { search, currentPage, pageSize } = useClientFilterStore();
 
   const [openClientSource, setOpenClientSource] = useState(false);
   const [tagOpenDropdown, setTagOpenDropdown] = useState(false);
@@ -62,7 +68,7 @@ export default function EditClientModalBody({
     await deleteSource(id);
 
     setClientSources((prev: Source[]) => {
-      return prev.filter((source) => source.id !== id);
+      return prev.filter(source => source.id !== id);
     });
 
     if (clientSource?.id === id) {
@@ -155,6 +161,9 @@ export default function EditClientModalBody({
             : res.message,
       });
     } else if (res.type === "success") {
+      queryClient.invalidateQueries({
+        queryKey: [CLIENT_LIST_KEY, search, currentPage, pageSize],
+      });
       clearError();
       onClose();
       successToast("Client updated successfully");
@@ -198,7 +207,7 @@ export default function EditClientModalBody({
               id="profilePicture"
               hidden
               accept="image/*"
-              onChange={(e) => {
+              onChange={e => {
                 const file = e.target.files?.[0];
                 if (file) {
                   setNewProfilePic(file);
@@ -217,7 +226,7 @@ export default function EditClientModalBody({
               id="profilePicture"
               hidden
               accept="image/*"
-              onChange={(e) => {
+              onChange={e => {
                 const file = e.target.files?.[0];
                 if (file) {
                   setNewProfilePic(file);
@@ -244,7 +253,7 @@ export default function EditClientModalBody({
             label="First Name"
             required
             defaultValue={client.firstName!}
-            onChange={(e) => {
+            onChange={e => {
               const value = e.target.value;
 
               // Validate on input change
@@ -270,7 +279,7 @@ export default function EditClientModalBody({
             name="email"
             label="Email"
             defaultValue={client.email!}
-            onChange={(e) => {
+            onChange={e => {
               const value = e.target.value;
 
               // Validate on input change
@@ -289,7 +298,7 @@ export default function EditClientModalBody({
             label="Mobile"
             required={false}
             defaultValue={client.mobile!}
-            onChange={(e) => {
+            onChange={e => {
               const value = e.target.value;
               // Allow only numeric values
               if (!/^\+?\d*$/.test(value)) {
@@ -337,7 +346,7 @@ export default function EditClientModalBody({
             {/* TODO: use `Selector` component and make the hieght auto */}
             <SelectClientSource
               clickabled={false}
-              label={(clientSrc) =>
+              label={clientSrc =>
                 clientSource ? clientSource.name : "Client Source"
               }
               newButton={
@@ -399,7 +408,7 @@ export default function EditClientModalBody({
               <input
                 type="checkbox"
                 checked={isPremium}
-                onChange={(e) => setIsPremium(e.target.checked)}
+                onChange={e => setIsPremium(e.target.checked)}
                 className="h-4 w-4 accent-[#6571FF]"
               />
               <span className="font-medium">Add as a Fleet</span>

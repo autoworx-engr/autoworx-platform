@@ -18,7 +18,7 @@ export default function EditEmployee({
   return (
     <Dialog
       open={open}
-      onOpenChange={(isOpen) => {
+      onOpenChange={isOpen => {
         if (!isOpen) setOpen(false);
         setOpen(isOpen);
       }}
