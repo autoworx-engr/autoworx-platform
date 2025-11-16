@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { Service } from "@prisma/client";
 import moment from "moment-timezone";
+import EditPaymentModal from "../EditPayment";
 
 const evenColor = "bg-background";
 const oddColor = "bg-[#F8FAFF]";
@@ -334,7 +335,13 @@ export default async function PaymentTab({
       </div>
 
       {/* Section 2 */}
-      <h3 className="mb-1 mt-3 lg:mt-12 font-semibold">Invoice Payments</h3>
+      <div className="flex items-center justify-between">
+        <h3 className="mb-1 mt-3 lg:mt-12 font-semibold">Invoice Payments</h3>
+        <EditPaymentModal
+          allTransactionEntries={allTransactionEntries}
+          invoicesWithFull={invoicesWithFull}
+        />
+      </div>
       <div className="h-[30%] overflow-scroll rounded-lg border md:rounded-none">
         {/* Desktop View */}
         <div className="hidden md:block ">
@@ -344,6 +351,7 @@ export default async function PaymentTab({
                 <th className="px-10 text-left">Invoice ID</th>
                 <th className="px-10 text-left">Vehicle</th>
                 <th className="px-10 text-left">Amount</th>
+                <th className="px-10 text-left">Method</th>
                 <th className="px-10 text-left">Cash Received</th>
                 <th className="px-10 text-left">Method</th>
                 <th className="px-10 text-left">Date</th>
@@ -371,6 +379,7 @@ export default async function PaymentTab({
                   <td className="px-10 text-left">
                     {formatCurrency(data.amountPaid)}
                   </td>
+                  <td className="px-10 text-left">{data.paymentMethod}</td>
                   <td className="px-10 text-left">
                     {data.paymentMethodInfo &&
                     "receivedCash" in data.paymentMethodInfo &&

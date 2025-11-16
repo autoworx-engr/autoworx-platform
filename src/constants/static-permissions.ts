@@ -83,6 +83,11 @@ export const staticPermissions = [
     status: false,
   },
   {
+    title: "Tag Automation",
+    permission_name: "tagAutomation",
+    status: false,
+  },
+  {
     title: "Service Automation",
     permission_name: "serviceAutomation",
     status: false,
@@ -111,6 +116,7 @@ export const AUTOMATION_CHILD_PERMISSIONS = [
   "invoiceAutomation",
   "inventoryAutomation",
   "serviceAutomation",
+  "tagAutomation",
 ];
 export const COMMUNICATION_HUB_CHILD_PERMISSIONS = [
   "communicationHubInternal",

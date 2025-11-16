@@ -21,7 +21,9 @@ export default async function getClients({
     };
 
     if (search) {
-      const [first, last] = search.trim().split(" ");
+      const trimmed = search.trim();
+      const [first, last] = trimmed.split(" ");
+      const numericId = /^\d+$/.test(trimmed) ? Number(trimmed) : null;
       whereConditions.OR = [
         {
           firstName: {
@@ -67,23 +69,19 @@ export default async function getClients({
             mode: "insensitive",
           },
         },
+        ...(numericId !== null ? [{ id: numericId }] : []),
       ];
     }
 
     const clients = await db.client.findMany({
       where: whereConditions,
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-        mobile: true,
+      include: {
         tag: {
-          where: { type: "CLIENT" },
+          where: {
+            type: "CLIENT",
+          },
         },
-        source: true,
       },
-
       orderBy: {
         createdAt: "desc",
       },

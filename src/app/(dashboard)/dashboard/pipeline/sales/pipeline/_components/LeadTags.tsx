@@ -7,6 +7,9 @@ import { LeadWithSalesUser } from "@/types/invoiceLead";
 import { removeLeadTag, saveLeadTag } from "@/actions/pipelines/leadTag";
 import { useColumnDispatch } from "@/context/sales-pipeline.context";
 import { actionTypes } from "@/constants/lead.constant";
+import { updateTagAutomationTrigger } from "@/service/tag-automation-trigger/api";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/authOptions";
 
 type TLeadTagsProps = {
   leadTags: {
@@ -52,6 +55,24 @@ export default function LeadTags({ leadTags, lead }: TLeadTagsProps) {
             tag: selectedTag,
           },
         });
+
+        const response = await updateTagAutomationTrigger({
+          columnId: columnId,
+          companyId: result?.lead?.companyId,
+          pipelineType: "SALES",
+          tagId: selectedTag?.id,
+          leadId: result?.leadId,
+        });
+        // console.log("response", response?.data);
+        // if (response?.success) {
+        //   dispatch({
+        //     type: actionTypes.AUTOMATION_TRIGGER,
+        //     payload: {
+        //       updatedLead: response.data,
+        //       previousColumnId: columnId,
+        //     },
+        //   });
+        // }
       }
     } catch (error) {
       console.error("Error adding tag:", error);

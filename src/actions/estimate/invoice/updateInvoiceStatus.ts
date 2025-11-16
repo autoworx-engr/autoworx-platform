@@ -4,6 +4,7 @@ import { updateServiceAutomationTrigger } from "@/service/service-maintenance-au
 import { InvoiceType } from "@prisma/client";
 import { sendInvoiceDeliveredNotification } from "@/lib/notification/invoice-notify";
 import { updateInvoiceAutomationTrigger } from "@/service/invoice-automation-trigger/api";
+import { updateTagAutomationTrigger } from "@/actions/automation/tag/triggerTagAutomation";
 
 export async function updateInvoiceStatus(
   invoiceId: string,
@@ -93,6 +94,14 @@ export async function updateInvoiceStatus(
         invoiceId: updatedInvoice?.id!,
         columnId: updatedInvoice?.columnId!,
         type: updatedInvoice?.type!,
+      });
+
+      await updateTagAutomationTrigger({
+        columnId: updatedInvoice?.columnId!,
+        companyId: updatedInvoice?.companyId!,
+        pipelineType: "SHOP",
+        invoiceId: updatedInvoice?.id!,
+        conditionType: "post_tag",
       });
 
       return { type: "success" };

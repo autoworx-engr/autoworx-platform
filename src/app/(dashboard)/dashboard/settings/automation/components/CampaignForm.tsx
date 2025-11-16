@@ -232,14 +232,27 @@ const CampaignForm = ({
       errorToast("Working hour limits are not available.");
       return;
     }
-    const minTime = dayjs(calendarSettings?.dayStart, "HH:mm");
-    const maxTime = dayjs(calendarSettings?.dayEnd, "HH:mm");
-
     if (time && formData.date) {
+      const date = formData.date;
+
+      // Combine selected date with calendar settings
+      const minTime = moment(
+        `${date} ${calendarSettings?.dayStart}`,
+        "YYYY-MM-DD HH:mm"
+      );
+      const maxTime = moment(
+        `${date} ${calendarSettings?.dayEnd}`,
+        "YYYY-MM-DD HH:mm"
+      );
+      const selectedTime = moment(
+        `${date} ${time.format("HH:mm")}`,
+        "YYYY-MM-DD HH:mm"
+      );
+
       const isValid =
-        time.isSame(minTime) ||
-        time.isSame(maxTime) ||
-        (time.isAfter(minTime) && time.isBefore(maxTime));
+        selectedTime.isSame(minTime) ||
+        selectedTime.isSame(maxTime) ||
+        (selectedTime.isAfter(minTime) && selectedTime.isBefore(maxTime));
 
       if (!isValid) {
         errorToast(
@@ -248,9 +261,7 @@ const CampaignForm = ({
         return;
       }
 
-      const dateTimeString = new Date(
-        `${formData.date}T${time.format("HH:mm")}:00`
-      ).toString();
+      const dateTimeString = selectedTime.toDate().toString();
       handleInputChange("startTime", dateTimeString);
     } else {
       handleInputChange("startTime", "");
