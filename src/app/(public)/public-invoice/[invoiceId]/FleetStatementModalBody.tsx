@@ -13,6 +13,8 @@ import { cn } from "@/lib/cn";
 import Image from "next/image";
 import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
 import { formatCurrency } from "@/utils/formatCurrency";
+import { createStripePaymentLink } from "@/actions/payment/stripePayment";
+import { errorToast } from "@/lib/toast";
 
 interface FleetStatementModalBodyProps {
   statementId: string;
@@ -267,9 +269,9 @@ export const FleetStatementModalBody: React.FC<
                 <DialogTrigger asChild>
                   <button
                     type="button"
-                    className="relative inline-flex items-center px-6 py-2 text-sm font-semibold 
-        text-white rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 
-        shadow-md hover:shadow-xl transition-all duration-300 
+                    className="relative inline-flex items-center px-6 py-2 text-sm font-semibold
+        text-white rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600
+        shadow-md hover:shadow-xl transition-all duration-300
         hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-blue-400"
                   >
                     Pay Now
@@ -278,17 +280,17 @@ export const FleetStatementModalBody: React.FC<
 
                 <DialogContent
                   className="
-        sm:max-w-[450px] rounded-2xl p-6 
-        bg-white/90 dark:bg-slate-900/60 
-        backdrop-blur-xl 
-        ring-1 ring-slate-900/10 dark:ring-white/10 
+        sm:max-w-[450px] rounded-2xl p-6
+        bg-white/90 dark:bg-slate-900/60
+        backdrop-blur-xl
+        ring-1 ring-slate-900/10 dark:ring-white/10
         shadow-2xl
       "
                 >
                   <DialogHeader>
                     <div className="flex items-center gap-3">
                       <div
-                        className="w-10 h-10 pb-1 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 
+                        className="w-10 h-10 pb-1 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600
             flex items-center justify-center shadow-md"
                       >
                         <p className="text-2xl text-white">+</p>
@@ -313,13 +315,14 @@ export const FleetStatementModalBody: React.FC<
                         id="amount"
                         value={amount}
                         type="text"
+                        disabled
                         placeholder="Enter payment amount"
                         className="
-              w-full px-3 py-2 rounded-lg 
-              bg-white/70 dark:bg-slate-800/60 
+              w-full px-3 py-2 rounded-lg
+              bg-white/70 dark:bg-slate-800/60
               border border-slate-300 dark:border-slate-700
               shadow-sm
-              focus:ring-2 focus:ring-blue-400 focus:border-blue-500 
+              focus:ring-2 focus:ring-blue-400 focus:border-blue-500
               outline-none transition-all duration-200
             "
                         onChange={(e) => {
@@ -338,10 +341,10 @@ export const FleetStatementModalBody: React.FC<
                     <button
                       type="button"
                       className="
-            px-4 py-2 rounded-lg text-sm font-medium 
-            bg-slate-200 dark:bg-slate-700 
+            px-4 py-2 rounded-lg text-sm font-medium
+            bg-slate-200 dark:bg-slate-700
             text-slate-800 dark:text-slate-200
-            hover:bg-slate-300 dark:hover:bg-slate-600 
+            hover:bg-slate-300 dark:hover:bg-slate-600
             transition-all duration-200
           "
                       onClick={() => setOpen(false)}
@@ -352,15 +355,32 @@ export const FleetStatementModalBody: React.FC<
                     <button
                       type="button"
                       disabled={isLoading || !amount || Number(amount) <= 0}
+                      // onClick={async () => {
+                      //   setIsLoading(true);
+                      //   await new Promise((r) => setTimeout(r, 300));
+                      //   setIsLoading(false);
+                      //   setOpen(false);
+                      // }}
                       onClick={async () => {
                         setIsLoading(true);
-                        await new Promise((r) => setTimeout(r, 300));
+                        const res = await createStripePaymentLink({
+                          amount,
+                          statementId,
+                          companyId: company.id,
+                          payType: "statement",
+                        });
+                        if (res.url) {
+                          window.open(res.url, "_self");
+                        } else if (!res?.success) {
+                          errorToast(
+                            res?.message ?? "Failed initiate Stripe checkout"
+                          );
+                        }
                         setIsLoading(false);
-                        setOpen(false);
                       }}
                       className={`
             px-4 py-2 rounded-lg text-sm font-semibold text-white
-            bg-gradient-to-r from-blue-500 to-indigo-600 
+            bg-gradient-to-r from-blue-500 to-indigo-600
             shadow-md hover:shadow-xl transition-all duration-300
             hover:-translate-y-0.5 focus:ring-2 focus:ring-blue-400
             disabled:opacity-50 disabled:cursor-not-allowed
