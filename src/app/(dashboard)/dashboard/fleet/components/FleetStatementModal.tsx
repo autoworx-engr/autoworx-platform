@@ -16,6 +16,7 @@ import { sendFleetEmail } from "@/actions/fleet/sendFleetEmail";
 import { sendFleetSms } from "@/actions/fleet/sendFleetSms";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { Mail, SquarePen } from "lucide-react";
+import { getOrCreateShortLinkAction } from "@/actions/shortener/getOrCreateShortLink";
 
 interface FleetStatementModalProps {
   isOpen: boolean;
@@ -156,6 +157,44 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
     successToast("Statement sent successfully");
   };
 
+  const handleCopyLink = async () => {
+    const isFleetStatement = true;
+    const query = isFleetStatement ? "?fleet=true" : "";
+    try {
+      const clientName = client?.firstName || client?.lastName || "";
+
+      const shortLinkResult = await getOrCreateShortLinkAction({
+        invoiceId: statementId!,
+        clientName,
+        isFleetStatement: true,
+      });
+
+      if (shortLinkResult.success && shortLinkResult.shortUrl) {
+        await navigator.clipboard.writeText(shortLinkResult.shortUrl);
+        successToast("Short link copied to clipboard");
+      } else {
+        // Fallback to original URL if short link creation fails
+        const fallbackUrl =
+          shortLinkResult.originalUrl ||
+          `${process.env.NEXT_PUBLIC_APP_URL}/public-invoice/${statementId}${query}`;
+        await navigator.clipboard.writeText(fallbackUrl);
+        console.log("⚠️ Copy Link - Using original URL:", {
+          error: shortLinkResult.error,
+          originalUrl: fallbackUrl,
+          invoiceId: statementId,
+        });
+        successToast("Link copied to clipboard");
+      }
+    } catch (error) {
+      console.error("Error copying link:", error);
+      // Fallback to original URL
+      const fallbackLink = isFleetStatement
+        ? `${process.env.NEXT_PUBLIC_APP_URL}/public-invoice/${statementId}?fleet=true` // 💡 FLEET FALLBACK
+        : `${process.env.NEXT_PUBLIC_APP_URL}/public-invoice/${statementId}`;
+      await navigator.clipboard.writeText(fallbackLink);
+      successToast("Link copied to clipboard");
+    }
+  };
   const tHeadingCommonClasses = "px-4 py-2 text-left font-bold text-[#66738C]";
   const tDataCommonClasses = "px-4 py-2 text-[#66738C] text-left";
 
@@ -207,7 +246,7 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
             <div className="flex items-center gap-x-2 rounded-md border border-gray-300 px-2 py-1">
               <span className="mr-1 font-semibold">Share via</span>
               <Popconfirm
-                title="Send invoice via Email now?"
+                title="Send fleet via Email now?"
                 onConfirm={handleEmail}
                 okText="Yes"
                 cancelText="No"
@@ -219,7 +258,7 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
               </Popconfirm>
               {credentials && (
                 <Popconfirm
-                  title="Send invoice via SMS now?"
+                  title="Send fleet via SMS now?"
                   onConfirm={handleSms}
                   okText="Yes"
                   cancelText="No"
@@ -255,6 +294,38 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
                 </Popconfirm>
               )}
             </div>
+            <button
+              className="flex items-center justify-center gap-1 rounded bg-[#6571FF] px-2 py-1 text-sm text-white md:px-4 md:text-base"
+              onClick={handleCopyLink}
+            >
+              <svg
+                viewBox="0 0 32 32"
+                height="16"
+                width="16"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="#ffffff"
+              >
+                <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                <g
+                  id="SVGRepo_tracerCarrier"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                ></g>
+                <g id="SVGRepo_iconCarrier">
+                  {" "}
+                  <g fill="none" fill-rule="evenodd">
+                    {" "}
+                    <path d="m0 0h32v32h-32z"></path>{" "}
+                    <path
+                      d="m24.110782 0 5.889218 8.76607872v19.23392128h-4v4h-24v-28h4v-4zm-18.110782 6h-2v24h20v-2h-18z"
+                      fill="#ffffff"
+                      fill-rule="nonzero"
+                    ></path>{" "}
+                  </g>{" "}
+                </g>
+              </svg>
+              <span className="hidden md:inline">Copy Link</span>
+            </button>
           </div>
         </DialogHeader>
 
