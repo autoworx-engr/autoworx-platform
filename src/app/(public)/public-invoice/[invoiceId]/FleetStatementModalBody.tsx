@@ -1,5 +1,14 @@
 "use client";
 import React from "react";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/Dialog";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/cn";
 import Image from "next/image";
 import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
@@ -14,6 +23,7 @@ export const FleetStatementModalBody: React.FC<
   FleetStatementModalBodyProps
 > = ({ statementId, initialStatement }) => {
   const statement = initialStatement;
+  const [open, setOpen] = React.useState(false);
 
   const company = statement?.Fleet?.client?.company;
   const fleet = statement?.Fleet;
@@ -39,6 +49,9 @@ export const FleetStatementModalBody: React.FC<
     totalPaid,
     totalDue,
   };
+
+  const [amount, setAmount] = React.useState(String(totalDue.toFixed(2)));
+  const [isLoading, setIsLoading] = React.useState(false);
 
   return (
     <div className="w-full max-w-5xl mx-auto bg-white rounded-lg shadow-sm">
@@ -248,6 +261,74 @@ export const FleetStatementModalBody: React.FC<
                 </span>
               </div>
             </div>
+          </div>
+
+          <div className="mt-4 flex justify-center lg:justify-end">
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger asChild>
+                <button
+                  className="w-fit ml-auto bg-[#6571ff] text-white font-medium py-1 pb-1.5 px-7 rounded transition-colors duration-200 shadow-sm flex items-center justify-between text-sm"
+                  type="button"
+                >
+                  Pay Now
+                </button>
+              </DialogTrigger>
+
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Make Payment With Stripe</DialogTitle>
+                </DialogHeader>
+
+                <div className="grid gap-4 py-4">
+                  <div className="gap-4">
+                    <Label htmlFor="amount" className="mb-2 text-right">
+                      Amount
+                    </Label>
+                    <div>
+                      <input
+                        id="amount"
+                        value={amount}
+                        type="text"
+                        placeholder="Enter payment amount"
+                        className="w-full rounded-lg border px-2 py-2"
+                        onChange={(e) => {
+                          let inputValue = e.target.value;
+                          if (/^\d*\.?\d*$/.test(inputValue)) {
+                            setAmount(inputValue);
+                          }
+                        }}
+                      />
+                      <span className="text-xs">
+                        ( Max. {formatCurrency(totals.totalDue)} )
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <DialogFooter>
+                  <button
+                    className="bg-gray-200 text-gray-800 rounded px-4 py-2"
+                    onClick={() => setOpen(false)}
+                    type="button"
+                  >
+                    Close
+                  </button>
+                  <button
+                    className="bg-[#6571ff] text-white rounded px-4 py-2"
+                    type="button"
+                    disabled={isLoading || !amount || Number(amount) <= 0}
+                    onClick={async () => {
+                      setIsLoading(true);
+                      await new Promise((r) => setTimeout(r, 300));
+                      setIsLoading(false);
+                      setOpen(false);
+                    }}
+                  >
+                    {isLoading ? "Processing..." : "Checkout to Stripe"}
+                  </button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
       </div>
