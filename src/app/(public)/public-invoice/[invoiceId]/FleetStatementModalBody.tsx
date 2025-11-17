@@ -1,18 +1,12 @@
 "use client";
 import React from "react";
-import {
-  Dialog,
-  DialogTrigger,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/Dialog";
-import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/cn";
 import Image from "next/image";
 import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
 import { formatCurrency } from "@/utils/formatCurrency";
+import { useServerGet } from "@/hooks/useServerGet";
+import { getStripeAccount } from "@/app/(dashboard)/dashboard/settings/payments/stripe";
+import { StatementPaymentDialog } from "@/components/fleet-statement/StatementPaymentDialog";
 
 interface FleetStatementModalBodyProps {
   statementId: string;
@@ -23,12 +17,14 @@ export const FleetStatementModalBody: React.FC<
   FleetStatementModalBodyProps
 > = ({ statementId, initialStatement }) => {
   const statement = initialStatement;
-  const [open, setOpen] = React.useState(false);
 
   const company = statement?.Fleet?.client?.company;
   const fleet = statement?.Fleet;
   const client = statement?.Fleet?.client;
   const invoices = statement?.invoice || [];
+
+  const companyId = company?.id;
+  const { data: stripeAccountData } = useServerGet(getStripeAccount, companyId);
 
   // Calculate totals
   const totalAmount = invoices.reduce(
@@ -49,9 +45,6 @@ export const FleetStatementModalBody: React.FC<
     totalPaid,
     totalDue,
   };
-
-  const [amount, setAmount] = React.useState(String(totalDue.toFixed(2)));
-  const [isLoading, setIsLoading] = React.useState(false);
 
   return (
     <div className="w-full max-w-5xl mx-auto bg-white rounded-lg shadow-sm">
@@ -262,184 +255,18 @@ export const FleetStatementModalBody: React.FC<
               </div>
             </div>
 
-            <div className="mt-4 flex justify-center lg:justify-end">
-              <Dialog open={open} onOpenChange={setOpen}>
-                <DialogTrigger asChild>
-                  <button
-                    type="button"
-                    className="relative inline-flex items-center px-6 py-2 text-sm font-semibold 
-        text-white rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 
-        shadow-md hover:shadow-xl transition-all duration-300 
-        hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  >
-                    Pay Now
-                  </button>
-                </DialogTrigger>
-
-                <DialogContent
-                  className="
-        sm:max-w-[450px] rounded-2xl p-6 
-        bg-white/90 dark:bg-slate-900/60 
-        backdrop-blur-xl 
-        ring-1 ring-slate-900/10 dark:ring-white/10 
-        shadow-2xl
-      "
-                >
-                  <DialogHeader>
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="w-10 h-10 pb-1 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 
-            flex items-center justify-center shadow-md"
-                      >
-                        <p className="text-2xl text-white">+</p>
-                      </div>
-
-                      <DialogTitle className="text-lg font-semibold text-slate-900 dark:text-white">
-                        Make Payment with Stripe
-                      </DialogTitle>
-                    </div>
-                  </DialogHeader>
-
-                  <div className="mt-4 grid gap-4">
-                    <label
-                      htmlFor="amount"
-                      className="text-sm font-medium text-slate-700 dark:text-slate-200"
-                    >
-                      Amount
-                    </label>
-
-                    <div className="space-y-1">
-                      <input
-                        id="amount"
-                        value={amount}
-                        type="text"
-                        placeholder="Enter payment amount"
-                        className="
-              w-full px-3 py-2 rounded-lg 
-              bg-white/70 dark:bg-slate-800/60 
-              border border-slate-300 dark:border-slate-700
-              shadow-sm
-              focus:ring-2 focus:ring-blue-400 focus:border-blue-500 
-              outline-none transition-all duration-200
-            "
-                        onChange={(e) => {
-                          let v = e.target.value;
-                          if (/^\d*\.?\d*$/.test(v)) setAmount(v);
-                        }}
-                      />
-
-                      <span className="text-xs text-slate-500 dark:text-slate-400">
-                        Max: {formatCurrency(totals.totalDue)}
-                      </span>
-                    </div>
-                  </div>
-
-                  <DialogFooter className="mt-6 flex justify-end gap-3">
-                    <button
-                      type="button"
-                      className="
-            px-4 py-2 rounded-lg text-sm font-medium 
-            bg-slate-200 dark:bg-slate-700 
-            text-slate-800 dark:text-slate-200
-            hover:bg-slate-300 dark:hover:bg-slate-600 
-            transition-all duration-200
-          "
-                      onClick={() => setOpen(false)}
-                    >
-                      Close
-                    </button>
-
-                    <button
-                      type="button"
-                      disabled={isLoading || !amount || Number(amount) <= 0}
-                      onClick={async () => {
-                        setIsLoading(true);
-                        await new Promise((r) => setTimeout(r, 300));
-                        setIsLoading(false);
-                        setOpen(false);
-                      }}
-                      className={`
-            px-4 py-2 rounded-lg text-sm font-semibold text-white
-            bg-gradient-to-r from-blue-500 to-indigo-600 
-            shadow-md hover:shadow-xl transition-all duration-300
-            hover:-translate-y-0.5 focus:ring-2 focus:ring-blue-400
-            disabled:opacity-50 disabled:cursor-not-allowed
-          `}
-                    >
-                      {isLoading ? "Processing..." : "Checkout to Stripe"}
-                    </button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </div>
-
-            {/* <div className="mt-4 flex justify-center lg:justify-end">
-              <Dialog open={open} onOpenChange={setOpen}>
-                <DialogTrigger asChild>
-                  <button
-                    className="w-fit ml-auto bg-[#6571ff] text-white font-medium py-1 pb-1.5 px-7 rounded transition-colors duration-200 shadow-sm flex items-center justify-between text-sm"
-                    type="button"
-                  >
-                    Pay Now
-                  </button>
-                </DialogTrigger>
-
-                <DialogContent className="sm:max-w-[425px]">
-                  <DialogHeader>
-                    <DialogTitle>Make Payment With Stripe</DialogTitle>
-                  </DialogHeader>
-
-                  <div className="grid gap-4 py-4">
-                    <div className="gap-4">
-                      <Label htmlFor="amount" className="mb-2 text-right">
-                        Amount
-                      </Label>
-                      <div>
-                        <input
-                          id="amount"
-                          value={amount}
-                          type="text"
-                          placeholder="Enter payment amount"
-                          className="w-full rounded-lg border px-2 py-2"
-                          onChange={(e) => {
-                            let inputValue = e.target.value;
-                            if (/^\d*\.?\d*$/.test(inputValue)) {
-                              setAmount(inputValue);
-                            }
-                          }}
-                        />
-                        <span className="text-xs">
-                          ( Max. {formatCurrency(totals.totalDue)} )
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <DialogFooter>
-                    <button
-                      className="bg-gray-200 text-gray-800 rounded px-4 py-2"
-                      onClick={() => setOpen(false)}
-                      type="button"
-                    >
-                      Close
-                    </button>
-                    <button
-                      className="bg-[#6571ff] text-white rounded px-4 py-2"
-                      type="button"
-                      disabled={isLoading || !amount || Number(amount) <= 0}
-                      onClick={async () => {
-                        setIsLoading(true);
-                        await new Promise((r) => setTimeout(r, 300));
-                        setIsLoading(false);
-                        setOpen(false);
-                      }}
-                    >
-                      {isLoading ? "Processing..." : "Checkout to Stripe"}
-                    </button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </div> */}
+            <StatementPaymentDialog
+              statementId={statementId}
+              companyId={company.id}
+              totalDue={totals.totalDue}
+              isEnabled={
+                !!(
+                  stripeAccountData?.success &&
+                  stripeAccountData?.enabled &&
+                  parseFloat(Number(totals.totalDue ?? 0).toFixed(2)) > 0
+                )
+              }
+            />
           </div>
         </div>
       </div>
