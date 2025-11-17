@@ -216,7 +216,7 @@ export async function POST(req: NextRequest) {
           });
 
           // Update chat track
-          await updateNewSMSChatTrack({
+          updateNewSMSChatTrack({
             clientId: client.id,
             smsLastMessage: cleanedMessageText,
             lastMessageBy: "Client",

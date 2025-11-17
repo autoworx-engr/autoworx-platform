@@ -52,7 +52,7 @@ Body:
     "email": "john.doe@example.com",
     "phone": "+1234567890",
     "customer_country": "United States",
-    "oppurtunity_source": "(Facebook) Car | Service"
+    "opportunity_source": "(Facebook) Car | Service"
 }`}
             </code>
           </pre>

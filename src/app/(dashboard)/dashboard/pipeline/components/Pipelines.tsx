@@ -31,6 +31,7 @@ import {
   CirclePlus,
   MessageCircleMore,
 } from "lucide-react";
+import { updateTagAutomationTrigger } from "@/service/tag-automation-trigger/api";
 
 interface PipelinesProps {
   pipelinesTitle: string;
@@ -264,6 +265,14 @@ export default function Pipelines({
           //     [key]: [...existingTags, selectedTag],
           //   };
           // });
+
+          updateTagAutomationTrigger({
+            columnId: result?.invoice?.columnId!,
+            companyId: result?.invoice?.companyId,
+            pipelineType: "SHOP",
+            tagId: selectedTag?.id,
+            invoiceId: result?.invoiceId,
+          });
         }
       } catch (error) {
         console.error("Error saving tag:", error);
@@ -544,7 +553,7 @@ export default function Pipelines({
                         provided.innerRef(el);
                         columnRefs.current[categoryIndex] = el;
                       }}
-                      className="mx-2 w-[calc(100vw-2rem)] flex-shrink-0 rounded-md border sm:min-w-80 sm:flex-1 lg:min-w-[calc(100%/3-1.5rem)] xl:min-w-[calc(100%/4-1.5rem)] 2xl:min-w-[calc(100%/5-1.5rem)] 3xl:min-w-[calc(100%/6-1.5rem)]"
+                      className="mx-2 w-[calc(100vw-2rem)] flex-shrink-0 rounded-md border sm:min-w-80 sm:flex-1 lg:min-w-[calc(100%/3-1.5rem)] xl:min-w-[calc(100%/4-1.5rem)] 2xl:min-w-[calc(100%/6-1.5rem)]"
                       style={{
                         backgroundColor: "rgba(101, 113, 255, 0.15)",
                         padding: "0",

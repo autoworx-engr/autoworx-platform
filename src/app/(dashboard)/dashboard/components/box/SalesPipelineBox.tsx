@@ -21,7 +21,6 @@ export default async function SalesPipelineBox({
     company?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
   const totalLeadsPerMonthPromise = getTotalLeadsPerMonth(timezone);
   const leadsConvertedDataPromise = getConvertedLeadsPerMonth(timezone);
-
   const conversionRateDataPromise = getConversionRateWithGrowth(timezone);
 
   const [totalLeadsPerMonth, leadsConvertedData, conversionRateData] =
@@ -37,31 +36,54 @@ export default async function SalesPipelineBox({
   const conversionRateGrowth = conversionRateData.conversionRateGrowth;
 
   return (
-    <div className={cn("flex-1 rounded-md p-4 shadow-lg 2xl:px-6", className)}>
-      {/* Title and Link */}
+    <div
+      className={cn(
+        `
+          flex-1 flex flex-col p-4 md:p-6 rounded-2xl transition-all duration-300
+
+          // Glassmorphism effect applied directly to the box
+          bg-white/50 dark:bg-slate-900/50
+          backdrop-blur-md
+
+          // Subtle border and lift
+          ring-1 ring-slate-900/5 dark:ring-white/10
+          shadow-lg dark:shadow-2xl dark:shadow-blue-900/20
+
+          // Hover effect for interactivity
+          hover:shadow-xl hover:shadow-blue-500/10 dark:hover:shadow-indigo-500/10
+
+        `,
+        className
+      )}
+    >
+      {/* Title and Link (Always at the top) */}
       <BoxTitle
         title="Sales Pipeline"
         redirectLink="/dashboard/pipeline/sales/pipeline"
+        className="mb-4 md:mb-6" // Use margin-bottom to separate title from metrics
       />
-      <div className="space-y-3">
+
+      {/* Metric Content Area */}
+      {/* Note: The new ChartData component handles internal border separation */}
+      <div className="flex flex-col">
         <ChartData
           heading="Leads coming in"
           subHeading="/month"
           number={currentTotalLeads ?? 0}
-          noRate={true}
+          noRate={true} // Leads coming in often doesn't need a rate of change
         />
         <ChartData
           heading="Leads Converted"
           number={leadsConvertedData?.current ?? 0}
           isPositive={leadsConvertedData?.growth?.isPositive ?? false}
-          rate={leadsConvertedData?.growth?.rate.toFixed(2) ?? 0}
+          rate={parseFloat(leadsConvertedData?.growth?.rate.toFixed(2) ?? "0")} // Ensure rate is a number
         />
         <ChartData
           heading="Conversion Rate"
           subHeading="Leads Converted/Total Leads"
-          number={currentConversionRate.toFixed(2) ?? 0}
+          number={parseFloat(currentConversionRate.toFixed(2) ?? "0")} // Ensure number is parsed cleanly
           isPositive={conversionRateGrowth.isPositive ?? false}
-          rate={conversionRateGrowth.rate.toFixed(2) ?? 0}
+          rate={parseFloat(conversionRateGrowth.rate.toFixed(2) ?? "0")} // Ensure rate is a number
           isNumberPercent
         />
       </div>

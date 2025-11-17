@@ -56,6 +56,14 @@ export const createTechnicianValidationSchema = z
       .max(1000, "Note cannot exceed 1000 characters")
       .optional()
       .nullish(),
+    technicianNote: z
+      .string({
+        invalid_type_error: "Note must be a string",
+      })
+      .trim()
+      .max(1000, "Note cannot exceed 1000 characters")
+      .optional()
+      .nullish(),
 
     userId: z
       .number({
@@ -151,6 +159,14 @@ export const updateTechnicianValidationSchema = z
       .optional()
       .nullish(),
 
+       technicianNote: z
+      .string({
+        invalid_type_error: "Note must be a string",
+      })
+      .trim()
+      .max(1000, "Note cannot exceed 1000 characters")
+      .optional()
+      .nullish(),
     userId: z
       .number({
         required_error: "User ID is required",

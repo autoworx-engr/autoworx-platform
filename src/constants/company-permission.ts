@@ -20,6 +20,7 @@ export const companyPermissionModule = {
   INVOICE_AUTOMATION: "invoiceAutomation",
   INVENTORY_AUTOMATION: "inventoryAutomation",
   SERVICE_AUTOMATION: "serviceAutomation",
+  TAG_AUTOMATION: "tagAutomation",
   SALES_PIPELINE: "salesPipeline",
   BUSINESS_SETTINGS: "businessSettings",
   COMMUNICATION: "communication",

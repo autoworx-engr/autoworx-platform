@@ -39,7 +39,7 @@ type EmployeeParams = {
   filter?: {
     type?: EmployeeType;
     searchParams?: string;
-    dateRange?: { startDate: Date; endDate: Date }[];
+    dateRange?: { startDate: Date; endDate: Date };
   };
 };
 export const getEmployeesForPaginate = cache(
@@ -65,13 +65,12 @@ export const getEmployeesForPaginate = cache(
 
     if (
       filter?.dateRange &&
-      filter.dateRange.length === 2 &&
-      filter.dateRange[0].startDate &&
-      filter.dateRange[1].endDate
+      filter.dateRange.startDate &&
+      filter.dateRange.endDate
     ) {
       whereClause.joinDate = {
-        gte: filter.dateRange[0].startDate,
-        lte: filter.dateRange[1].endDate,
+        gte: filter.dateRange.startDate,
+        lte: filter.dateRange.endDate,
       };
     }
 

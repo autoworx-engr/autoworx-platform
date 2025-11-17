@@ -24,6 +24,7 @@ export function formatPermissions(permissions: any[]) {
     "inventoryAutomation",
 
     "invoiceAutomation",
+    "tagAutomation",
   ];
 
   const communicationHubChildren = [

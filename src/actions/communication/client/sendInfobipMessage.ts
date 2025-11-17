@@ -91,13 +91,9 @@ export async function sendInfobipMessage({
       const infobipBaseUrl = "https://" + process.env.INFOBIP_BASE_URL;
       let infobipResponse;
 
-      // Helper function to determine content type
-      const getContentTypeFromUrl = (url: string, fileName: string): string => {
-        const extension =
-          fileName.split(".").pop()?.toLowerCase() ||
-          url.split(".").pop()?.toLowerCase();
-
-        switch (extension) {
+      // Helper function to determine content type from file extension
+      const getContentTypeFromExtension = (extension: string): string => {
+        switch (extension.toLowerCase()) {
           case "jpg":
           case "jpeg":
             return "image/jpeg";
@@ -116,24 +112,60 @@ export async function sendInfobipMessage({
           case "wav":
             return "audio/wav";
           default:
-            return "application/octet-stream";
+            return "image/jpeg"; // Default to image/jpeg for images
+        }
+      };
+
+      // Helper function to fetch content type from URL
+      const getContentTypeFromUrl = async (
+        url: string,
+        fileName: string
+      ): Promise<string> => {
+        try {
+          // First try to get from file extension
+          const extension =
+            fileName.split(".").pop()?.toLowerCase() ||
+            url.split(".").pop()?.toLowerCase();
+
+          if (extension && extension !== fileName && extension !== url) {
+            return getContentTypeFromExtension(extension);
+          }
+
+          // If no extension, fetch the actual content type from the URL
+          const response = await fetch(url, { method: "HEAD" });
+          const contentType = response.headers.get("content-type");
+
+          if (contentType) {
+            return contentType;
+          }
+
+          // Default to image/jpeg for technician photos
+          return "image/jpeg";
+        } catch (error) {
+          console.error("Error fetching content type:", error);
+          return "image/jpeg";
         }
       };
 
       // Check if we have attachments to determine if this should be MMS
       if (attachments && attachments.length > 0) {
         // Prepare media segments using direct links (no upload needed)
-        const mediaSegments = attachments.map((file) => {
-          const contentType = getContentTypeFromUrl(file.url, file.name);
-          const contentId = `${file.name.replace(/[^a-zA-Z0-9]/g, "_")}_${Date.now()}`;
+        const mediaSegments = await Promise.all(
+          attachments.map(async (file) => {
+            const contentType = await getContentTypeFromUrl(
+              file.url,
+              file.name
+            );
+            const contentId = `${file.name.replace(/[^a-zA-Z0-9]/g, "_")}_${Date.now()}`;
 
-          return {
-            type: "LINK",
-            contentId: contentId,
-            contentType: contentType,
-            contentUrl: file.url,
-          };
-        });
+            return {
+              type: "LINK",
+              contentId: contentId,
+              contentType: contentType,
+              contentUrl: file.url,
+            };
+          })
+        );
 
         // Send MMS with direct links using v2 API format
         const messageSegments = [];

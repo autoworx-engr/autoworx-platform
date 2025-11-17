@@ -47,6 +47,10 @@ export default function FilterBySearchBox({ searchText, paramKey }: TProps) {
       return "Search by invoice, client, vehicle";
     } else if (pathname.includes("teams")) {
       return "Search by employee name";
+    } else if (paramKey === "laborSearch") {
+      return "labour name,category";
+    } else if (paramKey === "serviceSearch") {
+      return "service name,category";
     } else {
       return "Search";
     }
@@ -56,7 +60,7 @@ export default function FilterBySearchBox({ searchText, paramKey }: TProps) {
     <div className="relative w-full min-w-[300] max-w-[693px]">
       <Search size={16} className="absolute left-[10px] top-[9px]" />
       <input
-        onChange={(e) => {
+        onChange={e => {
           handleSearchChange(e);
           setSearchTerm(e.target.value);
         }}

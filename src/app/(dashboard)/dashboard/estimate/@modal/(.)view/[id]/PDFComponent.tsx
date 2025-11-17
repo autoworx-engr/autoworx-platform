@@ -278,6 +278,7 @@ const PDFComponent = ({
   vehicle,
   companyDetails,
   authorizedName,
+  signImageUrl,
 }: {
   id: string;
   clientId: any;
@@ -296,6 +297,7 @@ const PDFComponent = ({
   vehicle: Vehicle | null;
   companyDetails: Company | null;
   authorizedName: string;
+  signImageUrl?: string;
 }) => {
   return (
     <Document>
@@ -426,25 +428,29 @@ const PDFComponent = ({
               {invoice.user.firstName} {invoice.user.lastName}
             </Text>
           </View>
-          {authorizedName && (
-            <View style={{ marginTop: 20 }}>
-              <Text style={[styles.boldText, styles.fontSize10]}>
-                {authorizedName || ""}
-              </Text>
-              <Text
-                style={[
-                  styles.fontSize10,
-                  {
-                    color: "#6571FF",
-                    // border: "3px solid #6571FF",
-                    padding: "4px 2px",
-                  },
-                ]}
-              >
-                Authorized
-              </Text>
-            </View>
-          )}
+          {authorizedName ||
+            (signImageUrl && (
+              <View style={{ marginTop: 20 }}>
+                {/* {signImageUrl ? <Im} */}
+                {authorizedName && (
+                  <Text style={[styles.boldText, styles.fontSize10]}>
+                    {authorizedName || ""}
+                  </Text>
+                )}
+                <Text
+                  style={[
+                    styles.fontSize10,
+                    {
+                      color: "#6571FF",
+                      // border: "3px solid #6571FF",
+                      padding: "4px 2px",
+                    },
+                  ]}
+                >
+                  Authorized0
+                </Text>
+              </View>
+            ))}
           {invoice?.stripePaymentLink &&
             //@ts-expect-error FIX Later
             parseFloat(invoice?.due || "0") > 0 && (

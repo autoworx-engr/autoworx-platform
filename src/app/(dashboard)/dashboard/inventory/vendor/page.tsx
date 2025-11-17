@@ -7,6 +7,7 @@ import Title from "@/components/Title";
 import NewVendor from "@/components/Lists/NewVendor";
 import TopVendors from "./TopVendors";
 import VendorCard from "./VendorCard";
+import VendorHeader from "../VendorHeader";
 
 export default async function Page({
   searchParams: { vendorId },
@@ -31,7 +32,7 @@ export default async function Page({
           }
         />
       </div>
-
+      <VendorHeader />
       <div className="mt-5 flex h-full flex-col gap-3 lg:flex-row">
         <div className="lg:hidden">
           <VendorCard vendors={vendors} vendorId={parseInt(vendorId)} />

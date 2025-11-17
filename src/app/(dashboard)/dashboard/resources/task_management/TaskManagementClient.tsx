@@ -30,7 +30,7 @@ const TaskManagementClient: React.FC<TaskManagementClientProps> = ({
         description={pageDescription}
         setFilter={setFilter}
       />
-      <div className="mt-4">
+      <div className="mt-4 space-y-5">
         {resourcesData
           .filter((resource) =>
             resource.title.toLowerCase().includes(filter.search.toLowerCase())

@@ -22,23 +22,30 @@ export default function Testimonial() {
           </p>
         </div>
 
-        <div className="max-w-6xl mx-auto grid gap-8 md:grid-cols-2">
+        <div className="max-w-7xl mx-auto grid gap-8 md:grid-cols-2 lg:grid-cols-3">
           {[
             {
-              name: "Alex P.",
-              title: "Owner of WrapStars Custom Garage",
-              image: "/images/solution/user/alex.jpg",
+              name: "Asil M.",
+              title: "Owner of TC Customs",
+              image: "/landing/OwnerOfTCCustoms.jpeg",
               rating: 5,
-              quote:
-                "Autoworx turned our chaos into a well-oiled machine. We went from using 5 separate apps to just one. Now I never worry about things slipping through the cracks – every lead, every payment is tracked. Our monthly revenue jumped 22% in the first month.",
+              quote: `We’re a small team, so staying organized is everything. Having a sales board to track leads and a separate shop board for active jobs makes it so much easier to stay on top of things—no more missed leads or forgotten installs. The integrated payments are a game-changer—customers pay us before we even have to ask!`,
             },
             {
-              name: "Mike T.",
-              title: "Manager at Executive Auto Customization",
-              image: "/images/solution/user/mike.jpg",
+              name: "Sahel M",
+              title: "Owner of ASM Performance",
+              image: "/landing/OwnerofASM.jpeg",
               rating: 5,
               quote:
-                "Before Autoworx, we were booked solid but our profit margins were slim. Their inventory system helped us stop ordering excess material, and the scheduling tools eliminated costly double-bookings. It's like having an extra employee without the payroll.",
+                "Autoworx has completely changed the way we run our shop. Scheduling, invoicing, inventory — everything’s in one place now. We’re saving hours every week, and our team finally feels organized instead of overwhelmed. Couldn’t imagine going back.",
+            },
+            {
+              name: "Angelo W",
+              title: "Co owner Luxe Wrap Stars",
+              image: "/landing/CoOwnerofLuxe.jpeg",
+              rating: 5,
+              quote:
+                "As both a service and retail shop — where we not only install wraps but also sell materials — Autoworx has been a total game changer. We can finally track which materials are used on each job, what’s sold over the counter, and even the ROI on every product we carry. It’s taken the guesswork out of our inventory and helped us make smarter decisions across the board. No other platform we’ve used comes close.",
             },
           ].map((testimonial, index) => (
             <TestimonialCard key={index} testimonial={testimonial} />

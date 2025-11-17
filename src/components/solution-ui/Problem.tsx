@@ -109,12 +109,11 @@ export default function Problem() {
           <div className="mx-auto max-w-xl mb-16">
             {[
               {
-                name: "Maria G.",
-                title: "Founder at Tint & Shine Auto Studio",
-                image: "/images/solution/user/maria.jpg",
+                name: "Steven B",
+                title: "Owner of Becks Car Care",
+                image: "/landing/beckscarcare.png",
                 rating: 5,
-                quote:
-                  "I was always buried in paperwork and chasing payments. Autoworx changed everything. My estimates and invoices are all in one place, and customers love the online approval. Plus, they beat my credit card processing rate!",
+                quote: `AutoWorks Transformed My Business. I’ve tried various software over the years, but nothing compares to AutoWorks. Their all-in-one platform covers booking, invoicing, estimates, inventory, customer management, and more, all in one easy-to-use dashboard. It’s streamlined my workflow, saved me hours each week, and helped me stay organized. If you want to level up your business, this is the tool to get.`,
               },
             ].map((testimonial, index) => (
               <TestimonialCard key={index} testimonial={testimonial} />

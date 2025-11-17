@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState, useTransition } from "react";
-import { Technician, VehicleParts } from "@prisma/client";
+import { Technician, TechnicianImage, VehicleParts } from "@prisma/client";
 import { deleteTechnician } from "@/actions/estimate/technician/deleteTechnician";
 import CreateAndEditLabor from "./CreateAndEditLabor";
 import { cn } from "@/lib/utils";
@@ -25,6 +25,7 @@ export default function LaborItems({
     name: string;
     hasPermission: boolean;
     vehicleParts: VehicleParts[];
+    images: TechnicianImage[];
   })[];
 }) {
   const [technicians, setTechnicians] = useState(technicianList);

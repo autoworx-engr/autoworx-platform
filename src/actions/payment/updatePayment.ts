@@ -18,9 +18,13 @@ interface CashPaymentData {
   receivedCash?: string;
 }
 
+interface DepositPaymentData {
+  depositMethod?: string;
+  depositNotes?: string;
+}
+
 interface OtherPaymentData {
   paymentMethodId?: number;
-  amount?: number;
 }
 
 interface PaymentData {
@@ -33,6 +37,7 @@ interface PaymentData {
     | CardPaymentData
     | CheckPaymentData
     | CashPaymentData
+    | DepositPaymentData
     | OtherPaymentData;
 }
 
@@ -44,6 +49,10 @@ export async function updatePayment({
   amount,
   additionalData,
 }: PaymentData): Promise<ServerAction> {
+  const existingPayment = await db.payment.findUnique({ where: { id } });
+
+  if (!existingPayment) throw new Error("Payment not found");
+
   let updatedPayment;
 
   switch (type) {
@@ -51,13 +60,20 @@ export async function updatePayment({
       updatedPayment = await db.payment.update({
         where: { id },
         data: {
+          type,
           date: new Date(date),
           notes,
           amount,
           card: {
-            update: {
-              cardType: (additionalData as CardPaymentData).cardType,
-              creditCard: (additionalData as CardPaymentData).creditCard,
+            upsert: {
+              create: {
+                cardType: (additionalData as CardPaymentData).cardType,
+                creditCard: (additionalData as CardPaymentData).creditCard,
+              },
+              update: {
+                cardType: (additionalData as CardPaymentData).cardType,
+                creditCard: (additionalData as CardPaymentData).creditCard,
+              },
             },
           },
         },
@@ -68,12 +84,18 @@ export async function updatePayment({
       updatedPayment = await db.payment.update({
         where: { id },
         data: {
+          type,
           date: new Date(date),
           notes,
           amount,
           check: {
-            update: {
-              checkNumber: (additionalData as CheckPaymentData).checkNumber,
+            upsert: {
+              create: {
+                checkNumber: (additionalData as CheckPaymentData).checkNumber,
+              },
+              update: {
+                checkNumber: (additionalData as CheckPaymentData).checkNumber,
+              },
             },
           },
         },
@@ -84,12 +106,46 @@ export async function updatePayment({
       updatedPayment = await db.payment.update({
         where: { id },
         data: {
+          type,
           date: new Date(date),
           notes,
           amount,
           cash: {
-            update: {
-              receivedCash: (additionalData as CashPaymentData).receivedCash,
+            upsert: {
+              create: {
+                receivedCash: (additionalData as CashPaymentData).receivedCash,
+              },
+              update: {
+                receivedCash: (additionalData as CashPaymentData).receivedCash,
+              },
+            },
+          },
+        },
+      });
+      break;
+
+    case "DEPOSIT":
+      updatedPayment = await db.payment.update({
+        where: { id },
+        data: {
+          type,
+          date: new Date(date),
+          notes,
+          amount,
+          deposit: {
+            upsert: {
+              create: {
+                depositMethod: (additionalData as DepositPaymentData)
+                  .depositMethod,
+                depositNotes: (additionalData as DepositPaymentData)
+                  .depositNotes,
+              },
+              update: {
+                depositMethod: (additionalData as DepositPaymentData)
+                  .depositMethod,
+                depositNotes: (additionalData as DepositPaymentData)
+                  .depositNotes,
+              },
             },
           },
         },
@@ -100,13 +156,20 @@ export async function updatePayment({
       updatedPayment = await db.payment.update({
         where: { id },
         data: {
+          type,
           date: new Date(date),
           notes,
           amount,
           other: {
-            update: {
-              paymentMethodId: (additionalData as OtherPaymentData)
-                .paymentMethodId,
+            upsert: {
+              create: {
+                paymentMethodId: (additionalData as OtherPaymentData)
+                  .paymentMethodId,
+              },
+              update: {
+                paymentMethodId: (additionalData as OtherPaymentData)
+                  .paymentMethodId,
+              },
             },
           },
         },
@@ -117,17 +180,18 @@ export async function updatePayment({
       throw new Error("Invalid payment type");
   }
 
-  // Update invoice
+  // --- recalc invoice ---
   const invoice = await db.invoice.findUnique({
     where: { id: updatedPayment.invoiceId! },
   });
 
-  let updatedInvoice = await db.invoice.update({
+  const previousAmount = Number(existingPayment.amount);
+  const newDue =
+    Number(invoice!.due) + previousAmount - Number(updatedPayment.amount);
+
+  await db.invoice.update({
     where: { id: invoice!.id },
-    data: {
-      // @ts-ignore
-      due: (invoice!.due || 0) - (updatedPayment.amount || 0),
-    },
+    data: { due: newDue },
   });
 
   revalidatePath("/estimate");

@@ -4,12 +4,61 @@ import { db } from "@/lib/db";
 import { getTechnicians } from "@/actions/estimate/technician/getTechnicians";
 import InvoiceModalBody from "../../../../components/invoice-modal/InvoiceModalBody";
 import ProtectedRouteForViewInvoice from "./ProtectedRouteForViewInvoice";
+import { FleetStatementModalBody } from "./FleetStatementModalBody";
 
 export default async function ViewEstimate({
   params: { invoiceId },
+  searchParams,
 }: {
   params: { invoiceId: string };
+  searchParams: { fleet?: string };
 }) {
+  console.log("🚀 ~ ViewEstimate ~ invoiceId:", invoiceId);
+  const isFleetStatement = (await searchParams?.fleet) === "true";
+  console.log("🚀 ~ ViewEstimate ~ isFleetStatement:", isFleetStatement);
+
+  if (isFleetStatement) {
+    // Load fleet statement data
+    const statement = await db.fleetStatement.findFirst({
+      where: {
+        id: invoiceId.toString(),
+      },
+      include: {
+        Fleet: {
+          include: {
+            client: {
+              include: {
+                company: true,
+              },
+            },
+          },
+        },
+        invoice: {
+          include: {
+            vehicle: true,
+            client: true,
+            column: true,
+          },
+        },
+      },
+    });
+    console.log("🚀 ~ ViewEstimate ~ statement:", statement);
+
+    return (
+      <InterceptedDialog>
+        <ProtectedRouteForViewInvoice hasInvoice={!!statement}>
+          {statement && (
+            <FleetStatementModalBody
+              statementId={invoiceId}
+              initialStatement={statement}
+            />
+          )}
+        </ProtectedRouteForViewInvoice>
+      </InterceptedDialog>
+    );
+  }
+
+  // Original invoice logic
   const invoice = await db.invoice.findUnique({
     where: { id: invoiceId },
     include: {

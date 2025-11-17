@@ -1,13 +1,13 @@
 "use client";
-import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd";
-import { useRef, useState, useEffect } from "react";
-import {
-  useColumnState,
-  useColumnDispatch,
-} from "@/context/sales-pipeline.context";
-import { actionTypes } from "@/constants/lead.constant";
 import { updateLeadColumn } from "@/actions/pipelines/getLeads";
+import { actionTypes } from "@/constants/lead.constant";
+import {
+  useColumnDispatch,
+  useColumnState,
+} from "@/context/sales-pipeline.context";
 import { errorToast, successToast } from "@/lib/toast";
+import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd";
+import { useEffect, useRef, useState } from "react";
 import LeadCard from "./LeadCard";
 import LeadInfinityScroll from "./LeadInfinityScroll";
 
@@ -97,7 +97,7 @@ export default function SalesPipelineSection() {
                     provided.innerRef(el);
                     columnRefs.current[columnIndex] = el;
                   }}
-                  className="mx-2 w-[calc(100vw-2rem)] flex-shrink-0 rounded-md border sm:min-w-80 sm:flex-1 lg:min-w-[calc(100%/3-1.5rem)] xl:min-w-[calc(100%/4-1.5rem)] 2xl:min-w-[calc(100%/5-1.5rem)] 3xl:min-w-[calc(100%/6-1.5rem)]"
+                  className="mx-2 w-[calc(100vw-2rem)] flex-shrink-0 rounded-md border sm:min-w-80 sm:flex-1 lg:min-w-[calc(100%/3-1.5rem)] xl:min-w-[calc(100%/4-1.5rem)] 2xl:min-w-[calc(100%/6-1.5rem)]"
                   style={{
                     backgroundColor: "rgba(101, 113, 255, 0.15)",
                     padding: "0",
@@ -107,7 +107,7 @@ export default function SalesPipelineSection() {
                     <p className="text-base font-bold">
                       {column.title || ""}
                       <span className="ml-2 rounded-lg bg-[#3F49B9] px-2">
-                        {column.totalLeads}
+                        {column?.leads?.length || 0}
                       </span>
                     </p>
                   </h2>
