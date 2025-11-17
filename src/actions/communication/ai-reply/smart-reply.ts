@@ -2,6 +2,7 @@
 
 import { db } from "@/lib/db";
 import Groq from "groq-sdk";
+import crypto from "crypto";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY! });
 
@@ -10,6 +11,50 @@ export type SmartSuggestion = {
   rationale?: string;
   confidence?: number;
 };
+
+// Simple in-memory cache with TTL (15 minutes)
+const suggestionCache = new Map<
+  string,
+  { data: SmartSuggestion[]; timestamp: number }
+>();
+const CACHE_TTL = 15 * 60 * 1000; // 15 minutes
+
+function getCacheKey(params: {
+  clientId: number;
+  companyId: number;
+  convo: string;
+  mode: string;
+  draft?: string;
+  tone: string;
+}): string {
+  const str = JSON.stringify(params);
+  return crypto.createHash("md5").update(str).digest("hex");
+}
+
+function getCachedSuggestions(key: string): SmartSuggestion[] | null {
+  const cached = suggestionCache.get(key);
+  if (!cached) return null;
+
+  const isExpired = Date.now() - cached.timestamp > CACHE_TTL;
+  if (isExpired) {
+    suggestionCache.delete(key);
+    return null;
+  }
+
+  return cached.data;
+}
+
+function setCachedSuggestions(key: string, data: SmartSuggestion[]): void {
+  suggestionCache.set(key, { data, timestamp: Date.now() });
+
+  // Cleanup old entries (keep cache size manageable)
+  if (suggestionCache.size > 100) {
+    const oldestKey = suggestionCache.keys().next().value;
+    if (oldestKey) {
+      suggestionCache.delete(oldestKey);
+    }
+  }
+}
 
 function stripFences(s: string) {
   let cleaned = s
@@ -68,7 +113,7 @@ export async function getSmartReplies({
       ? db.mailgunEmail.findMany({
           where: { clientId, companyId },
           orderBy: { createdAt: "desc" },
-          take: 15,
+          take: 10, // Reduced from 15 to save tokens
           select: {
             id: true,
             subject: true,
@@ -80,7 +125,7 @@ export async function getSmartReplies({
       : db.clientSMS.findMany({
           where: { clientId, companyId },
           orderBy: { createdAt: "desc" },
-          take: 15,
+          take: 10, // Reduced from 15 to save tokens
         });
 
   const vehiclesPromise = db.vehicle.findMany({
@@ -122,7 +167,7 @@ export async function getSmartReplies({
           .reverse()
           .map(
             (m: any) =>
-              `${m.emailBy === "CLIENT" ? "Client" : "Shop"}: ${m.subject ? `[${m.subject}] ` : ""}${m.text.trim()}`
+              `${m.emailBy === "CLIENT" ? "Client" : "Shop"}: ${m.subject ? `[${m.subject}] ` : ""}${m.text.trim().slice(0, 500)}` // Limit text length
           )
           .join("\n")
       : (recentMessages as any[])
@@ -130,9 +175,14 @@ export async function getSmartReplies({
           .reverse()
           .map(
             (m: any) =>
-              `${m.sentBy === "Client" ? "Client" : "Shop"}: ${m.message.trim()}`
+              `${m.sentBy === "Client" ? "Client" : "Shop"}: ${m.message.trim().slice(0, 320)}` // Limit message length
           )
           .join("\n");
+
+  // Early return if no conversation history
+  if (!convo.trim()) {
+    return [];
+  }
 
   const vehicleContext =
     vehicles.length > 0
@@ -144,7 +194,8 @@ export async function getSmartReplies({
       ? invoices
           .map((inv) => {
             const services = inv.invoiceItems
-              .map((ii) => ii.service?.name || "Unknown service")
+              .slice(0, 3) // Limit to first 3 services per invoice
+              .map((ii) => ii.service?.name || "Unknown")
               .join(", ");
             const v = inv.vehicle;
             const vStr = v
@@ -156,6 +207,22 @@ export async function getSmartReplies({
       : "No past invoices";
 
   const isEnhance = mode === "enhance" && !!draft?.trim();
+
+  // Check cache before making AI call
+  const cacheKey = getCacheKey({
+    clientId,
+    companyId,
+    convo,
+    mode,
+    draft,
+    tone,
+  });
+
+  const cachedSuggestions = getCachedSuggestions(cacheKey);
+  if (cachedSuggestions) {
+    console.log("[AI Reply] Returning cached suggestions");
+    return cachedSuggestions;
+  }
 
   // 3) System prompt (JSON-only contract)
   const system =
@@ -173,18 +240,39 @@ OUTPUT: JSON only (no prose, no code fences):
       : `
 ROLE: Autoworx AI assistant for auto restyling/garage ${context === "email" ? "emails" : "SMS"}.
 STYLE: ${tone}, ${context === "email" ? "professional email format with proper greeting/closing" : "≤320 chars"}. No emojis unless the client used one.
-CONTEXT RULES:
-- Use vehicles, lead info, and past invoices when helpful.
-- If price is asked but details missing, ask for model/year/service.
-- If availability asked, propose 2–3 tentative slots (do NOT confirm).
-- If frustration detected, begin with brief apology + solution.
+
+CRITICAL INSTRUCTIONS:
+1. ANALYZE THE CONVERSATION DEEPLY:
+   - What is the client asking about or discussing?
+   - What is the current state/status of the conversation?
+   - What would be the NATURAL NEXT REPLY based on the flow?
+
+2. CONTEXT-AWARE RESPONSES:
+   - If client asks a question, answer it directly (use vehicles/invoices context when relevant)
+   - If client requests a service, acknowledge and suggest next steps
+   - If client asks about price, provide info or ask for specifics (model/year/service) if missing
+   - If client asks about availability, propose 2–3 specific tentative time slots
+   - If client expresses frustration/complaint, acknowledge empathetically and offer solution
+   - If client confirms/accepts, respond appropriately to move forward
+   - If shop just sent info, suggest follow-up or ask if they need anything else
+
+3. USE AVAILABLE CONTEXT INTELLIGENTLY:
+   - Reference specific vehicles when relevant ("for your 2020 Honda Civic")
+   - Mention past services when helpful
+   - Don't ask for info already in context (year/make/model, past services)
+
+4. MAKE SUGGESTIONS DIVERSE:
+   - Each suggestion should offer a different approach/tone
+   - Vary between informative, questioning, and action-oriented replies
+
 OUTPUT: JSON only (no prose, no code fences):
-{"suggestions":[{"text":"..."},{"text":"..."}]}
+{"suggestions":[{"text":"..."},{"text":"..."},{"text":"..."}]}
 `.trim()) +
     `
 STRICTNESS:
 - Respond ONLY with valid JSON. Do not include commentary, markdown, or code fences.
 - Keep replies ${context === "email" ? "professional and well-formatted" : "SMS-friendly and actionable"}.
+- ALWAYS base suggestions on what makes sense as the NEXT reply in this specific conversation.
 `;
 
   const userBlock = isEnhance
@@ -205,21 +293,37 @@ Do not ask for year/make/model if it's irrelevant or already present—use the l
     : `Client Context:
 Vehicles:
 ${vehicleContext}
-Invoices:
+Lead Services Interested In: ${lead?.services || "None"}
+Recent Invoices:
 ${invoiceContext}
 
-Conversation (most recent last):
+Conversation History (most recent last):
 ${convo}
 
-Give ${maxSuggestions} short, helpful suggestions.
-Do not ask for year/make/model if it's irrelevant or already present—use the last vehicle from context when needed.`;
+TASK: Analyze the conversation above and generate ${maxSuggestions} smart reply suggestions.
+
+INSTRUCTIONS:
+1. Identify what the conversation is about and what the client's last message implies
+2. Determine what would be the most helpful NEXT response from the shop
+3. Create ${maxSuggestions} different reply options that:
+   - Directly address the client's last message
+   - Use context (vehicles, services, invoices) when relevant
+   - Offer different tones/approaches (e.g., one detailed, one brief, one with follow-up question)
+   - Sound natural as the NEXT message in this conversation
+
+DO NOT:
+- Ask for information already available in context
+- Provide generic responses that don't relate to the conversation
+- Repeat what was already said
+- Ignore the conversation flow
+
+Each suggestion should be a complete, ready-to-send reply that makes sense as the next message.`;
 
   // 4) Call Groq (OpenAI-compatible chat API)
   const completion = await groq.chat.completions.create({
-    model: "llama-3.1-8b-instant", // fast & cheap. For higher quality: "llama-3.1-70b-versatile"
-    // model: "openai/gpt-oss-120b", // fast & cheap. For higher quality: "llama-3.1-70b-versatile"
-    temperature: isEnhance ? 0.4 : 0.6,
-    max_tokens: 512,
+    model: "llama-3.3-70b-versatile", // Higher quality model for better context understanding
+    temperature: isEnhance ? 0.4 : 0.7, // Slightly higher temperature for more creative, context-aware suggestions
+    max_tokens: 400, // Reduced from 512 to save costs (sufficient for 3 suggestions)
     response_format: { type: "json_object" },
     messages: [
       { role: "system", content: system },
@@ -351,6 +455,9 @@ Do not ask for year/make/model if it's irrelevant or already present—use the l
     "[AI Reply] First suggestion:",
     suggestions[0]?.text.substring(0, 100)
   );
+
+  // Cache the results
+  setCachedSuggestions(cacheKey, suggestions);
 
   return suggestions;
 }

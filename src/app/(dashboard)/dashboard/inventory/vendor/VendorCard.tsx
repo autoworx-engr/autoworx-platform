@@ -9,6 +9,7 @@ import moment from "moment";
 import VendorListStore from "@/stores/vendorListStore";
 import { Popconfirm } from "antd";
 import { SquarePen, X } from "lucide-react";
+import { useDemoVendorFilterStore } from "@/stores/vendorFilter";
 
 const VendorCard = ({
   vendors,
@@ -19,7 +20,7 @@ const VendorCard = ({
 }) => {
   const router = useRouter();
   const [mounted, setMounted] = useState<boolean>(false);
-
+  const { searchTerm } = useDemoVendorFilterStore();
   const { isActive, setActive } = VendorListStore();
 
   useEffect(() => {
@@ -30,9 +31,20 @@ const VendorCard = ({
     return null;
   }
 
+  const filterVendor = vendors?.filter((vendor) => {
+    const term = searchTerm.toLowerCase();
+
+    return (
+      vendor.name?.toLowerCase().includes(term) ||
+      vendor.companyName?.toLowerCase().includes(term) ||
+      vendor.website?.toLowerCase().includes(term) ||
+      vendor.phone?.toLowerCase().includes(term)
+    );
+  });
+
   return (
     <div className={`${isActive ? "hidden" : ""} grid gap-4 lg:hidden`}>
-      {vendors.map((vendor) => (
+      {filterVendor?.map((vendor) => (
         <Card key={vendor.id}>
           <CardContent className="pt-4 font-medium text-[#66738C]">
             <div className="grid gap-2">

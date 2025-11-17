@@ -4,6 +4,7 @@ import getUser from "@/lib/getUser";
 import { db } from "@/lib/db";
 import { cn } from "@/lib/cn";
 import EmployeeLeaveRequestsModal from "./EmployeeLeaveRequestsModal";
+import BoxTitle from "./BoxTitle";
 
 type LeaveRequestWithUser = {
   className?: string;
@@ -27,46 +28,68 @@ export default async function EmployeeLeaveRequestsBox({
     },
   });
 
-  //   let filteredLeaveRequests = [];
+  // Note: Unused filtering logic remains commented out for future use if needed.
 
-  // if current user is Manager, then he should not be shown leave requests of other Managers
-  // only Admin can approve Manager's leave requests
-  // TODO: This code is unused
-  //   if (user.employeeType === "Manager") {
-  //     for (const leaveRequest of pendingLeaveRequests) {
-  //       if (leaveRequest.user.employeeType !== "Manager") {
-  //         filteredLeaveRequests.push(leaveRequest);
-  //       }
-  //     }
-  //   } else {
-  //     filteredLeaveRequests = pendingLeaveRequests;
-  //   }
   return (
-    <div className={cn("h-full flex-1 overflow-y-auto shadow-md", className)}>
-      {" "}
-      <div className={`flex h-full flex-col rounded-md p-6 shadow-lg`}>
-        <div className="mb-4 flex items-center justify-between">
-          <span className="text-xl font-bold">Employee Leave Requests</span>
-          <EmployeeLeaveRequestsModal
-            pendingLeaveRequests={pendingLeaveRequests}
+    // Outer Container: Apply full Glassmorphism style
+    <div
+      className={cn(
+        `
+          flex flex-col p-4 md:p-6 rounded-2xl transition-all duration-300 h-full flex-1
+
+          // Glassmorphism aesthetic (Replacing old rounded-md p-6 shadow-lg)
+          bg-white/50 dark:bg-slate-900/50
+          backdrop-blur-md
+
+          // Subtle border and lift
+          ring-1 ring-slate-900/5 dark:ring-white/10
+          shadow-lg dark:shadow-2xl dark:shadow-blue-900/20
+
+          // Hover effect for interactivity
+          hover:shadow-xl hover:shadow-blue-500/10 dark:hover:shadow-indigo-500/10
+
+          // Ensure scrollbar is applied only when needed
+          overflow-hidden
+        `,
+        className
+      )}
+    >
+      {/* Title and Modal Button */}
+      <div className="mb-4 md:mb-6 flex items-center justify-between flex-shrink-0">
+        <BoxTitle title="Employee Leave Requests" />
+        <EmployeeLeaveRequestsModal
+          pendingLeaveRequests={pendingLeaveRequests}
+        />
+      </div>
+
+      {/* List Container: Must stretch and handle overflow */}
+      <div className="custom-scrollbar flex flex-1 flex-col gap-3 overflow-y-auto pr-2">
+        {pendingLeaveRequests.map((leaveRequest) => (
+          // Individual component will apply internal styles
+          <EmployeeLeaveRequest
+            key={leaveRequest.id}
+            leaveRequest={leaveRequest}
           />
-        </div>
-        <div className="custom-scrollbar flex flex-1 flex-col space-y-4">
-          {pendingLeaveRequests.map((leaveRequest, idx) => (
-            <EmployeeLeaveRequest key={idx} leaveRequest={leaveRequest} />
-          ))}
-          {pendingLeaveRequests.length === 0 && (
-            <div className="flex flex-1 flex-col items-center justify-center py-2 text-center">
-              <div className="relative">
-                <span>No Leave Requests</span>
-                {/* <span className="animate-gradient-x bg-gradient-to-r from-blue-600 to-teal-500 bg-clip-text text-xl font-semibold text-transparent">
-                  Something Great is Coming...
-                </span>
-                <span className="absolute -bottom-1 left-0 h-0.5 w-full animate-pulse bg-gradient-to-r from-blue-600 to-teal-500"></span> */}
-              </div>
-            </div>
-          )}
-        </div>
+        ))}
+
+        {/* Empty State Redesign: More visually appealing and premium */}
+        {pendingLeaveRequests.length === 0 && (
+          <div className="flex flex-1 flex-col items-center justify-center py-6 px-4 text-center">
+            <span
+              className="text-4xl mb-2"
+              role="img"
+              aria-label="party popper"
+            >
+              🎉
+            </span>
+            <span className="text-lg font-semibold text-slate-700 dark:text-slate-200">
+              No Pending Leave Requests
+            </span>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              All clear! You're up to date with employee approvals.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

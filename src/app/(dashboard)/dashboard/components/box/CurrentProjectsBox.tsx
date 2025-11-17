@@ -5,8 +5,15 @@ import Link from "next/link";
 import React from "react";
 import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
 import { ExternalLink } from "lucide-react";
+import { cn } from "@/lib/cn"; // Ensure cn is imported
 
-export default async function CurrentProjectsBox() {
+type TCurrentProjectsBoxProps = {
+  className?: string; // Accept className from parent (DashboardTechnician)
+};
+
+export default async function CurrentProjectsBox({
+  className,
+}: TCurrentProjectsBoxProps) {
   const companyTimezone = await getCompanyTimezone();
   const timezone =
     companyTimezone?.timezone ||
@@ -14,50 +21,89 @@ export default async function CurrentProjectsBox() {
   const projects = await getCurrentProjects();
 
   return (
-    <div className="flex flex-1 flex-col rounded-md p-6 shadow-lg">
-      <div className="mb-8 flex items-center justify-between">
-        <span className="text-xl font-bold">Current Projects</span>{" "}
-        <Link href="/dashboard/pipeline/shop/pipeline">
-          <ExternalLink />
+    // Outer Container: Apply full Glassmorphism style and ensure flex-1 stretching
+    <div
+      className={cn(
+        `
+          flex flex-1 flex-col p-4 md:p-6 rounded-2xl transition-all duration-300 h-full
+
+          // Glassmorphism aesthetic (Replacing old rounded-md p-6 shadow-lg)
+          bg-white/50 dark:bg-slate-900/50
+          backdrop-blur-md
+
+          // Subtle border and lift
+          ring-1 ring-slate-900/5 dark:ring-white/10
+          shadow-lg dark:shadow-2xl dark:shadow-blue-900/20
+
+          // Hover effect for interactivity
+          hover:shadow-xl hover:shadow-blue-500/10 dark:hover:shadow-indigo-500/10
+
+          overflow-hidden // Important for internal scrolling
+        `,
+        className
+      )}
+    >
+      {/* Box Title and Link */}
+      <div className="mb-4 md:mb-6 flex items-center justify-between flex-shrink-0">
+        <span className="text-xl font-bold text-slate-800 dark:text-slate-100">
+          Current Projects
+        </span>{" "}
+        <Link
+          href="/dashboard/pipeline/shop/pipeline"
+          className="text-slate-500 dark:text-slate-400 hover:text-indigo-600 transition-colors"
+        >
+          <ExternalLink className="h-5 w-5" />
         </Link>
       </div>
-      <div className="custom-scrollbar flex flex-1 flex-col space-y-4">
-        {projects &&
-          projects.length > 0 &&
+
+      {/* List Container: Scrollable content */}
+      <div className="custom-scrollbar flex flex-1 flex-col gap-4 overflow-y-auto pr-2">
+        {projects && projects.length > 0 ? (
           projects.map((project, idx) => (
+            // Individual Project Item Redesign
             <div
               key={idx}
-              className="flex items-stretch justify-between rounded border border-gray-400 px-4 py-6 text-sm"
+              className="flex flex-col md:flex-row items-start justify-between rounded-xl p-4 transition-all duration-200
+                bg-slate-100/70 dark:bg-slate-800/70
+                hover:bg-slate-200/70 dark:hover:bg-slate-700/70 shadow-sm border border-slate-200/50 dark:border-slate-800"
             >
-              <div>
-                <p className="font-semibold">
+              {/* Left Side: Vehicle Info & Services */}
+              <div className="flex flex-col gap-1 mb-3 md:mb-0 md:w-1/2">
+                <p className="font-extrabold text-base text-slate-900 dark:text-white">
                   {project.yearMakeModel || "N/A"}
                 </p>
-                <div>
+                <div className="flex flex-col text-sm text-slate-700 dark:text-slate-300">
                   {project.services.map((service, index) => (
-                    <p key={index}>{service.name}</p>
+                    <p key={index} className="opacity-85 truncate">
+                      • {service.name}
+                    </p>
                   ))}
                 </div>
               </div>
-              <div className="flex flex-col justify-between">
-                <div className="#mb-auto">
+
+              {/* Right Side: Actions & Payout/Dates */}
+              <div className="flex flex-col gap-3 text-right text-sm md:w-1/2 md:pl-4">
+                {/* View Work Order Button (Top Right) */}
+                <div className="w-full self-end">
                   <WorkOrderModal
                     invoiceId={project.id}
                     buttonChild={
-                      <button className="rounded bg-[#6571FF] px-4 py-1 text-white">
+                      <button className="rounded-lg bg-indigo-600 hover:bg-indigo-700 px-4 py-2 font-semibold text-white transition-colors w-full md:w-auto">
                         View Work Order
                       </button>
                     }
                   />
                 </div>
-                <div className="#mt-auto">
+
+                {/* Financial/Date Details (Bottom Right) */}
+                <div className="flex flex-col gap-0.5 text-slate-700 dark:text-slate-300">
                   {project.totalPayout ? (
-                    <p className="font-semibold">
-                      Total Payout : ${project.totalPayout}
+                    <p className="font-bold text-base text-emerald-600 dark:text-emerald-400">
+                      Payout: ${project.totalPayout}
                     </p>
                   ) : null}
-                  <p className="font-semibold">
-                    Start Date :{" "}
+                  <p className="text-xs font-medium">
+                    Start:{" "}
                     {project.startDate
                       ? moment
                           .utc(project.startDate)
@@ -65,8 +111,8 @@ export default async function CurrentProjectsBox() {
                           .format("MM/DD/YYYY")
                       : "N/A"}
                   </p>
-                  <p className="font-semibold">
-                    Due Date :{" "}
+                  <p className="text-xs font-medium">
+                    Due:{" "}
                     {project.dueDate
                       ? moment
                           .utc(project.dueDate)
@@ -77,9 +123,20 @@ export default async function CurrentProjectsBox() {
                 </div>
               </div>
             </div>
-          ))}
-        {projects?.length === 0 && (
-          <div className="my-auto text-center">No current projects</div>
+          ))
+        ) : (
+          // Empty State Redesign
+          <div className="flex flex-1 flex-col items-center justify-center py-8 text-center">
+            <span className="text-4xl mb-2" role="img" aria-label="toolbox">
+              🛠️
+            </span>
+            <span className="text-lg font-semibold text-slate-700 dark:text-slate-200">
+              No Active Projects
+            </span>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              Time to check in with management!
+            </p>
+          </div>
         )}
       </div>
     </div>

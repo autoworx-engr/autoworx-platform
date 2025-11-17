@@ -9,7 +9,7 @@ import TaskListBox from "./box/TaskListBox";
 
 const Dashboard = async () => {
   return (
-    <div className="flex h-full flex-col gap-x-2 lg:flex-row lg:items-start xl:gap-x-8">
+    <div className="flex h-full flex-col gap-4 lg:flex-row xl:gap-x-8 bg-slate-50 dark:bg-slate-900/90 overflow-y-auto overflow-x-hidden">
       {/* col 1 */}
       <div className="flex h-full w-full flex-col justify-around space-y-4 lg:w-[23%]">
         {/* sales pipeline */}
@@ -28,13 +28,17 @@ const Dashboard = async () => {
       </div>
 
       {/* col 3 */}
-      <div className="flex h-full w-full flex-1 flex-col space-y-4 lg:w-[23%]">
+      <div className="flex h-full w-full flex-1 flex-col space-y-4 lg:w-[26%]">
         <AppointmentListBox />
       </div>
       {/* col 4*/}
-      <div className="flex h-full w-full flex-1 flex-col space-y-4 lg:w-[30%]">
-        <TaskListBox />
-        <ReputationBox />
+      <div className="flex h-full w-full flex-1 flex-col space-y-4 lg:w-[27%]">
+        <div className="flex-1 min-h-0">
+          <TaskListBox />
+        </div>
+        <div className="flex-1 min-h-0">
+          <ReputationBox />
+        </div>
       </div>
     </div>
   );

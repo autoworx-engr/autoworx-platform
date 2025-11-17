@@ -9,6 +9,7 @@ import moment from "moment-timezone";
 import { useRouter } from "next/navigation";
 import { deleteVendor } from "../../../../../actions/vendor/deleteVendor";
 import { SquarePen, X } from "lucide-react";
+import { useDemoVendorFilterStore } from "@/stores/vendorFilter";
 
 const evenColor = "bg-background";
 const oddColor = "bg-[#F8FAFF]";
@@ -22,7 +23,18 @@ export default function Table({
 }) {
   const router = useRouter();
   const timezone = useCompanyTimezone();
+  const { searchTerm } = useDemoVendorFilterStore();
 
+  const filterVendor = vendors?.filter((vendor) => {
+    const term = searchTerm.toLowerCase();
+
+    return (
+      vendor.name?.toLowerCase().includes(term) ||
+      vendor.companyName?.toLowerCase().includes(term) ||
+      vendor.website?.toLowerCase().includes(term) ||
+      vendor.phone?.toLowerCase().includes(term)
+    );
+  });
   return (
     <div className="hidden h-[90%] w-[70%] overflow-y-auto lg:block">
       <table className="w-[98%]">
@@ -39,7 +51,7 @@ export default function Table({
         </thead>
 
         <tbody>
-          {vendors.map((vendor, index) => (
+          {filterVendor?.map((vendor, index) => (
             <tr
               key={vendor.id}
               className={cn(

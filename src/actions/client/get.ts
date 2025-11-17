@@ -21,7 +21,9 @@ export default async function getClients({
     };
 
     if (search) {
-      const [first, last] = search.trim().split(" ");
+      const trimmed = search.trim();
+      const [first, last] = trimmed.split(" ");
+      const numericId = /^\d+$/.test(trimmed) ? Number(trimmed) : null;
       whereConditions.OR = [
         {
           firstName: {
@@ -67,6 +69,7 @@ export default async function getClients({
             mode: "insensitive",
           },
         },
+        ...(numericId !== null ? [{ id: numericId }] : []),
       ];
     }
 
