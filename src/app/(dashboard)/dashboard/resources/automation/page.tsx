@@ -28,7 +28,7 @@ const SettingsPage = () => {
         description="Explore the various resources available for automation management."
         setFilter={setFilter}
       />
-      <div className="mt-4">
+      <div className="mt-4 space-y-5">
         {resourcesData
           .filter((resource) =>
             resource.title.toLowerCase().includes(filter.search.toLowerCase())
