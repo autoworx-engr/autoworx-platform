@@ -13,15 +13,21 @@ type TProps = {
 };
 
 export default function SMSAttachment({ message, handleDownload }: TProps) {
+  const allImageUrls = (message?.attachments || [])
+    .filter((att: any) => isImage(att.name) && typeof att.url === "string")
+    .map((att: any) => att.url as string);
+
   return (
     <div
       className={`flex w-full flex-wrap items-center ${message.sentBy === "Company" && "justify-end"}`}
     >
       {message?.attachments?.map((attachment: any, index: number) => {
         if (isImage(attachment.name)) {
+          const currentImageIndex = allImageUrls.indexOf(attachment.url);
+          const urlsParam = encodeURIComponent(JSON.stringify(allImageUrls));
           return (
             <Link
-              href={`/dashboard/communication/photo?url=${attachment.url}`}
+              href={`/dashboard/communication/photo?urls=${urlsParam}&index=${currentImageIndex}`}
               className={`#inline-block mx-1 mt-2 cursor-pointer gap-x-2 rounded-md border border-gray-200 px-2 py-1 ${message.sentBy === "Company" && "#float-right"}`}
               key={index}
             >

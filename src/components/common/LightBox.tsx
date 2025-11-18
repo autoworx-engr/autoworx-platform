@@ -18,18 +18,6 @@ type LightboxProps = {
 const ComponentsLightbox = ({ getItems = [], startIndex = 0 }: LightboxProps) => {
   const [isOpen, setIsOpen] = useState<any>(true);
   const [maxZoomPixelRatio, setMaxZoomPixelRatio] = React.useState(4);
-  const searchParams = useSearchParams();
-
-  const propSlides = Array.isArray(getItems) ? getItems.filter((s) => !!s?.src) : [];
-  let slides: ImageItem[] = propSlides as ImageItem[];
-
-  if (slides.length === 0) {
-    const urlParam = searchParams.get("url");
-
-    if (urlParam) {
-      slides = [{ src: urlParam }];
-    }
-  }
 
   const router = useRouter();
 
@@ -48,7 +36,7 @@ const ComponentsLightbox = ({ getItems = [], startIndex = 0 }: LightboxProps) =>
           handleImageClick();
           setIsOpen(false);
         }}
-        slides={slides}
+        slides={getItems}
         index={startIndex}
         plugins={[Zoom]}
         zoom={{ maxZoomPixelRatio }}
