@@ -95,6 +95,7 @@ export async function POST(
         client = await db.client.create({
           data: {
             firstName: body.From.replace("+", ""),
+            lastName: " ",
             mobile: body.From.replace("+", ""),
             companyId: companyId,
           },

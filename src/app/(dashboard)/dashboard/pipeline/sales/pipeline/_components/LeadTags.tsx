@@ -10,6 +10,7 @@ import { actionTypes } from "@/constants/lead.constant";
 import { updateTagAutomationTrigger } from "@/service/tag-automation-trigger/api";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/authOptions";
+import { revalidatePath } from "next/cache";
 
 type TLeadTagsProps = {
   leadTags: {
@@ -82,6 +83,7 @@ export default function LeadTags({ leadTags, lead }: TLeadTagsProps) {
   const handleRemoveTag = async ({ columnId, leadId, tagId }: TRemoveTag) => {
     try {
       const success = await removeLeadTag(leadId, tagId);
+
       if (success) {
         dispatch({
           type: actionTypes.REMOVE_TAG,
