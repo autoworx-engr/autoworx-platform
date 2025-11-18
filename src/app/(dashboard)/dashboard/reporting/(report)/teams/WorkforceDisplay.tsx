@@ -8,7 +8,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useMediaQuery } from "react-responsive";
 import WorkforceMobileCard from "./WorkforceMobileCard";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 type TProps = {
   employees: (User & {
@@ -22,6 +22,8 @@ type TProps = {
   hasDateRange: boolean;
   formattedStartDate: any;
   formattedEndDate: any;
+  page?: number;
+  take?: number;
 };
 
 export default function WorkforceDisplay({
@@ -29,14 +31,26 @@ export default function WorkforceDisplay({
   formattedEndDate,
   formattedStartDate,
   hasDateRange,
+  page,
+  take,
 }: TProps) {
   const isDesktop = useMediaQuery({ query: "(min-width: 640px)" });
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(50); // Default page size set to 50
-  const [showPagination, setShowPagination] = useState(false);
 
+  const [currentPage, setCurrentPage] = useState(page ?? 1);
+  const [pageSize, setPageSize] = useState(take ?? 50); // Default page size set to 50
+  const [showPagination, setShowPagination] = useState(false);
+  const router = useRouter();
   const params = useSearchParams();
   const search = params.get("search");
+  const pathname = usePathname();
+
+  useEffect(() => {
+    setCurrentPage(page ?? 1);
+  }, [page]);
+
+  useEffect(() => {
+    setPageSize(take ?? 50);
+  }, [take]);
 
   useEffect(() => {
     if (employees.length > 0) {
@@ -47,10 +61,18 @@ export default function WorkforceDisplay({
   }, [employees]);
 
   const handlePageChange = (page: number, pageSize?: number) => {
+    const searchParams = new URLSearchParams(params.toString());
     setCurrentPage(page);
+    searchParams.set("page", page.toString());
     if (pageSize) {
       setPageSize(pageSize);
+      searchParams.set("take", pageSize.toString());
+    } else {
+      searchParams.delete("take");
     }
+
+    const newPath = `${pathname}?${searchParams.toString()}`;
+    router.push(newPath);
   };
 
   const startIndex = (currentPage - 1) * pageSize;

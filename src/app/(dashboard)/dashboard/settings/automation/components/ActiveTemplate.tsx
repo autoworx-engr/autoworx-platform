@@ -83,7 +83,7 @@ const ActiveTemplate = ({
         />
       )}
 
-      <Box className="relative">
+      <Box>
         <TextField
           multiline
           rows={rows}
@@ -112,14 +112,15 @@ const ActiveTemplate = ({
             ),
           }}
         />
-
-        <div
-          className={`absolute bottom-1 left-2 text-xs font-medium 
-             ${isLimitExceeded ? "text-red-500 " : "text-gray-500 dark:text-gray-400"}`}
-        >
-          {characterLength}/{maxLength}
-        </div>
       </Box>
+
+      <div
+        className={`mt-1 text-xs font-medium ${
+          isLimitExceeded ? "text-red-500" : "text-gray-500 dark:text-gray-400"
+        }`}
+      >
+        {characterLength}/{maxLength}
+      </div>
 
       {attachments && attachments.length > 0 && (
         <Box className="mt-4 flex flex-wrap gap-4">

@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
@@ -71,16 +71,16 @@ model AppointmentTitle {
 }
 
 model BookingForm {
-  id            Int      @id @default(autoincrement())
-  title         String?   @db.VarChar(200)
-  description   String?  @db.VarChar(500)
-  companyId     Int      @map("company_id")
-  bookingUrl   String   @db.Text @map("booking_url")
-  qrCodeUrl    String   @db.Text @map("qr_code_url")
-  stack          Int   @default(1)
-  isActive      Boolean  @default(true) @map("is_active")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at")
+  id          Int      @id @default(autoincrement())
+  title       String?  @db.VarChar(200)
+  description String?  @db.VarChar(500)
+  companyId   Int      @map("company_id")
+  bookingUrl  String   @map("booking_url") @db.Text
+  qrCodeUrl   String   @map("qr_code_url") @db.Text
+  stack       Int      @default(1)
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
 }
 
 // Pipeline Automation Schema
@@ -124,6 +124,7 @@ model TimeDelayExecution {
   estimateId                String?
   serviceMaintenanceRuleId  Int?
   invoiceAutomationRuleId   Int?
+  tagAutomationRuleId       Int?
   lead                      Lead?                             @relation(fields: [leadId], references: [id], onDelete: Cascade)
   estimate                  Invoice?                          @relation(fields: [estimateId], references: [id], onDelete: Cascade)
   executeAt                 DateTime
@@ -139,6 +140,7 @@ model TimeDelayExecution {
   InvoiceAutomationRule     InvoiceAutomationRule?            @relation(fields: [invoiceAutomationRuleId], references: [id], onDelete: SetNull)
   InventoryAutomationRule   InventoryAutomationRule?          @relation(fields: [inventoryAutomationRuleId], references: [id])
   inventoryAutomationRuleId Int?
+  tagAutomationRule         TagAutomationRule?                @relation(fields: [tagAutomationRuleId], references: [id])
 
   @@index([executeAt, status])
   @@index([pipelineRuleId])
@@ -268,8 +270,10 @@ model AutomationAttachment {
   communicationId      Int?
   marketingId          Int?
   serviceMaintenanceId Int?
+  tagCommunicationId   Int?
   invoiceId            Int?
   communication        CommunicationAutomationRule?      @relation("CommunicationAttachments", fields: [communicationId], references: [id])
+  tagCommunication     TagAutomationCommunication?       @relation("TagAutomationCommunicationAttachments", fields: [tagCommunicationId], references: [id])
   marketing            MarketingAutomationRule?          @relation("MarketingAttachments", fields: [marketingId], references: [id])
   serviceMaintenance   ServiceMaintenanceAutomationRule? @relation("ServiceMaintenanceAttachments", fields: [serviceMaintenanceId], references: [id])
   invoice              InvoiceAutomationRule?            @relation("InvoiceAttachments", fields: [invoiceId], references: [id])
@@ -303,6 +307,81 @@ model InventoryAutomationTeamMember {
   user            User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([inventoryRuleId, userId])
+}
+
+// TODO: Tag Automation Schema
+// tag automation rules
+model TagAutomationRule {
+  id                         Int                         @id @default(autoincrement())
+  companyId                  Int
+  title                      String
+  timeDelay                  Int                         @default(0) // in seconds
+  isPaused                   Boolean                     @default(false)
+  condition_type             TagConditionType
+  pipelineType               PipelineType
+  ruleType                   TagRuleType?
+  tag                        Tag[]
+  // columns                    Column[]
+  tagAutomationPipeline      TagAutomationPipeline?
+  tagAutomationCommunication TagAutomationCommunication?
+  PostTagAutomationColumn    PostTagAutomationColumn?
+  timeDelayExecution         TimeDelayExecution[]
+  createdAt                  DateTime                    @default(now())
+  updatedAt                  DateTime                    @default(now()) @updatedAt
+}
+
+model TagAutomationPipeline {
+  id              Int               @id @default(autoincrement())
+  tagAutomationId Int               @unique
+  targetColumnId  Int
+  tagAutomation   TagAutomationRule @relation(fields: [tagAutomationId], references: [id], onDelete: Cascade)
+  column          Column            @relation(fields: [targetColumnId], references: [id], onDelete: Cascade)
+
+  @@index([tagAutomationId])
+}
+
+model TagAutomationCommunication {
+  id                Int                    @id @default(autoincrement())
+  tagAutomationId   Int                    @unique
+  communicationType CommunicationType
+  isSendWeekDays    Boolean                @default(false)
+  isSendOfficeHours Boolean                @default(false)
+  subject           String?
+  emailBody         String?                @db.Text
+  smsBody           String?                @db.Text
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+  attachments       AutomationAttachment[] @relation("TagAutomationCommunicationAttachments")
+  tagAutomation     TagAutomationRule      @relation(fields: [tagAutomationId], references: [id], onDelete: Cascade)
+
+  @@index([tagAutomationId])
+}
+
+model PostTagAutomationColumn {
+  id              Int               @id @default(autoincrement())
+  tagAutomationId Int               @unique
+  columnIds       Column[]
+  tagAutomation   TagAutomationRule @relation(fields: [tagAutomationId], references: [id], onDelete: Cascade)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @default(now()) @updatedAt
+
+  @@index([tagAutomationId])
+}
+
+enum TagRuleType {
+  one_time
+  recurring
+}
+
+enum TagConditionType {
+  pipeline
+  communication
+  post_tag
+}
+
+enum PipelineType {
+  SALES
+  SHOP
 }
 
 // Enums
@@ -655,35 +734,35 @@ enum EmailTemplateType {
 }
 
 model Lead {
-  id                  Int        @id @default(autoincrement())
-  clientName          String     @map("client_name")
-  clientEmail         String?    @map("client_email")
-  clientPhone         String?    @map("client_phone")
-  vehicleInfo         String     @map("vehicle_info")
+  id                  Int                  @id @default(autoincrement())
+  clientName          String               @map("client_name")
+  clientEmail         String?              @map("client_email")
+  clientPhone         String?              @map("client_phone")
+  vehicleInfo         String               @map("vehicle_info")
   vehicleId           Int?
   services            String
   source              String
   comments            String?
-  companyId           Int        @map("company_id")
-  createdAt           DateTime   @default(now()) @map("created_at")
-  updatedAt           DateTime   @default(now()) @updatedAt @map("updated_at")
-  columnChangedAt     DateTime?  @map("column_changed_at")
-  company             Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  columnId            Int?       @map("column_id")
-  column              Column?    @relation(fields: [columnId], references: [id], onDelete: Cascade)
-  assignedSalesUserId Int?       @map("assigned_sales_id")
-  assignedDate        DateTime?  @map("assigned_date")
-  salesUser           User?      @relation(fields: [assignedSalesUserId], references: [id], onDelete: Cascade)
-  isLead              Boolean    @default(true)
-  isQualified         Boolean    @default(true)
-  isEstimateCreated   Boolean?   @default(false)
+  companyId           Int                  @map("company_id")
+  createdAt           DateTime             @default(now()) @map("created_at")
+  updatedAt           DateTime             @default(now()) @updatedAt @map("updated_at")
+  columnChangedAt     DateTime?            @map("column_changed_at")
+  company             Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  columnId            Int?                 @map("column_id")
+  column              Column?              @relation(fields: [columnId], references: [id], onDelete: Cascade)
+  assignedSalesUserId Int?                 @map("assigned_sales_id")
+  assignedDate        DateTime?            @map("assigned_date")
+  salesUser           User?                @relation(fields: [assignedSalesUserId], references: [id], onDelete: Cascade)
+  isLead              Boolean              @default(true)
+  isQualified         Boolean              @default(true)
+  isEstimateCreated   Boolean?             @default(false)
   tasks               Task[]
   leadTags            LeadTags[]
   serviceId           Int?
-  Service             Service?   @relation(fields: [serviceId], references: [id])
-  multipleServices    Service[]  @relation("LeadMultipleServices")
+  Service             Service?             @relation(fields: [serviceId], references: [id])
+  multipleServices    Service[]            @relation("LeadMultipleServices")
   clientId            Int?
-
+  isTriggered         Boolean              @default(false)
   Client              Client[]
   TimeDelayExecutions TimeDelayExecution[]
 
@@ -918,6 +997,9 @@ model Column {
   serviceMaintenanceStageForRules  ServiceMaintenanceAutomationRule[] @relation("conditionColumn")
   invoiceAutomationRule            InvoiceAutomationRule[]            @relation("invoiceStatus")
   InvoiceAutomationRule            InvoiceAutomationRule[]
+  // tagAutomationRuleColumns         TagAutomationRule[]
+  postTagAutomationColumns         PostTagAutomationColumn[]
+  tagAutomationPipeline            TagAutomationPipeline[]
 
   @@index([companyId])
   @@index([type])
@@ -1163,6 +1245,7 @@ model Tag {
   InvoiceTags         InvoiceTags[]
   InventoryProductTag InventoryProductTag[]
   leadTags            LeadTags[]
+  tagAutomationRule   TagAutomationRule[]
 
   @@index([companyId, type]) // NEW: Index for better query performance
 }
@@ -1233,6 +1316,7 @@ model Invoice {
   policy                  String?
   customerNotes           String?
   customerComments        String?
+  isTriggered             Boolean                   @default(false)
   companyId               Int                       @map("company_id")
   userId                  Int?                      @map("user_id")
   assignedToId            Int?                      @map("assigned_to")
@@ -1249,6 +1333,7 @@ model Invoice {
   invoiceItems            InvoiceItem[]
   vehicleParts            VehicleParts[]
   photos                  InvoicePhoto[]
+  signatureImage          String?
   tasks                   Task[]
   status                  Status?                   @relation(fields: [statusId], references: [id])
   payments                Payment[]
@@ -1341,11 +1426,12 @@ model Technician {
   priority      Priority? @default(Low)
   status        String?
   note          String?   @map("new_note") @db.VarChar(1500)
+  technicianNote  String?   @map("technician_note") @db.VarChar(1500)
   serviceId     Int       @map("service_id")
   invoiceId     String    @map("invoice_id")
   companyId     Int       @map("company_id")
   invoiceItemId Int       @map("invoice_item_id")
-
+  images       TechnicianImage[]   
   createdAt    DateTime       @default(now()) @map("created_at")
   updatedAt    DateTime       @default(now()) @updatedAt @map("updated_at")
   vehicleParts VehicleParts[]
@@ -1355,6 +1441,17 @@ model Technician {
   company      Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
   InvoiceRedo  InvoiceRedo[]
   invoiceItem  InvoiceItem    @relation(fields: [invoiceItemId], references: [id], onDelete: Cascade)
+}
+
+model TechnicianImage {
+  id            Int      @id @default(autoincrement())
+  technicianId  Int
+  fileUrl       String   @db.VarChar(2048) 
+  uploadedAt    DateTime @default(now()) 
+  
+  technician    Technician @relation(fields: [technicianId], references: [id], onDelete: Cascade)
+  
+  @@map("technician_images")
 }
 
 model InvoiceRedo {

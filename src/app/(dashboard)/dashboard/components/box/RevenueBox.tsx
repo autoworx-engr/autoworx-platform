@@ -18,10 +18,31 @@ export default async function RevenueBox({ className }: TRevenueBoxProps) {
     Intl.DateTimeFormat().resolvedOptions().timeZone;
   const revenue = await getRevenue(timezone);
   const expectedRevenue = await getExpectedRevenue();
+
   return (
-    <div className={cn("flex-1 rounded-md p-4 shadow-lg 2xl:px-6", className)}>
+    <div
+      className={cn(
+        // Premium Card/Glassmorphism Container Style
+        `
+          flex-1 p-4 md:p-6 rounded-2xl shadow-xl transition-all duration-300
+
+          // Glassmorphism effect
+          bg-white/50 dark:bg-slate-900/50
+          backdrop-blur-md
+
+          // Subtle border and shadow for lift
+          ring-1 ring-slate-900/5 dark:ring-white/10
+          shadow-lg dark:shadow-2xl dark:shadow-blue-900/20
+        `,
+        className
+      )}
+    >
+      {/* BoxTitle (Assumed to be clean and simple) */}
       <BoxTitle title="Revenue" redirectLink="/dashboard/reporting/revenue" />
-      <div className="#px-4">
+
+      {/* Metrics Content Area */}
+      <div className="pt-2">
+        {/* Current Revenue - Highlighting growth */}
         <ChartData
           heading="Current Revenue"
           dollarSign={true}
@@ -29,13 +50,16 @@ export default async function RevenueBox({ className }: TRevenueBoxProps) {
           isPositive={revenue?.growth?.isPositive || false}
           rate={revenue?.growth?.rate || 0}
         />
+
+        {/* Separator for visual clarity between metrics */}
+        <div className="h-[1px] w-full bg-slate-200/70 dark:bg-slate-700/70 my-3" />
+
+        {/* Expected Revenue - Static metric */}
         <ChartData
           heading="Expected Revenue"
           dollarSign={true}
           number={expectedRevenue?.revenue || 0}
           noRate
-          // isPositive={data?.expectedRevenue?.growth?.isPositive || false}
-          // rate={data?.expectedRevenue?.growth?.rate || 0}
         />
       </div>
     </div>

@@ -65,32 +65,11 @@ export async function sendFleetEmail({ statementId }: { statementId: string }) {
       (fleetStatement?.invoice?.[0]?.client?.firstName
         ? fleetStatement?.invoice?.[0]?.client?.firstName
         : fleetStatement?.invoice?.[0]?.client?.lastName) ?? " ";
-    const invoices = fleetStatement?.invoice || [];
 
-    const tableHeader = `+------------+----------+----------+----------------------------+
-| Year       | Make     | Model    | Invoice Link               |
-+------------+----------+----------+----------------------------+`;
+    // Add fleet statement link
+    const fleetStatementLink = `${process.env.NEXT_PUBLIC_APP_URL}/public-invoice/${statementId}?fleet=true`;
 
-    const tableRows = invoices.map((inv) => {
-      const year = inv.vehicle?.year || "N/A";
-      const make = inv.vehicle?.make || "N/A";
-      const model = inv.vehicle?.model || "N/A";
-      const link = `${process.env.NEXT_PUBLIC_APP_URL}/public-invoice/${inv.id}`;
-
-      // Pad columns to fixed width (align left)
-      const pad = (text: string, length: number) =>
-        text.length >= length
-          ? text.slice(0, length - 1) + "…"
-          : text.padEnd(length);
-
-      return `| ${pad(year.toString(), 10)} | ${pad(make, 8)} | ${pad(model, 8)} | ${pad(link, 26)} |`;
-    });
-
-    const tableFooter = `+------------+----------+----------+----------------------------+`;
-
-    const table = [tableHeader, ...tableRows, tableFooter].join("\n");
-
-    const variabledBody = `Client: ${clientName}\n\n${table}`;
+    const variabledBody = `Hello ${clientName},\n\nYour fleet statement is ready. Please click the link below to view:\n\n${fleetStatementLink}`;
 
     const res = await sendInfobipEmail({
       clientId: fleetStatement?.invoice?.[0]?.client.id,
@@ -110,11 +89,15 @@ export async function sendFleetEmail({ statementId }: { statementId: string }) {
           messageId: res.id,
         },
       });
-      await updateNewEmailChatTrack({
-        clientId: fleetStatement?.invoice?.[0]?.client.id,
-        emailLastMessage: variabledBody || "",
-        lastEmailBy: "Company",
-      });
+      try {
+        await updateNewEmailChatTrack({
+          clientId: fleetStatement?.invoice?.[0]?.client.id,
+          emailLastMessage: variabledBody || "",
+          lastEmailBy: "Company",
+        });
+      } catch (error) {
+        console.log("🚀 ~ sendFleetEmail ~ error:", error);
+      }
     }
     return {
       success: true,

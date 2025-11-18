@@ -1,15 +1,30 @@
 "use client";
 
 import { ClockBreak, ClockInOut } from "@prisma/client";
-
 import { stopBreak, takeBreak } from "@/actions/dashboard/break";
 import { clockIn } from "@/actions/dashboard/clockIn";
 import { clockOut } from "@/actions/dashboard/clockOut";
-// import { useAutoRefreshRoute } from "@/hooks/useAutoRefreshRoute.ts";
 import { successToast } from "@/lib/toast";
 import moment from "moment-timezone";
 import { useCallback } from "react";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
+
+// Placeholder for an Icon (e.g., Lucide or Heroicons)
+const ClockIcon = (props: { className?: string }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
+    <circle cx="12" cy="12" r="10" />
+    <polyline points="12 6 12 12 16 14" />
+  </svg>
+);
 
 type TAttendanceButtonsBoxProps = {
   lastClockInOut: (ClockInOut & { ClockBreak: ClockBreak[] }) | null;
@@ -26,6 +41,10 @@ export function formatToTimeString(date: Date, timezone?: string) {
     timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
   return moment(date).tz(companyTimezone).format("h:mm A");
 }
+
+// -------------------------------------------------------------
+// Core Component Starts Here
+// -------------------------------------------------------------
 
 export default function AttendanceButtonsBox({
   lastClockInOut,
@@ -68,8 +87,44 @@ export default function AttendanceButtonsBox({
   // Check if technician is clocked in (and not clocked out)
   const isClockedIn =
     lastClockInOut && lastClockInOut?.clockIn && !lastClockInOut?.clockOut;
+
+  // ----------------------------------------------------------------------
+  // Tailwind Utility Classes for Consistency and Professional Look
+  // ----------------------------------------------------------------------
+
+  // Base button classes for common styling
+  const baseButtonClasses =
+    "h-full w-full rounded-xl px-4 py-4 font-semibold text-white transition-all duration-300 xl:px-10 group relative overflow-hidden";
+
+  // Disabled button classes
+  const disabledClasses =
+    "cursor-not-allowed bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-400 shadow-inner ring-1 ring-slate-400/20 dark:ring-slate-600/20";
+
+  // Primary action gradient (Blue)
+  const primaryGradient =
+    "bg-gradient-to-br from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 hover:-translate-y-0.5";
+
+  // Active/Success state gradient (Emerald/Teal)
+  const successGradient =
+    "bg-gradient-to-br from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/40";
+
+  // Critical/Break End state (Rose/Red)
+  const criticalGradient =
+    "bg-gradient-to-br from-rose-500 to-red-600 hover:from-rose-400 hover:to-red-500 shadow-lg shadow-rose-500/30 hover:shadow-xl hover:shadow-rose-500/40 hover:-translate-y-0.5";
+
+  // ----------------------------------------------------------------------
+
   return (
-    <div className="flex flex-col sm:flex-row w-full gap-2 rounded-md p-4 shadow-lg">
+    <div
+      className={`
+        flex flex-col sm:flex-row w-full gap-3 p-4
+        rounded-2xl shadow-2xl dark:shadow-slate-900/50
+        bg-white/70 dark:bg-slate-800/70
+        ring-1 ring-slate-900/5 dark:ring-slate-700/50
+        backdrop-blur-md
+      `}
+    >
+      {/* Clock-In Button */}
       <div className="w-full">
         <button
           onClick={async () => {
@@ -82,32 +137,44 @@ export default function AttendanceButtonsBox({
               }
             }
           }}
-          className={`h-full w-full rounded ${
-            hasClockedInToday
-              ? "cursor-not-allowed bg-gray-400"
-              : !lastClockInOut?.clockOut && lastClockInOut?.clockIn
-                ? "bg-[#03A7A2]"
-                : "bg-[#6571FF]"
-          } ${!lastClockInOut?.clockOut && lastClockInOut?.clockIn ? "bg-[#03A7A2]" : "bg-[#6571FF]"} ${!lastClockInOut || lastClockInOut?.clockOut ? "cursor-pointer" : "cursor-default"} px-4 py-4 text-white xl:px-10`}
-          disabled={hasClockedInToday}
-          title={hasClockedInToday ? "You have already clocked in today" : ""}
+          className={`${baseButtonClasses} ${
+            !lastClockInOut || lastClockInOut?.clockOut // Ready for Clock-In
+              ? primaryGradient
+              : isClockedIn // Currently Clocked-In (Active/Success)
+                ? successGradient
+                : disabledClasses // Disabled/Other edge cases
+          } ${
+            hasClockedInToday && !isClockedIn ? disabledClasses : ""
+          } 2xl:text-xl`}
+          disabled={hasClockedInToday && !isClockedIn} // Disable if already clocked in AND clocked out
+          title={
+            hasClockedInToday && !isClockedIn
+              ? "You have already clocked in and out today"
+              : ""
+          }
         >
-          <span className="font-semibold 2xl:text-xl">
-            {!lastClockInOut?.clockOut && lastClockInOut?.clockIn
-              ? "Clocked-In"
-              : "Clock-In"}
-          </span>
-          <br />
-          {lastClockInOut?.clockIn && !lastClockInOut?.clockOut && (
-            <span className="text-xs">
-              {formatDateToCustomString(
-                new Date(lastClockInOut?.clockIn),
-                companyTimezone
-              )}
-            </span>
+          {isClockedIn ? (
+            // Active Clock-In State
+            <>
+              <div className="flex items-center justify-center gap-2">
+                <ClockIcon className="w-5 h-5 animate-pulse" />
+                <span>Clocked-In</span>
+              </div>
+              <span className="text-xs font-light mt-1 block opacity-80">
+                {formatDateToCustomString(
+                  new Date(lastClockInOut!.clockIn!),
+                  companyTimezone
+                )}
+              </span>
+            </>
+          ) : (
+            // Ready-to-Clock-In State
+            "Clock-In"
           )}
         </button>
       </div>
+
+      {/* Clock-Out Button */}
       <div className="w-full">
         <button
           onClick={async () => {
@@ -125,11 +192,11 @@ export default function AttendanceButtonsBox({
               }
             }
           }}
-          className={`h-full w-full rounded ${
+          className={`${baseButtonClasses} ${
             hasClockedOutToday || isOnBreak || !isClockedIn
-              ? "cursor-not-allowed bg-gray-400"
-              : "bg-[#6571FF]"
-          } px-4 py-4 font-semibold text-white xl:px-10`}
+              ? disabledClasses
+              : primaryGradient
+          } 2xl:text-xl`}
           disabled={hasClockedOutToday || isOnBreak || !isClockedIn}
           title={
             hasClockedOutToday
@@ -141,13 +208,14 @@ export default function AttendanceButtonsBox({
                   : ""
           }
         >
-          <span className="font-semibold 2xl:text-xl">Clock-Out</span>
-          <br />
-          {/* <span className="text-xs">10:00 AM</span> */}
+          Clock-Out
         </button>
       </div>
+
+      {/* Break / End Break Button */}
       <div className="w-full">
         {isOnBreak ? (
+          // End Break (Critical Action)
           <button
             onClick={async () => {
               if (lastClockInOut && validBreak(lastClockInOut)) {
@@ -162,11 +230,27 @@ export default function AttendanceButtonsBox({
                 }
               }
             }}
-            className={`h-full w-full rounded bg-[#03A7A2] px-4 py-4 font-semibold text-white xl:px-10 2xl:text-xl cursor-pointer`}
+            className={`${baseButtonClasses} ${criticalGradient} 2xl:text-xl`}
           >
-            End Break
+            <div className="flex items-center justify-center gap-2">
+              <ClockIcon className="w-5 h-5 animate-pulse" />
+              <span>End Break</span>
+            </div>
+            <span className="text-xs font-light mt-1 block opacity-80">
+              {/* Display break start time */}
+              Break started @{" "}
+              {formatToTimeString(
+                new Date(
+                  lastClockInOut!.ClockBreak[
+                    lastClockInOut!.ClockBreak.length - 1
+                  ].breakStart
+                ),
+                companyTimezone
+              )}
+            </span>
           </button>
         ) : (
+          // Take Break (Secondary Action, only if clocked in)
           <button
             onClick={async () => {
               // Only allow break if clocked in
@@ -183,24 +267,28 @@ export default function AttendanceButtonsBox({
                 }
               }
             }}
-            className={`h-full w-full rounded px-4 py-4 font-semibold text-white xl:px-10 xl:text-xl ${
-              isClockedIn
-                ? "bg-[#6571FF] cursor-pointer"
-                : "bg-gray-400 cursor-not-allowed"
-            }`}
+            className={`${baseButtonClasses} ${
+              isClockedIn ? primaryGradient : disabledClasses
+            } 2xl:text-xl`}
             disabled={!isClockedIn}
             title={
               !isClockedIn ? "You must clock in before taking a break" : ""
             }
           >
-            <span>Break</span> <br />
+            <span>Break</span>
             <div className="mt-1 flex flex-col">
+              {/* Added a subtle shine effect on hover for active buttons */}
+              {isClockedIn && (
+                <span className="absolute inset-0 bg-white opacity-0 group-hover:opacity-[0.08] transition-opacity duration-300"></span>
+              )}
+
+              {/* Display recent break history */}
               {!lastClockInOut?.clockOut &&
                 lastClockInOut?.ClockBreak.slice(-3).map((Break, ind) => {
                   return (
                     <span
                       key={ind}
-                      className="text-[10px] font-light leading-[1.3]"
+                      className="text-[10px] font-light leading-[1.3] opacity-80"
                     >
                       {formatToTimeString(Break.breakStart, companyTimezone)} -{" "}
                       {Break?.breakEnd &&

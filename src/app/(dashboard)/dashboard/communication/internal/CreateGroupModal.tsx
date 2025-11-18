@@ -140,6 +140,11 @@ export default function CreateGroupModal({
   };
 
   const handleCreateGroup = async () => {
+    if (groupName.trim() === "") {
+      setError("Group name is required.");
+      return;
+    }
+
     if (contactList.length >= 2) {
       setIsLoading(true);
       try {
@@ -191,24 +196,30 @@ export default function CreateGroupModal({
           <span className="text-white absolute right-1 top-0 text-sm ">+</span>
         </button>
       </DialogTrigger>
-      <DialogContent className="w-[350px] sm:w-full">
+      <DialogContent className="max-w-[350px] sm:w-full sm:max-w-lg">
         {error && <p className="text-center text-sm text-red-400">{error}</p>}
         <h2 className="mb-5 text-2xl font-bold">Create Group</h2>
         <div className="grid grid-cols-1">
           {/* group name */}
           <SlimInput
             value={groupName}
-            onChange={(e) => setGroupName(e.target.value)}
+            onChange={(e) => {
+              setGroupName(e.target.value);
+              if (e.target.value.trim() !== "") {
+                setError(null);
+              }
+            }}
             label="Group name"
             name="groupName"
             type="text"
+            className="w-full"
           />
         </div>
         <div>
           {openUserList ? (
             <>
               <div className="mb-1 px-2 font-medium">Contact List</div>
-              <div className="h-fit w-full space-y-4 rounded-md border border-gray-500 p-4">
+              <div className="w-full space-y-4 rounded-md border border-gray-500 p-4 max-h-[50vh] overflow-y-auto sm:max-h-[60vh]">
                 {/* Search box */}
                 <div className="relative">
                   <input
@@ -265,6 +276,7 @@ export default function CreateGroupModal({
                   getFindUsers();
                 }}
                 className="cursor-pointer"
+                rootClassName="overflow-hidden"
               />
               <ChevronDown
                 onClick={() => {

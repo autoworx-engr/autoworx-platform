@@ -52,6 +52,8 @@ import { InvoiceItems } from "./InvoiceItems";
 import { StripePay } from "./StripePay";
 import { Files, Mail, MessageCircleMore, SquarePen, X } from "lucide-react";
 import SignatureCanvas from "react-signature-canvas";
+import { uploadSignature } from "@/actions/estimate/invoice/uploadSignature";
+import { getFileFromCanvas } from "@/utils/getFileFromCanvas";
 
 const DownloadPDF = dynamic(() => import("./DownloadInvoice"), {
   ssr: false,
@@ -99,6 +101,7 @@ export default function InvoiceModalBody({
   const sigCanvas = useRef<any>(null);
   const [showAuthorizedName, setShowAuthorizedName] = useState(false);
   const [authorizedName, setAuthorizedName] = useState("");
+  const [signImage, setSignImage] = useState(null);
   const [authorizedNameInput, setAuthorizedNameInput] = useState("");
   const [sigImageURL, setSigImageURL] = useState(null);
   const [showSignaturePad, setShowSignaturePad] = useState(false);
@@ -135,6 +138,9 @@ export default function InvoiceModalBody({
       if (data.invoice?.authorizedName) {
         setAuthorizedName(data.invoice.authorizedName);
         setAuthorizedNameInput(data.invoice.authorizedName);
+      }
+      if (data.invoice?.signatureImage) {
+        setSignImage(data.invoice?.signatureImage);
       }
     }
   }, [isLoading, data, isFetched]);
@@ -256,6 +262,54 @@ export default function InvoiceModalBody({
       successToast("Link copied to clipboard");
     }
   };
+
+  const handleSaveSignature = async (invoiceId: string) => {
+    if (!sigCanvas.current) return;
+
+    try {
+      const file = getFileFromCanvas(
+        sigCanvas.current.getCanvas(),
+        `signature-${invoiceId}.png`
+      );
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch(`/api/upload`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        console.error("Failed to upload photos");
+        throw new Error("Failed to upload photos");
+      }
+
+      const json = await res.json();
+      const data = json.data;
+
+      // const response = await uploadSignature(invoiceId, data[0]);
+
+      const response = await authorizeInvoice(
+        invoice.id,
+        authorizedNameInput,
+        data[0],
+        invoice.type
+      );
+
+      if (response?.type === "success") {
+        successToast("Invoice Authorized");
+        await authorizedLeadsConvertion(invoice.id);
+      } else {
+        errorToast("Signature upload failed");
+        console.error("Signature upload failed:");
+      }
+    } catch (err) {
+      errorToast("Signature upload failed");
+      console.error("Signature upload failed:", err);
+    }
+  };
+
   return (
     <DialogPortal>
       <DialogOverlay />
@@ -272,17 +326,14 @@ export default function InvoiceModalBody({
                   className="flex items-center justify-center gap-1 rounded bg-[#6571FF] px-2 py-1 text-sm text-white md:px-4 md:text-base"
                   href={`/dashboard/estimate/edit/${invoice.id}?clientId=${invoice.clientId}`}
                 >
-                  <SquarePen className="h-3 w-3 md:h-4 md:w-4" />
+                  <SquarePen className="h-4 w-4 md:h-4 md:w-4" />
                   <span className="hidden md:inline">Edit</span>
                 </Link>
                 <Link
                   href={`/dashboard/communication/client/${invoice.clientId}?chat=true`}
                   className="flex items-center justify-center gap-1 rounded bg-[#6571FF] px-2 py-1 text-sm text-white md:px-4 md:text-base"
                 >
-                  <MessageCircleMore
-                    size={22}
-                    className="text-sm text-white md:text-xl"
-                  />
+                  <MessageCircleMore className="size-4 md:size-[22px] text-white md:text-xl" />
                   <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
                     Communications
                   </span>
@@ -315,7 +366,7 @@ export default function InvoiceModalBody({
                   <span className="hidden md:inline">Print</span>
                 </button>
 
-                <button className="flex items-center justify-center gap-1 rounded bg-[#6571FF] px-2 py-0.5 text-xs text-white md:px-4 md:py-1 md:text-base">
+                <button className="flex items-center justify-center gap-1 rounded bg-[#6571FF] px-2 py-1 text-xs text-white md:px-4 md:py-1 md:text-base">
                   {client && (
                     <DownloadPDF
                       id={invoice.id}
@@ -324,6 +375,7 @@ export default function InvoiceModalBody({
                       vehicle={vehicle}
                       companyDetails={company}
                       authorizedName={authorizedName}
+                      signImageUrl={signImage ?? undefined}
                       isStripe={
                         (stripeAccountData?.success &&
                           stripeAccountData?.enabled &&
@@ -335,15 +387,17 @@ export default function InvoiceModalBody({
                   )}
                 </button>
 
-                <div className="flex items-center gap-x-2 rounded-md border border-gray-300 px-2 py-1">
-                  <span className="mr-1 font-semibold">Share via</span>
+                <div className="flex items-center gap-x-2 rounded-md border border-gray-300 px-2 py-0.5">
+                  <span className="mr-1 font-semibold text-sm md:text-base">
+                    Share via
+                  </span>
                   <Popconfirm
                     title="Send invoice via Email now?"
                     onConfirm={handleEmail}
                     okText="Yes"
                     cancelText="No"
                   >
-                    <button className="flex items-center justify-center gap-1 rounded bg-[#6571FF] px-2 py-1 text-sm text-white md:px-4 md:text-base">
+                    <button className="flex items-center justify-center gap-1 rounded bg-[#6571FF] px-1 py-0.5 text-sm text-white md:px-4 md:text-base">
                       <Mail className="h-4 w-4 md:h-4 md:w-4" />
                       <span className="hidden md:inline">Email</span>
                     </button>
@@ -728,41 +782,44 @@ export default function InvoiceModalBody({
                     />
                     <button
                       className="absolute -right-[10px] -top-4 bg-red-700 rounded-full print:hidden"
-                      onClick={() => setShowAuthorizedName(false)}
+                      onClick={() => {
+                        setShowAuthorizedName(false);
+                        setShowSignaturePad(false);
+                      }}
                     >
                       <X size={20} className="text-white p-1" />
                     </button>
                   </div>
                   <button
-                    onClick={async () => {
-                      const res = await authorizeInvoice(
-                        invoice.id,
-                        authorizedNameInput,
-                        invoice.type
-                      );
-                      if (res?.type === "success") {
-                        successToast("Invoice Authorized");
-                        await authorizedLeadsConvertion(invoice.id);
-                        setAuthorizedName(authorizedNameInput);
+                    // onClick={async () => {
+                    //   const res = await authorizeInvoice(
+                    //     invoice.id,
+                    //     authorizedNameInput,
+                    //     invoice.type
+                    //   );
+                    //   if (res?.type === "success") {
+                    //     successToast("Invoice Authorized");
+                    //     await authorizedLeadsConvertion(invoice.id);
+                    //     setAuthorizedName(authorizedNameInput);
 
-                        // Update the invoice object in state to reflect the change
-                        setInvoice((prev) => {
-                          if (!prev) return prev;
-                          return {
-                            ...prev,
-                            authorizedName: authorizedNameInput,
-                          };
-                        });
-                      }
-                      setShowAuthorizedName(false);
-                    }}
+                    //     // Update the invoice object in state to reflect the change
+                    //     setInvoice((prev) => {
+                    //       if (!prev) return prev;
+                    //       return {
+                    //         ...prev,
+                    //         authorizedName: authorizedNameInput,
+                    //       };
+                    //     });
+                    //   }
+                    //   setShowAuthorizedName(false);
+                    // }}
                     className="text-md rounded bg-green-500 px-1.5 pb-1 text-center text-white print:hidden"
                   >
                     Authorize
                   </button>
                 </div>
               )}
-              {authorizedName && !showAuthorizedName && (
+              {authorizedName && (
                 <div className="flex flex-col items-center gap-y-2">
                   <span className="font-semibold italic">{authorizedName}</span>
 
@@ -805,32 +862,24 @@ export default function InvoiceModalBody({
                   </div>
                 </div>
               )}
-              {!showAuthorizedName && !authorizedName && (
-                <button
-                  onClick={() => {
-                    setShowAuthorizedName(true);
-                  }}
-                  className="rounded bg-[#6571FF] px-8 pb-1 text-white print:hidden"
-                >
-                  Authorize
-                </button>
-              )}
+              {!showAuthorizedName &&
+                !sigImageURL &&
+                !invoice?.signatureImage && (
+                  <button
+                    onClick={() => {
+                      // setShowAuthorizedName(true);
+                      setShowSignaturePad(true);
+                    }}
+                    className="rounded bg-[#6571FF] px-8 pb-1 text-white print:hidden"
+                  >
+                    Authorize
+                  </button>
+                )}
             </div>
           </div>
-          {!showSignaturePad && !sigImageURL && (
-            <div className="flex justify-end">
-              <button
-                onClick={() => {
-                  setShowSignaturePad(true);
-                }}
-                className="rounded bg-[#6571FF] px-8 pb-1 text-white print:hidden"
-              >
-                Signature
-              </button>
-            </div>
-          )}
+
           <div className="flex justify-end items-center">
-            {showSignaturePad && !sigImageURL && (
+            {showSignaturePad && !sigImageURL && !invoice?.signatureImage && (
               <div className="flex justify-end items-center gap-4">
                 <SignatureCanvas
                   ref={sigCanvas}
@@ -846,10 +895,19 @@ export default function InvoiceModalBody({
                 <div className="flex flex-col gap-3">
                   <button
                     onClick={() => {
+                      if (!sigCanvas.current || sigCanvas.current.isEmpty()) {
+                        errorToast(
+                          "Please provide your signature before saving."
+                        );
+                        return;
+                      }
                       const dataURL = sigCanvas.current
                         .getCanvas()
                         .toDataURL("image/png");
                       setSigImageURL(dataURL);
+                      handleSaveSignature(invoice.id);
+                      setShowAuthorizedName(false);
+                      setShowSignaturePad(false);
                     }}
                     className="px-4 py-2 bg-blue-600 text-white rounded-md"
                   >
@@ -858,6 +916,7 @@ export default function InvoiceModalBody({
                   <button
                     onClick={() => {
                       sigCanvas.current.clear();
+                      setShowSignaturePad(false);
                       setSigImageURL(null);
                     }}
                     className="px-4 py-2 bg-gray-500 text-white rounded-md"
@@ -877,7 +936,21 @@ export default function InvoiceModalBody({
                   className="border border-gray-300 rounded-md"
                 />
                 <span className="rounded-sm border border-[#6571ff] px-4 py-1 text-sm text-[#6571ff]">
-                  Signatured
+                  Authorized
+                </span>
+              </div>
+            )}
+            {invoice?.signatureImage && (
+              <div className="mt-2 text-center flex flex-col items-end gap-2">
+                <Image
+                  src={invoice?.signatureImage}
+                  width={200}
+                  height={50}
+                  alt="signature"
+                  className="border border-gray-300 rounded-md"
+                />
+                <span className="rounded-sm border border-[#6571ff] px-4 py-1 text-sm text-[#6571ff]">
+                  Authorized
                 </span>
               </div>
             )}

@@ -7,10 +7,14 @@ import AddNewEmployee from "@/components/Lists/NewEmployee";
 import { useEffect, useState } from "react";
 import { Search } from "lucide-react";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useQueryClient } from "@tanstack/react-query";
+import { EMPLOYEE_LIST_KEY } from "../_hook/useEmployeeQuery";
 
 // filter component for /employee page
 export default function EmployeeFilter() {
-  const { setFilter, type } = useEmployeeFilterStore();
+  const { dateRange, search, type, currentPage, pageSize, setFilter } =
+    useEmployeeFilterStore();
+  const queryClient = useQueryClient();
   const [searchInput, setSearchInput] = useState("");
 
   useEffect(() => {
@@ -19,6 +23,19 @@ export default function EmployeeFilter() {
   const handleSearchChange = useDebounce((value: string) => {
     setFilter({ search: value });
   }, 500);
+  const handleAddEmployeeSuccess = () => {
+    queryClient.invalidateQueries({
+      queryKey: [
+        EMPLOYEE_LIST_KEY,
+        currentPage,
+        pageSize,
+        type,
+        search,
+        dateRange[0],
+        dateRange[1],
+      ],
+    });
+  };
   return (
     <div className="flex flex-col items-end gap-4 lg:flex-row lg:items-center lg:justify-between">
       <div className="flex w-full flex-wrap items-center gap-x-8 gap-y-4 lg:w-fit">
@@ -51,7 +68,7 @@ export default function EmployeeFilter() {
           />
         </div>
       </div>
-      <AddNewEmployee />
+      <AddNewEmployee onSuccess={handleAddEmployeeSuccess} />
     </div>
   );
 }

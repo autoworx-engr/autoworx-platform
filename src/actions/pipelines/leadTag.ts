@@ -12,6 +12,9 @@ export const saveLeadTag = async (leadId: number, tagId: number) => {
         leadId: leadId,
         tagId: tagId,
       },
+      include: {
+        lead: true,
+      },
     });
     return result;
   } catch (error) {

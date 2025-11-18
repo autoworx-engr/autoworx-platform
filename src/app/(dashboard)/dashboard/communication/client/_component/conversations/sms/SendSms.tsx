@@ -10,6 +10,7 @@ import { useClientCommunicationStore } from "@/stores/client-store";
 import { useServerGet } from "@/hooks/useServerGet";
 import { getCompany } from "@/actions/settings/getCompany";
 import { SendHorizontal } from "lucide-react";
+import SmartReplyBar from "./SmartReply";
 
 // Helper function to format attachment message
 const formatAttachmentMessage = (files: File[]) => {
@@ -33,9 +34,10 @@ const formatAttachmentMessage = (files: File[]) => {
 
 type TProps = {
   clientId: number;
+  companyId: number;
 };
 
-export default function SendSms({ clientId }: TProps) {
+export default function SendSms({ clientId, companyId }: TProps) {
   const { clientList, setClientList } = clientListStore();
   const { mutate, isSuccess, isPending } = useSmsSendMutation(clientId);
   const { clientConversationTrack, setClientConversationTrack } =
@@ -46,6 +48,14 @@ export default function SendSms({ clientId }: TProps) {
   const [files, setFiles] = useState<File[]>([]);
   const [messageInput, setMessageInput] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const adjustTextareaHeight = (ta?: HTMLTextAreaElement | null) => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  };
 
   const handleSendMessage = async (
     e: React.FormEvent<HTMLFormElement | HTMLTextAreaElement>
@@ -83,6 +93,7 @@ export default function SendSms({ clientId }: TProps) {
 
     setMessageInput("");
     setFiles([]);
+    setTimeout(() => adjustTextareaHeight(), 0);
 
     try {
       mutate(optimisticMessage);
@@ -113,6 +124,16 @@ export default function SendSms({ clientId }: TProps) {
           setFiles((prev) => prev.filter((f) => f.name !== attachmentName))
         }
       />
+
+      {/* 👇 AI Smart Replies */}
+      <div className="bg-[#F3F4F6] px-2 pt-2">
+        <SmartReplyBar
+          clientId={clientId}
+          companyId={companyId}
+          draft={messageInput} // <-- pass the textarea value here
+          onPick={(text) => setMessageInput(text)} // or append if you prefer
+        />
+      </div>
 
       <form
         className="flex items-center gap-2 rounded-b-md bg-zinc-100 px-2 pb-1 pt-2 dark:bg-zinc-800/60"
@@ -156,14 +177,22 @@ export default function SendSms({ clientId }: TProps) {
         <div className="flex w-full items-center gap-2 rounded-md bg-white ring-1 ring-zinc-200 focus-within:ring-emerald-500 dark:bg-zinc-900 dark:ring-white/10">
           <textarea
             placeholder="Send message…"
+            ref={textareaRef}
             className="max-h-28 min-h-10 w-full resize-none rounded-md border-none bg-transparent px-3 py-2 text-[15px] leading-5 text-zinc-800 outline-none placeholder:text-zinc-400 focus:outline-none dark:text-zinc-100 dark:placeholder:text-zinc-500"
             value={messageInput}
             style={{
               WebkitAppearance: "none",
               WebkitTextSizeAdjust: "100%",
               touchAction: "manipulation",
+              height: "auto",
             }}
-            onChange={(e) => setMessageInput(e.target.value)}
+            onChange={(e) => {
+              setMessageInput(e.target.value);
+              adjustTextareaHeight(e.target);
+            }}
+            onInput={(e: React.FormEvent<HTMLTextAreaElement>) =>
+              adjustTextareaHeight(e.currentTarget)
+            }
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault(); // no newline

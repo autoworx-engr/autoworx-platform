@@ -227,10 +227,14 @@ export default function VehicleParts({
               </button>
             </div>
           ))
-        ) : (
+        ) : searchTerm ? (
           <div className="col-span-3 py-4 text-center text-sm text-gray-500">
             No parts found matching &ldquo;{searchTerm}&ldquo;. Try a different
             search term.
+          </div>
+        ) : (
+          <div className="col-span-3 py-4 text-center text-sm text-gray-500">
+            No parts available.
           </div>
         )}
       </div>

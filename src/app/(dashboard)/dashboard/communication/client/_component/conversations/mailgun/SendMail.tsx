@@ -7,6 +7,7 @@ import AttachmentInput from "../AttachmentInput";
 import { clientListStore } from "@/stores/client-store";
 import { useClientCommunicationStore } from "@/stores/client-store";
 import { SendHorizontal } from "lucide-react";
+import SmartReplyBar from "../sms/SmartReply";
 
 // Helper function to format attachment message
 const formatAttachmentMessage = (files: File[]) => {
@@ -30,9 +31,11 @@ const formatAttachmentMessage = (files: File[]) => {
 
 export default function SendMail({
   clientId,
+  companyId,
   setConversations,
 }: {
   clientId: number;
+  companyId: number;
   setConversations: React.Dispatch<
     React.SetStateAction<
       (MailgunEmail & { attachments: MailgunEmailAttachment[] })[] | undefined
@@ -133,7 +136,15 @@ export default function SendMail({
         onAllRemove={() => setFiles([])}
         onRemoveAttachment={handleRemoveAttachment}
       />
-
+      {/* 👇 AI Smart Replies */}
+      <div className="bg-[#F3F4F6] px-2 pt-2">
+        <SmartReplyBar
+          clientId={clientId}
+          companyId={companyId}
+          draft={messageInput} // <-- pass the textarea value here
+          onPick={(text) => setMessageInput(text)} // or append if you prefer
+        />
+      </div>
       <form
         className="flex items-center gap-2 rounded-b-md bg-zinc-100 px-2 py-1 dark:bg-zinc-800/60"
         onSubmit={(event) => {
