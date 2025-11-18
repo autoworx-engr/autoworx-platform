@@ -6,12 +6,16 @@ type TProps = {
   incomingCall: Call | null;
   onAccept: () => void;
   onReject: () => void;
+  isConnected: boolean;
+  callDuration: number;
 };
 
 export default function IncomingCallAlert({
   incomingCall,
   onAccept,
   onReject,
+  isConnected,
+  callDuration,
 }: TProps) {
   const [callerNumber, setCallerNumber] = useState<string>("");
 
@@ -26,12 +30,23 @@ export default function IncomingCallAlert({
 
   if (!incomingCall) return null;
 
+  // Format duration as MM:SS
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
       <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl">
         <div className="mb-6 text-center">
           <div className="mb-4 flex items-center justify-center">
-            <div className="h-20 w-20 animate-pulse rounded-full bg-green-500 flex items-center justify-center">
+            <div
+              className={`h-20 w-20 rounded-full flex items-center justify-center ${
+                isConnected ? "bg-blue-500" : "bg-green-500 animate-pulse"
+              }`}
+            >
               <svg
                 className="h-10 w-10 text-white"
                 fill="none"
@@ -48,54 +63,85 @@ export default function IncomingCallAlert({
             </div>
           </div>
           <h2 className="mb-2 text-2xl font-bold text-gray-800">
-            Incoming Call
+            {isConnected ? "Call Connected" : "Incoming Call"}
           </h2>
           <p className="text-lg text-gray-600">{callerNumber}</p>
+          {isConnected && (
+            <p className="mt-2 text-3xl font-mono font-semibold text-blue-600">
+              {formatDuration(callDuration)}
+            </p>
+          )}
         </div>
 
         <div className="flex gap-4">
-          <button
-            onClick={onReject}
-            className="flex-1 rounded-lg bg-red-600 px-6 py-4 text-lg font-semibold text-white shadow-lg transition hover:bg-red-700 active:scale-95"
-          >
-            <div className="flex items-center justify-center gap-2">
-              <svg
-                className="h-6 w-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+          {!isConnected ? (
+            <>
+              <button
+                onClick={onReject}
+                className="flex-1 rounded-lg bg-red-600 px-6 py-4 text-lg font-semibold text-white shadow-lg transition hover:bg-red-700 active:scale-95"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-              Decline
-            </div>
-          </button>
-          <button
-            onClick={onAccept}
-            className="flex-1 rounded-lg bg-green-600 px-6 py-4 text-lg font-semibold text-white shadow-lg transition hover:bg-green-700 active:scale-95"
-          >
-            <div className="flex items-center justify-center gap-2">
-              <svg
-                className="h-6 w-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+                <div className="flex items-center justify-center gap-2">
+                  <svg
+                    className="h-6 w-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                  Decline
+                </div>
+              </button>
+              <button
+                onClick={onAccept}
+                className="flex-1 rounded-lg bg-green-600 px-6 py-4 text-lg font-semibold text-white shadow-lg transition hover:bg-green-700 active:scale-95"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
-              Accept
-            </div>
-          </button>
+                <div className="flex items-center justify-center gap-2">
+                  <svg
+                    className="h-6 w-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                  Accept
+                </div>
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={onReject}
+              className="w-full rounded-lg bg-red-600 px-6 py-4 text-lg font-semibold text-white shadow-lg transition hover:bg-red-700 active:scale-95"
+            >
+              <div className="flex items-center justify-center gap-2">
+                <svg
+                  className="h-6 w-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+                End Call
+              </div>
+            </button>
+          )}
         </div>
       </div>
     </div>

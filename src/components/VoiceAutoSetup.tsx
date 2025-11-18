@@ -18,6 +18,8 @@ export default function VoiceAutoSetup({
     acceptIncomingCall,
     rejectIncomingCall,
     isDeviceReady,
+    currentConnection,
+    callDuration,
   } = useVoiceDevice();
 
   useEffect(() => {
@@ -35,6 +37,8 @@ export default function VoiceAutoSetup({
       incomingCall={incomingCall}
       onAccept={acceptIncomingCall}
       onReject={rejectIncomingCall}
+      isConnected={!!currentConnection}
+      callDuration={callDuration}
     />
   );
 }

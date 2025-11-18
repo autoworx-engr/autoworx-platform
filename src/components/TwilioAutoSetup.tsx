@@ -16,6 +16,8 @@ export default function TwilioAutoSetup({
     acceptIncomingCall,
     rejectIncomingCall,
     isDeviceReady,
+    currentConnection,
+    callDuration,
   } = useTwilioDevice();
 
   useEffect(() => {
@@ -33,6 +35,8 @@ export default function TwilioAutoSetup({
       incomingCall={incomingCall}
       onAccept={acceptIncomingCall}
       onReject={rejectIncomingCall}
+      isConnected={!!currentConnection}
+      callDuration={callDuration}
     />
   );
 }

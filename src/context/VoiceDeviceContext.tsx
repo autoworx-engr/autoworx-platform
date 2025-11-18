@@ -9,6 +9,8 @@ import {
 } from "react";
 import { Call, Device } from "@twilio/voice-sdk";
 import { InfobipRTCEvent, CallsApiEvent } from "infobip-rtc";
+import { pusher } from "@/lib/pusher/client";
+import { useSession } from "next-auth/react";
 
 type VoiceProvider = "TWILIO" | "INFOBIP";
 
@@ -40,6 +42,7 @@ export function useVoiceDevice() {
 }
 
 export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
+  const { data: session } = useSession();
   const [device, setDevice] = useState<Device | any | null>(null);
   const [incomingCall, setIncomingCall] = useState<Call | any | null>(null);
   const [currentConnection, setCurrentConnection] = useState<Call | any | null>(
@@ -57,6 +60,109 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
   const [infobipCallsConfigId, setInfobipCallsConfigId] = useState<
     string | null
   >(null);
+  const [currentCallSid, setCurrentCallSid] = useState<string | null>(null);
+  const [deviceId] = useState<string>(() => {
+    // Generate a unique ID for this device instance
+    return `device-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  });
+
+  // Get companyId from session
+  useEffect(() => {
+    if (session?.user?.companyId) {
+      console.log("🏢 [VoiceDevice] Company ID set:", session.user.companyId);
+      setCompanyId(session.user.companyId);
+    }
+  }, [session]);
+
+  // Subscribe to Pusher events for call state changes
+  useEffect(() => {
+    if (!companyId) {
+      console.log("⏳ [Pusher] Waiting for company ID before subscribing...");
+      return;
+    }
+
+    const channelName = `company-${companyId}`;
+    console.log("📡 [Pusher] Subscribing to channel:", channelName);
+    const channel = pusher.subscribe(channelName);
+
+    // Listen for call accepted event
+    channel.bind(
+      "call-accepted",
+      (data: { callSid: string; deviceId?: string }) => {
+        console.log("📡 [Pusher] Call accepted event received:", data);
+        // Only dismiss if this is NOT the device that accepted the call
+        if (data.deviceId && data.deviceId === deviceId) {
+          console.log("🔕 This device accepted the call, keeping modal open");
+          return;
+        }
+        // If this is the current incoming call, dismiss it
+        if (incomingCall && getCallSid(incomingCall) === data.callSid) {
+          console.log("🔕 Dismissing incoming call popup (accepted elsewhere)");
+          setIncomingCall(null);
+          setCallStatus("Call accepted on another device");
+        }
+      }
+    );
+
+    // Listen for call rejected event
+    channel.bind("call-rejected", (data: { callSid: string }) => {
+      console.log("📡 [Pusher] Call rejected on another device:", data.callSid);
+      // If this is the current incoming call, dismiss it
+      if (incomingCall && getCallSid(incomingCall) === data.callSid) {
+        console.log("🔕 Dismissing incoming call popup (rejected elsewhere)");
+        setIncomingCall(null);
+        setCallStatus("Call rejected on another device");
+      }
+    });
+
+    // Listen for call ended event
+    channel.bind(
+      "call-ended",
+      (data: { callSid: string; deviceId?: string }) => {
+        console.log("📡 [Pusher] Call ended event received:", data);
+        // Only end if this is NOT the device that ended the call
+        if (data.deviceId && data.deviceId === deviceId) {
+          console.log("🔕 This device ended the call, already handled locally");
+          return;
+        }
+        // If we have an active connection with this callSid, end it
+        const activeCallSid = currentConnection
+          ? getCallSid(currentConnection)
+          : incomingCall
+            ? getCallSid(incomingCall)
+            : null;
+
+        if (activeCallSid === data.callSid) {
+          console.log("🔕 Ending call on this device (ended elsewhere)");
+          // End the connection
+          if (currentConnection) {
+            if (provider === "TWILIO") {
+              currentConnection.disconnect();
+            } else if (provider === "INFOBIP") {
+              currentConnection.hangup();
+            }
+          }
+          // Clean up state
+          setCurrentConnection(null);
+          setIncomingCall(null);
+          setCurrentCallSid(null);
+          setCallStatus("Call ended on another device");
+          if (timer) {
+            clearInterval(timer);
+            setTimer(null);
+          }
+        }
+      }
+    );
+
+    return () => {
+      console.log("📡 [Pusher] Unsubscribing from channel:", channelName);
+      channel.unbind("call-accepted");
+      channel.unbind("call-rejected");
+      channel.unbind("call-ended");
+      pusher.unsubscribe(channelName);
+    };
+  }, [companyId, incomingCall, currentConnection, provider, timer, deviceId]);
 
   // Cleanup timer on unmount
   useEffect(() => {
@@ -64,6 +170,21 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
       if (timer) clearInterval(timer);
     };
   }, [timer]);
+
+  // Helper function to get CallSid from either Twilio or Infobip call
+  const getCallSid = (call: Call | any): string | null => {
+    if (!call) return null;
+    // Twilio Call object has parameters.CallSid
+    if (call.parameters?.CallSid) {
+      return call.parameters.CallSid;
+    }
+    // Infobip call might have id()
+    if (typeof call.id === "function") {
+      return call.id();
+    }
+    // Fallback to call.id if it's a property
+    return call.id || null;
+  };
 
   // Setup device for either Twilio or Infobip
   const setupDevice = useCallback(
@@ -134,6 +255,8 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
 
     twilioDevice.on("incoming", (call: Call) => {
       console.log("📞 [Twilio] Incoming call detected!");
+      const callSid = call.parameters?.CallSid || null;
+      setCurrentCallSid(callSid);
       setIncomingCall(call);
       setCallStatus("Incoming call...");
     });
@@ -241,6 +364,8 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
             incomingCallEvent.source().identity
           );
 
+          const callSid = incomingCallEvent.id ? incomingCallEvent.id() : null;
+          setCurrentCallSid(callSid);
           setIncomingCall(incomingCallEvent);
           setCallStatus("Incoming call...");
         }
@@ -377,6 +502,8 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
       console.log("📞 [Call] Ended");
       setCallStatus("Call ended");
       setCurrentConnection(null);
+      setIncomingCall(null);
+      setCurrentCallSid(null);
       if (timer) {
         clearInterval(timer);
         setTimer(null);
@@ -387,6 +514,8 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
       console.log("⚠️ [Call] Canceled");
       setCallStatus("Call canceled");
       setCurrentConnection(null);
+      setIncomingCall(null);
+      setCurrentCallSid(null);
       if (timer) {
         clearInterval(timer);
         setTimer(null);
@@ -397,6 +526,8 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
       console.error("❌ [Call] Error:", error);
       setCallStatus("Call error occurred");
       setCurrentConnection(null);
+      setIncomingCall(null);
+      setCurrentCallSid(null);
       if (timer) {
         clearInterval(timer);
         setTimer(null);
@@ -424,13 +555,42 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
 
     try {
       console.log("📞 [Global] Accepting incoming call...");
+
+      // Get the call SID before accepting
+      const callSid = getCallSid(incomingCall);
+
+      // Broadcast that this call was accepted (so other devices dismiss the popup)
+      if (callSid && companyId) {
+        try {
+          await fetch("/api/twilio/call-state", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              callSid,
+              action: "accepted",
+              companyId,
+              deviceId, // Include deviceId so this device knows to keep modal open
+            }),
+          });
+          console.log(
+            "📡 [API] Call acceptance broadcasted with deviceId:",
+            deviceId
+          );
+        } catch (error) {
+          console.warn("⚠️ [API] Failed to broadcast call acceptance:", error);
+          // Continue with accepting the call even if broadcast fails
+        }
+      }
+
       await navigator.mediaDevices.getUserMedia({ audio: true });
 
       if (provider === "TWILIO") {
         setupConnectionListeners(incomingCall);
         incomingCall.accept();
         setCurrentConnection(incomingCall);
-        setIncomingCall(null);
+        // Keep incomingCall set so the modal stays visible with timer
+        // setIncomingCall(null);
+        // setCurrentCallSid(null);
       } else if (provider === "INFOBIP") {
         // Accept Infobip WebRTC call
         console.log("📞 [Infobip] Accepting incoming call...");
@@ -454,6 +614,8 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
           console.log("📞 [Infobip] Incoming call ended");
           setCallStatus("Call ended");
           setCurrentConnection(null);
+          setIncomingCall(null);
+          setCurrentCallSid(null);
           if (timer) {
             clearInterval(timer);
             setTimer(null);
@@ -464,6 +626,8 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
           console.error("❌ [Infobip] Incoming call error:", error);
           setCallStatus("Call error occurred");
           setCurrentConnection(null);
+          setIncomingCall(null);
+          setCurrentCallSid(null);
           if (timer) {
             clearInterval(timer);
             setTimer(null);
@@ -471,7 +635,9 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
         });
 
         setCurrentConnection(incomingCall);
-        setIncomingCall(null);
+        // Keep incomingCall set so the modal stays visible with timer
+        // setIncomingCall(null);
+        // setCurrentCallSid(null);
       }
     } catch (error) {
       console.error("❌ [Global] Error accepting call:", error);
@@ -479,13 +645,36 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
         `Failed to accept call: ${error instanceof Error ? error.message : "Unknown error"}`
       );
       setIncomingCall(null);
+      setCurrentCallSid(null);
     }
-  }, [incomingCall, provider, timer]);
+  }, [incomingCall, provider, timer, companyId]);
 
   // Reject incoming call
-  const rejectIncomingCall = useCallback(() => {
+  const rejectIncomingCall = useCallback(async () => {
     if (incomingCall) {
       console.log("❌ [Global] Call rejected");
+
+      // Get the call SID before rejecting
+      const callSid = getCallSid(incomingCall);
+
+      // Broadcast that this call was rejected (so other devices dismiss the popup)
+      if (callSid && companyId) {
+        try {
+          await fetch("/api/twilio/call-state", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              callSid,
+              action: "rejected",
+              companyId,
+            }),
+          });
+          console.log("📡 [API] Call rejection broadcasted");
+        } catch (error) {
+          console.warn("⚠️ [API] Failed to broadcast call rejection:", error);
+          // Continue with rejecting the call even if broadcast fails
+        }
+      }
 
       if (provider === "TWILIO") {
         incomingCall.reject();
@@ -494,14 +683,38 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
       }
 
       setIncomingCall(null);
+      setCurrentCallSid(null);
       setCallStatus("Call rejected");
     }
-  }, [incomingCall, provider]);
+  }, [incomingCall, provider, companyId]);
 
   // End call
-  const endCall = useCallback(() => {
+  const endCall = useCallback(async () => {
     if (currentConnection) {
       console.log("📞 [Global] Ending call");
+
+      // Get the call SID before ending
+      const callSid = getCallSid(currentConnection) || currentCallSid;
+
+      // Broadcast that this call was ended (so other devices end it too)
+      if (callSid && companyId) {
+        try {
+          await fetch("/api/twilio/call-state", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              callSid,
+              action: "ended",
+              companyId,
+              deviceId, // Include deviceId so this device knows it initiated the end
+            }),
+          });
+          console.log("📡 [API] Call end broadcasted with deviceId:", deviceId);
+        } catch (error) {
+          console.warn("⚠️ [API] Failed to broadcast call end:", error);
+          // Continue with ending the call even if broadcast fails
+        }
+      }
 
       if (provider === "TWILIO") {
         currentConnection.disconnect();
@@ -511,12 +724,14 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
 
       setCallStatus("Call ended");
       setCurrentConnection(null);
+      setIncomingCall(null);
+      setCurrentCallSid(null);
       if (timer) {
         clearInterval(timer);
         setTimer(null);
       }
     }
-  }, [currentConnection, provider, timer]);
+  }, [currentConnection, provider, timer, companyId, deviceId, currentCallSid]);
 
   return (
     <VoiceDeviceContext.Provider
