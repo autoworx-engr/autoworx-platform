@@ -6,7 +6,7 @@ import { FEATURE_PERMISSIONS_MAP } from "@/lib/routePermissionsMap";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Menu, X } from "lucide-react";
+import { Bell, Building2, ChevronRight, CreditCard, FileText, Menu, MessageSquare, Network, Sparkles, User, Users, Wallet, X, Zap } from "lucide-react";
 
 type Props = {};
 
@@ -14,50 +14,60 @@ const accountSettings = [
   {
     link: "/dashboard/settings/my-account",
     label: "My Account",
+    icon: User,
   },
-
   {
     link: "/dashboard/settings/notifications",
     label: "Notifications",
+    icon: Bell,
   },
 ];
+
 const businessSettings = [
   {
     link: "/dashboard/settings/business",
     label: "Business Profile",
+    icon: Building2,
   },
   {
     link: "/dashboard/settings/networks",
     label: "My Network",
+    icon: Network,
   },
   {
     link: "/dashboard/settings/team-management",
-    label: "Team Managements",
+    label: "Team Management",
+    icon: Users,
   },
   {
     link: "/dashboard/settings/payments",
     label: "Payments",
+    icon: CreditCard,
   },
   {
     link: "/dashboard/settings/estimates",
     label: "Estimates & Invoice",
+    icon: FileText,
   },
   {
     link: "/dashboard/settings/billing",
     label: "Billing",
+    icon: Wallet,
   },
   {
     link: "/dashboard/settings/communications",
     label: "Communications Hub",
+    icon: MessageSquare,
   },
-
   {
     link: "/dashboard/settings/leadgeneration",
     label: "Lead Capture",
+    icon: Sparkles,
   },
   {
     link: "/dashboard/settings/automation",
     label: "Automation",
+    icon: Zap,
   },
 ];
 
@@ -151,130 +161,175 @@ const Sidebar = (props: Props) => {
   }, []);
 
   return (
-    <div className="">
-      {" "}
+     <div className="">
+      {/* Mobile Menu Button */}
       <div className="block lg:hidden">
-        <button className={`ml-5 text-xl`} onClick={toggleSidebar}>
+        <button 
+          className="ml-5 p-2 rounded-lg hover:bg-slate-100 transition-colors duration-300" 
+          onClick={toggleSidebar}
+        >
           {isSidebarOpen ? (
-            <X size={20} strokeWidth={3} />
+            <X size={20} strokeWidth={2.5} />
           ) : (
-            <Menu size={24} strokeWidth={3} />
+            <Menu size={24} strokeWidth={2.5} />
           )}
         </button>
+
+        {/* Mobile Sidebar */}
         <div
           ref={sidebarRef}
           className={cn(
-            `fixed left-0 top-0 z-50 mb-14 mt-14 h-full w-[280px] transform overflow-y-auto bg-background px-6 py-8 pb-14 shadow-xl transition-transform duration-300 ease-in-out`,
+            "fixed left-0 top-0 z-50 h-full w-[280px] transform overflow-y-auto bg-white shadow-2xl transition-transform duration-300 ease-in-out",
             {
               "translate-x-0": isSidebarOpen,
               "-translate-x-full": !isSidebarOpen,
-              "sm:ml-14 md:ml-14 lg:ml-14": isSidebarOpen, // Margin applied when sidebar is open
-              "sm:ml-0 md:ml-0": !isSidebarOpen, // No margin when sidebar is closed
             }
           )}
         >
-          <div className="flex items-end justify-end align-middle">
-            <button className="text-end text-xl" onClick={toggleSidebar}>
-              {isSidebarOpen ? (
-                <X size={20} strokeWidth={3} />
-              ) : (
-                <Menu size={24} strokeWidth={3} />
-              )}
+          <div className="flex items-end justify-end p-4">
+            <button 
+              className="p-2 rounded-lg hover:bg-slate-100 transition-colors duration-300" 
+              onClick={toggleSidebar}
+            >
+              <X size={20} strokeWidth={2.5} />
             </button>
           </div>
 
-          <h3 className="mb-4 font-bold">
-            <span className="border-b-2 pb-1">Account Settings</span>
-          </h3>
-          <div className="mb-8 space-y-2">
-            {filteredAccountSettings.map((setting, index) => {
-              return (
-                <Link
-                  className={cn(
-                    "block px-4 py-2 hover:bg-gray-100 hover:text-gray-900",
-                    {
-                      "font-medium text-[#6571FF]": path === setting.link,
-                    }
-                  )}
-                  key={index}
-                  href={setting.link}
-                >
-                  {setting.label}
-                </Link>
-              );
-            })}
-          </div>
-          {canAccessBusinessSettings() &&
-            filteredBusinessSettings.length > 0 && (
-              <div className="hidden sm:block">
-                <h3 className="mb-4 font-bold">
-                  <span className="border-b-2 pb-1">Business Settings</span>
+          <div className="px-4 pb-8">
+            {/* Account Section */}
+            <div className="mb-6">
+              <h3 className="mb-3 px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                Account
+              </h3>
+              <div className="space-y-1">
+                {filteredAccountSettings.map((setting, index) => {
+                  const Icon = setting.icon;
+                  const isActive = path === setting.link;
+                  return (
+                    <Link
+                      key={index}
+                      href={setting.link}
+                      onClick={() => setIsSidebarOpen(false)}
+                      className={cn(
+                        "flex items-center justify-between px-3 py-2.5 rounded-lg transition-all duration-300 group",
+                        {
+                          "bg-slate-900 text-white shadow-lg": isActive,
+                          "text-slate-700 hover:bg-slate-100": !isActive,
+                        }
+                      )}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Icon size={18} strokeWidth={2} />
+                        <span className="font-medium text-sm">{setting.label}</span>
+                      </div>
+                      {isActive && <ChevronRight size={16} strokeWidth={2.5} />}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Business Section */}
+            {canAccessBusinessSettings() && filteredBusinessSettings.length > 0 && (
+              <div className="mb-6">
+                <h3 className="mb-3 px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                  Business
                 </h3>
-                <div className="space-y-2">
+                <div className="space-y-1">
                   {filteredBusinessSettings.map((setting, index) => {
+                    const Icon = setting.icon;
+                    const isActive = path === setting.link;
                     return (
                       <Link
-                        className={cn(
-                          "block px-4 py-2 hover:bg-gray-100 hover:text-gray-900",
-                          {
-                            "font-medium text-[#6571FF]": path === setting.link,
-                          }
-                        )}
                         key={index}
                         href={setting.link}
+                        onClick={() => setIsSidebarOpen(false)}
+                        className={cn(
+                          "flex items-center justify-between px-3 py-2.5 rounded-lg transition-all duration-300 group",
+                          {
+                            "bg-slate-900 text-white shadow-lg": isActive,
+                            "text-slate-700 hover:bg-slate-100": !isActive,
+                          }
+                        )}
                       >
-                        {setting.label}
+                        <div className="flex items-center gap-3">
+                          <Icon size={18} strokeWidth={2} />
+                          <span className="font-medium text-sm">{setting.label}</span>
+                        </div>
+                        {isActive && <ChevronRight size={16} strokeWidth={2.5} />}
                       </Link>
                     );
                   })}
                 </div>
               </div>
             )}
+          </div>
         </div>
       </div>
-      <div className="sticky top-6 hidden min-h-[80vh] min-w-[300px] max-w-[350px] rounded-2xl bg-background px-6 py-8 shadow-xl lg:block">
-        <h3 className="mb-4 font-bold">
-          <span className="border-b-2 pb-1">Account Settings</span>
-        </h3>
-        <div className="mb-8 space-y-2">
-          {filteredAccountSettings.map((setting, index) => {
-            return (
-              <Link
-                className={cn(
-                  "block px-4 py-2 hover:bg-gray-100 hover:text-gray-900",
-                  {
-                    "font-medium text-[#6571FF]": path === setting.link,
-                  }
-                )}
-                key={index}
-                href={setting.link}
-              >
-                {setting.label}
-              </Link>
-            );
-          })}
+
+      {/* Desktop Sidebar */}
+      <div className="sticky top-6 hidden min-h-[80vh] min-w-[300px] max-w-[320px] rounded-2xl bg-white shadow-lg ring-1 ring-slate-900/5 px-5 py-6 lg:block">
+        {/* Account Section */}
+        <div className="mb-8">
+          <h3 className="mb-3 px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            Account
+          </h3>
+          <div className="space-y-1">
+            {filteredAccountSettings.map((setting, index) => {
+              const Icon = setting.icon;
+              const isActive = path === setting.link;
+              return (
+                <Link
+                  key={index}
+                  href={setting.link}
+                  className={cn(
+                    "flex items-center justify-between px-3 py-2.5 rounded-lg transition-all duration-300 group",
+                    {
+                      "bg-slate-900 text-white shadow-lg": isActive,
+                      "text-slate-700 hover:bg-slate-100": !isActive,
+                    }
+                  )}
+                >
+                  <div className="flex items-center gap-3">
+                    <Icon size={18} strokeWidth={2} />
+                    <span className="font-medium text-sm">{setting.label}</span>
+                  </div>
+                  {isActive && <ChevronRight size={16} strokeWidth={2.5} />}
+                </Link>
+              );
+            })}
+          </div>
         </div>
+
+        {/* Business Section */}
         {permissions &&
           (permissions.role === "Admin" || permissions.role === "Manager") &&
           filteredBusinessSettings.length > 0 && (
             <div>
-              <h3 className="mb-4 font-bold">
-                <span className="border-b-2 pb-1">Business Settings</span>
+              <h3 className="mb-3 px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                Business
               </h3>
-              <div className="space-y-2">
+              <div className="space-y-1">
                 {filteredBusinessSettings.map((setting, index) => {
+                  const Icon = setting.icon;
+                  const isActive = path === setting.link;
                   return (
                     <Link
-                      className={cn(
-                        "block px-4 py-2 hover:bg-gray-100 hover:text-gray-900",
-                        {
-                          "font-medium text-[#6571FF]": path === setting.link,
-                        }
-                      )}
                       key={index}
                       href={setting.link}
+                      className={cn(
+                        "flex items-center justify-between px-3 py-2.5 rounded-lg transition-all duration-300 group",
+                        {
+                          "bg-slate-900 text-white shadow-lg": isActive,
+                          "text-slate-700 hover:bg-slate-100": !isActive,
+                        }
+                      )}
                     >
-                      {setting.label}
+                      <div className="flex items-center gap-3">
+                        <Icon size={18} strokeWidth={2} />
+                        <span className="font-medium text-sm">{setting.label}</span>
+                      </div>
+                      {isActive && <ChevronRight size={16} strokeWidth={2.5} />}
                     </Link>
                   );
                 })}
