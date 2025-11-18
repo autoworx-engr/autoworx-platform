@@ -1,5 +1,5 @@
 "use client";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import React, { useState } from "react";
 import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/plugins/captions.css";
@@ -18,6 +18,18 @@ type LightboxProps = {
 const ComponentsLightbox = ({ getItems = [], startIndex = 0 }: LightboxProps) => {
   const [isOpen, setIsOpen] = useState<any>(true);
   const [maxZoomPixelRatio, setMaxZoomPixelRatio] = React.useState(4);
+  const searchParams = useSearchParams();
+
+  const propSlides = Array.isArray(getItems) ? getItems.filter((s) => !!s?.src) : [];
+  let slides: ImageItem[] = propSlides as ImageItem[];
+
+  if (slides.length === 0) {
+    const urlParam = searchParams.get("url");
+
+    if (urlParam) {
+      slides = [{ src: urlParam }];
+    }
+  }
 
   const router = useRouter();
 
@@ -25,10 +37,10 @@ const ComponentsLightbox = ({ getItems = [], startIndex = 0 }: LightboxProps) =>
     router.back();
   };
 
-  
+
 
   return (
-    <div className="mt-10 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
       <Lightbox
         styles={{ container: { backgroundColor: "rgba(0,0,0,0.6)" } }}
         open={isOpen}
@@ -36,7 +48,7 @@ const ComponentsLightbox = ({ getItems = [], startIndex = 0 }: LightboxProps) =>
           handleImageClick();
           setIsOpen(false);
         }}
-        slides={getItems}
+        slides={slides}
         index={startIndex}
         plugins={[Zoom]}
         zoom={{ maxZoomPixelRatio }}
