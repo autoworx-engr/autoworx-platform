@@ -16,6 +16,8 @@ export const saveLeadTag = async (leadId: number, tagId: number) => {
         lead: true,
       },
     });
+    // revalidatePath("/dashboard/task");
+    revalidatePath("/dashboard/pipeline/sales/pipeline");
     return result;
   } catch (error) {
     throw new Error("Lead tag model");
@@ -27,9 +29,11 @@ export const removeLeadTag = async (leadId: number, tagId: number) => {
     const result = await db.leadTags.deleteMany({
       where: {
         leadId: leadId,
-        tagId: tagId,
+        id: tagId,
       },
     });
+
+    revalidatePath("/dashboard/pipeline/sales/pipeline");
     return result;
   } catch (error) {
     console.error("Error removing tag:", error);
