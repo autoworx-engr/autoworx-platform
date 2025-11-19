@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
-import { Checkbox, Switch } from "antd";
+import { Checkbox, Switch, Tooltip } from "antd";
 import { Role, EmployeeType } from "@prisma/client";
 import {
   permissionModuleForAdminManager,
@@ -15,6 +15,7 @@ import {
 } from "@/actions/settings/teamManagement";
 import { errorToast } from "@/lib/toast";
 import { useTeamManagementStore } from "@/stores/teamManagementStore";
+import { ArrowLeft } from "lucide-react";
 
 interface CustomizeUserRolesProps {
   user: {
@@ -135,73 +136,99 @@ const CustomizeUserRole = ({ user, onBack }: CustomizeUserRolesProps) => {
   };
   const permissionModules: PermissionModule[] = getUserType();
   return (
-    <div className="">
-      <div className="mb-4 flex items-center">
-        <button onClick={onBack} className="mr-2 font-bold">
-          {"<"} Customize User Roles
+   <div className="p-0">
+      <div className="mb-6">
+        <button
+          onClick={onBack}
+          className="flex items-center text-indigo-600 hover:text-indigo-800 font-semibold transition duration-150"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to User List
         </button>
       </div>
-      <div className="ml-1 mr-4 flex h-[100px] w-[98%] items-center border-l border-r border-t border-black pl-2">
-        <div className="w- overflow-hidden rounded-full">
+
+      {/* User Info Header */}
+      <div className="mb-6 flex items-center border border-gray-300 rounded-lg p-4 bg-indigo-50 shadow-sm">
+        <div className="w-16 h-16 overflow-hidden rounded-full shrink-0 border-2 border-white shadow">
           <Image
             src={user.image}
             alt={name}
-            width={40}
-            height={40}
-            className="object-cover"
+            width={64}
+            height={64}
+            className="object-cover h-full w-full"
           />
         </div>
-        <div className="ml-3">
-          <h3 className="text-lg font-medium">{name}</h3>
-          <p className="text-sm text-gray-500">{user.employeeType}</p>
+        <div className="ml-4">
+          <h3 className="text-xl font-bold ">{name}</h3>
+          <p className="text-sm font-medium text-indigo-700">
+            {user.employeeType} Role
+          </p>
         </div>
       </div>
-      <table className="mb-2 ml-1 mr-4 w-[98%] border border-t-0 border-black p-8">
-        <thead>
-          <tr className="border-b-2 border-black">
-            <th className="px-4 text-left">Modules</th>
-            <th className="px-4 text-left">Full Access</th>
-            {user.employeeType !== "Admin" &&
-            user.employeeType !== "Manager" &&
-            user.employeeType !== "Other" ? (
-              <th className="px-4 text-left">Access</th>
-            ) : null}
-          </tr>
-        </thead>
-        <tbody>
-          {permissionModules.map((module, index) => (
-            <tr key={index + 1} className="p-4">
-              <td className="px-4 py-2">{module.label}</td>
-              <td className="px-4 py-2.5 text-left">
-                {!module.viewOnly && (
-                  <Switch
-                    checked={permissions[module.key] ?? false}
-                    onChange={checked =>
-                      handlePermissionChange(module.key, checked)
-                    }
-                    className="shadow-md"
-                  />
+
+      {/* Permissions Table */}
+      <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-md">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr className="">
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider ">
+                Modules
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider ">
+                Full Access
+              </th>
+              {/* Conditional header - logic preserved */}
+              {(user.employeeType === "Sales" ||
+                user.employeeType === "Technician") && (
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider ">
+                    View Only Access
+                  </th>
                 )}
-              </td>
-              <td className="px-4 py-2.5 text-left">
-                {module.viewOnly && (
-                  <div className="group">
-                    <Checkbox
-                      checked={permissions[module.viewOnly] ?? false}
-                      onChange={e =>
-                        handleViewOnlyChange(module.viewOnly!, e.target.checked)
-                      }
-                    ></Checkbox>
-                    <div className="fixed z-50 hidden -translate-x-20 -translate-y-12 rounded-lg border bg-[#66738C] p-1 text-sm text-white group-hover:block">
-                      View Only
-                    </div>
-                  </div>
-                )}
-              </td>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="divide-y divide-gray-200 bg-white">
+            {permissionModules.map((module, index) => (
+              <tr key={index + 1} className="hover:bg-gray-50 transition duration-150">
+                <td className="px-4 py-3   whitespace-nowrap">
+                  {module.label}
+                </td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center">
+                    {!module.viewOnly && (
+                      <Switch
+                        checked={permissions[module.key] ?? false}
+                        onChange={(checked) =>
+                          handlePermissionChange(module.key, checked)
+                        }
+                        className="shadow-sm"
+                      />
+                    )}
+                  </div>
+                </td>
+                {/* View Only Checkbox Column */}
+                {(user.employeeType === "Sales" ||
+                  user.employeeType === "Technician") && (
+                    <td className="px-4 py-3">
+                      {module.viewOnly && (
+                        <Tooltip title="View Only">
+                          <Checkbox
+                            checked={permissions[module.viewOnly] ?? false}
+                            onChange={(e) =>
+                              handleViewOnlyChange(
+                                module.viewOnly!,
+                                e.target.checked
+                              )
+                            }
+                          />
+                        </Tooltip>
+                      )}
+                    </td>
+                  )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };

@@ -7,6 +7,7 @@ import {
 import { successToast } from "@/lib/toast";
 import { CompanyEmailTemplate } from "@prisma/client";
 import { Input } from "antd";
+import { Mail } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface EmailTemplate {
@@ -19,7 +20,7 @@ export default function EstimateAndInvoicePage() {
     useState<CompanyEmailTemplate | null>(null);
   const [newSubject, setNewSubject] = useState<string>("");
   const [newMessage, setNewMessage] = useState<string>("");
-
+  const maxLength = 160;
   useEffect(() => {
     const fetchEmail = async () => {
       const template = await getEmailTemplate();
@@ -50,51 +51,63 @@ export default function EstimateAndInvoicePage() {
   };
 
   return (
-    <div className="flex flex-col items-start">
-      <div className="w-full space-y-2">
-        <h2 className="text-xl font-semibold">
+    <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-lg">
+      <div className="flex items-center mb-4">
+        <Mail className="w-6 h-6 text-indigo-600 mr-3" />
+        <h2 className="text-xl font-bold ">
           Edit Draft Email for Sharing Estimate/Invoice
         </h2>
-        <div className="space-y-4 rounded-sm border bg-background p-5">
+      </div>
+      <div className="space-y-4">
+        {/* Email Subject Input */}
+        <label className="block">
+          <div className="mb-1 px-1 text-sm font-medium ">Email Subject</div>
           <input
-            placeholder="Email Subject"
+            placeholder="Enter email subject here..."
             value={newSubject}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setNewSubject(e.target.value)
             }
-            className="mb-4 w-full rounded-sm border border-gray-300 bg-background p-2 text-sm leading-6 outline-none"
+            className="w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm outline-none shadow-sm focus:border-indigo-500 transition duration-150"
           />
-          <div className="mb-2 text-sm font-medium text-gray-500">
-            The following message will be sent to the recipient when sharing an
-            Invoice/Estimate
-          </div>
+        </label>
+        
+        {/* Message Context */}
+        <p className="text-sm font-medium text-gray-500 border-l-4 border-indigo-300 pl-3 py-1 bg-indigo-50 rounded">
+          The following message will be sent to the recipient when sharing an
+          Invoice/Estimate.
+        </p>
 
-          <div>
-            <div className="flex justify-between mb-1 text-xs text-gray-500">
-              <span className={newMessage.length > 160 ? "text-red-500" : ""}>
-                {newMessage.length}/160
-              </span>
-            </div>
-            <textarea
-              placeholder="Enter your message here..."
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              maxLength={160} // ✅ hard cap
-              className={`h-32 w-full resize-none rounded-sm border bg-background p-2 text-sm leading-6 outline-none ${
-                newMessage.length > 160 ? "border-red-500" : ""
-              }`}
-            />
+        {/* Email Message Textarea */}
+        <label className="block">
+          <div className="mb-1 flex justify-between items-center px-1 text-sm font-medium ">
+            <span>Email Message</span>
+            <span className={`text-xs font-medium ${newMessage.length > maxLength ? "text-red-500" : "text-gray-500"}`}>
+              {newMessage.length}/{maxLength}
+            </span>
           </div>
+          
+          <textarea
+            placeholder="Enter your message here..."
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            maxLength={maxLength} // ✅ hard cap
+            className={`h-32 w-full resize-none rounded-lg bg-gray-50 px-3 py-2 text-sm leading-6 outline-none transition duration-150 shadow-sm ${
+              newMessage.length > maxLength 
+                ? "border-2 border-red-500" 
+                : "border border-gray-300 focus:border-indigo-500"
+            }`}
+          />
+        </label>
 
-          <div className="flex justify-end mt-2">
-            <button
-              type="button"
-              onClick={handleUpdate}
-              className="rounded-md bg-[#6571FF] px-10 py-1.5 text-white"
-            >
-              Save
-            </button>
-          </div>
+        <div className="flex justify-end pt-2">
+          <button
+            type="button"
+            onClick={handleUpdate}
+            className="rounded-lg bg-[#6571FF] px-8 py-2 text-base font-medium text-white shadow-md hover:bg-[#5661FF] transition duration-150"
+          >
+            Save Template
+          </button>
         </div>
       </div>
     </div>
