@@ -7,8 +7,8 @@ type Props = {
 
 const layout = ({ children }: Props) => {
   return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
-      <h1 className="mb-6 ml-1 text-3xl font-bold text-gray-800">Settings</h1>
+    <div className="min-h-screen bg-gray-50 p-4">
+      <h1 className="mb-6 ml-1 text-3xl font-bold">Settings</h1>
       
       {/* Main content area: Sidebar and Page Content */}
       <div className="flex flex-col lg:flex-row lg:space-x-8">
