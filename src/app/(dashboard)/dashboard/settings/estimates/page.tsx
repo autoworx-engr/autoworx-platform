@@ -140,7 +140,7 @@ export default function EstimateAndInvoicePage() {
         {/* Tax, Service Fee & Currency Card */}
         <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-lg">
           <div className="flex items-center mb-4">
-            <DollarSign className="w-6 h-6 text-indigo-600 mr-3" />
+            <DollarSign className="w-6 h-6 text-[#6571FF] mr-3" />
             <h2 className="text-xl font-bold ">
               Tax, Service Fee & Currency
             </h2>
@@ -221,7 +221,7 @@ export default function EstimateAndInvoicePage() {
         {/* Terms & Conditions Card */}
         <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-lg">
           <div className="flex items-center mb-4">
-            <FileText className="w-6 h-6 text-indigo-600 mr-3" />
+            <FileText className="w-6 h-6 text-[#6571FF] mr-3" />
             <h2 className="text-xl font-bold ">
               Terms & Policy
             </h2>

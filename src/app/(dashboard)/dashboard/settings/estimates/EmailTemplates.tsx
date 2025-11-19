@@ -53,7 +53,7 @@ export default function EstimateAndInvoicePage() {
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-lg">
       <div className="flex items-center mb-4">
-        <Mail className="w-6 h-6 text-indigo-600 mr-3" />
+        <Mail className="w-6 h-6 text-[#6571FF] mr-3" />
         <h2 className="text-xl font-bold ">
           Edit Draft Email for Sharing Estimate/Invoice
         </h2>

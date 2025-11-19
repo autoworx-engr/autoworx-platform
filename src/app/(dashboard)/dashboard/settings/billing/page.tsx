@@ -34,7 +34,7 @@ export default function Page() {
         {/* Subscription Section */}
         <div className="w-full">
           <h2 className="mb-4 flex items-center text-2xl font-bold ">
-            <Zap className="w-6 h-6 mr-2 text-indigo-600" />
+            <Zap className="w-6 h-6 mr-2 text-[#6571FF]" />
             Subscription Details
           </h2>
           <div className="flex flex-col gap-6 rounded-xl border border-gray-200 bg-white p-6 shadow-xl lg:flex-row">
@@ -100,7 +100,7 @@ export default function Page() {
         {/* Payment Methods Section */}
         <div className="w-full">
           <h2 className="mb-4 flex items-center text-2xl font-bold ">
-            <CreditCard className="w-6 h-6 mr-2 text-indigo-600" />
+            <CreditCard className="w-6 h-6 mr-2 text-[#6571FF]" />
             Payment Methods
           </h2>
           <div className="flex flex-wrap justify-start gap-4">
@@ -121,7 +121,7 @@ export default function Page() {
         {/* Payment History Section */}
         <div className="w-full">
           <h2 className="mb-4 flex items-center text-2xl font-bold ">
-            <History className="w-6 h-6 mr-2 text-indigo-600" />
+            <History className="w-6 h-6 mr-2 text-[#6571FF]" />
             Payment History
           </h2>
           <div className="max-h-80 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg">
