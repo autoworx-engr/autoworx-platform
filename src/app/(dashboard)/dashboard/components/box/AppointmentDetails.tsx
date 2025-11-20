@@ -42,7 +42,7 @@ export default function AppointmentDetails({
       className="group relative flex flex-col gap-2 w-full p-4 cursor-pointer rounded-xl ring-1 ring-slate-200 dark:ring-slate-700 bg-white dark:bg-slate-900 hover:ring-blue-300/40 hover:shadow-md transition-all duration-300 ease-in-out"
     >
       {/* Accent bar */}
-      <div className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-xl bg-gradient-to-b from-purple-500 to-indigo-600" />
+      <div className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-xl bg-gradient-to-r from-[#00b8b0] to-[#0098da]" />
 
       {/* Title and time */}
       <div className="flex items-start justify-between w-full">
