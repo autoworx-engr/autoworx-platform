@@ -28,6 +28,7 @@ import { useCreateTagAutomationRule } from "@/hooks/tag-automation/useCreateTagA
 
 import { useFindOneTagAutomationRule } from "@/hooks/tag-automation/useFindOneTagAutomationRule";
 import { useUpdateTagAutomationRule } from "@/hooks/tag-automation/useUpdateTagAutomationRule";
+import { useAllTagAutomationRules } from "@/hooks/tag-automation/useAllTagAutomationRules";
 import {
   convertSecondsToTime,
   convertTimeToSeconds,
@@ -118,6 +119,10 @@ const TagRuleForm = ({
   const { mutate: updateRule, isPending: isUpdatePending } =
     useUpdateTagAutomationRule();
 
+  const { data: allTagAutomationData } = useAllTagAutomationRules(
+    Number(companyId),
+    true
+  );
   useEffect(() => {
     const loadData = async () => {
       if (isEdit && id && data && data.data) {
@@ -248,6 +253,39 @@ const TagRuleForm = ({
     id: tag.id,
     title: tag.name,
   }));
+
+  const usedTagIds = new Set<number>();
+  allTagAutomationData?.data.forEach((rule: any) => {
+    try {
+      const ruleCondition = rule.condition_type || rule.conditionType;
+      if (
+        ruleCondition &&
+        formData.condition_type &&
+        ruleCondition === formData.condition_type
+      ) {
+        (rule.tag || []).forEach((t: any) => {
+          if (t && t.id) usedTagIds.add(Number(t.id));
+        });
+      }
+    } catch (e) {
+      console.log(e);
+    }
+  });
+
+  // If editing, allow tags already present on the current rule
+  const currentRuleTagIds = new Set<number>(
+    (data?.data?.tag || []).map((t: any) => Number(t.id))
+  );
+
+  const filteredSalesTagOptions = salesTagOptions.filter(
+    (opt) =>
+      !usedTagIds.has(Number(opt.id)) || currentRuleTagIds.has(Number(opt.id))
+  );
+
+  const filteredShopTagOptions = shopTagOptions.filter(
+    (opt) =>
+      !usedTagIds.has(Number(opt.id)) || currentRuleTagIds.has(Number(opt.id))
+  );
 
   // Stage options for post-tag condition_type (stages are fetched based on pipelineType)
   const stageOptions = stages.map((s: any) => ({
@@ -425,7 +463,10 @@ const TagRuleForm = ({
       };
 
       // Ensure `templateType` is never sent to the API during update/create
-      if (finalData && Object.prototype.hasOwnProperty.call(finalData, "templateType")) {
+      if (
+        finalData &&
+        Object.prototype.hasOwnProperty.call(finalData, "templateType")
+      ) {
         delete finalData.templateType;
       }
 
@@ -496,12 +537,22 @@ const TagRuleForm = ({
             error={error.pipelineType}
           />
 
+          <Selector
+            name="condition"
+            label="Condition"
+            options={Conditions}
+            value={formData.condition_type!}
+            onChange={(value) => handleChange("condition_type", value)}
+            required
+            placeholder="Select a condition"
+            error={error.condition_type}
+          />
           {formData.pipelineType !== "" && (
             <MultiSelect
               options={
                 formData.pipelineType === "SHOP"
-                  ? shopTagOptions
-                  : salesTagOptions
+                  ? filteredShopTagOptions
+                  : filteredSalesTagOptions
               }
               value={formData.tagIds}
               onChange={(value) => handleChange("tagIds", value)}
@@ -535,16 +586,6 @@ const TagRuleForm = ({
             onChange={(value) => handleChange("timeDelay", value)}
             required
             placeholder="Select a time delay"
-          />
-          <Selector
-            name="condition"
-            label="Condition"
-            options={Conditions}
-            value={formData.condition_type!}
-            onChange={(value) => handleChange("condition_type", value)}
-            required
-            placeholder="Select a condition"
-            error={error.condition_type}
           />
 
           {formData.condition_type === "pipeline" && (
