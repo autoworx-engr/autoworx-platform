@@ -387,7 +387,7 @@ export default function AddNewEmployee({
                 <Password
                   name="password"
                   required={true}
-                  className="" // classes handled in component
+                  className="w-full rounded-sm border border-slate-400 bg-background px-2 py-0.5 leading-6 outline-none"
                 />
               </div>
               <div className="mb-1">
@@ -400,7 +400,7 @@ export default function AddNewEmployee({
                 <Password
                   name="confirmPassword"
                   required={true}
-                  className=""
+                  className="w-full rounded-sm border border-slate-400 bg-background px-2 py-0.5 leading-6 outline-none"
                 />
               </div>
             </div>

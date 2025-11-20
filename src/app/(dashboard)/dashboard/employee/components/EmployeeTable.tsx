@@ -109,7 +109,7 @@ const EmployeeTable = ({
     // continue to render the table
     content = (
       <div className="hidden lg:block overflow-hidden rounded-xl p-2 bg-white dark:bg-slate-900 ring-1 ring-slate-200 dark:ring-slate-800 shadow-sm">
-        <div className="overflow-x-auto">
+        <div className="md:overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="h-10">
@@ -219,12 +219,11 @@ const EmployeeTable = ({
   }
 
   return (
-
     <div className="w-full p-4 bg-slate-50 dark:bg-slate-950 min-h-[500px]">
       <div className="mx-auto space-y-6">
 
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Team Members <span className="text-slate-400 font-normal">({totalEmployeeCount})</span></h3>
+          <h3 className="text-lg font-bold text-slate-600 dark:text-slate-100">Team Members <span className="text-slate-400 font-normal">({totalEmployeeCount})</span></h3>
           {/* Pagination placeholder if needed up top */}
         </div>
 
