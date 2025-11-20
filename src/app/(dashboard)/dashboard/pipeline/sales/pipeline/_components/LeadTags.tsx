@@ -110,8 +110,7 @@ export default function LeadTags({ leadTags, lead }: TLeadTagsProps) {
             <button
               type="button"
               className={cn(
-                "ml-1 cursor-pointer text-xs text-white disabled:cursor-not-allowed disabled:opacity-50",
-                leadTag.tag?.bgColor === "white" && "text-black"
+                "ml-1 cursor-pointer text-xs text-black disabled:cursor-not-allowed disabled:opacity-50",
               )}
               onClick={() => {
                 handleRemoveTag({

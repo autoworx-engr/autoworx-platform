@@ -33,7 +33,8 @@ const AWXDashboard = ({ companies }: Props) => {
   const filteredCompanies = useMemo(
     () =>
       companies.filter((company) =>
-        company.name.toLowerCase().includes(searchTerm.toLowerCase())
+        company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        company?.adminEmail?.toLowerCase().includes(searchTerm.toLowerCase())
       ),
     [companies, searchTerm]
   );

@@ -9,7 +9,7 @@ export default function Title({
   className?: string;
 }) {
   return (
-    <h1 className={cn("text-[26px] font-bold text-[#797979]", className)}>
+    <h1 className={cn("text-[26px] font-bold text-slate-600", className)}>
       {children}
     </h1>
   );
