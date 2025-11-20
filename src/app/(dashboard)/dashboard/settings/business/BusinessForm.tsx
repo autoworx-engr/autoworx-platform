@@ -9,6 +9,7 @@ import ProfilePicture from "./ProfilePicture";
 import Timezone from "./Timezone";
 import { queryKeys } from "@/lib/queryKeys";
 import { useQueryClient } from "@tanstack/react-query";
+import { Briefcase, Mail, MapPin, Save } from "lucide-react";
 
 type TProps = {
   company: Company | null;
@@ -40,20 +41,24 @@ export default function BusinessForm({ company }: TProps) {
     city: company?.city || "",
     state: company?.state || "",
     zip: company?.zip || "",
-    timezone: company?.timezone
+    timezone: company?.timezone,
   };
 
-  const [businessSettings, setBusinessSettings] = useState(initialBusinessSettings);
+  const [businessSettings, setBusinessSettings] = useState(
+    initialBusinessSettings
+  );
 
   // Check if any values have changed from initial state
   const hasChanges = () => {
     // Check if image has changed
     if (imageSrc !== null) return true;
-    
+
     // Check if any business setting has changed
-    return Object.keys(businessSettings).some(key => {
-      return businessSettings[key as keyof typeof businessSettings] !== 
-             initialBusinessSettings[key as keyof typeof initialBusinessSettings];
+    return Object.keys(businessSettings).some((key) => {
+      return (
+        businessSettings[key as keyof typeof businessSettings] !==
+        initialBusinessSettings[key as keyof typeof initialBusinessSettings]
+      );
     });
   };
 
@@ -169,7 +174,7 @@ export default function BusinessForm({ company }: TProps) {
     const { name, value } = e.target;
 
     // Update business settings
-    setBusinessSettings(prev => ({ ...prev, [name]: value }));
+    setBusinessSettings((prev) => ({ ...prev, [name]: value }));
 
     // Perform validation based on input name
     let error = "";
@@ -198,9 +203,9 @@ export default function BusinessForm({ company }: TProps) {
     }
 
     // Update validation errors
-    setValidationErrors(prev => ({
+    setValidationErrors((prev) => ({
       ...prev,
-      [name]: error
+      [name]: error,
     }));
   };
 
@@ -235,7 +240,7 @@ export default function BusinessForm({ company }: TProps) {
 
     // Check if there are any errors
     const hasErrors = Object.values(newValidationErrors).some(
-      error => error !== ""
+      (error) => error !== ""
     );
     if (hasErrors) {
       return;
@@ -248,7 +253,7 @@ export default function BusinessForm({ company }: TProps) {
         if (company?.image) {
           const response = await fetch(`/api/upload`, {
             method: "DELETE",
-            body: JSON.stringify({ filePath: company.image })
+            body: JSON.stringify({ filePath: company.image }),
           });
           await response.json();
         }
@@ -257,7 +262,7 @@ export default function BusinessForm({ company }: TProps) {
         formData.append("file", imageSrc);
         const uploadRes = await fetch("/api/upload", {
           method: "POST",
-          body: formData
+          body: formData,
         });
 
         if (!uploadRes.ok) {
@@ -286,7 +291,7 @@ export default function BusinessForm({ company }: TProps) {
         state: businessSettings.state,
         zip: businessSettings.zip,
         image,
-        timezone: businessSettings.timezone
+        timezone: businessSettings.timezone,
       };
 
       const response = await updateCompany(company?.id, companyData);
@@ -313,7 +318,7 @@ export default function BusinessForm({ company }: TProps) {
 
   return (
     <>
-      {error && <p className="text-center text-sm text-red-500">{error}</p>}
+      {/* Profile Picture remains a separate component */}
       <ProfilePicture
         imageSrc={imageSrc}
         imageUrl={imageUrl}
@@ -321,123 +326,156 @@ export default function BusinessForm({ company }: TProps) {
         setImageSrc={setImageSrc}
         isPDFPhoto={true}
       />
+
+      {error && (
+        <p className="text-center text-sm text-red-600 mb-4 bg-red-50 p-3 rounded-lg border border-red-200">
+          {error}
+        </p>
+      )}
+
       <form
-        onSubmit={e => startTransition(() => handleSubmit(e))}
-        className="space-y-4"
+        onSubmit={(e) => startTransition(() => handleSubmit(e))}
+        className="space-y-6 pb-6"
       >
-        {/* name and registration number */}
-        <div className="grid md:grid-cols-2 grid-cols-1 gap-x-8">
-          <SlimInput
-            value={businessSettings.legalBusinessName}
-            onChange={handleChange}
-            label="Legal Business Name"
-            name="legalBusinessName"
-            required
-            error={validationErrors.legalBusinessName}
-          />
-          <SlimInput
-            required={true}
-            value={businessSettings.businessRegistrationIDNumber}
-            onChange={handleChange}
-            label="Business Registration ID Number"
-            name="businessRegistrationIDNumber"
-            error={validationErrors.businessRegistrationIDNumber}
-          />
+        {/* Business Information Section */}
+        <div className="space-y-4">
+          <h4 className="text-lg font-bold text-gray-800 flex items-center border-b pb-2">
+            <Briefcase className="h-5 w-5 mr-2 text-gray-500" />
+            Core Business Info
+          </h4>
+          <div className="grid md:grid-cols-2 grid-cols-1 gap-x-8 gap-y-4">
+            <SlimInput
+              value={businessSettings.legalBusinessName}
+              onChange={handleChange}
+              label="Legal Business Name"
+              name="legalBusinessName"
+              required
+              error={validationErrors.legalBusinessName}
+            />
+            <SlimInput
+              required={true}
+              value={businessSettings.businessRegistrationIDNumber}
+              onChange={handleChange}
+              label="Business Registration ID Number"
+              name="businessRegistrationIDNumber"
+              error={validationErrors.businessRegistrationIDNumber}
+            />
+            <SlimInput
+              required={true}
+              value={businessSettings.businessType}
+              onChange={handleChange}
+              label="Business Type"
+              name="businessType"
+              error={validationErrors.businessType}
+            />
+            <SlimInput
+              required={false}
+              value={businessSettings.industrySpecialization}
+              onChange={handleChange}
+              label="Industry/Specialization (Optional)"
+              name="industrySpecialization"
+              error={validationErrors.industrySpecialization}
+            />
+          </div>
         </div>
-        {/* businessType and phone number */}
-        <div className="grid md:grid-cols-2 grid-cols-1 gap-x-8">
-          <SlimInput
-            required={true}
-            value={businessSettings.businessType}
-            onChange={handleChange}
-            label="Business Type"
-            name="businessType"
-            error={validationErrors.businessType}
-          />
-          <SlimInput
-            required={true}
-            value={businessSettings.businessPhone}
-            onChange={handleChange}
-            label="Business Phone"
-            name="businessPhone"
-            error={validationErrors.businessPhone}
-          />
+
+        {/* Contact Information Section */}
+        <div className="space-y-4 pt-4 border-t border-gray-100">
+          <h4 className="text-lg font-bold text-gray-800 flex items-center border-b pb-2">
+            <Mail className="h-5 w-5 mr-2 text-gray-500" />
+            Contact & Digital Presence
+          </h4>
+          <div className="grid md:grid-cols-2 grid-cols-1 gap-x-8 gap-y-4">
+            <SlimInput
+              required={true}
+              value={businessSettings.businessPhone}
+              onChange={handleChange}
+              label="Business Phone"
+              name="businessPhone"
+              error={validationErrors.businessPhone}
+            />
+            <SlimInput
+              required={true}
+              value={businessSettings.businessEmail}
+              onChange={handleChange}
+              label="Business Email"
+              name="businessEmail"
+              error={validationErrors.businessEmail}
+            />
+          </div>
+          <div className="grid grid-cols-1">
+            <SlimInput
+              required={false}
+              value={businessSettings.businessWebsite}
+              onChange={handleChange}
+              label="Business Website (Optional)"
+              name="businessWebsite"
+              error={validationErrors.businessWebsite}
+            />
+          </div>
         </div>
-        {/* industry and email */}
-        <div className="grid md:grid-cols-2 grid-cols-1 gap-x-8">
-          <SlimInput
-            required={false}
-            value={businessSettings.industrySpecialization}
-            onChange={handleChange}
-            label="Industry/Specialization"
-            name="industrySpecialization"
-            error={validationErrors.industrySpecialization}
-          />
-          <SlimInput
-            required={true}
-            value={businessSettings.businessEmail}
-            onChange={handleChange}
-            label="Business Email"
-            name="businessEmail"
-            error={validationErrors.businessEmail}
-          />
-        </div>
-        <div>
+
+        {/* Location & Timezone Section */}
+        <div className="space-y-4 pt-4 border-t border-gray-100">
+          <h4 className="text-lg font-bold text-gray-800 flex items-center border-b pb-2">
+            <MapPin className="h-5 w-5 mr-2 text-gray-500" />
+            Location & Preferences
+          </h4>
+
           <Timezone
             timezone={businessSettings?.timezone}
             setBusinessSettings={setBusinessSettings}
           />
-        </div>
-        <div className="grid grid-cols-1">
-          <SlimInput
-            required={false}
-            value={businessSettings.businessWebsite}
-            onChange={handleChange}
-            label="Business Website"
-            name="businessWebsite"
-            error={validationErrors.businessWebsite}
-          />
-        </div>
-        <div className="grid grid-cols-1">
-          <SlimInput
-            value={businessSettings.companyAddress}
-            onChange={handleChange}
-            label="Company Address"
-            name="companyAddress"
-            error={validationErrors.companyAddress}
-          />
-        </div>
-        <div className="grid md:grid-cols-3 grid-cols-1 gap-x-8">
-          <SlimInput
-            value={businessSettings.city}
-            onChange={handleChange}
-            label="City"
-            name="city"
-            error={validationErrors.city}
-          />
-          <SlimInput
-            value={businessSettings.state}
-            onChange={handleChange}
-            label="State"
-            name="state"
-            error={validationErrors.state}
-          />
-          <SlimInput
-            value={businessSettings.zip}
-            onChange={handleChange}
-            label="Zip"
-            name="zip"
-            error={validationErrors.zip}
-          />
+
+          <div className="grid grid-cols-1 gap-y-4">
+            <SlimInput
+              value={businessSettings.companyAddress}
+              onChange={handleChange}
+              label="Company Address"
+              name="companyAddress"
+              error={validationErrors.companyAddress}
+            />
+          </div>
+          <div className="grid md:grid-cols-3 grid-cols-1 gap-x-8 gap-y-4">
+            <SlimInput
+              value={businessSettings.city}
+              onChange={handleChange}
+              label="City"
+              name="city"
+              error={validationErrors.city}
+            />
+            <SlimInput
+              value={businessSettings.state}
+              onChange={handleChange}
+              label="State"
+              name="state"
+              error={validationErrors.state}
+            />
+            <SlimInput
+              value={businessSettings.zip}
+              onChange={handleChange}
+              label="Zip"
+              name="zip"
+              error={validationErrors.zip}
+            />
+          </div>
         </div>
 
-        <div className="text-right">
+        {/* Save Button */}
+        <div className="text-right   border-gray-100">
           <button
             disabled={isPending || !hasChanges()}
             type="submit"
-            className="ml-auto mt-4 rounded-md bg-[#6571FF] px-6 py-1 text-white disabled:bg-gray-400"
+            className="ml-auto rounded-lg bg-[#6571FF] px-8 py-2 text-white text-base font-semibold transition duration-150 hover:bg-[#5a64e8] disabled:bg-gray-400 disabled:cursor-not-allowed shadow-lg flex items-center justify-center float-right"
           >
-            {isPending ? "Saving" : "Save"}
+            {isPending ? (
+              <>Saving...</>
+            ) : (
+              <>
+                <Save className="h-5 w-5 mr-2" />
+                Save Changes
+              </>
+            )}
           </button>
         </div>
       </form>
