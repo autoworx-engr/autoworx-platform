@@ -13,6 +13,7 @@ import { useEmployeeFilterStore } from "@/stores/employeeFilter";
 import ResponsiveEmployeeCard from "@/components/mobile-responsive/employee/ResponsiveEmployeeCard";
 import useEmployeeQuery from "../_hook/useEmployeeQuery";
 import { EmployeeTableSkeleton } from "./EmployeeTableSkeleton";
+import { UserIcon } from "lucide-react";
 
 const defaultPageSize = 20;
 type UserWithSalaryHistory = (User & { salaryHistory: SalaryHistory[] })[];
@@ -107,127 +108,152 @@ const EmployeeTable = ({
   } else {
     // continue to render the table
     content = (
-      <div className="app-shadow hidden overflow-x-auto rounded-lg bg-background p-2 lg:block">
-        <table className="w-full">
-          <thead>
-            <tr className="h-10 border-b">
-              <th className="border-b px-4 py-2 text-left">Employee ID</th>
-              <th className="border-b px-4 py-2 text-left">Name </th>
-              {needCompanyName && (
-                <th className="border-b px-4 py-2 text-left">Company </th>
-              )}
-              <th className="border-b px-4 py-2 text-left">Email</th>
-              <th className="border-b px-4 py-2 text-left">Phone</th>
-              <th className="border-b px-4 py-2 text-left">Joined</th>
-              <th className="border-b px-4 py-2 text-center">Type</th>
-              <th className="border-b px-4 py-2 text-center">Edit</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {employees.map((employee: any, index: number) => (
-              <tr
-                key={index}
-                className={cn(
-                  index % 2 === 0 ? "bg-background" : "bg-blue-100"
-                )}
-              >
-                <td className="border-b px-4 py-2 text-left">
-                  <Link
-                    className="block h-full w-full text-blue-500"
-                    href={`/dashboard/employee/${employee.id}?view=details`}
-                  >
-                    {padId(employee.id)}
-                  </Link>
-                </td>
-                <td className="border-b px-4 py-2 text-left">
-                  <Link
-                    className="block h-full w-full"
-                    href={`/dashboard/employee/${employee.id}?view=details`}
-                  >
-                    {employee.firstName} {employee.lastName}
-                  </Link>
-                </td>
+      <div className="hidden lg:block overflow-hidden rounded-xl p-2 bg-white dark:bg-slate-900 ring-1 ring-slate-200 dark:ring-slate-800 shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="h-10">
+                <th className="border-b px-4 py-2 text-left">Employee ID</th>
+                <th className="border-b px-4 py-2 text-left">Name </th>
                 {needCompanyName && (
+                  <th className="border-b px-4 py-2 text-left">Company </th>
+                )}
+                <th className="border-b px-4 py-2 text-left">Email</th>
+                <th className="border-b px-4 py-2 text-left">Phone</th>
+                <th className="border-b px-4 py-2 text-left">Joined</th>
+                <th className="border-b px-4 py-2 text-center">Type</th>
+                <th className="border-b px-4 py-2 text-center">Edit</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {employees.map((employee: any, index: number) => (
+                <tr
+                  key={index}
+                  className={cn(
+                    " duration-200 hover:bg-slate-50 dark:hover:bg-slate-800/50",
+                    index % 2 !== 0 ? "bg-blue-50/80 dark:bg-slate-900" : "bg-white dark:bg-slate-900",
+
+                  )}
+                >
                   <td className="border-b px-4 py-2 text-left">
                     <Link
-                      className="block h-full w-full hover:underline hover:text-blue-500"
-                      href={`/awx-dashboard/statistics/${employee.id}`}
+                      className="block h-full w-full text-blue-400"
+                      href={`/dashboard/employee/${employee.id}?view=details`}
                     >
-                      {employee?.companyName}
+                      {padId(employee.id)}
                     </Link>
                   </td>
-                )}
-                <td className="border-b px-4 py-2 text-left">
-                  <Link
-                    className="block h-full w-full"
-                    href={`/dashboard/employee/${employee.id}?view=details`}
-                  >
-                    {employee.email}
-                  </Link>
-                </td>
-                <td className="border-b px-4 py-2 text-left">
-                  <Link
-                    className="block h-full w-full"
-                    href={`/dashboard/employee/${employee.id}?view=details`}
-                  >
-                    {employee.phone}
-                  </Link>
-                </td>
-                <td className="border-b px-4 py-2 text-left">
-                  <Link
-                    className="block h-full w-full"
-                    href={`/dashboard/employee/${employee.id}?view=details`}
-                  >
-                    {employee.joinDate
-                      ? moment(employee.joinDate).format("MM/DD/YYYY")
-                      : "N/A"}
-                  </Link>
-                </td>
-                <td className="border-b px-4 py-2 text-center">
-                  <Link
-                    className="block h-full w-full"
-                    href={`/dashboard/employee/${employee.id}?view=details`}
-                  >
-                    {employee.employeeType}
-                  </Link>
-                </td>
-                <td className="border-b border-l bg-background px-4 py-2 text-center">
-                  <div className="flex items-center justify-center gap-2">
-                    <EditEmployee employee={employee} />
-                    <DeleteEmployee employee={employee} />
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                  <td className="border-b px-4 py-2 text-left">
+                    <Link
+                      className="h-full w-full flex items-center gap-3 group "
+                      href={`/dashboard/employee/${employee.id}?view=details`}
+                    >
+                      <div className="w-6 h-6 rounded-full flex items-center justify-center text-[#6571FF]/80 ring-1 ring-indigo-100 dark:ring-indigo-900/30">
+                        <UserIcon size={16} />
+                      </div>
+                      <div>
+                        <div className="font-medium text-slate-500 dark:text-slate-200 transition-colors">
+                          {employee.firstName} {employee.lastName}
+                        </div>
+                      </div>
+                    </Link>
+                  </td>
+                  {needCompanyName && (
+                    <td className="border-b px-4 py-2 text-left">
+                      <Link
+                        className="block h-full w-full hover:underline hover:text-blue-500 text-slate-500 font-normal"
+                        href={`/awx-dashboard/statistics/${employee.id}`}
+                      >
+                        {employee?.companyName}
+                      </Link>
+                    </td>
+                  )}
+                  <td className="border-b px-4 py-2 text-left">
+                    <Link
+                      className="block h-full w-full text-slate-500 font-normal"
+                      href={`/dashboard/employee/${employee.id}?view=details`}
+                    >
+                      {employee.email}
+                    </Link>
+                  </td>
+                  <td className="border-b px-4 py-2 text-left">
+                    <Link
+                      className="block h-full w-full text-slate-500 font-normal"
+                      href={`/dashboard/employee/${employee.id}?view=details`}
+                    >
+                      {employee.phone}
+                    </Link>
+                  </td>
+                  <td className="border-b px-4 py-2 text-left">
+                    <Link
+                      className="block h-full w-full text-slate-500 font-normal"
+                      href={`/dashboard/employee/${employee.id}?view=details`}
+                    >
+                      {employee.joinDate
+                        ? moment(employee.joinDate).format("MM/DD/YYYY")
+                        : "N/A"}
+                    </Link>
+                  </td>
+                  <td className="border-b px-4 py-2 text-center">
+                    <Link
+                      className="block h-full w-full text-slate-500 font-normal"
+                      href={`/dashboard/employee/${employee.id}?view=details`}
+                    >
+                      {employee.employeeType}
+                    </Link>
+                  </td>
+                  <td className="border-b border-l bg-background px-4 py-2 text-center">
+                    <div className="flex items-center justify-center gap-2">
+                      <EditEmployee employee={employee} />
+                      <DeleteEmployee employee={employee} />
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     );
   }
 
   return (
-    <>
-      <div className="h-[60%] overflow-y-auto lg:hidden">
-        {employees.map((employee, index) => (
-          <ResponsiveEmployeeCard key={index} data={employee} index={index} />
-        ))}
-      </div>
-      {content}
-      {showPagination && (
-        <div className="mt-4 pb-6 lg:pb-0 flex justify-end">
-          <Pagination
-            className="custom-pagination"
-            current={currentPage}
-            pageSize={pageSize}
-            total={totalEmployeeCount}
-            onChange={handlePageChange}
-            showSizeChanger
-            onShowSizeChange={handlePageChange}
-          />
+
+    <div className="w-full p-4 bg-slate-50 dark:bg-slate-950 min-h-[500px]">
+      <div className="mx-auto space-y-6">
+
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Team Members <span className="text-slate-400 font-normal">({totalEmployeeCount})</span></h3>
+          {/* Pagination placeholder if needed up top */}
         </div>
-      )}
-    </>
+
+        {/* Mobile View */}
+        <div className="lg:hidden space-y-4">
+          {employees.map((employee: any, index: number) => (
+            <ResponsiveEmployeeCard key={index} data={employee} index={index} />
+          ))}
+        </div>
+
+        {/* Desktop View */}
+        {content}
+
+        {/* Pagination */}
+        {(showPagination || true) && ( // Force true for demo
+          <div className="flex justify-end">
+            <Pagination
+              className="custom-pagination"
+              current={currentPage}
+              pageSize={pageSize}
+              total={totalEmployeeCount}
+              onChange={handlePageChange}
+              showSizeChanger
+              onShowSizeChange={handlePageChange}
+            />
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 
