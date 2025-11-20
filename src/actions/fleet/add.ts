@@ -106,6 +106,10 @@ export async function addFleet(data: {
           companyId: companyId,
           tagId: data.tagId || null,
           photo: data.photo || undefined,
+          address: data.address || undefined,
+          city: data.city || undefined,
+          state: data.state || undefined,
+          zip: data.zip || undefined,
           isFleet: true,
         },
       });
