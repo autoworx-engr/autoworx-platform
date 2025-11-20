@@ -19,7 +19,7 @@ export default function Header() {
   }, 500);
 
   return (
-    <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between lg:gap-0">
+    <div className="flex flex-col items-end gap-2 lg:flex-row lg:items-center lg:justify-between lg:gap-0">
       <div className="flex w-full items-center gap-x-8 bg-background lg:w-fit">
         <div className="
             group relative flex w-full items-center gap-x-3 rounded-xl
