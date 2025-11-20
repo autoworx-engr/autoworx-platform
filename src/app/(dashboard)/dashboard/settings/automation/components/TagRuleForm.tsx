@@ -118,7 +118,7 @@ const TagRuleForm = ({
   );
   const { mutate: updateRule, isPending: isUpdatePending } =
     useUpdateTagAutomationRule();
-   // Fetch all existing tag automation rules so we can exclude used tags
+  // Fetch all existing tag automation rules so we can exclude used tags
   const { data: allTagAutomationData } = useAllTagAutomationRules(
     Number(companyId),
     true
@@ -254,10 +254,6 @@ const TagRuleForm = ({
     title: tag.name,
   }));
 
- 
-
-
-
   // Compute used tag ids for the same condition_type + pipelineType
   const usedTagIds = new Set<number>();
   allTagAutomationData?.data.forEach((rule: any) => {
@@ -276,7 +272,7 @@ const TagRuleForm = ({
         });
       }
     } catch (e) {
-      console.log(e)
+      console.log(e);
     }
   });
 
@@ -286,11 +282,13 @@ const TagRuleForm = ({
   );
 
   const filteredSalesTagOptions = salesTagOptions.filter(
-    (opt) => !usedTagIds.has(Number(opt.id)) || currentRuleTagIds.has(Number(opt.id))
+    (opt) =>
+      !usedTagIds.has(Number(opt.id)) || currentRuleTagIds.has(Number(opt.id))
   );
 
   const filteredShopTagOptions = shopTagOptions.filter(
-    (opt) => !usedTagIds.has(Number(opt.id)) || currentRuleTagIds.has(Number(opt.id))
+    (opt) =>
+      !usedTagIds.has(Number(opt.id)) || currentRuleTagIds.has(Number(opt.id))
   );
 
   // Stage options for post-tag condition_type (stages are fetched based on pipelineType)
@@ -364,11 +362,6 @@ const TagRuleForm = ({
   // Handle template toggle
   const handleTemplateToggle = (template: "SMS" | "EMAIL") => {
     setActiveTemplate(template);
-
-    setFormData((prev) => ({
-      ...prev,
-      templateType: template,
-    }));
   };
 
   // Handle file attachment
@@ -543,8 +536,6 @@ const TagRuleForm = ({
       console.error(err);
     }
     setError({});
-   
-    
   };
 
   return (
