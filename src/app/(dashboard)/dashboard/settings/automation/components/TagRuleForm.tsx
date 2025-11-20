@@ -254,18 +254,15 @@ const TagRuleForm = ({
     title: tag.name,
   }));
 
-  // Compute used tag ids for the same condition_type + pipelineType
+  // Compute used tag ids for the same condition_type
   const usedTagIds = new Set<number>();
   allTagAutomationData?.data.forEach((rule: any) => {
     try {
       const ruleCondition = rule.condition_type || rule.conditionType;
-      // const rulePipeline = rule.pipelineType || rule.pipeline_type || "";
       if (
         ruleCondition &&
         formData.condition_type &&
-        String(ruleCondition) === String(formData.condition_type) 
-        // String((rulePipeline || "").toUpperCase()) ===
-        //   String((formData.pipelineType || "").toUpperCase())
+        ruleCondition === formData.condition_type
       ) {
         (rule.tag || []).forEach((t: any) => {
           if (t && t.id) usedTagIds.add(Number(t.id));
