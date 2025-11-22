@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 import { twiml } from "twilio";
 import { v4 as uuidv4 } from "uuid";
+import { sendPushNotification } from "@/actions/notification/sendPushNotification";
 
 export async function POST(request: Request) {
   try {
@@ -70,6 +71,50 @@ export async function POST(request: Request) {
         clientId: client.id,
       },
     });
+
+    // Send push notifications to admin, manager, and sales users only
+    try {
+      const companyUsers = await db.user.findMany({
+        where: {
+          companyId: twilioCredentials.companyId,
+          active: true,
+          employeeType: {
+            in: ["Admin", "Manager", "Sales"],
+          },
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      const callerName =
+        client.firstName && client.lastName
+          ? `${client.firstName} ${client.lastName}`.trim()
+          : client.firstName || client.lastName || from;
+
+      // Send push notification to each user
+      const notificationPromises = companyUsers.map((user) =>
+        sendPushNotification({
+          userId: user.id,
+          title: "📞 Incoming Call",
+          body: `Call from ${callerName}`,
+          deepLink: `/dashboard/communication/client/${client.id}`,
+        }).catch((error) => {
+          console.error(
+            `Failed to send push notification to user ${user.id}:`,
+            error
+          );
+        })
+      );
+
+      await Promise.allSettled(notificationPromises);
+      console.log(
+        `📱 Push notifications sent to ${companyUsers.length} user(s)`
+      );
+    } catch (notificationError) {
+      console.error("Error sending push notifications:", notificationError);
+      // Continue even if notifications fail
+    }
 
     // Generate TwiML to dial the user's browser/device
     const voiceResponse = new twiml.VoiceResponse();

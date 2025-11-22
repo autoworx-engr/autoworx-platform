@@ -259,6 +259,38 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
       setCurrentCallSid(callSid);
       setIncomingCall(call);
       setCallStatus("Incoming call...");
+
+      // Listen for call being canceled (caller hung up before answer)
+      call.on("cancel", () => {
+        console.log("⚠️ [Twilio] Incoming call was canceled by caller");
+        setIncomingCall(null);
+        setCurrentCallSid(null);
+        setCallStatus("Call was canceled");
+      });
+
+      // Listen for call being rejected remotely
+      call.on("reject", () => {
+        console.log("❌ [Twilio] Incoming call was rejected");
+        setIncomingCall(null);
+        setCurrentCallSid(null);
+        setCallStatus("Call was rejected");
+      });
+
+      // Listen for call disconnect
+      call.on("disconnect", () => {
+        console.log("📞 [Twilio] Incoming call disconnected");
+        setIncomingCall(null);
+        setCurrentCallSid(null);
+        setCallStatus("Call disconnected");
+      });
+
+      // Listen for call errors
+      call.on("error", (error) => {
+        console.error("❌ [Twilio] Incoming call error:", error);
+        setIncomingCall(null);
+        setCurrentCallSid(null);
+        setCallStatus("Call error");
+      });
     });
 
     await twilioDevice.register();
@@ -368,6 +400,22 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
           setCurrentCallSid(callSid);
           setIncomingCall(incomingCallEvent);
           setCallStatus("Incoming call...");
+
+          // Listen for call being canceled/hung up by caller
+          incomingCallEvent.on(CallsApiEvent.HANGUP, () => {
+            console.log("⚠️ [Infobip] Incoming call was hung up by caller");
+            setIncomingCall(null);
+            setCurrentCallSid(null);
+            setCallStatus("Call was canceled");
+          });
+
+          // Listen for call errors
+          incomingCallEvent.on(CallsApiEvent.ERROR, (error: any) => {
+            console.error("❌ [Infobip] Incoming call error:", error);
+            setIncomingCall(null);
+            setCurrentCallSid(null);
+            setCallStatus("Call error");
+          });
         }
       );
 

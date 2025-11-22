@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
+import { sendPushNotification } from "@/actions/notification/sendPushNotification";
 
 // Webhook endpoint for Infobip WebRTC incoming calls
 // This is called by Infobip when someone dials your number
@@ -71,6 +72,50 @@ export async function POST(request: NextRequest) {
         clientId: client.id,
       },
     });
+
+    // Send push notifications to admin, manager, and sales users only
+    try {
+      const companyUsers = await db.user.findMany({
+        where: {
+          companyId: infobipConfig.companyId,
+          active: true,
+          employeeType: {
+            in: ["Admin", "Manager", "Sales"],
+          },
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      const callerName =
+        client.firstName && client.lastName
+          ? `${client.firstName} ${client.lastName}`.trim()
+          : client.firstName || client.lastName || from;
+
+      // Send push notification to each user
+      const notificationPromises = companyUsers.map((user) =>
+        sendPushNotification({
+          userId: user.id,
+          title: "📞 Incoming Call",
+          body: `Call from ${callerName}`,
+          deepLink: `/dashboard/communication/client/${client.id}`,
+        }).catch((error) => {
+          console.error(
+            `Failed to send push notification to user ${user.id}:`,
+            error
+          );
+        })
+      );
+
+      await Promise.allSettled(notificationPromises);
+      console.log(
+        `📱 Push notifications sent to ${companyUsers.length} user(s)`
+      );
+    } catch (notificationError) {
+      console.error("Error sending push notifications:", notificationError);
+      // Continue even if notifications fail
+    }
 
     // Return routing instruction to Infobip
     // This tells Infobip to forward the call to the WebRTC client
