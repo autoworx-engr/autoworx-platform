@@ -46,7 +46,7 @@ const HorizontalPayoutCard = ({
 
         {/* Title Text */}
         <div className="flex flex-col">
-          <span className=" text-xl font-semibold text-slate-600 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-300 transition-colors">
+          <span className="text-2xl font-bold text-slate-600 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-300 transition-colors">
             {title}
           </span>
           {/* Mobile: Amount shows here instead of right side for better stacking if needed, 
