@@ -62,11 +62,7 @@ const BookingForm = () => {
   const [customTitle, setCustomTitle] = useState("");
 
   // // Predefined title options
-  const titleOptionsForCrmEnable = [
-    "Phone Call Request",
-    "Demo Request",
-    "Customer Service Support",
-  ];
+  const titleOptionsForCrmEnable = ["Book a Demo", "Customer Support"];
 
   // Predefined title options
   const titleOptions = [
