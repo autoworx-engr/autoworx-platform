@@ -63,6 +63,10 @@ export default async function InventoryBox({ className }: TInventoryBoxProps) {
           number={totalValue}
           noRate={true} // Total value is a static snapshot, growth rate applies to flow
         />
+
+        {/* Separator for visual clarity between metrics */}
+        <div className="h-[1px] w-full bg-slate-200/70 dark:bg-slate-700/70 my-3" />
+
         <ChartData
           heading="Current Monthly Total" // Enhanced heading to represent change/movement
           // subHeading="Value added/removed this month"

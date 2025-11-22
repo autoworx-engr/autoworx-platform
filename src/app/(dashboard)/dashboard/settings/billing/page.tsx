@@ -4,6 +4,7 @@ import Image from "next/image";
 import { PricePlans } from "./PricePlans";
 import moment from "moment-timezone";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
+import { Award, CreditCard, History, Zap } from "lucide-react";
 
 const paymentHistory = [
   { amount: "$100", method: "Credit Card", date: "2024-08-01" },
@@ -28,77 +29,88 @@ export default function Page() {
   const timezone = useCompanyTimezone();
 
   return (
-    <div className="min-h-screen">
-      <div className="relative -top-10 mx-auto flex max-w-4xl flex-col items-center space-y-2 overflow-hidden p-2 sm:p-4 lg:p-6">
+    <div className="min-h-screen ">
+      <div className="relative  flex max-w-4xl flex-col space-y-8 p-2">
         {/* Subscription Section */}
-        <div className="mb-2 mt-10 w-full">
-          <h2 className="font-inter mb-2 text-lg font-semibold text-[#66738C] sm:text-xl">
-            Subscription
+        <div className="w-full">
+          <h2 className="mb-4 flex items-center text-2xl font-bold ">
+            <Zap className="w-6 h-6 mr-2 text-[#6571FF]" />
+            Subscription Details
           </h2>
-          <div className="flex flex-col gap-4 rounded-[5px] border border-[#D9D9D9] bg-background p-4 sm:p-6 lg:flex-row">
-            <div className="flex-1 space-y-2 lg:space-y-4">
-              <p className="font-inter text-base font-semibold leading-6 text-[#66738C] sm:text-lg lg:text-xl">
-                Subscribed to{" "}
+          <div className="flex flex-col gap-6 rounded-xl border border-gray-200 bg-white p-6 shadow-xl lg:flex-row">
+            <div className="flex-1 space-y-3 lg:space-y-4">
+              <p className="text-lg font-semibold leading-7 text-gray-700 sm:text-xl">
+                Current Plan:{" "}
                 <span
-                  className={`font-semibold italic ${planColors[selectedPlan] || "text-gray-500"}`}
+                  className={`text-2xl font-extrabold ${
+                    planColors[selectedPlan] || "text-gray-500"
+                  }`}
                 >
                   {selectedPlan}
                 </span>
               </p>
-              <p className="font-inter text-base font-normal italic leading-6 text-[#66738C] sm:text-lg lg:text-xl">
-                Activated on{" "}
-                <span className="font-semibold italic">8th August 2024</span>
-              </p>
-              <p className="font-inter mb-4 text-base font-normal italic leading-6 text-[#66738C] sm:text-lg lg:text-xl">
-                Expires on{" "}
-                <span className="font-semibold italic">8th August 2025</span>
-              </p>
+              <div className="space-y-1 text-base font-normal text-gray-600">
+                <p>
+                  Activated on:{" "}
+                  <span className="font-semibold text-gray-800">
+                    8th August 2024
+                  </span>
+                </p>
+                <p>
+                  Expires on:{" "}
+                  <span className="font-semibold text-red-500">
+                    8th August 2025
+                  </span>
+                </p>
+              </div>
 
-              <div className="mt-6 flex flex-col space-y-3 sm:flex-row sm:space-x-4 sm:space-y-0 lg:mt-8">
+              <div className="mt-8 flex flex-col space-y-3 sm:flex-row sm:space-x-4 sm:space-y-0 lg:mt-10">
                 <button
-                  className="font-inter h-10 w-full rounded-[5px] bg-[#66738C] text-base font-normal leading-6 text-white sm:h-11 sm:w-32 sm:text-lg lg:text-xl"
+                  className="h-11 w-full rounded-lg border border-gray-400 bg-gray-50 text-base font-semibold text-gray-700 shadow-sm hover:bg-gray-100 transition sm:w-32 lg:w-36"
                   onClick={() => setPlansOpen((prev) => !prev)}
                 >
                   Re-new
                 </button>
                 <button
-                  className="font-inter h-10 w-full rounded-[5px] bg-[#6571FF] text-base font-bold leading-6 text-white sm:h-11 sm:w-36 sm:text-lg lg:text-xl"
+                  className="h-11 w-full rounded-lg bg-[#6571FF] text-base font-bold text-white shadow-md hover:bg-[#525fec] transition sm:w-36 lg:w-40"
                   onClick={() => setPlansOpen((prev) => !prev)}
                 >
+                  <Award className="w-5 h-5 inline mr-1" />
                   Upgrade
                 </button>
               </div>
-              <p className="font-inter mt-4 text-xs font-normal italic leading-4 text-[#66738C] sm:text-sm">
+              <p className="mt-4 text-xs font-normal italic leading-4 text-gray-500 pt-2">
                 If you want a package customized according to your preferences,
                 contact us here
               </p>
             </div>
             {/* Icon section */}
-            <div className="flex justify-center lg:justify-end">
+            <div className="flex justify-center lg:justify-end lg:items-center">
               <Image
                 src="/icons/CompanyLogo1.svg"
                 width={150}
                 height={150}
                 alt="Company logo"
-                className="sm:h-40 sm:w-40 lg:h-48 lg:w-48"
+                className="h-32 w-32 sm:h-40 sm:w-40 lg:h-48 lg:w-48 opacity-80"
               />
             </div>
           </div>
         </div>
 
         {/* Payment Methods Section */}
-        <div className="mb-4 w-full">
-          <h2 className="font-inter mb-4 text-lg font-semibold leading-6 text-[#66738C] sm:text-xl">
+        <div className="w-full">
+          <h2 className="mb-4 flex items-center text-2xl font-bold ">
+            <CreditCard className="w-6 h-6 mr-2 text-[#6571FF]" />
             Payment Methods
           </h2>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:flex lg:space-x-4">
+          <div className="flex flex-wrap justify-start gap-4">
             {/* Payment method cards */}
             {[1, 2, 3].map((item) => (
               <div
                 key={item}
-                className="flex h-24 items-center justify-center rounded-[5px] border border-[#D9D9D9] bg-background sm:h-32 lg:h-32 lg:w-36"
+                className="flex h-24 w-full items-center justify-center rounded-lg border border-gray-300 bg-white shadow-sm hover:shadow-md transition sm:h-32 sm:w-40"
               >
-                <p className="font-inter text-2xl font-semibold leading-8 text-[#66738C] sm:text-3xl lg:text-4xl">
+                <p className="text-xl font-bold text-gray-500 sm:text-2xl">
                   Logo
                 </p>
               </div>
@@ -107,30 +119,35 @@ export default function Page() {
         </div>
 
         {/* Payment History Section */}
-        <div className="mt-4 w-full">
-          <h2 className="font-inter mb-4 text-[20px] font-semibold leading-[24px] text-[#66738C]">
+        <div className="w-full">
+          <h2 className="mb-4 flex items-center text-2xl font-bold ">
+            <History className="w-6 h-6 mr-2 text-[#6571FF]" />
             Payment History
           </h2>
-          <div className="max-h-64 overflow-x-auto rounded-[5px] border border-[#D9D9D9] bg-background p-4">
-            <table className="min-w-full text-left">
-              <thead>
-                <tr className="font-inter sticky -top-4 bg-background text-[16px] font-bold leading-[19px] text-[#66738C]">
+          <div className="max-h-80 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-100">
+                <tr className="sticky top-0 text-left text-sm font-bold uppercase tracking-wider text-gray-600">
                   <th className="px-6 py-3">Amount</th>
                   <th className="px-6 py-3">Payment Method</th>
                   <th className="px-6 py-3">Date</th>
                 </tr>
               </thead>
-              <tbody className="border border-[#D9D9D9]">
+              <tbody className="divide-y divide-gray-100 text-sm text-gray-800">
                 {paymentHistory.map((entry, index) => (
                   <tr
                     key={index}
                     className={
-                      index % 2 === 0 ? "bg-background" : "bg-[#EEF4FF]"
+                      index % 2 === 0
+                        ? "bg-white hover:bg-gray-50"
+                        : "bg-blue-100 hover:bg-gray-100"
                     }
                   >
-                    <td className="px-6 py-3">{entry.amount}</td>
+                    <td className="px-6 py-3 font-medium">
+                      {entry.amount}
+                    </td>
                     <td className="px-6 py-3">{entry.method}</td>
-                    <td className="px-6 py-3">
+                    <td className="px-6 py-3 whitespace-nowrap">
                       {entry.date
                         ? moment.tz(entry.date, timezone).format("MM/DD/YYYY")
                         : ""}

@@ -27,11 +27,11 @@ const ChartData = ({
     <div className={containerLayout}>
       <div className="flex-1">
         {/* Heading and Subheading - Clean, professional typography */}
-        <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+        <h3 className="text-base font-semibold text-slate-600 dark:text-slate-200">
           {heading}
         </h3>
         {subHeading && (
-          <h6 className="text-xs text-slate-500 dark:text-slate-400">
+          <h6 className="text-sm font-medium text-slate-500 dark:text-slate-400">
             {subHeading}
           </h6>
         )}
@@ -41,21 +41,23 @@ const ChartData = ({
           className={`
             mt-2 inline-block rounded-xl p-1 transition-all duration-300
 
-            // Subtle Gradient and Shadow for Emphasis
-            bg-slate-50/50 dark:bg-slate-800/50
-            ring-1 ring-slate-200/50 dark:ring-slate-700
-            shadow-inner shadow-slate-200/50 dark:shadow-slate-900/50
-
-            // Hover effect: Subtle lift and shadow glow
-            hover:shadow-lg hover:shadow-blue-500/10 dark:hover:shadow-indigo-500/10
-            hover:-translate-y-[1px]
+            
           `}
+        // Subtle Gradient and Shadow for Emphasis
+
+        // bg-slate-50/50 dark:bg-slate-800/50
+        // ring-1 ring-slate-200/50 dark:ring-slate-700
+        // shadow-inner shadow-slate-200/50 dark:shadow-slate-900/50
+
+        // Hover effect: Subtle lift and shadow glow
+        // hover:shadow-lg hover:shadow-blue-500/10 dark:hover:shadow-indigo-500/10
+        // hover:-translate-y-[1px]
         >
           <span>
             {/* Tooltip logic for long numbers */}
             {formatCurrency(number).length > 20 ||
-            number.toString().length > 20 ? (
-              <span className="text-xl font-extrabold text-slate-900 dark:text-white xl:text-3xl">
+              number.toString().length > 20 ? (
+              <span className="text-xl font-bold text-slate-600 dark:text-white xl:text-2xl">
                 <Tooltip>
                   <TooltipTrigger>
                     {/* Truncated display */}
@@ -74,7 +76,7 @@ const ChartData = ({
               </span>
             ) : (
               // Standard display
-              <span className="text-xl font-extrabold text-slate-900 dark:text-white xl:text-3xl">
+              <span className="text-xl font-bold text-slate-600 dark:text-white xl:text-2xl">
                 {dollarSign ? formatCurrency(number) : number}
                 {isNumberPercent && "%"}
               </span>
@@ -102,7 +104,7 @@ const ChartData = ({
           </div>
 
           {/* Rate value */}
-          <div className="text-sm font-bold">{Math.abs(rate)}%</div>
+          <div className="text-xl font-bold">{Math.abs(rate)}%</div>
         </div>
       )}
     </div>

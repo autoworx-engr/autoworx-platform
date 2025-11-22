@@ -17,7 +17,7 @@ export default function BoxTitle({
   return (
     <div className={cn("mb-6 flex items-center justify-between", className)}>
       {/* Title Typography Refinement */}
-      <span className="text-xl font-extrabold text-slate-800 dark:text-white md:text-2xl">
+      <span className="text-xl font-extrabold text-slate-700 dark:text-white md:text-2xl">
         {title}
       </span>{" "}
       {/* Redirect Link with Subtle Interaction */}
@@ -29,7 +29,7 @@ export default function BoxTitle({
           aria-label={`Go to ${title} report`}
         >
           {/* Icon Styling: Blue for 'more info' link, subtle size */}
-          <ExternalLink className="h-4 w-4 text-blue-500 dark:text-blue-400" />
+          <ExternalLink className="h-5 w-5 text-blue-500 dark:text-blue-400" />
         </Link>
       )}
     </div>

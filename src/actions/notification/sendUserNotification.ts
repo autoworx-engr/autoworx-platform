@@ -3,11 +3,11 @@
 import { getNotificationSetting } from "@/lib/notification/getNotificationSetting";
 import { NotificationType } from "@prisma/client";
 import { sendNotification } from "./sendNotification";
-import { sendPushNotification } from "./sendPushNotification";
 import sendNotificationByEmail from "./sendNotificationByEmail";
 import sendNotificationBySms from "./sendNotificationBySms";
+import { sendPushNotification } from "./sendPushNotification";
 
-type SendUserNotificationsParams = {
+export type SendUserNotificationsParams = {
   userId: number;
   userName: string;
   userPhoneNo: string;
@@ -39,13 +39,21 @@ export async function sendUserNotifications({
   companyId,
   type,
   iconType,
-  redirectUrl,
+  redirectUrl = process.env.NEXT_PUBLIC_BASE_URL || "",
 }: SendUserNotificationsParams) {
   try {
-    const setting = await getNotificationSetting({
-      userId,
-      notificationType: type,
-    });
+    let setting = null;
+
+    if (type) {
+      setting = await getNotificationSetting({
+        userId,
+        notificationType: type,
+      });
+    } else {
+      setting = {
+        push_enabled: true,
+      };
+    }
 
     if (setting?.push_enabled) {
       await sendNotification({
@@ -85,6 +93,7 @@ export async function sendUserNotifications({
         userPhoneNo,
       });
     }
+    return { success: true };
   } catch (error) {
     console.error("Error sending user notification:", error);
     // throw error;

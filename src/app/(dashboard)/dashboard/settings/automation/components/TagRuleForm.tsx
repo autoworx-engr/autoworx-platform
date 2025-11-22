@@ -28,6 +28,7 @@ import { useCreateTagAutomationRule } from "@/hooks/tag-automation/useCreateTagA
 
 import { useFindOneTagAutomationRule } from "@/hooks/tag-automation/useFindOneTagAutomationRule";
 import { useUpdateTagAutomationRule } from "@/hooks/tag-automation/useUpdateTagAutomationRule";
+import { useAllTagAutomationRules } from "@/hooks/tag-automation/useAllTagAutomationRules";
 import {
   convertSecondsToTime,
   convertTimeToSeconds,
@@ -118,6 +119,10 @@ const TagRuleForm = ({
   const { mutate: updateRule, isPending: isUpdatePending } =
     useUpdateTagAutomationRule();
 
+  const { data: allTagAutomationData } = useAllTagAutomationRules(
+    Number(companyId),
+    true
+  );
   useEffect(() => {
     const loadData = async () => {
       if (isEdit && id && data && data.data) {
@@ -249,6 +254,39 @@ const TagRuleForm = ({
     title: tag.name,
   }));
 
+  const usedTagIds = new Set<number>();
+  allTagAutomationData?.data.forEach((rule: any) => {
+    try {
+      const ruleCondition = rule.condition_type || rule.conditionType;
+      if (
+        ruleCondition &&
+        formData.condition_type &&
+        ruleCondition === formData.condition_type
+      ) {
+        (rule.tag || []).forEach((t: any) => {
+          if (t && t.id) usedTagIds.add(Number(t.id));
+        });
+      }
+    } catch (e) {
+      console.log(e);
+    }
+  });
+
+  // If editing, allow tags already present on the current rule
+  const currentRuleTagIds = new Set<number>(
+    (data?.data?.tag || []).map((t: any) => Number(t.id))
+  );
+
+  const filteredSalesTagOptions = salesTagOptions.filter(
+    (opt) =>
+      !usedTagIds.has(Number(opt.id)) || currentRuleTagIds.has(Number(opt.id))
+  );
+
+  const filteredShopTagOptions = shopTagOptions.filter(
+    (opt) =>
+      !usedTagIds.has(Number(opt.id)) || currentRuleTagIds.has(Number(opt.id))
+  );
+
   // Stage options for post-tag condition_type (stages are fetched based on pipelineType)
   const stageOptions = stages.map((s: any) => ({
     id: s.id,
@@ -320,11 +358,6 @@ const TagRuleForm = ({
   // Handle template toggle
   const handleTemplateToggle = (template: "SMS" | "EMAIL") => {
     setActiveTemplate(template);
-
-    setFormData((prev) => ({
-      ...prev,
-      templateType: template,
-    }));
   };
 
   // Handle file attachment
@@ -410,33 +443,9 @@ const TagRuleForm = ({
       setError(newErrors);
     }
 
-    // Parse selected timeDelay (label or option id) without mutating form state
-    const parseSelectedTimeDelay = (value: any) => {
-      if (value === null || value === undefined || value === "") return null;
-
-      const optId = (o: any) =>
-        o && typeof o === "object" && "id" in o ? o.id : o;
-      const optTitle = (o: any) =>
-        o && typeof o === "object" && "title" in o ? o.title : o;
-
-      const match = invoiceTimeDelays.find(
-        (o: any) =>
-          String(optId(o)) === String(value) ||
-          String(optTitle(o)) === String(value)
-      );
-      if (match) {
-        const idVal = optId(match);
-        const n = Number(idVal);
-        if (!Number.isNaN(n)) return n;
-        return convertTimeToSeconds(String(optTitle(match)));
-      }
-
-      const n = Number(value);
-      if (!Number.isNaN(n)) return n;
-      return convertTimeToSeconds(String(value));
-    };
-
-    const parsedTimeDelay = parseSelectedTimeDelay(formData.timeDelay);
+    if (formData.timeDelay != null) {
+      formData.timeDelay = convertTimeToSeconds(formData.timeDelay as string);
+    }
 
     try {
       const uploadedAttachments = await uploadAllAttachments(
@@ -448,11 +457,18 @@ const TagRuleForm = ({
       // Prepare final payload
       const finalData: any = {
         ...formData,
-        timeDelay: parsedTimeDelay,
         companyId: companyId,
         attachments: images,
         ruleType: formData.ruleType ? formData.ruleType : "one_time",
       };
+
+      // Ensure `templateType` is never sent to the API during update/create
+      if (
+        finalData &&
+        Object.prototype.hasOwnProperty.call(finalData, "templateType")
+      ) {
+        delete finalData.templateType;
+      }
 
       // normalize fields for API
       // if (finalData.timeDelay != null) {
@@ -521,12 +537,22 @@ const TagRuleForm = ({
             error={error.pipelineType}
           />
 
+          <Selector
+            name="condition"
+            label="Condition"
+            options={Conditions}
+            value={formData.condition_type!}
+            onChange={(value) => handleChange("condition_type", value)}
+            required
+            placeholder="Select a condition"
+            error={error.condition_type}
+          />
           {formData.pipelineType !== "" && (
             <MultiSelect
               options={
                 formData.pipelineType === "SHOP"
-                  ? shopTagOptions
-                  : salesTagOptions
+                  ? filteredShopTagOptions
+                  : filteredSalesTagOptions
               }
               value={formData.tagIds}
               onChange={(value) => handleChange("tagIds", value)}
@@ -560,16 +586,6 @@ const TagRuleForm = ({
             onChange={(value) => handleChange("timeDelay", value)}
             required
             placeholder="Select a time delay"
-          />
-          <Selector
-            name="condition"
-            label="Condition"
-            options={Conditions}
-            value={formData.condition_type!}
-            onChange={(value) => handleChange("condition_type", value)}
-            required
-            placeholder="Select a condition"
-            error={error.condition_type}
           />
 
           {formData.condition_type === "pipeline" && (

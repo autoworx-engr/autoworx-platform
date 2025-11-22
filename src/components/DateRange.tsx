@@ -80,21 +80,27 @@ const DateRange = ({
   };
 
   return (
-    <div ref={ref}>
+    <div ref={ref} className="relative z-50">
       <button
         onClick={togglePicker}
-        className="flex w-full items-center gap-2 rounded-lg border border-gray-400 p-2 text-sm text-gray-400 hover:border-blue-600"
+        className={`
+            flex w-full items-center justify-between gap-3 rounded-xl px-4 py-2.5 text-sm transition-all duration-300 ease-out
+            ${showPicker
+            ? 'bg-white ring-2 ring-[#6571FF] shadow-md shadow-indigo-500/10 dark:bg-slate-900'
+            : 'bg-white ring-1 ring-slate-200 hover:ring-indigo-500/50 hover:shadow-sm dark:bg-slate-900 dark:ring-slate-700'
+          }
+        `}
       >
-        <span>
+        <span className={`font-medium ${isRangeSelected ? 'text-slate-700 dark:text-slate-200' : 'text-slate-400'}`}>
           {isRangeSelected
             ? formatRange(state.selection.startDate, state.selection.endDate)
-            : "Date Range"}
+            : "Select Date Range"}
         </span>
-        <Calendar size={14} />
+        <Calendar className={`w-4 h-4 ${showPicker || isRangeSelected ? 'text-[#6571FF]' : 'text-slate-400'}`} />
       </button>
 
       {showPicker && (
-        <div className="absolute z-10 w-[600px] border border-gray-300 bg-background p-4 shadow-lg">
+        <div className="absolute left-0 top-full mt-2 z-10 w-[400px] lg:w-[600px] rounded-2xl border border-slate-100 bg-white p-5 shadow-[0_20px_40px_-12px_rgba(0,0,0,0.15)] ring-1 ring-slate-900/5 animate-in fade-in zoom-in-95 dark:bg-slate-900 dark:border-slate-800 dark:ring-white/10">
           <DateRangePicker
             inputRanges={[]}
             ranges={[tempRange]}
@@ -105,15 +111,18 @@ const DateRange = ({
             preventSnapRefocus={true}
             calendarFocus="forwards"
           />
-          <div className="mt-2 flex justify-end">
+          <div className="mt-2 flex justify-end gap-3 border-t border-slate-100 pt-4 dark:border-slate-800">
+            <button
+              onClick={handleCancel}
+              className="rounded-lg px-4 py-2 text-sm font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-700 dark:hover:bg-slate-800 dark:text-slate-400"
+            >
+              Clear
+            </button>
             <button
               onClick={handleOk}
-              className="mr-2 rounded bg-blue-500 p-2 text-white"
+              className="rounded-lg bg-gradient-to-r from-[#6571FF] to-[#5a66ee] px-6 py-2 text-sm font-bold text-white shadow-md shadow-indigo-500/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-indigo-500/30 transition-all"
             >
-              OK
-            </button>
-            <button onClick={handleCancel} className="rounded bg-gray-300 p-2">
-              Clear
+              Apply Filter
             </button>
           </div>
         </div>
