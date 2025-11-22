@@ -3,9 +3,9 @@
 import { getNotificationSetting } from "@/lib/notification/getNotificationSetting";
 import { NotificationType } from "@prisma/client";
 import { sendNotification } from "./sendNotification";
-import { sendPushNotification } from "./sendPushNotification";
 import sendNotificationByEmail from "./sendNotificationByEmail";
 import sendNotificationBySms from "./sendNotificationBySms";
+import { sendPushNotification } from "./sendPushNotification";
 
 export type SendUserNotificationsParams = {
   userId: number;
@@ -42,10 +42,18 @@ export async function sendUserNotifications({
   redirectUrl,
 }: SendUserNotificationsParams) {
   try {
-    const setting = await getNotificationSetting({
-      userId,
-      notificationType: type,
-    });
+    let setting = null;
+
+    if (type) {
+      setting = await getNotificationSetting({
+        userId,
+        notificationType: type,
+      });
+    } else {
+      setting = {
+        push_enabled: true,
+      };
+    }
 
     if (setting?.push_enabled) {
       await sendNotification({
