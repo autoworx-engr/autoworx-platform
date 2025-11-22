@@ -49,152 +49,206 @@ export async function updatePayment({
   amount,
   additionalData,
 }: PaymentData): Promise<ServerAction> {
-  const existingPayment = await db.payment.findUnique({ where: { id } });
+  // console.log("Updating payment:", { id, type, date, notes, amount });
+
+  const existingPayment = await db.payment.findUnique({
+    where: { id },
+    include: { deposit: true },
+  });
 
   if (!existingPayment) throw new Error("Payment not found");
 
-  let updatedPayment;
+  const originalAmount = Number(existingPayment.amount);
+  const originalType = existingPayment.type;
+  const isOriginalDeposit = originalType === "DEPOSIT";
+  const isNewDeposit = type === "DEPOSIT";
 
-  switch (type) {
-    case "CARD":
-      updatedPayment = await db.payment.update({
-        where: { id },
-        data: {
-          type,
-          date: new Date(date),
-          notes,
-          amount,
-          card: {
-            upsert: {
-              create: {
-                cardType: (additionalData as CardPaymentData).cardType,
-                creditCard: (additionalData as CardPaymentData).creditCard,
-              },
-              update: {
-                cardType: (additionalData as CardPaymentData).cardType,
-                creditCard: (additionalData as CardPaymentData).creditCard,
-              },
-            },
+  const paymentTypeHandlers = {
+    CARD: {
+      card: {
+        upsert: {
+          create: {
+            cardType: (additionalData as CardPaymentData).cardType,
+            creditCard: (additionalData as CardPaymentData).creditCard,
+          },
+          update: {
+            cardType: (additionalData as CardPaymentData).cardType,
+            creditCard: (additionalData as CardPaymentData).creditCard,
           },
         },
-      });
-      break;
-
-    case "CHECK":
-      updatedPayment = await db.payment.update({
-        where: { id },
-        data: {
-          type,
-          date: new Date(date),
-          notes,
-          amount,
-          check: {
-            upsert: {
-              create: {
-                checkNumber: (additionalData as CheckPaymentData).checkNumber,
-              },
-              update: {
-                checkNumber: (additionalData as CheckPaymentData).checkNumber,
-              },
-            },
+      },
+    },
+    CHECK: {
+      check: {
+        upsert: {
+          create: {
+            checkNumber: (additionalData as CheckPaymentData).checkNumber,
+          },
+          update: {
+            checkNumber: (additionalData as CheckPaymentData).checkNumber,
           },
         },
-      });
-      break;
-
-    case "CASH":
-      updatedPayment = await db.payment.update({
-        where: { id },
-        data: {
-          type,
-          date: new Date(date),
-          notes,
-          amount,
-          cash: {
-            upsert: {
-              create: {
-                receivedCash: (additionalData as CashPaymentData).receivedCash,
-              },
-              update: {
-                receivedCash: (additionalData as CashPaymentData).receivedCash,
-              },
-            },
+      },
+    },
+    CASH: {
+      cash: {
+        upsert: {
+          create: {
+            receivedCash: (additionalData as CashPaymentData).receivedCash,
+          },
+          update: {
+            receivedCash: (additionalData as CashPaymentData).receivedCash,
           },
         },
-      });
-      break;
-
-    case "DEPOSIT":
-      updatedPayment = await db.payment.update({
-        where: { id },
-        data: {
-          type,
-          date: new Date(date),
-          notes,
-          amount,
-          deposit: {
-            upsert: {
-              create: {
-                depositMethod: (additionalData as DepositPaymentData)
-                  .depositMethod,
-                depositNotes: (additionalData as DepositPaymentData)
-                  .depositNotes,
-              },
-              update: {
-                depositMethod: (additionalData as DepositPaymentData)
-                  .depositMethod,
-                depositNotes: (additionalData as DepositPaymentData)
-                  .depositNotes,
-              },
-            },
+      },
+    },
+    DEPOSIT: {
+      deposit: {
+        upsert: {
+          create: {
+            depositMethod: (additionalData as DepositPaymentData).depositMethod,
+            depositNotes: (additionalData as DepositPaymentData).depositNotes,
+          },
+          update: {
+            depositMethod: (additionalData as DepositPaymentData).depositMethod,
+            depositNotes: (additionalData as DepositPaymentData).depositNotes,
           },
         },
-      });
-      break;
-
-    case "OTHER":
-      updatedPayment = await db.payment.update({
-        where: { id },
-        data: {
-          type,
-          date: new Date(date),
-          notes,
-          amount,
-          other: {
-            upsert: {
-              create: {
-                paymentMethodId: (additionalData as OtherPaymentData)
-                  .paymentMethodId,
-              },
-              update: {
-                paymentMethodId: (additionalData as OtherPaymentData)
-                  .paymentMethodId,
-              },
-            },
+      },
+    },
+    OTHER: {
+      other: {
+        upsert: {
+          create: {
+            paymentMethodId: (additionalData as OtherPaymentData)
+              .paymentMethodId,
+          },
+          update: {
+            paymentMethodId: (additionalData as OtherPaymentData)
+              .paymentMethodId,
           },
         },
-      });
-      break;
+      },
+    },
+  };
 
-    default:
-      throw new Error("Invalid payment type");
+  if (!paymentTypeHandlers[type]) {
+    throw new Error("Invalid payment type");
   }
 
-  // --- recalc invoice ---
-  const invoice = await db.invoice.findUnique({
-    where: { id: updatedPayment.invoiceId! },
-  });
+  //  Use transaction to ensure atomicity
+  await db.$transaction(async (tx) => {
+    // UPDATE PAYMENT
+    const updatedPayment = await tx.payment.update({
+      where: { id },
+      data: {
+        type,
+        date: new Date(date),
+        notes,
+        amount,
+        ...paymentTypeHandlers[type],
+      },
+    });
 
-  const previousAmount = Number(existingPayment.amount);
-  const newDue =
-    Number(invoice!.due) + previousAmount - Number(updatedPayment.amount);
+    // console.log("Updated payment:", updatedPayment);
 
-  await db.invoice.update({
-    where: { id: invoice!.id },
-    data: { due: newDue },
+    // FETCH INVOICE
+    const invoice = await tx.invoice.findUnique({
+      where: { id: updatedPayment.invoiceId! },
+    });
+    if (!invoice) throw new Error("Invoice not found");
+
+    //  Handle deposit field changes in invoice
+    if (isOriginalDeposit && isNewDeposit) {
+      // Editing deposit amount - adjust invoice deposit
+      const depositDifference = amount - originalAmount;
+      await tx.invoice.update({
+        where: { id: invoice.id },
+        data: {
+          deposit: {
+            increment: depositDifference,
+          },
+        },
+      });
+    } else if (isOriginalDeposit && !isNewDeposit) {
+      // Converting deposit to regular payment
+      await tx.invoice.update({
+        where: { id: invoice.id },
+        data: {
+          deposit: {
+            decrement: originalAmount,
+          },
+          totalPayment: {
+            increment: amount,
+          },
+        },
+      });
+    } else if (!isOriginalDeposit && isNewDeposit) {
+      // Converting regular payment to deposit
+      await tx.invoice.update({
+        where: { id: invoice.id },
+        data: {
+          totalPayment: {
+            decrement: originalAmount,
+          },
+          deposit: {
+            increment: amount,
+          },
+        },
+      });
+    } else {
+      // Regular payment edit - adjust totalPayment
+      const paymentDifference = amount - originalAmount;
+      await tx.invoice.update({
+        where: { id: invoice.id },
+        data: {
+          totalPayment: {
+            increment: paymentDifference,
+          },
+        },
+      });
+    }
+
+    // FETCH ALL PAYMENTS for recalculation
+    const payments = await tx.payment.findMany({
+      where: { invoiceId: updatedPayment.invoiceId },
+      orderBy: { createdAt: "asc" },
+    });
+
+    //  RECALCULATE dueAfterPayment for all payments
+    let cumulativePaid = 0;
+    let cumulativeDeposit = 0;
+
+    for (const p of payments) {
+      if (p.type === "DEPOSIT") {
+        cumulativeDeposit += Number(p.amount);
+      } else {
+        cumulativePaid += Number(p.amount);
+      }
+
+      // Due
+      const dueAfterPayment =
+        Number(invoice.grandTotal) - (cumulativeDeposit + cumulativePaid);
+
+      await tx.payment.update({
+        where: { id: p.id },
+        data: { dueAfterPayment },
+      });
+    }
+
+    //  UPDATE INVOICE DUE
+    const finalDue =
+      Number(invoice.grandTotal) - (cumulativeDeposit + cumulativePaid);
+    await tx.invoice.update({
+      where: { id: invoice.id },
+      data: {
+        due: finalDue,
+      },
+    });
   });
 
   revalidatePath("/estimate");
+  revalidatePath("/dashboard/clients");
 
-  return { type: "success", data: updatedPayment };
+  return { type: "success", data: { id, type, amount } };
 }
