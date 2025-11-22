@@ -39,7 +39,7 @@ export async function sendUserNotifications({
   companyId,
   type,
   iconType,
-  redirectUrl,
+  redirectUrl = process.env.NEXT_PUBLIC_BASE_URL || "",
 }: SendUserNotificationsParams) {
   try {
     let setting = null;
