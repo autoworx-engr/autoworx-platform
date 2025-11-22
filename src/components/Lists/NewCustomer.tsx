@@ -464,10 +464,10 @@ export default function NewCustomer({
         <DialogFooter>
           <DialogClose
             className="
-                rounded-xl px-5 py-2.5 text-sm font-medium text-slate-500 
-                hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
-                transition-colors border
-              "
+              rounded-xl px-5 py-2.5 text-sm font-medium text-slate-500 
+              hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
+              transition-colors border
+            "
             onClick={() => {
               clearError();
               setIsClientOpen(false);
