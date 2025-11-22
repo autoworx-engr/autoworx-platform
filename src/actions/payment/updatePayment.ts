@@ -49,10 +49,19 @@ export async function updatePayment({
   amount,
   additionalData,
 }: PaymentData): Promise<ServerAction> {
-  console.log("Updating payment:", { id, type, date, notes, amount });
+  // console.log("Updating payment:", { id, type, date, notes, amount });
 
-  const existingPayment = await db.payment.findUnique({ where: { id } });
+  const existingPayment = await db.payment.findUnique({
+    where: { id },
+    include: { deposit: true },
+  });
+
   if (!existingPayment) throw new Error("Payment not found");
+
+  const originalAmount = Number(existingPayment.amount);
+  const originalType = existingPayment.type;
+  const isOriginalDeposit = originalType === "DEPOSIT";
+  const isNewDeposit = type === "DEPOSIT";
 
   const paymentTypeHandlers = {
     CARD: {
@@ -127,54 +136,119 @@ export async function updatePayment({
     throw new Error("Invalid payment type");
   }
 
-  // UPDATE PAYMENT (Cleaner)
-  const updatedPayment = await db.payment.update({
-    where: { id },
-    data: {
-      type,
-      date: new Date(date),
-      notes,
-      amount,
-      ...paymentTypeHandlers[type],
-    },
-  });
-
-  console.log("Updated payment:", updatedPayment);
-
-  // FETCH INVOICE
-  const invoice = await db.invoice.findUnique({
-    where: { id: updatedPayment.invoiceId! },
-  });
-  if (!invoice) throw new Error("Invoice not found");
-
-  // FETCH ALL PAYMENTS
-  const payments = await db.payment.findMany({
-    where: { invoiceId: updatedPayment.invoiceId },
-    orderBy: { createdAt: "asc" },
-  });
-
-  // RECALCULATE dueAfterPayment
-  let cumulativePaid = 0;
-
-  for (const p of payments) {
-    cumulativePaid += Number(p.amount);
-    const dueAfterPayment = Number(invoice.grandTotal) - cumulativePaid;
-
-    await db.payment.update({
-      where: { id: p.id },
-      data: { dueAfterPayment },
+  //  Use transaction to ensure atomicity
+  await db.$transaction(async (tx) => {
+    // UPDATE PAYMENT
+    const updatedPayment = await tx.payment.update({
+      where: { id },
+      data: {
+        type,
+        date: new Date(date),
+        notes,
+        amount,
+        ...paymentTypeHandlers[type],
+      },
     });
-  }
 
-  // UPDATE INVOICE DUE
-  await db.invoice.update({
-    where: { id: invoice.id },
-    data: {
-      due: Number(invoice.grandTotal) - cumulativePaid,
-    },
+    // console.log("Updated payment:", updatedPayment);
+
+    // FETCH INVOICE
+    const invoice = await tx.invoice.findUnique({
+      where: { id: updatedPayment.invoiceId! },
+    });
+    if (!invoice) throw new Error("Invoice not found");
+
+    //  Handle deposit field changes in invoice
+    if (isOriginalDeposit && isNewDeposit) {
+      // Editing deposit amount - adjust invoice deposit
+      const depositDifference = amount - originalAmount;
+      await tx.invoice.update({
+        where: { id: invoice.id },
+        data: {
+          deposit: {
+            increment: depositDifference,
+          },
+        },
+      });
+    } else if (isOriginalDeposit && !isNewDeposit) {
+      // Converting deposit to regular payment
+      await tx.invoice.update({
+        where: { id: invoice.id },
+        data: {
+          deposit: {
+            decrement: originalAmount,
+          },
+          totalPayment: {
+            increment: amount,
+          },
+        },
+      });
+    } else if (!isOriginalDeposit && isNewDeposit) {
+      // Converting regular payment to deposit
+      await tx.invoice.update({
+        where: { id: invoice.id },
+        data: {
+          totalPayment: {
+            decrement: originalAmount,
+          },
+          deposit: {
+            increment: amount,
+          },
+        },
+      });
+    } else {
+      // Regular payment edit - adjust totalPayment
+      const paymentDifference = amount - originalAmount;
+      await tx.invoice.update({
+        where: { id: invoice.id },
+        data: {
+          totalPayment: {
+            increment: paymentDifference,
+          },
+        },
+      });
+    }
+
+    // FETCH ALL PAYMENTS for recalculation
+    const payments = await tx.payment.findMany({
+      where: { invoiceId: updatedPayment.invoiceId },
+      orderBy: { createdAt: "asc" },
+    });
+
+    //  RECALCULATE dueAfterPayment for all payments
+    let cumulativePaid = 0;
+    let cumulativeDeposit = 0;
+
+    for (const p of payments) {
+      if (p.type === "DEPOSIT") {
+        cumulativeDeposit += Number(p.amount);
+      } else {
+        cumulativePaid += Number(p.amount);
+      }
+
+      // Due
+      const dueAfterPayment =
+        Number(invoice.grandTotal) - (cumulativeDeposit + cumulativePaid);
+
+      await tx.payment.update({
+        where: { id: p.id },
+        data: { dueAfterPayment },
+      });
+    }
+
+    //  UPDATE INVOICE DUE
+    const finalDue =
+      Number(invoice.grandTotal) - (cumulativeDeposit + cumulativePaid);
+    await tx.invoice.update({
+      where: { id: invoice.id },
+      data: {
+        due: finalDue,
+      },
+    });
   });
 
   revalidatePath("/estimate");
+  revalidatePath("/dashboard/clients");
 
-  return { type: "success", data: updatedPayment };
+  return { type: "success", data: { id, type, amount } };
 }
