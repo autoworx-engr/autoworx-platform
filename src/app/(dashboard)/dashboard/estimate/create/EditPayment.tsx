@@ -11,66 +11,37 @@ import {
   DialogTitle,
 } from "@/components/Dialog";
 import Selector from "@/components/Selector";
-
 import { SlimInput } from "@/components/SlimInput";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { cn } from "@/lib/cn";
-import { errorToast } from "@/lib/toast";
+import { errorToast, successToast } from "@/lib/toast";
+import { useEstimateCreateStore } from "@/stores/estimate-create";
 import { useListsStore } from "@/stores/lists";
 import { PaymentMethod } from "@prisma/client";
 import { SquarePen } from "lucide-react";
 import moment from "moment-timezone";
-import { useState, useTransition } from "react";
-import toast from "react-hot-toast";
+import { useEffect, useState, useTransition } from "react";
 
-// type EditPaymentModalProps = {
-//   paymentData: {
-//     invoicesWithFull;
-//     allTransactionEntries;
-//   };
-// };
+type EditPaymentModalProps = {
+  mergedPaymentData: any;
+};
 
 export default function EditPaymentModal({
-  allTransactionEntries,
-  invoicesWithFull,
-}: {
-  invoicesWithFull: any;
-  allTransactionEntries: any;
-}) {
+  mergedPaymentData,
+}: EditPaymentModalProps) {
   const { paymentMethods } = useListsStore();
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
 
-  const mergedPaymentData = {
-    id: invoicesWithFull?.[0]?.id,
-    invoiceId: invoicesWithFull?.[0]?.id,
-    amount: allTransactionEntries?.[0]?.amount || 0,
-    date: allTransactionEntries?.[0]?.date || new Date(),
-    notes:
-      allTransactionEntries?.[0]?.notes || invoicesWithFull?.[0]?.notes || "",
-    type:
-      // invoicesWithFull?.[0]?.paymentMethod ||
-      allTransactionEntries?.[0]?.type || "CARD",
-    card: {
-      creditCard: invoicesWithFull?.[0]?.paymentMethodInfo?.creditCard || "",
-      cardType: invoicesWithFull?.[0]?.paymentMethodInfo?.cardType || "",
-    },
-    checkNumber: invoicesWithFull?.[0]?.paymentMethodInfo?.checkNumber || "",
-    cashReceived: invoicesWithFull?.[0]?.paymentMethodInfo?.cashReceived || "",
-    deposit: invoicesWithFull?.[0]?.paymentMethodInfo?.depositAmount || 0,
-    depositMethod:
-      invoicesWithFull?.[0]?.paymentMethodInfo?.depositMethod || "",
-    depositNotes: invoicesWithFull?.[0]?.paymentMethodInfo?.depositNotes || "",
-    paymentMethod: invoicesWithFull?.[0]?.paymentMethod || null,
-    paymementId: invoicesWithFull?.[0]?.paymentId || null,
-  };
+  const {
+    setTotalPayment,
+    setDeposit,
+    setDue,
+    grandTotal,
+    deposit: currentDeposit,
+    totalPayment: currentTotalPayment,
+  } = useEstimateCreateStore();
 
-  console.log("✅ Invoices with Full:", invoicesWithFull);
-  console.log("✅ All Transaction Entries:", allTransactionEntries);
-
-  console.log("✅ Merged Payment Data:", mergedPaymentData);
-
-  // const [method, setMethod] = useState(mergedPaymentData.type);
   const [method, setMethod] = useState(() => {
     const { card } = mergedPaymentData || {};
     if (card?.cardType) return "CARD";
@@ -82,40 +53,77 @@ export default function EditPaymentModal({
       return mergedPaymentData.paymentMethod;
     return "OTHER";
   });
-  console.log("payment method ==>", method);
+
   const [date, setDate] = useState<Date>(new Date(mergedPaymentData.date));
   const [amount, setAmount] = useState(mergedPaymentData.amount);
   const [notes, setNotes] = useState(mergedPaymentData.notes);
-  const [paymentMethodInput, setPaymentMethodInput] = useState("");
 
-  const [card, setCard] = useState(mergedPaymentData.card.creditCard);
-  const [cardType, setCardType] = useState(
-    mergedPaymentData.card.cardType || "MASTERCARD"
+  const [paymentMethodInput, setPaymentMethodInput] = useState("");
+  //  OTHER payment method, load the actual payment method
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(
+    () => {
+      if (
+        mergedPaymentData.paymentMethod === "OTHER" &&
+        mergedPaymentData.otherPaymentMethodId
+      ) {
+        const pm = paymentMethods.find(
+          (p) => p.id === mergedPaymentData.otherPaymentMethodId
+        );
+        return pm || null;
+      }
+      return null;
+    }
   );
-  const [check, setCheck] = useState(mergedPaymentData.checkNumber);
-  const [cash, setCash] = useState(mergedPaymentData.cashReceived);
-  const [deposit, setDeposit] = useState(mergedPaymentData.deposit);
+  const [card, setCard] = useState(mergedPaymentData?.card?.creditCard || "");
+  const [cardType, setCardType] = useState(
+    mergedPaymentData?.card?.cardType || "MASTERCARD"
+  );
+  const [check, setCheck] = useState(mergedPaymentData.checkNumber || "");
+  const [cash, setCash] = useState(mergedPaymentData.cashReceived || "");
   const [depositMethod, setDepositMethod] = useState(
-    mergedPaymentData.depositMethod
+    mergedPaymentData.depositMethod || ""
   );
   const [depositNotes, setDepositNotes] = useState(
-    mergedPaymentData.depositNotes
+    mergedPaymentData.depositNotes || ""
   );
 
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(
-    mergedPaymentData.paymentMethod
-  );
   const [openPaymentMethod, setOpenPaymentMethod] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      // Determine the method type
+      const methodType = mergedPaymentData.paymentMethod || "OTHER";
+      setMethod(methodType);
+
+      setDate(new Date(mergedPaymentData.date));
+      setAmount(mergedPaymentData.amount);
+      setNotes(mergedPaymentData.notes || "");
+      setCard(mergedPaymentData?.card?.creditCard || "");
+      setCardType(mergedPaymentData?.card?.cardType || "MASTERCARD");
+      setCheck(mergedPaymentData.checkNumber || "");
+      setCash(mergedPaymentData.cashReceived || "");
+      setDepositMethod(mergedPaymentData.depositMethod || "");
+      setDepositNotes(mergedPaymentData.depositNotes || "");
+
+      // Load OTHER payment method properly
+      if (methodType === "OTHER" && mergedPaymentData.otherPaymentMethodId) {
+        const pm = paymentMethods.find(
+          (p) => p.id === mergedPaymentData.otherPaymentMethodId
+        );
+        setPaymentMethod(pm || null);
+      } else {
+        setPaymentMethod(null);
+      }
+    }
+  }, [open, mergedPaymentData, paymentMethods]);
 
   async function handleNewPaymentMethod() {
     try {
       const res = await newPaymentMethod(paymentMethodInput);
-
       if (res.type === "success") {
         setPaymentMethodInput("");
         setPaymentMethod(res.data);
         setOpenPaymentMethod(false);
-
         useListsStore.setState({
           paymentMethods: [...paymentMethods, res.data],
         });
@@ -134,77 +142,91 @@ export default function EditPaymentModal({
     }
   }
 
-  // ✅ Handle save
-  // const handleSave = () => {
-  //   startTransition(() => {
-  //     const updatedData = {
-  //       transactionId: mergedPaymentData.id,
-  //       invoiceId: mergedPaymentData.invoiceId,
-  //       amount: parseFloat(amount.toString()),
-  //       date,
-  //       notes,
-  //       type: method,
-  //       paymentInfo:
-  //         method === "CARD"
-  //           ? { cardType, creditCard: card }
-  //           : method === "CHECK"
-  //             ? { checkNumber: check }
-  //             : method === "CASH"
-  //               ? { cashReceived: cash }
-  //               : method === "OTHER"
-  //                 ? { paymentMethodId: paymentMethod?.id }
-  //                 : method === "DEPOSIT"
-  //                   ? {
-  //                       depositAmount: deposit,
-  //                       depositMethod,
-  //                       depositNotes,
-  //                     }
-  //                   : {},
-  //     };
-
-  //     console.log("✅ Updated merged payment:", updatedData);
-
-  //     // Here you’ll send this updatedData to your update API endpoint
-  //     setOpen(false);
-  //   });
-  // };
-
   const handleSave = () => {
     startTransition(async () => {
       try {
+        let additionalData = {};
+        switch (method) {
+          case "CARD":
+            additionalData = { cardType, creditCard: card };
+            break;
+          case "CHECK":
+            additionalData = { checkNumber: check };
+            break;
+          case "CASH":
+            additionalData = { receivedCash: cash };
+            break;
+          case "OTHER":
+            additionalData = { paymentMethodId: paymentMethod?.id };
+            break;
+          case "DEPOSIT":
+            additionalData = { depositMethod, depositNotes };
+            break;
+          default:
+            additionalData = {};
+        }
+
         const payload = {
-          id: Number(mergedPaymentData.paymementId), // payment ID
+          id: Number(mergedPaymentData.id),
           type: method,
           date,
           notes,
-          amount: parseFloat(amount.toString()),
-          additionalData:
-            method === "CARD"
-              ? { cardType, creditCard: card }
-              : method === "CHECK"
-                ? { checkNumber: check }
-                : method === "CASH"
-                  ? { receivedCash: cash }
-                  : method === "OTHER"
-                    ? { paymentMethodId: paymentMethod?.id }
-                    : method === "DEPOSIT"
-                      ? {
-                          depositMethod,
-                          depositNotes,
-                        }
-                      : {},
+          amount: parseFloat(amount),
+          additionalData,
         };
 
-        console.log("🔄 Sending Payload To updatePayment:", payload);
+        const originalPaymentAmount = mergedPaymentData.amount;
+        const originalPaymentType = mergedPaymentData.paymentMethod;
+
+        // Check if we're dealing with deposits
+        const isOriginalDeposit = originalPaymentType === "DEPOSIT";
+        const isNewDeposit = method === "DEPOSIT";
 
         const res = await updatePayment(payload);
+        if (res?.type === "success") {
+          // Handle different scenarios
+          if (isOriginalDeposit && isNewDeposit) {
+            // Editing a deposit amount
+            const depositDifference =
+              parseFloat(amount) - originalPaymentAmount;
+            const newDeposit = currentDeposit + depositDifference;
+            setDeposit(newDeposit);
 
-        if (res.type === "success") {
-          console.log("🎉 Payment Updated:", res.data);
-          toast.success("Payment updated successfully");
+            const newDue = grandTotal - (newDeposit + currentTotalPayment);
+            setDue(newDue);
+          } else if (isOriginalDeposit && !isNewDeposit) {
+            // Converting deposit to regular payment
+            const newDeposit = currentDeposit - originalPaymentAmount;
+            setDeposit(newDeposit);
+
+            const newTotalPayment = currentTotalPayment + parseFloat(amount);
+            setTotalPayment(newTotalPayment);
+
+            const newDue = grandTotal - (newDeposit + newTotalPayment);
+            setDue(newDue);
+          } else if (!isOriginalDeposit && isNewDeposit) {
+            // Converting regular payment to deposit
+            const newTotalPayment = currentTotalPayment - originalPaymentAmount;
+            setTotalPayment(newTotalPayment);
+
+            const newDeposit = currentDeposit + parseFloat(amount);
+            setDeposit(newDeposit);
+
+            const newDue = grandTotal - (newDeposit + newTotalPayment);
+            setDue(newDue);
+          } else {
+            // Editing regular payment
+            const amountDifference = parseFloat(amount) - originalPaymentAmount;
+            const newTotalPayment = currentTotalPayment + amountDifference;
+
+            setTotalPayment(newTotalPayment);
+
+            const newDue = grandTotal - (currentDeposit + newTotalPayment);
+            setDue(newDue);
+          }
+
+          successToast("Payment updated successfully");
           setOpen(false);
-        } else {
-          errorToast(res.message || "Update failed");
         }
       } catch (err) {
         console.error(err);
@@ -217,10 +239,9 @@ export default function EditPaymentModal({
     <Dialog open={open} onOpenChange={setOpen}>
       <button
         onClick={() => setOpen(true)}
-        className="text-[#6571FF] underline flex items-center gap-1"
+        className="flex items-center gap-1 text-[#6571FF] underline"
       >
-        <SquarePen className="w-5 h-5" />
-        Edit Payment
+        <SquarePen className="h-5 w-5" />
       </button>
 
       <DialogContent className="max-w-xl">
@@ -229,7 +250,7 @@ export default function EditPaymentModal({
           <DialogClose />
         </DialogHeader>
 
-        <form className="space-y-6 mt-5">
+        <form className="mt-5 space-y-6">
           {/* Type Buttons */}
           <div className="flex flex-wrap gap-2">
             {["CARD", "CHECK", "CASH", "OTHER", "DEPOSIT"].map((t) => (
@@ -263,7 +284,6 @@ export default function EditPaymentModal({
               name="amount"
               type="number"
               value={amount}
-              // readonly={true}
               onChange={(e) => setAmount(e.target.value)}
             />
           </div>
@@ -352,32 +372,33 @@ export default function EditPaymentModal({
           {method === "DEPOSIT" && (
             <>
               <SlimInput
-                label="Deposit Amount"
-                name="deposit"
-                value={deposit}
-                onChange={(e) => setDeposit(e.target.value)}
-              />
-              <SlimInput
                 label="Deposit Method"
                 name="depositMethod"
                 value={depositMethod}
                 onChange={(e) => setDepositMethod(e.target.value)}
               />
-              <textarea
-                className="mt-3 w-full rounded-md border p-2 outline-none"
-                placeholder="Deposit Notes"
-                value={depositNotes}
-                onChange={(e) => setDepositNotes(e.target.value)}
-              />
+              <div className="mt-3">
+                <label className="mb-1 block text-sm font-medium">
+                  Deposit Notes
+                </label>
+                <textarea
+                  className="w-full rounded-md border p-2 outline-none"
+                  placeholder="Deposit Notes"
+                  value={depositNotes}
+                  onChange={(e) => setDepositNotes(e.target.value)}
+                />
+              </div>
             </>
           )}
 
-          <textarea
-            className="mt-3 w-full rounded-md border p-2 outline-none"
-            placeholder="Notes"
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-          />
+          {method !== "DEPOSIT" && (
+            <textarea
+              className="mt-3 w-full rounded-md border p-2 outline-none"
+              placeholder="Notes"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+            />
+          )}
 
           <DialogFooter className="mt-5 flex justify-end gap-3">
             <button
@@ -393,7 +414,7 @@ export default function EditPaymentModal({
               onClick={handleSave}
               className="rounded-md bg-[#6571FF] px-5 py-2 text-white disabled:bg-gray-400"
             >
-              Save Changes
+              {pending ? "Saving..." : "Save Changes"}
             </button>
           </DialogFooter>
         </form>
