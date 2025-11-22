@@ -99,9 +99,9 @@ export async function POST(
       if (!client) {
         client = await db.client.create({
           data: {
-            firstName: body.From.replace("+", ""),
+            firstName: from,
             lastName: " ",
-            mobile: body.From.replace("+", ""),
+            mobile: from,
             companyId: infobipConfig.companyId,
           },
           include: {
@@ -151,7 +151,7 @@ export async function POST(
         });
 
         // Update chat track
-        await updateNewSMSChatTrack({
+        updateNewSMSChatTrack({
           clientId: client.id,
           smsLastMessage: messageText,
           lastMessageBy: "Client",
@@ -169,15 +169,15 @@ export async function POST(
         pusher.trigger(channelName, "client", { count: totalUnReadMessages });
 
         // Send Pusher message for real-time updates
-        await receiveTwiloMessage(clientSMS);
+        receiveTwiloMessage(clientSMS);
 
         // Send client mail or SMS notification
-        await sendClientMailOrSMSNotify(client.id);
+        sendClientMailOrSMSNotify(client.id);
 
         // Trigger pipeline automation if applicable
         try {
           if (client.Lead?.id && client.Lead?.columnId) {
-            await updatePipelineAutomationTriggerWithToken({
+            updatePipelineAutomationTriggerWithToken({
               companyId: client.companyId,
               condition: "MESSAGE_RECEIVED_CLIENT",
               leadId: client.Lead.id,
