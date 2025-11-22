@@ -7,7 +7,7 @@ import { sendPushNotification } from "./sendPushNotification";
 import sendNotificationByEmail from "./sendNotificationByEmail";
 import sendNotificationBySms from "./sendNotificationBySms";
 
-type SendUserNotificationsParams = {
+export type SendUserNotificationsParams = {
   userId: number;
   userName: string;
   userPhoneNo: string;
@@ -85,6 +85,7 @@ export async function sendUserNotifications({
         userPhoneNo,
       });
     }
+    return { success: true };
   } catch (error) {
     console.error("Error sending user notification:", error);
     // throw error;
