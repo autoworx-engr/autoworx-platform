@@ -19,7 +19,6 @@ export const getNotificationSetting = async ({
         email_enabled: true,
         push_enabled: true,
         text_enabled: true,
-        notification_type: true,
       },
     });
     return notificationSetting as {
