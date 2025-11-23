@@ -235,16 +235,17 @@ export default function RefundModal({
           <button
             onClick={openRefundDialog}
             type="button"
-            className={`flex items-center gap-2 rounded-md px-3 py-2 transition-all sm:px-4 sm:py-2 text-sm sm:text-base${
-              isDisabled ? "cursor-not-allowed opacity-50" : ""
-            } ${
-              hasRefund
-                ? "border border-[#6571FF] bg-white text-[#6571FF] hover:bg-blue-50"
-                : "border border-[#6571FF] bg-[#6571FF] text-white hover:bg-blue-600"
-            }`}
+            className={`
+                flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5 active:translate-y-0
+                ${isDisabled ? "cursor-not-allowed opacity-50" : ""} 
+                ${hasRefund
+                ? "border border-slate-200 bg-white text-slate-700 hover:text-[#6571FF] hover:border-[#6571FF]"
+                : "bg-gradient-to-r from-[#6571FF] to-[#5a66ee] text-white shadow-[#6571FF]/20"
+              }
+            `}
             disabled={isDisabled}
           >
-            <span>Refund</span>
+            <span>{hasRefund ? "Manage Refund" : "Refund"}</span>
             {hasRefund && <Settings size={16} color="#6571FF" />}
           </button>
         </DialogTrigger>
@@ -252,7 +253,7 @@ export default function RefundModal({
         <DialogContent className="w-[95vw] max-w-xl max-h-[90vh] overflow-y-auto [&>button]:hidden p-4 sm:p-6">
           <form>
             <DialogHeader>
-              <DialogTitle className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-lg sm:text-xl">
+              <DialogTitle className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-lg sm:text-xl text-gray-600">
                 <span>{hasRefund ? "Manage Refund" : "Refund"}</span>
                 {hasRefund && (
                   <button
@@ -388,16 +389,16 @@ export default function RefundModal({
                 />
               </div>
 
-              <DialogFooter className="mt-5 flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
+              <DialogFooter className="mt-8 flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 border-t border-slate-100 dark:border-slate-800 pt-6">
                 <button
                   type="button"
-                  className="w-full sm:w-auto rounded-md border-2 border-slate-400 p-2 px-5"
+                  className="w-full sm:w-auto rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-2.5 px-6 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
                   onClick={() => setOpen(false)}
                 >
                   Cancel
                 </button>
                 <button
-                  className="w-full sm:w-auto rounded-md bg-blue-500 p-2 px-5 text-white disabled:bg-gray-400"
+                  className="w-full sm:w-auto rounded-xl bg-gradient-to-r from-[#6571FF] to-[#5a66ee] p-2.5 px-8 text-sm font-bold text-white shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/40 hover:-translate-y-0.5 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
                   formAction={() => startTransition(handleSubmit)}
                   disabled={pending}
                   type="submit"

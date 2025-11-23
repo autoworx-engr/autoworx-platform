@@ -65,9 +65,9 @@ export default async function Payout({
   // If showing breakdown and user has salary, use UnifiedPayoutCard
   if (showBreakdown && earningsBreakdown?.hasSalary) {
     return (
-      <div className="grid grid-cols-1 gap-3 lg:flex lg:grid-cols-3 lg:gap-6">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <UnifiedPayoutCard
-          title="Previous Month Payout"
+          title="Previous Month"
           amount={previousMonthEarnings}
           percentage={previousMonthPercentageChange}
           increased={previousMonthIncreased}
@@ -78,7 +78,7 @@ export default async function Payout({
           }}
         />
         <UnifiedPayoutCard
-          title="Current Month Payout"
+          title="Current Month"
           amount={currentMonthEarnings}
           percentage={currentMonthPercentageChange}
           increased={currentMonthIncreased}
@@ -87,15 +87,18 @@ export default async function Payout({
             salary: earningsBreakdown.salary.current,
             showBreakdown: true,
           }}
+          // Highlight current month slightly
+          customStyles="ring-2 ring-[#6571FF]/20 dark:ring-[#6571FF]/20 shadow-xl shadow-indigo-100 dark:shadow-none"
         />
         <UnifiedPayoutCard
-          title="YTD Payout"
+          title="Year To Date"
           amount={totalEarnings}
           breakdown={{
             workBased: earningsBreakdown.workBased.total,
             salary: earningsBreakdown.salary.total,
             showBreakdown: true,
           }}
+          hidePercentage
         />
       </div>
     );
@@ -103,18 +106,19 @@ export default async function Payout({
 
   // Default display using regular PayoutCard
   return (
-    <div className="grid grid-cols-1 gap-3 lg:flex lg:grid-cols-3 lg:gap-6">
+    <div className="grid grid-cols-1 gap-6">
       <PayoutCard
-        title="Previous Month Payout"
+        title="Previous Month"
         amount={previousMonthEarnings}
         percentage={previousMonthPercentageChange}
         increased={previousMonthIncreased}
       />
       <PayoutCard
-        title="Current Month Payout"
+        title="Current Month"
         amount={currentMonthEarnings}
         percentage={currentMonthPercentageChange}
         increased={currentMonthIncreased}
+        customStyles="ring-2 ring-[#6571FF]/20 shadow-lg shadow-indigo-100"
       />
       <PayoutCard title="YTD Payout" amount={totalEarnings} />
     </div>
