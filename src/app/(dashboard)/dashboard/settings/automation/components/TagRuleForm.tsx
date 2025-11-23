@@ -329,6 +329,16 @@ const TagRuleForm = ({
         newState[field] = value;
       }
 
+      
+      if (
+        field === "communicationType" &&
+        prev.communicationType !== value
+       
+      ) {
+        if (value === "EMAIL") newState.templateType = "EMAIL";
+        else if (value === "SMS") newState.templateType = "SMS";
+      }
+
       // If condition_type changed, reset targetColumnId and columnIds
       if (field === "condition_type" && prev.condition_type !== value) {
         newState.targetColumnId = null;
@@ -345,6 +355,13 @@ const TagRuleForm = ({
 
       return newState as Rule;
     });
+
+    
+    if (field === "communicationType" ) {
+      if (value === "EMAIL") setActiveTemplate("EMAIL");
+      else if (value === "SMS") setActiveTemplate("SMS");
+     
+    }
 
     if (error[field]) {
       setError((prev) => {
@@ -366,9 +383,11 @@ const TagRuleForm = ({
 
   // Handle template toggle
   const handleTemplateToggle = (template: "SMS" | "EMAIL") => {
+    // user manually selected template -> prevent automatic overrides
     setActiveTemplate(template);
-
-    
+  
+    // Keep formData.templateType in sync with manual selection (UI only)
+    setFormData((prev) => ({ ...prev, templateType: template }));
   };
 
   // Handle file attachment
