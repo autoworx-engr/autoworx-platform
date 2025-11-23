@@ -34,6 +34,7 @@ import {
   convertSecondsToTime,
   convertTimeToSeconds,
 } from "@/utils/timeConvertToSeconds";
+import { errorToast } from "@/lib/toast";
 
 type RuleFormProps = {
   mode: "create" | "edit" | undefined;
@@ -124,6 +125,8 @@ const TagRuleForm = ({
     Number(companyId),
     true
   );
+
+  
   useEffect(() => {
     const loadData = async () => {
       if (isEdit && id && data && data.data) {
@@ -372,10 +375,10 @@ const TagRuleForm = ({
     }
 
     // Clear subject-related errors when subject field changes
-    if (field === "subject" && (error.emailSubject || error.emailBody)) {
+    if (field === "subject" && (error.subject || error.emailBody)) {
       setError((prev) => {
         const newErrors = { ...prev };
-        delete newErrors.emailSubject;
+        delete newErrors.subject;
         return newErrors;
       });
     }
@@ -383,10 +386,9 @@ const TagRuleForm = ({
 
   // Handle template toggle
   const handleTemplateToggle = (template: "SMS" | "EMAIL") => {
-    // user manually selected template -> prevent automatic overrides
+
     setActiveTemplate(template);
   
-    // Keep formData.templateType in sync with manual selection (UI only)
     setFormData((prev) => ({ ...prev, templateType: template }));
   };
 
@@ -455,9 +457,9 @@ const TagRuleForm = ({
 
         if (isSubjectEmpty && isBodyEmpty) {
           newErrors.emailBody = "Email subject and body are required.";
-          newErrors.emailSubject = "Subject is required.";
+          newErrors.subject = "Subject is required.";
         } else if (isSubjectEmpty) {
-          newErrors.emailSubject = "Subject is required.";
+          newErrors.subject = "Subject is required.";
           newErrors.emailBody = "Email subject is required.";
         } else if (isBodyEmpty) {
           newErrors.emailBody = "Email body is required.";
@@ -468,9 +470,44 @@ const TagRuleForm = ({
         //   errorToast(newError.businessEmail);
         // }
       }
+
+      if (formData.communicationType === "BOTH") {
+            if (!formData.subject || !formData.subject.trim()) {
+              newErrors.subject = "Subject is required.";
+              newErrors.emailBody = "Subject is required.";
+            }
+      
+            if (!formData.emailBody || !formData.emailBody.trim()) {
+              newErrors.emailBody = "Email body is required.";
+            }
+            if (!formData.smsBody || !formData.smsBody.trim()) {
+              newErrors.smsBody = "SMS body is required.";
+            }
+      
+            // if (company?.email === null) {
+            //   newErrors.businessEmail = "You haven't added your business email.";
+            //   errorToast(newErrors.businessEmail);
+            // }
+      
+            // if (twilio === null) {
+            //   newErrors.twilio = "SMS gateway not available";
+            //   errorToast(newErrors.twilio);
+            // }
+          }
+          if (formData.communicationType === "SMS") {
+            if (!formData.smsBody || !formData.smsBody.trim()) {
+              newErrors.smsBody = "SMS body is required.";
+            }
+      
+            // if (twilio === null) {
+            //   newErrors.twilio = "";
+            //   errorToast(newErrors.twilio);
+            // }
+          }
     }
     if (Object.keys(newErrors).length > 0) {
       setError(newErrors);
+      return;
     }
 
     // Parse selected timeDelay (label or option id) without mutating form state
@@ -760,7 +797,7 @@ const TagRuleForm = ({
                       handleFileAttachment={handleFileAttachment}
                       attachmentType="sms"
                       error={
-                        error.smsBody || error.emailBody || error.emailSubject
+                        error.smsBody || error.emailBody || error.subject
                       }
                       maxLength={maxLength}
                       characterLength={length}
@@ -790,9 +827,9 @@ const TagRuleForm = ({
                       handleFileAttachment={handleFileAttachment}
                       attachmentType="email"
                       error={
-                        error.emailBody || error.emailSubject || error.smsBody
+                        error.emailBody || error.subject || error.smsBody
                       }
-                      subjectError={!!error.emailSubject}
+                      subjectError={!!error.subject}
                       maxLength={maxLength}
                       characterLength={length}
                       isLimitExceeded={isLimitExceeded}
