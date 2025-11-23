@@ -29,6 +29,7 @@ import { useCreateTagAutomationRule } from "@/hooks/tag-automation/useCreateTagA
 
 import { useFindOneTagAutomationRule } from "@/hooks/tag-automation/useFindOneTagAutomationRule";
 import { useUpdateTagAutomationRule } from "@/hooks/tag-automation/useUpdateTagAutomationRule";
+import { useAllTagAutomationRules } from "@/hooks/tag-automation/useAllTagAutomationRules";
 import {
   convertSecondsToTime,
   convertTimeToSeconds,
@@ -118,7 +119,7 @@ const TagRuleForm = ({
   );
   const { mutate: updateRule, isPending: isUpdatePending } =
     useUpdateTagAutomationRule();
-  // Fetch all existing tag automation rules so we can exclude used tags
+
   const { data: allTagAutomationData } = useAllTagAutomationRules(
     Number(companyId),
     true
@@ -254,7 +255,6 @@ const TagRuleForm = ({
     title: tag.name,
   }));
 
-  // Compute used tag ids for the same condition_type
   const usedTagIds = new Set<number>();
   allTagAutomationData?.data.forEach((rule: any) => {
     try {
@@ -578,7 +578,6 @@ const TagRuleForm = ({
             placeholder="Select a condition"
             error={error.condition_type}
           />
-
           {formData.pipelineType !== "" && (
             <MultiSelect
               options={

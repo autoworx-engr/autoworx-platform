@@ -9,6 +9,7 @@ import { Select } from "antd";
 import { useEffect, useState } from "react";
 import EmailTemplates from "./EmailTemplates";
 import { successToast } from "@/lib/toast";
+import { DollarSign, FileText, Percent } from "lucide-react";
 
 interface CurrencyData {
   Code: string;
@@ -133,14 +134,21 @@ export default function EstimateAndInvoicePage() {
   };
 
   return (
-    <div className="grid w-full grid-cols-1 md:grid-cols-2 items-start gap-4 px-5">
-      <div className="space-y-4">
-        {/* Currency & Tax */}
-        <div>
-          <h2 className="mb-2 text-xl font-semibold">Tax & Service Fee</h2>
-          <div className="space-y-3 rounded-sm border bg-background p-5">
-            <div className="flex w-full flex-col items-center justify-between gap-4 lg:flex-row">
-              <div className="relative w-full md:w-1/2">
+    <div className="grid w-full grid-cols-1 md:grid-cols-2 items-start gap-8 p-1">
+      {/* LEFT COLUMN: Tax, Service Fee & Terms */}
+      <div className="space-y-6">
+        {/* Tax, Service Fee & Currency Card */}
+        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-lg">
+          <div className="flex items-center mb-4">
+            <DollarSign className="w-6 h-6 text-[#6571FF] mr-3" />
+            <h2 className="text-xl font-bold ">
+              Tax, Service Fee & Currency
+            </h2>
+          </div>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+              {/* Tax Amount */}
+              <div className="relative w-full">
                 <SlimInput
                   name="taxAmount"
                   value={tax.toString()}
@@ -154,11 +162,13 @@ export default function EstimateAndInvoicePage() {
                     }
                   }}
                 />
-                <span className="absolute bottom-1 right-1">%</span>
+                <span className="absolute bottom-1 right-3 text-gray-500">
+                  <Percent className="w-4 h-4" />
+                </span>
               </div>
 
-              {/* Service Fee */}
-              <div className="relative w-full md:w-1/2">
+              {/* Service Fee (Shop Supplies) */}
+              <div className="relative w-full">
                 <SlimInput
                   name="serviceFee"
                   value={serviceFee.toString()}
@@ -172,16 +182,20 @@ export default function EstimateAndInvoicePage() {
                     }
                   }}
                 />
-                <span className="absolute bottom-1 right-1">%</span>
+                <span className="absolute bottom-1 right-3 text-gray-500">
+                  <Percent className="w-4 h-4" />
+                </span>
               </div>
-              <div className="flex w-full md:w-1/2 flex-col items-start">
-                <div className="mb-1 px-2 text-sm font-medium sm:text-base">
+              
+              {/* Currency Select */}
+              <div className="flex w-full flex-col items-start">
+                <div className="mb-1 px-2 text-sm font-medium text-gray-700">
                   Currency
                 </div>
                 <Select
                   showSearch
                   value={currency}
-                  className="w-full"
+                  className="w-full [&_.ant-select-selector]:!h-10 [&_.ant-select-selector]:!rounded-lg [&_.ant-select-selector]:!border-gray-300 [&_.ant-select-selector]:!shadow-sm"
                   filterOption={(input, option) =>
                     (option?.value ?? " ")
                       .toLowerCase()
@@ -193,29 +207,38 @@ export default function EstimateAndInvoicePage() {
               </div>
             </div>
 
-            <div className="flex justify-end">
+            <div className="flex justify-end pt-2">
               <button
-                className="rounded-md bg-[#6571FF] px-10 py-1.5 text-white"
+                className="rounded-lg bg-[#6571FF] px-8 py-2 text-base font-medium text-white shadow-md hover:bg-[#5661FF] transition duration-150"
                 onClick={handleUpdateCurrency}
               >
-                Save
+                Save Changes
               </button>
             </div>
           </div>
         </div>
-        {/* Terms & Conditions */}
-        <div>
-          <h2 className="mb-2 text-xl font-semibold">Terms & Conditions</h2>
-          <div className="space-y-3 rounded-sm border bg-background p-5">
-            <div className="grid grid-cols-1 md:grid-cols-2 items-start gap-3">
+
+        {/* Terms & Conditions Card */}
+        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-lg">
+          <div className="flex items-center mb-4">
+            <FileText className="w-6 h-6 text-[#6571FF] mr-3" />
+            <h2 className="text-xl font-bold ">
+              Terms & Policy
+            </h2>
+          </div>
+          <div className="space-y-3">
+            <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2">
+              {/* Terms & Conditions Textarea */}
               <label className="block">
-                <div className="mb-1 px-2 font-medium">Terms & Conditions</div>
+                <div className="mb-1 px-1 font-medium ">
+                  Terms & Conditions
+                </div>
                 <div className="relative">
                   <textarea
-                    className={`h-60 w-full resize-none rounded-sm bg-background px-2 py-0.5 text-sm leading-6 outline-none ${
+                    className={`h-60 w-full resize-none rounded-lg bg-gray-50 px-3 py-2 text-sm leading-6 outline-none transition duration-150 ${
                       currentTermsLength > maxLength
-                        ? "border border-red-500"
-                        : "border border-primary-foreground border-slate-400"
+                        ? "border-2 border-red-500"
+                        : "border border-gray-300 focus:border-indigo-500"
                     }`}
                     name="terms"
                     value={
@@ -225,19 +248,21 @@ export default function EstimateAndInvoicePage() {
                       setTermPolicy({ ...termPolicy, terms: e.target.value })
                     }
                   />
-                  <div className="absolute bottom-3 right-3 text-xs font-medium text-gray-500 dark:text-gray-400">
+                  <div className={`absolute bottom-3 right-3 text-xs font-medium ${currentTermsLength > maxLength ? "text-red-500" : "text-gray-500"}`}>
                     {currentTermsLength} / {maxLength}
                   </div>
                 </div>
               </label>
+
+              {/* Policy Textarea */}
               <label className="block">
-                <div className="mb-1 px-2 font-medium">Policy</div>
+                <div className="mb-1 px-1 font-medium ">Policy</div>
                 <div className="relative">
                   <textarea
-                    className={`h-60 w-full resize-none rounded-sm bg-background px-2 py-0.5 text-sm leading-6 outline-none ${
+                    className={`h-60 w-full resize-none rounded-lg bg-gray-50 px-3 py-2 text-sm leading-6 outline-none transition duration-150 ${
                       currentPolicyLength > maxLength
-                        ? "border border-red-500"
-                        : "border border-primary-foreground border-slate-400"
+                        ? "border-2 border-red-500"
+                        : "border border-gray-300 focus:border-indigo-500"
                     }`}
                     name="policy"
                     value={termPolicy?.policy}
@@ -245,29 +270,32 @@ export default function EstimateAndInvoicePage() {
                       setTermPolicy({ ...termPolicy, policy: e.target.value })
                     }
                   />
-                  <div className="absolute bottom-3 right-3 text-xs font-medium text-gray-500 dark:text-gray-400">
+                  <div className={`absolute bottom-3 right-3 text-xs font-medium ${currentPolicyLength > maxLength ? "text-red-500" : "text-gray-500"}`}>
                     {currentPolicyLength} / {maxLength}
                   </div>
                 </div>
               </label>
             </div>
-            <div className="flex justify-end">
+            
+            <div className="flex justify-end pt-2">
               <button
                 disabled={disabled}
-                className={`rounded-md bg-[#6571FF] px-10 py-1.5 text-white ${
-                  disabled ? "cursor-not-allowed opacity-50" : ""
+                className={`rounded-lg px-8 py-2 text-base font-medium text-white shadow-md transition duration-150 ${
+                  disabled
+                    ? "cursor-not-allowed bg-gray-400 opacity-70"
+                    : "bg-[#6571FF] hover:bg-[#5661FF]"
                 }`}
                 onClick={handleUpdateTermsPolicy}
               >
-                Save
+                Save Terms & Policy
               </button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Email templates section */}
-      <div className="w-full space-y-4">
+      {/* RIGHT COLUMN: Email templates section */}
+      <div className="w-full space-y-6">
         <EmailTemplates />
       </div>
     </div>
