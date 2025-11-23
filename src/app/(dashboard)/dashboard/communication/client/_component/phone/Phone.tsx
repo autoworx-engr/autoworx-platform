@@ -43,7 +43,7 @@ export default async function Phone({ clientId }: { clientId: number }) {
 
   if (!client) return null;
   return (
-    <div className="mx-auto flex h-[90%] w-full max-w-md flex-col items-center justify-center rounded-lg bg-gray-100 px-2 py-6 shadow-lg">
+    <div className=" overflow-y-auto h-full w-full  rounded-2xl bg-gradient-to-br from-white via-slate-50/50 to-white  shadow-lg ring-1 ring-slate-900/5 flex flex-col px-4 pt-4">
       <CallList data={enrichedCalls} twilioNumber={phoneNumber ?? ""} />
       <SendCall client={client} phoneNumber={phoneNumber} provider={provider} />
     </div>

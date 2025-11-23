@@ -141,37 +141,101 @@ export default function SendCall({
 
   return (
     <>
-      <div className="mt-auto flex w-full gap-4">
+      <div className="mt-auto flex w-full gap-3">
+        {/* Setup Device Button */}
         <button
-          className={`w-full rounded-lg px-4 py-3 text-lg font-semibold text-white shadow transition ${
-            isDeviceReady ? "bg-green-600" : "bg-purple-700 hover:bg-purple-800"
+          className={`group relative overflow-hidden w-full rounded-xl px-4 py-3.5 text-base font-semibold text-white shadow-lg transition-all duration-300 ${
+            isDeviceReady
+              ? "bg-gradient-to-br from-emerald-500 to-teal-600 shadow-emerald-500/20 cursor-default"
+              : "bg-gradient-to-br from-[#6571FF] to-[#5563E8] shadow-[#6571FF]/20 hover:shadow-xl hover:shadow-[#6571FF]/30 hover:-translate-y-0.5 active:scale-95"
           }`}
           onClick={handleSetupDevice}
           disabled={isDeviceReady}
         >
-          {isDeviceReady ? "Device Ready ✓" : "Setup Device"}
+          {!isDeviceReady && (
+            <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+          )}
+          <div className="relative flex items-center justify-center gap-2">
+            {isDeviceReady ? (
+              <>
+                <svg
+                  className="h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2.5}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                Device Ready
+              </>
+            ) : (
+              "Setup Device"
+            )}
+          </div>
         </button>
+
+        {/* Make Call Button */}
         <button
-          className={`w-full rounded-lg px-4 py-3 text-lg font-semibold text-white shadow transition ${
+          className={`group relative overflow-hidden w-full rounded-xl px-4 py-3.5 text-base font-semibold text-white shadow-lg transition-all duration-300 ${
             isDeviceReady && !currentConnection
-              ? "bg-green-600 hover:bg-green-700"
-              : "cursor-not-allowed bg-gray-400"
+              ? "bg-gradient-to-br from-emerald-500 to-teal-600 shadow-emerald-500/20 hover:shadow-xl hover:shadow-emerald-500/30 hover:-translate-y-0.5 active:scale-95"
+              : "bg-slate-300 text-slate-500 cursor-not-allowed shadow-none"
           }`}
           onClick={makeCall}
           disabled={!isDeviceReady || !!currentConnection}
         >
-          Make Call
+          {isDeviceReady && !currentConnection && (
+            <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+          )}
+          <div className="relative flex items-center justify-center gap-2">
+            <svg
+              className="h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+              />
+            </svg>
+            Make Call
+          </div>
         </button>
+
+        {/* End Call Button */}
         <button
-          className={`w-full rounded-lg px-4 py-3 text-lg font-semibold text-white shadow transition ${
+          className={`group relative overflow-hidden w-full rounded-xl px-4 py-3.5 text-base font-semibold text-white shadow-lg transition-all duration-300 ${
             currentConnection
-              ? "bg-red-600 hover:bg-red-700"
-              : "cursor-not-allowed bg-gray-400"
+              ? "bg-gradient-to-br from-red-500 to-rose-600 shadow-red-500/20 hover:shadow-xl hover:shadow-red-500/30 hover:-translate-y-0.5 active:scale-95"
+              : "bg-slate-300 text-slate-500 cursor-not-allowed shadow-none"
           }`}
           onClick={endCall}
           disabled={!currentConnection}
         >
-          End Call
+          <div className="relative flex items-center justify-center gap-2">
+            <svg
+              className={`h-5 w-5 transition-transform duration-300 ${currentConnection ? "group-hover:rotate-90" : ""}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+            End Call
+          </div>
         </button>
       </div>
       <CallStatus callStatus={callStatus} callDuration={callDuration} />

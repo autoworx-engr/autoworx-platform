@@ -73,56 +73,143 @@ export default function IncomingCallAlert({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl">
-        <div className="mb-6 text-center">
-          <div className="mb-4 flex items-center justify-center">
-            <div
-              className={`h-20 w-20 rounded-full flex items-center justify-center ${
-                isConnected ? "bg-blue-500" : "bg-green-500 animate-pulse"
-              }`}
-            >
-              <svg
-                className="h-10 w-10 text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                />
-              </svg>
-            </div>
-          </div>
-          <h2 className="mb-2 text-2xl font-bold text-gray-800">
-            {isConnected ? "Call Connected" : "Incoming Call"}
-          </h2>
-          {callerName && (
-            <p className="text-xl font-semibold text-gray-800 mb-1">
-              {callerName}
-            </p>
-          )}
-          <p className="text-lg text-gray-600">{callerNumber}</p>
-          {isConnected && (
-            <p className="mt-2 text-3xl font-mono font-semibold text-blue-600">
-              {formatDuration(callDuration)}
-            </p>
-          )}
-        </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-slate-900/80 via-slate-800/80 to-slate-900/80 backdrop-blur-md animate-in fade-in duration-300">
+      <div className="w-full max-w-md mx-4 relative">
+        {/* Gradient glow effect */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#00b8b0]/20 to-[#0098da]/20 rounded-3xl blur-2xl"></div>
 
-        <div className="flex gap-4">
-          {!isConnected ? (
-            <>
+        {/* Main card with glassmorphism */}
+        <div className="relative bg-white/95 backdrop-blur-xl rounded-3xl p-8 shadow-2xl ring-1 ring-slate-900/5 animate-in zoom-in-95 duration-300">
+          {/* Decorative gradient bar */}
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#00b8b0] via-[#0098da] to-[#00b8b0] rounded-t-3xl"></div>
+
+          <div className="mb-8 text-center">
+            {/* Phone icon with gradient background */}
+            <div className="mb-6 flex items-center justify-center">
+              <div className="relative">
+                {/* Pulsing rings for incoming call */}
+                {!isConnected && (
+                  <>
+                    <div className="absolute inset-0 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 opacity-20 animate-ping"></div>
+                    <div className="absolute inset-0 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 opacity-20 animate-pulse"></div>
+                  </>
+                )}
+                <div
+                  className={`relative h-24 w-24 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 ${
+                    isConnected
+                      ? "bg-gradient-to-br from-blue-500 to-blue-600 shadow-blue-500/30"
+                      : "bg-gradient-to-br from-emerald-500 to-teal-600 shadow-emerald-500/30"
+                  }`}
+                >
+                  <svg
+                    className="h-12 w-12 text-white drop-shadow-md transition-transform duration-300 hover:scale-110"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                    />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            {/* Status text */}
+            <h2 className="mb-3 text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
+              {isConnected ? "Call Connected" : "Incoming Call"}
+            </h2>
+
+            {/* Caller name with subtle background */}
+            {callerName && (
+              <div className="mb-2 inline-block px-4 py-1.5 rounded-full bg-gradient-to-r from-slate-50 to-slate-100 ring-1 ring-slate-900/5">
+                <p className="text-lg font-semibold text-slate-800">
+                  {callerName}
+                </p>
+              </div>
+            )}
+
+            {/* Phone number */}
+            <p className="text-base text-slate-600 font-medium mt-1">
+              {callerNumber}
+            </p>
+
+            {/* Call duration with gradient */}
+            {isConnected && (
+              <div className="mt-4 inline-flex items-center px-6 py-3 rounded-2xl bg-gradient-to-r from-blue-50 to-cyan-50 ring-1 ring-blue-900/10">
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse"></div>
+                  <p className="text-3xl font-mono font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                    {formatDuration(callDuration)}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex gap-3">
+            {!isConnected ? (
+              <>
+                {/* Decline button */}
+                <button
+                  onClick={onReject}
+                  className="group flex-1 relative overflow-hidden rounded-xl bg-gradient-to-br from-red-500 to-rose-600 px-6 py-4 text-lg font-semibold text-white shadow-lg shadow-red-500/30 transition-all duration-300 hover:shadow-xl hover:shadow-red-500/40 hover:-translate-y-0.5 active:scale-95"
+                >
+                  <div className="relative flex items-center justify-center gap-2">
+                    <svg
+                      className="h-6 w-6 transition-transform duration-300 group-hover:rotate-90"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                    Decline
+                  </div>
+                </button>
+
+                {/* Accept button */}
+                <button
+                  onClick={onAccept}
+                  className="group flex-1 relative overflow-hidden rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 px-6 py-4 text-lg font-semibold text-white shadow-lg shadow-emerald-500/30 transition-all duration-300 hover:shadow-xl hover:shadow-emerald-500/40 hover:-translate-y-0.5 active:scale-95"
+                >
+                  {/* Shimmer effect */}
+                  <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+                  <div className="relative flex items-center justify-center gap-2">
+                    <svg
+                      className="h-6 w-6 transition-transform duration-300 group-hover:scale-110"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                    Accept
+                  </div>
+                </button>
+              </>
+            ) : (
               <button
                 onClick={onReject}
-                className="flex-1 rounded-lg bg-red-600 px-6 py-4 text-lg font-semibold text-white shadow-lg transition hover:bg-red-700 active:scale-95"
+                className="group w-full relative overflow-hidden rounded-xl bg-gradient-to-br from-red-500 to-rose-600 px-6 py-4 text-lg font-semibold text-white shadow-lg shadow-red-500/30 transition-all duration-300 hover:shadow-xl hover:shadow-red-500/40 hover:-translate-y-0.5 active:scale-95"
               >
-                <div className="flex items-center justify-center gap-2">
+                <div className="relative flex items-center justify-center gap-2">
                   <svg
-                    className="h-6 w-6"
+                    className="h-6 w-6 transition-transform duration-300 group-hover:rotate-90"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -134,54 +221,11 @@ export default function IncomingCallAlert({
                       d="M6 18L18 6M6 6l12 12"
                     />
                   </svg>
-                  Decline
+                  End Call
                 </div>
               </button>
-              <button
-                onClick={onAccept}
-                className="flex-1 rounded-lg bg-green-600 px-6 py-4 text-lg font-semibold text-white shadow-lg transition hover:bg-green-700 active:scale-95"
-              >
-                <div className="flex items-center justify-center gap-2">
-                  <svg
-                    className="h-6 w-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  Accept
-                </div>
-              </button>
-            </>
-          ) : (
-            <button
-              onClick={onReject}
-              className="w-full rounded-lg bg-red-600 px-6 py-4 text-lg font-semibold text-white shadow-lg transition hover:bg-red-700 active:scale-95"
-            >
-              <div className="flex items-center justify-center gap-2">
-                <svg
-                  className="h-6 w-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-                End Call
-              </div>
-            </button>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </div>
