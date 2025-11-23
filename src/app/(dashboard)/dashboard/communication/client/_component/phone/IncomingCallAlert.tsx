@@ -18,14 +18,46 @@ export default function IncomingCallAlert({
   callDuration,
 }: TProps) {
   const [callerNumber, setCallerNumber] = useState<string>("");
+  const [callerName, setCallerName] = useState<string>("");
+  const [isLoadingName, setIsLoadingName] = useState<boolean>(false);
 
   useEffect(() => {
-    if (incomingCall) {
-      // Get the caller's number from call parameters
+    const fetchCallerInfo = async () => {
+      if (!incomingCall) return;
+      
+      // Get the caller's number and name from call parameters
       const params = incomingCall.parameters;
       const from = params.From || "Unknown Number";
+      const clientName = params.ClientName || "";
+      
       setCallerNumber(from);
-    }
+      
+      // If we have the client name from Twilio params, use it
+      if (clientName) {
+        setCallerName(clientName);
+      } else if (from && from !== "Unknown Number") {
+        // For Infobip or if name not provided, fetch from API
+        setIsLoadingName(true);
+        try {
+          const response = await fetch(`/api/client/by-phone?phone=${encodeURIComponent(from)}`);
+          if (response.ok) {
+            const data = await response.json();
+            if (data.client) {
+              const name = data.client.firstName && data.client.lastName
+                ? `${data.client.firstName} ${data.client.lastName}`.trim()
+                : data.client.firstName || data.client.lastName || "";
+              setCallerName(name);
+            }
+          }
+        } catch (error) {
+          console.error("Failed to fetch caller info:", error);
+        } finally {
+          setIsLoadingName(false);
+        }
+      }
+    };
+    
+    fetchCallerInfo();
   }, [incomingCall]);
 
   if (!incomingCall) return null;
@@ -65,6 +97,11 @@ export default function IncomingCallAlert({
           <h2 className="mb-2 text-2xl font-bold text-gray-800">
             {isConnected ? "Call Connected" : "Incoming Call"}
           </h2>
+          {callerName && (
+            <p className="text-xl font-semibold text-gray-800 mb-1">
+              {callerName}
+            </p>
+          )}
           <p className="text-lg text-gray-600">{callerNumber}</p>
           {isConnected && (
             <p className="mt-2 text-3xl font-mono font-semibold text-blue-600">

@@ -65,6 +65,7 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
     // Generate a unique ID for this device instance
     return `device-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   });
+  const [wakeLock, setWakeLock] = useState<any>(null);
 
   // Get companyId from session
   useEffect(() => {
@@ -185,6 +186,79 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
     // Fallback to call.id if it's a property
     return call.id || null;
   };
+
+  // Request wake lock to keep screen on during call
+  const requestWakeLock = async () => {
+    try {
+      if ("wakeLock" in navigator) {
+        const lock = await (navigator as any).wakeLock.request("screen");
+        setWakeLock(lock);
+        console.log("🔒 [WakeLock] Screen wake lock acquired");
+
+        lock.addEventListener("release", () => {
+          console.log("🔓 [WakeLock] Screen wake lock released");
+        });
+      } else {
+        console.log("⚠️ [WakeLock] Wake Lock API not supported");
+      }
+    } catch (err) {
+      console.error("❌ [WakeLock] Failed to acquire wake lock:", err);
+    }
+  };
+
+  // Release wake lock
+  const releaseWakeLock = async () => {
+    if (wakeLock) {
+      try {
+        await wakeLock.release();
+        setWakeLock(null);
+        console.log("🔓 [WakeLock] Screen wake lock manually released");
+      } catch (err) {
+        console.error("❌ [WakeLock] Failed to release wake lock:", err);
+      }
+    }
+  };
+
+  // Handle visibility change to keep microphone active
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (currentConnection) {
+        if (document.hidden) {
+          console.log(
+            "👁️ [Visibility] Page hidden, maintaining audio connection"
+          );
+        } else {
+          console.log("👁️ [Visibility] Page visible, ensuring audio is active");
+
+          // Re-enable audio tracks if they were disabled
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+              audio: true,
+            });
+            stream.getAudioTracks().forEach((track) => {
+              track.enabled = true;
+              console.log(
+                "🎤 [Audio] Audio track re-enabled after visibility change"
+              );
+            });
+          } catch (err) {
+            console.error("❌ [Audio] Failed to re-enable audio:", err);
+          }
+
+          // Re-request wake lock if it was released
+          if (!wakeLock && "wakeLock" in navigator) {
+            await requestWakeLock();
+          }
+        }
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [currentConnection, wakeLock]);
 
   // Setup device for either Twilio or Infobip
   const setupDevice = useCallback(
@@ -498,6 +572,9 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
               setCallDuration((prev) => prev + 1);
             }, 1000);
             setTimer(interval);
+
+            // Request wake lock to keep screen on and microphone active
+            requestWakeLock();
           });
 
           infobipCall.on(CallsApiEvent.HANGUP, () => {
@@ -508,6 +585,8 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
               clearInterval(timer);
               setTimer(null);
             }
+            // Release wake lock when call ends
+            releaseWakeLock();
           });
 
           infobipCall.on(CallsApiEvent.ERROR, (error: any) => {
@@ -518,6 +597,8 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
               clearInterval(timer);
               setTimer(null);
             }
+            // Release wake lock on error
+            releaseWakeLock();
           });
 
           setCurrentConnection(infobipCall);
@@ -544,6 +625,9 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
         setCallDuration((prev) => prev + 1);
       }, 1000);
       setTimer(interval);
+
+      // Request wake lock to keep screen on and microphone active
+      requestWakeLock();
     });
 
     connection.on("disconnect", () => {
@@ -556,6 +640,8 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
         clearInterval(timer);
         setTimer(null);
       }
+      // Release wake lock when call ends
+      releaseWakeLock();
     });
 
     connection.on("cancel", () => {
@@ -568,6 +654,8 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
         clearInterval(timer);
         setTimer(null);
       }
+      // Release wake lock when call is canceled
+      releaseWakeLock();
     });
 
     connection.on("error", (error) => {
@@ -599,7 +687,16 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
 
   // Accept incoming call
   const acceptIncomingCall = useCallback(async () => {
-    if (!incomingCall) return;
+    if (!incomingCall) {
+      console.warn("⚠️ [Global] No incoming call to accept");
+      return;
+    }
+
+    // Prevent double-accept
+    if (currentConnection) {
+      console.warn("⚠️ [Global] Call already connected");
+      return;
+    }
 
     try {
       console.log("📞 [Global] Accepting incoming call...");
@@ -630,21 +727,53 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      await navigator.mediaDevices.getUserMedia({ audio: true });
-
       if (provider === "TWILIO") {
+        console.log("📞 [Twilio] Processing call acceptance...");
+        console.log("📞 [Twilio] Call state:", incomingCall.status());
+
+        // Setup listeners before accepting
         setupConnectionListeners(incomingCall);
-        incomingCall.accept();
+
+        // Request microphone permission first
+        try {
+          console.log("🎤 [Audio] Requesting microphone permission...");
+          const stream = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+          });
+          console.log(
+            "🎤 [Audio] Microphone permission granted, tracks:",
+            stream.getAudioTracks().length
+          );
+        } catch (audioError) {
+          console.warn("⚠️ [Audio] Microphone permission issue:", audioError);
+          // Twilio SDK will request permission when accepting
+        }
+
+        // Set connection before accepting
         setCurrentConnection(incomingCall);
+
+        // Accept the call
+        console.log("📞 [Twilio] Calling incomingCall.accept()...");
+        incomingCall.accept();
+        console.log("✅ [Twilio] Accept method called");
+
         // Keep incomingCall set so the modal stays visible with timer
         // setIncomingCall(null);
         // setCurrentCallSid(null);
       } else if (provider === "INFOBIP") {
         // Accept Infobip WebRTC call
         console.log("📞 [Infobip] Accepting incoming call...");
-        incomingCall.accept();
 
-        // Setup Infobip call event listeners
+        // Request microphone permission first
+        try {
+          await navigator.mediaDevices.getUserMedia({ audio: true });
+          console.log("🎤 [Audio] Microphone permission granted");
+        } catch (audioError) {
+          console.warn("⚠️ [Audio] Microphone permission issue:", audioError);
+          // Continue anyway - Infobip SDK will request permission
+        }
+
+        // Setup Infobip call event listeners BEFORE accepting
         incomingCall.on("established", () => {
           console.log("✅ [Infobip] Incoming call established");
           setCallStatus("Call connected");
@@ -656,6 +785,9 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
             setCallDuration((prev) => prev + 1);
           }, 1000);
           setTimer(interval);
+
+          // Request wake lock to keep screen on and microphone active
+          requestWakeLock();
         });
 
         incomingCall.on("hangup", () => {
@@ -668,6 +800,8 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
             clearInterval(timer);
             setTimer(null);
           }
+          // Release wake lock when call ends
+          releaseWakeLock();
         });
 
         incomingCall.on("error", (error: any) => {
@@ -680,9 +814,15 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
             clearInterval(timer);
             setTimer(null);
           }
+          // Release wake lock on error
+          releaseWakeLock();
         });
 
         setCurrentConnection(incomingCall);
+
+        // Accept the call after listeners are set up
+        incomingCall.accept();
+        console.log("✅ [Infobip] Call accepted");
         // Keep incomingCall set so the modal stays visible with timer
         // setIncomingCall(null);
         // setCurrentCallSid(null);
@@ -692,6 +832,8 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
       setCallStatus(
         `Failed to accept call: ${error instanceof Error ? error.message : "Unknown error"}`
       );
+      // Clean up on error
+      setCurrentConnection(null);
       setIncomingCall(null);
       setCurrentCallSid(null);
     }
@@ -778,6 +920,8 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
         clearInterval(timer);
         setTimer(null);
       }
+      // Release wake lock when call is manually ended
+      releaseWakeLock();
     }
   }, [currentConnection, provider, timer, companyId, deviceId, currentCallSid]);
 

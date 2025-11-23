@@ -77,7 +77,6 @@ export async function POST(request: Request) {
       const companyUsers = await db.user.findMany({
         where: {
           companyId: twilioCredentials.companyId,
-          active: true,
           employeeType: {
             in: ["Admin", "Manager", "Sales"],
           },
@@ -134,7 +133,22 @@ export async function POST(request: Request) {
     // If you have multiple users, you need to determine which device to ring
     // For now, using the Twilio phone number as the identity
     const clientIdentity = twilioCredentials.phoneNumber;
-    dial.client(clientIdentity);
+    
+    // Pass client information as parameters
+    const callerName =
+      client.firstName && client.lastName
+        ? `${client.firstName} ${client.lastName}`.trim()
+        : client.firstName || client.lastName || "Unknown Caller";
+    
+    const clientDial = dial.client(clientIdentity);
+    clientDial.parameter({
+      name: "ClientName",
+      value: callerName,
+    });
+    clientDial.parameter({
+      name: "ClientId",
+      value: client.id.toString(),
+    });
 
     const twimlResponse = voiceResponse.toString();
 
