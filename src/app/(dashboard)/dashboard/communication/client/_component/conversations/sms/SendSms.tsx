@@ -1,15 +1,17 @@
 "use client";
 import updateFirstContactTimeClient from "@/actions/communication/client/updateFirstContactTimeClient";
+import { getCompany } from "@/actions/settings/getCompany";
+import { useServerGet } from "@/hooks/useServerGet";
 import { errorToast } from "@/lib/toast";
-import { clientListStore } from "@/stores/client-store";
+import {
+  clientListStore,
+  useClientCommunicationStore,
+} from "@/stores/client-store";
+import { SendHorizontal } from "lucide-react";
 import Image from "next/image";
 import React, { useRef, useState } from "react";
 import useSmsSendMutation from "../../../_hooks/useSmsSendMutation";
 import AttachmentInput from "../AttachmentInput";
-import { useClientCommunicationStore } from "@/stores/client-store";
-import { useServerGet } from "@/hooks/useServerGet";
-import { getCompany } from "@/actions/settings/getCompany";
-import { SendHorizontal } from "lucide-react";
 import SmartReplyBar from "./SmartReply";
 
 // Helper function to format attachment message
