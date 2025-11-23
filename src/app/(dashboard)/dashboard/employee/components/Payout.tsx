@@ -65,7 +65,7 @@ export default async function Payout({
   // If showing breakdown and user has salary, use UnifiedPayoutCard
   if (showBreakdown && earningsBreakdown?.hasSalary) {
     return (
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <UnifiedPayoutCard
           title="Previous Month"
           amount={previousMonthEarnings}

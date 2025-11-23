@@ -24,11 +24,9 @@ export default async function EmployeeInformation({
   const timezone =
     company?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
   return (
-    <div className="flex w-full gap-8">
-
-      {/* --- DESKTOP LANDSCAPE PROFILE CARD --- */}
+    <div className="flex flex-col md:flex-row w-full gap-8">
       <div className="
-        hidden lg:flex w-full flex-col lg:flex-row
+        hidden md:flex w-full flex-col 2xl:flex-row
         rounded-3xl 
         bg-white dark:bg-slate-900 
         shadow-[0_2px_24px_rgba(0,0,0,0.04)] dark:shadow-black/20
@@ -37,21 +35,23 @@ export default async function EmployeeInformation({
       ">
 
         {/* Identity Column (Left) */}
-        <div className="flex min-w-[300px] flex-col items-center justify-center border-r border-slate-100 bg-slate-50/50 p-8 text-center dark:border-slate-800 dark:bg-slate-800/30">
-          <div className="relative mb-4">
+        <div className="flex min-w-[300px] flex-col xl:flex-row 2xl:flex-col items-center justify-center xl:justify-start 2xl:justify-center xl:gap-6 border-r border-slate-100 bg-slate-50/50 p-8 pb-4 text-center dark:border-slate-800 dark:bg-slate-800/30">
+          <div className="relative">
             <div className="rounded-full p-1.5 bg-white dark:bg-slate-900 shadow-sm ring-1 ring-slate-200 dark:ring-slate-700">
               <Avatar photo={employee.image} width={96} height={96} />
             </div>
             <div className="absolute bottom-1 right-1 h-5 w-5 rounded-full border-4 border-white bg-emerald-500 dark:border-slate-900"></div>
           </div>
 
-          <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">
-            {employee.firstName} {employee.lastName}
-          </h2>
-          <div className="mt-2 flex items-center gap-2">
-            <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-bold uppercase tracking-wide text-[#6571FF] dark:bg-indigo-500/10 dark:text-indigo-300">
-              {employee.employeeType}
-            </span>
+          <div>
+            <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">
+              {employee.firstName} {employee.lastName}
+            </h2>
+            <div className="mt-2 flex items-center gap-2">
+              <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-bold uppercase tracking-wide text-[#6571FF] dark:bg-indigo-500/10 dark:text-indigo-300">
+                {employee.employeeType}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -110,7 +110,7 @@ export default async function EmployeeInformation({
       </div>
 
       {/* --- MOBILE VIEW --- */}
-      <div className="relative lg:hidden">
+      <div className="relative md:hidden">
         <div className="absolute right-2 top-2 z-10">
           <EditEmployee employee={employee} settingIcon />
         </div>
