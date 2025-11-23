@@ -35,6 +35,7 @@ import {
   convertTimeToSeconds,
 } from "@/utils/timeConvertToSeconds";
 import { errorToast } from "@/lib/toast";
+import { Spin } from "antd";
 
 type RuleFormProps = {
   mode: "create" | "edit" | undefined;
@@ -121,7 +122,7 @@ const TagRuleForm = ({
   const { mutate: updateRule, isPending: isUpdatePending } =
     useUpdateTagAutomationRule();
 
-  const { data: allTagAutomationData } = useAllTagAutomationRules(
+  const { data: allTagAutomationData, isLoading:isAllTagRuleLoading } = useAllTagAutomationRules(
     Number(companyId),
     true
   );
@@ -562,12 +563,7 @@ const TagRuleForm = ({
         delete finalData.templateType;
       }
 
-      // normalize fields for API
-      // if (finalData.timeDelay != null) {
-      //   finalData.timeDelay = parseTimeDelayToSeconds(finalData?.timeDelay);
-      // }
-
-      // targetColumnId should be a number or null
+      
       if (
         finalData.condition_type === "pipeline" &&
         finalData.targetColumnId !== null &&
@@ -602,6 +598,13 @@ const TagRuleForm = ({
     setError({});
   };
 
+  if (isLoading || isFetching || stagesLoading || isAllTagRuleLoading) {
+      return (
+        <div className="flex h-[800px] w-full animate-pulse items-center justify-center rounded-md bg-gray-200 p-4 shadow-sm md:p-6">
+          <Spin />
+        </div>
+      );
+    }
   return (
     <div className="rounded-md border bg-white p-4 shadow-sm md:p-6">
       <Paper elevation={0} className="mx-auto max-w-lg rounded-lg">
