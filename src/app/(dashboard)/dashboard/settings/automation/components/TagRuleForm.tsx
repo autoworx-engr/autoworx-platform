@@ -56,7 +56,7 @@ type Rule = {
   targetColumnId: number | number[] | null;
   columnIds?: number[];
   communicationType: "SMS" | "EMAIL" | "BOTH";
-  // templateType: "SMS" | "EMAIL";
+  templateType?: "SMS" | "EMAIL";
   isSendWeekDays: boolean;
   isSendOfficeHours: boolean;
   subject?: string | null;
@@ -86,7 +86,7 @@ const TagRuleForm = ({
     targetColumnId: null,
     columnIds: [],
     communicationType: "SMS",
-    // templateType: "SMS",
+    templateType: "SMS",
     isSendWeekDays: false,
     isSendOfficeHours: false,
     subject: "",
@@ -203,7 +203,7 @@ const TagRuleForm = ({
           targetColumnId: null,
           columnIds: [],
           communicationType: "SMS",
-          // templateType: "SMS",
+          templateType: "SMS",
           isSendWeekDays: false,
           isSendOfficeHours: false,
           subject: "",
@@ -367,6 +367,8 @@ const TagRuleForm = ({
   // Handle template toggle
   const handleTemplateToggle = (template: "SMS" | "EMAIL") => {
     setActiveTemplate(template);
+
+    
   };
 
   // Handle file attachment
@@ -491,6 +493,7 @@ const TagRuleForm = ({
       const finalData: any = {
         ...formData,
         companyId: companyId,
+        timeDelay: parsedTimeDelay,
         attachments: images,
         ruleType: formData.ruleType ? formData.ruleType : "one_time",
       };
