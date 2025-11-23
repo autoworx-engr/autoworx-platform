@@ -51,28 +51,20 @@ export default async function PaymentTab({
     },
   });
 
-  // Get all payments for invoices with full details needed
   const invoiceIds = invoices.map((invoice) => invoice.id);
 
-  // This will hold the original invoices for the Invoice Payments section
   const originalInvoices = await Promise.all(
     invoices.map(async (invoice) => {
       const vehicle = invoice.vehicleId
-        ? await db.vehicle.findUnique({
-            where: { id: invoice.vehicleId },
-          })
+        ? await db.vehicle.findUnique({ where: { id: invoice.vehicleId } })
         : null;
 
-      return {
-        ...invoice,
-        vehicle: vehicle?.model ?? "",
-      };
+      return { ...invoice, vehicle: vehicle?.model ?? "" };
     })
   );
 
-  // This will hold the payment-based invoice entries for Transaction History
   const invoicesWithFull = [];
-  // Get all payments for all invoices with refund information and due amount
+
   const allPayments = await db.payment.findMany({
     where: { invoiceId: { in: invoiceIds } },
     select: {
@@ -84,6 +76,7 @@ export default async function PaymentTab({
       other: true,
       type: true,
       card: true,
+      check: true,
       notes: true,
       cash: true,
       deposit: true,
@@ -101,43 +94,34 @@ export default async function PaymentTab({
       },
     },
   });
-  // This will hold ALL transaction entries (payments + refunds) for Transaction History
+
   const allTransactionEntries = [];
 
-  // Sort all payments by date (oldest first) for proper due calculation
   const sortedPayments = allPayments.sort(
     (a, b) =>
       new Date(a.date || a.createdAt).getTime() -
       new Date(b.date || b.createdAt).getTime()
   );
 
-  // Create payment-based invoice entries with proper due calculation
   for (let i = 0; i < sortedPayments.length; i++) {
     const payment = sortedPayments[i];
 
-    // Find the original invoice this payment belongs to
     const originalInvoice = invoices.find(
       (inv) => inv.id === payment.invoiceId
     );
-
     if (!originalInvoice) continue;
 
-    // Get vehicle info
     const vehicle = originalInvoice.vehicleId
       ? await db.vehicle.findUnique({
           where: { id: originalInvoice.vehicleId },
         })
       : null;
 
-    // Get payment method
     let paymentMethodText = "";
-
     if (payment.type === "OTHER") {
       const paymentMethodId = payment.other?.paymentMethodId;
       const paymentMethod = paymentMethodId
-        ? await db.paymentMethod.findUnique({
-            where: { id: paymentMethodId },
-          })
+        ? await db.paymentMethod.findUnique({ where: { id: paymentMethodId } })
         : null;
       paymentMethodText = paymentMethod?.name ?? "";
     } else if (payment.type === "CARD") {
@@ -146,7 +130,6 @@ export default async function PaymentTab({
       paymentMethodText = payment?.type ?? "";
     }
 
-    // Calculate accurate refund amounts from actual Refund records
     const actualRefundedAmount = payment.Refund.reduce(
       (sum, refund) => sum + Number(refund.amount),
       0
@@ -163,7 +146,6 @@ export default async function PaymentTab({
     } else {
       const originalInvoiceGrandTotal = Number(originalInvoice.grandTotal || 0);
       const originalInvoiceDeposit = Number(originalInvoice.deposit || 0);
-
       const paymentsUpToThis = sortedPayments.slice(0, i + 1);
       const totalPaidUpToThis = paymentsUpToThis.reduce((sum, pmt) => {
         if (pmt.invoiceId === payment.invoiceId) {
@@ -175,20 +157,19 @@ export default async function PaymentTab({
         }
         return sum;
       }, 0);
-
       dueAfterPayment =
         originalInvoiceGrandTotal - originalInvoiceDeposit - totalPaidUpToThis;
     }
 
-    // Add original payment entry
     invoicesWithFull.push({
       ...originalInvoice,
       vehicle: vehicle?.model ?? "",
       paymentMethod: paymentMethodText,
-      amountPaid: originalAmount, // Always show original amount paid
-      refundedAmount: actualRefundedAmount, // Show actual refunded amount
-      netAmount: netAmount, // Net amount after refunds
+      amountPaid: originalAmount,
+      refundedAmount: actualRefundedAmount,
+      netAmount: netAmount,
       paymentId: payment.id,
+      check: payment.check,
       notes: payment.notes,
       paymentMethodInfo: payment.cash
         ? payment.cash
@@ -197,12 +178,10 @@ export default async function PaymentTab({
           : payment.other
             ? payment.other
             : payment.deposit,
-      // Use payment date instead of invoice date if available
       paymentDate: payment.date || originalInvoice.createdAt,
       due: dueAfterPayment,
     });
 
-    // Add payment transaction entry
     allTransactionEntries.push({
       id: `payment-${payment.id}`,
       type: "PAYMENT",
@@ -216,40 +195,33 @@ export default async function PaymentTab({
       cashReceived: payment.cash?.receivedCash || null,
     });
 
-    // Add refund transaction entries
     payment.Refund.forEach((refund) => {
       allTransactionEntries.push({
         id: `refund-${refund.id}`,
         type: "REFUND",
         invoiceId: originalInvoice.id,
         vehicle: vehicle?.model ?? "",
-        amount: -Number(refund.amount), // Negative amount for refunds
+        amount: -Number(refund.amount),
         date: refund.refundDate,
         method: refund.method,
         notes: refund.notes || refund.reason,
         paymentId: payment.id,
         refundId: refund.id,
-        cashReceived: null, // Refunds don't have cash received
+        cashReceived: null,
       });
     });
   }
 
-  // Sort all transactions by date (newest first)
   allTransactionEntries.sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
-  // Calculate total paid amount (net of refunds) using actual refund data
+
   const totalCustomerPaidAmount = allPayments.reduce((acc, payment) => {
     const originalAmount = Number(payment?.amount ?? 0);
-    // const actualRefundedAmount = payment.Refund.reduce(
-    //   (sum, refund) => sum + Number(refund.amount),
-    //   0
-    // );
     const netAmount = originalAmount;
     return acc + netAmount;
   }, 0);
 
-  // Calculate total refunded amount from actual refund records
   const totalRefundedAmount = allPayments.reduce((acc, payment) => {
     const actualRefundedAmount = payment.Refund.reduce(
       (sum, refund) => sum + Number(refund.amount),
@@ -257,7 +229,7 @@ export default async function PaymentTab({
     );
     return acc + actualRefundedAmount;
   }, 0);
-  // Calculate total invoice amount
+
   const totalAmount = invoices.reduce(
     (acc, invoice) =>
       acc +
@@ -265,30 +237,81 @@ export default async function PaymentTab({
     0
   );
 
-  // Count services from original invoices to avoid duplicates
   const totalServices = [] as (Service & { count: number })[];
-
   originalInvoices.forEach((invoice) => {
     invoice.invoiceItems.forEach((item) => {
       if (item.serviceId) {
-        const service = totalServices.find(
-          (service) => service.id === item.serviceId
-        );
-
-        if (service) {
-          service.count += 1;
-        } else {
-          totalServices.push({ ...item.service!, count: 1 });
-        }
+        const service = totalServices.find((s) => s.id === item.serviceId);
+        if (service) service.count += 1;
+        else totalServices.push({ ...item.service!, count: 1 });
       }
     });
+  });
+
+  const invoiceData = invoicesWithFull.map((inv: any) => {
+    const payment = allPayments.find((p) => p.id === inv.paymentId);
+    const actualPaymentType = payment?.type;
+    const isDeposit = actualPaymentType === "DEPOSIT";
+
+    return {
+      id: inv.id,
+      paymentType: actualPaymentType,
+      paymentMethodDisplay: inv.paymentMethod,
+      paymentMethodInfo: inv.paymentMethodInfo,
+      notes: inv.notes,
+      paymentId: inv.paymentId,
+      amountPaid: inv.amountPaid,
+      card: {
+        creditCard: inv.paymentMethodInfo?.creditCard || "",
+        cardType: inv.paymentMethodInfo?.cardType || "",
+      },
+      checkNumber: inv.check?.checkNumber || "",
+      cashReceived: inv.paymentMethodInfo?.receivedCash || "",
+      depositAmount: isDeposit ? inv.amountPaid : 0,
+      depositMethod: inv.paymentMethodInfo?.depositMethod || "",
+      depositNotes: inv.paymentMethodInfo?.depositNotes || "",
+      grandTotal: inv.grandTotal,
+    };
+  });
+
+  const transactionData = allTransactionEntries.map((tx: any) => ({
+    id: tx.id,
+    paymentId: tx.paymentId,
+    amount: tx.amount,
+    date: tx.date,
+    notes: tx.notes,
+    type: tx.type,
+  }));
+
+  const mergedPaymentData = invoiceData.map((inv) => {
+    const tx = transactionData.find((t) => t.paymentId === inv.paymentId);
+
+    return {
+      id: inv.paymentId,
+      invoiceId: inv.id,
+      paymentId: inv.paymentId,
+      amount: tx?.amount ?? inv.amountPaid ?? 0,
+      date: tx?.date ?? new Date(),
+      type: tx?.type ?? "PAYMENT",
+      notes: tx?.notes ?? inv.notes ?? "",
+      card: {
+        creditCard: inv.card?.creditCard || "",
+        cardType: inv.card?.cardType || "",
+      },
+      checkNumber: inv.checkNumber || "",
+      cashReceived: inv.cashReceived || "",
+      deposit: inv.depositAmount || 0,
+      depositMethod: inv.depositMethod || "",
+      depositNotes: inv.depositNotes || "",
+      paymentMethod: inv.paymentType,
+      paymentMethodDisplay: inv.paymentMethodDisplay,
+    };
   });
 
   return (
     <div className="w-full mx-auto h-full">
       {/* Section 1 */}
       <div className="flex h-[25%] flex-wrap items-center justify-between gap-4 2xl:flex-nowrap md:gap-0">
-        {/* <CurrentInvoicePayment /> */}
         <div className="grid w-full grid-cols-2 justify-between border border-slate-400 md:flex md:w-fit">
           <div className="bg-[#F8FAFF] p-5 px-2 text-center font-semibold md:px-10">
             <h3>Total Quoted</h3>
@@ -299,7 +322,7 @@ export default async function PaymentTab({
             <p className="text-center">
               {formatCurrency(totalCustomerPaidAmount)}
             </p>
-          </div>{" "}
+          </div>
           <div className="p-5 px-2 text-center font-semibold md:px-10">
             <h3>Total Refunded</h3>
             <p className="text-center text-red-600">
@@ -311,10 +334,10 @@ export default async function PaymentTab({
             <p className="text-center">{allTransactionEntries?.length || 0}</p>
           </div>
         </div>
+
         <div className="w-full md:w-96 lg:w-[420px] xl:w-[480px] 2xl:w-[520px] border border-slate-400 text-center text-sm md:text-start">
-          <h3 className="p-3 py-1 font-semibold">Top Services </h3>
-          <div className="">
-            {/* top 4 services */}
+          <h3 className="p-3 py-1 font-semibold">Top Services</h3>
+          <div>
             {totalServices
               .sort((a, b) => b.count - a.count)
               .slice(0, 3)
@@ -335,16 +358,10 @@ export default async function PaymentTab({
       </div>
 
       {/* Section 2 */}
-      <div className="flex items-center justify-between">
-        <h3 className="mb-1 mt-3 lg:mt-12 font-semibold">Invoice Payments</h3>
-        <EditPaymentModal
-          allTransactionEntries={allTransactionEntries}
-          invoicesWithFull={invoicesWithFull}
-        />
-      </div>
+      <h3 className="mb-1 mt-3 lg:mt-12 font-semibold">Invoice Payments</h3>
       <div className="h-[30%] overflow-scroll rounded-lg border md:rounded-none">
-        {/* Desktop View */}
-        <div className="hidden md:block ">
+        {/* Desktop */}
+        <div className="hidden md:block">
           <table className="table-auto w-full text-xs">
             <thead className="bg-background">
               <tr className="h-10 border-b">
@@ -353,57 +370,66 @@ export default async function PaymentTab({
                 <th className="px-10 text-left">Amount</th>
                 <th className="px-10 text-left">Method</th>
                 <th className="px-10 text-left">Cash Received</th>
-                <th className="px-10 text-left">Method</th>
                 <th className="px-10 text-left">Date</th>
                 <th className="text-nowrap px-10 text-left">Due</th>
                 <th className="text-nowrap px-10 text-left">Status</th>
                 <th className="px-10 text-left">Notes</th>
+                <th className="px-10 text-left">Actions</th>
               </tr>
             </thead>
-
             <tbody>
-              {invoicesWithFull?.map((data, index) => (
-                <tr
-                  key={data.id}
-                  className={cn("py-3", index % 2 === 0 ? evenColor : oddColor)}
-                >
-                  <td className="h-8 px-10 text-left">
-                    <InvoiceModal
-                      invoiceId={data.id}
-                      buttonChild={
-                        <button className="text-[#6571FF]">{data.id}</button>
-                      }
-                    />
-                  </td>
-                  <td className="px-10 text-left">{data.vehicle}</td>
-                  <td className="px-10 text-left">
-                    {formatCurrency(data.amountPaid)}
-                  </td>
-                  <td className="px-10 text-left">{data.paymentMethod}</td>
-                  <td className="px-10 text-left">
-                    {data.paymentMethodInfo &&
-                    "receivedCash" in data.paymentMethodInfo &&
-                    data.paymentMethodInfo.receivedCash
-                      ? data.paymentMethodInfo.receivedCash
-                      : "N/A"}
-                  </td>
-                  <td className="px-10 text-left">{data.paymentMethod}</td>
-                  <td className="px-10 text-left">
-                    {moment(data.paymentDate).format("MM.DD.YYYY")}
-                  </td>
-                  <td className="px-10 text-left">
-                    {formatCurrency(Number(data.due))}
-                  </td>
-                  <td className="px-10 text-left">{data.column?.title}</td>
-                  <td className="px-10 text-left">{data.notes}</td>
-                </tr>
-              ))}
+              {invoicesWithFull?.map((data, index) => {
+                const mergedPayment = mergedPaymentData.find(
+                  (m) => m.paymentId === data.paymentId
+                );
+                return (
+                  <tr
+                    key={data.id}
+                    className={cn(
+                      "py-3",
+                      index % 2 === 0 ? evenColor : oddColor
+                    )}
+                  >
+                    <td className="h-8 px-10 text-left">
+                      <InvoiceModal
+                        invoiceId={data.id}
+                        buttonChild={
+                          <button className="text-[#6571FF]">{data.id}</button>
+                        }
+                      />
+                    </td>
+                    <td className="px-10 text-left">{data.vehicle}</td>
+                    <td className="px-10 text-left">
+                      {formatCurrency(data.amountPaid)}
+                    </td>
+                    <td className="px-10 text-left">{data.paymentMethod}</td>
+                    <td className="px-10 text-left">
+                      {data.paymentMethodInfo &&
+                      "receivedCash" in data.paymentMethodInfo &&
+                      data.paymentMethodInfo.receivedCash
+                        ? data.paymentMethodInfo.receivedCash
+                        : "N/A"}
+                    </td>
+                    <td className="px-10 text-left">
+                      {moment(data.paymentDate).format("MM.DD.YYYY")}
+                    </td>
+                    <td className="px-10 text-left">
+                      {formatCurrency(Number(data.due))}
+                    </td>
+                    <td className="px-10 text-left">{data.column?.title}</td>
+                    <td className="px-10 text-left">{data.notes}</td>
+                    <td className="px-10 text-left">
+                      <EditPaymentModal mergedPaymentData={mergedPayment} />
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
 
-        {/* Mobile View */}
-        <div className="grid gap-4 p-4 md:hidden">
+        {/* Mobile */}
+        {/* <div className="grid gap-4 p-4 md:hidden">
           {invoicesWithFull.slice(0, 4).map((data, index) => (
             <div
               key={data.id}
@@ -421,9 +447,12 @@ export default async function PaymentTab({
                     </button>
                   }
                 />
-                <p className="text-lg font-bold text-[#6571FF]">
-                  {formatCurrency(data.amountPaid)}
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="text-lg font-bold text-[#6571FF]">
+                    {formatCurrency(data.amountPaid)}
+                  </p>
+                  <EditPaymentModal mergedPaymentData={mergedPayment} />
+                </div>
               </div>
               <div className="mt-2 space-y-2">
                 <div className="flex justify-between">
@@ -459,17 +488,96 @@ export default async function PaymentTab({
               </div>
             </div>
           ))}
+        </div> */}
+
+        {/* Mobile */}
+        <div className="grid gap-4 p-4 md:hidden">
+          {invoicesWithFull.slice(0, 4).map((data, index) => {
+            // ✅ Find the merged payment data for this payment
+            const mergedPayment = mergedPaymentData.find(
+              (m) => m.paymentId === data.paymentId
+            );
+
+            return (
+              <div
+                key={data.id}
+                className={cn(
+                  "rounded-lg p-4 shadow-sm transition-all duration-200",
+                  index % 2 === 0 ? "bg-background" : "bg-[#F8FAFF]"
+                )}
+              >
+                <div className="flex items-center justify-between">
+                  <InvoiceModal
+                    invoiceId={data.id}
+                    buttonChild={
+                      <button className="text-lg font-semibold text-[#6571FF]">
+                        {data.id}
+                      </button>
+                    }
+                  />
+                  <div className="flex items-center gap-2">
+                    <p className="text-lg font-bold text-[#6571FF]">
+                      {formatCurrency(data.amountPaid)}
+                    </p>
+                    {/* ✅ Add edit button */}
+                    <EditPaymentModal mergedPaymentData={mergedPayment} />
+                  </div>
+                </div>
+                <div className="mt-2 space-y-2">
+                  <div className="flex justify-between">
+                    <p className="text-sm text-[#66738C]">Vehicle</p>
+                    <p className="text-sm font-medium">{data.vehicle}</p>
+                  </div>
+                  <div className="flex justify-between">
+                    <p className="text-sm text-[#66738C]">Date</p>
+                    <p className="text-sm font-medium">
+                      {moment(data.paymentDate).format("MM.DD.YYYY")}
+                    </p>
+                  </div>
+                  <div className="flex justify-between">
+                    <p className="text-sm text-[#66738C]">Payment Method</p>
+                    <p className="text-sm font-medium">{data.paymentMethod}</p>
+                  </div>
+                  <div className="flex justify-between">
+                    <p className="text-sm text-[#66738C]">Cash Received</p>
+                    <p className="text-sm font-medium">
+                      {data.paymentMethodInfo &&
+                      "receivedCash" in data.paymentMethodInfo &&
+                      data.paymentMethodInfo.receivedCash
+                        ? data.paymentMethodInfo.receivedCash
+                        : "N/A"}
+                    </p>
+                  </div>
+                  <div className="flex justify-between">
+                    <p className="text-sm text-[#66738C]">Due</p>
+                    <p className="text-sm font-medium">
+                      {formatCurrency(Number(data.due))}
+                    </p>
+                  </div>
+                  <div className="flex justify-between">
+                    <p className="text-sm text-[#66738C]">Status</p>
+                    <p className="text-sm font-medium">{data.column?.title}</p>
+                  </div>
+                  {data.notes && (
+                    <div className="pt-2">
+                      <p className="text-sm text-[#66738C]">Notes</p>
+                      <p className="text-sm font-medium">{data.notes}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
       {/* Section 3 */}
       <h3 className="mb-1 mt-3 font-semibold">Transaction History</h3>
-      <div className="h-[30%] overflow-scroll  rounded-lg border md:rounded-none">
-        {/* Desktop View */}
+      <div className="h-[30%] overflow-scroll rounded-lg border md:rounded-none">
+        {/* Desktop */}
         <div className="hidden md:block">
           <table className="w-full text-xs">
             <thead className="bg-background">
-              {" "}
               <tr className="h-10 border-b">
                 <th className="px-10 text-left">Type</th>
                 <th className="px-10 text-left">Invoice ID</th>
@@ -480,7 +588,7 @@ export default async function PaymentTab({
                 <th className="text-nowrap px-10 text-left">Method</th>
                 <th className="px-10 text-left">Notes</th>
               </tr>
-            </thead>{" "}
+            </thead>
             <tbody>
               {allTransactionEntries.map((transaction, index) => (
                 <tr
@@ -510,7 +618,9 @@ export default async function PaymentTab({
                   </td>
                   <td className="px-10 text-left">{transaction.vehicle}</td>
                   <td
-                    className={`px-10 text-left ${transaction.type === "REFUND" ? "text-red-600" : ""}`}
+                    className={`px-10 text-left ${
+                      transaction.type === "REFUND" ? "text-red-600" : ""
+                    }`}
                   >
                     {formatCurrency(Math.abs(transaction.amount))}
                   </td>
@@ -528,8 +638,9 @@ export default async function PaymentTab({
               ))}
             </tbody>
           </table>
-        </div>{" "}
-        {/* Mobile View */}
+        </div>
+
+        {/* Mobile */}
         <div className="grid gap-4 p-4 md:hidden">
           {allTransactionEntries.map((transaction, index) => (
             <div
@@ -571,7 +682,8 @@ export default async function PaymentTab({
                     {transaction.type === "REFUND" && " (Refunded)"}
                   </p>
                 </div>
-              </div>{" "}
+              </div>
+
               <div className="mt-2 space-y-2">
                 <div className="flex justify-between">
                   <p className="text-sm text-[#66738C]">Vehicle</p>
