@@ -133,13 +133,13 @@ export async function POST(request: Request) {
     // If you have multiple users, you need to determine which device to ring
     // For now, using the Twilio phone number as the identity
     const clientIdentity = twilioCredentials.phoneNumber;
-    
+
     // Pass client information as parameters
     const callerName =
       client.firstName && client.lastName
         ? `${client.firstName} ${client.lastName}`.trim()
         : client.firstName || client.lastName || "Unknown Caller";
-    
+
     const clientDial = dial.client(clientIdentity);
     clientDial.parameter({
       name: "ClientName",

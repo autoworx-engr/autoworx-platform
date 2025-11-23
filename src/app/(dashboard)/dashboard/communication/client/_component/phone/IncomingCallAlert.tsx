@@ -24,14 +24,14 @@ export default function IncomingCallAlert({
   useEffect(() => {
     const fetchCallerInfo = async () => {
       if (!incomingCall) return;
-      
+
       // Get the caller's number and name from call parameters
       const params = incomingCall.parameters;
       const from = params.From || "Unknown Number";
       const clientName = params.ClientName || "";
-      
+
       setCallerNumber(from);
-      
+
       // If we have the client name from Twilio params, use it
       if (clientName) {
         setCallerName(clientName);
@@ -39,13 +39,16 @@ export default function IncomingCallAlert({
         // For Infobip or if name not provided, fetch from API
         setIsLoadingName(true);
         try {
-          const response = await fetch(`/api/client/by-phone?phone=${encodeURIComponent(from)}`);
+          const response = await fetch(
+            `/api/client/by-phone?phone=${encodeURIComponent(from)}`
+          );
           if (response.ok) {
             const data = await response.json();
             if (data.client) {
-              const name = data.client.firstName && data.client.lastName
-                ? `${data.client.firstName} ${data.client.lastName}`.trim()
-                : data.client.firstName || data.client.lastName || "";
+              const name =
+                data.client.firstName && data.client.lastName
+                  ? `${data.client.firstName} ${data.client.lastName}`.trim()
+                  : data.client.firstName || data.client.lastName || "";
               setCallerName(name);
             }
           }
@@ -56,7 +59,7 @@ export default function IncomingCallAlert({
         }
       }
     };
-    
+
     fetchCallerInfo();
   }, [incomingCall]);
 
