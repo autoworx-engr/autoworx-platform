@@ -335,6 +335,14 @@ const TagRuleForm = ({
         newState.columnIds = [];
       }
 
+      // If pipelineType changed, reset selected tags so selections don't leak between pipelines
+      if (field === "pipelineType" && prev.pipelineType !== value) {
+        newState.tagIds = [];
+        // also reset any pipeline-specific selections
+        newState.targetColumnId = null;
+        newState.columnIds = [];
+      }
+
       return newState as Rule;
     });
 
