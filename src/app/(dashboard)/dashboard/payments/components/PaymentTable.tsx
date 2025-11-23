@@ -35,7 +35,8 @@ export default function PaymentTable({
       paymentMethod === "Other" &&
       method !== "Card" &&
       method !== "Cash" &&
-      method !== "Cheque"
+      method !== "Cheque" &&
+      method !== "Deposit"
     ) {
       return true;
     } else {
