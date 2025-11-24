@@ -19,6 +19,7 @@ import { signOut } from "next-auth/react";
 import { useSetCompanyFeaturePermission } from "@/hooks/useSetCompanyFeaturePermission";
 import { superAdminNavList } from "@/app/(dashboard)/awx-dashboard/_utils/superAdminNavList";
 import UserBugReport from "./bug-report/UserBugReport";
+import CarLoading from "./common/CarLoading";
 
 const navbarList = [
   {
@@ -260,7 +261,7 @@ export default function Layout({
   if (!permissions) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
-        <Spin size="large" />
+        <CarLoading />
       </div>
     );
   }

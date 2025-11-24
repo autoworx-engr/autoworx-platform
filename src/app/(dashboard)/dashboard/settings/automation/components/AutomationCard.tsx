@@ -18,6 +18,7 @@ import { useUpdateInventoryAutomationRule } from "@/hooks/inventory-automation/u
 import { CirclePause, CirclePlay, SquarePen, Trash2 } from "lucide-react";
 import { useUpdateTagAutomationRule } from "@/hooks/tag-automation/useUpdateTagAutomationRule";
 import { useDeleteTagAutomationRule } from "@/hooks/tag-automation/useDeleteTagAutomationRule";
+import CarLoading from "@/components/common/CarLoading";
 
 interface Item {
   id: string;
@@ -107,7 +108,7 @@ const AutomationCard: FC<AutomationCardProps> = ({
       updateInventory({ id, data: data });
     } else if (type === "tag") {
       updateTagRule({ id, companyId, data });
-    }else if (type == "marketing") {
+    } else if (type == "marketing") {
       const now = Date.now();
 
       const ruleDate = new Date(item.date!);
@@ -203,12 +204,12 @@ const AutomationCard: FC<AutomationCardProps> = ({
           {isPipelineUpdating ||
           isCommunicationUpdating ||
           isMarketingUpdating ||
-          isServiceUpdating || 
-          isTagUpdating || 
-          isInventoryUpdating || 
+          isServiceUpdating ||
+          isTagUpdating ||
+          isInventoryUpdating ||
           isInvoiceUpdating ? (
             <button>
-              <Spin />
+              <CarLoading />
             </button>
           ) : (
             <button
@@ -233,12 +234,12 @@ const AutomationCard: FC<AutomationCardProps> = ({
           {isPipelineDeleting ||
           isCommunicationDeleting ||
           isMarketingDeleting ||
-          isServiceDeleting || 
-          isTagDeleting || 
-          isInventoryDeleting || 
+          isServiceDeleting ||
+          isTagDeleting ||
+          isInventoryDeleting ||
           isInvoiceDeleting ? (
             <button>
-              <Spin />
+              <CarLoading />
             </button>
           ) : (
             <Popconfirm
