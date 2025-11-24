@@ -569,7 +569,7 @@ export default function FeaturePermission({
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
               <span className="text-xl font-semibold text-[#66738C]">
-                Master Toggle:
+                Toggle:
               </span>
               <Switch
                 checked={allPermissionsEnabled()}

@@ -13,6 +13,18 @@ type propsType = {
     id?: string;
   };
 };
+
+const ModernChartData = (props: any) => (
+  <div className="flex justify-between items-center p-3 rounded-xl bg-slate-100/50 dark:bg-slate-700/50 transition duration-300 hover:bg-slate-100 dark:hover:bg-slate-700">
+    <span className="text-base font-medium text-slate-500 dark:text-slate-400">
+      {props.heading}
+    </span>
+    <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#00b8b0] to-[#0098da]">
+      {props.dollarSign ? "$" : ""}
+      {props.number}
+    </span>
+  </div>
+);
 const Page = async (props: propsType) => {
   const { params } = props;
   const { id } = params;
@@ -53,6 +65,19 @@ const Page = async (props: propsType) => {
 
   const employees = sales + technicians + managers + others;
 
+  const getStatusStyles = (status: string | undefined) => {
+    if (status?.toUpperCase() === "PAID") {
+      return {
+        text: "PAID",
+        className: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20 px-3 py-1 rounded-full text-xs font-semibold", 
+      };
+    }
+    return {
+      text: "STATUS UNKNOWN",
+      className: "bg-slate-50 text-slate-700 ring-1 ring-slate-600/20 px-3 py-1 rounded-full text-xs font-semibold",
+    };
+  };
+  const statusStyles = getStatusStyles("PAID");
   return (
     <div className="h-full bg-[#F8F9FA] px-4 text-xs 2xl:text-base">
       <div className="flex flex-col items-start justify-center space-y-8 lg:flex-row lg:space-x-6 lg:space-y-4">
@@ -71,42 +96,44 @@ const Page = async (props: propsType) => {
 
               <div className=" bg-background rounded-md shadow-lg ">
                 {/* Top Section */}
-                <div className="p-6 pb-4">
+               <div className="p-6 pb-4">
                   <div className="flex flex-col items-center text-center">
                     <Avatar
                       photo={
                         company?.image ? company?.image : "/icons/business.png"
                       }
-                      width={60}
-                      height={60}
+                      width={80}
+                      height={80}
                       alt={company?.name}
+                      className="rounded-full ring-2 ring-[#6571FF]/50"
                     />
-                    <h3 className="text-base md:text-xl  font-semibold  mt-3">
+                    <h3 className="text-base font-semibold text-slate-700 dark:text-slate-200 md:text-xl mt-3">
                       {company?.name}
                     </h3>
+                    <p className="text-sm italic text-slate-500 dark:text-slate-400 mt-1">{company?.email}</p>
                   </div>
                 </div>
 
                 {/* Stats Section */}
                 <div className="px-6 pb-4">
-                  <div className="flex justify-center gap-8">
+                  <div className="flex justify-around gap-4 py-4 border-y border-slate-200 dark:border-slate-700">
                     <div className="text-center">
-                      <div className="text-xl font-semibold ">
+                      <div className="text-2xl font-bold text-slate-700 dark:text-slate-200">
                         {company?.users?.length || 0}
                       </div>
-                      <div className="text-xs text-gray-500 mt-0.5">Users</div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Users</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-xl font-semibold ">
+                      <div className="text-2xl font-bold text-slate-700 dark:text-slate-200">
                         {company?.clients?.length || 0}
                       </div>
-                      <div className="text-xs text-gray-500 mt-0.5">
+                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                         Clients
                       </div>
                     </div>
                     <div className="text-center">
-                      <div className="text-xl font-semibold ">{employees}</div>
-                      <div className="text-xs text-gray-500 mt-0.5">
+                      <div className="text-2xl font-bold text-slate-700 dark:text-slate-200">{employees}</div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                         Employee
                       </div>
                     </div>
@@ -114,64 +141,66 @@ const Page = async (props: propsType) => {
                 </div>
 
                 {/* Team Breakdown */}
-                <div className="border-t border-gray-100 px-6 py-4">
+                <div className="px-6 py-4">
+                  <h4 className="font-semibold text-slate-600 dark:text-slate-300 mb-3">Team Breakdown</h4>
                   <div className="space-y-2.5">
-                    <div className="flex items-center justify-between">
+                    
+                    {/* Technician */}
+                    <div className="flex items-center justify-between transition duration-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 p-1.5 rounded-lg">
                       <div className="flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 bg-sky-400 rounded-full"></div>
-                        <span className="text-sm text-gray-600">
+                        <div className="w-1.5 h-1.5 bg-sky-400 rounded-full ring-2 ring-sky-400/50"></div>
+                        <span className="text-sm text-slate-600 dark:text-slate-300">
                           Technicians
                         </span>
                       </div>
-                      <span className="text-sm font-medium ">
+                      <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
                         {technicians}
                       </span>
                     </div>
 
-                    <div className="flex items-center justify-between">
+                    {/* Sales */}
+                    <div className="flex items-center justify-between transition duration-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 p-1.5 rounded-lg">
                       <div className="flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
-                        <span className="text-sm text-gray-600">Sales</span>
+                        <div className="w-1.5 h-1.5 bg-green-400 rounded-full ring-2 ring-green-400/50"></div>
+                        <span className="text-sm text-slate-600 dark:text-slate-300">Sales</span>
                       </div>
-                      <span className="text-sm font-medium ">{sales}</span>
+                      <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{sales}</span>
                     </div>
 
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between transition duration-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 p-1.5 rounded-lg">
                       <div className="flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 bg-violet-400 rounded-full"></div>
-                        <span className="text-sm text-gray-600">Managers</span>
+                        <div className="w-1.5 h-1.5 bg-violet-400 rounded-full ring-2 ring-violet-400/50"></div>
+                        <span className="text-sm text-slate-600 dark:text-slate-300">Managers</span>
                       </div>
-                      <span className="text-sm font-medium ">{managers}</span>
+                      <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{managers}</span>
                     </div>
                   </div>
+                
                 </div>
               </div>
             </div>
 
             {/* Employee Payout */}
-            <div className="rounded-md bg-background p-4 shadow-lg xl:p-8">
-              <div className="mb-8 flex items-center justify-between">
-                <span className="text-xl md:text-2xl font-bold">
+            <div className="bg-white/70 dark:bg-slate-800/70 backdrop-blur-md rounded-2xl shadow-xl shadow-slate-200/50 dark:shadow-slate-900/50 ring-1 ring-slate-200 dark:ring-slate-700 p-6">
+             <div className="mb-6 flex items-center justify-between">
+                <span className="text-xl font-bold text-slate-700 dark:text-slate-200 md:text-2xl">
                   Statistics
-                </span>{" "}
-                {/* <span>
-                  <FaExternalLinkAlt />
-                </span> */}
+                </span>
               </div>
               <div className="#px-4 space-y-4">
-                <ChartData
+                <ModernChartData
                   heading="Total Revenue"
                   number={567}
                   dollarSign
                   noRate
                 />
-                <ChartData
+                <ModernChartData
                   heading="Total Contracts"
                   number={767}
                   dollarSign
                   noRate
                 />
-                <ChartData
+                <ModernChartData
                   heading="Client Growth"
                   number={435}
                   dollarSign
@@ -182,34 +211,40 @@ const Page = async (props: propsType) => {
           </div>
           <div className="h-full w-full space-y-4 lg:mt-16 lg:w-[60%]">
             {/* payment info */}
-            <div className="space-y-2 rounded-lg bg-[#D3D7FF] px-6 py-6 shadow-lg">
-              <p>
+            <div className="space-y-2 rounded-2xl bg-[#D3D7FF]/80 dark:bg-[#4650a3]/80 backdrop-blur-sm px-6 py-6 shadow-xl shadow-indigo-300/50 dark:shadow-indigo-900/50 ring-1 ring-indigo-200 dark:ring-indigo-700 transition duration-300 hover:shadow-2xl">
+              <h4 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-2">Subscription Details</h4>
+              <p className="text-sm text-slate-700 dark:text-slate-200">
                 Subscribed to{" "}
                 <b>
-                  <i>Autoworx Basic Plan</i>
+                  <i className="font-extrabold text-[#6571FF] dark:text-[#8b94ff]">
+                    Autoworx Basic Plan
+                  </i>
                 </b>
               </p>
-              <p className="italic">
+              <p className="italic text-sm text-slate-600 dark:text-slate-300">
                 Activated On :{" "}
-                <i>
-                  <b>{moment(company?.createdAt).format("D MMMM, YYYY")}</b>
+                <i className="font-semibold text-slate-700 dark:text-slate-200">
+                  {moment(company?.createdAt).format("D MMMM, YYYY")}
                 </i>
               </p>
-              {/* <p className="italic">
-                Expires On :{" "}
-                <i>
-                  <b>8 August, 2024</b>
-                </i>
-              </p> */}
-              <p className="font-semibold">Payment Status : PAID</p>
-              <p className="mt-4 flex items-center gap-x-4">
-                <button className="rounded bg-[#6571ff] px-2 py-1 text-white">
+              
+              <div className="pt-2 flex items-center gap-3">
+                  <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                      Payment Status :
+                  </p>
+                  <span className={statusStyles.className}>
+                      {statusStyles.text}
+                  </span>
+              </div>
+
+              <div className="mt-4 flex items-center gap-x-4 pt-2">
+                <button className="rounded-xl bg-gradient-to-r from-[#6571FF] to-[#0098da] px-4 py-2 text-sm font-medium text-white shadow-lg shadow-[#6571FF]/30 transition-all duration-300 hover:shadow-xl hover:shadow-[#6571FF]/50 hover:-translate-y-0.5">
                   Upgrade
                 </button>
-                <button className="rounded bg-[#6571ff] px-2 py-1 text-white">
+                <button className="rounded-xl border border-slate-400 dark:border-slate-500 bg-white dark:bg-slate-700 px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 transition-all duration-300 hover:bg-slate-50 dark:hover:bg-slate-600">
                   Cancel
                 </button>
-              </p>
+              </div>
             </div>
             {/* communication hub configure */}
             <ConfigureCommunicationHub />
