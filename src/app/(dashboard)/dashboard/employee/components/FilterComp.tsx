@@ -19,7 +19,7 @@ export default function FilterComp({ service, category }: TProps) {
   } = useEmployeeWorkFilterStore();
 
   return (
-    <div className="mt-5 flex w-full flex-col gap-4 md:flex-row md:items-center md:justify-between">
+    <div className="mt-5 flex w-full flex-col gap-4 md:flex-row md:items-center">
       <div className="relative w-full md:max-w-4xl">
         <div className="relative group flex w-full items-center gap-3 rounded-2xl bg-white/60 dark:bg-slate-900/50 ring-1 ring-slate-900/5 dark:ring-slate-700/30 p-3 pl-4 backdrop-blur-md shadow-sm transition-all duration-300 hover:shadow-lg">
 

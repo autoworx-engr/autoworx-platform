@@ -47,7 +47,7 @@ export default async function EmployeeInformation({
             <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">
               {employee.firstName} {employee.lastName}
             </h2>
-            <div className="mt-2 flex items-center gap-2">
+            <div className="mt-2 flex items-center justify-center gap-2">
               <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-bold uppercase tracking-wide text-[#6571FF] dark:bg-indigo-500/10 dark:text-indigo-300">
                 {employee.employeeType}
               </span>

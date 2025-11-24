@@ -425,17 +425,16 @@ const Dashboard = () => {
                           const effectiveHours = isNaN(Number(data.hours))
                             ? data.hours
                             : convertDuration(
-                                Number(data.hours) - Number(data.totalBreaks)
-                              );
+                              Number(data.hours) - Number(data.totalBreaks)
+                            );
 
                           return (
                             <tr
                               key={index}
-                              className={`group ${
-                                index % 2 === 0
-                                  ? "border-b bg-blue-50"
-                                  : "border-b bg-background"
-                              }`}
+                              className={`group ${index % 2 === 0
+                                ? "border-b bg-blue-50"
+                                : "border-b bg-background"
+                                }`}
                             >
                               <td className="bg-background px-2 py-2 font-medium sm:px-4">
                                 {dayAbbr}-{dayDate}
@@ -466,63 +465,57 @@ const Dashboard = () => {
                 {metricData.map((metric, index) => (
                   <div
                     key={index}
-                    className="relative flex items-center justify-center gap-4 rounded-lg border border-gray-300 bg-background p-4"
+                    className="relative flex items-center justify-between gap-4 rounded-xl bg-white/30 p-4 backdrop-blur-md ring-1 ring-slate-900/5 transition duration-300 hover:-translate-y-0.5 hover:scale-[1.02] hover:shadow-md dark:bg-black/30 dark:ring-white/10 dark:hover:shadow-lg"
                   >
-                    <div className="absolute left-1 top-1">
+                    <div className="absolute left-2 top-2">
                       <div
+                        className="group relative"
                         onMouseEnter={() => setInfoIndex(index)}
                         onMouseLeave={() => setInfoIndex(null)}
                       >
-                        <Info className="h-3 w-3 cursor-pointer" />
+                        <Info className="h-4 w-4 cursor-help text-slate-500 transition duration-300 group-hover:text-slate-700 dark:text-slate-400 dark:group-hover:text-slate-200" />
+                        {infoIndex === index && (
+                          <div className="absolute left-6 top-0 z-10 min-h-[60px] w-[200px] rounded-lg bg-slate-700/90 p-3 text-sm text-white opacity-0 shadow-lg transition-opacity duration-300 group-hover:opacity-100 dark:bg-slate-800/90">
+                            {getInfoContent(metric.label)}
+                          </div>
+                        )}
                       </div>
-                      {infoIndex === index && (
-                        <div
-                          style={{
-                            backgroundColor: "rgba(102, 115, 140, 0.9)",
-                          }}
-                          className="absolute left-5 top-0 z-10 flex h-auto min-h-[60px] w-[200px] items-center justify-center rounded-lg p-2 text-sm text-white"
-                        >
-                          {getInfoContent(metric.label)}
-                        </div>
-                      )}
                     </div>
-                    <div className="w-[70%] text-base font-bold text-gray-700">
+                    <div className="ml-4 w-fit text-base font-bold text-slate-600 dark:text-slate-300">
                       {metric.label}
                     </div>
-                    <div className="w-[60%] text-lg font-semibold text-gray-800">
+                    <div className="text-lg font-semibold text-slate-600 dark:text-slate-200">
                       {metric.value}
                     </div>
                     <div
-                      className={`flex items-center gap-1 text-sm font-medium ${metric.isPositive ? "text-green-500" : "text-red-500"}`}
+                      className={`mt-1 flex items-center justify-end gap-1 text-sm font-medium ${metric.isPositive ? 'text-emerald-500' : 'text-rose-500'
+                        }`}
                     >
-                      <div>
-                        {metric.isPositive ? (
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 24 24"
-                            width="16"
-                            height="16"
-                            aria-hidden="true"
-                            role="img"
-                          >
-                            <path d="M12 8.5l7 7H5l7-7z" fill="currentColor" />
-                          </svg>
-                        ) : (
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 24 24"
-                            width="16"
-                            height="16"
-                            aria-hidden="true"
-                            role="img"
-                          >
-                            <path
-                              d="M12 15.5L5 8.5h14l-7 7z"
-                              fill="currentColor"
-                            />
-                          </svg>
-                        )}
-                      </div>
+                      {metric.isPositive ? (
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          width="16"
+                          height="16"
+                          aria-hidden="true"
+                          role="img"
+                          className="transition duration-300 hover:scale-110"
+                        >
+                          <path d="M12 8.5l7 7H5l7-7z" fill="currentColor" />
+                        </svg>
+                      ) : (
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          width="16"
+                          height="16"
+                          aria-hidden="true"
+                          role="img"
+                          className="transition duration-300 hover:scale-110"
+                        >
+                          <path d="M12 15.5L5 8.5h14l-7 7z" fill="currentColor" />
+                        </svg>
+                      )}
                       <div className="text-nowrap">{metric.percentage}</div>
                     </div>
                   </div>
