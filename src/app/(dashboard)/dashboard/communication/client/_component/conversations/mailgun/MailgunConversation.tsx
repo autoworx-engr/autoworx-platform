@@ -1,12 +1,12 @@
 "use client";
 
+import { makeLinksClickable } from "@/components/MakeLinkClickable";
 import { cn } from "@/lib/cn";
 import { MailgunEmail, MailgunEmailAttachment } from "@prisma/client";
-import Image from "next/image";
-import MailAttachment from "./MailAttachment";
-import { makeLinksClickable } from "@/components/MakeLinkClickable";
 import { format } from "date-fns";
+import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import MailAttachment from "./MailAttachment";
 
 type TProps = {
   messages: (MailgunEmail & { attachments: MailgunEmailAttachment[] })[];
@@ -151,7 +151,7 @@ export default function MailGunConversation({
                         >
                           {/* Text */}
                           {message?.text?.trim() && (
-                            <div className="break-words">
+                            <div className="break-words whitespace-pre-wrap ">
                               {makeLinksClickable(message.text)}
                             </div>
                           )}
