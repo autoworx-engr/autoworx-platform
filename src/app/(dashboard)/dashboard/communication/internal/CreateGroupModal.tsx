@@ -208,7 +208,7 @@ export default function CreateGroupModal({
         )}
         {/* Title */}
         <h2 className="mb-5 text-2xl font-bold text-slate-800 dark:text-white">
-          Create Group 👥
+          Create Group 
         </h2>
         <div className="grid grid-cols-1">
           {/* group name input */}
