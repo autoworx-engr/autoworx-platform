@@ -64,13 +64,11 @@ const AWXDashboard = ({ companies }: Props) => {
   };
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 p-4 text-xs 2xl:text-base">
-      {/* Statistics সেকশনটি সবার উপরে রাখতে, 
-        Statistics এবং বাকি দুটি সেকশনকে একটি কলাম-ভিত্তিক (vertical) ফ্লেক্স কন্টেইনারে রাখা হয়েছে। 
-      */}
+      
       <div className="flex flex-col gap-y-8"> 
 
-        {/* Statistics Section (এখন এটি সবার উপরে থাকবে) */}
-        <div className="w-full space-y-4"> {/* `sm:w-fit` রিমুভ করা হয়েছে */}
+        {/* Statistics Section  */}
+        <div className="w-full space-y-4"> 
           <h2 className="text-2xl font-bold text-slate-600 dark:text-slate-300">
             Statistics
           </h2>
@@ -78,7 +76,7 @@ const AWXDashboard = ({ companies }: Props) => {
             {statistics.map((stat, index) => (
               <Card
                 key={index}
-                // Apply subtle glassmorphism, professional shadow, and hover effect
+                
                 className="h-[120px] w-full bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm shadow-xl shadow-slate-200/50 dark:shadow-slate-900/50 transition-all duration-300 hover:shadow-2xl hover:shadow-[#6571FF]/20 dark:hover:shadow-[#6571FF]/10 sm:h-[150px] rounded-2xl ring-1 ring-slate-200 dark:ring-slate-700 hover:z-10 hover:-translate-y-0.5"
               >
                 <CardContent className="w-full px-4 py-6 sm:p-7">
@@ -95,10 +93,10 @@ const AWXDashboard = ({ companies }: Props) => {
           </div>
         </div>
         
-        {/* Reports এবং Company List সেকশন এখন পাশাপাশি থাকবে */}
+
         <div className="flex flex-col gap-x-8 gap-y-8 xl:flex-row">
             
-            {/* Company List Section (আগে এটি তৃতীয় স্থানে ছিল, এখন বাম দিকে থাকবে) */}
+           
             <div className="h-full flex-1">
               <h3 className="mb-4 text-2xl font-bold text-slate-600 dark:text-slate-300">
                 Company List
@@ -128,9 +126,9 @@ const AWXDashboard = ({ companies }: Props) => {
                       </p>
                     )}
                     {filteredCompanies.map((company, index) => {
-                      const statusStyles = getStatusStyles("PAID"); // Assuming PAID as per original logic for now
+                      const statusStyles = getStatusStyles("PAID"); 
                       return (
-                        // Company Card Link - Apply subtle lift, shadow, and border color change on hover
+                      
                         <Link
                           href={`/awx-dashboard/statistics/${company?.id}`}
                           key={index}
@@ -213,7 +211,7 @@ const AWXDashboard = ({ companies }: Props) => {
               </div>
             </div>
           
-            {/* Reports Section (ডান দিকে থাকবে) */}
+           {/* Reports Sections */}
             <ReportsSection
               reports={reports!}
               isFetching={isFetching}

@@ -238,7 +238,13 @@ const Page = async (props: propsType) => {
               </div>
 
               <div className="mt-4 flex items-center gap-x-4 pt-2">
-                <button className="rounded-xl bg-gradient-to-r from-[#6571FF] to-[#0098da] px-4 py-2 text-sm font-medium text-white shadow-lg shadow-[#6571FF]/30 transition-all duration-300 hover:shadow-xl hover:shadow-[#6571FF]/50 hover:-translate-y-0.5">
+                <button className="rounded-xl px-4 py-2.5 text-sm font-semibold text-white
+                bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+                shadow-[0_4px_14px_0_rgba(101,113,255,0.39)]
+                hover:shadow-[0_6px_20px_rgba(101,113,255,0.23)]
+                hover:-translate-y-0.5
+                active:translate-y-0 active:scale-100
+                transition-all duration-300 ease-in-out">
                   Upgrade
                 </button>
                 <button className="rounded-xl border border-slate-400 dark:border-slate-500 bg-white dark:bg-slate-700 px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 transition-all duration-300 hover:bg-slate-50 dark:hover:bg-slate-600">
