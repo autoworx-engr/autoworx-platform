@@ -115,7 +115,7 @@ const AWXDashboard = ({ companies }: Props) => {
               </div>
               
               {/* Company List Container */}
-              <div className="custom-scrollbar h-full max-h-[calc(100vh-420px)] w-full rounded-2xl bg-white dark:bg-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-slate-900/50 ring-1 ring-slate-200 dark:ring-slate-700 overflow-y-auto">
+              <div className="custom-scrollbar h-full max-h-[60vh] md:max-h-[calc(100vh-420px)] w-full rounded-2xl bg-white dark:bg-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-slate-900/50 ring-1 ring-slate-200 dark:ring-slate-700 overflow-y-auto">
                 <div className="h-full p-3 sm:p-4 2xl:p-5">
                   <div className="space-y-4 sm:space-y-6">
                     {filteredCompanies.length == 0 && (
