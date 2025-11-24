@@ -88,9 +88,9 @@ export async function POST(req: NextRequest) {
         if (!client) {
           client = await db.client.create({
             data: {
-              firstName: body.From.replace("+", ""),
+              firstName: from,
               lastName: " ",
-              mobile: body.From.replace("+", ""),
+              mobile: from,
               companyId: infobipConfig.companyId,
             },
           });

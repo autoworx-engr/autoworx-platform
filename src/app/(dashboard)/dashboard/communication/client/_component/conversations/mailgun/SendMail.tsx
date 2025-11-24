@@ -1,12 +1,14 @@
 "use client";
 import { errorToast } from "@/lib/toast";
+import {
+  clientListStore,
+  useClientCommunicationStore,
+} from "@/stores/client-store";
+import { MailgunEmail, MailgunEmailAttachment } from "@prisma/client";
+import { SendHorizontal } from "lucide-react";
 import Image from "next/image";
 import React, { useRef, useState } from "react";
-import { MailgunEmail, MailgunEmailAttachment } from "@prisma/client";
 import AttachmentInput from "../AttachmentInput";
-import { clientListStore } from "@/stores/client-store";
-import { useClientCommunicationStore } from "@/stores/client-store";
-import { SendHorizontal } from "lucide-react";
 import SmartReplyBar from "../sms/SmartReply";
 
 // Helper function to format attachment message

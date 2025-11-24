@@ -381,7 +381,7 @@ export default function AddNewEmployee({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="mb-1">
-                <label htmlFor="password" className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 ml-1 mb-1.5 block">
+                <label htmlFor="password" className="mb-1 px-2 font-medium">
                   Password <span className="text-[#E9405F]">*</span>
                 </label>
                 <Password
@@ -393,7 +393,7 @@ export default function AddNewEmployee({
               <div className="mb-1">
                 <label
                   htmlFor="confirmPassword"
-                  className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 ml-1 mb-1.5 block"
+                  className="mb-1 px-2 font-medium"
                 >
                   Confirm Password <span className="text-[#E9405F]">*</span>
                 </label>

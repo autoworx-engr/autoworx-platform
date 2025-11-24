@@ -1,10 +1,9 @@
 "use client";
-import { cn } from "@/lib/cn";
-import Image from "next/image";
-import React from "react";
 import { makeLinksClickable } from "@/components/MakeLinkClickable";
-import SMSAttachment from "./SMSAttachment";
+import { cn } from "@/lib/cn";
 import { ClientSMS, ClientSmsAttachments } from "@prisma/client";
+import Image from "next/image";
+import SMSAttachment from "./SMSAttachment";
 
 export default function SmsMessage({
   message,
@@ -72,7 +71,9 @@ export default function SmsMessage({
 
             {/* Text */}
             {text && (
-              <div className="break-words">{makeLinksClickable(text)}</div>
+              <div className="break-words whitespace-pre-wrap">
+                {makeLinksClickable(text)}
+              </div>
             )}
 
             {/* Attachments (kept inside bubble) */}
