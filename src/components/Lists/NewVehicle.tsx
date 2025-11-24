@@ -25,7 +25,6 @@ import {
 import SelectorWithSearch from "./SelectorWithSearch";
 import { Spin } from "antd";
 import { usePathname } from "next/navigation";
-import CarLoading from "../common/CarLoading";
 
 type TProps = {
   newButton?: React.ReactNode;
@@ -162,7 +161,7 @@ export default function NewVehicle({
     <Dialog open={open && loading === false} onOpenChange={setOpen}>
       <DialogTrigger disabled={loading} asChild>
         {loading ? (
-          <CarLoading />
+          <Spin />
         ) : newButton ? (
           newButton
         ) : (

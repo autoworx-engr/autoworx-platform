@@ -209,7 +209,7 @@ const AutomationCard: FC<AutomationCardProps> = ({
           isInventoryUpdating ||
           isInvoiceUpdating ? (
             <button>
-              <CarLoading />
+              <Spin />
             </button>
           ) : (
             <button
@@ -239,7 +239,7 @@ const AutomationCard: FC<AutomationCardProps> = ({
           isInventoryDeleting ||
           isInvoiceDeleting ? (
             <button>
-              <CarLoading />
+              <Spin />
             </button>
           ) : (
             <Popconfirm
