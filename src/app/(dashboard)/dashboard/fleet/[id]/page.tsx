@@ -54,16 +54,16 @@ const page = async (props: PropsType) => {
           <ArrowLeft size={18} />
         </Link>
       </div>
-      <div className="flex items-center justify-between">
-        <h1 className="mr-4 mt-1 text-xl font-bold text-[#797979] sm:text-2xl">
-          Fleet List
+      <div className="flex items-center justify-between mb-1">
+        <h1 className="mr-4 mt-1 text-xl font-bold text-slate-600 sm:text-2xl">
+          Fleet Details
         </h1>
 
         {/* Add new fleet button */}
 
         <NewFleet
           buttonElement={
-            <button className="w-fit self-end rounded-md bg-[#6571FF] p-2 px-5 text-white">
+            <button className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#6571FF] to-[#8088FF] px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-[#6571FF]/40 transition-all duration-300 hover:from-[#505aff] hover:to-[#6571FF] hover:shadow-xl">
               + Add New Fleet
             </button>
           }
