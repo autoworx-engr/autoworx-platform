@@ -33,10 +33,10 @@ const ACCESS_CODE = env("ACCESS_CODE");
 
 const insertDefaultColumns = async (columnId: number, type: string) => {
   const columnsFortypes = defaultColumnWithColor.filter(
-    (column) => column.type === type
+    column => column.type === type
   );
 
-  const columnsWithCompany = columnsFortypes.map((column) => ({
+  const columnsWithCompany = columnsFortypes.map(column => ({
     ...column,
     companyId: columnId,
   }));
@@ -71,11 +71,11 @@ export async function register({
       throw new AppError(httpStatus.BAD_REQUEST, "Invalid access code");
     }
 
-    const lowerCaseEmail = userInfo.email.toLowerCase();
+    const userEmail = userInfo.email;
 
     // check if the user already created
     const user = await db.user.findUnique({
-      where: { email: lowerCaseEmail },
+      where: { email: userEmail },
     });
 
     if (user) {
@@ -210,7 +210,7 @@ export async function register({
     ];
 
     await Promise.all(
-      defaultPermissions.map((perm) =>
+      defaultPermissions.map(perm =>
         db.companyPermissionModule.create({
           data: {
             companyId: newCompany.id,
@@ -226,7 +226,7 @@ export async function register({
       data: {
         firstName: userInfo.firstName,
         lastName: userInfo.lastName,
-        email: lowerCaseEmail,
+        email: userEmail,
         password: hashedPassword,
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         companyId: newCompany.id,
