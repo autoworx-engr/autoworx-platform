@@ -1,30 +1,21 @@
 "use client";
-
-import { convertInvoice } from "@/actions/estimate/invoice/convert";
-import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
-import ResponsiveEstimateCard from "@/components/mobile-responsive/estimate/ResponsiveEstimateCard";
 import { cn } from "@/lib/cn";
-import { errorToast, successToast } from "@/lib/toast";
-import { updateServiceAutomationTrigger } from "@/service/service-maintenance-automation-trigger/api";
 import { useActionStoreCreateEdit } from "@/stores/createEditStore";
 import { useListsStore } from "@/stores/lists";
 import { formatCurrency } from "@/utils/formatCurrency";
-import { Pagination } from "antd"; // Importing the Pagination component from Ant Design
+import { Pagination } from "antd";
 import moment from "moment-timezone";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useMediaQuery } from "react-responsive";
-import ConvertTo from "./ConvertTo";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { SquarePen } from "lucide-react";
+import ResponsiveTemplateCard from "./ResponsiveTemplateCard";
 
-export interface InvoiceData {
+export interface TemplateData {
   id: string;
-  clientName: string;
-  vehicle: string;
-  email: string;
-  phone: string;
+  title: string;
   grandTotal: number;
   createdAt: Date;
   status?: string;
@@ -41,28 +32,22 @@ const oddColor = "bg-[#F8FAFF]";
 const defaultTake = 50;
 
 type TTableProps = {
-  estimateData: {
+  data: {
     totalEstimate: number;
-    data: InvoiceData[] | [];
+    data: TemplateData[] | [];
   };
   page?: string;
   take?: string;
-  isInvoice?: boolean;
 };
 
-export default function Table({
-  take,
-  page,
-  estimateData,
-  isInvoice,
-}: TTableProps) {
+export default function TemplateTable({ take, page, data }: TTableProps) {
   const { setActionType } = useActionStoreCreateEdit();
   const [currentPage, setCurrentPage] = useState(parseInt(page ?? "", 10) || 1);
   const timezone = useCompanyTimezone();
   const [pageSize, setPageSize] = useState(
     parseInt(take ?? "", 10) || defaultTake
   );
-  // const [showPagination, setShowPagination] = useState(false);
+
   const allStatusesFromStore = useListsStore((x) => x.statuses);
 
   const pathname = usePathname();
@@ -71,32 +56,10 @@ export default function Table({
 
   const isMax640 = useMediaQuery({ query: "(max-width: 640px)" });
 
-  // useEffect(() => {
-  //   if (estimateData.totalEstimate > defaultTake) {
-  //     setShowPagination(true);
-  //   } else {
-  //     setShowPagination(false);
-  //   }
-  // }, [estimateData.totalEstimate]);
-
   // optimize calculation with useMemo
   const showPagination = useMemo(() => {
-    return estimateData.totalEstimate > defaultTake;
-  }, [estimateData.totalEstimate]);
-
-  // const handlePageChange = (page: number, pageSize?: number) => {
-  //   const searchParams = new URLSearchParams(params.toString());
-  //   searchParams.set("page", page.toString());
-  //   if (pageSize) {
-  //     setPageSize(pageSize);
-  //     searchParams.set("take", pageSize.toString());
-  //   } else {
-  //     searchParams.delete("take");
-  //   }
-  //   setCurrentPage(page);
-  //   const newPath = `${pathname}?${searchParams.toString()}`;
-  //   router.push(newPath);
-  // };
+    return data?.totalEstimate > defaultTake;
+  }, [data?.totalEstimate]);
 
   // for preventing unnecessary re-renders
   const handlePageChange = useCallback(
@@ -116,37 +79,14 @@ export default function Table({
     [params, pathname, router]
   );
 
-  // Handler for converting an invoice to an estimate or invoice
-  const handleConvertedInvoice = async (id: string) => {
-    const res = await convertInvoice(id);
-    if (res.type === "success") {
-      const checkEstimateOrInvoice =
-        res.data.type === "Estimate" ? "Invoice" : "Estimate";
-      successToast(
-        `${checkEstimateOrInvoice} - ${id} converted to ${res.data.type}`
-      );
-
-      if (res?.data?.type == "Invoice") {
-        await updateServiceAutomationTrigger({
-          companyId: res?.data?.companyId,
-          estimateId: res?.data?.id,
-          columnId: res?.data?.columnId!,
-        });
-      }
-    } else if (res.type === "globalError") {
-      errorToast(res.message);
-    }
-  };
-
   return (
     <div className="min-h-[65vh] overflow-x-scroll rounded-md bg-background xl:overflow-auto xl:overflow-y-hidden flex flex-col ">
       <div className="flex-grow">
         {isMax640 ? (
           <div className="flex  w-full flex-col items-center justify-center gap-y-4">
-            {estimateData?.data?.map((data, index) => (
-              <ResponsiveEstimateCard
-                onConvert={() => handleConvertedInvoice(data?.id)}
-                invoiceEstimate={data}
+            {data?.data?.map((data, index) => (
+              <ResponsiveTemplateCard
+                template={data}
                 key={data.id}
                 index={index}
               />
@@ -157,48 +97,24 @@ export default function Table({
             {/* Estimate Header */}
             <thead className="bg-background">
               <tr className="h-10 border-b">
-                <th className="px-4 py-2 text-left">Invoice ID</th>
-                <th className="px-4 py-2 text-left">Client</th>
-                <th className="px-4 py-2 text-left">Vehicle</th>
-                <th className="px-4 py-2 text-left">Email</th>
-                <th className="px-4 py-2 text-left">Phone</th>
+                <th className="px-4 py-2 text-left">Template ID</th>
+                <th className="px-4 py-2 text-left">Title</th>
                 <th className="px-4 py-2 text-left">Price</th>
                 <th className="px-4 py-2 text-left">Date</th>
                 <th className="px-4 py-2 text-left">Status</th>
-                {isInvoice && (
-                  <th className="px-2 py-2 text-left">Delivered At</th>
-                )}
-
+                <th className="px-2 py-2 text-left">Created At</th>
                 <th className="px-4 py-2 text-left">Edit</th>
               </tr>
             </thead>
 
             {/* Estimate List */}
             <tbody>
-              {estimateData?.data?.map((data, index) => (
+              {data?.data?.map((data, index) => (
                 <tr
                   key={data.id}
                   className={cn("py-3", index % 2 === 0 ? evenColor : oddColor)}
                 >
-                  <td className="px-4 py-2 text-left">
-                    <InvoiceModal
-                      invoiceId={data.id}
-                      buttonChild={<button>{data.id}</button>}
-                      buttonChildClassName="block w-full text-blue-600"
-                    />
-                  </td>
-                  <td className="px-4 py-2 text-left">
-                    <p className="block h-full w-full">{data.clientName}</p>
-                  </td>
-                  <td className="px-4 py-2 text-left">
-                    <p className="block h-full w-full">{data.vehicle}</p>
-                  </td>
-                  <td className="px-4 py-2 text-left">
-                    <p className="block h-full w-full">{data.email}</p>
-                  </td>
-                  <td className="px-4 py-2 text-left">
-                    <p className="block h-full w-full">{data.phone}</p>
-                  </td>
+                  <td className="px-4 py-2 text-left">{data.id}</td>
                   <td className="px-4 py-2 text-left text-[#006D77]">
                     <p className="block h-full w-full">
                       {formatCurrency(+data.grandTotal)}
@@ -223,21 +139,7 @@ export default function Table({
                     </p>
                   </td>
 
-                  {isInvoice && (
-                    <td className="px-4 py-2 text-left">
-                      <p className="block h-full w-full">
-                        {data?.deliveredAt
-                          ? moment
-                              .tz(data?.deliveredAt, timezone)
-                              .format("MM/DD/YYYY")
-                          : ""}
-                      </p>
-                    </td>
-                  )}
                   <td className="flex items-center gap-3 px-4 py-2">
-                    <ConvertTo
-                      onConvert={() => handleConvertedInvoice(data.id)}
-                    />
                     <Link
                       href={`/dashboard/estimate/edit/${data.id}?clientId=${data.clientId}`}
                       className="text-2xl text-blue-600"
@@ -258,7 +160,7 @@ export default function Table({
                 className="custom-pagination"
                 current={currentPage}
                 pageSize={pageSize}
-                total={estimateData.totalEstimate}
+                total={data?.totalEstimate}
                 onChange={handlePageChange}
                 showSizeChanger={true}
                 onShowSizeChange={handlePageChange}
