@@ -20,10 +20,11 @@ import {
   StaticPermissionItem,
 } from "@/types/feature-permission";
 import getMissing, { formatPermissions } from "@/utils/formatPermission";
-import { Spin, Switch } from "antd";
+import { Switch } from "antd";
 import { useEffect, useState } from "react";
 import { MissingPermissionItemComponent } from "./MissingPermissionItemComponent";
 import { PermissionItemComponent } from "./PermissionItemComponent";
+import CarLoading from "@/components/common/CarLoading";
 
 export default function FeaturePermission({
   companyId,
@@ -555,7 +556,7 @@ export default function FeaturePermission({
   if (isLoading) {
     return (
       <div className="flex h-screen w-full animate-pulse items-center justify-center rounded-md bg-gray-200 p-4 shadow-sm md:p-6">
-        <Spin />
+        <CarLoading />
       </div>
     );
   }

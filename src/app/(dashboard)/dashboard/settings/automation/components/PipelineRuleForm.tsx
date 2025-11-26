@@ -13,6 +13,7 @@ import { errorToast } from "@/lib/toast";
 import { usePipelineStagesStore } from "@/stores/pipelineStagesStore";
 import { Spin } from "antd";
 import { useAllPipelineAutomationRules } from "@/hooks/pipeline-automation/useAllPipelineAutomationRules";
+import CarLoading from "@/components/common/CarLoading";
 
 export type Rule = {
   id?: string;
@@ -58,7 +59,7 @@ const PipelineRuleForm = ({
   });
 
   const [showDelayField, setShowDelayField] = useState(
-    formData.conditionType === "Time Delay",
+    formData.conditionType === "Time Delay"
   );
   const {
     stages,
@@ -71,7 +72,7 @@ const PipelineRuleForm = ({
   const { mutate: updateRule, isPending: isUpdatePending } =
     useUpdatePipelineAutomationRule();
   const { data, isLoading, isFetching } = useFindOnePipelineAutomationRule(
-    Number(id),
+    Number(id)
   );
   const [error, setError] = useState<Record<string, string>>({});
 
@@ -200,7 +201,7 @@ const PipelineRuleForm = ({
   };
 
   const rule = allPipelineRules?.data?.find(
-    (r: any) => r?.conditionType === formData?.conditionType,
+    (r: any) => r?.conditionType === formData?.conditionType
   );
   const ruleColumnIds = (
     rule?.stages?.map((s: any) => s?.columnId) || []
@@ -210,17 +211,20 @@ const PipelineRuleForm = ({
     (stage) =>
       !ruleColumnIds?.includes(stage?.id) &&
       !formData?.stageIds?.includes(stage?.id) &&
-      formData.targetColumnId !== stage.id,
+      formData.targetColumnId !== stage.id
   );
 
-    try {
+  try {
     const selectedTargetId =
-      formData?.targetColumnId !== null && formData?.targetColumnId !== undefined
+      formData?.targetColumnId !== null &&
+      formData?.targetColumnId !== undefined
         ? Number(formData.targetColumnId)
         : null;
 
     if (selectedTargetId && stages && Array.isArray(stages)) {
-      const alreadyPresent = actionOptions?.some((s) => s.id === selectedTargetId);
+      const alreadyPresent = actionOptions?.some(
+        (s) => s.id === selectedTargetId
+      );
       if (!alreadyPresent) {
         const selectedStage = stages.find((s) => s.id === selectedTargetId);
         if (selectedStage) {
@@ -241,7 +245,7 @@ const PipelineRuleForm = ({
   ) {
     return (
       <div className="flex h-[600px] w-full animate-pulse items-center justify-center rounded-md bg-gray-200 p-4 shadow-sm md:p-6">
-        <Spin />
+        <CarLoading />
       </div>
     );
   }
