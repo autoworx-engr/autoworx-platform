@@ -1,4 +1,5 @@
 import { cn } from "@/lib/cn";
+import { TrendingDown, TrendingUp } from "lucide-react";
 import React from "react";
 
 interface UnifiedPayoutCardProps {
@@ -30,13 +31,19 @@ const UnifiedPayoutCard = ({
 
   return (
     <div
-      className={`flex min-h-[140px] w-full flex-col justify-between rounded-lg border border-gray-300 bg-background p-2 text-sm sm:box-border lg:min-h-[180px] lg:mx-0 lg:w-full lg:p-5 ${customStyles}`}
+      className={cn(
+        "group relative flex flex-col justify-between overflow-hidden rounded-2xl bg-white dark:bg-slate-900 p-4 transition-all duration-300 hover:shadow-lg hover:-translate-y-1",
+        "ring-1 ring-slate-200 dark:ring-slate-800",
+        customStyles
+      )}
     >
-      <div className="flex-1">
-        <p className="font-inter mb-4 text-xs font-bold text-gray-500 lg:w-[300px] lg:text-xl">
+      <div className="absolute top-0 right-0 -mr-4 -mt-4 h-24 w-24 rounded-full bg-gradient-to-br from-purple-50 to-pink-50 opacity-50 blur-2xl dark:from-purple-900/20 dark:to-pink-900/20 transition-opacity group-hover:opacity-100" />
+
+      <div className="relative z-10">
+        <p className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
           {title}
         </p>
-        <div className="font-inter mb-4 text-[28px] font-semibold text-gray-500 lg:text-6xl">
+        <div className="mb-2 text-xl font-bold text-slate-600 dark:text-slate-100 lg:text-3xl tracking-tight">
           {!hideDollar ? "$" : ""}
           {amount.toLocaleString("en-US", {
             minimumFractionDigits: 2,
@@ -45,50 +52,42 @@ const UnifiedPayoutCard = ({
         </div>
 
         {showBreakdown && (
-          <div className="mb-3 space-y-1 text-xs text-gray-600">
+          <div className="mb-1 space-y-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 p-3 text-xs font-medium text-slate-600 dark:text-slate-400">
             <div className="flex justify-between">
-              <span>Work-based:</span>
-              <span>
-                $
-                {breakdown.workBased.toLocaleString("en-US", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
+              <span className="flex items-center gap-1.5">
+                <div className="h-1.5 w-1.5 rounded-full bg-indigo-400" /> Work-based
+              </span>
+              <span className="text-slate-600 dark:text-slate-200">
+                ${breakdown.workBased.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
             </div>
             <div className="flex justify-between">
-              <span>Salary:</span>
-              <span>
-                $
-                {breakdown.salary.toLocaleString("en-US", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
+              <span className="flex items-center gap-1.5">
+                <div className="h-1.5 w-1.5 rounded-full bg-purple-400" /> Salary
+              </span>
+              <span className="text-slate-800 dark:text-slate-200">
+                ${breakdown.salary.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
             </div>
-            <div className="border-t border-gray-300 pt-1"></div>
           </div>
         )}
       </div>
 
-      <div className="mt-auto">
-        {!hidePercentage && (
-          <>
-            {percentage != 0 ? (
-              <div
-                className={cn(
-                  "font-inter text-xl font-semibold",
-                  increased ? "text-green-500" : "text-red-500"
-                )}
-              >
-                {percentage}%
-              </div>
-            ) : (
-              <div className="h-7 lg:h-8"></div>
+      <div className="mt-auto relative z-10">
+        {!hidePercentage && percentage !== 0 && (
+          <div
+            className={cn(
+              "flex w-fit items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold",
+              increased
+                ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400"
+                : "bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400"
             )}
-          </>
+          >
+            {increased ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+            {Math.abs(percentage)}%
+            <span className="ml-1 font-normal text-slate-400 dark:text-slate-500 opacity-80">vs last month</span>
+          </div>
         )}
-        {hidePercentage && <div className="h-7 lg:h-8"></div>}
       </div>
     </div>
   );

@@ -22,18 +22,18 @@ const resources = [
     link: "/dashboard/resources/task_management",
     label: "task management",
   },
-  {
-    link: "/dashboard/resources/reporting",
-    label: "reporting",
-  },
+  // {
+  //   link: "/dashboard/resources/reporting",
+  //   label: "reporting",
+  // },
   {
     link: "/dashboard/resources/estimates_invoices",
     label: "estimates & invoices",
   },
-  {
-    link: "/dashboard/resources/payments",
-    label: "payments",
-  },
+  // {
+  //   link: "/dashboard/resources/payments",
+  //   label: "payments",
+  // },
   {
     link: "/dashboard/resources/inventory",
     label: "inventory",
@@ -46,14 +46,14 @@ const resources = [
   //   link: "/dashboard/resources/reputation_management",
   //   label: "reputation management",
   // },
-  {
-    link: "/dashboard/resources/settings",
-    label: "settings",
-  },
-  {
-    link: "/dashboard/resources/automation",
-    label: "automation",
-  },
+  // {
+  //   link: "/dashboard/resources/settings",
+  //   label: "settings",
+  // },
+  // {
+  //   link: "/dashboard/resources/automation",
+  //   label: "automation",
+  // },
   // {
   //   link: "/dashboard/resources/lead",
   //   label: "lead capture",

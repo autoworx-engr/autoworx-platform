@@ -63,7 +63,7 @@ export default function PaymentTable({
         const isWithinDateRange =
           dateRange[0] && dateRange[1]
             ? moment.utc(item.date).isSameOrAfter(convertedStart) &&
-              moment.utc(item.date).isSameOrBefore(convertedEnd)
+            moment.utc(item.date).isSameOrBefore(convertedEnd)
             : true;
 
         const isWithinAmountRange =
@@ -80,8 +80,8 @@ export default function PaymentTable({
 
         const isSearchMatch = search
           ? item.vehicle?.toLowerCase().includes(search.toLowerCase()) ||
-            item.invoiceId.toLowerCase().includes(search.toLowerCase()) ||
-            item.client.name?.toLowerCase().includes(search.toLowerCase())
+          item.invoiceId.toLowerCase().includes(search.toLowerCase()) ||
+          item.client.name?.toLowerCase().includes(search.toLowerCase())
           : true;
 
         const isRefundMatch =
@@ -119,70 +119,154 @@ export default function PaymentTable({
   );
 
   return (
-    <div className="min-h-[65vh] overflow-x-scroll rounded-md bg-background xl:overflow-hidden">
-      {/* Desktop View */}
-      <div className="hidden md:block">
-        <table className="w-full">
-          {/*  Header */}
-          <thead className="bg-background">
-            <tr className="h-10 border-b">
-              <th className="border-b px-4 py-2 text-left">Invoice#</th>
-              <th className="border-b px-4 py-2 text-left">Customer</th>
-              <th className="border-b px-4 py-2 text-left">Vehicle Info</th>
-              <th className="border-b px-4 py-2 text-left">Transaction Date</th>
-              <th className="border-b px-4 py-2 text-left">Amount</th>
-              <th className="border-b px-4 py-2 text-left">Cash Received</th>
-              <th className="border-b px-4 py-2 text-left">Method</th>
-              <th className="border-b px-4 py-2 text-left">Refund</th>
-            </tr>
-          </thead>
+    <div className="w-full p-4 bg-background dark:bg-slate-950 min-h-[65vh]">
+      <div className="mx-auto space-y-6">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-bold text-slate-600 dark:text-slate-100">Payments <span className="text-slate-400 font-normal">({filteredData.length})</span></h3>
+        </div>
 
-          <tbody>
-            {paginatedData.map((item, index) => (
-              <tr
-                key={index}
-                className={index % 2 === 0 ? "bg-background" : "bg-[#EEF4FF]"}
-              >
-                <td className="border-b px-4 py-2">
-                  <InvoiceModal
-                    invoiceId={item.invoiceId}
-                    buttonChild={<button>{item.invoiceId}</button>}
-                    buttonChildClassName="text-blue-500"
-                  />
-                </td>
-                <td className="border-b px-4 py-2">
+        {/* Desktop View */}
+        <div className="hidden lg:block overflow-hidden rounded-xl p-2 bg-white dark:bg-slate-900 ring-1 ring-slate-200 dark:ring-slate-800 shadow-sm">
+          <div className="md:overflow-x-auto">
+            <table className="w-full">
+              {/*  Header */}
+              <thead className="bg-background">
+                <tr className="h-10 border-b">
+                  <th className="border-b px-4 py-2 text-left">Invoice#</th>
+                  <th className="border-b px-4 py-2 text-left">Customer</th>
+                  <th className="border-b px-4 py-2 text-left">Vehicle Info</th>
+                  <th className="border-b px-4 py-2 text-left">Transaction Date</th>
+                  <th className="border-b px-4 py-2 text-left">Amount</th>
+                  <th className="border-b px-4 py-2 text-left">Cash Received</th>
+                  <th className="border-b px-4 py-2 text-left">Method</th>
+                  <th className="border-b px-4 py-2 text-left">Refund</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {paginatedData.map((item, index) => (
+                  <tr
+                    key={index}
+                    className={`duration-200 hover:bg-slate-50 dark:hover:bg-slate-800/50 ${index % 2 !== 0
+                      ? "bg-blue-50/80 dark:bg-slate-900"
+                      : "bg-white dark:bg-slate-900"
+                      }`}
+                  >
+                    <td className="border-b px-4 py-2">
+                      <InvoiceModal
+                        invoiceId={item.invoiceId}
+                        buttonChild={<button>{item.invoiceId}</button>}
+                        buttonChildClassName="text-blue-500"
+                      />
+                    </td>
+                    <td className="border-b px-4 py-2">
+                      <Link
+                        href={`/dashboard/client/${item?.client?.id && item?.client?.id !== undefined ? item?.client?.id : ""}`}
+                        className="text-blue-500"
+                      >
+                        {item?.client?.name && item?.client?.name !== undefined
+                          ? item?.client?.name
+                          : "- - -"}
+                      </Link>
+                    </td>
+                    <td className="border-b px-4 py-2">
+                      {item?.vehicle && item?.vehicle !== undefined
+                        ? item?.vehicle
+                        : "- - -"}
+                    </td>
+                    <td className="border-b px-4 py-2">
+                      {FormatUtcToTimezone(item.date, timezone, "MM/DD/YYYY")}
+                    </td>
+                    <td className="border-b px-4 py-2">
+                      <div>
+                        <div>{formatCurrency(item.amount)}</div>
+                        {item.refundedAmount > 0 && (
+                          <div className="text-sm text-red-500">
+                            Refunded: {formatCurrency(item.refundedAmount)}
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                    <td className="border-b px-4 py-2">
+                      {item.cashReceived ? item.cashReceived : "N/A"}
+                    </td>
+                    <td className="border-b px-4 py-2">{item.method}</td>{" "}
+                    <td className="border-b px-4 py-2">
+                      <RefundModal
+                        paymentId={item.id}
+                        paymentType={item.paymentType}
+                        totalAmount={item.amount}
+                        refundedAmount={item.refundedAmount}
+                        refundMethod={item.refundMethod}
+                        refundReason={item.refundReason}
+                        refundDate={item.refundDate}
+                        onRefundSuccess={onRefreshPayments}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Mobile View */}
+        <div className="lg:hidden space-y-4">
+          {filteredData.map((item, index) => (
+            <div
+              key={index}
+              className={`w-full rounded-lg border border-gray-100 p-6 shadow-md transition-all duration-200 ${index % 2 !== 0 ? "bg-blue-50/80 dark:bg-slate-900" : "bg-white dark:bg-slate-900"
+                }`}
+            >
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Link
+                    href={`/dashboard/estimate/view/${item.invoiceId}`}
+                    className="text-lg font-semibold text-[#6571FF]"
+                  >
+                    {item.invoiceId}
+                  </Link>
+                  <p className="font-semibold text-[#66738C]">
+                    {FormatUtcToTimezone(item.date, timezone, "MM/DD/YYYY")}
+                  </p>
+                </div>
+                <div className="flex items-center justify-between">
                   <Link
                     href={`/dashboard/client/${item?.client?.id && item?.client?.id !== undefined ? item?.client?.id : ""}`}
-                    className="text-blue-500"
+                    className="line-clamp-1 text-lg font-semibold"
                   >
                     {item?.client?.name && item?.client?.name !== undefined
                       ? item?.client?.name
                       : "- - -"}
                   </Link>
-                </td>
-                <td className="border-b px-4 py-2">
-                  {item?.vehicle && item?.vehicle !== undefined
-                    ? item?.vehicle
-                    : "- - -"}
-                </td>
-                <td className="border-b px-4 py-2">
-                  {FormatUtcToTimezone(item.date, timezone, "MM/DD/YYYY")}
-                </td>
-                <td className="border-b px-4 py-2">
                   <div>
-                    <div>{formatCurrency(item.amount)}</div>
+                    <p className="text-lg font-semibold text-[#66738C]">
+                      {formatCurrency(item.amount)}
+                    </p>
                     {item.refundedAmount > 0 && (
-                      <div className="text-sm text-red-500">
+                      <p className="text-sm text-red-500">
                         Refunded: {formatCurrency(item.refundedAmount)}
-                      </div>
+                      </p>
                     )}
                   </div>
-                </td>
-                <td className="border-b px-4 py-2">
-                  {item.cashReceived ? item.cashReceived : "N/A"}
-                </td>
-                <td className="border-b px-4 py-2">{item.method}</td>{" "}
-                <td className="border-b px-4 py-2">
+                </div>
+                <div className="flex items-center justify-between">
+                  <p className="text-lg font-semibold text-[#66738C]">
+                    {item?.vehicle && item?.vehicle !== undefined
+                      ? item?.vehicle
+                      : "- - -"}
+                  </p>
+                  <p className="text-lg font-semibold text-[#66738C]">
+                    {item.method}
+                  </p>
+                </div>
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-[#66738C]">Cash Received:</p>
+                  <p className="text-sm font-semibold text-[#66738C]">
+                    {item.cashReceived ? item.cashReceived : "N/A"}
+                  </p>
+                </div>{" "}
+                <div className="flex justify-end">
                   <RefundModal
                     paymentId={item.id}
                     paymentType={item.paymentType}
@@ -193,98 +277,26 @@ export default function PaymentTable({
                     refundDate={item.refundDate}
                     onRefundSuccess={onRefreshPayments}
                   />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Mobile View */}
-      <div className="grid gap-6 p-4 pb-6 md:hidden">
-        {filteredData.map((item, index) => (
-          <div
-            key={index}
-            className={`w-full rounded-lg border border-gray-100 p-6 shadow-md transition-all duration-200 ${index % 2 === 0 ? "bg-background" : "bg-[#F8FAFF]"}`}
-          >
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Link
-                  href={`/dashboard/estimate/view/${item.invoiceId}`}
-                  className="text-lg font-semibold text-[#6571FF]"
-                >
-                  {item.invoiceId}
-                </Link>
-                <p className="font-semibold text-[#66738C]">
-                  {FormatUtcToTimezone(item.date, timezone, "MM/DD/YYYY")}
-                </p>
-              </div>
-              <div className="flex items-center justify-between">
-                <Link
-                  href={`/dashboard/client/${item?.client?.id && item?.client?.id !== undefined ? item?.client?.id : ""}`}
-                  className="line-clamp-1 text-lg font-semibold"
-                >
-                  {item?.client?.name && item?.client?.name !== undefined
-                    ? item?.client?.name
-                    : "- - -"}
-                </Link>
-                <div>
-                  <p className="text-lg font-semibold text-[#66738C]">
-                    {formatCurrency(item.amount)}
-                  </p>
-                  {item.refundedAmount > 0 && (
-                    <p className="text-sm text-red-500">
-                      Refunded: {formatCurrency(item.refundedAmount)}
-                    </p>
-                  )}
                 </div>
               </div>
-              <div className="flex items-center justify-between">
-                <p className="text-lg font-semibold text-[#66738C]">
-                  {item?.vehicle && item?.vehicle !== undefined
-                    ? item?.vehicle
-                    : "- - -"}
-                </p>
-                <p className="text-lg font-semibold text-[#66738C]">
-                  {item.method}
-                </p>
-              </div>
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-[#66738C]">Cash Received:</p>
-                <p className="text-sm font-semibold text-[#66738C]">
-                  {item.cashReceived ? item.cashReceived : "N/A"}
-                </p>
-              </div>{" "}
-              <div className="flex justify-end">
-                <RefundModal
-                  paymentId={item.id}
-                  paymentType={item.paymentType}
-                  totalAmount={item.amount}
-                  refundedAmount={item.refundedAmount}
-                  refundMethod={item.refundMethod}
-                  refundReason={item.refundReason}
-                  refundDate={item.refundDate}
-                  onRefundSuccess={onRefreshPayments}
-                />
-              </div>
             </div>
-          </div>
-        ))}
-      </div>
-
-      {showPagination && (
-        <div className="mt-4 flex justify-end">
-          <Pagination
-            className="custom-pagination"
-            current={currentPage}
-            pageSize={pageSize}
-            total={filteredData.length}
-            onChange={handlePageChange}
-            showSizeChanger
-            onShowSizeChange={handlePageChange}
-          />
+          ))}
         </div>
-      )}
+
+        {showPagination && (
+          <div className="mt-4 flex justify-end">
+            <Pagination
+              className="custom-pagination"
+              current={currentPage}
+              pageSize={pageSize}
+              total={filteredData.length}
+              onChange={handlePageChange}
+              showSizeChanger
+              onShowSizeChange={handlePageChange}
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 }

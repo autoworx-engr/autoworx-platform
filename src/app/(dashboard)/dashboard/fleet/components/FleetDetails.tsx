@@ -21,7 +21,7 @@ export default async function FleetDetails({
 }) {
   return (
     <div className="">
-      <FleetSubHeading text="Fleet Details" className="md:ml-6" />
+      {/* <FleetSubHeading text="Fleet Details" className="md:ml-6" /> */}
 
       <InfoDetails client={fleet} />
     </div>

@@ -100,40 +100,40 @@ export default function PerformanceTable() {
             {metricData.map((metric, index) => (
               <div
                 key={index}
-                className="relative flex w-full flex-col gap-x-4 gap-y-2 rounded-lg border border-gray-300 bg-background p-4 lg:flex-row lg:items-center lg:justify-center"
+                className="relative flex w-full flex-col gap-x-4 gap-y-2 rounded-xl bg-white p-4 backdrop-blur-md ring-1 ring-slate-900/5 transition duration-300 hover:-translate-y-0.5 hover:scale-[1.02] hover:shadow-md dark:bg-black/30 dark:ring-white/10 dark:hover:shadow-lg"
               >
-                <div className="absolute left-1 top-1">
+                <div className="absolute left-2 top-2">
                   <div
+                    className="group relative"
                     onMouseEnter={() => setInfoIndex(index)}
                     onMouseLeave={() => setInfoIndex(null)}
                   >
-                    <Info className="h-3 w-3 cursor-pointer" />
+                    <Info className="h-4 w-4 cursor-help text-slate-500 transition duration-300 group-hover:text-slate-700 dark:text-slate-400 dark:group-hover:text-slate-200" />
+                    {infoIndex === index && (
+                      <div className="absolute left-6 top-0 z-10 min-h-[60px] w-[200px] rounded-lg bg-slate-700/90 p-3 text-sm text-white opacity-0 shadow-lg transition-opacity duration-300 group-hover:opacity-100 dark:bg-slate-800/90">
+                        {getPerformanceContent(metric.label)}
+                      </div>
+                    )}
                   </div>
-                  {infoIndex === index && (
+                </div>
+                <div className="ml-2 text-lg font-bold text-gray-700 lg:w-[80%]">
+                  {metric.label}
+                </div>
+                <div className="ml-2 flex items-center justify-between gap-4">
+                  <div className="text-xl font-semibold text-gray-800 lg:w-[80%]">
+                    {metric.value}
+                  </div>
+                  {!metric.isZeroGrowth && (
                     <div
-                      style={{ backgroundColor: "rgba(102, 115, 140, 0.9)" }}
-                      className="absolute left-5 top-0 z-10 flex h-auto min-h-[60px] w-[200px] items-center justify-center rounded-lg p-2 text-sm text-white"
+                      className={cn(
+                        "font-inter text-xl font-semibold",
+                        metric.percentage ? "text-green-500" : "text-red-500"
+                      )}
                     >
-                      {getPerformanceContent(metric.label)}
+                      {metric.percentage}%
                     </div>
                   )}
                 </div>
-                <div className="text-lg font-bold text-gray-700 lg:w-[80%]">
-                  {metric.label}
-                </div>
-                <div className="text-xl font-semibold text-gray-800 lg:w-[80%]">
-                  {metric.value}
-                </div>
-                {!metric.isZeroGrowth && (
-                  <div
-                    className={cn(
-                      "font-inter text-xl font-semibold",
-                      metric.percentage ? "text-green-500" : "text-red-500"
-                    )}
-                  >
-                    {metric.percentage}%
-                  </div>
-                )}
               </div>
             ))}
           </div>

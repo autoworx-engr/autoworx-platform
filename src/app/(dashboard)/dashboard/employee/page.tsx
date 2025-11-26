@@ -19,7 +19,7 @@ export default async function Page() {
           <Link // Change to <Link> if using Next.js/React Router
             href="/dashboard/reporting/teams"
             className="
-            group relative flex items-center gap-3 pl-4 pr-5 py-3 rounded-xl
+            group relative flex items-center gap-3 pl-3 pr-4 py-2 rounded-xl
             bg-gradient-to-b from-white to-slate-50 dark:from-slate-800 dark:to-slate-900
             ring-1 ring-slate-200 dark:ring-slate-700
             shadow-[0_1px_2px_rgba(0,0,0,0.05)]

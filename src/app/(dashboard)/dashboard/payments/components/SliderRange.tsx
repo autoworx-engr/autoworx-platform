@@ -8,26 +8,25 @@ interface SliderRangeProps {
   onChange: (newValue: [number, number]) => void;
 }
 
-// Custom styled Slider
+// Custom styled Slider (color adjusted to theme blue)
 const CustomSlider = styled(Slider)(({ theme }) => ({
-  color: "#4f4f4f", // Default track color (for selected range)
+  color: "#6571FF", // theme blue for selected range
   height: 8,
   "& .MuiSlider-track": {
-    background:
-      "linear-gradient(to right, #4f4f4f 23%, #4f4f4f 253%, #e0e0e0 253%, #e0e0e0 100%)",
+    background: "linear-gradient(to right, #6571FF 0%, #6571FF 100%)",
   },
   "& .MuiSlider-thumb": {
-    backgroundColor: "#ffffff", // Thumb color
+    backgroundColor: "#ffffff",
     borderRadius: "50%",
     width: 24,
     height: 24,
     border: "2px solid currentColor",
     "&:hover": {
-      boxShadow: "0px 0px 0px 2px ",
+      boxShadow: "0px 0px 0px 6px rgba(101,113,255,0.12)",
     },
   },
   "& .MuiSlider-rail": {
-    color: "#909090", // Rail color (for unselected portion)
+    backgroundColor: "#E6E9EE",
     height: 8,
   },
 }));
@@ -40,12 +39,12 @@ export default function SliderRange({ value, onChange }: SliderRangeProps) {
   };
 
   return (
-    <Box sx={{ width: 350 }}>
+    <Box sx={{ width: '100%' }}>
       <CustomSlider
         value={value}
         onChange={handleChange}
         valueLabelDisplay="auto"
-        min={1}
+        min={0}
         max={3000}
         step={1}
       />
