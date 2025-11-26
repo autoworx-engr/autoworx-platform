@@ -1357,6 +1357,40 @@ model Invoice {
   @@index([companyId], name: "fk_invoices_company")
   @@index([companyId, type])
 }
+model InvoiceTemplate {
+  id                      String                    @id @default(cuid())
+  createdAt               DateTime                  @default(now()) @map("created_at")
+  updatedAt               DateTime                  @default(now()) @updatedAt @map("updated_at")
+  subtotal                Decimal?                  @default(0) @db.Decimal(8, 2)
+  discount                Decimal?                  @default(0) @db.Decimal(8, 2)
+  tax                     Decimal?                  @default(0) @db.Decimal(8, 2)
+  serviceFee              Decimal?                  @default(0) @db.Decimal(8, 2)
+  grandTotal              Decimal?                  @default(0) @map("grand_total") @db.Decimal(8, 2)
+  statusId                Int?                      @map("status_id")
+  internalNotes           String?
+  terms                   String?
+  policy                  String?
+  companyId               Int                       @map("company_id")
+  userId                  Int?                      @map("user_id")
+  columnId                Int?                      @map("column_id")
+  company                 Company                   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  invoiceItems            InvoiceItem[]
+  vehicleParts            VehicleParts[]
+  photos                  InvoicePhoto[]
+  tasks                   Task[]
+  status                  Status?                   @relation(fields: [statusId], references: [id])
+  user                    User?                     @relation(name: "user", fields: [userId], references: [id], onDelete: SetNull)
+  Material                Material[]
+  technician              Technician[]
+  tags                    InvoiceTags[]
+  column                  Column?                   @relation(fields: [columnId], references: [id], onDelete: SetNull)
+  serviceIndex            Json?
+  Inspections             InvoiceInspection[]
+  damageNotes             String?                   @map("damage_notes")
+
+  @@index([companyId], name: "fk_invoices_company")
+}
+
 
 model InvoiceTags {
   id        Int      @id @default(autoincrement())
