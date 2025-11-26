@@ -4,18 +4,18 @@ import { getAttendanceInfo } from "@/actions/employee/getAttendanceInfo";
 // @ts-ignore
 import { updateAttendanceTime } from "@/actions/employee/updateAttendanceTime";
 import DateRange from "@/app/(dashboard)/dashboard/payments/components/PaymentDateRange";
+import AttendanceTableSkeleton from "@/components/ui/AttendanceTableSkeleton";
+import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { useServerGet } from "@/hooks/useServerGet";
 import {
   convertDuration,
   convertMinutesToHours,
   getTotalBreaksValue,
 } from "@/lib/convertDurations";
-import { useParams } from "next/navigation";
-import React, { useState, useEffect } from "react";
-import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
-import moment from "moment-timezone";
 import { Info, Pencil, Save, X } from "lucide-react";
-import AttendanceTableSkeleton from "@/components/ui/AttendanceTableSkeleton";
+import moment from "moment-timezone";
+import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 interface AttendanceRecord {
   id?: number;
@@ -411,11 +411,10 @@ const Dashboard = () => {
                           // If data.date is a string in YYYY-MM-DD format, parse it as local date
                           let dateMoment;
                           if (typeof data.date === "string") {
-                            // Parse as local date to avoid timezone shifts
-                            dateMoment = moment.tz(data.date, timezone);
+                            dateMoment = moment.tz(`${data.date}`, timezone);
                           } else {
-                            // If it's a Date object, convert it properly
-                            dateMoment = moment.utc(data.date).tz(timezone);
+                            // FIX: Parse as-is without shifting time
+                            dateMoment = moment(data.date).tz(timezone, true);
                           }
 
                           const dayOfWeek = dateMoment.day();
