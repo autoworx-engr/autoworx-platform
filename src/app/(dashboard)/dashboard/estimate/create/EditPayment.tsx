@@ -25,10 +25,12 @@ import { useEffect, useState, useTransition } from "react";
 
 type EditPaymentModalProps = {
   mergedPaymentData: any;
+  invoiceGrandTotal: number;
 };
 
 export default function EditPaymentModal({
   mergedPaymentData,
+  invoiceGrandTotal,
 }: EditPaymentModalProps) {
   const { paymentMethods } = useListsStore();
   const [open, setOpen] = useState(false);
@@ -60,7 +62,6 @@ export default function EditPaymentModal({
   const [notes, setNotes] = useState(mergedPaymentData.notes);
 
   const [paymentMethodInput, setPaymentMethodInput] = useState("");
-  //  OTHER payment method, load the actual payment method
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(
     () => {
       if (
@@ -92,7 +93,6 @@ export default function EditPaymentModal({
 
   useEffect(() => {
     if (open) {
-      // Determine the method type
       const methodType = mergedPaymentData.paymentMethod || "OTHER";
       setMethod(methodType);
 
@@ -106,7 +106,6 @@ export default function EditPaymentModal({
       setDepositMethod(mergedPaymentData.depositMethod || "");
       setDepositNotes(mergedPaymentData.depositNotes || "");
 
-      // Load OTHER payment method properly
       if (methodType === "OTHER" && mergedPaymentData.otherPaymentMethodId) {
         const pm = paymentMethods.find(
           (p) => p.id === mergedPaymentData.otherPaymentMethodId
@@ -143,108 +142,6 @@ export default function EditPaymentModal({
     }
   }
 
-  // const handleSave = () => {
-  //   startTransition(async () => {
-  //     try {
-  //       let additionalData = {};
-  //       switch (method) {
-  //         case "CARD":
-  //           additionalData = { cardType, creditCard: card };
-  //           break;
-  //         case "CHECK":
-  //           additionalData = { checkNumber: check };
-  //           break;
-  //         case "CASH":
-  //           additionalData = { receivedCash: cash };
-  //           break;
-  //         case "OTHER":
-  //           additionalData = { paymentMethodId: paymentMethod?.id };
-  //           break;
-  //         case "DEPOSIT":
-  //           additionalData = { depositMethod, depositNotes };
-  //           break;
-  //         default:
-  //           additionalData = {};
-  //       }
-
-  //       const payload = {
-  //         id: Number(mergedPaymentData.id),
-  //         type: method,
-  //         date,
-  //         notes,
-  //         amount: parseFloat(amount),
-  //         additionalData,
-  //       };
-
-  //       const originalPaymentAmount = mergedPaymentData.amount;
-  //       const originalPaymentType = mergedPaymentData.paymentMethod;
-
-  //       // Check if we're dealing with deposits
-  //       const isOriginalDeposit = originalPaymentType === "DEPOSIT";
-  //       const isNewDeposit = method === "DEPOSIT";
-
-  //       // Check if total would exceed grand total
-  //       const totalPaid = newDeposit + newTotalPayment;
-  //       if (totalPaid > grandTotal) {
-  //         errorToast(
-  //           `Total payment (${formatCurrency(totalPaid)}) cannot exceed grand total (${formatCurrency(grandTotal)})`
-  //         );
-  //         return;
-  //       }
-
-  //       const res = await updatePayment(payload);
-  //       if (res?.type === "success") {
-  //         // Handle different scenarios
-  //         if (isOriginalDeposit && isNewDeposit) {
-  //           // Editing a deposit amount
-  //           const depositDifference =
-  //             parseFloat(amount) - originalPaymentAmount;
-  //           const newDeposit = currentDeposit + depositDifference;
-  //           setDeposit(newDeposit);
-
-  //           const newDue = grandTotal - (newDeposit + currentTotalPayment);
-  //           setDue(newDue);
-  //         } else if (isOriginalDeposit && !isNewDeposit) {
-  //           // Converting deposit to regular payment
-  //           const newDeposit = currentDeposit - originalPaymentAmount;
-  //           setDeposit(newDeposit);
-
-  //           const newTotalPayment = currentTotalPayment + parseFloat(amount);
-  //           setTotalPayment(newTotalPayment);
-
-  //           const newDue = grandTotal - (newDeposit + newTotalPayment);
-  //           setDue(newDue);
-  //         } else if (!isOriginalDeposit && isNewDeposit) {
-  //           // Converting regular payment to deposit
-  //           const newTotalPayment = currentTotalPayment - originalPaymentAmount;
-  //           setTotalPayment(newTotalPayment);
-
-  //           const newDeposit = currentDeposit + parseFloat(amount);
-  //           setDeposit(newDeposit);
-
-  //           const newDue = grandTotal - (newDeposit + newTotalPayment);
-  //           setDue(newDue);
-  //         } else {
-  //           // Editing regular payment
-  //           const amountDifference = parseFloat(amount) - originalPaymentAmount;
-  //           const newTotalPayment = currentTotalPayment + amountDifference;
-
-  //           setTotalPayment(newTotalPayment);
-
-  //           const newDue = grandTotal - (currentDeposit + newTotalPayment);
-  //           setDue(newDue);
-  //         }
-
-  //         successToast("Payment updated successfully");
-  //         setOpen(false);
-  //       }
-  //     } catch (err) {
-  //       console.error(err);
-  //       errorToast("Unexpected error occurred");
-  //     }
-  //   });
-  // };
-
   const handleSave = () => {
     startTransition(async () => {
       try {
@@ -278,69 +175,59 @@ export default function EditPaymentModal({
           additionalData,
         };
 
-        const originalPaymentAmount = mergedPaymentData.amount;
-        const originalPaymentType = mergedPaymentData.paymentMethod;
-
-        // Check if we're dealing with deposits
-        const isOriginalDeposit = originalPaymentType === "DEPOSIT";
-        const isNewDeposit = method === "DEPOSIT";
-
-        // ✅ Validate total payment doesn't exceed grand total
-        let newTotalPayment = currentTotalPayment;
-        let newDeposit = currentDeposit;
-
-        if (isOriginalDeposit && isNewDeposit) {
-          // Editing a deposit amount
-          const depositDifference = parseFloat(amount) - originalPaymentAmount;
-          newDeposit = currentDeposit + depositDifference;
-        } else if (isOriginalDeposit && !isNewDeposit) {
-          // Converting deposit to regular payment
-          newDeposit = currentDeposit - originalPaymentAmount;
-          newTotalPayment = currentTotalPayment + parseFloat(amount);
-        } else if (!isOriginalDeposit && isNewDeposit) {
-          // Converting regular payment to deposit
-          newTotalPayment = currentTotalPayment - originalPaymentAmount;
-          newDeposit = currentDeposit + parseFloat(amount);
-        } else {
-          // Editing regular payment
-          const amountDifference = parseFloat(amount) - originalPaymentAmount;
-          newTotalPayment = currentTotalPayment + amountDifference;
-        }
-
-        // Check if total would exceed grand total
-        const totalPaid = newDeposit + newTotalPayment;
-        if (totalPaid > grandTotal) {
+        //  Validate against the specific invoice's grand total, not the global total
+        const newAmount = parseFloat(amount);
+        if (newAmount > invoiceGrandTotal) {
           errorToast(
-            `Total payment (${formatCurrency(totalPaid)}) cannot exceed grand total (${formatCurrency(grandTotal)})`
+            `Payment amount (${formatCurrency(newAmount)}) cannot exceed invoice total (${formatCurrency(invoiceGrandTotal)})`
           );
           return;
         }
 
         const res = await updatePayment(payload);
         if (res?.type === "success") {
-          // Handle different scenarios
-          if (isOriginalDeposit && isNewDeposit) {
-            // Editing a deposit amount
-            setDeposit(newDeposit);
-            const newDue = grandTotal - (newDeposit + currentTotalPayment);
-            setDue(newDue);
-          } else if (isOriginalDeposit && !isNewDeposit) {
-            // Converting deposit to regular payment
-            setDeposit(newDeposit);
-            setTotalPayment(newTotalPayment);
-            const newDue = grandTotal - (newDeposit + newTotalPayment);
-            setDue(newDue);
-          } else if (!isOriginalDeposit && isNewDeposit) {
-            // Converting regular payment to deposit
-            setTotalPayment(newTotalPayment);
-            setDeposit(newDeposit);
-            const newDue = grandTotal - (newDeposit + newTotalPayment);
-            setDue(newDue);
-          } else {
-            // Editing regular payment
-            setTotalPayment(newTotalPayment);
-            const newDue = grandTotal - (currentDeposit + newTotalPayment);
-            setDue(newDue);
+          //  Only update Zustand store if this is the current invoice being edited
+          const originalPaymentAmount = mergedPaymentData.amount;
+          const originalPaymentType = mergedPaymentData.paymentMethod;
+
+          const isOriginalDeposit = originalPaymentType === "DEPOSIT";
+          const isNewDeposit = method === "DEPOSIT";
+
+          // Only update store if editing the current invoice (optional based on your flow)
+          if (
+            mergedPaymentData.invoiceId ===
+            useEstimateCreateStore.getState().invoiceId
+          ) {
+            let newTotalPayment = currentTotalPayment;
+            let newDeposit = currentDeposit;
+
+            if (isOriginalDeposit && isNewDeposit) {
+              const depositDifference = newAmount - originalPaymentAmount;
+              newDeposit = currentDeposit + depositDifference;
+              setDeposit(newDeposit);
+              const newDue = grandTotal - (newDeposit + currentTotalPayment);
+              setDue(newDue);
+            } else if (isOriginalDeposit && !isNewDeposit) {
+              newDeposit = currentDeposit - originalPaymentAmount;
+              newTotalPayment = currentTotalPayment + newAmount;
+              setDeposit(newDeposit);
+              setTotalPayment(newTotalPayment);
+              const newDue = grandTotal - (newDeposit + newTotalPayment);
+              setDue(newDue);
+            } else if (!isOriginalDeposit && isNewDeposit) {
+              newTotalPayment = currentTotalPayment - originalPaymentAmount;
+              newDeposit = currentDeposit + newAmount;
+              setTotalPayment(newTotalPayment);
+              setDeposit(newDeposit);
+              const newDue = grandTotal - (newDeposit + newTotalPayment);
+              setDue(newDue);
+            } else {
+              const amountDifference = newAmount - originalPaymentAmount;
+              newTotalPayment = currentTotalPayment + amountDifference;
+              setTotalPayment(newTotalPayment);
+              const newDue = grandTotal - (currentDeposit + newTotalPayment);
+              setDue(newDue);
+            }
           }
 
           successToast("Payment updated successfully");
@@ -352,6 +239,7 @@ export default function EditPaymentModal({
       }
     });
   };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <button
@@ -405,7 +293,7 @@ export default function EditPaymentModal({
             />
           </div>
 
-          {/* Conditional Fields */}
+          {/* Rest of the form fields... */}
           {method === "CARD" && (
             <>
               <SlimInput

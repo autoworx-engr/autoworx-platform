@@ -419,7 +419,10 @@ export default async function PaymentTab({
                     <td className="px-10 text-left">{data.column?.title}</td>
                     <td className="px-10 text-left">{data.notes}</td>
                     <td className="px-10 text-left">
-                      <EditPaymentModal mergedPaymentData={mergedPayment} />
+                      <EditPaymentModal
+                        invoiceGrandTotal={Number(data.grandTotal)}
+                        mergedPaymentData={mergedPayment}
+                      />
                     </td>
                   </tr>
                 );
@@ -429,71 +432,9 @@ export default async function PaymentTab({
         </div>
 
         {/* Mobile */}
-        {/* <div className="grid gap-4 p-4 md:hidden">
-          {invoicesWithFull.slice(0, 4).map((data, index) => (
-            <div
-              key={data.id}
-              className={cn(
-                "rounded-lg p-4 shadow-sm transition-all duration-200",
-                index % 2 === 0 ? "bg-background" : "bg-[#F8FAFF]"
-              )}
-            >
-              <div className="flex items-center justify-between">
-                <InvoiceModal
-                  invoiceId={data.id}
-                  buttonChild={
-                    <button className="text-lg font-semibold text-[#6571FF]">
-                      {data.id}
-                    </button>
-                  }
-                />
-                <div className="flex items-center gap-2">
-                  <p className="text-lg font-bold text-[#6571FF]">
-                    {formatCurrency(data.amountPaid)}
-                  </p>
-                  <EditPaymentModal mergedPaymentData={mergedPayment} />
-                </div>
-              </div>
-              <div className="mt-2 space-y-2">
-                <div className="flex justify-between">
-                  <p className="text-sm text-[#66738C]">Vehicle</p>
-                  <p className="text-sm font-medium">{data.vehicle}</p>
-                </div>
-                <div className="flex justify-between">
-                  <p className="text-sm text-[#66738C]">Date</p>
-                  <p className="text-sm font-medium">
-                    {moment(data.paymentDate).format("MM.DD.YYYY")}
-                  </p>
-                </div>
-                <div className="flex justify-between">
-                  <p className="text-sm text-[#66738C]">Payment Method</p>
-                  <p className="text-sm font-medium">{data.paymentMethod}</p>
-                </div>
-                <div className="flex justify-between">
-                  <p className="text-sm text-[#66738C]">Cash Received</p>
-                  <p className="text-sm font-medium">
-                    {data.paymentMethodInfo &&
-                    "receivedCash" in data.paymentMethodInfo &&
-                    data.paymentMethodInfo.receivedCash
-                      ? data.paymentMethodInfo.receivedCash
-                      : "N/A"}
-                  </p>
-                </div>
-                {data.notes && (
-                  <div className="pt-2">
-                    <p className="text-sm text-[#66738C]">Notes</p>
-                    <p className="text-sm font-medium">{data.notes}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div> */}
-
-        {/* Mobile */}
         <div className="grid gap-4 p-4 md:hidden">
           {invoicesWithFull.slice(0, 4).map((data, index) => {
-            // ✅ Find the merged payment data for this payment
+            //  Find the merged payment data for this payment
             const mergedPayment = mergedPaymentData.find(
               (m) => m.paymentId === data.paymentId
             );
@@ -519,8 +460,11 @@ export default async function PaymentTab({
                     <p className="text-lg font-bold text-[#6571FF]">
                       {formatCurrency(data.amountPaid)}
                     </p>
-                    {/* ✅ Add edit button */}
-                    <EditPaymentModal mergedPaymentData={mergedPayment} />
+                    {/*  Add edit button */}
+                    <EditPaymentModal
+                      invoiceGrandTotal={Number(data.grandTotal)}
+                      mergedPaymentData={mergedPayment}
+                    />
                   </div>
                 </div>
                 <div className="mt-2 space-y-2">
