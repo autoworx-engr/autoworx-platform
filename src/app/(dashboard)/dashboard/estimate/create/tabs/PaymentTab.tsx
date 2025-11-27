@@ -475,7 +475,7 @@ export default async function PaymentTab({
                     <EditPaymentModal
                       invoiceGrandTotal={Number(data.grandTotal)}
                       mergedPaymentData={mergedPayment}
-                      totalPaidForInvoice={totalPaidForInvoice} // ✅ ADD THIS
+                      totalPaidForInvoice={totalPaidForInvoice}
                     />
                   </div>
                 </div>

@@ -26,7 +26,7 @@ import { useEffect, useState, useTransition } from "react";
 type EditPaymentModalProps = {
   mergedPaymentData: any;
   invoiceGrandTotal: number;
-  totalPaidForInvoice: number; //  total of all payments for this invoice
+  totalPaidForInvoice: number;
 };
 
 export default function EditPaymentModal({
@@ -192,15 +192,6 @@ export default function EditPaymentModal({
         // Calculate what the new total would be if we update this payment
         const otherPaymentsTotal = totalPaidForInvoice - originalPaymentAmount;
         const newTotalPaidForInvoice = otherPaymentsTotal + newAmount;
-
-        console.log("Validation Check:", {
-          invoiceGrandTotal,
-          originalPaymentAmount,
-          newAmount,
-          otherPaymentsTotal,
-          newTotalPaidForInvoice,
-          totalPaidForInvoice,
-        });
 
         if (newTotalPaidForInvoice > invoiceGrandTotal) {
           errorToast(
