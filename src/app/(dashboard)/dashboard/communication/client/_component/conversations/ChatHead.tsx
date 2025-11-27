@@ -45,10 +45,10 @@ export default function ChatHead({
   );
 
   const handleTabChange = (tab: string) => {
-    // if (tab === "PHONE" && !isCallingAccess?.enabled) {
-    //   setShowPremiumModal(true);
-    //   return;
-    // }
+    if (tab === "PHONE" && !isCallingAccess?.enabled) {
+      setShowPremiumModal(true);
+      return;
+    }
 
     setSelected(tab);
     if (searchParams) {
@@ -186,11 +186,11 @@ export default function ChatHead({
         <Phone className="w-5 h-5 fill-current text-white" />
       </button>
 
-      {/* <PremiumModal
+      <PremiumModal
         open={showPremiumModal}
         onClose={() => setShowPremiumModal(false)}
         featureName="calling feature"
-      /> */}
+      />
     </div>
   );
 }
