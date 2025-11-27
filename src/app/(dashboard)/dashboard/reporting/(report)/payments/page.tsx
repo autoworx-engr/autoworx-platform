@@ -100,20 +100,20 @@ export default async function PaymentReportPage({ searchParams }: TProps) {
   let filteredPayments =
     searchParams?.search && paymentInfo
       ? paymentInfo.filter((payment: any) => {
-          if (!payment.invoice?.client && !payment.invoiceId) {
-            return false;
-          }
-          const fullName = `${payment.invoice?.client?.firstName || ""} ${payment.invoice?.client?.lastName || ""}`;
-          const invoiceId = payment.invoiceId ? String(payment.invoiceId) : "";
-          return (
-            normalizeSearch(fullName)?.includes(
-              normalizeSearch(searchParams?.search || "")
-            ) ||
-            normalizeSearch(invoiceId)?.includes(
-              normalizeSearch(searchParams?.search || "")
-            )
-          );
-        })
+        if (!payment.invoice?.client && !payment.invoiceId) {
+          return false;
+        }
+        const fullName = `${payment.invoice?.client?.firstName || ""} ${payment.invoice?.client?.lastName || ""}`;
+        const invoiceId = payment.invoiceId ? String(payment.invoiceId) : "";
+        return (
+          normalizeSearch(fullName)?.includes(
+            normalizeSearch(searchParams?.search || "")
+          ) ||
+          normalizeSearch(invoiceId)?.includes(
+            normalizeSearch(searchParams?.search || "")
+          )
+        );
+      })
       : paymentInfo;
 
   if (searchParams.startDate && searchParams.endDate) {
@@ -224,7 +224,7 @@ export default async function PaymentReportPage({ searchParams }: TProps) {
         filterMultipleSliders={filterMultipleSliders}
         searchParams={searchParams}
       />
-      <div className="my-7 grid grid-cols-2 gap-4 xl:grid-cols-5">
+      <div className="my-7 grid grid-cols-1 md:grid-cols-2 gap-4 xl:grid-cols-5">
         <Calculation content="AVERAGE VALUE" amount={averageValue} />
         <Calculation content="OUTSTANDING PAYMENT" amount={totalDue} />
         <Calculation content="TOTAL PAYMENT" amount={totalAmount} />
