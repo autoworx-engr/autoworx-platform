@@ -23,6 +23,9 @@ export default async function Phone({ clientId }: { clientId: number }) {
     where: {
       clientId: clientId,
     },
+    orderBy: {
+      createdAt: "asc",
+    },
   });
 
   const enrichedCalls = calls.map((call) => {

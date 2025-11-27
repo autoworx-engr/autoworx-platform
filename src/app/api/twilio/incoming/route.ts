@@ -59,7 +59,7 @@ export async function POST(request: Request) {
     const callId = callSid || uuidv4();
 
     // Create ClientCall record for incoming call
-    await db.clientCall.create({
+    const createdCall = await db.clientCall.create({
       data: {
         callSid: callId,
         from,
