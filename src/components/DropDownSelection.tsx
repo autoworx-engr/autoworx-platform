@@ -47,20 +47,30 @@ export function DropdownSelection({
             variant="outline"
             className={cn(
               "flex items-center justify-center gap-x-1 text-xs lg:gap-x-2 lg:text-base",
+              "rounded-xl px-3 py-2 transition-transform duration-500 ease-out transform hover:scale-[1.02]",
+              // base appearance
+              "bg-white/60 dark:bg-slate-900/40 backdrop-blur-sm",
+              // default ring + hover
+              "ring-1 ring-slate-900/5 dark:ring-slate-700/20 hover:ring-[#6470fd]/50 hover:shadow-sm",
+              // when menu is open (radix sets aria-expanded)
+              "aria-[expanded=true]:ring-2 aria-[expanded=true]:ring-[#6470fd] aria-[expanded=true]:shadow-[0_20px_40px_-12px_rgba(100,112,253,0.10)]",
               buttonClassName
             )}
           >
-            {changesValue || defaultValue}
+            <span className="truncate max-w-[10rem] text-slate-600 dark:text-slate-200">
+              {changesValue || defaultValue}
+            </span>
             {dropdownIcon ? (
               dropdownIcon
             ) : (
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
-                width="24"
-                height="24"
+                width="20"
+                height="20"
                 aria-hidden="true"
                 role="img"
+                className="ml-2 text-slate-500 dark:text-slate-300 transition-transform duration-200 group-hover:translate-y-0.5 aria-[expanded=true]:text-[#6470fd]"
               >
                 <path d="M12 15.5L5 8.5h14l-7 7z" fill="currentColor" />
               </svg>
@@ -71,12 +81,17 @@ export function DropdownSelection({
       <DropdownMenuContent
         className={cn(
           "w-56 max-h-80 overflow-y-auto thin-scrollbar",
+          "rounded-2xl p-2 backdrop-blur-md bg-white/60 dark:bg-slate-900/50",
+          "ring-1 ring-slate-900/5 dark:ring-slate-700/20 shadow-lg border-transparent",
+          "transition-all duration-200",
           contentClassName
         )}
       >
         {menuLabel && (
           <>
-            <DropdownMenuLabel>{menuLabel}</DropdownMenuLabel>
+            <DropdownMenuLabel className="px-3 py-1 text-xs font-semibold text-slate-500 dark:text-slate-400">
+              {menuLabel}
+            </DropdownMenuLabel>
             <DropdownMenuSeparator />
           </>
         )}
@@ -87,16 +102,37 @@ export function DropdownSelection({
         >
           {dropDownValues.length > 0 ? (
             dropDownValues.map((value) => (
-              <DropdownMenuRadioItem key={value} value={value}>
-                {value}
+              <DropdownMenuRadioItem
+                key={value}
+                value={value}
+                className={cn(
+                  "group flex items-center justify-between px-3 py-2 rounded-lg text-sm",
+                  "text-slate-600 dark:text-slate-200 hover:bg-slate-100/60 dark:hover:bg-slate-800/60",
+                  "transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#6470fd]/20",
+                  "data-[state=checked]:bg-[#6470fd] data-[state=checked]:text-white",
+                  "data-[state=checked]:shadow-[0_8px_30px_rgba(100,112,253,0.12)]"
+                )}
+              >
+                <span className="flex items-center gap-1">
+                  <span className="truncate">{value}</span>
+                </span>
               </DropdownMenuRadioItem>
             ))
           ) : (
             <DropdownMenuRadioItem
               key={defaultValue}
               value={defaultValue || ""}
+              className={cn(
+                "group flex items-center justify-between px-3 py-2 rounded-lg text-sm",
+                "text-slate-600 dark:text-slate-200 hover:bg-slate-100/60 dark:hover:bg-slate-800/60",
+                "transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#6470fd]/20",
+                "data-[state=checked]:bg-[#6470fd] data-[state=checked]:text-white",
+                "data-[state=checked]:shadow-[0_8px_30px_rgba(100,112,253,0.12)]"
+              )}
             >
-              {defaultValue}
+              <span className="flex items-center gap-1">
+                <span className="truncate">{defaultValue}</span>
+              </span>
             </DropdownMenuRadioItem>
           )}
         </DropdownMenuRadioGroup>

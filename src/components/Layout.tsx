@@ -21,6 +21,7 @@ import { superAdminNavList } from "@/app/(dashboard)/awx-dashboard/_utils/superA
 import UserBugReport from "./bug-report/UserBugReport";
 import { VoiceDeviceProvider } from "@/context/VoiceDeviceContext";
 import VoiceAutoSetup from "./VoiceAutoSetup";
+import CarLoading from "./common/CarLoading";
 
 const navbarList = [
   {
@@ -300,7 +301,7 @@ export default function Layout({
   if (!permissions) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
-        <Spin size="large" />
+        <CarLoading />
       </div>
     );
   }

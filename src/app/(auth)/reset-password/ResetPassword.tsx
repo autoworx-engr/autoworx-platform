@@ -8,6 +8,7 @@ import SubmitButton from "./SubmitButton";
 import { Spin } from "antd";
 import { useRouter } from "next/navigation";
 import { useFormErrorStore } from "@/stores/form-error";
+import CarLoading from "@/components/common/CarLoading";
 
 export default function ResetPassword({
   uriToken,
@@ -53,16 +54,11 @@ export default function ResetPassword({
     if (!res.ok) {
       const errorData = await res.json();
       showError({ message: errorData.error || "Resend Failed", field: "otp" });
-    } 
+    }
   };
 
   if (!token && !email) {
-    return (
-      <Spin
-        size="large"
-        className="center flex h-screen items-center justify-center"
-      />
-    );
+    return <CarLoading />;
   }
 
   return (
@@ -132,7 +128,7 @@ export default function ResetPassword({
           <div className="mb-4">
             <label htmlFor="newPassword" className="mb-2 block">
               New Password
-            </label> 
+            </label>
             <Password
               name="newPassword"
               required

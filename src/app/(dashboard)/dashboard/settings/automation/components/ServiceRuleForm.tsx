@@ -28,9 +28,9 @@ import { parseTimeDelayToSeconds } from "@/utils/parseTimeDelayToSeconds";
 import { useFindOneServiceMaintenanceAutomationRule } from "@/hooks/service-maintenance-automation/useFindOneServiceMaintenanceAutomationRule";
 import { parseSecondsToTimeDelay } from "@/utils/parseSecondsToTimeDelay";
 import { useUpdateServiceMaintenanceAutomationRule } from "@/hooks/service-maintenance-automation/useUpdateServiceMaintenanceAutomationRule";
-import { Spin } from "antd";
 import { errorToast } from "@/lib/toast";
 import { useCharacterLimit } from "@/hooks/useCharecterLimit";
+import CarLoading from "@/components/common/CarLoading";
 type RuleFormProps = {
   initialData?: Rule;
   mode: "create" | "edit" | undefined;
@@ -334,7 +334,7 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
   if (isLoading || isFetching || serviceLoading || stageLoading) {
     return (
       <div className="flex h-[800px] w-full animate-pulse items-center justify-center rounded-md bg-gray-200 p-4 shadow-sm md:p-6">
-        <Spin />
+        <CarLoading />
       </div>
     );
   }

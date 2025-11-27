@@ -120,7 +120,7 @@ export default function EmployeeInfoTable({
   const pageEnd = pageStart + pageSize;
   const paginatedInfo = filteredInfo.slice(pageStart, pageEnd);
 
-  const handlePageChange = (page: number, size:number) => {
+  const handlePageChange = (page: number, size: number) => {
     setCurrentPage(page);
     if (size && size !== pageSize) setPageSize(size);
   };
@@ -217,6 +217,7 @@ export default function EmployeeInfoTable({
                   <p
                     style={{
                       backgroundColor: WORK_ORDER_STATUS_COLOR[row.status!],
+                      opacity: 0.90,
                     }}
                     className="rounded-full px-2 py-0.5 text-white"
                   >

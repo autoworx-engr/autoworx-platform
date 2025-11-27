@@ -1,27 +1,36 @@
 import { useState } from "react";
 import { useEmployeeWorkFilterStore } from "@/stores/employeeWorkFilter";
+import { DropdownSelection } from "@/components/DropDownSelection";
 
 export default function Filter() {
-  const [status, setStatus] = useState<string>("");
+  const [status, setStatus] = useState<string>("All");
   const { setFilter } = useEmployeeWorkFilterStore();
-
-  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newStatus = e.target.value;
-    setStatus(newStatus);
-    setFilter({ status: newStatus });
+  const handleStatusChange = (value: string) => {
+    setStatus(value);
+    setFilter({ status: value });
   };
 
+  const values = [
+    "All",
+    "Pending",
+    "In Progress",
+    "Complete",
+    "Cancelled",
+  ];
+
   return (
-    <select
-      className="block w-full cursor-pointer rounded-lg border border-gray-400 p-2 text-gray-400 outline-none hover:border-blue-600"
-      value={status}
-      onChange={handleStatusChange}
-    >
-      <option value="All">All</option>
-      <option value="Pending">Pending</option>
-      <option value="In Progress">In Progress</option>
-      <option value="Complete">Complete</option>
-      <option value="Cancelled">Cancelled</option>
-    </select>
+    <DropdownSelection
+      dropDownValues={values}
+      onValueChange={handleStatusChange}
+      changesValue={status}
+      defaultValue="All"
+      buttonClassName={`
+                min-w-[140px] rounded-xl border-none 
+                bg-white dark:bg-slate-900 
+                ring-1 ring-slate-200 dark:ring-slate-700 
+                shadow-sm text-slate-600 dark:text-slate-300 font-medium
+                hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors
+              `}
+    />
   );
 }

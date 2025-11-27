@@ -1,7 +1,8 @@
 "use client";
 
-import { Spin } from 'antd';
-import { useState, useEffect } from 'react';
+import { Spin } from "antd";
+import { useState, useEffect } from "react";
+import CarLoading from "./common/CarLoading";
 
 interface OptimizedLoadingProps {
   loading: boolean;
@@ -14,11 +15,11 @@ interface OptimizedLoadingProps {
  * Optimized loading component that prevents flash of loading state for fast operations
  * and ensures minimum loading time for better UX
  */
-export const OptimizedLoading = ({ 
-  loading, 
-  minLoadingTime = 300, 
-  children, 
-  fallback 
+export const OptimizedLoading = ({
+  loading,
+  minLoadingTime = 300,
+  children,
+  fallback,
 }: OptimizedLoadingProps) => {
   const [showLoading, setShowLoading] = useState(false);
   const [startTime, setStartTime] = useState<number | null>(null);
@@ -52,10 +53,15 @@ export const OptimizedLoading = ({
   }, [loading, minLoadingTime, startTime, showLoading]);
 
   if (showLoading) {
-    return fallback || (
-      <div className="flex w-full items-center justify-center" style={{ height: "calc(100vh - 300px)" }}>
-        <Spin size="large" />
-      </div>
+    return (
+      fallback || (
+        <div
+          className="flex w-full items-center justify-center"
+          style={{ height: "calc(100vh - 300px)" }}
+        >
+          <CarLoading />
+        </div>
+      )
     );
   }
 

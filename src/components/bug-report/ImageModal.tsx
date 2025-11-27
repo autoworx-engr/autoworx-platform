@@ -1,6 +1,6 @@
-import { Spin } from 'antd';
-import Image from 'next/image';
-import React, { useEffect, useRef } from 'react';
+import Image from "next/image";
+import React, { useEffect, useRef } from "react";
+import CarLoading from "../common/CarLoading";
 
 type ImageModalProps = {
   setIsModalOpen: (value: boolean) => void;
@@ -38,11 +38,11 @@ const ImageModal: React.FC<ImageModalProps> = ({
     };
 
     if (isModalOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isModalOpen]);
 
@@ -60,21 +60,21 @@ const ImageModal: React.FC<ImageModalProps> = ({
 
         {isImageLoading && (
           <div className="flex items-center justify-center h-[400px] w-[600px]">
-            <Spin />
+            <CarLoading />
           </div>
         )}
         {isOptimistic ? (
           <></>
         ) : (
           <>
-            {' '}
+            {" "}
             <Image
               src={message.attachment[currentImageIndex].fileUrl}
               alt=""
               width={800}
               height={600}
               className={`max-h-[90vh] rounded shadow ${
-                isImageLoading ? 'hidden' : 'block'
+                isImageLoading ? "hidden" : "block"
               }`}
               onLoadingComplete={() => setIsImageLoading(false)}
             />
