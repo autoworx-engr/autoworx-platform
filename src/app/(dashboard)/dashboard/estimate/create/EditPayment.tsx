@@ -195,7 +195,7 @@ export default function EditPaymentModal({
 
         if (newTotalPaidForInvoice > invoiceGrandTotal) {
           errorToast(
-            `Total payments for this invoice (${formatCurrency(newTotalPaidForInvoice)}) cannot exceed invoice total (${formatCurrency(invoiceGrandTotal)}). Other payments total: ${formatCurrency(otherPaymentsTotal)}`
+            `Total payments for this invoice (${formatCurrency(newTotalPaidForInvoice)}) cannot exceed invoice total (${formatCurrency(invoiceGrandTotal)})`
           );
           return;
         }
