@@ -1,7 +1,12 @@
 "use client";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { Info } from "lucide-react";
-import { useState } from "react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/Tooltip";
 
 type TProps = {
   content: string;
@@ -20,41 +25,69 @@ export default function CalculationWithTooltip({
   endDate,
   defaultTooltip = "Total revenue from all delivered invoices",
 }: TProps) {
-  const [showTooltip, setShowTooltip] = useState(false);
-
   const tooltipContent =
     hasDateRange &&
-    startDate &&
-    endDate &&
-    startDate !== "undefined" &&
-    endDate !== "undefined"
+      startDate &&
+      endDate &&
+      startDate !== "undefined" &&
+      endDate !== "undefined"
       ? `${startDate} to ${endDate}`
       : defaultTooltip;
 
+  const formattedAmount = formatCurrency(Number(amount));
+  const shouldShowTooltip = formattedAmount.length > 15;
+  const displayAmount = shouldShowTooltip
+    ? formattedAmount.slice(0, 15) + "..."
+    : formattedAmount;
+
   return (
-    <div className="relative flex h-32 w-full flex-col items-center justify-center gap-y-3 rounded-lg border p-4 shadow-md sm:gap-y-4 md:h-40 lg:h-48 lg:gap-y-5 lg:p-0">
-      <div className="absolute left-2 top-2">
-        <div
-          onMouseEnter={() => setShowTooltip(true)}
-          onMouseLeave={() => setShowTooltip(false)}
-        >
-          <Info className="h-3 w-3 cursor-pointer" />
+    <TooltipProvider>
+      <div
+        className="relative flex h-36 w-full flex-col items-center justify-center p-4 
+        rounded-2xl transition-all duration-300 ease-in-out cursor-default
+        sm:h-40 lg:h-48
+        bg-white/70 dark:bg-slate-800/80 backdrop-blur-sm
+        ring-1 ring-slate-200/70 dark:ring-slate-700/50
+        shadow-lg
+        hover:-translate-y-1 hover:shadow-xl hover:shadow-[#6571FF]/20 dark:hover:shadow-[#6571FF]/10
+        group"
+      >
+        {/* Info tooltip (top-left) */}
+        <div className="absolute left-3 top-3">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="cursor-pointer text-slate-500 dark:text-slate-300">
+                <Info className="h-4 w-4" />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="text-sm font-medium">{tooltipContent}</p>
+            </TooltipContent>
+          </Tooltip>
         </div>
-        {showTooltip && (
-          <div
-            style={{ backgroundColor: "rgba(102, 115, 140, 0.9)" }}
-            className="absolute z-10 flex h-auto w-[135px] items-center justify-center rounded-lg p-2 text-xs text-white md:left-5 md:top-0 md:min-h-[60px] md:text-sm [@media(min-width:425px)]:w-[180px] [@media(min-width:768px)]:w-[200px]"
-          >
-            {tooltipContent}
-          </div>
-        )}
+
+        {/* Content Label */}
+        <span className="text-center text-base md:text-lg text-slate-600 dark:text-slate-300 font-medium mb-2">
+          {content}
+        </span>
+
+        {/* Amount with optional tooltip */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="text-center text-3xl font-bold sm:text-4xl text-slate-600 dark:text-white transition-colors duration-300">
+              {displayAmount}
+            </span>
+          </TooltipTrigger>
+          {shouldShowTooltip && (
+            <TooltipContent>
+              <p className="text-sm font-medium">{formattedAmount}</p>
+            </TooltipContent>
+          )}
+        </Tooltip>
+
+        {/* Gradient accent */}
+        <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-[#6571FF] to-[#8088FF] rounded-b-2xl opacity-50 group-hover:opacity-100 transition-opacity duration-300 hover:from-[#505aff] hover:to-[#6571FF] hover:shadow-xl rounded-2xl" />
       </div>
-      <div className="relative flex items-center gap-2">
-        <span className="text-center text-base md:text-lg">{content}</span>
-      </div>
-      <span className="text-center text-base font-bold sm:text-3xl md:text-3xl lg:text-4xl">
-        {formatCurrency(amount)}
-      </span>
-    </div>
+    </TooltipProvider>
   );
 }

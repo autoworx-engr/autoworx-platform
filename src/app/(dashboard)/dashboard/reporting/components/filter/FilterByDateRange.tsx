@@ -121,12 +121,18 @@ export default function FilterDateRange({
       <button
         ref={buttonRef}
         onClick={togglePicker}
-        className="flex w-full items-center justify-between gap-2 rounded-sm border border-gray-400 p-1 text-sm text-gray-400 hover:border-blue-600 md:max-w-80"
+        className={`
+          flex w-full items-center justify-between gap-3 rounded-xl px-4 py-2.5 text-sm transition-all duration-300 ease-out
+          ${activeModal[modalName as keyof TFilterModalState]
+            ? 'bg-white ring-2 ring-[#6571FF] shadow-md shadow-indigo-500/10 dark:bg-slate-900'
+            : 'bg-white ring-1 ring-slate-200 hover:ring-indigo-500/50 hover:shadow-sm dark:bg-slate-900 dark:ring-slate-700'
+          }
+        `}
       >
-        <span className="truncate">
+        <span className={`font-medium truncate ${isRangeSelected ? 'text-slate-700 dark:text-slate-200' : 'text-slate-400'}`}>
           {formatRange(state.selection.startDate, state.selection.endDate)}
         </span>
-        <Calendar size={16} />
+        <Calendar className={`w-4 h-4`} />
       </button>
 
       {activeModal[modalName as keyof TFilterModalState] && (
@@ -150,21 +156,21 @@ export default function FilterDateRange({
           <div className="mt-4 flex justify-end gap-2">
             <button
               onClick={handleClear}
-              className="min-w-[60px] rounded bg-red-500 px-3 py-2 text-sm text-white md:px-4 md:text-base"
+              className="rounded-lg px-4 py-2 text-sm font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-700 dark:hover:bg-slate-800 dark:text-slate-400 border"
             >
               Clear
             </button>
             <button
-              onClick={handleOk}
-              className="min-w-[60px] rounded bg-blue-500 px-3 py-2 text-sm text-white md:px-4 md:text-base"
-            >
-              OK
-            </button>
-            <button
               onClick={togglePicker}
-              className="min-w-[60px] rounded bg-gray-300 px-3 py-2 text-sm md:px-4 md:text-base"
+              className="rounded-lg px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 border"
             >
               Cancel
+            </button>
+            <button
+              onClick={handleOk}
+              className="rounded-lg bg-gradient-to-r from-[#6571FF] to-[#5a66ee] px-6 py-2 text-sm font-bold text-white shadow-md shadow-indigo-500/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-indigo-500/30 transition-all"
+            >
+              Apply Filter
             </button>
           </div>
         </div>

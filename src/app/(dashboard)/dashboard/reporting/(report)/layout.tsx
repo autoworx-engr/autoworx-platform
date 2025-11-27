@@ -1,8 +1,9 @@
 "use client";
 import { usePermissionStore } from "@/stores/permissionStore";
-import { useRouter } from "next/navigation";
-import React, { useEffect } from "react";
-import ReportLink from "../components/ReportLink";
+import { useRouter, useSearchParams } from "next/navigation";
+import React, { useEffect, useState } from "react";
+import Link from "next/link";
+import { TrendingUp, Box, UserPlus, CreditCard, Users } from "lucide-react";
 type TProps = {
   children: React.ReactNode;
 };
@@ -10,6 +11,7 @@ type TProps = {
 export default function ReportLayout({ children }: TProps) {
   const { permissions } = usePermissionStore();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     if (permissions?.role === "Sales") {
@@ -18,40 +20,64 @@ export default function ReportLayout({ children }: TProps) {
       router.push("/dashboard/reporting/technicianreporting");
     }
   }, [permissions, router]);
+
+  // Tab system inspired by Header.tsx
+  const activeView = searchParams?.get("view") || "revenue";
+  const [currentView, setCurrentView] = useState<string | null>(activeView);
+
+  const toggleButtons = [
+    { label: "Revenue", href: "/dashboard/reporting/revenue?view=revenue", view: "revenue", icon: TrendingUp },
+    { label: "Inventory", href: "/dashboard/reporting/inventory?view=inventory", view: "inventory", icon: Box },
+    { label: "Leads", href: "/dashboard/reporting/leads?view=leads", view: "leads", icon: UserPlus },
+    { label: "Payments", href: "/dashboard/reporting/payments?view=payments", view: "payments", icon: CreditCard },
+    { label: "Teams", href: "/dashboard/reporting/teams?view=teams", view: "teams", requiresWorkforce: true, icon: Users },
+  ];
+
   return (
     <div>
       {permissions?.role === "Admin" || permissions?.role === "Manager" ? (
         <div>
           <div className="flex flex-col p-5 lg:flex-row lg:items-center">
-            <h1 className="mb-4 text-center text-2xl font-bold lg:mb-0 lg:mr-4 lg:text-left">
+            <h1 className="mb-4 text-center text-slate-600 text-2xl font-bold lg:mb-0 lg:mr-4 lg:text-left">
               Reporting
             </h1>
-            <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:gap-x-4">
-              <div className="grid grid-cols-3 gap-2 sm:grid-cols-3 lg:flex lg:gap-4">
-                <ReportLink href="/dashboard/reporting/revenue">
-                  Revenue
-                </ReportLink>
-                <ReportLink href="/dashboard/reporting/inventory">
-                  Inventory
-                </ReportLink>
-                <ReportLink href="/dashboard/reporting/leads">Leads</ReportLink>
-              </div>
-              <div className="flex justify-center gap-2 lg:flex lg:gap-4">
-                <ReportLink href="/dashboard/reporting/payments">
-                  Payments
-                </ReportLink>
-                {
-                  //@ts-ignore
-                  permissions?.companyPermissions?.workforceManagement !==
-                    false && (
-                    <ReportLink href="/dashboard/reporting/teams">
-                     Teams
-                    </ReportLink>
-                  )
-                }
-              </div>
-            </div>
+
+            {/* Tab Navigation */}
+            <nav className="w-full lg:w-auto mt-2 lg:mt-0">
+              <ul className="flex items-center gap-1.5 p-1.5 overflow-x-auto thin-scrollbar rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm shadow-sm">
+                {toggleButtons.map((button, index) => {
+                  if (button.requiresWorkforce && permissions?.companyPermissions?.workforceManagement === false) {
+                    return null;
+                  }
+                  const isActive = button.view === currentView;
+                  const Icon = (button as any).icon;
+
+                  return (
+                    <li key={index} className="shrink-0">
+                      <Link
+                        href={button.href}
+                        onClick={() => setCurrentView(button.view)}
+                        className={`group relative flex items-center gap-2.5 rounded-xl px-3 py-2 text-base font-medium transition-all duration-300 ease-out ${isActive
+                          ? "text-white shadow-md shadow-indigo-500/25 ring-1 ring-black/5 translate-y-[-1px]"
+                          : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200"
+                          }`}
+                      >
+                        {isActive && <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-[#6571FF] to-[#5a66ee] -z-10" />}
+                        {Icon && (
+                          <Icon
+                            size={18}
+                            className={`transition-colors duration-300 ${isActive ? "text-white" : "text-slate-400 group-hover:text-[#6571FF]"}`}
+                          />
+                        )}
+                        <span className="whitespace-nowrap">{button.label}</span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </nav>
           </div>
+
           <div className="bg-background p-5 md:rounded-lg md:shadow-md">
             {children}
           </div>

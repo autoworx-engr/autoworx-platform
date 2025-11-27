@@ -107,7 +107,7 @@ export default function FilterHeader({
         </div> */}
 
       {/* Category Filter */}
-      <div className="w-full md:w-auto">
+      <div className="flex items-center gap-4">
         <FilterBySelection
           selectedItem={searchParams?.category as string}
           items={getCategory}
@@ -117,10 +117,8 @@ export default function FilterHeader({
           closeModal={closeModal}
           toggleModal={toggleModal}
         />
-      </div>
 
-      {/* Service Filter */}
-      <div className="w-full md:w-auto">
+        {/* Service Filter */}
         <FilterBySelection
           selectedItem={searchParams?.service as string}
           items={getService}

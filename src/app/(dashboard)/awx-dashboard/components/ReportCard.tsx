@@ -13,12 +13,11 @@ const ReportCard = ({ report }: ReportCardProps) => {
   const ViewButton = () => (
     <button
       onClick={(e) => {
-        // Prevent event propagation if inside a link/clickable parent
         e.stopPropagation();
         setSelectedContact(report);
       }}
-      // Apply primary color gradient, subtle lift/shadow on hover, and small shimmer effect
-      className="rounded-xl mr-2 bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+  
+      className="rounded-xl  mr-8 md:mr-2 bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
                 shadow-[0_4px_14px_0_rgba(101,113,255,0.39)]
                 hover:shadow-[0_6px_20px_rgba(101,113,255,0.23)]
                 hover:-translate-y-0.5
@@ -65,7 +64,7 @@ const ReportCard = ({ report }: ReportCardProps) => {
         </div>
       </div>
       {/* Primary accent color bar for visual hierarchy and importance */}
-      <div className="absolute -right-2 md:right-0 top-1/2 h-[90%] w-1 -translate-y-1/2 rounded-l-3xl bg-gradient-to-r from-[#6571FF] to-[#5a66ee]"></div>
+      <div className="absolute right-0 top-1/2 h-[90%] w-1 -translate-y-1/2 rounded-l-3xl bg-gradient-to-r from-[#6571FF] to-[#5a66ee]"></div>
     </div>
   );
 };
