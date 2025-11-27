@@ -26,11 +26,13 @@ import { useEffect, useState, useTransition } from "react";
 type EditPaymentModalProps = {
   mergedPaymentData: any;
   invoiceGrandTotal: number;
+  totalPaidForInvoice: number; //  total of all payments for this invoice
 };
 
 export default function EditPaymentModal({
   mergedPaymentData,
   invoiceGrandTotal,
+  totalPaidForInvoice,
 }: EditPaymentModalProps) {
   const { paymentMethods } = useListsStore();
   const [open, setOpen] = useState(false);
@@ -175,8 +177,10 @@ export default function EditPaymentModal({
           additionalData,
         };
 
-        //  Validate against the specific invoice's grand total, not the global total
         const newAmount = parseFloat(amount);
+        const originalPaymentAmount = mergedPaymentData.amount;
+
+        //  Single payment cannot exceed grand total
         if (newAmount > invoiceGrandTotal) {
           errorToast(
             `Payment amount (${formatCurrency(newAmount)}) cannot exceed invoice total (${formatCurrency(invoiceGrandTotal)})`
@@ -184,16 +188,34 @@ export default function EditPaymentModal({
           return;
         }
 
+        //   Total of all payments for this invoice cannot exceed grand total
+        // Calculate what the new total would be if we update this payment
+        const otherPaymentsTotal = totalPaidForInvoice - originalPaymentAmount;
+        const newTotalPaidForInvoice = otherPaymentsTotal + newAmount;
+
+        console.log("Validation Check:", {
+          invoiceGrandTotal,
+          originalPaymentAmount,
+          newAmount,
+          otherPaymentsTotal,
+          newTotalPaidForInvoice,
+          totalPaidForInvoice,
+        });
+
+        if (newTotalPaidForInvoice > invoiceGrandTotal) {
+          errorToast(
+            `Total payments for this invoice (${formatCurrency(newTotalPaidForInvoice)}) cannot exceed invoice total (${formatCurrency(invoiceGrandTotal)}). Other payments total: ${formatCurrency(otherPaymentsTotal)}`
+          );
+          return;
+        }
+
         const res = await updatePayment(payload);
         if (res?.type === "success") {
-          //  Only update Zustand store if this is the current invoice being edited
-          const originalPaymentAmount = mergedPaymentData.amount;
           const originalPaymentType = mergedPaymentData.paymentMethod;
-
           const isOriginalDeposit = originalPaymentType === "DEPOSIT";
           const isNewDeposit = method === "DEPOSIT";
 
-          // Only update store if editing the current invoice (optional based on your flow)
+          // Only update store if editing the current invoice
           if (
             mergedPaymentData.invoiceId ===
             useEstimateCreateStore.getState().invoiceId
@@ -293,7 +315,7 @@ export default function EditPaymentModal({
             />
           </div>
 
-          {/* Rest of the form fields... */}
+          {/* Conditional Fields */}
           {method === "CARD" && (
             <>
               <SlimInput

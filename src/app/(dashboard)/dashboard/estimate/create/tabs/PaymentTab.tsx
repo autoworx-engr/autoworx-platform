@@ -382,6 +382,11 @@ export default async function PaymentTab({
                 const mergedPayment = mergedPaymentData.find(
                   (m) => m.paymentId === data.paymentId
                 );
+
+                //  Calculate total paid for this specific invoice
+                const totalPaidForInvoice = invoicesWithFull
+                  .filter((inv) => inv.id === data.id)
+                  .reduce((sum, inv) => sum + Number(inv.amountPaid || 0), 0);
                 return (
                   <tr
                     key={data.id}
@@ -422,6 +427,7 @@ export default async function PaymentTab({
                       <EditPaymentModal
                         invoiceGrandTotal={Number(data.grandTotal)}
                         mergedPaymentData={mergedPayment}
+                        totalPaidForInvoice={totalPaidForInvoice}
                       />
                     </td>
                   </tr>
@@ -438,6 +444,11 @@ export default async function PaymentTab({
             const mergedPayment = mergedPaymentData.find(
               (m) => m.paymentId === data.paymentId
             );
+
+            //  Calculate total paid for this specific invoice
+            const totalPaidForInvoice = invoicesWithFull
+              .filter((inv) => inv.id === data.id)
+              .reduce((sum, inv) => sum + Number(inv.amountPaid || 0), 0);
 
             return (
               <div
@@ -464,6 +475,7 @@ export default async function PaymentTab({
                     <EditPaymentModal
                       invoiceGrandTotal={Number(data.grandTotal)}
                       mergedPaymentData={mergedPayment}
+                      totalPaidForInvoice={totalPaidForInvoice} // ✅ ADD THIS
                     />
                   </div>
                 </div>
