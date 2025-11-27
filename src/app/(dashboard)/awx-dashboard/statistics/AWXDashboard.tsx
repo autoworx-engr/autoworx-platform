@@ -15,13 +15,7 @@ type Props = {
   companies: CompanyStat[];
 };
 
-const statistics = [
-  { title: "Total Revenue", value: "567" },
-  { title: "Total Contracts", value: "737" },
-  { title: "Churn Rate", value: "567" },
-  { title: "Growth Rate", value: "567" },
-  { title: "Bugs", value: "567" },
-];
+
 
 const AWXDashboard = ({ companies }: Props) => {
   const { data: reports, isFetching, isLoading } = useGetAllBugReports(20);
@@ -46,14 +40,13 @@ const AWXDashboard = ({ companies }: Props) => {
   };
 
  const getStatusStyles = (status: string | undefined) => {
-    // Since the original code only showed "PAID", we focus on styling that,
-    // but the structure is ready for dynamic expansion.
+
     if (status?.toUpperCase() === "PAID") {
       // Modernized status tag for success state
       return {
         text: "PAID",
         className:
-          "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20 px-3 py-1 rounded-full font-semibold", // Success style
+          "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20 px-3 py-1 rounded-full font-semibold whitespace-nowrap", 
       };
     }
     return {
@@ -62,6 +55,14 @@ const AWXDashboard = ({ companies }: Props) => {
         "bg-slate-50 text-slate-700 ring-1 ring-slate-600/20 px-3 py-1 rounded-full font-semibold",
     };
   };
+
+  const statistics = [
+  { title: "Total Revenue", value: "567" },
+  { title: "Total Contracts", value: "737" },
+  { title: "Churn Rate", value: "567" },
+  { title: "Growth Rate", value: "567" },
+  { title: "Bugs", value: reports?.length ?? 0 },
+];
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 p-4 text-xs 2xl:text-base">
       
@@ -94,10 +95,10 @@ const AWXDashboard = ({ companies }: Props) => {
         </div>
         
 
-        <div className="flex flex-col gap-x-8 gap-y-8 xl:flex-row">
+        <div className="grid grid-cols-1 gap-8 xl:grid-cols-3">
             
            
-            <div className="h-full flex-1">
+            <div className="h-full col-span-1 xl:col-span-2">
               <h3 className="mb-4 text-2xl font-bold text-slate-600 dark:text-slate-300">
                 Company List
               </h3>
@@ -115,7 +116,7 @@ const AWXDashboard = ({ companies }: Props) => {
               </div>
               
               {/* Company List Container */}
-              <div className="custom-scrollbar h-full max-h-[60vh] md:max-h-[calc(100vh-420px)] w-full rounded-2xl bg-white dark:bg-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-slate-900/50 ring-1 ring-slate-200 dark:ring-slate-700 overflow-y-auto">
+              <div className="custom-scrollbar h-full max-h-[65vh] md:max-h-[calc(100vh-450px)] w-full rounded-2xl bg-white dark:bg-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-slate-900/50 ring-1 ring-slate-200 dark:ring-slate-700 overflow-y-auto">
                 <div className="h-full p-3 sm:p-4 2xl:p-5">
                   <div className="space-y-4 sm:space-y-6">
                     {filteredCompanies.length == 0 && (
@@ -212,11 +213,13 @@ const AWXDashboard = ({ companies }: Props) => {
             </div>
           
            {/* Reports Sections */}
-            <ReportsSection
+           <div className="col-span-1">
+             <ReportsSection
               reports={reports!}
               isFetching={isFetching}
               isLoading={isLoading}
             />
+           </div>
 
         </div>
       </div>
