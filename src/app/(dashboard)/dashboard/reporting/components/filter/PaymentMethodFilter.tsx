@@ -94,52 +94,52 @@ export default function PaymentMethodFilter({
     <div className="relative w-full md:w-auto">
       <button
         onClick={() => toggleModal(modalName)}
-        className={`flex w-full items-center justify-between gap-2 rounded-sm border ${selectedMethod !== "All" ? "border-[#6571FF] bg-[#6571FF] text-white" : "border-gray-400 text-gray-400"} p-1 px-5 text-sm hover:border-blue-600 md:max-w-80`}
+        className={`flex h-10 items-center justify-center rounded-xl px-4 text-sm font-medium transition-all duration-300 min-w-[120px] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#6571ff] active:shadow-lg ${selectedMethod !== "All"
+            ? "bg-[#6571ff] text-white shadow-[#6571ff]/50"
+            : "bg-white ring-1 ring-slate-200 text-slate-500 hover:bg-slate-50"
+          }`}
       >
-        <span className={``}>
-          {selectedMethod === "All" ? "Filter" : selectedMethod}
-        </span>
+        {selectedMethod === "All" ? "Filter" : selectedMethod}
       </button>
 
       {activeModal[modalName] && (
-        <div
-          ref={modalRef}
-          className="absolute right-0 z-10 mt-2 w-72 origin-top-right rounded-md bg-background p-4 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none md:left-0"
-        >
-          <div className="mb-4">
-            <h3 className="mb-2 text-base font-medium text-gray-700">
-              Payment Method
-            </h3>
-            <div className="flex flex-wrap gap-2">
-              {paymentMethods.map((method) => (
-                <button
-                  key={method}
-                  onClick={() => handleMethodSelect(method)}
-                  className={`flex items-center justify-center rounded-md border px-3 py-1 text-sm ${
-                    selectedMethod === method
-                      ? "border-[#6571FF] bg-[#6571FF] text-white"
-                      : "border-gray-300 text-gray-700"
-                  }`}
-                >
-                  {method}
-                </button>
-              ))}
+        <div className="absolute right-0 z-40 mt-2 origin-top-right md:left-auto">
+          <div
+            ref={modalRef}
+            className="mt-2 w-72 rounded-2xl border border-slate-200 bg-white/90 backdrop-blur-xl p-5 shadow-2xl shadow-slate-200/50 lg:w-[400px]"
+          >
+            <div className="mb-4">
+              <h3 className="mb-2 text-sm font-semibold text-slate-700">Payment Method</h3>
+              <div className="flex flex-wrap gap-2">
+                {paymentMethods.map((method) => (
+                  <button
+                    key={method}
+                    onClick={() => handleMethodSelect(method)}
+                    className={`flex items-center justify-center rounded-lg border px-3 py-1 text-base font-medium transition-all duration-200 hover:scale-105 ${selectedMethod === method
+                        ? "bg-[#6571ff] text-white border-transparent shadow-md"
+                        : "border-slate-200 text-slate-700 hover:bg-slate-50"
+                      }`}
+                  >
+                    {method}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
 
-          <div className="flex space-x-2">
-            <button
-              onClick={applyFilter}
-              className="rounded-md bg-[#6571FF] px-4 py-2 text-sm font-medium text-white hover:bg-blue-600"
-            >
-              Apply
-            </button>
-            <button
-              onClick={clearFilter}
-              className="rounded-md border border-gray-300 bg-background px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-            >
-              Clear All
-            </button>
+            <div className="flex space-x-2 border-t border-slate-100 pt-4">
+              <button
+                onClick={applyFilter}
+                className="rounded-xl bg-gradient-to-r from-[#6571ff] to-[#5a66ee] px-6 py-2 text-sm font-bold text-white shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/30 hover:scale-[1.02] transition-all active:scale-95"
+              >
+                Apply
+              </button>
+              <button
+                onClick={clearFilter}
+                className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-500 hover:bg-slate-50 transition-colors"
+              >
+                Clear All
+              </button>
+            </div>
           </div>
         </div>
       )}
