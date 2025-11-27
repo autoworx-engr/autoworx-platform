@@ -3,6 +3,7 @@
 import { useEstimateCreateStore } from "@/stores/estimate-create";
 import { ImagesInput } from "./ImagesInput";
 import { TasksInput } from "./TasksInput";
+import NotesTextArea from "../../templates/NotesTextArea";
 
 export function AttachmentTab() {
   const {
@@ -29,14 +30,8 @@ export function AttachmentTab() {
         <ImagesInput photos={photos} setPhotos={setPhotos} />
         <TasksInput tasks={tasks}/>
 
-        <textarea
-          className="col-span-full rounded border border-solid border-slate-500 p-2"
-          name="internal-notes"
-          rows={5}
-          placeholder="Internal Job Notes..."
-          value={internalNotes}
-          onChange={(e) => setInternalNotes(e.currentTarget.value)}
-        />
+        
+        <NotesTextArea value={internalNotes} onChange={setInternalNotes} placeholder="Internal Job Notes..." name="internal-notes"/>
 
         {/* <textarea
           className="rounded border border-solid border-slate-500 p-2"
@@ -60,15 +55,8 @@ export function AttachmentTab() {
       <h2 className="mb-3 font-bold">Customer</h2>
 
       <div className="grid grid-cols-1 gap-3">
-        <textarea
-          className="rounded col-span-full border border-solid border-slate-500 p-2"
-          name="customer-notes"
-          rows={5}
-          placeholder="Notes..."
-          value={customerNotes}
-          onChange={(e) => setCustomerNotes(e.currentTarget.value)}
-        />
-
+       
+ <NotesTextArea value={customerNotes} onChange={setCustomerNotes} placeholder="Notes..." name="customer-notes"/>
         {/* <textarea
           className="rounded border border-solid border-slate-500 p-2"
           name="customer-comments"

@@ -17,6 +17,7 @@ import PaymentTab from "../../create/tabs/PaymentTab";
 import { BillSummary } from "../../create/BillSummary";
 import ConvertButton from "../../create/ConvertButton";
 import TemplateAttachmentTab from "../TemplateAttachmentTab";
+import TemplateInspectionTab from "../TemplateInspectionTab";
 
 export default async function Page({
   searchParams,
@@ -124,6 +125,9 @@ export default async function Page({
 
           <TabsContent value="attachment" >
             <TemplateAttachmentTab />
+          </TabsContent>
+          <TabsContent value="inspections" >
+           <TemplateInspectionTab/>
           </TabsContent>
         </Tabs>
       </div>

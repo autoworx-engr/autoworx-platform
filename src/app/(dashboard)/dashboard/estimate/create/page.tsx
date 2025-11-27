@@ -22,8 +22,8 @@ import Create from "./Create";
 import Header from "./Header";
 import { AttachmentTab } from "./tabs/AttachmentTab";
 import { CreateTab } from "./tabs/CreateTab";
-import InspectionsTab from "./tabs/InspectionsTab";
 import PaymentTab from "./tabs/PaymentTab";
+import EstimateInspectionsTab from "./tabs/EstimateInspectionsTab";
 
 export default async function Page({
   searchParams,
@@ -154,7 +154,7 @@ export default async function Page({
           </TabsContent>
 
           <TabsContent value="inspections">
-            <InspectionsTab />
+           <EstimateInspectionsTab/>
           </TabsContent>
           <TabsContent value="payments">
             <PaymentTab

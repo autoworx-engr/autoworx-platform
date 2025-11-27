@@ -22,6 +22,7 @@ const TemplateAttachmentTab = () => {
           value={internalNotes}
           onChange={setInternalNotes}
           placeholder="Internal Job Notes..."
+          name="internal-notes"
         />
 
         <div>
@@ -30,6 +31,7 @@ const TemplateAttachmentTab = () => {
           value={customerNotes}
           onChange={setCustomerNotes}
           placeholder="Notes..."
+          name={"customer-notes"}
         />
         </div>
         </>

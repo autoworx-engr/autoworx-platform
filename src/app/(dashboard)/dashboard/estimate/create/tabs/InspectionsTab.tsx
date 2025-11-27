@@ -1,27 +1,16 @@
-"use client";
-import { useEstimateCreateStore } from "@/stores/estimate-create";
 
-const InspectionsTab: React.FC = () => {
-  const { inspections, updateInspection, damageNotes, setDamageNotes } =
-    useEstimateCreateStore();
+import { carParts } from "@/constants/car-parts";
+import { InspectionType } from "@/stores/estimate-create";
+import NotesTextArea from "../../templates/NotesTextArea";
 
-  const carParts: string[] = [
-    "Front Bumper",
-    "Hood",
-    "Fender",
-    "Front Door",
-    "Rocker Panel",
-    "Quarter Panel",
-    "Roof",
-    "Trunk",
-    "Back Bumper",
-    "Side Mirror",
-    "Door Handles",
-    "Spoiler",
-    "Flares",
-    "Side Skirts",
-    "Antenna",
-  ];
+interface InspectionsTabsProps {
+  inspections: InspectionType[];
+   updateInspection: (index: number, inspection: InspectionType) => void;
+    damageNotes: string | null;
+    setDamageNotes: (damageNotes: string) => void;
+    
+}
+const InspectionsTab: React.FC<InspectionsTabsProps> = ({inspections, updateInspection, damageNotes, setDamageNotes }) => {
 
   const handleCheckboxChange = (
     index: number,
@@ -116,12 +105,7 @@ const InspectionsTab: React.FC = () => {
       {/* Damage Notes */}
       <div>
         <h1 className="mb-2 mt-4 text-[16px] font-bold">Damage Notes</h1>
-        <textarea
-          value={damageNotes ?? ""}
-          className="h-[107px] w-full resize-y rounded-md border-2 border-gray-300 p-2 focus:border-[#E0E3FF] focus:outline-none"
-          placeholder="Enter your notes here..."
-          onChange={(e) => setDamageNotes(e.target.value)}
-        />
+        <NotesTextArea value={damageNotes ?? ""} onChange={setDamageNotes} placeholder="Enter your notes here..." name="damage-notes"/>
       </div>
     </div>
   );
