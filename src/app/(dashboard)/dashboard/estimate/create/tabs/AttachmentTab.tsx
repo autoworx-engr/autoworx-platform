@@ -16,14 +16,18 @@ export function AttachmentTab() {
     setPolicy,
     setCustomerNotes,
     setCustomerComments,
+    photos,
+    setPhotos,
+    tasks,
   } = useEstimateCreateStore();
 
+   // const { photos, setPhotos } = useEstimateCreateStore();
   return (
     <>
       <h2 className="mb-3 font-bold">Internal</h2>
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-        <ImagesInput />
-        <TasksInput />
+        <ImagesInput photos={photos} setPhotos={setPhotos} />
+        <TasksInput tasks={tasks}/>
 
         <textarea
           className="col-span-full rounded border border-solid border-slate-500 p-2"

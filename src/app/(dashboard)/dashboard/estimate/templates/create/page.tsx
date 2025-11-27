@@ -16,6 +16,7 @@ import InspectionsTab from "../../create/tabs/InspectionsTab";
 import PaymentTab from "../../create/tabs/PaymentTab";
 import { BillSummary } from "../../create/BillSummary";
 import ConvertButton from "../../create/ConvertButton";
+import TemplateAttachmentTab from "../TemplateAttachmentTab";
 
 export default async function Page({
   searchParams,
@@ -120,6 +121,10 @@ export default async function Page({
               Create
             </TabsTriggerCreate>
           </TabsList>
+
+          <TabsContent value="attachment" >
+            <TemplateAttachmentTab />
+          </TabsContent>
         </Tabs>
       </div>
 
