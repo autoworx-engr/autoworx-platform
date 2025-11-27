@@ -95,15 +95,15 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
         some:
           searchParams.category || searchParams.service
             ? {
-                OR: [
-                  {
-                    service: {
-                      name: searchParams.service?.trim(),
-                      category: { name: searchParams.category },
-                    },
+              OR: [
+                {
+                  service: {
+                    name: searchParams.service?.trim(),
+                    category: { name: searchParams.category },
                   },
-                ],
-              }
+                },
+              ],
+            }
             : undefined,
       },
       OR: filterOR.length > 0 ? filterOR : undefined,
@@ -176,24 +176,24 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
   let filteredInvoices =
     searchParams?.search && invoices
       ? invoices.filter((invoice) => {
-          if (!invoice.client && !invoice.id) {
-            return false;
-          }
+        if (!invoice.client && !invoice.id) {
+          return false;
+        }
 
-          const fullName = `${invoice?.client?.firstName} ${invoice?.client?.lastName}`;
-          const vehicle = `${invoice.vehicle?.make} ${invoice.vehicle?.model} ${invoice.vehicle?.submodel}`;
-          return (
-            normalizeSearch(fullName)?.includes(
-              normalizeSearch(searchParams?.search || "")
-            ) ||
-            normalizeSearch(invoice.id)?.includes(
-              normalizeSearch(searchParams?.search || "")
-            ) ||
-            normalizeSearch(vehicle)?.includes(
-              normalizeSearch(searchParams?.search || "")
-            )
-          );
-        })
+        const fullName = `${invoice?.client?.firstName} ${invoice?.client?.lastName}`;
+        const vehicle = `${invoice.vehicle?.make} ${invoice.vehicle?.model} ${invoice.vehicle?.submodel}`;
+        return (
+          normalizeSearch(fullName)?.includes(
+            normalizeSearch(searchParams?.search || "")
+          ) ||
+          normalizeSearch(invoice.id)?.includes(
+            normalizeSearch(searchParams?.search || "")
+          ) ||
+          normalizeSearch(vehicle)?.includes(
+            normalizeSearch(searchParams?.search || "")
+          )
+        );
+      })
       : invoices;
 
   if (searchParams.startDate && searchParams.endDate) {
@@ -494,10 +494,10 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
   let filteredRevenue =
     searchParams?.startDate && searchParams?.endDate
       ? filteredInvoice.reduce(
-          (total, invoice) =>
-            total + Number((invoice as Invoice).grandTotal || 0),
-          0
-        )
+        (total, invoice) =>
+          total + Number((invoice as Invoice).grandTotal || 0),
+        0
+      )
       : totalRevenue; // Use total revenue when no date filter
 
   let getFilteredCategoryId = categories.find(
@@ -620,7 +620,7 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
 
   return (
     <div className="space-y-5">
-      <div className="my-7 grid grid-cols-2 gap-4 xl:grid-cols-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 xl:grid-cols-4">
         <Calculation content="WEEK" amount={totalWeekProfit} />
         <Calculation content="MONTH" amount={totalMonthProfit} />
         <Calculation content="YTD" amount={totalProfit} />

@@ -22,8 +22,10 @@ const CustomBar = (props: any) => {
       x={x}
       y={y - 30}
       width={width}
-      height={height}
+      height={Math.abs(height)}
       fill={fill}
+      rx={6}
+      ry={6}
       style={style}
     />
   );
@@ -72,7 +74,7 @@ const CustomTooltip = ({ active, payload, isMobile, labe }: any) => {
             {data?.categoryName || "Unknown Category"}
           </p>
           <div className="border-t border-gray-200 pt-2">
-          
+
             <p className="text-lg font-bold text-[#03A7A2]">{displayValue}</p>
             {salePrice >= 1000 && (
               <p className="text-xs text-gray-500 mt-1">
@@ -114,7 +116,7 @@ const InventoryBarChartContainer = ({ chartData, yAxisLabel }: TProps) => {
   const formattedChartData = chartData.map((item) => ({
     categoryName: item.categoryName || "Uncategorized",
     salePrice: Number(Number(item.salePrice).toFixed(2)),
-    
+
   }));
 
   // State to track window resize for ResponsiveContainer
@@ -185,7 +187,7 @@ const InventoryBarChartContainer = ({ chartData, yAxisLabel }: TProps) => {
               </YAxis>
               <Bar
                 dataKey={"salePrice"}
-                fill="#ffffff"
+                fill="#03A7A2"
                 style={{ stroke: "#03A7A2", strokeWidth: isMobile ? 1.5 : 2 }}
                 shape={<CustomBar />}
                 label={<CustomLabel isMobile={isMobile} />}
