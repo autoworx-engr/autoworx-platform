@@ -78,7 +78,6 @@ export async function POST(request: NextRequest) {
       const companyUsers = await db.user.findMany({
         where: {
           companyId: infobipConfig.companyId,
-          active: true,
           employeeType: {
             in: ["Admin", "Manager", "Sales"],
           },
