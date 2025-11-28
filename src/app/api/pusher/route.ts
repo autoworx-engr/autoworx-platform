@@ -215,8 +215,6 @@ export async function POST(req: Request) {
       pusher.trigger(`track-${to}`, "chat-track", { ...userChatTrack });
     }
 
-    console.log({ section,type });
-
     if (type === sendType.User && section === "internal") {
       // send message notification
       // Send a notification to the user about the new message
