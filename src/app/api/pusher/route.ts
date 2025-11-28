@@ -1,6 +1,6 @@
 import { authOptions } from "@/authOptions";
 import { db } from "@/lib/db";
-import { sendInternalMessageNotification } from "@/lib/notification/communication-notify";
+import { sendInternalMessageNotification, sendCollaborationMessageNotification } from "@/lib/notification/communication-notify";
 import { getPusherInstance } from "@/lib/pusher/server";
 import { sendType } from "@/types/Chat";
 import { MessageSection } from "@prisma/client";
@@ -215,6 +215,8 @@ export async function POST(req: Request) {
       pusher.trigger(`track-${to}`, "chat-track", { ...userChatTrack });
     }
 
+    console.log({ section,type });
+
     if (type === sendType.User && section === "internal") {
       // send message notification
       // Send a notification to the user about the new message
@@ -222,6 +224,24 @@ export async function POST(req: Request) {
       sendInternalMessageNotification({
         toUserId: to,
         message: message,
+      });
+    }
+
+    if (type === sendType.User && section === "collaboration" && to) { 
+      const receiver = await db.user.findUnique({
+        where: { id: to },
+        select: { companyId: true }
+      });
+
+      const company = await db.company.findUnique({
+        where: { id: receiver?.companyId },
+        select: { name: true }
+      })
+      // send collaboration message notification
+      // Send a notification to the user about the new message
+      sendCollaborationMessageNotification({
+        toUserId: to,
+        companyName: company?.name || "",
       });
     }
     revalidatePath("/dashboard/communication/internal");

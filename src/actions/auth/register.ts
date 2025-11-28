@@ -227,6 +227,7 @@ export async function register({
         firstName: userInfo.firstName,
         lastName: userInfo.lastName,
         email: lowerCaseEmail,
+        companyName: userInfo.company,
         password: hashedPassword,
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         companyId: newCompany.id,
