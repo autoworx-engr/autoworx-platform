@@ -3,12 +3,53 @@ import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
 import { cn } from "@/lib/cn";
 import { db } from "@/lib/db";
 import { formatCurrency } from "@/utils/formatCurrency";
-import { Service } from "@prisma/client";
+import { PaymentType, Service } from "@prisma/client";
 import moment from "moment-timezone";
 import EditPaymentModal from "../EditPayment";
 
 const evenColor = "bg-background";
 const oddColor = "bg-[#F8FAFF]";
+
+type PaymentInfo = {
+  id: number;
+  paymentId: number;
+  receivedCash?: string | null;
+  creditCard?: string | null;
+  cardType?: string | null;
+  checkNumber?: string | null;
+  depositMethod?: string | null;
+  depositNotes?: string | null;
+};
+type CheckInfo = {
+  id: number;
+  paymentId: number;
+  checkNumber: string | null;
+};
+
+export type InvoiceWithFull = {
+  invoiceItems: Array<Record<string, any>>;
+  column: {
+    title: string | null;
+  } | null;
+  grandTotal: number;
+  due: number;
+  deposit?: number;
+  vehicleId: number | null;
+  createdAt?: Date;
+  customerNotes: string | null;
+  id: string;
+  vehicle: string;
+  paymentMethod: PaymentType | string;
+  amountPaid: number;
+  refundedAmount: number;
+  netAmount: number;
+  paymentId: number;
+
+  check: CheckInfo | null;
+  notes: string | null;
+  paymentMethodInfo: PaymentInfo | null;
+  paymentDate?: Date;
+};
 
 export default async function PaymentTab({
   clientId,
@@ -63,7 +104,7 @@ export default async function PaymentTab({
     })
   );
 
-  const invoicesWithFull = [];
+  const invoicesWithFull: InvoiceWithFull[] = [];
 
   const allPayments = await db.payment.findMany({
     where: { invoiceId: { in: invoiceIds } },
@@ -169,8 +210,10 @@ export default async function PaymentTab({
       refundedAmount: actualRefundedAmount,
       netAmount: netAmount,
       paymentId: payment.id,
-      check: payment.check,
-      notes: payment.notes,
+      check: payment.check
+        ? { ...payment.check, checkNumber: payment.check.checkNumber ?? null }
+        : null,
+      notes: payment.notes ?? null,
       paymentMethodInfo: payment.cash
         ? payment.cash
         : payment.card
@@ -179,8 +222,15 @@ export default async function PaymentTab({
             ? payment.other
             : payment.deposit,
       paymentDate: payment.date || originalInvoice.createdAt,
-      due: dueAfterPayment,
+      due: Number(dueAfterPayment),
+      grandTotal: Number(originalInvoice.grandTotal || 0),
+      deposit: Number(originalInvoice.deposit || 0),
+      column: originalInvoice.column
+        ? { title: originalInvoice.column.title ?? null }
+        : null,
     });
+
+    console.log(" ====> invoicesWithFull ===> ", invoicesWithFull);
 
     allTransactionEntries.push({
       id: `payment-${payment.id}`,
@@ -382,6 +432,11 @@ export default async function PaymentTab({
                 const mergedPayment = mergedPaymentData.find(
                   (m) => m.paymentId === data.paymentId
                 );
+
+                //  Calculate total paid for this specific invoice
+                const totalPaidForInvoice = invoicesWithFull
+                  .filter((inv) => inv.id === data.id)
+                  .reduce((sum, inv) => sum + Number(inv.amountPaid || 0), 0);
                 return (
                   <tr
                     key={data.id}
@@ -422,6 +477,7 @@ export default async function PaymentTab({
                       <EditPaymentModal
                         invoiceGrandTotal={Number(data.grandTotal)}
                         mergedPaymentData={mergedPayment}
+                        totalPaidForInvoice={totalPaidForInvoice}
                       />
                     </td>
                   </tr>
@@ -438,6 +494,11 @@ export default async function PaymentTab({
             const mergedPayment = mergedPaymentData.find(
               (m) => m.paymentId === data.paymentId
             );
+
+            //  Calculate total paid for this specific invoice
+            const totalPaidForInvoice = invoicesWithFull
+              .filter((inv) => inv.id === data.id)
+              .reduce((sum, inv) => sum + Number(inv.amountPaid || 0), 0);
 
             return (
               <div
@@ -464,6 +525,7 @@ export default async function PaymentTab({
                     <EditPaymentModal
                       invoiceGrandTotal={Number(data.grandTotal)}
                       mergedPaymentData={mergedPayment}
+                      totalPaidForInvoice={totalPaidForInvoice}
                     />
                   </div>
                 </div>
