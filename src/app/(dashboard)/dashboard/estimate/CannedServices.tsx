@@ -104,31 +104,30 @@ export default function CannedServices({
 
   return (
     <div className="h-full w-full md:px-4 flex flex-col">
-      <section className="  pb-3 lg:pb-0">
-        <div className="flex items-center gap-x-8">
-          <h3 className="text-xl font-bold md:text-2xl">Canned Services</h3>
+      <section className="pb-4 border-b border-gray-200">
+        <div className="flex items-center gap-x-4">
+          <h3 className="text-2xl font-extrabold text-gray-800">📋 Canned Services</h3>
         </div>
-
-        <div className="flex flex-col md:flex-row gap-3 py-1">
-          <div className="flex items-center justify-between gap-3">
-            <FilterBySearchBox
-              searchText={serviceSearch as string}
-              paramKey="serviceSearch"
-            />
-            <CannedFilterBySelection
-              selectedItem={selectedCategory}
-              items={uniqueCategories}
-              type="serviceCategory" // unique param for services
-              modalName="serviceCategory"
-              closeModal={closeModal}
-              activeModal={activeModal}
-              toggleModal={toggleModal}
-            />
+        {/* Updated layout to match Canned Labor: Search, Filter (Icon), Add Service (Button) on one line */}
+        <div className=" pt-3">
+          <FilterBySearchBox
+            searchText={serviceSearch as string}
+            paramKey="serviceSearch"
+          />
           </div>
-
+          <div className="flex justify-between items-center mt-3">
+          <CannedFilterBySelection
+            selectedItem={selectedCategory}
+            items={uniqueCategories}
+            type="serviceCategory" // unique param for services
+            modalName="serviceCategory"
+            closeModal={closeModal}
+            activeModal={activeModal}
+            toggleModal={toggleModal}
+          />
           <NewService
             newButton={
-              <button className="rounded-md bg-[#6571FF]   w-full md:w-32 p-1 text-white">
+              <button className="rounded-lg bg-indigo-600 w-full min-w-32 md:w-36 p-2 text-white font-medium hover:bg-indigo-700 transition-colors shadow-md">
                 + Add Service
               </button>
             }
@@ -136,14 +135,14 @@ export default function CannedServices({
         </div>
       </section>
       {/* Desktop View */}
-      <div className="overflow-y-auto hidden flex-1 h-full md:block">
-        <Table className="h-full">
-          <TableHeader className="sticky top-0 bg-background">
+      <div className="overflow-y-auto thin-scrollbar hidden flex-1 h-full md:block mt-4">
+        <Table className="h-full border border-gray-200 rounded-lg">
+          <TableHeader className="sticky top-0 bg-gray-50 border-b border-gray-200">
             <TableRow>
-              <TableHead>Services Name</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead>Edit</TableHead>
+              <TableHead className="font-semibold text-gray-700">Service Name</TableHead>
+              <TableHead className="font-semibold text-gray-700">Category</TableHead>
+              <TableHead className="font-semibold text-gray-700">Description</TableHead>
+              <TableHead className="font-semibold text-gray-700">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody className="custom-scrollbar h-full">
@@ -160,7 +159,7 @@ export default function CannedServices({
               <TableRow>
                 <TableCell
                   colSpan={4}
-                  className="py-8 text-center text-gray-500"
+                  className="py-12 text-center text-gray-500 text-lg"
                 >
                   No canned services available
                 </TableCell>
@@ -170,7 +169,7 @@ export default function CannedServices({
         </Table>
       </div>
       {/* Mobile View */}
-      <div className="grid h-full gap-4 pb-4 md:hidden">
+      <div className="grid h-full gap-4 pb-4 md:hidden mt-4">
         {paginatedServices.length > 0 ? (
           paginatedServices.map((service, i) => (
             <ServiceComponent
@@ -181,13 +180,13 @@ export default function CannedServices({
             />
           ))
         ) : (
-          <div className="rounded-md bg-background py-8 text-center text-gray-500 shadow-sm">
+          <div className="rounded-xl bg-white p-8 text-center text-gray-500 shadow-lg border border-gray-100">
             No canned services available
           </div>
         )}
       </div>
       {showPagination && (
-        <div className=" h-10 hidden justify-end lg:flex">
+        <div className=" hidden h-10 justify-end lg:flex flex-shrink-0 mt-4">
           <Pagination
             className="custom-pagination"
             current={currentPage}
@@ -280,17 +279,21 @@ const ServiceComponent = ({
 
   if (view === "card") {
     return (
-      <Card
+     <Card
         className={cn(
-          "w-full transition-all duration-200",
-          index % 2 === 0 ? "bg-background" : "bg-[#F8FAFF]",
-          isEdit ? "border-2 border-[#6571FF]" : ""
+          "w-full transition-all duration-300 rounded-xl shadow-lg border-t-4",
+          index !== undefined && index % 2 === 0
+            ? "border-indigo-500 bg-white"
+            : "border-teal-500 bg-gray-50",
+          isEdit ? "shadow-2xl ring-2 ring-indigo-400" : "shadow-md hover:shadow-lg"
         )}
       >
         <CardHeader className="p-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-start justify-between">
             {!isEdit ? (
-              <h3 className="line-clamp-1 text-xl font-bold">{service.name}</h3>
+              <h3 className="line-clamp-2 text-xl font-extrabold text-gray-800">
+                {service.name}
+              </h3>
             ) : (
               <div className="flex-1">
                 <input
@@ -303,7 +306,7 @@ const ServiceComponent = ({
                       setNameError(
                         "Service name must be less than 50 characters"
                       );
-                      return false;
+                      return;
                     }
                     setName(value);
                     if (value.trim()) {
@@ -312,9 +315,11 @@ const ServiceComponent = ({
                     }
                   }}
                   onBlur={() => validateName(name)}
-                  className={`mr-2 flex-1 rounded-md border-2 ${
-                    nameError ? "border-red-500" : "border-slate-400"
-                  } p-2`}
+                  className={cn(
+                    "w-full rounded-lg border p-2 text-base font-semibold focus:ring-2 focus:ring-indigo-500 transition-colors",
+                    nameError ? "border-red-500" : "border-gray-300 focus:border-indigo-500"
+                  )}
+                  placeholder="Service Name"
                   aria-invalid={nameError ? "true" : "false"}
                   aria-describedby={nameError ? "name-error" : undefined}
                 />
@@ -328,25 +333,31 @@ const ServiceComponent = ({
                 )}
               </div>
             )}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3 ml-4">
               {isEdit && (
                 <button
                   onClick={handleUpdateService}
-                  className="text-2xl text-[#6571FF]"
+                  className="text-2xl text-green-600 hover:text-green-700 disabled:text-gray-400 transition-colors"
+                  title="Save"
                 >
-                  <CircleCheckBig size={24} />
+                  <CircleCheckBig className="w-6 h-6" />
                 </button>
               )}
               <button
                 onClick={() => setIsEdit(!isEdit)}
-                className="text-2xl text-[#6571FF]"
+                className="text-2xl text-indigo-500 hover:text-indigo-600 transition-colors"
+                title={isEdit ? "Cancel" : "Edit"}
               >
-                <SquarePen className="w-4 h-4 text-[#6571FF]" />
+                {!isEdit ? (
+                  <SquarePen className="w-5 h-5" />
+                ) : (
+                  <X className="w-6 h-6 text-red-500" />
+                )}
               </button>
               {!isEdit && (
                 <Popconfirm
-                  title="Delete the canned service"
-                  description="Are you sure to delete this canned service?"
+                  title="Delete the Canned Service"
+                  description="Are you sure to delete this Canned Service?"
                   okText="Yes"
                   cancelText="No"
                   onConfirm={async () => {
@@ -354,18 +365,18 @@ const ServiceComponent = ({
                     setIsEdit(false);
                   }}
                 >
-                  <X cursor={"pointer"} color="#f87171" fontSize={20} />
+                  <Trash2 className="w-5 h-5 text-red-500 hover:text-red-700 cursor-pointer transition-colors" title="Delete" />
                 </Popconfirm>
               )}
             </div>
           </div>
         </CardHeader>
         <CardContent className="p-4 pt-0">
-          <div className="space-y-3">
+          <div className="space-y-4">
             <div>
-              <p className="mb-1 text-sm text-[#66738C]">Category</p>
+              <p className="mb-1 text-sm font-medium text-gray-500">Category</p>
               {!isEdit ? (
-                <p className="line-clamp-1 text-lg text-[#6571FF]">
+                <p className="line-clamp-1 text-lg font-semibold text-indigo-600">
                   {service.category?.name}
                 </p>
               ) : (
@@ -379,18 +390,37 @@ const ServiceComponent = ({
               )}
             </div>
             <div>
-              <p className="mb-1 text-sm text-[#66738C]">Description</p>
+              <p className="mb-1 text-sm font-medium text-gray-500">Description</p>
               {!isEdit ? (
-                <p className="break-all whitespace-pre-wrap text-[#66738C] ">
+                <p className="break-all whitespace-pre-wrap text-gray-700">
                   {service.description}
                 </p>
               ) : (
-                <textarea
-                  placeholder="Description"
-                  value={description || ""}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="min-h-[100px] w-full rounded-md border-2 border-slate-400 p-2"
-                />
+                <>
+                  <textarea
+                    placeholder="Description"
+                    value={description || ""}
+                    onChange={(e) => {
+                      const value = e.target.value;
+
+                      if (value.length > 250) {
+                        setDescriptionError(
+                          "Description must be less than 250 characters"
+                        );
+                        return;
+                      }
+                      setDescription(value);
+                      setDescriptionError("");
+                    }}
+                    className={cn(
+                      "min-h-[100px] w-full rounded-lg border p-2 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition-colors",
+                      descriptionError ? "border-red-500" : "border-gray-300"
+                    )}
+                  />
+                  {descriptionError && (
+                    <p className="mt-1 text-xs text-red-500">{descriptionError}</p>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -402,13 +432,14 @@ const ServiceComponent = ({
   return (
     <TableRow
       className={cn(
-        index % 2 === 0 ? "bg-background" : "bg-[#F8FAFF]",
-        "cursor-pointer rounded-md py-3"
+        "border-b border-gray-200 transition-colors hover:bg-indigo-50",
+        index % 2 === 0 ? "bg-white" : "bg-gray-50",
+        isEdit ? "bg-yellow-50 shadow-inner" : ""
       )}
     >
-      <TableCell>
+      <TableCell className="py-3">
         {!isEdit ? (
-          <span>{service.name}</span>
+          <span className="font-medium text-gray-800">{service.name}</span>
         ) : (
           <div>
             <input
@@ -424,9 +455,11 @@ const ServiceComponent = ({
                 }
               }}
               onBlur={() => validateName(name)}
-              className={`max-w-[150px] rounded-md border-2 ${
-                nameError ? "border-red-500" : "border-slate-400"
-              } p-1 px-4`}
+              className={cn(
+                "w-full min-w-[150px] rounded-md border p-1 px-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500",
+                nameError ? "border-red-500" : "border-gray-300"
+              )}
+              placeholder="Service Name"
               aria-invalid={nameError ? "true" : "false"}
               aria-describedby={nameError ? "name-error" : undefined}
             />
@@ -438,9 +471,9 @@ const ServiceComponent = ({
           </div>
         )}
       </TableCell>
-      <TableCell>
+      <TableCell className="py-3">
         {!isEdit ? (
-          <span>{service.category?.name}</span>
+          <span className="text-gray-600">{service.category?.name}</span>
         ) : (
           <SelectCategory
             onCategoryChange={setCategory}
@@ -451,9 +484,9 @@ const ServiceComponent = ({
           />
         )}
       </TableCell>
-      <TableCell>
+      <TableCell className="py-3">
         {!isEdit ? (
-          <span className="max-w-[2rem] whitespace-pre-wrap break-all">
+          <span className="line-clamp-2 max-w-[250px] whitespace-pre-wrap break-all text-gray-700">
             {service.description}
           </span>
         ) : (
@@ -471,10 +504,12 @@ const ServiceComponent = ({
                   return;
                 }
                 setDescription(value);
+                setDescriptionError("");
               }}
-              className={`h-20 max-w-[150px] rounded-md border-2 p-2 ${
-                descriptionError ? "border-red-500" : "border-slate-400"
-              }`}
+              className={cn(
+                "h-20 max-w-[250px] w-full rounded-md border p-1 px-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500",
+                descriptionError ? "border-red-500" : "border-gray-300"
+              )}
             />
             {descriptionError && (
               <p className="mt-1 text-xs text-red-500">{descriptionError}</p>
@@ -482,38 +517,47 @@ const ServiceComponent = ({
           </div>
         )}
       </TableCell>
-      <TableCell className="flex items-center my-auto h-full">
+      <TableCell className="flex items-center space-x-3 py-3 h-full">
         {isEdit && (
-          <div className="flex items-center">
-            <button onClick={() => setIsEdit(false)}>
-              <X cursor={"pointer"} color="#f87171" className="w-5 h-5 mr-2 " />
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => setIsEdit(false)}
+              title="Cancel Edit"
+            >
+              <X
+                color="#f87171"
+                className="w-5 h-5 hover:text-red-700 transition-colors"
+              />
             </button>
             <button
               onClick={handleUpdateService}
-              className="mr-4 text-lg text-[#6571FF]"
+              className="text-lg text-indigo-600 hover:text-indigo-700 disabled:cursor-not-allowed disabled:text-gray-400 transition-colors"
+              title="Save Changes"
             >
-              <CircleCheckBig size={18} />
+              <CircleCheckBig className="w-5 h-5" strokeWidth={2.5} />
             </button>
           </div>
         )}
-        <button
-          onClick={() => setIsEdit(!isEdit)}
-          className="text-lg text-[#6571FF]"
-        >
-          <SquarePen className="w-4 h-4 text-[#6571FF]" />
-        </button>
+        {!isEdit && (
+          <button
+            onClick={() => setIsEdit(!isEdit)}
+            className="text-xl text-indigo-500 hover:text-indigo-600 transition-colors"
+            title="Edit"
+          >
+            <SquarePen className="w-5 h-5" />
+          </button>
+        )}
         <Popconfirm
           title="Delete the canned service"
           description="Are you sure to delete this canned service?"
           okText="Yes"
           cancelText="No"
-          className="ml-3"
           onConfirm={async () => {
             await deleteService(service.id);
             setIsEdit(false);
           }}
         >
-          <Trash2 cursor={"pointer"} color="#f87171" className="w-5 h-5" />
+          <Trash2 className="w-5 h-5 text-red-500 hover:text-red-700 cursor-pointer transition-colors" title="Delete" />
         </Popconfirm>
       </TableCell>
     </TableRow>
