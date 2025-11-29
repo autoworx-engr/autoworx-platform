@@ -12,7 +12,7 @@ import {
 import { toast } from "react-hot-toast";
 import { INVOICE_COLORS } from "@/lib/consts";
 import { Column } from "@prisma/client";
-import { Tally2, X } from "lucide-react";
+import { GripVertical, Lock, Plus, Tally2, X } from "lucide-react";
 
 interface LocalColumn {
   id: number | null;
@@ -201,23 +201,41 @@ export default function ManagePipelines({
   };
 
   return (
-    <DndProvider backend={HTML5Backend}>
+     <DndProvider backend={HTML5Backend}>
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       >
         <div
-          className="w-180 max-h-[90vh] rounded-lg bg-background p-6 flex flex-col"
+          className="w-full max-w-md mx-4 max-h-[94vh] rounded-xl bg-white shadow-2xl flex flex-col overflow-hidden"
           onClick={(e) => e.stopPropagation()}
         >
-          <h2 className="mb-4 text-lg font-semibold flex-shrink-0">
-            Edit Pipeline
-          </h2>
-          <div className="flex flex-col items-center justify-center flex-1 min-h-0">
-            <div className="w-full max-h-[60vh] overflow-y-auto pr-2">
+          {/* Header */}
+          <div className="px-6 py-5 border-b border-slate-200 flex-shrink-0">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-semibold text-slate-900">
+                  Edit Pipeline
+                </h2>
+                <p className="text-sm text-slate-500 mt-1">
+                  Drag to reorder columns, or add new ones
+                </p>
+              </div>
+              <button
+                onClick={onClose}
+                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 flex flex-col min-h-0 px-6 py-4">
+            <div className="flex-1  overflow-y-auto pr-2 space-y-3 thin-scrollbar">
               {localColumns.map((column, index) => (
                 <ColumnItem
-                  key={column.id ?? `new-${index}`} // Fallback key for new columns
+                  key={column.id ?? `new-${index}`}
                   index={index}
                   column={column}
                   moveColumn={moveColumn}
@@ -227,25 +245,30 @@ export default function ManagePipelines({
                 />
               ))}
             </div>
+            
+            {/* Add Button */}
             <button
               onClick={handleAddColumn}
-              className="mt-2 w-[75%] rounded border-2 border-blue-500 px-1 py-1 text-center text-sm text-blue-500 flex-shrink-0"
+              className="mt-4 w-full rounded-lg border-2 border-dashed border-blue-300 px-4 py-3 text-sm font-medium text-blue-600 hover:border-blue-400 hover:bg-blue-50 transition-all flex items-center justify-center gap-2"
             >
-              + Add New Column
+              <Plus size={18} />
+              Add New Column
             </button>
           </div>
-          <div className="mt-4 flex justify-end flex-shrink-0">
+
+          {/* Footer */}
+          <div className="px-6 py-4 border-t border-slate-200 flex justify-end gap-3 flex-shrink-0 bg-slate-50">
             <button
               onClick={onClose}
-              className="mr-2 rounded-md bg-gray-200 px-4 py-2"
+              className="px-5 py-2.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
             >
               Cancel
             </button>
             <button
               onClick={handleSave}
-              className="rounded-md bg-blue-500 px-4 py-2 text-white"
+              className="px-6 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
             >
-              Apply
+              Apply Changes
             </button>
           </div>
         </div>
@@ -290,30 +313,47 @@ function ColumnItem({
   drag(drop(ref));
   const isRestricted = column.isRestricted;
   return (
-    <div
+ <div
       ref={ref}
-      className={`mb-2 flex cursor-move items-center rounded-md bg-background p-2 ${
-        isDragging ? "opacity-50" : "opacity-100"
-      }`}
+      className={`group flex items-center gap-3 rounded-lg bg-white border border-slate-200 p-3 transition-all ${isDragging ? 'cursor-grabbing' : 'cursor-grab'} ${
+        isDragging 
+          ? "opacity-50 shadow-lg scale-105" 
+          : "opacity-100 hover:border-slate-300 hover:shadow-md"
+      } ${isRestricted ? 'bg-slate-50' : ''}`}
     >
-      <Tally2 className="mr-2 text-gray-600 rotate-90 mt-3" size={20} />
-      <input
-        type="text"
-        ref={inputRef}
-        value={column.title}
-        onChange={(e) => handleColumnChange(index, e.target.value)}
-        className="flex-grow rounded-md border border-gray-300 p-1"
-        disabled={isRestricted}
-      />
+      {/* Drag Handle */}
+      <div className="flex-shrink-0 text-slate-400 group-hover:text-slate-600 transition-colors">
+        <GripVertical size={20} />
+      </div>
+
+      {/* Input Field */}
+      <div className="flex-1">
+        <input
+          type="text"
+          ref={inputRef}
+          value={column.title}
+          onChange={(e) => handleColumnChange(index, e.target.value)}
+          className={`w-full px-3 py-2 text-sm font-medium rounded-lg border transition-all outline-none ${
+            isRestricted
+              ? 'bg-slate-100 border-slate-200 text-slate-600 cursor-grab'
+              : 'bg-white border-slate-200 text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-100'
+          }`}
+          disabled={isRestricted}
+        />
+      </div>
+
+      {/* Delete Button */}
       {!isRestricted ? (
         <button
           onClick={() => handleDeleteColumn(index)}
-          className="ml-2 text-[#FF6262] hover:text-red-700"
+          className="flex-shrink-0 p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
         >
-          <X size={20} strokeWidth={3} />
+          <X size={18} strokeWidth={2.5} />
         </button>
       ) : (
-        <div className="m-0 w-7"></div>
+        <div className="flex-shrink-0 p-2 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">
+          <Lock size={16} />
+        </div>
       )}
     </div>
   );
