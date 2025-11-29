@@ -39,7 +39,8 @@ export default function NewService({
   const [description, setDescription] = useState("");
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
+  const descriptionLength = description.length;
+  const maxDescriptionLength = 250;
   // Reset form when dialog opens or closes
   useEffect(() => {
     if (open) {
@@ -220,105 +221,174 @@ export default function NewService({
         {newButton ? (
           newButton
         ) : (
-          <button type="button" className="px-4 text-xs text-[#6571FF]">
-            + New Service
+          <button 
+            type="button" 
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            New Service
           </button>
         )}
       </DialogTrigger>
 
       <DialogContent
-        className="max-h-full max-w-md grid-rows-[auto,1fr,auto]"
+        className="max-h-[94vh] max-w-md grid-rows-[auto,1fr,auto] overflow-hidden"
         form
       >
-        <DialogHeader>
-          <DialogTitle>{edit ? "Edit Service" : "Add New Service"}</DialogTitle>
+        <DialogHeader className="border-b border-slate-200 pb-4">
+          <DialogTitle className="text-xl font-semibold text-slate-900">
+            {edit ? "Edit Service" : "Add New Service"}
+          </DialogTitle>
         </DialogHeader>
 
-        <div className="flex flex-col gap-5 py-5 md:p-5">
-          <div className="flex flex-col">
-            <input
-              type="text"
-              placeholder="Service Name*"
-              value={name}
-              onChange={(e) => {
-                const value = e.target.value;
+        <div className="overflow-y-auto px-1">
+          <div className="space-y-3 py-3">
+            {/* Service Name */}
+            <div className="space-y-2">
+              <label htmlFor="service-name" className="block text-sm font-medium text-slate-700">
+                Service Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                id="service-name"
+                placeholder="Enter service name"
+                value={name}
+                onChange={(e) => {
+                  const value = e.target.value;
 
-                if (value.length > 50) {
-                  setNameError("Service name must be less than 50 characters");
-                  return false;
-                }
-                setName(value);
-                // Clear error when user starts typing
-                if (value.trim()) {
-                  setNameError("");
-                  clearError();
-                }
-              }}
-              onBlur={() => validateName(name)}
-              className={`rounded-md border-2 ${
-                nameError ? "border-red-500" : "border-slate-400"
-              } p-2`}
-              aria-invalid={nameError ? "true" : "false"}
-              aria-describedby={nameError ? "name-error" : undefined}
-            />
-            {nameError && (
-              <span id="name-error" className="mt-1 text-xs text-red-500">
-                {nameError}
-              </span>
-            )}
+                  if (value.length > 50) {
+                    setNameError("Service name must be less than 50 characters");
+                    return false;
+                  }
+                  setName(value);
+                  // Clear error when user starts typing
+                  if (value.trim()) {
+                    setNameError("");
+                    clearError();
+                  }
+                }}
+                onBlur={() => validateName(name)}
+                className={`w-full px-4 py-2.5 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder:text-slate-400 ${
+                  nameError ? "border-red-500 focus:ring-red-500" : "border-slate-300"
+                }`}
+                aria-invalid={nameError ? "true" : "false"}
+                aria-describedby={nameError ? "name-error" : undefined}
+              />
+              {nameError && (
+                <p id="name-error" className="flex items-center gap-1 text-xs text-red-600">
+                  <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  {nameError}
+                </p>
+              )}
+            </div>
+
+            {/* Category */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-slate-700">
+                Category <span className="text-red-500">*</span>
+              </label>
+              <SelectCategory
+                onCategoryChange={(selectedCategory) => {
+                  setCategory(selectedCategory);
+                  // Clear error when category is selected
+                  if (selectedCategory) {
+                    setCategoryError("");
+                    clearError();
+                  }
+                }}
+                labelPosition="none"
+                categoryData={category}
+                categoryOpen={categoryOpen}
+                setCategoryOpen={setCategoryOpen}
+                required={true}
+                onBlur={() => validateCategory(category)}
+              />
+              {categoryError && (
+                <p className="flex items-center gap-1 text-xs text-red-600">
+                  <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  {categoryError}
+                </p>
+              )}
+            </div>
+
+            {/* Description */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label htmlFor="description" className="block text-sm font-medium text-slate-700">
+                  Description
+                </label>
+                <span className={`text-xs ${
+                  descriptionLength > maxDescriptionLength * 0.9 
+                    ? 'text-red-600 font-medium' 
+                    : 'text-slate-500'
+                }`}>
+                  {descriptionLength}/{maxDescriptionLength}
+                </span>
+              </div>
+              <textarea
+                id="description"
+                placeholder="Add any additional details about this service..."
+                value={description}
+                onChange={(e) => {
+                  const value = e.target.value;
+
+                  if (value.length > maxDescriptionLength) {
+                    toast.error("Description must be less than 250 characters");
+                    return false;
+                  }
+                  setDescription(value);
+                }}
+                rows={5}
+                className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder:text-slate-400 resize-none"
+              />
+              <p className="text-xs text-slate-500">
+                Provide a detailed description of what this service includes
+              </p>
+            </div>
+
+            {/* Info Box */}
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex gap-3">
+                <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                </svg>
+                <div>
+                  <h4 className="text-sm font-medium text-blue-900 mb-1">Service Information</h4>
+                  <p className="text-xs text-blue-700 leading-relaxed">
+                    Services added here will be available in your canned services list for quick selection when creating estimates.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
-
-          <div className="flex flex-col">
-            <SelectCategory
-              onCategoryChange={(selectedCategory) => {
-                setCategory(selectedCategory);
-                // Clear error when category is selected
-                if (selectedCategory) {
-                  setCategoryError("");
-                  clearError();
-                }
-              }}
-              labelPosition="none"
-              categoryData={category}
-              categoryOpen={categoryOpen}
-              setCategoryOpen={setCategoryOpen}
-              required={true}
-              onBlur={() => validateCategory(category)}
-            />
-            {categoryError && (
-              <span className="mt-1 text-xs text-red-500">{categoryError}</span>
-            )}
-          </div>
-
-          <textarea
-            placeholder="Description"
-            value={description}
-            onChange={(e) => {
-              const value = e.target.value;
-
-              if (value.length > 250) {
-                toast.error("Description must be less than 250 characters");
-                return false;
-              }
-              setDescription(value);
-            }}
-            className="h-40 rounded-md border-2 border-slate-400 p-2"
-          />
         </div>
-        <DialogFooter className="flex justify-between gap-4 md:gap-0">
+
+        <DialogFooter className="flex flex-row justify-end gap-3   mt-auto">
           <DialogClose
-            className="rounded-lg border-2 border-slate-400 p-2"
+            className="px-5 py-2.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
             onClick={handleClose}
           >
             Cancel
           </DialogClose>
           <button
-            className="rounded-lg bg-[#6571FF] p-2 text-white disabled:cursor-not-allowed disabled:opacity-50 md:px-5"
+            className="px-6 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             onClick={edit ? handleEdit : handleSubmit}
             type="button"
             disabled={isLoading}
           >
-            {isLoading ? "Processing..." : "Done"}
+            {isLoading && (
+              <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+            )}
+            {isLoading ? "Processing..." : edit ? "Update Service" : "Add Service"}
           </button>
         </DialogFooter>
       </DialogContent>
