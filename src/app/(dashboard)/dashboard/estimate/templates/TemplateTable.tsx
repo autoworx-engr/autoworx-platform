@@ -141,7 +141,7 @@ export default function TemplateTable({ take, page, data }: TTableProps) {
 
                   <td className="flex items-center gap-3 px-4 py-2">
                     <Link
-                      href={`/dashboard/estimate/edit/${data.id}?clientId=${data.clientId}`}
+                      href={`/dashboard/estimate/templates/create?isEdit=true&templateId=${data?.id}`}
                       className="text-2xl text-blue-600"
                       onClick={() => setActionType("edit")}
                     >
@@ -164,7 +164,7 @@ export default function TemplateTable({ take, page, data }: TTableProps) {
                 onChange={handlePageChange}
                 showSizeChanger={true}
                 onShowSizeChange={handlePageChange}
-                size={isMax640 ? "small" : "default"} // Use smaller size on mobile
+                size={isMax640 ? "small" : "default"}
                 responsive={true}
               />
             </div>

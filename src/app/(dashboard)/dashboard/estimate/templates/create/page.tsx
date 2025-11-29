@@ -4,37 +4,38 @@ import {
   TabsList,
   TabsTriggerCreate,
 } from "@/app/(dashboard)/dashboard/estimate/TabsNav";
-import EstimateLogo from "@/components/EstimateLogo";
 import { SyncLists } from "@/components/SyncLists";
 import Title from "@/components/Title";
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
-import { InvoiceType, Tag } from "@prisma/client";
+import { Tag } from "@prisma/client";
 import { CreateTab } from "../../create/tabs/CreateTab";
-import { AttachmentTab } from "../../create/tabs/AttachmentTab";
-import InspectionsTab from "../../create/tabs/InspectionsTab";
-import PaymentTab from "../../create/tabs/PaymentTab";
-import { BillSummary } from "../../create/BillSummary";
-import ConvertButton from "../../create/ConvertButton";
 import TemplateAttachmentTab from "../TemplateAttachmentTab";
 import TemplateInspectionTab from "../TemplateInspectionTab";
+import Create from "../../create/Create";
+import { TemplateBillSummary } from "../TemplateBillSummary";
+import SyncEstimate from "../../create/SyncEstimate";
 
 export default async function Page({
   searchParams,
 }: {
-  searchParams: { clientId?: string };
+  searchParams: { templateId?: string; isEdit?: boolean };
 }) {
-  const clientId = searchParams.clientId
-    ? parseInt(searchParams.clientId)
-    : null;
-  const client = clientId
-    ? await db.client.findUnique({ where: { id: clientId } })
-    : null;
+  const isEdit = searchParams?.isEdit;
+  // console.log("isEdit", isEdit, "templateId", searchParams?.templateId);
   const companyId = await getCompanyId();
-  const customers = await db.client.findMany({ where: { companyId } });
-  const vehicles = await db.vehicle.findMany({
-    where: { companyId, clientId },
-  });
+
+  let invoice: any = null;
+
+  if (isEdit && searchParams?.templateId) {
+    invoice = await db.invoice.findUnique({
+      where: { id: searchParams?.templateId, companyId },
+      include: {
+        requestEstimate: true,
+      },
+    });
+  }
+
   const categories = await db.category.findMany({ where: { companyId } });
   const services = await db.service.findMany({
     where: { companyId, canned: true },
@@ -98,14 +99,37 @@ export default async function Page({
       <div className="col-span-3 space-y-4">
         <Title>Template</Title>
 
+        <SyncLists
+          customers={[]}
+          vehicles={[]}
+          categories={categories}
+          services={services}
+          materials={materials}
+          labors={labors}
+          tags={tags}
+          vendors={vendors}
+          statuses={statuses}
+          paymentMethods={paymentMethods}
+          client={null}
+        />
+
+        {isEdit && (
+          <SyncEstimate
+            invoice={invoice}
+            // @ts-ignore
+            items={[]}
+            photos={[]}
+            tasks={[]}
+            inspections={[]}
+            payment={null}
+          />
+        )}
+
         <Tabs
           defaultValue="create"
           className="col-start-1 flex min-h-[40vh] lg:min-h-[69vh] flex-col overflow-clip"
         >
           <TabsList className="grid grid-cols-4 md:inline-flex">
-            <TabsTriggerCreate value="payments" className="order-4 md:order-1">
-              Payments
-            </TabsTriggerCreate>
             <TabsTriggerCreate
               value="inspections"
               className="order-3 md:order-2"
@@ -123,25 +147,24 @@ export default async function Page({
             </TabsTriggerCreate>
           </TabsList>
 
-          <TabsContent value="attachment" >
+          <TabsContent value="create" className="h-full w-full">
+            <CreateTab />
+          </TabsContent>
+
+          <TabsContent value="attachment">
             <TemplateAttachmentTab />
           </TabsContent>
-          <TabsContent value="inspections" >
-           <TemplateInspectionTab/>
+          <TabsContent value="inspections">
+            <TemplateInspectionTab />
           </TabsContent>
         </Tabs>
       </div>
 
       <div className="app-shadow grid grid-rows-[1fr,auto,auto] divide-y rounded-md">
         <div>
-          <ConvertButton
-            type={InvoiceType.Estimate}
-            text="Save as Estimate"
-            className="border-none bg-[#6470FF] text-white"
-            icon={<EstimateLogo />}
-          />
+          <Create />
         </div>
-        <BillSummary />
+        <TemplateBillSummary />
       </div>
     </div>
   );
