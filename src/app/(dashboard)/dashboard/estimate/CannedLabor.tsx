@@ -341,7 +341,7 @@ const LaborComponent = ({
                   cancelText="No"
                   onConfirm={() => deleteLabor(labor.id)}
                 >
-                  <Trash2 className="w-5 h-5 text-red-500 hover:text-red-700 cursor-pointer transition-colors" title="Delete" />
+                  <Trash2 className="w-5 h-5 text-red-500 hover:text-red-700 cursor-pointer transition-colors" />
                 </Popconfirm>
               )}
             </div>
@@ -491,7 +491,7 @@ const LaborComponent = ({
           cancelText="No"
           onConfirm={() => deleteLabor(labor.id)}
         >
-          <Trash2 className="w-5 h-5 text-red-500 hover:text-red-700 cursor-pointer transition-colors" title="Delete" />
+          <Trash2 className="w-5 h-5 text-red-500 hover:text-red-700 cursor-pointer transition-colors"  />
         </Popconfirm>
       </TableCell>
     </TableRow>
