@@ -17,13 +17,7 @@ export interface TemplateData {
   id: string;
   title: string;
   grandTotal: number;
-  createdAt: Date;
-  status?: string;
-  type?: string;
-  textColor?: string;
-  bgColor?: string;
-  clientId: number | null;
-  deliveredAt?: Date | null;
+  createdAt: Date | null;
 }
 
 const evenColor = "bg-background";
@@ -101,8 +95,6 @@ export default function TemplateTable({ take, page, data }: TTableProps) {
                 <th className="px-4 py-2 text-left">Title</th>
                 <th className="px-4 py-2 text-left">Price</th>
                 <th className="px-4 py-2 text-left">Date</th>
-                <th className="px-4 py-2 text-left">Status</th>
-                <th className="px-2 py-2 text-left">Created At</th>
                 <th className="px-4 py-2 text-left">Edit</th>
               </tr>
             </thead>
@@ -123,19 +115,6 @@ export default function TemplateTable({ take, page, data }: TTableProps) {
                   <td className="px-4 py-2 text-left">
                     <p className="block h-full w-full">
                       {moment.tz(data.createdAt, timezone).format("MM/DD/YYYY")}
-                    </p>
-                  </td>
-                  <td className="px-4 py-2 text-left">
-                    <p className="block h-full w-full">
-                      <p
-                        className="rounded-md text-center"
-                        style={{
-                          backgroundColor: data.bgColor,
-                          color: data.textColor,
-                        }}
-                      >
-                        {data.status || ""}
-                      </p>
                     </p>
                   </td>
 
