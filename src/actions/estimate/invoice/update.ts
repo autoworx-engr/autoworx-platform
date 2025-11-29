@@ -259,6 +259,7 @@ export async function updateInvoice(
               }
 
               if (!findExistingLabor && item.labor) {
+                //TODO: delete old labor if labor id exist and not canned labor
                 if (item?.labor?.id && !item?.labor?.cannedLabor) {
                   await txDb.labor.delete({
                     where: {
