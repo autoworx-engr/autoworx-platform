@@ -46,6 +46,7 @@ export default function WorkOrderModalBody({
 }) {
   const [dueDate, setDueDate] = useState<string | null>("");
   const isAdminOrManager = useIsAdminOrManager();
+   const [openService, setOpenService] = useState<number | null>(null);
   const { data, error, isLoading, isFetched } = useQuery({
     queryKey: queryKeys.getWorkOrderDataKey(invoiceId),
     queryFn: () => getWorkOrderData(invoiceId),
@@ -89,7 +90,7 @@ export default function WorkOrderModalBody({
     techniciansPerItem,
   } = data as IWorkOrderData;
 
-  console.log("work order data:", techniciansPerItem);
+
 
   const getTechnicianPhotos = (): TechnicianPhoto[] => {
     const finalPhotosArray: TechnicianPhoto[] = [];
@@ -121,7 +122,7 @@ export default function WorkOrderModalBody({
   };
 
   const technicianPhotos = getTechnicianPhotos();
-  console.log("Technician Photos:", technicianPhotos);
+  const isInvoiceDelivered = invoice?.column?.title === "Delivered";
   return (
     <DialogContent className="h-full min-w-fit overflow-y-auto sm:max-w-[740px] lg:h-fit">
       <div className="mt-4 flex items-center justify-between gap-1 lg:mt-4">
@@ -219,11 +220,13 @@ export default function WorkOrderModalBody({
           invoiceStatus={invoice?.column?.title}
           writePermission={writePermission}
           techniciansPerItem={techniciansPerItem}
+          openService={openService}
+          setOpenService={setOpenService}
         />
 
         {/* see images dialog trigger (uses its own internal state) */}
         {isAdminOrManager && (
-          <div className="absolute right-16 top-0">
+          <div className={`absolute  ${isInvoiceDelivered ? "right-32" : "right-16"} ${openService !== null ? "top-2" : "top-0"}`}>
             <Dialog>
               <DialogTrigger asChild>
                 <button className="bg-[#6571ff] text-white px-5 py-0.5 rounded-md">
