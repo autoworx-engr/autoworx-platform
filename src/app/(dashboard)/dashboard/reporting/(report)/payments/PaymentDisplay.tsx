@@ -106,7 +106,7 @@ export default function PaymentDisplay({
               <th className="border-b px-4 py-2 text-left">Payment Method</th>
               <th className="border-b px-4 py-2 text-left">Total Amount</th>
               <th className="border-b px-4 py-2 text-left">Cash Received</th>
-              <th className="border-b px-4 py-2 text-left">Status</th>
+              <th className="border-b px-4 py-2 text-center">Status</th>
             </tr>
           </thead>
           <tbody>
@@ -172,14 +172,15 @@ export default function PaymentDisplay({
                       ? payment.cash.receivedCash
                       : "N/A"}
                   </td>
-                  <td
-                    className={cn(
-                      `border-b px-4 py-2 text-left`,
-                      paymentStatus === "due" && "text-red-500",
-                      paymentStatus === "paid" && "text-green-500"
-                    )}
-                  >
-                    {paymentStatus}
+                  <td className="text-center">
+                    <span className={cn(
+                      `border-b px-2 py-1 text-left capitalize`,
+                      paymentStatus === "due" && "bg-[#de5967] text-white rounded-md",
+                      paymentStatus === "paid" && "bg-[#3c8f89] text-white rounded-md"
+                    )}>
+
+                      {paymentStatus}
+                    </span>
                   </td>
                 </tr>
               );

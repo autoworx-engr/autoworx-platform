@@ -34,6 +34,7 @@ import { useCalendarSettingsStore } from "@/stores/calendarSettingsStore";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import moment from "moment-timezone";
 import { useCharacterLimit } from "@/hooks/useCharecterLimit";
+import CarLoading from "@/components/common/CarLoading";
 
 export type Campaign = {
   id?: number;
@@ -232,14 +233,27 @@ const CampaignForm = ({
       errorToast("Working hour limits are not available.");
       return;
     }
-    const minTime = dayjs(calendarSettings?.dayStart, "HH:mm");
-    const maxTime = dayjs(calendarSettings?.dayEnd, "HH:mm");
-
     if (time && formData.date) {
+      const date = formData.date;
+
+      // Combine selected date with calendar settings
+      const minTime = moment(
+        `${date} ${calendarSettings?.dayStart}`,
+        "YYYY-MM-DD HH:mm"
+      );
+      const maxTime = moment(
+        `${date} ${calendarSettings?.dayEnd}`,
+        "YYYY-MM-DD HH:mm"
+      );
+      const selectedTime = moment(
+        `${date} ${time.format("HH:mm")}`,
+        "YYYY-MM-DD HH:mm"
+      );
+
       const isValid =
-        time.isSame(minTime) ||
-        time.isSame(maxTime) ||
-        (time.isAfter(minTime) && time.isBefore(maxTime));
+        selectedTime.isSame(minTime) ||
+        selectedTime.isSame(maxTime) ||
+        (selectedTime.isAfter(minTime) && selectedTime.isBefore(maxTime));
 
       if (!isValid) {
         errorToast(
@@ -248,9 +262,7 @@ const CampaignForm = ({
         return;
       }
 
-      const dateTimeString = new Date(
-        `${formData.date}T${time.format("HH:mm")}:00`
-      ).toString();
+      const dateTimeString = selectedTime.toDate().toString();
       handleInputChange("startTime", dateTimeString);
     } else {
       handleInputChange("startTime", "");
@@ -435,7 +447,7 @@ const CampaignForm = ({
   if (isLoading || isFetching || isYearsLoading || isMakeLoading) {
     return (
       <div className="flex h-[800px] w-full animate-pulse items-center justify-center rounded-md bg-gray-200 p-4 shadow-sm md:p-6">
-        <Spin />
+        <CarLoading />
       </div>
     );
   }

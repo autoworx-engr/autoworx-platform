@@ -16,7 +16,7 @@ import { NotificationsPopover } from "../NotificationProvider";
 import QuickLink from "../QuickLink";
 
 import MobileNavList from "./MobileNavList";
-import { CircleX, Layers, Menu, RotateCw, SquarePlay } from "lucide-react";
+import { CircleX, Menu, RotateCw, SquarePlay } from "lucide-react";
 
 type TProps = {
   navList: {
@@ -150,7 +150,7 @@ export default function MobileNav({ navList, permissions }: TProps) {
               <RotateCw className="size-5 text-white" />
             </button>
             <Link href="/dashboard/resources" className="px-3">
-              <Layers className="size-5 text-white" />
+              <SquarePlay className="size-5 text-white" />
             </Link>
             {(currentUser?.employeeType == "Admin" ||
               currentUser?.employeeType == "Manager" ||

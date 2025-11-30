@@ -92,7 +92,7 @@ const CreateStatementModal = ({
     <div>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
-          <button className="w-fit self-end rounded-md bg-[#6571FF] p-2 px-5 text-white">
+          <button className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#6571FF] to-[#8088FF] px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-[#6571FF]/40 transition-all duration-300 hover:from-[#505aff] hover:to-[#6571FF] hover:shadow-xl">
             Create Statement
           </button>
         </DialogTrigger>
@@ -192,13 +192,25 @@ const CreateStatementModal = ({
             </div>
             <div className="flex gap-2">
               <button
-                className="w-fit self-end rounded-md border border-[#66738C] p-2 px-5 text-[#66738C]"
+                className="
+                rounded-xl px-5 py-2.5 text-sm font-medium text-slate-500 
+                hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
+                transition-colors border
+              "
                 onClick={handleCancel}
               >
                 Cancel
               </button>
               <button
-                className="w-fit self-end rounded-md bg-[#6571FF] p-2 px-5 text-white disabled:cursor-not-allowed disabled:bg-gray-400"
+                className="
+                rounded-xl px-6 py-2.5 text-sm font-medium text-white
+                bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+                shadow-lg shadow-indigo-500/30
+                hover:shadow-xl hover:shadow-indigo-500/40
+                hover:-translate-y-0.5 hover:scale-[1.02]
+                active:translate-y-0 active:scale-100
+                transition-all duration-200
+              "
                 onClick={handleCreate}
                 disabled={selectedItems.length === 0 || loading || !fleetId}
               >

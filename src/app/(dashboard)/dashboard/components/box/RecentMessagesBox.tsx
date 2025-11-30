@@ -4,6 +4,7 @@ import getUser from "@/lib/getUser";
 import getPermissions from "@/lib/getPermissions";
 import BoxTitle from "./BoxTitle";
 import MessageContainer from "./MessageContainer";
+import { cn } from "@/lib/cn"; // Ensure cn utility is imported
 
 export default async function RecentMessagesBox() {
   const user = await getUser();
@@ -12,7 +13,6 @@ export default async function RecentMessagesBox() {
   const permissions = await getPermissions();
   const companyPermissions = permissions?.companyPermissions;
   const userPermissions = permissions?.userPermissions;
-
 
   // Priority-based permission check: userPermission first, then companyPermission
   const hasMessagePermission =
@@ -65,10 +65,30 @@ export default async function RecentMessagesBox() {
   const internalMessages = await fetchRecentMessages(defaultTake);
 
   return (
-    <div className="flex-1 overflow-y-hidden p-6 shadow-md">
-      <div className="h-full">
+    // Outer Container: Apply full Glassmorphism style and ensure flex-1 stretching
+    <div
+      className={cn(
+        `
+          flex flex-1 flex-col p-4 md:p-6 rounded-2xl transition-all duration-300 #h-full
+
+          // Glassmorphism aesthetic (Replaces old p-6 shadow-md)
+          bg-white/50 dark:bg-slate-900/50
+          backdrop-blur-md
+
+          // Subtle border and lift
+          ring-1 ring-slate-900/5 dark:ring-white/10
+          shadow-lg dark:shadow-2xl dark:shadow-blue-900/20
+
+          // Hover effect for interactivity
+          hover:shadow-xl hover:shadow-blue-500/10 dark:hover:shadow-indigo-500/10
+
+          overflow-hidden // Crucial for containing the scrollable MessageContainer
+        `
+      )}
+    >
+      <div className="flex flex-col h-full">
         <BoxTitle
-          className="mb-4"
+          className="mb-4 md:mb-6 flex-shrink-0" // Add margin and ensure title doesn't scroll
           title="Recent Messages"
           redirectLink={
             !shouldHideRedirectLink
@@ -76,18 +96,24 @@ export default async function RecentMessagesBox() {
               : undefined
           }
         />
-        <MessageContainer
-          user={user}
-          hasMessagePermission={hasMessagePermission}
-          clientMessages={user.employeeType === "Sales" ? sortedClients : []}
-          internalMessages={
-            user.employeeType === "Technician" ||
-            user.employeeType === "Sales" ||
-            user.employeeType === "Other"
-              ? internalMessages
-              : []
-          }
-        />
+
+        {/* Message Container: Must fill remaining space and handle its own scrolling */}
+        <div className="flex-1 min-h-0 custom-scrollbar overflow-y-auto">
+          <MessageContainer
+            user={user}
+            hasMessagePermission={hasMessagePermission}
+            // Only Sales gets client emails on the dashboard (as per existing logic)
+            clientMessages={user.employeeType === "Sales" ? sortedClients : []}
+            // Technicians get internal messages
+            internalMessages={
+              user.employeeType === "Technician" ||
+              user.employeeType === "Sales" ||
+              user.employeeType === "Other"
+                ? internalMessages
+                : []
+            }
+          />
+        </div>
       </div>
     </div>
   );

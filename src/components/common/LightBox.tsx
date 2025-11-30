@@ -1,5 +1,5 @@
 "use client";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import React, { useState } from "react";
 import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/plugins/captions.css";
@@ -25,10 +25,10 @@ const ComponentsLightbox = ({ getItems = [], startIndex = 0 }: LightboxProps) =>
     router.back();
   };
 
-  
+
 
   return (
-    <div className="mt-10 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
       <Lightbox
         styles={{ container: { backgroundColor: "rgba(0,0,0,0.6)" } }}
         open={isOpen}

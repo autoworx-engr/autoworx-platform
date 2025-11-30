@@ -1,13 +1,10 @@
-import { db } from "@/lib/db";
-import { Client, Vehicle, User } from "@prisma/client";
-import Image from "next/image";
-import dynamic from "next/dynamic";
-import Link from "next/link";
-import { Edit } from "lucide-react";
-import BackBtn from "../conversations/BackBtn";
-import { cn } from "@/lib/cn";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/Tooltip";
-import { useState } from "react";
+import { cn } from "@/lib/cn";
+import { db } from "@/lib/db";
+import { Client, User, Vehicle } from "@prisma/client";
+import dynamic from "next/dynamic";
+import Image from "next/image";
+import BackBtn from "../conversations/BackBtn";
 import EditClientModalTrigger from "./EditClientModalTrigger";
 
 type TProps = { client?: Client | null; vehicles?: Partial<Vehicle>[] };

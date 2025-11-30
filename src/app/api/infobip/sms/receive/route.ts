@@ -104,8 +104,9 @@ export async function POST(req: NextRequest) {
         if (!client) {
           client = await db.client.create({
             data: {
-              firstName: body.From.replace("+", ""),
-              mobile: body.From.replace("+", ""),
+              firstName: from,
+              lastName: " ",
+              mobile: from,
               companyId: infobipConfig.companyId,
             },
           });
@@ -215,7 +216,7 @@ export async function POST(req: NextRequest) {
           });
 
           // Update chat track
-          await updateNewSMSChatTrack({
+          updateNewSMSChatTrack({
             clientId: client.id,
             smsLastMessage: cleanedMessageText,
             lastMessageBy: "Client",
@@ -235,7 +236,7 @@ export async function POST(req: NextRequest) {
 
           // Send Pusher message for real-time updates
           try {
-            await receiveTwiloMessage({
+            receiveTwiloMessage({
               ...clientSMS,
               attachments: processedAttachments,
             });
@@ -246,7 +247,7 @@ export async function POST(req: NextRequest) {
 
           // Send client mail or SMS notification
           try {
-            await sendClientMailOrSMSNotify(client.id);
+            sendClientMailOrSMSNotify(client.id);
           } catch (pusherError) {
             console.error(
               "Pusher sendClientMailOrSMSNotify error:",
@@ -270,7 +271,7 @@ export async function POST(req: NextRequest) {
             });
 
             if (clientWithLead?.Lead?.id && clientWithLead?.Lead?.columnId) {
-              await updatePipelineAutomationTriggerWithToken({
+              updatePipelineAutomationTriggerWithToken({
                 companyId: client.companyId,
                 condition: "MESSAGE_RECEIVED_CLIENT",
                 leadId: clientWithLead.Lead.id,

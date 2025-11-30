@@ -1,17 +1,13 @@
 import { getColumnsByType } from "@/actions/pipelines/pipelinesColumn";
 import Leads from "../../components/Leads";
 import { Suspense } from "react";
-import { Spin } from "antd";
+import CarLoading from "@/components/common/CarLoading";
 
 export const dynamic = "force-dynamic";
 
 // Loading component for better UX
 function LoadingLeads() {
-  return (
-    <div className="flex h-screen w-full items-center justify-center">
-      <Spin size="large" />
-    </div>
-  );
+  return <CarLoading />;
 }
 
 export default async function Page() {

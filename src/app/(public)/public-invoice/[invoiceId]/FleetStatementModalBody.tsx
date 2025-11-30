@@ -4,6 +4,9 @@ import { cn } from "@/lib/cn";
 import Image from "next/image";
 import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
 import { formatCurrency } from "@/utils/formatCurrency";
+import { useServerGet } from "@/hooks/useServerGet";
+import { getStripeAccount } from "@/app/(dashboard)/dashboard/settings/payments/stripe";
+import { StatementPaymentDialog } from "@/components/fleet-statement/StatementPaymentDialog";
 
 interface FleetStatementModalBodyProps {
   statementId: string;
@@ -19,6 +22,9 @@ export const FleetStatementModalBody: React.FC<
   const fleet = statement?.Fleet;
   const client = statement?.Fleet?.client;
   const invoices = statement?.invoice || [];
+
+  const companyId = company?.id;
+  const { data: stripeAccountData } = useServerGet(getStripeAccount, companyId);
 
   // Calculate totals
   const totalAmount = invoices.reduce(
@@ -248,6 +254,19 @@ export const FleetStatementModalBody: React.FC<
                 </span>
               </div>
             </div>
+
+            <StatementPaymentDialog
+              statementId={statementId}
+              companyId={company.id}
+              totalDue={totals.totalDue}
+              isEnabled={
+                !!(
+                  stripeAccountData?.success &&
+                  stripeAccountData?.enabled &&
+                  parseFloat(Number(totals.totalDue ?? 0).toFixed(2)) > 0
+                )
+              }
+            />
           </div>
         </div>
       </div>

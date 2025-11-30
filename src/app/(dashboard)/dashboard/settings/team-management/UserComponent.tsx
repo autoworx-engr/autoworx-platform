@@ -58,56 +58,66 @@ const UserList: React.FC = () => {
   };
 
   return (
-    <div className="relative w-full">
-      <div className="mb-2 mt-2">
-        <h2 className="pl-2 text-xl font-semibold">User Roles (Custom)</h2>
+   <div className="relative w-full p-6"> {/* Added internal padding */}
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold text-gray-800">
+          🧑‍💻 User Roles (Custom)
+        </h2>
+        <p className="text-sm text-gray-500">
+          View all users and customize permissions individually.
+        </p>
       </div>
 
-      <div className="thin-scrollbar m-2 max-h-[75vh] overflow-x-auto rounded-lg bg-background p-4 shadow-md">
-        {selectedUser && (
+      <div className="h-full">
+        {selectedUser ? (
           <CustomizeUserRole user={selectedUser} onBack={handleBackClick} />
-        )}
-        {openEdit && (
+        ) : (
           <>
-            <h3 className="text-lg font-medium">User List</h3>
-            <div className="mb-4 mt-4">
+            <div className="mb-4">
               <Search />
             </div>
-            <ul>
-              {users.map((user) => {
-                const name = `${user.firstName} ${user.lastName}`;
-                return (
-                  <li
-                    key={user.id}
-                    className="mb-2 flex items-center rounded-md border border-[#66738C] p-2"
-                  >
-                    <div className="h-10 w-10 overflow-hidden rounded-full">
-                      <Image
-                        src={user.image}
-                        alt={name}
-                        width={40}
-                        height={40}
-                        className="object-cover"
-                      />
-                    </div>
-                    <div className="ml-3 flex-1">
-                      <h4 className="text-md font-semibold">{name}</h4>
-                      <p className="text-sm text-gray-500">
-                        {user.employeeType}
-                      </p>
-                    </div>
-                    <div>
-                      <button
-                        onClick={() => handleEditClick(user)}
-                        className="text-[#6571FF] hover:underline"
-                      >
-                        <SquarePen className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
+            <div className="thin-scrollbar max-h-[95vh] overflow-y-auto pr-2"> {/* Improved scroll container */}
+              <ul className="space-y-3">
+                {users.map((user) => {
+                  const name = `${user.firstName} ${user.lastName || ""}`;
+                  return (
+                    <li
+                      key={user.id}
+                      className="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 p-3 transition duration-150 hover:bg-gray-100 shadow-sm"
+                    >
+                      <div className="flex items-center min-w-0">
+                        <div className="h-12 w-12 overflow-hidden rounded-full shrink-0">
+                          <Image
+                            src={user.image}
+                            alt={name}
+                            width={48}
+                            height={48}
+                            className="object-cover h-full w-full"
+                          />
+                        </div>
+                        <div className="ml-4 min-w-0">
+                          <h4 className="text-base font-semibold  truncate">
+                            {name}
+                          </h4>
+                          <p className="text-xs font-medium text-indigo-600">
+                            {user.employeeType}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="shrink-0">
+                        <button
+                          onClick={() => handleEditClick(user)}
+                          className="text-indigo-600 p-2 rounded-full hover:bg-indigo-50 transition duration-150"
+                          title={`Edit ${user.firstName}'s permissions`}
+                        >
+                          <SquarePen className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
           </>
         )}
       </div>

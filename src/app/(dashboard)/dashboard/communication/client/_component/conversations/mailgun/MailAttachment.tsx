@@ -24,6 +24,10 @@ export default function MailAttachment({ message, onDownload }: TProps) {
   const attachments = message?.attachments ?? [];
   if (!attachments.length) return null;
 
+  const allImageUrls = attachments
+    .filter((a) => isImage(a.mimeType ?? a.name) && typeof a.url === "string")
+    .map((a) => a.url as string);
+
   return (
     <div
       className={cn(
@@ -36,10 +40,12 @@ export default function MailAttachment({ message, onDownload }: TProps) {
 
         // IMAGE THUMB
         if (img) {
+          const currentImageIndex = allImageUrls.indexOf(att.url);
+          const urlsParam = encodeURIComponent(JSON.stringify(allImageUrls));
           return (
             <Link
               key={`${att.url}-${i}`}
-              href={`/dashboard/communication/photo?url=${encodeURIComponent(att.url)}`}
+              href={`/dashboard/communication/photo?urls=${urlsParam}&index=${currentImageIndex}`}
               className={cn(
                 "group relative inline-flex overflow-hidden rounded-md ring-1 ring-zinc-200 transition",
                 "hover:ring-emerald-400 dark:ring-white/10"

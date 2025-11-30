@@ -47,10 +47,10 @@ const InvoiceList = ({
   const filteredInvoices = invoiceData?.filter((item: any) => {
     const matchSearch = search
       ? item?.id?.toLowerCase().includes(search.toLowerCase()) ||
-        item?.vehicle?.vin?.toLowerCase().includes(search.toLowerCase()) ||
-        item?.vehicle?.make?.toLowerCase().includes(search.toLowerCase()) ||
-        item?.vehicle?.year?.toString().includes(search) ||
-        item?.vehicle?.other?.toLowerCase().includes(search)
+      item?.vehicle?.vin?.toLowerCase().includes(search.toLowerCase()) ||
+      item?.vehicle?.make?.toLowerCase().includes(search.toLowerCase()) ||
+      item?.vehicle?.year?.toString().includes(search) ||
+      item?.vehicle?.other?.toLowerCase().includes(search)
       : true;
 
     return matchSearch;
@@ -59,7 +59,7 @@ const InvoiceList = ({
   const filteredStatements = invoiceData?.filter((item: any) => {
     const matchedSearch = search
       ? item?.id?.toLowerCase().includes(search.toLowerCase()) ||
-        item?.invoice?.length.toString().includes(search)
+      item?.invoice?.length.toString().includes(search)
       : true;
 
     return matchedSearch;
@@ -70,9 +70,7 @@ const InvoiceList = ({
       {/* <FleetSubHeading text={`${type} List`} /> */}
 
       <div className="flex  items-center justify-between pr-5">
-        <div className="md:max-w-[700px] flex-1 rounded border border-gray-300 bg-background p-3">
-          <FilterBySearchBox searchText={searchParams?.search as string} />
-        </div>
+        <FilterBySearchBox searchText={searchParams?.search as string} />
 
         {/* Only show CreateStatementModal for Invoice type and when fleetId is available */}
         {type === "Invoice" && fleetId && (

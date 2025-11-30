@@ -10,6 +10,7 @@ import { actionTypes } from "@/constants/lead.constant";
 import { updateTagAutomationTrigger } from "@/service/tag-automation-trigger/api";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/authOptions";
+import { revalidatePath } from "next/cache";
 
 type TLeadTagsProps = {
   leadTags: {
@@ -56,13 +57,23 @@ export default function LeadTags({ leadTags, lead }: TLeadTagsProps) {
           },
         });
 
-        updateTagAutomationTrigger({
+        const response = await updateTagAutomationTrigger({
           columnId: columnId,
           companyId: result?.lead?.companyId,
           pipelineType: "SALES",
           tagId: selectedTag?.id,
           leadId: result?.leadId,
         });
+        // console.log("response", response?.data);
+        // if (response?.success) {
+        //   dispatch({
+        //     type: actionTypes.AUTOMATION_TRIGGER,
+        //     payload: {
+        //       updatedLead: response.data,
+        //       previousColumnId: columnId,
+        //     },
+        //   });
+        // }
       }
     } catch (error) {
       console.error("Error adding tag:", error);
@@ -72,6 +83,7 @@ export default function LeadTags({ leadTags, lead }: TLeadTagsProps) {
   const handleRemoveTag = async ({ columnId, leadId, tagId }: TRemoveTag) => {
     try {
       const success = await removeLeadTag(leadId, tagId);
+
       if (success) {
         dispatch({
           type: actionTypes.REMOVE_TAG,
@@ -98,8 +110,7 @@ export default function LeadTags({ leadTags, lead }: TLeadTagsProps) {
             <button
               type="button"
               className={cn(
-                "ml-1 cursor-pointer text-xs text-white disabled:cursor-not-allowed disabled:opacity-50",
-                leadTag.tag?.bgColor === "white" && "text-black"
+                "ml-1 cursor-pointer text-xs text-black disabled:cursor-not-allowed disabled:opacity-50",
               )}
               onClick={() => {
                 handleRemoveTag({

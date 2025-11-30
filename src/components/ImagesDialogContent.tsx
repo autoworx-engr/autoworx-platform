@@ -1,161 +1,283 @@
 "use client";
 
-import Image from "next/image";
-import { DialogClose } from "@/components/Dialog";
-import { useState } from "react";
-import { Check, Share2, Square, Trash2 } from "lucide-react";
-import toast from "react-hot-toast";
+import { useEffect, useMemo, useState } from "react";
 import moment from "moment";
+import { TechnicianPhoto } from "./workorder-modal/WorkOrderModalBody";
+import { deleteTechnicianImage } from "@/actions/estimate/technician/deleteTechnicianImage";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/queryKeys";
+import { errorToast, successToast } from "@/lib/toast";
+import { ImagesDialogueShareButtons } from "./workorder-modal/ImagesDialogueShareButtons";
+import { ImageContentCard } from "./workorder-modal/ImageContentCard";
+import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
+import { useIsAdminOrManager } from "@/utils/useIsAdminOrManager";
+import { SelectionToolbar } from "./workorder-modal/SelectionToolbar";
+import { sendInfobipEmailWithAttachments } from "@/actions/estimate/invoice/sendInfobipEmail";
+import { sendWorkOrderAttachments } from "@/actions/communication/client/chat-track/sendWorkOrderAttachments";
 
-export interface InvoicePhoto {
-  id: number;
-  photo: string;
-  technicianName: string;
-  timestamp: string;
-}
-
-const photos = [
-  {
-    id: 1,
-    photo: "https://ik.imagekit.io/monzilkit/modern-car-driving-city.jpg",
-    technicianName: "John Doe",
-    timestamp: "2023-10-01T10:00:00Z",
-  },
-  {
-    id: 2,
-    photo: "https://ik.imagekit.io/monzilkit/modern-car-driving-city.jpg",
-    technicianName: "Jane Smith",
-    timestamp: "2023-10-02T14:30:00Z",
-  },
-  {
-    id: 3,
-    photo: "https://ik.imagekit.io/monzilkit/modern-car-driving-city.jpg",
-    technicianName: "Mike Johnson",
-    timestamp: "2023-10-01T10:00:00Z",
-  },
-  {
-    id: 4,
-    photo: "https://ik.imagekit.io/monzilkit/modern-car-driving-city.jpg",
-    technicianName: "Emily Davis",
-    timestamp: "2023-10-02T14:30:00Z",
-  },
-];
-
-export function ImagesDialogContent() {
-  const [images, setImages] = useState<InvoicePhoto[]>(photos || []);
+export function ImagesDialogContent({
+  technicianPhotos,
+  clientId,
+  invoiceId,
+}: {
+  technicianPhotos?: TechnicianPhoto[];
+  clientId?: number;
+  invoiceId?: string;
+}) {
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [isSending, setIsSending] = useState(false);
+
+  const [photosState, setPhotosState] = useState<TechnicianPhoto[]>(
+    technicianPhotos || []
+  );
+  const queryClient = useQueryClient();
+  const currentUser = useGetCurrentUser();
+  const isAdminOrManager = useIsAdminOrManager();
+
+  useEffect(() => {
+    if (technicianPhotos) {
+      setPhotosState(technicianPhotos);
+      setSelectedIds([]);
+    }
+  }, [technicianPhotos]);
+
+  const selectableIds = useMemo(
+    () => photosState.map((p) => p.id as number),
+    [photosState, currentUser?.id, isAdminOrManager]
+  );
+
+  const allSelectableSelected =
+    selectableIds.length > 0 &&
+    selectableIds.every((id) => selectedIds.includes(id));
 
   function toggleSelect(id?: number) {
     if (!id) return;
     setSelectedIds((s) =>
-      s.includes(id) ? s.filter((x) => x !== id) : [...s, id]
+      s.includes(id as number)
+        ? s.filter((x) => x !== id)
+        : [...s, id as number]
     );
   }
 
   async function handleDelete(id?: number) {
     if (!id) return;
-    // optimistic UI: remove locally then call server
-    setImages((x) => x.filter((p) => p.id !== id));
+
+    setSelectedIds((s) => s.filter((x) => x !== id));
+    const prev = photosState;
+    const img = photosState.find((p) => p.id === id);
+    const invoiceId = img?.invoiceId;
+    if (currentUser?.id !== img?.technicianId && !isAdminOrManager) return;
+    setPhotosState((p) => p.filter((x) => x.id !== id));
 
     try {
-      const res = await fetch(`/api/invoice/photo/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Delete failed");
-      toast.success("Photo deleted");
+      const result = await deleteTechnicianImage(id);
+
+      if (result?.success) {
+        if (invoiceId) {
+          await queryClient.invalidateQueries({
+            queryKey: queryKeys.getWorkOrderDataKey(invoiceId),
+          });
+        }
+
+        successToast(result?.message || "Photo deleted successfully");
+        setSelectedIds((s) => s.filter((x) => x !== id));
+      }
     } catch (err) {
-      toast.error("Failed to delete photo");
-      // revert (simple refetch would be better)
-      setImages(photos || []);
+      setPhotosState(prev);
+      errorToast("Failed to delete photo");
     }
   }
 
-  async function handleShareSelected() {
-    const selected = images.filter((i) => selectedIds.includes(i.id));
-    if (selected.length === 0) return;
+  function generateShareText() {
+    const selected = photosState.filter((i) =>
+      selectedIds.includes(i.id as number)
+    );
+    if (selected.length === 0) return "";
 
-    const links = selected.map((s) => s.photo).join("\n");
-    if (navigator.share) {
-      try {
-        await navigator.share({ text: links });
-        // toast.success("Shared selected images");
-      } catch (err) {
-        // user cancelled or failed
-      }
+    const lines = selected.map((s) => {
+      const time = s.timestamp
+        ? moment(s.timestamp).format("MMM DD, YYYY hh:mm A")
+        : "Unknown time";
+      const invoicePart = s.invoiceId ? `Invoice: ${s.invoiceId}\n` : "";
+      return `${invoicePart}Uploaded: ${time}\nReported by: ${s.technicianName}\nImage: ${s.photo}`;
+    });
+
+    return lines.join("\n\n");
+  }
+  async function handleEmailShare() {
+    if (!clientId) {
+      errorToast("Client information not available");
       return;
     }
 
+    const selected = photosState.filter((i) =>
+      selectedIds.includes(i.id as number)
+    );
+
+    if (selected.length === 0) {
+      errorToast("Please select at least one image");
+      return;
+    }
+
+    setIsSending(true);
+
     try {
-      await navigator.clipboard.writeText(links);
-      toast.success("Copied image links to clipboard");
+      // Prepare attachment URLs from selected photos
+      const attachmentUrls = selected.map((photo) => {
+        const fileName =
+          photo.photo.split("/").pop() || `technician-photo-${photo.id}.jpg`;
+        return {
+          url: photo.photo,
+          name: fileName,
+        };
+      });
+
+      // Generate email text content
+      const lines = selected.map((s) => {
+        const time = s.timestamp
+          ? moment(s.timestamp).format("MMM DD, YYYY hh:mm A")
+          : "Unknown time";
+        const invoicePart = s.invoiceId ? `Invoice: ${s.invoiceId}\n` : "";
+        return `${invoicePart}Uploaded: ${time}\nReported by: ${s.technicianName}`;
+      });
+
+      const emailText = lines.join("\n\n");
+      const subject = `Technician Photos (${selectedIds.length} ${selectedIds.length === 1 ? "image" : "images"})`;
+
+      // Send email with attachments
+      const result = await sendInfobipEmailWithAttachments({
+        clientId,
+        subject,
+        text: emailText,
+        attachmentUrls,
+      });
+
+      if (result.success) {
+        successToast(
+          `Email sent successfully with ${attachmentUrls.length} ${attachmentUrls.length === 1 ? "attachment" : "attachments"}`
+        );
+        setSelectedIds([]); // Clear selection after successful send
+      } else {
+        errorToast(result.message || "Failed to send email");
+      }
+    } catch (error: any) {
+      console.error("Email send error:", error);
+      errorToast(error.message || "Failed to send email");
+    } finally {
+      setIsSending(false);
+    }
+  }
+
+  async function handleSmsShare() {
+    if (!clientId) {
+      errorToast("Client information not available");
+      return;
+    }
+
+    const selected = photosState.filter((i) =>
+      selectedIds.includes(i.id as number)
+    );
+
+    if (selected.length === 0) {
+      errorToast("Please select at least one image");
+      return;
+    }
+
+    setIsSending(true);
+
+    try {
+      // Prepare attachment URLs from selected photos
+      const attachmentUrls = selected.map((photo) => {
+        const fileName =
+          photo.photo.split("/").pop() || `technician-photo-${photo.id}.jpg`;
+        return {
+          url: photo.photo,
+          name: fileName,
+        };
+      });
+
+      // Send SMS/MMS with attachments
+      const result = await sendWorkOrderAttachments({
+        clientId,
+        attachments: attachmentUrls,
+      });
+
+      if (result.success) {
+        successToast(
+          `SMS sent successfully with ${attachmentUrls.length} ${attachmentUrls.length === 1 ? "attachment" : "attachments"}`
+        );
+        setSelectedIds([]); // Clear selection after successful send
+      } else {
+        errorToast(result.error || "Failed to send SMS");
+      }
+    } catch (error: any) {
+      console.error("SMS send error:", error);
+      errorToast(error.message || "Failed to send SMS");
+    } finally {
+      setIsSending(false);
+    }
+  }
+
+  async function handleCopyShare() {
+    const shareText = generateShareText();
+    if (!shareText) return;
+
+    try {
+      await navigator.clipboard.writeText(shareText);
+      successToast("Copied to clipboard");
     } catch (err) {
-      toast.error("Unable to copy links");
+      errorToast("Failed to copy to clipboard");
     }
   }
 
   return (
-    <div>
-      <div className="flex items-center gap-4">
-        <h3 className="text-lg font-semibold">Images</h3>
+    <div className="flex flex-col gap-4">
+      {/* Header */}
+      <div className="flex flex-col gap-4 border-b border-border bg-background p-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-1">
+          <h2 className="text-xl font-semibold text-foreground md:text-2xl">
+            Images
+          </h2>
+          <p className="text-xs text-muted-foreground md:text-sm">
+            {photosState.length} {photosState.length === 1 ? "photo" : "photos"}{" "}
+            total
+          </p>
+        </div>
+
         {selectedIds.length > 0 && (
-          <button
-            onClick={handleShareSelected}
-            className="flex items-center gap-2 rounded bg-green-600 px-3 py-1 text-sm text-white"
-          >
-            <Share2 className="h-4 w-4" /> Share ({selectedIds.length})
-          </button>
+          <ImagesDialogueShareButtons
+            handleCopyShare={handleCopyShare}
+            handleEmailShare={handleEmailShare}
+            handleSmsShare={handleSmsShare}
+          />
         )}
       </div>
 
-      <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {images.length === 0 && (
-          <p className="col-span-full text-sm text-muted-foreground">
+      {/* Selection toolbar */}
+      <SelectionToolbar
+        selectedIds={selectedIds}
+        photosState={photosState}
+        selectableIds={selectableIds}
+        allSelectableSelected={allSelectableSelected}
+        setSelectedIds={setSelectedIds}
+      />
+
+      {/* Images grid */}
+      <div className="mt-1 grid grid-cols-1 gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3">
+        {photosState.length === 0 && (
+          <p className="col-span-full rounded-md border border-dashed border-border bg-muted/30 p-4 text-sm text-muted-foreground text-center">
             No images available
           </p>
         )}
 
-        {images.map((img) => (
-          <div key={img.id} className="relative rounded border p-2 shadow-sm">
-            <div className="h-40 w-full overflow-hidden rounded relative">
-              <Image
-                src={img.photo}
-                alt={`photo-${img.id}`}
-                width={800}
-                height={400}
-                className="h-full w-full object-cover"
-              />
-              <div className="absolute top-2 right-2 flex items-center gap-2">
-                <button
-                  onClick={() => toggleSelect(img.id)}
-                  className={`flex items-center gap-1 rounded text-sm px-0.5 py-0.5 transition-all ${selectedIds.includes(img.id) ? "bg-green-600 text-white" : "bg-gray-200 text-gray-700"}`}
-                >
-                  {selectedIds.includes(img.id) ? (
-                    <>
-                      <Check className="h-5 w-5" />
-                    </>
-                  ) : (
-                    <Square className="h-5 w-5" />
-                  )}
-                </button>
-
-                <button
-                  onClick={() => handleDelete(img.id)}
-                  className="flex items-center gap-1 rounded bg-red-500 px-2 py-1 text-sm text-white"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-
-            <div className="mt-2 flex items-center justify-between text-xs">
-              <div>
-                <p className="font-semibold">
-                  Reported By: {img.technicianName}
-                </p>
-                <p className="text-muted-foreground">
-                  {moment(img.timestamp).format("MMM DD, YYYY hh:mm A")}
-                </p>
-              </div>
-            </div>
-          </div>
+        {photosState.map((img) => (
+          <ImageContentCard
+            key={img.id}
+            img={img}
+            selectedIds={selectedIds}
+            toggleSelect={toggleSelect}
+            handleDelete={handleDelete}
+          />
         ))}
       </div>
     </div>
