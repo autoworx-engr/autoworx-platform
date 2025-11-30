@@ -5,13 +5,25 @@ import { v4 as uuidv4 } from "uuid";
 import { sendPushNotification } from "@/actions/notification/sendPushNotification";
 
 export async function POST(request: Request) {
+  console.log("📞 [Incoming] Webhook called at:", new Date().toISOString());
   try {
     const formData = await request.formData();
+
+    // Log all form data for debugging
+    const allData: Record<string, any> = {};
+    formData.forEach((value, key) => {
+      allData[key] = value;
+    });
+    console.log("📋 [Incoming] All FormData:", allData);
+
     const from = formData.get("From") as string; // Caller's phone number
     const to = formData.get("To") as string; // Your Twilio number
     const callSid = formData.get("CallSid") as string;
 
+    console.log("📥 [Incoming] Received:", { from, to, callSid });
+
     if (!from || !to) {
+      console.error("❌ [Incoming] Missing From or To");
       return NextResponse.json(
         { error: "Missing 'From' or 'To' parameters." },
         { status: 400 }
@@ -58,6 +70,14 @@ export async function POST(request: Request) {
 
     const callId = callSid || uuidv4();
 
+    console.log("📝 [Incoming] Creating ClientCall record with:", {
+      callSid: callId,
+      from,
+      to,
+      companyId: twilioCredentials.companyId,
+      clientId: client.id,
+    });
+
     // Create ClientCall record for incoming call
     const createdCall = await db.clientCall.create({
       data: {
@@ -70,6 +90,12 @@ export async function POST(request: Request) {
         companyId: twilioCredentials.companyId,
         clientId: client.id,
       },
+    });
+
+    console.log("✅ [Incoming] ClientCall created successfully:", {
+      id: createdCall.id,
+      callSid: createdCall.callSid,
+      status: createdCall.status,
     });
 
     // Send push notifications to admin, manager, and sales users only
@@ -148,6 +174,10 @@ export async function POST(request: Request) {
     clientDial.parameter({
       name: "ClientId",
       value: client.id.toString(),
+    });
+    clientDial.parameter({
+      name: "ParentCallSid",
+      value: callId, // Pass the parent call SID to the browser
     });
 
     const twimlResponse = voiceResponse.toString();
