@@ -264,7 +264,7 @@ export default function CreateGroupModal({
                       >
                         {/* Avatar remains simple and functional */}
                         <Avatar photo={user.image} width={60} height={60} />
-                        <div className="flex flex-col overflow-hidden">
+                        <div className="flex flex-col overflow-hidden flex-1 min-w-0">
                           <p className="truncate text-base font-semibold text-slate-800 dark:text-white">
                             {user.firstName} {user.lastName}
                           </p>
