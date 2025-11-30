@@ -357,7 +357,14 @@ export default function AddNewProduct({
       <DialogTrigger asChild>
         <button
           onClick={handleAddNewProduct}
-          className={`rounded-md bg-[#6571FF] py-1.5 px-4 text-white md:py-2 md:px-5 text-sm ${isDatabase ? "w-full py-2 md:w-auto" : ""}`}
+          className="
+          flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white
+          bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+          shadow-[0_4px_14px_0_rgba(101,113,255,0.39)]
+          hover:shadow-[0_6px_20px_rgba(101,113,255,0.23)]
+          hover:-translate-y-0.5
+          active:translate-y-0 active:scale-100
+          transition-all duration-300 ease-in-out"
         >
           Add New Product
         </button>
@@ -583,11 +590,19 @@ export default function AddNewProduct({
         </div>
 
         <DialogFooter>
-          <DialogClose className="rounded-lg border-2 border-slate-400 p-2">
+          <DialogClose className="rounded-lg px-5 py-2.5 text-sm font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 transition-colors border">
             Cancel
           </DialogClose>
           <Submit
-            className="mb-2 flex items-center justify-center rounded-lg border bg-[#6571FF] px-5 py-2 text-white md:mb-0"
+            className="
+              rounded-lg px-6 py-2.5 text-sm font-medium text-white
+              bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+              shadow-lg shadow-indigo-500/30
+              hover:shadow-xl hover:shadow-indigo-500/40
+              hover:-translate-y-0.5 hover:scale-[1.02]
+              active:translate-y-0 active:scale-100
+              transition-all duration-200
+            "
             formAction={handleSubmit}
           >
             Add
