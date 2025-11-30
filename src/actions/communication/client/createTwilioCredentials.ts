@@ -154,6 +154,7 @@ export const createTwilioCredentials = async ({
         });
         await client.incomingPhoneNumbers(company.phoneNumberSid).update({
           smsUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/twilio/sms-receive/${companyIds}`,
+          voiceUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/twilio/incoming`,
         });
       }
 
