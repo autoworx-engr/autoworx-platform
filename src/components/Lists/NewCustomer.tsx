@@ -27,6 +27,7 @@ import { CircleUserRound, UserIcon, X } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useClientFilterStore } from "@/stores/clientFilter";
 import { CLIENT_LIST_KEY } from "@/app/(dashboard)/dashboard/client/_hook/useClientQuery";
+import PhoneInput from "../PhoneInput";
 
 export default function NewCustomer({
   buttonElement,
@@ -49,6 +50,7 @@ export default function NewCustomer({
   const [mobile, setMobile] = useState("+1");
   const pathname = usePathname();
   const queryClient = useQueryClient();
+  const [country, setCountry] = useState('');
   const { search, currentPage, pageSize } = useClientFilterStore();
   const [clientInfo, setClientInfo] = useState({
     firstName: "",
@@ -110,15 +112,22 @@ export default function NewCustomer({
     }
 
     // Validate mobile number format
-    if (!mobile.startsWith("+1") || !/^\+1\d{10}$/.test(mobile)) {
+    // if (!mobile.startsWith("+1") || !/^\+1\d{10}$/.test(mobile)) {
+    //   showError({
+    //     field: "mobile",
+    //     message:
+    //       "Please enter a valid US phone number with area code (e.g., +1234567890).",
+    //   });
+    //   return;
+    // }
+const fullPhone = `${country}${mobile}`
+    if (!mobile || mobile.length < 10) {
       showError({
         field: "mobile",
-        message:
-          "Please enter a valid US phone number with area code (e.g., +1234567890).",
-      });
-      return;
+        message: "Please enter a valid phone number (at least 10 digits).",
+      })
+      return
     }
-
     let photo;
     // update photo
     if (profilePic) {
@@ -155,7 +164,7 @@ export default function NewCustomer({
         firstName: firstName.trim(),
         lastName,
         email,
-        mobile,
+        mobile: fullPhone,
         customerCompany,
         address,
         city,
@@ -329,7 +338,7 @@ export default function NewCustomer({
                 // }
               }}
             />
-            <SlimInput
+            {/* <SlimInput
               name="mobile"
               label="Mobile"
               required
@@ -341,7 +350,18 @@ export default function NewCustomer({
                 // Clear errors when user is typing
                 clearError();
               }}
-            />
+            /> */}
+
+            <PhoneInput
+            label="Mobile Number"
+            placeholder="1234567890"
+            required
+            onChange={(phoneNum, code) => {
+              setMobile(phoneNum);
+              setCountry(code);
+              console.log('Phone:', phoneNum, 'Country Code:', code);
+            }}
+          />
           </div>
 
           <div className="flex items-center justify-between">
