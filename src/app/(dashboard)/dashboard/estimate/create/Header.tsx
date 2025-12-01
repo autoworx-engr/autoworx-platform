@@ -9,6 +9,7 @@ import { customAlphabet } from "nanoid";
 import { useEffect, useState } from "react";
 import { CreateEstimateActionsButtons } from "./CreateEstimateActionButtons";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { SlimInput } from "@/components/SlimInput";
 
 export default function Header({
   id,
@@ -27,7 +28,8 @@ export default function Header({
   isAllServicesCompleted?: boolean;
   isEdit?: boolean;
 }) {
-  const { invoiceId, setInvoiceId } = useEstimateCreateStore();
+  const { invoiceId, setInvoiceId, setTitle, title } = useEstimateCreateStore();
+
   //dropdown states
   const [clientOpenDropdown, setClientOpenDropdown] = useState(false);
   const [vehicleOpenDropdown, setVehicleOpenDropdown] = useState(false);
@@ -36,7 +38,7 @@ export default function Header({
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
-
+  const isTemplate = pathname.includes("templates");
   useEffect(() => {
     if (!id) setInvoiceId(customAlphabet("1234567890", 10)());
   }, [id]);
@@ -76,22 +78,33 @@ export default function Header({
 
       <CreateEstimateActionsButtons status={status!} />
 
-      <div className="flex basis-full flex-wrap items-center gap-3">
-        <SelectClient
-          value={client}
-          openDropdown={clientOpenDropdown}
-          setOpenDropdown={setClientOpenDropdown}
-          invoice={invoice}
-        />
-
-        <SelectVehicle
-          value={vehicle}
-          openDropdown={vehicleOpenDropdown}
-          setOpenDropdown={setVehicleOpenDropdown}
-          invoice={invoice}
-          isClear={true}
-          isEdit={isEdit}
-        />
+      <div className="flex basis-full flex-wrap items-end gap-3">
+        {isTemplate ? (
+          <SlimInput
+            name="title"
+            className="py-2"
+            required
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+        ) : (
+          <>
+            <SelectClient
+              value={client}
+              openDropdown={clientOpenDropdown}
+              setOpenDropdown={setClientOpenDropdown}
+              invoice={invoice}
+            />
+            <SelectVehicle
+              value={vehicle}
+              openDropdown={vehicleOpenDropdown}
+              setOpenDropdown={setVehicleOpenDropdown}
+              invoice={invoice}
+              isClear={true}
+              isEdit={isEdit}
+            />
+          </>
+        )}
 
         <SelectStatus
           value={status}

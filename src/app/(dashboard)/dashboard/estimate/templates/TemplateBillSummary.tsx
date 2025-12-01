@@ -1,7 +1,11 @@
 "use client";
 import { getCompanyTaxCurrency } from "@/actions/settings/emailTemplates";
+import { useEstimateTemplateCreate } from "@/hooks/useEstimateTemplateCreate";
+import { useInvoiceCreate } from "@/hooks/useInvoiceCreate";
+import { errorToast } from "@/lib/toast";
 import { useEstimateCreateStore } from "@/stores/estimate-create";
-import { usePathname } from "next/navigation";
+import { useListsStore } from "@/stores/lists";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export function TemplateBillSummary({
@@ -20,6 +24,18 @@ export function TemplateBillSummary({
     serviceFee,
     deposit,
     totalPayment,
+    invoiceId,
+    due,
+    internalNotes,
+    terms,
+    policy,
+    customerNotes,
+    customerComments,
+    photos,
+    tasks,
+    coupon,
+    inspections,
+    damageNotes,
   } = useEstimateCreateStore();
   const {
     setSubtotal,
@@ -28,14 +44,16 @@ export function TemplateBillSummary({
     setTax,
     setDue,
     setServiceFee,
+    reset,
   } = useEstimateCreateStore();
-
+  const resetLists = useListsStore((state) => state.reset);
+  const createEstimateTemplate = useEstimateTemplateCreate();
   const [isTaxEnabled, setIsTaxEnabled] = useState<boolean>(true);
   const [isSuppliesEnabled, setIsSuppliesEnabled] = useState<boolean>(true);
   const [originalTax, setOriginalTax] = useState(0);
   const [originalServiceFee, setOriginalServiceFee] = useState(0);
   const pathname = usePathname();
-
+  const router = useRouter();
   // Fetch initial tax and service fee values
   useEffect(() => {
     setIsSuppliesEnabled(isEstimateServiceFee);
@@ -146,6 +164,20 @@ export function TemplateBillSummary({
   }, [grandTotal, deposit, totalPayment, setDue]);
 
   const isGrandTotalZero = grandTotal === 0 ? true : false;
+
+  async function handleSubmit() {
+    const res = await createEstimateTemplate();
+    if (res.type === "success") {
+      router.push("/dashboard/estimate/templates");
+      reset();
+      resetLists();
+    } else if (res.type === "globalError") {
+      errorToast(
+        res.errorSource?.length ? res.errorSource[0].message : res.message
+      );
+      return;
+    }
+  }
   return (
     <>
       <div className="space-y-1 p-1.5">
@@ -212,6 +244,7 @@ export function TemplateBillSummary({
           type="button"
           className={`w-full rounded-md  p-2  ${isGrandTotalZero ? "cursor-not-allowed bg-gray-500" : "bg-background text-[#006d77]"}`}
           disabled={isGrandTotalZero}
+          onClick={handleSubmit}
         >
           Save Template
         </button>

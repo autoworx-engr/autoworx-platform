@@ -15,6 +15,7 @@ import TemplateInspectionTab from "../TemplateInspectionTab";
 import Create from "../../create/Create";
 import { TemplateBillSummary } from "../TemplateBillSummary";
 import SyncEstimate from "../../create/SyncEstimate";
+import Header from "../../create/Header";
 
 export default async function Page({
   searchParams,
@@ -100,6 +101,7 @@ export default async function Page({
         <Title>Template</Title>
 
         <SyncLists
+          title=""
           customers={[]}
           vehicles={[]}
           categories={categories}
@@ -112,7 +114,7 @@ export default async function Page({
           paymentMethods={paymentMethods}
           client={null}
         />
-
+        <Header />
         {isEdit && (
           <SyncEstimate
             invoice={invoice}

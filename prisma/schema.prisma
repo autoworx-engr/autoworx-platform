@@ -849,7 +849,7 @@ model InfobipConfig {
   phoneNumber String @map("phone_number")
 
   // Voice/Call configuration fields
-  applicationId      String? @map("application_id") // Infobip Application ID for voice calls
+  applicationId        String? @map("application_id") // Infobip Application ID for voice calls
   callsConfigurationId String? @map("calls_configuration_id") // Infobip Calls Configuration ID
 
   createdAt DateTime @default(now()) @map("created_at")
@@ -1119,6 +1119,7 @@ model inventoryWirehouseProduct {
 model InvoiceItem {
   id                Int              @id @default(autoincrement())
   invoiceId         String?          @map("invoice_id")
+  invoiceTemplateId String?
   serviceId         Int?             @map("service_id")
   laborId           Int?             @map("labor_id")
   createdAt         DateTime         @default(now()) @map("created_at")
@@ -1131,7 +1132,6 @@ model InvoiceItem {
   tags              ItemTag[]
   technicians       Technician[]
   invoiceTemplate   InvoiceTemplate? @relation(fields: [invoiceTemplateId], references: [id])
-  invoiceTemplateId String?
 }
 
 enum InvoiceItemMaterialType {
@@ -1370,28 +1370,30 @@ model Invoice {
 }
 
 model InvoiceTemplate {
-  id            String              @id @default(cuid())
-  subtotal      Decimal?            @default(0) @db.Decimal(8, 2)
-  discount      Decimal?            @default(0) @db.Decimal(8, 2)
-  tax           Decimal?            @default(0) @db.Decimal(8, 2)
-  serviceFee    Decimal?            @default(0) @db.Decimal(8, 2)
-  grandTotal    Decimal?            @default(0) @map("grand_total") @db.Decimal(8, 2)
-  statusId      Int?                @map("status_id")
-  internalNotes String?
-  companyId     Int                 @map("company_id")
-  columnId      Int?                @map("column_id")
-  company       Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  invoiceItems  InvoiceItem[]
-  photos        InvoicePhoto[]
-  tasks         Task[]
-  status        Status?             @relation(fields: [statusId], references: [id])
-  Material      Material[]
-  tags          InvoiceTags[]
-  column        Column?             @relation(fields: [columnId], references: [id], onDelete: SetNull)
-  serviceIndex  Json?
-  Inspections   InvoiceInspection[]
-  createdAt     DateTime            @default(now()) @map("created_at")
-  updatedAt     DateTime            @default(now()) @updatedAt @map("updated_at")
+  id             String              @id @default(cuid())
+  title          String
+  subtotal       Decimal?            @default(0) @db.Decimal(8, 2)
+  discount       Decimal?            @default(0) @db.Decimal(8, 2)
+  tax            Decimal?            @default(0) @db.Decimal(8, 2)
+  serviceFee     Decimal?            @default(0) @db.Decimal(8, 2)
+  grandTotal     Decimal?            @default(0) @map("grand_total") @db.Decimal(8, 2)
+  statusId       Int?                @map("status_id")
+  internalNotes  String?
+  companyId      Int                 @map("company_id")
+  columnId       Int?                @map("column_id")
+  company        Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  invoiceItems   InvoiceItem[]
+  photos         InvoicePhoto[]
+  tasks          Task[]
+  status         Status?             @relation(fields: [statusId], references: [id])
+  Material       Material[]
+  tags           InvoiceTags[]
+  column         Column?             @relation(fields: [columnId], references: [id], onDelete: SetNull)
+  serviceIndex   Json?
+  Inspections    InvoiceInspection[]
+  createdAt      DateTime            @default(now()) @map("created_at")
+  updatedAt      DateTime            @default(now()) @updatedAt @map("updated_at")
+  templatePhotos TemplatePhoto[]
 
   @@index([companyId], name: "fk_template_company")
 }
@@ -1429,6 +1431,17 @@ model InvoicePhoto {
   invoiceTemplateId String?
 
   @@index([invoiceId], name: "fk_invoice_photos_invoice")
+}
+
+model TemplatePhoto {
+  id                Int             @id @default(autoincrement())
+  invoiceTemplateId String
+  photo             String          @db.VarChar(1024)
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @default(now()) @updatedAt @map("updated_at")
+  invoiceTemplate   InvoiceTemplate @relation(fields: [invoiceTemplateId], references: [id])
+
+  @@index([invoiceTemplateId], name: "fk_template_photos")
 }
 
 model RequestEstimate {
@@ -1509,14 +1522,14 @@ model InvoiceRedo {
 //model for inspection of a invoice.
 model InvoiceInspection {
   id                Int              @id @default(autoincrement())
-  invoiceId         String           @map("invoice_id")
+  invoiceId         String?          @map("invoice_id")
   title             String
   driver            Boolean          @default(false)
   passenger         Boolean          @default(false)
   notes             String?
   createdAt         DateTime         @default(now()) @map("created_at")
   updatedAt         DateTime         @default(now()) @updatedAt @map("updated_at")
-  invoice           Invoice          @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  invoice           Invoice?         @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
   invoiceTemplate   InvoiceTemplate? @relation(fields: [invoiceTemplateId], references: [id])
   invoiceTemplateId String?
 

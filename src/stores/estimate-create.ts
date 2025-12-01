@@ -19,6 +19,7 @@ export type InspectionType = {
 };
 interface EstimateCreateStore {
   invoiceId: string;
+  title: string;
   subtotal: number;
   discount: number;
   tax: number;
@@ -59,7 +60,7 @@ interface EstimateCreateStore {
   setCustomerNotes: (customerNotes: string) => void;
   setCustomerComments: (customerComments: string) => void;
   setCoupon: (coupon: Coupon) => void;
-
+  setTitle: (title: string) => void;
   setPhotos: (photos: { id?: number; photo?: string }[]) => void;
   addPhoto: (photo: string) => void;
   removePhoto: (photo: string) => void;
@@ -86,7 +87,7 @@ interface EstimateCreateStore {
 export const useEstimateCreateStore = create<EstimateCreateStore>((set) => ({
   invoiceId: "",
   type: "",
-
+  title: "",
   subtotal: 0,
   discount: 0,
   tax: 0,
@@ -95,21 +96,16 @@ export const useEstimateCreateStore = create<EstimateCreateStore>((set) => ({
   grandTotal: 0,
   due: 0,
   totalPayment: 0,
-
   internalNotes: "",
   terms: "",
   policy: "",
   customerNotes: "",
   customerComments: "",
-
   photos: [],
   tasks: [],
-
   items: [],
-
   payment: null,
   currentSelectedCategoryId: null,
-
   coupon: null,
   inspections: Array.from({ length: 15 }, () => ({
     title: "",
@@ -136,9 +132,11 @@ export const useEstimateCreateStore = create<EstimateCreateStore>((set) => ({
   setPolicy: (policy: string) => set({ policy }),
   setCustomerNotes: (customerNotes: string) => set({ customerNotes }),
   setCustomerComments: (customerComments: string) => set({ customerComments }),
-
   setCoupon: (coupon: Coupon) => set({ coupon }),
-
+  setTitle: (title: string) => {
+    console.log("setting title:", title);
+    set({ title });
+  },
   setPhotos: (photos: { id?: number; photo?: string }[]) => set({ photos }),
   addPhoto: (photo: string) =>
     set((x: any) => ({ photos: [...x.photos, photo] })),
