@@ -434,7 +434,7 @@ const LaborComponent = ({
           />
         )}
       </TableCell>
-      <TableCell className="py-3 font-mono">
+      <TableCell className="py-3">
         {!isEdit ? (
           <span className="text-gray-700 font-semibold">
             {formatCurrency(labor.charge ? Number(labor.charge) : 0)}
