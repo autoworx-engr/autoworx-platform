@@ -20,10 +20,8 @@ export default function SmsMessage({
   const text = (message.message ?? "").trim();
 
    const senderName = message.sentBy === "Company" 
-                ? message.user 
-                  ? `${message.user.firstName} ${message.user.lastName || ''}`.trim()
-                  : "Company"
-                : null;
+                ? message.user && `${message.user.firstName} ${message.user.lastName || ''}`.trim()
+: null;
   const handleDownload = (fileUrl: string) => {
     window.open(fileUrl, "_blank", "noopener,noreferrer");
   };

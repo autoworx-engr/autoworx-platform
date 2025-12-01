@@ -104,9 +104,7 @@ export default function MailGunConversation({
                 isIncoming && (!prev || prev.emailBy === "Company");
 
                  const senderName = message.emailBy === "Company" 
-                ? message.user 
-                  ? `${message.user.firstName} ${message.user.lastName || ''}`.trim()
-                  : "Company"
+                ? message.user && `${message.user.firstName} ${message.user.lastName || ''}`.trim()
                 : null;
               return (
                 <div key={message.id} className="w-full">
