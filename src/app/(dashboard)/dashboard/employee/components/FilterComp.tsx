@@ -19,38 +19,51 @@ export default function FilterComp({ service, category }: TProps) {
   } = useEmployeeWorkFilterStore();
 
   return (
-    <div className="mt-5 flex w-full items-center justify-between">
-      <div className="flex w-full max-w-4xl rounded-lg border border-gray-300 bg-background p-2">
-        <div className="flex w-full items-center gap-4">
-          <Search />
-          <div className="flex items-center gap-4">
-            <div className="m-2">
-              <DateRange
-                onOk={(start, end) => setFilter({ dateRange: [start, end] })}
-                onCancel={() => setFilter({ dateRange: [null, null] })}
-              />
+    <div className="mt-5 flex w-full flex-col gap-4 md:flex-row md:items-center">
+      <div className="relative w-full md:max-w-4xl">
+        <div className="relative group flex w-full items-center gap-3 rounded-2xl bg-white/60 dark:bg-slate-900/50 ring-1 ring-slate-900/5 dark:ring-slate-700/30 p-3 pl-4 backdrop-blur-md shadow-sm transition-all duration-300 hover:shadow-lg">
+
+          {/* subtle shimmer on hover (light/dark aware) */}
+          <span className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-30 bg-gradient-to-r from-white/0 via-white/40 to-white/0 dark:from-transparent dark:via-black/20 dark:to-transparent mix-blend-screen" />
+
+          <div className="flex-1">
+            <div className="flex w-full items-center gap-3 sm:gap-4">
+              <div className="flex-1">
+                <Search />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <div className="rounded-xl bg-transparent p-0 transition-transform duration-300 hover:-translate-y-0.5">
+                  <DateRange
+                    onOk={(start, end) => setFilter({ dateRange: [start, end] })}
+                    onCancel={() => setFilter({ dateRange: [null, null] })}
+                  />
+                </div>
+              </div>
             </div>
-            {/* Search inside filter */}
-            {/* <div className="relative">
-              <Filter />
-            </div> */}
           </div>
         </div>
       </div>
 
-      <div className="mr-4 flex gap-10">
-        <div className="relative">
-          <Filter />
+      <div className="flex items-center gap-6 self-start md:self-auto">
+        <div className="relative flex items-center">
+          <div className="rounded-lg bg-transparent p-1 transition-transform duration-300 hover:-translate-y-0.5">
+            <Filter />
+          </div>
+          {/* The dropdowns are intentionally left commented to preserve existing behavior; re-enable when needed. */}
           {/* Category based filter */}
-          {/* <DropdownSelection
-            dropDownValues={category}
-            onValueChange={(value) => setFilter({ category: value })}
-            changesValue={selectedCategory}
-            defaultValue="Category"
-          /> */}
+          {/* <div className="ml-3 hidden sm:block">
+            <DropdownSelection
+              dropDownValues={category}
+              onValueChange={(value) => setFilter({ category: value })}
+              changesValue={selectedCategory}
+              defaultValue="Category"
+            />
+          </div> */}
         </div>
-        {/* Service based filter */}
-        {/* <div className="relative">
+
+        {/* Service based filter (kept commented) */}
+        {/* <div className="hidden sm:block">
           <DropdownSelection
             dropDownValues={service}
             onValueChange={(value) => setFilter({ service: value })}

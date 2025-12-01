@@ -6,6 +6,7 @@ import { getCompanyById } from "@/actions/settings/getCompnayById";
 import ZapForm from "@/components/ZapForm";
 import { Spin } from "antd";
 import { errorToast } from "@/lib/toast";
+import CarLoading from "@/components/common/CarLoading";
 
 interface CompanyInfo {
   name: string;
@@ -60,7 +61,7 @@ const LeadService = () => {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <Spin />
+        <CarLoading />
       </div>
     );
   }

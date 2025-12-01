@@ -4,6 +4,7 @@ import { Session } from "next-auth";
 import React from "react";
 import GroupMessageBox from "./GroupMessageBox";
 import UserMessageBox from "./UserMessageBox";
+import EmptyMessageBox from "./EmptyMessageBox";
 
 export interface MessageQue {
   user: number;
@@ -128,6 +129,10 @@ export default function UsersArea({
             backgroundColor: "#DFEBED",
           }}
         />
+      )}
+
+      {totalMessageBoxLength === 0 && (
+        <EmptyMessageBox  />
       )}
     </div>
   );

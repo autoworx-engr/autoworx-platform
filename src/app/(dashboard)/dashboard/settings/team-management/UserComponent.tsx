@@ -76,7 +76,7 @@ const UserList: React.FC = () => {
             <div className="mb-4">
               <Search />
             </div>
-            <div className="thin-scrollbar max-h-[60vh] overflow-y-auto pr-2"> {/* Improved scroll container */}
+            <div className="thin-scrollbar max-h-[95vh] overflow-y-auto pr-2"> {/* Improved scroll container */}
               <ul className="space-y-3">
                 {users.map((user) => {
                   const name = `${user.firstName} ${user.lastName || ""}`;

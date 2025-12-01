@@ -13,6 +13,7 @@ import { Company, InfobipConfig, Tag, TwilioCredentials } from "@prisma/client";
 import MultiSelect from "./MultiSelect";
 import { getInvoiceTags } from "@/actions/pipelines/invoiceTag";
 import { usePipelineStagesStore } from "@/stores/pipelineStagesStore";
+import { useAllTagAutomationRules } from "@/hooks/tag-automation/useAllTagAutomationRules";
 import { TAttachments } from "@/types/automation";
 import CustomRadioGroup from "./CustomRadioGroup";
 import { Box, Paper, Switch, Typography } from "@mui/material";
@@ -28,11 +29,13 @@ import { useCreateTagAutomationRule } from "@/hooks/tag-automation/useCreateTagA
 
 import { useFindOneTagAutomationRule } from "@/hooks/tag-automation/useFindOneTagAutomationRule";
 import { useUpdateTagAutomationRule } from "@/hooks/tag-automation/useUpdateTagAutomationRule";
-import { useAllTagAutomationRules } from "@/hooks/tag-automation/useAllTagAutomationRules";
+
 import {
   convertSecondsToTime,
   convertTimeToSeconds,
 } from "@/utils/timeConvertToSeconds";
+import { errorToast } from "@/lib/toast";
+import { Spin } from "antd";
 
 type RuleFormProps = {
   mode: "create" | "edit" | undefined;
@@ -55,7 +58,7 @@ type Rule = {
   targetColumnId: number | number[] | null;
   columnIds?: number[];
   communicationType: "SMS" | "EMAIL" | "BOTH";
-  // templateType: "SMS" | "EMAIL";
+  templateType?: "SMS" | "EMAIL";
   isSendWeekDays: boolean;
   isSendOfficeHours: boolean;
   subject?: string | null;
@@ -85,7 +88,7 @@ const TagRuleForm = ({
     targetColumnId: null,
     columnIds: [],
     communicationType: "SMS",
-    // templateType: "SMS",
+    templateType: "SMS",
     isSendWeekDays: false,
     isSendOfficeHours: false,
     subject: "",
@@ -119,10 +122,12 @@ const TagRuleForm = ({
   const { mutate: updateRule, isPending: isUpdatePending } =
     useUpdateTagAutomationRule();
 
-  const { data: allTagAutomationData } = useAllTagAutomationRules(
+  const { data: allTagAutomationData, isLoading:isAllTagRuleLoading } = useAllTagAutomationRules(
     Number(companyId),
     true
   );
+
+  
   useEffect(() => {
     const loadData = async () => {
       if (isEdit && id && data && data.data) {
@@ -202,7 +207,7 @@ const TagRuleForm = ({
           targetColumnId: null,
           columnIds: [],
           communicationType: "SMS",
-          // templateType: "SMS",
+          templateType: "SMS",
           isSendWeekDays: false,
           isSendOfficeHours: false,
           subject: "",
@@ -328,14 +333,39 @@ const TagRuleForm = ({
         newState[field] = value;
       }
 
+      
+      if (
+        field === "communicationType" &&
+        prev.communicationType !== value
+       
+      ) {
+        if (value === "EMAIL") newState.templateType = "EMAIL";
+        else if (value === "SMS") newState.templateType = "SMS";
+      }
+
       // If condition_type changed, reset targetColumnId and columnIds
       if (field === "condition_type" && prev.condition_type !== value) {
         newState.targetColumnId = null;
         newState.columnIds = [];
       }
 
+      // If pipelineType changed, reset selected tags so selections don't leak between pipelines
+      if (field === "pipelineType" && prev.pipelineType !== value) {
+        newState.tagIds = [];
+        // also reset any pipeline-specific selections
+        newState.targetColumnId = null;
+        newState.columnIds = [];
+      }
+
       return newState as Rule;
     });
+
+    
+    if (field === "communicationType" ) {
+      if (value === "EMAIL") setActiveTemplate("EMAIL");
+      else if (value === "SMS") setActiveTemplate("SMS");
+     
+    }
 
     if (error[field]) {
       setError((prev) => {
@@ -346,10 +376,10 @@ const TagRuleForm = ({
     }
 
     // Clear subject-related errors when subject field changes
-    if (field === "subject" && (error.emailSubject || error.emailBody)) {
+    if (field === "subject" && (error.subject || error.emailBody)) {
       setError((prev) => {
         const newErrors = { ...prev };
-        delete newErrors.emailSubject;
+        delete newErrors.subject;
         return newErrors;
       });
     }
@@ -357,7 +387,10 @@ const TagRuleForm = ({
 
   // Handle template toggle
   const handleTemplateToggle = (template: "SMS" | "EMAIL") => {
+
     setActiveTemplate(template);
+  
+    setFormData((prev) => ({ ...prev, templateType: template }));
   };
 
   // Handle file attachment
@@ -425,27 +458,86 @@ const TagRuleForm = ({
 
         if (isSubjectEmpty && isBodyEmpty) {
           newErrors.emailBody = "Email subject and body are required.";
-          newErrors.emailSubject = "Subject is required.";
+          newErrors.subject = "Subject is required.";
         } else if (isSubjectEmpty) {
-          newErrors.emailSubject = "Subject is required.";
+          newErrors.subject = "Subject is required.";
           newErrors.emailBody = "Email subject is required.";
         } else if (isBodyEmpty) {
           newErrors.emailBody = "Email body is required.";
         }
 
-        // if (company?.email === null) {
-        //   newErrors.businessEmail = "You haven't added your business email.";
-        //   errorToast(newError.businessEmail);
-        // }
+       if (company?.email === null) {
+              newErrors.businessEmail = "You haven't added your business email.";
+              errorToast(newErrors.businessEmail);
+            }
       }
+
+      if (formData.communicationType === "BOTH") {
+            if (!formData.subject || !formData.subject.trim()) {
+              newErrors.subject = "Subject is required.";
+              newErrors.emailBody = "Subject is required.";
+            }
+      
+            if (!formData.emailBody || !formData.emailBody.trim()) {
+              newErrors.emailBody = "Email body is required.";
+            }
+            if (!formData.smsBody || !formData.smsBody.trim()) {
+              newErrors.smsBody = "SMS body is required.";
+            }
+      
+            if (company?.email === null) {
+              newErrors.businessEmail = "You haven't added your business email.";
+              errorToast(newErrors.businessEmail);
+            }
+      
+            if (twilio === null) {
+              newErrors.twilio = "SMS gateway not available";
+              errorToast(newErrors.twilio);
+            }
+          }
+          if (formData.communicationType === "SMS") {
+            if (!formData.smsBody || !formData.smsBody.trim()) {
+              newErrors.smsBody = "SMS body is required.";
+            }
+      
+            if (twilio === null) {
+              newErrors.twilio = "";
+              errorToast(newErrors.twilio);
+            }
+          }
     }
     if (Object.keys(newErrors).length > 0) {
       setError(newErrors);
+      return;
     }
 
-    if (formData.timeDelay != null) {
-      formData.timeDelay = convertTimeToSeconds(formData.timeDelay as string);
-    }
+    // Parse selected timeDelay (label or option id) without mutating form state
+    const parseSelectedTimeDelay = (value: any) => {
+      if (value === null || value === undefined || value === "") return null;
+
+      const optId = (o: any) =>
+        o && typeof o === "object" && "id" in o ? o.id : o;
+      const optTitle = (o: any) =>
+        o && typeof o === "object" && "title" in o ? o.title : o;
+
+      const match = invoiceTimeDelays.find(
+        (o: any) =>
+          String(optId(o)) === String(value) ||
+          String(optTitle(o)) === String(value)
+      );
+      if (match) {
+        const idVal = optId(match);
+        const n = Number(idVal);
+        if (!Number.isNaN(n)) return n;
+        return convertTimeToSeconds(String(optTitle(match)));
+      }
+
+      const n = Number(value);
+      if (!Number.isNaN(n)) return n;
+      return convertTimeToSeconds(String(value));
+    };
+
+    const parsedTimeDelay = parseSelectedTimeDelay(formData.timeDelay);
 
     try {
       const uploadedAttachments = await uploadAllAttachments(
@@ -458,6 +550,7 @@ const TagRuleForm = ({
       const finalData: any = {
         ...formData,
         companyId: companyId,
+        timeDelay: parsedTimeDelay,
         attachments: images,
         ruleType: formData.ruleType ? formData.ruleType : "one_time",
       };
@@ -470,12 +563,7 @@ const TagRuleForm = ({
         delete finalData.templateType;
       }
 
-      // normalize fields for API
-      // if (finalData.timeDelay != null) {
-      //   finalData.timeDelay = parseTimeDelayToSeconds(finalData?.timeDelay);
-      // }
-
-      // targetColumnId should be a number or null
+      
       if (
         finalData.condition_type === "pipeline" &&
         finalData.targetColumnId !== null &&
@@ -508,10 +596,15 @@ const TagRuleForm = ({
       console.error(err);
     }
     setError({});
-    // Submit formData to server or perform desired action
-    console.log("Form Data Submitted:", formData);
   };
 
+  if (isLoading || isFetching || stagesLoading || isAllTagRuleLoading) {
+      return (
+        <div className="flex h-[800px] w-full animate-pulse items-center justify-center rounded-md bg-gray-200 p-4 shadow-sm md:p-6">
+          <Spin />
+        </div>
+      );
+    }
   return (
     <div className="rounded-md border bg-white p-4 shadow-sm md:p-6">
       <Paper elevation={0} className="mx-auto max-w-lg rounded-lg">
@@ -707,7 +800,7 @@ const TagRuleForm = ({
                       handleFileAttachment={handleFileAttachment}
                       attachmentType="sms"
                       error={
-                        error.smsBody || error.emailBody || error.emailSubject
+                        error.smsBody || error.emailBody || error.subject
                       }
                       maxLength={maxLength}
                       characterLength={length}
@@ -737,9 +830,9 @@ const TagRuleForm = ({
                       handleFileAttachment={handleFileAttachment}
                       attachmentType="email"
                       error={
-                        error.emailBody || error.emailSubject || error.smsBody
+                        error.emailBody || error.subject || error.smsBody
                       }
-                      subjectError={!!error.emailSubject}
+                      subjectError={!!error.subject}
                       maxLength={maxLength}
                       characterLength={length}
                       isLimitExceeded={isLimitExceeded}

@@ -9,29 +9,47 @@ type ReportCardProps = {
 
 const ReportCard = ({ report }: ReportCardProps) => {
   const { setSelectedContact } = useBugReportAdminStore();
+
+  const ViewButton = () => (
+    <button
+      onClick={(e) => {
+        e.stopPropagation();
+        setSelectedContact(report);
+      }}
+  
+      className="rounded-xl  mr-8 md:mr-2 bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+                shadow-[0_4px_14px_0_rgba(101,113,255,0.39)]
+                hover:shadow-[0_6px_20px_rgba(101,113,255,0.23)]
+                hover:-translate-y-0.5
+                active:translate-y-0 active:scale-100
+                transition-all duration-300 ease-in-out px-4 py-1.5 text-sm font-medium text-white"
+    >
+      View
+    </button>
+  );
   return (
-    <div className="relative rounded-lg border border-gray-200 bg-white p-4">
+   <div className="relative rounded-xl border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-900/70 backdrop-blur-sm p-4 transition-all duration-300 hover:shadow-lg hover:shadow-slate-300/50 dark:hover:shadow-slate-900/50 hover:ring-2 hover:ring-[#6571FF]/20 hover:-translate-y-0.5">
       <div className="flex items-center justify-between gap-6">
-        <div className="max-w-2/4 flex-1 text-[#66738C]">
-          <div className="flex justify-between items-center gap-3">
-            <p className="mb-1 w-full font-bold">
+        <div className="max-w-2/4 flex-1 text-slate-600 dark:text-slate-300">
+          <div className="flex justify-between items-start gap-3">
+            {/* Report Subject */}
+            <p className="mb-1 w-full font-bold text-slate-700 dark:text-slate-200 truncate">
               {
                 report?.BugReportMessage?.[report?.BugReportMessage?.length - 1]
                   ?.subject
               }
             </p>
-            <Button
-              size="sm"
-              onClick={() => setSelectedContact(report)}
-              className="rounded mr-2 bg-[#6571FF] px-4 py-1 text-sm font-medium text-white hover:bg-[#6571FF]/90"
-            >
-              View
-            </Button>
+            {/* View Button */}
+            <div className="shrink-0 pt-0.5">
+              <ViewButton />
+            </div>
           </div>
-          <div className="mb-2 text-sm font-semibold">
+          {/* Date */}
+          <div className="mb-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
             {moment(report?.createdAt).format("DD MMMM YYYY")}
           </div>
-          <div className="text-sm leading-relaxed">
+          {/* Content Snippet */}
+          <div className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
             <p>
               {report.BugReportMessage?.[report?.BugReportMessage?.length - 1]
                 ?.content.length > 80
@@ -45,7 +63,8 @@ const ReportCard = ({ report }: ReportCardProps) => {
           </div>
         </div>
       </div>
-      <div className="absolute right-1 top-1/2 h-[90%] w-1 -translate-y-1/2 rounded-3xl bg-[#6571FF]"></div>
+      {/* Primary accent color bar for visual hierarchy and importance */}
+      <div className="absolute right-0 top-1/2 h-[90%] w-1 -translate-y-1/2 rounded-l-3xl bg-gradient-to-r from-[#6571FF] to-[#5a66ee]"></div>
     </div>
   );
 };

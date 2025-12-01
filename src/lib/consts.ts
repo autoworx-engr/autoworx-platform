@@ -45,8 +45,8 @@ export const INVOICE_COLORS: { textColor: string; bgColor: string }[] = [
 ];
 
 export const WORK_ORDER_STATUS_COLOR: { [key: string]: string } = {
-  "In Progress": "#007BFF",
+  "In Progress": "#3385eb",
   Pending: "#FFC107",
-  Complete: "#28A745",
+  Complete: "#0f766e",
   Cancel: "#DC3545",
 };

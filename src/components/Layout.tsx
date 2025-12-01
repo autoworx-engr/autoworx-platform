@@ -8,7 +8,7 @@ import { EmployeeType } from "@prisma/client";
 import { Spin } from "antd";
 import { Session } from "next-auth";
 import { redirect, usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import MobileNav from "./mobile-responsive/MobileNav";
 import PopupState from "./PopupState";
 import PrivateRoute from "./PrivateRoute";
@@ -19,6 +19,9 @@ import { signOut } from "next-auth/react";
 import { useSetCompanyFeaturePermission } from "@/hooks/useSetCompanyFeaturePermission";
 import { superAdminNavList } from "@/app/(dashboard)/awx-dashboard/_utils/superAdminNavList";
 import UserBugReport from "./bug-report/UserBugReport";
+import { VoiceDeviceProvider } from "@/context/VoiceDeviceContext";
+import VoiceAutoSetup from "./VoiceAutoSetup";
+import CarLoading from "./common/CarLoading";
 
 const navbarList = [
   {
@@ -171,6 +174,10 @@ export default function Layout({
   useSetCompanyFeaturePermission(session); // Set user permissions based on session
   const { permissions } = usePermissionStore();
   const currentUser = useGetCurrentUser();
+  const [voicePhoneNumber, setVoicePhoneNumber] = useState<string | null>(null);
+  const [voiceProvider, setVoiceProvider] = useState<"TWILIO" | "INFOBIP">(
+    "TWILIO"
+  );
 
   useEffect(() => {
     const uploadNotificationData = async () => {
@@ -196,6 +203,40 @@ export default function Layout({
       });
     }
   }, [session?.error]);
+
+  // Fetch voice provider phone number (Twilio or Infobip)
+  useEffect(() => {
+    const fetchVoiceConfig = async () => {
+      try {
+        // First, determine which provider the company uses
+        const companyResponse = await fetch("/api/company/sms-gateway");
+        if (companyResponse.ok) {
+          const companyData = await companyResponse.json();
+          const gateway = companyData.smsGateway || "TWILIO";
+          setVoiceProvider(gateway);
+
+          // Fetch phone number based on provider
+          const endpoint =
+            gateway === "TWILIO"
+              ? "/api/twilio/get-phone-number"
+              : "/api/infobip/get-phone-number";
+
+          const response = await fetch(endpoint);
+          if (response.ok) {
+            const data = await response.json();
+            setVoicePhoneNumber(data.phoneNumber);
+            console.log(`📱 ${gateway} phone number loaded:`, data.phoneNumber);
+          }
+        }
+      } catch (error) {
+        console.error("❌ Error fetching voice configuration:", error);
+      }
+    };
+
+    if (session && currentUser?.companyId) {
+      fetchVoiceConfig();
+    }
+  }, [session, currentUser?.companyId]);
 
   // onesignal icon moveable
   useEffect(() => {
@@ -260,30 +301,36 @@ export default function Layout({
   if (!permissions) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
-        <Spin size="large" />
+        <CarLoading />
       </div>
     );
   }
 
   return (
-    <div className="w-full overflow-y-hidden">
-      <SideNavbar
-        navList={isSuperAdminRoute ? superAdminNavList : navbarList}
-        permissions={permissions}
-      />
-      <MobileNav
-        navList={isSuperAdminRoute ? mobileSuperAdminNav : mobileNav}
-        permissions={permissions}
-      />
-      <div className="sm:ml-[5%]">
-        <TopNavbar />
-        <PopupState />
-        <main className="relative mt-14 max-h-[calc(100vh-56px)] overflow-y-auto bg-[#F8F9FA] sm:mt-0 sm:p-2 sm:px-4 md:h-[93vh]">
-          <InitOneSignalProvider />
-          <PrivateRoute session={session}>{children}</PrivateRoute>
-          <UserBugReport />
-        </main>
+    <VoiceDeviceProvider>
+      <div className="w-full overflow-y-hidden">
+        <VoiceAutoSetup
+          phoneNumber={voicePhoneNumber}
+          provider={voiceProvider}
+        />
+        <SideNavbar
+          navList={isSuperAdminRoute ? superAdminNavList : navbarList}
+          permissions={permissions}
+        />
+        <MobileNav
+          navList={isSuperAdminRoute ? mobileSuperAdminNav : mobileNav}
+          permissions={permissions}
+        />
+        <div className="sm:ml-[5%]">
+          <TopNavbar />
+          <PopupState />
+          <main className="relative mt-14 max-h-[calc(100vh-56px)] overflow-y-auto bg-[#F8F9FA] sm:mt-0 sm:p-2 sm:px-4 md:h-[93vh]">
+            <InitOneSignalProvider />
+            <PrivateRoute session={session}>{children}</PrivateRoute>
+            <UserBugReport />
+          </main>
+        </div>
       </div>
-    </div>
+    </VoiceDeviceProvider>
   );
 }

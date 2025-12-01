@@ -1,55 +1,49 @@
 "use client";
 import updateFirstContactTimeClient from "@/actions/communication/client/updateFirstContactTimeClient";
 import { Client } from "@prisma/client";
-import { Call, Device } from "@twilio/voice-sdk";
-import { useCallback, useEffect, useState } from "react";
+import { Call } from "@twilio/voice-sdk";
+import { useEffect, useState } from "react";
 import CallStatus from "./CallStatus";
 import { useRouter } from "next/navigation";
+import { useVoiceDevice } from "@/context/VoiceDeviceContext";
 
 type TProps = {
   client?: Client | null;
   phoneNumber?: string | null;
+  provider?: "TWILIO" | "INFOBIP";
 };
 
-export default function SendCall({ client, phoneNumber }: TProps) {
-  const [device, setDevice] = useState<Device | null>(null);
-  const [currentConnection, setCurrentConnection] = useState<Call | null>(null);
-  const [callStatus, setCallStatus] = useState("");
-  const [callDuration, setCallDuration] = useState(0); // Duration in seconds
-  const [timer, setTimer] = useState<NodeJS.Timeout | null>(null);
+export default function SendCall({
+  client,
+  phoneNumber,
+  provider = "TWILIO",
+}: TProps) {
   const router = useRouter();
-  const setupDevice = useCallback(async () => {
-    try {
-      const response = await fetch("/api/twilio/token", {
-        method: "POST",
-        body: JSON.stringify({ identity: phoneNumber }),
-        headers: { "Content-Type": "application/json" },
-      });
+  const {
+    device,
+    setupDevice: globalSetupDevice,
+    isDeviceReady,
+    currentConnection: globalConnection,
+    callStatus: globalCallStatus,
+    callDuration: globalCallDuration,
+    endCall: globalEndCall,
+    makeCall: globalMakeCall,
+    provider: activeProvider,
+  } = useVoiceDevice();
 
-      const { token } = await response.json();
+  const [localConnection, setLocalConnection] = useState<Call | null>(null);
+  const [localCallStatus, setLocalCallStatus] = useState("");
+  const [localCallDuration, setLocalCallDuration] = useState(0);
+  const [timer, setTimer] = useState<NodeJS.Timeout | null>(null);
 
-      const twilioDevice = new Device(token);
+  // Determine which connection is active (global incoming or local outgoing)
+  const currentConnection = globalConnection || localConnection;
+  const callStatus = globalConnection ? globalCallStatus : localCallStatus;
+  const callDuration = globalConnection
+    ? globalCallDuration
+    : localCallDuration;
 
-      twilioDevice.on("ready", () => {
-        setCallStatus("Device is ready");
-      });
-
-      twilioDevice.on("error", (error) => {
-        console.error("Twilio Device Error:", error);
-      });
-
-      setDevice(twilioDevice);
-    } catch (error) {
-      console.error("Error setting up Twilio Device:", error);
-    }
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (device) device.destroy();
-    };
-  }, [device]);
-
+  // Cleanup timer on unmount
   useEffect(() => {
     return () => {
       if (timer) clearInterval(timer);
@@ -57,49 +51,79 @@ export default function SendCall({ client, phoneNumber }: TProps) {
   }, [timer]);
 
   const makeCall = async () => {
-    if (!device) return;
+    if (!device || !isDeviceReady) {
+      console.warn("Device not ready. Please wait for device to initialize.");
+      setLocalCallStatus("Device not ready");
+      return;
+    }
     if (!client?.mobile) return;
-    // 🔐 Ensure mic permission is requested before connecting
-    await navigator.mediaDevices.getUserMedia({ audio: true });
-    const options = { params: { To: client?.mobile } }; // Replace with recipient's number
-    const connection = await device.connect(options);
 
-    if (connection) {
-      connection.on("accept", async () => {
-        setCallStatus("Call connected");
-        await updateFirstContactTimeClient(client?.id);
-        setCallDuration(0); // Reset duration
-        const interval = setInterval(() => {
-          setCallDuration((prev) => prev + 1);
-        }, 1000);
-        setTimer(interval);
-      });
+    try {
+      // Update first contact time
+      await updateFirstContactTimeClient(client?.id);
 
-      connection.on("disconnect", () => {
-        setCallStatus("Call ended");
-        setCurrentConnection(null);
-        if (timer) clearInterval(timer);
-      });
+      // Use unified makeCall function that handles both providers
+      if (activeProvider === "TWILIO") {
+        // Twilio-specific call logic (existing)
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+        const options = { params: { To: client?.mobile } };
+        const connection = await device.connect(options);
 
-      connection.on("cancel", () => {
-        setCallStatus("Call canceled");
-        setCurrentConnection(null);
-        if (timer) clearInterval(timer);
-      });
-      connection.on("error", (error) => {
-        console.error("Connection Error:", error);
-        setCallStatus("Call error occurred");
-      });
+        if (connection) {
+          connection.on("accept", async () => {
+            setLocalCallStatus("Call connected");
+            setLocalCallDuration(0);
+            const interval = setInterval(() => {
+              setLocalCallDuration((prev) => prev + 1);
+            }, 1000);
+            setTimer(interval);
+          });
 
-      setCurrentConnection(connection);
+          connection.on("disconnect", () => {
+            setLocalCallStatus("Call ended");
+            setLocalConnection(null);
+            if (timer) clearInterval(timer);
+            setTimeout(() => {
+              router.refresh();
+            }, 3000);
+          });
+
+          connection.on("cancel", () => {
+            setLocalCallStatus("Call canceled");
+            setLocalConnection(null);
+            if (timer) clearInterval(timer);
+          });
+
+          connection.on("error", (error: any) => {
+            console.error("Connection Error:", error);
+            setLocalCallStatus("Call error occurred");
+          });
+
+          setLocalConnection(connection);
+        }
+      } else if (activeProvider === "INFOBIP") {
+        // Use the global makeCall for Infobip
+        await globalMakeCall(client.mobile, client.id);
+        setLocalCallStatus("Calling...");
+      }
+    } catch (error) {
+      console.error("Error making call:", error);
+      setLocalCallStatus("Failed to make call");
     }
   };
 
   const endCall = () => {
-    if (currentConnection) {
-      currentConnection.disconnect();
-      setCallStatus("Call ended");
-      setCurrentConnection(null);
+    if (globalConnection) {
+      // End global incoming call
+      globalEndCall();
+      setTimeout(() => {
+        router.refresh();
+      }, 3000);
+    } else if (localConnection) {
+      // End local outgoing call
+      localConnection.disconnect();
+      setLocalCallStatus("Call ended");
+      setLocalConnection(null);
       if (timer) clearInterval(timer);
       setTimeout(() => {
         router.refresh();
@@ -107,38 +131,111 @@ export default function SendCall({ client, phoneNumber }: TProps) {
     }
   };
 
+  const handleSetupDevice = async () => {
+    if (phoneNumber) {
+      await globalSetupDevice(phoneNumber, provider);
+    }
+  };
+
   if (!client) return null;
 
   return (
     <>
-      <div className="mt-auto flex w-full gap-4">
+      <div className="mt-auto flex w-full gap-3">
+        {/* Setup Device Button */}
         <button
-          className="w-full rounded-lg bg-purple-700 px-4 py-3 text-lg font-semibold text-white shadow transition hover:bg-purple-800"
-          onClick={setupDevice}
+          className={`group relative overflow-hidden w-full rounded-xl px-4 py-3.5 text-base font-semibold text-white shadow-lg transition-all duration-300 ${
+            isDeviceReady
+              ? "bg-gradient-to-br from-emerald-500 to-teal-600 shadow-emerald-500/20 cursor-default"
+              : "bg-gradient-to-br from-[#6571FF] to-[#5563E8] shadow-[#6571FF]/20 hover:shadow-xl hover:shadow-[#6571FF]/30 hover:-translate-y-0.5 active:scale-95"
+          }`}
+          onClick={handleSetupDevice}
+          disabled={isDeviceReady}
         >
-          Setup Device
+          {!isDeviceReady && (
+            <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+          )}
+          <div className="relative flex items-center justify-center gap-2">
+            {isDeviceReady ? (
+              <>
+                <svg
+                  className="h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2.5}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                Device Ready
+              </>
+            ) : (
+              "Setup Device"
+            )}
+          </div>
         </button>
+
+        {/* Make Call Button */}
         <button
-          className={`w-full rounded-lg px-4 py-3 text-lg font-semibold text-white shadow transition ${
-            device && !currentConnection
-              ? "bg-green-600 hover:bg-green-700"
-              : "cursor-not-allowed bg-gray-400"
+          className={`group relative overflow-hidden w-full rounded-xl px-4 py-3.5 text-base font-semibold text-white shadow-lg transition-all duration-300 ${
+            isDeviceReady && !currentConnection
+              ? "bg-gradient-to-br from-emerald-500 to-teal-600 shadow-emerald-500/20 hover:shadow-xl hover:shadow-emerald-500/30 hover:-translate-y-0.5 active:scale-95"
+              : "bg-slate-300 text-slate-500 cursor-not-allowed shadow-none"
           }`}
           onClick={makeCall}
-          disabled={!device || !!currentConnection}
+          disabled={!isDeviceReady || !!currentConnection}
         >
-          Make Call
+          {isDeviceReady && !currentConnection && (
+            <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+          )}
+          <div className="relative flex items-center justify-center gap-2">
+            <svg
+              className="h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+              />
+            </svg>
+            Make Call
+          </div>
         </button>
+
+        {/* End Call Button */}
         <button
-          className={`w-full rounded-lg px-4 py-3 text-lg font-semibold text-white shadow transition ${
+          className={`group relative overflow-hidden w-full rounded-xl px-4 py-3.5 text-base font-semibold text-white shadow-lg transition-all duration-300 ${
             currentConnection
-              ? "bg-red-600 hover:bg-red-700"
-              : "cursor-not-allowed bg-gray-400"
+              ? "bg-gradient-to-br from-red-500 to-rose-600 shadow-red-500/20 hover:shadow-xl hover:shadow-red-500/30 hover:-translate-y-0.5 active:scale-95"
+              : "bg-slate-300 text-slate-500 cursor-not-allowed shadow-none"
           }`}
           onClick={endCall}
           disabled={!currentConnection}
         >
-          End Call
+          <div className="relative flex items-center justify-center gap-2">
+            <svg
+              className={`h-5 w-5 transition-transform duration-300 ${currentConnection ? "group-hover:rotate-90" : ""}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+            End Call
+          </div>
         </button>
       </div>
       <CallStatus callStatus={callStatus} callDuration={callDuration} />

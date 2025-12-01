@@ -23,6 +23,7 @@ import {
 import CustomRadioGroup from "./CustomRadioGroup";
 import { Company, TwilioCredentials, InfobipConfig } from "@prisma/client";
 import { useCharacterLimit } from "@/hooks/useCharecterLimit";
+import CarLoading from "@/components/common/CarLoading";
 
 type RuleFormProps = {
   mode: "create" | "edit" | undefined;
@@ -355,7 +356,7 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
     <>
       {isLoading || isFetching || stagesLoading ? (
         <div className="flex h-[800px] w-full animate-pulse items-center justify-center rounded-md bg-gray-200 p-4 shadow-sm md:p-6">
-          <Spin />
+          <CarLoading />
         </div>
       ) : (
         <div>

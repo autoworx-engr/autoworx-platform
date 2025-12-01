@@ -41,11 +41,11 @@ export default async function CalculationContainer({
       companyId,
       ...(start &&
         end && {
-          createdAt: {
-            gte: start,
-            lte: end,
-          },
-        }),
+        createdAt: {
+          gte: start,
+          lte: end,
+        },
+      }),
     },
     select: {
       price: true,
@@ -60,11 +60,11 @@ export default async function CalculationContainer({
       companyId,
       ...(start &&
         end && {
-          createdAt: {
-            gte: start,
-            lte: end,
-          },
-        }),
+        createdAt: {
+          gte: start,
+          lte: end,
+        },
+      }),
     },
     select: {
       price: true,
@@ -148,7 +148,7 @@ export default async function CalculationContainer({
     !hasTypeFilter || (Array.isArray(getType) && getType.includes("Supply"));
 
   return (
-    <div className="my-7 grid grid-cols-2 gap-4 xl:grid-cols-4">
+    <div className="my-7 grid grid-cols-1 md:grid-cols-2 gap-4 xl:grid-cols-4">
       <Calculation content="Total Products" amount={totalProductPrice} />
       <Calculation content="Total Supplies" amount={totalSuppliesPrice} />
 

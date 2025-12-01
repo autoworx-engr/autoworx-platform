@@ -204,7 +204,7 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
         ref={componentRef}
-        className="w-[98vw] max-w-4xl max-h-[98vh] overflow-hidden rounded-lg bg-white px-4 py-5 shadow-2xl sm:px-10 sm:w-[95vw] sm:max-h-[95vh]"
+        className="w-[98vw] max-w-4xl max-h-[98vh] overflow-hidden rounded-lg bg-white px-4 py-5 shadow-2xl sm:px-10 sm:w-[95vw] sm:max-h-[95vh] overflow-y-auto"
       >
         {/* Header */}
         <DialogHeader className="mt-2 flex w-full flex-wrap items-center justify-center print:hidden">
@@ -377,13 +377,13 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
           </div>
         </div>
         {/* Fleet Table */}
-        <div className="thin-scrollbar overflow-x-hidden">
+        <div className="thin-scrollbar overflow-x-hidden h-[200px]">
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <div className="text-gray-500">Loading statement...</div>
             </div>
           ) : (
-            <table className="h-full w-full">
+            <table className="w-full">
               <thead className="sticky top-0 z-10 bg-background">
                 <tr className="bg-background">
                   <th className={`${tHeadingCommonClasses}`}>Invoice#</th>
