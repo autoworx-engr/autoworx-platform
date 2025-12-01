@@ -174,17 +174,57 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
 
   // Helper function to get CallSid from either Twilio or Infobip call
   const getCallSid = (call: Call | any): string | null => {
-    if (!call) return null;
-    // Twilio Call object has parameters.CallSid
+    if (!call) {
+      console.log("🔍 [getCallSid] Call object is null/undefined");
+      return null;
+    }
+
+    // CRITICAL: For Twilio incoming calls, use ParentCallSid (the database record's CallSid)
+    // The CallSid in parameters is the child call (browser leg), not the parent (webhook leg)
+    if (call.parameters?.ParentCallSid) {
+      console.log(
+        "🔍 [getCallSid] Found ParentCallSid (database record):",
+        call.parameters.ParentCallSid
+      );
+      return call.parameters.ParentCallSid;
+    }
+
+    // Check if ParentCallSid is in the Params string (Twilio custom parameters)
+    if (call.parameters?.Params) {
+      try {
+        const params = new URLSearchParams(call.parameters.Params);
+        const parentCallSid = params.get("ParentCallSid");
+        if (parentCallSid) {
+          console.log(
+            "🔍 [getCallSid] Found ParentCallSid in Params string (database record):",
+            parentCallSid
+          );
+          return parentCallSid;
+        }
+      } catch (error) {
+        console.warn("⚠️ [getCallSid] Failed to parse Params string:", error);
+      }
+    }
+
+    // Fallback to regular CallSid (for outgoing calls or if ParentCallSid not set)
     if (call.parameters?.CallSid) {
+      console.log(
+        "🔍 [getCallSid] Found Twilio CallSid:",
+        call.parameters.CallSid
+      );
       return call.parameters.CallSid;
     }
+
     // Infobip call might have id()
     if (typeof call.id === "function") {
-      return call.id();
+      const id = call.id();
+      console.log("🔍 [getCallSid] Found Infobip id (function):", id);
+      return id;
     }
     // Fallback to call.id if it's a property
-    return call.id || null;
+    const id = call.id || null;
+    console.log("🔍 [getCallSid] Found id property:", id);
+    return id;
   };
 
   // Request wake lock to keep screen on during call
@@ -329,7 +369,27 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
 
     twilioDevice.on("incoming", (call: Call) => {
       console.log("📞 [Twilio] Incoming call detected!");
-      const callSid = call.parameters?.CallSid || null;
+
+      // CRITICAL: Parse ParentCallSid from Params string (Twilio custom parameters)
+      let parentCallSid = call.parameters?.ParentCallSid;
+      if (!parentCallSid && call.parameters?.Params) {
+        try {
+          const params = new URLSearchParams(call.parameters.Params);
+          parentCallSid = params.get("ParentCallSid") || "";
+        } catch (error) {
+          console.warn("⚠️ [Twilio] Failed to parse Params string:", error);
+        }
+      }
+
+      // Use ParentCallSid (database record) instead of CallSid (browser leg)
+      const callSid = parentCallSid || call.parameters?.CallSid || null;
+      console.log("📞 [Twilio] ParentCallSid (database):", parentCallSid);
+      console.log(
+        "📞 [Twilio] CallSid (browser leg):",
+        call.parameters?.CallSid
+      );
+      console.log("📞 [Twilio] Using CallSid:", callSid);
+      console.log("📞 [Twilio] Full call parameters:", call.parameters);
       setCurrentCallSid(callSid);
       setIncomingCall(call);
       setCallStatus("Incoming call...");
@@ -707,7 +767,16 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
       // Broadcast that this call was accepted (so other devices dismiss the popup)
       if (callSid && companyId) {
         try {
-          await fetch("/api/twilio/call-state", {
+          console.log(
+            "📡 [API] Sending acceptance to /api/twilio/call-state with:",
+            {
+              callSid,
+              action: "accepted",
+              companyId,
+              deviceId,
+            }
+          );
+          const response = await fetch("/api/twilio/call-state", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -717,14 +786,23 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
               deviceId, // Include deviceId so this device knows to keep modal open
             }),
           });
-          console.log(
-            "📡 [API] Call acceptance broadcasted with deviceId:",
-            deviceId
-          );
+          const result = await response.json();
+          console.log("📡 [API] Call acceptance response:", result);
+          if (!response.ok) {
+            console.error("⚠️ [API] Call acceptance failed:", result);
+          }
         } catch (error) {
-          console.warn("⚠️ [API] Failed to broadcast call acceptance:", error);
+          console.error("❌ [API] Failed to broadcast call acceptance:", error);
           // Continue with accepting the call even if broadcast fails
         }
+      } else {
+        console.warn(
+          "⚠️ [Global] Missing callSid or companyId, cannot update database:",
+          {
+            callSid,
+            companyId,
+          }
+        );
       }
 
       if (provider === "TWILIO") {
@@ -844,13 +922,29 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
     if (incomingCall) {
       console.log("❌ [Global] Call rejected");
 
-      // Get the call SID before rejecting
-      const callSid = getCallSid(incomingCall);
+      // Get the call SID before rejecting (use stored currentCallSid as fallback)
+      let callSid = getCallSid(incomingCall);
+      if (!callSid && currentCallSid) {
+        console.log(
+          "📞 [Global] Using stored currentCallSid as fallback:",
+          currentCallSid
+        );
+        callSid = currentCallSid;
+      }
+      console.log("📞 [Global] Rejecting call with SID:", callSid);
 
       // Broadcast that this call was rejected (so other devices dismiss the popup)
       if (callSid && companyId) {
         try {
-          await fetch("/api/twilio/call-state", {
+          console.log(
+            "📡 [API] Sending rejection to /api/twilio/call-state with:",
+            {
+              callSid,
+              action: "rejected",
+              companyId,
+            }
+          );
+          const response = await fetch("/api/twilio/call-state", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -859,11 +953,23 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
               companyId,
             }),
           });
-          console.log("📡 [API] Call rejection broadcasted");
+          const result = await response.json();
+          console.log("📡 [API] Call rejection response:", result);
+          if (!response.ok) {
+            console.error("⚠️ [API] Call rejection failed:", result);
+          }
         } catch (error) {
-          console.warn("⚠️ [API] Failed to broadcast call rejection:", error);
+          console.error("❌ [API] Failed to broadcast call rejection:", error);
           // Continue with rejecting the call even if broadcast fails
         }
+      } else {
+        console.warn(
+          "⚠️ [Global] Missing callSid or companyId, cannot update database:",
+          {
+            callSid,
+            companyId,
+          }
+        );
       }
 
       if (provider === "TWILIO") {
@@ -875,8 +981,10 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
       setIncomingCall(null);
       setCurrentCallSid(null);
       setCallStatus("Call rejected");
+    } else {
+      console.warn("⚠️ [Global] No incoming call to reject");
     }
-  }, [incomingCall, provider, companyId]);
+  }, [incomingCall, provider, companyId, currentCallSid]);
 
   // End call
   const endCall = useCallback(async () => {
@@ -889,7 +997,16 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
       // Broadcast that this call was ended (so other devices end it too)
       if (callSid && companyId) {
         try {
-          await fetch("/api/twilio/call-state", {
+          console.log(
+            "📡 [API] Sending end call to /api/twilio/call-state with:",
+            {
+              callSid,
+              action: "ended",
+              companyId,
+              deviceId,
+            }
+          );
+          const response = await fetch("/api/twilio/call-state", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -899,11 +1016,23 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
               deviceId, // Include deviceId so this device knows it initiated the end
             }),
           });
-          console.log("📡 [API] Call end broadcasted with deviceId:", deviceId);
+          const result = await response.json();
+          console.log("📡 [API] Call end response:", result);
+          if (!response.ok) {
+            console.error("⚠️ [API] Call end failed:", result);
+          }
         } catch (error) {
-          console.warn("⚠️ [API] Failed to broadcast call end:", error);
+          console.error("❌ [API] Failed to broadcast call end:", error);
           // Continue with ending the call even if broadcast fails
         }
+      } else {
+        console.warn(
+          "⚠️ [Global] Missing callSid or companyId, cannot update database:",
+          {
+            callSid,
+            companyId,
+          }
+        );
       }
 
       if (provider === "TWILIO") {

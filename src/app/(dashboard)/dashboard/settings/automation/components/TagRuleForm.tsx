@@ -466,10 +466,10 @@ const TagRuleForm = ({
           newErrors.emailBody = "Email body is required.";
         }
 
-        // if (company?.email === null) {
-        //   newErrors.businessEmail = "You haven't added your business email.";
-        //   errorToast(newError.businessEmail);
-        // }
+       if (company?.email === null) {
+              newErrors.businessEmail = "You haven't added your business email.";
+              errorToast(newErrors.businessEmail);
+            }
       }
 
       if (formData.communicationType === "BOTH") {
@@ -485,25 +485,25 @@ const TagRuleForm = ({
               newErrors.smsBody = "SMS body is required.";
             }
       
-            // if (company?.email === null) {
-            //   newErrors.businessEmail = "You haven't added your business email.";
-            //   errorToast(newErrors.businessEmail);
-            // }
+            if (company?.email === null) {
+              newErrors.businessEmail = "You haven't added your business email.";
+              errorToast(newErrors.businessEmail);
+            }
       
-            // if (twilio === null) {
-            //   newErrors.twilio = "SMS gateway not available";
-            //   errorToast(newErrors.twilio);
-            // }
+            if (twilio === null) {
+              newErrors.twilio = "SMS gateway not available";
+              errorToast(newErrors.twilio);
+            }
           }
           if (formData.communicationType === "SMS") {
             if (!formData.smsBody || !formData.smsBody.trim()) {
               newErrors.smsBody = "SMS body is required.";
             }
       
-            // if (twilio === null) {
-            //   newErrors.twilio = "";
-            //   errorToast(newErrors.twilio);
-            // }
+            if (twilio === null) {
+              newErrors.twilio = "";
+              errorToast(newErrors.twilio);
+            }
           }
     }
     if (Object.keys(newErrors).length > 0) {

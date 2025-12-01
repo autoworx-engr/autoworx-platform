@@ -1,5 +1,4 @@
 import getClients from "@/actions/client/get";
-import getClientList from "@/actions/client/getClientList";
 import { Client, Source, Tag } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
 

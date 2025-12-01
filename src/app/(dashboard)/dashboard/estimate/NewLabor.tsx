@@ -203,11 +203,10 @@ export default function NewLabor({
   }
 
   return (
-    <Dialog
+   <Dialog
       open={open}
       onOpenChange={(newOpen) => {
         if (!newOpen) {
-          // This handles the X button click or clicking outside the dialog
           handleDialogClose();
         }
         setOpen(newOpen);
@@ -217,142 +216,221 @@ export default function NewLabor({
         {newButton ? (
           newButton
         ) : (
-          <button type="button" className="# px-4text-xs text-[#6571FF]">
-            + New Vehicle
+          <button 
+            type="button" 
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            New Labor
           </button>
         )}
       </DialogTrigger>
 
       <DialogContent
-        className="max-h-full max-w-md grid-rows-[auto,1fr,auto]"
+        className="max-h-[94vh] max-w-md grid-rows-[auto,1fr,auto] overflow-hidden"
         form
       >
-        <DialogHeader>
-          <DialogTitle>Add New Labor</DialogTitle>
+        <DialogHeader className="border-b border-slate-200 pb-2">
+          <DialogTitle className="text-xl font-semibold text-slate-900">
+            {data?.edit && !fromCanned ? "Edit Labor" : "Add New Labor"}
+          </DialogTitle>
         </DialogHeader>
 
-        <FormError />
+        <div className="overflow-y-auto px-1">
+          <FormError />
 
-        <div className="flex flex-col gap-y-8 py-5 md:p-5">
-          <div className="#items-center flex gap-2">
-            <input
-              type="text"
-              id="name"
-              value={name}
-              onChange={(e) => {
-                const value = e.target.value;
-                if (value.length > 30) {
-                  showError({
-                    field: "name",
-                    message: "Labor name must be less than 30 characters",
-                  });
-                  return false;
-                }
-                setName(value);
-                // Clear error when user starts typing
-                if (value.trim()) {
-                  clearError();
-                }
-              }}
-              className="#text-xs w-full rounded-md border-2 border-slate-400 p-1 px-4"
-              placeholder="Labor Name*"
-            />
-          </div>
+          <div className="space-y-3 py-3">
+            {/* Labor Name */}
+            <div className="space-y-2">
+              <label htmlFor="name" className="block text-sm font-medium text-slate-700">
+                Labor Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                id="name"
+                value={name}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value.length > 30) {
+                    showError({
+                      field: "name",
+                      message: "Labor name must be less than 30 characters",
+                    });
+                    return false;
+                  }
+                  setName(value);
+                  if (value.trim()) {
+                    clearError();
+                  }
+                }}
+                className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder:text-slate-400"
+                placeholder="Enter labor name"
+              />
+            </div>
 
-          <SelectCategory
-            onCategoryChange={setCategory}
-            labelPosition="none"
-            categoryData={category}
-            categoryOpen={categoryOpen}
-            setCategoryOpen={setCategoryOpen}
-          />
+            {/* Category */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-slate-700">
+                Category
+              </label>
+              <SelectCategory
+                onCategoryChange={setCategory}
+                labelPosition="none"
+                categoryData={category}
+                categoryOpen={categoryOpen}
+                setCategoryOpen={setCategoryOpen}
+              />
+            </div>
 
-          <div className="#items-center flex gap-2">
-            <div className="w-full">
+            {/* Tags */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-slate-700">
+                Tags
+              </label>
               <SelectTags
                 value={tags}
                 setValue={setTags}
                 openStates={[tagsOpen, setTagsOpen]}
               />
             </div>
-          </div>
 
-          <div className="#items-center flex gap-2">
-            <textarea
-              id="notes"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              className="h-30 #text-xs w-full rounded-md border-2 border-slate-400 p-1 px-4"
-              placeholder="Notes"
-            />
-          </div>
+            {/* Pricing Section */}
+            <div className="pt-2">
+              <h3 className="text-sm font-semibold text-slate-900 mb-4">Pricing Details</h3>
+              <div className="grid grid-cols-2 gap-4">
+                {/* Hours */}
+                <div className="space-y-2">
+                  <label htmlFor="hours" className="block text-sm font-medium text-slate-700">
+                    Hours <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      id="hours"
+                      value={hours}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setHours(value);
+                        if (value.trim()) {
+                          clearError();
+                        }
+                      }}
+                      step="0.01"
+                      className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder:text-slate-400"
+                      placeholder="0.00"
+                      required
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">hrs</span>
+                  </div>
+                </div>
 
-          <div className="#items-center flex gap-2">
-            <input
-              type="number"
-              id="hours"
-              value={hours}
-              onChange={(e) => {
-                const value = e.target.value;
-                setHours(value);
-                // Clear error when user starts typing
-                if (value.trim()) {
-                  clearError();
-                }
-              }}
-              step="0.01"
-              className="#text-xs w-full rounded-md border-2 border-slate-400 p-1 px-4"
-              placeholder="No. of Hours*"
-              required
-            />
-          </div>
+                {/* Rate per Hour */}
+                <div className="space-y-2">
+                  <label htmlFor="perhour" className="block text-sm font-medium text-slate-700">
+                    Rate/Hour <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-500">$</span>
+                    <input
+                      type="number"
+                      id="perhour"
+                      value={charge}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setCharge(value);
+                        if (value.trim()) {
+                          clearError();
+                        }
+                      }}
+                      step="0.01"
+                      className="w-full pl-8 pr-4 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder:text-slate-400"
+                      placeholder="0.00"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
 
-          <div className="#items-center flex gap-2">
-            <input
-              type="number"
-              id="perhour"
-              value={charge}
-              onChange={(e) => {
-                const value = e.target.value;
-                setCharge(value);
-                // Clear error when user starts typing
-                if (value.trim()) {
-                  clearError();
-                }
-              }}
-              step="0.01"
-              className="#text-xs w-full rounded-md border-2 border-slate-400 p-1 px-4"
-              placeholder="$/hr*"
-              required
-            />
-          </div>
+              {/* Discount */}
+              <div className="space-y-2 mt-4">
+                <label htmlFor="discount" className="block text-sm font-medium text-slate-700">
+                  Discount
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-500">$</span>
+                  <input
+                    type="number"
+                    id="discount"
+                    value={discount}
+                    onChange={(e) => setDiscount(e.target.value)}
+                    step="0.01"
+                    className="w-full pl-8 pr-4 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder:text-slate-400"
+                    placeholder="0.00"
+                  />
+                </div>
+              </div>
 
-          <div className="#items-center flex gap-2">
-            <input
-              type="number"
-              id="discount"
-              value={discount}
-              onChange={(e) => setDiscount(e.target.value)}
-              step="0.01"
-              className="#text-xs w-full rounded-md border-2 border-slate-400 p-1 px-4"
-              placeholder="Discount"
-            />
+              {/* Total Calculation Display */}
+              {hours && charge && (
+                <div className="mt-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-slate-600">Subtotal:</span>
+                    <span className="font-medium text-slate-900">
+                      ${(parseFloat(hours) * parseFloat(charge)).toFixed(2)}
+                    </span>
+                  </div>
+                  {discount && parseFloat(discount) > 0 && (
+                    <>
+                      <div className="flex justify-between items-center text-sm mt-2">
+                        <span className="text-slate-600">Discount:</span>
+                        <span className="font-medium text-red-600">
+                          -${parseFloat(discount).toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="border-t border-slate-300 mt-2 pt-2 flex justify-between items-center">
+                        <span className="font-semibold text-slate-900">Total:</span>
+                        <span className="font-bold text-lg text-slate-900">
+                          ${(parseFloat(hours) * parseFloat(charge) - parseFloat(discount)).toFixed(2)}
+                        </span>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Notes */}
+            <div className="space-y-2">
+              <label htmlFor="notes" className="block text-sm font-medium text-slate-700">
+                Notes
+              </label>
+              <textarea
+                id="notes"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={3}
+                className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder:text-slate-400 resize-none"
+                placeholder="Add any additional notes or details..."
+              />
+            </div>
           </div>
         </div>
 
-        <DialogFooter className="flex justify-between gap-4 md:gap-0">
+        <DialogFooter className="flex flex-row justify-end gap-3   mt-auto">
           <DialogClose
             onClick={handleDialogClose}
-            className="rounded-lg border-2 border-slate-400 p-2"
+            className="px-5 py-2.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
           >
             Cancel
           </DialogClose>
           <button
-            className="rounded-lg bg-[#6571FF] p-2 text-white md:px-5"
+            className="px-6 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={data?.edit && !fromCanned ? handleEdit : handleSubmit}
             type="button"
           >
-            Done
+            {data?.edit && !fromCanned ? "Update Labor" : "Add Labor"}
           </button>
         </DialogFooter>
       </DialogContent>
