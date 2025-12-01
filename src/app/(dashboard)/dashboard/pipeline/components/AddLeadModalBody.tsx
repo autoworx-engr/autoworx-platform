@@ -15,9 +15,12 @@ import {
 } from "@/hooks/useCarData";
 import { salesPipelineKeyStr } from "@/utils/enums/query-key-constant";
 import Selector from "../../settings/automation/components/Selector";
+import PhoneInput from "@/components/PhoneInput";
 
 const AddLeads = ({ onClose }: { onClose?: () => void }) => {
   const queryClient = useQueryClient();
+   const [phoneNumber, setPhoneNumber] = useState("")
+  const [countryCode, setCountryCode] = useState("")
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -88,6 +91,20 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
     fetchTokenAndSetSource();
   }, []);
 
+   useEffect(() => {
+    const fullPhone = `${countryCode}${phoneNumber}`
+    setFormData((prev) => ({ ...prev, phone: fullPhone }))
+
+    // Validate phone number length (at least 10 digits)
+    if (phoneNumber && phoneNumber.length < 10) {
+      setFieldErrors({
+        ...fieldErrors,
+        phone: "Phone number must be at least 10 digits",
+      })
+    } else if (phoneNumber) {
+      clearFieldError("phone")
+    }
+  }, [phoneNumber, countryCode])
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
 
@@ -193,7 +210,9 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
           others: "",
           service: "",
           source: "",
-        });
+        })
+        setPhoneNumber("")
+        setCountryCode("+1")
       } else {
         setFormStatus({
           message: "Failed to create lead. Please try again.",
@@ -277,7 +296,7 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
           />
         </div>
 
-        <div className="space-y-2">
+        {/* <div className="space-y-2">
           <label
             htmlFor="phone"
             className="block text-sm font-medium text-gray-700"
@@ -299,8 +318,18 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
           {fieldErrors.phone && (
             <p className="mt-1 text-sm text-red-600">{fieldErrors.phone}</p>
           )}
-        </div>
+        </div> */}
 
+  <PhoneInput
+          label="Phone Number"
+          placeholder="(555) 123-4567"
+          required
+          onChange={(phone, code) => {
+            setPhoneNumber(phone)
+            setCountryCode(code)
+          }}
+          error={fieldErrors.phone}
+        />
         {/* Vehicle Information Section */}
         <div className="border-t border-gray-200 pb-1 pt-2">
           <h3 className="text-md font-medium text-gray-700">

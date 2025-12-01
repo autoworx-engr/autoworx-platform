@@ -176,7 +176,7 @@ export default function PhoneInput({
             onChange={handlePhoneChange}
             placeholder={placeholder}
             disabled={disabled}
-            className="flex-1 px-4 py-1 bg-transparent text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none disabled:cursor-not-allowed"
+            className="flex-1 px-4 py-[2px] bg-transparent text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none disabled:cursor-not-allowed"
           />
 
           {/* Clear Button */}

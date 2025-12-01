@@ -20,6 +20,7 @@ import { errorToast } from "@/lib/toast";
 import Password from "@/components/Password";
 import SlimSalaryInput from "@/components/employee/SlimSalaryInput";
 import { CircleUserRound as UserIcon } from "lucide-react";
+import PhoneInput from "../PhoneInput";
 
 export default function AddNewEmployee({
   onSuccess,
@@ -32,6 +33,8 @@ export default function AddNewEmployee({
   const [employeeTypeOpen, setEmployeeTypeOpen] = useState(false);
   const [salaryTypeOpen, setSalaryTypeOpen] = useState(false);
   const [profilePic, setProfilePic] = useState<File | null>(null);
+  const [mobile, setMobile] = useState("+1");
+  const [country, setCountry] = useState('');
   const [salaryData, setSalaryData] = useState<{
     salaryType: SalaryType;
     salaryAmount: number;
@@ -51,9 +54,11 @@ export default function AddNewEmployee({
       document.querySelector<HTMLInputElement>("[name='lastName']")?.value;
     const email =
       document.querySelector<HTMLInputElement>("[name='email']")?.value;
-    const mobileNumber = document.querySelector<HTMLInputElement>(
-      "[name='mobileNumber']"
-    )?.value;
+    // const mobileNumber = document.querySelector<HTMLInputElement>(
+    //   "[name='mobileNumber']"
+    // )?.value;
+
+    const mobileNumber = country && mobile ? `${country}${mobile}` : mobile || ""
     const address =
       document.querySelector<HTMLInputElement>("[name='address']")?.value;
     const city =
@@ -109,14 +114,22 @@ export default function AddNewEmployee({
     }
 
     // Validate mobile number format
-    if (!mobileNumber?.trim() || !/^\+?\d*$/.test(mobileNumber.trim())) {
-      showError({
-        field: "mobileNumber",
-        message: "Please enter a valid mobile number (digits only).",
-      });
-      return;
-    }
+    // if (!mobileNumber?.trim() || !/^\+?\d*$/.test(mobileNumber.trim())) {
+    //   showError({
+    //     field: "mobileNumber",
+    //     message: "Please enter a valid mobile number (digits only).",
+    //   });
+    //   return;
+    // }
 
+   
+    if (!mobile ||  mobile.length < 10) {
+      showError({
+        field: "mobile",
+        message: "Please enter a valid phone number (at least 10 digits).",
+      })
+      return
+    }
     // Validate passwords
     if (!password?.trim()) {
       showError({
@@ -193,7 +206,7 @@ export default function AddNewEmployee({
         firstName,
         lastName,
         email,
-        mobileNumber,
+        mobileNumber: mobileNumber,
         address,
         city,
         state,
@@ -360,7 +373,7 @@ export default function AddNewEmployee({
                   }
                 }}
               />
-              <SlimInput
+              {/* <SlimInput
                 name="mobileNumber"
                 type="tel"
                 required
@@ -376,7 +389,19 @@ export default function AddNewEmployee({
                     clearError();
                   }
                 }}
-              />
+              /> */}
+
+              <PhoneInput
+                          label="Mobile"
+                          placeholder="1234567890"
+                          required={false}
+                          value={mobile}
+                          onChange={(phone, code) => {
+                            setMobile(phone)
+                            setCountry(code)
+                            clearError()
+                          }}
+                        />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
