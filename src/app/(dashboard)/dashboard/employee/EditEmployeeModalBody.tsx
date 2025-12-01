@@ -23,6 +23,7 @@ import SelectEmployeeType from "./SelectEmployeeType";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEmployeeFilterStore } from "@/stores/employeeFilter";
 import { EMPLOYEE_LIST_KEY } from "./_hook/useEmployeeQuery";
+import PhoneInput from "@/components/PhoneInput";
 
 type TEditClientModalBodyProps = {
   employee: User;
@@ -43,7 +44,8 @@ export default function EditClientModalBody({
   const { data: companyName } = useServerGet(getCompany);
   const [openChangePassword, setOpenChangePassword] = useState(false);
   const { showError, clearError } = useFormErrorStore();
-
+    const [countryCode, setCountryCode] = useState<string>("")
+    const [phoneNumber, setPhoneNumber] = useState<string>("")
   const {
     dateRange,
     search,
@@ -66,7 +68,21 @@ export default function EditClientModalBody({
     }
   }, [newProfilePic]);
 
+  useEffect(()=>{
+     if (employee.phone) {
+      const match = employee.phone.match(/^(\+\d+)(.*)$/)
+      if (match) {
+        setCountryCode(match[1])
+        setPhoneNumber(match[2])
+      } else {
+        setPhoneNumber(employee.phone)
+      }
+    }
+  }, [employee.phone])
+
   async function handleSubmit(data: FormData) {
+    const fullPhone = `${countryCode}${phoneNumber}`;
+  data.set("mobileNumber", fullPhone);
     let photo;
     const firstName = data.get("firstName") as string;
     const lastName = data.get("lastName") as string;
@@ -110,13 +126,13 @@ export default function EditClientModalBody({
     }
 
     // Validate mobile number format
-    if (!mobileNumber?.trim() || !/^\+?\d*$/.test(mobileNumber.trim())) {
-      showError({
-        field: "mobileNumber",
-        message: "Please enter a valid mobile number (digits only).",
-      });
-      return;
-    }
+    // if (!mobileNumber?.trim() || !/^\+?\d*$/.test(mobileNumber.trim())) {
+    //   showError({
+    //     field: "mobileNumber",
+    //     message: "Please enter a valid mobile number (digits only).",
+    //   });
+    //   return;
+    // }
 
     // Validate optional fields if provided
     if (zip && !/^\d*$/.test(zip)) {
@@ -340,7 +356,7 @@ export default function EditClientModalBody({
               }
             }}
           />
-          <SlimInput
+          {/* <SlimInput
             type="tel"
             name="mobileNumber"
             defaultValue={employee.phone!}
@@ -355,7 +371,20 @@ export default function EditClientModalBody({
                 clearError();
               }
             }}
-          />
+          /> */}
+
+           <PhoneInput
+                      label="Mobile"
+                      placeholder="1234567890"
+                      required={false}
+                      defaultValue={employee.phone!}
+                      value={phoneNumber}
+                      onChange={(phone, code) => {
+                        setPhoneNumber(phone)
+                        setCountryCode(code)
+                        clearError()
+                      }}
+                    />
         </div>
         {isAdminOrManager && !openChangePassword && (
           <span

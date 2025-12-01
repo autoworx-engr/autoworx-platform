@@ -13,6 +13,7 @@ import { TermsAndPolicyModal } from "./TermsAndPolicyModal";
 import Image from "next/image";
 import { Globe, MapPin, Phone } from "lucide-react";
 import { useSearchParams } from "next/navigation";
+import PhoneInput from "./PhoneInput";
 
 type ZapFormProps = {
   company: {
@@ -29,7 +30,8 @@ type ZapFormProps = {
 const ZapForm = ({ company }: ZapFormProps) => {
   const [legalBusinessName, setLegalBusinessName] = useState<string>("");
   const [consent, setConsent] = useState<boolean>(false);
-
+    const [countryCode, setCountryCode] = useState<string>("")
+  const [phoneNumber, setPhoneNumber] = useState<string>("")
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -160,6 +162,21 @@ const ZapForm = ({ company }: ZapFormProps) => {
   ) => {
     setFormData((prev) => ({ ...prev, multiServices: value }));
   };
+
+  const handlePhoneChange = (num: string, code: string) => {
+ 
+  const fullPhoneNumber = `${code}${num}`; 
+
+ 
+  setCountryCode(code);
+  setPhoneNumber(num);
+
+ 
+  setFormData((prev) => ({
+    ...prev,
+    phone: fullPhoneNumber,
+  }));
+}
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -313,6 +330,8 @@ const ZapForm = ({ company }: ZapFormProps) => {
             )}
           </div>
 
+         
+
           {/* Form Title */}
 
           <p className="mt-1 text-center font-semibold text-white text-opacity-90">
@@ -358,7 +377,7 @@ const ZapForm = ({ company }: ZapFormProps) => {
               />
             </div>
             <div className="space-y-2">
-              <label
+              {/* <label
                 htmlFor="phone"
                 className="block text-sm font-medium text-gray-700"
               >
@@ -378,7 +397,15 @@ const ZapForm = ({ company }: ZapFormProps) => {
               />
               {fieldErrors.phone && (
                 <p className="mt-1 text-sm text-red-600">{fieldErrors.phone}</p>
-              )}
+              )} */}
+
+               <PhoneInput
+    label="Phone Number"
+    value={formData.phone} 
+    onChange={(num, code) => handlePhoneChange(num, code)} 
+    required
+    error={fieldErrors.phone} // এরর মেসেজ পাস করুন
+  />
             </div>{" "}
             <div className="space-y-2">
               {formData.token ? (
@@ -400,64 +427,7 @@ const ZapForm = ({ company }: ZapFormProps) => {
                 Vehicle Information*
               </h3>
             </div>
-            {/* <div className="grid grid-cols-3 gap-3">
-              <div className="space-y-2">
-                <label
-                  htmlFor="vehicle_year"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Year
-                </label>
-                <input
-                  id="vehicle_year"
-                  type="text"
-                  name="vehicle_year"
-                  placeholder="2019"
-                  value={formData.vehicle_year}
-                  onChange={handleChange}
-                  required
-                  className="w-full rounded-md border-2 border-gray-300 px-4 py-2 placeholder:text-gray-500 focus:border-[#00b8b0] focus:outline-none focus:ring-2 focus:ring-[#00b8b0]"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label
-                  htmlFor="vehicle_make"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Make*
-                </label>
-                <input
-                  id="vehicle_make"
-                  type="text"
-                  name="vehicle_make"
-                  placeholder="Honda"
-                  value={formData.vehicle_make}
-                  onChange={handleChange}
-                  required
-                  className="w-full rounded-md border-2 border-gray-300 px-4 py-2 placeholder:text-gray-500 focus:border-[#00b8b0] focus:outline-none focus:ring-2 focus:ring-[#00b8b0]"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label
-                  htmlFor="vehicle_model"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Model*
-                </label>
-                <input
-                  id="vehicle_model"
-                  type="text"
-                  name="vehicle_model"
-                  placeholder="Civic"
-                  value={formData.vehicle_model}
-                  onChange={handleChange}
-                  required
-                  className="w-full rounded-md border-2 border-gray-300 px-4 py-2 placeholder:text-gray-500 focus:border-[#00b8b0] focus:outline-none focus:ring-2 focus:ring-[#00b8b0]"
-                />
-              </div>
-            </div> */}
+          
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
               <Selector
                 name="vehicle_year"

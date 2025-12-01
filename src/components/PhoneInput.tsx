@@ -66,22 +66,28 @@ export default function PhoneInput({
     staleTime: 1000 * 60 * 60 * 24,
   })
 
-  useEffect(() => {
-    if (defaultValue && countries.length > 0) {
-      const match = defaultValue.match(/^(\+\d+)(.*)$/)
-      if (match) {
-        const code = match[1]
-        const phone = match[2]
-        const country = countries.find((c) => c.code === code)
-        if (country) {
-          setSelectedCountry(country)
-          setPhoneNumber(phone)
-          return
-        }
-      }
-      setPhoneNumber(defaultValue)
+ useEffect(() => {
+  if (!defaultValue || !countries.length) return;
+
+  // Extract country code (+1, +880)
+ const match = defaultValue.match(/^(\+\d{1,4})(\d*)$/);
+
+  if (match) {
+    const code = match[1];   // +880
+    const phone = match[2];  // 1712345678
+
+    const country = countries.find((c) => c.code === code);
+    if (country) {
+      setSelectedCountry(country);
+      setPhoneNumber(phone);
+      return;
     }
-  }, [defaultValue, countries])
+  }
+
+  // Fallback if regex fails
+  setPhoneNumber(defaultValue.replace(/\D/g, ""));
+}, [defaultValue, countries]);
+
 
   useEffect(() => {
     if (countries.length && !selectedCountry && !defaultValue) {
