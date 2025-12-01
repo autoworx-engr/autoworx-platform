@@ -916,7 +916,8 @@ model MailgunEmail {
 
   clientId Int
   client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
-
+  userId Int? @map("user_id")
+  user   User? @relation(fields: [userId], references: [id], onDelete: SetNull)
   createdAt DateTime @default(now())
 }
 
@@ -1990,7 +1991,7 @@ model User {
   inventoryProducts InventoryProduct[]
   ClientSMS         ClientSMS[]
   ClientCall        ClientCall[]
-
+  MailgunEmail      MailgunEmail[]
   salesLead                      Lead[]
   NotificationSettings           NotificationSettingsV2[]
   Notification                   Notification[]

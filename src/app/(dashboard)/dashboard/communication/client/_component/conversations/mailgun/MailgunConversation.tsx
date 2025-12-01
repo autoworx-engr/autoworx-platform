@@ -9,7 +9,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import MailAttachment from "./MailAttachment";
 
 type TProps = {
-  messages: (MailgunEmail & { attachments: MailgunEmailAttachment[] })[];
+  messages: (MailgunEmail & { attachments: MailgunEmailAttachment[]; user?: {
+      firstName: string;
+      lastName: string | null;
+    } | null; })[];
+  
   newestFirst?: boolean; // optional: set true if your array is newest-first
 };
 
@@ -88,6 +92,7 @@ export default function MailGunConversation({
             let lastDate: string | null = null;
 
             return data.map((message, index) => {
+              console.log("Rendering message:", message);
               const isIncoming = message.emailBy !== "Company";
               const messageDate = format(new Date(message.createdAt), "PPP");
               const messageTime = format(new Date(message.createdAt), "h:mm a");
@@ -98,6 +103,11 @@ export default function MailGunConversation({
               const showAvatar =
                 isIncoming && (!prev || prev.emailBy === "Company");
 
+                 const senderName = message.emailBy === "Company" 
+                ? message.user 
+                  ? `${message.user.firstName} ${message.user.lastName || ''}`.trim()
+                  : "Company"
+                : null;
               return (
                 <div key={message.id} className="w-full">
                   {/* Date chip */}
@@ -166,15 +176,25 @@ export default function MailGunConversation({
                         </div>
                       )}
 
-                      {/* Time */}
+                      {/* Sender name (small) and Time */}
                       <div
                         className={cn(
-                          "mt-1 text-[10px] leading-4 text-zinc-500",
-                          !isIncoming && "text-right"
+                          "mt-1 flex flex-col gap-0 text-zinc-500",
+                          !isIncoming && "items-end"
                         )}
-                        title={new Date(message.createdAt).toLocaleString()}
                       >
-                        {messageTime}
+                        {senderName && (
+                          <div className="text-[9px] italic text-zinc-500">
+                            {senderName}
+                          </div>
+                        )}
+
+                        <div
+                          className={cn("text-[10px] leading-4", !isIncoming && "text-right")}
+                          title={new Date(message.createdAt).toLocaleString()}
+                        >
+                          {messageTime}
+                        </div>
                       </div>
                     </div>
                   </div>
