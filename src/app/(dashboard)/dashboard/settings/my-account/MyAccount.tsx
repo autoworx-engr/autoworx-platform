@@ -9,6 +9,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRef, useState, useTransition } from "react";
 import { ChangePassword } from "./changePassword";
+import PhoneInput from "@/components/PhoneInput";
 
 const MyAccount = ({ user }: { user: User }) => {
   const [profilePic, setProfilePic] = useState<File | null>(null);
@@ -24,6 +25,16 @@ const MyAccount = ({ user }: { user: User }) => {
     state: user?.state || "",
     zip: user?.zip || "",
   });
+
+  const handlePhoneChange = (num: string, code: string) => {
+    
+    const fullPhoneNumber = `${code}${num}`; 
+
+    setUserInfo((prev) => ({
+      ...prev,
+      phone: fullPhoneNumber,
+    }));
+  };
   const isUserInfoChanged =
     JSON.stringify(userInfo) !==
       JSON.stringify({
@@ -211,7 +222,7 @@ const MyAccount = ({ user }: { user: User }) => {
                   }}
                   readOnly
                 />
-                <SlimInput
+                {/* <SlimInput
                   name="phone"
                   value={userInfo?.phone || ""}
                   onChange={(e) => {
@@ -220,7 +231,17 @@ const MyAccount = ({ user }: { user: User }) => {
                       [e.target.name]: e.target.value,
                     });
                   }}
-                />
+                /> */}
+
+                <PhoneInput
+    
+    defaultValue={user?.phone || ""} 
+   
+    value={userInfo.phone}
+   
+    onChange={handlePhoneChange} 
+    label="Phone" 
+  />
               </div>
               {/* address */}
               <div className="grid grid-cols-1">
