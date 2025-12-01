@@ -40,6 +40,7 @@ type PhoneInputProps = {
   required?: boolean
   disabled?: boolean
   error?: string
+  defaultValue?: string
 }
 
 export default function PhoneInput({
@@ -50,6 +51,7 @@ export default function PhoneInput({
   required = false,
   disabled = false,
   error,
+  defaultValue,
 }: PhoneInputProps) {
   const [phoneNumber, setPhoneNumber] = useState("")
   const [selectedCountry, setSelectedCountry] = useState<CountryOption | null>(null)
@@ -65,11 +67,28 @@ export default function PhoneInput({
   })
 
   useEffect(() => {
-    if (countries.length && !selectedCountry) {
+    if (defaultValue && countries.length > 0) {
+      const match = defaultValue.match(/^(\+\d+)(.*)$/)
+      if (match) {
+        const code = match[1]
+        const phone = match[2]
+        const country = countries.find((c) => c.code === code)
+        if (country) {
+          setSelectedCountry(country)
+          setPhoneNumber(phone)
+          return
+        }
+      }
+      setPhoneNumber(defaultValue)
+    }
+  }, [defaultValue, countries])
+
+  useEffect(() => {
+    if (countries.length && !selectedCountry && !defaultValue) {
       const usCountry = countries.find((c) => c.id === "US")
       if (usCountry) setSelectedCountry(usCountry)
     }
-  }, [countries, selectedCountry])
+  }, [countries, selectedCountry, defaultValue])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -110,9 +129,9 @@ export default function PhoneInput({
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full ">
       {label && (
-        <label className="block mb-2 text-sm font-medium text-slate-600 dark:text-slate-300">
+        <label className="block mb-1 text-sm font-medium ">
           {label}
           {required && <span className="text-red-500 ml-1">*</span>}
         </label>
@@ -157,7 +176,7 @@ export default function PhoneInput({
             onChange={handlePhoneChange}
             placeholder={placeholder}
             disabled={disabled}
-            className="flex-1 px-4 py-2 bg-transparent text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none disabled:cursor-not-allowed"
+            className="flex-1 px-4 py-1 bg-transparent text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none disabled:cursor-not-allowed"
           />
 
           {/* Clear Button */}
@@ -173,7 +192,7 @@ export default function PhoneInput({
         </div>
 
         {isOpen && (
-          <div className="absolute top-full left-0 mt-2 w-full min-w-max bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg z-50 overflow-hidden">
+          <div className="absolute top-full left-0 mt-2 w-full  bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg z-50 overflow-hidden">
             {/* Search Input */}
             <div className="p-2 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
               <input

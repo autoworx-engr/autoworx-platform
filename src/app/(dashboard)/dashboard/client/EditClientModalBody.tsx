@@ -20,6 +20,7 @@ import { useEffect, useState, useTransition } from "react";
 import { RotatingLines } from "react-loader-spinner";
 import { CLIENT_LIST_KEY } from "./_hook/useClientQuery";
 import { useClientFilterStore } from "@/stores/clientFilter";
+import PhoneInput from "@/components/PhoneInput";
 
 type TEditClientModalBodyProps = {
   client: Client & {
@@ -50,6 +51,8 @@ export default function EditClientModalBody({
   );
   const [newProfilePic, setNewProfilePic] = useState<File | null>(null);
   const [clientSources, setClientSources] = useState<Source[]>([]);
+    const [countryCode, setCountryCode] = useState<string>("")
+  const [phoneNumber, setPhoneNumber] = useState<string>("")
   const { showError, clearError } = useFormErrorStore();
 
   useEffect(() => {
@@ -57,6 +60,16 @@ export default function EditClientModalBody({
     setTag(client.tag || undefined);
     setClientSource(client.source || null);
     setProfilePic(client.photo !== DEFAULT_IMAGE_URL ? client.photo : null);
+
+     if (client.mobile) {
+      const match = client.mobile.match(/^(\+\d+)(.*)$/)
+      if (match) {
+        setCountryCode(match[1])
+        setPhoneNumber(match[2])
+      } else {
+        setPhoneNumber(client.mobile)
+      }
+    }
   }, [client]);
 
   async function getClientSources() {
@@ -84,7 +97,8 @@ export default function EditClientModalBody({
     const lastName =
       document.querySelector<HTMLInputElement>("#lastName")?.value;
     const email = document.querySelector<HTMLInputElement>("#email")?.value;
-    const mobile = document.querySelector<HTMLInputElement>("#mobile")?.value;
+    // const mobile = document.querySelector<HTMLInputElement>("#mobile")?.value;
+const mobile = countryCode && phoneNumber ? `${countryCode}${phoneNumber}` : phoneNumber || ""
     const customerCompany =
       document.querySelector<HTMLInputElement>("#customerCompany")?.value;
     const address = document.querySelector<HTMLInputElement>("#address")?.value;
@@ -293,7 +307,7 @@ export default function EditClientModalBody({
               // }
             }}
           />
-          <SlimInput
+          {/* <SlimInput
             name="mobile"
             label="Mobile"
             required={false}
@@ -310,6 +324,19 @@ export default function EditClientModalBody({
               } else {
                 clearError();
               }
+            }}
+          /> */}
+
+          <PhoneInput
+            label="Mobile"
+            placeholder="1234567890"
+            required={false}
+            defaultValue={client.mobile!}
+            value={phoneNumber}
+            onChange={(phone, code) => {
+              setPhoneNumber(phone)
+              setCountryCode(code)
+              clearError()
             }}
           />
         </div>
