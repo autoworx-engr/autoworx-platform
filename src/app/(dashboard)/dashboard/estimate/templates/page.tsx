@@ -6,9 +6,9 @@ import NavigationTabs from "../NavigationTabs";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/authOptions";
 import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
-import { fetchAndTransformData } from "@/lib/fetchAndTransformData";
 import { db } from "@/lib/db";
 import TemplateTable from "./TemplateTable";
+import { estimateTemplateFetchAndTransformData } from "@/lib/estimateTemplateFetchAndTransformData";
 
 async function TemplatesPage({
   searchParams,
@@ -25,13 +25,36 @@ async function TemplatesPage({
   const session = await getServerSession(authOptions);
   const companyId = session?.user.companyId;
   const { timezone } = await getCompanyTimezone();
+
+  if (!companyId) {
+    throw new Error("Company ID is required");
+  }
+
+  const estimateTemplatesPromise = estimateTemplateFetchAndTransformData(
+    companyId,
+    searchParams,
+    timezone
+  );
   if (!companyId) {
     throw new Error("Company ID is required to create an email template.");
   }
 
-  const categories = await db.category.findMany({ where: { companyId } });
-  const tags = await db.tag.findMany({ where: { companyId, type: "GENERAL" } });
-  const statuses = await db.column.findMany({ where: { companyId } });
+  const categoriesPromise = db.category.findMany({
+    where: { companyId },
+  });
+  const tagsPromise = db.tag.findMany({
+    where: { companyId, type: "GENERAL" },
+  });
+  const statusesPromise = db.column.findMany({
+    where: { companyId, type: "shop" },
+  });
+
+  const [templates, categories, tags, statuses] = await Promise.all([
+    estimateTemplatesPromise,
+    categoriesPromise,
+    tagsPromise,
+    statusesPromise,
+  ]);
 
   return (
     <div>
@@ -46,7 +69,7 @@ async function TemplatesPage({
       />
 
       <NavigationTabs activeTab="c-template">
-        <TemplateTable data={{ data: [], totalEstimate: 0 }} />
+        <TemplateTable data={templates} />
       </NavigationTabs>
     </div>
   );

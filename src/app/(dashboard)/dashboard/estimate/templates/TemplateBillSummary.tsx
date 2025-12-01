@@ -1,7 +1,6 @@
 "use client";
 import { getCompanyTaxCurrency } from "@/actions/settings/emailTemplates";
 import { useEstimateTemplateCreate } from "@/hooks/useEstimateTemplateCreate";
-import { useInvoiceCreate } from "@/hooks/useInvoiceCreate";
 import { errorToast } from "@/lib/toast";
 import { useEstimateCreateStore } from "@/stores/estimate-create";
 import { useListsStore } from "@/stores/lists";
@@ -24,18 +23,6 @@ export function TemplateBillSummary({
     serviceFee,
     deposit,
     totalPayment,
-    invoiceId,
-    due,
-    internalNotes,
-    terms,
-    policy,
-    customerNotes,
-    customerComments,
-    photos,
-    tasks,
-    coupon,
-    inspections,
-    damageNotes,
   } = useEstimateCreateStore();
   const {
     setSubtotal,
@@ -52,8 +39,8 @@ export function TemplateBillSummary({
   const [isSuppliesEnabled, setIsSuppliesEnabled] = useState<boolean>(true);
   const [originalTax, setOriginalTax] = useState(0);
   const [originalServiceFee, setOriginalServiceFee] = useState(0);
-  const pathname = usePathname();
   const router = useRouter();
+
   // Fetch initial tax and service fee values
   useEffect(() => {
     setIsSuppliesEnabled(isEstimateServiceFee);
@@ -178,6 +165,7 @@ export function TemplateBillSummary({
       return;
     }
   }
+
   return (
     <>
       <div className="space-y-1 p-1.5">

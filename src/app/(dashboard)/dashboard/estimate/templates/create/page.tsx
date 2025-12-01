@@ -29,11 +29,8 @@ export default async function Page({
   let invoice: any = null;
 
   if (isEdit && searchParams?.templateId) {
-    invoice = await db.invoice.findUnique({
+    invoice = await db.invoiceTemplate.findUnique({
       where: { id: searchParams?.templateId, companyId },
-      include: {
-        requestEstimate: true,
-      },
     });
   }
 

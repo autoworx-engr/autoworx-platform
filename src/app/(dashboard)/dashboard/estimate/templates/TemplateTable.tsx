@@ -1,13 +1,12 @@
 "use client";
 import { cn } from "@/lib/cn";
 import { useActionStoreCreateEdit } from "@/stores/createEditStore";
-import { useListsStore } from "@/stores/lists";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { Pagination } from "antd";
 import moment from "moment-timezone";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useMediaQuery } from "react-responsive";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { SquarePen } from "lucide-react";
@@ -17,6 +16,9 @@ export interface TemplateData {
   id: string;
   title: string;
   grandTotal: number;
+  status?: string;
+  textColor?: string;
+  bgColor?: string;
   createdAt: Date | null;
 }
 
@@ -41,8 +43,6 @@ export default function TemplateTable({ take, page, data }: TTableProps) {
   const [pageSize, setPageSize] = useState(
     parseInt(take ?? "", 10) || defaultTake
   );
-
-  const allStatusesFromStore = useListsStore((x) => x.statuses);
 
   const pathname = usePathname();
   const router = useRouter();
@@ -94,6 +94,7 @@ export default function TemplateTable({ take, page, data }: TTableProps) {
                 <th className="px-4 py-2 text-left">Template ID</th>
                 <th className="px-4 py-2 text-left">Title</th>
                 <th className="px-4 py-2 text-left">Price</th>
+                <th className="px-4 py-2 text-left">Status</th>
                 <th className="px-4 py-2 text-left">Date</th>
                 <th className="px-4 py-2 text-left">Edit</th>
               </tr>
@@ -107,9 +108,23 @@ export default function TemplateTable({ take, page, data }: TTableProps) {
                   className={cn("py-3", index % 2 === 0 ? evenColor : oddColor)}
                 >
                   <td className="px-4 py-2 text-left">{data.id}</td>
+                  <td className="px-4 py-2 text-left">{data.title}</td>
                   <td className="px-4 py-2 text-left text-[#006D77]">
                     <p className="block h-full w-full">
                       {formatCurrency(+data.grandTotal)}
+                    </p>
+                  </td>
+                  <td className="px-4 py-2 text-left">
+                    <p className="block h-full w-full">
+                      <p
+                        className="rounded-md text-center"
+                        style={{
+                          backgroundColor: data.bgColor,
+                          color: data.textColor,
+                        }}
+                      >
+                        {data.status || ""}
+                      </p>
                     </p>
                   </td>
                   <td className="px-4 py-2 text-left">
