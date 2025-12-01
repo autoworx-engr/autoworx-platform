@@ -1,6 +1,5 @@
 "use client";
 import { getFleetStatements } from "@/actions/fleet/statement";
-import { useInvoiceStore } from "@/stores/fleetAllInvoiceStore";
 import { useEffect, useState } from "react";
 import { FleetTab, TabsContent, TabsList, TabsTrigger } from "./FleetTab";
 import InvoiceList from "./InvoiceList";
@@ -19,16 +18,8 @@ const InvoiceAndStatementList = ({
   const [refreshKey, setRefreshKey] = useState(0);
   const [fleetStatements, setFleetStatements] = useState<any[]>([]);
   const [loadingStatements, setLoadingStatements] = useState(false);
-  const { setAllInvoices } = useInvoiceStore();
 
   const fleetId = client?.fleet?.id;
-
-  // GLOBAL INVOICE LIST
-  useEffect(() => {
-    if (client?.Invoice) {
-      setAllInvoices(client.Invoice);
-    }
-  }, [client?.Invoice]);
 
   // Load fleet statements when component mounts or when refreshKey changes
   useEffect(() => {

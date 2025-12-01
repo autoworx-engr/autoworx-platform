@@ -14,7 +14,7 @@ import FleetSubHeading from "./FleetSubHeading";
 
 import { editFleetStatement } from "@/actions/fleet/statement/editFleetStatement";
 import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
-import { useInvoiceStore } from "@/stores/fleetAllInvoiceStore";
+import { useFleetInvoiceStore } from "@/stores/fleetInvoiceStore";
 
 interface EditFleetStatementModalProps {
   isOpen: boolean;
@@ -33,7 +33,7 @@ const EditFleetStatementModal = ({
 }: EditFleetStatementModalProps) => {
   const [loading, setLoading] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const { allInvoices } = useInvoiceStore();
+  const { allInvoices } = useFleetInvoiceStore();
 
   // Initialize selected items with current invoices
   useEffect(() => {
@@ -43,6 +43,7 @@ const EditFleetStatementModal = ({
   }, [isOpen, currentInvoices]);
 
   const invoices = [
+    ...currentInvoices,
     ...allInvoices.filter(
       (inv) => !currentInvoices.some((curr) => curr.id === inv.id)
     ),
@@ -137,7 +138,7 @@ const EditFleetStatementModal = ({
               </tr>
             </thead>
             <tbody>
-              {allInvoices.map((invoice: any, index) => (
+              {invoices.map((invoice: any, index) => (
                 <tr
                   key={invoice.id}
                   className={cn(
@@ -190,7 +191,7 @@ const EditFleetStatementModal = ({
         {/* Footer with buttons */}
         <div className="flex items-center justify-between border-t pt-4">
           <div className="text-sm text-gray-600">
-            {selectedItems.length} of {allInvoices.length} items selected
+            {selectedItems.length} of {invoices.length} items selected
           </div>
           <div className="flex gap-2">
             <button

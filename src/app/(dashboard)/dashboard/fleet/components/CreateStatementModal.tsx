@@ -1,5 +1,6 @@
 "use client";
 
+import { createFleetStatement } from "@/actions/fleet/statement";
 import {
   Dialog,
   DialogContent,
@@ -7,13 +8,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/Dialog";
-import { Checkbox, message } from "antd";
-import { useState } from "react";
-import FleetSubHeading from "./FleetSubHeading";
-import { cn } from "@/lib/cn";
-import { Invoice } from "@prisma/client";
-import { createFleetStatement } from "@/actions/fleet/statement";
 import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
+import { cn } from "@/lib/cn";
+import { useFleetInvoiceStore } from "@/stores/fleetInvoiceStore";
+import { Invoice } from "@prisma/client";
+import { Checkbox, message } from "antd";
+import { useEffect, useState } from "react";
+import FleetSubHeading from "./FleetSubHeading";
 
 const CreateStatementModal = ({
   unPaidInvoices,
@@ -26,9 +27,14 @@ const CreateStatementModal = ({
 }) => {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const { setAllInvoices } = useFleetInvoiceStore();
   const [selectedItems, setSelectedItems] = useState<string[]>(
     unPaidInvoices.map((invoice) => invoice.id)
   );
+
+  useEffect(() => {
+    setAllInvoices(unPaidInvoices);
+  }, [unPaidInvoices]);
 
   const handleSelectItem = (itemId: string, checked: boolean) => {
     if (checked) {

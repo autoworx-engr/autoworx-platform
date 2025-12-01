@@ -65,9 +65,8 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
   const company = statement?.Fleet?.client?.company;
   const fleet = statement?.Fleet;
   const client = statement?.Fleet?.client;
-  console.log("statement invoice ==>", statement.invoice);
   const invoices = statement?.invoice || [];
-  console.log("invoices ==>", invoices);
+
   const totals = statement?.totals || {
     totalAmount: 0,
     totalPaid: 0,
