@@ -1,5 +1,4 @@
 import { useEstimateCreateStore } from "@/stores/estimate-create";
-import { usePathname } from "next/navigation";
 import { ServerAction } from "@/types/action";
 import { useListsStore } from "@/stores/lists";
 import { TErrorHandler } from "@/types/globalError";
@@ -7,7 +6,7 @@ import { successToast } from "@/lib/toast";
 import { updateEstimateTemplate } from "@/actions/estimate-template/update";
 import { createEstimateTemplate } from "@/actions/estimate-template/create";
 
-export function useEstimateTemplateCreate() {
+export function useEstimateTemplateCreate({ isEdit }: { isEdit: boolean }) {
   const {
     invoiceId,
     subtotal,
@@ -25,16 +24,14 @@ export function useEstimateTemplateCreate() {
 
   const { status } = useListsStore();
 
-  const pathaname = usePathname();
-
   async function handleSubmit(): Promise<ServerAction | TErrorHandler> {
     const columnId = status?.id;
-    const isEditPage = pathaname?.includes("/estimate/templates?isEdit=true");
-
+    console.log("isEditPage", isEdit);
     let res: ServerAction | TErrorHandler;
-    if (isEditPage) {
+    if (isEdit) {
       res = await updateEstimateTemplate({
         id: invoiceId,
+        title,
         columnId: columnId || undefined,
         subtotal,
         discount,

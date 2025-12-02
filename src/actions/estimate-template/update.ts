@@ -43,6 +43,26 @@ export async function updateEstimateTemplate(
 
     const companyId = await getCompanyId();
 
+    let finalColumnId = data?.columnId;
+
+    if (!finalColumnId) {
+      const defaultColumn = await db.column.findFirst({
+        where: {
+          title: "Pending",
+          type: "shop",
+          companyId,
+        },
+        select: {
+          id: true,
+        },
+      });
+      if (defaultColumn) {
+        finalColumnId = defaultColumn.id;
+      } else {
+        throw new Error("Default column not found");
+      }
+    }
+
     //find invoice from database
     const template = await db.invoiceTemplate.findUnique({
       where: {
@@ -428,14 +448,14 @@ export async function updateEstimateTemplate(
             id: data.id,
           },
           data: {
-            columnId: data.columnId ?? null,
+            columnId: finalColumnId,
             subtotal: data.subtotal,
             discount: data.discount,
             tax: data.tax,
             serviceFee: data.serviceFee,
             grandTotal: data.grandTotal,
             internalNotes: data.internalNotes,
-
+            title: data?.title,
             serviceIndex: JSON.stringify(
               updatedEstimateTemplateItem
                 .map((item) => item?.id)

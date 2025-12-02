@@ -10,9 +10,11 @@ import { useEffect, useState } from "react";
 export function TemplateBillSummary({
   isEstimateTax = true,
   isEstimateServiceFee = true,
+  isEdit = false,
 }: {
   isEstimateTax?: boolean;
   isEstimateServiceFee?: boolean;
+  isEdit?: boolean;
 }) {
   const {
     items,
@@ -34,7 +36,7 @@ export function TemplateBillSummary({
     reset,
   } = useEstimateCreateStore();
   const resetLists = useListsStore((state) => state.reset);
-  const createEstimateTemplate = useEstimateTemplateCreate();
+  const createEstimateTemplate = useEstimateTemplateCreate({ isEdit });
   const [isTaxEnabled, setIsTaxEnabled] = useState<boolean>(true);
   const [isSuppliesEnabled, setIsSuppliesEnabled] = useState<boolean>(true);
   const [originalTax, setOriginalTax] = useState(0);

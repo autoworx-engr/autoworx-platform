@@ -27,10 +27,132 @@ export default async function Page({
   const companyId = await getCompanyId();
 
   let invoice: any = null;
+  let photos: any = null;
+  let items: any = null;
+  let tasks: any = null;
+  let invoiceInspections: any = null;
 
   if (isEdit && searchParams?.templateId) {
     invoice = await db.invoiceTemplate.findUnique({
       where: { id: searchParams?.templateId, companyId },
+    });
+
+    items = await db.invoiceItem.findMany({
+      where: { invoiceTemplateId: invoice.id },
+      include: {
+        service: {
+          include: {
+            Technician: true,
+          },
+        },
+        materials: {
+          include: {
+            tags: {
+              include: { tag: true },
+            },
+          },
+        },
+        labor: {
+          include: {
+            tags: {
+              include: { tag: true },
+            },
+          },
+        },
+        tags: {
+          include: { tag: true },
+        },
+      },
+    });
+
+    const completedServices: string[] = [];
+    const incompleteServices: string[] = [];
+
+    items.forEach((item: any) => {
+      // @ts-ignore
+      item.tags = item.tags?.map((tag) => tag.tag);
+      item.materials = item.materials?.map((material: any) => {
+        // @ts-ignore
+        material.tags = material.tags?.map((tag) => tag.tag);
+        return material;
+      });
+      // @ts-ignore
+      item.labor = item.labor
+        ? {
+            ...item.labor,
+            // @ts-ignore
+            tags: item.labor?.tags?.map((tag) => tag.tag),
+          }
+        : null;
+
+      //
+      //
+      //
+      // find out incomplete and completed services
+
+      const technicians =
+        item.service?.Technician?.filter(
+          (tech: any) => tech.invoiceId === invoice.id
+        ) || [];
+
+      if (technicians.length) {
+        if (Array.isArray(technicians) && technicians.length > 0) {
+          const statuses = technicians.map((tech) =>
+            tech.status?.toLowerCase().trim()
+          );
+
+          const isServiceComplete = statuses.every(
+            (status) => status === "complete"
+          );
+
+          if (isServiceComplete) {
+            completedServices.push(item.service?.name ?? "");
+          } else {
+            incompleteServices.push(item.service?.name ?? "");
+          }
+        } else {
+          incompleteServices.push(item.service?.name ?? "");
+        }
+      }
+    });
+
+    // we need to sort based on the serial of the service, the invoice was created by the user
+    const serviceIndex =
+      typeof invoice?.serviceIndex === "string"
+        ? JSON.parse(invoice.serviceIndex)
+        : (invoice?.serviceIndex ?? []);
+
+    if (Array.isArray(serviceIndex) && serviceIndex.length > 0) {
+      items.sort((a, b) => {
+        const indexA =
+          a.service?.id !== undefined
+            ? serviceIndex.indexOf(a.service.id)
+            : Infinity;
+        const indexB =
+          b.service?.id !== undefined
+            ? serviceIndex.indexOf(b.service.id)
+            : Infinity;
+
+        return indexA - indexB;
+      });
+    }
+
+    photos = await db.invoicePhoto.findMany({
+      where: { invoiceTemplateId: invoice.id },
+    });
+    tasks = await db.task.findMany({
+      where: { invoiceTemplateId: invoice.id },
+    });
+
+    // Fetch invoice inspections
+    invoiceInspections = await db.invoiceInspection.findMany({
+      where: { invoiceTemplateId: invoice.id },
+      select: {
+        title: true,
+        driver: true,
+        passenger: true,
+        notes: true,
+      },
     });
   }
 
@@ -98,7 +220,7 @@ export default async function Page({
         <Title>Template</Title>
 
         <SyncLists
-          title=""
+          title={invoice?.title}
           customers={[]}
           vehicles={[]}
           categories={categories}
@@ -114,12 +236,12 @@ export default async function Page({
         <Header />
         {isEdit && (
           <SyncEstimate
-            invoice={invoice}
+            template={invoice}
             // @ts-ignore
-            items={[]}
-            photos={[]}
-            tasks={[]}
-            inspections={[]}
+            items={items}
+            photos={photos}
+            tasks={tasks}
+            inspections={invoiceInspections}
             payment={null}
           />
         )}
@@ -163,7 +285,7 @@ export default async function Page({
         <div>
           <Create />
         </div>
-        <TemplateBillSummary />
+        <TemplateBillSummary isEdit={isEdit} />
       </div>
     </div>
   );
