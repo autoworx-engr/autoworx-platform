@@ -3,6 +3,7 @@
 import type React from "react"
 import { useEffect, useRef, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
+import countriesData from "@/utils/allcountries.json"
 import { ChevronDown, X } from "lucide-react"
 
 type CountryOption = {
@@ -13,23 +14,41 @@ type CountryOption = {
 }
 
 async function fetchCountries(): Promise<CountryOption[]> {
-  const res = await fetch("https://restcountries.com/v3.1/all?fields=name,cca2,cca3,flags,idd", { cache: "no-store" })
-  if (!res.ok) throw new Error("Failed to load countries")
-  const data = await res.json()
+  const raw: any[] = Array.isArray(countriesData) ? countriesData : []
 
-  return (data || [])
-    .map((c: any) => {
-      const id = c.cca2 || c.cca3 || ""
-      const title = c.name?.common || id
-      const flagUrl = c.flags?.svg || c.flags?.png || null
-      const root = c.idd?.root || ""
-      const suffix = Array.isArray(c.idd?.suffixes) && c.idd.suffixes.length > 0 ? c.idd.suffixes[0] : ""
-      const code = root ? `${root}${suffix}` : undefined
+ 
+  const map = new Map<string, CountryOption>()
 
-      return { id: id?.toString(), title, flagUrl, code }
-    })
-    .filter((o: CountryOption) => !!o.id && !!o.title)
-    .sort((a: CountryOption, b: CountryOption) => a.title.localeCompare(b.title))
+  for (const c of raw) {
+    const title = (c.name || c.title || "").toString()
+    const flagUrl = c.flagUrl || c.flags || null
+    
+    const code = c.callingCode || c.calling_code || c.code || c.dial_code || null
+
+    if (!title) continue
+
+    const normalizedTitle = title.trim()
+    const key = `${normalizedTitle.toLowerCase()}|${(code || "").toString()}`
+
+    if (!map.has(key)) {
+      map.set(key, {
+        id: normalizedTitle,
+        title: normalizedTitle,
+        flagUrl: flagUrl || null,
+        code: code || undefined,
+      })
+    }
+  }
+
+  const list = Array.from(map.values()).sort((a, b) => a.title.localeCompare(b.title))
+
+  // Ensure a reasonable default exists (United States / +1) — if missing, try to add a minimal US entry
+  const hasUS = list.some((c) => c.title.toLowerCase().includes("united states") || c.code === "+1")
+  if (!hasUS) {
+    list.unshift({ id: "United States", title: "United States", flagUrl: "https://flagcdn.com/us.svg", code: "+1" })
+  }
+
+  return list
 }
 
 type PhoneInputProps = {
