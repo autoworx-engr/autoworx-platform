@@ -2,15 +2,18 @@
 import { cn } from "@/lib/cn";
 import { useActionStoreCreateEdit } from "@/stores/createEditStore";
 import { formatCurrency } from "@/utils/formatCurrency";
-import { Pagination } from "antd";
+import { Pagination, Popconfirm } from "antd";
 import moment from "moment-timezone";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 import { useMediaQuery } from "react-responsive";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
-import { SquarePen } from "lucide-react";
+import { SquarePen, Trash2 } from "lucide-react";
 import ResponsiveTemplateCard from "./ResponsiveTemplateCard";
+import { deleteEstimateTemplate } from "@/actions/estimate-template/delete";
+import { errorToast } from "@/lib/toast";
+import toast from "react-hot-toast";
 
 export interface TemplateData {
   id: string;
@@ -72,6 +75,18 @@ export default function TemplateTable({ take, page, data }: TTableProps) {
     },
     [params, pathname, router]
   );
+
+  async function handleDeleteTemplate(id: string) {
+    const res = await deleteEstimateTemplate({
+      id,
+    });
+
+    if (res.type === "success") {
+      toast.success("The estimate template deleted successfully!");
+    } else if (res.type === "globalError") {
+      errorToast(res.message);
+    }
+  }
 
   return (
     <div className="min-h-[65vh] overflow-x-scroll rounded-md bg-background xl:overflow-auto xl:overflow-y-hidden flex flex-col ">
@@ -141,6 +156,21 @@ export default function TemplateTable({ take, page, data }: TTableProps) {
                     >
                       <SquarePen size={18} className="text-[#6571FF]" />
                     </Link>
+
+                    <Popconfirm
+                      title="Delete the estimate template"
+                      description="Are you sure to delete this estimate template?"
+                      okText="Yes"
+                      cancelText="No"
+                      onConfirm={() => handleDeleteTemplate(data?.id)}
+                    >
+                      <button
+                        className="flex items-center gap-2 rounded-md text-red-400 px-3 py-1 hover:text-red-500"
+                        aria-label="Delete"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </Popconfirm>
                   </td>
                 </tr>
               ))}
