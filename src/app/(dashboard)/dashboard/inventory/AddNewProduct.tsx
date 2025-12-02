@@ -358,7 +358,7 @@ export default function AddNewProduct({
         <button
           onClick={handleAddNewProduct}
           className="
-          flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white
+          flex items-center justify-center gap-2 w-full text-center rounded-lg px-5 py-2.5 text-sm font-semibold text-white
           bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
           shadow-[0_4px_14px_0_rgba(101,113,255,0.39)]
           hover:shadow-[0_6px_20px_rgba(101,113,255,0.23)]

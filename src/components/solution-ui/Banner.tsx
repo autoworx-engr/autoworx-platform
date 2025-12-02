@@ -3,6 +3,7 @@
 import React from "react";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
+import BookDemoForm from "./BookDemoForm";
 
 const chaosStyles = `
   @keyframes chaosRotate {
@@ -37,7 +38,9 @@ export default function Banner() {
             Meet Autoworx – The all-in-one platform built by restyling shop
             owners, for restyling shop owners.
           </p>
-          <div className="flex max-w-md flex-col gap-4 sm:flex-row">
+
+
+          {/* <div className="flex max-w-md flex-col gap-4 sm:flex-row">
             <Input placeholder="Enter your email" className="flex-1" />
             <Button
               className="bg-teal-600 px-6 hover:bg-teal-700"
@@ -52,7 +55,10 @@ export default function Banner() {
             >
               Book Demo →
             </Button>
-          </div>
+          </div> */}
+
+          <BookDemoForm />
+
           <p className="text-sm text-gray-500">
             Limited spots available for beta access
           </p>

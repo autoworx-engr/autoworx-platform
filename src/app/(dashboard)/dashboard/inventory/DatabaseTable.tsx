@@ -71,7 +71,7 @@ export default function DatabaseTable({
                   <p className="block h-full w-full">{item.unit}</p>
                 </td>
                 <td className="px-4 py-2 text-center">
-                  <p className="block h-full w-full">
+                  <p className="block h-full w-fit">
                     <AddNewProduct product={item} isDatabase={true} />
                   </p>
                 </td>
@@ -101,7 +101,7 @@ export default function DatabaseTable({
               <div className="flex justify-between items-center pb-2 border-b border-slate-200/50"> {/* Subtle divider */}
                 <div>
                   <div className="text-xs font-medium text-slate-500">Name</div>
-                  <div className="text-base font-semibold text-slate-800 truncate max-w-[200px]"> {/* Truncate long names */}
+                  <div className="text-base font-semibold text-slate-800 truncate max-w-[220px]"> {/* Truncate long names */}
                     {item.productName}
                   </div>
                 </div>
@@ -109,7 +109,7 @@ export default function DatabaseTable({
                 {/* Highlighted ID with subtle background and accent color */}
                 <div className="bg-slate-100/80 px-3 py-1 rounded-full ring-1 ring-slate-200">
                   <div className="text-sm font-bold text-[#6571FF]"> {/* Accent color for ID */}
-                    #{item.id.substring(0, 6)}... {/* Truncate ID for mobile brevity */}
+                    #{item.id}
                   </div>
                 </div>
               </div>
@@ -128,7 +128,7 @@ export default function DatabaseTable({
             </div>
 
             {/* Action Button Section */}
-            <div className="mt-4 pt-4 border-t border-slate-200/50"> {/* Refined divider */}
+            <div className="mt-4 pt-4 border-t border-slate-200/50 w-full"> {/* Refined divider */}
               <AddNewProduct product={item} isDatabase={true} />
             </div>
           </div>

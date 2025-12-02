@@ -88,7 +88,7 @@ export default function InventoryList({
       {view === "products" && (
         <TabsContent
           value="products"
-          className={`mx-2 flex min-h-0 flex-col md:visible md:static md:opacity-100 ${productId ? "invisible absolute opacity-0" : "visible static opacity-100"}`}
+          className={`mx-2 flex min-h-0 overflow-y-hidden flex-col md:visible md:static md:opacity-100 ${productId ? "invisible absolute opacity-0" : "visible static opacity-100"}`}
         >
           <div className="relative flex h-full w-full flex-col">
             <div className="sticky top-0 z-50 bg-white pb-2 pt-2">
@@ -99,15 +99,13 @@ export default function InventoryList({
                 }}
               />
             </div>
-            <div className="h-full overflow-y-auto">
-              <ProductTable
-                searchParams={searchParams}
-                products={products as any}
-                totalItems={totalProducts}
-                currentProductId={productId}
-                user={user}
-              />
-            </div>
+            <ProductTable
+              searchParams={searchParams}
+              products={products as any}
+              totalItems={totalProducts}
+              currentProductId={productId}
+              user={user}
+            />
           </div>
         </TabsContent>
       )}
@@ -115,7 +113,7 @@ export default function InventoryList({
       {view === "supplies" && (
         <TabsContent
           value="supplies"
-          className={`mx-2 flex min-h-0 flex-col md:visible md:static md:opacity-100 ${productId ? "invisible absolute opacity-0" : "visible static opacity-100"}`}
+          className={`mx-2 flex min-h-0 overflow-y-hidden flex-col md:visible md:static md:opacity-100 ${productId ? "invisible absolute opacity-0" : "visible static opacity-100"}`}
         >
           <div className="relative flex h-full w-full flex-col">
             <div className="sticky top-0 z-50 bg-white pb-2 pt-2">
@@ -126,15 +124,13 @@ export default function InventoryList({
                 }}
               />
             </div>
-            <div className="h-full overflow-y-auto">
-              <ProductTable
-                totalItems={totalSupplies}
-                searchParams={searchParams}
-                products={supplies as any}
-                currentProductId={productId}
-                user={user}
-              />
-            </div>
+            <ProductTable
+              totalItems={totalSupplies}
+              searchParams={searchParams}
+              products={supplies as any}
+              currentProductId={productId}
+              user={user}
+            />
           </div>
         </TabsContent>
       )}
