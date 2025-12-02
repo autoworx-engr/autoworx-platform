@@ -110,10 +110,19 @@ export default function PhoneInput({
 
   useEffect(() => {
     if (countries.length && !selectedCountry && !defaultValue) {
-      const usCountry = countries.find((c) => c.id === "US")
-      if (usCountry) setSelectedCountry(usCountry)
+      const usCountry =
+      countries.find((c) => c.id === "United States") ||
+        countries.find((c) => c.code === "+1") ||
+        countries.find((c) => (c.title || "").toLowerCase().includes("united states"))
+
+      if (usCountry) {
+        setSelectedCountry(usCountry)
+        onChange?.(phoneNumber, usCountry.code || "")
+      }
     }
   }, [countries, selectedCountry, defaultValue])
+
+
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
