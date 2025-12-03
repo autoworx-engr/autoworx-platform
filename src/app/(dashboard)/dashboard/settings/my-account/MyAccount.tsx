@@ -24,15 +24,17 @@ const MyAccount = ({ user }: { user: User }) => {
     city: user?.city || "",
     state: user?.state || "",
     zip: user?.zip || "",
+    countryCode: user?.countryCode || "",
   });
 
-  const handlePhoneChange = (num: string, code: string) => {
+  const handlePhoneChange = (num: string, code: string, isoCode:string) => {
     
     const fullPhoneNumber = `${code}${num}`; 
 
     setUserInfo((prev) => ({
       ...prev,
       phone: fullPhoneNumber,
+      countryCode: isoCode || ""
     }));
   };
   const isUserInfoChanged =
@@ -114,6 +116,7 @@ const MyAccount = ({ user }: { user: User }) => {
     let result = await editMyAccountInfo({
       ...userInfo,
       image: imageUrl,
+      countryCode: userInfo.countryCode,
     });
     setUserInfo({
       ...userInfo,
@@ -236,8 +239,8 @@ const MyAccount = ({ user }: { user: User }) => {
                 <PhoneInput
     
     defaultValue={user?.phone || ""} 
-   
-    value={userInfo.phone}
+     defaultIsoCode={user?.countryCode!}
+    // value={userInfo.phone}
    
     onChange={handlePhoneChange} 
     label="Phone" 

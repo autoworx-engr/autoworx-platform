@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useEffect, useRef, useState } from "react"
+import {  useEffect, useMemo, useRef, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import countriesData from "@/utils/allcountries.json"
 import { ChevronDown, X } from "lucide-react"
@@ -11,6 +11,7 @@ type CountryOption = {
   title: string
   flagUrl?: string | null
   code?: string | null
+  isoCode?: string | null
 }
 
 async function fetchCountries(): Promise<CountryOption[]> {
@@ -20,10 +21,11 @@ async function fetchCountries(): Promise<CountryOption[]> {
   const map = new Map<string, CountryOption>()
 
   for (const c of raw) {
-    const title = (c.name || c.title || "").toString()
-    const flagUrl = c.flagUrl || c.flags || null
+    const title = (c.name  || "").toString()
+    const flagUrl = c.flagUrl  || null
     
-    const code = c.callingCode || c.calling_code || c.code || c.dial_code || null
+    const code = c.callingCode || null
+    const isoCode = c.countryCode  || null
 
     if (!title) continue
 
@@ -36,30 +38,25 @@ async function fetchCountries(): Promise<CountryOption[]> {
         title: normalizedTitle,
         flagUrl: flagUrl || null,
         code: code || undefined,
+        isoCode: isoCode ? isoCode.toUpperCase() : undefined,
       })
     }
   }
 
-  const list = Array.from(map.values()).sort((a, b) => a.title.localeCompare(b.title))
-
-  // Ensure a reasonable default exists (United States / +1) — if missing, try to add a minimal US entry
-  const hasUS = list.some((c) => c.title.toLowerCase().includes("united states") || c.code === "+1")
-  if (!hasUS) {
-    list.unshift({ id: "United States", title: "United States", flagUrl: "https://flagcdn.com/us.svg", code: "+1" })
-  }
-
-  return list
+  
+  return Array.from(map.values()).sort((a, b) => a.title.localeCompare(b.title))
 }
 
 type PhoneInputProps = {
   value?: string
-  onChange?: (phoneNumber: string, countryCode: string) => void
+  onChange?: (phoneNumber: string, callingCode: string, countryCode:string) => void
   label?: string
   placeholder?: string
   required?: boolean
   disabled?: boolean
   error?: string
   defaultValue?: string
+  defaultIsoCode?:string
 }
 
 export default function PhoneInput({
@@ -71,6 +68,7 @@ export default function PhoneInput({
   disabled = false,
   error,
   defaultValue,
+  defaultIsoCode,
 }: PhoneInputProps) {
   const [phoneNumber, setPhoneNumber] = useState("")
   const [selectedCountry, setSelectedCountry] = useState<CountryOption | null>(null)
@@ -78,51 +76,75 @@ export default function PhoneInput({
   const [searchTerm, setSearchTerm] = useState("")
   const dropdownRef = useRef<HTMLDivElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
-
+const isInitializedRef = useRef(false)
   const { data: countries = [], isLoading } = useQuery({
     queryKey: ["countries"],
     queryFn: fetchCountries,
     staleTime: 1000 * 60 * 60 * 24,
   })
 
+
+
+  // Initialize component with default values
  useEffect(() => {
-  if (!defaultValue || !countries.length) return;
+    if (isInitializedRef.current || isLoading || !countries.length) return
 
-  // Extract country code (+1, +880)
- const match = defaultValue.match(/^(\+\d{1,4})(\d*)$/);
+    let countryToSet: CountryOption | null = null
+    let phoneToSet = ""
 
-  if (match) {
-    const code = match[1];   // +880
-    const phone = match[2];  // 1712345678
-
-    const country = countries.find((c) => c.code === code);
-    if (country) {
-      setSelectedCountry(country);
-      setPhoneNumber(phone);
-      return;
+    // Step 1: Find country by ISO code (priority)
+    if (defaultIsoCode) {
+      const iso = defaultIsoCode.toUpperCase()
+      countryToSet = countries.find((c) => c.isoCode === iso) || null
     }
-  }
 
-  // Fallback if regex fails
-  setPhoneNumber(defaultValue.replace(/\D/g, ""));
-}, [defaultValue, countries]);
-
-
-  useEffect(() => {
-    if (countries.length && !selectedCountry && !defaultValue) {
-      const usCountry =
-      countries.find((c) => c.id === "United States") ||
-        countries.find((c) => c.code === "+1") ||
-        countries.find((c) => (c.title || "").toLowerCase().includes("united states"))
-
-      if (usCountry) {
-        setSelectedCountry(usCountry)
-        onChange?.(phoneNumber, usCountry.code || "")
+    // Step 2: If no ISO code, try to parse from defaultValue
+    if (!countryToSet && defaultValue && defaultValue.startsWith("+")) {
+      const cleaned = defaultValue.replace(/\s+/g, "")
+      const match = cleaned.match(/^(\+\d{1,4})(\d*)$/)
+      
+      if (match) {
+        const code = match[1]
+        phoneToSet = match[2]
+        countryToSet = countries.find((c) => c.code === code) || null
       }
     }
-  }, [countries, selectedCountry, defaultValue])
+
+    // Step 3: Set phone number
+    // If we found country by ISO, extract phone without country code
+    if (countryToSet && defaultValue) {
+      // Remove country code from defaultValue if present
+      phoneToSet = defaultValue.replace(countryToSet.code || "", "").replace(/^\+/, "").replace(/\D/g, "")
+    } else if (defaultValue && !phoneToSet) {
+      // Use defaultValue as-is
+      phoneToSet = defaultValue.replace(/\D/g, "")
+    }
+
+    // Step 4: Default to US if no country found
+    if (!countryToSet) {
+      countryToSet = 
+        countries.find((c) => c.isoCode === "US") ||
+        countries.find((c) => c.code === "+1") ||
+        countries[0] || null
+    }
+
+    setSelectedCountry(countryToSet)
+    setPhoneNumber(phoneToSet)
+    isInitializedRef.current = true
+
+    // Notify parent
+    if (countryToSet && onChange) {
+      onChange(phoneToSet, countryToSet.code || "", countryToSet.isoCode!)
+    }
+  }, [countries, isLoading, defaultValue, defaultIsoCode, onChange])
 
 
+  // Sync with external value prop (for controlled component)
+  useEffect(() => {
+    if (value !== undefined && value !== phoneNumber) {
+      setPhoneNumber(value)
+    }
+  }, [value])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -140,26 +162,31 @@ export default function PhoneInput({
     }
   }, [isOpen])
 
-  const filteredCountries = searchTerm
-    ? countries.filter((c) => c.title.toLowerCase().includes(searchTerm.toLowerCase()))
-    : countries
+const filteredCountries = useMemo(() => {
+    if (!searchTerm) return countries
+    const lower = searchTerm.toLowerCase()
+    return countries.filter((c) => 
+      c.title.toLowerCase().includes(lower) || 
+      c.code?.includes(searchTerm)
+    )
+  }, [countries, searchTerm])
 
   const handleCountrySelect = (country: CountryOption) => {
     setSelectedCountry(country)
     setIsOpen(false)
     setSearchTerm("")
-    onChange?.(phoneNumber, country.code || "")
+    onChange?.(phoneNumber, country.code || "", country.isoCode || "")
   }
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const num = e.target.value.replace(/\D/g, "")
     setPhoneNumber(num)
-    onChange?.(num, selectedCountry?.code || "")
+    onChange?.(num, selectedCountry?.code || "", selectedCountry?.isoCode || "")
   }
 
   const handleClear = () => {
     setPhoneNumber("")
-    onChange?.("", selectedCountry?.code || "")
+    onChange?.("", selectedCountry?.code || "", selectedCountry?.isoCode || "")
   }
 
   return (

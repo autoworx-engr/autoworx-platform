@@ -4,7 +4,7 @@ import { DialogClose, DialogContent, DialogFooter } from "@/components/Dialog";
 import FormError from "@/components/FormError";
 import { SlimInput } from "@/components/SlimInput";
 import Submit from "@/components/Submit";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { updateEmployee } from "@/actions/employee/update";
 import { getCompany } from "@/actions/settings/getCompany";
@@ -44,8 +44,8 @@ export default function EditClientModalBody({
   const { data: companyName } = useServerGet(getCompany);
   const [openChangePassword, setOpenChangePassword] = useState(false);
   const { showError, clearError } = useFormErrorStore();
-    const [countryCode, setCountryCode] = useState<string>("")
-    const [phoneNumber, setPhoneNumber] = useState<string>("")
+
+       const phoneDataRef = useRef({ phoneNumber: "", countryCode: "", isoCode: "" })
   const {
     dateRange,
     search,
@@ -68,18 +68,9 @@ export default function EditClientModalBody({
     }
   }, [newProfilePic]);
 
-  useEffect(()=>{
-     if (employee.phone) {
-      const match = employee.phone.match(/^(\+\d+)(.*)$/)
-      if (match) {
-        setCountryCode(match[1])
-        setPhoneNumber(match[2])
-      } else {
-        setPhoneNumber(employee.phone)
-      }
-    }
-  }, [employee.phone])
 
+
+   const { phoneNumber, countryCode, isoCode } = phoneDataRef.current;
   async function handleSubmit(data: FormData) {
     const fullPhone = `${countryCode}${phoneNumber}`;
   data.set("mobileNumber", fullPhone);
@@ -192,6 +183,7 @@ export default function EditClientModalBody({
       lastName,
       email,
       mobileNumber,
+      countryCode: isoCode,
       address,
       changePassword,
       city,
@@ -237,6 +229,8 @@ export default function EditClientModalBody({
   const isAdminOrManager =
     session?.user?.employeeType === "Admin" ||
     session?.user?.employeeType === "Manager";
+
+   
   return (
     <DialogContent
       className="max-h-full max-w-xl grid-rows-[auto,1fr,auto]"
@@ -378,10 +372,14 @@ export default function EditClientModalBody({
                       placeholder="1234567890"
                       required={false}
                       defaultValue={employee.phone!}
-                      value={phoneNumber}
-                      onChange={(phone, code) => {
-                        setPhoneNumber(phone)
-                        setCountryCode(code)
+                      // value={phoneNumber}
+                       defaultIsoCode={employee.countryCode!}
+                      onChange={(phone, code, iso) => {
+                        phoneDataRef.current = {
+                        phoneNumber: phone,
+                        countryCode: code,
+                        isoCode: iso || ""
+              };
                         clearError()
                       }}
                     />

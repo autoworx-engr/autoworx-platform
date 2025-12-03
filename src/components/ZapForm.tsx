@@ -30,8 +30,6 @@ type ZapFormProps = {
 const ZapForm = ({ company }: ZapFormProps) => {
   const [legalBusinessName, setLegalBusinessName] = useState<string>("");
   const [consent, setConsent] = useState<boolean>(false);
-    const [countryCode, setCountryCode] = useState<string>("")
-  const [phoneNumber, setPhoneNumber] = useState<string>("")
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -43,6 +41,7 @@ const ZapForm = ({ company }: ZapFormProps) => {
     multiServices: [] as { id: string | number; title: string }[],
     source: "",
     token: "",
+    countryCode: "US",
   });
 
   const {
@@ -124,29 +123,38 @@ const ZapForm = ({ company }: ZapFormProps) => {
     const { name, value } = e.target;
 
     // Special validation for phone field
-    if (name === "phone") {
-      // Update the value in state regardless of validation
-      setFormData({
-        ...formData,
-        phone: value,
-      });
+    // if (name === "phone") {
+    //   // Update the value in state regardless of validation
+    //   setFormData({
+    //     ...formData,
+    //     phone: value,
+    //   });
 
-      // Only show error if value is not empty and doesn't start with +1
-      if (value && !value.startsWith("+1")) {
-        setFieldErrors({
-          ...fieldErrors,
-          phone: "Phone number must start with +1",
-        });
-      } else {
-        clearFieldError("phone");
-      }
-    } else {
-      // Handle all other fields normally
-      setFormData({
-        ...formData,
-        [name]: value,
-      });
-    }
+    //   // Only show error if value is not empty and doesn't start with +1
+    //   // if (value && !value.startsWith("+1")) {
+    //   //   setFieldErrors({
+    //   //     ...fieldErrors,
+    //   //     phone: "Phone number must start with +1",
+    //   //   });
+    //   // } else {
+    //   //   clearFieldError("phone");
+    //   // }
+    // } else {
+    //   // Handle all other fields normally
+    //   setFormData({
+    //     ...formData,
+    //     [name]: value,
+    //   });
+    // }
+
+    setFormData({
+    ...formData,
+    [name]: value,
+  });
+  
+  
+  clearFieldError(name);
+
   };
 
   const clearFieldError = (field: string) => {
@@ -163,26 +171,31 @@ const ZapForm = ({ company }: ZapFormProps) => {
     setFormData((prev) => ({ ...prev, multiServices: value }));
   };
 
-  const handlePhoneChange = (num: string, code: string) => {
+  const handlePhoneChange = (num: string, code: string, isoCode:string) => {
  
   const fullPhoneNumber = `${code}${num}`; 
-
- 
-  setCountryCode(code);
-  setPhoneNumber(num);
 
  
   setFormData((prev) => ({
     ...prev,
     phone: fullPhoneNumber,
+    countryCode: isoCode,
   }));
+
+  clearFieldError("phone");
 }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
     setFormStatus({ message: "", type: null });
-
+if (!formData.phone || formData.phone.length < 10) {
+    setFieldErrors({
+      ...fieldErrors,
+      phone: "Please enter a valid phone number",
+    });
+    return;
+  }
     try {
       const serviceTitle =
         formData.multiServices && formData.multiServices.length > 0
@@ -214,6 +227,7 @@ const ZapForm = ({ company }: ZapFormProps) => {
           name: formData.name,
           email: formData.email,
           phone: formData.phone,
+          countryCode: formData.countryCode,
           opportunity_source: opportunitySource,
           multiServices: formData?.multiServices,
         }),
@@ -236,6 +250,7 @@ const ZapForm = ({ company }: ZapFormProps) => {
           vehicle_model: "",
           others: "",
           multiServices: [],
+          countryCode: "US",
         });
       } else {
         setFormStatus({
@@ -401,10 +416,10 @@ const ZapForm = ({ company }: ZapFormProps) => {
 
                <PhoneInput
     label="Phone Number"
-    value={formData.phone} 
-    onChange={(num, code) => handlePhoneChange(num, code)} 
+    // value={formData.phone} 
+    onChange={(num, code, isoCode) => handlePhoneChange(num, code, isoCode)} 
     required
-    error={fieldErrors.phone} // এরর মেসেজ পাস করুন
+    error={fieldErrors.phone} 
   />
             </div>{" "}
             <div className="space-y-2">

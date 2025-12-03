@@ -43,6 +43,7 @@ export default function BusinessForm({ company }: TProps) {
     state: company?.state || "",
     zip: company?.zip || "",
     timezone: company?.timezone,
+    countryCode: company?.countryCode || "",
   };
 
   const [businessSettings, setBusinessSettings] = useState(
@@ -143,7 +144,7 @@ export default function BusinessForm({ company }: TProps) {
     return "";
   };
 
-  const handlePhoneChange = (num: string, code: string) => {
+  const handlePhoneChange = (num: string, code: string, isoCode:string) => {
 
     const fullPhoneNumber = `${code}${num}`;
 
@@ -151,6 +152,7 @@ export default function BusinessForm({ company }: TProps) {
     setBusinessSettings((prev) => ({
       ...prev,
       businessPhone: fullPhoneNumber,
+      countryCode: isoCode,
     }));
 
     const error = validateBusinessPhone(fullPhoneNumber);
@@ -309,6 +311,7 @@ export default function BusinessForm({ company }: TProps) {
         zip: businessSettings.zip,
         image,
         timezone: businessSettings.timezone,
+        countryCode: businessSettings.countryCode,
       };
 
       const response = await updateCompany(company?.id, companyData);
@@ -415,7 +418,8 @@ export default function BusinessForm({ company }: TProps) {
             <PhoneInput
     label="Business Phone"
     defaultValue={company?.phone || ""}
-    value={businessSettings.businessPhone} 
+     defaultIsoCode={company?.countryCode!}
+    // value={businessSettings.businessPhone} 
     onChange={handlePhoneChange} 
     required={true}
     error={validationErrors.businessPhone}

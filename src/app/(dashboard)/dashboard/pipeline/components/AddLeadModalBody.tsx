@@ -21,6 +21,7 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
   const queryClient = useQueryClient();
    const [phoneNumber, setPhoneNumber] = useState("")
   const [countryCode, setCountryCode] = useState("")
+  const [isoCode, setIsoCode] = useState("")
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -32,6 +33,7 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
     service: "" as string | { id: string | number; title: string },
     source: "",
     token: "",
+    countryCode: "US",
   });
 
   const [selectedService, setSelectedService] = useState<{
@@ -93,7 +95,7 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
 
    useEffect(() => {
     const fullPhone = `${countryCode}${phoneNumber}`
-    setFormData((prev) => ({ ...prev, phone: fullPhone }))
+    setFormData((prev) => ({ ...prev, phone: fullPhone, countryCode: isoCode }));
 
     // Validate phone number length (at least 10 digits)
     if (phoneNumber && phoneNumber.length < 10) {
@@ -104,7 +106,7 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
     } else if (phoneNumber) {
       clearFieldError("phone")
     }
-  }, [phoneNumber, countryCode])
+  }, [phoneNumber, countryCode, isoCode])
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
 
@@ -176,6 +178,7 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
             name: formData.name,
             email: formData.email,
             phone: formData.phone,
+            countryCode: formData.countryCode,
             serviceId: formData.service,
             opportunity_source: opportunitySource,
           }),
@@ -210,6 +213,7 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
           others: "",
           service: "",
           source: "",
+          countryCode: "US",
         })
         setPhoneNumber("")
         setCountryCode("+1")
@@ -253,6 +257,7 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
     { title: "Phone Call", id: "Phone Call" },
   ];
 
+  console.log("formData", formData);
   return (
     <DialogContent
       className="max-h-[calc(100vh-2rem)] overflow-y-auto"
@@ -324,9 +329,10 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
           label="Phone Number"
           placeholder="(555) 123-4567"
           required
-          onChange={(phone, code) => {
+          onChange={(phone, code, isoCode) => {
             setPhoneNumber(phone)
             setCountryCode(code)
+            setIsoCode(isoCode)
           }}
           error={fieldErrors.phone}
         />

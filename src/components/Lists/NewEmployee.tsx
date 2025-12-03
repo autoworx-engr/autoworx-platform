@@ -33,8 +33,15 @@ export default function AddNewEmployee({
   const [employeeTypeOpen, setEmployeeTypeOpen] = useState(false);
   const [salaryTypeOpen, setSalaryTypeOpen] = useState(false);
   const [profilePic, setProfilePic] = useState<File | null>(null);
-  const [mobile, setMobile] = useState("+1");
-  const [country, setCountry] = useState('');
+  // const [mobile, setMobile] = useState("+1");
+  // const [country, setCountry] = useState('');
+  // const [countryIsoCode, setCountryIsoCode] = useState('');
+
+  const phoneDataRef = useRef({
+  mobile: "",
+  country: "",
+  countryIsoCode: ""
+});
   const [salaryData, setSalaryData] = useState<{
     salaryType: SalaryType;
     salaryAmount: number;
@@ -42,7 +49,7 @@ export default function AddNewEmployee({
 
   const { data: companyName } = useServerGet(getCompany);
   const { showError, clearError } = useFormErrorStore();
-
+const { mobile, country, countryIsoCode } = phoneDataRef.current;
   async function handleSubmit() {
     clearError();
     let photo;
@@ -57,7 +64,7 @@ export default function AddNewEmployee({
     // const mobileNumber = document.querySelector<HTMLInputElement>(
     //   "[name='mobileNumber']"
     // )?.value;
-
+    
     const mobileNumber = country && mobile ? `${country}${mobile}` : mobile || ""
     const address =
       document.querySelector<HTMLInputElement>("[name='address']")?.value;
@@ -207,6 +214,7 @@ export default function AddNewEmployee({
         lastName,
         email,
         mobileNumber: mobileNumber,
+        countryCode: countryIsoCode,
         address,
         city,
         state,
@@ -248,6 +256,7 @@ export default function AddNewEmployee({
     setOpen(false);
   };
 
+  console.log("Country Iso Code:", countryIsoCode);
   return (
     <div className="">
       <Dialog
@@ -395,10 +404,13 @@ export default function AddNewEmployee({
                           label="Mobile"
                           placeholder="1234567890"
                           required={false}
-                          value={mobile}
-                          onChange={(phone, code) => {
-                            setMobile(phone)
-                            setCountry(code)
+                          // value={mobile}
+                          onChange={(phone, code, isoCode) => {
+                            phoneDataRef.current = {
+                              mobile: phone,
+                              country: code,
+                              countryIsoCode: isoCode || ""
+                            };
                             clearError()
                           }}
                         />

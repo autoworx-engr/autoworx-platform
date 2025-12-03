@@ -51,6 +51,7 @@ export default function NewCustomer({
   const pathname = usePathname();
   const queryClient = useQueryClient();
   const [country, setCountry] = useState('');
+  const [countryIsoCode, setCountryIsoCode] = useState('');
   const { search, currentPage, pageSize } = useClientFilterStore();
   const [clientInfo, setClientInfo] = useState({
     firstName: "",
@@ -97,7 +98,9 @@ export default function NewCustomer({
     setProfilePic(null);
     setTagOpenDropdown(false);
     setTag(undefined);
+    setCountryIsoCode("");
   }
+
 
   async function handleSubmit() {
     clearError();
@@ -165,6 +168,7 @@ const fullPhone = `${country}${mobile}`
         lastName,
         email,
         mobile: fullPhone,
+        countryCode: countryIsoCode,
         customerCompany,
         address,
         city,
@@ -207,8 +211,10 @@ const fullPhone = `${country}${mobile}`
     setMobile("+1");
     setIsClientOpen(false);
     setIsAppointmentModalOpen && setIsAppointmentModalOpen(true);
+    setCountryIsoCode("");
   };
 
+   
   return (
     <Dialog
       open={isClientOpen}
@@ -356,10 +362,11 @@ const fullPhone = `${country}${mobile}`
             label="Mobile Number"
             placeholder="1234567890"
             required
-            onChange={(phoneNum, code) => {
+            onChange={(phoneNum, code, isoCode) => {
               setMobile(phoneNum);
               setCountry(code);
-              console.log('Phone:', phoneNum, 'Country Code:', code);
+              if (isoCode) setCountryIsoCode(isoCode);
+              clearError();
             }}
           />
           </div>
