@@ -26,7 +26,7 @@ export default function EmptyMessageBox() {
 
         {/* Primary Heading: Clear, Modern, and professional font weight */}
         <h2 className="text-4xl font-extrabold text-slate-900 dark:text-white mb-4 tracking-tight">
-          Start Your Collaboration
+          Communicate with Your Team
         </h2>
 
         {/* Subtitle: Direct Instructions with Muted Color */}

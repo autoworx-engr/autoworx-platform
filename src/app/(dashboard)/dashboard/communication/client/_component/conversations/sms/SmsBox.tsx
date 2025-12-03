@@ -218,6 +218,7 @@ export default function SmsBox({ clientId }: { clientId: number }) {
         {/* messages */}
         <div className="flex flex-col gap-2">
           {messages.map((message: any, idx: number) => {
+            console.log("Rendering SMS message:", message);
             const created = new Date(message.createdAt);
             const dateStr = created.toDateString();
             const showChip = dateStr !== lastDateStr;

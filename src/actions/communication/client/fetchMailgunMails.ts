@@ -14,6 +14,12 @@ export const fetchMailsMailgun = cache(async (clientId: number) => {
       },
       include: {
         attachments: true,
+        user: {
+          select: {
+            firstName: true,
+            lastName:true
+          }
+        }
       },
     });
 

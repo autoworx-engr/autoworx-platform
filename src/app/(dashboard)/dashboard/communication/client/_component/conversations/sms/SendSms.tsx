@@ -13,6 +13,7 @@ import React, { useRef, useState } from "react";
 import useSmsSendMutation from "../../../_hooks/useSmsSendMutation";
 import AttachmentInput from "../AttachmentInput";
 import SmartReplyBar from "./SmartReply";
+import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
 
 // Helper function to format attachment message
 const formatAttachmentMessage = (files: File[]) => {
@@ -46,7 +47,7 @@ export default function SendSms({ clientId, companyId }: TProps) {
     useClientCommunicationStore();
 
   const { data } = useServerGet(getCompany);
-
+  const currentUser = useGetCurrentUser();
   const [files, setFiles] = useState<File[]>([]);
   const [messageInput, setMessageInput] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
@@ -77,6 +78,10 @@ export default function SendSms({ clientId, companyId }: TProps) {
       isSending: true,
       sentBy: "Company",
       smsGateway: data?.smsGateway || "TWILIO",
+      user: {
+        firstName: currentUser?.name || "",
+        lastName:  "",
+      }
     };
 
     // Update conversation track optimistically

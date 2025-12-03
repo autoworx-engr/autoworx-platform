@@ -6,6 +6,7 @@ import moment from "moment";
 import { useRouter } from "next/navigation";
 import { useCalendarStore } from "@/stores/calendarStore";
 import { Search } from "lucide-react";
+import { useDebounce } from "@/hooks/useDebounce";
 
 type SearchResult = {
   id: number;
@@ -13,6 +14,7 @@ type SearchResult = {
   date: Date | string;
   type: "task" | "appointment";
   startTime?: string;
+  searchText?: string;
 };
 
 export default function CalendarSearch({
@@ -36,33 +38,74 @@ export default function CalendarSearch({
   const allItems = useRef<SearchResult[]>([]);
 
   useEffect(() => {
+    // Helper to normalize text: remove diacritics, collapse whitespace, lower-case
+    const normalize = (s: string) =>
+      s
+        .normalize("NFD")
+        .replace(/\p{M}/gu, "")
+        .replace(/\s+/g, " ")
+        .trim()
+        .toLowerCase();
+
     allItems.current = [
-      ...tasks.map((task) => ({
-        id: task.id,
-        title: task.title,
-        date: task.date,
-        type: "task" as const,
-        startTime: task.startTime,
-      })),
-      ...appointments.map((appointment) => ({
-        id: appointment.id,
-        title: appointment.title || "Untitled Appointment",
-        date: appointment.date || new Date(), // Fallback to current date if null
-        type: "appointment" as const,
-        startTime: appointment.startTime || undefined, // Convert null to undefined
-      })),
+      ...tasks.map((task) => {
+        const dateString = moment(task.date).format("MMM DD YYYY");
+        const timeString = task.startTime
+          ? moment(task.startTime, "HH:mm").format("h:mm A")
+          : "";
+        const combined = `${task.title} ${dateString} task ${timeString}`;
+        return {
+          id: task.id,
+          title: task.title,
+          date: task.date,
+          type: "task" as const,
+          startTime: task.startTime,
+          searchText: normalize(combined),
+        };
+      }),
+      ...appointments.map((appointment) => {
+        const title = appointment.title || "Untitled Appointment";
+        const dateVal = appointment.date || new Date();
+        const dateString = moment(dateVal).format("MMM DD YYYY");
+        const timeString = appointment.startTime
+          ? moment(appointment.startTime, "HH:mm").format("h:mm A")
+          : "";
+        const combined = `${title} ${dateString} appointment ${timeString}`;
+
+        return {
+          id: appointment.id,
+          title,
+          date: appointment.date || new Date(), 
+          type: "appointment" as const,
+          startTime: appointment.startTime || undefined, 
+          searchText: normalize(combined),
+        };
+      }),
     ];
   }, [tasks, appointments]);
 
-  useEffect(() => {
-    if (searchTerm.trim() === "") {
+  const handleSearch = (term: string) => {
+    const normalize = (s: string) =>
+      s
+        .normalize("NFD")
+        .replace(/\p{M}/gu, "")
+        .replace(/\s+/g, " ")
+        .trim()
+        .toLowerCase();
+
+    const normalizedTerm = normalize(term);
+
+    if (normalizedTerm === "") {
       setSearchResults([]);
       return;
     }
 
-    const filteredResults = allItems.current.filter((item) =>
-      item.title.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const tokens = normalizedTerm.split(" ").filter(Boolean);
+
+    const filteredResults = allItems.current.filter((item) => {
+      const hay = (item.searchText || "") as string;
+      return tokens.every((t) => hay.includes(t));
+    });
 
     filteredResults.sort((a, b) => {
       const dateA = new Date(a.date);
@@ -71,7 +114,27 @@ export default function CalendarSearch({
     });
 
     setSearchResults(filteredResults.slice(0, 10)); // Limit to 10 results
-  }, [searchTerm]);
+  };
+
+const debouncedSearch = useDebounce(handleSearch, 300);
+  // useEffect(() => {
+  //   if (searchTerm.trim() === "") {
+  //     setSearchResults([]);
+  //     return;
+  //   }
+
+  //   const filteredResults = allItems.current.filter((item) =>
+  //     item.title.toLowerCase().includes(searchTerm.toLowerCase())
+  //   );
+
+  //   filteredResults.sort((a, b) => {
+  //     const dateA = new Date(a.date);
+  //     const dateB = new Date(b.date);
+  //     return dateB.getTime() - dateA.getTime();
+  //   });
+
+  //   setSearchResults(filteredResults.slice(0, 10)); // Limit to 10 results
+  // }, [searchTerm]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -120,8 +183,10 @@ export default function CalendarSearch({
           type="text"
           value={searchTerm}
           onChange={(e) => {
-            setSearchTerm(e.target.value);
-            setIsDropdownOpen(e.target.value.trim() !== "");
+            const value = e.target.value;
+                        setSearchTerm(value);
+                        setIsDropdownOpen(value.trim() !== "");
+                        debouncedSearch(value);
           }}
           onFocus={() => {
             if (searchTerm.trim() !== "") {
