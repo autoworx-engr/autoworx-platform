@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { CameraIcon, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import TextScanTab from "./text-scan-tab";
+import { X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import BarcodeScanTab from "./barcode-scan-tab";
+import TextScanTab from "./text-scan-tab";
 
 interface VINScannerModalProps {
   isOpen: boolean;
@@ -18,60 +18,23 @@ export default function VINScannerModal({
   onScanComplete,
 }: VINScannerModalProps) {
   const [activeTab, setActiveTab] = useState<"barcode" | "text">("barcode");
-  const [isCameraActive, setIsCameraActive] = useState(false);
   const [manualInput, setManualInput] = useState("");
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
+  // const streamRef = useRef<MediaStream | null>(null);
 
-  useEffect(() => {
-    return () => {
-      // Cleanup camera stream when component unmounts
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-      }
-    };
-  }, []);
+  // useEffect(() => {
+  //   return () => {
+  //     // Cleanup camera stream when component unmounts
+  //     if (streamRef.current) {
+  //       streamRef.current.getTracks().forEach(track => track.stop());
+  //     }
+  //   };
+  // }, []);
 
-  const startCamera = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" },
-      });
-      console.log("Camera stream started");
-      console.log("videoRef.current:", videoRef.current);
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        streamRef.current = stream;
-        console.log("Setting isCameraActive to true");
-        setIsCameraActive(true);
-      }
-    } catch (error) {
-      console.error("Error accessing camera:", error);
-      alert("Unable to access camera. Please check permissions.");
-    }
-  };
-
-  const stopCamera = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-    }
-    setIsCameraActive(false);
-  };
-
-  const captureFrame = () => {
-    if (videoRef.current && canvasRef.current) {
-      const context = canvasRef.current.getContext("2d");
-      if (context) {
-        context.drawImage(videoRef.current, 0, 0);
-        // In a real app, you would send this to a barcode/OCR service
-        // For now, simulate detection
-        const mockVin =
-          "JTHBP5C22A5" + Math.random().toString(36).substring(7).toUpperCase();
-        onScanComplete(mockVin.substring(0, 17));
-      }
-    }
-  };
+  // const stopCamera = () => {
+  //   if (streamRef.current) {
+  //     streamRef.current.getTracks().forEach(track => track.stop());
+  //   }
+  // };
 
   const handleTextSubmit = () => {
     if (manualInput.length >= 5) {
@@ -79,6 +42,8 @@ export default function VINScannerModal({
       setManualInput("");
     }
   };
+
+  console.log({ manualInput });
 
   if (!isOpen) return null;
 
@@ -103,8 +68,7 @@ export default function VINScannerModal({
             type="button"
             onClick={() => {
               setActiveTab("barcode");
-              stopCamera();
-              setIsCameraActive(false);
+              // stopCamera();
             }}
             className={`pb-3 px-4 font-medium transition-colors ${
               activeTab === "barcode"
@@ -118,8 +82,7 @@ export default function VINScannerModal({
             type="button"
             onClick={() => {
               setActiveTab("text");
-              stopCamera();
-              setIsCameraActive(false);
+              // stopCamera();
             }}
             className={`pb-3 px-4 font-medium transition-colors ${
               activeTab === "text"
@@ -133,51 +96,46 @@ export default function VINScannerModal({
 
         {/* Barcode Tab */}
         {activeTab === "barcode" && (
-          <BarcodeScanTab
-            canvasRef={canvasRef}
-            videoRef={videoRef}
-            isCameraActive={isCameraActive}
-            onStartCamera={startCamera}
-            onStopCamera={stopCamera}
-            onCaptureFrame={captureFrame}
-          />
+          <BarcodeScanTab onDetectedValue={vin => setManualInput(vin)} />
         )}
 
         {/* Text Tab */}
         {activeTab === "text" && (
-          <TextScanTab
-            canvasRef={canvasRef}
-            videoRef={videoRef}
-            isCameraActive={isCameraActive}
-            onStartCamera={startCamera}
-            onStopCamera={stopCamera}
-            onCaptureFrame={captureFrame}
-          />
+          <TextScanTab onDetectedValue={vin => setManualInput(vin)} />
         )}
 
         {/* Manual Input Fallback */}
-        <div className="mt-6 border-t pt-6">
-          <p className="mb-3 text-sm font-medium text-black">
+        <div className="mt-8 border-t border-gray-200 pt-6">
+          <p className="mb-4 text-sm font-medium text-gray-700">
             Or enter manually:
           </p>
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-4">
+            {/* Modernized Input Field */}
             <input
               type="text"
               value={manualInput}
               onChange={e => setManualInput(e.target.value.toUpperCase())}
-              placeholder="Enter VIN"
+              placeholder="Enter VIN (17 characters max)"
               maxLength={17}
-              className="flex-1 rounded border border-black bg-white px-3 py-2 text-white placeholder-gray-400 focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400"
+              // Modern design classes: lighter border, rounded corners, subtle shadow, and a distinct focus ring.
+              className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 shadow-sm transition duration-150 ease-in-out focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 sm:text-base"
             />
-            <Button
+
+            {/* Modernized Submit Button */}
+            <button
               type="button"
               onClick={handleTextSubmit}
-              disabled={manualInput.length < 5}
-              className="bg-white text-black hover:bg-gray-400 disabled:bg-gray-500 py-4 disabled:text-gray-400"
+              disabled={manualInput.length < 5} // Keep the original minimum length check
+              // Primary button design: distinct color, subtle hover, disabled state is clearly muted.
+              className="w-full sm:w-auto rounded-lg bg-indigo-600 px-6 py-3 text-base font-semibold text-white shadow-md transition duration-150 ease-in-out hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-gray-400 disabled:shadow-none"
             >
               Submit
-            </Button>
+            </button>
           </div>
+          {/* Optional helper text for clarity */}
+          <p className="mt-2 text-xs text-gray-500">
+            A VIN is 17 characters long and contains both numbers and letters.
+          </p>
         </div>
       </div>
     </div>

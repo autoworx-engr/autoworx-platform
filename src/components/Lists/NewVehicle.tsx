@@ -247,7 +247,7 @@ export default function NewVehicle({
             <SlimInput name="license" required={false} label="License Plate" />
             <div className="flex items-end gap-2">
               <SlimInput name="vin" required={false} />
-              
+
               <VINInputCamera onVehicleInfo={value => console.log(value)} />
             </div>
             <SlimInput

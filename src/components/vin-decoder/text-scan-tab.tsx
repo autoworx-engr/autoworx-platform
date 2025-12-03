@@ -1,25 +1,19 @@
+"use client";
 import { Button } from "@/components/ui/button";
 import { CameraIcon, ScanLine } from "lucide-react";
 import { useRef, useState } from "react";
 import { createWorker } from "tesseract.js";
 
 type TTextScanTabProps = {
-  isCameraActive: boolean;
-  onStartCamera: () => void;
-  onStopCamera: () => void;
-  onCaptureFrame: () => void;
-  videoRef: React.RefObject<HTMLVideoElement>;
-  canvasRef: React.RefObject<HTMLCanvasElement>;
+  onDetectedValue?: (vin: string) => void;
 };
 
 const vinRegex = /[A-HJ-NPR-Z0-9]{17}/g; // basic VIN pattern
 
-export default function TextScanTab({
-  //   isCameraActive,
-  onStopCamera,
-}: TTextScanTabProps) {
+export default function TextScanTab({ onDetectedValue }: TTextScanTabProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const [vin, setVin] = useState("");
   const [loading, setLoading] = useState(false);
   const [isCameraActive, setIsCameraActive] = useState(false);
@@ -29,9 +23,17 @@ export default function TextScanTab({
     const stream = await navigator.mediaDevices.getUserMedia({
       video: { facingMode: "environment" },
     });
-    console.log(videoRef.current);
     if (videoRef.current) {
       videoRef.current.srcObject = stream;
+      streamRef.current = stream;
+    }
+  };
+
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+      setIsCameraActive(false);
     }
   };
 
@@ -60,9 +62,8 @@ export default function TextScanTab({
     console.log(matches);
 
     if (matches && matches.length) {
-      setVin(matches[0]); // first VIN-like match
-    } else {
-      setVin("No VIN found");
+      const vin = matches[0];
+      onDetectedValue && onDetectedValue(vin);
     }
     setLoading(false);
   };
@@ -112,12 +113,13 @@ export default function TextScanTab({
               type="button"
               onClick={onCaptureFrame}
               className="flex-1 bg-green-600 text-white hover:bg-green-700"
+              disabled={loading}
             >
-              Capture
+              {loading ? "Loading..." : "Capture"}
             </Button>
             <Button
               type="button"
-              onClick={onStopCamera}
+              onClick={stopCamera}
               variant="outline"
               className="flex-1 border-blue-600 text-blue-300 hover:bg-blue-700 bg-transparent"
             >

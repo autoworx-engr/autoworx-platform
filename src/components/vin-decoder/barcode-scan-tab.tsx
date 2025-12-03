@@ -1,24 +1,107 @@
 import { Button } from "@/components/ui/button";
-import { CameraIcon, ScanLine } from "lucide-react";
+import { ScanLine } from "lucide-react";
+
+import React, { useEffect, useRef, useState } from "react";
+import {
+  BrowserMultiFormatReader,
+  BarcodeFormat,
+  DecodeHintType,
+} from "@zxing/library";
 
 type TBarcodeScanTabProps = {
-  isCameraActive: boolean;
-  onStartCamera: () => void;
-  onStopCamera: () => void;
-  onCaptureFrame: () => void;
-  videoRef: React.RefObject<HTMLVideoElement>;
-  canvasRef: React.RefObject<HTMLCanvasElement>;
+  onDetectedValue?: (vin: string) => void;
+};
+
+const isValidVin = (vin: string) => {
+  const normalized = vin.trim().toUpperCase();
+  // VIN = 17 characters, no I, O, Q
+  return /^[A-HJ-NPR-Z0-9]{17}$/.test(normalized);
 };
 
 export default function BarcodeScanTab({
-  isCameraActive,
-  onStartCamera,
-  onStopCamera,
-  onCaptureFrame,
-  videoRef,
-  canvasRef,
+  onDetectedValue,
 }: TBarcodeScanTabProps) {
-  console.log("isCameraActive:", isCameraActive);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const readerRef = useRef<BrowserMultiFormatReader | null>(null);
+
+  const [scannedValue, setScannedValue] = useState("");
+  const [isValid, setIsValid] = useState(false);
+  const [error, setError] = useState<string | null>("");
+  const [isCameraActive, setIsCameraActive] = useState(false);
+
+  // init reader once
+  useEffect(() => {
+    const hints = new Map();
+    hints.set(DecodeHintType.POSSIBLE_FORMATS, [
+      BarcodeFormat.CODE_39, // most VIN barcodes
+      BarcodeFormat.CODE_128,
+      BarcodeFormat.PDF_417,
+      BarcodeFormat.DATA_MATRIX,
+    ]);
+
+    readerRef.current = new BrowserMultiFormatReader(hints);
+
+    return () => {
+      // cleanup on unmount
+      if (readerRef.current) {
+        readerRef.current.reset();
+      }
+    };
+  }, []);
+
+  const onStartCamera = async () => {
+    if (!readerRef.current) return;
+    setError(null);
+    setIsCameraActive(true);
+
+    try {
+      const devices = await readerRef.current.listVideoInputDevices();
+      if (!devices.length) {
+        setError("No camera devices found");
+        setIsCameraActive(false);
+        return;
+      }
+
+      const deviceId = devices[0].deviceId;
+      console.log("Using video device:", deviceId);
+      console.log("Video ref:", videoRef.current);
+
+      await readerRef.current.decodeFromVideoDevice(
+        deviceId,
+        (videoRef.current as HTMLVideoElement) || undefined,
+        (result, err) => {
+          console.log({ result, err });
+          if (result) {
+            const text = result.getText().trim();
+            setScannedValue(text);
+
+            const vinOk = isValidVin(text);
+            setIsValid(vinOk);
+
+            if (vinOk) {
+              // stop scanning after a valid VIN
+              readerRef?.current?.reset();
+              setIsCameraActive(false);
+              if (onDetectedValue) onDetectedValue(text);
+            }
+          }
+          // `err` happens a lot while scanning; usually safe to ignore
+        }
+      );
+    } catch (e: any) {
+      console.error(e);
+      setError(e.message || "Could not start VIN scanner");
+      setIsCameraActive(true);
+    }
+  };
+
+  const onStopScan = () => {
+    if (readerRef.current) {
+      readerRef.current.reset();
+      setIsCameraActive(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       {!isCameraActive ? (
@@ -53,24 +136,28 @@ export default function BarcodeScanTab({
               autoPlay
               playsInline
               className="h-64 w-full object-cover"
+              muted
             />
             {/* Barcode scanning frame overlay */}
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="h-32 w-48 border-2 border-white opacity-75" />
             </div>
           </div>
-          <canvas ref={canvasRef} className="hidden" width="640" height="480" />
+
           <div className="flex gap-2">
             <Button
               type="button"
-              onClick={onCaptureFrame}
-              className="flex-1 bg-black text-white hover:bg-gray-900"
+              variant="outline"
+              className="flex-10 bg-white text-black border-black hover:bg-gray-100"
+              // disabled={!scannedValue}
+              disabled
             >
-              Capture
+              {/* {!!scannedValue ? "Scan" : "Scanning"} */}
+              Scanning
             </Button>
             <Button
               type="button"
-              onClick={onStopCamera}
+              onClick={onStopScan}
               variant="outline"
               className="flex-10 bg-white text-black border-black hover:bg-gray-100"
             >
