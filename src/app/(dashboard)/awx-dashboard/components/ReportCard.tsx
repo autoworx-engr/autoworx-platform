@@ -30,20 +30,17 @@ const ReportCard = ({ report }: ReportCardProps) => {
   return (
    <div className="relative rounded-xl border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-900/70 backdrop-blur-sm p-4 transition-all duration-300 hover:shadow-lg hover:shadow-slate-300/50 dark:hover:shadow-slate-900/50 hover:ring-2 hover:ring-[#6571FF]/20 hover:-translate-y-0.5">
       <div className="flex items-center justify-between gap-6">
-        <div className="max-w-2/4 flex-1 text-slate-600 dark:text-slate-300">
-          <div className="flex justify-between items-start gap-3">
+        <div className="min-w-0 flex-1 ">
+  
             {/* Report Subject */}
-            <p className="mb-1 w-full font-bold text-slate-700 dark:text-slate-200 truncate">
+            <p className="mb-1  font-bold text-slate-700 dark:text-slate-200 truncate max-w-full">
               {
                 report?.BugReportMessage?.[report?.BugReportMessage?.length - 1]
                   ?.subject
               }
             </p>
-            {/* View Button */}
-            <div className="shrink-0 pt-0.5">
-              <ViewButton />
-            </div>
-          </div>
+       
+          
           {/* Date */}
           <div className="mb-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
             {moment(report?.createdAt).format("DD MMMM YYYY")}
@@ -65,6 +62,9 @@ const ReportCard = ({ report }: ReportCardProps) => {
       </div>
       {/* Primary accent color bar for visual hierarchy and importance */}
       <div className="absolute right-0 top-1/2 h-[90%] w-1 -translate-y-1/2 rounded-l-3xl bg-gradient-to-r from-[#6571FF] to-[#5a66ee]"></div>
+       <div className="shrink-0 pt-0.5">
+              <ViewButton />
+            </div>
     </div>
   );
 };
