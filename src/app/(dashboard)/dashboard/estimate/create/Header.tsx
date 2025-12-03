@@ -17,6 +17,7 @@ import { CreateEstimateActionsButtons } from "./CreateEstimateActionButtons";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { SlimInput } from "@/components/SlimInput";
 import SelectTemplate from "./SelectTemplate";
+import { useListsStore } from "@/stores/lists";
 
 export default function Header({
   id,
@@ -39,6 +40,7 @@ export default function Header({
 }) {
   const { invoiceId, setInvoiceId, setTitle, title, template, setTemplate } =
     useEstimateCreateStore();
+  const { status: selectedStatus } = useListsStore();
 
   //dropdown states
   const [clientOpenDropdown, setClientOpenDropdown] = useState(false);
@@ -96,7 +98,7 @@ export default function Header({
         <p>{invoiceId}</p>
       </div>
 
-      <CreateEstimateActionsButtons status={status!} />
+      <CreateEstimateActionsButtons status={status! || selectedStatus} />
 
       <div className="flex basis-full flex-wrap items-end gap-3">
         {isTemplate ? (
@@ -127,7 +129,7 @@ export default function Header({
         )}
 
         <SelectStatus
-          value={status}
+          value={status || selectedStatus}
           open={statusOpenDropdown}
           setOpen={setStatusOpenDropdown}
           isAllServicesCompleted={isAllServicesCompleted}

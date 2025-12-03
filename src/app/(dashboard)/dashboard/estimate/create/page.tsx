@@ -9,15 +9,7 @@ import { SyncLists } from "@/components/SyncLists";
 import Title from "@/components/Title";
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
-import {
-  InventoryProduct,
-  InvoiceItem,
-  InvoiceType,
-  Labor,
-  Material,
-  Service,
-  Tag,
-} from "@prisma/client";
+import { InvoiceType, Tag } from "@prisma/client";
 import { BillSummary } from "./BillSummary";
 import ConvertButton from "./ConvertButton";
 import Create from "./Create";
@@ -26,7 +18,7 @@ import { AttachmentTab } from "./tabs/AttachmentTab";
 import { CreateTab } from "./tabs/CreateTab";
 import PaymentTab from "./tabs/PaymentTab";
 import EstimateInspectionsTab from "./tabs/EstimateInspectionsTab";
-import SyncEstimate from "./SyncEstimate";
+import DynamicTemplateLoader from "../DynamicTemplateLoader";
 
 export default async function Page({
   searchParams,
@@ -39,147 +31,14 @@ export default async function Page({
     : null;
   const templateId = searchParams.templateId ? searchParams.templateId : null;
 
-  let estimateTemplate: any = null;
-  let photos: any = null;
-  let items: any = null;
-  let tasks: any = null;
-  let invoiceInspections: any = null;
-
-  if (templateId && searchParams?.templateId) {
-    estimateTemplate = await db.invoiceTemplate.findUnique({
-      where: { id: searchParams?.templateId, companyId },
-    });
-
-    items = await db.invoiceItem.findMany({
-      where: { invoiceTemplateId: estimateTemplate.id },
-      include: {
-        service: {
-          include: {
-            Technician: true,
-          },
-        },
-        materials: {
-          include: {
-            tags: {
-              include: { tag: true },
-            },
-          },
-        },
-        labor: {
-          include: {
-            tags: {
-              include: { tag: true },
-            },
-          },
-        },
-        tags: {
-          include: { tag: true },
-        },
-      },
-    });
-
-    const completedServices: string[] = [];
-    const incompleteServices: string[] = [];
-
-    items.forEach((item: any) => {
-      // @ts-ignore
-      item.tags = item.tags?.map((tag) => tag.tag);
-      item.materials = item.materials?.map((material: any) => {
-        // @ts-ignore
-        material.tags = material.tags?.map((tag) => tag.tag);
-        return material;
-      });
-      // @ts-ignore
-      item.labor = item.labor
-        ? {
-            ...item.labor,
-            // @ts-ignore
-            tags: item.labor?.tags?.map((tag) => tag.tag),
-          }
-        : null;
-
-      //
-      //
-      //
-      // find out incomplete and completed services
-
-      const technicians =
-        item.service?.Technician?.filter(
-          (tech: any) => tech.invoiceId === estimateTemplate.id
-        ) || [];
-
-      if (technicians.length) {
-        if (Array.isArray(technicians) && technicians.length > 0) {
-          const statuses = technicians.map((tech) =>
-            tech.status?.toLowerCase().trim()
-          );
-
-          const isServiceComplete = statuses.every(
-            (status) => status === "complete"
-          );
-
-          if (isServiceComplete) {
-            completedServices.push(item.service?.name ?? "");
-          } else {
-            incompleteServices.push(item.service?.name ?? "");
-          }
-        } else {
-          incompleteServices.push(item.service?.name ?? "");
-        }
-      }
-    });
-
-    // we need to sort based on the serial of the service, the invoice was created by the user
-    const serviceIndex =
-      typeof estimateTemplate?.serviceIndex === "string"
-        ? JSON.parse(estimateTemplate.serviceIndex)
-        : (estimateTemplate?.serviceIndex ?? []);
-
-    if (Array.isArray(serviceIndex) && serviceIndex.length > 0) {
-      items.sort(
-        (
-          a: InvoiceItem & { service: Service },
-          b: InvoiceItem & { service: Service }
-        ) => {
-          const indexA =
-            a.service?.id !== undefined
-              ? serviceIndex.indexOf(a.service.id)
-              : Infinity;
-          const indexB =
-            b.service?.id !== undefined
-              ? serviceIndex.indexOf(b.service.id)
-              : Infinity;
-
-          return indexA - indexB;
-        }
-      );
-    }
-
-    photos = await db.invoicePhoto.findMany({
-      where: { invoiceTemplateId: estimateTemplate.id },
-    });
-    tasks = await db.task.findMany({
-      where: { invoiceTemplateId: estimateTemplate.id },
-    });
-
-    // Fetch invoice inspections
-    invoiceInspections = await db.invoiceInspection.findMany({
-      where: { invoiceTemplateId: estimateTemplate.id },
-      select: {
-        title: true,
-        driver: true,
-        passenger: true,
-        notes: true,
-      },
-    });
-  }
-
   const template = templateId
     ? await db.invoiceTemplate.findUnique({ where: { id: templateId } })
     : null;
 
   const client = clientId
-    ? await db.client.findUnique({ where: { id: clientId } })
+    ? await db.client.findUnique({
+        where: { id: clientId },
+      })
     : null;
 
   const customers = await db.client.findMany({ where: { companyId } });
@@ -244,6 +103,7 @@ export default async function Page({
       productId: product.id,
     }))
   );
+
   return (
     <div className="gap-3 space-y-4 overflow-clip py-2 md:-my-2 md:min-h-[93vh] xl:grid xl:grid-cols-4 xl:space-y-0">
       <div className="col-span-3 space-y-4">
@@ -263,17 +123,7 @@ export default async function Page({
           client={client}
         />
 
-        {templateId && (
-          <SyncEstimate
-            template={estimateTemplate}
-            // @ts-ignore
-            items={items}
-            photos={photos}
-            tasks={tasks}
-            inspections={invoiceInspections}
-            payment={null}
-          />
-        )}
+        {templateId && <DynamicTemplateLoader templateId={templateId} />}
 
         <Header selectedTemplate={template} />
 

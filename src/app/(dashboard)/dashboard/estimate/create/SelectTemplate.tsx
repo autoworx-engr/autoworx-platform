@@ -4,6 +4,7 @@ import Selector from "@/components/Selector";
 import { InvoiceTemplate } from "@prisma/client";
 import { Dispatch, SetStateAction, useEffect, useMemo, useState } from "react";
 import useTemplateListInfiniteQuery from "@/hooks/query-hook/useTemplateListInfiniteQuery";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 interface SelectTemplateProps {
   name?: string;
@@ -19,6 +20,9 @@ export default function SelectTemplate({
   openDropdown,
   setOpenDropdown,
 }: SelectTemplateProps) {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
   const state = useState(value);
   const [template, setTemplate] = setValue ? [value, setValue] : state;
   const [searchTerm, setSearchTerm] = useState("");
@@ -47,14 +51,21 @@ export default function SelectTemplate({
     setTemplate(t);
   };
 
-  const handleClear = () => setTemplate(null);
+  const handleClear = () => {
+    setTemplate(null);
+
+    const params = new URLSearchParams(searchParams?.toString());
+    params.delete("templateId"); // <-- remove the param
+
+    router.push(`${pathname}?${params.toString()}`);
+  };
 
   return (
     <>
       <input type="hidden" name={"templateId"} value={template?.id ?? ""} />
 
       <Selector
-        className="w-1/4"
+        className="w-1/4 cursor-pointer"
         label={(t: InvoiceTemplate | null) => t?.title ?? "Select Template"}
         newButton={null}
         displayList={(t: InvoiceTemplate) => (

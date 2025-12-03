@@ -1,5 +1,6 @@
 import { FullPayment } from "@/types/db";
 import {
+  Column,
   Coupon,
   InvoiceTemplate,
   Labor,
