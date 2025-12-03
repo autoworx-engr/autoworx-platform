@@ -8,7 +8,7 @@ import { SyncLists } from "@/components/SyncLists";
 import Title from "@/components/Title";
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
-import { Tag } from "@prisma/client";
+import { InvoiceItem, Service, Tag } from "@prisma/client";
 import { CreateTab } from "../../create/tabs/CreateTab";
 import TemplateAttachmentTab from "../TemplateAttachmentTab";
 import TemplateInspectionTab from "../TemplateInspectionTab";
@@ -123,18 +123,23 @@ export default async function Page({
         : (invoice?.serviceIndex ?? []);
 
     if (Array.isArray(serviceIndex) && serviceIndex.length > 0) {
-      items.sort((a, b) => {
-        const indexA =
-          a.service?.id !== undefined
-            ? serviceIndex.indexOf(a.service.id)
-            : Infinity;
-        const indexB =
-          b.service?.id !== undefined
-            ? serviceIndex.indexOf(b.service.id)
-            : Infinity;
+      items.sort(
+        (
+          a: InvoiceItem & { service: Service },
+          b: InvoiceItem & { service: Service }
+        ) => {
+          const indexA =
+            a.service?.id !== undefined
+              ? serviceIndex.indexOf(a.service.id)
+              : Infinity;
+          const indexB =
+            b.service?.id !== undefined
+              ? serviceIndex.indexOf(b.service.id)
+              : Infinity;
 
-        return indexA - indexB;
-      });
+          return indexA - indexB;
+        }
+      );
     }
 
     photos = await db.invoicePhoto.findMany({
