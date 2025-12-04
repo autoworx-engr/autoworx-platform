@@ -1,22 +1,24 @@
-
 import { carParts } from "@/constants/car-parts";
 import { InspectionType } from "@/stores/estimate-create";
 import NotesTextArea from "../../templates/NotesTextArea";
 
 interface InspectionsTabsProps {
-  inspections: InspectionType[];
-   updateInspection: (index: number, inspection: InspectionType) => void;
-    damageNotes: string | null;
-    setDamageNotes: (damageNotes: string) => void;
-    
+  inspections?: InspectionType[];
+  updateInspection?: (index: number, inspection: InspectionType) => void;
+  damageNotes?: string | null;
+  setDamageNotes?: (damageNotes: string) => void;
 }
-const InspectionsTab: React.FC<InspectionsTabsProps> = ({inspections, updateInspection, damageNotes, setDamageNotes }) => {
-
+const InspectionsTab: React.FC<InspectionsTabsProps> = ({
+  inspections,
+  updateInspection,
+  damageNotes,
+  setDamageNotes,
+}) => {
   const handleCheckboxChange = (
     index: number,
-    field: "driver" | "passenger",
+    field: "driver" | "passenger"
   ) => {
-    const existingInspection = inspections[index] ?? {
+    const existingInspection = (inspections && inspections[index]) ?? {
       title: carParts[index],
       driver: false,
       passenger: false,
@@ -28,11 +30,11 @@ const InspectionsTab: React.FC<InspectionsTabsProps> = ({inspections, updateInsp
       title: carParts[index],
       [field]: !existingInspection[field],
     };
-    updateInspection(index, updatedInspection);
+    updateInspection && updateInspection(index, updatedInspection);
   };
 
   const handleNotesChange = (index: number, notes: string) => {
-    const existingInspection = inspections[index] ?? {
+    const existingInspection = (inspections && inspections[index]) ?? {
       title: carParts[index],
       driver: false,
       passenger: false,
@@ -44,7 +46,7 @@ const InspectionsTab: React.FC<InspectionsTabsProps> = ({inspections, updateInsp
       title: carParts[index],
       notes,
     };
-    updateInspection(index, updatedInspection);
+    updateInspection && updateInspection(index, updatedInspection);
   };
   return (
     <div className="mx-auto w-full p-2 md:p-4">
@@ -73,7 +75,7 @@ const InspectionsTab: React.FC<InspectionsTabsProps> = ({inspections, updateInsp
                 <input
                   type="checkbox"
                   className="mr-3 h-3 w-3 text-blue-600 md:h-5 md:w-5"
-                  checked={inspections[index]?.driver || false}
+                  checked={(inspections && inspections[index]?.driver) || false}
                   onChange={() => handleCheckboxChange(index, "driver")}
                 />
               </div>
@@ -83,7 +85,9 @@ const InspectionsTab: React.FC<InspectionsTabsProps> = ({inspections, updateInsp
                 <input
                   type="checkbox"
                   className="mr-4 h-3 w-3 text-blue-600 md:h-5 md:w-5"
-                  checked={inspections[index]?.passenger || false}
+                  checked={
+                    (inspections && inspections[index]?.passenger) || false
+                  }
                   onChange={() => handleCheckboxChange(index, "passenger")}
                 />
               </div>
@@ -95,7 +99,7 @@ const InspectionsTab: React.FC<InspectionsTabsProps> = ({inspections, updateInsp
                 type="text"
                 placeholder="Notes..."
                 className="ml-10 w-full rounded border border-gray-300 p-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-400 md:p-1 md:text-sm"
-                value={inspections[index]?.notes || ""}
+                value={(inspections && inspections[index]?.notes) || ""}
                 onChange={(e) => handleNotesChange(index, e.target.value)}
               />
             </div>
@@ -105,7 +109,12 @@ const InspectionsTab: React.FC<InspectionsTabsProps> = ({inspections, updateInsp
       {/* Damage Notes */}
       <div>
         <h1 className="mb-2 mt-4 text-[16px] font-bold">Damage Notes</h1>
-        <NotesTextArea value={damageNotes ?? ""} onChange={setDamageNotes} placeholder="Enter your notes here..." name="damage-notes"/>
+        <NotesTextArea
+          value={damageNotes ?? ""}
+          onChange={setDamageNotes}
+          placeholder="Enter your notes here..."
+          name="damage-notes"
+        />
       </div>
     </div>
   );
