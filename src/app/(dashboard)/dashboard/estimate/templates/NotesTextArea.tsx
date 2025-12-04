@@ -1,6 +1,6 @@
 interface NotesTextAreaProps {
   value: string;
-  onChange?: (notes: string) => void;
+  onChange: (notes: string) => void;
   placeholder?: string;
   name?: string;
 }
@@ -18,7 +18,7 @@ const NotesTextArea = ({
       rows={5}
       placeholder={placeholder}
       value={value}
-      onChange={(e) => onChange && onChange(e.currentTarget.value)}
+      onChange={(e) => onChange(e.currentTarget.value)}
     />
   );
 };
