@@ -64,48 +64,51 @@ export default function SelectTemplate({
     <>
       <input type="hidden" name={"templateId"} value={template?.id ?? ""} />
 
-      <Selector
-        className="w-1/4 cursor-pointer"
-        label={(t: InvoiceTemplate | null) => t?.title ?? "Select Template"}
-        newButton={null}
-        displayList={(t: InvoiceTemplate) => (
-          <div
-            onClick={() => handleSelect(t)}
-            className="flex flex-col gap-1 cursor-pointer p-2 hover:bg-gray-100"
-          >
-            <h3 className="font-bold">{t.title}</h3>
-          </div>
-        )}
-        items={templateList}
-        onSearch={(search: string) => {
-          setSearchTerm(search);
-          return templateList;
-        }}
-        openState={[
-          openDropdown as boolean,
-          setOpenDropdown as Dispatch<SetStateAction<boolean>>,
-        ]}
-        selectedItem={template}
-        setSelectedItem={setTemplate}
-        useInfiniteScroll
-        hasNextPage={hasNextPage}
-        fetchNextPage={fetchNextPage}
-        isFetchingNextPage={isFetchingNextPage}
-        footer={
-          template ? (
-            <button
-              type="button"
-              onClick={() => {
-                handleClear();
-                setOpenDropdown && setOpenDropdown(false);
-              }}
-              className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+      <div>
+        {" "}
+        <Selector
+          className=" cursor-pointer"
+          label={(t: InvoiceTemplate | null) => t?.title ?? "Template"}
+          newButton={null}
+          displayList={(t: InvoiceTemplate) => (
+            <div
+              onClick={() => handleSelect(t)}
+              className="flex flex-col gap-1 cursor-pointer p-2 hover:bg-gray-100"
             >
-              Clear Template
-            </button>
-          ) : null
-        }
-      />
+              <h3 className="font-bold">{t.title}</h3>
+            </div>
+          )}
+          items={templateList}
+          onSearch={(search: string) => {
+            setSearchTerm(search);
+            return templateList;
+          }}
+          openState={[
+            openDropdown as boolean,
+            setOpenDropdown as Dispatch<SetStateAction<boolean>>,
+          ]}
+          selectedItem={template}
+          setSelectedItem={setTemplate}
+          useInfiniteScroll
+          hasNextPage={hasNextPage}
+          fetchNextPage={fetchNextPage}
+          isFetchingNextPage={isFetchingNextPage}
+          footer={
+            template ? (
+              <button
+                type="button"
+                onClick={() => {
+                  handleClear();
+                  setOpenDropdown && setOpenDropdown(false);
+                }}
+                className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+              >
+                Clear Template
+              </button>
+            ) : null
+          }
+        />
+      </div>
     </>
   );
 }

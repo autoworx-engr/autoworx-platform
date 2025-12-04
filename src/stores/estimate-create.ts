@@ -171,6 +171,7 @@ export const useEstimateCreateStore = create<EstimateCreateStore>((set) => ({
     set({
       invoiceId: "",
       title: "",
+      template: null,
       subtotal: 0,
       discount: 0,
       deposit: 0,
