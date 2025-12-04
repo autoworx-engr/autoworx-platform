@@ -2,6 +2,7 @@ import { cn } from "@/lib/cn";
 import { Attachment, Message } from "@prisma/client";
 import { Session } from "next-auth";
 import UserMessageBox from "./UserMessageBox";
+import CollaborationEmptyBox from "./CollaborationEmptyBox";
 
 export default function UsersArea({
   currentUser,
@@ -51,6 +52,10 @@ export default function UsersArea({
             backgroundColor: "#DFEBED",
           }}
         />
+      )}
+
+      {(!selectedUsersList || selectedUsersList.length === 0) && (
+        <CollaborationEmptyBox/>
       )}
     </div>
   );

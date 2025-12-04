@@ -23,6 +23,7 @@ export async function addCustomer(data: {
   tagId?: number;
   photo?: string;
   sourceId?: number;
+  countryCode?:string;
 }, pathname?: string): Promise<ServerAction | TErrorHandler> {
   try {
     await createClientValidationSchema.parseAsync(data);
@@ -34,7 +35,7 @@ export async function addCustomer(data: {
     }
     if (data.email) {
       const existingCustomer = await db.client.findFirst({
-        where: { email: data.email, companyId, mobile: data.mobile },
+        where: { email: data.email, companyId, mobile: data.mobile, },
       });
 
       if (existingCustomer) {
@@ -65,6 +66,7 @@ export async function addCustomer(data: {
         ...data,
         companyId,
         photo: data.photo ? data.photo : undefined,
+        
       },
     });
 
