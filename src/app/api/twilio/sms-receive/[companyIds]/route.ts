@@ -122,10 +122,12 @@ export async function POST(
         });
         let attachments = [];
         for (const file of images) {
+          // Extract file extension from URL
+          const fileExtension = file.split(".").pop()?.split("?")[0] || "jpg";
           let atc = await db.clientSmsAttachments.create({
             data: {
               url: file,
-              name: `${dbMessage.id}_${Date.now()}`,
+              name: `${dbMessage.id}_${Date.now()}.${fileExtension}`,
               clientSMSId: dbMessage.id,
             },
           });
