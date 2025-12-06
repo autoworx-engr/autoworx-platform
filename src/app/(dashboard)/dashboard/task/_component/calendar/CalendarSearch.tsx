@@ -180,7 +180,11 @@ export default function CalendarSearch({ type }: { type: string }) {
   }
   return (
     <div className="relative w-full">
-      <div className="relative">
+      <div className="group relative flex w-full items-center gap-x-3 rounded-xl bg-white dark:bg-slate-900 px-4 py-2.5 ring-1 ring-slate-200 dark:ring-slate-700 shadow-sm transition-all duration-300 ease-out focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500/50 focus-within:shadow-md focus-within:shadow-indigo-500/5 hover:ring-slate-300 dark:hover:ring-slate-600">
+        <Search
+          size={20}
+          className="h-5 w-5 text-slate-400 group-focus-within:text-[#6571FF] transition-colors duration-300 flex-shrink-0"
+        />
         <input
           ref={inputRef}
           type="text"
@@ -195,11 +199,7 @@ export default function CalendarSearch({ type }: { type: string }) {
             }
           }}
           placeholder="Search tasks and appointments..."
-          className="w-full rounded-md border border-input bg-background px-3 py-2 pl-10 text-sm"
-        />
-        <Search
-          size={16}
-          className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+          className="w-full bg-transparent text-sm font-medium text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none"
         />
       </div>
 

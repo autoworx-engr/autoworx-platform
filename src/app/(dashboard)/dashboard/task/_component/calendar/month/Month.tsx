@@ -28,6 +28,13 @@ import CalendarTooltip from "../CalendarTooltip";
 import HolidayDeleteConfirmation from "../HolidayDeleteConfirmation";
 import { Skeleton } from "antd";
 
+// Gradient priority classes for tasks
+const priorityClasses = {
+  Low: "bg-gradient-to-r from-blue-500 to-indigo-600 shadow-indigo-600/50",
+  Medium: "bg-gradient-to-r from-cyan-600 to-blue-500 shadow-cyan-600/50",
+  High: "bg-gradient-to-r from-teal-700 to-green-700 shadow-teal-700/50",
+};
+
 export default function Month() {
   const { setDate, setNavigating } = useCalendarStore((state) => ({
     setDate: state.setDate,
@@ -400,29 +407,34 @@ export default function Month() {
                     {/* Tasks */}
                     {cell[1]
                       ?.slice(0, 2)
-                      .map((task: CalendarTask, i: number) => (
-                        <Tooltip key={i}>
-                          <TooltipTrigger asChild>
-                            <div
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleRedirectToDay(cell[0]);
-                              }}
-                              className="cursor-pointer truncate rounded px-1 py-2 text-xs text-white lg:block lg:text-sm"
-                              style={{
-                                backgroundColor: TASK_COLOR[task.priority],
-                              }}
-                            >
-                              {task.title}
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipPortal>
-                            <CalendarTooltip
-                              event={{ ...task, type: "task" } as any}
-                            />
-                          </TooltipPortal>
-                        </Tooltip>
-                      ))}
+                      .map((task: CalendarTask, i: number) => {
+                        const taskPriorityClass =
+                          priorityClasses[task.priority as keyof typeof priorityClasses] ||
+                          priorityClasses.Low;
+                        return (
+                          <Tooltip key={i}>
+                            <TooltipTrigger asChild>
+                              <div
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRedirectToDay(cell[0]);
+                                }}
+                                className={cn(
+                                  "cursor-pointer truncate rounded px-1 py-2 text-xs text-white lg:block lg:text-sm transition-all duration-300 ease-in-out hover:shadow-lg hover:scale-[1.01]",
+                                  taskPriorityClass
+                                )}
+                              >
+                                {task.title}
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipPortal>
+                              <CalendarTooltip
+                                event={{ ...task, type: "task" } as any}
+                              />
+                            </TooltipPortal>
+                          </Tooltip>
+                        );
+                      })}
 
                     {cell[0] && (
                       <div>
@@ -448,11 +460,11 @@ export default function Month() {
                                           const dateString =
                                             cell[0] instanceof Date
                                               ? cell[0].toLocaleDateString(
-                                                  "en-CA"
-                                                ) // 'YYYY-MM-DD' format
+                                                "en-CA"
+                                              ) // 'YYYY-MM-DD' format
                                               : moment(cell[0]).format(
-                                                  "YYYY-MM-DD"
-                                                );
+                                                "YYYY-MM-DD"
+                                              );
 
                                           // Set navigation flag to prevent reset, then set date and navigate
                                           setNavigating(true);
@@ -520,17 +532,22 @@ export default function Month() {
                         <>
                           <h3 className="text-lg font-bold">Tasks</h3>
                           <div className="flex flex-col gap-1">
-                            {cell[1]?.map((task: CalendarTask, i: number) => (
-                              <div
-                                key={i}
-                                className="flex items-center gap-2 rounded p-2 text-white"
-                                style={{
-                                  backgroundColor: TASK_COLOR[task.priority],
-                                }}
-                              >
-                                <p>{task.title}</p>
-                              </div>
-                            ))}
+                            {cell[1]?.map((task: CalendarTask, i: number) => {
+                              const taskPriorityClass =
+                                priorityClasses[task.priority as keyof typeof priorityClasses] ||
+                                priorityClasses.Low;
+                              return (
+                                <div
+                                  key={i}
+                                  className={cn(
+                                    "flex items-center gap-2 rounded p-2 text-white transition-all duration-300 ease-in-out",
+                                    taskPriorityClass
+                                  )}
+                                >
+                                  <p>{task.title}</p>
+                                </div>
+                              );
+                            })}
                           </div>
                         </>
                       )}

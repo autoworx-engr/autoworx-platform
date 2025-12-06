@@ -207,13 +207,13 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
         className="w-[98vw] max-w-4xl max-h-[98vh] overflow-hidden rounded-lg bg-white px-4 py-5 shadow-2xl sm:px-10 sm:w-[95vw] sm:max-h-[95vh] overflow-y-auto"
       >
         {/* Header */}
-        <DialogHeader className="mt-2 flex w-full flex-wrap items-center justify-center print:hidden">
+        <DialogHeader className="mt-2 flex w-full flex-wrap items-center justify-center print:hidden pt-3">
           <div className="grid w-full grid-cols-2 flex-wrap items-center justify-center gap-2 md:flex md:gap-3">
             <Link
               className="flex items-center justify-center gap-1 rounded bg-[#6571FF] px-2 py-1 text-sm text-white md:px-4 md:text-base"
               href={`#`}
             >
-              <SquarePen className="h-3 w-3 md:h-4 md:w-4" />
+              <SquarePen className="h-4 w-4" />
               <span className="hidden md:inline">Edit</span>
             </Link>
 
@@ -224,7 +224,7 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
               <svg
                 fill="#ffffff"
                 viewBox="0 0 32 32"
-                className="h-3 w-3 md:h-4 md:w-4"
+                className="h-4 w-4"
                 version="1.1"
                 xmlns="http://www.w3.org/2000/svg"
               >
@@ -252,7 +252,7 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
                 cancelText="No"
               >
                 <button className="flex items-center justify-center gap-1 rounded bg-[#6571FF] px-2 py-1 text-sm text-white md:px-4 md:text-base">
-                  <Mail className="h-4 w-4 md:h-4 md:w-4" />
+                  <Mail className="h-4 w-4" />
                   <span className="hidden md:inline">Email</span>
                 </button>
               </Popconfirm>
@@ -263,7 +263,7 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
                   okText="Yes"
                   cancelText="No"
                 >
-                  <button className="flex items-center justify-center gap-1 rounded bg-[#6571FF] px-2 py-1 text-sm text-white md:px-4 md:text-base">
+                  <button className="flex items-center justify-center gap-1 rounded bg-[#6571FF] text-sm text-white md:px-4 md:text-base">
                     <svg
                       fill="#ffffff"
                       height="24"
@@ -377,14 +377,14 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
           </div>
         </div>
         {/* Fleet Table */}
-        <div className="thin-scrollbar overflow-x-hidden h-[200px]">
+        <div className="thin-scrollbar overflow-x-auto h-[200px]">
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <div className="text-gray-500">Loading statement...</div>
             </div>
           ) : (
             <table className="w-full">
-              <thead className="sticky top-0 z-10 bg-background">
+              <thead className="sticky top-0 bg-background">
                 <tr className="bg-background">
                   <th className={`${tHeadingCommonClasses}`}>Invoice#</th>
                   <th className={`${tHeadingCommonClasses}`}>Year</th>
@@ -401,9 +401,8 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
                 {invoices.map((invoice: any, index: number) => (
                   <tr
                     key={invoice.id}
-                    className={`border-b border-gray-100 transition-colors ${
-                      index % 2 === 0 ? "bg-background" : "bg-[#EEF4FF]"
-                    }`}
+                    className={`border-b border-gray-100 transition-colors ${index % 2 === 0 ? "bg-background" : "bg-[#EEF4FF]"
+                      }`}
                   >
                     <td className="border-b px-4 py-2 text-left text-[#6571FF]">
                       <InvoiceModal

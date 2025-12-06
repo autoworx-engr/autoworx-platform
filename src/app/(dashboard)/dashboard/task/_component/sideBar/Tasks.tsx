@@ -109,7 +109,7 @@ export default function Tasks() {
       )}
 
       {!minimized && (
-        <div className="mt-auto">
+        <div className="mt-auto w-full">
           <TaskCreateOrEdit onTaskCreated={handleTaskCreated} />
         </div>
       )}
