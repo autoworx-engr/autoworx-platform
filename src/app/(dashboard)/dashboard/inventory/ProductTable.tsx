@@ -1,21 +1,15 @@
 "use client";
 
 import { deleteInventory } from "@/actions/inventory/delete";
-import { cn } from "@/lib/cn";
-import { Category, InventoryProduct, User, Vendor } from "@prisma/client";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import React, { useEffect, useState } from "react";
-import EditProduct from "./EditProduct";
 import InventoryResponsiveCard from "@/components/mobile-responsive/inventory/ResponsiveInventoryCard";
+import { cn } from "@/lib/cn";
 import { ProductCardProps } from "@/types/inventory";
-import { Pagination, Popconfirm } from "antd"; // Importing the Pagination component from Ant Design
-import { Tooltip } from "antd";
-import {
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/Tooltip";
+import { Category, InventoryProduct, User, Vendor } from "@prisma/client";
+import { Pagination, Popconfirm, Tooltip } from "antd"; // Importing the Pagination component from Ant Design
 import { X } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import EditProduct from "./EditProduct";
 
 const evenColor = "bg-background";
 const oddColor = "bg-blue-100";
@@ -94,6 +88,22 @@ export default function ProductTable({
             </div>
           );
         })}
+
+        {/* Mobile Pagination */}
+        {showPagination && (
+          <div className="mt-4 flex justify-center">
+            <Pagination
+              className="custom-pagination"
+              current={currentPage}
+              pageSize={pageSize}
+              total={totalItems}
+              onChange={handlePageChange}
+              showSizeChanger
+              onShowSizeChange={handlePageChange}
+              simple
+            />
+          </div>
+        )}
 
         {/* Extra bottom padding to prevent overlap */}
         <div className="h-20 lg:hidden" />

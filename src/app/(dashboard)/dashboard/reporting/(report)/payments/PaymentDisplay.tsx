@@ -1,14 +1,14 @@
 "use client";
-import { useMediaQuery } from "react-responsive";
-import { Payment, Prisma, Refund } from "@prisma/client";
 import { cn } from "@/lib/cn";
 import { formatCurrency } from "@/utils/formatCurrency";
-import PaymentMobileCard from "./PaymentMobileCard";
+import { Payment, Prisma, Refund } from "@prisma/client";
 import { Pagination } from "antd"; // Importing the Pagination component from Ant Design
-import { useEffect, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import moment from "moment-timezone";
 import { ArrowDown } from "lucide-react";
+import moment from "moment-timezone";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useMediaQuery } from "react-responsive";
+import PaymentMobileCard from "./PaymentMobileCard";
 
 type TProps = {
   paymentInfo: (Payment & {
@@ -173,12 +173,15 @@ export default function PaymentDisplay({
                       : "N/A"}
                   </td>
                   <td className="text-center">
-                    <span className={cn(
-                      `border-b px-2 py-1 text-left capitalize`,
-                      paymentStatus === "due" && "bg-[#de5967] text-white rounded-md",
-                      paymentStatus === "paid" && "bg-[#3c8f89] text-white rounded-md"
-                    )}>
-
+                    <span
+                      className={cn(
+                        `border-b px-2 py-1 text-left capitalize`,
+                        paymentStatus === "due" &&
+                          "bg-[#de5967] text-white rounded-md",
+                        paymentStatus === "paid" &&
+                          "bg-[#3c8f89] text-white rounded-md"
+                      )}
+                    >
                       {paymentStatus}
                     </span>
                   </td>
@@ -205,17 +208,21 @@ export default function PaymentDisplay({
   }
 
   return (
-    <div className="space-y-4 md:hidden">
-      {paymentInfo.map((payment, index) => (
-        <PaymentMobileCard
-          key={payment.id}
-          payment={payment}
-          index={index}
-          timezone={timezone}
-        />
-      ))}
-      {/* {showPagination && (
-        <div className="mt-4 flex justify-end">
+    <div>
+      <div className="space-y-4 md:hidden">
+        {paymentsToRender.map((payment, index) => (
+          <PaymentMobileCard
+            key={payment.id}
+            payment={payment}
+            index={index}
+            timezone={timezone}
+          />
+        ))}
+      </div>
+
+      {/* Mobile Pagination */}
+      {showPagination && (
+        <div className="mt-4 flex justify-center pb-4 md:hidden">
           <Pagination
             className="custom-pagination"
             current={currentPage}
@@ -224,9 +231,10 @@ export default function PaymentDisplay({
             onChange={handlePageChange}
             showSizeChanger
             onShowSizeChange={handlePageChange}
+            simple
           />
         </div>
-      )} */}
+      )}
     </div>
   );
 }
