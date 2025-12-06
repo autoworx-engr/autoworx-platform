@@ -1,6 +1,7 @@
 import { Appointment, Client, User } from "@prisma/client";
-import { SquarePen } from "lucide-react";
+import { MessageCircleMore, SquarePen } from "lucide-react";
 import moment from "moment";
+import Link from "next/link";
 
 type TAppointmentTooltipProps = {
   event: Appointment & {
@@ -15,26 +16,36 @@ export default function AppointmentTooltip({
 }: TAppointmentTooltipProps) {
   return (
     <>
-      <div 
+      <div
         onClick={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">
           <h3 className="font-semibold">{event.title}</h3>
-          <button
-            type="button"
-            className="text- rounded-full bg-[#6571FF] p-2 text-white"
-            onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              onModalOpen && onModalOpen();
-            }}
-            onMouseDown={(e) => {
-              e.stopPropagation();
-            }}
-          >
-            <SquarePen className="w-4 h-4 cursor-pointer mx-auto" />
-          </button>
+          {/* Chat Link */}
+          <div className="flex gap-2">
+            <Link
+              href={`/dashboard/communication/client/${event.clientId}?chat=true`}
+              className="rounded-full bg-[#6571FF] p-2 text-white"
+              title="Open Chat"
+            >
+              <MessageCircleMore className="h-4 w-4 cursor-pointer mx-auto" />
+            </Link>
+            <button
+              type="button"
+              className="text- rounded-full bg-[#6571FF] p-2 text-white"
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                onModalOpen && onModalOpen();
+              }}
+              onMouseDown={(e) => {
+                e.stopPropagation();
+              }}
+            >
+              <SquarePen className="w-4 h-4 cursor-pointer mx-auto" />
+            </button>
+          </div>
         </div>
 
         <p>

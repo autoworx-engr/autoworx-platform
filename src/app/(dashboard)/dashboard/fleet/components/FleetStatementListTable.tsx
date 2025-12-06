@@ -1,10 +1,15 @@
 "use client";
-import React, { useState } from "react";
-import { cn } from "@/lib/cn";
-import { FleetStatementModal } from "./FleetStatementModal";
-import moment from "moment";
+import { deleteFleetStatement } from "@/actions/fleet/statement/deleteStatement";
 import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/cn";
+import { errorToast, successToast } from "@/lib/toast";
 import { formatCurrency } from "@/utils/formatCurrency";
+import { Popconfirm } from "antd";
+import { SquarePen, Trash2 } from "lucide-react";
+import moment from "moment";
+import React, { useEffect, useState } from "react";
+import EditFleetStatementModal from "./EditFleetStatementModal"; // Add this import
+import { FleetStatementModal } from "./FleetStatementModal";
 
 interface FleetStatementListTableProps {
   statementData: any[];
@@ -13,13 +18,24 @@ interface FleetStatementListTableProps {
 }
 
 const FleetStatementListTable: React.FC<FleetStatementListTableProps> = ({
-  statementData,
+  statementData: initialStatementData,
   loading = false,
   onRefresh,
 }) => {
   const [selectedStatementId, setSelectedStatementId] = useState<string | null>(
     null
   );
+
+  // Add state for edit modal
+  const [editStatementId, setEditStatementId] = useState<string | null>(null);
+
+  // Local state to manage statements for immediate UI updates
+  const [localStatements, setLocalStatements] = useState(initialStatementData);
+
+  // Update local state when prop changes
+  useEffect(() => {
+    setLocalStatements(initialStatementData);
+  }, [initialStatementData]);
 
   const tHeadingCommonClasses =
     "px-4 py-2 text-center font-bold text-[#66738C]";
@@ -33,6 +49,45 @@ const FleetStatementListTable: React.FC<FleetStatementListTableProps> = ({
     setSelectedStatementId(null);
   };
 
+  // Add handlers for edit modal
+  const handleEditStatement = (statementId: string) => {
+    setEditStatementId(statementId);
+  };
+
+  const handleCloseEditModal = () => {
+    setEditStatementId(null);
+  };
+
+  // Handle delete statement with optimistic update
+  const handleDeleteStatement = async (statementId: string) => {
+    // Optimistically remove from local state immediately
+    const previousStatements = localStatements;
+    setLocalStatements((prev) => prev.filter((s) => s.id !== statementId));
+
+    try {
+      const result = await deleteFleetStatement({ statementId });
+
+      // Handle response
+      if (result.type === "success") {
+        successToast(result.message || "Statement deleted successfully");
+
+        // Trigger parent refresh to sync data from server
+        if (onRefresh) {
+          onRefresh();
+        }
+      } else {
+        // If deletion failed, restore the item
+        setLocalStatements(previousStatements);
+        errorToast(result.message || "Failed to delete statement");
+      }
+    } catch (error: any) {
+      // If error occurred, restore the item
+      setLocalStatements(previousStatements);
+      errorToast(error.message || "An error occurred while deleting");
+      console.error("Delete statement error:", error);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
@@ -41,13 +96,18 @@ const FleetStatementListTable: React.FC<FleetStatementListTableProps> = ({
     );
   }
 
-  if (!statementData || statementData.length === 0) {
+  if (!localStatements || localStatements.length === 0) {
     return (
       <div className="flex items-center justify-center py-8">
         <div className="text-gray-500">No fleet statements found</div>
       </div>
     );
   }
+
+  // Get current statement being edited
+  const currentEditStatement = localStatements.find(
+    (s) => s.id === editStatementId
+  );
 
   return (
     <div className="mt-5 rounded-md bg-background p-4 shadow-md">
@@ -57,7 +117,6 @@ const FleetStatementListTable: React.FC<FleetStatementListTableProps> = ({
             <tr className="bg-background">
               <th className={`${tHeadingCommonClasses}`}>Statement#</th>
               <th className={`${tHeadingCommonClasses}`}>Date Created</th>
-              {/* <th className={`${tHeadingCommonClasses}`}>Fleet Name</th> */}
               <th className={`${tHeadingCommonClasses}`}>
                 Number of Invoices in Statement
               </th>
@@ -65,14 +124,15 @@ const FleetStatementListTable: React.FC<FleetStatementListTableProps> = ({
               <th className={`${tHeadingCommonClasses}`}>Paid Amount</th>
               <th className={`${tHeadingCommonClasses}`}>Due Amount</th>
               <th className={`${tHeadingCommonClasses}`}>Status</th>
+              <th className={`${tHeadingCommonClasses}`}>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {statementData.map((statement, index) => (
+            {localStatements.map((statement, index) => (
               <tr
                 key={statement.id}
                 className={cn(
-                  "cursor-pointer rounded-md border py-3 hover:bg-gray-50",
+                  "cursor-pointer rounded-md border py-3 hover:bg-gray-50 transition-colors",
                   index % 2 === 0 ? "bg-background" : "bg-[#EEF4FF]"
                 )}
                 onClick={() => handleViewStatement(statement.id)}
@@ -85,9 +145,6 @@ const FleetStatementListTable: React.FC<FleetStatementListTableProps> = ({
                 <td className={`${tDataCommonClasses}`}>
                   {moment(statement.createdAt).format("DD MMMM YYYY hh:mmA")}
                 </td>
-                {/* <td className={`${tDataCommonClasses}`}>
-                  {statement.Fleet?.fleetName || "N/A"}
-                </td> */}
                 <td className={`${tDataCommonClasses}`}>
                   {statement.invoice?.length || 0}
                 </td>
@@ -115,13 +172,45 @@ const FleetStatementListTable: React.FC<FleetStatementListTableProps> = ({
                   </span>
                 </td>
                 <td className={`${tDataCommonClasses} `}>
-                  <span className={`px-2 py-1 rounded text-xs font-medium text-white ${statement.totals?.totalDue > 0
-                    ? "bg-[#dc4757]/90"
-                    : "bg-[#27837c]/90"
-                    }`}>
-
+                  <span
+                    className={`px-2 py-1 rounded text-xs font-medium text-white ${
+                      statement.totals?.totalDue > 0
+                        ? "bg-[#dc4757]/90"
+                        : "bg-[#27837c]/90"
+                    }`}
+                  >
                     {statement.totals?.totalDue > 0 ? "Pending" : "Paid"}
                   </span>
+                </td>
+                <td className={`${tDataCommonClasses}`}>
+                  <div className="flex items-center justify-center gap-4">
+                    <Popconfirm
+                      title="Are you sure you want to delete this statement?"
+                      onConfirm={(e) => {
+                        e?.stopPropagation();
+                        handleDeleteStatement(statement.id);
+                      }}
+                      onCancel={(e) => e?.stopPropagation()}
+                      okText="Yes"
+                      cancelText="No"
+                    >
+                      <button
+                        onClick={(e) => e.stopPropagation()}
+                        className="text-red-600 hover:text-red-800 transition-colors"
+                      >
+                        <Trash2 size={20} />
+                      </button>
+                    </Popconfirm>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditStatement(statement.id); // Updated handler
+                      }}
+                      className="text-blue-600 hover:text-blue-800 transition-colors"
+                    >
+                      <SquarePen size={20} />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -132,7 +221,7 @@ const FleetStatementListTable: React.FC<FleetStatementListTableProps> = ({
       {/* Mobile Card Layout */}
       <div className="block md:hidden">
         <div className="space-y-3">
-          {statementData.map((statement, index) => (
+          {localStatements.map((statement, index) => (
             <Card
               key={statement.id}
               className={cn(
@@ -148,10 +237,11 @@ const FleetStatementListTable: React.FC<FleetStatementListTableProps> = ({
                     #{statement.id.slice(-8)}
                   </span>
                   <span
-                    className={`px-2 py-1 rounded text-xs font-medium ${statement.totals?.totalDue > 0
-                      ? "bg-red-100 text-red-700"
-                      : "bg-green-100 text-green-700"
-                      }`}
+                    className={`px-2 py-1 rounded text-xs font-medium ${
+                      statement.totals?.totalDue > 0
+                        ? "bg-red-100 text-red-700"
+                        : "bg-green-100 text-green-700"
+                    }`}
                   >
                     {statement.totals?.totalDue > 0 ? "Pending" : "Paid"}
                   </span>
@@ -172,11 +262,42 @@ const FleetStatementListTable: React.FC<FleetStatementListTableProps> = ({
                     </span>
                   </div>
                 </div>
+
+                {/* Action Buttons for Mobile */}
+                <div className="flex items-center justify-end gap-3 pt-2 border-t">
+                  <Popconfirm
+                    title="Are you sure you want to delete this statement?"
+                    onConfirm={(e) => {
+                      e?.stopPropagation();
+                      handleDeleteStatement(statement.id);
+                    }}
+                    onCancel={(e) => e?.stopPropagation()}
+                    okText="Yes"
+                    cancelText="No"
+                  >
+                    <button
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-red-600 hover:text-red-800 transition-colors"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </Popconfirm>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEditStatement(statement.id); // Updated handler
+                    }}
+                    className="text-blue-600 hover:text-blue-800 transition-colors"
+                  >
+                    <SquarePen size={18} />
+                  </button>
+                </div>
               </CardContent>
             </Card>
           ))}
         </div>
       </div>
+
       {/* Fleet Statement Modal */}
       <FleetStatementModal
         isOpen={!!selectedStatementId}
@@ -189,6 +310,22 @@ const FleetStatementListTable: React.FC<FleetStatementListTableProps> = ({
           }
         }}
       />
+
+      {/* Edit Fleet Statement Modal */}
+      {editStatementId && currentEditStatement && (
+        <EditFleetStatementModal
+          isOpen={!!editStatementId}
+          onClose={handleCloseEditModal}
+          statementId={editStatementId}
+          currentInvoices={currentEditStatement.invoice || []}
+          onStatementUpdated={() => {
+            handleCloseEditModal();
+            if (onRefresh) {
+              onRefresh();
+            }
+          }}
+        />
+      )}
     </div>
   );
 };

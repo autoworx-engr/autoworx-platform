@@ -1,10 +1,9 @@
 "use client";
 
-import { Client, Fleet, Source, Tag } from "@prisma/client";
-import React, { useEffect, useState } from "react";
-import { useClientFilterStore } from "@/stores/clientFilter";
 import ResponsiveEmployeeCard from "@/components/mobile-responsive/employee/ResponsiveEmployeeCard";
-import { generateRandomId } from "@/utils/randomNumber";
+import { useClientFilterStore } from "@/stores/clientFilter";
+import { Client, Fleet, Source, Tag } from "@prisma/client";
+import { useEffect, useState } from "react";
 import FleetListTable from "./FleetListTable";
 // import * as PusherPushNotifications from "@pusher/push-notifications-web";
 
@@ -24,8 +23,10 @@ export default function FleetList({
     const term = search.toLowerCase().replace(/\s+/g, " ");
     setFilteredClients(
       clients.filter((client) => {
-        const fullName = `${client.firstName} ${client.lastName || ""}`.toLowerCase().replace(/\s+/g, " ");
-        
+        const fullName = `${client.firstName} ${client.lastName || ""}`
+          .toLowerCase()
+          .replace(/\s+/g, " ");
+
         return (
           client.id.toString().includes(term) ||
           fullName.includes(term) ||
