@@ -9,7 +9,7 @@ import { TErrorHandler } from "@/types/globalError";
 import { successToast } from "@/lib/toast";
 import { updateInventoryWhenInvoiceCreate } from "@/actions/estimate/invoice/updateInventory";
 
-export function useInvoiceCreate(type: InvoiceType) {
+export function useTemplateCreate(type: InvoiceType) {
   const {
     invoiceId,
     subtotal,
@@ -41,7 +41,7 @@ export function useInvoiceCreate(type: InvoiceType) {
     const clientId = client?.id;
     const vehicleId = vehicle?.id;
     const columnId = status?.id;
-    const isEditPage = pathaname?.includes("/estimate/edit/");
+    const isEditPage = pathaname?.includes("/template/create?isEdit=true");
 
     // check if client is selected
     if (!isEditPage && !client) {
