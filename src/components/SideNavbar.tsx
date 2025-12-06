@@ -352,7 +352,7 @@ export default function SideNavbar({ navList, permissions }: TProps) {
 
   return (
     <TooltipProvider delayDuration={200}>
-      <nav className="fixed z-50 hidden h-screen flex-col items-center gap-8 overflow-y-auto overflow-x-hidden bg-gradient-to-b from-gray-50 to-gray-100 backdrop-blur-xl px-3 py-12 sm:flex lg:w-[5%] shadow-[8px_0_24px_rgba(0,0,0,0.06)] border-r border-white/50">
+      <nav className="fixed z-10 hidden h-screen flex-col items-center gap-8 overflow-y-auto overflow-x-hidden bg-gradient-to-b from-gray-50 to-gray-100 backdrop-blur-xl px-3 py-12 sm:flex lg:w-[5%] shadow-[8px_0_24px_rgba(0,0,0,0.06)] border-r border-white/50">
         <Link href="/" className="relative">
           <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500 via-cyan-500 to-blue-600 flex items-center justify-center shadow-[0_8px_16px_rgba(59,130,246,0.3)] hover:shadow-[0_12px_24px_rgba(59,130,246,0.4)] transition-all duration-300 hover:scale-105">
             <Image
@@ -383,17 +383,20 @@ export default function SideNavbar({ navList, permissions }: TProps) {
                 active={modifiedPathName === item.path ? true : false}
                 icon={
                   <span className="relative inline-flex items-center justify-center">
-                    {IconComponent ? (
-                      <IconComponent className="w-5 h-5 text-gray-700" />
-                    ) : (
-                      <Image
-                        src={item.icon}
-                        alt={item.title}
-                        width={22}
-                        height={22}
-                        className="opacity-60"
-                      />
-                    )}
+                    {
+                      IconComponent && (
+                        <IconComponent className="w-5 h-5 text-gray-700" />
+                      )
+                      // : (
+                      //   <Image
+                      //     src={item.icon}
+                      //     alt={item.title}
+                      //     width={22}
+                      //     height={22}
+                      //     className="opacity-60"
+                      //   />
+                      // )
+                    }
                     {item.title === "Communication Hub" &&
                       notificationShowPermission &&
                       totalMessageCount > 0 && (
@@ -467,36 +470,39 @@ export default function SideNavbar({ navList, permissions }: TProps) {
                       )}
                       href={item.link}
                     >
-                      {IconComponent ? (
-                        <IconComponent
-                          className={cn(
-                            "w-5 h-5 transition-all duration-300",
-                            modifiedPathName === item.path
-                              ? "text-white drop-shadow-md"
-                              : "text-gray-700"
-                          )}
-                        />
-                      ) : (
-                        <Image
-                          src={item.icon}
-                          alt={item.title}
-                          width={20}
-                          height={20}
-                          className={cn(
-                            "opacity-60",
-                            modifiedPathName === item.path &&
-                              "brightness-0 invert opacity-100"
-                          )}
-                        />
-                      )}
+                      {
+                        IconComponent && (
+                          <IconComponent
+                            className={cn(
+                              "w-5 h-5 transition-all duration-300",
+                              modifiedPathName === item.path
+                                ? "text-white drop-shadow-md"
+                                : "text-gray-700"
+                            )}
+                          />
+                        )
+                        // : (
+                        //   <Image
+                        //     src={item.icon}
+                        //     alt={item.title}
+                        //     width={20}
+                        //     height={20}
+                        //     className={cn(
+                        //       "opacity-60",
+                        //       modifiedPathName === item.path &&
+                        //         "brightness-0 invert opacity-100"
+                        //     )}
+                        //   />
+                        // )
+                      }
                     </Link>
                   )}
                 </TooltipTrigger>
                 {visibleTooltip === index && (
                   <TooltipContent
                     side="right"
-                    sideOffset={12}
-                    className="rounded-xl bg-white/90 backdrop-blur-md px-3 py-2 text-sm font-medium text-gray-700 shadow-[0_8px_24px_rgba(0,0,0,0.12)] border border-white/50 z-[99999] max-w-xs break-words"
+                    sideOffset={8}
+                    className="rounded-xl bg-white/90 backdrop-blur-md px-3 py-2 text-sm font-medium text-gray-700 shadow-[0_8px_24px_rgba(0,0,0,0.12)] border border-white/50 z-[999]"
                   >
                     {item.title}
                   </TooltipContent>
@@ -540,8 +546,8 @@ export default function SideNavbar({ navList, permissions }: TProps) {
             </TooltipTrigger>
             <TooltipContent
               side="right"
-              sideOffset={12}
-              className="rounded-xl bg-white/90 backdrop-blur-md px-3 py-2 text-sm font-medium text-gray-700 shadow-[0_8px_24px_rgba(0,0,0,0.12)] border border-white/50 z-[99999]"
+              sideOffset={8}
+              className="rounded-xl bg-white/90 backdrop-blur-md px-3 py-2 text-sm font-medium text-gray-700 shadow-[0_8px_24px_rgba(0,0,0,0.12)] border border-white/50 z-[999]"
             >
               Settings
             </TooltipContent>
@@ -605,8 +611,8 @@ function Dropdown({
         {visibleTooltip && (
           <TooltipContent
             side="right"
-            sideOffset={12}
-            className="rounded-xl bg-white/90 backdrop-blur-md px-3 py-2 text-sm font-medium text-gray-700 shadow-[0_8px_24px_rgba(0,0,0,0.12)] border border-white/50 z-[99999] max-w-xs break-words"
+            sideOffset={8}
+            className="rounded-xl bg-white/90 backdrop-blur-md px-3 py-2 text-sm font-medium text-gray-700 shadow-[0_8px_24px_rgba(0,0,0,0.12)] border border-white/50 z-[999]"
           >
             {title}
           </TooltipContent>
@@ -616,7 +622,7 @@ function Dropdown({
       <DropdownMenuContent
         side="right"
         align="start"
-        sideOffset={12}
+        sideOffset={8}
         className="space-y-2 border-none bg-transparent p-2 shadow-none"
       >
         {children}
