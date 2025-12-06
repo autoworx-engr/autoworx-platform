@@ -362,7 +362,6 @@ export default function SideNavbar({ navList, permissions }: TProps) {
               height={24}
               className="brightness-0 invert"
             />
-            {/* <LayoutDashboard className="w-6 h-6 text-white drop-shadow-lg" /> */}
           </div>
           <div className="absolute -right-2 -top-1 rotate-12 transform rounded-md bg-gradient-to-r from-cyan-400 to-blue-500 px-1.5 py-0.5 text-[7px] font-bold tracking-wider text-white shadow-lg backdrop-blur-sm">
             Beta
@@ -454,7 +453,9 @@ export default function SideNavbar({ navList, permissions }: TProps) {
                   ))}
               </Dropdown>
             ) : (
-              <Tooltip key={index}>
+              <Tooltip
+                key={index}
+              >
                 <TooltipTrigger
                   asChild
                   onMouseEnter={() => setVisibleTooltip(index)}
