@@ -575,7 +575,7 @@ model Company {
   businessId                       String?                            @map("business_id")
   businessType                     String?                            @map("business_type")
   phone                            String?
-  countryCode                     String?                            @map("country_code") @default("US")
+  countryCode                      String?                            @map("country_code") @default("US")
   email                            String?
   industry                         String?
   website                          String?

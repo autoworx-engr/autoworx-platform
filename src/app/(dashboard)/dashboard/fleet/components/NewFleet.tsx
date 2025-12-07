@@ -20,6 +20,7 @@ import SelectComponent from "./Select";
 import Image from "next/image";
 import { successToast } from "@/lib/toast";
 import { CircleUserRound, SquarePen, UserIcon } from "lucide-react";
+import PhoneInput from "@/components/PhoneInput";
 
 export default function NewFleet({
   fleet,
@@ -45,6 +46,8 @@ export default function NewFleet({
 
   const { showError, clearError } = useFormErrorStore();
   const [mobile, setMobile] = useState("+1");
+  const [countryCode, setCountryCode] = useState('');
+  const [countryIsoCode, setCountryIsoCode] = useState('');
 
   useEffect(() => {
     if (isEdit && fleet && open) {
@@ -64,7 +67,8 @@ export default function NewFleet({
     const contactName =
       document.querySelector<HTMLInputElement>("#contactName")?.value;
     const email = document.querySelector<HTMLInputElement>("#email")?.value;
-    const mobile = document.querySelector<HTMLInputElement>("#mobile")?.value;
+    // const mobile = document.querySelector<HTMLInputElement>("#mobile")?.value;
+    const phone =  countryCode && mobile ? `${countryCode}${mobile}` : mobile || ""
     const address = document.querySelector<HTMLInputElement>("#address")?.value;
     const city = document.querySelector<HTMLInputElement>("#city")?.value;
     const state = document.querySelector<HTMLInputElement>("#state")?.value;
@@ -91,7 +95,7 @@ export default function NewFleet({
       });
       return;
     }
-    if (!mobile?.trim()) {
+    if (!phone?.trim()) {
       showError({
         field: "mobile",
         message: "Mobile is required.",
@@ -124,7 +128,8 @@ export default function NewFleet({
         fleetName,
         contactName,
         email,
-        mobile,
+        mobile:phone,
+        countryCode: countryIsoCode,
         address,
         city,
         state,
@@ -140,7 +145,8 @@ export default function NewFleet({
         fleetName,
         contactName,
         email,
-        mobile,
+        mobile:phone,
+        countryCode: countryIsoCode,
         address,
         city,
         state,
@@ -311,7 +317,7 @@ export default function NewFleet({
                 // }
               }}
             />
-            <SlimInput
+            {/* <SlimInput
               type="tel"
               name="mobile"
               label="Mobile Number"
@@ -332,7 +338,21 @@ export default function NewFleet({
                   });
                 }
               }}
-            />
+            /> */}
+
+            <PhoneInput
+    required
+    defaultValue={fleet?.mobile || ""} 
+    defaultIsoCode={fleet?.countryCode || "US"}
+    onChange={(phoneNumber, callingCode, countryIsoCode) => {
+      setMobile(phoneNumber);
+      setCountryCode(callingCode);
+      setCountryIsoCode(countryIsoCode);
+      
+      
+      clearError();
+    }}
+  />
           </div>
 
           <div className="flex items-center justify-between">

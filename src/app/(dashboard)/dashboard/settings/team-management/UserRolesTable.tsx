@@ -110,7 +110,7 @@ export default function UserRolesTable() {
     <div className="relative w-full ">
       <div className=" px-6 pt-6">
         <h2 className="text-2xl font-bold text-gray-800">
-          💼 User Roles (Default)
+          User Roles (Default)
         </h2>
         <p className="text-sm text-gray-500">
           Set base permissions for each standard role.
