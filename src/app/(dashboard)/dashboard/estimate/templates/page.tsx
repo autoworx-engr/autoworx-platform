@@ -68,7 +68,7 @@ async function TemplatesPage({
         endDate={searchParams.endDate}
       />
 
-      <NavigationTabs activeTab="c-template">
+      <NavigationTabs activeTab="d-template">
         <TemplateTable data={templates} />
       </NavigationTabs>
     </div>
