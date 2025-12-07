@@ -21,6 +21,7 @@ import { AttachmentTab } from "../../create/tabs/AttachmentTab";
 import { CreateTab } from "../../create/tabs/CreateTab";
 import PaymentTab from "../../create/tabs/PaymentTab";
 import { Save } from "lucide-react";
+import EstimateInspectionsTab from "../../create/tabs/EstimateInspectionsTab";
 
 export default async function Page({
   params,
@@ -311,7 +312,7 @@ export default async function Page({
           </TabsContent>
 
           <TabsContent value="inspections">
-            <InspectionsTab />
+            <EstimateInspectionsTab />
           </TabsContent>
           <TabsContent value="payments">
             <PaymentTab

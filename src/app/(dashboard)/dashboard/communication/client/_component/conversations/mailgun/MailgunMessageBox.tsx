@@ -15,7 +15,10 @@ import RedirectToSettings from "./RedirectToSettings";
 
 type TProps = {
   clientId: number;
-  conversations?: (MailgunEmail & { attachments: MailgunEmailAttachment[] })[];
+  conversations?: (MailgunEmail & { attachments: MailgunEmailAttachment[], user?: {
+      firstName: string;
+      lastName: string | null;
+    } | null; })[];
   clientEmail: boolean;
 };
 

@@ -101,6 +101,7 @@ export const getEmployeesForPaginate = cache(
         zip: true,
         companyName: true,
         image: true,
+        countryCode:true,
         salaryHistory: {
           where: {
             isActive: true,

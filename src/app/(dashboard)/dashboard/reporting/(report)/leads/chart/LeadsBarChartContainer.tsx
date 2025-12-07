@@ -106,7 +106,7 @@ export default function LeadsBarChartContainer({ searchParams }: TProps) {
           </Label>
         </YAxis>
         <Tooltip />
-        <Legend verticalAlign="top" align="right" layout="horizontal" />
+        <Legend verticalAlign="bottom" align="center" layout="horizontal" />
 
         <Bar
           dataKey="qualified"

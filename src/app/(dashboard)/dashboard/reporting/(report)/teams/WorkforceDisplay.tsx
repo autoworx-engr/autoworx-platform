@@ -5,10 +5,10 @@ import { Prisma, User } from "@prisma/client";
 import { Pagination } from "antd";
 import moment from "moment-timezone";
 import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useMediaQuery } from "react-responsive";
 import WorkforceMobileCard from "./WorkforceMobileCard";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 type TProps = {
   employees: (User & {
@@ -198,19 +198,23 @@ export default function WorkforceDisplay({
   }
 
   return (
-    <div className="space-y-4 md:hidden">
-      {employees.map((employee, index) => (
-        <WorkforceMobileCard
-          key={employee.id}
-          employee={employee}
-          index={index}
-          formattedEndDate={formattedEndDate}
-          formattedStartDate={formattedStartDate}
-          hasDateRange={hasDateRange}
-        />
-      ))}
+    <div>
+      <div className="space-y-4 md:hidden">
+        {paginatedEmployees.map((employee, index) => (
+          <WorkforceMobileCard
+            key={employee.id}
+            employee={employee}
+            index={index}
+            formattedEndDate={formattedEndDate}
+            formattedStartDate={formattedStartDate}
+            hasDateRange={hasDateRange}
+          />
+        ))}
+      </div>
+
+      {/* Mobile Pagination */}
       {showPagination && (
-        <div className="mt-4 flex justify-end">
+        <div className="mt-4 flex justify-center pb-4 md:hidden">
           <Pagination
             className="custom-pagination"
             current={currentPage}
@@ -219,6 +223,7 @@ export default function WorkforceDisplay({
             onChange={handlePageChange}
             showSizeChanger
             onShowSizeChange={handlePageChange}
+            simple
           />
         </div>
       )}

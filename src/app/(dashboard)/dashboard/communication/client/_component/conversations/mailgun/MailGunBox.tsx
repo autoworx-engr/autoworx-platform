@@ -4,7 +4,10 @@ import MailGunConversation from "./MailgunConversation";
 import { MailgunEmail, MailgunEmailAttachment } from "@prisma/client";
 
 type TProps = {
-  conversations?: (MailgunEmail & { attachments: MailgunEmailAttachment[] })[];
+  conversations?: (MailgunEmail & { attachments: MailgunEmailAttachment[], user?: {
+      firstName: string;
+      lastName: string | null;
+    } | null; })[];
   clientId: number;
 };
 
