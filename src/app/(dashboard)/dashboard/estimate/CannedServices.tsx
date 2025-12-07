@@ -106,7 +106,9 @@ export default function CannedServices({
     <div className="h-full w-full md:px-4 flex flex-col">
       <section className="pb-4 border-b border-gray-200">
         <div className="flex items-center gap-x-4">
-          <h3 className="text-2xl font-extrabold text-gray-800">📋 Canned Services</h3>
+          <h3 className="text-2xl font-extrabold text-gray-800">
+            Canned Services
+          </h3>
         </div>
         {/* Updated layout to match Canned Labor: Search, Filter (Icon), Add Service (Button) on one line */}
         <div className=" pt-3">
@@ -114,8 +116,8 @@ export default function CannedServices({
             searchText={serviceSearch as string}
             paramKey="serviceSearch"
           />
-          </div>
-          <div className="flex justify-between items-center mt-3">
+        </div>
+        <div className="flex justify-between items-center mt-3">
           <CannedFilterBySelection
             selectedItem={selectedCategory}
             items={uniqueCategories}
@@ -127,7 +129,13 @@ export default function CannedServices({
           />
           <NewService
             newButton={
-              <button className="rounded-lg bg-indigo-600 w-full min-w-32 md:w-36 p-2 text-white font-medium hover:bg-indigo-700 transition-colors shadow-md">
+              <button
+                className="rounded-lg bg-gradient-to-r from-[#6571FF] to-[#5a66ee] w-full min-w-32 md:w-36 p-2 text-white font-medium shadow-indigo-500/30
+                hover:shadow-xl hover:shadow-indigo-500/40
+                hover:-translate-y-0.5 hover:scale-[1.02]
+                active:translate-y-0 active:scale-100
+                transition-all duration-200"
+              >
                 + Add Service
               </button>
             }
@@ -139,10 +147,18 @@ export default function CannedServices({
         <Table className="h-full border border-gray-200 rounded-lg">
           <TableHeader className="sticky top-0 bg-gray-50 border-b border-gray-200">
             <TableRow>
-              <TableHead className="font-semibold text-gray-700">Service Name</TableHead>
-              <TableHead className="font-semibold text-gray-700">Category</TableHead>
-              <TableHead className="font-semibold text-gray-700">Description</TableHead>
-              <TableHead className="font-semibold text-gray-700">Actions</TableHead>
+              <TableHead className="font-semibold text-gray-700">
+                Service Name
+              </TableHead>
+              <TableHead className="font-semibold text-gray-700">
+                Category
+              </TableHead>
+              <TableHead className="font-semibold text-gray-700">
+                Description
+              </TableHead>
+              <TableHead className="font-semibold text-gray-700">
+                Actions
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody className="custom-scrollbar h-full">
@@ -279,13 +295,15 @@ const ServiceComponent = ({
 
   if (view === "card") {
     return (
-     <Card
+      <Card
         className={cn(
           "w-full transition-all duration-300 rounded-xl shadow-lg border-t-4",
           index !== undefined && index % 2 === 0
             ? "border-indigo-500 bg-white"
             : "border-teal-500 bg-gray-50",
-          isEdit ? "shadow-2xl ring-2 ring-indigo-400" : "shadow-md hover:shadow-lg"
+          isEdit
+            ? "shadow-2xl ring-2 ring-indigo-400"
+            : "shadow-md hover:shadow-lg"
         )}
       >
         <CardHeader className="p-4">
@@ -317,7 +335,9 @@ const ServiceComponent = ({
                   onBlur={() => validateName(name)}
                   className={cn(
                     "w-full rounded-lg border p-2 text-base font-semibold focus:ring-2 focus:ring-indigo-500 transition-colors",
-                    nameError ? "border-red-500" : "border-gray-300 focus:border-indigo-500"
+                    nameError
+                      ? "border-red-500"
+                      : "border-gray-300 focus:border-indigo-500"
                   )}
                   placeholder="Service Name"
                   aria-invalid={nameError ? "true" : "false"}
@@ -365,7 +385,7 @@ const ServiceComponent = ({
                     setIsEdit(false);
                   }}
                 >
-                  <Trash2 className="w-5 h-5 text-red-500 hover:text-red-700 cursor-pointer transition-colors"  />
+                  <Trash2 className="w-5 h-5 text-red-500 hover:text-red-700 cursor-pointer transition-colors" />
                 </Popconfirm>
               )}
             </div>
@@ -390,7 +410,9 @@ const ServiceComponent = ({
               )}
             </div>
             <div>
-              <p className="mb-1 text-sm font-medium text-gray-500">Description</p>
+              <p className="mb-1 text-sm font-medium text-gray-500">
+                Description
+              </p>
               {!isEdit ? (
                 <p className="break-all whitespace-pre-wrap text-gray-700">
                   {service.description}
@@ -418,7 +440,9 @@ const ServiceComponent = ({
                     )}
                   />
                   {descriptionError && (
-                    <p className="mt-1 text-xs text-red-500">{descriptionError}</p>
+                    <p className="mt-1 text-xs text-red-500">
+                      {descriptionError}
+                    </p>
                   )}
                 </>
               )}
@@ -520,10 +544,7 @@ const ServiceComponent = ({
       <TableCell className="flex items-center space-x-3 py-3 h-full">
         {isEdit && (
           <div className="flex items-center space-x-2">
-            <button
-              onClick={() => setIsEdit(false)}
-              title="Cancel Edit"
-            >
+            <button onClick={() => setIsEdit(false)} title="Cancel Edit">
               <X
                 color="#f87171"
                 className="w-5 h-5 hover:text-red-700 transition-colors"
@@ -557,7 +578,7 @@ const ServiceComponent = ({
             setIsEdit(false);
           }}
         >
-          <Trash2 className="w-5 h-5 text-red-500 hover:text-red-700 cursor-pointer transition-colors"/>
+          <Trash2 className="w-5 h-5 text-red-500 hover:text-red-700 cursor-pointer transition-colors" />
         </Popconfirm>
       </TableCell>
     </TableRow>

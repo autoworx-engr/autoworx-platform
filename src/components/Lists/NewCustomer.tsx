@@ -114,15 +114,6 @@ export default function NewCustomer({
       return;
     }
 
-    // Validate mobile number format
-    // if (!mobile.startsWith("+1") || !/^\+1\d{10}$/.test(mobile)) {
-    //   showError({
-    //     field: "mobile",
-    //     message:
-    //       "Please enter a valid US phone number with area code (e.g., +1234567890).",
-    //   });
-    //   return;
-    // }
 const fullPhone = `${country}${mobile}`
     if (!mobile || mobile.length < 10) {
       showError({
@@ -344,20 +335,7 @@ const fullPhone = `${country}${mobile}`
                 // }
               }}
             />
-            {/* <SlimInput
-              name="mobile"
-              label="Mobile"
-              required
-              value={mobile}
-              onChange={e => {
-                const value = e.target.value;
-                // Always update the state to allow editing
-                setMobile(value);
-                // Clear errors when user is typing
-                clearError();
-              }}
-            /> */}
-
+         
             <PhoneInput
             label="Mobile Number"
             placeholder="1234567890"
