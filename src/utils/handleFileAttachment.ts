@@ -39,7 +39,7 @@ export const uploadAllAttachments = async (attachments: any[]) => {
 
   // Filter out files that need to be uploaded (have the isLocal flag)
   const filesToUpload = attachments.filter(
-    (attachment) => attachment.isLocal && attachment.file,
+    (attachment) => attachment.isLocal && attachment.file
   );
 
   if (filesToUpload.length === 0) {
@@ -57,11 +57,17 @@ export const uploadAllAttachments = async (attachments: any[]) => {
           maxSizeMB: 1,
           maxWidthOrHeight: 1920,
           useWebWorker: true,
-        }),
-      ),
+        })
+      )
     );
 
-    compressedFiles.forEach((file) => {
+    // Convert compressed blobs back to File objects with original filenames
+    compressedFiles.forEach((compressedFile, index) => {
+      const originalFile = filesToUpload[index].file;
+      const file = new File([compressedFile], originalFile.name, {
+        type: compressedFile.type,
+        lastModified: Date.now(),
+      });
       imageFormData.append("file", file);
     });
 
@@ -119,17 +125,24 @@ export const handleFileAttachmentUtils = async ({
   const imageFormData = new FormData();
 
   try {
+    const filesArray = Array.from(selectedFiles);
     const compressedFiles = await Promise.all(
-      Array.from(selectedFiles).map((file) =>
+      filesArray.map((file) =>
         imageCompression(file, {
           maxSizeMB: 1,
           maxWidthOrHeight: 1920,
           useWebWorker: true,
-        }),
-      ),
+        })
+      )
     );
 
-    compressedFiles.forEach((file) => {
+    // Convert compressed blobs back to File objects with original filenames
+    compressedFiles.forEach((compressedFile, index) => {
+      const originalFile = filesArray[index];
+      const file = new File([compressedFile], originalFile.name, {
+        type: compressedFile.type,
+        lastModified: Date.now(),
+      });
       imageFormData.append("file", file);
     });
 

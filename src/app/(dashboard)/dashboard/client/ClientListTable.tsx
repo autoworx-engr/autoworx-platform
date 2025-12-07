@@ -55,8 +55,9 @@ const ClientListTable = ({
                 key={index}
                 className={cn(
                   " duration-200 hover:bg-slate-50 dark:hover:bg-slate-800/50",
-                  index % 2 !== 0 ? "bg-blue-50/80 dark:bg-slate-900" : "bg-white dark:bg-slate-900",
-
+                  index % 2 !== 0
+                    ? "bg-blue-50/80 dark:bg-slate-900"
+                    : "bg-white dark:bg-slate-900"
                 )}
               >
                 <td className="border-b px-4 py-2 text-left">

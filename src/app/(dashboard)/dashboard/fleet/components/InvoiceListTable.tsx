@@ -1,17 +1,17 @@
 "use client";
-import { cn } from "@/lib/cn";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/DropdownMenu";
+import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
+import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/cn";
+import { formatCurrency } from "@/utils/formatCurrency";
+import { FleetStatement, Invoice } from "@prisma/client";
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
-import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
-import { FleetStatement, Invoice } from "@prisma/client";
-import { Card, CardContent } from "@/components/ui/card";
-import { formatCurrency } from "@/utils/formatCurrency";
 
 const InvoiceListTable = ({
   invoiceData,
@@ -43,8 +43,7 @@ const InvoiceListTable = ({
       );
 
     const statusMatch =
-      statusFilters.length === 0 ||
-      statusFilters.includes(item.column?.title);
+      statusFilters.length === 0 || statusFilters.includes(item.column?.title);
 
     return paymentMatch && statusMatch;
   });
@@ -71,8 +70,10 @@ const InvoiceListTable = ({
 
   const getStatusBadgeClasses = (title?: string) => {
     const t = (title || "").toLowerCase();
-    if (t.includes("complete") || t.includes("completed")) return "bg-[#27837c]/90 text-white";
-    if (t.includes("progress") || t.includes("in progress")) return "bg-[#4791ed]/90 text-white";
+    if (t.includes("complete") || t.includes("completed"))
+      return "bg-[#27837c]/90 text-white";
+    if (t.includes("progress") || t.includes("in progress"))
+      return "bg-[#4791ed]/90 text-white";
     return "bg-gray-100 text-gray-700";
   };
 
@@ -101,13 +102,16 @@ const InvoiceListTable = ({
                         </button>
                       </DropdownMenuTrigger>
 
-                      <DropdownMenuContent align="start" className="w-40 space-y-1">
+                      <DropdownMenuContent
+                        align="start"
+                        className="w-40 space-y-1"
+                      >
                         <DropdownMenuCheckboxItem
                           checked={paymentFilters.includes("Paid")}
                           onCheckedChange={(checked) =>
                             handlePaymentFilter("Paid", checked)
                           }
-                          className={`${paymentFilters.includes("Paid") ? 'bg-gradient-to-r from-[#6571FF] to-[#8088FF] text-white' : ''}`}
+                          className={`${paymentFilters.includes("Paid") ? "bg-gradient-to-r from-[#6571FF] to-[#8088FF] text-white" : ""}`}
                         >
                           Paid
                         </DropdownMenuCheckboxItem>
@@ -116,7 +120,7 @@ const InvoiceListTable = ({
                           onCheckedChange={(checked) =>
                             handlePaymentFilter("Unpaid", checked)
                           }
-                          className={`${paymentFilters.includes("Unpaid") ? 'bg-gradient-to-r from-[#6571FF] to-[#8088FF] text-white' : ''}`}
+                          className={`${paymentFilters.includes("Unpaid") ? "bg-gradient-to-r from-[#6571FF] to-[#8088FF] text-white" : ""}`}
                         >
                           Unpaid
                         </DropdownMenuCheckboxItem>
@@ -134,7 +138,10 @@ const InvoiceListTable = ({
                           <ChevronDown className="h-4 w-4" />
                         </button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="start" className="w-40 space-y-1">
+                      <DropdownMenuContent
+                        align="start"
+                        className="w-40 space-y-1"
+                      >
                         {uniqueStatuses?.map((status: any, index: number) => (
                           <DropdownMenuCheckboxItem
                             key={index}
@@ -147,9 +154,11 @@ const InvoiceListTable = ({
                                 checked
                               )
                             }
-                            className={`${statusFilters.includes(
-                              status?.status as string
-                            ) ? 'bg-gradient-to-r from-[#6571FF] to-[#8088FF] text-white' : ''}`}
+                            className={`${
+                              statusFilters.includes(status?.status as string)
+                                ? "bg-gradient-to-r from-[#6571FF] to-[#8088FF] text-white"
+                                : ""
+                            }`}
                           >
                             {status?.status}
                           </DropdownMenuCheckboxItem>
