@@ -9,34 +9,38 @@ import { SyncLists } from "@/components/SyncLists";
 import Title from "@/components/Title";
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
-import {
-  InventoryProduct,
-  InvoiceType,
-  Labor,
-  Material,
-  Tag,
-} from "@prisma/client";
+import { InvoiceType, Tag } from "@prisma/client";
 import { BillSummary } from "./BillSummary";
 import ConvertButton from "./ConvertButton";
 import Create from "./Create";
 import Header from "./Header";
 import { AttachmentTab } from "./tabs/AttachmentTab";
 import { CreateTab } from "./tabs/CreateTab";
-import InspectionsTab from "./tabs/InspectionsTab";
 import PaymentTab from "./tabs/PaymentTab";
+import EstimateInspectionsTab from "./tabs/EstimateInspectionsTab";
+import DynamicTemplateLoader from "../DynamicTemplateLoader";
 
 export default async function Page({
   searchParams,
 }: {
-  searchParams: { clientId?: string };
+  searchParams: { clientId?: string; templateId?: string };
 }) {
+  const companyId = await getCompanyId();
   const clientId = searchParams.clientId
     ? parseInt(searchParams.clientId)
     : null;
-  const client = clientId
-    ? await db.client.findUnique({ where: { id: clientId } })
+  const templateId = searchParams.templateId ? searchParams.templateId : null;
+
+  const template = templateId
+    ? await db.invoiceTemplate.findUnique({ where: { id: templateId } })
     : null;
-  const companyId = await getCompanyId();
+
+  const client = clientId
+    ? await db.client.findUnique({
+        where: { id: clientId },
+      })
+    : null;
+
   const customers = await db.client.findMany({ where: { companyId } });
   const vehicles = await db.vehicle.findMany({
     where: { companyId, clientId },
@@ -99,6 +103,7 @@ export default async function Page({
       productId: product.id,
     }))
   );
+
   return (
     <div className="gap-3 space-y-4 overflow-clip py-2 md:-my-2 md:min-h-[93vh] xl:grid xl:grid-cols-4 xl:space-y-0">
       <div className="col-span-3 space-y-4">
@@ -118,7 +123,9 @@ export default async function Page({
           client={client}
         />
 
-        <Header />
+        {templateId && <DynamicTemplateLoader templateId={templateId} />}
+
+        <Header selectedTemplate={template} />
 
         <Tabs
           defaultValue="create"
@@ -154,7 +161,7 @@ export default async function Page({
           </TabsContent>
 
           <TabsContent value="inspections">
-            <InspectionsTab />
+            <EstimateInspectionsTab />
           </TabsContent>
           <TabsContent value="payments">
             <PaymentTab

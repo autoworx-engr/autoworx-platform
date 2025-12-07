@@ -1,6 +1,7 @@
 import { Appointment, Client, User } from "@prisma/client";
-import { SquarePen, Clock, Mail, Phone, User as UserIcon, Users } from "lucide-react";
+import { MessageCircleMore, SquarePen, Clock, Mail, Phone, User as UserIcon, Users } from "lucide-react";
 import moment from "moment";
+import Link from "next/link";
 
 type TAppointmentTooltipProps = {
   event: Appointment & {
@@ -38,99 +39,98 @@ export default function AppointmentTooltip({
   onModalOpen,
 }: TAppointmentTooltipProps) {
   return (
-    // Outer div maintains click/drag isolation
-    <div
-      onClick={(e) => e.stopPropagation()}
-      onMouseDown={(e) => e.stopPropagation()}
-      className="space-y-3"
-    >
-
-      {/* 1. Title and Edit Button (Sleek Header) */}
-      <div className="flex items-start justify-between pb-2 border-b border-slate-200 dark:border-slate-700">
-
-        {/* Title: Professional, higher contrast typography */}
-        <h3 className="text-xl font-extrabold text-slate-600 dark:text-white mr-4">
-          {event.title}
-        </h3>
-
-        {/* Edit Button: Sleek, premium style with the action color */}
-        <button
-          type="button"
-          className={`flex-shrink-0 rounded-md p-1 text-white bg-[${ACTION_COLOR}] 
-                      shadow-md shadow-[${ACTION_COLOR}]/40 hover:shadow-lg 
-                      hover:scale-[1.05] ${TRANSITION_UTILITY}`}
-          onClick={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            onModalOpen && onModalOpen();
-          }}
-          onMouseDown={(e) => {
-            e.stopPropagation();
-          }}
-        >
-          <SquarePen className="w-4 h-4 lg:w-5 lg:h-5" />
-        </button>
-      </div>
-
-      {/* 2. Time and Core Details */}
-      <div className="space-y-2">
-
-        {/* Time Range */}
-        <TooltipDetail icon={Clock} label="Time">
-          <span className="font-semibold text-cyan-600 dark:text-cyan-400">
-            {moment(event.startTime, "HH:mm").format("h:mm A")} to{" "}
-            {moment(event.endTime, "HH:mm").format("h:mm A")}
-          </span>
-        </TooltipDetail>
-
-        {/* Client Name */}
-        {event.client && (
-          <TooltipDetail icon={UserIcon} label="Client">
-            <span className="font-semibold">{`${event.client.firstName} ${event.client.lastName || ""}`}</span>
-          </TooltipDetail>
-        )}
-
-        {/* Email Link (Iconified) */}
-        {event.client?.email && (
-          <TooltipDetail icon={Mail} label="Email">
-            <a
-              href={`mailto:${event.client.email}`}
-              className={`font-medium ${LINK_BLUE}`}
+    <>
+      <div
+        onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold">{event.title}</h3>
+          {/* Chat Link */}
+          <div className="flex gap-2">
+            <Link
+              href={`/dashboard/communication/client/${event.clientId}?chat=true`}
+              className="rounded-full bg-[#6571FF] p-2 text-white"
+              title="Open Chat"
             >
-              {event.client.email}
-            </a>
-          </TooltipDetail>
-        )}
-
-        {/* Phone Link (Iconified) */}
-        {event.client?.mobile && (
-          <TooltipDetail icon={Phone} label="Phone">
-            <a
-              href={`tel:${event.client.mobile}`}
-              className={`cursor-pointer font-medium ${LINK_EMERALD}`}
+              <MessageCircleMore className="h-4 w-4 cursor-pointer mx-auto" />
+            </Link>
+            <button
+              type="button"
+              className="text- rounded-full bg-[#6571FF] p-2 text-white"
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                onModalOpen && onModalOpen();
+              }}
+              onMouseDown={(e) => {
+                e.stopPropagation();
+              }}
             >
-              {event.client.mobile}
-            </a>
-          </TooltipDetail>
-        )}
-
-        {/* Assigned To */}
-        {event?.assignedUsers && event.assignedUsers.length > 0 && (
-          <TooltipDetail icon={Users} label="Assigned">
-            {event.assignedUsers
-              .slice(0, 1)
-              .map((user: User) => `${user.firstName} ${user.lastName}`)}
-          </TooltipDetail>
-        )}
-      </div>
-
-      {/* 3. Notes (Subtle Footer) */}
-      {event?.notes && (
-        <div className="pt-3 border-t border-slate-200 dark:border-slate-700">
-          <p className={`text-sm italic font-semibold ${INFO_TEXT_COLOR} mb-1`}>Notes:</p>
-          <p className={`text-xs ${SLATE_TEXT_COLOR}`}>{event.notes}</p>
+              <SquarePen className="w-4 h-4 cursor-pointer mx-auto" />
+            </button>
+          </div>
         </div>
-      )}
-    </div>
-  );
+
+        {/* 2. Time and Core Details */}
+        <div className="space-y-2">
+
+          {/* Time Range */}
+          <TooltipDetail icon={Clock} label="Time">
+            <span className="font-semibold text-cyan-600 dark:text-cyan-400">
+              {moment(event.startTime, "HH:mm").format("h:mm A")} to{" "}
+              {moment(event.endTime, "HH:mm").format("h:mm A")}
+            </span>
+          </TooltipDetail>
+
+          {/* Client Name */}
+          {event.client && (
+            <TooltipDetail icon={UserIcon} label="Client">
+              <span className="font-semibold">{`${event.client.firstName} ${event.client.lastName || ""}`}</span>
+            </TooltipDetail>
+          )}
+
+          {/* Email Link (Iconified) */}
+          {event.client?.email && (
+            <TooltipDetail icon={Mail} label="Email">
+              <a
+                href={`mailto:${event.client.email}`}
+                className={`font-medium ${LINK_BLUE}`}
+              >
+                {event.client.email}
+              </a>
+            </TooltipDetail>
+          )}
+
+          {/* Phone Link (Iconified) */}
+          {event.client?.mobile && (
+            <TooltipDetail icon={Phone} label="Phone">
+              <a
+                href={`tel:${event.client.mobile}`}
+                className={`cursor-pointer font-medium ${LINK_EMERALD}`}
+              >
+                {event.client.mobile}
+              </a>
+            </TooltipDetail>
+          )}
+
+          {/* Assigned To */}
+          {event?.assignedUsers && event.assignedUsers.length > 0 && (
+            <TooltipDetail icon={Users} label="Assigned">
+              {event.assignedUsers
+                .slice(0, 1)
+                .map((user: User) => `${user.firstName} ${user.lastName}`)}
+            </TooltipDetail>
+          )}
+        </div>
+
+        {/* 3. Notes (Subtle Footer) */}
+        {event?.notes && (
+          <div className="pt-3 border-t border-slate-200 dark:border-slate-700">
+            <p className={`text-sm italic font-semibold ${INFO_TEXT_COLOR} mb-1`}>Notes:</p>
+            <p className={`text-xs ${SLATE_TEXT_COLOR}`}>{event.notes}</p>
+          </div>
+        )}
+      </div>
+      );
 }

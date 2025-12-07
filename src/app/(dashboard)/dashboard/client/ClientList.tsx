@@ -2,10 +2,11 @@
 
 import ResponsiveEmployeeCard from "@/components/mobile-responsive/employee/ResponsiveEmployeeCard";
 import { useClientFilterStore } from "@/stores/clientFilter";
+import { Client, Source, Tag } from "@prisma/client";
+import { Pagination } from "antd";
 import useClientQuery from "./_hook/useClientQuery";
 import ClientListTable from "./ClientListTable";
 import { ClientTableSkeleton } from "./ClientTableSkeleton";
-import { Client, Source, Tag } from "@prisma/client";
 
 export default function ClientList({
   clients = [],
@@ -14,7 +15,8 @@ export default function ClientList({
   needCompanyName?: boolean;
   clients?: (Client & { tag: Tag | null; source: Source | null })[];
 }) {
-  const { search, currentPage, pageSize } = useClientFilterStore();
+  const { search, currentPage, pageSize, setCurrentPage, setPageSize } =
+    useClientFilterStore();
   const { data, isLoading, isError } = useClientQuery({
     search,
     currentPage,
@@ -28,6 +30,15 @@ export default function ClientList({
     clientData = data.clients;
     totalClients = data?.totalClients || 0;
   }
+
+  const handlePageChange = (page: number, pageSize?: number) => {
+    setCurrentPage(page ?? 0);
+    if (pageSize) {
+      setPageSize(pageSize);
+    }
+  };
+
+  const showPagination = totalClients > pageSize;
 
   let content;
   if (isLoading && !isError) {
@@ -48,12 +59,32 @@ export default function ClientList({
 
   return (
     <div>
-      <div className="h-[60%] overflow-y-auto lg:hidden">
-        {clientData.map((employee, index) => (
-          <ResponsiveEmployeeCard key={index} data={employee} index={index} />
-        ))}
+      {/* Mobile View */}
+      <div className="lg:hidden">
+        <div className="h-[60%] overflow-y-auto">
+          {clientData.map((employee, index) => (
+            <ResponsiveEmployeeCard key={index} data={employee} index={index} />
+          ))}
+        </div>
+
+        {/* Mobile Pagination */}
+        {showPagination && (
+          <div className="my-2 flex justify-center">
+            <Pagination
+              className="custom-pagination"
+              current={currentPage}
+              pageSize={pageSize}
+              total={totalClients ?? 0}
+              onChange={handlePageChange}
+              showSizeChanger
+              onShowSizeChange={handlePageChange}
+              simple // Optional: use simple pagination for mobile
+            />
+          </div>
+        )}
       </div>
 
+      {/* Desktop View */}
       {content}
     </div>
   );

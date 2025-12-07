@@ -23,7 +23,7 @@ export const materialModelSchemaValidation = z
         },
         {
           message: "Material Quantity must be a positive number",
-        },
+        }
       )
       .optional(),
     cost: z
@@ -45,11 +45,11 @@ export const materialModelSchemaValidation = z
     invoiceId: z.string().nullable().nullable().optional(),
     invoiceItemId: z.number().int().positive().nullable().optional(),
     productId: z.number().int().positive().nullable().optional(),
-    createdAt: z
+    createdAt: z.coerce
       .date()
       .default(() => new Date())
       .optional(),
-    updatedAt: z
+    updatedAt: z.coerce
       .date()
       .default(() => new Date())
       .optional(),
@@ -91,7 +91,7 @@ export const materialModelSchemaValidation = z
     {
       message: "Quantity must be zero or positive",
       path: ["quantity"],
-    },
+    }
   );
 
 export type TMaterialModelSchemaValidation = z.infer<

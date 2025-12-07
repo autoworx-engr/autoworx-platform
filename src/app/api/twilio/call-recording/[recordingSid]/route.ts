@@ -4,7 +4,7 @@ import { NextRequest } from "next/server";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { recordingSid: string } },
+  { params }: { params: { recordingSid: string } }
 ) {
   const recordingSid = params.recordingSid;
   if (!recordingSid) {
