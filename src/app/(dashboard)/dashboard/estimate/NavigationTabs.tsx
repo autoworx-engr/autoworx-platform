@@ -55,24 +55,6 @@ export default function NavigationTabs({
       {/* Mobile tab bar*/}
       <div className="flex gap-2 px-2 md:hidden overflow-x-auto thin-scrollbar">
         <MobileTabButton
-          href="/dashboard/estimate/templates"
-          label="Templates"
-          activeTab={activeTab}
-          tabKey="d-template"
-          router={router}
-          onClick={handleTemplateClick}
-        />
-
-        <MobileTabButton
-          href="/dashboard/estimate/canned"
-          label="Canned"
-          activeTab={activeTab}
-          tabKey="c-canned"
-          router={router}
-          onClick={handleCannedClick}
-        />
-
-        <MobileTabButton
           href="/dashboard/estimate/invoices"
           label="Invoices"
           activeTab={activeTab}
@@ -88,6 +70,23 @@ export default function NavigationTabs({
           tabKey="a-estimate"
           router={router}
           onClick={handleEstimateClick}
+        />
+        <MobileTabButton
+          href="/dashboard/estimate/templates"
+          label="Templates"
+          activeTab={activeTab}
+          tabKey="d-template"
+          router={router}
+          onClick={handleTemplateClick}
+        />
+
+        <MobileTabButton
+          href="/dashboard/estimate/canned"
+          label="Canned"
+          activeTab={activeTab}
+          tabKey="c-canned"
+          router={router}
+          onClick={handleCannedClick}
         />
       </div>
 
