@@ -32,6 +32,8 @@ import { useSession } from "next-auth/react";
 import { filterNavList } from "@/lib/navListAuthorization";
 import {
   BarChart3,
+  Calendar,
+  ChartPie,
   CheckSquare,
   CreditCard,
   FileText,
@@ -41,6 +43,7 @@ import {
   MessageSquare,
   Package,
   Settings,
+  SquareActivity,
   Users,
 } from "lucide-react";
 
@@ -60,21 +63,21 @@ type TProps = {
   permissions: PermissionsResult | null;
 };
 
-const iconMap: Record<string, React.ComponentType<any>> = {
+const iconMap: Record<string, React.ComponentType<any> | string> = {
   // "/icons/navbar/Dashboard.svg": LayoutDashboard,
   Dashboard: LayoutDashboard,
   // "/icons/navbar/Community.svg": MessageSquare,
-  "Communication Hub": MessageSquare,
+  "Communication Hub": "/icons/navbar/message.svg",
   // "/icons/navbar/Sales.svg": GitBranch,
-  Pipelines: GitBranch,
+  Pipelines: SquareActivity,
   // "/icons/navbar/Task.svg": CheckSquare,
-  "Task and Activity Management": CheckSquare,
+  "Task and Activity Management": Calendar,
   // "/icons/navbar/Analytics.svg": BarChart3,
-  "Analytics and Reporting": BarChart3,
+  "Analytics and Reporting": ChartPie,
   // "/icons/navbar/Invoices.svg": FileText,
   Invoices: FileText,
   // "/icons/navbar/Payments.svg": CreditCard,
-  Payments: CreditCard,
+  Payments: "/icons/navbar/coin.svg",
   // "/icons/navbar/Inventory.svg": Package,
   Inventory: Package,
   // "/icons/navbar/Employee.png": Users,
@@ -371,7 +374,7 @@ export default function SideNavbar({ navList, permissions }: TProps) {
         <div className="mb-auto mt-16 flex flex-col items-center gap-3">
           {filteredNavList.map((item, index) => {
             const IconComponent = iconMap[item.title];
-
+            const isCustomSvg = typeof IconComponent === "string";
             return item.subnav ? (
               <Dropdown
                 key={index}
@@ -382,20 +385,19 @@ export default function SideNavbar({ navList, permissions }: TProps) {
                 active={modifiedPathName === item.path ? true : false}
                 icon={
                   <span className="relative inline-flex items-center justify-center">
-                    {
+                    {isCustomSvg ? (
+                      <Image
+                        src={IconComponent as string}
+                        alt={item.title}
+                        width={20}
+                        height={20}
+                        className="w-5 h-5 opacity-60"
+                      />
+                    ) : (
                       IconComponent && (
                         <IconComponent className="w-5 h-5 text-gray-700" />
                       )
-                      // : (
-                      //   <Image
-                      //     src={item.icon}
-                      //     alt={item.title}
-                      //     width={22}
-                      //     height={22}
-                      //     className="opacity-60"
-                      //   />
-                      // )
-                    }
+                    )}
                     {item.title === "Communication Hub" &&
                       notificationShowPermission &&
                       totalMessageCount > 0 && (
@@ -453,9 +455,7 @@ export default function SideNavbar({ navList, permissions }: TProps) {
                   ))}
               </Dropdown>
             ) : (
-              <Tooltip
-                key={index}
-              >
+              <Tooltip key={index}>
                 <TooltipTrigger
                   asChild
                   onMouseEnter={() => setVisibleTooltip(index)}
@@ -471,7 +471,20 @@ export default function SideNavbar({ navList, permissions }: TProps) {
                       )}
                       href={item.link}
                     >
-                      {
+                      {isCustomSvg ? (
+                        <Image
+                          src={IconComponent as string}
+                          alt={item.title}
+                          width={20}
+                          height={20}
+                          className={cn(
+                            "w-5 h-5 transition-all duration-300",
+                            modifiedPathName === item.path
+                              ? "brightness-0 invert opacity-100"
+                              : "opacity-60"
+                          )}
+                        />
+                      ) : (
                         IconComponent && (
                           <IconComponent
                             className={cn(
@@ -482,20 +495,7 @@ export default function SideNavbar({ navList, permissions }: TProps) {
                             )}
                           />
                         )
-                        // : (
-                        //   <Image
-                        //     src={item.icon}
-                        //     alt={item.title}
-                        //     width={20}
-                        //     height={20}
-                        //     className={cn(
-                        //       "opacity-60",
-                        //       modifiedPathName === item.path &&
-                        //         "brightness-0 invert opacity-100"
-                        //     )}
-                        //   />
-                        // )
-                      }
+                      )}
                     </Link>
                   )}
                 </TooltipTrigger>
