@@ -22,6 +22,7 @@ export async function editMyAccountInfo({
   city,
   state,
   zip,
+  countryCode,
 }: TUpdateUserValidationSchema): Promise<ServerAction | TErrorHandler> {
   try {
     await updateUserValidationSchema.parseAsync({
@@ -34,6 +35,7 @@ export async function editMyAccountInfo({
       city,
       state,
       zip,
+      countryCode
     });
     const session = await getServerSession(authOptions);
     const userId = session?.user.id;
@@ -55,6 +57,7 @@ export async function editMyAccountInfo({
         state,
         zip,
         email,
+        countryCode,
       },
     });
     revalidatePath("/settings/my-account");

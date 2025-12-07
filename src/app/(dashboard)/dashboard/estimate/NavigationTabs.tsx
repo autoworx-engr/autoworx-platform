@@ -27,6 +27,7 @@ export default function NavigationTabs({
     // Prefetch the dashboard page
     router.prefetch("/dashboard/estimate/canned");
     router.prefetch("/dashboard/estimate/invoices");
+    router.prefetch("/dashboard/estimate/templates");
     router.prefetch("/dashboard/estimate");
   }, [router]);
   const handleCannedClick = () => {
@@ -43,11 +44,23 @@ export default function NavigationTabs({
     setType("estimate");
     // router.push("/dashboard/estimate");
   };
+  const handleTemplateClick = () => {
+    setType("estimate");
+    // router.push("/dashboard/estimate");
+  };
 
   return (
-  
-     <Tabs defaultValue={activeTab} className="mt-5 h-full overflow-hidden">
+    <Tabs defaultValue={activeTab} className="mt-5 h-full overflow-hidden">
       <TabsList>
+        <Link href="/dashboard/estimate/templates">
+          <TabsTrigger
+            className=""
+            value="d-template"
+            onClick={handleTemplateClick}
+          >
+            Templates
+          </TabsTrigger>
+        </Link>
         <Link href="/dashboard/estimate/canned">
           <TabsTrigger
             className=""
@@ -57,6 +70,7 @@ export default function NavigationTabs({
             Canned
           </TabsTrigger>
         </Link>
+
         <Link href="/dashboard/estimate/invoices">
           <TabsTrigger value="b-invoice" onClick={handleInvoiceClick}>
             Invoices
@@ -74,6 +88,5 @@ export default function NavigationTabs({
         </TabsContent>
       </div>
     </Tabs>
-   
   );
 }

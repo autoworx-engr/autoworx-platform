@@ -36,6 +36,7 @@ export async function POST(request: NextRequest) {
     // console.log("🚀 ~ POST ~ clientName:", clientName);
     const clientEmail = body?.email;
     const clientPhone = body?.phone;
+    const countryCode = body?.countryCode;
     // console.log("🚀 ~ POST ~ clientPhone:", clientPhone);
     const customerCountry = body.customer_country;
     // console.log("🚀 ~ POST ~ customerCountry:", customerCountry);
@@ -65,6 +66,7 @@ export async function POST(request: NextRequest) {
           clientPhone,
           vehicleInfo,
           services,
+          countryCode,
           source,
           serviceId: null,
           companyId: company.id,
@@ -80,10 +82,10 @@ export async function POST(request: NextRequest) {
           multipleServices:
             multipleServices && multipleServices.length > 0
               ? {
-                  connect: multipleServices.map((service: any) => ({
-                    id: Number(service.id),
-                  })),
-                }
+                connect: multipleServices.map((service: any) => ({
+                  id: Number(service.id),
+                })),
+              }
               : undefined,
         },
       });
@@ -94,11 +96,11 @@ export async function POST(request: NextRequest) {
 
       let newClient = clientPhone
         ? await db.client.findFirst({
-            where: {
-              mobile: clientPhone,
-              companyId: company.id,
-            },
-          })
+          where: {
+            mobile: clientPhone,
+            companyId: company.id,
+          },
+        })
         : null;
 
       if (!newClient) {
@@ -154,7 +156,7 @@ export async function POST(request: NextRequest) {
             columnId: +(newLead?.columnId ?? 0),
           });
         }
-      } catch (error) {}
+      } catch (error) { }
 
       // communication automation trigger
       await updateCommunicationAutomationTrigger({
@@ -181,6 +183,7 @@ export async function POST(request: NextRequest) {
           phone: clientPhone,
           type: "demo_request",
           opportunity_source: opportunity,
+          countryCode: countryCode,
         },
         { status: 201 }
       );
@@ -241,10 +244,10 @@ export async function POST(request: NextRequest) {
         multipleServices:
           multipleServices && multipleServices.length > 0
             ? {
-                connect: multipleServices.map((service: any) => ({
-                  id: Number(service.id),
-                })),
-              }
+              connect: multipleServices.map((service: any) => ({
+                id: Number(service.id),
+              })),
+            }
             : undefined,
       },
     });
@@ -257,11 +260,11 @@ export async function POST(request: NextRequest) {
 
     let newClient = clientPhone
       ? await db.client.findFirst({
-          where: {
-            mobile: clientPhone,
-            companyId: company.id,
-          },
-        })
+        where: {
+          mobile: clientPhone,
+          companyId: company.id,
+        },
+      })
       : null;
 
     if (!newClient) {
@@ -352,7 +355,7 @@ export async function POST(request: NextRequest) {
           columnId: +(newLead?.columnId ?? 0),
         });
       }
-    } catch (error) {}
+    } catch (error) { }
 
     // communication automation trigger
     await updateCommunicationAutomationTrigger({
@@ -380,6 +383,7 @@ export async function POST(request: NextRequest) {
         phone: clientPhone,
         customer_country: customerCountry,
         opportunity_source: opportunity,
+        countryCode: countryCode,
       },
       { status: 201 }
     );

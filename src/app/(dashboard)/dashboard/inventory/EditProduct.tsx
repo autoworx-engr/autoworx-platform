@@ -286,8 +286,8 @@ export default function EditProduct({ productData }: TProps) {
                   label={(vendor: Vendor | null) =>
                     vendor
                       ? vendor?.companyName ||
-                        vendor.name ||
-                        `Vendor ${vendor.id}`
+                      vendor.name ||
+                      `Vendor ${vendor.id}`
                       : "Vendor"
                   }
                   newButton={

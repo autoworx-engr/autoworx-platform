@@ -9,12 +9,19 @@ export default function SmsMessage({
   message,
 }: {
   message: ClientSMS & {
+    user?: {
+      firstName: string;
+      lastName: string | null;
+    } | null;
     attachments: ClientSmsAttachments[];
   };
 }) {
   const isIncoming = message.sentBy !== "Company";
   const text = (message.message ?? "").trim();
 
+   const senderName = message.sentBy === "Company" 
+                ? message.user && `${message.user.firstName} ${message.user.lastName || ''}`.trim()
+: null;
   const handleDownload = (fileUrl: string) => {
     window.open(fileUrl, "_blank", "noopener,noreferrer");
   };
@@ -82,15 +89,26 @@ export default function SmsMessage({
         )}
 
         {/* Timestamp */}
-        <div
+       <div className={cn(
+                                 "mt-1 flex flex-col gap-0 text-zinc-500",
+                                 !isIncoming && "items-end"
+                               )}>
+
+                                {senderName && (
+                          <div className="text-[9px] italic text-zinc-500">
+                            {senderName}
+                          </div>
+                        )}
+         <div
           className={cn(
-            "mt-1 text-[10px] leading-4 text-zinc-500",
+            "mt-1  text-[10px] leading-4 text-zinc-500",
             !isIncoming && "text-right"
           )}
           title={new Date(message.createdAt).toLocaleString()}
         >
           {formatTime(message.createdAt)}
         </div>
+       </div>
       </div>
     </div>
   );

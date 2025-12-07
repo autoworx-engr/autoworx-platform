@@ -74,31 +74,30 @@ const InventoryResponsiveCard: React.FC<InventoryResponsiveCardProps> = ({
           <div>
             {(user?.employeeType === "Admin" ||
               user?.employeeType === "Manager") && (
-              <div className="mt-4 flex gap-2">
-                <button className="text-[18px] text-blue-600">
-                  <EditProduct productData={product as any} />
-                </button>
-                <Popconfirm
-                  title={`Are you sure you want to delete this ${
-                    viewTab === "products" ? "product" : "supply"
-                  }?`}
-                  onConfirm={async () => {
-                    await deleteInventory(product.id);
-                    router.push(
-                      `/dashboard/inventory?view=${search?.get("view")}`
-                    );
-                  }}
-                  okText="Yes"
-                  cancelText="No"
-                >
-                  <X
-                    size={20}
-                    strokeWidth={3}
-                    className="text-xl text-red-400"
-                  />
-                </Popconfirm>
-              </div>
-            )}
+                <div className="mt-4 flex gap-2">
+                  <button className="text-[18px] text-blue-600">
+                    <EditProduct productData={product as any} />
+                  </button>
+                  <Popconfirm
+                    title={`Are you sure you want to delete this ${viewTab === "products" ? "product" : "supply"
+                      }?`}
+                    onConfirm={async () => {
+                      await deleteInventory(product.id);
+                      router.push(
+                        `/dashboard/inventory?view=${search?.get("view")}`
+                      );
+                    }}
+                    okText="Yes"
+                    cancelText="No"
+                  >
+                    <X
+                      size={20}
+                      strokeWidth={3}
+                      className="text-xl text-red-400"
+                    />
+                  </Popconfirm>
+                </div>
+              )}
           </div>
         </div>
       </Card>

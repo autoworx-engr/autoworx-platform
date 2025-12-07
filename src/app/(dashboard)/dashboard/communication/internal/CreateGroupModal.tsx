@@ -200,7 +200,7 @@ export default function CreateGroupModal({
         </button>
       </DialogTrigger>
       {/* Dialog Content: The main modal body with glassmorphism effect */}
-      <DialogContent className="max-w-[350px] rounded-2xl bg-background  sm:w-full sm:max-w-lg">
+      <DialogContent className="w-[90vw] max-w-md rounded-2xl bg-background  ">
         {error && (
           <p className="text-center text-sm text-rose-500 dark:text-rose-400">
             {error}
@@ -264,12 +264,12 @@ export default function CreateGroupModal({
                       >
                         {/* Avatar remains simple and functional */}
                         <Avatar photo={user.image} width={60} height={60} />
-                        <div className="flex flex-col overflow-hidden">
+                        <div className="flex flex-col overflow-hidden flex-1 min-w-0">
                           <p className="truncate text-base font-semibold text-slate-800 dark:text-white">
                             {user.firstName} {user.lastName}
                           </p>
                           {/* Details with muted text color */}
-                          <div className="flex items-center space-x-3 text-xs text-slate-600 dark:text-slate-400">
+                          <div className="flex flex-col md:flex-row md:items-center md:space-x-3 text-[8px] md:text-xs text-slate-600 dark:text-slate-400">
                             {user.phone && <p>{user.phone}</p>}
                             <p className="truncate">{user.email}</p>
                           </div>

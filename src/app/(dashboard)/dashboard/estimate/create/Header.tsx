@@ -4,11 +4,20 @@ import { SelectClient } from "@/components/Lists/SelectClient";
 import { SelectStatus } from "@/components/Lists/SelectStatus";
 import { SelectVehicle } from "@/components/Lists/SelectVehicle";
 import { useEstimateCreateStore } from "@/stores/estimate-create";
-import { Client, Column, Invoice, Vehicle } from "@prisma/client";
+import {
+  Client,
+  Column,
+  Invoice,
+  InvoiceTemplate,
+  Vehicle,
+} from "@prisma/client";
 import { customAlphabet } from "nanoid";
 import { useEffect, useState } from "react";
 import { CreateEstimateActionsButtons } from "./CreateEstimateActionButtons";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { SlimInput } from "@/components/SlimInput";
+import SelectTemplate from "./SelectTemplate";
+import { useListsStore } from "@/stores/lists";
 
 export default function Header({
   id,
@@ -18,6 +27,7 @@ export default function Header({
   invoice,
   isAllServicesCompleted,
   isEdit = false,
+  selectedTemplate,
 }: {
   id?: string;
   vehicle?: Vehicle;
@@ -26,16 +36,23 @@ export default function Header({
   invoice?: Invoice;
   isAllServicesCompleted?: boolean;
   isEdit?: boolean;
+  selectedTemplate?: InvoiceTemplate | null;
 }) {
-  const { invoiceId, setInvoiceId } = useEstimateCreateStore();
+  const { invoiceId, setInvoiceId, setTitle, title, template, setTemplate } =
+    useEstimateCreateStore();
+  const { status: selectedStatus } = useListsStore();
+
   //dropdown states
   const [clientOpenDropdown, setClientOpenDropdown] = useState(false);
+  const [templateOpenDropdown, setTemplateOpenDropdown] = useState(false);
   const [vehicleOpenDropdown, setVehicleOpenDropdown] = useState(false);
   const [statusOpenDropdown, setStatusOpenDropdown] = useState(false);
 
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
+  const isTemplate = pathname.includes("templates");
+  const isEstimateCreate = pathname.includes("estimate/create");
 
   useEffect(() => {
     if (!id) setInvoiceId(customAlphabet("1234567890", 10)());
@@ -48,6 +65,13 @@ export default function Header({
       router.push(`${pathname}?${params.toString()}`);
     }
   }, []);
+  useEffect(() => {
+    if (template) {
+      const params = new URLSearchParams(searchParams?.toString());
+      params.set("templateId", template?.id);
+      router.push(`${pathname}?${params.toString()}`);
+    }
+  }, [template]);
 
   useEffect(() => {
     if (clientOpenDropdown && (vehicleOpenDropdown || statusOpenDropdown)) {
@@ -74,31 +98,51 @@ export default function Header({
         <p>{invoiceId}</p>
       </div>
 
-      <CreateEstimateActionsButtons status={status!} />
+      <CreateEstimateActionsButtons status={status! || selectedStatus} />
 
-      <div className="flex basis-full flex-wrap items-center gap-3">
-        <SelectClient
-          value={client}
-          openDropdown={clientOpenDropdown}
-          setOpenDropdown={setClientOpenDropdown}
-          invoice={invoice}
-        />
-
-        <SelectVehicle
-          value={vehicle}
-          openDropdown={vehicleOpenDropdown}
-          setOpenDropdown={setVehicleOpenDropdown}
-          invoice={invoice}
-          isClear={true}
-          isEdit={isEdit}
-        />
+      <div className="flex basis-full flex-wrap items-end gap-3">
+        {isTemplate ? (
+          <SlimInput
+            name="title"
+            className="py-2"
+            required
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+        ) : (
+          <>
+            <SelectClient
+              value={client}
+              openDropdown={clientOpenDropdown}
+              setOpenDropdown={setClientOpenDropdown}
+              invoice={invoice}
+            />
+            <SelectVehicle
+              value={vehicle}
+              openDropdown={vehicleOpenDropdown}
+              setOpenDropdown={setVehicleOpenDropdown}
+              invoice={invoice}
+              isClear={true}
+              isEdit={isEdit}
+            />
+          </>
+        )}
 
         <SelectStatus
-          value={status}
+          value={status || selectedStatus}
           open={statusOpenDropdown}
           setOpen={setStatusOpenDropdown}
           isAllServicesCompleted={isAllServicesCompleted}
         />
+        {isEstimateCreate && (
+          <SelectTemplate
+            openDropdown={templateOpenDropdown}
+            setOpenDropdown={setTemplateOpenDropdown}
+            setValue={setTemplate}
+            value={template || selectedTemplate}
+            name="templateId"
+          />
+        )}
       </div>
     </div>
   );

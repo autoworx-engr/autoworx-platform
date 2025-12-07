@@ -1,6 +1,6 @@
 "use client";
 
-import { Select } from "antd";
+import { DropdownSelection } from "@/components/DropDownSelection";
 import { useEffect, useState } from "react";
 import { useInventoryDatabaseSearchStore } from "@/stores/inventoryDatabaseSearchStore";
 import DatabaseSearchBox from "./DatabaseSearchBox";
@@ -17,9 +17,14 @@ export default function DatabaseFilterHeader({ categories }: TProps) {
     categoryName
   );
 
-  const handleCategoryChange = (value: string | undefined) => {
-    setSelectedCategory(value);
-    setCategoryName(value ?? "");
+  const handleCategoryChange = (value: string) => {
+    if (value === "All Categories") {
+      setSelectedCategory(undefined);
+      setCategoryName("");
+    } else {
+      setSelectedCategory(value);
+      setCategoryName(value ?? "");
+    }
     setPage(1);
   };
 
@@ -29,25 +34,18 @@ export default function DatabaseFilterHeader({ categories }: TProps) {
 
   return (
     <div className="my-3 flex w-full flex-col gap-4 md:flex-row md:items-center md:justify-between md:gap-x-3">
-      <div className="flex flex-col gap-2 md:flex-1 md:flex-row md:items-center md:space-x-4">
+      <div className="flex flex-col gap-2 md:flex-row md:items-center md:space-x-4">
         <div className="relative w-full md:min-w-[300px] md:max-w-[693px]">
           <DatabaseSearchBox />
         </div>
         <div className="w-full md:w-auto">
-          <Select
-            placeholder="Category"
-            value={selectedCategory || undefined}
-            onChange={handleCategoryChange}
-            className="w-full md:w-[150px]"
-            allowClear
-          >
-            <Select.Option value="">All Categories</Select.Option>
-            {categories.map((category, index) => (
-              <Select.Option key={index} value={category}>
-                {category}
-              </Select.Option>
-            ))}
-          </Select>
+          <DropdownSelection
+            dropDownValues={["All Categories", ...categories]}
+            onValueChange={handleCategoryChange}
+            changesValue={selectedCategory || "All Categories"}
+            defaultValue="All Categories"
+            buttonClassName="md:w-[200px]"
+          />
         </div>
       </div>
     </div>

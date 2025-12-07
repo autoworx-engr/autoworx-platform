@@ -84,7 +84,7 @@ export const createStripePaymentLink = async ({
               product_data: {
                 name: productName,
               },
-              unit_amount: Number(amount) * 100, // Amount in cents
+              unit_amount: Math.round(Number(amount) * 100),
             },
             quantity: 1,
           },
