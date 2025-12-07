@@ -52,24 +52,25 @@ export default function NavigationTabs({
   return (
     <Tabs defaultValue={activeTab} className="mt-5 h-full overflow-hidden">
       <TabsList>
-        <Link href="/dashboard/estimate/canned">
-          <TabsTrigger
-            className=""
-            value="d-canned"
-            onClick={handleCannedClick}
-          >
-            Canned
-          </TabsTrigger>
-        </Link>
         <Link href="/dashboard/estimate/templates">
           <TabsTrigger
             className=""
-            value="c-template"
+            value="d-template"
             onClick={handleTemplateClick}
           >
             Templates
           </TabsTrigger>
         </Link>
+        <Link href="/dashboard/estimate/canned">
+          <TabsTrigger
+            className=""
+            value="c-canned"
+            onClick={handleCannedClick}
+          >
+            Canned
+          </TabsTrigger>
+        </Link>
+
         <Link href="/dashboard/estimate/invoices">
           <TabsTrigger value="b-invoice" onClick={handleInvoiceClick}>
             Invoices
