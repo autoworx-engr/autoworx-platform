@@ -146,11 +146,9 @@ export default function DayTask({
                   <div className="flex-1 overflow-auto thin-scrollbar w-full space-y-0.5">
 
                     {/* Title */}
-                    <div className="flex items-center justify-between mb-1">
-                      <h3 className={`text-sm font-extrabold ${BASE_TEXT_COLOR} truncate`}>
-                        {event.title}
-                      </h3>
-                    </div>
+                    <h3 className={`text-md font-extrabold text-start ${BASE_TEXT_COLOR} mb-1`}>
+                      {event.title}
+                    </h3>
 
                     {/* Time Range (Top Priority Detail) */}
                     <p className={`flex items-center gap-1 text-xs font-semibold ${APPOINTMENT_TEXT_COLOR}`}>
@@ -228,7 +226,7 @@ export default function DayTask({
                 </div>
               ) : (
                 <div className="flex h-full justify-start">
-                  <h3 className="font-semibold">{event.title}h</h3>
+                  <h3 className="font-semibold">{event.title}</h3>
                 </div>
               )}
             </>

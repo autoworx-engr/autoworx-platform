@@ -208,12 +208,14 @@ export default function CalendarSearch({ type }: { type: string }) {
         (isTaskLoad || isAppointmentLoad) && (
           <div
             ref={dropdownRef}
-            className="absolute z-50 mt-2 w-full lg:w-80 xl:w-80 overflow-hidden rounded-lg border border-border bg-popover shadow-md"
+            // Applying premium glassmorphism container style
+            className="absolute z-50 mt-2 w-full lg:w-80 xl:w-80 overflow-hidden rounded-xl ring-1 ring-slate-900/5 dark:ring-slate-700/50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm shadow-xl"
           >
-            <div className="px-4 py-8 text-center">
+            <div className="px-4 py-8 flex items-center justify-center">
               <div className="flex items-center justify-center gap-2">
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
-                <span className="text-sm text-muted-foreground">
+                {/* Spinner uses the ACTION_COLOR */}
+                <div className="flex-1 h-4 w-4 animate-spin rounded-full border-2 border-[#6571FF] border-t-transparent"></div>
+                <span className="flex-1 w-fit text-sm text-slate-500 dark:text-slate-400 font-medium">
                   Searching...
                 </span>
               </div>
@@ -227,32 +229,42 @@ export default function CalendarSearch({ type }: { type: string }) {
         searchResults.length > 0 && (
           <div
             ref={dropdownRef}
-            className="absolute z-50 mt-2 w-full lg:w-80 xl:w-80 overflow-hidden rounded-lg border border-border bg-popover shadow-md"
+            // Applying premium glassmorphism container style
+            className="absolute z-50 mt-2 w-full lg:w-80 xl:w-80 overflow-hidden rounded-xl ring-1 ring-slate-900/5 dark:ring-slate-700/50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm shadow-xl"
           >
-            <div className="max-h-80 overflow-auto">
+            <div className="max-h-80 overflow-y-auto thin-scrollbar">
               {searchResults.map((result, index) => (
                 <div key={`${result.type}-${result.id}`}>
                   <div
                     onClick={() => handleResultClick(result)}
-                    className="group relative cursor-pointer px-4 py-4 transition-colors duration-150 hover:bg-accent/10 focus:bg-accent/10 focus:outline-none"
+                    // Hover effect is refined: slightly darker background, smooth transition
+                    className={`group relative cursor-pointer px-4 py-3 transition-all duration-300 ease-in-out hover:bg-slate-100/70 dark:hover:bg-slate-800/70 focus:bg-slate-100/70 focus:outline-none`}
                   >
-                    <div className="space-y-3">
+                    <div className="space-y-2">
+
                       {/* Header with title and type badge */}
                       <div className="flex items-start justify-between gap-3">
-                        <h3 className="font-semibold text-foreground text-base leading-tight text-balance flex-1 pr-20 line-clamp-2 break-words">
+                        {/* Title: Enhanced typography */}
+                        <h3 className="font-bold text-slate-600 dark:text-white text-base leading-snug flex-1 pr-16 line-clamp-2 break-words max-w-[250px] truncate">
                           {result.title}
                         </h3>
-                        <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary border border-primary/20 capitalize flex-shrink-0 absolute top-4 right-4">
+
+                        {/* Type Badge: Primary color used for the badge for prominence */}
+                        <span
+                          className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold border 
+                                  bg-[#6571FF]/10 text-[#6571FF] dark:text-cyan-400 border-[#6571FF]/50 flex-shrink-0 absolute top-3 right-4`}
+                          style={{ color: "#6571FF", borderColor: "#6571FF" }} // Ensure dynamic color for badge text
+                        >
                           {result.type}
                         </span>
                       </div>
 
                       {/* Client and Vehicle info with icons */}
-                      <div className="grid grid-cols-1 gap-2">
+                      <div className="grid grid-cols-1 gap-1.5 text-slate-600 dark:text-slate-400">
                         {(result.firstName || result.lastName) && (
                           <div className="flex items-center gap-2">
-                            <User className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                            <span className="text-sm font-medium text-foreground">
+                            <User className="h-4 w-4 text-cyan-600 dark:text-cyan-400 flex-shrink-0" />
+                            <span className="text-sm font-medium">
                               {[result.firstName, result.lastName]
                                 .filter(Boolean)
                                 .join(" ")}
@@ -262,8 +274,8 @@ export default function CalendarSearch({ type }: { type: string }) {
 
                         {result.vehicle && (
                           <div className="flex items-center gap-2">
-                            <Car className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                            <span className="text-sm text-foreground">
+                            <Car className="h-4 w-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+                            <span className="text-sm">
                               {result.vehicle}
                             </span>
                           </div>
@@ -271,17 +283,17 @@ export default function CalendarSearch({ type }: { type: string }) {
                       </div>
 
                       {/* Date and Time with icons */}
-                      <div className="flex items-center gap-4 pt-1">
+                      <div className="flex items-center gap-4 pt-1 text-slate-500 dark:text-slate-400">
                         <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-muted-foreground" />
-                          <time className="text-sm font-medium text-foreground">
+                          <Calendar className="h-4 w-4" />
+                          <time className="text-xs font-medium">
                             {moment.utc(result.date).format("MMM DD, YYYY")}
                           </time>
                         </div>
                         {result.startTime && (
                           <div className="flex items-center gap-2">
-                            <Clock className="h-4 w-4 text-muted-foreground" />
-                            <time className="text-sm font-medium text-foreground">
+                            <Clock className="h-4 w-4" />
+                            <time className="text-xs font-medium">
                               {moment(result.startTime, "HH:mm").format(
                                 "h:mm A"
                               )}
@@ -292,7 +304,8 @@ export default function CalendarSearch({ type }: { type: string }) {
                     </div>
                   </div>
                   {index < searchResults.length - 1 && (
-                    <div className="mx-4 border-b border-border/50" />
+                    // Clean divider line
+                    <div className="mx-4 border-b border-slate-200/50 dark:border-slate-700/50" />
                   )}
                 </div>
               ))}
