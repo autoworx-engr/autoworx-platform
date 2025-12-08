@@ -30,6 +30,22 @@ import {
 import { useChatTrackStore } from "@/stores/chatTrackStore";
 import { useSession } from "next-auth/react";
 import { filterNavList } from "@/lib/navListAuthorization";
+import {
+  BarChart3,
+  Calendar,
+  ChartPie,
+  CheckSquare,
+  CreditCard,
+  FileText,
+  GitBranch,
+  LayoutDashboard,
+  LucideIcon,
+  MessageSquare,
+  Package,
+  Settings,
+  SquareActivity,
+  Users,
+} from "lucide-react";
 
 type TProps = {
   navList: {
@@ -45,6 +61,29 @@ type TProps = {
       | null;
   }[];
   permissions: PermissionsResult | null;
+};
+
+const iconMap: Record<string, React.ComponentType<any> | string> = {
+  // "/icons/navbar/Dashboard.svg": LayoutDashboard,
+  Dashboard: LayoutDashboard,
+  // "/icons/navbar/Community.svg": MessageSquare,
+  "Communication Hub": "/icons/navbar/message.svg",
+  // "/icons/navbar/Sales.svg": GitBranch,
+  Pipelines: SquareActivity,
+  // "/icons/navbar/Task.svg": CheckSquare,
+  "Task and Activity Management": Calendar,
+  // "/icons/navbar/Analytics.svg": BarChart3,
+  "Analytics and Reporting": ChartPie,
+  // "/icons/navbar/Invoices.svg": FileText,
+  Invoices: FileText,
+  // "/icons/navbar/Payments.svg": CreditCard,
+  Payments: "/icons/navbar/coin.svg",
+  // "/icons/navbar/Inventory.svg": Package,
+  Inventory: Package,
+  // "/icons/navbar/Employee.png": Users,
+  Directory: Users,
+  // "/icons/navbar/Settings.svg": Settings,
+  Settings: Settings,
 };
 
 export default function SideNavbar({ navList, permissions }: TProps) {
@@ -316,24 +355,27 @@ export default function SideNavbar({ navList, permissions }: TProps) {
 
   return (
     <TooltipProvider delayDuration={200}>
-      <nav className="fixed z-10 hidden h-screen flex-col items-center gap-8 overflow-y-auto bg-[#0C1427] px-2 py-12 sm:flex lg:w-[5%]">
-        {/* logo */}
-        <Link href="/">
-          <Image
-            src="/icons/Logo.png"
-            alt="Company Logo"
-            width={40}
-            height={40}
-          />
-          <div className="py-0.1 let absolute right-4 top-12 rotate-12 transform gap-2 rounded-md border border-white bg-gradient-to-r from-[#00b8b0] to-[#0098da] px-1 text-[8px] font-bold tracking-wider text-black shadow-lg">
+      <nav className="fixed z-10 hidden h-screen flex-col items-center gap-8 overflow-y-auto overflow-x-hidden bg-gradient-to-b from-gray-50 to-gray-100 backdrop-blur-xl px-3 py-12 sm:flex lg:w-[5%] shadow-[8px_0_24px_rgba(0,0,0,0.06)] border-r border-white/50">
+        <Link href="/" className="relative">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500 via-cyan-500 to-blue-600 flex items-center justify-center shadow-[0_8px_16px_rgba(59,130,246,0.3)] hover:shadow-[0_12px_24px_rgba(59,130,246,0.4)] transition-all duration-300 hover:scale-105">
+            <Image
+              src="/icons/logo1.webp"
+              alt="Company Logo"
+              width={24}
+              height={24}
+              className="brightness-0 invert"
+            />
+          </div>
+          <div className="absolute -right-2 -top-1 rotate-12 transform rounded-md bg-gradient-to-r from-cyan-400 to-blue-500 px-1.5 py-0.5 text-[7px] font-bold tracking-wider text-white shadow-lg backdrop-blur-sm">
             Beta
           </div>
         </Link>
 
-        {/* Links */}
-        <div className="mb-auto mt-16 flex flex-col items-center gap-4">
-          {filteredNavList.map((item, index) =>
-            item.subnav ? (
+        <div className="mb-auto mt-16 flex flex-col items-center gap-3">
+          {filteredNavList.map((item, index) => {
+            const IconComponent = iconMap[item.title];
+            const isCustomSvg = typeof IconComponent === "string";
+            return item.subnav ? (
               <Dropdown
                 key={index}
                 title={item.title}
@@ -343,17 +385,24 @@ export default function SideNavbar({ navList, permissions }: TProps) {
                 active={modifiedPathName === item.path ? true : false}
                 icon={
                   <span className="relative inline-flex items-center justify-center">
-                    <Image
-                      src={item.icon}
-                      alt={item.title}
-                      width={24}
-                      height={24}
-                    />
+                    {isCustomSvg ? (
+                      <Image
+                        src={IconComponent as string}
+                        alt={item.title}
+                        width={20}
+                        height={20}
+                        className="w-5 h-5 opacity-60"
+                      />
+                    ) : (
+                      IconComponent && (
+                        <IconComponent className="w-5 h-5 text-gray-700" />
+                      )
+                    )}
                     {item.title === "Communication Hub" &&
                       notificationShowPermission &&
                       totalMessageCount > 0 && (
-                        <span className="absolute right-0 -top-1 -translate-y-1/2 translate-x-1/2 rounded-full bg-red-500 px-2 py-1 text-xs text-white">
-                          {totalMessageCount}
+                        <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-red-500 to-pink-600 text-[10px] font-semibold text-white shadow-[0_4px_12px_rgba(239,68,68,0.5)] ring-2 ring-white">
+                          {totalMessageCount > 99 ? "99+" : totalMessageCount}
                         </span>
                       )}
                   </span>
@@ -364,30 +413,41 @@ export default function SideNavbar({ navList, permissions }: TProps) {
                     <DropdownMenuItem
                       key={index}
                       asChild
-                      className="cursor-pointer border border-solid border-white bg-background shadow-lg hover:bg-slate-500/80 hover:text-white focus:bg-slate-500/80 focus:text-white"
+                      className="cursor-pointer rounded-xl bg-white/80 backdrop-blur-md shadow-[0_4px_16px_rgba(0,0,0,0.08)] hover:bg-white hover:shadow-[0_8px_24px_rgba(59,130,246,0.15)] border border-white/50 focus:bg-white transition-all duration-200 min-w-[200px]"
                     >
-                      <Link href={subnavItem.link}>
-                        <span>{subnavItem.title}</span>
+                      <Link
+                        href={subnavItem.link}
+                        className="flex items-center justify-between w-full"
+                      >
+                        <span className="text-gray-700 font-medium text-sm">
+                          {subnavItem.title}
+                        </span>
                         {subnavItem.link ===
                           "/dashboard/communication/client" &&
                           hasClientCommunicationPermission &&
                           unReadClientCount > 0 && (
-                            <span className="ml-2 rounded-full bg-red-500 px-2 py-1 text-xs text-white">
-                              {unReadClientCount}
+                            <span className="ml-2 flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-red-500 to-pink-600 text-[10px] font-semibold text-white shadow-[0_4px_12px_rgba(239,68,68,0.4)]">
+                              {unReadClientCount > 99
+                                ? "99+"
+                                : unReadClientCount}
                             </span>
                           )}
                         {subnavItem.title === "Internal" &&
                           hasInternalCommunicationPermission &&
                           unreadMessageCount.internalCount > 0 && (
-                            <span className="ml-2 rounded-full bg-red-500 px-2 py-1 text-xs text-white">
-                              {unreadMessageCount.internalCount}
+                            <span className="ml-2 flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-red-500 to-pink-600 text-[10px] font-semibold text-white shadow-[0_4px_12px_rgba(239,68,68,0.4)]">
+                              {unreadMessageCount.internalCount > 99
+                                ? "99+"
+                                : unreadMessageCount.internalCount}
                             </span>
                           )}
                         {subnavItem.title === "Collaboration" &&
                           hasCollaborationCommunicationPermission &&
                           unreadMessageCount.collaborationCount > 0 && (
-                            <span className="ml-2 rounded-full bg-red-500 px-2 py-1 text-xs text-white">
-                              {unreadMessageCount.collaborationCount}
+                            <span className="ml-2 flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-red-500 to-pink-600 text-[10px] font-semibold text-white shadow-[0_4px_12px_rgba(239,68,68,0.4)]">
+                              {unreadMessageCount.collaborationCount > 99
+                                ? "99+"
+                                : unreadMessageCount.collaborationCount}
                             </span>
                           )}
                       </Link>
@@ -404,17 +464,38 @@ export default function SideNavbar({ navList, permissions }: TProps) {
                   {item.link && (
                     <Link
                       className={cn(
-                        "rounded-sm p-2 hover:bg-background/25",
-                        modifiedPathName === item.path && "!bg-black invert"
+                        "rounded-2xl p-2.5 transition-all duration-300 backdrop-blur-sm",
+                        modifiedPathName === item.path
+                          ? "bg-gradient-to-br from-blue-500 to-cyan-500 shadow-[0_8px_20px_rgba(59,130,246,0.35)] hover:shadow-[0_12px_28px_rgba(59,130,246,0.45)] scale-105"
+                          : " hover:bg-white/60 bg-[#e0e0e0] hover:bg-[#e8e8e8] shadow-[-12px -12px 24px 5px rgba(255, 255, 255, 0.035),12px 12px 24px 5px rgba(0, 0, 0, 0.07)] shadow-[inset_-3px_-3px_8px_rgba(255,255,255,0.8),inset_3px_3px_8px_rgba(0,0,0,0.08)]"
                       )}
                       href={item.link}
                     >
-                      <Image
-                        src={item.icon}
-                        alt={item.title}
-                        width={20}
-                        height={20}
-                      />
+                      {isCustomSvg ? (
+                        <Image
+                          src={IconComponent as string}
+                          alt={item.title}
+                          width={20}
+                          height={20}
+                          className={cn(
+                            "w-5 h-5 transition-all duration-300",
+                            modifiedPathName === item.path
+                              ? "brightness-0 invert opacity-100"
+                              : "opacity-60"
+                          )}
+                        />
+                      ) : (
+                        IconComponent && (
+                          <IconComponent
+                            className={cn(
+                              "w-5 h-5 transition-all duration-300",
+                              modifiedPathName === item.path
+                                ? "text-white drop-shadow-md"
+                                : "text-gray-700"
+                            )}
+                          />
+                        )
+                      )}
                     </Link>
                   )}
                 </TooltipTrigger>
@@ -422,39 +503,52 @@ export default function SideNavbar({ navList, permissions }: TProps) {
                   <TooltipContent
                     side="right"
                     sideOffset={8}
-                    className="border border-solid border-white bg-slate-500/80 text-white z-[999]"
+                    className="rounded-xl bg-white/90 backdrop-blur-md px-3 py-2 text-sm font-medium text-gray-700 shadow-[0_8px_24px_rgba(0,0,0,0.12)] border border-white/50 z-[999]"
                   >
                     {item.title}
                   </TooltipContent>
                 )}
               </Tooltip>
-            )
-          )}
+            );
+          })}
         </div>
 
-        {/* Settings */}
         {!isSuperAdminRoute && (
           <Tooltip>
             <TooltipTrigger asChild>
               <Link
                 href="/dashboard/settings/my-account"
-                className={`rounded-sm p-2 hover:bg-background/25 hover:opacity-50 ${
-                  modifiedPathName === "/dashboard/settings" &&
-                  "!bg-black invert"
-                }`}
+                className={cn(
+                  "rounded-[25px] p-2.5 transition-all duration-300 backdrop-blur-sm",
+                  modifiedPathName === "/dashboard/settings"
+                    ? "bg-gradient-to-br from-blue-500 to-cyan-500 shadow-[0_8px_20px_rgba(59,130,246,0.35)] hover:shadow-[0_12px_28px_rgba(59,130,246,0.45)] scale-105"
+                    : "hover:bg-white/60 bg-[#e0e0e0] hover:bg-[#e8e8e8] shadow-[-12px -12px 24px 5px rgba(255, 255, 255, 0.035),12px 12px 24px 5px rgba(0, 0, 0, 0.07)] shadow-[inset_-3px_-3px_8px_rgba(255,255,255,0.8),inset_3px_3px_8px_rgba(0,0,0,0.08)]"
+                )}
               >
-                <Image
+                {/* <Image
                   src="/icons/navbar/Settings.svg"
                   alt="Settings"
                   width={20}
                   height={20}
+                  className={cn(
+                    "opacity-60",
+                    modifiedPathName === "/dashboard/settings" && "brightness-0 invert opacity-100"
+                  )}
+                /> */}
+                <Settings
+                  className={cn(
+                    "w-5 h-5 transition-all duration-300",
+                    modifiedPathName === "/dashboard/settings"
+                      ? "text-white drop-shadow-md"
+                      : "text-gray-700"
+                  )}
                 />
               </Link>
             </TooltipTrigger>
             <TooltipContent
               side="right"
               sideOffset={8}
-              className="border border-solid border-white bg-slate-500/80 text-white"
+              className="rounded-xl bg-white/90 backdrop-blur-md px-3 py-2 text-sm font-medium text-gray-700 shadow-[0_8px_24px_rgba(0,0,0,0.12)] border border-white/50 z-[999]"
             >
               Settings
             </TooltipContent>
@@ -504,9 +598,10 @@ function Dropdown({
             <button
               type="button"
               className={cn(
-                "rounded-sm p-2 hover:bg-background/25",
-                open && activeDropdown === index && "!bg-black invert",
-                active && "!bg-black invert"
+                "rounded-2xl p-2.5 transition-all duration-300 backdrop-blur-sm",
+                (open && activeDropdown === index) || active
+                  ? "bg-gradient-to-br from-blue-500 to-cyan-500 shadow-[0_8px_20px_rgba(59,130,246,0.35)] scale-105"
+                  : "hover:bg-white/60 bg-[#e0e0e0] hover:bg-[#e8e8e8] shadow-[-12px -12px 24px 5px rgba(255, 255, 255, 0.035),12px 12px 24px 5px rgba(0, 0, 0, 0.07)] shadow-[inset_-3px_-3px_8px_rgba(255,255,255,0.8),inset_3px_3px_8px_rgba(0,0,0,0.08)]"
               )}
             >
               {icon}
@@ -518,7 +613,7 @@ function Dropdown({
           <TooltipContent
             side="right"
             sideOffset={8}
-            className="border border-solid border-white bg-slate-500/80 text-white"
+            className="rounded-xl bg-white/90 backdrop-blur-md px-3 py-2 text-sm font-medium text-gray-700 shadow-[0_8px_24px_rgba(0,0,0,0.12)] border border-white/50 z-[999]"
           >
             {title}
           </TooltipContent>
@@ -529,7 +624,7 @@ function Dropdown({
         side="right"
         align="start"
         sideOffset={8}
-        className="-m-4 space-y-1 border-none bg-transparent p-4 shadow-none"
+        className="space-y-2 border-none bg-transparent p-2 shadow-none"
       >
         {children}
       </DropdownMenuContent>
