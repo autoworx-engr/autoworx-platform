@@ -91,8 +91,6 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
     assignedUsers: task.taskUser.map((tu) => tu.user),
   }));
 
-  console.log("Appointments for client:", appointmentData);
-
   const conversations = conversationsData.data;
 
   return (
@@ -231,7 +229,7 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
         </div>
       </section>
 
-      {/* Appointments (client-side list + editor) */}
+      {/* Appointments */}
       <AppointmentListClient appointments={appointmentData} />
     </div>
   );
