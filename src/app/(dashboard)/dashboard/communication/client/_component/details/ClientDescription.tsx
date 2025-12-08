@@ -9,7 +9,10 @@ import SaveAttachment from "./SaveAttachment";
 import dynamic from "next/dynamic";
 import getSms from "@/actions/communication/client/getSms";
 import { cn } from "@/lib/cn";
-
+import Link from "next/link";
+const AppointmentListClient = dynamic(() => import("./AppointmentListClient"), {
+  ssr: false,
+});
 type TProps = {
   client?: Client | null;
   vehicles?: Partial<Vehicle>[];
@@ -51,6 +54,13 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
     },
   });
 
+  const appointmentsPromise = db.appointment.findMany({
+    where: {
+      companyId,
+      clientId: client?.id,
+    },
+  });
+
   const companyUsersPromise = db.user.findMany({
     where: {
       companyId,
@@ -59,20 +69,29 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
 
   const smsPromise = getSms(client?.id);
 
-  const [conversationsData, estimates, tasksData, companyUsers, smsData] =
-    await Promise.all([
-      conversationsPromise,
-      estimatesPromise,
-      tasksPromise,
-      companyUsersPromise,
-      smsPromise,
-    ]);
+  const [
+    conversationsData,
+    estimates,
+    tasksData,
+    companyUsers,
+    smsData,
+    appointmentData,
+  ] = await Promise.all([
+    conversationsPromise,
+    estimatesPromise,
+    tasksPromise,
+    companyUsersPromise,
+    smsPromise,
+    appointmentsPromise,
+  ]);
 
   // Transform tasks to include assignedUsers in the correct format
   const tasks = tasksData.map((task) => ({
     ...task,
     assignedUsers: task.taskUser.map((tu) => tu.user),
   }));
+
+  console.log("Appointments for client:", appointmentData);
 
   const conversations = conversationsData.data;
 
@@ -211,6 +230,9 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
           </div>
         </div>
       </section>
+
+      {/* Appointments (client-side list + editor) */}
+      <AppointmentListClient appointments={appointmentData} />
     </div>
   );
 }
