@@ -356,25 +356,22 @@ export default function SideNavbar({ navList, permissions }: TProps) {
 
   return (
     <TooltipProvider delayDuration={200}>
-      <nav className="fixed z-10 hidden h-screen flex-col items-center gap-6 overflow-y-auto overflow-x-hidden bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 dark:from-slate-950 dark:via-slate-950 dark:to-slate-950 backdrop-blur-2xl px-3 py-8 sm:flex lg:w-[80px] shadow-[16px_0_32px_rgba(0,0,0,0.25)] border-r border-slate-800/50">
+      <nav className="fixed z-10 hidden h-screen flex-col items-center gap-6 overflow-y-auto overflow-x-hidden bg-gradient-to-b from-white via-slate-50/80 to-white dark:from-slate-50 dark:via-slate-100/80 dark:to-slate-50 backdrop-blur-xl px-4 py-8 sm:flex lg:w-[100px] shadow-[16px_0_32px_rgba(0,0,0,0.08)] border-r border-slate-200/60">
         <Link href="/" className="relative mb-4 group">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#00b8b0] to-[#0098da] flex items-center justify-center shadow-[0_8px_24px_rgba(0,184,176,0.4)] hover:shadow-[0_12px_32px_rgba(0,184,176,0.5)] transition-all duration-300 hover:scale-110 group-hover:-translate-y-1">
-            <Image
-              src="/icons/logo1.webp"
-              alt="Company Logo"
-              width={24}
-              height={24}
-              className="brightness-0 invert"
-            />
-          </div>
-          <div className="absolute -right-3 -top-2 rotate-12 transform rounded-lg bg-gradient-to-r from-[#00b8b0] to-[#0098da] px-1.5 py-0.5 text-[7px] font-bold tracking-widest text-white shadow-lg backdrop-blur-md border border-white/20">
+          <Image
+            src="/images/solution/logo1.png"
+            alt="Company Logo"
+            width={40}
+            height={40}
+          />
+          <div className="absolute -right-3 -top-2 rotate-12 transform rounded-lg bg-gradient-to-r from-[#6571FF] to-[#5a66ee] px-1.5 py-0.5 text-[7px] font-bold tracking-widest text-white shadow-lg backdrop-blur-md border border-white/20">
             Beta
           </div>
         </Link>
 
-        <div className="w-8 h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent mb-6" />
+        <div className="w-8 h-px bg-gradient-to-r from-transparent via-slate-300 to-transparent mb-6" />
 
-        <div className="mb-auto mt-8 flex flex-col items-center gap-2">
+        <div className="mb-auto mt-8 flex flex-col items-center gap-3">
           {filteredNavList.map((item, index) => {
             const IconComponent = iconMap[item.title];
             const isCustomSvg = typeof IconComponent === "string";
@@ -394,17 +391,24 @@ export default function SideNavbar({ navList, permissions }: TProps) {
                         alt={item.title}
                         width={20}
                         height={20}
-                        className="w-5 h-5 opacity-80 transition-all duration-300"
+                        className="w-5 h-5 opacity-85 transition-all duration-300"
                       />
                     ) : (
                       IconComponent && (
-                        <IconComponent className="w-5 h-5 text-slate-300 transition-all duration-300" />
+                        <IconComponent
+                          className={cn(
+                            "w-5 h-5 transition-all duration-300",
+                            modifiedPathName === item.path
+                              ? "text-white drop-shadow-md"
+                              : "text-slate-700 hover:text-slate-900"
+                          )}
+                        />
                       )
                     )}
                     {item.title === "Communication Hub" &&
                       notificationShowPermission &&
                       totalMessageCount > 0 && (
-                        <span className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-r from-rose-500 to-pink-600 text-[10px] font-bold text-white shadow-[0_4px_16px_rgba(244,63,94,0.5)] ring-2 ring-slate-900 animate-pulse">
+                        <span className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-r from-[#6571FF] to-[#7c3aed] text-[10px] font-bold text-white shadow-[0_4px_16px_rgba(101,113,255,0.5)] ring-2 ring-slate-900 animate-pulse">
                           {totalMessageCount > 99 ? "99+" : totalMessageCount}
                         </span>
                       )}
@@ -416,20 +420,20 @@ export default function SideNavbar({ navList, permissions }: TProps) {
                     <DropdownMenuItem
                       key={index}
                       asChild
-                      className="cursor-pointer rounded-xl bg-slate-800/80 dark:bg-slate-800/80 backdrop-blur-md shadow-[0_8px_24px_rgba(0,0,0,0.3)] hover:bg-slate-700 hover:shadow-[0_12px_32px_rgba(0,184,176,0.2)] border border-slate-700/60 focus:bg-slate-700 transition-all duration-200 min-w-[220px] overflow-hidden"
+                      className="cursor-pointer rounded-xl bg-white dark:bg-slate-50 backdrop-blur-md shadow-[0_4px_16px_rgba(0,0,0,0.08)] hover:bg-slate-50 dark:hover:bg-slate-100 hover:shadow-[0_8px_24px_rgba(101,113,255,0.12)] border border-slate-200/80 dark:border-slate-300/60 focus:bg-slate-50 dark:focus:bg-slate-100 transition-all duration-200 min-w-[220px] overflow-hidden"
                     >
                       <Link
                         href={subnavItem.link}
                         className="flex items-center justify-between w-full px-4 py-3"
                       >
-                        <span className="text-slate-100 font-medium text-sm">
+                        <span className="text-slate-800 dark:text-slate-900 font-medium text-sm">
                           {subnavItem.title}
                         </span>
                         {subnavItem.link ===
                           "/dashboard/communication/client" &&
                           hasClientCommunicationPermission &&
                           unReadClientCount > 0 && (
-                            <span className="ml-2 flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-r from-rose-500 to-pink-600 text-[10px] font-bold text-white shadow-[0_4px_12px_rgba(244,63,94,0.5)]">
+                            <span className="ml-2 flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-r from-[#6571FF] to-[#7c3aed] text-[10px] font-bold text-white shadow-[0_4px_12px_rgba(101,113,255,0.5)]">
                               {unReadClientCount > 99
                                 ? "99+"
                                 : unReadClientCount}
@@ -438,7 +442,7 @@ export default function SideNavbar({ navList, permissions }: TProps) {
                         {subnavItem.title === "Internal" &&
                           hasInternalCommunicationPermission &&
                           unreadMessageCount.internalCount > 0 && (
-                            <span className="ml-2 flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-r from-rose-500 to-pink-600 text-[10px] font-bold text-white shadow-[0_4px_12px_rgba(244,63,94,0.5)]">
+                            <span className="ml-2 flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-r from-[#6571FF] to-[#7c3aed] text-[10px] font-bold text-white shadow-[0_4px_12px_rgba(101,113,255,0.5)]">
                               {unreadMessageCount.internalCount > 99
                                 ? "99+"
                                 : unreadMessageCount.internalCount}
@@ -447,7 +451,7 @@ export default function SideNavbar({ navList, permissions }: TProps) {
                         {subnavItem.title === "Collaboration" &&
                           hasCollaborationCommunicationPermission &&
                           unreadMessageCount.collaborationCount > 0 && (
-                            <span className="ml-2 flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-r from-rose-500 to-pink-600 text-[10px] font-bold text-white shadow-[0_4px_12px_rgba(244,63,94,0.5)]">
+                            <span className="ml-2 flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-r from-[#6571FF] to-[#7c3aed] text-[10px] font-bold text-white shadow-[0_4px_12px_rgba(101,113,255,0.5)]">
                               {unreadMessageCount.collaborationCount > 99
                                 ? "99+"
                                 : unreadMessageCount.collaborationCount}
@@ -469,8 +473,8 @@ export default function SideNavbar({ navList, permissions }: TProps) {
                       className={cn(
                         "rounded-2xl p-3 transition-all duration-300 backdrop-blur-sm flex items-center justify-center border",
                         modifiedPathName === item.path
-                          ? "bg-gradient-to-br from-[#00b8b0] to-[#0098da] shadow-[0_8px_24px_rgba(0,184,176,0.4)] hover:shadow-[0_12px_32px_rgba(0,184,176,0.5)] scale-110 border-[#00b8b0]/50"
-                          : "bg-slate-800/60 border-slate-700/60 hover:bg-slate-700/80 hover:border-slate-600/80 hover:shadow-[0_8px_20px_rgba(0,184,176,0.2)] hover:-translate-y-0.5"
+                          ? "bg-gradient-to-br from-[#6571FF] to-[#7c3aed] shadow-[0_8px_24px_rgba(101,113,255,0.3)] hover:shadow-[0_12px_32px_rgba(101,113,255,0.4)] scale-110 border-[#6571FF]/40"
+                          : "bg-slate-100 dark:bg-slate-200 border-slate-300/70 dark:border-slate-400/70 hover:bg-slate-150 dark:hover:bg-slate-250 hover:border-slate-400 dark:hover:border-slate-500 hover:shadow-[0_8px_20px_rgba(101,113,255,0.15)] hover:-translate-y-0.5"
                       )}
                       href={item.link}
                     >
@@ -494,7 +498,7 @@ export default function SideNavbar({ navList, permissions }: TProps) {
                               "w-5 h-5 transition-all duration-300",
                               modifiedPathName === item.path
                                 ? "text-white drop-shadow-md"
-                                : "text-slate-300 hover:text-slate-100"
+                                : "text-slate-600 hover:text-slate-800"
                             )}
                           />
                         )
@@ -506,7 +510,7 @@ export default function SideNavbar({ navList, permissions }: TProps) {
                   <TooltipContent
                     side="right"
                     sideOffset={12}
-                    className="rounded-xl bg-slate-900/95 backdrop-blur-md px-3 py-2 text-sm font-medium text-slate-100 shadow-[0_8px_32px_rgba(0,0,0,0.4)] border border-slate-700/50 z-[999]"
+                    className="rounded-xl bg-white dark:bg-slate-50 backdrop-blur-md px-3 py-2 text-sm font-medium text-slate-800 dark:text-slate-900 shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-slate-200/70 dark:border-slate-300/60 z-[999]"
                   >
                     {item.title}
                   </TooltipContent>
@@ -518,7 +522,7 @@ export default function SideNavbar({ navList, permissions }: TProps) {
 
         {!isSuperAdminRoute && (
           <>
-            <div className="w-8 h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent mt-6 mb-4" />
+            <div className="w-8 h-px bg-gradient-to-r from-transparent via-slate-300 to-transparent mt-6 mb-4" />
             <Tooltip>
               <TooltipTrigger asChild>
                 <Link
@@ -526,8 +530,8 @@ export default function SideNavbar({ navList, permissions }: TProps) {
                   className={cn(
                     "rounded-2xl p-3 transition-all duration-300 backdrop-blur-sm flex items-center justify-center border",
                     modifiedPathName === "/dashboard/settings"
-                      ? "bg-gradient-to-br from-[#00b8b0] to-[#0098da] shadow-[0_8px_24px_rgba(0,184,176,0.4)] hover:shadow-[0_12px_32px_rgba(0,184,176,0.5)] scale-110 -translate-y-1 border-[#00b8b0]/50"
-                      : "bg-slate-800/60 border-slate-700/60 hover:bg-slate-700/80 hover:border-slate-600/80 hover:shadow-[0_8px_20px_rgba(0,184,176,0.2)] hover:-translate-y-0.5"
+                      ? "bg-gradient-to-br from-[#6571FF] to-[#7c3aed] shadow-[0_8px_24px_rgba(101,113,255,0.3)] hover:shadow-[0_12px_32px_rgba(101,113,255,0.4)] scale-110 -translate-y-1 border-[#6571FF]/40"
+                      : "bg-slate-100 dark:bg-slate-200 border-slate-300/70 dark:border-slate-400/70 hover:bg-slate-150 dark:hover:bg-slate-250 hover:border-slate-400 dark:hover:border-slate-500 hover:shadow-[0_8px_20px_rgba(101,113,255,0.15)] hover:-translate-y-0.5"
                   )}
                 >
                   <Settings
@@ -535,7 +539,7 @@ export default function SideNavbar({ navList, permissions }: TProps) {
                       "w-5 h-5 transition-all duration-300",
                       modifiedPathName === "/dashboard/settings"
                         ? "text-white drop-shadow-md"
-                        : "text-slate-300 hover:text-slate-100"
+                        : "text-slate-600 hover:text-slate-800"
                     )}
                   />
                 </Link>
@@ -543,7 +547,7 @@ export default function SideNavbar({ navList, permissions }: TProps) {
               <TooltipContent
                 side="right"
                 sideOffset={12}
-                className="rounded-xl bg-slate-900/95 backdrop-blur-md px-3 py-2 text-sm font-medium text-slate-100 shadow-[0_8px_32px_rgba(0,0,0,0.4)] border border-slate-700/50 z-[999]"
+                className="rounded-xl bg-white dark:bg-slate-50 backdrop-blur-md px-3 py-2 text-sm font-medium text-slate-800 dark:text-slate-900 shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-slate-200/70 dark:border-slate-300/60 z-[999]"
               >
                 Settings
               </TooltipContent>
@@ -596,8 +600,8 @@ function Dropdown({
               className={cn(
                 "rounded-2xl p-3 transition-all duration-300 backdrop-blur-sm flex items-center justify-center border",
                 (open && activeDropdown === index) || active
-                  ? "bg-gradient-to-br from-[#00b8b0] to-[#0098da] shadow-[0_8px_24px_rgba(0,184,176,0.4)] scale-110 -translate-y-1 border-[#00b8b0]/50"
-                  : "bg-slate-800/60 border-slate-700/60 hover:bg-slate-700/80 hover:border-slate-600/80 hover:shadow-[0_8px_20px_rgba(0,184,176,0.2)] hover:-translate-y-0.5"
+                  ? "bg-gradient-to-br from-[#6571FF] to-[#7c3aed] shadow-[0_8px_24px_rgba(101,113,255,0.3)] scale-110 -translate-y-1 border-[#6571FF]/40"
+                  : "bg-slate-100 dark:bg-slate-200 border-slate-300/70 dark:border-slate-400/70 hover:bg-slate-150 dark:hover:bg-slate-250 hover:border-slate-400 dark:hover:border-slate-500 hover:shadow-[0_8px_20px_rgba(101,113,255,0.15)] hover:-translate-y-0.5"
               )}
             >
               {icon}
@@ -609,7 +613,7 @@ function Dropdown({
           <TooltipContent
             side="right"
             sideOffset={12}
-            className="rounded-xl bg-slate-900/95 backdrop-blur-md px-3 py-2 text-sm font-medium text-slate-100 shadow-[0_8px_32px_rgba(0,0,0,0.4)] border border-slate-700/50 z-[999]"
+            className="rounded-xl bg-white dark:bg-slate-50 backdrop-blur-md px-3 py-2 text-sm font-medium text-slate-800 dark:text-slate-900 shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-slate-200/70 dark:border-slate-300/60 z-[999]"
           >
             {title}
           </TooltipContent>
