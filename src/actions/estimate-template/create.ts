@@ -9,6 +9,7 @@ import { estimateTemplateCreateValidationSchema } from "@/validations/schemas/es
 import { InvoiceTemplate, Labor, Material, Service, Tag } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
+import { createTask } from "../task/createTask";
 
 /**
  * Creates a new invoice in the system
@@ -36,6 +37,7 @@ type TCreateEstimateTemplateProps = {
   columnId?: number;
   inspections: InspectionType[];
   damageNotes: string | null;
+  customerNotes: string | null;
 };
 
 export async function createEstimateTemplate({
@@ -53,6 +55,7 @@ export async function createEstimateTemplate({
   columnId,
   inspections,
   damageNotes,
+  customerNotes,
 }: TCreateEstimateTemplateProps): Promise<ServerAction | TErrorHandler> {
   try {
     // Step 1: Validate input data using Zod schema
@@ -71,6 +74,7 @@ export async function createEstimateTemplate({
       columnId,
       inspections,
       damageNotes,
+      customerNotes,
     });
 
     // Step 2: Get authenticated session and company ID
@@ -113,11 +117,14 @@ export async function createEstimateTemplate({
             serviceFee,
             grandTotal,
             internalNotes,
+            damageNotes,
+            customerNotes,
             companyId,
             columnId: finalColumnId,
           },
         });
-
+        console.log("new template", newTemplate);
+        console.log("new photos", photos);
         //save the inspections
         const inspectionsToSave = inspections.filter((inspection) => {
           const hasTitle =
@@ -131,9 +138,9 @@ export async function createEstimateTemplate({
         if (inspectionsToSave.length > 0) {
           await Promise.all(
             inspectionsToSave.map(async (inspection) => {
-              return db.invoiceInspection.create({
+              return await db.invoiceInspection.create({
                 data: {
-                  invoiceId: newTemplate.id,
+                  invoiceTemplateId: newTemplate.id,
                   title: inspection.title,
                   driver: inspection.driver,
                   passenger: inspection.passenger,
@@ -146,12 +153,17 @@ export async function createEstimateTemplate({
         // Step 7: Process and upload photos
         await Promise.all(
           photos.map(async (photo) => {
-            return db.templatePhoto.create({
+            const templatePhoto = await db.templatePhoto.create({
               data: {
                 invoiceTemplateId: newTemplate.id,
                 photo: photo.photo ?? "",
               },
             });
+
+            console.log("newTemplate.id", newTemplate.id);
+            console.log("templatePhoto", templatePhoto);
+
+            return templatePhoto;
           })
         );
 
@@ -183,7 +195,7 @@ export async function createEstimateTemplate({
               // Create labor tags
               await Promise.all(
                 labor.tags.map(async (tag) => {
-                  return db.laborTag.create({
+                  return await db.laborTag.create({
                     data: {
                       laborId: newLabor.id,
                       tagId: tag.id,
@@ -232,7 +244,7 @@ export async function createEstimateTemplate({
                 // Create material tag
                 await Promise.all(
                   material.tags.map(async (tag) => {
-                    return db.materialTag.create({
+                    return await db.materialTag.create({
                       data: {
                         materialId: newMat.id,
                         tagId: tag.id,
@@ -271,22 +283,22 @@ export async function createEstimateTemplate({
     );
 
     // Create associated tasks
-    // await Promise.all(
-    //   tasks.map(async (task) => {
-    //     if (!task) return;
+    await Promise.all(
+      tasks.map(async (task) => {
+        if (!task) return;
 
-    //     const taskSplit = task.task.split(":");
+        const taskSplit = task.task.split(":");
 
-    //     return createTask({
-    //       title: taskSplit[0].trim(),
-    //       description: taskSplit.length > 1 ? taskSplit[1].trim() : "",
-    //       priority: "Medium",
-    //       assignedUsers: [],
-    //       invoiceId: invoice.id,
-    //       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    //     });
-    //   })
-    // );
+        return createTask({
+          title: taskSplit[0].trim(),
+          description: taskSplit.length > 1 ? taskSplit[1].trim() : "",
+          priority: "Medium",
+          assignedUsers: [],
+          invoiceTemplateId: template.id,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        });
+      })
+    );
 
     // Step 12: Revalidate the estimate page
     revalidatePath("/estimate/templates");

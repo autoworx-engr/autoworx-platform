@@ -111,7 +111,7 @@ export async function GET(req: Request, context: { params: { id: string } }) {
     }
 
     // Fetch photos
-    const photos = await db.invoicePhoto.findMany({
+    const photos = await db.templatePhoto.findMany({
       where: { invoiceTemplateId: estimateTemplate.id },
     });
 
