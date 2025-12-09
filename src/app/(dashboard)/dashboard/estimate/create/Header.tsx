@@ -38,8 +38,15 @@ export default function Header({
   isEdit?: boolean;
   selectedTemplate?: InvoiceTemplate | null;
 }) {
-  const { invoiceId, setInvoiceId, setTitle, title, template, setTemplate } =
-    useEstimateCreateStore();
+  const {
+    invoiceId,
+    setInvoiceId,
+    setTitle,
+    title,
+    template,
+    setTemplate,
+    grandTotal,
+  } = useEstimateCreateStore();
   const { status: selectedStatus } = useListsStore();
 
   //dropdown states
@@ -95,7 +102,7 @@ export default function Header({
   return (
     <div className="app-shadow col-start-1 flex flex-wrap items-center gap-3 rounded-md p-3">
       <div className="mr-auto flex gap-1">
-        <p>{invoiceId}</p>
+        <p>{invoiceId || template?.id}</p>
       </div>
 
       <CreateEstimateActionsButtons status={status! || selectedStatus} />
@@ -134,7 +141,7 @@ export default function Header({
           setOpen={setStatusOpenDropdown}
           isAllServicesCompleted={isAllServicesCompleted}
         />
-        {isEstimateCreate && (
+        {(isEstimateCreate || grandTotal === 0) && (
           <SelectTemplate
             openDropdown={templateOpenDropdown}
             setOpenDropdown={setTemplateOpenDropdown}

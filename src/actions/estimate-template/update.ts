@@ -9,6 +9,7 @@ import { Labor, Material, Service, Tag, Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { InspectionType } from "@/stores/estimate-create";
 import { estimateTemplateEditValidationSchema } from "@/validations/schemas/estimate-template/estimate.validation";
+import { createTask } from "../task/createTask";
 
 interface UpdateEstimateTemplateInput {
   id: string;
@@ -31,6 +32,8 @@ interface UpdateEstimateTemplateInput {
   }[];
   tasks: { id: undefined | number; task: string }[];
   inspections: InspectionType[];
+  customerNotes: string | null;
+  damageNotes: string | null;
 }
 
 export async function updateEstimateTemplate(
@@ -114,7 +117,7 @@ export async function updateEstimateTemplate(
         const updatedEstimateTemplatePhotos = await Promise.all(
           data?.photos?.map(async (photo) => {
             if (!photo.id) {
-              return txDb.templatePhoto.create({
+              return await txDb.templatePhoto.create({
                 data: {
                   invoiceTemplateId: data.id,
                   photo: photo.photo ?? "",
@@ -157,7 +160,7 @@ export async function updateEstimateTemplate(
         if (inspectionsToSave.length > 0) {
           await Promise.all(
             inspectionsToSave.map(async (inspection) => {
-              return txDb.invoiceInspection.create({
+              return await txDb.invoiceInspection.create({
                 data: {
                   invoiceTemplateId: data.id,
                   title: inspection.title,
@@ -234,7 +237,7 @@ export async function updateEstimateTemplate(
                   },
                 });
               }
-              console.log({ updatedLabor });
+
               // update item
               const updatedInvoiceItem = await txDb.invoiceItem.update({
                 where: {
@@ -455,6 +458,8 @@ export async function updateEstimateTemplate(
             serviceFee: data.serviceFee,
             grandTotal: data.grandTotal,
             internalNotes: data.internalNotes,
+            damageNotes: data?.damageNotes,
+            customerNotes: data?.customerNotes,
             title: data?.title,
             serviceIndex: JSON.stringify(
               updatedEstimateTemplateItem
@@ -501,49 +506,49 @@ export async function updateEstimateTemplate(
     );
 
     // task create or update this section
-    // const invoiceTasks = await Promise.all(
-    //   data?.tasks?.map(async (task) => {
-    //     // if task.id is undefined, create a new task
-    //     if (task.id === undefined) {
-    //       const response = await createTask({
-    //         title: task.task.split(":")[0],
-    //         description: task.task.length > 1 ? task.task.split(":")[1] : "",
-    //         assignedUsers: [],
-    //         priority: "Medium",
-    //         invoiceId: data.id,
-    //         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    //         clientId: data.clientId,
-    //       });
+    const invoiceTasks = await Promise.all(
+      data?.tasks?.map(async (task) => {
+        // if task.id is undefined, create a new task
+        if (task.id === undefined) {
+          const response = await createTask({
+            title: task.task.split(":")[0],
+            description: task.task.length > 1 ? task.task.split(":")[1] : "",
+            assignedUsers: [],
+            priority: "Medium",
+            invoiceTemplateId: data.id,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            clientId: null,
+          });
 
-    //       if (response.type === "success") {
-    //         return response.data;
-    //       }
-    //     } else if (task.id) {
-    //       // if task.id is not undefined, update the task
-    //       return db.task.update({
-    //         where: {
-    //           id: task?.id,
-    //         },
-    //         data: {
-    //           title: task.task.split(":")[0],
-    //           description: task.task.length > 1 ? task.task.split(":")[1] : "",
-    //         },
-    //       });
-    //     }
-    //   })
-    // );
+          if (response.type === "success") {
+            return response.data;
+          }
+        } else if (task.id) {
+          // if task.id is not undefined, update the task
+          return db.task.update({
+            where: {
+              id: task?.id,
+            },
+            data: {
+              title: task.task.split(":")[0],
+              description: task.task.length > 1 ? task.task.split(":")[1] : "",
+            },
+          });
+        }
+      })
+    );
 
     // delete tasks which are removed from the invoice
-    // await db.task.deleteMany({
-    //   where: {
-    //     invoiceId: data.id,
-    //     id: {
-    //       notIn: invoiceTasks
-    //         .map((task) => task?.id)
-    //         .filter(Boolean) as number[],
-    //     },
-    //   },
-    // });
+    await db.task.deleteMany({
+      where: {
+        invoiceTemplateId: data.id,
+        id: {
+          notIn: invoiceTasks
+            .map((task) => task?.id)
+            .filter(Boolean) as number[],
+        },
+      },
+    });
 
     updatedEstimateTemplate.invoiceItems =
       updatedEstimateTemplate?.invoiceItems.map((item: any) => {

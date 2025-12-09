@@ -58,6 +58,12 @@ export const estimateTemplateCreateValidationSchema = z
     internalNotes: z.string({
       invalid_type_error: "Internal notes must be a string",
     }),
+    customerNotes: z.string({
+      invalid_type_error: "Customer notes must be a string",
+    }),
+    damageNotes: z.string({
+      invalid_type_error: "Damage notes must be a string",
+    }),
 
     photos: z.array(
       z.object({
@@ -126,6 +132,14 @@ export const estimateTemplateEditValidationSchema = z.object({
 
   internalNotes: z
     .string({ invalid_type_error: "Internal notes must be a string" })
+    .max(1000, "Internal notes must not exceed 1000 characters.")
+    .optional(),
+  damageNotes: z
+    .string({ invalid_type_error: "Damage notes must be a string" })
+    .max(1000, "Internal notes must not exceed 1000 characters.")
+    .optional(),
+  customerNotes: z
+    .string({ invalid_type_error: "Customer notes must be a string" })
     .max(1000, "Internal notes must not exceed 1000 characters.")
     .optional(),
 
