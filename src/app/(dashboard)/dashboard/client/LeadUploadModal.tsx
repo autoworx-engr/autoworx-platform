@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { Upload, X, File as FileIcon } from "lucide-react";
+import { Upload, X, File as FileIcon, Download } from "lucide-react";
 import {
   Dialog,
   DialogClose,
@@ -148,6 +148,15 @@ export function LeadUploadModal({ buttonElement }: FileUploadModalProps) {
     setIsUploadLeadOpen(false);
   };
 
+  const handleDownloadSample = () => {
+    const link = document.createElement("a");
+    link.href = "/lead-sample.xlsx";
+    link.download = "lead-sample.xlsx";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <Dialog open={isUploadLeadOpen} onOpenChange={setIsUploadLeadOpen}>
       <DialogTrigger asChild>
@@ -247,10 +256,21 @@ export function LeadUploadModal({ buttonElement }: FileUploadModalProps) {
           )}
 
           {/* Supported Formats */}
-          <p className="text-xs text-gray-500 text-center">
-            Supported formats:{" "}
-            <span className="font-semibold">CSV, XLSX, XLS</span>
-          </p>
+          
+          <div className="space-y-3">
+            <p className="text-xs text-gray-500 text-center">
+              Supported formats:{" "}
+              <span className="font-semibold">CSV, XLSX, XLS</span>
+            </p>
+            {/* Download Sample File Button */}
+            <button
+              onClick={handleDownloadSample}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
+            >
+              <Download className="w-4 h-4" />
+              Download Sample File
+            </button>
+          </div>
         </div>
 
         {/* Footer */}
