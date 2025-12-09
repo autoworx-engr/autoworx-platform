@@ -116,15 +116,7 @@ export default function EditClientModalBody({
       return;
     }
 
-    // Validate mobile number format
-    // if (!mobileNumber?.trim() || !/^\+?\d*$/.test(mobileNumber.trim())) {
-    //   showError({
-    //     field: "mobileNumber",
-    //     message: "Please enter a valid mobile number (digits only).",
-    //   });
-    //   return;
-    // }
-
+  
     // Validate optional fields if provided
     if (zip && !/^\d*$/.test(zip)) {
       showError({
@@ -350,23 +342,7 @@ export default function EditClientModalBody({
               }
             }}
           />
-          {/* <SlimInput
-            type="tel"
-            name="mobileNumber"
-            defaultValue={employee.phone!}
-            onChange={e => {
-              const value = e.target.value;
-              if (!/^\+?\d*$/.test(value)) {
-                showError({
-                  field: "mobileNumber",
-                  message: "Please enter a valid mobile number (digits only).",
-                });
-              } else {
-                clearError();
-              }
-            }}
-          /> */}
-
+          
            <PhoneInput
                       label="Mobile"
                       placeholder="1234567890"

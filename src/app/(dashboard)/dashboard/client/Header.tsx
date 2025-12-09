@@ -5,11 +5,11 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { useClientFilterStore } from "@/stores/clientFilter";
 import { Search } from "lucide-react";
 import React, { useEffect } from "react";
+import { LeadUploadModal } from "./LeadUploadModal";
 
 export default function Header() {
   const { setFilter } = useClientFilterStore();
   const [searchTerm, setSearchTerm] = React.useState("");
-
   useEffect(() => {
     setFilter({ search: "" });
   }, []);
@@ -21,7 +21,8 @@ export default function Header() {
   return (
     <div className="flex flex-col items-end gap-2 lg:flex-row lg:items-center lg:justify-between lg:gap-0">
       <div className="flex w-full items-center gap-x-8 bg-background lg:w-fit">
-        <div className="
+        <div
+          className="
             group relative flex w-full items-center gap-x-3 rounded-xl
             bg-white dark:bg-slate-900 
             px-4 py-2 lg:w-[400px] xl:w-[500px]
@@ -30,7 +31,8 @@ export default function Header() {
             focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500/50
             focus-within:shadow-md focus-within:shadow-indigo-500/5
             hover:ring-slate-300 dark:hover:ring-slate-600
-          ">
+          "
+        >
           <span className="text-slate-400 group-focus-within:text-[#6571FF] transition-colors duration-300">
             <Search className="w-5 h-5" />
           </span>
@@ -43,7 +45,7 @@ export default function Header() {
               "
             placeholder="Search by client ID, name, email or phone..."
             value={searchTerm}
-            onChange={event => {
+            onChange={(event) => {
               const value = event.target.value;
               handleSearchChange(value);
               setSearchTerm(value);
@@ -54,9 +56,11 @@ export default function Header() {
           />
         </div>
       </div>
-      <NewCustomer
-        buttonElement={
-          <button className="
+      <div className="flex items-center gap-2">
+        <LeadUploadModal
+          buttonElement={
+            <button
+              className="
             flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white
             bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
             shadow-[0_4px_14px_0_rgba(101,113,255,0.39)]
@@ -64,11 +68,30 @@ export default function Header() {
             hover:-translate-y-0.5
             active:translate-y-0 active:scale-100
             transition-all duration-300 ease-in-out
-          ">
-            + Add New Client
-          </button>
-        }
-      />
+          "
+            >
+              + Upload Lead
+            </button>
+          }
+        />
+        <NewCustomer
+          buttonElement={
+            <button
+              className="
+            flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white
+            bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+            shadow-[0_4px_14px_0_rgba(101,113,255,0.39)]
+            hover:shadow-[0_6px_20px_rgba(101,113,255,0.23)]
+            hover:-translate-y-0.5
+            active:translate-y-0 active:scale-100
+            transition-all duration-300 ease-in-out
+          "
+            >
+              + Add New Client
+            </button>
+          }
+        />
+      </div>
     </div>
   );
 }

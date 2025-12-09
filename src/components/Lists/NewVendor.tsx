@@ -14,10 +14,11 @@ import FormError from "@/components/FormError";
 import { useFormErrorStore } from "@/stores/form-error";
 import { useListsStore } from "@/stores/lists";
 import { Vendor } from "@prisma/client";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { SlimInput } from "../SlimInput";
 import { SlimTextarea } from "../SlimTextarea";
 import { errorToast, successToast } from "@/lib/toast";
+import PhoneInput from "../PhoneInput";
 
 export default function NewVendor({
   bgShadow,
@@ -32,6 +33,13 @@ export default function NewVendor({
   const [companyName, setCompanyName] = useState("");
   const { showError, clearError } = useFormErrorStore();
 
+    const phoneDataRef = useRef({
+    mobile: "",
+    country: "",
+    countryIsoCode: ""
+  });
+
+  const { mobile, country, countryIsoCode } = phoneDataRef.current;
   async function handleSubmit() {
     clearError();
 
@@ -40,7 +48,8 @@ export default function NewVendor({
       ?.value as string;
     const company =
       document.querySelector<HTMLInputElement>("#companyName")?.value;
-    const phone = document.querySelector<HTMLInputElement>("#phone")?.value;
+    // const phone = document.querySelector<HTMLInputElement>("#phone")?.value;
+    const phone = country && mobile ? `${country}${mobile}` : mobile || ""
     const email = document.querySelector<HTMLInputElement>("#email")?.value;
     const address = document.querySelector<HTMLInputElement>("#address")?.value;
     const city = document.querySelector<HTMLInputElement>("#city")?.value;
@@ -93,13 +102,13 @@ export default function NewVendor({
     }
 
     // Validate phone format if provided
-    if (phone && !/^\+?\d*$/.test(phone)) {
-      showError({
-        field: "phone",
-        message: "Please enter a valid phone number (digits only).",
-      });
-      return;
-    }
+    // if (phone && !/^\+?\d*$/.test(phone)) {
+    //   showError({
+    //     field: "phone",
+    //     message: "Please enter a valid phone number (digits only).",
+    //   });
+    //   return;
+    // }
 
     // Validate website format if provided
     if (
@@ -126,6 +135,7 @@ export default function NewVendor({
       zip,
       website,
       notes,
+      countryCode: countryIsoCode
     });
 
     if (res.type === "success") {
@@ -211,7 +221,7 @@ export default function NewVendor({
               {companyName.length}/50
             </div>
           </div>
-          <SlimInput
+          {/* <SlimInput
             id="phone"
             name="phone"
             required
@@ -226,7 +236,22 @@ export default function NewVendor({
                 clearError();
               }
             }}
-          />
+          /> */}
+
+           <PhoneInput
+                                    label="Phone"
+                                    placeholder="1234567890"
+                                    required={false}
+                                    // value={mobile}
+                                    onChange={(phone, code, isoCode) => {
+                                      phoneDataRef.current = {
+                                        mobile: phone,
+                                        country: code,
+                                        countryIsoCode: isoCode || ""
+                                      };
+                                      clearError()
+                                    }}
+                                  />
           <SlimInput
             id="email"
             name="email"

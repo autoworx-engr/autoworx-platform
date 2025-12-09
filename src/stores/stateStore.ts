@@ -13,6 +13,8 @@ interface State {
   setIsBugOpen: (isOpen: boolean) => void;
   isNewBugOpen: boolean;
   setIsNewBugOpen: (isOpen: boolean) => void;
+  isUploadLeadOpen:boolean;
+  setIsUploadLeadOpen: (isOpen:boolean)=>void;
 }
 
 export const stateStore = create<State>((set) => ({
@@ -28,4 +30,6 @@ export const stateStore = create<State>((set) => ({
   setIsBugOpen: (isOpen) => set({ isBugOpen: isOpen }),
   isNewBugOpen: false,
   setIsNewBugOpen: (isOpen: boolean) => set({ isNewBugOpen: isOpen }),
+  isUploadLeadOpen:false,
+  setIsUploadLeadOpen:(isOpen:boolean)=>set({isUploadLeadOpen:isOpen}),
 }));
