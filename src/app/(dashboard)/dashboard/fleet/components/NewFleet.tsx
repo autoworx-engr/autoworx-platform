@@ -194,7 +194,9 @@ export default function NewFleet({
     >
       <DialogTrigger asChild>
         {buttonElement ? (
-          buttonElement
+          <span className="text-[#6571FF]">
+            {buttonElement}
+          </span>
         ) : (
           <button className="text-xs text-[#6571FF]">+ Add New Fleet</button>
         )}

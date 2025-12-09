@@ -15,6 +15,14 @@ import TaskTooltip from "../TaskTooltip";
 import useWeekStartEndDays from "../../../_hook/lib/useWeekStartEndDays";
 import AppointmentTooltip from "../AppointmentTooltip";
 import { AppointmentCreateOrEdit } from "@/components/appointment/AppointmentCreateOrEdit";
+import { Clock, Mail, Phone, User as UserIcon, Users } from "lucide-react";
+
+// Gradient priority classes for tasks
+const priorityClasses = {
+  Low: "bg-gradient-to-r from-blue-500 to-indigo-600 shadow-indigo-600/50",
+  Medium: "bg-gradient-to-r from-cyan-600 to-blue-500 shadow-cyan-600/50",
+  High: "bg-gradient-to-r from-teal-700 to-green-700 shadow-teal-700/50",
+};
 
 type TProps = {
   event: any;
@@ -90,8 +98,13 @@ export default function DayTask({
   // @ts-ignore
   const backgroundColor = event.priority
     ? //@ts-ignore
-      TASK_COLOR[event.priority]
+    priorityClasses[event.priority]
     : "rgb(255, 255, 255)";
+
+  const APPOINTMENT_TEXT_COLOR = "text-slate-600 dark:text-slate-300";
+  const APPOINTMENT_STATUS_COLOR = "bg-[#6571FF]";
+  const BASE_TEXT_COLOR = "text-slate-600 dark:text-white";
+  const INFO_TEXT_COLOR = "text-slate-500 dark:text-slate-400";
 
   // If there are more than one task in the same row, adjust width
   if (totalTaskInRow > 2) {
@@ -107,11 +120,10 @@ export default function DayTask({
         rowsLength={rowsLength}
         task={event}
         height={height}
-        className={cn(isDragOver && "z-20 opacity-50")}
+        className={cn(isDragOver && "z-20 opacity-50", `bg-white ${backgroundColor}`)}
         style={{
           left: calculateLeftPosition,
           top,
-          backgroundColor,
           borderRadius: "10px",
           maxWidth: width,
           minWidth: width,
@@ -128,54 +140,89 @@ export default function DayTask({
           {
             <>
               {event.type === "appointment" ? (
-                <div className="flex h-full flex-col items-start text-xs">
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-semibold">{event.title}</h3>
-                    </div>
-                    <p className="text-left">
-                      Client:{" "}
-                      {event.client &&
-                        `${event.client.firstName} ${event.client.lastName || ""}`}
+                <div className="relative flex h-full flex-col items-start pr-3">
+
+                  {/* Content Area */}
+                  <div className="flex-1 overflow-auto thin-scrollbar w-full space-y-0.5">
+
+                    {/* Title */}
+                    <h3 className={`text-md font-extrabold text-start ${BASE_TEXT_COLOR} mb-1`}>
+                      {event.title}
+                    </h3>
+
+                    {/* Time Range (Top Priority Detail) */}
+                    <p className={`flex items-center gap-1 text-xs font-semibold ${APPOINTMENT_TEXT_COLOR}`}>
+                      <Clock size={14} className="text-cyan-600 dark:text-cyan-400" />
+                      {moment(event.startTime, "HH:mm").format("h:mm A")} –{" "}
+                      {moment(event.endTime, "HH:mm").format("h:mm A")}
                     </p>
-                    <p className="text-left">
-                      Email:
-                      <a
-                        href={`mailto:${event.client?.email}`}
-                        className="text-blue-500"
-                      >
-                        {event.client?.email}
-                      </a>
-                    </p>
-                    <p className="text-left">
-                      Phone:
-                      <a
-                        href={`tel:${event.client?.mobile}`}
-                        className="text-blue-500"
-                      >
-                        {event.client?.mobile}
-                      </a>
-                    </p>
-                    <p className="text-left">
-                      Assigned To:{" "}
-                      {event?.assignedUsers
-                        .slice(0, 1)
-                        .map(
-                          (user: User) => `${user.firstName} ${user.lastName}`
-                        )}
-                    </p>
-                    <p className="text-left">
-                      {moment(event.startTime, "HH:mm").format("hh:mm A")} To{" "}
-                      {moment(event.endTime, "HH:mm").format("hh:mm A")}
-                    </p>
-                    <p className="text-left">
-                      Draft Estimate: {event.draftEstimate}
-                    </p>
-                    <p className="text-left">
-                      Notes: {event?.notes}
-                    </p>
+
+                    {/* Client Name */}
+                    {event.client && (
+                      <div className="flex items-center gap-1 text-sm truncate">
+                        <UserIcon size={14} />
+                        <p className={`text-start text-sm ${APPOINTMENT_TEXT_COLOR} truncate`}>
+                          Client: <span className="font-semibold">{`${event.client.firstName} ${event.client.lastName || ""}`}</span>
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Email Link (Iconified) */}
+                    {event.client?.email && (
+                      <p className="flex items-center gap-1 text-sm truncate">
+                        <Mail size={14} className="text-blue-500/80" />
+                        <a
+                          href={`mailto:${event.client.email}`}
+                          className="text-blue-500 hover:text-blue-400 font-medium underline-offset-2 hover:underline"
+                          onClick={(e) => e.stopPropagation()} // Prevent dragging when clicking link
+                        >
+                          {event.client.email}
+                        </a>
+                      </p>
+                    )}
+
+                    {/* Phone Link (Iconified - Using the specified Emerald/Teal success tone for distinction) */}
+                    {event.client?.mobile && (
+                      <p className="flex items-center gap-1 text-sm truncate">
+                        <Phone size={14} className="text-emerald-500/80" />
+                        <a
+                          href={`tel:${event.client.mobile}`}
+                          className="text-emerald-500 hover:text-emerald-400 font-medium underline-offset-2 hover:underline"
+                          onClick={(e) => e.stopPropagation()} // Prevent dragging when clicking link
+                        >
+                          {event.client.mobile}
+                        </a>
+                      </p>
+                    )}
+
+                    {/* Assigned To (Iconified) */}
+                    {event?.assignedUsers?.length > 0 && (
+                      <p className={`flex items-center gap-1 text-sm ${INFO_TEXT_COLOR} truncate`}>
+                        <Users size={14} />
+                        {event.assignedUsers
+                          .slice(0, 1)
+                          .map(
+                            (user: User) => `${user.firstName} ${user.lastName}`
+                          )}
+                      </p>
+                    )}
+
+                    {/* Draft Estimate / Notes Preview (Subtle, less space-consuming) */}
+                    {(event.draftEstimate || event.notes) && (
+                      <p className={`text-xs italic pt-1 ${INFO_TEXT_COLOR} truncate`}>
+                        {event.draftEstimate && `Estimate: ${event.draftEstimate} | `}
+                        {event.notes && `Notes: ${event.notes}`}
+                      </p>
+                    )}
+
                   </div>
-                  <div className="absolute inset-y-1 right-0 h-[calc(100%-0.5rem)] w-1.5 rounded-lg border bg-[#6571FF]"></div>
+
+                  {/* Status Indicator Bar (Applied to the container, slightly thicker, full height) */}
+                  {/* The parent container provides the background color (near white/dark slate) */}
+                  <div
+                    className={`absolute inset-y-0 right-0 h-full w-1 rounded-r-lg ${APPOINTMENT_STATUS_COLOR}`}
+                    style={{ right: "-2px" }} // Nudge slightly for visual effect outside the padding
+                  ></div>
                 </div>
               ) : (
                 <div className="flex h-full justify-start">
