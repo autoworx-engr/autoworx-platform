@@ -285,7 +285,7 @@ export default function EditClientModalBody({
           />
         </div>
 
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
           <SlimInput
             name="email"
             label="Email"
@@ -304,23 +304,24 @@ export default function EditClientModalBody({
               // }
             }}
           />
-
-          <PhoneInput
-            label="Mobile"
-            placeholder="1234567890"
-            required={false}
-            defaultValue={client.mobile!}
-            // value={phoneNumber}
-            defaultIsoCode={client.countryCode!}
-            onChange={(phone, code, iso) => {
-              phoneDataRef.current = {
-                phoneNumber: phone,
-                countryCode: code,
-                isoCode: iso || "",
-              };
-              clearError();
-            }}
-          />
+          <div className="md:w-[248px]">
+            <PhoneInput
+              label="Mobile"
+              placeholder="1234567890"
+              required={false}
+              defaultValue={client.mobile!}
+              // value={phoneNumber}
+              defaultIsoCode={client.countryCode!}
+              onChange={(phone, code, iso) => {
+                phoneDataRef.current = {
+                  phoneNumber: phone,
+                  countryCode: code,
+                  isoCode: iso || "",
+                };
+                clearError();
+              }}
+            />
+          </div>
         </div>
 
         <div className="flex items-center justify-between">

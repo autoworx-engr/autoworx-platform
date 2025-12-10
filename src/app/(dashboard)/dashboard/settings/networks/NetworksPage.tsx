@@ -143,7 +143,7 @@ const NetworksPage = ({
         {/* Collaborations Section */}
         <div>
           <h2 className="mb-6 text-2xl font-semibold text-gray-800">
-            🤝 Collaborations
+            Collaborations
           </h2>
           <div className="space-y-4 rounded-xl border border-gray-200 bg-white p-2 shadow-xl min-h-[300px]">
             {connectedCompanies.length === 0 && (
@@ -224,7 +224,7 @@ const NetworksPage = ({
           {/* network settings */}
           <div>
             <h2 className="mb-6 text-2xl font-semibold text-gray-800">
-              ⚙️ Network Settings
+              Network Settings
             </h2>
 
             <div className="space-y-6 rounded-xl border border-gray-200 bg-white p-4 shadow-xl">
@@ -395,7 +395,7 @@ const NetworksPage = ({
           {/* possible collaborations nearby */}
           <div className="mt-8">
             <h3 className="mb-6 text-2xl font-semibold text-gray-800">
-              📍 Possible Collaborations Nearby
+              Possible Collaborations Nearby
             </h3>
             <div className="space-y-4">
               <div className="relative h-10 w-full">

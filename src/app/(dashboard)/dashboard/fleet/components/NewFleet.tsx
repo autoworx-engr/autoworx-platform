@@ -46,8 +46,8 @@ export default function NewFleet({
 
   const { showError, clearError } = useFormErrorStore();
   const [mobile, setMobile] = useState("+1");
-  const [countryCode, setCountryCode] = useState('');
-  const [countryIsoCode, setCountryIsoCode] = useState('');
+  const [countryCode, setCountryCode] = useState("");
+  const [countryIsoCode, setCountryIsoCode] = useState("");
 
   useEffect(() => {
     if (isEdit && fleet && open) {
@@ -68,7 +68,8 @@ export default function NewFleet({
       document.querySelector<HTMLInputElement>("#contactName")?.value;
     const email = document.querySelector<HTMLInputElement>("#email")?.value;
     // const mobile = document.querySelector<HTMLInputElement>("#mobile")?.value;
-    const phone =  countryCode && mobile ? `${countryCode}${mobile}` : mobile || ""
+    const phone =
+      countryCode && mobile ? `${countryCode}${mobile}` : mobile || "";
     const address = document.querySelector<HTMLInputElement>("#address")?.value;
     const city = document.querySelector<HTMLInputElement>("#city")?.value;
     const state = document.querySelector<HTMLInputElement>("#state")?.value;
@@ -128,7 +129,7 @@ export default function NewFleet({
         fleetName,
         contactName,
         email,
-        mobile:phone,
+        mobile: phone,
         countryCode: countryIsoCode,
         address,
         city,
@@ -145,7 +146,7 @@ export default function NewFleet({
         fleetName,
         contactName,
         email,
-        mobile:phone,
+        mobile: phone,
         countryCode: countryIsoCode,
         address,
         city,
@@ -200,23 +201,23 @@ export default function NewFleet({
     >
       <DialogTrigger asChild>
         {buttonElement ? (
-          <span className="text-[#6571FF]">
-            {buttonElement}
-          </span>
+          <span className="text-[#6571FF]">{buttonElement}</span>
         ) : (
           <button className="text-xs text-[#6571FF]">+ Add New Fleet</button>
         )}
       </DialogTrigger>
       <DialogContent
         className="max-h-full max-w-xl grid-rows-[auto,1fr,auto]"
-      // form
+        // form
       >
         <div className="mt-8 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-slate-600 dark:text-slate-100">
               {isEdit ? "Edit" : "Add"} Fleet
             </h1>
-            <p className="text-sm text-slate-500 mt-1">Enter details for the new fleet</p>
+            <p className="text-sm text-slate-500 mt-1">
+              Enter details for the new fleet
+            </p>
           </div>
 
           {profilePic ? (
@@ -259,7 +260,9 @@ export default function NewFleet({
                 }}
               />
               <div className="flex flex-col items-end">
-                <span className="text-sm font-semibold text-slate-600 dark:text-slate-300 group-hover:text-[#6571FF] transition-colors">Upload Photo</span>
+                <span className="text-sm font-semibold text-slate-600 dark:text-slate-300 group-hover:text-[#6571FF] transition-colors">
+                  Upload Photo
+                </span>
               </div>
               <div className="p-1 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-400 group-hover:text-[#6571FF] group-hover:bg-white transition-colors">
                 <UserIcon size={32} strokeWidth={2} />
@@ -299,7 +302,7 @@ export default function NewFleet({
             />
           </div>
 
-          <div className="flex items-center justify-between gap-x-2">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
             <SlimInput
               name="email"
               label="Email Address"
@@ -342,19 +345,20 @@ export default function NewFleet({
               }}
             /> */}
 
-            <PhoneInput
-    required
-    defaultValue={fleet?.mobile || ""} 
-    defaultIsoCode={fleet?.countryCode || "US"}
-    onChange={(phoneNumber, callingCode, countryIsoCode) => {
-      setMobile(phoneNumber);
-      setCountryCode(callingCode);
-      setCountryIsoCode(countryIsoCode);
-      
-      
-      clearError();
-    }}
-  />
+            <div className="md:w-[248px]">
+              <PhoneInput
+                required
+                defaultValue={fleet?.mobile || ""}
+                defaultIsoCode={fleet?.countryCode || "US"}
+                onChange={(phoneNumber, callingCode, countryIsoCode) => {
+                  setMobile(phoneNumber);
+                  setCountryCode(callingCode);
+                  setCountryIsoCode(countryIsoCode);
+
+                  clearError();
+                }}
+              />
+            </div>
           </div>
 
           <div className="flex items-center justify-between">

@@ -45,7 +45,11 @@ export default function EditClientModalBody({
   const [openChangePassword, setOpenChangePassword] = useState(false);
   const { showError, clearError } = useFormErrorStore();
 
-       const phoneDataRef = useRef({ phoneNumber: "", countryCode: "", isoCode: "" })
+  const phoneDataRef = useRef({
+    phoneNumber: "",
+    countryCode: "",
+    isoCode: "",
+  });
   const {
     dateRange,
     search,
@@ -68,12 +72,10 @@ export default function EditClientModalBody({
     }
   }, [newProfilePic]);
 
-
-
-   const { phoneNumber, countryCode, isoCode } = phoneDataRef.current;
+  const { phoneNumber, countryCode, isoCode } = phoneDataRef.current;
   async function handleSubmit(data: FormData) {
     const fullPhone = `${countryCode}${phoneNumber}`;
-  data.set("mobileNumber", fullPhone);
+    data.set("mobileNumber", fullPhone);
     let photo;
     const firstName = data.get("firstName") as string;
     const lastName = data.get("lastName") as string;
@@ -116,7 +118,6 @@ export default function EditClientModalBody({
       return;
     }
 
-  
     // Validate optional fields if provided
     if (zip && !/^\d*$/.test(zip)) {
       showError({
@@ -222,7 +223,6 @@ export default function EditClientModalBody({
     session?.user?.employeeType === "Admin" ||
     session?.user?.employeeType === "Manager";
 
-   
   return (
     <DialogContent
       className="max-h-full max-w-xl grid-rows-[auto,1fr,auto]"
@@ -255,7 +255,7 @@ export default function EditClientModalBody({
               id="profilePicture"
               hidden
               accept="image/*"
-              onChange={e => {
+              onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) {
                   setNewProfilePic(file);
@@ -274,7 +274,7 @@ export default function EditClientModalBody({
               id="profilePicture"
               hidden
               accept="image/*"
-              onChange={e => {
+              onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) {
                   setNewProfilePic(file);
@@ -302,7 +302,7 @@ export default function EditClientModalBody({
             name="firstName"
             required
             defaultValue={employee.firstName}
-            onChange={e => {
+            onChange={(e) => {
               const value = e.target.value;
               if (!value.trim()) {
                 showError({
@@ -320,12 +320,12 @@ export default function EditClientModalBody({
             required={false}
           />
         </div>
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
           <SlimInput
             name="email"
             defaultValue={employee.email}
             required
-            onChange={e => {
+            onChange={(e) => {
               const value = e.target.value;
               if (!value.trim()) {
                 showError({
@@ -342,23 +342,25 @@ export default function EditClientModalBody({
               }
             }}
           />
-          
-           <PhoneInput
-                      label="Mobile"
-                      placeholder="1234567890"
-                      required={false}
-                      defaultValue={employee.phone!}
-                      // value={phoneNumber}
-                       defaultIsoCode={employee.countryCode!}
-                      onChange={(phone, code, iso) => {
-                        phoneDataRef.current = {
-                        phoneNumber: phone,
-                        countryCode: code,
-                        isoCode: iso || ""
-              };
-                        clearError()
-                      }}
-                    />
+
+          <div className="md:w-[248px]">
+            <PhoneInput
+              label="Mobile"
+              placeholder="1234567890"
+              required={false}
+              defaultValue={employee.phone!}
+              // value={phoneNumber}
+              defaultIsoCode={employee.countryCode!}
+              onChange={(phone, code, iso) => {
+                phoneDataRef.current = {
+                  phoneNumber: phone,
+                  countryCode: code,
+                  isoCode: iso || "",
+                };
+                clearError();
+              }}
+            />
+          </div>
         </div>
         {isAdminOrManager && !openChangePassword && (
           <span
@@ -411,7 +413,7 @@ export default function EditClientModalBody({
             name="zip"
             defaultValue={employee.zip!}
             required={false}
-            onChange={e => {
+            onChange={(e) => {
               const value = e.target.value;
               if (value && !/^\d*$/.test(value)) {
                 showError({
@@ -434,7 +436,7 @@ export default function EditClientModalBody({
             name="commission"
             defaultValue={Number(employee.commission!)}
             required={false}
-            onChange={e => {
+            onChange={(e) => {
               const value = e.target.value;
               if (value && !/^(\d*\.?\d+|\d+\.?\d*)$/.test(value)) {
                 showError({

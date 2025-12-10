@@ -50,8 +50,8 @@ export default function NewCustomer({
   const [mobile, setMobile] = useState("+1");
   const pathname = usePathname();
   const queryClient = useQueryClient();
-  const [country, setCountry] = useState('');
-  const [countryIsoCode, setCountryIsoCode] = useState('');
+  const [country, setCountry] = useState("");
+  const [countryIsoCode, setCountryIsoCode] = useState("");
   const { search, currentPage, pageSize } = useClientFilterStore();
   const [clientInfo, setClientInfo] = useState({
     firstName: "",
@@ -72,7 +72,7 @@ export default function NewCustomer({
     await deleteSource(id);
 
     setClientSources((prev: Source[]) => {
-      return prev.filter(source => source.id !== id);
+      return prev.filter((source) => source.id !== id);
     });
 
     if (clientSource?.id === id) {
@@ -101,7 +101,6 @@ export default function NewCustomer({
     setCountryIsoCode("");
   }
 
-
   async function handleSubmit() {
     clearError();
 
@@ -114,13 +113,13 @@ export default function NewCustomer({
       return;
     }
 
-const fullPhone = `${country}${mobile}`
+    const fullPhone = `${country}${mobile}`;
     if (!mobile || mobile.length < 10) {
       showError({
         field: "mobile",
         message: "Please enter a valid phone number (at least 10 digits).",
-      })
-      return
+      });
+      return;
     }
     let photo;
     // update photo
@@ -205,11 +204,10 @@ const fullPhone = `${country}${mobile}`
     setCountryIsoCode("");
   };
 
-   
   return (
     <Dialog
       open={isClientOpen}
-      onOpenChange={isClientOpen => {
+      onOpenChange={(isClientOpen) => {
         if (!isClientOpen) handleClose();
         setIsClientOpen(isClientOpen);
       }}
@@ -218,7 +216,8 @@ const fullPhone = `${country}${mobile}`
         {buttonElement ? (
           buttonElement
         ) : (
-          <button className="
+          <button
+            className="
                 flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white
                 bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
                 shadow-[0_4px_14px_0_rgba(101,113,255,0.39)]
@@ -226,19 +225,24 @@ const fullPhone = `${country}${mobile}`
                 hover:-translate-y-0.5
                 active:translate-y-0 active:scale-100
                 transition-all duration-300 ease-in-out
-            ">+ Add New Client</button>
+            "
+          >
+            + Add New Client
+          </button>
         )}
       </DialogTrigger>
       <DialogContent
         className="max-h-full max-w-xl grid-rows-[auto,1fr,auto]"
-      // form
+        // form
       >
         <div className="mt-8 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-slate-600 dark:text-slate-100">
               Add Client
             </h1>
-            <p className="text-sm text-slate-500 mt-1">Enter details for the new client</p>
+            <p className="text-sm text-slate-500 mt-1">
+              Enter details for the new client
+            </p>
           </div>
 
           {profilePic ? (
@@ -269,7 +273,7 @@ const fullPhone = `${country}${mobile}`
                 id="profilePicture"
                 hidden
                 accept="image/*"
-                onChange={e => {
+                onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) {
                     setProfilePic(file);
@@ -277,7 +281,9 @@ const fullPhone = `${country}${mobile}`
                 }}
               />
               <div className="flex flex-col items-end">
-                <span className="text-sm font-semibold text-slate-600 dark:text-slate-300 group-hover:text-[#6571FF] transition-colors">Upload Photo</span>
+                <span className="text-sm font-semibold text-slate-600 dark:text-slate-300 group-hover:text-[#6571FF] transition-colors">
+                  Upload Photo
+                </span>
               </div>
               <div className="p-1 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-400 group-hover:text-[#6571FF] group-hover:bg-white transition-colors">
                 <UserIcon size={32} strokeWidth={2} />
@@ -295,10 +301,10 @@ const fullPhone = `${country}${mobile}`
               label="First Name"
               required
               value={clientInfo.firstName}
-              onChange={e => {
+              onChange={(e) => {
                 const value = e.target.value;
                 // Always update the state to allow normal editing
-                setClientInfo(prev => ({ ...prev, firstName: value }));
+                setClientInfo((prev) => ({ ...prev, firstName: value }));
                 // Clear any existing errors when user is typing
                 clearError();
               }}
@@ -307,22 +313,22 @@ const fullPhone = `${country}${mobile}`
               name="lastName"
               required={false}
               value={clientInfo.lastName}
-              onChange={e => {
+              onChange={(e) => {
                 const value = e.target.value;
-                setClientInfo(prev => ({ ...prev, lastName: value }));
+                setClientInfo((prev) => ({ ...prev, lastName: value }));
               }}
             />
           </div>
 
-          <div className="flex items-center justify-between gap-x-2">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
             <SlimInput
               name="email"
               label="Email"
               value={clientInfo.email}
               // required
-              onChange={e => {
+              onChange={(e) => {
                 const value = e.target.value;
-                setClientInfo(prev => ({ ...prev, email: value }));
+                setClientInfo((prev) => ({ ...prev, email: value }));
 
                 // Validate on input change
                 // if (!value.trim()) {
@@ -335,18 +341,20 @@ const fullPhone = `${country}${mobile}`
                 // }
               }}
             />
-         
-            <PhoneInput
-            label="Mobile Number"
-            placeholder="1234567890"
-            required
-            onChange={(phoneNum, code, isoCode) => {
-              setMobile(phoneNum);
-              setCountry(code);
-              if (isoCode) setCountryIsoCode(isoCode);
-              clearError();
-            }}
-          />
+
+            <div className="md:w-[248px]">
+              <PhoneInput
+                label="Mobile Number"
+                placeholder="1234567890"
+                required
+                onChange={(phoneNum, code, isoCode) => {
+                  setMobile(phoneNum);
+                  setCountry(code);
+                  if (isoCode) setCountryIsoCode(isoCode);
+                  clearError();
+                }}
+              />
+            </div>
           </div>
 
           <div className="flex items-center justify-between">
@@ -355,9 +363,9 @@ const fullPhone = `${country}${mobile}`
               rootClassName="flex-1"
               name="address"
               required={false}
-              onChange={e => {
+              onChange={(e) => {
                 const value = e.target.value;
-                setClientInfo(prev => ({ ...prev, address: value }));
+                setClientInfo((prev) => ({ ...prev, address: value }));
               }}
             />
           </div>
@@ -367,24 +375,24 @@ const fullPhone = `${country}${mobile}`
               value={clientInfo.city}
               name="city"
               required={false}
-              onChange={e => {
-                setClientInfo(prev => ({ ...prev, city: e.target.value }));
+              onChange={(e) => {
+                setClientInfo((prev) => ({ ...prev, city: e.target.value }));
               }}
             />
             <SlimInput
               value={clientInfo.state}
               name="state"
               required={false}
-              onChange={e => {
-                setClientInfo(prev => ({ ...prev, state: e.target.value }));
+              onChange={(e) => {
+                setClientInfo((prev) => ({ ...prev, state: e.target.value }));
               }}
             />
             <SlimInput
               name="zip"
               value={clientInfo.zip}
               required={false}
-              onChange={e => {
-                setClientInfo(prev => ({ ...prev, zip: e.target.value }));
+              onChange={(e) => {
+                setClientInfo((prev) => ({ ...prev, zip: e.target.value }));
               }}
             />
           </div>
@@ -395,9 +403,9 @@ const fullPhone = `${country}${mobile}`
               required={false}
               label="Company"
               value={clientInfo.customerCompany}
-              onChange={e => {
+              onChange={(e) => {
                 const value = e.target.value;
-                setClientInfo(prev => ({ ...prev, customerCompany: value }));
+                setClientInfo((prev) => ({ ...prev, customerCompany: value }));
               }}
             />
 
@@ -406,7 +414,7 @@ const fullPhone = `${country}${mobile}`
               {/* TODO: use `Selector` component and make the hieght auto */}
               <SelectClientSource
                 clickabled={false}
-                label={clientSrc =>
+                label={(clientSrc) =>
                   clientSource ? clientSource.name : "Client Source"
                 }
                 newButton={
