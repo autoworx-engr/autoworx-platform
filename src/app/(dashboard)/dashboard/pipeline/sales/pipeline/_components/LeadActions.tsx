@@ -51,8 +51,7 @@ export default function LeadActions({ lead }: TProps) {
         vehicleId: vehicleId,
         type: "Estimate",
       });
-      console.log("res of draft estimate", res);
-      console.log("res type", res?.type);
+
       if (res.type === "success") {
         successToast(res?.message || "Draft estimate created");
         //updating the pipelien data with the draft estimate flag
@@ -92,7 +91,6 @@ export default function LeadActions({ lead }: TProps) {
         });
       } else if (res.type === "error") {
         setInvoiceId(res.data.id);
-        errorToast(res.message || "Draft estimate already exists!");
       } else if (res.type === "globalError") {
         errorToast(
           res?.errorSource && res?.errorSource.length > 0

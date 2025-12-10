@@ -122,31 +122,6 @@ const ZapForm = ({ company }: ZapFormProps) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
 
-    // Special validation for phone field
-    // if (name === "phone") {
-    //   // Update the value in state regardless of validation
-    //   setFormData({
-    //     ...formData,
-    //     phone: value,
-    //   });
-
-    //   // Only show error if value is not empty and doesn't start with +1
-    //   // if (value && !value.startsWith("+1")) {
-    //   //   setFieldErrors({
-    //   //     ...fieldErrors,
-    //   //     phone: "Phone number must start with +1",
-    //   //   });
-    //   // } else {
-    //   //   clearFieldError("phone");
-    //   // }
-    // } else {
-    //   // Handle all other fields normally
-    //   setFormData({
-    //     ...formData,
-    //     [name]: value,
-    //   });
-    // }
-
     setFormData({
     ...formData,
     [name]: value,
@@ -392,28 +367,7 @@ if (!formData.phone || formData.phone.length < 10) {
               />
             </div>
             <div className="space-y-2">
-              {/* <label
-                htmlFor="phone"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Phone Number*
-              </label>
-              <input
-                id="phone"
-                type="text"
-                name="phone"
-                placeholder="+1 (555) 123-4567"
-                value={formData.phone}
-                onChange={handleChange}
-                required
-                className={`w-full rounded-md border-2 ${
-                  fieldErrors.phone ? "border-red-500" : "border-gray-300"
-                } px-4 py-2 placeholder:text-gray-500 focus:border-[#00b8b0] focus:outline-none focus:ring-2 focus:ring-[#00b8b0]`}
-              />
-              {fieldErrors.phone && (
-                <p className="mt-1 text-sm text-red-600">{fieldErrors.phone}</p>
-              )} */}
-
+             
                <PhoneInput
     label="Phone Number"
     // value={formData.phone} 

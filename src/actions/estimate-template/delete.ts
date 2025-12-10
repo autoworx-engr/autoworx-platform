@@ -30,36 +30,43 @@ export async function deleteEstimateTemplate({
         },
       });
 
-      const productsWithQuantity =
-        materials && materials.length > 0
-          ? materials.reduce(
-              (
-                acc: {
-                  id: number;
-                  name: string;
-                  invoiceItemId?: number | null;
-                  quantity: number;
-                }[],
-                material
-              ) => {
-                const product = acc.find((p) => p?.id === material.productId);
-                if (product) {
-                  if (material.quantity !== null) {
-                    product.quantity += Number(material.quantity);
-                  }
-                } else {
-                  acc.push({
-                    id: material.productId as number,
-                    name: material.name || "",
-                    invoiceItemId: material.invoiceItemId,
-                    quantity: Number(material.quantity) || 0,
-                  });
+      materials && materials.length > 0
+        ? materials.reduce(
+            (
+              acc: {
+                id: number;
+                name: string;
+                invoiceItemId?: number | null;
+                quantity: number;
+              }[],
+              material
+            ) => {
+              const product = acc.find((p) => p?.id === material.productId);
+              if (product) {
+                if (material.quantity !== null) {
+                  product.quantity += Number(material.quantity);
                 }
-                return acc;
-              },
-              []
-            )
-          : [];
+              } else {
+                acc.push({
+                  id: material.productId as number,
+                  name: material.name || "",
+                  invoiceItemId: material.invoiceItemId,
+                  quantity: Number(material.quantity) || 0,
+                });
+              }
+              return acc;
+            },
+            []
+          )
+        : [];
+
+      await db.task.deleteMany({
+        where: { invoiceTemplateId: id },
+      });
+
+      await db.templatePhoto.deleteMany({
+        where: { invoiceTemplateId: id },
+      });
 
       const deletedEstimateTemplate = await db.invoiceTemplate.delete({
         where: {
