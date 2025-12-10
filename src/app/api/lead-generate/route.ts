@@ -4,6 +4,7 @@ import { updateTagAutomationTrigger } from "@/actions/automation/tag/triggerTagA
 import { initialCreateClientChatTrack } from "@/actions/communication/client/chat-track";
 import { companyWithUser } from "@/actions/settings/getCompanyWithUser";
 import { db } from "@/lib/db";
+import { sendCRMDemoNotification } from "@/lib/notification/crm-demo-notifiy";
 import { sendNewLeadNotification } from "@/lib/notification/pipeline-notify";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -82,10 +83,10 @@ export async function POST(request: NextRequest) {
           multipleServices:
             multipleServices && multipleServices.length > 0
               ? {
-                connect: multipleServices.map((service: any) => ({
-                  id: Number(service.id),
-                })),
-              }
+                  connect: multipleServices.map((service: any) => ({
+                    id: Number(service.id),
+                  })),
+                }
               : undefined,
         },
       });
@@ -96,11 +97,11 @@ export async function POST(request: NextRequest) {
 
       let newClient = clientPhone
         ? await db.client.findFirst({
-          where: {
-            mobile: clientPhone,
-            companyId: company.id,
-          },
-        })
+            where: {
+              mobile: clientPhone,
+              companyId: company.id,
+            },
+          })
         : null;
 
       if (!newClient) {
@@ -156,7 +157,7 @@ export async function POST(request: NextRequest) {
             columnId: +(newLead?.columnId ?? 0),
           });
         }
-      } catch (error) { }
+      } catch (error) {}
 
       // communication automation trigger
       await updateCommunicationAutomationTrigger({
@@ -173,6 +174,12 @@ export async function POST(request: NextRequest) {
         leadId: newLead.id,
         conditionType: "post_tag",
         generatedToken: token,
+      });
+
+      // send a notification for new lead added
+      await sendCRMDemoNotification({
+        companyId: company.id,
+        clientName: newLead.clientName,
       });
 
       return Response.json(
@@ -244,10 +251,10 @@ export async function POST(request: NextRequest) {
         multipleServices:
           multipleServices && multipleServices.length > 0
             ? {
-              connect: multipleServices.map((service: any) => ({
-                id: Number(service.id),
-              })),
-            }
+                connect: multipleServices.map((service: any) => ({
+                  id: Number(service.id),
+                })),
+              }
             : undefined,
       },
     });
@@ -260,11 +267,11 @@ export async function POST(request: NextRequest) {
 
     let newClient = clientPhone
       ? await db.client.findFirst({
-        where: {
-          mobile: clientPhone,
-          companyId: company.id,
-        },
-      })
+          where: {
+            mobile: clientPhone,
+            companyId: company.id,
+          },
+        })
       : null;
 
     if (!newClient) {
@@ -355,7 +362,7 @@ export async function POST(request: NextRequest) {
           columnId: +(newLead?.columnId ?? 0),
         });
       }
-    } catch (error) { }
+    } catch (error) {}
 
     // communication automation trigger
     await updateCommunicationAutomationTrigger({
