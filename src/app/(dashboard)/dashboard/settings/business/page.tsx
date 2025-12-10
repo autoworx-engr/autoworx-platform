@@ -10,7 +10,7 @@ const BusinessPage = async () => {
         {/* account detail */}
         <div className="#w-1/2">
           <h3 className="my-4 text-2xl font-bold text-gray-800 border-b pb-2">
-          ⚙️ Account Details 
+            Account Details
           </h3>
           <Suspense fallback={<CarLoading />}>
             <Container />
