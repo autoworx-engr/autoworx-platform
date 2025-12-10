@@ -22,15 +22,17 @@ import { CreateTab } from "../../create/tabs/CreateTab";
 import PaymentTab from "../../create/tabs/PaymentTab";
 import { Save } from "lucide-react";
 import EstimateInspectionsTab from "../../create/tabs/EstimateInspectionsTab";
+import DynamicTemplateLoader from "../../DynamicTemplateLoader";
 
 export default async function Page({
   params,
   searchParams,
 }: {
   params: { id: string };
-  searchParams: { clientId?: string };
+  searchParams: { clientId?: string; templateId?: string };
 }) {
   const session = await getServerSession(authOptions);
+  const templateId = searchParams.templateId ? searchParams.templateId : null;
 
   if (!session) {
     throw new Error("Session ID is required");
@@ -267,6 +269,8 @@ export default async function Page({
           payment={payment}
           inspections={invoiceInspections}
         />
+
+        {templateId && <DynamicTemplateLoader templateId={templateId} />}
 
         <Header
           id={invoice.id}
