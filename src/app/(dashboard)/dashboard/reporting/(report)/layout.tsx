@@ -1,7 +1,7 @@
 "use client";
 import { usePermissionStore } from "@/stores/permissionStore";
 import { useRouter, useSearchParams } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { TrendingUp, Box, UserPlus, CreditCard, Users } from "lucide-react";
 type TProps = {
@@ -12,6 +12,7 @@ export default function ReportLayout({ children }: TProps) {
   const { permissions } = usePermissionStore();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const tabsContainerRef = useRef<HTMLUListElement>(null);
 
   useEffect(() => {
     if (permissions?.role === "Sales") {
@@ -33,6 +34,28 @@ export default function ReportLayout({ children }: TProps) {
     { label: "Teams", href: "/dashboard/reporting/teams?view=teams", view: "teams", requiresWorkforce: true, icon: Users },
   ];
 
+  // Scroll active tab to center on mobile when it changes
+  useEffect(() => {
+    if (tabsContainerRef.current && currentView) {
+      const activeTab = tabsContainerRef.current.querySelector('[data-active="true"]') as HTMLElement;
+      if (activeTab) {
+        const container = tabsContainerRef.current;
+        const tabRect = activeTab.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+
+        // Calculate scroll position to center the tab
+        const tabCenterOffset = tabRect.left - containerRect.left + tabRect.width / 2;
+        const containerCenter = containerRect.width / 2;
+        const scrollLeft = container.scrollLeft + (tabCenterOffset - containerCenter);
+
+        container.scrollTo({
+          left: scrollLeft,
+          behavior: 'smooth',
+        });
+      }
+    }
+  }, [currentView]);
+
   return (
     <div>
       {permissions?.role === "Admin" || permissions?.role === "Manager" ? (
@@ -44,7 +67,7 @@ export default function ReportLayout({ children }: TProps) {
 
             {/* Tab Navigation */}
             <nav className="w-full lg:w-auto mt-2 lg:mt-0">
-              <ul className="flex items-center gap-1.5 p-1.5 overflow-x-auto thin-scrollbar rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm shadow-sm">
+              <ul className="flex items-center gap-1.5 p-1.5 overflow-x-auto thin-scrollbar rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm shadow-sm" ref={tabsContainerRef}>
                 {toggleButtons.map((button, index) => {
                   if (button.requiresWorkforce && permissions?.companyPermissions?.workforceManagement === false) {
                     return null;
@@ -57,6 +80,7 @@ export default function ReportLayout({ children }: TProps) {
                       <Link
                         href={button.href}
                         onClick={() => setCurrentView(button.view)}
+                        data-active={button.view === currentView}
                         className={`group relative flex items-center gap-2.5 rounded-xl px-3 py-2 text-base font-medium transition-all duration-300 ease-out ${isActive
                           ? "text-white shadow-md shadow-indigo-500/25 ring-1 ring-black/5 translate-y-[-1px]"
                           : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200"

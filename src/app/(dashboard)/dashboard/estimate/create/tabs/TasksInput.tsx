@@ -5,8 +5,11 @@ import { useEstimateCreateStore } from "@/stores/estimate-create";
 import { CirclePlus, X } from "lucide-react";
 import { create } from "mutative";
 
-export function TasksInput() {
-  const tasks = useEstimateCreateStore((x) => x.tasks);
+interface TasksInputProps {
+    tasks: { id: undefined | number; task: string }[];
+}
+export function TasksInput({tasks}:TasksInputProps) {
+  // const tasks = useEstimateCreateStore((x) => x.tasks);
 
   return (
     <div className="rounded border border-solid border-slate-500">

@@ -36,8 +36,8 @@ const ResponsiveEmployeeCard = ({
         : `/dashboard/client/${id}`;
 
   const communicationUrl = data.role
-    ? `/dashboard/communication/internal`
-    : `/dashboard/communication/client/${id}`;
+    ? `/dashboard/communication/internal?id=${id}`
+    : `/dashboard/communication/client/${id}?chat=true`;
 
   const evenColor = "bg-background";
   const oddColor = "bg-[#EEF4FF]";

@@ -43,7 +43,7 @@ const defaultTake = 50;
 type TTableProps = {
   estimateData: {
     totalEstimate: number;
-    data: InvoiceData[];
+    data: InvoiceData[] | [];
   };
   page?: string;
   take?: string;
@@ -143,9 +143,9 @@ export default function Table({
       <div className="flex-grow">
         {isMax640 ? (
           <div className="flex  w-full flex-col items-center justify-center gap-y-4">
-            {estimateData.data.map((data, index) => (
+            {estimateData?.data?.map((data, index) => (
               <ResponsiveEstimateCard
-                onConvert={() => handleConvertedInvoice(data.id)}
+                onConvert={() => handleConvertedInvoice(data?.id)}
                 invoiceEstimate={data}
                 key={data.id}
                 index={index}
@@ -175,7 +175,7 @@ export default function Table({
 
             {/* Estimate List */}
             <tbody>
-              {estimateData.data.map((data, index) => (
+              {estimateData?.data?.map((data, index) => (
                 <tr
                   key={data.id}
                   className={cn("py-3", index % 2 === 0 ? evenColor : oddColor)}

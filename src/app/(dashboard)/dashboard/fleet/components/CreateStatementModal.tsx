@@ -1,5 +1,6 @@
 "use client";
 
+import { createFleetStatement } from "@/actions/fleet/statement";
 import {
   Dialog,
   DialogContent,
@@ -7,13 +8,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/Dialog";
-import { Checkbox, message } from "antd";
-import { useState } from "react";
-import FleetSubHeading from "./FleetSubHeading";
-import { cn } from "@/lib/cn";
-import { Invoice } from "@prisma/client";
-import { createFleetStatement } from "@/actions/fleet/statement";
 import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
+import { cn } from "@/lib/cn";
+import { useFleetInvoiceStore } from "@/stores/fleetInvoiceStore";
+import { Invoice } from "@prisma/client";
+import { Checkbox, message } from "antd";
+import { useEffect, useState } from "react";
+import FleetSubHeading from "./FleetSubHeading";
 
 const CreateStatementModal = ({
   unPaidInvoices,
@@ -26,9 +27,19 @@ const CreateStatementModal = ({
 }) => {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [selectedItems, setSelectedItems] = useState<string[]>(
-    unPaidInvoices.map((invoice) => invoice.id)
-  );
+  const { setAllInvoices } = useFleetInvoiceStore();
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+
+  // Reset selection when modal opens with fresh unpaid invoices
+  useEffect(() => {
+    if (open) {
+      setSelectedItems(unPaidInvoices.map((invoice) => invoice.id));
+    }
+  }, [open, unPaidInvoices]);
+
+  useEffect(() => {
+    setAllInvoices(unPaidInvoices);
+  }, [unPaidInvoices]);
 
   const handleSelectItem = (itemId: string, checked: boolean) => {
     if (checked) {
@@ -65,8 +76,15 @@ const CreateStatementModal = ({
       });
 
       if (result.type === "success") {
-        message.success(result.message);
+        message.success(result.message || "Statement created successfully");
+
+        // Close modal first
         setOpen(false);
+
+        // Reset selection
+        setSelectedItems([]);
+
+        // Trigger refresh to update the statement list
         if (onStatementCreated) {
           onStatementCreated();
         }
@@ -74,7 +92,7 @@ const CreateStatementModal = ({
         message.error(result.message || "Failed to create statement");
       }
     } catch (error) {
-      // console.error("Error creating statement:", error);
+      console.error("Error creating statement:", error);
       message.error("Failed to create statement");
     } finally {
       setLoading(false);
@@ -83,11 +101,15 @@ const CreateStatementModal = ({
 
   const handleCancel = () => {
     setOpen(false);
+    // Reset selection when canceling
+    setSelectedItems([]);
   };
 
-  const isAllSelected = selectedItems.length === unPaidInvoices.length;
+  const isAllSelected =
+    selectedItems.length === unPaidInvoices.length && unPaidInvoices.length > 0;
   const isIndeterminate =
-    setSelectedItems.length > 0 && selectedItems.length < unPaidInvoices.length;
+    selectedItems.length > 0 && selectedItems.length < unPaidInvoices.length;
+
   return (
     <div>
       <Dialog open={open} onOpenChange={setOpen}>
@@ -105,84 +127,87 @@ const CreateStatementModal = ({
 
           {/* Table Container with Scroll */}
           <div className="thin-scrollbar flex-1 overflow-y-auto scroll-smooth">
-            <table className="w-full">
-              <thead className="sticky top-0 z-10 bg-background">
-                <tr className="h-10">
-                  <th className="px-3 py-3 text-left">
-                    <Checkbox
-                      checked={isAllSelected}
-                      onChange={(e) => handleSelectAll(e.target.checked)}
-                      ref={(ref) => {
-                        if (ref?.input) {
-                          ref.input.indeterminate = isIndeterminate;
-                        }
-                      }}
-                    />
-                  </th>
-                  <th className="border-b px-3 py-2 text-left">Invoice#</th>
-                  <th className="border-b px-3 py-2 text-left">Year</th>
-                  <th className="border-b px-3 py-2 text-left">Make</th>
-                  <th className="border-b px-3 py-2 text-left">Model</th>
-                  <th className="border-b px-3 py-2 text-left">VIN</th>
-                  <th className="border-b px-3 py-2 text-left">Price</th>
-                  <th className="border-b px-3 py-2 text-left">Payment</th>
-                  <th className="border-b px-3 py-2 text-left">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {unPaidInvoices.map((invoice: any, index) => (
-                  <tr
-                    key={invoice.id}
-                    className={cn(
-                      "cursor-pointer rounded-md border py-3",
-                      index % 2 === 0 ? "bg-background" : "bg-[#EEF4FF]"
-                    )}
-                  >
-                    <td className="px-3 py-3">
+            {unPaidInvoices.length > 0 ? (
+              <table className="w-full">
+                <thead className="sticky top-0 z-10 bg-background">
+                  <tr className="h-10">
+                    <th className="px-3 py-3 text-left">
                       <Checkbox
-                        checked={selectedItems.includes(invoice.id)}
-                        onChange={(e) =>
-                          handleSelectItem(invoice.id, e.target.checked)
-                        }
+                        checked={isAllSelected}
+                        onChange={(e) => handleSelectAll(e.target.checked)}
+                        ref={(ref) => {
+                          if (ref?.input) {
+                            ref.input.indeterminate = isIndeterminate;
+                          }
+                        }}
                       />
-                    </td>
-                    <td className="border-b px-4 py-2 text-left text-[#6571FF]">
-                      <InvoiceModal
-                        invoiceId={invoice?.id}
-                        buttonChild={<button>{invoice?.id}</button>}
-                        buttonChildClassName="block w-full text-blue-600"
-                      />
-                    </td>
-                    <td className="border-b px-3 py-2 text-left">
-                      {invoice.vehicle?.year || "N/A"}
-                    </td>
-                    <td className="border-b px-3 py-2 text-left">
-                      {invoice.vehicle?.make || "N/A"}
-                    </td>
-                    <td className="border-b px-3 py-2 text-left">
-                      {invoice.vehicle?.model || "N/A"}
-                    </td>
-                    {invoice.vehicle?.other && (
-                      <td className="border-b px-3 py-2 text-left">
-                        {invoice.vehicle?.model || "N/A"}
-                      </td>
-                    )}
-                    <td className="border-b px-3 py-2 text-left">
-                      {invoice.vehicle?.vin || "N/A"}
-                    </td>
-                    <td className="border-b px-3 py-2 text-left">
-                      {invoice?.grandTotal || "0"}
-                    </td>
-                    <td className="border-b px-4 py-2 text-left">
-                      {invoice.due > 0 ? "Unpaid" : "Paid"}
-                    </td>
-                    <td className="border-b px-4 py-2 text-left">
-                      {invoice.column?.title || "N/A"}
-                    </td>
+                    </th>
+                    <th className="border-b px-3 py-2 text-left">Invoice#</th>
+                    <th className="border-b px-3 py-2 text-left">Year</th>
+                    <th className="border-b px-3 py-2 text-left">Make</th>
+                    <th className="border-b px-3 py-2 text-left">Model</th>
+                    <th className="border-b px-3 py-2 text-left">VIN</th>
+                    <th className="border-b px-3 py-2 text-left">Price</th>
+                    <th className="border-b px-3 py-2 text-left">Status</th>
+                    <th className="border-b px-3 py-2 text-left">Column</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {unPaidInvoices.map((invoice: any, index) => (
+                    <tr
+                      key={invoice.id}
+                      className={cn(
+                        "cursor-pointer rounded-md border py-3",
+                        index % 2 === 0 ? "bg-background" : "bg-[#EEF4FF]"
+                      )}
+                    >
+                      <td className="px-3 py-3">
+                        <Checkbox
+                          checked={selectedItems.includes(invoice.id)}
+                          onChange={(e) =>
+                            handleSelectItem(invoice.id, e.target.checked)
+                          }
+                        />
+                      </td>
+                      <td className="border-b px-4 py-2 text-left text-[#6571FF]">
+                        <InvoiceModal
+                          invoiceId={invoice?.id}
+                          buttonChild={<button>{invoice?.id}</button>}
+                          buttonChildClassName="block w-full text-blue-600"
+                        />
+                      </td>
+                      <td className="border-b px-3 py-2 text-left">
+                        {invoice.vehicle?.year || "N/A"}
+                      </td>
+                      <td className="border-b px-3 py-2 text-left">
+                        {invoice.vehicle?.make || "N/A"}
+                      </td>
+                      <td className="border-b px-3 py-2 text-left">
+                        {invoice.vehicle?.model ||
+                          invoice.vehicle?.other ||
+                          "N/A"}
+                      </td>
+                      <td className="border-b px-3 py-2 text-left">
+                        {invoice.vehicle?.vin || "N/A"}
+                      </td>
+                      <td className="border-b px-3 py-2 text-left">
+                        {invoice?.grandTotal || "0"}
+                      </td>
+                      <td className="border-b px-4 py-2 text-left">
+                        {invoice.due > 0 ? "Unpaid" : "Paid"}
+                      </td>
+                      <td className="border-b px-4 py-2 text-left">
+                        {invoice.column?.title || "N/A"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <div className="flex items-center justify-center py-12">
+                <p className="text-gray-500">No unpaid invoices available</p>
+              </div>
+            )}
           </div>
 
           {/* Footer with buttons */}
@@ -198,6 +223,7 @@ const CreateStatementModal = ({
                 transition-colors border
               "
                 onClick={handleCancel}
+                disabled={loading}
               >
                 Cancel
               </button>
@@ -209,6 +235,8 @@ const CreateStatementModal = ({
                 hover:shadow-xl hover:shadow-indigo-500/40
                 hover:-translate-y-0.5 hover:scale-[1.02]
                 active:translate-y-0 active:scale-100
+                disabled:opacity-50 disabled:cursor-not-allowed
+                disabled:hover:translate-y-0 disabled:hover:scale-100
                 transition-all duration-200
               "
                 onClick={handleCreate}

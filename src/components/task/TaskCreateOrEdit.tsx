@@ -80,7 +80,7 @@ export default function TaskCreateOrEdit({
     openButtonIcon = (
       // Compact, professional design
       <button
-        className={`${primaryCtaClasses} rounded-xl min-w-[140px] px-4 py-2`} // Modern rounded-xl shape
+        className={`${primaryCtaClasses} rounded-xl w-full px-4 py-2`} // Modern rounded-xl shape
       >
         {fromEdit ? (
           // Icon for edit action (using SquarePen, with subtle color change to match theme)

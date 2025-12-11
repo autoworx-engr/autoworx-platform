@@ -225,17 +225,7 @@ const MyAccount = ({ user }: { user: User }) => {
                   }}
                   readOnly
                 />
-                {/* <SlimInput
-                  name="phone"
-                  value={userInfo?.phone || ""}
-                  onChange={(e) => {
-                    setUserInfo({
-                      ...userInfo,
-                      [e.target.name]: e.target.value,
-                    });
-                  }}
-                /> */}
-
+                
                 <PhoneInput
     
     defaultValue={user?.phone || ""} 

@@ -1,5 +1,4 @@
 import { deleteTask } from "@/actions/task/deleteTask";
-import { TASK_COLOR } from "@/lib/consts";
 import { useCalendarStore } from "@/stores/calendarStore";
 import { Task } from "@prisma/client";
 import { Popconfirm, Tooltip } from "antd";
@@ -14,6 +13,13 @@ import { useDate } from "../../../task-v1/[type]/Calendar/Day";
 import { taskQueryKey } from "../../_constant";
 import useWeekStartEndDays from "../../_hook/lib/useWeekStartEndDays";
 import { CircleCheckBig, SquarePen } from "lucide-react";
+
+// Sleeker gradient look matching dashboard task cards
+const priorityClasses = {
+  Low: "bg-gradient-to-r from-blue-500 to-indigo-600 shadow-indigo-600/50",
+  Medium: "bg-gradient-to-r from-cyan-600 to-blue-500 shadow-cyan-600/50",
+  High: "bg-gradient-to-r from-teal-700 to-green-700 shadow-teal-700/50",
+};
 
 type TaskComponentProps = {
   task: Task;
@@ -106,13 +112,32 @@ export default function TaskComponent({ task }: TaskComponentProps) {
     revalidateTaskQueries();
     successToast("Task deleted successfully.");
   };
+
+  const priorityClass =
+    priorityClasses[task.priority as keyof typeof priorityClasses] ||
+    priorityClasses.Low;
+
+  // Enhance tooltip info with due date/time when available
+  const timePart = task.startTime
+    ? moment(task.startTime, "HH:mm").format("h:mmA")
+    : null;
+  const datePart = task.date ? moment(task.date).format("MMM DD") : null;
+  const tooltipLabel = datePart
+    ? `${task.title} — Due ${datePart}${timePart ? `, ${timePart}` : ""}`
+    : task.title;
+
   return (
     <div
-      className="flex items-center rounded-md px-4 py-2 text-[17px] text-white max-[1300px]:px-2 max-[1300px]:py-1 max-[1300px]:text-[14px]"
-      style={{
-        backgroundColor: TASK_COLOR[task.priority],
-        cursor: task.startTime && task.endTime ? "pointer" : "move",
-      }}
+      className={`
+        ${priorityClass}
+        flex items-center gap-x-2 rounded-lg px-3 md:px-4 text-white text-sm
+        max-[1300px]:px-2 max-[1300px]:text-[14px]
+        transition-all duration-300 ease-in-out shadow-lg ring-1 ring-white/10
+        hover:-translate-y-0.5 hover:shadow-xl hover:ring-white/20
+        h-auto min-h-[40px] max-h-[56px]
+        ${isDragging ? "opacity-70" : ""}
+      `}
+      style={{ cursor: task.startTime && task.endTime ? "pointer" : "move" }}
       ref={
         task.startTime && task.endTime
           ? undefined
@@ -121,27 +146,23 @@ export default function TaskComponent({ task }: TaskComponentProps) {
       draggable={task.startTime && task.endTime ? false : true}
       onDragStart={task.startTime && task.endTime ? undefined : handleDragStart}
       onDragEnd={handleDragEnd}
+      onClick={() => {
+        setNavigating(true);
+        if (task.date && task.startTime && task.endTime) {
+          const redirectDate = moment(task.date).format("YYYY-MM-DD");
+          setDate(redirectDate);
+        }
+        router.push("/dashboard/task/day");
+
+        // Clear navigation flag after a short delay to allow navigation to complete
+        setTimeout(() => setNavigating(false), 30000);
+      }}
     >
       <span
-        style={{
-          cursor: task.startTime && task.endTime ? "pointer" : "move",
-        }}
-        className="w-[90%] text-sm"
-        onClick={() => {
-          // Set navigation flag to prevent reset, then set date and navigate
-          setNavigating(true);
-          if (task.date && task.startTime && task.endTime) {
-            const redirectDate = moment(task.date).format("YYYY-MM-DD");
-            console.log("Redirecting to date:", redirectDate);
-            setDate(redirectDate);
-          }
-          router.push("/dashboard/task/day");
-
-          // Clear navigation flag after a short delay to allow navigation to complete
-          setTimeout(() => setNavigating(false), 30000);
-        }}
+        style={{ cursor: task.startTime && task.endTime ? "pointer" : "move" }}
+        className="w-[90%] text-sm font-medium leading-tight text-white"
       >
-        <Tooltip title={task.title} placement="right">
+        <Tooltip title={tooltipLabel} placement="right">
           {task.title.length > 15
             ? task.title.slice(0, 15) + "..."
             : task.title}{" "}
@@ -150,7 +171,12 @@ export default function TaskComponent({ task }: TaskComponentProps) {
 
       <TaskCreateOrEdit
         triggerIcon={
-          <SquarePen className="w-5 h-5 text-white hover:text-gray-400 mr-2 cursor-pointer" />
+          <span
+            onClick={(e) => e.stopPropagation()}
+            className="inline-flex"
+          >
+            <SquarePen className="h-4 w-4 text-white/90 hover:text-white transition-colors cursor-pointer md:h-5 md:w-5" />
+          </span>
         }
         taskId={task.id}
         fromEdit
@@ -165,13 +191,22 @@ export default function TaskComponent({ task }: TaskComponentProps) {
         cancelText="No"
         open={popconfirmVisible}
         onOpenChange={setPopconfirmVisible}
-        onConfirm={handleDelete}
-        onCancel={() => setPopconfirmVisible(false)}
+        onConfirm={(e) => {
+          e?.stopPropagation();
+          handleDelete();
+        }}
+        onCancel={(e) => {
+          e?.stopPropagation();
+          setPopconfirmVisible(false);
+        }}
       >
         <CircleCheckBig
-          size={20}
-          className="text-white hover:text-gray-400"
-          onClick={() => setPopconfirmVisible(true)}
+          strokeWidth={2.5}
+          className="h-4 w-4 text-white/90 hover:text-white transition-colors cursor-pointer md:h-5 md:w-5"
+          onClick={(e) => {
+            e.stopPropagation();
+            setPopconfirmVisible(true);
+          }}
         />
       </Popconfirm>
     </div>

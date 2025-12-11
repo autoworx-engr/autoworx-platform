@@ -6,7 +6,6 @@ import Link from "next/link";
 import { useEstimateFilterStore } from "@/stores/estimate-filter";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useActionStoreCreateEdit } from "@/stores/createEditStore";
-
 import { useListsStore } from "@/stores/lists";
 import { useEstimateCreateStore } from "@/stores/estimate-create";
 import { useEstimatePopupStore } from "@/stores/estimate-popup";
@@ -38,6 +37,7 @@ export default function Header({
   const { close } = useEstimatePopupStore();
 
   const isCanned = pathname === "/dashboard/estimate/canned";
+  const isTemplate = pathname === "/dashboard/estimate/templates";
 
   const handleSearchChange = useDebounce((searchValue: string) => {
     const searchParams = new URLSearchParams(params.toString());
@@ -79,7 +79,7 @@ export default function Header({
 
       {/* Create Estimate */}
       <div className="flex items-end justify-end">
-        {!isCanned && (
+        {!isCanned && !isTemplate && (
           <Link
             href="/dashboard/estimate/create"
             className="app-shadow mx-3 flex h-10 items-center justify-center rounded-md bg-[#6571FF] px-5 text-white md:mx-0 lg:max-w-max"
@@ -92,6 +92,21 @@ export default function Header({
             }}
           >
             + Create Estimate
+          </Link>
+        )}
+        {isTemplate && (
+          <Link
+            href="/dashboard/estimate/templates/create"
+            className="app-shadow mx-3 flex h-10 items-center justify-center rounded-md bg-[#6571FF] px-5 text-white md:mx-0 lg:max-w-max"
+            onClick={() => {
+              setActionType("create");
+
+              resetEstimateCreate();
+              resetLists();
+              close();
+            }}
+          >
+            + Create Template
           </Link>
         )}
       </div>

@@ -1,5 +1,14 @@
 import { FullPayment } from "@/types/db";
-import { Coupon, Labor, Material, Service, Tag, Task } from "@prisma/client";
+import {
+  Column,
+  Coupon,
+  InvoiceTemplate,
+  Labor,
+  Material,
+  Service,
+  Tag,
+  Task,
+} from "@prisma/client";
 import { create } from "zustand";
 
 export interface Item {
@@ -19,6 +28,7 @@ export type InspectionType = {
 };
 interface EstimateCreateStore {
   invoiceId: string;
+  title: string;
   subtotal: number;
   discount: number;
   tax: number;
@@ -41,10 +51,9 @@ interface EstimateCreateStore {
   coupon: Coupon | null;
   inspections: InspectionType[];
   damageNotes: string | null;
-
+  template?: InvoiceTemplate | null;
   setInvoiceId: (invoiceId: string) => void;
   setType: (type: string) => void;
-
   setSubtotal: (subtotal: number) => void;
   setDiscount: (discount: number) => void;
   setTax: (tax: number) => void;
@@ -52,22 +61,20 @@ interface EstimateCreateStore {
   setGrandTotal: (grandTotal: number) => void;
   setDue: (due: number) => void;
   setDeposit: (deposit: number) => void;
-
   setInternalNotes: (internalNotes: string) => void;
   setTerms: (terms: string) => void;
   setPolicy: (policy: string) => void;
   setCustomerNotes: (customerNotes: string) => void;
   setCustomerComments: (customerComments: string) => void;
   setCoupon: (coupon: Coupon) => void;
-
+  setTitle: (title: string) => void;
+  setTemplate?: (template: InvoiceTemplate) => void;
   setPhotos: (photos: { id?: number; photo?: string }[]) => void;
   addPhoto: (photo: string) => void;
   removePhoto: (photo: string) => void;
-
   setTasks: (tasks: { id: undefined | number; task: string }[]) => void;
   addTask: (task: Task) => void;
   removeTask: (taskId: number) => void;
-
   setCurrentSelectedCategoryId: (categoryId: number) => void;
   setInspections: (inspections: InspectionType[]) => void;
   updateInspection: (index: number, inspection: InspectionType) => void;
@@ -86,7 +93,8 @@ interface EstimateCreateStore {
 export const useEstimateCreateStore = create<EstimateCreateStore>((set) => ({
   invoiceId: "",
   type: "",
-
+  title: "",
+  template: null,
   subtotal: 0,
   discount: 0,
   tax: 0,
@@ -95,21 +103,16 @@ export const useEstimateCreateStore = create<EstimateCreateStore>((set) => ({
   grandTotal: 0,
   due: 0,
   totalPayment: 0,
-
   internalNotes: "",
   terms: "",
   policy: "",
   customerNotes: "",
   customerComments: "",
-
   photos: [],
   tasks: [],
-
   items: [],
-
   payment: null,
   currentSelectedCategoryId: null,
-
   coupon: null,
   inspections: Array.from({ length: 15 }, () => ({
     title: "",
@@ -128,17 +131,19 @@ export const useEstimateCreateStore = create<EstimateCreateStore>((set) => ({
   setGrandTotal: (grandTotal: number) => set({ grandTotal }),
   setDue: (due: number) => set({ due }),
   setDeposit: (deposit: number) => set({ deposit }),
-
   setTotalPayment: (totalPayment: number) => set({ totalPayment }),
-
   setInternalNotes: (internalNotes: string) => set({ internalNotes }),
   setTerms: (terms: string) => set({ terms }),
   setPolicy: (policy: string) => set({ policy }),
   setCustomerNotes: (customerNotes: string) => set({ customerNotes }),
   setCustomerComments: (customerComments: string) => set({ customerComments }),
-
   setCoupon: (coupon: Coupon) => set({ coupon }),
-
+  setTitle: (title: string) => {
+    set({ title });
+  },
+  setTemplate: (template: InvoiceTemplate) => {
+    set({ template });
+  },
   setPhotos: (photos: { id?: number; photo?: string }[]) => set({ photos }),
   addPhoto: (photo: string) =>
     set((x: any) => ({ photos: [...x.photos, photo] })),
@@ -165,6 +170,8 @@ export const useEstimateCreateStore = create<EstimateCreateStore>((set) => ({
   reset: () =>
     set({
       invoiceId: "",
+      title: "",
+      template: null,
       subtotal: 0,
       discount: 0,
       deposit: 0,

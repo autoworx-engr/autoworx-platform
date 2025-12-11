@@ -10,6 +10,7 @@ import { useEstimateNavigationStore } from "@/stores/estimateNavigationStore";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import MobileTabButton from "./MobileTabButton";
 
 interface NavigationsTabProps {
   activeTab: string;
@@ -27,6 +28,7 @@ export default function NavigationTabs({
     // Prefetch the dashboard page
     router.prefetch("/dashboard/estimate/canned");
     router.prefetch("/dashboard/estimate/invoices");
+    router.prefetch("/dashboard/estimate/templates");
     router.prefetch("/dashboard/estimate");
   }, [router]);
   const handleCannedClick = () => {
@@ -43,11 +45,62 @@ export default function NavigationTabs({
     setType("estimate");
     // router.push("/dashboard/estimate");
   };
+  const handleTemplateClick = () => {
+    setType("estimate");
+    // router.push("/dashboard/estimate");
+  };
 
   return (
-  
-     <Tabs defaultValue={activeTab} className="mt-5 h-full overflow-hidden">
-      <TabsList>
+    <Tabs defaultValue={activeTab} className="mt-5 h-full md:overflow-hidden">
+      {/* Mobile tab bar*/}
+      <div className="flex gap-2 px-2 md:hidden overflow-x-auto thin-scrollbar">
+        <MobileTabButton
+          href="/dashboard/estimate/invoices"
+          label="Invoices"
+          activeTab={activeTab}
+          tabKey="b-invoice"
+          router={router}
+          onClick={handleInvoiceClick}
+        />
+
+        <MobileTabButton
+          href="/dashboard/estimate"
+          label="Estimates"
+          activeTab={activeTab}
+          tabKey="a-estimate"
+          router={router}
+          onClick={handleEstimateClick}
+        />
+        <MobileTabButton
+          href="/dashboard/estimate/templates"
+          label="Templates"
+          activeTab={activeTab}
+          tabKey="d-template"
+          router={router}
+          onClick={handleTemplateClick}
+        />
+
+        <MobileTabButton
+          href="/dashboard/estimate/canned"
+          label="Canned"
+          activeTab={activeTab}
+          tabKey="c-canned"
+          router={router}
+          onClick={handleCannedClick}
+        />
+      </div>
+
+      {/* Desktop tabs */}
+      <TabsList className="hidden md:flex gap-2 overflow-x-auto w-auto">
+        <Link href="/dashboard/estimate/templates">
+          <TabsTrigger
+            className=""
+            value="d-template"
+            onClick={handleTemplateClick}
+          >
+            Templates
+          </TabsTrigger>
+        </Link>
         <Link href="/dashboard/estimate/canned">
           <TabsTrigger
             className=""
@@ -57,6 +110,7 @@ export default function NavigationTabs({
             Canned
           </TabsTrigger>
         </Link>
+
         <Link href="/dashboard/estimate/invoices">
           <TabsTrigger value="b-invoice" onClick={handleInvoiceClick}>
             Invoices
@@ -74,6 +128,5 @@ export default function NavigationTabs({
         </TabsContent>
       </div>
     </Tabs>
-   
   );
 }
