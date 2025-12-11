@@ -5,11 +5,18 @@ import { X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import BarcodeScanTab from "./barcode-scan-tab";
 import TextScanTab from "./text-scan-tab";
+import {
+  CAR_VIN_DECODER_QUERY_KEY,
+  useCarVinDecoder,
+} from "@/hooks/useCarData";
+import { useQueryClient } from "@tanstack/react-query";
+import { getCarVinDecoder } from "@/service/car/api";
+import { errorToast } from "@/lib/toast";
 
 interface VINScannerModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onScanComplete: (vin: string) => void;
+  onScanComplete: (vin: string, data: Record<string, any>) => void;
 }
 
 export default function VINScannerModal({
@@ -19,31 +26,32 @@ export default function VINScannerModal({
 }: VINScannerModalProps) {
   const [activeTab, setActiveTab] = useState<"barcode" | "text">("barcode");
   const [manualInput, setManualInput] = useState("");
-  // const streamRef = useRef<MediaStream | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [verbose] = useState(false);
+  const [allTrims] = useState(false);
+  const queryClient = useQueryClient();
 
-  // useEffect(() => {
-  //   return () => {
-  //     // Cleanup camera stream when component unmounts
-  //     if (streamRef.current) {
-  //       streamRef.current.getTracks().forEach(track => track.stop());
-  //     }
-  //   };
-  // }, []);
-
-  // const stopCamera = () => {
-  //   if (streamRef.current) {
-  //     streamRef.current.getTracks().forEach(track => track.stop());
-  //   }
-  // };
-
-  const handleTextSubmit = () => {
-    if (manualInput.length >= 5) {
-      onScanComplete(manualInput.toUpperCase());
-      setManualInput("");
+  const handleTextSubmit = async () => {
+    try {
+      setIsLoading(true);
+      if (manualInput?.length >= 5) {
+        const data = await queryClient.fetchQuery({
+          queryKey: [CAR_VIN_DECODER_QUERY_KEY, verbose, allTrims],
+          queryFn: () => getCarVinDecoder(manualInput),
+        });
+        console.log("Submitting VIN:", manualInput);
+        console.log("Decoded Data:", data);
+        onScanComplete(manualInput, data);
+        setManualInput("");
+        onClose();
+      }
+    } catch (err) {
+      console.error("Error decoding VIN:", err);
+      errorToast("Failed to decode VIN. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
-
-  console.log({ manualInput });
 
   if (!isOpen) return null;
 
@@ -125,7 +133,7 @@ export default function VINScannerModal({
             <button
               type="button"
               onClick={handleTextSubmit}
-              disabled={manualInput.length < 5} // Keep the original minimum length check
+              disabled={manualInput.length < 5 || isLoading} // Keep the original minimum length check
               // Primary button design: distinct color, subtle hover, disabled state is clearly muted.
               className="w-full sm:w-auto rounded-lg bg-indigo-600 px-6 py-3 text-base font-semibold text-white shadow-md transition duration-150 ease-in-out hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-gray-400 disabled:shadow-none"
             >

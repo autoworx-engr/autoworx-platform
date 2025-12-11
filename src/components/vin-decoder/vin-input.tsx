@@ -7,13 +7,19 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 
 interface VINInputProps {
-  onVehicleInfo: (vehicleInfo: any) => void;
+  onVehicleInfo: (vehicleInfo: {
+    vin: string;
+    data: Record<string, any>;
+  }) => void;
 }
 
 export default function VINInputCamera({ onVehicleInfo }: VINInputProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const handleScanComplete = (scannedVin: string) => {
-    onVehicleInfo({ vin: scannedVin });
+  const handleScanComplete = (
+    scannedVin: string,
+    data: Record<string, any>
+  ) => {
+    onVehicleInfo({ vin: scannedVin, data });
   };
 
   const onCameraClick = () => {
