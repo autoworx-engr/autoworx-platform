@@ -15,7 +15,7 @@ export type SendUserNotificationsParams = {
   companyId: number;
   title: string;
   description: string;
-  type: NotificationType;
+  type?: NotificationType;
   iconType:
     | "communication"
     | "message"
