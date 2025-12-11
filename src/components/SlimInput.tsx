@@ -37,7 +37,7 @@ export function SlimInput({
             slimInputClassName,
             className,
             "pr-6", // Add padding to the right to avoid overlap with the `%`
-            error && "border-red-500 focus:border-red-500", // Add error state styling
+            error && "border-red-500 focus:border-red-500" // Add error state styling
           )}
           id={props.id ?? props.name}
           required={required}

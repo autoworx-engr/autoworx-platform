@@ -1,15 +1,15 @@
 "use client";
-import { useMediaQuery } from "react-responsive";
 import {
   InventoryProduct,
   InventoryProductHistory,
   Prisma,
 } from "@prisma/client";
-import InventoryTableRow from "./InventoryTableRow";
-import InventoryMobileCard from "./InventoryMobileCard";
-import { useEffect, useState } from "react";
 import { Pagination } from "antd";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useMediaQuery } from "react-responsive";
+import InventoryMobileCard from "./InventoryMobileCard";
+import InventoryTableRow from "./InventoryTableRow";
 
 type TProps = {
   inventoryProducts: Prisma.InventoryProductGetPayload<{
@@ -202,10 +202,34 @@ export default function InventoryDisplay({
   }
 
   return (
-    <div className="space-y-4 md:hidden">
-      {sortedInventoryHistory.map((history, index) => (
-        <InventoryMobileCard key={history.id} history={history} index={index} />
-      ))}
+    <div>
+      <div className="space-y-4 md:hidden">
+        {inventoryToRender.map((history, index) => (
+          <InventoryMobileCard
+            key={history.id}
+            history={history}
+            index={
+              currentPage > 1 ? index + pageSize * (currentPage - 1) : index
+            }
+            // timezone={timezone}
+          />
+        ))}
+      </div>
+
+      {/* Mobile Pagination */}
+      {showPagination && (
+        <div className="mt-4 flex justify-center pb-4">
+          <Pagination
+            className="custom-pagination"
+            current={currentPage}
+            pageSize={pageSize}
+            total={sortedInventoryHistory.length}
+            onChange={handlePageChange}
+            showSizeChanger
+            onShowSizeChange={handlePageChange}
+          />
+        </div>
+      )}
     </div>
   );
 }

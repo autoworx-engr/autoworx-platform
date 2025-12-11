@@ -1,12 +1,12 @@
 "use client";
+import { Refund } from "@prisma/client";
+import { Pagination } from "antd";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { useMediaQuery } from "react-responsive";
 import { TInvoice } from "./page";
-import RevenueTableRow from "./RevenueTableRow";
 import RevenueMobileCard from "./RevenueMobileCard";
-import { InventoryProductHistory, Refund } from "@prisma/client";
-import { Pagination } from "antd";
-import { useEffect, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import RevenueTableRow from "./RevenueTableRow";
 
 type TProps = {
   filteredInvoice: (TInvoice & {
@@ -152,15 +152,33 @@ export default function RevenueDisplay({
   }
 
   return (
-    <div className="space-y-4">
-      {filteredInvoice.map((invoice, index) => (
-        <RevenueMobileCard
-          key={invoice.id}
-          invoice={invoice}
-          index={index}
-          timezone={timezone as string}
-        />
-      ))}
+    <div>
+      <div className="space-y-4">
+        {invoicesToRender.map((invoice, index) => (
+          <RevenueMobileCard
+            key={invoice.id}
+            invoice={invoice}
+            index={index}
+            timezone={timezone as string}
+          />
+        ))}
+      </div>
+
+      {/* Mobile Pagination */}
+      {showPagination && (
+        <div className="mt-4 flex justify-center pb-4">
+          <Pagination
+            className="custom-pagination"
+            current={currentPage}
+            pageSize={pageSize}
+            total={filteredInvoice?.length}
+            onChange={handlePageChange}
+            showSizeChanger
+            onShowSizeChange={handlePageChange}
+            simple
+          />
+        </div>
+      )}
     </div>
   );
 }

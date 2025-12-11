@@ -230,8 +230,6 @@ export default async function PaymentTab({
         : null,
     });
 
-    console.log(" ====> invoicesWithFull ===> ", invoicesWithFull);
-
     allTransactionEntries.push({
       id: `payment-${payment.id}`,
       type: "PAYMENT",

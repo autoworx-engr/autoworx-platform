@@ -162,7 +162,7 @@ export default function FeaturePermission({
     const updatePermissionRecursive = (
       items: PermissionItem[]
     ): PermissionItem[] => {
-      return items.map((item) => {
+      return items?.map((item) => {
         const foundUpdate = updates.find(
           (u) => u.permission_name === item.permission_name
         );

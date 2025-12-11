@@ -102,13 +102,13 @@ export default function CannedLabor({
     }));
   };
 
-  console.log("search params==>", laborSearch);
-
   return (
     <div className="h-full w-full flex flex-col">
       <section className="pb-4 border-b border-gray-200">
         <div className="flex items-center gap-x-4">
-          <h3 className="text-2xl font-extrabold text-gray-800">🛠️ Canned Labor</h3>
+          <h3 className="text-2xl font-extrabold text-gray-800">
+            Canned Labor
+          </h3>
         </div>
         {/* Changed layout for horizontal alignment of search, filter, and add labor */}
         <div className=" pt-3">
@@ -116,8 +116,8 @@ export default function CannedLabor({
             searchText={laborSearch as string}
             paramKey="laborSearch"
           />
-          </div>
-          <div className="flex justify-between items-center mt-3">
+        </div>
+        <div className="flex justify-between items-center mt-3">
           <CannedFilterBySelection
             selectedItem={selectedCategory}
             items={uniqueCategories}
@@ -129,7 +129,13 @@ export default function CannedLabor({
           />
           <NewLabor
             newButton={
-              <button className="rounded-lg bg-indigo-600 w-full min-w-32 md:w-36 p-2 text-white font-medium hover:bg-indigo-700 transition-colors shadow-md">
+              <button
+                className="rounded-lg bg-gradient-to-r from-[#6571FF] to-[#5a66ee] w-full min-w-32 md:w-36 p-2 text-white font-medium shadow-indigo-500/30
+                hover:shadow-xl hover:shadow-indigo-500/40
+                hover:-translate-y-0.5 hover:scale-[1.02]
+                active:translate-y-0 active:scale-100
+                transition-all duration-200"
+              >
                 + Add Labor
               </button>
             }
@@ -143,10 +149,18 @@ export default function CannedLabor({
         <Table className="h-full border border-gray-200 rounded-lg">
           <TableHeader className="sticky top-0 bg-gray-50 border-b border-gray-200">
             <TableRow>
-              <TableHead className="font-semibold text-gray-700">Labor Name</TableHead>
-              <TableHead className="font-semibold text-gray-700">Category</TableHead>
-              <TableHead className="font-semibold text-gray-700">$/Hour</TableHead>
-              <TableHead className="font-semibold text-gray-700">Actions</TableHead>
+              <TableHead className="font-semibold text-gray-700">
+                Labor Name
+              </TableHead>
+              <TableHead className="font-semibold text-gray-700">
+                Category
+              </TableHead>
+              <TableHead className="font-semibold text-gray-700">
+                $/Hour
+              </TableHead>
+              <TableHead className="font-semibold text-gray-700">
+                Actions
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody className="overflow-y-auto h-full">
@@ -284,7 +298,9 @@ const LaborComponent = ({
           index !== undefined && index % 2 === 0
             ? "border-indigo-500 bg-white"
             : "border-teal-500 bg-gray-50",
-          isEdit ? "shadow-2xl ring-2 ring-indigo-400" : "shadow-md hover:shadow-lg"
+          isEdit
+            ? "shadow-2xl ring-2 ring-indigo-400"
+            : "shadow-md hover:shadow-lg"
         )}
       >
         <CardHeader className="p-4">
@@ -302,7 +318,9 @@ const LaborComponent = ({
                   onChange={handleNameChange}
                   className={cn(
                     "w-full rounded-lg border p-2 text-base font-semibold focus:ring-2 focus:ring-indigo-500 transition-colors",
-                    nameError ? "border-red-500" : "border-gray-300 focus:border-indigo-500"
+                    nameError
+                      ? "border-red-500"
+                      : "border-gray-300 focus:border-indigo-500"
                   )}
                   placeholder="Labor Name"
                 />
@@ -392,7 +410,7 @@ const LaborComponent = ({
   console.log(isPending, "isPending");
 
   return (
-   <TableRow
+    <TableRow
       className={cn(
         "border-b border-gray-200 transition-colors hover:bg-indigo-50",
         index % 2 === 0 ? "bg-white" : "bg-gray-50",
@@ -456,10 +474,7 @@ const LaborComponent = ({
       <TableCell className="flex items-center space-x-3 py-3 h-full">
         {isEdit && (
           <div className="flex items-center space-x-2">
-            <button
-              onClick={() => setIsEdit(false)}
-              title="Cancel Edit"
-            >
+            <button onClick={() => setIsEdit(false)} title="Cancel Edit">
               <X
                 color="#f87171"
                 className="w-5 h-5 hover:text-red-700 transition-colors"
@@ -491,7 +506,7 @@ const LaborComponent = ({
           cancelText="No"
           onConfirm={() => deleteLabor(labor.id)}
         >
-          <Trash2 className="w-5 h-5 text-red-500 hover:text-red-700 cursor-pointer transition-colors"  />
+          <Trash2 className="w-5 h-5 text-red-500 hover:text-red-700 cursor-pointer transition-colors" />
         </Popconfirm>
       </TableCell>
     </TableRow>
