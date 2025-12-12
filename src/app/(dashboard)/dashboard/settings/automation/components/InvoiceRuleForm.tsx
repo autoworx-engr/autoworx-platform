@@ -3,7 +3,6 @@ import React, { useState, useEffect } from "react";
 import Selector from "./Selector";
 import { Box, Paper, Typography, Switch } from "@mui/material";
 import { SlimInput } from "@/components/SlimInput";
-import TemplateVariable from "./TemplateVariable";
 import ActiveTemplate from "./ActiveTemplate";
 import { invoiceTimeDelays, invoiceTypeOptions, timeDelays } from "./constants";
 import { errorToast } from "@/lib/toast";
@@ -22,6 +21,7 @@ import { parseSecondsToTimeDelay } from "@/utils/parseSecondsToTimeDelay";
 import { Company, TwilioCredentials, InfobipConfig } from "@prisma/client";
 import { useCharacterLimit } from "@/hooks/useCharecterLimit";
 import CarLoading from "@/components/common/CarLoading";
+import { AppointmentTemplateVariable } from "@/components/Lists/NewTemplate";
 
 type RuleFormProps = {
   initialData?: Rule;
@@ -517,7 +517,10 @@ const InvoiceRuleForm: React.FC<RuleFormProps> = ({
               )}
 
               {/* Template Variables */}
-              <TemplateVariable VARIABLES={template_variable_options} />
+              <AppointmentTemplateVariable
+                VARIABLES={template_variable_options}
+                hasBackground={true}
+              />
             </Box>
 
             {/* Save & Cancel Buttons */}
