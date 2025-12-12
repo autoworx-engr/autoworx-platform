@@ -2,6 +2,11 @@ import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { Tooltip } from "antd";
+import { TrendingUp } from "lucide-react";
+
+const SHADOW_COLOR = "shadow-lg shadow-slate-900/10 dark:shadow-white/5";
+const INFO_TEXT_COLOR = "text-slate-500 dark:text-slate-400";
+const ACCENT_COLOR = "#6571FF";
 
 export default async function TopVendors() {
   const companyId = await getCompanyId();
@@ -47,29 +52,42 @@ export default async function TopVendors() {
   const maxTotal = Math.max(...topVendors.map((v) => v.total)) || 1;
 
   return (
-    <div className="app-shadow h-[30%]  w-full rounded-lg bg-background p-5">
-      <h3 className="text-xl font-bold">Top Vendors</h3>
+    <div className={`${SHADOW_COLOR} w-full rounded-xl h-[40%] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 p-6 transition-shadow duration-300 hover:shadow-2xl pb-20`}>
+      <div className="flex items-center gap-2 mb-5">
+        <TrendingUp size={20} style={{ color: ACCENT_COLOR }} />
+        <h3 className="text-xl font-extrabold" style={{ color: ACCENT_COLOR }}>Top Vendors</h3>
+      </div>
 
-      <div className="flex h-[90%] flex-col gap-3 overflow-y-auto p-3">
+      <div className="flex flex-col gap-4 h-full overflow-y-auto thin-scrollbar">
         {topVendors.map((vendor, i) => {
           const progress =
             (Math.log(vendor?.total + 1) / Math.log(maxTotal + 1)) * 100;
 
           return (
-            <div key={i} className="flex items-center justify-between gap-3">
-              <p className="text-sm w-[30%] truncate">{vendor?.companyName}</p>
-
+            <div key={i} className="flex flex-col gap-2">
               <Tooltip
                 title={`Total Purchase: ${formatCurrency(vendor?.total)}`}
                 placement="top"
               >
-                <div className="h-2 flex-1 cursor-pointer rounded-md bg-gray-200">
-                  <div
-                    className="h-2 rounded-md bg-[#6571FF] transition-all duration-500"
-                    style={{ width: `${progress}%` }}
-                  ></div>
+                <div className="flex items-center justify-between cursor-pointer">
+                  <p className="text-sm font-medium text-slate-700 dark:text-white truncate flex-1 pr-2">
+                    {vendor?.companyName}
+                  </p>
+                  <p className="text-xs font-semibold text-slate-600">
+                    {formatCurrency(vendor?.total)}
+                  </p>
                 </div>
               </Tooltip>
+
+              <div className="h-1.5 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-500 ease-out"
+                  style={{
+                    width: `${progress}%`,
+                    backgroundColor: ACCENT_COLOR,
+                  }}
+                ></div>
+              </div>
             </div>
           );
         })}
