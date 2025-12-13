@@ -34,13 +34,14 @@ export default function NewService({
 
   const [name, setName] = useState("");
   const [nameError, setNameError] = useState("");
+  const [nameTouched, setNameTouched] = useState(false);
   const [category, setCategory] = useState<Category | undefined>();
   const [categoryError, setCategoryError] = useState("");
   const [description, setDescription] = useState("");
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const descriptionLength = description.length;
-  const maxDescriptionLength = 250;
+  const maxDescriptionLength = 1500;
   // Reset form when dialog opens or closes
   useEffect(() => {
     if (open) {
@@ -100,6 +101,8 @@ export default function NewService({
   async function handleSubmit() {
     try {
       setIsLoading(true);
+
+      setNameTouched(true);
 
       // Validate both service name and category
       const isNameValid = validateName(name);
@@ -162,6 +165,9 @@ export default function NewService({
   async function handleEdit() {
     try {
       setIsLoading(true);
+
+      setNameTouched(true);
+
       // Validate both service name and category
       const isNameValid = validateName(name);
       const isCategoryValid = validateCategory(category);
@@ -221,12 +227,22 @@ export default function NewService({
         {newButton ? (
           newButton
         ) : (
-          <button 
-            type="button" 
+          <button
+            type="button"
             className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 4v16m8-8H4"
+              />
             </svg>
             New Service
           </button>
@@ -247,7 +263,10 @@ export default function NewService({
           <div className="space-y-3 py-3">
             {/* Service Name */}
             <div className="space-y-2">
-              <label htmlFor="service-name" className="block text-sm font-medium text-slate-700">
+              <label
+                htmlFor="service-name"
+                className="block text-sm font-medium text-slate-700"
+              >
                 Service Name <span className="text-red-500">*</span>
               </label>
               <input
@@ -259,7 +278,9 @@ export default function NewService({
                   const value = e.target.value;
 
                   if (value.length > 50) {
-                    setNameError("Service name must be less than 50 characters");
+                    setNameError(
+                      "Service name must be less than 50 characters"
+                    );
                     return false;
                   }
                   setName(value);
@@ -269,17 +290,30 @@ export default function NewService({
                     clearError();
                   }
                 }}
-                onBlur={() => validateName(name)}
+                onBlur={() => setNameTouched(true)}
                 className={`w-full px-4 py-2.5 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder:text-slate-400 ${
-                  nameError ? "border-red-500 focus:ring-red-500" : "border-slate-300"
+                  nameError
+                    ? "border-red-500 focus:ring-red-500"
+                    : "border-slate-300"
                 }`}
                 aria-invalid={nameError ? "true" : "false"}
                 aria-describedby={nameError ? "name-error" : undefined}
               />
-              {nameError && (
-                <p id="name-error" className="flex items-center gap-1 text-xs text-red-600">
-                  <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              {nameError && nameTouched && (
+                <p
+                  id="name-error"
+                  className="flex items-center gap-1 text-xs text-red-600"
+                >
+                  <svg
+                    className="w-3.5 h-3.5"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                   {nameError}
                 </p>
@@ -309,8 +343,16 @@ export default function NewService({
               />
               {categoryError && (
                 <p className="flex items-center gap-1 text-xs text-red-600">
-                  <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  <svg
+                    className="w-3.5 h-3.5"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                   {categoryError}
                 </p>
@@ -320,14 +362,19 @@ export default function NewService({
             {/* Description */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <label htmlFor="description" className="block text-sm font-medium text-slate-700">
+                <label
+                  htmlFor="description"
+                  className="block text-sm font-medium text-slate-700"
+                >
                   Description
                 </label>
-                <span className={`text-xs ${
-                  descriptionLength > maxDescriptionLength * 0.9 
-                    ? 'text-red-600 font-medium' 
-                    : 'text-slate-500'
-                }`}>
+                <span
+                  className={`text-xs ${
+                    descriptionLength > maxDescriptionLength * 0.9
+                      ? "text-red-600 font-medium"
+                      : "text-slate-500"
+                  }`}
+                >
                   {descriptionLength}/{maxDescriptionLength}
                 </span>
               </div>
@@ -355,13 +402,24 @@ export default function NewService({
             {/* Info Box */}
             <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <div className="flex gap-3">
-                <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                <svg
+                  className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                    clipRule="evenodd"
+                  />
                 </svg>
                 <div>
-                  <h4 className="text-sm font-medium text-blue-900 mb-1">Service Information</h4>
+                  <h4 className="text-sm font-medium text-blue-900 mb-1">
+                    Service Information
+                  </h4>
                   <p className="text-xs text-blue-700 leading-relaxed">
-                    Services added here will be available in your canned services list for quick selection when creating estimates.
+                    Services added here will be available in your canned
+                    services list for quick selection when creating estimates.
                   </p>
                 </div>
               </div>
@@ -383,12 +441,31 @@ export default function NewService({
             disabled={isLoading}
           >
             {isLoading && (
-              <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              <svg
+                className="animate-spin h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                />
               </svg>
             )}
-            {isLoading ? "Processing..." : edit ? "Update Service" : "Add Service"}
+            {isLoading
+              ? "Processing..."
+              : edit
+                ? "Update Service"
+                : "Add Service"}
           </button>
         </DialogFooter>
       </DialogContent>
