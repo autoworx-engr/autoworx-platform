@@ -4,7 +4,6 @@ import Selector from "./Selector";
 import { Box, Paper, Typography, Switch } from "@mui/material";
 import MultiSelect from "./MultiSelect";
 import { SlimInput } from "@/components/SlimInput";
-import TemplateVariable from "./TemplateVariable";
 import ActiveTemplate from "./ActiveTemplate";
 import { timeDelays } from "./constants";
 
@@ -31,6 +30,7 @@ import { useUpdateServiceMaintenanceAutomationRule } from "@/hooks/service-maint
 import { errorToast } from "@/lib/toast";
 import { useCharacterLimit } from "@/hooks/useCharecterLimit";
 import CarLoading from "@/components/common/CarLoading";
+import { AppointmentTemplateVariable } from "@/components/Lists/NewTemplate";
 type RuleFormProps = {
   initialData?: Rule;
   mode: "create" | "edit" | undefined;
@@ -480,7 +480,10 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
               )}
 
               {/* Template Variables */}
-              <TemplateVariable VARIABLES={template_variable_options} />
+              <AppointmentTemplateVariable
+                VARIABLES={template_variable_options}
+                hasBackground={true}
+              />
             </Box>
 
             {/* Save & Cancel Buttons */}

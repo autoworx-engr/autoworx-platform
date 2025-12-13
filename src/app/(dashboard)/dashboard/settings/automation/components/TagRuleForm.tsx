@@ -36,6 +36,7 @@ import {
 } from "@/utils/timeConvertToSeconds";
 import { errorToast } from "@/lib/toast";
 import { Spin } from "antd";
+import { AppointmentTemplateVariable } from "@/components/Lists/NewTemplate";
 
 type RuleFormProps = {
   mode: "create" | "edit" | undefined;
@@ -122,12 +123,9 @@ const TagRuleForm = ({
   const { mutate: updateRule, isPending: isUpdatePending } =
     useUpdateTagAutomationRule();
 
-  const { data: allTagAutomationData, isLoading:isAllTagRuleLoading } = useAllTagAutomationRules(
-    Number(companyId),
-    true
-  );
+  const { data: allTagAutomationData, isLoading: isAllTagRuleLoading } =
+    useAllTagAutomationRules(Number(companyId), true);
 
-  
   useEffect(() => {
     const loadData = async () => {
       if (isEdit && id && data && data.data) {
@@ -333,12 +331,7 @@ const TagRuleForm = ({
         newState[field] = value;
       }
 
-      
-      if (
-        field === "communicationType" &&
-        prev.communicationType !== value
-       
-      ) {
+      if (field === "communicationType" && prev.communicationType !== value) {
         if (value === "EMAIL") newState.templateType = "EMAIL";
         else if (value === "SMS") newState.templateType = "SMS";
       }
@@ -360,11 +353,9 @@ const TagRuleForm = ({
       return newState as Rule;
     });
 
-    
-    if (field === "communicationType" ) {
+    if (field === "communicationType") {
       if (value === "EMAIL") setActiveTemplate("EMAIL");
       else if (value === "SMS") setActiveTemplate("SMS");
-     
     }
 
     if (error[field]) {
@@ -387,9 +378,8 @@ const TagRuleForm = ({
 
   // Handle template toggle
   const handleTemplateToggle = (template: "SMS" | "EMAIL") => {
-
     setActiveTemplate(template);
-  
+
     setFormData((prev) => ({ ...prev, templateType: template }));
   };
 
@@ -466,45 +456,45 @@ const TagRuleForm = ({
           newErrors.emailBody = "Email body is required.";
         }
 
-       if (company?.email === null) {
-              newErrors.businessEmail = "You haven't added your business email.";
-              errorToast(newErrors.businessEmail);
-            }
+        if (company?.email === null) {
+          newErrors.businessEmail = "You haven't added your business email.";
+          errorToast(newErrors.businessEmail);
+        }
       }
 
       if (formData.communicationType === "BOTH") {
-            if (!formData.subject || !formData.subject.trim()) {
-              newErrors.subject = "Subject is required.";
-              newErrors.emailBody = "Subject is required.";
-            }
-      
-            if (!formData.emailBody || !formData.emailBody.trim()) {
-              newErrors.emailBody = "Email body is required.";
-            }
-            if (!formData.smsBody || !formData.smsBody.trim()) {
-              newErrors.smsBody = "SMS body is required.";
-            }
-      
-            if (company?.email === null) {
-              newErrors.businessEmail = "You haven't added your business email.";
-              errorToast(newErrors.businessEmail);
-            }
-      
-            if (twilio === null) {
-              newErrors.twilio = "SMS gateway not available";
-              errorToast(newErrors.twilio);
-            }
-          }
-          if (formData.communicationType === "SMS") {
-            if (!formData.smsBody || !formData.smsBody.trim()) {
-              newErrors.smsBody = "SMS body is required.";
-            }
-      
-            if (twilio === null) {
-              newErrors.twilio = "";
-              errorToast(newErrors.twilio);
-            }
-          }
+        if (!formData.subject || !formData.subject.trim()) {
+          newErrors.subject = "Subject is required.";
+          newErrors.emailBody = "Subject is required.";
+        }
+
+        if (!formData.emailBody || !formData.emailBody.trim()) {
+          newErrors.emailBody = "Email body is required.";
+        }
+        if (!formData.smsBody || !formData.smsBody.trim()) {
+          newErrors.smsBody = "SMS body is required.";
+        }
+
+        if (company?.email === null) {
+          newErrors.businessEmail = "You haven't added your business email.";
+          errorToast(newErrors.businessEmail);
+        }
+
+        if (twilio === null) {
+          newErrors.twilio = "SMS gateway not available";
+          errorToast(newErrors.twilio);
+        }
+      }
+      if (formData.communicationType === "SMS") {
+        if (!formData.smsBody || !formData.smsBody.trim()) {
+          newErrors.smsBody = "SMS body is required.";
+        }
+
+        if (twilio === null) {
+          newErrors.twilio = "";
+          errorToast(newErrors.twilio);
+        }
+      }
     }
     if (Object.keys(newErrors).length > 0) {
       setError(newErrors);
@@ -563,7 +553,6 @@ const TagRuleForm = ({
         delete finalData.templateType;
       }
 
-      
       if (
         finalData.condition_type === "pipeline" &&
         finalData.targetColumnId !== null &&
@@ -599,12 +588,12 @@ const TagRuleForm = ({
   };
 
   if (isLoading || isFetching || stagesLoading || isAllTagRuleLoading) {
-      return (
-        <div className="flex h-[800px] w-full animate-pulse items-center justify-center rounded-md bg-gray-200 p-4 shadow-sm md:p-6">
-          <Spin />
-        </div>
-      );
-    }
+    return (
+      <div className="flex h-[800px] w-full animate-pulse items-center justify-center rounded-md bg-gray-200 p-4 shadow-sm md:p-6">
+        <Spin />
+      </div>
+    );
+  }
   return (
     <div className="rounded-md border bg-white p-4 shadow-sm md:p-6">
       <Paper elevation={0} className="mx-auto max-w-lg rounded-lg">
@@ -799,9 +788,7 @@ const TagRuleForm = ({
                       handleChange={handleTemplateChange}
                       handleFileAttachment={handleFileAttachment}
                       attachmentType="sms"
-                      error={
-                        error.smsBody || error.emailBody || error.subject
-                      }
+                      error={error.smsBody || error.emailBody || error.subject}
                       maxLength={maxLength}
                       characterLength={length}
                       isLimitExceeded={isLimitExceeded}
@@ -829,9 +816,7 @@ const TagRuleForm = ({
                       handleChange={handleTemplateChange}
                       handleFileAttachment={handleFileAttachment}
                       attachmentType="email"
-                      error={
-                        error.emailBody || error.subject || error.smsBody
-                      }
+                      error={error.emailBody || error.subject || error.smsBody}
                       subjectError={!!error.subject}
                       maxLength={maxLength}
                       characterLength={length}
@@ -841,7 +826,8 @@ const TagRuleForm = ({
                 )}
 
                 {/* Template Variables */}
-                <TemplateVariable />
+                {/* <TemplateVariable /> */}
+                <AppointmentTemplateVariable hasBackground={true} />
               </Box>
             </>
           )}

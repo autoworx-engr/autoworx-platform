@@ -5,7 +5,6 @@ import { Box, Paper, Typography, Switch } from "@mui/material";
 import MultiSelect from "./MultiSelect";
 import { SlimInput } from "@/components/SlimInput";
 import ActiveTemplate from "./ActiveTemplate";
-import TemplateVariable from "./TemplateVariable";
 import { usePipelineStagesStore } from "@/stores/pipelineStagesStore";
 import { timeDelays } from "./constants";
 import { errorToast } from "@/lib/toast";
@@ -24,6 +23,7 @@ import CustomRadioGroup from "./CustomRadioGroup";
 import { Company, TwilioCredentials, InfobipConfig } from "@prisma/client";
 import { useCharacterLimit } from "@/hooks/useCharecterLimit";
 import CarLoading from "@/components/common/CarLoading";
+import { AppointmentTemplateVariable } from "@/components/Lists/NewTemplate";
 
 type RuleFormProps = {
   mode: "create" | "edit" | undefined;
@@ -532,7 +532,7 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
                   )}
 
                   {/* Template Variables */}
-                  <TemplateVariable />
+                  <AppointmentTemplateVariable hasBackground={true} />
                 </Box>
 
                 {/* Save & Cancel Buttons */}

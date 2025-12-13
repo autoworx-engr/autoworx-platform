@@ -208,7 +208,7 @@ export default function CreateGroupModal({
         )}
         {/* Title */}
         <h2 className="mb-5 text-2xl font-bold text-slate-800 dark:text-white">
-          Create Group 
+          Create Group
         </h2>
         <div className="grid grid-cols-1">
           {/* group name input */}
@@ -265,11 +265,11 @@ export default function CreateGroupModal({
                         {/* Avatar remains simple and functional */}
                         <Avatar photo={user.image} width={60} height={60} />
                         <div className="flex flex-col overflow-hidden flex-1 min-w-0">
-                          <p className="truncate text-base font-semibold text-slate-800 dark:text-white">
+                          <p className="truncate max-w-[280px] text-xs md:text-base font-semibold text-slate-800 dark:text-white">
                             {user.firstName} {user.lastName}
                           </p>
                           {/* Details with muted text color */}
-                          <div className="flex flex-col md:flex-row md:items-center md:space-x-3 text-[8px] md:text-xs text-slate-600 dark:text-slate-400">
+                          <div className="flex flex-col  text-[8px] md:text-xs text-slate-600 dark:text-slate-400">
                             {user.phone && <p>{user.phone}</p>}
                             <p className="truncate">{user.email}</p>
                           </div>
@@ -335,9 +335,7 @@ export default function CreateGroupModal({
         {/* Footer with action buttons */}
         <DialogFooter className="flex-row-reverse gap-x-3 sm:gap-x-0">
           {/* Cancel Button: Secondary action, simple design */}
-          <DialogClose
-            className="rounded-xl border-2 border-slate-300 p-2 text-slate-700 transition-colors duration-300 ease-in-out hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-700"
-          >
+          <DialogClose className="rounded-xl border-2 border-slate-300 p-2 text-slate-700 transition-colors duration-300 ease-in-out hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-700">
             Cancel
           </DialogClose>
           {/* Create Group Button: Special action color with loading state and shimmer effect on hover */}
