@@ -64,13 +64,13 @@ export default function SmartReplyBar({
   const [isClosing, setIsClosing] = React.useState(false);
   const { data, isFetching } = useGetCompanyPermissions(companyId);
   // if feature is not enabled, don't show the smart reply bar
-  // const permission = data?.data?.find(
-  //   (perm: Permission) => perm?.permission_name === "aiSmartReplies"
-  // );
+  const permission = data?.data?.find(
+    (perm: Permission) => perm?.permission_name === "aiSmartReplies"
+  );
 
-  // if (!permission?.enabled) {
-  //   return null;
-  // }
+  if (!permission?.enabled) {
+    return null;
+  }
 
   const normalize = (res: unknown) => {
     // Debug: Check what we're actually receiving
@@ -170,7 +170,6 @@ export default function SmartReplyBar({
 
   return (
     <div className="flex flex-col gap-2 pb-2 px-2">
-      {/* <style dangerouslySetInnerHTML={{ __html: animationStyles }} /> */}
       {/* Buttons row */}
       <div className="flex items-center justify-between">
         <div className="flex gap-2">
