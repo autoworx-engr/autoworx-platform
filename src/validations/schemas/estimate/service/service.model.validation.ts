@@ -5,8 +5,8 @@ export const serviceModelDataValidationSchema = z
     name: z.string().min(1),
     categoryId: z.number().int().positive().nullable().optional(),
     description: z.string().nullable(),
-    createdAt: z.date(),
-    updatedAt: z.date(),
+    createdAt: z.coerce.date(),
+    updatedAt: z.coerce.date(),
     fromRequest: z.boolean().nullable(),
     fromRequestedCompanyId: z.number().int().positive().nullable(),
     companyId: z.number().int().positive(),
@@ -23,7 +23,7 @@ export const serviceModelDataValidationSchema = z
       message:
         "fromRequestedCompanyId must be provided when fromRequest is true",
       path: ["fromRequestedCompanyId"],
-    },
+    }
   )
   .refine(
     (data) => {
@@ -33,5 +33,5 @@ export const serviceModelDataValidationSchema = z
     {
       message: "updatedAt cannot be before createdAt",
       path: ["updatedAt"],
-    },
+    }
   );

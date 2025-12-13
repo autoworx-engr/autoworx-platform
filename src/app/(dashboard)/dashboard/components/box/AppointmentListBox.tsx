@@ -42,7 +42,7 @@ export default async function AppointmentListBox() {
   let appointments = [];
 
   // Start of today in company timezone (converted to UTC for database query)
-  const startOfToday = moment.tz(timezone).startOf("day").utc();
+  const startOfToday = moment.tz(timezone).utc().startOf("day");
 
   if (
     user.employeeType === "Admin" ||

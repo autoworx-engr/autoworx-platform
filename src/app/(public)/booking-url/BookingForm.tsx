@@ -6,6 +6,7 @@ import {
   processBooking,
 } from "@/actions/booking/processBooking";
 import { getCompanyById } from "@/actions/settings/getCompnayById";
+import PhoneInput from "@/components/PhoneInput";
 import { SlimInput, slimInputClassName } from "@/components/SlimInput";
 import useBookingFormQueryById from "@/hooks/bookingForm/useBookingFormQueryById";
 import { cn } from "@/lib/utils";
@@ -27,13 +28,15 @@ type FormData = {
   email: string;
   mobile: string;
   notes: string;
+  countryCode:string;
 };
 
 const BookingForm = () => {
   const searchParams = useSearchParams();
   const refParam = searchParams.get("ref");
   const [companyId, bookingFormId] = refParam ? decodeCompanyId(refParam) : [];
-
+  const [callingCode, setCallingCode] = useState("+1")
+  const [isoCode, setIsoCode] = useState("")
   const { data: bookingForm, isLoading: bookingFromLoading } =
     useBookingFormQueryById(Number(bookingFormId));
 
@@ -55,6 +58,7 @@ const BookingForm = () => {
     email: "",
     mobile: "+1",
     notes: "",
+    countryCode: "US"
   });
 
   // State for handling title dropdown and custom input
@@ -183,22 +187,22 @@ const BookingForm = () => {
   const handleChange = (field: keyof FormData, value: any) => {
     let processedValue = value;
 
-    if (field === "mobile") {
-      processedValue = processedValue.replace(/\D/g, "");
+    // if (field === "mobile") {
+    //   processedValue = processedValue.replace(/\D/g, "");
 
-      if (!processedValue.startsWith("+1")) {
-        if (processedValue.startsWith("+")) {
-          processedValue = "+1" + processedValue.slice(1);
-        } else if (processedValue.startsWith("1")) {
-          processedValue = "+" + processedValue;
-        } else {
-          processedValue = "+1" + processedValue;
-        }
-      }
-    }
+    //   if (!processedValue.startsWith("+1")) {
+    //     if (processedValue.startsWith("+")) {
+    //       processedValue = "+1" + processedValue.slice(1);
+    //     } else if (processedValue.startsWith("1")) {
+    //       processedValue = "+" + processedValue;
+    //     } else {
+    //       processedValue = "+1" + processedValue;
+    //     }
+    //   }
+    // }
 
-    setFormData((prev) => ({ ...prev, [field]: processedValue }));
-
+    // setFormData((prev) => ({ ...prev, [field]: processedValue }));
+setFormData((prev) => ({ ...prev, [field]: value }));
     if (error[field]) {
       setError((prev) => {
         const newErrors = { ...prev };
@@ -386,10 +390,13 @@ const BookingForm = () => {
 
     if (!formData.mobile.trim()) {
       newError.mobile = "Mobile is required.";
-    } else if (!/^\+1[\d\s\-$$$$]+$/.test(formData.mobile)) {
-      newError.mobile =
-        "Phone number must start with '+1' and contain valid characters.";
-    }
+    } else if (formData.mobile.length < 10) {
+    newError.mobile = "Please enter a valid phone number.";
+  }
+    //  else if (!/^\+1[\d\s\-$$$$]+$/.test(formData.mobile)) {
+    //   newError.mobile =
+    //     "Phone number must start with '+1' and contain valid characters.";
+    // }
 
     if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newError.email = "Invalid email address.";
@@ -423,9 +430,14 @@ const BookingForm = () => {
     }
 
     try {
+      const fullPhoneNumber = `${callingCode}${formData.mobile}`;
+      const bookingData = {
+      ...formData,
+      mobile: fullPhoneNumber, 
+    };
       // Process the booking
       const result = await processBooking(
-        formData,
+        bookingData,
         companyId,
         bookingForm?.id!
       );
@@ -441,8 +453,9 @@ const BookingForm = () => {
           email: "",
           mobile: "+1",
           notes: "",
+          countryCode: "US"
         });
-
+        setCallingCode("+1");
         // Reset title selection states
         setSelectedTitleOption("");
         setCustomTitle("");
@@ -721,7 +734,7 @@ const BookingForm = () => {
                 className={`${inputClass}`}
                 type="email"
               />
-              <SlimInput
+              {/* <SlimInput
                 type="tel"
                 error={error.mobile}
                 value={formData.mobile}
@@ -730,7 +743,32 @@ const BookingForm = () => {
                 label="Mobile"
                 className={`${inputClass}`}
                 required
-              />
+              /> */}
+
+              <PhoneInput
+  // value={formData.mobile}
+  onChange={(phone, code, isoCode) => {
+    setFormData(prev => ({
+      ...prev,
+      mobile: phone,
+      countryCode: isoCode
+    }));
+    setCallingCode(code);
+   
+    if (error.mobile) {
+      setError(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.mobile;
+        return newErrors;
+      });
+    }
+  }}
+  label="Mobile"
+  placeholder="1234567890"
+  required
+  error={error.mobile}
+  // defaultIsoCode="US" 
+/>
             </div>
 
             <div className="space-y-2">

@@ -16,10 +16,11 @@ import { Client, Source, Tag } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { CircleUserRound, SquarePen, X } from "lucide-react";
 import Image from "next/image";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { RotatingLines } from "react-loader-spinner";
 import { CLIENT_LIST_KEY } from "./_hook/useClientQuery";
 import { useClientFilterStore } from "@/stores/clientFilter";
+import PhoneInput from "@/components/PhoneInput";
 
 type TEditClientModalBodyProps = {
   client: Client & {
@@ -51,7 +52,11 @@ export default function EditClientModalBody({
   const [newProfilePic, setNewProfilePic] = useState<File | null>(null);
   const [clientSources, setClientSources] = useState<Source[]>([]);
   const { showError, clearError } = useFormErrorStore();
-
+  const phoneDataRef = useRef({
+    phoneNumber: "",
+    countryCode: "",
+    isoCode: "",
+  });
   useEffect(() => {
     setIsPremium(client?.isFleet!);
     setTag(client.tag || undefined);
@@ -68,7 +73,7 @@ export default function EditClientModalBody({
     await deleteSource(id);
 
     setClientSources((prev: Source[]) => {
-      return prev.filter(source => source.id !== id);
+      return prev.filter((source) => source.id !== id);
     });
 
     if (clientSource?.id === id) {
@@ -84,7 +89,12 @@ export default function EditClientModalBody({
     const lastName =
       document.querySelector<HTMLInputElement>("#lastName")?.value;
     const email = document.querySelector<HTMLInputElement>("#email")?.value;
-    const mobile = document.querySelector<HTMLInputElement>("#mobile")?.value;
+    // const mobile = document.querySelector<HTMLInputElement>("#mobile")?.value;
+    const { phoneNumber, countryCode, isoCode } = phoneDataRef.current;
+    const mobile =
+      countryCode && phoneNumber
+        ? `${countryCode}${phoneNumber}`
+        : phoneNumber || "";
     const customerCompany =
       document.querySelector<HTMLInputElement>("#customerCompany")?.value;
     const address = document.querySelector<HTMLInputElement>("#address")?.value;
@@ -140,6 +150,7 @@ export default function EditClientModalBody({
       lastName,
       email,
       mobile,
+      countryCode: isoCode,
       customerCompany,
       address,
       city,
@@ -207,7 +218,7 @@ export default function EditClientModalBody({
               id="profilePicture"
               hidden
               accept="image/*"
-              onChange={e => {
+              onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) {
                   setNewProfilePic(file);
@@ -226,7 +237,7 @@ export default function EditClientModalBody({
               id="profilePicture"
               hidden
               accept="image/*"
-              onChange={e => {
+              onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) {
                   setNewProfilePic(file);
@@ -253,7 +264,7 @@ export default function EditClientModalBody({
             label="First Name"
             required
             defaultValue={client.firstName!}
-            onChange={e => {
+            onChange={(e) => {
               const value = e.target.value;
 
               // Validate on input change
@@ -274,12 +285,12 @@ export default function EditClientModalBody({
           />
         </div>
 
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
           <SlimInput
             name="email"
             label="Email"
             defaultValue={client.email!}
-            onChange={e => {
+            onChange={(e) => {
               const value = e.target.value;
 
               // Validate on input change
@@ -293,25 +304,24 @@ export default function EditClientModalBody({
               // }
             }}
           />
-          <SlimInput
-            name="mobile"
-            label="Mobile"
-            required={false}
-            defaultValue={client.mobile!}
-            onChange={e => {
-              const value = e.target.value;
-              // Allow only numeric values
-              if (!/^\+?\d*$/.test(value)) {
-                showError({
-                  field: "mobile",
-                  message:
-                    "Invalid phone number format. Only numbers are allowed.",
-                });
-              } else {
+          <div className="md:w-[248px]">
+            <PhoneInput
+              label="Mobile"
+              placeholder="1234567890"
+              required={false}
+              defaultValue={client.mobile!}
+              // value={phoneNumber}
+              defaultIsoCode={client.countryCode!}
+              onChange={(phone, code, iso) => {
+                phoneDataRef.current = {
+                  phoneNumber: phone,
+                  countryCode: code,
+                  isoCode: iso || "",
+                };
                 clearError();
-              }
-            }}
-          />
+              }}
+            />
+          </div>
         </div>
 
         <div className="flex items-center justify-between">
@@ -346,7 +356,7 @@ export default function EditClientModalBody({
             {/* TODO: use `Selector` component and make the hieght auto */}
             <SelectClientSource
               clickabled={false}
-              label={clientSrc =>
+              label={(clientSrc) =>
                 clientSource ? clientSource.name : "Client Source"
               }
               newButton={
@@ -408,7 +418,7 @@ export default function EditClientModalBody({
               <input
                 type="checkbox"
                 checked={isPremium}
-                onChange={e => setIsPremium(e.target.checked)}
+                onChange={(e) => setIsPremium(e.target.checked)}
                 className="h-4 w-4 accent-[#6571FF]"
               />
               <span className="font-medium">Add as a Fleet</span>

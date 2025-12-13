@@ -402,13 +402,13 @@ export default function Pipelines({
       if (newStatusId !== null) {
         const response = await updateInvoiceStatus(lead.invoiceId, newStatusId);
         if (response.type === "success") {
-          toast.success("Lead moved successfully");
+          toast.success("Job moved successfully");
 
           if (destinationColumn.title === "Delivered") {
             await updateTechnicianStatustoComplete(lead.invoiceId);
           }
         } else {
-          toast.error("Failed to move lead. Please try again.");
+          toast.error("Failed to move job. Please try again.");
           setPipelineData(pipelineData);
         }
       }
@@ -517,7 +517,7 @@ export default function Pipelines({
       try {
         const response = await updateInvoiceStatus(invoiceId, newStatusId);
         if (response.type === "success") {
-          successToast("Lead moved successfully");
+          successToast("Job moved successfully");
         } else {
           errorToast("Failed to update invoice status");
           console.error("Failed to update invoice status:", response.message);

@@ -10,6 +10,7 @@ import Timezone from "./Timezone";
 import { queryKeys } from "@/lib/queryKeys";
 import { useQueryClient } from "@tanstack/react-query";
 import { Briefcase, Mail, MapPin, Save } from "lucide-react";
+import PhoneInput from "@/components/PhoneInput";
 
 type TProps = {
   company: Company | null;
@@ -42,6 +43,7 @@ export default function BusinessForm({ company }: TProps) {
     state: company?.state || "",
     zip: company?.zip || "",
     timezone: company?.timezone,
+    countryCode: company?.countryCode || "",
   };
 
   const [businessSettings, setBusinessSettings] = useState(
@@ -100,11 +102,11 @@ export default function BusinessForm({ company }: TProps) {
     return "";
   };
 
-  const validateBusinessPhone = (value: string) => {
+ const validateBusinessPhone = (value: string) => {
     if (!value.trim()) {
       return "Business phone number is required.";
     }
-    if (!/^\+?\d+$/.test(value)) {
+    if (!/^\+?\d+$/.test(value)) { 
       return "Business phone number must only contain digits (optional + prefix).";
     }
     return "";
@@ -142,6 +144,23 @@ export default function BusinessForm({ company }: TProps) {
     return "";
   };
 
+  const handlePhoneChange = (num: string, code: string, isoCode:string) => {
+
+    const fullPhoneNumber = `${code}${num}`;
+
+   
+    setBusinessSettings((prev) => ({
+      ...prev,
+      businessPhone: fullPhoneNumber,
+      countryCode: isoCode,
+    }));
+
+    const error = validateBusinessPhone(fullPhoneNumber);
+    setValidationErrors((prev) => ({
+      ...prev,
+      businessPhone: error,
+    }));
+  };
   // const validateCity = (value: string) => {
   //   if (!value.trim()) {
   //     return "City is required.";
@@ -292,6 +311,7 @@ export default function BusinessForm({ company }: TProps) {
         zip: businessSettings.zip,
         image,
         timezone: businessSettings.timezone,
+        countryCode: businessSettings.countryCode,
       };
 
       const response = await updateCompany(company?.id, companyData);
@@ -386,14 +406,17 @@ export default function BusinessForm({ company }: TProps) {
             Contact & Digital Presence
           </h4>
           <div className="grid md:grid-cols-2 grid-cols-1 gap-x-8 gap-y-4">
-            <SlimInput
-              required={true}
-              value={businessSettings.businessPhone}
-              onChange={handleChange}
-              label="Business Phone"
-              name="businessPhone"
-              error={validationErrors.businessPhone}
-            />
+           
+            <PhoneInput
+    label="Business Phone"
+    defaultValue={company?.phone || ""}
+     defaultIsoCode={company?.countryCode!}
+    // value={businessSettings.businessPhone} 
+    onChange={handlePhoneChange} 
+    required={true}
+    error={validationErrors.businessPhone}
+     
+  />
             <SlimInput
               required={true}
               value={businessSettings.businessEmail}

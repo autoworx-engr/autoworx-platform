@@ -4,6 +4,7 @@ import { updateTagAutomationTrigger } from "@/actions/automation/tag/triggerTagA
 import { initialCreateClientChatTrack } from "@/actions/communication/client/chat-track";
 import { companyWithUser } from "@/actions/settings/getCompanyWithUser";
 import { db } from "@/lib/db";
+import { sendCRMDemoNotification } from "@/lib/notification/crm-demo-notifiy";
 import { sendNewLeadNotification } from "@/lib/notification/pipeline-notify";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -36,6 +37,7 @@ export async function POST(request: NextRequest) {
     // console.log("🚀 ~ POST ~ clientName:", clientName);
     const clientEmail = body?.email;
     const clientPhone = body?.phone;
+    const countryCode = body?.countryCode;
     // console.log("🚀 ~ POST ~ clientPhone:", clientPhone);
     const customerCountry = body.customer_country;
     // console.log("🚀 ~ POST ~ customerCountry:", customerCountry);
@@ -65,6 +67,7 @@ export async function POST(request: NextRequest) {
           clientPhone,
           vehicleInfo,
           services,
+          countryCode,
           source,
           serviceId: null,
           companyId: company.id,
@@ -173,6 +176,12 @@ export async function POST(request: NextRequest) {
         generatedToken: token,
       });
 
+      // send a notification for new lead added
+      await sendCRMDemoNotification({
+        companyId: company.id,
+        clientName: newLead.clientName,
+      });
+
       return Response.json(
         {
           id: newLead.id,
@@ -181,6 +190,7 @@ export async function POST(request: NextRequest) {
           phone: clientPhone,
           type: "demo_request",
           opportunity_source: opportunity,
+          countryCode: countryCode,
         },
         { status: 201 }
       );
@@ -380,6 +390,7 @@ export async function POST(request: NextRequest) {
         phone: clientPhone,
         customer_country: customerCountry,
         opportunity_source: opportunity,
+        countryCode: countryCode,
       },
       { status: 201 }
     );

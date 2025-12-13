@@ -107,7 +107,7 @@ export default function CannedLabor({
       <section className="pb-4 border-b border-gray-200">
         <div className="flex items-center gap-x-4">
           <h3 className="text-2xl font-extrabold text-gray-800">
-            🛠️ Canned Labor
+            Canned Labor
           </h3>
         </div>
         {/* Changed layout for horizontal alignment of search, filter, and add labor */}
@@ -129,7 +129,13 @@ export default function CannedLabor({
           />
           <NewLabor
             newButton={
-              <button className="rounded-lg bg-indigo-600 w-full min-w-32 md:w-36 p-2 text-white font-medium hover:bg-indigo-700 transition-colors shadow-md">
+              <button
+                className="rounded-lg bg-gradient-to-r from-[#6571FF] to-[#5a66ee] w-full min-w-32 md:w-36 p-2 text-white font-medium shadow-indigo-500/30
+                hover:shadow-xl hover:shadow-indigo-500/40
+                hover:-translate-y-0.5 hover:scale-[1.02]
+                active:translate-y-0 active:scale-100
+                transition-all duration-200"
+              >
                 + Add Labor
               </button>
             }
@@ -446,7 +452,7 @@ const LaborComponent = ({
           />
         )}
       </TableCell>
-      <TableCell className="py-3 font-mono">
+      <TableCell className="py-3">
         {!isEdit ? (
           <span className="text-gray-700 font-semibold">
             {formatCurrency(labor.charge ? Number(labor.charge) : 0)}

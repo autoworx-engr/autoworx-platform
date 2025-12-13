@@ -31,6 +31,7 @@ export async function updateEmployee({
   changePassword,
   salaryType,
   salaryAmount,
+  countryCode,
 }: TUpdateEmployeeValidationSchema & {
   salaryType?: SalaryType | null;
   salaryAmount?: number | null;
@@ -43,6 +44,7 @@ export async function updateEmployee({
       email,
       mobileNumber,
       changePassword,
+      countryCode,
       address,
       city,
       state,
@@ -71,6 +73,7 @@ export async function updateEmployee({
       lastName,
       email,
       phone: mobileNumber,
+      countryCode:countryCode,
       address,
       city,
       state,

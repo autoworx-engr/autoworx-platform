@@ -12,29 +12,35 @@ export default function Heading() {
     sessionUser.data?.user?.employeeType === "Manager";
 
   return (
-    <div className="calender-time-shadow flex min-h-8 items-center justify-center gap-2 rounded-[6px] bg-[#D9D9D9] p-0.5">
+    <div className="flex items-center gap-2 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm shadow-sm p-1.5">
       {!minimized && (
         <>
           {isAdminOrManager && (
             <button
               type="button"
               className={cn(
-                "flex-1 rounded-[4px] text-[19px] text-[#797979] max-[1300px]:h-[30px] max-[1300px]:w-[90px] max-[1300px]:text-[17px]",
-                type === "USERS" && "bg-background",
+                "relative flex-1 flex items-center justify-center gap-2.5 rounded-xl px-3 py-2 text-base font-medium transition-all duration-300 ease-out",
+                type === "USERS"
+                  ? "text-white shadow-md shadow-indigo-500/25 ring-1 ring-black/5 translate-y-[-1px]"
+                  : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200"
               )}
               onClick={() => setType("USERS")}
             >
+              {type === "USERS" && <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-[#6571FF] to-[#5a66ee] -z-10" />}
               Users
             </button>
           )}
           <button
             type="button"
             className={cn(
-              "flex-1 rounded-[4px] text-[19px] text-[#797979] max-[1300px]:h-[30px] max-[1300px]:w-[90px] max-[1300px]:text-[17px]",
-              type === "TASKS" && "bg-background",
+              "relative flex-1 flex items-center justify-center gap-2.5 rounded-xl px-3 py-2 text-base font-medium transition-all duration-300 ease-out",
+              type === "TASKS"
+                ? "text-white shadow-md shadow-indigo-500/25 ring-1 ring-black/5 translate-y-[-1px]"
+                : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200"
             )}
             onClick={() => setType("TASKS")}
           >
+            {type === "TASKS" && <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-[#6571FF] to-[#5a66ee] -z-10" />}
             Tasks
           </button>
         </>

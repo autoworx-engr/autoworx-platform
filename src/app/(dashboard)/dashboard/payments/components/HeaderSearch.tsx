@@ -25,7 +25,7 @@ export default function HeaderSearch({ activeTab }: HeaderSearchProps) {
 
   return (
     <div className="mt-5 flex w-full flex-wrap items-center justify-between gap-2 px-2">
-      <div className="flex w-full max-w-4xl">
+      <div className="flex flex-col lg:flex-row gap-2 lg:gap-0 w-full max-w-4xl">
         <div className="group relative flex w-full items-center gap-x-3 rounded-xl bg-white dark:bg-slate-900 px-4 py-2.5 lg:w-[400px] xl:w-[500px] ring-1 ring-slate-200 dark:ring-slate-700 shadow-sm transition-all duration-300 ease-out focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500/50 focus-within:shadow-md focus-within:shadow-indigo-500/5 hover:ring-slate-300 dark:hover:ring-slate-600">
           <span className="text-slate-400 group-focus-within:text-[#6571FF] transition-colors duration-300">
             <Search className="w-5 h-5" />

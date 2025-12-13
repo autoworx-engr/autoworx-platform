@@ -30,7 +30,10 @@ export default function SmsContainer({ clientId }: TProps) {
       .subscribe(`sms-${user?.companyId}-${clientId}`)
       .bind(
         "sms",
-        (data: ClientSMS & { attachments?: ClientSmsAttachments[] }) => {
+        (data: ClientSMS & {user?: {
+      firstName: string;
+      lastName: string | null;
+    } | null;} & { attachments?: ClientSmsAttachments[] }) => {
           if (!data) return;
 
           // update caches data

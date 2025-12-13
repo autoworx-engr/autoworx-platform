@@ -14,10 +14,11 @@ import FormError from "@/components/FormError";
 import { useFormErrorStore } from "@/stores/form-error";
 import { useListsStore } from "@/stores/lists";
 import { Vendor } from "@prisma/client";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { SlimInput } from "../SlimInput";
 import { SlimTextarea } from "../SlimTextarea";
 import { errorToast, successToast } from "@/lib/toast";
+import PhoneInput from "../PhoneInput";
 
 export default function NewVendor({
   bgShadow,
@@ -32,6 +33,13 @@ export default function NewVendor({
   const [companyName, setCompanyName] = useState("");
   const { showError, clearError } = useFormErrorStore();
 
+    const phoneDataRef = useRef({
+    mobile: "",
+    country: "",
+    countryIsoCode: ""
+  });
+
+  const { mobile, country, countryIsoCode } = phoneDataRef.current;
   async function handleSubmit() {
     clearError();
 
@@ -40,7 +48,8 @@ export default function NewVendor({
       ?.value as string;
     const company =
       document.querySelector<HTMLInputElement>("#companyName")?.value;
-    const phone = document.querySelector<HTMLInputElement>("#phone")?.value;
+    // const phone = document.querySelector<HTMLInputElement>("#phone")?.value;
+    const phone = country && mobile ? `${country}${mobile}` : mobile || ""
     const email = document.querySelector<HTMLInputElement>("#email")?.value;
     const address = document.querySelector<HTMLInputElement>("#address")?.value;
     const city = document.querySelector<HTMLInputElement>("#city")?.value;
@@ -93,13 +102,13 @@ export default function NewVendor({
     }
 
     // Validate phone format if provided
-    if (phone && !/^\+?\d*$/.test(phone)) {
-      showError({
-        field: "phone",
-        message: "Please enter a valid phone number (digits only).",
-      });
-      return;
-    }
+    // if (phone && !/^\+?\d*$/.test(phone)) {
+    //   showError({
+    //     field: "phone",
+    //     message: "Please enter a valid phone number (digits only).",
+    //   });
+    //   return;
+    // }
 
     // Validate website format if provided
     if (
@@ -126,6 +135,7 @@ export default function NewVendor({
       zip,
       website,
       notes,
+      countryCode: countryIsoCode
     });
 
     if (res.type === "success") {
@@ -211,7 +221,7 @@ export default function NewVendor({
               {companyName.length}/50
             </div>
           </div>
-          <SlimInput
+          {/* <SlimInput
             id="phone"
             name="phone"
             required
@@ -226,7 +236,22 @@ export default function NewVendor({
                 clearError();
               }
             }}
-          />
+          /> */}
+
+           <PhoneInput
+                                    label="Phone"
+                                    placeholder="1234567890"
+                                    required={false}
+                                    // value={mobile}
+                                    onChange={(phone, code, isoCode) => {
+                                      phoneDataRef.current = {
+                                        mobile: phone,
+                                        country: code,
+                                        countryIsoCode: isoCode || ""
+                                      };
+                                      clearError()
+                                    }}
+                                  />
           <SlimInput
             id="email"
             name="email"
@@ -292,7 +317,11 @@ export default function NewVendor({
 
         <DialogFooter>
           <DialogClose
-            className="rounded-lg border-2 border-slate-400 p-2"
+            className="
+                rounded-xl px-5 py-2.5 text-sm font-medium text-slate-500 
+                hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
+                transition-colors border
+              "
             onClick={() => {
               clearError();
             }}
@@ -300,7 +329,15 @@ export default function NewVendor({
             Cancel
           </DialogClose>
           <button
-            className="rounded-lg border bg-[#6571FF] px-5 py-2 text-white"
+            className="
+                rounded-xl px-6 py-2.5 text-sm font-medium text-white
+                bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+                shadow-lg shadow-indigo-500/30
+                hover:shadow-xl hover:shadow-indigo-500/40
+                hover:-translate-y-0.5 hover:scale-[1.02]
+                active:translate-y-0 active:scale-100
+                transition-all duration-200
+              "
             onClick={handleSubmit}
           >
             Submit

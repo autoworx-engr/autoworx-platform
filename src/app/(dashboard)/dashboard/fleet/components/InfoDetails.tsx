@@ -44,7 +44,7 @@ const InfoDetails = ({
   return (
     <div className="flex w-full flex-col justify-between gap-3 lg:flex-row lg:gap-5">
       <div className="relative lg:hidden">
-        <div className="absolute left-1 top-1">
+        <div className="absolute right-2 top-2">
           <NewFleet
             fleet={client}
             buttonElement={<Settings size={14} />}

@@ -25,6 +25,12 @@ const getSms = async (
         },
         include: {
             attachments: true,
+            user: {
+                select: {
+                    firstName: true,
+                    lastName: true,
+                }
+            }
         },
         ...restParams,
     });

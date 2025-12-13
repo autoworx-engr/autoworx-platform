@@ -457,9 +457,8 @@ export const FleetStatementModal: React.FC<FleetStatementModalProps> = ({
                   {invoices.map((invoice: any, index: number) => (
                     <tr
                       key={invoice.id}
-                      className={`border-b border-gray-100 transition-colors ${
-                        index % 2 === 0 ? "bg-background" : "bg-[#EEF4FF]"
-                      }`}
+                      className={`border-b border-gray-100 transition-colors ${index % 2 === 0 ? "bg-background" : "bg-[#EEF4FF]"
+                        }`}
                     >
                       <td className="border-b px-4 py-2 text-left text-[#6571FF]">
                         <InvoiceModal

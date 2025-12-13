@@ -11,7 +11,6 @@ import { Box, Switch, Typography } from "@mui/material";
 import MultiSelect from "./MultiSelect";
 import { SlimInput } from "@/components/SlimInput";
 import ActiveTemplate from "./ActiveTemplate";
-import TemplateVariable from "./TemplateVariable";
 import { targetConditions, targetOptions } from "./constants";
 import { errorToast } from "@/lib/toast";
 import { useCreateMarketingAutomationRule } from "@/hooks/marketing-automation/useCreateMarketingAutomationRule";
@@ -35,6 +34,7 @@ import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import moment from "moment-timezone";
 import { useCharacterLimit } from "@/hooks/useCharecterLimit";
 import CarLoading from "@/components/common/CarLoading";
+import { AppointmentTemplateVariable } from "@/components/Lists/NewTemplate";
 
 export type Campaign = {
   id?: number;
@@ -684,7 +684,7 @@ const CampaignForm = ({
             )}
 
             {/* Template Variables */}
-            <TemplateVariable />
+            <AppointmentTemplateVariable hasBackground={true} />
           </Box>
 
           {/* Submit Button */}

@@ -36,6 +36,7 @@ export function SyncLists({
   paymentMethods = [],
   estimates = [],
   client,
+  title,
 }: {
   customers?: Client[];
   vehicles?: Vehicle[];
@@ -51,6 +52,7 @@ export function SyncLists({
   paymentMethods?: PaymentMethod[];
   estimates?: Invoice[];
   client?: Client | null;
+  title?: string;
 }) {
   const { reset } = useEstimateCreateStore();
   const { close } = useEstimatePopupStore();

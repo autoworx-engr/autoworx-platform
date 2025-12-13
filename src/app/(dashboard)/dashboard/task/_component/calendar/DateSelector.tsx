@@ -169,20 +169,43 @@ function DateSelector({ type, weekStart = 1 }: DateSelectorProps) {
     return null;
   };
 
+  const TRANSITION_UTILITY = "transition-all duration-300 ease-in-out";
+  const baseStyle = `
+    flex min-w-[150px] items-center justify-between gap-2 text-xs lg:text-sm
+    p-2 bg-white/50 backdrop-blur-sm border
+    rounded-md ring-1 ring-slate-900/5 dark:bg-slate-900/50 dark:ring-slate-700/50 
+    cursor-pointer 
+    ${TRANSITION_UTILITY}
+    focus:outline-none focus:ring-2 focus:ring-[#6571FF]
+  `;
+  const interactiveStyle = `
+    hover:bg-white/80 dark:hover:bg-slate-800/80
+    hover:-translate-y-0.5 hover:shadow-md 
+  `;
+  const textStyle = "text-slate-600 dark:text-slate-300";
+  const iconStyle = "text-slate-400 dark:text-slate-500";
+
   return (
     <div className="relative" ref={dropdownRef}>
       <button
         type="button"
-        className={`${BUTTON_STYLE} flex min-w-[150px] items-center justify-between gap-2 text-xs lg:text-sm`}
+        className={`${baseStyle} ${interactiveStyle}`}
         onClick={() => setIsOpen(!isOpen)}
       >
         <span className="flex items-center gap-2">
-          <CalendarDays size={18} />
-          <span>{getDisplayValue()}</span>
+          {/* Calendar Icon: Subtle coloring */}
+          <CalendarDays size={18} className={iconStyle} />
+          {/* Display Value: Core data using specified text color */}
+          <span className={`${textStyle} font-medium`}>
+            {getDisplayValue()}
+          </span>
         </span>
+
+        {/* Chevron Icon: Rotates on open, smooth transition */}
         <ChevronDown
           size={16}
-          className={`transition-transform ${isOpen ? "rotate-180" : ""}`}
+          className={`${iconStyle} ${TRANSITION_UTILITY} ${isOpen ? "rotate-180" : ""
+            }`}
         />
       </button>
 

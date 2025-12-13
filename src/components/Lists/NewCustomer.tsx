@@ -1,4 +1,3 @@
-//----------------------------------------------------------
 "use client";
 
 import { addCustomer } from "@/actions/client/add";
@@ -28,6 +27,7 @@ import { useEffect, useState, useTransition } from "react";
 import { RotatingLines } from "react-loader-spinner";
 import { deleteSource } from "../../actions/source/deleteSource";
 import { getSources } from "../../actions/source/getSources";
+import PhoneInput from "../PhoneInput";
 import NewClientSource from "./NewClientSource";
 import NewVehicle from "./NewVehicle";
 
@@ -54,6 +54,8 @@ export default function NewCustomer({
   const [mobile, setMobile] = useState("+1");
   const pathname = usePathname();
   const queryClient = useQueryClient();
+  const [country, setCountry] = useState("");
+  const [countryIsoCode, setCountryIsoCode] = useState("");
   const { search, currentPage, pageSize } = useClientFilterStore();
 
   // Vehicle creation flow states
@@ -107,6 +109,7 @@ export default function NewCustomer({
     setProfilePic(null);
     setTagOpenDropdown(false);
     setTag(undefined);
+    setCountryIsoCode("");
   }
 
   async function handleSubmit() {
@@ -121,16 +124,14 @@ export default function NewCustomer({
       return;
     }
 
-    // Validate mobile number format
-    if (!mobile.startsWith("+1") || !/^\+1\d{10}$/.test(mobile)) {
+    const fullPhone = `${country}${mobile}`;
+    if (!mobile || mobile.length < 10) {
       showError({
         field: "mobile",
-        message:
-          "Please enter a valid US phone number with area code (e.g., +1234567890).",
+        message: "Please enter a valid phone number (at least 10 digits).",
       });
       return;
     }
-
     let photo;
     if (profilePic) {
       const formData = new FormData();
@@ -166,7 +167,8 @@ export default function NewCustomer({
         firstName: firstName.trim(),
         lastName,
         email,
-        mobile,
+        mobile: fullPhone,
+        countryCode: countryIsoCode,
         customerCompany,
         address,
         city,
@@ -228,6 +230,7 @@ export default function NewCustomer({
     setMobile("+1");
     setIsClientOpen(false);
     setIsAppointmentModalOpen && setIsAppointmentModalOpen(true);
+    setCountryIsoCode("");
   };
 
   return (
@@ -362,6 +365,42 @@ export default function NewCustomer({
                   clearError();
                 }}
               />
+            </div>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+              <SlimInput
+                name="email"
+                label="Email"
+                value={clientInfo.email}
+                // required
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setClientInfo((prev) => ({ ...prev, email: value }));
+
+                  // Validate on input change
+                  // if (!value.trim()) {
+                  //   showError({
+                  //     field: "email",
+                  //     message: "Email is required.",
+                  //   });
+                  // } else {
+                  //   clearError();
+                  // }
+                }}
+              />
+
+              <div className="md:w-[248px]">
+                <PhoneInput
+                  label="Mobile Number"
+                  placeholder="1234567890"
+                  required
+                  onChange={(phoneNum, code, isoCode) => {
+                    setMobile(phoneNum);
+                    setCountry(code);
+                    if (isoCode) setCountryIsoCode(isoCode);
+                    clearError();
+                  }}
+                />
+              </div>
             </div>
 
             <div className="flex items-center justify-between">

@@ -47,7 +47,7 @@ export function SelectClient({
     isFetchingNextPage,
   } = useClientListInfiniteQuery(debouncedSearchTerm);
 
-  // Flatten the infinite data into a single array
+  // Flatten the infinite data into a single array`
   const clientList = useMemo(() => {
     return infiniteData?.pages.flatMap((page) => page?.clients) ?? [];
   }, [infiniteData]);
