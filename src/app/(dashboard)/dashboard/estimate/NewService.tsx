@@ -386,7 +386,9 @@ export default function NewService({
                   const value = e.target.value;
 
                   if (value.length > maxDescriptionLength) {
-                    toast.error("Description must be less than 250 characters");
+                    toast.error(
+                      "Description must be less than 1500 characters"
+                    );
                     return false;
                   }
                   setDescription(value);
