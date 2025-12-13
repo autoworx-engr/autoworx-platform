@@ -343,29 +343,6 @@ export default function NewCustomer({
                 }}
               />
             </div>
-
-            <div className="flex items-center justify-between gap-x-2">
-              <SlimInput
-                name="email"
-                label="Email"
-                value={clientInfo.email}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setClientInfo((prev) => ({ ...prev, email: value }));
-                }}
-              />
-              <SlimInput
-                name="mobile"
-                label="Mobile"
-                required
-                value={mobile}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setMobile(value);
-                  clearError();
-                }}
-              />
-            </div>
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
               <SlimInput
                 name="email"
