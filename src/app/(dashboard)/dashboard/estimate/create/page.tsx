@@ -185,7 +185,12 @@ export default async function Page({
           />
           <Create />
         </div>
-        <BillSummary />
+        <BillSummary
+          isEstimateServiceFee={
+            template ? Number(template?.serviceFee) > 0 : true
+          }
+          isEstimateTax={template ? Number(template?.tax) > 0 : true}
+        />
       </div>
     </div>
   );
