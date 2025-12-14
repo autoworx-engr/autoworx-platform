@@ -20,27 +20,33 @@ export default async function Page({
   });
 
   return (
-    <div className="h-full overflow-y-hidden p-2">
+    <div className="h-full w-full overflow-y-hidden p-2">
       <div className="flex items-center justify-between">
         <Title>Vendor List</Title>
 
         <NewVendor
           button={
-            <button className="rounded-md bg-[#6571FF] p-2 px-8 text-white">
+            <button className="
+                flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white
+                bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+                shadow-[0_4px_14px_0_rgba(101,113,255,0.39)]
+                hover:shadow-[0_6px_20px_rgba(101,113,255,0.23)]
+                hover:-translate-y-0.5
+                active:translate-y-0 active:scale-100
+                transition-all duration-300 ease-in-out
+            ">
               Add New Vendor
             </button>
           }
         />
       </div>
       <VendorHeader />
-      <div className="mt-5 flex h-full flex-col gap-3 lg:flex-row">
-        <div className="lg:hidden">
-          <VendorCard vendors={vendors} vendorId={parseInt(vendorId)} />
-        </div>
+      <div className="mt-5 flex h-full w-full flex-col gap-3 lg:flex-row">
+        <VendorCard vendors={vendors} vendorId={parseInt(vendorId)} />
 
         <Table vendors={vendors} vendorId={parseInt(vendorId)} />
 
-        <div className="flex flex-col gap-3 lg:w-[30%]">
+        <div className="flex flex-col gap-3 lg:w-[30%] lg:h-[86%] lg:overflow-y-hidden">
           <Details vendor={vendors.find((v) => v.id === parseInt(vendorId))} />
           <TopVendors />
         </div>

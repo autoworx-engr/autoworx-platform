@@ -1,7 +1,7 @@
 "use client";
 
 import { Vendor } from "@prisma/client";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   Dialog,
   DialogClose,
@@ -18,6 +18,7 @@ import { SlimTextarea } from "../SlimTextarea";
 import FormError from "@/components/FormError";
 import { useFormErrorStore } from "@/stores/form-error";
 import { successToast } from "@/lib/toast";
+import PhoneInput from "../PhoneInput";
 
 type ServerAction =
   | { type: "success"; data: Vendor }
@@ -40,7 +41,13 @@ export default function EditVendor({
   const [open, setOpen] = useState(false);
   const [companyName, setCompanyName] = useState(vendor.companyName || "");
   const { showError, clearError } = useFormErrorStore();
+  const phoneDataRef = useRef({
+    phoneNumber: "",
+    countryCode: "",
+    isoCode: "",
+  });
 
+  const { phoneNumber, countryCode, isoCode } = phoneDataRef.current;
   async function handleSubmit() {
     clearError();
 
@@ -51,8 +58,12 @@ export default function EditVendor({
     const company = document.querySelector<HTMLInputElement>(
       "[name='companyName']"
     )?.value;
+    // const phone =
+    //   document.querySelector<HTMLInputElement>("[name='phone']")?.value;
     const phone =
-      document.querySelector<HTMLInputElement>("[name='phone']")?.value;
+      countryCode && phoneNumber
+        ? `${countryCode}${phoneNumber}`
+        : phoneNumber || "";
     const email =
       document.querySelector<HTMLInputElement>("[name='email']")?.value;
     const address =
@@ -104,13 +115,13 @@ export default function EditVendor({
     }
 
     // Validate phone format if provided
-    if (phone && !/^\+?\d*$/.test(phone)) {
-      showError({
-        field: "phone",
-        message: "Please enter a valid phone number (digits only).",
-      });
-      return;
-    }
+    // if (phone && !/^\+?\d*$/.test(phone)) {
+    //   showError({
+    //     field: "phone",
+    //     message: "Please enter a valid phone number (digits only).",
+    //   });
+    //   return;
+    // }
 
     // Validate website format if provided
     if (
@@ -147,6 +158,7 @@ export default function EditVendor({
       zip,
       website,
       notes,
+      countryCode: isoCode,
     });
 
     if (res.type === "success") {
@@ -236,7 +248,7 @@ export default function EditVendor({
               {companyName.length}/50
             </div>
           </div>
-          <SlimInput
+          {/* <SlimInput
             name="phone"
             defaultValue={vendor.phone ?? ""}
             required={false}
@@ -250,6 +262,23 @@ export default function EditVendor({
               } else {
                 clearError();
               }
+            }}
+          /> */}
+
+          <PhoneInput
+            label="Phone"
+            placeholder="1234567890"
+            required={false}
+            defaultValue={vendor.phone!}
+            // value={phoneNumber}
+            defaultIsoCode={vendor.countryCode!}
+            onChange={(phone, code, iso) => {
+              phoneDataRef.current = {
+                phoneNumber: phone,
+                countryCode: code,
+                isoCode: iso || "",
+              };
+              clearError();
             }}
           />
           <SlimInput

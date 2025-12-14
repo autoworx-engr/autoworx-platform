@@ -22,6 +22,7 @@ export interface TaskType {
   assignedUsers: number[];
   priority: Priority;
   invoiceId?: string;
+  invoiceTemplateId?: string;
   startTime?: string | null;
   endTime?: string | null;
   clientId?: number | null;
@@ -30,7 +31,7 @@ export interface TaskType {
 }
 
 export async function createTask(
-  task: TCreateTaskValidationSchema,
+  task: TCreateTaskValidationSchema
 ): Promise<ServerAction | TErrorHandler> {
   try {
     // Validate task data
@@ -49,6 +50,7 @@ export async function createTask(
       userId: parseInt(session.user.id),
       companyId: session.user.companyId,
       invoiceId: task.invoiceId,
+      invoiceTemplateId: task?.invoiceTemplateId,
       startTime: task.startTime,
       endTime: task.endTime,
       clientId: task.clientId,

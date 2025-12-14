@@ -466,7 +466,7 @@ model Client {
   firstName              String                   @map("first_name")
   lastName               String?                  @map("last_name")
   mobile                 String?
-  countryCode            String?                  @map("country_code") @default("US")
+  countryCode            String?                  @default("US") @map("country_code")
   email                  String?
   address                String?
   city                   String?
@@ -575,7 +575,7 @@ model Company {
   businessId                       String?                            @map("business_id")
   businessType                     String?                            @map("business_type")
   phone                            String?
-  countryCode                     String?                            @map("country_code") @default("US")
+  countryCode                      String?                            @map("country_code") @default("US")
   email                            String?
   industry                         String?
   website                          String?
@@ -741,7 +741,7 @@ model Lead {
   clientName          String               @map("client_name")
   clientEmail         String?              @map("client_email")
   clientPhone         String?              @map("client_phone")
-  countryCode         String?              @map("country_code") @default("US")
+  countryCode         String?              @default("US") @map("country_code")
   vehicleInfo         String               @map("vehicle_info")
   vehicleId           Int?
   services            String
@@ -918,10 +918,10 @@ model MailgunEmail {
   companyId Int
   company   Company @relation(fields: [companyId], references: [id])
 
-  clientId Int
-  client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  userId Int? @map("user_id")
-  user   User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  clientId  Int
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  userId    Int?     @map("user_id")
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   createdAt DateTime @default(now())
 }
 
@@ -1087,7 +1087,7 @@ model Vendor {
   website                 String?
   email                   String?
   phone                   String?
-  countryCode             String?                   @map("country_code") @default("US")
+  countryCode             String?                   @default("US") @map("country_code")
   address                 String?
   city                    String?
   state                   String?
@@ -1377,6 +1377,7 @@ model Invoice {
 model InvoiceTemplate {
   id             String              @id @default(cuid())
   title          String
+  customerNotes  String?
   subtotal       Decimal?            @default(0) @db.Decimal(8, 2)
   discount       Decimal?            @default(0) @db.Decimal(8, 2)
   tax            Decimal?            @default(0) @db.Decimal(8, 2)
@@ -1388,7 +1389,6 @@ model InvoiceTemplate {
   columnId       Int?                @map("column_id")
   company        Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
   invoiceItems   InvoiceItem[]
-  photos         InvoicePhoto[]
   tasks          Task[]
   status         Status?             @relation(fields: [statusId], references: [id])
   Material       Material[]
@@ -1396,6 +1396,7 @@ model InvoiceTemplate {
   column         Column?             @relation(fields: [columnId], references: [id], onDelete: SetNull)
   serviceIndex   Json?
   Inspections    InvoiceInspection[]
+  damageNotes    String?             @map("damage_notes")
   createdAt      DateTime            @default(now()) @map("created_at")
   updatedAt      DateTime            @default(now()) @updatedAt @map("updated_at")
   templatePhotos TemplatePhoto[]
@@ -1426,14 +1427,12 @@ enum InvoiceType {
 // Photo of a invoice.
 // One invoice can have multiple photos.
 model InvoicePhoto {
-  id                Int              @id @default(autoincrement())
-  invoiceId         String           @map("invoice_id")
-  photo             String           @db.VarChar(1024)
-  createdAt         DateTime         @default(now()) @map("created_at")
-  updatedAt         DateTime         @default(now()) @updatedAt @map("updated_at")
-  invoice           Invoice          @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  invoiceTemplate   InvoiceTemplate? @relation(fields: [invoiceTemplateId], references: [id])
-  invoiceTemplateId String?
+  id        Int      @id @default(autoincrement())
+  invoiceId String   @map("invoice_id")
+  photo     String   @db.VarChar(1024)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  invoice   Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 
   @@index([invoiceId], name: "fk_invoice_photos_invoice")
 }
@@ -1539,6 +1538,7 @@ model InvoiceInspection {
   invoiceTemplateId String?
 
   @@index([invoiceId], name: "fk_invoice_inspections_invoice")
+  @@index([invoiceTemplateId], name: "fk_invoice_inspections_invoice_template")
 }
 
 // Message for chat.
@@ -2008,50 +2008,50 @@ model UserFeedbackAttachment {
 // When user registers, they have to create a company. So, every new user is an admin.
 // After that, they can add employees to the company.
 model User {
-  id                Int                @id @default(autoincrement())
-  firstName         String
-  lastName          String?
-  email             String             @unique
-  emailVerifiedAt   DateTime?          @map("email_verified_at")
-  image             String             @default("/images/default.png")
-  password          String
-  provider          Provider           @default(email)
-  timezone          String             @default("UTC")
-  phone             String?
-  countryCode       String?            @map("country_code") @default("US")
-  address           String?
-  city              String?
-  state             String?
-  zip               String?
-  companyName       String?            @map("company_name")
-  commission        Decimal?           @default(0) @db.Decimal(10, 3)
-  role              Role               @default(admin)
-  employeeType      EmployeeType       @default(Admin)
-  isSuperAdmin      Boolean            @default(false) @map("is_super_admin")
-  joinDate          DateTime?          @map("join_date")
-  companyId         Int                @map("company_id")
-  createdAt         DateTime           @default(now()) @map("created_at")
-  updatedAt         DateTime           @default(now()) @updatedAt @map("updated_at")
-  company           Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  groups            Group[]            @relation("UserGroups")
-  tasks             Task[]
-  taskUsers         TaskUser[]
-  appointments      Appointment[]
-  appointmentUsers  AppointmentUser[]
-  invoices          Invoice[]          @relation("user")
-  Technician        Technician[]
-  permissions       Permission[]
-  assignedInvoices  Invoice[]          @relation("assignedTo")
-  LeaveRequest      LeaveRequest[]
-  sentEstimates     RequestEstimate[]  @relation("Sender")
-  receivedEstimates RequestEstimate[]  @relation("Receiver")
-  OAuthToken        OAuthToken?
-  ClockInOut        ClockInOut[]
-  UserFeedback      UserFeedback[]
-  inventoryProducts InventoryProduct[]
-  ClientSMS         ClientSMS[]
-  ClientCall        ClientCall[]
-  MailgunEmail      MailgunEmail[]
+  id                             Int                             @id @default(autoincrement())
+  firstName                      String
+  lastName                       String?
+  email                          String                          @unique
+  emailVerifiedAt                DateTime?                       @map("email_verified_at")
+  image                          String                          @default("/images/default.png")
+  password                       String
+  provider                       Provider                        @default(email)
+  timezone                       String                          @default("UTC")
+  phone                          String?
+  countryCode                    String?                         @default("US") @map("country_code")
+  address                        String?
+  city                           String?
+  state                          String?
+  zip                            String?
+  companyName                    String?                         @map("company_name")
+  commission                     Decimal?                        @default(0) @db.Decimal(10, 3)
+  role                           Role                            @default(admin)
+  employeeType                   EmployeeType                    @default(Admin)
+  isSuperAdmin                   Boolean                         @default(false) @map("is_super_admin")
+  joinDate                       DateTime?                       @map("join_date")
+  companyId                      Int                             @map("company_id")
+  createdAt                      DateTime                        @default(now()) @map("created_at")
+  updatedAt                      DateTime                        @default(now()) @updatedAt @map("updated_at")
+  company                        Company                         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  groups                         Group[]                         @relation("UserGroups")
+  tasks                          Task[]
+  taskUsers                      TaskUser[]
+  appointments                   Appointment[]
+  appointmentUsers               AppointmentUser[]
+  invoices                       Invoice[]                       @relation("user")
+  Technician                     Technician[]
+  permissions                    Permission[]
+  assignedInvoices               Invoice[]                       @relation("assignedTo")
+  LeaveRequest                   LeaveRequest[]
+  sentEstimates                  RequestEstimate[]               @relation("Sender")
+  receivedEstimates              RequestEstimate[]               @relation("Receiver")
+  OAuthToken                     OAuthToken?
+  ClockInOut                     ClockInOut[]
+  UserFeedback                   UserFeedback[]
+  inventoryProducts              InventoryProduct[]
+  ClientSMS                      ClientSMS[]
+  ClientCall                     ClientCall[]
+  MailgunEmail                   MailgunEmail[]
   salesLead                      Lead[]
   NotificationSettings           NotificationSettingsV2[]
   Notification                   Notification[]

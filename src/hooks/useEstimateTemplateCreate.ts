@@ -20,17 +20,21 @@ export function useEstimateTemplateCreate({ isEdit }: { isEdit: boolean }) {
     items,
     inspections,
     title,
+    template,
+    customerComments,
+    customerNotes,
+    damageNotes,
   } = useEstimateCreateStore();
 
   const { status } = useListsStore();
 
   async function handleSubmit(): Promise<ServerAction | TErrorHandler> {
     const columnId = status?.id;
-    console.log("isEditPage", isEdit);
+
     let res: ServerAction | TErrorHandler;
-    if (isEdit) {
+    if (isEdit && template?.id) {
       res = await updateEstimateTemplate({
-        id: invoiceId,
+        id: template?.id,
         title,
         columnId: columnId || undefined,
         subtotal,
@@ -40,6 +44,8 @@ export function useEstimateTemplateCreate({ isEdit }: { isEdit: boolean }) {
         grandTotal,
         internalNotes,
         photos,
+        customerNotes,
+        damageNotes,
         //@ts-ignore
         items: items.map((item) => ({
           ...item,
@@ -84,6 +90,8 @@ export function useEstimateTemplateCreate({ isEdit }: { isEdit: boolean }) {
         grandTotal,
         internalNotes,
         photos,
+        customerNotes,
+        damageNotes,
         //@ts-ignore
         items: items.map(({ id, ...item }) => ({
           ...item,

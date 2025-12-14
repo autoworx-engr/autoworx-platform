@@ -36,6 +36,7 @@ export default function SyncEstimate({
   inspections: InspectionType[];
 }) {
   const { invoiceId } = useEstimateCreateStore();
+  console.log("template", template);
   useEffect(() => {
     // async function fetchPhotos() {
     //   const photoFiles = await Promise.all(
@@ -55,6 +56,7 @@ export default function SyncEstimate({
 
     useEstimateCreateStore.setState({
       invoiceId: invoice ? invoice.id : invoiceId,
+      template: template,
       subtotal: parseFloat(
         invoice
           ? invoice.subtotal?.toString() || "0"
@@ -86,13 +88,19 @@ export default function SyncEstimate({
           ? invoice.grandTotal?.toString() || "0"
           : template?.grandTotal?.toString() || "0"
       ),
-      due: parseFloat((invoice && invoice.due?.toString()) || "0"),
+      due: invoice
+        ? Number(invoice?.due ?? 0)
+        : Math.max(
+            Number(template?.grandTotal ?? 0) - (Number(0) + Number(0)),
+            0
+          ),
       internalNotes: invoice
         ? invoice.internalNotes || ""
         : template?.internalNotes || "",
       terms: (invoice && invoice.terms) || "",
       policy: (invoice && invoice.policy) || "",
-      customerNotes: (invoice && invoice.customerNotes) || "",
+      customerNotes:
+        (invoice ? invoice.customerNotes : template?.customerNotes) || "",
       customerComments: (invoice && invoice.customerComments) || "",
       tasks: tasks.map((task) => ({
         id: task.id,
@@ -104,7 +112,8 @@ export default function SyncEstimate({
       totalPayment: parseFloat(
         (invoice && invoice.totalPayment?.toString()) || "0"
       ),
-      damageNotes: (invoice && invoice.damageNotes) || "",
+      damageNotes:
+        (invoice ? invoice.damageNotes : template?.damageNotes) || "",
       inspections,
       title: (template && template?.title) || "",
     });

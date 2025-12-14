@@ -142,7 +142,7 @@ export default async function Page({
       );
     }
 
-    photos = await db.invoicePhoto.findMany({
+    photos = await db.templatePhoto.findMany({
       where: { invoiceTemplateId: invoice.id },
     });
     tasks = await db.task.findMany({

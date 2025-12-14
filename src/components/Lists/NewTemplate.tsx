@@ -166,12 +166,16 @@ const TEMPLATE_VARIABLES: TemplateVariable[] = [
 ];
 
 export const AppointmentTemplateVariable = ({
-  VARIABLES = TEMPLATE_VARIABLES, // Use the default TEMPLATE_VARIABLES if none are provided
+  VARIABLES = TEMPLATE_VARIABLES,
+  hasBackground = false, // Use the default TEMPLATE_VARIABLES if none are provided
 }: {
   VARIABLES?: TemplateVariable[];
+  hasBackground?: boolean;
 }) => {
   return (
-    <div className="rounded-lg bg-white p-4 font-sans text-gray-700 shadow-md">
+    <div
+      className={`rounded-lg   bg-white p-4 font-sans text-gray-700 ${hasBackground ? "" : "shadow-md"} `}
+    >
       {/* Section title for template variables */}
       <h4 className="mb-3 text-lg font-semibold text-gray-800">
         TEMPLATE VARIABLES

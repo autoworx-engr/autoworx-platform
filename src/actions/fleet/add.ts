@@ -21,6 +21,7 @@ export async function addFleet(data: {
   tagId?: number;
   photo?: string;
   preferredPaymentTerm?: string | null;
+  countryCode?:string;
 }): Promise<ServerAction | TErrorHandler> {
   try {
     await createFleetValidationSchema.parseAsync(data);
@@ -111,6 +112,7 @@ export async function addFleet(data: {
           state: data.state || undefined,
           zip: data.zip || undefined,
           isFleet: true,
+          countryCode:data.countryCode,
         },
       });
 

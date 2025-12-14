@@ -84,12 +84,12 @@ export default memo(function LeadCard({
         },
       });
 
-      successToast("Lead moved successfully");
+      successToast("Job moved successfully");
       await updateLeadColumn(leadData.id, parseInt(newColumnId));
       setShowColumnSelect(false);
     } catch (error) {
-      errorToast("Failed to move lead. Please try again.");
-      console.error("Error moving lead:", error);
+      errorToast("Failed to move job. Please try again.");
+      console.error("Error moving job:", error);
     }
   };
 
