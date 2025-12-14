@@ -45,6 +45,7 @@ export default function NewVehicle({
   const pathname = usePathname();
   const { showError, clearError } = useFormErrorStore();
   const [selectedColor, setSelectedColor] = useState<VehicleColor | null>(null);
+  const [engineSize, setEngineSize] = useState<string>("");
   const [formData, setFormData] = useState({
     vehicleYear: null,
     vehicleMake: null,
@@ -243,12 +244,29 @@ export default function NewVehicle({
             />
 
             <SlimInput name="transmission" required={false} />
-            <SlimInput name="engineSize" required={false} />
+            <SlimInput
+              name="engineSize"
+              required={false}
+              value={engineSize}
+              onChange={e => setEngineSize(e.target.value)}
+            />
             <SlimInput name="license" required={false} label="License Plate" />
             <div className="flex items-end gap-2">
               <SlimInput name="vin" required={false} />
 
-              <VINInputCamera onVehicleInfo={value => console.log(value)} />
+              <VINInputCamera
+                onVehicleInfo={value => {
+                  const { make, model, year, specs } = value?.data?.data || {};
+                  const { displacement_cc } = specs || {};
+                  setFormData({
+                    vehicleYear: year,
+                    vehicleMake: make,
+                    vehicleModel: model,
+                    other: "",
+                  });
+                  setEngineSize(displacement_cc || "");
+                }}
+              />
             </div>
             <SlimInput
               name="other"
