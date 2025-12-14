@@ -9,7 +9,7 @@ import {
 } from "@/stores/client-store";
 import { SendHorizontal } from "lucide-react";
 import Image from "next/image";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import useSmsSendMutation from "../../../_hooks/useSmsSendMutation";
 import AttachmentInput from "../AttachmentInput";
 import SmartReplyBar from "./SmartReply";
@@ -60,6 +60,10 @@ export default function SendSms({ clientId, companyId }: TProps) {
     el.style.height = `${el.scrollHeight}px`;
   };
 
+  useEffect(() => {
+    adjustTextareaHeight();
+  }, [messageInput]);
+
   const handleSendMessage = async (
     e: React.FormEvent<HTMLFormElement | HTMLTextAreaElement>
   ) => {
@@ -80,7 +84,7 @@ export default function SendSms({ clientId, companyId }: TProps) {
       smsGateway: data?.smsGateway || "TWILIO",
       user: {
         firstName: currentUser?.name || "",
-        lastName:  "",
+        lastName: "",
       }
     };
 

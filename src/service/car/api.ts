@@ -24,19 +24,37 @@ export const getMake = async (): Promise<string[]> => {
   }
 };
 
+export const getCarVinDecoder = async (
+  vin: string,
+  params?: { verbose?: boolean; allTrims?: boolean }
+): Promise<Record<string, any>> => {
+  try {
+    const response = await axiosInstance.get(`api/cars/vin/${vin}`, {
+      params: {
+        verbose: params?.verbose,
+        allTrims: params?.allTrims,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Failed to fetch makes:", error);
+    throw error;
+  }
+};
+
 export const getModelsByYearAndMake = async (
   year: string,
-  make: string,
+  make: string
 ): Promise<string[]> => {
   try {
     const response = await axiosInstance.get(
-      `/api/cars/models?year=${year}&make=${make}`,
+      `/api/cars/models?year=${year}&make=${make}`
     );
     return response.data;
   } catch (error) {
     console.error(
       `Failed to fetch models for year=${year} and make=${make}:`,
-      error,
+      error
     );
     throw error;
   }
