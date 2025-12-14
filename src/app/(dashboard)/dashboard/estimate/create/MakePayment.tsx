@@ -120,7 +120,7 @@ export default function MakePayment() {
 
   const formatAmount = (value: number | string): number => {
     const num = typeof value === "string" ? parseFloat(value) : value;
-    return parseFloat(num.toFixed(2));
+    return Math.round(num * 100) / 100;
   };
 
   function reset() {
@@ -136,12 +136,14 @@ export default function MakePayment() {
   }
 
   async function handleSubmit() {
+    const roundedAmount = formatAmount(amount);
+    const roundedDue = formatAmount(due);
+
+    if (Number(roundedAmount) > roundedDue) {
+      errorToast("amount exceeds the due");
+      return;
+    }
     try {
-      const roundedAmount = formatAmount(amount);
-      if (Number(roundedAmount) > due) {
-        errorToast("amount exceeds the due");
-        return;
-      }
       await additionalDataValidation.parseAsync({
         creditCard: card,
         cardType: cardType ? (cardType as CardType) : "MASTERCARD",
