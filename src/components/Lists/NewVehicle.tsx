@@ -25,6 +25,7 @@ import {
 import SelectorWithSearch from "./SelectorWithSearch";
 import { Spin } from "antd";
 import { usePathname } from "next/navigation";
+import VINInputCamera from "../vin-decoder/vin-input";
 
 type TProps = {
   newButton?: React.ReactNode;
@@ -44,6 +45,7 @@ export default function NewVehicle({
   const pathname = usePathname();
   const { showError, clearError } = useFormErrorStore();
   const [selectedColor, setSelectedColor] = useState<VehicleColor | null>(null);
+  const [engineSize, setEngineSize] = useState<string>("");
   const [formData, setFormData] = useState({
     vehicleYear: null,
     vehicleMake: null,
@@ -83,7 +85,7 @@ export default function NewVehicle({
         }))
       : [];
   const handleInputChange = (name: string, value: string) => {
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
       [name]: value,
     }));
@@ -242,9 +244,30 @@ export default function NewVehicle({
             />
 
             <SlimInput name="transmission" required={false} />
-            <SlimInput name="engineSize" required={false} />
+            <SlimInput
+              name="engineSize"
+              required={false}
+              value={engineSize}
+              onChange={e => setEngineSize(e.target.value)}
+            />
             <SlimInput name="license" required={false} label="License Plate" />
-            <SlimInput name="vin" required={false} />
+            <div className="flex items-end gap-2">
+              <SlimInput name="vin" required={false} />
+
+              <VINInputCamera
+                onVehicleInfo={value => {
+                  const { make, model, year, specs } = value?.data?.data || {};
+                  const { displacement_cc } = specs || {};
+                  setFormData({
+                    vehicleYear: year,
+                    vehicleMake: make,
+                    vehicleModel: model,
+                    other: "",
+                  });
+                  setEngineSize(displacement_cc || "");
+                }}
+              />
+            </div>
             <SlimInput
               name="other"
               label="Other (Vehicle not listed or non-vehicle job? Enter details here)"
@@ -255,7 +278,7 @@ export default function NewVehicle({
                 !!formData.vehicleModel &&
                 "cursor-not-allowed bg-gray-100 opacity-50"
               }`}
-              onChange={(e) => {
+              onChange={e => {
                 let value = e.target.value;
                 setIsOtherPopulated(value?.length > 0);
               }}
