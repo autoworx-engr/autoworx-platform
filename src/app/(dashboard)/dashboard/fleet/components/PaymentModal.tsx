@@ -82,7 +82,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
   const formatAmount = (value: number | string): number => {
     const num = typeof value === "string" ? parseFloat(value) : value;
-    return parseFloat(num.toFixed(2));
+    return Math.round(num * 100) / 100;
   };
 
   function reset() {
@@ -107,8 +107,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const handleSubmit = async () => {
     try {
       const roundedAmount = formatAmount(amount);
+      const roundedTotalDue = formatAmount(totalDue);
 
-      if (Number(roundedAmount) > totalDue) {
+      if (Number(roundedAmount) > Number(roundedTotalDue)) {
         errorToast("Payment amount exceeds the due amount");
         return;
       }
