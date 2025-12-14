@@ -1,29 +1,30 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  Zap,
-  FilePlus2,
-  CalendarPlus,
-  UserPlus2,
-  MessageCircleWarning,
-  FileUser,
-} from "lucide-react";
-import { useRouter } from "next/navigation";
-import AddNewEmployee from "./Lists/NewEmployee";
-import NewCustomer from "./Lists/NewCustomer";
-import { stateStore } from "@/stores/stateStore";
-import { AppointmentCreateOrEdit } from "./appointment/AppointmentCreateOrEdit";
-import { Appointment, Lead } from "@prisma/client";
-import { useQueryClient } from "@tanstack/react-query";
+import { updatePipelineAutomationTrigger } from "@/actions/automation/pipeline/triggerPipelineAutomation";
+import AddLeads from "@/app/(dashboard)/dashboard/pipeline/components/AddLeads";
 import { appointmentQueryKey } from "@/app/(dashboard)/dashboard/task/_constant";
 import { useDate } from "@/app/(dashboard)/dashboard/task/_hook/lib/useDate";
 import useMonth from "@/app/(dashboard)/dashboard/task/_hook/lib/useMonth";
-import moment from "moment";
-import { updatePipelineAutomationTrigger } from "@/actions/automation/pipeline/triggerPipelineAutomation";
 import useWeekStartEndDays from "@/app/(dashboard)/dashboard/task/_hook/lib/useWeekStartEndDays";
-import Link from "next/link";
+import { Card, CardContent } from "@/components/ui/card";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
-import AddLeads from "@/app/(dashboard)/dashboard/pipeline/components/AddLeads";
+import { stateStore } from "@/stores/stateStore";
+import { Appointment, Lead } from "@prisma/client";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  CalendarPlus,
+  FilePlus2,
+  FileUser,
+  MessageCircleWarning,
+  UserPlus2,
+  Zap,
+} from "lucide-react";
+import moment from "moment";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { AppointmentCreateOrEdit } from "./appointment/AppointmentCreateOrEdit";
+import NewCustomer from "./Lists/NewCustomer";
+import NewVehicle from "./Lists/NewVehicle";
+import VehicleAddPrompt from "./VehicleAddPrompt";
 
 const QuickLink = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -32,6 +33,13 @@ const QuickLink = () => {
   const [isLeadOpen, setIsLeadOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+
+  // New state for the vehicle flow
+  const [isVehiclePromptOpen, setIsVehiclePromptOpen] = useState(false);
+  const [isNewVehicleModalOpen, setIsNewVehicleModalOpen] = useState(false);
+  const [newlyCreatedClientId, setNewlyCreatedClientId] = useState<
+    number | null
+  >(null);
 
   const date = useDate();
   const dateFormat = date.format("YYYY-MM-DD");
@@ -52,13 +60,13 @@ const QuickLink = () => {
         dropdownRef.current &&
         !dropdownRef.current.contains(event.target as Node);
 
-      // Only close if user clicks outside and client is NOT open
       if (
         clickedOutside &&
         !isClientOpen &&
         !isAppointmentModalOpen &&
         !isLeadOpen &&
-        !isBugOpen
+        !isBugOpen &&
+        !isNewVehicleModalOpen
       ) {
         setIsDropdownOpen(false);
       }
@@ -68,7 +76,20 @@ const QuickLink = () => {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [isClientOpen, isAppointmentModalOpen, isLeadOpen, isBugOpen]);
+  }, [
+    isClientOpen,
+    isAppointmentModalOpen,
+    isLeadOpen,
+    isBugOpen,
+    isNewVehicleModalOpen,
+  ]);
+
+  //  handle client creation
+  const handleClientCreated = (client: { id: number }) => {
+    setIsDropdownOpen(false);
+    setNewlyCreatedClientId(client.id);
+    setIsVehiclePromptOpen(true);
+  };
 
   const actions = [
     {
@@ -116,7 +137,6 @@ const QuickLink = () => {
     newAppointment: Appointment & { lead: Lead | null }
   ) => {
     try {
-      // Invalidate queries for appointments based on the current month and year
       queryClient.invalidateQueries({
         queryKey: [
           appointmentQueryKey.allAppointments,
@@ -124,7 +144,6 @@ const QuickLink = () => {
           formattedYear,
         ],
       });
-      // Invalidate queries for appointments based on the current week
       queryClient.invalidateQueries({
         queryKey: [
           appointmentQueryKey.allAppointments,
@@ -132,7 +151,6 @@ const QuickLink = () => {
           weekEndDate,
         ],
       });
-      // Invalidate queries for appointments based on the current DATE
       queryClient.invalidateQueries({
         queryKey: [appointmentQueryKey.allAppointments, dateFormat],
       });
@@ -159,7 +177,6 @@ const QuickLink = () => {
       >
         <Zap className="h-5 w-5 sm:h-7 sm:w-7 text-white sm:text-[#6571FF]" />
       </button>
-
       {isDropdownOpen && (
         <Card className="custom-scrollbar absolute top-10 -right-16 md:right-0 z-30 w-72 sm:w-80 max-h-80 overflow-y-auto shadow-xl">
           <CardContent className="pt-4">
@@ -180,6 +197,7 @@ const QuickLink = () => {
                   ) : action.label === "Create Client" ? (
                     <div>
                       <NewCustomer
+                        onClientCreated={handleClientCreated} // PASS THE NEW HANDLER
                         buttonElement={
                           <div className="flex cursor-pointer items-center space-x-3 rounded-lg border border-gray-200 bg-white p-3 transition hover:bg-[#F4F6FF]">
                             <action.icon className="h-5 w-5 text-[#6571FF]" />
@@ -221,6 +239,29 @@ const QuickLink = () => {
         </Card>
       )}
 
+      <VehicleAddPrompt
+        isOpen={isVehiclePromptOpen}
+        setIsOpen={setIsVehiclePromptOpen}
+        onConfirm={() => {
+          setIsVehiclePromptOpen(false);
+          setIsNewVehicleModalOpen(true);
+        }}
+        onCancel={() => {
+          setIsVehiclePromptOpen(false);
+          setNewlyCreatedClientId(null);
+        }}
+      />
+      {/* New Vehicle Modal */}
+      {newlyCreatedClientId && (
+        <NewVehicle
+          clientId={newlyCreatedClientId}
+          open={isNewVehicleModalOpen}
+          setOpen={setIsNewVehicleModalOpen}
+          onAdd={() => {
+            setNewlyCreatedClientId(null);
+          }}
+        />
+      )}
       {/* New Appointment */}
       <AppointmentCreateOrEdit
         isModalOpen={isAppointmentModalOpen}

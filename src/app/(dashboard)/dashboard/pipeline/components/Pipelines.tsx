@@ -8,10 +8,20 @@ import {
   saveInvoiceTag,
 } from "@/actions/pipelines/invoiceTag";
 import { AppointmentCreateOrEdit } from "@/components/appointment/AppointmentCreateOrEdit";
+import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
 import WorkOrderModal from "@/components/workorder-modal/WorkOrderModal";
+import { errorToast, successToast } from "@/lib/toast";
+import { updateTagAutomationTrigger } from "@/service/tag-automation-trigger/api";
 import { Column, Employee, ShopPipelineData } from "@/types/invoiceLead";
+import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
 import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd";
 import { Tag, User } from "@prisma/client";
+import {
+  ArrowRightLeft,
+  Calendar,
+  CirclePlus,
+  MessageCircleMore,
+} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -24,14 +34,6 @@ import SearchScroll from "./SearchScroll";
 import ServiceSelector from "./ServiceSelector";
 import ShopColumnDropdown from "./ShopColumnDropdown";
 import TaskForm from "./TaskForm";
-import { errorToast, successToast } from "@/lib/toast";
-import {
-  ArrowRightLeft,
-  Calendar,
-  CirclePlus,
-  MessageCircleMore,
-} from "lucide-react";
-import { updateTagAutomationTrigger } from "@/service/tag-automation-trigger/api";
 
 interface PipelinesProps {
   pipelinesTitle: string;
@@ -53,17 +55,22 @@ export default function Pipelines({
   const pathname = usePathname();
 
   const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
+  console.log("selectedClientId==>", selectedClientId);
   const [selectedVehicleId, setSelectedVehicleId] = useState<number | null>(
     null
   );
   const [pipelineData, setPipelineData] =
     useState<ShopPipelineData[]>(shopPipelineDataProp);
   const [companyUsers, setCompanyUsers] = useState<User[]>([]);
+
   const [isLoading, setIsLoading] = useState<boolean>(true);
   // References for scrolling to leads
   const columnRefs = useRef<(HTMLDivElement | null)[]>([]);
   const leadRefs = useRef<Map<string, HTMLLIElement>>(new Map());
   const [screenWidth, setScreenWidth] = useState<number>(window.innerWidth);
+
+  const currentUser = useGetCurrentUser();
+  console.log("Current User:", currentUser);
 
   function updateWidth() {
     setScreenWidth(window.innerWidth);
@@ -844,6 +851,7 @@ export default function Pipelines({
                                           }
                                         />
                                       </div>
+
                                       <button
                                         onClick={() => {
                                           // removeClientIdFromParams();
@@ -894,6 +902,29 @@ export default function Pipelines({
                                           Add Task
                                         </span>
                                       </div>
+
+                                      {/* Invoice id */}
+                                      {(currentUser?.role === "manager" ||
+                                        currentUser?.role === "admin") && (
+                                        <div className="group relative mx-0 mt-1 p-0">
+                                          <InvoiceModal
+                                            invoiceId={lead.invoiceId}
+                                            buttonChild={
+                                              <button className="group relative flex w-6 items-center justify-center">
+                                                <Image
+                                                  src="/icons/invoice.png"
+                                                  alt=""
+                                                  width={14}
+                                                  height={14}
+                                                />
+                                                <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
+                                                  View Invoice
+                                                </span>
+                                              </button>
+                                            }
+                                          />
+                                        </div>
+                                      )}
                                     </div>
                                     <div className="group relative">
                                       {/* button */}

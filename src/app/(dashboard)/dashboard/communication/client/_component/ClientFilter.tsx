@@ -1,8 +1,8 @@
 "use client";
 import { cn } from "@/lib/cn";
 import { useDemoClientFilterStore } from "@/stores/clientFilter";
-import { useCallback, useEffect } from "react";
 import { Search, X } from "lucide-react";
+import { useCallback, useEffect } from "react";
 
 export default function ClientFilter() {
   const { filter, setFilter, setSearchTerm, searchTerm } =
@@ -20,7 +20,10 @@ export default function ClientFilter() {
 
   const handleFilterChange = useCallback(
     (value: string) => {
-      console.log("🔍 ClientFilter handleFilterChange:", { oldValue: filter, newValue: value });
+      console.log("🔍 ClientFilter handleFilterChange:", {
+        oldValue: filter,
+        newValue: value,
+      });
       setFilter(value);
     },
     [setFilter, filter]
@@ -51,7 +54,7 @@ export default function ClientFilter() {
         />
         <input
           type="text"
-          placeholder="Search clients…"
+          placeholder="Search client by name, email or phone"
           className={cn(
             "w-full rounded-md border bg-white pl-9 pr-9 py-2 text-sm text-zinc-700 placeholder-zinc-400 outline-none",
             "border-zinc-300 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20",
