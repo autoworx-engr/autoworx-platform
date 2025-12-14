@@ -248,12 +248,22 @@ export default function CreateAndEditLabor({
         );
 
         if (response.type === "success") {
+          const newImages: TechnicianImage[] = finalImageUrls.map((url) => {
+            return {
+              fileUrl: url,
+              uploadedAt: new Date(),
+              technicianId: technician.id,
+            } as TechnicianImage;
+          });
+
+          setFormData({ attachments: newImages });
           setOpen(false);
           setTechnicians((prev) =>
             prev.map((tech) =>
               tech.id === technician.id
                 ? {
                     ...response.data,
+                    images: newImages,
                     hasPermission: tech.hasPermission,
                     vehicleParts: selectedVehicleParts as Parts[],
                   }
@@ -338,6 +348,21 @@ export default function CreateAndEditLabor({
     setPriority("Low");
     setError("");
     setEmployee(null);
+  };
+
+  const handleCancel = () => {
+    if (technician) {
+      setFormData({
+        attachments:
+          (technician.images as (TechnicianImage | LocalAttachment)[]) || [],
+      });
+      setTechnicianNote(technician.technicianNote || "");
+      setStatus(technician.status as TStatus);
+    } else {
+      reset();
+    }
+    setImageUploadIsLoading(false);
+    setError("");
   };
 
   useEffect(() => {
@@ -652,7 +677,10 @@ export default function CreateAndEditLabor({
           isWriteAccess={isAdminOrManger && !isTechnician}
         />
         <DialogFooter>
-          <DialogClose className="mt-2 rounded-lg border-2 border-slate-400 p-2 text-sm md:mt-0 md:text-base">
+          <DialogClose
+            className="mt-2 rounded-lg border-2 border-slate-400 p-2 text-sm md:mt-0 md:text-base"
+            onClick={handleCancel}
+          >
             Cancel
           </DialogClose>
           <button
