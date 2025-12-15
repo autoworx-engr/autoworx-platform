@@ -30,10 +30,7 @@ export const sendInvoiceConvertedNotification = async ({
       firstName: true,
       lastName: true,
     });
-    const redirectUrl =
-      invoiceType === "Estimate"
-        ? "/dashboard/estimate"
-        : "/dashboard/estimate/invoices";
+    const redirectUrl = `/dashboard/estimate/view/${invoiceId}`;
 
     const description = `Estimate ${invoiceId} for ${clientName} converted to invoice ${invoiceId}. View in Autoworx`;
 
