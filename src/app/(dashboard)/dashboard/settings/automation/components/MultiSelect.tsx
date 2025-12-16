@@ -17,6 +17,7 @@ type MultiSelectProps = {
   disabled?: boolean;
   required: boolean;
   error?: string;
+  labelClassName?: string;
 };
 
 const MultiSelect: React.FC<MultiSelectProps> = ({
@@ -29,6 +30,7 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
   disabled = false,
   isSearch = false,
   placeholder = "Select options",
+  labelClassName = "",
 }) => {
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -97,7 +99,7 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
     : options;
   return (
     <div className="relative" ref={wrapperRef}>
-      <div className={cn("mb-1 font-medium text-gray-500")}>
+      <div className={cn("mb-1 font-medium text-gray-500", labelClassName)}>
         {label}
         {required && <span className="text-red-500"> *</span>}
       </div>

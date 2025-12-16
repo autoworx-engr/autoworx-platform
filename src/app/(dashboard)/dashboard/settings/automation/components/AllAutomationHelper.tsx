@@ -1,4 +1,4 @@
-import { FileText, FileTextIcon } from "lucide-react";
+import { ArrowRight, FileText, FileTextIcon } from "lucide-react";
 
 export const getInvoiceTypeHelp = (type: string) => {
   if (!type) return null;
@@ -23,4 +23,34 @@ export const getInvoiceTypeHelp = (type: string) => {
   };
 
   return helpContent[type as keyof typeof helpContent] || null;
+};
+
+
+interface ConditionActionHelpProps {
+  conditionId?: number | string | null;
+  actionId?: number | string | null;
+  conditionName?: string;
+  actionName?: string;
+}
+
+export const getConditionActionHelp = ({
+  conditionId,
+  actionId,
+  conditionName,
+  actionName,
+}: ConditionActionHelpProps) => {
+  if (!conditionId || !actionId) return null;
+
+  const helpConfig = {
+    status_transition: {
+      icon: <ArrowRight className="w-5 h-5 text-indigo-600" />,
+      title: "Status Transition",
+      description: `When service moves from "${conditionName}" to "${actionName}", this automation will trigger and send notifications to the customer.`,
+      bgColor: "bg-indigo-50",
+      borderColor: "border-indigo-200",
+      textColor: "text-indigo-800",
+    },
+  };
+
+  return helpConfig.status_transition;
 };
