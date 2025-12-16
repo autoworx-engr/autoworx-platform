@@ -22,6 +22,10 @@ import { Company, TwilioCredentials, InfobipConfig } from "@prisma/client";
 import { useCharacterLimit } from "@/hooks/useCharecterLimit";
 import CarLoading from "@/components/common/CarLoading";
 import { AppointmentTemplateVariable } from "@/components/Lists/NewTemplate";
+import TooltipLabel from "./ToolTipLabel";
+import { getInvoiceTypeHelp } from "./AllAutomationHelper";
+import InfoCard from "./InfoCard";
+import { TipBox } from "./TagautomationHelper";
 
 type RuleFormProps = {
   initialData?: Rule;
@@ -372,6 +376,7 @@ const InvoiceRuleForm: React.FC<RuleFormProps> = ({
     );
   }
 
+  const typeHelp = getInvoiceTypeHelp(formData.type!);
   return (
     <div>
       <div className="rounded-md border bg-white p-4 shadow-sm md:p-6">
@@ -390,28 +395,90 @@ const InvoiceRuleForm: React.FC<RuleFormProps> = ({
               />
 
               {/* Invoice type */}
-              <Selector
-                name="type"
-                label="Type"
-                options={invoiceTypeOptions}
-                value={formData.type!}
-                onChange={(value) => handleChange("type", value)}
-                required
-                error={error.type}
-              />
+              <div className="relative">
+                <TooltipLabel
+                  label="Type"
+                  tooltipText={
+                    <div className="space-y-1">
+                      <p className="font-semibold mb-1">
+                        Choose document type:
+                      </p>
+                      <p>
+                        <strong>Invoice:</strong> Final bill for completed work
+                      </p>
+                      <p>
+                        <strong>Estimate:</strong> Quote for proposed work
+                      </p>
+                    </div>
+                  }
+                  required
+                  icon="question"
+                />
+
+                <Selector
+                  name="type"
+                  // label="Type"
+                  options={invoiceTypeOptions}
+                  value={formData.type!}
+                  onChange={(value) => handleChange("type", value)}
+                  required
+                  error={error.type}
+                  labelClassName="hidden"
+                />
+
+                {typeHelp && (
+                  <InfoCard
+                    icon={typeHelp.icon}
+                    title={typeHelp.title}
+                    description={typeHelp.desc}
+                    bgColor={typeHelp.bgColor}
+                    borderColor={typeHelp.borderColor}
+                    textColor={typeHelp.textColor}
+                  />
+                )}
+              </div>
 
               {/* Invoice Status */}
-              <Selector
-                name="status"
-                label="Status"
-                options={stages}
-                value={formData.invoiceStatusId!}
-                onChange={(value) => handleChange("invoiceStatusId", value)}
-                required
-                disabled={stageLoading}
-                isClear={true}
-                error={error.invoiceStatusId}
-              />
+
+              <div className="relative">
+                <TooltipLabel
+                  label="Status"
+                  tooltipText={
+                    <div className="space-y-2">
+                      <p className="font-semibold mb-1">
+                        When to trigger this automation:
+                      </p>
+                      <p>
+                        Select the pipeline status that will trigger this
+                        automation. When an invoice/estimate moves to this
+                        status, the notification will be sent automatically.
+                      </p>
+                      <p className="mt-2 text-xs italic">
+                        These are your shop pipeline stages from the target
+                        column.
+                      </p>
+                    </div>
+                  }
+                  required
+                />
+                <Selector
+                  name="status"
+                  // label="Status"
+                  options={stages}
+                  value={formData.invoiceStatusId!}
+                  onChange={(value) => handleChange("invoiceStatusId", value)}
+                  required
+                  disabled={stageLoading}
+                  isClear={true}
+                  error={error.invoiceStatusId}
+                  labelClassName="hidden"
+                />
+
+                <TipBox
+                  message="The automation will trigger when an invoice/estimate reaches this status in your pipeline."
+                  variant="info"
+                />
+              </div>
 
               {/* Time Delay */}
               <Selector
@@ -521,6 +588,12 @@ const InvoiceRuleForm: React.FC<RuleFormProps> = ({
                 VARIABLES={template_variable_options}
                 hasBackground={true}
               />
+              <div className="">
+                <TipBox
+                message="Click any variable to copy it, then paste it into your template where you want the dynamic content to appear. For example: 'Hi <CLIENT>, your invoice is ready: <INVOICE_LINK>'"
+                variant="info"
+              />
+              </div>
             </Box>
 
             {/* Save & Cancel Buttons */}

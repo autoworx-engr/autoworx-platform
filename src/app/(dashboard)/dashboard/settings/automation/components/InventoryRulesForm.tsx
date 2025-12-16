@@ -22,7 +22,6 @@ import {
   getInventoryActionHelp,
   getInventoryConditionHelp,
 } from "./InventoryAutomationHelper";
-import { Users } from "lucide-react";
 import { TipBox } from "./TagautomationHelper";
 
 type RuleFormProps = {
