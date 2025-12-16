@@ -16,6 +16,14 @@ import { useCreateInventoryAutomationRule } from "@/hooks/inventory-automation/u
 import { useUpdateInventoryAutomationRule } from "@/hooks/inventory-automation/useUpdateInventoryAutomationRule";
 import { useFindOneInventoryAutomationRule } from "@/hooks/inventory-automation/useFindOneInventoryAutomationRule";
 import CarLoading from "@/components/common/CarLoading";
+import TooltipLabel from "./ToolTipLabel";
+import InfoCard from "./InfoCard";
+import {
+  getInventoryActionHelp,
+  getInventoryConditionHelp,
+} from "./InventoryAutomationHelper";
+import { Users } from "lucide-react";
+import { TipBox } from "./TagautomationHelper";
 
 type RuleFormProps = {
   initialData?: Rule;
@@ -102,7 +110,6 @@ const InventoryRuleForm: React.FC<RuleFormProps> = ({
     loadData();
   }, [isEdit, id, data?.data, mode]);
 
-  console.log("employess", employees);
   // Update rule on initial data change
   useEffect(() => {
     if (initialData) {
@@ -186,6 +193,8 @@ const InventoryRuleForm: React.FC<RuleFormProps> = ({
     }
   };
 
+  const conditionHelpContent = getInventoryConditionHelp(formData.condition);
+  const actionHelpContent = getInventoryActionHelp(formData.action || "");
   return (
     <>
       {loading || isLoading || isFetching ? (
@@ -194,7 +203,7 @@ const InventoryRuleForm: React.FC<RuleFormProps> = ({
         </div>
       ) : (
         <div>
-          <div className="h-[600px] rounded-md border bg-white p-4 shadow-sm md:p-6">
+          <div className=" rounded-md border bg-white p-4 shadow-sm md:p-6">
             <Paper elevation={0} className="mx-auto max-w-lg rounded-lg">
               <form onSubmit={handleSubmit}>
                 {/* Title */}
@@ -209,15 +218,45 @@ const InventoryRuleForm: React.FC<RuleFormProps> = ({
                 />
 
                 {/* Frequency */}
-                <Selector
-                  name="frequency"
-                  label="Frequency"
-                  options={Frequency}
-                  value={formData.frequency!}
-                  onChange={(value) => handleChange("frequency", value)}
-                  required
-                  error={error.frequency}
-                />
+
+                <div className="relative">
+                  <TooltipLabel
+                    label="Frequency"
+                    tooltipText={
+                      <div className="space-y-1">
+                        <p className="font-semibold mb-1">
+                          How often to check inventory:
+                        </p>
+                        <p>
+                          <strong>Daily:</strong> Check once every day
+                        </p>
+                        <p>
+                          <strong>Weekly:</strong> Check once every week
+                        </p>
+                        <p>
+                          <strong>Monthly:</strong> Check once every month
+                        </p>
+                        <p>
+                          <strong>Every Two Months:</strong> Check every 60 days
+                        </p>
+                      </div>
+                    }
+                    required
+                    icon="question"
+                  />
+
+                  <Selector
+                    name="frequency"
+                    // label="Frequency"
+                    options={Frequency}
+                    value={formData.frequency!}
+                    onChange={(value) => handleChange("frequency", value)}
+                    required
+                    error={error.frequency}
+                    labelClassName="hidden"
+                  />
+                </div>
+
                 {/* Day */}
 
                 {formData.frequency === "WEEKLY" && (
@@ -233,25 +272,91 @@ const InventoryRuleForm: React.FC<RuleFormProps> = ({
                 )}
 
                 {/* Condition */}
-                <Selector
-                  name="condition"
-                  label="Condition"
-                  options={InventoryConditions}
-                  value={formData.condition}
-                  onChange={(value) => handleChange("condition", value)}
-                  required
-                  error={error.condition}
-                />
+
+                <div className="relative">
+                  <TooltipLabel
+                    label="Condition"
+                    tooltipText={
+                      <div className="space-y-1">
+                        <p className="font-semibold mb-1">
+                          Stock level conditions:
+                        </p>
+                        <p>
+                          <strong>Low Stock:</strong> Alert when stock is
+                          running low
+                        </p>
+                        <p>
+                          <strong>Out of Stock:</strong> Alert when completely
+                          out of stock
+                        </p>
+                        <p>
+                          <strong>Both:</strong> Alert for both situations
+                        </p>
+                      </div>
+                    }
+                    required
+                    icon="question"
+                  />
+                  <Selector
+                    name="condition"
+                    // label="Condition"
+                    options={InventoryConditions}
+                    value={formData.condition}
+                    onChange={(value) => handleChange("condition", value)}
+                    required
+                    error={error.condition}
+                    labelClassName="hidden"
+                  />
+
+                  {conditionHelpContent && (
+                    <InfoCard
+                      icon={conditionHelpContent.icon}
+                      title={conditionHelpContent.title}
+                      description={conditionHelpContent.desc}
+                      bgColor={conditionHelpContent.bgColor}
+                      borderColor={conditionHelpContent.borderColor}
+                      textColor={conditionHelpContent.textColor}
+                    />
+                  )}
+                </div>
+
                 {/* Action */}
-                <Selector
-                  name="action"
-                  label="Action"
-                  options={InventoryActions}
-                  value={formData.action}
-                  onChange={(value) => handleChange("action", value)}
-                  required
-                  error={error.action}
-                />
+                <div className="relative">
+                  <TooltipLabel
+                    label="Action"
+                    tooltipText="Choose how to notify your team members about stock issues"
+                    required
+                  />
+                  <Selector
+                    name="action"
+                    // label="Action"
+                    options={InventoryActions}
+                    value={formData.action}
+                    onChange={(value) => handleChange("action", value)}
+                    required
+                    error={error.action}
+                    labelClassName="hidden"
+                  />
+
+                  {actionHelpContent && (
+                    <InfoCard
+                      icon={actionHelpContent.icon}
+                      title={actionHelpContent.title}
+                      description={actionHelpContent.desc}
+                      bgColor={actionHelpContent.bgColor}
+                      borderColor={actionHelpContent.borderColor}
+                      textColor={actionHelpContent.textColor}
+                    />
+                  )}
+
+                  {formData.action === "BOTH" && (
+                    <TipBox
+                      message="When using 'Both', ensure all selected team members have valid email addresses and phone numbers in their profiles."
+                      variant="warning"
+                    />
+                  )}
+                </div>
+
                 {/* Vendor */}
                 {/* <Selector
               name="vendor"
@@ -269,15 +374,27 @@ const InventoryRuleForm: React.FC<RuleFormProps> = ({
               onChange={(value) => handleChange("teamMemberUserIds", value)}
             /> */}
 
-                <MultiSelect
-                  options={teamMembersOptions!}
-                  value={formData.teamMemberUserIds}
-                  onChange={(value) => handleChange("teamMemberUserIds", value)}
-                  label="Send to Team"
-                  placeholder="Select options"
-                  required={false}
-                  disabled={!employees}
-                />
+                <div className="relative">
+                  <TooltipLabel
+                    label="Send to Team"
+                    tooltipText="Select team members who will receive the stock alerts. You can choose multiple members."
+                    required
+                    icon="question"
+                  />
+                  <MultiSelect
+                    options={teamMembersOptions!}
+                    value={formData.teamMemberUserIds}
+                    onChange={(value) =>
+                      handleChange("teamMemberUserIds", value)
+                    }
+                    // label="Send to Team"
+                    placeholder="Select options"
+                    required={false}
+                    disabled={!employees}
+                    isSearch
+                  />
+                </div>
+
                 {/* Save & Cancel Buttons */}
                 <div className="flex justify-end pt-4">
                   <button

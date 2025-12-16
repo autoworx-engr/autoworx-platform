@@ -11,7 +11,7 @@ type MultiSelectProps = {
   options: Option[];
   value: (string | number)[];
   onChange: (newValue: (string | number)[]) => void;
-  label: string;
+  label?: string;
   placeholder?: string;
   isSearch?: boolean;
   disabled?: boolean;

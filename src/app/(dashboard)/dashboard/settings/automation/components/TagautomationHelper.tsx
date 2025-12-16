@@ -1,9 +1,7 @@
-
 import { Tooltip } from "antd";
 import { InfoCircleOutlined, QuestionCircleOutlined } from "@ant-design/icons";
 import { Target, MessageSquare, Clock, Info, X, Zap } from "lucide-react";
 import { useState } from "react";
-
 
 /**
  * Returns condition-specific help content with icons and styling
@@ -42,33 +40,6 @@ export const getConditionHelp = (conditionType: string) => {
 /**
  * Renders an info card with icon, title, and description
  */
-export const InfoCard = ({
-  icon,
-  title,
-  description,
-  bgColor,
-  borderColor,
-  textColor,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  bgColor: string;
-  borderColor: string;
-  textColor: string;
-}) => (
-  <div
-    className={`flex gap-3 p-3 rounded-lg ${bgColor} border-l-4 ${borderColor} mt-3 animate-fadeIn`}
-  >
-    <div className="flex-shrink-0 mt-0.5">{icon}</div>
-    <div>
-      <div className={`font-medium text-sm ${textColor}`}>{title}</div>
-      <div className={`text-xs mt-1 ${textColor} opacity-90`}>
-        {description}
-      </div>
-    </div>
-  </div>
-);
 
 /**
  * Renders a guide card with dismissible close button
@@ -150,42 +121,45 @@ const FlowVisualization = ({
 };
 
 /**
- * Renders a tooltip-wrapped label
+ * Renders a helpful tip box
  */
-export const TooltipLabel = ({
-  label,
-  tooltipText,
-  required = false,
-  icon = "info",
+export const TipBox = ({
+  message,
+  variant = "info",
 }: {
-  label: string;
-  tooltipText: string | React.ReactNode;
-  required?: boolean;
-  icon?: "info" | "question";
+  message: string;
+  variant?: "info" | "warning" | "success";
 }) => {
-  const IconComponent =
-    icon === "question" ? QuestionCircleOutlined : InfoCircleOutlined;
+  const variants = {
+    info: {
+      bg: "bg-blue-50",
+      border: "border-blue-200",
+      text: "text-blue-900",
+      emoji: "💡",
+    },
+    warning: {
+      bg: "bg-amber-50",
+      border: "border-amber-200",
+      text: "text-amber-900",
+      emoji: "⚠️",
+    },
+    success: {
+      bg: "bg-green-50",
+      border: "border-green-200",
+      text: "text-green-900",
+      emoji: "✅",
+    },
+  };
 
+  const style = variants[variant];
   return (
-    <div className="flex items-center gap-1 mb-1">
-      <span className="font-medium text-gray-500">
-        {label} {required && <span className="text-red-500">*</span>}
-      </span>
-      <Tooltip title={tooltipText} placement="top">
-        <IconComponent className="text-gray-400 hover:text-gray-600 cursor-help text-xs" />
-      </Tooltip>
+    <div
+      className={`flex items-start gap-2 mt-2 p-2 ${style.bg} border ${style.border} rounded`}
+    >
+      <span className="text-base">{style.emoji}</span>
+      <p className={`text-xs ${style.text}`}>
+        <strong>Tip:</strong> {message}
+      </p>
     </div>
   );
 };
-
-/**
- * Renders a helpful tip box
- */
-export const TipBox = ({ message }: { message: string }) => (
-  <div className="flex items-start gap-2 mt-2 p-2 bg-amber-50 border border-amber-200 rounded">
-    <span className="text-base">💡</span>
-    <p className="text-xs text-amber-900">
-      <strong>Tip:</strong> {message}
-    </p>
-  </div>
-);

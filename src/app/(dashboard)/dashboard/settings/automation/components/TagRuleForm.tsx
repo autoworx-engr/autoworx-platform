@@ -39,10 +39,10 @@ import { AppointmentTemplateVariable } from "@/components/Lists/NewTemplate";
 import {
   getConditionHelp,
   GuideCard,
-  InfoCard,
   TipBox,
-  TooltipLabel,
 } from "./TagautomationHelper";
+import TooltipLabel from "./ToolTipLabel";
+import InfoCard from "./InfoCard";
 // import { CircleQuestionMark } from 'lucide-react';
 type RuleFormProps = {
   mode: "create" | "edit" | undefined;
