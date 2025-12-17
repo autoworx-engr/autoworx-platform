@@ -125,64 +125,7 @@ export const getPipelineConditionHelp = (conditionType: string) => {
   return helpConfig[conditionType as keyof typeof helpConfig] || null;
 };
 
-/**
- * Info Card Component
- */
-const InfoCard = ({
-  icon,
-  title,
-  description,
-  bgColor,
-  borderColor,
-  textColor,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  bgColor: string;
-  borderColor: string;
-  textColor: string;
-}) => (
-  <div
-    className={`flex gap-3 p-3 rounded-lg ${bgColor} border-l-4 ${borderColor} mt-3 animate-fadeIn`}
-  >
-    <div className="flex-shrink-0 mt-0.5">{icon}</div>
-    <div>
-      <div className={`font-medium text-sm ${textColor}`}>{title}</div>
-      <div className={`text-xs mt-1 ${textColor} opacity-90`}>
-        {description}
-      </div>
-    </div>
-  </div>
-);
 
-/**
- * Guide Card Component
- */
-const PipelineGuideCard = ({ onClose }: { onClose: () => void }) => (
-  <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-    <div className="flex items-start justify-between">
-      <div className="flex gap-3">
-        <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-        <div className="text-sm text-blue-900">
-          <p className="font-medium mb-1">How Pipeline Automation Works?</p>
-          <p className="text-xs leading-relaxed">
-            Select Stage(s) → Choose Condition → Set Action Column → Automatic
-            Movement
-          </p>
-        </div>
-      </div>
-      <button
-        type="button"
-        onClick={onClose}
-        className="text-blue-600 hover:text-blue-800 transition-colors p-1"
-        aria-label="Close guide"
-      >
-        <X className="w-4 h-4" />
-      </button>
-    </div>
-  </div>
-);
 
 /**
  * Flow Visualization for Pipeline
@@ -289,35 +232,4 @@ export const getCampaignConditionHelp = ({
   return helpContent.Condition;
 };
 
-const getCommunicationHelp = (commType: string) => {
-  if (!commType) return null;
 
-  const helpContent = {
-    SMS: {
-      icon: MessageSquare,
-      title: "SMS Campaign",
-      desc: "Send promotional text messages directly to your customers' phones. High open rates and immediate delivery.",
-      bgColor: "bg-green-50",
-      borderColor: "border-green-200",
-      textColor: "text-green-800",
-    },
-    EMAIL: {
-      icon: Mail,
-      title: "Email Campaign",
-      desc: "Send detailed marketing emails with rich content and attachments. Perfect for newsletters and promotional offers.",
-      bgColor: "bg-blue-50",
-      borderColor: "border-blue-200",
-      textColor: "text-blue-800",
-    },
-    BOTH: {
-      icon: Mail,
-      title: "Multi-Channel Campaign",
-      desc: "Send both SMS and Email for maximum reach. Your message will be delivered through multiple channels to ensure visibility.",
-      bgColor: "bg-indigo-50",
-      borderColor: "border-indigo-200",
-      textColor: "text-indigo-800",
-    },
-  };
-
-  // return helpContent[commType];
-};

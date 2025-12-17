@@ -369,7 +369,7 @@ const PipelineRuleForm = ({
                 <div className="space-y-1">
                   <p className="font-semibold mb-1">Destination column:</p>
                   <p>
-                    Choose which column deals should move to when the condition
+                    Choose which column leads should move to when the condition
                     is met.
                   </p>
                   <p className="mt-2">
