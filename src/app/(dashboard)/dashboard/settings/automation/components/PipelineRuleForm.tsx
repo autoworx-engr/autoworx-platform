@@ -266,7 +266,7 @@ const PipelineRuleForm = ({
 
   return (
     <>
-      <div className="h-[600px] rounded-md border bg-white p-4 shadow-sm md:p-6">
+      <div className="min-h-[600px] rounded-md border bg-white p-4 shadow-sm md:p-6">
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Title */}
           <SlimInput
@@ -399,7 +399,8 @@ const PipelineRuleForm = ({
                   A lead in "
                   {formData.stageIds
                     .map((id) => stages.find((s) => s.id === id)?.title)
-                    .join(", ")} {}
+                    .join(", ")}{" "}
+                  {}
                   will move to "{selectedActionStage?.title}" when the condition
                   is met.
                 </span>
