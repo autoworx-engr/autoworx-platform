@@ -32,7 +32,7 @@ const SearchBox = React.forwardRef(function SearchBox(
       <input
         ref={ref}
         // value={searchText}
-        placeholder="search for a company"
+        placeholder="Search for a Company"
         onChange={onChangeInput}
         type="text"
         className="w-full rounded-sm border border-primary-foreground bg-background py-0.5 pl-7 leading-6 outline-none text-base"
