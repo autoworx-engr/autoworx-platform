@@ -14,7 +14,10 @@ import { usePipelineStagesStore } from "@/stores/pipelineStagesStore";
 import { Spin } from "antd";
 import { useAllPipelineAutomationRules } from "@/hooks/pipeline-automation/useAllPipelineAutomationRules";
 import CarLoading from "@/components/common/CarLoading";
-import { getPipelineConditionHelp, PipelineFlowVisualization } from "./AllAutomationHelper";
+import {
+  getPipelineConditionHelp,
+  PipelineFlowVisualization,
+} from "./AllAutomationHelper";
 import TooltipLabel from "./ToolTipLabel";
 import InfoCard from "./InfoCard";
 import { TipBox } from "./TagautomationHelper";
@@ -393,8 +396,10 @@ const PipelineRuleForm = ({
               <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded flex items-center gap-2 text-xs text-green-900">
                 <ArrowRight className="w-4 h-4 flex-shrink-0" />
                 <span>
-                  <strong>Example:</strong> A lead in "
-                  {stages?.find((s) => s.id === formData.stageIds[0])?.title}"
+                  A lead in "
+                  {formData.stageIds
+                    .map((id) => stages.find((s) => s.id === id)?.title)
+                    .join(", ")} {}
                   will move to "{selectedActionStage?.title}" when the condition
                   is met.
                 </span>
@@ -430,8 +435,8 @@ const PipelineRuleForm = ({
         action={selectedActionStage?.title || ""}
       /> */}
 
-      {/* Add CSS for animations */}
-      {/* <style jsx>{`
+        {/* Add CSS for animations */}
+        {/* <style jsx>{`
         @keyframes fadeIn {
           from {
             opacity: 0;
