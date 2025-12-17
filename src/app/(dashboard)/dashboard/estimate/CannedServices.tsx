@@ -65,6 +65,8 @@ export default function CannedServices({
     });
 
     setFilteredData(filtered);
+    // Reset to page 1 whenever search or filter changes
+    setCurrentPage(1);
   }, [services, serviceSearch, selectedCategory]);
 
   useEffect(() => {

@@ -9,7 +9,7 @@ export default function SearchTerms() {
       <Search size={18} className="absolute left-3 top-3 text-gray-400" />
       <input
         type="text"
-        placeholder="Search..."
+        placeholder="Search "
         className="w-full rounded border border-gray-300 p-2 pl-10"
         onChange={(e) => {
           setFilter({ search: e.target.value });
