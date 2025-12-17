@@ -37,9 +37,9 @@ export default function SelectTemplate({
   // Infinite query
   const {
     data: infiniteData,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
+    // fetchNextPage,
+    // hasNextPage,
+    // isFetchingNextPage,
   } = useTemplateListInfiniteQuery(debouncedSearchTerm);
 
   const templateList = useMemo(
@@ -89,10 +89,10 @@ export default function SelectTemplate({
           ]}
           selectedItem={template}
           setSelectedItem={setTemplate}
-          useInfiniteScroll
-          hasNextPage={hasNextPage}
-          fetchNextPage={fetchNextPage}
-          isFetchingNextPage={isFetchingNextPage}
+          // useInfiniteScroll
+          // hasNextPage={hasNextPage}
+          // fetchNextPage={fetchNextPage}
+          // isFetchingNextPage={isFetchingNextPage}
           footer={
             template ? (
               <button
