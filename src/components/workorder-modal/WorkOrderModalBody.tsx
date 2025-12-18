@@ -122,7 +122,6 @@ export default function WorkOrderModalBody({
   };
 
   const technicianPhotos = getTechnicianPhotos();
-  console.log("Technician Photos:", technicianPhotos);
   return (
     <DialogContent className="h-full min-w-fit overflow-y-auto sm:max-w-[740px] lg:h-fit">
       <div className="mt-4 flex items-center justify-between gap-1 lg:mt-4">
