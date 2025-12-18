@@ -235,7 +235,7 @@ export default function WorkOrderModalBody({
                 </button>
               </DialogTrigger>
 
-              <DialogContent className="min-w-[560px] max-w-3xl overflow-y-auto h-full lg:h-fit">
+              <DialogContent className="max-w-3xl  overflow-y-auto h-full lg:h-fit">
                 <ImagesDialogContent
                   technicianPhotos={technicianPhotos}
                   clientId={invoice?.client?.id}

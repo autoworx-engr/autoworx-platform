@@ -231,9 +231,9 @@ export function ImagesDialogContent({
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 ">
       {/* Header */}
-      <div className="flex flex-col gap-4 border-b border-border bg-background p-4 md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col gap-4 border-b border-border bg-background  md:flex-row md:items-center md:justify-between pb-2 px-4">
         <div className="flex flex-col gap-1">
           <h2 className="text-xl font-semibold text-foreground md:text-2xl">
             Images
