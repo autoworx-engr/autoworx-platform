@@ -45,6 +45,7 @@ export default function CannedLabor({
   const [activeModal, setActiveModal] = useState<{ [key: string]: boolean }>(
     {}
   );
+  //  Show pagination if many labors
 
   useEffect(() => {
     const filtered = labors.filter((row) => {
@@ -64,9 +65,10 @@ export default function CannedLabor({
     });
 
     setFilteredData(filtered);
+    // Reset to page 1 whenever search or filter changes
+    setCurrentPage(1);
   }, [laborSearch, selectedCategory, labors]);
 
-  //  Show pagination if many labors
   useEffect(() => {
     setShowPagination(filteredData?.length > 10);
   }, [filteredData]);

@@ -5,8 +5,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { useInventoryFilterStore } from "@/stores/inventoryFilter";
 import { useListsStore } from "@/stores/lists";
 import { Search } from "lucide-react";
-import { usePathname, useSearchParams } from "next/navigation";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 
 type TSearchFilterProps = {
@@ -62,7 +61,7 @@ export default function SearchFilter({ searchParams }: TSearchFilterProps) {
 
           <input
             type="text"
-            placeholder="Search by name"
+            placeholder="Search by Name"
             className="w-full bg-transparent text-sm font-medium text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none"
             value={search}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
