@@ -18,13 +18,12 @@ import { TAttachments } from "@/types/automation";
 import CustomRadioGroup from "./CustomRadioGroup";
 import { Box, Paper, Switch, Typography } from "@mui/material";
 import ActiveTemplate from "./ActiveTemplate";
-import TemplateVariable from "./TemplateVariable";
+
 import { useCharacterLimit } from "@/hooks/useCharecterLimit";
 import {
   handleFileSelection,
   uploadAllAttachments,
 } from "@/utils/handleFileAttachment";
-
 import { useCreateTagAutomationRule } from "@/hooks/tag-automation/useCreateTagAutomationRule";
 
 import { useFindOneTagAutomationRule } from "@/hooks/tag-automation/useFindOneTagAutomationRule";
@@ -37,7 +36,14 @@ import {
 import { errorToast } from "@/lib/toast";
 import { Spin } from "antd";
 import { AppointmentTemplateVariable } from "@/components/Lists/NewTemplate";
-
+import {
+  getConditionHelp,
+  GuideCard,
+  TipBox,
+} from "./TagautomationHelper";
+import TooltipLabel from "./ToolTipLabel";
+import InfoCard from "./InfoCard";
+// import { CircleQuestionMark } from 'lucide-react';
 type RuleFormProps = {
   mode: "create" | "edit" | undefined;
   id?: string | null;
@@ -108,6 +114,9 @@ const TagRuleForm = ({
     (formData.emailBody || formData.smsBody || "") as string,
     maxLength
   );
+
+  const helpContent = getConditionHelp(formData.condition_type);
+  const [showGuide, setShowGuide] = useState(true);
   const [error, setError] = useState<Record<string, string>>({});
   const {
     stages,
@@ -618,17 +627,49 @@ const TagRuleForm = ({
             required
             error={error.pipelineType}
           />
+          <div className="relative">
+            <TooltipLabel
+              label="Condition"
+              tooltipText={
+                <div className="space-y-1 py-1">
+                  <p className="font-semibold">Three types of conditions:</p>
+                  <p>
+                    <strong>Pipeline:</strong> Move lead to another column
+                  </p>
+                  <p>
+                    <strong>Communication:</strong> Send message to client
+                  </p>
+                  <p>
+                    <strong>Post-Tag:</strong> Add tags after reaching column
+                  </p>
+                </div>
+              }
+              required
+              icon="question"
+            />
+            <Selector
+              name="condition"
+              label="Condition"
+              options={Conditions}
+              value={formData.condition_type!}
+              onChange={(value) => handleChange("condition_type", value)}
+              required
+              placeholder="Select a condition"
+              error={error.condition_type}
+              labelClassName="hidden"
+            />
 
-          <Selector
-            name="condition"
-            label="Condition"
-            options={Conditions}
-            value={formData.condition_type!}
-            onChange={(value) => handleChange("condition_type", value)}
-            required
-            placeholder="Select a condition"
-            error={error.condition_type}
-          />
+            {helpContent && (
+              <InfoCard
+                icon={helpContent.icon}
+                title={helpContent.title}
+                description={helpContent.desc}
+                bgColor={helpContent.bgColor}
+                borderColor={helpContent.borderColor}
+                textColor={helpContent.textColor}
+              />
+            )}
+          </div>
           {formData.pipelineType !== "" && (
             <MultiSelect
               options={
@@ -688,21 +729,24 @@ const TagRuleForm = ({
           )}
 
           {formData.condition_type === "post_tag" && (
-            <MultiSelect
-              // For post-tag condition we need to pick stages (columns) from the pipeline
-              options={stageOptions}
-              value={formData.columnIds || []}
-              onChange={(value) => handleChange("columnIds", value)}
-              label="Select Stages to Trigger Rule"
-              placeholder={
-                formData.pipelineType === "SHOP"
-                  ? "Select shop stages"
-                  : "Select sales stages"
-              }
-              required
-              error={error.columnIds}
-              disabled={stagesLoading}
-            />
+            <div>
+              <MultiSelect
+                // For post-tag condition we need to pick stages (columns) from the pipeline
+                options={stageOptions}
+                value={formData.columnIds || []}
+                onChange={(value) => handleChange("columnIds", value)}
+                label="Select Stages to Trigger Rule"
+                placeholder={
+                  formData.pipelineType === "SHOP"
+                    ? "Select shop stages"
+                    : "Select sales stages"
+                }
+                required
+                error={error.columnIds}
+                disabled={stagesLoading}
+              />
+              <TipBox message="When a lead reaches this column, the selected tags will be automatically added to it." />
+            </div>
           )}
 
           {formData.condition_type === "communication" && (
@@ -833,19 +877,25 @@ const TagRuleForm = ({
           )}
 
           {formData.condition_type === "post_tag" && (
-            <CustomRadioGroup
-              name="ruleType"
-              label="Rule Type"
-              value={formData.ruleType}
-              onChange={handleChange}
-              options={[
-                { label: "One-time", value: "one_time" },
-                {
-                  label: "Recurring (after condition is met)",
-                  value: "recurring",
-                },
-              ]}
-            />
+            <div className="relative">
+              <TooltipLabel
+                label="Rule Type"
+                tooltipText="One-time: tags added only once. Recurring: tags added every time the condition is met"
+              />
+              <CustomRadioGroup
+                name="ruleType"
+                // label="Rule Type"
+                value={formData.ruleType}
+                onChange={handleChange}
+                options={[
+                  { label: "One-time", value: "one_time" },
+                  {
+                    label: "Recurring (after condition is met)",
+                    value: "recurring",
+                  },
+                ]}
+              />
+            </div>
           )}
 
           <div className="flex justify-end pt-4">

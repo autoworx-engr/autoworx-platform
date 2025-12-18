@@ -18,6 +18,7 @@ import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd";
 import { Tag, User } from "@prisma/client";
 import {
   ArrowRightLeft,
+  BookCheck,
   Calendar,
   CirclePlus,
   MessageCircleMore,
@@ -902,22 +903,29 @@ export default function Pipelines({
                                           Add Task
                                         </span>
                                       </div>
-
+                                    </div>
+                                    <div className="group relative">
+                                      {/* button */}
+                                      {/* <CirclePlus
+                                        size={24}
+                                        strokeWidth={1.5}
+                                        className="mt-1 cursor-pointer"
+                                      /> */}
                                       {/* Invoice id */}
-                                      {(currentUser?.role === "manager" ||
-                                        currentUser?.role === "admin") && (
+                                      {(currentUser?.employeeType ===
+                                        "Manager" ||
+                                        currentUser?.employeeType === "Admin" ||
+                                        currentUser?.isSuperAdmin === true) && (
                                         <div className="group relative mx-0 mt-1 p-0">
                                           <InvoiceModal
                                             invoiceId={lead.invoiceId}
                                             buttonChild={
                                               <button className="group relative flex w-6 items-center justify-center">
-                                                <Image
-                                                  src="/icons/invoice.png"
-                                                  alt=""
-                                                  width={14}
-                                                  height={14}
+                                                <BookCheck
+                                                  width={18}
+                                                  height={18}
                                                 />
-                                                <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
+                                                <span className="invisible absolute bottom-full px-2 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C]  py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
                                                   View Invoice
                                                 </span>
                                               </button>
@@ -925,14 +933,6 @@ export default function Pipelines({
                                           />
                                         </div>
                                       )}
-                                    </div>
-                                    <div className="group relative">
-                                      {/* button */}
-                                      <CirclePlus
-                                        size={24}
-                                        strokeWidth={1.5}
-                                        className="mt-1 cursor-pointer"
-                                      />
                                     </div>
                                   </div>
                                 </li>
