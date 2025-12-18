@@ -73,6 +73,8 @@ export default function CannedLabor({
     });
 
     setFilteredData(filtered);
+    // Reset to page 1 whenever search or filter changes
+    setCurrentPage(1);
   }, [laborSearch, selectedCategory, labors]);
 
   useEffect(() => {

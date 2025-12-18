@@ -123,9 +123,7 @@ export default async function EmployeeInformation({
         {employee.employeeType !== "Sales" ? (
           <Payout info={info} showBreakdown={true} />
         ) : (
-          <div className="p-8 text-center text-slate-400 bg-slate-100 rounded-2xl border border-dashed border-slate-300">
-            Sales Payout Component Placeholder
-          </div>
+          <PayoutSales employee={employee} timezone={timezone} />
         )}
       </div>
 
