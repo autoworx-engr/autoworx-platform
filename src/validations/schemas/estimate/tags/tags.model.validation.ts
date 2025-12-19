@@ -16,8 +16,8 @@ export const tagModelValidationSchema = z
     //   message:
     //     "Background color must be a valid hex color code (e.g., #FFFFFF)",
     // }),
-    createdAt: z.date().default(() => new Date()),
-    updatedAt: z.date().default(() => new Date()),
+    createdAt: z.coerce.date().default(() => new Date()),
+    updatedAt: z.coerce.date().default(() => new Date()),
     companyId: z.number().int().positive(),
   })
   .refine(
@@ -28,7 +28,7 @@ export const tagModelValidationSchema = z
     {
       message: "updatedAt cannot be before createdAt",
       path: ["updatedAt"],
-    },
+    }
   )
   .refine(
     (data) => {
@@ -38,7 +38,7 @@ export const tagModelValidationSchema = z
     {
       message: "Text color and background color must be different",
       path: ["textColor"],
-    },
+    }
   );
 
 // Type inference

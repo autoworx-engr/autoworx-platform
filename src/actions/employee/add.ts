@@ -29,6 +29,7 @@ interface EmployeeData {
   profilePicture?: string;
   password: string;
   confirmPassword: string;
+  countryCode?: string
 }
 
 export async function addEmployee({
@@ -49,6 +50,7 @@ export async function addEmployee({
   profilePicture,
   password,
   confirmPassword,
+  countryCode
 }: EmployeeData): Promise<ServerAction | TErrorHandler> {
   try {
     const companyId = await getCompanyId();
@@ -94,6 +96,7 @@ export async function addEmployee({
         password: hashedPassword,
         companyId,
         role: "employee",
+        countryCode: countryCode,
       },
     });
 

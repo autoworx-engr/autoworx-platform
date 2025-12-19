@@ -20,6 +20,7 @@ export async function newVendor({
   company,
   website,
   notes,
+  countryCode,
 }: {
   name?: string;
   email?: string;
@@ -31,6 +32,7 @@ export async function newVendor({
   company: string;
   website?: string;
   notes?: string;
+  countryCode?:string;
 }): Promise<ServerAction | TErrorHandler> {
   try {
     const session = await getServerSession(authOptions);
@@ -66,6 +68,7 @@ export async function newVendor({
         website: validatedVendorData.website,
         notes: validatedVendorData.notes,
         companyId,
+        countryCode:countryCode
       },
     });
 

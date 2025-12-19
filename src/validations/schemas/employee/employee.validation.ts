@@ -80,6 +80,7 @@ export const updateEmployeeValidationSchema = z.object({
     .nullable(),
   email: requiredEmailValidationSchema,
   mobileNumber: phoneValidationSchema.optional(),
+  countryCode: z.string().optional(),
   address: z
     .string({ invalid_type_error: "Address must be a string" })
     .trim()

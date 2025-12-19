@@ -76,9 +76,7 @@ const NetworksPage = ({
       );
       setConnectedCompanies((prevConnected) => [
         ...prevConnected,
-        // The original code was potentially flawed here if unconnectedCompanies was not comprehensive.
-        // It relies on finding the newly connected company in the *initial* list of unconnectedCompanies.
-        // Assuming 'unconnectedCompanies' includes all companies (minus connected ones) loaded initially, this logic is preserved.
+
         ...unconnectedCompanies.filter((company) => company.id === companyId),
       ]);
       successToast(`Connected with ${companyName}`);
@@ -140,14 +138,14 @@ const NetworksPage = ({
   }, [currentCompany]);
 
   return (
-    <div className="min-h-full w-full p-4 sm:p-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
+    <div className="min-h-full w-full">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Collaborations Section */}
         <div>
           <h2 className="mb-6 text-2xl font-semibold text-gray-800">
-            🤝 Collaborations
+            Collaborations
           </h2>
-          <div className="space-y-4 rounded-xl border border-gray-200 bg-white p-6 shadow-xl min-h-[300px]">
+          <div className="space-y-4 rounded-xl border border-gray-200 bg-white p-2 shadow-xl min-h-[300px]">
             {connectedCompanies.length === 0 && (
               <p className="py-10 text-center text-sm text-gray-500">
                 No active collaborations found.
@@ -226,10 +224,10 @@ const NetworksPage = ({
           {/* network settings */}
           <div>
             <h2 className="mb-6 text-2xl font-semibold text-gray-800">
-              ⚙️ Network Settings
+              Network Settings
             </h2>
 
-            <div className="space-y-6 rounded-xl border border-gray-200 bg-white p-6 shadow-xl">
+            <div className="space-y-6 rounded-xl border border-gray-200 bg-white p-4 shadow-xl">
               {/* settings */}
               <div className="w-full space-y-4">
                 <div className="flex items-center justify-between border-b pb-3">
@@ -397,7 +395,7 @@ const NetworksPage = ({
           {/* possible collaborations nearby */}
           <div className="mt-8">
             <h3 className="mb-6 text-2xl font-semibold text-gray-800">
-              📍 Possible Collaborations Nearby
+              Possible Collaborations Nearby
             </h3>
             <div className="space-y-4">
               <div className="relative h-10 w-full">

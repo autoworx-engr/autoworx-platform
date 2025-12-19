@@ -17,7 +17,7 @@ import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import EditSalePurchaseList from "./EditSalePurchaseList";
 import { FormatUtcToTimezone } from "@/utils/FormatUtcToTimezone";
-import { SquarePen } from "lucide-react";
+import { SquarePen, ShoppingCart, Truck, DollarSign } from "lucide-react";
 
 enum Tab {
   Sales = "sales",
@@ -50,31 +50,32 @@ export default function SalesPurchaseHistoryClient({
   const view = searchParams?.get("view");
 
   return (
-    <div className="app-shadow mt-4 block min-h-[300px] w-full overflow-y-auto rounded-lg bg-background p-4 lg:max-h-[52%] lg:min-h-[52%]">
+    <div className="app-shadow mt-4 block min-h-[300px] overflow-y-auto rounded-lg bg-background p-4 lg:max-h-[52%] lg:min-h-[52%]">
       <Tabs.Root value={tab} onValueChange={(value) => setTab(value as Tab)}>
-        <Tabs.List className="flex gap-5">
+        <Tabs.List className="w-fit flex gap-3 items-center p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 shadow-sm">
           <Tabs.Trigger
             value={Tab.Sales}
             className={cn(
-              "rounded-md p-2 px-5 text-sm 2xl:text-lg",
+              "group relative flex items-center gap-2.5 rounded-lg px-4 py-2 text-sm 2xl:text-lg font-medium transition-all duration-300",
               tab === Tab.Sales
-                ? "bg-[#6571FF] text-white"
-                : "border border-[#6571FF] text-[#6571FF]"
+                ? "text-white shadow-md shadow-indigo-500/25 ring-1 ring-black/5 translate-y-[-1px] bg-gradient-to-r from-[#6571FF] to-[#5a66ee]"
+                : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200"
             )}
           >
-            {/* Use List */}
-            {view === "products" ? "Sales List" : "Use List"}
+            <DollarSign size={18} strokeWidth={2.5} className={cn("transition-colors duration-300", tab === Tab.Sales ? "text-white" : "text-slate-500 group-hover:text-[#6571FF]")} />
+            <span className="whitespace-nowrap">{view === "products" ? "Sales List" : "Use List"}</span>
           </Tabs.Trigger>
           <Tabs.Trigger
             value={Tab.Purchase}
             className={cn(
-              "rounded-md p-2 px-5 text-sm 2xl:text-lg",
+              "group relative flex items-center gap-2.5 rounded-lg px-4 py-2 text-sm 2xl:text-lg font-medium transition-all duration-300",
               tab === Tab.Purchase
-                ? "bg-[#6571FF] text-white"
-                : "border border-[#6571FF] text-[#6571FF]"
+                ? "text-white shadow-md shadow-indigo-500/25 ring-1 ring-black/5 translate-y-[-1px] bg-gradient-to-r from-[#6571FF] to-[#5a66ee]"
+                : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200"
             )}
           >
-            Purchase List
+            <ShoppingCart size={18} strokeWidth={2.5} className={cn("transition-colors duration-300", tab === Tab.Purchase ? "text-white" : "text-slate-500 group-hover:text-[#6571FF]")} />
+            <span className="whitespace-nowrap">Purchase List</span>
           </Tabs.Trigger>
         </Tabs.List>
         <div className="mt-3">
@@ -201,27 +202,27 @@ function Table({
               </td>
               {(user?.employeeType === "Admin" ||
                 user?.employeeType === "Manager") && (
-                <td className="text-center">
-                  {history.invoiceId ? (
-                    // <EditSalesList
-                    // productId={history.productId}
-                    // invoiceIds={[history.invoiceId]}
-                    // cost={parseInt(history?.price?.toString() || "0")}
-                    // productType={product?.type || "Product"}
-                    // history = {history}
-                    // />
-                    <></>
-                  ) : (
-                    <EditSalePurchaseList
-                      productId={history.productId}
-                      user={user}
-                      history={history}
-                      product={product!}
-                      invoiceIds={invoiceIds}
-                    />
-                  )}
-                </td>
-              )}
+                  <td className="text-center">
+                    {history.invoiceId ? (
+                      // <EditSalesList
+                      // productId={history.productId}
+                      // invoiceIds={[history.invoiceId]}
+                      // cost={parseInt(history?.price?.toString() || "0")}
+                      // productType={product?.type || "Product"}
+                      // history = {history}
+                      // />
+                      <></>
+                    ) : (
+                      <EditSalePurchaseList
+                        productId={history.productId}
+                        user={user}
+                        history={history}
+                        product={product!}
+                        invoiceIds={invoiceIds}
+                      />
+                    )}
+                  </td>
+                )}
             </tr>
           ))}
         </tbody>
@@ -229,94 +230,111 @@ function Table({
 
       {/* Mobile Card View (Hidden on Desktop) */}
       <div className="space-y-4 md:hidden">
-        {histories.map((history, index) => (
-          <div
-            key={history.id}
-            className={cn(
-              "rounded-lg border border-[#BFC4FF] p-4 shadow-sm",
-              index % 2 === 0 ? evenColor : oddColor
-            )}
-          >
-            <div className="flex items-center justify-between">
-              {product?.type === "Product" && (
-                <div className="flex justify-between">
-                  {/* <span className="font-medium">
-                  {type === "Sale" ? "Invoice" : "Receipt"}:
-                </span> */}
-                  {type === "Sale" && history.invoiceId ? (
+        {histories.map((history: any, index: number) => {
+          const isSale = type === "Sale";
+          const total = parseFloat(history.price?.toString() ?? "0") * Number(history.quantity);
+
+          // Determine the record's main contact name
+          const contactName = isSale
+            ? history.client?.firstName
+            : history.vendor?.name;
+
+          return (
+            <div
+              key={history.id}
+              className={cn(
+                "rounded-xl border border-slate-200 dark:border-slate-800 p-4 shadow-sm transition-shadow duration-200",
+                index % 2 === 0 ? evenColor : oddColor,
+                "hover:shadow-md dark:bg-slate-900/50" // Added dark mode and hover effect
+              )}
+            >
+              {/* Row 1: Type / Reference ID & Date */}
+              <div className="flex items-center justify-between border-b border-dashed border-slate-200 pb-2 mb-2 dark:border-slate-700">
+                {/* Reference Link/Status */}
+                <div className="text-sm font-semibold">
+                  {product?.type === "Product" && isSale && history.invoiceId ? (
                     <Link
                       href={`/dashboard/estimate/view/${history.invoiceId}`}
-                      className="text-[#6571FF]"
+                      className="text-[#6571FF] hover:underline"
                     >
                       {history.invoiceId}
                     </Link>
                   ) : (
-                    <span className="hidden text-red-500 md:block">
-                      --- Loss ---
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className={cn(
+                        "text-sm font-medium px-3 py-0.5 rounded-full",
+                        isSale ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"
+                      )}>
+                        {isSale ? "SALE" : "PURCHASE"}
+                      </span>
+                      {shouldShowActions && (
+                        <div>
+                          {/* Check 1: If it's a Purchase (not Sale) AND has an Invoice ID, link to edit the Invoice */}
+                          {!isSale && history.invoiceId ? (
+                            <Link
+                              href={`/dashboard/estimate/edit/${history.invoiceId}?clientId=${history.client?.id}`}
+                              className="text-[#6571FF] hover:text-indigo-500 transition-colors"
+                            >
+                              <SquarePen className="h-4 w-4" />
+                            </Link>
+                          ) : (
+                            // Check 2: Otherwise, show the inline Edit/Delete component
+                            <EditSalePurchaseList
+                              productId={history.productId}
+                              user={user}
+                              history={history}
+                              product={product!}
+                              invoiceIds={invoiceIds}
+                            />
+                          )}
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
-              )}
 
-              <div className="flex justify-between">
-                {/* <span className="font-medium">Date:</span> */}
-                <span>
+                {/* Date */}
+                <div className="text-sm font-medium text-slate-600 dark:text-slate-400">
                   {FormatUtcToTimezone(history.date, timezone, "MM/DD/YYYY")}
+                </div>
+              </div>
+
+              {/* Row 2: Contact Name */}
+              <div className="flex justify-between items-center text-sm">
+                <span className="font-medium text-slate-500 dark:text-slate-400">
+                  {isSale ? "Client" : "Vendor"} Name:
+                </span>
+                <span className="font-bold text-slate-600 dark:text-slate-200">
+                  {contactName ?? 'N/A'}
+                </span>
+              </div>
+
+              {/* Row 3: Price */}
+              <div className="flex justify-between items-center mt-2">
+                <span className="font-medium text-slate-500 dark:text-slate-400">Price:</span>
+                <span className="text-lg font-semibold text-slate-600 dark:text-white">
+                  {formatCurrency(parseFloat(history.price?.toString() ?? "0"))}
+                </span>
+              </div>
+
+              {/* Row 4: Quantity */}
+              <div className="flex justify-between items-center -mt-1 text-sm">
+                <span className="font-medium text-slate-500 dark:text-slate-400">Quantity:</span>
+                <span className="font-bold text-slate-600 dark:text-slate-200">
+                  {Number(history.quantity)}
+                </span>
+              </div>
+
+              {/* Row 5: Total */}
+              <div className="flex justify-between items-center border-t border-dashed border-slate-200 pt-2 mt-2 dark:border-slate-700">
+                <span className="font-semibold text-slate-600 dark:text-slate-300">Total:</span>
+                <span className="font-bold text-lg text-slate-600 dark:text-white">
+                  {formatCurrency(total)}
                 </span>
               </div>
             </div>
-            <div className="flex justify-between">
-              <span className="font-medium">Name:</span>
-              <span className="font-bold">
-                {type === "Sale"
-                  ? history.client?.firstName
-                  : history.vendor?.name}
-              </span>
-            </div>
-
-            <div className="flex justify-between">
-              <span className="font-medium">Price:</span>
-              <span className="text-[20px] font-bold">
-                ${history.price?.toString()}
-              </span>
-            </div>
-            <div className="-mt-[6px] flex justify-between">
-              <span className="font-medium">Quantity:</span>
-              <span className="font-bold">{Number(history.quantity)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="font-medium">Total:</span>
-              <span className="font-bold">
-                {formatCurrency(
-                  parseFloat(history.price?.toString() ?? "0") *
-                    Number(history.quantity)
-                )}
-              </span>
-            </div>
-
-            {shouldShowActions && (
-              <div className="flex items-center justify-between">
-                <span className="font-medium">Action:</span>
-                {type !== "Sale" && history.invoiceId ? (
-                  <Link
-                    href={`/dashboard/estimate/edit/${history.invoiceId}?clientId=${history.client?.id}`}
-                    className="text-[#6571FF]"
-                  >
-                    <SquarePen className="mt-1 h-4 w-4" />
-                  </Link>
-                ) : (
-                  <EditSalePurchaseList
-                    productId={history.productId}
-                    user={user}
-                    history={history}
-                    product={product!}
-                    invoiceIds={invoiceIds}
-                  />
-                )}
-              </div>
-            )}
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

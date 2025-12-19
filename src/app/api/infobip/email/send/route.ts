@@ -7,6 +7,8 @@ import path from "path";
 import { pipeline, Readable } from "stream";
 import { promisify } from "util";
 import os from "os";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/authOptions";
 
 const pump = promisify(pipeline);
 
@@ -31,7 +33,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const files = formData.getAll("files") as File[];
     const recipient = formData.get("recipient") as string | null;
     const text = (formData.get("text") as string | null) ?? "";
-
+    const session = await getServerSession(authOptions)
+    const currentUser = session?.user;
     if (!recipient) throw new Error("Recipient not provided");
 
     // Get client + lead context
@@ -146,6 +149,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           companyId: company.id,
           clientId: parseInt(recipient),
           messageId, // store Infobip's messageId
+          userId: Number(currentUser?.id) || null,
+
         },
       });
 
@@ -191,7 +196,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
       MailData = await db.mailgunEmail.findFirst({
         where: { id: mailData.id },
-        include: { attachments: true },
+        include: {
+          attachments: true, user: {
+            select: {
+              firstName: true,
+              lastName: true,
+            }
+          }
+        },
       });
     }
 
@@ -199,7 +211,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     for (const fp of filePaths) {
       try {
         if (fs.existsSync(fp)) fs.unlinkSync(fp);
-      } catch {}
+      } catch { }
     }
 
     // Trigger pipeline automations
@@ -212,7 +224,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           columnId: client.Lead.columnId,
         });
       }
-    } catch {}
+    } catch { }
 
     return NextResponse.json({ success: true, data: MailData });
   } catch (error: unknown) {

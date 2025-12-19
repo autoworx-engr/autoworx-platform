@@ -1,8 +1,9 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
+import BookDemoForm from "./BookDemoForm";
 
 const chaosStyles = `
   @keyframes chaosRotate {
@@ -24,6 +25,29 @@ const chaosStyles = `
 `;
 
 export default function Banner() {
+  const [shouldAutoPlay, setShouldAutoPlay] = useState(false);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+
+  useEffect(() => {
+    const updateAutoplay = () => {
+      setShouldAutoPlay(window.innerWidth >= 1024);
+    };
+
+    updateAutoplay();
+    window.addEventListener("resize", updateAutoplay);
+    return () => window.removeEventListener("resize", updateAutoplay);
+  }, []);
+
+  useEffect(() => {
+    if (!shouldAutoPlay) return;
+    const video = videoRef.current;
+    if (video && video.paused) {
+      video.play().catch(() => {
+        // Ignore autoplay rejection; user interaction will play.
+      });
+    }
+  }, [shouldAutoPlay]);
+
   return (
     <div className="bg-[#14252D05] px-4 pb-24 pt-10">
       <style dangerouslySetInnerHTML={{ __html: chaosStyles }} />
@@ -37,7 +61,9 @@ export default function Banner() {
             Meet Autoworx – The all-in-one platform built by restyling shop
             owners, for restyling shop owners.
           </p>
-          <div className="flex max-w-md flex-col gap-4 sm:flex-row">
+
+
+          {/* <div className="flex max-w-md flex-col gap-4 sm:flex-row">
             <Input placeholder="Enter your email" className="flex-1" />
             <Button
               className="bg-teal-600 px-6 hover:bg-teal-700"
@@ -52,7 +78,10 @@ export default function Banner() {
             >
               Book Demo →
             </Button>
-          </div>
+          </div> */}
+
+          <BookDemoForm />
+
           <p className="text-sm text-gray-500">
             Limited spots available for beta access
           </p>
@@ -61,9 +90,13 @@ export default function Banner() {
         <div className="relative overflow-hidden rounded-md">
           <video
             className="mx-auto h-[500px] w-[280px] rounded-2xl shadow-lg"
+            ref={videoRef}
             controls
-            autoPlay
+            autoPlay={shouldAutoPlay}
             muted
+            playsInline
+            preload={shouldAutoPlay ? "auto" : "metadata"}
+            poster={shouldAutoPlay ? undefined : "/images/solution/video-poster.png"}
           >
             <source
               src="/videos/solution_video.mp4"

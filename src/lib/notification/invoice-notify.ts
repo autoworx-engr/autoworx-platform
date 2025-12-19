@@ -2,6 +2,7 @@ import { sendUserNotifications } from "@/actions/notification/sendUserNotificati
 import { getUsersByRole } from "@/actions/user/getUserByRole";
 import { EmployeeType } from "@prisma/client";
 import { getCompanyId } from "../companyId";
+import { getVehicleByInvoiceId } from "@/actions/vehicle/getVehicleByInvoiceId";
 
 // send notification for when invoice is converted
 type TInvoiceConvertedNotification = {
@@ -30,12 +31,17 @@ export const sendInvoiceConvertedNotification = async ({
       firstName: true,
       lastName: true,
     });
-    const redirectUrl =
-      invoiceType === "Estimate"
-        ? "/dashboard/estimate"
-        : "/dashboard/estimate/invoices";
 
-    const description = `Estimate ${invoiceId} for ${clientName} converted to invoice ${invoiceId}. View in Autoworx`;
+    const vehicleInfo = await getVehicleByInvoiceId(invoiceId);
+    const { make, model, year } = vehicleInfo || {};
+    const vehicleName =
+      make && model
+        ? `${year ? year : ""} ${make} ${model}`
+        : make || invoiceId;
+
+    const redirectUrl = `/dashboard/estimate/view/${invoiceId}`;
+
+    const description = `Estimate ${invoiceId} for ${clientName} (${vehicleName}) converted to invoice ${invoiceId}. View in Autoworx`;
 
     const title = "Invoice Converted";
     for (const user of getUsers) {
@@ -81,8 +87,15 @@ export const sendInvoiceAuthorizeNotification = async ({
       id: true,
     });
 
+    const vehicleInfo = await getVehicleByInvoiceId(invoiceId);
+    const { make, model, year } = vehicleInfo || {};
+    const vehicleName =
+      make && model
+        ? `${year ? year : ""} ${make} ${model}`
+        : make || invoiceId;
+
     const redirectUrl = `/dashboard/estimate/view/${invoiceId}`;
-    const description = `Estimate ${invoiceId} for ${clientName} has been approved. See it in your Autoworx dashboard`;
+    const description = `Estimate ${invoiceId} for ${clientName} (${vehicleName}) has been approved. See it in your Autoworx dashboard`;
     const title = "Invoice Authorized";
 
     for (const user of getUsers) {
@@ -175,8 +188,15 @@ export const sendInvoiceDeliveredNotification = async ({
       id: true,
     });
 
+    const vehicleInfo = await getVehicleByInvoiceId(invoiceId);
+    const { make, model, year } = vehicleInfo || {};
+    const vehicleName =
+      make && model
+        ? `${year ? year : ""} ${make} ${model}`
+        : make || invoiceId;
+
     const redirectUrl = `/dashboard/estimate/view/${invoiceId}`;
-    const description = `Invoice ${invoiceId}${clientName ? ` for ${clientName}` : ""} has been delivered. Review it in Autoworx.`;
+    const description = `Invoice ${invoiceId}${clientName ? ` for ${clientName} (${vehicleName})` : ""} has been delivered. Review it in Autoworx.`;
     const title = "Invoice Delivered";
 
     for (const user of getUsers) {

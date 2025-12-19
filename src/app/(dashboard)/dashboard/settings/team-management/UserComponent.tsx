@@ -61,7 +61,7 @@ const UserList: React.FC = () => {
    <div className="relative w-full p-6"> {/* Added internal padding */}
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-800">
-          🧑‍💻 User Roles (Custom)
+          User Roles (Custom)
         </h2>
         <p className="text-sm text-gray-500">
           View all users and customize permissions individually.

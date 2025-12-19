@@ -1,16 +1,15 @@
-import NewCustomer from "@/components/Lists/NewCustomer";
 import ResponsiveEmployeeCard from "@/components/mobile-responsive/employee/ResponsiveEmployeeCard";
 import Title from "@/components/Title";
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import { Vehicle } from "@prisma/client";
+import { ArrowLeft, Search } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import EditClient from "../../client/EditClient";
 import ClientInformation from "../ClientInformation";
 import OrderList from "../OrderList";
 import VehicleList from "../VehicleList";
-import { ArrowLeft, Search } from "lucide-react";
 
 type Props = {
   params: {
@@ -41,16 +40,16 @@ const Page = async (props: Props) => {
 
   const selectedVehicle = vehicleId
     ? await db.vehicle.findUnique({
-      where: { id: Number(vehicleId) },
-      include: {
-        invoices: {
-          where: {
-            type: "Invoice",
+        where: { id: Number(vehicleId) },
+        include: {
+          invoices: {
+            where: {
+              type: "Invoice",
+            },
+            include: { column: true },
           },
-          include: { column: true },
         },
-      },
-    })
+      })
     : null;
 
   const vehicles = await db.vehicle.findMany({

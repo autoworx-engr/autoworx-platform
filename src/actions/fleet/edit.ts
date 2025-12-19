@@ -22,6 +22,7 @@ export async function editFleet(data: {
   photo?: string;
   preferredPaymentTerm?: string | null;
   clientId: number;
+  countryCode?:string
 }): Promise<ServerAction | TErrorHandler> {
   try {
     await updateFleetValidationSchema.parseAsync(data);
@@ -59,6 +60,7 @@ export async function editFleet(data: {
           zip: data.zip || existingFleet.zip,
           tagId: data.tagId || existingFleet.tagId,
           photo: data.photo || existingFleet.photo,
+          countryCode:data.countryCode || existingFleet.countryCode,
         },
       });
       const fleet = await tsx.fleet.update({

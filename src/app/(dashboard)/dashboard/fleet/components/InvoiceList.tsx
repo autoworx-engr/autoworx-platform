@@ -1,9 +1,8 @@
 import { FleetStatement, Invoice } from "@prisma/client";
 import FilterBySearchBox from "../../reporting/components/filter/FilterBySearchBox";
 import CreateStatementModal from "./CreateStatementModal";
-import FleetSubHeading from "./FleetSubHeading";
-import InvoiceListTable from "./InvoiceListTable";
 import FleetStatementListTable from "./FleetStatementListTable";
+import InvoiceListTable from "./InvoiceListTable";
 
 export interface InVoiceDataType {
   id: string;
@@ -47,10 +46,10 @@ const InvoiceList = ({
   const filteredInvoices = invoiceData?.filter((item: any) => {
     const matchSearch = search
       ? item?.id?.toLowerCase().includes(search.toLowerCase()) ||
-      item?.vehicle?.vin?.toLowerCase().includes(search.toLowerCase()) ||
-      item?.vehicle?.make?.toLowerCase().includes(search.toLowerCase()) ||
-      item?.vehicle?.year?.toString().includes(search) ||
-      item?.vehicle?.other?.toLowerCase().includes(search)
+        item?.vehicle?.vin?.toLowerCase().includes(search.toLowerCase()) ||
+        item?.vehicle?.make?.toLowerCase().includes(search.toLowerCase()) ||
+        item?.vehicle?.year?.toString().includes(search) ||
+        item?.vehicle?.other?.toLowerCase().includes(search)
       : true;
 
     return matchSearch;
@@ -59,7 +58,7 @@ const InvoiceList = ({
   const filteredStatements = invoiceData?.filter((item: any) => {
     const matchedSearch = search
       ? item?.id?.toLowerCase().includes(search.toLowerCase()) ||
-      item?.invoice?.length.toString().includes(search)
+        item?.invoice?.length.toString().includes(search)
       : true;
 
     return matchedSearch;
