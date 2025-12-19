@@ -203,7 +203,7 @@ export default function NewLabor({
   }
 
   return (
-   <Dialog
+    <Dialog
       open={open}
       onOpenChange={(newOpen) => {
         if (!newOpen) {
@@ -216,8 +216,8 @@ export default function NewLabor({
         {newButton ? (
           newButton
         ) : (
-          <button 
-            type="button" 
+          <button
+            type="button"
             className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -238,7 +238,7 @@ export default function NewLabor({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="overflow-y-auto px-1">
+        <div className="overflow-y-auto px-2.5">
           <FormError />
 
           <div className="space-y-3 py-3">

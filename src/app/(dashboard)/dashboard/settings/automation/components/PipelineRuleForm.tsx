@@ -14,6 +14,14 @@ import { usePipelineStagesStore } from "@/stores/pipelineStagesStore";
 import { Spin } from "antd";
 import { useAllPipelineAutomationRules } from "@/hooks/pipeline-automation/useAllPipelineAutomationRules";
 import CarLoading from "@/components/common/CarLoading";
+import {
+  getPipelineConditionHelp,
+  PipelineFlowVisualization,
+} from "./AllAutomationHelper";
+import TooltipLabel from "./ToolTipLabel";
+import InfoCard from "./InfoCard";
+import { TipBox } from "./TagautomationHelper";
+import { ArrowRight } from "lucide-react";
 
 export type Rule = {
   id?: string;
@@ -58,6 +66,7 @@ const PipelineRuleForm = ({
     // createdBy: null,
   });
 
+  const [showGuide, setShowGuide] = useState(true);
   const [showDelayField, setShowDelayField] = useState(
     formData.conditionType === "Time Delay"
   );
@@ -236,6 +245,11 @@ const PipelineRuleForm = ({
     console.error("Error adjusting action options:", err);
   }
 
+  const conditionHelpContent = getPipelineConditionHelp(formData.conditionType);
+
+  const selectedActionStage = stages?.find(
+    (s) => s.id === Number(formData.targetColumnId)
+  );
   if (
     stagesLoading ||
     isLoading ||
@@ -252,7 +266,7 @@ const PipelineRuleForm = ({
 
   return (
     <>
-      <div className="h-[600px] rounded-md border bg-white p-4 shadow-sm md:p-6">
+      <div className="min-h-[600px] rounded-md border bg-white p-4 shadow-sm md:p-6">
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Title */}
           <SlimInput
@@ -267,6 +281,24 @@ const PipelineRuleForm = ({
 
           {/* Stage */}
           <div>
+            <TooltipLabel
+              label="Stage"
+              tooltipText={
+                <div className="space-y-1">
+                  <p className="font-semibold mb-1">Select source stages:</p>
+                  <p>
+                    Choose one or multiple stages where leads will trigger this
+                    automation.
+                  </p>
+                  <p className="mt-2">
+                    <strong>Example:</strong> Select "Lead Lost" and "New Leads"
+                    to monitor leads in both stages.
+                  </p>
+                </div>
+              }
+              required
+              icon="question"
+            />
             <MultiSelect
               options={stages}
               // value={formData?.stageIds}
@@ -276,47 +308,105 @@ const PipelineRuleForm = ({
                   : formData?.stageIds
               }
               onChange={(value) => handleInputChange("stageIds", value)}
-              label="Stage"
+              // label="Stage"
               placeholder="Select options"
               required
               error={error.stageIds}
+              labelClassName="hidden"
             />
           </div>
 
           {/* Condition */}
-          <Selector
-            name="condition"
-            label="Condition"
-            options={conditions}
-            value={formData?.conditionType}
-            onChange={(value) => handleInputChange("conditionType", value)}
-            required
-            error={error.conditionType}
-          />
+
+          <div>
+            <Selector
+              name="condition"
+              label="Condition"
+              options={conditions}
+              value={formData?.conditionType}
+              onChange={(value) => handleInputChange("conditionType", value)}
+              required
+              error={error.conditionType}
+            />
+
+            {conditionHelpContent && (
+              <InfoCard
+                icon={conditionHelpContent.icon}
+                title={conditionHelpContent.title}
+                description={conditionHelpContent.desc}
+                bgColor={conditionHelpContent.bgColor}
+                borderColor={conditionHelpContent.borderColor}
+                textColor={conditionHelpContent.textColor}
+              />
+            )}
+          </div>
 
           {/* Delay */}
           {showDelayField && (
-            <Selector
-              name="delay"
-              label="Delay"
-              options={timeDelays}
-              value={formData?.timeDelay!}
-              onChange={(value) => handleInputChange("timeDelay", value)}
-              error={error.timeDelay}
-            />
+            <div>
+              <Selector
+                name="delay"
+                label="Delay"
+                options={timeDelays}
+                value={formData?.timeDelay!}
+                onChange={(value) => handleInputChange("timeDelay", value)}
+                error={error.timeDelay}
+              />
+
+              <TipBox
+                message="The timer starts when a lead enters any of the selected stages. After the delay, it will automatically move to your action column."
+                variant="warning"
+              />
+            </div>
           )}
 
           {/* Action */}
 
-          <Selector
-            name="action"
-            label="Action"
-            options={actionOptions}
-            value={formData?.targetColumnId!}
-            onChange={(value) => handleInputChange("targetColumnId", value)}
-            required
-            error={error.targetColumnId}
-          />
+          <div>
+            <TooltipLabel
+              label="Action"
+              tooltipText={
+                <div className="space-y-1">
+                  <p className="font-semibold mb-1">Destination column:</p>
+                  <p>
+                    Choose which column leads should move to when the condition
+                    is met.
+                  </p>
+                  <p className="mt-2">
+                    <strong>Note:</strong> Stages selected in the "Stage" field
+                    are automatically excluded to prevent loops.
+                  </p>
+                </div>
+              }
+              required
+              icon="question"
+            />
+            <Selector
+              name="action"
+              // label="Action"
+              options={actionOptions}
+              value={formData?.targetColumnId!}
+              onChange={(value) => handleInputChange("targetColumnId", value)}
+              required
+              error={error.targetColumnId}
+              labelClassName="hidden"
+            />
+
+            {formData.stageIds.length > 0 && formData.targetColumnId && (
+              <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded flex items-center gap-2 text-xs text-green-900">
+                <ArrowRight className="w-4 h-4 flex-shrink-0" />
+                <span>
+                  A lead in "
+                  {formData.stageIds
+                    .map((id) => stages.find((s) => s.id === id)?.title)
+                    .join(", ")}{" "}
+                  {}
+                  will move to "{selectedActionStage?.title}" when the condition
+                  is met.
+                </span>
+              </div>
+            )}
+          </div>
 
           <div className="flex justify-end pt-4">
             <button
@@ -338,6 +428,31 @@ const PipelineRuleForm = ({
             </button>
           </div>
         </form>
+
+        {/* <PipelineFlowVisualization 
+        stageCount={formData.stageIds.length}
+        condition={formData.conditionType}
+        delay={formData.timeDelay!}
+        action={selectedActionStage?.title || ""}
+      /> */}
+
+        {/* Add CSS for animations */}
+        {/* <style jsx>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.3s ease-out;
+        }
+      `}
+      </style> */}
       </div>
     </>
   );
