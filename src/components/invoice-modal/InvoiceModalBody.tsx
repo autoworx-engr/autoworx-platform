@@ -193,6 +193,22 @@ export default function InvoiceModalBody({
     }
   }, [isStripe]);
 
+  // Track invoice view for public users
+  useEffect(() => {
+    if (isPublic && invoiceId && isFetched && !isLoading) {
+      // Call the track-view endpoint
+      fetch("/api/invoice/track-view", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ invoiceId }),
+      }).catch((error) => {
+        console.error("Failed to track invoice view:", error);
+      });
+    }
+  }, [isPublic, invoiceId, isFetched, isLoading]);
+
   if (isLoading) {
     return (
       <DialogPortal>

@@ -1369,6 +1369,7 @@ model Invoice {
   TimeDelayExecution      TimeDelayExecution[]
   Refund                  Refund[]
   FleetStatement          FleetStatement?           @relation(fields: [fleetStatementId], references: [id])
+  isViewed                Boolean?                  @default(false) @map("is_viewed")
 
   @@index([companyId], name: "fk_invoices_company")
   @@index([companyId, type])
