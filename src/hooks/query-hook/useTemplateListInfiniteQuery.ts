@@ -10,8 +10,8 @@ export default function useTemplateListInfiniteQuery(search?: string) {
     queryFn: async ({ pageParam = 0 }) => {
       const { templates } = await getTemplateList(
         {
-          skip: pageParam * PAGE_SIZE,
-          take: PAGE_SIZE,
+          // skip: pageParam * PAGE_SIZE,
+          // take: PAGE_SIZE,
           orderBy: {
             createdAt: "desc",
           },

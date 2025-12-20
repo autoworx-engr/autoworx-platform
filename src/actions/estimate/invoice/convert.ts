@@ -169,6 +169,8 @@ export async function convertInvoice(
     });
 
     revalidatePath("/estimate");
+    revalidatePath("/dashboard/estimate");
+    revalidatePath(`/dashboard/estimate/view/${id}`);
 
     return {
       type: "success",
@@ -327,7 +329,9 @@ export async function convertInvoicePublic(
       return updatedInvoiceData;
     });
 
-    // revalidatePath("/estimate");
+    revalidatePath("/estimate");
+    revalidatePath("/dashboard/estimate");
+    revalidatePath(`/dashboard/estimate/view/${id}`);
 
     return {
       type: "success",

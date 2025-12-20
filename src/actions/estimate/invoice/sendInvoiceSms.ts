@@ -125,21 +125,31 @@ export async function sendInvoiceSms({ invoiceId }: { invoiceId: string }) {
     });
 
     try {
+      console.log("Sending SMS via gateway:", company?.smsGateway);
       if (company?.smsGateway === "TWILIO") {
-        sendTwilioMessage({
+        const response = await sendTwilioMessage({
           clientId: invoice.client.id,
           message: variabledBody || "",
           attachments: [],
         });
+
+        if (!response.success) {
+          throw new Error(`SMS sending failed`);
+        }
       } else if (company?.smsGateway === "INFOBIP") {
-        sendInfobipMessage({
+        const response = await sendInfobipMessage({
           clientId: invoice.client.id,
           message: variabledBody || "",
           attachments: [],
         });
+
+        if (!response.success) {
+          throw new Error(`SMS sending failed`);
+        }
       }
     } catch (error) {
       console.log("Failed to send invoice sms:", error);
+      throw error;
     }
     return {
       success: true,

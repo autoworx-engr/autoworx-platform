@@ -17,12 +17,14 @@ interface ImageContentCardProps {
   selectedIds: number[];
   toggleSelect: (id: number) => void;
   handleDelete: (id: number) => void;
+  onOpen?: () => void;
 }
 export const ImageContentCard = ({
   img,
   selectedIds,
   toggleSelect,
   handleDelete,
+  onOpen,
 }: ImageContentCardProps) => {
   const currentUser = useGetCurrentUser();
   const isAdminOrManager = useIsAdminOrManager();
@@ -36,7 +38,8 @@ export const ImageContentCard = ({
           alt={`photo-${img.id}`}
           width={800}
           height={400}
-          className="h-full w-full object-cover"
+          onClick={() => onOpen && onOpen()}
+          className="h-full w-full object-cover cursor-pointer"
         />
         <div className="absolute top-2 right-2 flex items-center gap-2">
           <button
@@ -56,9 +59,11 @@ export const ImageContentCard = ({
             okText="Yes"
             cancelText="No"
           >
-            <button disabled={isDisabled} 
-            className={`flex items-center gap-1 rounded bg-red-500 px-2 py-1 text-sm text-white 
-            ${isDisabled ? "opacity-50 cursor-not-allowed" : "hover:bg-red-600 transition-all"}`}>
+            <button
+              disabled={isDisabled}
+              className={`flex items-center gap-1 rounded bg-red-500 px-2 py-1 text-sm text-white 
+            ${isDisabled ? "opacity-50 cursor-not-allowed" : "hover:bg-red-600 transition-all"}`}
+            >
               <Trash2 className="h-4 w-4" />
             </button>
           </Popconfirm>

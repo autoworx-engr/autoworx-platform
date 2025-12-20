@@ -28,6 +28,7 @@ export async function authorizeInvoice(
         authorizedName,
         signatureImage: url,
         type: InvoiceType.Invoice,
+        wasAuthorized: true,
         convertedAt: new Date(),
       },
     });
@@ -168,6 +169,7 @@ export async function deleteInvoiceAuthorize(
       },
       data: {
         authorizedName: null,
+        signatureImage: null,
       },
     });
 
