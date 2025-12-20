@@ -125,10 +125,10 @@ const DroppableColumn = ({
 
   useEffect(() => {
     const ulElement = ulRef.current;
-    if (!ulElement) return;
+    if (!ulElement || screenWidth < 768) return;
 
     return autoScrollForElements({ element: ulElement });
-  }, []);
+  }, [screenWidth]);
   return (
     <div
       ref={(el) => {
