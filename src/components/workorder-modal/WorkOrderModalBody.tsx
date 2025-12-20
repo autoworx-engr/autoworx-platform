@@ -16,6 +16,7 @@ import { useServerGet } from "@/hooks/useServerGet";
 import { cn } from "@/lib/cn";
 import moment from "moment";
 import Image from "next/image";
+import { Image as LucideImage } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import DueDate from "./DueDateInput";
@@ -121,7 +122,6 @@ export default function WorkOrderModalBody({
   };
 
   const technicianPhotos = getTechnicianPhotos();
-  console.log("Technician Photos:", technicianPhotos);
   return (
     <DialogContent className="h-full min-w-fit overflow-y-auto sm:max-w-[740px] lg:h-fit">
       <div className="mt-4 flex items-center justify-between gap-1 lg:mt-4">
@@ -223,15 +223,18 @@ export default function WorkOrderModalBody({
 
         {/* see images dialog trigger (uses its own internal state) */}
         {isAdminOrManager && (
-          <div className="absolute right-16 top-0">
+          <div className="absolute right-5 md:right-16 top-0">
             <Dialog>
               <DialogTrigger asChild>
-                <button className="bg-[#6571ff] text-white px-5 py-0.5 rounded-md">
-                  Attachments
+                <button className="md:bg-[#6571ff] md:text-white px-5 py-0.5 rounded-md">
+                  <span className="lg:hidden">
+                    <LucideImage className="h-5 w-5 text-[#6571ff]" />
+                  </span>
+                  <span className="hidden lg:inline">Attachments</span>
                 </button>
               </DialogTrigger>
 
-              <DialogContent className="min-w-[560px] max-w-3xl overflow-y-auto h-full lg:h-fit">
+              <DialogContent className="max-w-3xl  overflow-y-auto h-full lg:h-fit">
                 <ImagesDialogContent
                   technicianPhotos={technicianPhotos}
                   clientId={invoice?.client?.id}
