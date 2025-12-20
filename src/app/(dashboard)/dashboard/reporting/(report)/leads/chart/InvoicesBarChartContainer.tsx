@@ -1,14 +1,11 @@
 "use client";
-import { Bar, Label, Tooltip, XAxis, YAxis } from "recharts";
 import BarChartComponent from "@/app/(dashboard)/dashboard/reporting/components/BarChartComponent";
+import { Bar, Label, Tooltip, XAxis, YAxis } from "recharts";
 
-import { useServerGet } from "@/hooks/useServerGet";
-import { getLeadInfo } from "@/actions/dashboard/data/getLeadInfo";
-import { useEffect, useState } from "react";
-import { endOfMonth, format, startOfMonth } from "date-fns";
-import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
-import useGetLeadInfoQuery from "../_hook/useGetLeadInfoQuery";
 import LeadsChartSkeleton from "@/components/ui/LeadsChartSkeleton";
+import { endOfMonth, format, startOfMonth } from "date-fns";
+import { useEffect, useState } from "react";
+import useGetLeadInfoQuery from "../_hook/useGetLeadInfoQuery";
 
 type TProps = {
   searchParams: {
