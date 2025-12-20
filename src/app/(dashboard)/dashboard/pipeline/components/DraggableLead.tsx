@@ -1,7 +1,10 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { SetStateAction, useEffect, useRef, useState } from "react";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
-import { draggable } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import {
+  draggable,
+  dropTargetForElements,
+} from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { Tag, User } from "@prisma/client";
 import { Employee, ShopLead, ShopPipelineData } from "@/types/invoiceLead";
 import {
@@ -134,12 +137,20 @@ const DraggableLead = ({
       draggable({
         element,
         getInitialData: () => ({
+          type: "LEAD",
           columnIndex: categoryIndex,
           leadIndex: leadIndex,
           invoiceId: lead.invoiceId,
         }),
         onDragStart: () => setIsDragging(true),
         onDrop: () => setIsDragging(false),
+      }),
+      dropTargetForElements({
+        element,
+        getData: () => ({
+          columnIndex: categoryIndex,
+          index: leadIndex,
+        }),
       })
     );
   }, [categoryIndex, leadIndex, screenWidth, lead.invoiceId]);
