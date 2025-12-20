@@ -21,6 +21,7 @@ import { formatCurrency } from "@/utils/formatCurrency";
 import { PaymentMethod } from "@prisma/client";
 import { SquarePen } from "lucide-react";
 import moment from "moment-timezone";
+import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 
 type EditPaymentModalProps = {
@@ -34,6 +35,7 @@ export default function EditPaymentModal({
   invoiceGrandTotal,
   totalPaidForInvoice,
 }: EditPaymentModalProps) {
+  const router = useRouter(); // ADD THIS
   const { paymentMethods } = useListsStore();
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -180,7 +182,11 @@ export default function EditPaymentModal({
         const newAmount = parseFloat(amount);
         const originalPaymentAmount = mergedPaymentData.amount;
 
-        //  Single payment cannot exceed grand total
+        if (newAmount <= 0) {
+          errorToast("Payment amount must be greater than zero");
+          return;
+        }
+
         if (newAmount > invoiceGrandTotal) {
           errorToast(
             `Payment amount (${formatCurrency(newAmount)}) cannot exceed invoice total (${formatCurrency(invoiceGrandTotal)})`
@@ -188,8 +194,6 @@ export default function EditPaymentModal({
           return;
         }
 
-        //   Total of all payments for this invoice cannot exceed grand total
-        // Calculate what the new total would be if we update this payment
         const otherPaymentsTotal = totalPaidForInvoice - originalPaymentAmount;
         const newTotalPaidForInvoice = otherPaymentsTotal + newAmount;
 
@@ -206,7 +210,6 @@ export default function EditPaymentModal({
           const isOriginalDeposit = originalPaymentType === "DEPOSIT";
           const isNewDeposit = method === "DEPOSIT";
 
-          // Only update store if editing the current invoice
           if (
             mergedPaymentData.invoiceId ===
             useEstimateCreateStore.getState().invoiceId
@@ -243,8 +246,20 @@ export default function EditPaymentModal({
             }
           }
 
+          // Update totalPayment in the store for real-time UI update
+          if (
+            mergedPaymentData.invoiceId !==
+            useEstimateCreateStore.getState().invoiceId
+          ) {
+            // If editing a different invoice, just refresh
+            router.refresh();
+          }
+
           successToast("Payment updated successfully");
           setOpen(false);
+
+          // Refresh the server data
+          router.refresh();
         }
       } catch (err) {
         console.error(err);

@@ -148,13 +148,29 @@ export function LeadUploadModal({ buttonElement }: FileUploadModalProps) {
     setIsUploadLeadOpen(false);
   };
 
-  const handleDownloadSample = () => {
-    const link = document.createElement("a");
-    link.href = "/lead-sample.xlsx";
-    link.download = "lead-sample.xlsx";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleDownloadSample = async () => {
+    const fileUrl = "/lead-sample.xlsx";
+    const fileName = "lead-sample.xlsx";
+    try {
+      const response = await fetch(fileUrl);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Download failed:", error);
+      errorToast("Failed to download sample file.");
+    }
   };
 
   return (
@@ -256,7 +272,7 @@ export function LeadUploadModal({ buttonElement }: FileUploadModalProps) {
           )}
 
           {/* Supported Formats */}
-          
+
           <div className="space-y-3">
             <p className="text-xs text-gray-500 text-center">
               Supported formats:{" "}
