@@ -39,15 +39,18 @@ export default function DirectShareButton() {
           if (!sendEmailResponse.success) {
             throw new Error("SMS sending failed");
           }
-          successToast("SMS sent successfully");
+          router.push(
+            `/dashboard/communication/client/${clientId}?open=EMAIL&chat=true`
+          );
+          successToast("Email sent successfully");
         } else if (type === "SMS") {
           const sendEmailResponse = await sendInvoiceSms({ invoiceId });
           if (!sendEmailResponse.success) {
             throw new Error("SMS sending failed");
           }
+          router.push(`/dashboard/communication/client/${clientId}?chat=true`);
           successToast("SMS sent successfully");
         }
-        router.push(`/dashboard/communication/client/${clientId}?chat=true`);
       } catch (error) {
         errorToast("Sending failed. Please try again.");
         if (createInvoicePath) {
