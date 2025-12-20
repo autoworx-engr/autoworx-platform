@@ -123,6 +123,7 @@ const DraggableLead = ({
 }: DraggableLeadProps) => {
   const leadRef = useRef<HTMLLIElement | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [isDropTarget, setIsDropTarget] = useState(false);
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -151,6 +152,13 @@ const DraggableLead = ({
           columnIndex: categoryIndex,
           index: leadIndex,
         }),
+        canDrop: ({ source }) => {
+          const sourceData = source.data as { type?: string };
+          return sourceData.type === "LEAD";
+        },
+        onDragEnter: () => setIsDropTarget(true),
+        onDragLeave: () => setIsDropTarget(false),
+        onDrop: () => setIsDropTarget(false),
       })
     );
   }, [categoryIndex, leadIndex, screenWidth, lead.invoiceId]);
@@ -170,7 +178,7 @@ const DraggableLead = ({
         leadRef.current = el;
         if (el) leadRefs.current.set(key, el);
       }}
-      className="max-w-auto relative mx-1 my-1 h-fit animate-none rounded-xl border bg-background p-1 duration-300 hover:bg-slate-100 cursor-grab"
+      className={`max-w-auto relative mx-1 my-1 h-fit animate-none rounded-xl border bg-background p-1 duration-300 hover:bg-slate-100 cursor-grab active:cursor-grabbing  ${isDropTarget ? "ring-2 ring-blue-500 bg-blue-50" : ""}`}
       style={{
         opacity: isDragging ? 0.5 : 1,
       }}
