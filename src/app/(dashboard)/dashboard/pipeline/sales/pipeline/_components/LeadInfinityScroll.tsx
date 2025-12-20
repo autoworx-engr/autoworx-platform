@@ -1,4 +1,6 @@
 "use client";
+
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { getLeads } from "@/actions/pipelines/getLeads";
 import { actionTypes } from "@/constants/lead.constant";
 import {
@@ -6,13 +8,12 @@ import {
   useSearchTerm,
 } from "@/context/sales-pipeline.context";
 import { LeadWithSalesUser } from "@/types/invoiceLead";
-import { DroppableProvided } from "@hello-pangea/dnd";
-import React, { useEffect, useRef, useState } from "react";
+import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 
 type TProps = {
-  provided: DroppableProvided;
   columnTitle: string;
   columnId: number | null;
+  columnIndex: number;
   leads: LeadWithSalesUser[];
   children: (leads: LeadWithSalesUser[]) => React.ReactNode;
 };
@@ -20,34 +21,47 @@ type TProps = {
 const defaultTakeLeads = 10;
 
 export default function LeadInfinityScroll({
-  provided,
   leads = [],
   columnId,
+  columnIndex,
   children,
 }: TProps) {
   const dispatch = useColumnDispatch();
   const searchTerm = useSearchTerm();
-
+  const scrollRef = useRef<HTMLUListElement>(null);
   const loaderRef = useRef<HTMLDivElement>(null);
   const [scrollLoading, setScrollLoading] = useState(false);
   const [hasMore, setHasMore] = useState(false);
 
   const leadsLength = leads?.length ?? 0;
 
-  const fetchMoreLeads = async () => {
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    return dropTargetForElements({
+      element: el,
+      getData: () => ({
+        type: "column",
+        columnId,
+        columnIndex,
+        index: leads.length,
+      }),
+    });
+  }, [columnId, columnIndex, leads.length]);
+
+  const fetchMoreLeads = useCallback(async () => {
     try {
-      console.log("Fetching more leads data...");
       if (columnId) {
         const getNextLeads = await getLeads({
           columnId,
           take: defaultTakeLeads,
           skip: leadsLength,
-          searchTerm: searchTerm || undefined, // Include search term in pagination
+          searchTerm: searchTerm || undefined,
         });
         if (getNextLeads?.length < defaultTakeLeads) {
           setHasMore(false);
         }
-        // Call dispatch action to update leads in the store
         dispatch({
           type: actionTypes.MORE_LEADS,
           payload: {
@@ -55,29 +69,18 @@ export default function LeadInfinityScroll({
             leads: getNextLeads,
           },
         });
-      } else {
-        throw new Error("Column not found");
       }
     } catch (err) {
-      console.error("Error fetching more leads:", err);
+      console.error(err);
       setHasMore(false);
     }
-  };
+  }, [columnId, leadsLength, searchTerm, dispatch]);
 
   useEffect(() => {
     if (leadsLength >= defaultTakeLeads) {
       setHasMore(true);
     }
   }, [leadsLength]);
-
-  // Reset hasMore when search term changes
-  useEffect(() => {
-    if (searchTerm) {
-      setHasMore(false); // Disable infinity scroll during search
-    } else if (leadsLength >= defaultTakeLeads) {
-      setHasMore(true); // Re-enable when search is cleared
-    }
-  }, [searchTerm, leadsLength]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -95,11 +98,11 @@ export default function LeadInfinityScroll({
     }
 
     return () => observer.disconnect();
-  }, [fetchMoreLeads, scrollLoading, hasMore, leadsLength]);
+  }, [fetchMoreLeads, scrollLoading, hasMore]);
 
   return (
     <ul
-      {...provided?.droppableProps}
+      ref={scrollRef}
       className="thin-scrollbar mt-1 flex max-h-[65vh] min-h-[65vh] flex-col gap-1 overflow-y-auto p-1"
       style={{ maxHeight: "65vh" }}
     >
