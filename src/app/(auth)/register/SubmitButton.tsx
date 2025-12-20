@@ -67,7 +67,7 @@ export default function SubmitButton() {
 
   return (
     <Submit
-      className="mx-auto mt-4 block rounded-md bg-blue-500 px-10 py-2 text-white"
+      className="mx-auto w-full mt-4 rounded-md bg-gradient-to-r from-[#6571FF] to-[#5a66ee] px-10 py-2 text-white"
       formAction={handler}
     >
       Submit

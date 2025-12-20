@@ -62,6 +62,8 @@ export default function MakePayment() {
     setDue,
     invoiceId,
     setDeposit: setDEPOSIT,
+    setTotalPayment,
+    totalPayment: currentTotalPayment,
   } = useEstimateCreateStore();
   const createInvoice = useInvoiceCreate("Invoice");
   const router = useRouter();
@@ -139,8 +141,13 @@ export default function MakePayment() {
     const roundedAmount = formatAmount(amount);
     const roundedDue = formatAmount(due);
 
+    if (!roundedAmount || roundedAmount <= 0) {
+      errorToast("Payment amount must be greater than 0");
+      return;
+    }
+
     if (Number(roundedAmount) > roundedDue) {
-      errorToast("amount exceeds the due");
+      errorToast(`amount exceeds the due of $${roundedDue}  `);
       return;
     }
     try {
@@ -179,7 +186,16 @@ export default function MakePayment() {
               paymentMethodId: paymentMethod?.id,
             },
           });
-          if (res2?.type === "success") setDue(due - roundedAmount);
+          if (res2?.type === "success") {
+            setDue(due - roundedAmount);
+            // Update totalPayment in the store for real-time UI update
+            useEstimateCreateStore.setState((prev) => ({
+              ...prev,
+              totalPayment: prev.totalPayment + roundedAmount,
+            }));
+
+            // setTotalPayment(currentTotalPayment + roundedAmount);
+          }
         }
         // Add deposit
         if (tab === "DEPOSIT") {
@@ -209,10 +225,11 @@ export default function MakePayment() {
         await paymentLeadsConvertion(invoiceId);
         setOpen(false);
         successToast("Payment recorded successfully");
-        // setDeposit(deposit + Number(amount));
-
-        // Redirect to the index
         reset();
+
+        // Refresh the page to get updated data from server
+        router.refresh();
+
         !isEditPage && router.push("/dashboard/estimate/invoices");
       } else if (res2?.type === "globalError") {
         errorToast(

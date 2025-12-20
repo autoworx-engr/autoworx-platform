@@ -123,7 +123,9 @@ export default function InvoiceModalBody({
   const [refundAmount, setRefundAmount] = useState<number>(0);
 
   // Detect if we're coming from an intercepted route
-  const fromInterceptedRoute = params.get("fromRoute") === "invoice" || params.get("fromRoute") === "public-invoice";
+  const fromInterceptedRoute =
+    params.get("fromRoute") === "invoice" ||
+    params.get("fromRoute") === "public-invoice";
 
   useEffect(() => {
     if (isFetched && !isLoading && data) {
@@ -337,11 +339,14 @@ export default function InvoiceModalBody({
         onPointerDownOutside={(e) => {
           // Prevent closing when clicking on elements inside the dialog
           const target = e.target as HTMLElement;
-          if (target.closest('[class*="lightbox"], .yarl__container, .yarl__')) {
+          if (
+            target.closest('[class*="lightbox"], .yarl__container, .yarl__')
+          ) {
             e.preventDefault();
           }
         }}
-        className="fixed left-[50%] top-[50%] z-50 flex h-full w-full translate-x-[-50%] translate-y-[-50%] flex-col justify-center gap-1 overflow-y-auto py-4 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] md:max-h-full md:max-w-[98%] md:flex-row md:gap-4">
+        className="fixed left-[50%] top-[50%] z-50 flex h-full w-full translate-x-[-50%] translate-y-[-50%] flex-col justify-center gap-1 overflow-y-auto py-4 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] md:max-h-full md:max-w-[98%] md:flex-row md:gap-4"
+      >
         <div
           ref={printComponentRef}
           className="#shadow-lg no-visible-scrollbar relative grid h-full w-full shrink grow-0 flex-col items-center justify-center gap-4 overflow-y-auto rounded-md border bg-background p-6 md:h-[90vh] md:w-[740px] md:flex-row"
@@ -408,7 +413,7 @@ export default function InvoiceModalBody({
                         (stripeAccountData?.success &&
                           stripeAccountData?.enabled &&
                           parseFloat(Number(invoice?.due ?? 0).toFixed(2)) >
-                          0) ??
+                            0) ??
                         false
                       }
                     />
@@ -578,80 +583,80 @@ export default function InvoiceModalBody({
               {/* Estimate Tab Content */}
               {(activeTab === "estimate" ||
                 !window.matchMedia("(max-width: 768px)").matches) && (
-                  <>
-                    <h1 className="col-span-full text-center text-xl font-bold uppercase text-slate-500 md:text-left md:text-3xl">
-                      {invoice?.type?.toUpperCase()}
-                    </h1>
+                <>
+                  <h1 className="col-span-full text-center text-xl font-bold uppercase text-slate-500 md:text-left md:text-3xl">
+                    {invoice?.type?.toUpperCase()}
+                  </h1>
 
-                    {/* Client Info */}
-                    <div className="overflow-hidden">
-                      <h2 className="font-bold text-slate-500">Estimate To:</h2>
-                      <p className="flex items-center gap-1 truncate">
-                        {client?.firstName} {client?.lastName}
-                      </p>
+                  {/* Client Info */}
+                  <div className="overflow-hidden">
+                    <h2 className="font-bold text-slate-500">Estimate To:</h2>
+                    <p className="flex items-center gap-1 truncate">
+                      {client?.firstName} {client?.lastName}
+                    </p>
 
-                      <p className="truncate">
-                        <a
-                          href={`tel:${client?.mobile}`}
-                          className="cursor-pointer text-blue-500"
-                        >
-                          {client?.mobile}
-                        </a>
-                      </p>
-                      <p className="truncate">
-                        <a
-                          href={`mailto:${client?.email}`}
-                          className="text-blue-500"
-                        >
-                          {client?.email}
-                        </a>
-                      </p>
-                      <Tooltip
-                        title={invoice?.customerNotes}
-                        placement="top"
-                        trigger="click"
+                    <p className="truncate">
+                      <a
+                        href={`tel:${client?.mobile}`}
+                        className="cursor-pointer text-blue-500"
                       >
-                        <span className="inline-flex cursor-pointer items-center rounded bg-[#6571FF] px-2 py-0.5 text-xs text-white">
-                          Note
-                        </span>
-                      </Tooltip>
-                    </div>
-
-                    {/* Vehicle Info */}
-                    <div>
-                      <h2 className="font-bold text-slate-500">
-                        Vehicle Details:
-                      </h2>
-                      <div className="flex flex-row flex-wrap gap-2">
-                        <p>{vehicle?.year || ""}</p>
-                        <p>{vehicle?.make}</p>
-                        <p>{vehicle?.model}</p>
-                        {vehicle?.other && <p>{vehicle?.other}</p>}
-                      </div>
-                      <p>{vehicle?.submodel}</p>
-                      <p>{vehicle?.type}</p>
-                    </div>
-
-                    {/* Estimate Details */}
-                    <div>
-                      <h2 className="font-bold text-slate-500">
-                        Estimate Details:
-                      </h2>
-                      <p>{invoice.id}</p>
-                      <p>{moment(invoice.createdAt).format("MMM DD, YYYY")}</p>
-                      <p>Bill Status</p>
-                      <p
-                        className="mt-2 max-w-32 rounded-md px-2 py-[1px] text-xs font-semibold md:mt-0"
-                        style={{
-                          color: invoice.column?.textColor || undefined,
-                          backgroundColor: invoice?.column?.bgColor || undefined,
-                        }}
+                        {client?.mobile}
+                      </a>
+                    </p>
+                    <p className="truncate">
+                      <a
+                        href={`mailto:${client?.email}`}
+                        className="text-blue-500"
                       >
-                        {invoice.column?.title}
-                      </p>
+                        {client?.email}
+                      </a>
+                    </p>
+                    <Tooltip
+                      title={invoice?.customerNotes}
+                      placement="top"
+                      trigger="click"
+                    >
+                      <span className="inline-flex cursor-pointer items-center rounded bg-[#6571FF] px-2 py-0.5 text-xs text-white">
+                        Note
+                      </span>
+                    </Tooltip>
+                  </div>
+
+                  {/* Vehicle Info */}
+                  <div>
+                    <h2 className="font-bold text-slate-500">
+                      Vehicle Details:
+                    </h2>
+                    <div className="flex flex-row flex-wrap gap-2">
+                      <p>{vehicle?.year || ""}</p>
+                      <p>{vehicle?.make}</p>
+                      <p>{vehicle?.model}</p>
+                      {vehicle?.other && <p>{vehicle?.other}</p>}
                     </div>
-                  </>
-                )}
+                    <p>{vehicle?.submodel}</p>
+                    <p>{vehicle?.type}</p>
+                  </div>
+
+                  {/* Estimate Details */}
+                  <div>
+                    <h2 className="font-bold text-slate-500">
+                      Estimate Details:
+                    </h2>
+                    <p>{invoice.id}</p>
+                    <p>{moment(invoice.createdAt).format("MMM DD, YYYY")}</p>
+                    <p>Bill Status</p>
+                    <p
+                      className="mt-2 max-w-32 rounded-md px-2 py-[1px] text-xs font-semibold md:mt-0"
+                      style={{
+                        color: invoice.column?.textColor || undefined,
+                        backgroundColor: invoice?.column?.bgColor || undefined,
+                      }}
+                    >
+                      {invoice.column?.title}
+                    </p>
+                  </div>
+                </>
+              )}
 
               {/* Attachments Tab Content - Only visible on mobile when selected */}
               {activeTab === "attachments" &&
@@ -663,8 +668,12 @@ export default function InvoiceModalBody({
                     <div className="mt-2 flex w-full items-center justify-center">
                       <div className="grid w-full grid-cols-3 gap-4 px-2 sm:px-4 [@media(max-width:374px)]:grid-cols-2">
                         {invoice.photos.map((x, index) => {
-                          const allImageUrls = invoice.photos.map((photo) => photo.photo);
-                          const urlsParam = encodeURIComponent(JSON.stringify(allImageUrls));
+                          const allImageUrls = invoice.photos.map(
+                            (photo) => photo.photo
+                          );
+                          const urlsParam = encodeURIComponent(
+                            JSON.stringify(allImageUrls)
+                          );
                           return (
                             <Link
                               href={
@@ -749,10 +758,10 @@ export default function InvoiceModalBody({
                               {formatCurrency(
                                 (Number(
                                   (invoice.subtotal as any) -
-                                  (invoice.discount as any)
+                                    (invoice.discount as any)
                                 ) *
                                   Number(value)) /
-                                100
+                                  100
                               )}
                             </span>
                           )}
@@ -902,7 +911,7 @@ export default function InvoiceModalBody({
                     }}
                     className="rounded bg-[#6571FF] px-8 pb-1 text-white print:hidden"
                   >
-                    Authorize
+                    {invoice?.wasAuthorized ? "Re-Authorize" : "Authorize"}
                   </button>
                 )}
             </div>
@@ -1010,19 +1019,21 @@ export default function InvoiceModalBody({
             {/* Desktop tabs are here */}
             <div className="hidden lg:mb-4 lg:flex lg:justify-center lg:gap-4">
               <button
-                className={`rounded px-4 py-1 text-sm font-medium ${desktopActiveTab === "attachments"
-                  ? "bg-[#6571FF] text-white"
-                  : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                  }`}
+                className={`rounded px-4 py-1 text-sm font-medium ${
+                  desktopActiveTab === "attachments"
+                    ? "bg-[#6571FF] text-white"
+                    : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                }`}
                 onClick={() => setDesktopActiveTab("attachments")}
               >
                 Attachments
               </button>
               <button
-                className={`rounded px-4 py-1 text-sm font-medium ${desktopActiveTab === "inspections"
-                  ? "bg-[#6571FF] text-white"
-                  : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                  }`}
+                className={`rounded px-4 py-1 text-sm font-medium ${
+                  desktopActiveTab === "inspections"
+                    ? "bg-[#6571FF] text-white"
+                    : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                }`}
                 onClick={() => setDesktopActiveTab("inspections")}
               >
                 Inspections
@@ -1037,8 +1048,12 @@ export default function InvoiceModalBody({
                 </h2>
                 <div className="flex grid-cols-1 gap-4 overflow-x-auto md:grid">
                   {invoice.photos.map((x, index) => {
-                    const allImageUrls = invoice.photos.map((photo) => photo.photo);
-                    const urlsParam = encodeURIComponent(JSON.stringify(allImageUrls));
+                    const allImageUrls = invoice.photos.map(
+                      (photo) => photo.photo
+                    );
+                    const urlsParam = encodeURIComponent(
+                      JSON.stringify(allImageUrls)
+                    );
                     return (
                       <Link
                         href={
