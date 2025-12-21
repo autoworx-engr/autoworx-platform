@@ -43,6 +43,7 @@ import {
 } from "./TagautomationHelper";
 import TooltipLabel from "./ToolTipLabel";
 import InfoCard from "./InfoCard";
+import { TEMPLATE_VARIABLES } from "./TemplateVariable";
 // import { CircleQuestionMark } from 'lucide-react';
 type RuleFormProps = {
   mode: "create" | "edit" | undefined;
@@ -871,7 +872,7 @@ const TagRuleForm = ({
 
                 {/* Template Variables */}
                 {/* <TemplateVariable /> */}
-                <AppointmentTemplateVariable hasBackground={true} />
+                <AppointmentTemplateVariable VARIABLES={TEMPLATE_VARIABLES} hasBackground={true} />
               </Box>
             </>
           )}
