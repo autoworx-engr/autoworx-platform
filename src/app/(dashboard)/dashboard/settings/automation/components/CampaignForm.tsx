@@ -454,17 +454,17 @@ const CampaignForm = ({
   };
 
   const selectedTargets = targetOptions
-    .filter((opt) => formData.target.includes(opt.id))
-    .map((opt) => opt.title)
+    .filter((opt) => formData?.target?.includes(opt.id))
+    .map((opt) => opt?.title)
     .join(", ");
 
-  const condition = targetConditions.find(
-    (c) => c.id === formData.targetCondition
+  const condition = targetConditions?.find(
+    (c) => c.id === formData?.targetCondition
   );
 
   const targetHelp = getTargetHelp({
     selectedTargets,
-    length: formData.target.length,
+    length: formData?.target?.length,
   });
 
   const conditionHelp = getCampaignConditionHelp({

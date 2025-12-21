@@ -392,7 +392,7 @@ const PipelineRuleForm = ({
               labelClassName="hidden"
             />
 
-            {formData.stageIds.length > 0 && formData.targetColumnId && (
+            {formData?.stageIds?.length > 0 && formData.targetColumnId && (
               <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded flex items-center gap-2 text-xs text-green-900">
                 <ArrowRight className="w-4 h-4 flex-shrink-0" />
                 <span>

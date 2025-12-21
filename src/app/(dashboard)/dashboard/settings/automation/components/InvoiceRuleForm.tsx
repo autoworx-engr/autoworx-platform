@@ -380,7 +380,7 @@ const InvoiceRuleForm: React.FC<RuleFormProps> = ({
     );
   }
 
-  const typeHelp = getInvoiceTypeHelp(formData.type!);
+  const typeHelp = getInvoiceTypeHelp(formData?.type!);
   return (
     <div>
       <div className="rounded-md border bg-white p-4 shadow-sm md:p-6">
