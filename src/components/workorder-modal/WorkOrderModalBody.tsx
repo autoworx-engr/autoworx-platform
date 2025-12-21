@@ -47,6 +47,7 @@ export default function WorkOrderModalBody({
 }) {
   const [dueDate, setDueDate] = useState<string | null>("");
   const isAdminOrManager = useIsAdminOrManager();
+   const [openService, setOpenService] = useState<number | null>(null);
   const { data, error, isLoading, isFetched } = useQuery({
     queryKey: queryKeys.getWorkOrderDataKey(invoiceId),
     queryFn: () => getWorkOrderData(invoiceId),
@@ -90,7 +91,7 @@ export default function WorkOrderModalBody({
     techniciansPerItem,
   } = data as IWorkOrderData;
 
-  console.log("work order data:", techniciansPerItem);
+
 
   const getTechnicianPhotos = (): TechnicianPhoto[] => {
     const finalPhotosArray: TechnicianPhoto[] = [];
@@ -219,6 +220,8 @@ export default function WorkOrderModalBody({
           invoiceStatus={invoice?.column?.title}
           writePermission={writePermission}
           techniciansPerItem={techniciansPerItem}
+          openService={openService}
+          setOpenService={setOpenService}
         />
 
         {/* see images dialog trigger (uses its own internal state) */}
