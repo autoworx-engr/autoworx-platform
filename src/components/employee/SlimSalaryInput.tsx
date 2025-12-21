@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { SalaryType } from "@prisma/client";
+import SelectEmployeeSalaryType from "@/app/(dashboard)/dashboard/employee/SelectEmployeeSalaryType";
 import { SlimInput } from "@/components/SlimInput";
 import { useFormErrorStore } from "@/stores/form-error";
-import SelectEmployeeSalaryType from "@/app/(dashboard)/dashboard/employee/SelectEmployeeSalaryType";
+import { SalaryType } from "@prisma/client";
 
 interface SlimSalaryInputProps {
   onSalaryChange?: (
