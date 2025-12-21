@@ -39,6 +39,7 @@ import TooltipLabel from "./ToolTipLabel";
 import { getCampaignConditionHelp, getTargetHelp } from "./AllAutomationHelper";
 import InfoCard from "./InfoCard";
 import { TipBox } from "./TagautomationHelper";
+import { TEMPLATE_VARIABLES } from "./TemplateVariable";
 
 export type Campaign = {
   id?: number;
@@ -222,6 +223,10 @@ const CampaignForm = ({
   const handleChange = (field: keyof Campaign, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
 
+    if (field === "communicationType") {
+      if (value === "SMS") setActiveTemplate("SMS");
+      if (value === "EMAIL") setActiveTemplate("EMAIL");
+    }
     if (error[field]) {
       setError((prev) => {
         const newErrors = { ...prev };
@@ -771,11 +776,14 @@ const CampaignForm = ({
             )}
 
             {/* Template Variables */}
-            <AppointmentTemplateVariable hasBackground={true} />
+            <AppointmentTemplateVariable
+              VARIABLES={TEMPLATE_VARIABLES}
+              hasBackground={true}
+            />
             <TipBox
-        message="Click any variable to copy it, then paste it into your campaign message. Example: 'Hi <CLIENT>, check out our special offer for your <VEHICLE>!'"
-        variant="info"
-      />
+              message="Click any variable to copy it, then paste it into your campaign message. Example: 'Hi <CLIENT>, check out our special offer for your <VEHICLE>!'"
+              variant="info"
+            />
           </Box>
 
           {/* Submit Button */}
