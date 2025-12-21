@@ -192,8 +192,8 @@ const InventoryRuleForm: React.FC<RuleFormProps> = ({
     }
   };
 
-  const conditionHelpContent = getInventoryConditionHelp(formData.condition);
-  const actionHelpContent = getInventoryActionHelp(formData.action || "");
+  const conditionHelpContent = getInventoryConditionHelp(formData?.condition);
+  const actionHelpContent = getInventoryActionHelp(formData?.action || "");
   return (
     <>
       {loading || isLoading || isFetching ? (
