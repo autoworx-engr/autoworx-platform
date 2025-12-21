@@ -336,13 +336,13 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
   };
 
   const getConditionActionHelp = () => {
-    const conditionId = formData.conditionColumnId;
-    const actionId = formData.targetColumnId;
+    const conditionId = formData?.conditionColumnId;
+    const actionId = formData?.targetColumnId;
 
     if (conditionId == null || actionId == null) return null;
 
     const findStageName = (id: any) => {
-      const st: any = stages.find((s: any) => Number(s.id) === Number(id));
+      const st: any = stages?.find((s: any) => Number(s.id) === Number(id));
       return st?.title ?? st?.name ?? String(id);
     };
 
