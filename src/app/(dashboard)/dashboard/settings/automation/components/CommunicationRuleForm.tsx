@@ -27,6 +27,7 @@ import { AppointmentTemplateVariable } from "@/components/Lists/NewTemplate";
 import TooltipLabel from "./ToolTipLabel";
 import { ArrowRight } from "lucide-react";
 import { TipBox } from "./TagautomationHelper";
+import { TEMPLATE_VARIABLES } from "./TemplateVariable";
 
 type RuleFormProps = {
   mode: "create" | "edit" | undefined;
@@ -164,6 +165,10 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
   const handleChange = (field: keyof Rule, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
 
+    if (field === "communicationType") {
+      if (value === "SMS") setActiveTemplate("SMS");
+      if (value === "EMAIL") setActiveTemplate("EMAIL");
+    }
     if (error[field]) {
       setError((prev) => {
         const newErrors = { ...prev };
@@ -218,7 +223,7 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
 
     if (!formData.title || !formData.title.trim())
       newError.title = "Title is required.";
-    if (!Array.isArray(formData.stages) || formData.stages.length === 0) {
+    if (!Array.isArray(formData.stages) || formData?.stages?.length === 0) {
       newError.stages = "At least one stage is required.";
     }
     if (formData.timeDelay === null)
@@ -455,7 +460,7 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
                     labelClassName="hidden"
                   />
 
-                  {formData.stages.length > 0 && formData.targetColumnId && (
+                  {formData?.stages?.length > 0 && formData.targetColumnId && (
                     <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded flex items-center gap-2 text-xs text-green-900">
                       <ArrowRight className="w-4 h-4 flex-shrink-0" />
                       <span>
@@ -605,7 +610,10 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
                   )}
 
                   {/* Template Variables */}
-                  <AppointmentTemplateVariable hasBackground={true} />
+                  <AppointmentTemplateVariable
+                    VARIABLES={TEMPLATE_VARIABLES}
+                    hasBackground={true}
+                  />
                   <TipBox
                     message="Click any variable to copy it, then paste it into your template where you want the dynamic content to appear. For example: 'Hi <CLIENT>, your invoice is ready: <INVOICE_LINK>'"
                     variant="info"
