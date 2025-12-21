@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import { Company, User } from "@prisma/client";
-import SearchCollaborationModal from "./SearchCollaborationModal";
 import { cn } from "@/lib/cn";
+import CollaborationToggle from "./CollaborationToggle";
 
 type TProps = {
   companyAdmins: Partial<User>[];
@@ -18,6 +18,8 @@ type TProps = {
     senderId: number;
   }[];
   currentUserId: number;
+  isCollaborators: boolean | null | undefined;
+  companyId: number;
 };
 
 export default function List({
@@ -29,6 +31,8 @@ export default function List({
   className,
   unreadCounts,
   currentUserId,
+  isCollaborators,
+  companyId,
 }: TProps) {
   const [selectedCompany, setSelectedCompany] = useState<
     (Company & { users: User[] }) | null
@@ -57,16 +61,13 @@ export default function List({
       )}
     >
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-[#797979] sm:text-[14px] sm:font-normal">
-          User List
-        </h2>
-        <SearchCollaborationModal
-          companies={companies}
-          setCompanyAdmins={setCompanyAdmins}
-          companyAdmins={companyAdmins}
-        />
-      </div>
+      <CollaborationToggle
+        companyId={companyId}
+        initialValue={isCollaborators ?? false}
+        companies={companies}
+        setCompanyAdmins={setCompanyAdmins}
+        companyAdmins={companyAdmins}
+      />
 
       {/* Search */}
       <form

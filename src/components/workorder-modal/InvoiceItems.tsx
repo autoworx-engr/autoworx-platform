@@ -10,6 +10,8 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 
 type TProps = {
   invoiceTechnicians: (Technician & { name: string })[];
+  openService: number | null;
+  setOpenService: React.Dispatch<React.SetStateAction<number | null>>;
   items: Awaited<
     ReturnType<
       typeof db.invoiceItem.findMany<{
@@ -40,8 +42,10 @@ export function InvoiceItems({
   invoiceStatus,
   writePermission,
   techniciansPerItem,
+  openService,
+  setOpenService,
 }: TProps) {
-  const [openService, setOpenService] = useState<number | null>(null);
+  // const [openService, setOpenService] = useState<number | null>(null);
   return items?.map((item) => {
     if (!item.service) return null;
     return (

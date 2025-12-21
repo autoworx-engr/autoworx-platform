@@ -575,7 +575,7 @@ model Company {
   businessId                       String?                            @map("business_id")
   businessType                     String?                            @map("business_type")
   phone                            String?
-  countryCode                      String?                            @map("country_code") @default("US")
+  countryCode                      String?                            @default("US") @map("country_code")
   email                            String?
   industry                         String?
   website                          String?
@@ -634,6 +634,7 @@ model Company {
   permissions                      Permission[]
   Lead                             Lead[]
   isCRMEnabled                     Boolean?                           @default(false) @map("is_crm_enabled")
+  isCollaborators                  Boolean?                           @default(false) @map("is_collaborators")
   LeaveRequest                     LeaveRequest[]
   RequestEstimateSent              RequestEstimate[]                  @relation("SenderCompany")
   RequestEstimateReceived          RequestEstimate[]                  @relation("ReceiverCompany")
@@ -1346,7 +1347,7 @@ model Invoice {
   vehicleParts            VehicleParts[]
   photos                  InvoicePhoto[]
   signatureImage          String?
-  wasAuthorized           Boolean                  @default(false)
+  wasAuthorized           Boolean                   @default(false)
   tasks                   Task[]
   status                  Status?                   @relation(fields: [statusId], references: [id])
   payments                Payment[]
@@ -1370,6 +1371,7 @@ model Invoice {
   TimeDelayExecution      TimeDelayExecution[]
   Refund                  Refund[]
   FleetStatement          FleetStatement?           @relation(fields: [fleetStatementId], references: [id])
+  isViewed                Boolean?                  @default(false) @map("is_viewed")
 
   @@index([companyId], name: "fk_invoices_company")
   @@index([companyId, type])
