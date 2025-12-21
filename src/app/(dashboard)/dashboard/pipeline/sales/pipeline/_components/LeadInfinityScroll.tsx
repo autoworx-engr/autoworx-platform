@@ -9,6 +9,7 @@ import {
 } from "@/context/sales-pipeline.context";
 import { LeadWithSalesUser } from "@/types/invoiceLead";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
 
 type TProps = {
   columnTitle: string;
@@ -32,6 +33,9 @@ export default function LeadInfinityScroll({
   const loaderRef = useRef<HTMLDivElement>(null);
   const [scrollLoading, setScrollLoading] = useState(false);
   const [hasMore, setHasMore] = useState(false);
+  const [screenWidth, setScreenWidth] = useState<number>(
+    typeof window !== "undefined" ? window.innerWidth : 1200
+  );
 
   const leadsLength = leads?.length ?? 0;
 
@@ -49,6 +53,21 @@ export default function LeadInfinityScroll({
       }),
     });
   }, [columnId, columnIndex, leads.length]);
+
+  // Enable vertical auto-scroll within the column list during drag (desktop)
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || screenWidth < 768) return;
+    return autoScrollForElements({ element: el });
+  }, [screenWidth]);
+
+  useEffect(() => {
+    function updateWidth() {
+      setScreenWidth(window.innerWidth);
+    }
+    window.addEventListener("resize", updateWidth);
+    return () => window.removeEventListener("resize", updateWidth);
+  }, []);
 
   const fetchMoreLeads = useCallback(async () => {
     try {

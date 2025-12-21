@@ -42,6 +42,7 @@ export default memo(function LeadCard({
   const pipelineColumns = useColumnState() || [];
   const [showColumnSelect, setShowColumnSelect] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [isDropTarget, setIsDropTarget] = useState(false);
   const cardRef = useRef<HTMLLIElement>(null);
 
   useEffect(() => {
@@ -77,6 +78,9 @@ export default memo(function LeadCard({
             allowedEdges: ["top", "bottom"],
           });
         },
+        onDragEnter: () => setIsDropTarget(true),
+        onDragLeave: () => setIsDropTarget(false),
+        onDrop: () => setIsDropTarget(false),
       })
     );
   }, [leadData, index, columnIndex, isDragDisabled]);
@@ -137,7 +141,8 @@ export default memo(function LeadCard({
       className={cn(
         "max-w-auto relative mx-1 my-1 h-fit rounded-xl border bg-background p-1 duration-300 hover:bg-slate-100",
         highlight && "bg-yellow-100",
-        isDragging && "opacity-20 grayscale bg-slate-200"
+        isDragging && "opacity-20 grayscale bg-slate-200",
+        isDropTarget && "ring-2 ring-blue-500 bg-blue-50"
       )}
     >
       <div className="relative flex justify-between">

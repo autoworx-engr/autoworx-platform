@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { updateLeadColumn } from "@/actions/pipelines/getLeads";
 import { actionTypes } from "@/constants/lead.constant";
 import {
@@ -9,6 +9,7 @@ import {
 } from "@/context/sales-pipeline.context";
 import { errorToast, successToast } from "@/lib/toast";
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
 import { extractClosestEdge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
 import { getReorderDestinationIndex } from "@atlaskit/pragmatic-drag-and-drop-hitbox/util/get-reorder-destination-index";
 import LeadCard from "./LeadCard";
@@ -20,6 +21,7 @@ export default function SalesPipelineSection() {
   const [screenWidth, setScreenWidth] = useState<number>(
     typeof window !== "undefined" ? window.innerWidth : 1200
   );
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     function updateWidth() {
@@ -28,6 +30,13 @@ export default function SalesPipelineSection() {
     window.addEventListener("resize", updateWidth);
     return () => window.removeEventListener("resize", updateWidth);
   }, []);
+
+  // Enable horizontal auto-scroll of the columns container during drag (desktop)
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!el || screenWidth < 768) return;
+    return autoScrollForElements({ element: el });
+  }, [screenWidth]);
 
   useEffect(() => {
     return monitorForElements({
@@ -115,7 +124,10 @@ export default function SalesPipelineSection() {
 
   return (
     <div className="h-full w-full overflow-hidden px-2">
-      <div className="thin-scrollbar flex touch-pan-x snap-x snap-mandatory flex-nowrap justify-between gap-2 overflow-x-auto">
+      <div
+        ref={scrollContainerRef}
+        className="thin-scrollbar flex touch-pan-x snap-x snap-mandatory flex-nowrap justify-between gap-2 overflow-x-auto"
+      >
         {pipelineColumns.map((column, columnIndex) => (
           <div
             key={column.id || columnIndex}
