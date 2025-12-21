@@ -36,6 +36,7 @@ import VehicleParts from "./VehicleParts";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import { ImageIcon, X } from "lucide-react";
+import ComponentsLightbox from "@/components/common/LightBox";
 import {
   handleFileSelection,
   uploadAllAttachments,
@@ -121,6 +122,9 @@ export default function CreateAndEditLabor({
 
   const [imageUploadIsLoading, setImageUploadIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [lightboxItems, setLightboxItems] = useState<{ src: string }[] | null>(
+    null
+  );
   const [priority, setPriority] = useState<Priority>("Low");
   const [loading, setLoading] = useState(false); // Loading state
 
@@ -640,7 +644,12 @@ export default function CreateAndEditLabor({
                           <img
                             src={att.fileUrl || "/placeholder.svg"}
                             alt={`attachment-${idx}`}
-                            className="h-20 w-20 rounded-md border border-slate-200 object-cover shadow-sm transition-transform group-hover:scale-105"
+                            onClick={() =>
+                              setLightboxItems([
+                                { src: att.fileUrl || "/placeholder.svg" },
+                              ])
+                            }
+                            className="h-20 w-20 rounded-md border border-slate-200 object-cover shadow-sm transition-transform group-hover:scale-105 cursor-pointer"
                           />
                           <button
                             type="button"
@@ -662,6 +671,14 @@ export default function CreateAndEditLabor({
                     <p className="text-center text-xs text-slate-400">
                       No photos uploaded
                     </p>
+                  )}
+                  {/* Lightbox  */}
+                  {lightboxItems && (
+                    <ComponentsLightbox
+                      getItems={lightboxItems.map((i) => ({ src: i.src }))}
+                      startIndex={0}
+                      onClose={() => setLightboxItems(null)}
+                    />
                   )}
                 </div>
               </div>

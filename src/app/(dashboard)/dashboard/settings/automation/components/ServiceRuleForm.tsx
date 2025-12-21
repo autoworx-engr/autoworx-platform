@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import Selector from "./Selector";
 import { Box, Paper, Typography, Switch } from "@mui/material";
+import { ArrowRight } from "lucide-react";
 import MultiSelect from "./MultiSelect";
 import { SlimInput } from "@/components/SlimInput";
 import ActiveTemplate from "./ActiveTemplate";
@@ -31,6 +32,9 @@ import { errorToast } from "@/lib/toast";
 import { useCharacterLimit } from "@/hooks/useCharecterLimit";
 import CarLoading from "@/components/common/CarLoading";
 import { AppointmentTemplateVariable } from "@/components/Lists/NewTemplate";
+import TooltipLabel from "./ToolTipLabel";
+import InfoCard from "./InfoCard";
+import { TipBox } from "./TagautomationHelper";
 type RuleFormProps = {
   initialData?: Rule;
   mode: "create" | "edit" | undefined;
@@ -331,6 +335,35 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
     handleChange(name as keyof Rule, value);
   };
 
+  const getConditionActionHelp = () => {
+    const conditionId = formData?.conditionColumnId;
+    const actionId = formData?.targetColumnId;
+
+    if (conditionId == null || actionId == null) return null;
+
+    const findStageName = (id: any) => {
+      const st: any = stages?.find((s: any) => Number(s.id) === Number(id));
+      return st?.title ?? st?.name ?? String(id);
+    };
+
+    const conditionName = findStageName(conditionId);
+    const actionName = findStageName(actionId);
+
+    const helpConfig = {
+      status_transition: {
+        icon: <ArrowRight className="w-5 h-5 text-indigo-600" />,
+        title: "Status Transition",
+        desc: `When service moves from "${conditionName}" to "${actionName}", this automation will trigger and send notifications to the customer.`,
+        bgColor: "bg-indigo-50",
+        borderColor: "border-indigo-200",
+        textColor: "text-indigo-800",
+      },
+    };
+
+    return helpConfig.status_transition;
+  };
+  const conditionActionHelp = getConditionActionHelp();
+
   if (isLoading || isFetching || serviceLoading || stageLoading) {
     return (
       <div className="flex h-[800px] w-full animate-pulse items-center justify-center rounded-md bg-gray-200 p-4 shadow-sm md:p-6">
@@ -356,6 +389,21 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
 
             {/* Service */}
             <div>
+              <TooltipLabel
+                label="Service"
+                tooltipText={
+                  <div className="space-y-2">
+                    <p className="font-semibold mb-1">
+                      Select services for this automation:
+                    </p>
+                    <p>
+                      Choose one or more services that this automation rule will
+                      apply to. You can search and select multiple services.
+                    </p>
+                  </div>
+                }
+                required
+              />
               <MultiSelect
                 options={serviceOptions}
                 value={
@@ -364,26 +412,49 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
                     : formData.selectedServiceIds
                 }
                 onChange={(value) => handleChange("selectedServiceIds", value)}
-                label="Service"
+                // label="Service"
                 placeholder="Select options"
                 required
                 isSearch={true}
                 disabled={serviceLoading}
                 error={error.selectedServiceIds}
+                labelClassName="hidden"
               />
             </div>
 
             {/* Condition */}
-            <Selector
-              name="condition"
-              label="Condition"
-              options={stages}
-              value={formData.conditionColumnId!}
-              onChange={(value) => handleChange("conditionColumnId", value)}
-              required
-              disabled={stageLoading}
-              error={error.conditionColumnId}
-            />
+            <div>
+              <TooltipLabel
+                label="Condition"
+                tooltipText={
+                  <div className="space-y-2">
+                    <p className="font-semibold mb-1">
+                      Starting status (FROM):
+                    </p>
+                    <p>
+                      Select the status where the service currently is. This is
+                      the starting point of the transition.
+                    </p>
+                    <p className="mt-2 text-xs italic">
+                      These are your shop pipeline stages from the target
+                      column.
+                    </p>
+                  </div>
+                }
+                required
+              />
+              <Selector
+                name="condition"
+                // label="Condition"
+                options={stages}
+                value={formData.conditionColumnId!}
+                onChange={(value) => handleChange("conditionColumnId", value)}
+                required
+                disabled={stageLoading}
+                error={error.conditionColumnId}
+                labelClassName="hidden"
+              />
+            </div>
 
             {/* Time Delay */}
             <Selector
@@ -396,15 +467,50 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
               error={error.timeDelay}
             />
             {/* Action */}
-            <Selector
-              name="action"
-              label="Action"
-              options={actionOptions}
-              value={formData.targetColumnId!}
-              onChange={(value) => handleChange("targetColumnId", value)}
-              disabled={stageLoading}
-              isClear={true}
-            />
+
+            <div>
+              <TooltipLabel
+                label="Action"
+                tooltipText={
+                  <div className="space-y-2">
+                    <p className="font-semibold mb-1">
+                      Destination status (TO):
+                    </p>
+                    <p>
+                      Select the status where the service will move to. When
+                      this transition happens, the automation will trigger.
+                    </p>
+                    <p className="mt-2 text-xs italic">
+                      The condition status you selected will not appear here as
+                      you cannot move to the same status.
+                    </p>
+                  </div>
+                }
+                required
+              />
+              <Selector
+                name="action"
+                // label="Action"
+                options={actionOptions}
+                value={formData.targetColumnId!}
+                onChange={(value) => handleChange("targetColumnId", value)}
+                disabled={stageLoading}
+                isClear={true}
+                labelClassName="hidden"
+              />
+
+              {conditionActionHelp && (
+                <InfoCard
+                  icon={conditionActionHelp.icon}
+                  title={conditionActionHelp.title}
+                  description={conditionActionHelp.desc}
+                  bgColor={conditionActionHelp.bgColor}
+                  borderColor={conditionActionHelp.borderColor}
+                  textColor={conditionActionHelp.textColor}
+                />
+              )}
+            </div>
+
             {/* Templates */}
             <Box className="my-4">
               <label className="mb-2 font-semibold text-gray-500">
@@ -483,6 +589,11 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
               <AppointmentTemplateVariable
                 VARIABLES={template_variable_options}
                 hasBackground={true}
+              />
+
+              <TipBox
+                message="Click any variable to copy it, then paste it into your template where you want the dynamic content to appear. For example: 'Hi <CONTACT>, your service is complete: <VEHICLE>'"
+                variant="info"
               />
             </Box>
 

@@ -69,9 +69,9 @@ export default async function Page({
   });
 
   // spread all `tag` objects into `tags` array
-  products.forEach((product) => {
+  products.forEach(product => {
     (product as unknown as { tags: Tag[] }).tags = product.tags.map(
-      (tag) => tag.tag
+      tag => tag.tag
     );
   });
 
@@ -87,16 +87,14 @@ export default async function Page({
   });
 
   // spread all `tag` objects into `tags` array
-  labors.forEach((labor) => {
-    (labor as unknown as { tags: Tag[] }).tags = labor.tags.map(
-      (tag) => tag.tag
-    );
+  labors.forEach(labor => {
+    (labor as unknown as { tags: Tag[] }).tags = labor.tags.map(tag => tag.tag);
   });
 
   let materials = [] as any[];
 
   materials.push(
-    ...products.map((product) => ({
+    ...products.map(product => ({
       ...product,
       cost: product.price,
       tags: product.tags,

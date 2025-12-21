@@ -38,7 +38,7 @@ export default function ConvertButton({
       resetLists();
     } else if (res.type === "globalError") {
       errorToast(
-        res.errorSource?.length ? res.errorSource[0].message : res.message,
+        res.errorSource?.length ? res.errorSource[0].message : res.message
       );
       return;
     }
@@ -49,7 +49,7 @@ export default function ConvertButton({
       <Submit
         className={cn(
           "flex w-full items-center justify-center gap-2 text-nowrap rounded border border-solid border-slate-600 p-2 text-center text-sm disabled:opacity-35",
-          className,
+          className
         )}
         formAction={handleSubmit}
       >
