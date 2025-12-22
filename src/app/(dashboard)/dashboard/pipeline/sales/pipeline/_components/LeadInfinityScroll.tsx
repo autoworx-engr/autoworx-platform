@@ -49,7 +49,7 @@ export default function LeadInfinityScroll({
         type: "column",
         columnId,
         columnIndex,
-        index: leads.length,
+        index: leads.length, // Empty space = end of list
       }),
     });
   }, [columnId, columnIndex, leads.length]);

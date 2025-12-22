@@ -104,17 +104,29 @@ export default memo(function LeadCard({
     }
 
     try {
-      const currentColumnIndex = pipelineColumns.findIndex(col => col.id === leadData.columnId);
-      const destinationColumnIndex = pipelineColumns.findIndex(col => col.id === parseInt(newColumnId));
+      const currentColumnIndex = pipelineColumns.findIndex(
+        (col) => col.id === leadData.columnId
+      );
+      const destinationColumnIndex = pipelineColumns.findIndex(
+        (col) => col.id === parseInt(newColumnId)
+      );
       if (currentColumnIndex === -1 || destinationColumnIndex === -1) return;
 
-      const leadIndex = pipelineColumns[currentColumnIndex].leads.findIndex(l => l.id === leadData.id);
+      const leadIndex = pipelineColumns[currentColumnIndex].leads.findIndex(
+        (l) => l.id === leadData.id
+      );
 
       dispatch({
         type: actionTypes.DRAG_END,
         payload: {
-          source: { droppableId: currentColumnIndex.toString(), index: leadIndex },
-          destination: { droppableId: destinationColumnIndex.toString(), index: pipelineColumns[destinationColumnIndex].leads.length },
+          source: {
+            droppableId: currentColumnIndex.toString(),
+            index: leadIndex,
+          },
+          destination: {
+            droppableId: destinationColumnIndex.toString(),
+            index: pipelineColumns[destinationColumnIndex].leads.length,
+          },
           draggableId: leadData.id.toString(),
         },
       });
@@ -139,9 +151,9 @@ export default memo(function LeadCard({
     <li
       ref={cardRef}
       className={cn(
-        "max-w-auto relative mx-1 my-1 h-fit rounded-xl border bg-background p-1 duration-300 hover:bg-slate-100",
+        "max-w-auto relative mx-1 my-1 h-fit rounded-xl border bg-background p-1 duration-300 hover:bg-slate-100 cursor-grab active:cursor-grabbing",
         highlight && "bg-yellow-100",
-        isDragging && "opacity-20 grayscale bg-slate-200",
+        isDragging && "opacity-20 grayscale bg-slate-200 ",
         isDropTarget && "ring-2 ring-blue-500 bg-blue-50"
       )}
     >

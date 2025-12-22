@@ -31,17 +31,17 @@ export default function SalesPipelineSection() {
     return () => window.removeEventListener("resize", updateWidth);
   }, []);
 
-  // Enable horizontal auto-scroll of the columns container during drag (desktop)
-  useEffect(() => {
-    const el = scrollContainerRef.current;
-    if (!el || screenWidth < 768) return;
-    return autoScrollForElements({ element: el });
-  }, [screenWidth]);
-
   useEffect(() => {
     return monitorForElements({
       onDrop({ source, location }) {
-        const destination = location.current.dropTargets[0];
+        // const destination = location.current.dropTargets[0];
+        const cardDropTarget = location.current.dropTargets.find(
+          (target) => target.data.type === "card"
+        );
+        const columnDropTarget = location.current.dropTargets.find(
+          (target) => target.data.type === "column"
+        );
+        const destination = cardDropTarget || columnDropTarget;
         if (!destination) return;
 
         const sourceData = source.data as {
@@ -60,15 +60,20 @@ export default function SalesPipelineSection() {
         };
 
         if (sourceData.type === "card") {
-          const closestEdgeOfTarget = extractClosestEdge(destination.data);
+          let finalIndex: number;
 
+          if (cardDropTarget) {
+            const closestEdgeOfTarget = extractClosestEdge(cardDropTarget.data);
+            finalIndex = getReorderDestinationIndex({
+              startIndex: sourceData.index,
+              indexOfTarget: destinationData.index,
+              closestEdgeOfTarget,
+              axis: "vertical",
+            });
+          } else {
+            finalIndex = destinationData.index;
+          }
           // Use getReorderDestinationIndex for all cases - it handles both same-column and cross-column correctly
-          const finalIndex = getReorderDestinationIndex({
-            startIndex: sourceData.index,
-            indexOfTarget: destinationData.index,
-            closestEdgeOfTarget,
-            axis: "vertical",
-          });
 
           if (
             sourceData.columnIndex === destinationData.columnIndex &&
@@ -122,6 +127,11 @@ export default function SalesPipelineSection() {
     });
   }, [dispatch]);
 
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!el || screenWidth < 768) return;
+    return autoScrollForElements({ element: el });
+  }, [screenWidth]);
   return (
     <div className="h-full w-full overflow-hidden px-2">
       <div
