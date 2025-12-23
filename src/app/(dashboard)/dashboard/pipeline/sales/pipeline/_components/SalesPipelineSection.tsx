@@ -10,8 +10,6 @@ import {
 import { errorToast, successToast } from "@/lib/toast";
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
-import { extractClosestEdge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
-import { getReorderDestinationIndex } from "@atlaskit/pragmatic-drag-and-drop-hitbox/util/get-reorder-destination-index";
 import LeadCard from "./LeadCard";
 import LeadInfinityScroll from "./LeadInfinityScroll";
 
