@@ -26,10 +26,10 @@ import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 type LeadCardProps = {
   leadData: LeadWithSalesUser;
   highlight?: boolean;
-  index: number;
-  columnIndex: number;
-  isDragDisabled: boolean;
-  leadIndex: number;
+  index?: number;
+  columnIndex?: number;
+  isDragDisabled?: boolean;
+  leadIndex?: number;
 };
 
 export default memo(function LeadCard({
@@ -112,8 +112,8 @@ export default memo(function LeadCard({
         element,
         getInitialData: (): {
           leadId: string;
-          columnIndex: number;
-          leadIndex: number;
+          columnIndex: number | undefined;
+          leadIndex: number | undefined;
         } => ({
           leadId: leadData.id.toString(),
           columnIndex,

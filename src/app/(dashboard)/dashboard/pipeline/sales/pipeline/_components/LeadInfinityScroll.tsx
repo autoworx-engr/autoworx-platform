@@ -14,10 +14,10 @@ import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-sc
 type TProps = {
   columnTitle: string;
   columnId: number | null;
-  columnIndex: number;
+  columnIndex?: number;
   leads: LeadWithSalesUser[];
-  totalLeads: number;
-  screenWidth: number;
+  totalLeads?: number;
+  screenWidth?: number;
   children: (leads: LeadWithSalesUser[]) => React.ReactNode;
 };
 
@@ -108,7 +108,7 @@ export default function LeadInfinityScroll({
 
   useEffect(() => {
     const element = containerRef.current;
-    if (!element || screenWidth < 768) {
+    if (!element || (screenWidth !== undefined && screenWidth < 768)) {
       return;
     }
 
@@ -123,7 +123,7 @@ export default function LeadInfinityScroll({
 
    useEffect(() => {
     const ulElement = scrollRef.current;
-    if (!ulElement || screenWidth < 768) return;
+    if (!ulElement || (screenWidth !== undefined && screenWidth < 768)) return;
 
     return autoScrollForElements({ element: ulElement });
   }, [screenWidth]);
