@@ -7,6 +7,7 @@ import { Company } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
+import PhoneInput from "@/components/PhoneInput";
 import ServiceSelectAndAdd from "@/components/ServiceSelectAndAdd";
 import {
   useGetAllYears,
@@ -15,7 +16,6 @@ import {
 } from "@/hooks/useCarData";
 import { salesPipelineKeyStr } from "@/utils/enums/query-key-constant";
 import Selector from "../../settings/automation/components/Selector";
-import PhoneInput from "@/components/PhoneInput";
 
 const AddLeads = ({ onClose }: { onClose?: () => void }) => {
   const queryClient = useQueryClient();
@@ -185,6 +185,7 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
             countryCode: formData.countryCode,
             serviceId: formData.service,
             opportunity_source: opportunitySource,
+            source: formData.source,
           }),
         }
       );

@@ -152,6 +152,18 @@ export default function EmployeeInfoTable({
                 {info.invoice?.vehicle?.make} {info.invoice?.vehicle?.model}{" "}
                 {info.invoice?.vehicle?.other}
               </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Assigned:{" "}
+                {info.date
+                  ? moment.tz(info.date, timezone).format("DD.MM.YYYY")
+                  : "-"}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Closed:{" "}
+                {info.dateClosed
+                  ? moment.tz(info.dateClosed, timezone).format("DD.MM.YYYY")
+                  : "-"}
+              </p>
             </div>
             <div>
               <p>
@@ -217,7 +229,6 @@ export default function EmployeeInfoTable({
                   <p
                     style={{
                       backgroundColor: WORK_ORDER_STATUS_COLOR[row.status!],
-                      opacity: 0.90,
                     }}
                     className="rounded-full px-2 py-0.5 text-white"
                   >

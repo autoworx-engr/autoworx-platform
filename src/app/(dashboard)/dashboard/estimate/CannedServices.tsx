@@ -4,6 +4,15 @@ import { updateService } from "@/actions/estimate/service/updateService";
 import SelectCategory from "@/components/Lists/SelectCategory";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/Dialog";
+import {
   Table,
   TableBody,
   TableCell,
@@ -14,11 +23,10 @@ import {
 import { cn } from "@/lib/cn";
 import { errorToast, successToast } from "@/lib/toast";
 import { useEstimateCreateStore } from "@/stores/estimate-create";
-import { useFormErrorStore } from "@/stores/form-error";
 import { useListsStore } from "@/stores/lists";
 import { Category, Service } from "@prisma/client";
 import { Pagination, Popconfirm } from "antd";
-import { CircleCheckBig, SquarePen, Trash2, X } from "lucide-react";
+import { SquarePen, Trash2 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import FilterBySearchBox from "../reporting/components/filter/FilterBySearchBox";
@@ -54,7 +62,7 @@ export default function CannedServices({
 
       const matchesSearch = serviceSearch
         ? row.name.toLowerCase().includes(serviceSearch.toLowerCase()) ||
-          categoryName.includes(serviceSearch.toLowerCase())
+        categoryName.includes(serviceSearch.toLowerCase())
         : true;
 
       const matchesCategory = selectedCategory
@@ -113,40 +121,42 @@ export default function CannedServices({
           </h3>
         </div>
         {/* Updated layout to match Canned Labor: Search, Filter (Icon), Add Service (Button) on one line */}
-        <div className=" pt-3">
-          <FilterBySearchBox
-            searchText={serviceSearch as string}
-            paramKey="serviceSearch"
-          />
-        </div>
-        <div className="flex justify-between items-center mt-3">
-          <CannedFilterBySelection
-            selectedItem={selectedCategory}
-            items={uniqueCategories}
-            type="serviceCategory" // unique param for services
-            modalName="serviceCategory"
-            closeModal={closeModal}
-            activeModal={activeModal}
-            toggleModal={toggleModal}
-          />
-          <NewService
-            newButton={
-              <button
-                className="rounded-lg bg-gradient-to-r from-[#6571FF] to-[#5a66ee] w-full min-w-32 md:w-36 p-2 text-white font-medium shadow-indigo-500/30
+        <div className="mt-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between gap-y-3">
+          <div className="flex-1">
+            <FilterBySearchBox
+              searchText={serviceSearch as string}
+              paramKey="serviceSearch"
+            />
+          </div>
+          <div className="flex items-center gap-3">
+            <CannedFilterBySelection
+              selectedItem={selectedCategory}
+              items={uniqueCategories}
+              type="serviceCategory" // unique param for services
+              modalName="serviceCategory"
+              closeModal={closeModal}
+              activeModal={activeModal}
+              toggleModal={toggleModal}
+            />
+            <NewService
+              newButton={
+                <button
+                  className="rounded-lg bg-gradient-to-r from-[#6571FF] to-[#5a66ee] w-full min-w-32 md:w-36 p-2 text-white font-medium shadow-indigo-500/30
                 hover:shadow-xl hover:shadow-indigo-500/40
                 hover:-translate-y-0.5 hover:scale-[1.02]
                 active:translate-y-0 active:scale-100
                 transition-all duration-200"
-              >
-                + Add Service
-              </button>
-            }
-          />
+                >
+                  + Add Service
+                </button>
+              }
+            />
+          </div>
         </div>
       </section>
       {/* Desktop View */}
       <div className="overflow-y-auto thin-scrollbar hidden flex-1 h-full md:block mt-4">
-        <Table className="h-full border border-gray-200 rounded-lg">
+        <Table className="border border-gray-200 rounded-lg">
           <TableHeader className="sticky top-0 bg-gray-50 border-b border-gray-200">
             <TableRow>
               <TableHead className="font-semibold text-gray-700">
@@ -163,7 +173,7 @@ export default function CannedServices({
               </TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody className="custom-scrollbar h-full">
+          <TableBody>
             {paginatedServices.length > 0 ? (
               paginatedServices.map((service, index) => (
                 <ServiceComponent
@@ -229,71 +239,61 @@ const ServiceComponent = ({
   view: "table" | "card";
   index: number;
 }) => {
-  const [isEdit, setIsEdit] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState(service.name);
+  const [nameError, setNameError] = useState("");
+  const [description, setDescription] = useState(service.description);
+  const [descriptionError, setDescriptionError] = useState("");
   const [category, setCategory] = useState<Category | null>(
     service?.category || null
   );
+  const [categoryOpen, setCategoryOpen] = useState(false);
   const { categories } = useListsStore();
   const { currentSelectedCategoryId } = useEstimateCreateStore();
-  const [categoryOpen, setCategoryOpen] = useState(false);
-  const [name, setName] = useState(service.name);
-  const [description, setDescription] = useState(service.description);
-  const { showError, clearError } = useFormErrorStore();
-  const [nameError, setNameError] = useState(""); // Added state for name error
-  const [descriptionError, setDescriptionError] = useState(""); // Added state for description error
-
-  // Validation function
-  const validateName = (value: string) => {
-    if (value.length > 50) {
-      setNameError("Service name must be less than 50 characters");
-      return false;
-    }
-    if (!value.trim()) {
-      setNameError("Service name is required");
-      showError({
-        field: "name",
-        message: "Service name is required",
-      });
-      return false;
-    } else {
-      setNameError("");
-      clearError();
-      return true;
-    }
-  };
-
-  async function handleUpdateService() {
-    // Validate the service name before proceeding
-    if (!validateName(name)) {
-      return;
-    }
-
-    const res = await updateService({
-      id: service.id,
-      name: name,
-      description: description || "",
-      categoryId: category?.id,
-      canned: true,
-    });
-
-    // Optionally handle the response (e.g., check for success or errors)
-    if (res && "type" in res && res.type === "success") {
-      successToast("Service updated successfully!");
-      setIsEdit(false); // Exit edit mode only on success
-    } else {
-      // Handle error if needed (e.g., show a toast)
-      errorToast(res?.message ?? "Update failed. Please try again.");
-      // console.error("Update failed:", res);
-    }
-  }
+  const [isPending, setIsPending] = useState(false);
 
   useEffect(() => {
-    if (currentSelectedCategoryId) {
+    if (currentSelectedCategoryId && !category) {
       setCategory(
         categories.find((cat) => cat.id === currentSelectedCategoryId)!
       );
     }
-  }, [currentSelectedCategoryId]);
+  }, [currentSelectedCategoryId, category, categories]);
+
+  const handleDialogClose = () => {
+    setOpen(false);
+    setNameError("");
+    setDescriptionError("");
+  };
+
+  async function handleUpdateService() {
+    if (!name.trim()) {
+      setNameError("Service name is required");
+      return;
+    }
+
+    if (name.length > 50) {
+      setNameError("Service name must be less than 50 characters");
+      return;
+    }
+
+    setIsPending(true);
+    const res = await updateService({
+      id: service.id,
+      name: name,
+      description: description || "",
+      categoryId: category?.id || undefined,
+      canned: true,
+    });
+
+    if (res && "type" in res && res.type === "success") {
+      successToast("Service updated successfully!");
+      handleDialogClose();
+    } else {
+      errorToast(res?.message ?? "Update failed. Please try again.");
+    }
+    setIsPending(false);
+  }
 
   if (view === "card") {
     return (
@@ -303,93 +303,121 @@ const ServiceComponent = ({
           index !== undefined && index % 2 === 0
             ? "border-indigo-500 bg-white"
             : "border-teal-500 bg-gray-50",
-          isEdit
-            ? "shadow-2xl ring-2 ring-indigo-400"
-            : "shadow-md hover:shadow-lg"
+          "shadow-md hover:shadow-lg"
         )}
       >
         <CardHeader className="p-4">
           <div className="flex items-start justify-between">
-            {!isEdit ? (
-              <h3 className="line-clamp-2 text-xl font-extrabold text-gray-800">
-                {service.name}
-              </h3>
-            ) : (
-              <div className="flex-1">
-                <input
-                  type="text"
-                  id="name"
-                  value={name}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (value.length > 50) {
-                      setNameError(
-                        "Service name must be less than 50 characters"
-                      );
-                      return;
-                    }
-                    setName(value);
-                    if (value.trim()) {
-                      setNameError("");
-                      clearError();
-                    }
-                  }}
-                  onBlur={() => validateName(name)}
-                  className={cn(
-                    "w-full rounded-lg border p-2 text-base font-semibold focus:ring-2 focus:ring-indigo-500 transition-colors",
-                    nameError
-                      ? "border-red-500"
-                      : "border-gray-300 focus:border-indigo-500"
-                  )}
-                  placeholder="Service Name"
-                  aria-invalid={nameError ? "true" : "false"}
-                  aria-describedby={nameError ? "name-error" : undefined}
-                />
-                {nameError && (
-                  <span
-                    id="name-error"
-                    className="mt-1 block text-xs text-red-500"
-                  >
-                    {nameError}
-                  </span>
-                )}
-              </div>
-            )}
+            <h3 className="line-clamp-2 text-xl font-extrabold text-gray-800">
+              {service.name}
+            </h3>
             <div className="flex items-center gap-3 ml-4">
-              {isEdit && (
-                <button
-                  onClick={handleUpdateService}
-                  className="text-2xl text-green-600 hover:text-green-700 disabled:text-gray-400 transition-colors"
-                  title="Save"
-                >
-                  <CircleCheckBig className="w-6 h-6" />
-                </button>
-              )}
-              <button
-                onClick={() => setIsEdit(!isEdit)}
-                className="text-2xl text-indigo-500 hover:text-indigo-600 transition-colors"
-                title={isEdit ? "Cancel" : "Edit"}
+              <Dialog open={open} onOpenChange={setOpen}>
+                <DialogTrigger asChild>
+                  <button
+                    className="text-2xl text-indigo-500 hover:text-indigo-600 transition-colors"
+                    title="Edit"
+                  >
+                    <SquarePen className="w-5 h-5" />
+                  </button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Edit Canned Service</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-gray-700">
+                        Service Name
+                      </label>
+                      <input
+                        type="text"
+                        value={name}
+                        onChange={(e) => {
+                          setName(e.target.value);
+                          if (nameError) setNameError("");
+                        }}
+                        className={cn(
+                          "w-full rounded-lg border p-2 text-base focus:ring-2 focus:ring-indigo-500 transition-colors",
+                          nameError
+                            ? "border-red-500"
+                            : "border-gray-300 focus:border-indigo-500"
+                        )}
+                        placeholder="Service Name"
+                      />
+                      {nameError && (
+                        <p className="mt-1 text-xs text-red-500">{nameError}</p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-gray-700">
+                        Category
+                      </label>
+                      <SelectCategory
+                        onCategoryChange={setCategory}
+                        labelPosition="none"
+                        categoryData={category}
+                        categoryOpen={categoryOpen}
+                        setCategoryOpen={setCategoryOpen}
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-gray-700">
+                        Description
+                      </label>
+                      <textarea
+                        placeholder="Description"
+                        value={description || ""}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value.length > 250) {
+                            setDescriptionError(
+                              "Description must be less than 250 characters"
+                            );
+                            return;
+                          }
+                          setDescription(value);
+                          setDescriptionError("");
+                        }}
+                        className={cn(
+                          "min-h-[100px] w-full rounded-lg border p-2 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition-colors",
+                          descriptionError ? "border-red-500" : "border-gray-300"
+                        )}
+                      />
+                      {descriptionError && (
+                        <p className="mt-1 text-xs text-red-500">
+                          {descriptionError}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <DialogClose asChild>
+                      <button className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">
+                        Cancel
+                      </button>
+                    </DialogClose>
+                    <button
+                      onClick={handleUpdateService}
+                      disabled={isPending}
+                      className="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:bg-gray-400"
+                    >
+                      {isPending ? "Updating..." : "Update Service"}
+                    </button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+              <Popconfirm
+                title="Delete the Canned Service"
+                description="Are you sure to delete this Canned Service?"
+                okText="Yes"
+                cancelText="No"
+                onConfirm={async () => {
+                  await deleteService(service.id);
+                }}
               >
-                {!isEdit ? (
-                  <SquarePen className="w-5 h-5" />
-                ) : (
-                  <X className="w-6 h-6 text-red-500" />
-                )}
-              </button>
-              {!isEdit && (
-                <Popconfirm
-                  title="Delete the Canned Service"
-                  description="Are you sure to delete this Canned Service?"
-                  okText="Yes"
-                  cancelText="No"
-                  onConfirm={async () => {
-                    await deleteService(service.id);
-                    setIsEdit(false);
-                  }}
-                >
-                  <Trash2 className="w-5 h-5 text-red-500 hover:text-red-700 cursor-pointer transition-colors" />
-                </Popconfirm>
-              )}
+                <Trash2 className="w-5 h-5 text-red-500 hover:text-red-700 cursor-pointer transition-colors" />
+              </Popconfirm>
             </div>
           </div>
         </CardHeader>
@@ -397,57 +425,17 @@ const ServiceComponent = ({
           <div className="space-y-4">
             <div>
               <p className="mb-1 text-sm font-medium text-gray-500">Category</p>
-              {!isEdit ? (
-                <p className="line-clamp-1 text-lg font-semibold text-indigo-600">
-                  {service.category?.name}
-                </p>
-              ) : (
-                <SelectCategory
-                  onCategoryChange={setCategory}
-                  labelPosition="none"
-                  categoryData={category}
-                  categoryOpen={categoryOpen}
-                  setCategoryOpen={setCategoryOpen}
-                />
-              )}
+              <p className="line-clamp-1 text-lg font-semibold text-indigo-600">
+                {service.category?.name}
+              </p>
             </div>
             <div>
               <p className="mb-1 text-sm font-medium text-gray-500">
                 Description
               </p>
-              {!isEdit ? (
-                <p className="break-all whitespace-pre-wrap text-gray-700">
-                  {service.description}
-                </p>
-              ) : (
-                <>
-                  <textarea
-                    placeholder="Description"
-                    value={description || ""}
-                    onChange={(e) => {
-                      const value = e.target.value;
-
-                      if (value.length > 250) {
-                        setDescriptionError(
-                          "Description must be less than 250 characters"
-                        );
-                        return;
-                      }
-                      setDescription(value);
-                      setDescriptionError("");
-                    }}
-                    className={cn(
-                      "min-h-[100px] w-full rounded-lg border p-2 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition-colors",
-                      descriptionError ? "border-red-500" : "border-gray-300"
-                    )}
-                  />
-                  {descriptionError && (
-                    <p className="mt-1 text-xs text-red-500">
-                      {descriptionError}
-                    </p>
-                  )}
-                </>
-              )}
+              <p className="break-all whitespace-pre-wrap text-gray-700">
+                {service.description}
+              </p>
             </div>
           </div>
         </CardContent>
@@ -459,117 +447,116 @@ const ServiceComponent = ({
     <TableRow
       className={cn(
         "border-b border-gray-200 transition-colors hover:bg-indigo-50",
-        index % 2 === 0 ? "bg-white" : "bg-gray-50",
-        isEdit ? "bg-yellow-50 shadow-inner" : ""
+        index % 2 === 0 ? "bg-white" : "bg-gray-50"
       )}
     >
       <TableCell className="py-3">
-        {!isEdit ? (
-          <span className="font-medium text-gray-800">{service.name}</span>
-        ) : (
-          <div>
-            <input
-              type="text"
-              id="name"
-              value={name}
-              onChange={(e) => {
-                const value = e.target.value;
-                setName(value);
-                if (value.trim()) {
-                  setNameError("");
-                  clearError();
-                }
-              }}
-              onBlur={() => validateName(name)}
-              className={cn(
-                "w-full min-w-[150px] rounded-md border p-1 px-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500",
-                nameError ? "border-red-500" : "border-gray-300"
-              )}
-              placeholder="Service Name"
-              aria-invalid={nameError ? "true" : "false"}
-              aria-describedby={nameError ? "name-error" : undefined}
-            />
-            {nameError && (
-              <span id="name-error" className="mt-1 block text-xs text-red-500">
-                {nameError}
-              </span>
-            )}
-          </div>
-        )}
+        <span className="font-medium text-gray-800">{service.name}</span>
       </TableCell>
       <TableCell className="py-3">
-        {!isEdit ? (
-          <span className="text-gray-600">{service.category?.name}</span>
-        ) : (
-          <SelectCategory
-            onCategoryChange={setCategory}
-            labelPosition="none"
-            categoryData={category}
-            categoryOpen={categoryOpen}
-            setCategoryOpen={setCategoryOpen}
-          />
-        )}
+        <span className="text-gray-600">{service.category?.name}</span>
       </TableCell>
       <TableCell className="py-3">
-        {!isEdit ? (
-          <span className="line-clamp-2 max-w-[250px] whitespace-pre-wrap break-all text-gray-700">
-            {service.description}
-          </span>
-        ) : (
-          <div>
-            <textarea
-              placeholder="Description"
-              value={description || ""}
-              onChange={(e) => {
-                const value = e.target.value;
-
-                if (value.length > 250) {
-                  setDescriptionError(
-                    "Description must be less than 250 characters"
-                  );
-                  return;
-                }
-                setDescription(value);
-                setDescriptionError("");
-              }}
-              className={cn(
-                "h-20 max-w-[250px] w-full rounded-md border p-1 px-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500",
-                descriptionError ? "border-red-500" : "border-gray-300"
-              )}
-            />
-            {descriptionError && (
-              <p className="mt-1 text-xs text-red-500">{descriptionError}</p>
-            )}
-          </div>
-        )}
+        <span className="line-clamp-2 max-w-[250px] whitespace-pre-wrap break-all text-gray-700">
+          {service.description}
+        </span>
       </TableCell>
       <TableCell className="flex items-center space-x-3 py-3 h-full">
-        {isEdit && (
-          <div className="flex items-center space-x-2">
-            <button onClick={() => setIsEdit(false)} title="Cancel Edit">
-              <X
-                color="#f87171"
-                className="w-5 h-5 hover:text-red-700 transition-colors"
-              />
-            </button>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
             <button
-              onClick={handleUpdateService}
-              className="text-lg text-indigo-600 hover:text-indigo-700 disabled:cursor-not-allowed disabled:text-gray-400 transition-colors"
-              title="Save Changes"
+              className="text-xl text-indigo-500 hover:text-indigo-600 transition-colors"
+              title="Edit"
             >
-              <CircleCheckBig className="w-5 h-5" strokeWidth={2.5} />
+              <SquarePen className="w-5 h-5" />
             </button>
-          </div>
-        )}
-        {!isEdit && (
-          <button
-            onClick={() => setIsEdit(!isEdit)}
-            className="text-xl text-indigo-500 hover:text-indigo-600 transition-colors"
-            title="Edit"
-          >
-            <SquarePen className="w-5 h-5" />
-          </button>
-        )}
+          </DialogTrigger>
+          <DialogContent className="max-w-md">
+            <DialogHeader className="px-2.5">
+              <DialogTitle>Edit Canned Service</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 px-2.5">
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-700">
+                  Service Name
+                </label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => {
+                    setName(e.target.value);
+                    if (nameError) setNameError("");
+                  }}
+                  className={cn(
+                    "w-full rounded-lg border p-2 text-base focus:ring-2 focus:ring-indigo-500 transition-colors",
+                    nameError
+                      ? "border-red-500"
+                      : "border-gray-300 focus:border-indigo-500"
+                  )}
+                  placeholder="Service Name"
+                />
+                {nameError && (
+                  <p className="mt-1 text-xs text-red-500">{nameError}</p>
+                )}
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-700">
+                  Category
+                </label>
+                <SelectCategory
+                  onCategoryChange={setCategory}
+                  labelPosition="none"
+                  categoryData={category}
+                  categoryOpen={categoryOpen}
+                  setCategoryOpen={setCategoryOpen}
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-700">
+                  Description
+                </label>
+                <textarea
+                  placeholder="Description"
+                  value={description || ""}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value.length > 250) {
+                      setDescriptionError(
+                        "Description must be less than 250 characters"
+                      );
+                      return;
+                    }
+                    setDescription(value);
+                    setDescriptionError("");
+                  }}
+                  className={cn(
+                    "min-h-[100px] w-full rounded-lg border p-2 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition-colors",
+                    descriptionError ? "border-red-500" : "border-gray-300"
+                  )}
+                />
+                {descriptionError && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {descriptionError}
+                  </p>
+                )}
+              </div>
+            </div>
+            <DialogFooter>
+              <DialogClose asChild>
+                <button className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">
+                  Cancel
+                </button>
+              </DialogClose>
+              <button
+                onClick={handleUpdateService}
+                disabled={isPending}
+                className="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:bg-gray-400"
+              >
+                {isPending ? "Updating..." : "Update Service"}
+              </button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
         <Popconfirm
           title="Delete the canned service"
           description="Are you sure to delete this canned service?"
@@ -577,7 +564,6 @@ const ServiceComponent = ({
           cancelText="No"
           onConfirm={async () => {
             await deleteService(service.id);
-            setIsEdit(false);
           }}
         >
           <Trash2 className="w-5 h-5 text-red-500 hover:text-red-700 cursor-pointer transition-colors" />

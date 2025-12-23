@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     // console.log("🚀 ~ POST ~ isCRMCompany:", isCRMCompany);
     if (isCRMCompany) {
       // For demo requests
-      const source = "Marketing Site";
+      const source = body.source || "Marketing Site";
 
       let vehicleInfo = "N/A";
       let services = crmMsg || "Service Request";

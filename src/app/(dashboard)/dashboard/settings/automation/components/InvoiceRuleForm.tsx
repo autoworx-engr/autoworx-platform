@@ -179,6 +179,10 @@ const InvoiceRuleForm: React.FC<RuleFormProps> = ({
   const handleChange = (field: keyof Rule, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
 
+    if (field === "communicationType") {
+      if (value === "SMS") setActiveTemplate("SMS");
+      if (value === "EMAIL") setActiveTemplate("EMAIL");
+    }
     if (error[field]) {
       setError((prev) => {
         const newErrors = { ...prev };
@@ -376,7 +380,7 @@ const InvoiceRuleForm: React.FC<RuleFormProps> = ({
     );
   }
 
-  const typeHelp = getInvoiceTypeHelp(formData.type!);
+  const typeHelp = getInvoiceTypeHelp(formData?.type!);
   return (
     <div>
       <div className="rounded-md border bg-white p-4 shadow-sm md:p-6">
@@ -590,9 +594,9 @@ const InvoiceRuleForm: React.FC<RuleFormProps> = ({
               />
               <div className="">
                 <TipBox
-                message="Click any variable to copy it, then paste it into your template where you want the dynamic content to appear. For example: 'Hi <CLIENT>, your invoice is ready: <INVOICE_LINK>'"
-                variant="info"
-              />
+                  message="Click any variable to copy it, then paste it into your template where you want the dynamic content to appear. For example: 'Hi <CLIENT>, your invoice is ready: <INVOICE_LINK>'"
+                  variant="info"
+                />
               </div>
             </Box>
 
