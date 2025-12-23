@@ -148,7 +148,7 @@ export default function SalesPipelineSection() {
         const dropData = destination.data as {
           columnIndex: number;
           targetType: "column" | "card";
-          targetLeadIndex?: number; 
+          targetLeadIndex?: number;
           closestEdge?: "top" | "bottom";
         };
 
@@ -161,26 +161,33 @@ export default function SalesPipelineSection() {
         //   pipelineColumns[destinationColumnIndex]?.leads || [];
         // const destinationLeadIndex = destinationLeads.length;
 
-        let destinationLeadIndex: number
+        let destinationLeadIndex: number;
 
-        if (dropData.targetType === "card" && dropData.targetLeadIndex !== undefined) {
+        if (
+          dropData.targetType === "card" &&
+          dropData.targetLeadIndex !== undefined
+        ) {
           // Dropped on a specific card
-          const edge = dropData.closestEdge
-          destinationLeadIndex = dropData.targetLeadIndex
+          const edge = dropData.closestEdge;
+          destinationLeadIndex = dropData.targetLeadIndex;
 
           // If dropping below, insert after the target
           if (edge === "bottom") {
-            destinationLeadIndex += 1
+            destinationLeadIndex += 1;
           }
 
           // Adjust index if moving within same column
-          if (sourceColumnIndex === destinationColumnIndex && sourceLeadIndex < destinationLeadIndex) {
-            destinationLeadIndex -= 1
+          if (
+            sourceColumnIndex === destinationColumnIndex &&
+            sourceLeadIndex < destinationLeadIndex
+          ) {
+            destinationLeadIndex -= 1;
           }
         } else {
           // Dropped on empty column area - add to end
-          const destinationLeads = pipelineColumns[destinationColumnIndex]?.leads || []
-          destinationLeadIndex = destinationLeads.length
+          const destinationLeads =
+            pipelineColumns[destinationColumnIndex]?.leads || [];
+          destinationLeadIndex = destinationLeads.length;
         }
         // Don't do anything if dropped in same position
         if (
@@ -238,11 +245,11 @@ export default function SalesPipelineSection() {
     });
   }, [dispatch, pipelineColumns, screenWidth]);
 
-  // useEffect(() => {
-  //   const el = scrollContainerRef.current;
-  //   if (!el || screenWidth < 768) return;
-  //   return autoScrollForElements({ element: el });
-  // }, [screenWidth]);
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!el || screenWidth < 768) return;
+    return autoScrollForElements({ element: el });
+  }, [screenWidth]);
   return (
     <div className="h-full w-full overflow-hidden px-2">
       <div

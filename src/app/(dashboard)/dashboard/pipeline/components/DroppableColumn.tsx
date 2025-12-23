@@ -1,7 +1,7 @@
 import { SetStateAction, useEffect, useRef, useState } from "react";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
-import { Employee, ShopLead, ShopPipelineData } from "@/types/invoiceLead";
+import { Employee,  ShopPipelineData } from "@/types/invoiceLead";
 import { Tag, User } from "@prisma/client";
 import DraggableLead from "./DraggableLead";
 type DroppableColumnProps = {

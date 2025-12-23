@@ -8,33 +8,16 @@ import {
   saveInvoiceTag,
 } from "@/actions/pipelines/invoiceTag";
 import { AppointmentCreateOrEdit } from "@/components/appointment/AppointmentCreateOrEdit";
-import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
-import WorkOrderModal from "@/components/workorder-modal/WorkOrderModal";
 import { errorToast, successToast } from "@/lib/toast";
 import { updateTagAutomationTrigger } from "@/service/tag-automation-trigger/api";
 import { Column, Employee, ShopPipelineData } from "@/types/invoiceLead";
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
-import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd";
 import { Tag, User } from "@prisma/client";
-import {
-  ArrowRightLeft,
-  BookCheck,
-  Calendar,
-  CirclePlus,
-  MessageCircleMore,
-} from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { SetStateAction, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { EmployeeSelector } from "./EmployeeSelector";
-import { EmployeeTagSelector } from "./EmployeeTagSelector";
 import PipelineLoadingSkeleton from "./PipelineLoadingSkeleton";
 import SearchScroll from "./SearchScroll";
-import ServiceSelector from "./ServiceSelector";
-import ShopColumnDropdown from "./ShopColumnDropdown";
-import TaskForm from "./TaskForm";
 import DroppableColumn from "./DroppableColumn";
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
@@ -54,9 +37,7 @@ export default function PipelinesCopy({
   shopPipelineDataProp,
   isTechnician,
 }: PipelinesProps) {
-  const searchParams = useSearchParams();
   const router = useRouter();
-  const pathname = usePathname();
 
   const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
   console.log("selectedClientId==>", selectedClientId);
@@ -189,14 +170,6 @@ export default function PipelinesCopy({
     console.log(categoryIndex, leadIndex);
   };
 
-  const getInitials = (employee: Employee | null) => {
-    if (employee) {
-      const firstNameInitial = employee.firstName.charAt(0).toUpperCase();
-      const lastNameInitial = employee.lastName?.charAt(0).toUpperCase();
-      return `${firstNameInitial}${lastNameInitial}`;
-    }
-    return "";
-  };
 
   const createEmployeeSelectHandler =
     (categoryIndex: number, leadIndex: number) =>
@@ -426,118 +399,7 @@ export default function PipelinesCopy({
     }
   };
 
-  const handleDragEnd = async (result: any) => {
-    const { destination, source } = result;
-
-    if (!destination) return;
-
-    // If the item is dropped in the same position, do nothing
-    if (
-      destination.droppableId === source.droppableId &&
-      destination.index === source.index
-    ) {
-      return;
-    }
-
-    // Handle drag-and-drop within the same column
-    if (destination.droppableId === source.droppableId) {
-      const columnIndex = parseInt(source.droppableId);
-      const columnItems = [...pipelineData[columnIndex].leads];
-
-      // Remove the item from the source index
-      const [removed] = columnItems.splice(source.index, 1);
-
-      // Re-insert the item at the destination index
-      columnItems.splice(destination.index, 0, removed);
-
-      // Update the state with the reordered column items
-      const updatedData = pipelineData.map((column, index) => {
-        if (index === columnIndex) {
-          return { ...column, leads: columnItems };
-        }
-        return column;
-      });
-      console.log(updatedData);
-      setPipelineData(updatedData);
-      return;
-    }
-
-    // Handle drag-and-drop between different columns
-    const sourceColumn = pipelineData[source.droppableId];
-    const destinationColumn = pipelineData[destination.droppableId];
-
-    const sourceItems = [...sourceColumn.leads];
-    const destinationItems = [...destinationColumn.leads];
-
-    const [removed] = sourceItems.splice(source.index, 1);
-
-    if (destinationColumn && destinationColumn.title === "Delivered") {
-      // Check if the due is 0 before moving to delivered
-      const completed = removed?.services?.incomplete?.length === 0;
-
-      if (!completed && removed?.technicians?.length > 0) {
-        toast.error(
-          "All services must be completed by Technicians before moving to delivered."
-        );
-        // Revert the item back to its original position
-        sourceItems.splice(source.index, 0, removed);
-        return;
-      }
-    }
-    if (destinationColumn && destinationColumn.title === "Delivered") {
-      // Check if the due is 0 before moving to delivered
-      if (removed.dueBalance !== 0) {
-        toast.error("Please clear due balance before moving to delivered.");
-        // Revert the item back to its original position
-        sourceItems.splice(source.index, 0, removed);
-        return;
-      }
-
-      // Update technician status to 'Complete' in the backend
-      try {
-        const response = await updateTechnicianStatustoComplete(
-          removed.invoiceId
-        );
-      } catch (error) {
-        console.error("Error updating technician status:", error);
-      }
-    }
-
-    destinationItems.splice(destination.index, 0, removed);
-
-    const updatedData = pipelineData.map((column, index) => {
-      if (index === parseInt(source.droppableId)) {
-        return { ...column, leads: sourceItems };
-      } else if (index === parseInt(destination.droppableId)) {
-        return { ...column, leads: destinationItems };
-      }
-      return column;
-    });
-
-    setPipelineData(updatedData);
-
-    const invoiceId = removed.invoiceId;
-    const newStatusId = destinationColumn.id;
-    if (newStatusId !== null) {
-      try {
-        const response = await updateInvoiceStatus(invoiceId, newStatusId);
-        if (response.type === "success") {
-          successToast("Job moved successfully");
-        } else {
-          errorToast("Failed to update invoice status");
-          console.error("Failed to update invoice status:", response.message);
-        }
-      } catch (error) {
-        errorToast("Failed to update invoice status");
-        console.error("Error updating invoice status:", error);
-      }
-    } else {
-      console.error("newStatusId is null");
-    }
-  };
-
   
-
   useEffect(() => {
     return monitorForElements({
       onDrop({ source, location }) {

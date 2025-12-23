@@ -121,6 +121,13 @@ export default function LeadInfinityScroll({
     });
   }, [columnIndex, screenWidth]);
 
+   useEffect(() => {
+    const ulElement = scrollRef.current;
+    if (!ulElement || screenWidth < 768) return;
+
+    return autoScrollForElements({ element: ulElement });
+  }, [screenWidth]);
+
   return (
     <div
       ref={containerRef}
@@ -140,7 +147,7 @@ export default function LeadInfinityScroll({
         </p>
       </h2>
       <ul
-        // ref={scrollRef}
+        ref={scrollRef}
         className="thin-scrollbar mt-1 flex max-h-[65vh] min-h-[65vh] flex-col gap-1 overflow-y-auto p-1"
         style={{ maxHeight: "65vh" }}
       >
