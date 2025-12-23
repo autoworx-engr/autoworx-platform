@@ -29,6 +29,7 @@ type LeadCardProps = {
   index: number;
   columnIndex: number;
   isDragDisabled: boolean;
+  leadIndex: number;
 };
 
 export default memo(function LeadCard({
@@ -37,6 +38,7 @@ export default memo(function LeadCard({
   index,
   columnIndex,
   isDragDisabled,
+  leadIndex,
 }: LeadCardProps) {
   const dispatch = useColumnDispatch();
   const pipelineColumns = useColumnState() || [];
@@ -44,46 +46,6 @@ export default memo(function LeadCard({
   const [isDragging, setIsDragging] = useState(false);
   const [isDropTarget, setIsDropTarget] = useState(false);
   const cardRef = useRef<HTMLLIElement>(null);
-
-  useEffect(() => {
-    const el = cardRef.current;
-    if (!el || isDragDisabled) return;
-
-    return combine(
-      draggable({
-        element: el,
-        getInitialData: () => ({
-          type: "card",
-          leadId: leadData.id,
-          index,
-          columnId: leadData.columnId,
-          columnIndex,
-        }),
-        onDragStart: () => setIsDragging(true),
-        onDrop: () => setIsDragging(false),
-      }),
-      dropTargetForElements({
-        element: el,
-        getData: ({ input, element }) => {
-          const data = {
-            type: "card",
-            leadId: leadData.id,
-            index,
-            columnId: leadData.columnId,
-            columnIndex,
-          };
-          return attachClosestEdge(data, {
-            input,
-            element,
-            allowedEdges: ["top", "bottom"],
-          });
-        },
-        onDragEnter: () => setIsDropTarget(true),
-        onDragLeave: () => setIsDropTarget(false),
-        onDrop: () => setIsDropTarget(false),
-      })
-    );
-  }, [leadData, index, columnIndex, isDragDisabled]);
 
   const handleRemoveLead = async (leadId: number, columnId: number) => {
     try {
@@ -139,6 +101,43 @@ export default memo(function LeadCard({
     }
   };
 
+  useEffect(() => {
+    const element = cardRef.current;
+    if (!element || isDragDisabled) {
+      return;
+    }
+
+    return combine(
+      draggable({
+        element,
+        getInitialData: (): {
+          leadId: string;
+          columnIndex: number;
+          leadIndex: number;
+        } => ({
+          leadId: leadData.id.toString(),
+          columnIndex,
+          leadIndex,
+        }),
+        onDragStart: () => setIsDragging(true),
+        onDrop: () => setIsDragging(false),
+      }),
+      dropTargetForElements({
+        element,
+        getData: () => ({
+          leadId: leadData.id.toString(),
+          columnIndex,
+          leadIndex,
+          targetType: "card",
+          targetLeadIndex: leadIndex,
+        }),
+        onDragEnter: () => setIsDropTarget(true),
+        onDragLeave: () => setIsDropTarget(false),
+        onDrop: () => setIsDropTarget(false),
+      })
+    );
+  }, [leadData.id, columnIndex, leadIndex, isDragDisabled]);
+
   const columnOptions = pipelineColumns
     .filter((col) => col.id !== leadData.columnId && col.id != null)
     .map((col) => ({
@@ -150,6 +149,9 @@ export default memo(function LeadCard({
   return (
     <li
       ref={cardRef}
+      data-lead-id={leadData.id}
+      data-column-index={columnIndex}
+      data-lead-index={leadIndex}
       className={cn(
         "max-w-auto relative mx-1 my-1 h-fit rounded-xl border bg-background p-1 duration-300 hover:bg-slate-100 cursor-grab active:cursor-grabbing",
         highlight && "bg-yellow-100",

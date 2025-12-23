@@ -31,135 +31,234 @@ export default function SalesPipelineSection() {
     return () => window.removeEventListener("resize", updateWidth);
   }, []);
 
+  // useEffect(() => {
+  //   return monitorForElements({
+  //     onDrop({ source, location }) {
+  //       const destination = location.current.dropTargets[0];
+  //       // const cardDropTarget = location.current.dropTargets.find(
+  //       //   (target) => target.data.type === "card"
+  //       // );
+  //       // const columnDropTarget = location.current.dropTargets.find(
+  //       //   (target) => target.data.type === "column"
+  //       // );
+  //       // const destination = cardDropTarget || columnDropTarget;
+  //       if (!destination) return;
+
+  //       const sourceData = source.data as {
+  //         type: string;
+  //         leadId: number;
+  //         index: number;
+  //         columnIndex: number;
+  //         columnId: number | null;
+  //       };
+
+  //       const destinationData = destination.data as {
+  //         type: string;
+  //         columnId: number | null;
+  //         columnIndex: number;
+  //         index: number;
+  //       };
+
+  //       if (sourceData.type === "card") {
+  //         let finalIndex: number;
+
+  //         if (cardDropTarget) {
+  //           const closestEdgeOfTarget = extractClosestEdge(cardDropTarget.data);
+  //           finalIndex = getReorderDestinationIndex({
+  //             startIndex: sourceData.index,
+  //             indexOfTarget: destinationData.index,
+  //             closestEdgeOfTarget,
+  //             axis: "vertical",
+  //           });
+  //         } else {
+  //           finalIndex = destinationData.index;
+  //         }
+  //         // Use getReorderDestinationIndex for all cases - it handles both same-column and cross-column correctly
+
+  //         if (
+  //           sourceData.columnIndex === destinationData.columnIndex &&
+  //           sourceData.index === finalIndex
+  //         ) {
+  //           return;
+  //         }
+
+  //         const draggableId = sourceData.leadId.toString();
+  //         const sourcePayload = {
+  //           droppableId: sourceData.columnIndex.toString(),
+  //           index: sourceData.index,
+  //         };
+  //         const destinationPayload = {
+  //           droppableId: destinationData.columnIndex.toString(),
+  //           index: finalIndex,
+  //         };
+
+  //         dispatch({
+  //           type: actionTypes.DRAG_END,
+  //           payload: {
+  //             source: sourcePayload,
+  //             destination: destinationPayload,
+  //             draggableId,
+  //           },
+  //         });
+
+  //         if (sourceData.columnId !== destinationData.columnId) {
+  //           const newColumnId = destinationData.columnId;
+  //           if (newColumnId !== null) {
+  //             updateLeadColumn(sourceData.leadId, newColumnId)
+  //               .then(() => {
+  //                 successToast("Lead column updated successfully");
+  //               })
+  //               .catch((error) => {
+  //                 console.error(error);
+  //                 dispatch({
+  //                   type: actionTypes.DRAG_END,
+  //                   payload: {
+  //                     source: destinationPayload,
+  //                     destination: sourcePayload,
+  //                     draggableId,
+  //                   },
+  //                 });
+  //                 errorToast("Failed to update lead column.");
+  //               });
+  //           }
+  //         }
+  //       }
+  //     },
+  //   });
+  // }, [dispatch]);
+
   useEffect(() => {
+    // Disable drag and drop on mobile
+    if (screenWidth < 768) {
+      return;
+    }
+
     return monitorForElements({
       onDrop({ source, location }) {
-        // const destination = location.current.dropTargets[0];
-        const cardDropTarget = location.current.dropTargets.find(
-          (target) => target.data.type === "card"
-        );
-        const columnDropTarget = location.current.dropTargets.find(
-          (target) => target.data.type === "column"
-        );
-        const destination = cardDropTarget || columnDropTarget;
-        if (!destination) return;
+        const destination = location.current.dropTargets[0];
+        if (!destination) {
+          return;
+        }
 
-        const sourceData = source.data as {
-          type: string;
-          leadId: number;
-          index: number;
+        const dragData = source.data as {
+          leadId: string;
           columnIndex: number;
-          columnId: number | null;
+          leadIndex: number;
+        };
+        const dropData = destination.data as {
+          columnIndex: number;
+          targetType: "column" | "card";
+          targetLeadIndex?: number; 
+          closestEdge?: "top" | "bottom";
         };
 
-        const destinationData = destination.data as {
-          type: string;
-          columnId: number | null;
-          columnIndex: number;
-          index: number;
-        };
+        const sourceColumnIndex = dragData.columnIndex;
+        const sourceLeadIndex = dragData.leadIndex;
+        const destinationColumnIndex = dropData.columnIndex;
 
-        if (sourceData.type === "card") {
-          let finalIndex: number;
+        // Calculate destination index - get all leads in destination column
+        // const destinationLeads =
+        //   pipelineColumns[destinationColumnIndex]?.leads || [];
+        // const destinationLeadIndex = destinationLeads.length;
 
-          if (cardDropTarget) {
-            const closestEdgeOfTarget = extractClosestEdge(cardDropTarget.data);
-            finalIndex = getReorderDestinationIndex({
-              startIndex: sourceData.index,
-              indexOfTarget: destinationData.index,
-              closestEdgeOfTarget,
-              axis: "vertical",
-            });
-          } else {
-            finalIndex = destinationData.index;
-          }
-          // Use getReorderDestinationIndex for all cases - it handles both same-column and cross-column correctly
+        let destinationLeadIndex: number
 
-          if (
-            sourceData.columnIndex === destinationData.columnIndex &&
-            sourceData.index === finalIndex
-          ) {
-            return;
+        if (dropData.targetType === "card" && dropData.targetLeadIndex !== undefined) {
+          // Dropped on a specific card
+          const edge = dropData.closestEdge
+          destinationLeadIndex = dropData.targetLeadIndex
+
+          // If dropping below, insert after the target
+          if (edge === "bottom") {
+            destinationLeadIndex += 1
           }
 
-          const draggableId = sourceData.leadId.toString();
-          const sourcePayload = {
-            droppableId: sourceData.columnIndex.toString(),
-            index: sourceData.index,
-          };
-          const destinationPayload = {
-            droppableId: destinationData.columnIndex.toString(),
-            index: finalIndex,
-          };
+          // Adjust index if moving within same column
+          if (sourceColumnIndex === destinationColumnIndex && sourceLeadIndex < destinationLeadIndex) {
+            destinationLeadIndex -= 1
+          }
+        } else {
+          // Dropped on empty column area - add to end
+          const destinationLeads = pipelineColumns[destinationColumnIndex]?.leads || []
+          destinationLeadIndex = destinationLeads.length
+        }
+        // Don't do anything if dropped in same position
+        if (
+          sourceColumnIndex === destinationColumnIndex &&
+          sourceLeadIndex === destinationLeadIndex
+        ) {
+          return;
+        }
 
-          dispatch({
-            type: actionTypes.DRAG_END,
-            payload: {
-              source: sourcePayload,
-              destination: destinationPayload,
-              draggableId,
+        // Optimistic update - update UI immediately
+        dispatch({
+          type: actionTypes.DRAG_END,
+          payload: {
+            source: {
+              droppableId: sourceColumnIndex.toString(),
+              index: sourceLeadIndex,
             },
-          });
+            destination: {
+              droppableId: destinationColumnIndex.toString(),
+              index: destinationLeadIndex,
+            },
+            draggableId: dragData.leadId,
+          },
+        });
 
-          if (sourceData.columnId !== destinationData.columnId) {
-            const newColumnId = destinationData.columnId;
-            if (newColumnId !== null) {
-              updateLeadColumn(sourceData.leadId, newColumnId)
-                .then(() => {
-                  successToast("Lead column updated successfully");
-                })
-                .catch((error) => {
-                  console.error(error);
-                  dispatch({
-                    type: actionTypes.DRAG_END,
-                    payload: {
-                      source: destinationPayload,
-                      destination: sourcePayload,
-                      draggableId,
+        // Only make API call if moving between columns
+        if (sourceColumnIndex !== destinationColumnIndex) {
+          const newColumnId = pipelineColumns[destinationColumnIndex]?.id;
+          if (newColumnId) {
+            successToast("Lead column updated successfully");
+            updateLeadColumn(Number(dragData.leadId), newColumnId).catch(
+              (error) => {
+                console.error("Failed to update lead column:", error);
+                // Revert the optimistic update on error
+                dispatch({
+                  type: actionTypes.DRAG_END,
+                  payload: {
+                    source: {
+                      droppableId: destinationColumnIndex.toString(),
+                      index: destinationLeadIndex,
                     },
-                  });
-                  errorToast("Failed to update lead column.");
+                    destination: {
+                      droppableId: sourceColumnIndex.toString(),
+                      index: sourceLeadIndex,
+                    },
+                    draggableId: dragData.leadId,
+                  },
                 });
-            }
+                errorToast("Failed to update lead column. Please try again.");
+              }
+            );
           }
         }
       },
     });
-  }, [dispatch]);
+  }, [dispatch, pipelineColumns, screenWidth]);
 
-  useEffect(() => {
-    const el = scrollContainerRef.current;
-    if (!el || screenWidth < 768) return;
-    return autoScrollForElements({ element: el });
-  }, [screenWidth]);
+  // useEffect(() => {
+  //   const el = scrollContainerRef.current;
+  //   if (!el || screenWidth < 768) return;
+  //   return autoScrollForElements({ element: el });
+  // }, [screenWidth]);
   return (
     <div className="h-full w-full overflow-hidden px-2">
       <div
         ref={scrollContainerRef}
         className="thin-scrollbar flex touch-pan-x snap-x snap-mandatory flex-nowrap justify-between gap-2 overflow-x-auto"
       >
-        {pipelineColumns.map((column, columnIndex) => (
-          <div
-            key={column.id || columnIndex}
-            className="mx-2 w-[calc(100vw-2rem)] flex-shrink-0 rounded-md border sm:min-w-80 sm:flex-1 lg:min-w-[calc(100%/3-1.5rem)] xl:min-w-[calc(100%/4-1.5rem)] 2xl:min-w-[calc(100%/6-1.5rem)]"
-            style={{
-              backgroundColor: "rgba(101, 113, 255, 0.15)",
-              padding: "0",
-            }}
-          >
-            <h2 className="rounded-lg bg-[#6571FF] px-4 py-3 text-center text-white">
-              <p className="text-base font-bold">
-                {column.title || ""}
-                <span className="ml-2 rounded-lg bg-[#3F49B9] px-2">
-                  {column?.totalLeads || 0}
-                </span>
-              </p>
-            </h2>
+        {pipelineColumns.map((column, columnIndex) => {
+          return (
             <LeadInfinityScroll
+              key={columnIndex}
               columnTitle={column.title || ""}
               columnId={column.id}
               columnIndex={columnIndex}
               leads={column.leads}
+              screenWidth={screenWidth}
+              totalLeads={column?.totalLeads || 0}
             >
               {(leads) =>
                 leads.map((lead, leadIndex) => (
@@ -169,12 +268,13 @@ export default function SalesPipelineSection() {
                     index={leadIndex}
                     columnIndex={columnIndex}
                     isDragDisabled={screenWidth < 768}
+                    leadIndex={leadIndex}
                   />
                 ))
               }
             </LeadInfinityScroll>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

@@ -16,6 +16,8 @@ type TProps = {
   columnId: number | null;
   columnIndex: number;
   leads: LeadWithSalesUser[];
+  totalLeads: number;
+  screenWidth: number;
   children: (leads: LeadWithSalesUser[]) => React.ReactNode;
 };
 
@@ -26,48 +28,23 @@ export default function LeadInfinityScroll({
   columnId,
   columnIndex,
   children,
+  screenWidth,
+  columnTitle,
+  totalLeads,
 }: TProps) {
   const dispatch = useColumnDispatch();
   const searchTerm = useSearchTerm();
   const scrollRef = useRef<HTMLUListElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const loaderRef = useRef<HTMLDivElement>(null);
   const [scrollLoading, setScrollLoading] = useState(false);
   const [hasMore, setHasMore] = useState(false);
-  const [screenWidth, setScreenWidth] = useState<number>(
-    typeof window !== "undefined" ? window.innerWidth : 1200
-  );
+  const [isDraggedOver, setIsDraggedOver] = useState(false);
+  // const [screenWidth, setScreenWidth] = useState<number>(
+  //   typeof window !== "undefined" ? window.innerWidth : 1200
+  // );
 
   const leadsLength = leads?.length ?? 0;
-
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-
-    return dropTargetForElements({
-      element: el,
-      getData: () => ({
-        type: "column",
-        columnId,
-        columnIndex,
-        index: leads.length, // Empty space = end of list
-      }),
-    });
-  }, [columnId, columnIndex, leads.length]);
-
-  // Enable vertical auto-scroll within the column list during drag (desktop)
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el || screenWidth < 768) return;
-    return autoScrollForElements({ element: el });
-  }, [screenWidth]);
-
-  useEffect(() => {
-    function updateWidth() {
-      setScreenWidth(window.innerWidth);
-    }
-    window.addEventListener("resize", updateWidth);
-    return () => window.removeEventListener("resize", updateWidth);
-  }, []);
 
   const fetchMoreLeads = useCallback(async () => {
     try {
@@ -88,6 +65,8 @@ export default function LeadInfinityScroll({
             leads: getNextLeads,
           },
         });
+      } else {
+        throw new Error("Column ID not found");
       }
     } catch (err) {
       console.error(err);
@@ -100,6 +79,14 @@ export default function LeadInfinityScroll({
       setHasMore(true);
     }
   }, [leadsLength]);
+
+  useEffect(() => {
+    if (searchTerm) {
+      setHasMore(false);
+    } else if (leadsLength >= defaultTakeLeads) {
+      setHasMore(true);
+    }
+  }, [searchTerm, leadsLength]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -119,19 +106,52 @@ export default function LeadInfinityScroll({
     return () => observer.disconnect();
   }, [fetchMoreLeads, scrollLoading, hasMore]);
 
+  useEffect(() => {
+    const element = containerRef.current;
+    if (!element || screenWidth < 768) {
+      return;
+    }
+
+    return dropTargetForElements({
+      element,
+      getData: () => ({ columnIndex, targetType: "column" }),
+      onDragEnter: () => setIsDraggedOver(true),
+      onDragLeave: () => setIsDraggedOver(false),
+      onDrop: () => setIsDraggedOver(false),
+    });
+  }, [columnIndex, screenWidth]);
+
   return (
-    <ul
-      ref={scrollRef}
-      className="thin-scrollbar mt-1 flex max-h-[65vh] min-h-[65vh] flex-col gap-1 overflow-y-auto p-1"
-      style={{ maxHeight: "65vh" }}
+    <div
+      ref={containerRef}
+      data-column-index={columnIndex}
+      className="mx-2 w-[calc(100vw-2rem)] flex-shrink-0 rounded-md border sm:min-w-80 sm:flex-1 lg:min-w-[calc(100%/3-1.5rem)] xl:min-w-[calc(100%/4-1.5rem)] 2xl:min-w-[calc(100%/6-1.5rem)]"
+      style={{
+        backgroundColor: "rgba(101, 113, 255, 0.15)",
+        padding: "0",
+      }}
     >
-      {children(leads)}
-      {hasMore && !searchTerm && (
-        <div ref={loaderRef} className="text-center">
-          <div className="mx-auto h-6 w-6 animate-spin rounded-full border-4 border-dashed border-yellow-500"></div>
-          <h2 className="mt-4 text-zinc-900 dark:text-white">Loading...</h2>
-        </div>
-      )}
-    </ul>
+      <h2 className="rounded-lg bg-[#6571FF] px-4 py-3 text-center text-white">
+        <p className="text-base font-bold">
+          {columnTitle || ""}
+          <span className="ml-2 rounded-lg bg-[#3F49B9] px-2">
+            {totalLeads || 0}
+          </span>
+        </p>
+      </h2>
+      <ul
+        // ref={scrollRef}
+        className="thin-scrollbar mt-1 flex max-h-[65vh] min-h-[65vh] flex-col gap-1 overflow-y-auto p-1"
+        style={{ maxHeight: "65vh" }}
+      >
+        {children(leads)}
+        {hasMore && !searchTerm && (
+          <div ref={loaderRef} className="text-center">
+            <div className="mx-auto h-6 w-6 animate-spin rounded-full border-4 border-dashed border-yellow-500"></div>
+            <h2 className="mt-4 text-zinc-900 dark:text-white">Loading...</h2>
+          </div>
+        )}
+      </ul>
+    </div>
   );
 }
