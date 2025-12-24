@@ -26,7 +26,7 @@ export default function LeadColumnContainer({
       <PipelineTitle title={column.title} leadsCount={column.totalLeads} />
 
       <LeadInfinityScroll
-        provided={provided}
+        // provided={provided}
         columnTitle={column.title}
         columnId={column.id}
         leads={leads}
