@@ -1,4 +1,6 @@
 "use client";
+import { acceptCompanyJoin } from "@/actions/communication/collaboration/acceptCompanyJoin";
+import { rejectCompanyJoin } from "@/actions/communication/collaboration/rejectCompanyJoin";
 import {
   connectWithCompany,
   findNearbyCompanies,
@@ -8,10 +10,13 @@ import {
   togglePhoneVisibility,
 } from "@/actions/settings/myNetwork";
 import { Switch } from "@/components/Switch";
+import { Button } from "@/components/ui/button";
+import { CompanyCard } from "@/components/ui/companyCard";
+import { getJoinMeta } from "@/helpers/getJoinMeta";
 import { useDebounceCallback } from "@/hooks/useDebounceCallback";
 import { errorToast, successToast } from "@/lib/toast";
 import Slider from "@mui/material/Slider";
-import { Company } from "@prisma/client";
+import { Company, CompanyJoin } from "@prisma/client";
 import { Search, Link as LinkIcon, MapPin, Phone, Globe } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
@@ -45,7 +50,7 @@ const NetworksPage = ({
   const [nearbyCompaniesSearch, setNearbyCompaniesSearch] =
     useState<string>("");
 
-  const [connectedCompanies, setConnectedCompanies] = useState<Company[] | []>(
+  const [connectedCompanies, setConnectedCompanies] = useState<any[] | []>(
     connectedCompaniesData
   );
   const [nearbyCompanies, setNearbyCompanies] = useState<Company[] | []>([]);
@@ -137,6 +142,37 @@ const NetworksPage = ({
     }
   }, [currentCompany]);
 
+  const pendingSent = [];
+  const pendingReceived = [];
+  const active = [];
+
+  for (const company of connectedCompanies) {
+    const { sent, received } = getJoinMeta(company);
+
+    const join = sent || received;
+    if (!join) continue;
+
+    // 🟡 Pending
+    if (join.status === "PENDING") {
+      if (sent) {
+        pendingSent.push(company);
+      }
+      if (received) {
+        pendingReceived.push({
+          company,
+          joinId: received.id,
+        });
+      }
+    }
+
+    if (join.status === "ACCEPTED") {
+      active.push({
+        company,
+        joinedAt: join.createdAt,
+      });
+    }
+  }
+
   return (
     <div className="min-h-full w-full">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -145,80 +181,139 @@ const NetworksPage = ({
           <h2 className="mb-6 text-2xl font-semibold text-gray-800">
             Collaborations
           </h2>
-          <div className="space-y-4 rounded-xl border border-gray-200 bg-white p-2 shadow-xl min-h-[300px]">
-            {connectedCompanies.length === 0 && (
-              <p className="py-10 text-center text-sm text-gray-500">
-                No active collaborations found.
+
+          <div className="space-y-6 rounded-xl border bg-white p-4 shadow-xl min-h-[300px]">
+            {/* 🔵 Pending */}
+            <h3 className="text-xl font-semibold text-gray-800">
+              Pending Collaborations
+            </h3>
+
+            {/* 🟡 Pending Sent */}
+            {pendingSent.length > 0 && (
+              <>
+                <p className="text-sm text-gray-500">Requests sent by you</p>
+                <div className="space-y-4">
+                  {pendingSent.map((company) => {
+                    // const join =
+                    //   company.companyJoinsAsOne.find(
+                    //     (j: CompanyJoin) => j.id === company?.joinId
+                    //   ) ||
+                    //   company.companyJoinsAsTwo.find(
+                    //     (j: CompanyJoin) => j.id === company?.joinId
+                    //   );
+                    // console.log("join", join);
+                    // const isAllowed =
+                    //   join &&
+                    //   join.status === "PENDING" &&
+                    //   join.companyTwoId === Number(currentCompany?.id);
+                    return (
+                      <CompanyCard
+                        key={company.id}
+                        company={company}
+                        rightSlot={
+                          <p className="text-sm italic text-gray-500 pt-1">
+                            Collaboration request pending
+                          </p>
+                        }
+                      />
+                    );
+                  })}
+                </div>
+              </>
+            )}
+
+            {/* 🟠 Pending Received */}
+            {pendingReceived.length > 0 && (
+              <>
+                <p className="text-sm text-gray-500">Requests received</p>
+                <div className="space-y-4">
+                  {pendingReceived.map(({ company, joinId }) => {
+                    // const join =
+                    //   company.companyJoinsAsOne.find(
+                    //     (j: CompanyJoin) => j.id === joinId
+                    //   ) ||
+                    //   company.companyJoinsAsTwo.find(
+                    //     (j: CompanyJoin) => j.id === joinId
+                    //   );
+                    // console.log("join", join);
+                    // const isAllowed =
+                    //   join &&
+                    //   join.status === "PENDING" &&
+                    //   join.companyTwoId === Number(currentCompany?.id);
+
+                    return (
+                      <CompanyCard
+                        key={company.id}
+                        company={company}
+                        rightSlot={
+                          <div className="flex gap-2 pt-1">
+                            <Button
+                              className="bg-green-500"
+                              onClick={() =>
+                                acceptCompanyJoin(
+                                  joinId,
+                                  Number(currentCompany?.id)
+                                )
+                              }
+                            >
+                              Accept
+                            </Button>
+                            <Button
+                              className="bg-red-500"
+                              onClick={() =>
+                                rejectCompanyJoin(
+                                  joinId,
+                                  Number(currentCompany?.id)
+                                )
+                              }
+                            >
+                              Reject
+                            </Button>
+                          </div>
+                        }
+                      />
+                    );
+                  })}
+                </div>
+              </>
+            )}
+
+            {pendingSent.length === 0 && pendingReceived.length === 0 && (
+              <p className="text-sm text-gray-500 italic">
+                No pending collaboration requests
               </p>
             )}
-            <div className="max-h-[500px] overflow-y-auto space-y-4">
-              {connectedCompanies.map((company, index) => (
-                <div
-                  key={index}
-                  className="flex items-start rounded-lg border border-gray-200 bg-gray-50 p-4 transition duration-200 hover:border-indigo-300 hover:shadow-sm"
-                >
-                  <div className="mr-4 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-100">
-                    <Image
-                      src="/icons/business.png"
-                      alt={company.name}
-                      width={24}
-                      height={24}
-                      className="opacity-70"
-                    />
-                  </div>
-                  <div className="flex w-full items-start justify-between">
-                    <div>
-                      <p className="text-lg font-medium text-gray-800">
-                        {company.name}
-                      </p>
-                      <div className="mt-1 space-y-0.5 text-sm text-gray-500">
-                        {company.website && (
-                          <p className="flex items-center">
-                            <Globe size={14} className="mr-1 text-indigo-500" />
-                            <a
-                              href={company.website}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="hover:text-indigo-600 transition"
-                            >
-                              {company.website}
-                            </a>
-                          </p>
-                        )}
-                        {company.phone && (
-                          <p className="flex items-center">
-                            <Phone size={14} className="mr-1 text-indigo-500" />
-                            {company.phone}
-                          </p>
-                        )}
-                        {company.address && (
-                          <p className="flex items-center">
-                            <MapPin
-                              size={14}
-                              className="mr-1 text-indigo-500"
-                            />
-                            {company.address}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    {/* Collaboration Date */}
+
+            {/* 🟢 Active */}
+            <h3 className="text-xl font-semibold text-gray-800 pt-6">
+              Active Collaborations
+            </h3>
+
+            {active.length === 0 && (
+              <p className="text-sm text-gray-500 italic">
+                No active collaborations found
+              </p>
+            )}
+
+            <div className="space-y-4">
+              {active.map(({ company, joinedAt }) => (
+                <CompanyCard
+                  key={company.id}
+                  company={company}
+                  rightSlot={
                     <div className="text-right text-xs italic text-gray-500 pt-1">
                       <p className="font-semibold text-gray-600">
                         Collaborating Since
                       </p>
-                      <p>
-                        {collaborationDates[index]
-                          ? formatDate(collaborationDates[index])
-                          : "N/A"}
-                      </p>
+                      <p>{formatDate(joinedAt)}</p>
                     </div>
-                  </div>
-                </div>
+                  }
+                />
               ))}
             </div>
           </div>
         </div>
+
         {/* Network Settings & Nearby Companies Section */}
         <div>
           {/* network settings */}

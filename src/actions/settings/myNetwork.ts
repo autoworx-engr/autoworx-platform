@@ -48,6 +48,7 @@ export async function connectWithCompany(
       data: {
         companyOneId: userCompanyId,
         companyTwoId: targetCompanyId,
+        status: "PENDING",
       },
     });
     revalidatePathName && revalidatePath(revalidatePathName);

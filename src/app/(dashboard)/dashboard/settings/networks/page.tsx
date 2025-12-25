@@ -29,7 +29,7 @@ const page = async (props: Props) => {
   const collaborationDates = connectedCompanyIds.map((join) => join.createdAt);
 
   const connectedIds = connectedCompanyIds.flatMap((join) =>
-    [join.companyOneId, join.companyTwoId].filter((id) => id !== userCompanyId),
+    [join.companyOneId, join.companyTwoId].filter((id) => id !== userCompanyId)
   );
 
   const connectedCompanies = await db.company.findMany({
@@ -37,6 +37,10 @@ const page = async (props: Props) => {
       id: {
         in: connectedIds,
       },
+    },
+    include: {
+      companyJoinsAsOne: true,
+      companyJoinsAsTwo: true,
     },
   });
 
