@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import { lowInventoryNotification } from "@/lib/notification/inventory-notify";
 import { sendInvoiceConvertedNotification } from "@/lib/notification/invoice-notify";
 import { updateInvoiceAutomationTrigger } from "@/service/invoice-automation-trigger/api";
+import { updateTagAutomationTrigger } from "@/service/tag-automation-trigger/api";
 import { ServerAction } from "@/types/action";
 import { TErrorHandler } from "@/types/globalError";
 import { InvoiceType } from "@prisma/client";
@@ -65,6 +66,14 @@ export async function convertInvoice(
         invoiceId: updatedInvoiceData?.id!,
         columnId: updatedInvoiceData?.columnId!,
         type: updatedInvoiceData?.type!,
+      });
+
+      updateTagAutomationTrigger({
+        columnId: updatedInvoiceData?.columnId!,
+        companyId: updatedInvoiceData?.companyId!,
+        pipelineType: "SHOP",
+        conditionType: "post_tag",
+        invoiceId: updatedInvoiceData?.id!,
       });
 
       await Promise.all(
@@ -160,6 +169,8 @@ export async function convertInvoice(
     });
 
     revalidatePath("/estimate");
+    revalidatePath("/dashboard/estimate");
+    revalidatePath(`/dashboard/estimate/view/${id}`);
 
     return {
       type: "success",
@@ -318,7 +329,9 @@ export async function convertInvoicePublic(
       return updatedInvoiceData;
     });
 
-    // revalidatePath("/estimate");
+    revalidatePath("/estimate");
+    revalidatePath("/dashboard/estimate");
+    revalidatePath(`/dashboard/estimate/view/${id}`);
 
     return {
       type: "success",

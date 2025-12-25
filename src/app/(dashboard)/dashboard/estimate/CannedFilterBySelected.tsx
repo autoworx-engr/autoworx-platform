@@ -1,7 +1,7 @@
 "use client";
 import { cn } from "@/lib/cn";
 import { capitalCase } from "change-case";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, ChevronUp, Filter } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef } from "react";
 
@@ -70,47 +70,55 @@ export default function CannedFilterBySelection({
     closeModal(modalName);
   };
 
+  const isModalOpen = activeModal[modalName];
+  const filterText = type === "types" ? "Types" : capitalCase(type);
   return (
-    <div className="relative w-full md:w-auto">
+    <div className="relative w-full md:w-auto z-10">
       <button
         ref={buttonRef}
         onClick={() => toggleModal(modalName)}
         className={cn(
-          "flex w-full items-center justify-center gap-2 border border-gray-400 p-1 px-5 text-sm text-gray-400 hover:border-blue-600 md:w-44",
-          activeModal ? "rounded-tl-sm rounded-tr-sm" : "rounded-sm"
+          "flex w-full items-center justify-between gap-2 border p-2.5 px-4 text-sm font-medium transition-all duration-200 md:w-48 rounded-lg",
+          selectedItem ? "border-indigo-500 text-indigo-600 bg-indigo-50 hover:bg-indigo-100" : "border-gray-300 text-gray-600 hover:border-indigo-400 bg-white",
+          isModalOpen ? "rounded-b-none border-b-0 shadow-lg" : "shadow-sm hover:shadow-md"
         )}
+        title={`Filter by ${filterText}`}
       >
-        <span className="truncate">
-          {selectedItem
-            ? selectedItem
-            : type === "types"
-              ? "Types"
-              : capitalCase(type)}
-        </span>
-        <ChevronDown className="w-4 h-4" />
+        <div className="flex items-center gap-2">
+          <Filter className="w-4 h-4" />
+          <span className="truncate">
+            {selectedItem ? selectedItem : filterText}
+          </span>
+        </div>
+        {isModalOpen ? (
+          <ChevronUp className="w-4 h-4 text-indigo-600" />
+        ) : (
+          <ChevronDown className="w-4 h-4 text-gray-500" />
+        )}
       </button>
 
-      {activeModal[modalName] && (
+      {isModalOpen && (
         <div
           ref={dropdownRef}
-          className="absolute left-0 right-0 z-50 flex max-h-52 w-full flex-col space-y-1 overflow-y-auto rounded-bl-sm rounded-br-sm border border-t-0 border-gray-400 bg-background p-3 pb-0 md:w-44"
+          className="absolute left-0 right-0 z-50 flex max-h-56 w-full flex-col space-y-1 overflow-y-auto thin-scrollbar rounded-b-lg border border-t-0 border-gray-300 bg-white p-3 shadow-xl md:w-48"
         >
           {items.map((item) => (
             <button
               key={item.id}
               onClick={() => handleSelection(item.name)}
-              className={`text-md flex items-center gap-2 text-start hover:text-blue-600 ${
-                item.name === selectedItem ? "text-blue-600" : "text-gray-400"
-              }`}
+              className={`text-sm flex items-center p-2 rounded-md text-start transition-colors duration-150 border ${item.name === selectedItem
+                ? "bg-indigo-50 text-indigo-600 font-semibold hover:bg-indigo-100"
+                : "text-gray-700 hover:bg-gray-100"
+                }`}
             >
               {item.name}
             </button>
           ))}
           <button
             onClick={handleClear}
-            className="sticky bottom-0 z-50 my-2 border-t bg-background py-1 text-sm hover:text-red-500"
+            className="sticky -bottom-2 z-50 border rounded-md border-gray-200 bg-white py-2 mt-1 text-sm font-medium text-red-500 hover:text-red-700 transition-colors"
           >
-            Clear
+            Clear Filter
           </button>
         </div>
       )}

@@ -5,23 +5,24 @@ import Title from "@/components/Title";
 import { fetchTaskPageData } from "@/lib/fetchTaskPageData";
 import { useCalendarStore } from "@/stores/calendarStore";
 import { CalendarType } from "@/types/calendar";
-import { Spin } from "antd";
 import { useEffect, useState } from "react";
 import TaskPage from "./TaskPage";
+import CarLoading from "@/components/common/CarLoading";
 
 export default function TaskAndActivityClient({ params }: any) {
-  const { reset, month, updateVariable, isNavigating, setNavigating } = useCalendarStore();
+  const { reset, month, updateVariable, isNavigating, setNavigating } =
+    useCalendarStore();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Only reset if we're not in the middle of a navigation from another calendar view
     console.log("Navigation state:", isNavigating);
-    
+
     if (!isNavigating) {
       reset();
     }
-    
+
     // Clear navigation flag after component mounts
     if (isNavigating) {
       const timer = setTimeout(() => {
@@ -30,7 +31,6 @@ export default function TaskAndActivityClient({ params }: any) {
       return () => clearTimeout(timer);
     }
   }, [isNavigating, reset, setNavigating]);
-  
 
   useEffect(() => {
     if (month) {
@@ -52,7 +52,7 @@ export default function TaskAndActivityClient({ params }: any) {
   if (loading || !data) {
     return (
       <div className="flex h-screen w-full items-center justify-center p-4">
-        <Spin size="large" />
+        <CarLoading />
       </div>
     );
   }

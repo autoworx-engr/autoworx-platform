@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import Image from "next/image";
+import { CheckCircle, X, XCircle } from "lucide-react";
 
 interface PricePlansProps {
   setClose: () => void;
@@ -22,145 +23,107 @@ export function PricePlans({
     return currentPlan === planName ? "Current Plan" : "Choose Plan";
   };
 
+  const planDetails = [
+    {
+      name: "Autoworx Basic Plan",
+      color: "text-gray-500",
+      bgColor: "bg-gray-500",
+      image: "/icons/CompanyLogo1.svg",
+      features: [true, true, true, false, false, false],
+    },
+    {
+      name: "Autoworx Standard Plan",
+      color: "text-[#6571FF]",
+      bgColor: "bg-[#6571FF]",
+      image: "/icons/CompanyLogo2.svg",
+      features: [true, true, true, true, false, false],
+    },
+    {
+      name: "Autoworx Premium Plan",
+      color: "text-yellow-500",
+      bgColor: "bg-yellow-500",
+      image: "/icons/CompanyLogo3.svg",
+      features: [true, true, true, true, true, true],
+    },
+  ];
   return (
-    <section
-      className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-black/50 py-20"
+   <section
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-auto bg-black/60 backdrop-blur-sm py-20"
       onClick={setClose}
     >
-      <div className="max-w-8xl relative mx-auto px-4">
+      <div className="relative mx-auto px-4">
         <div
-          className="flex w-[1000px] justify-center space-x-6"
+          className="flex w-full max-w-[1200px] flex-col items-center justify-center space-y-6 md:flex-row md:space-x-6 md:space-y-0 p-4"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Plan 1 */}
-          <div className="w-full max-w-xl rounded-md bg-background shadow-lg">
-            <div className="flex flex-col items-center p-6 pt-0">
-              <div className="mb-4">
+          {/* Close Button for Modal */}
+          <button
+            onClick={setClose}
+            className="absolute top-0 right-0 m-4 text-white hover:text-gray-300 transition z-50 md:top-auto md:right-[-40px]"
+            aria-label="Close"
+          >
+            <X className="w-8 h-8" />
+          </button>
+
+          {planDetails.map((plan, index) => (
+            <div
+              key={index}
+              className={`w-full max-w-sm rounded-xl bg-white p-8 shadow-2xl transition duration-300 ${
+                plan.name === currentPlan
+                  ? "ring-4 ring-offset-4 ring-indigo-500 scale-105"
+                  : "hover:shadow-xl"
+              }`}
+            >
+              <div className="flex flex-col items-center space-y-6">
+                <Image
+                  src={plan.image}
+                  width={150}
+                  height={150}
+                  alt={`${plan.name} logo`}
+                  className="w-32 h-32"
+                />
+
+                <h2 className={`text-xl font-bold ${plan.color}`}>
+                  {plan.name}
+                </h2>
+
                 <button
                   type="button"
-                  className="rounded-sm bg-gray-500 px-4 py-2 text-white"
-                  onClick={() => handlePlanSelect("Autoworx Basic Plan")}
+                  className={`rounded-full px-6 py-2 text-sm font-semibold text-white transition duration-200 ${
+                    plan.name === currentPlan
+                      ? "bg-gray-400 cursor-default"
+                      : `${plan.bgColor} hover:opacity-90 shadow-md`
+                  }`}
+                  onClick={() => handlePlanSelect(plan.name)}
+                  disabled={plan.name === currentPlan}
                 >
-                  {getButtonLabel("Autoworx Basic Plan")}
+                  {getButtonLabel(plan.name)}
                 </button>
+
+                <ul className="w-full space-y-3 pt-4 text-gray-700">
+                  {plan.features.map((hasFeature, featureIndex) => (
+                    <li
+                      key={featureIndex}
+                      className="flex items-center text-base"
+                    >
+                      {hasFeature ? (
+                        <CheckCircle className="w-5 h-5 mr-3 text-green-500 flex-shrink-0" />
+                      ) : (
+                        <XCircle className="w-5 h-5 mr-3 text-red-400 flex-shrink-0" />
+                      )}
+                      <span
+                        className={
+                          hasFeature ? "font-medium" : "text-gray-400 italic"
+                        }
+                      >
+                        Feature {featureIndex + 1}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
               </div>
-              <Image
-                src="/icons/CompanyLogo1.svg"
-                width={200}
-                height={200}
-                alt="Company logo"
-              ></Image>
-              <h2 className="mb-4 mt-4 text-lg font-semibold text-gray-500">
-                Autoworx Basic Plan
-              </h2>
-              <ul className="text-gray-600">
-                <li className="mb-2 flex items-center">
-                  <span className="mr-2">✔</span> Feature 1
-                </li>
-                <li className="mb-2 flex items-center">
-                  <span className="mr-2">✔</span> Feature 2
-                </li>
-                <li className="mb-2 flex items-center">
-                  <span className="mr-2">✔</span> Feature 3
-                </li>
-                <li className="mb-2 flex items-center">
-                  <span className="mr-2 text-gray-400">✖</span> Feature 4
-                </li>
-                <li className="mb-2 flex items-center">
-                  <span className="mr-2 text-gray-400">✖</span> Feature 5
-                </li>
-                <li className="flex items-center">
-                  <span className="mr-2 text-gray-400">✖</span> Feature 6
-                </li>
-              </ul>
             </div>
-          </div>
-          {/* Plan 2 */}
-          <div className="w-full max-w-sm rounded-md bg-background shadow-lg">
-            <div className="flex flex-col items-center p-6 pt-0">
-              <div className="mb-4">
-                <button
-                  type="button"
-                  className="rounded-sm bg-[#6571FF] px-4 py-2 text-white hover:bg-blue-600"
-                  onClick={() => handlePlanSelect("Autoworx Standard Plan")}
-                >
-                  {getButtonLabel("Autoworx Standard Plan")}
-                </button>
-              </div>
-              <Image
-                src="/icons/CompanyLogo2.svg"
-                width={200}
-                height={200}
-                alt="Company logo"
-              ></Image>
-              <h2 className="mb-4 mt-4 text-lg font-semibold text-[#6571FF]">
-                Autoworx Standard Plan
-              </h2>
-              <ul className="text-gray-600">
-                <li className="mb-2 flex items-center">
-                  <span className="mr-2">✔</span> Feature 1
-                </li>
-                <li className="mb-2 flex items-center">
-                  <span className="mr-2">✔</span> Feature 2
-                </li>
-                <li className="mb-2 flex items-center">
-                  <span className="mr-2">✔</span> Feature 3
-                </li>
-                <li className="mb-2 flex items-center">
-                  <span className="mr-2">✔</span> Feature 4
-                </li>
-                <li className="mb-2 flex items-center">
-                  <span className="mr-2 text-gray-400">✖</span> Feature 5
-                </li>
-                <li className="flex items-center">
-                  <span className="mr-2 text-gray-400">✖</span> Feature 6
-                </li>
-              </ul>
-            </div>
-          </div>
-          {/* Plan 3 */}
-          <div className="w-full max-w-sm rounded-md bg-background shadow-lg">
-            <div className="flex flex-col items-center p-6 pt-0">
-              <div className="mb-4">
-                <button
-                  type="button"
-                  className="rounded-sm bg-yellow-500 px-4 py-2 text-white hover:bg-yellow-600"
-                  onClick={() => handlePlanSelect("Autoworx Premium Plan")}
-                >
-                  {getButtonLabel("Autoworx Premium Plan")}
-                </button>
-              </div>
-              <Image
-                src="/icons/CompanyLogo3.svg"
-                width={200}
-                height={200}
-                alt="Company logo"
-              ></Image>
-              <h2 className="mb-4 mt-4 text-lg font-semibold text-yellow-500">
-                Autoworx Premium Plan
-              </h2>
-              <ul className="text-gray-600">
-                <li className="mb-2 flex items-center">
-                  <span className="mr-2">✔</span> Feature 1
-                </li>
-                <li className="mb-2 flex items-center">
-                  <span className="mr-2">✔</span> Feature 2
-                </li>
-                <li className="mb-2 flex items-center">
-                  <span className="mr-2">✔</span> Feature 3
-                </li>
-                <li className="mb-2 flex items-center">
-                  <span className="mr-2">✔</span> Feature 4
-                </li>
-                <li className="mb-2 flex items-center">
-                  <span className="mr-2">✔</span> Feature 5
-                </li>
-                <li className="flex items-center">
-                  <span className="mr-2">✔</span> Feature 6
-                </li>
-              </ul>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
     </section>

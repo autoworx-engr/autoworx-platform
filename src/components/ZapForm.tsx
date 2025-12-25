@@ -13,6 +13,7 @@ import { TermsAndPolicyModal } from "./TermsAndPolicyModal";
 import Image from "next/image";
 import { Globe, MapPin, Phone } from "lucide-react";
 import { useSearchParams } from "next/navigation";
+import PhoneInput from "./PhoneInput";
 
 type ZapFormProps = {
   company: {
@@ -29,7 +30,6 @@ type ZapFormProps = {
 const ZapForm = ({ company }: ZapFormProps) => {
   const [legalBusinessName, setLegalBusinessName] = useState<string>("");
   const [consent, setConsent] = useState<boolean>(false);
-
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -41,6 +41,7 @@ const ZapForm = ({ company }: ZapFormProps) => {
     multiServices: [] as { id: string | number; title: string }[],
     source: "",
     token: "",
+    countryCode: "US",
   });
 
   const {
@@ -121,30 +122,14 @@ const ZapForm = ({ company }: ZapFormProps) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
 
-    // Special validation for phone field
-    if (name === "phone") {
-      // Update the value in state regardless of validation
-      setFormData({
-        ...formData,
-        phone: value,
-      });
+    setFormData({
+    ...formData,
+    [name]: value,
+  });
+  
+  
+  clearFieldError(name);
 
-      // Only show error if value is not empty and doesn't start with +1
-      if (value && !value.startsWith("+1")) {
-        setFieldErrors({
-          ...fieldErrors,
-          phone: "Phone number must start with +1",
-        });
-      } else {
-        clearFieldError("phone");
-      }
-    } else {
-      // Handle all other fields normally
-      setFormData({
-        ...formData,
-        [name]: value,
-      });
-    }
   };
 
   const clearFieldError = (field: string) => {
@@ -161,11 +146,31 @@ const ZapForm = ({ company }: ZapFormProps) => {
     setFormData((prev) => ({ ...prev, multiServices: value }));
   };
 
+  const handlePhoneChange = (num: string, code: string, isoCode:string) => {
+ 
+  const fullPhoneNumber = `${code}${num}`; 
+
+ 
+  setFormData((prev) => ({
+    ...prev,
+    phone: fullPhoneNumber,
+    countryCode: isoCode,
+  }));
+
+  clearFieldError("phone");
+}
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
     setFormStatus({ message: "", type: null });
-
+if (!formData.phone || formData.phone.length < 10) {
+    setFieldErrors({
+      ...fieldErrors,
+      phone: "Please enter a valid phone number",
+    });
+    return;
+  }
     try {
       const serviceTitle =
         formData.multiServices && formData.multiServices.length > 0
@@ -197,6 +202,7 @@ const ZapForm = ({ company }: ZapFormProps) => {
           name: formData.name,
           email: formData.email,
           phone: formData.phone,
+          countryCode: formData.countryCode,
           opportunity_source: opportunitySource,
           multiServices: formData?.multiServices,
         }),
@@ -219,6 +225,7 @@ const ZapForm = ({ company }: ZapFormProps) => {
           vehicle_model: "",
           others: "",
           multiServices: [],
+          countryCode: "US",
         });
       } else {
         setFormStatus({
@@ -313,6 +320,8 @@ const ZapForm = ({ company }: ZapFormProps) => {
             )}
           </div>
 
+         
+
           {/* Form Title */}
 
           <p className="mt-1 text-center font-semibold text-white text-opacity-90">
@@ -358,27 +367,14 @@ const ZapForm = ({ company }: ZapFormProps) => {
               />
             </div>
             <div className="space-y-2">
-              <label
-                htmlFor="phone"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Phone Number*
-              </label>
-              <input
-                id="phone"
-                type="text"
-                name="phone"
-                placeholder="+1 (555) 123-4567"
-                value={formData.phone}
-                onChange={handleChange}
-                required
-                className={`w-full rounded-md border-2 ${
-                  fieldErrors.phone ? "border-red-500" : "border-gray-300"
-                } px-4 py-2 placeholder:text-gray-500 focus:border-[#00b8b0] focus:outline-none focus:ring-2 focus:ring-[#00b8b0]`}
-              />
-              {fieldErrors.phone && (
-                <p className="mt-1 text-sm text-red-600">{fieldErrors.phone}</p>
-              )}
+             
+               <PhoneInput
+    label="Phone Number"
+    // value={formData.phone} 
+    onChange={(num, code, isoCode) => handlePhoneChange(num, code, isoCode)} 
+    required
+    error={fieldErrors.phone} 
+  />
             </div>{" "}
             <div className="space-y-2">
               {formData.token ? (
@@ -400,64 +396,7 @@ const ZapForm = ({ company }: ZapFormProps) => {
                 Vehicle Information*
               </h3>
             </div>
-            {/* <div className="grid grid-cols-3 gap-3">
-              <div className="space-y-2">
-                <label
-                  htmlFor="vehicle_year"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Year
-                </label>
-                <input
-                  id="vehicle_year"
-                  type="text"
-                  name="vehicle_year"
-                  placeholder="2019"
-                  value={formData.vehicle_year}
-                  onChange={handleChange}
-                  required
-                  className="w-full rounded-md border-2 border-gray-300 px-4 py-2 placeholder:text-gray-500 focus:border-[#00b8b0] focus:outline-none focus:ring-2 focus:ring-[#00b8b0]"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label
-                  htmlFor="vehicle_make"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Make*
-                </label>
-                <input
-                  id="vehicle_make"
-                  type="text"
-                  name="vehicle_make"
-                  placeholder="Honda"
-                  value={formData.vehicle_make}
-                  onChange={handleChange}
-                  required
-                  className="w-full rounded-md border-2 border-gray-300 px-4 py-2 placeholder:text-gray-500 focus:border-[#00b8b0] focus:outline-none focus:ring-2 focus:ring-[#00b8b0]"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label
-                  htmlFor="vehicle_model"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Model*
-                </label>
-                <input
-                  id="vehicle_model"
-                  type="text"
-                  name="vehicle_model"
-                  placeholder="Civic"
-                  value={formData.vehicle_model}
-                  onChange={handleChange}
-                  required
-                  className="w-full rounded-md border-2 border-gray-300 px-4 py-2 placeholder:text-gray-500 focus:border-[#00b8b0] focus:outline-none focus:ring-2 focus:ring-[#00b8b0]"
-                />
-              </div>
-            </div> */}
+          
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
               <Selector
                 name="vehicle_year"

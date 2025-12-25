@@ -1,16 +1,15 @@
-import NewCustomer from "@/components/Lists/NewCustomer";
 import ResponsiveEmployeeCard from "@/components/mobile-responsive/employee/ResponsiveEmployeeCard";
 import Title from "@/components/Title";
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import { Vehicle } from "@prisma/client";
+import { ArrowLeft, Search } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import EditClient from "../../client/EditClient";
 import ClientInformation from "../ClientInformation";
 import OrderList from "../OrderList";
 import VehicleList from "../VehicleList";
-import { ArrowLeft, Search } from "lucide-react";
 
 type Props = {
   params: {
@@ -74,15 +73,13 @@ const Page = async (props: Props) => {
         </div>
 
         <div className="my-4 flex flex-col justify-between lg:flex-row lg:items-center">
-          <div className="flex items-center gap-x-8 bg-background">
-            <div className="flex w-full items-center gap-x-2 rounded-md border border-gray-300 px-4 py-1 text-gray-400 lg:w-[500px]">
-              <span className="">
-                <Search className="w-5 h-5" />
-              </span>
+          <div className="flex items-center gap-x-8 w-full">
+            <div className="relative min-w-0 flex-1 lg:max-w-[500px] bg-background">
+              <Search className="w-5 h-5 absolute left-3 top-3 text-slate-400 dark:text-slate-300 transition-colors duration-300" />
               <input
                 name="search"
                 type="text"
-                className="w-full rounded-md border px-4 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-slate-300 ring-0 rounded-xl bg-transparent pr-3 pl-10 py-2 text-slate-600 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6571FF] focus:shadow-[0_8px_24px_rgba(101,113,255,0.08)] transition-all duration-300"
                 placeholder="Search"
               />
             </div>

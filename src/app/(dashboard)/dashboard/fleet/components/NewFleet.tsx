@@ -19,7 +19,8 @@ import { RotatingLines } from "react-loader-spinner";
 import SelectComponent from "./Select";
 import Image from "next/image";
 import { successToast } from "@/lib/toast";
-import { CircleUserRound, SquarePen } from "lucide-react";
+import { CircleUserRound, SquarePen, UserIcon } from "lucide-react";
+import PhoneInput from "@/components/PhoneInput";
 
 export default function NewFleet({
   fleet,
@@ -45,6 +46,8 @@ export default function NewFleet({
 
   const { showError, clearError } = useFormErrorStore();
   const [mobile, setMobile] = useState("+1");
+  const [countryCode, setCountryCode] = useState("");
+  const [countryIsoCode, setCountryIsoCode] = useState("");
 
   useEffect(() => {
     if (isEdit && fleet && open) {
@@ -64,7 +67,9 @@ export default function NewFleet({
     const contactName =
       document.querySelector<HTMLInputElement>("#contactName")?.value;
     const email = document.querySelector<HTMLInputElement>("#email")?.value;
-    const mobile = document.querySelector<HTMLInputElement>("#mobile")?.value;
+    // const mobile = document.querySelector<HTMLInputElement>("#mobile")?.value;
+    const phone =
+      countryCode && mobile ? `${countryCode}${mobile}` : mobile || "";
     const address = document.querySelector<HTMLInputElement>("#address")?.value;
     const city = document.querySelector<HTMLInputElement>("#city")?.value;
     const state = document.querySelector<HTMLInputElement>("#state")?.value;
@@ -91,7 +96,7 @@ export default function NewFleet({
       });
       return;
     }
-    if (!mobile?.trim()) {
+    if (!phone?.trim()) {
       showError({
         field: "mobile",
         message: "Mobile is required.",
@@ -124,7 +129,8 @@ export default function NewFleet({
         fleetName,
         contactName,
         email,
-        mobile,
+        mobile: phone,
+        countryCode: countryIsoCode,
         address,
         city,
         state,
@@ -140,7 +146,8 @@ export default function NewFleet({
         fleetName,
         contactName,
         email,
-        mobile,
+        mobile: phone,
+        countryCode: countryIsoCode,
         address,
         city,
         state,
@@ -194,7 +201,7 @@ export default function NewFleet({
     >
       <DialogTrigger asChild>
         {buttonElement ? (
-          buttonElement
+          <span className="text-[#6571FF]">{buttonElement}</span>
         ) : (
           <button className="text-xs text-[#6571FF]">+ Add New Fleet</button>
         )}
@@ -204,49 +211,39 @@ export default function NewFleet({
         // form
       >
         <div className="mt-8 flex items-center justify-between">
-          <h1 className="text-2xl font-bold">
-            {isEdit ? "Edit" : "Add"} Fleet
-          </h1>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-600 dark:text-slate-100">
+              {isEdit ? "Edit" : "Add"} Fleet
+            </h1>
+            <p className="text-sm text-slate-500 mt-1">
+              Enter details for the new fleet
+            </p>
+          </div>
 
           {profilePic ? (
-            <label className="relative cursor-pointer" htmlFor="profilePicture">
-              <div className="relative h-20 w-20 rounded-full border border-slate-400 hover:border-dashed hover:opacity-80 overflow-hidden">
-                <Image
-                  src={
-                    typeof profilePic === "string"
-                      ? profilePic
-                      : URL.createObjectURL(profilePic)
-                  }
-                  width={80}
-                  height={80}
-                  alt="profile"
-                  className="h-full w-full object-cover"
-                  unoptimized={profilePic !== null}
-                  crossOrigin="anonymous"
-                />
-              </div>
-
-              <span className="absolute bottom-0 left-1 text-lg p-1 rounded-full bg-[#6571FF]">
-                <SquarePen className="w-3 h-3 cursor-pointer text-white " />
-              </span>
-
-              <input
-                type="file"
-                name="profilePicture"
-                id="profilePicture"
-                hidden
-                accept="image/*"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    setProfilePic(file);
-                  }
-                }}
-              />
-            </label>
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={
+                typeof profilePic === "string"
+                  ? profilePic
+                  : URL.createObjectURL(profilePic)
+              }
+              alt="profile"
+              className="h-16 w-16 cursor-pointer rounded-full object-cover ring-4 ring-white dark:ring-slate-800 shadow-md transition-transform group-hover:scale-105"
+              onClick={() => {
+                setProfilePic(null);
+              }}
+            />
           ) : (
             <label
-              className="flex cursor-pointer items-center justify-center gap-x-2 rounded-full border border-slate-400 pl-2"
+              className="
+                    group flex cursor-pointer items-center justify-center gap-x-3 
+                    rounded-full pl-4 pr-2 py-1.5
+                    bg-white dark:bg-slate-800
+                    border border-dashed border-slate-300 dark:border-slate-600
+                    hover:border-[#6571FF] hover:bg-indigo-50/50 dark:hover:bg-indigo-900/20
+                    transition-all duration-300
+                "
               htmlFor="profilePicture"
             >
               <input
@@ -262,15 +259,14 @@ export default function NewFleet({
                   }
                 }}
               />
-              <span className="lg:hidden">Upload picture</span>
-              <span className="hidden lg:block">
-                Upload a profile picture
-              </span>{" "}
-              <CircleUserRound
-                size={48}
-                strokeWidth={1.5}
-                className="text-gray-400"
-              />
+              <div className="flex flex-col items-end">
+                <span className="text-sm font-semibold text-slate-600 dark:text-slate-300 group-hover:text-[#6571FF] transition-colors">
+                  Upload Photo
+                </span>
+              </div>
+              <div className="p-1 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-400 group-hover:text-[#6571FF] group-hover:bg-white transition-colors">
+                <UserIcon size={32} strokeWidth={2} />
+              </div>
             </label>
           )}
         </div>
@@ -306,7 +302,7 @@ export default function NewFleet({
             />
           </div>
 
-          <div className="flex items-center justify-between gap-x-2">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
             <SlimInput
               name="email"
               label="Email Address"
@@ -326,7 +322,7 @@ export default function NewFleet({
                 // }
               }}
             />
-            <SlimInput
+            {/* <SlimInput
               type="tel"
               name="mobile"
               label="Mobile Number"
@@ -347,7 +343,22 @@ export default function NewFleet({
                   });
                 }
               }}
-            />
+            /> */}
+
+            <div className="md:w-[248px]">
+              <PhoneInput
+                required
+                defaultValue={fleet?.mobile || ""}
+                defaultIsoCode={fleet?.countryCode || "US"}
+                onChange={(phoneNumber, callingCode, countryIsoCode) => {
+                  setMobile(phoneNumber);
+                  setCountryCode(callingCode);
+                  setCountryIsoCode(countryIsoCode);
+
+                  clearError();
+                }}
+              />
+            </div>
           </div>
 
           <div className="flex items-center justify-between">
@@ -398,7 +409,11 @@ export default function NewFleet({
 
         <DialogFooter>
           <DialogClose
-            className="mt-1 rounded-lg border-2 border-slate-400 p-2 lg:mt-0"
+            className="
+              rounded-xl px-5 py-2.5 text-sm font-medium text-slate-500 
+              hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
+              transition-colors border
+            "
             onClick={() => {
               clearError();
               setOpen(false);
@@ -410,7 +425,15 @@ export default function NewFleet({
             disabled={pending}
             type="button"
             onClick={() => startTransition(handleSubmit)}
-            className="rounded-lg border bg-[#6571FF] px-5 py-2 text-white"
+            className="
+              rounded-xl px-6 py-2.5 text-sm font-medium text-white
+              bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+              shadow-lg shadow-indigo-500/30
+              hover:shadow-xl hover:shadow-indigo-500/40
+              hover:-translate-y-0.5 hover:scale-[1.02]
+              active:translate-y-0 active:scale-100
+              transition-all duration-200
+            "
           >
             {pending ? (
               <div className="flex flex-col items-center justify-center">

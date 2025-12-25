@@ -20,6 +20,7 @@ import { errorToast } from "@/lib/toast";
 import Password from "@/components/Password";
 import SlimSalaryInput from "@/components/employee/SlimSalaryInput";
 import { CircleUserRound as UserIcon } from "lucide-react";
+import PhoneInput from "../PhoneInput";
 
 export default function AddNewEmployee({
   onSuccess,
@@ -32,6 +33,15 @@ export default function AddNewEmployee({
   const [employeeTypeOpen, setEmployeeTypeOpen] = useState(false);
   const [salaryTypeOpen, setSalaryTypeOpen] = useState(false);
   const [profilePic, setProfilePic] = useState<File | null>(null);
+  // const [mobile, setMobile] = useState("+1");
+  // const [country, setCountry] = useState('');
+  // const [countryIsoCode, setCountryIsoCode] = useState('');
+
+  const phoneDataRef = useRef({
+  mobile: "",
+  country: "",
+  countryIsoCode: ""
+});
   const [salaryData, setSalaryData] = useState<{
     salaryType: SalaryType;
     salaryAmount: number;
@@ -39,7 +49,7 @@ export default function AddNewEmployee({
 
   const { data: companyName } = useServerGet(getCompany);
   const { showError, clearError } = useFormErrorStore();
-
+const { mobile, country, countryIsoCode } = phoneDataRef.current;
   async function handleSubmit() {
     clearError();
     let photo;
@@ -51,9 +61,11 @@ export default function AddNewEmployee({
       document.querySelector<HTMLInputElement>("[name='lastName']")?.value;
     const email =
       document.querySelector<HTMLInputElement>("[name='email']")?.value;
-    const mobileNumber = document.querySelector<HTMLInputElement>(
-      "[name='mobileNumber']"
-    )?.value;
+    // const mobileNumber = document.querySelector<HTMLInputElement>(
+    //   "[name='mobileNumber']"
+    // )?.value;
+    
+    const mobileNumber = country && mobile ? `${country}${mobile}` : mobile || ""
     const address =
       document.querySelector<HTMLInputElement>("[name='address']")?.value;
     const city =
@@ -109,14 +121,22 @@ export default function AddNewEmployee({
     }
 
     // Validate mobile number format
-    if (!mobileNumber?.trim() || !/^\+?\d*$/.test(mobileNumber.trim())) {
-      showError({
-        field: "mobileNumber",
-        message: "Please enter a valid mobile number (digits only).",
-      });
-      return;
-    }
+    // if (!mobileNumber?.trim() || !/^\+?\d*$/.test(mobileNumber.trim())) {
+    //   showError({
+    //     field: "mobileNumber",
+    //     message: "Please enter a valid mobile number (digits only).",
+    //   });
+    //   return;
+    // }
 
+   
+    if (!mobile ||  mobile.length < 10) {
+      showError({
+        field: "mobile",
+        message: "Please enter a valid phone number (at least 10 digits).",
+      })
+      return
+    }
     // Validate passwords
     if (!password?.trim()) {
       showError({
@@ -193,7 +213,8 @@ export default function AddNewEmployee({
         firstName,
         lastName,
         email,
-        mobileNumber,
+        mobileNumber: mobileNumber,
+        countryCode: countryIsoCode,
         address,
         city,
         state,
@@ -235,41 +256,64 @@ export default function AddNewEmployee({
     setOpen(false);
   };
 
+ 
   return (
     <div className="">
       <Dialog
         open={open}
-        onOpenChange={(isOpen) => {
+        onOpenChange={(isOpen: boolean) => {
           if (!isOpen) handleClose();
           setOpen(isOpen);
         }}
       >
-        <DialogTrigger asChild>
+        <DialogTrigger asChild onClick={() => setOpen(true)}>
           {button ? (
             button
           ) : (
-            <button className="rounded-md bg-[#6571FF] p-2 px-5 text-white">
-              + Add New Employee
+            <button className="
+                flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white
+                bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+                shadow-[0_4px_14px_0_rgba(101,113,255,0.39)]
+                hover:shadow-[0_6px_20px_rgba(101,113,255,0.23)]
+                hover:-translate-y-0.5
+                active:translate-y-0 active:scale-100
+                transition-all duration-300 ease-in-out
+            ">
+              <span>+</span> Add New Employee
             </button>
           )}
         </DialogTrigger>
         <DialogContent className="max-h-full max-w-xl grid-rows-[auto,1fr,auto]">
-          <div className="mt-8 flex items-center justify-between">
-            <h1 className="text-2xl font-bold">Add Employee</h1>
+          <div className="mt-8 flex items-center justify-between px-4">
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-slate-600 dark:text-slate-100">
+                Add Employee
+              </h1>
+              <p className="text-sm text-slate-500 mt-1">Enter details for the new team member</p>
+            </div>
 
             {profilePic ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={URL.createObjectURL(profilePic)}
-                alt="profile"
-                className="h-14 w-14 cursor-pointer rounded-full border border-slate-400"
-                onClick={() => {
-                  setProfilePic(null);
-                }}
-              />
+              <div className="relative group">
+                <img
+                  src={URL.createObjectURL(profilePic)}
+                  alt="profile"
+                  className="h-16 w-16 cursor-pointer rounded-full object-cover ring-4 ring-white dark:ring-slate-800 shadow-md transition-transform group-hover:scale-105"
+                  onClick={() => {
+                    setProfilePic(null);
+                  }}
+                />
+              </div>
             ) : (
               <label
-                className="flex cursor-pointer items-center justify-center gap-x-2 rounded-full border border-slate-400 pl-2"
+                className="
+                    group flex cursor-pointer items-center justify-center gap-x-3 
+                    rounded-full pl-4 pr-2 py-1.5
+                    bg-white dark:bg-slate-800
+                    border border-dashed border-slate-300 dark:border-slate-600
+                    hover:border-[#6571FF] hover:bg-indigo-50/50 dark:hover:bg-indigo-900/20
+                    transition-all duration-300
+                "
                 htmlFor="profilePicture"
               >
                 <input
@@ -285,23 +329,24 @@ export default function AddNewEmployee({
                     }
                   }}
                 />
-                <span className="lg:hidden">Upload picture</span>
-                <span className="hidden lg:inline">
-                  Upload a profile picture
-                </span>{" "}
-                <UserIcon size={48} strokeWidth={1.5} />
+                <div className="flex flex-col items-end">
+                  <span className="text-sm font-semibold text-slate-600 dark:text-slate-300 group-hover:text-[#6571FF] transition-colors">Upload Photo</span>
+                </div>
+                <div className="p-1 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-400 group-hover:text-[#6571FF] group-hover:bg-white transition-colors">
+                  <UserIcon size={32} strokeWidth={2} />
+                </div>
               </label>
             )}
           </div>
 
           <FormError />
 
-          <div className="space-y-2 overflow-y-auto">
-            <div className="flex items-center justify-between gap-2">
+          <div className="space-y-5 overflow-y-auto py-2 px-4 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent">
+            <div className="grid grid-cols-2 gap-4">
               <SlimInput
                 name="firstName"
                 required
-                onChange={(e) => {
+                onChange={(e: any) => {
                   const value = e.target.value;
                   if (!value.trim()) {
                     showError({
@@ -315,11 +360,12 @@ export default function AddNewEmployee({
               />
               <SlimInput name="lastName" />
             </div>
-            <div className="flex items-center justify-between gap-2">
+
+            <div className="grid grid-cols-2 gap-4">
               <SlimInput
                 name="email"
                 required
-                onChange={(e) => {
+                onChange={(e: any) => {
                   const value = e.target.value;
                   if (!value.trim()) {
                     showError({
@@ -336,11 +382,11 @@ export default function AddNewEmployee({
                   }
                 }}
               />
-              <SlimInput
+              {/* <SlimInput
                 name="mobileNumber"
                 type="tel"
                 required
-                onChange={(e) => {
+                onChange={(e: any) => {
                   const value = e.target.value;
                   if (!/^\+?\d*$/.test(value)) {
                     showError({
@@ -352,9 +398,25 @@ export default function AddNewEmployee({
                     clearError();
                   }
                 }}
-              />
+              /> */}
+
+              <PhoneInput
+                          label="Mobile"
+                          placeholder="1234567890"
+                          required={false}
+                          // value={mobile}
+                          onChange={(phone, code, isoCode) => {
+                            phoneDataRef.current = {
+                              mobile: phone,
+                              country: code,
+                              countryIsoCode: isoCode || ""
+                            };
+                            clearError()
+                          }}
+                        />
             </div>
-            <div className="flex items-center justify-between gap-2 lg:gap-7">
+
+            <div className="grid grid-cols-2 gap-4">
               <div className="mb-1">
                 <label htmlFor="password" className="mb-1 px-2 font-medium">
                   Password <span className="text-[#E9405F]">*</span>
@@ -379,6 +441,7 @@ export default function AddNewEmployee({
                 />
               </div>
             </div>
+
             <div className="flex items-center justify-between">
               <SlimInput
                 rootClassName="flex-1"
@@ -386,13 +449,14 @@ export default function AddNewEmployee({
                 required={false}
               />
             </div>
-            <div className="flex items-center justify-between gap-x-2">
+
+            <div className="grid grid-cols-3 gap-3">
               <SlimInput name="city" required={false} />
               <SlimInput name="state" required={false} />
               <SlimInput
                 name="zip"
                 required={false}
-                onChange={(e) => {
+                onChange={(e: any) => {
                   const value = e.target.value;
                   if (value && !/^\d*$/.test(value)) {
                     showError({
@@ -405,14 +469,15 @@ export default function AddNewEmployee({
                 }}
               />
             </div>
-            <div className="flex items-center justify-between gap-2">
+
+            <div className="grid grid-cols-2 gap-4">
               <SlimInput name="companyName" defaultValue={companyName?.name} />
               <SlimInput
                 name="commission"
                 label="Commission %"
                 type="number"
                 required={false}
-                onChange={(e) => {
+                onChange={(e: any) => {
                   const value = e.target.value;
                   if (value && !/^(\d*\.?\d+|\d+\.?\d*)$/.test(value)) {
                     showError({
@@ -425,7 +490,8 @@ export default function AddNewEmployee({
                 }}
               />
             </div>
-            <div className="flex items-center justify-between gap-x-4">
+
+            <div className="grid grid-cols-2 gap-4 items-end">
               <SelectEmployeeType
                 required
                 employeeTypeOpen={employeeTypeOpen}
@@ -443,26 +509,39 @@ export default function AddNewEmployee({
 
             {/* Salary Management Section */}
             <SlimSalaryInput
-              onSalaryChange={(data) => setSalaryData(data)}
+              onSalaryChange={(data: any) => setSalaryData(data)}
               salaryTypeOpen={salaryTypeOpen}
               setSalaryTypeOpen={setSalaryTypeOpen}
             />
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="px-4">
             <DialogClose
-              className="rounded-lg border-2 border-slate-400 p-2"
+              className="
+                rounded-xl px-5 py-2.5 text-sm font-medium text-slate-500 
+                hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
+                transition-colors border
+              "
               onClick={() => {
                 clearError();
+                handleClose();
               }}
             >
               Cancel
             </DialogClose>
             <button
-              className="rounded-lg border bg-[#6571FF] px-5 py-2 text-white"
+              className="
+                rounded-xl px-6 py-2.5 text-sm font-medium text-white
+                bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+                shadow-lg shadow-indigo-500/30
+                hover:shadow-xl hover:shadow-indigo-500/40
+                hover:-translate-y-0.5 hover:scale-[1.02]
+                active:translate-y-0 active:scale-100
+                transition-all duration-200
+              "
               onClick={handleSubmit}
             >
-              Add
+              Save Employee
             </button>
           </DialogFooter>
         </DialogContent>

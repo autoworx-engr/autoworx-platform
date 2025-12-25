@@ -31,7 +31,7 @@ const DashboardResourcePage = () => {
         description="Explore the various resources available for managing your dashboard. From communications to task management, find all the tools you need to optimize your workflow."
         setFilter={setFilter}
       />
-      <div className="mt-4">
+      <div className="mt-4 space-y-5">
         {resourcesData
           .filter((resource) =>
             resource.title.toLowerCase().includes(filter.search.toLowerCase())

@@ -12,27 +12,45 @@ export const createStripePaymentLink = async ({
   invoiceId,
   amount,
   payType,
+  statementId,
 }: {
   companyId: number;
-  invoiceId: string;
+  invoiceId?: string;
+  statementId?: string;
   amount: string;
-  payType: "payment" | "deposit";
+  payType: "payment" | "deposit" | "statement";
 }) => {
   try {
+    if (!invoiceId && !statementId) {
+      throw new Error("Invoice not found");
+    }
     const company = await db.company.findFirst({
       where: {
         id: companyId,
       },
     });
-    const invoice = await db.invoice.findFirst({
-      where: {
-        id: invoiceId,
-      },
-    });
+    const invoice = invoiceId
+      ? await db.invoice.findFirst({
+          where: {
+            id: invoiceId,
+          },
+        })
+      : null;
+    // if (!invoice) {
+    //   throw new Error("Invoice not found");
+    // }
 
-    if (!invoice) {
-      throw new Error("Invoice not found");
-    }
+    const statement = statementId
+      ? await db.fleetStatement.findFirst({
+          where: {
+            id: statementId,
+          },
+        })
+      : null;
+
+    // if (!statement) {
+    //   throw new Error("Statement not found");
+    // }
 
     // Only validate amount against due amount for payments, not deposits
     if (
@@ -51,7 +69,9 @@ export const createStripePaymentLink = async ({
       throw new Error("No stripe account found");
     }
 
-    const productName = `INVOICE-${invoiceId}`;
+    const productName = invoiceId
+      ? `INVOICE-${invoiceId}`
+      : `STATEMENT-${statementId}`;
 
     const session = await stripe.checkout.sessions.create(
       {
@@ -64,23 +84,30 @@ export const createStripePaymentLink = async ({
               product_data: {
                 name: productName,
               },
-              unit_amount: Number(amount) * 100, // Amount in cents
+              unit_amount: Math.round(Number(amount) * 100),
             },
             quantity: 1,
           },
         ],
         payment_intent_data: {
           metadata: {
-            paymentData: JSON.stringify({
-              companyId,
-              invoiceId,
-              amount,
-              payType,
-            }),
+            paymentData: invoiceId
+              ? JSON.stringify({
+                  companyId,
+                  invoiceId,
+                  amount,
+                  payType,
+                })
+              : JSON.stringify({
+                  companyId,
+                  statementId,
+                  amount,
+                  payType: "statement",
+                }),
           },
         },
-        success_url: `${process.env.NEXT_PUBLIC_APP_URL}/public-invoice/${invoiceId}?success=true&type=${payType}`,
-        cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/public-invoice/${invoiceId}`,
+        success_url: `${process.env.NEXT_PUBLIC_APP_URL}/public-invoice/${invoiceId ?? statementId}?success=true&type=${payType}${statementId ? "&fleet=true" : ""}`,
+        cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/public-invoice/${invoiceId ?? statementId}${statementId ? "?fleet=true" : ""}`,
       },
       {
         stripeAccount: company.stripeAccountId,

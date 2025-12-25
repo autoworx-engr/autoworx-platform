@@ -14,6 +14,31 @@ import { errorToast } from "@/lib/toast";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import Decimal from "decimal.js";
 
+export type EstimateMaterial = {
+  id: number;
+  name: string;
+
+  // money / numbers
+  discount: Decimal | null;
+  quantity: Decimal | null;
+  cost: Decimal | null;
+  sell: Decimal | null;
+
+  // relationships
+  companyId: number;
+  invoiceId: string | null;
+  invoiceTemplateId: string | null;
+  invoiceItemId: number | null;
+  productId: number | null;
+  vendorId: number | null;
+  categoryId: number | null;
+
+  // metadata
+  notes: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
 export default function MaterialCreate() {
   const { categories } = useListsStore();
   const { vendors } = useListsStore();
@@ -202,7 +227,7 @@ export default function MaterialCreate() {
                   ];
                 } else {
                   console.log("inside else");
-                  materials = materials.map((material, i) => {
+                  materials = materials.map((material: any, i) => {
                     if (i === materialIndex) {
                       return {
                         id,
@@ -294,7 +319,7 @@ export default function MaterialCreate() {
                 },
               ];
             } else {
-              materials = materials.map((material, i) => {
+              materials = materials.map((material: any, i: number) => {
                 if (i === materialIndex) {
                   return {
                     id: 30003030,

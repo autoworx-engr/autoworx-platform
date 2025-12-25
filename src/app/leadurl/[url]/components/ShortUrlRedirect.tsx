@@ -1,7 +1,7 @@
 "use client";
 
+import CarLoading from "@/components/common/CarLoading";
 import { useLeadLinkStore } from "@/stores/useLeadLinkStore";
-import { Spin } from "antd";
 import { useParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
 
@@ -44,7 +44,7 @@ const ShortUrlRedirect = () => {
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <Spin />
+        <CarLoading />
       </div>
     );
   }
@@ -87,7 +87,7 @@ const ShortUrlRedirect = () => {
 
   return (
     <div className="flex min-h-screen items-center justify-center">
-      <Spin />
+      <CarLoading />
     </div>
   );
 };

@@ -1,12 +1,15 @@
 "use client";
 import { errorToast } from "@/lib/toast";
+import {
+  clientListStore,
+  useClientCommunicationStore,
+} from "@/stores/client-store";
+import { MailgunEmail, MailgunEmailAttachment } from "@prisma/client";
+import { SendHorizontal } from "lucide-react";
 import Image from "next/image";
 import React, { useRef, useState } from "react";
-import { MailgunEmail, MailgunEmailAttachment } from "@prisma/client";
 import AttachmentInput from "../AttachmentInput";
-import { clientListStore } from "@/stores/client-store";
-import { useClientCommunicationStore } from "@/stores/client-store";
-import { SendHorizontal } from "lucide-react";
+import SmartReplyBar from "../sms/SmartReply";
 
 // Helper function to format attachment message
 const formatAttachmentMessage = (files: File[]) => {
@@ -30,12 +33,17 @@ const formatAttachmentMessage = (files: File[]) => {
 
 export default function SendMail({
   clientId,
+  companyId,
   setConversations,
 }: {
   clientId: number;
+  companyId: number;
   setConversations: React.Dispatch<
     React.SetStateAction<
-      (MailgunEmail & { attachments: MailgunEmailAttachment[] })[] | undefined
+      (MailgunEmail & { attachments: MailgunEmailAttachment[], user?: {
+          firstName: string;
+          lastName: string | null;
+        } | null; })[] | undefined
     >
   >;
 }) {
@@ -48,6 +56,14 @@ export default function SendMail({
   const [files, setFiles] = useState<File[]>([]);
 
   const fileRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const adjustTextareaHeight = (ta?: HTMLTextAreaElement | null) => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  };
 
   const handleSendMessage = async (
     e:
@@ -133,7 +149,15 @@ export default function SendMail({
         onAllRemove={() => setFiles([])}
         onRemoveAttachment={handleRemoveAttachment}
       />
-
+      {/* 👇 AI Smart Replies */}
+      <div className="bg-[#F3F4F6] px-2 pt-2">
+        <SmartReplyBar
+          clientId={clientId}
+          companyId={companyId}
+          draft={messageInput} // <-- pass the textarea value here
+          onPick={(text) => setMessageInput(text)} // or append if you prefer
+        />
+      </div>
       <form
         className="flex items-center gap-2 rounded-b-md bg-zinc-100 px-2 py-1 dark:bg-zinc-800/60"
         onSubmit={(event) => {
@@ -179,6 +203,7 @@ export default function SendMail({
         {/* input area */}
         <div className="flex w-full items-center gap-2 rounded-md bg-white ring-1 ring-zinc-200 focus-within:ring-emerald-500 dark:bg-zinc-900 dark:ring-white/10">
           <textarea
+            ref={textareaRef}
             placeholder="Send message…"
             className="max-h-28 min-h-10 w-full resize-none rounded-md border-none bg-transparent px-3 py-2 text-[15px] leading-5 text-zinc-800 outline-none placeholder:text-zinc-400 focus:outline-none dark:text-zinc-100 dark:placeholder:text-zinc-500"
             value={messageInput}
@@ -186,8 +211,15 @@ export default function SendMail({
               WebkitAppearance: "none",
               WebkitTextSizeAdjust: "100%",
               touchAction: "manipulation",
+              height: "auto",
             }}
-            onChange={(e) => setMessageInput(e.target.value)}
+            onChange={(e) => {
+              setMessageInput(e.target.value);
+              adjustTextareaHeight(e.target);
+            }}
+            onInput={(e: React.FormEvent<HTMLTextAreaElement>) =>
+              adjustTextareaHeight(e.currentTarget)
+            }
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();

@@ -38,7 +38,7 @@ import {
   Vehicle,
 } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
-import { Popconfirm, Spin, Tooltip } from "antd";
+import { Popconfirm, Tooltip } from "antd";
 import moment from "moment";
 import dynamic from "next/dynamic";
 import Image from "next/image";
@@ -52,6 +52,9 @@ import { InvoiceItems } from "./InvoiceItems";
 import { StripePay } from "./StripePay";
 import { Files, Mail, MessageCircleMore, SquarePen, X } from "lucide-react";
 import SignatureCanvas from "react-signature-canvas";
+import { uploadSignature } from "@/actions/estimate/invoice/uploadSignature";
+import { getFileFromCanvas } from "@/utils/getFileFromCanvas";
+import CarLoading from "../common/CarLoading";
 
 const DownloadPDF = dynamic(() => import("./DownloadInvoice"), {
   ssr: false,
@@ -99,6 +102,7 @@ export default function InvoiceModalBody({
   const sigCanvas = useRef<any>(null);
   const [showAuthorizedName, setShowAuthorizedName] = useState(false);
   const [authorizedName, setAuthorizedName] = useState("");
+  const [signImage, setSignImage] = useState(null);
   const [authorizedNameInput, setAuthorizedNameInput] = useState("");
   const [sigImageURL, setSigImageURL] = useState(null);
   const [showSignaturePad, setShowSignaturePad] = useState(false);
@@ -118,6 +122,11 @@ export default function InvoiceModalBody({
   const [isPrinting, setIsPrinting] = useState(false);
   const [refundAmount, setRefundAmount] = useState<number>(0);
 
+  // Detect if we're coming from an intercepted route
+  const fromInterceptedRoute =
+    params.get("fromRoute") === "invoice" ||
+    params.get("fromRoute") === "public-invoice";
+
   useEffect(() => {
     if (isFetched && !isLoading && data) {
       setInvoice(data.invoice);
@@ -135,6 +144,9 @@ export default function InvoiceModalBody({
       if (data.invoice?.authorizedName) {
         setAuthorizedName(data.invoice.authorizedName);
         setAuthorizedNameInput(data.invoice.authorizedName);
+      }
+      if (data.invoice?.signatureImage) {
+        setSignImage(data.invoice?.signatureImage);
       }
     }
   }, [isLoading, data, isFetched]);
@@ -183,6 +195,22 @@ export default function InvoiceModalBody({
     }
   }, [isStripe]);
 
+  // Track invoice view for public users
+  useEffect(() => {
+    if (isPublic && invoiceId && isFetched && !isLoading) {
+      // Call the track-view endpoint
+      fetch("/api/invoice/track-view", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ invoiceId }),
+      }).catch((error) => {
+        console.error("Failed to track invoice view:", error);
+      });
+    }
+  }, [isPublic, invoiceId, isFetched, isLoading]);
+
   if (isLoading) {
     return (
       <DialogPortal>
@@ -190,7 +218,7 @@ export default function InvoiceModalBody({
         <DialogContentBlank className="fixed left-[50%] top-[50%] z-50 flex h-full w-full translate-x-[-50%] translate-y-[-50%] flex-col justify-center gap-1 overflow-y-auto py-4 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] md:max-h-full md:max-w-[98%] md:flex-row md:gap-4">
           <div className="flex h-full w-full items-center justify-center">
             <div className="text-center">
-              <Spin percent="auto" size="large" />
+              <CarLoading />
             </div>
           </div>
         </DialogContentBlank>
@@ -256,10 +284,69 @@ export default function InvoiceModalBody({
       successToast("Link copied to clipboard");
     }
   };
+
+  const handleSaveSignature = async (invoiceId: string) => {
+    if (!sigCanvas.current) return;
+
+    try {
+      const file = getFileFromCanvas(
+        sigCanvas.current.getCanvas(),
+        `signature-${invoiceId}.png`
+      );
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch(`/api/upload`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        console.error("Failed to upload photos");
+        throw new Error("Failed to upload photos");
+      }
+
+      const json = await res.json();
+      const data = json.data;
+
+      // const response = await uploadSignature(invoiceId, data[0]);
+
+      const response = await authorizeInvoice(
+        invoice.id,
+        authorizedNameInput,
+        data[0],
+        invoice.type
+      );
+
+      if (response?.type === "success") {
+        successToast("Invoice Authorized");
+        await authorizedLeadsConvertion(invoice.id);
+      } else {
+        errorToast("Signature upload failed");
+        console.error("Signature upload failed:");
+      }
+    } catch (err) {
+      errorToast("Signature upload failed");
+      console.error("Signature upload failed:", err);
+    }
+  };
+
   return (
     <DialogPortal>
       <DialogOverlay />
-      <DialogContentBlank className="fixed left-[50%] top-[50%] z-50 flex h-full w-full translate-x-[-50%] translate-y-[-50%] flex-col justify-center gap-1 overflow-y-auto py-4 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] md:max-h-full md:max-w-[98%] md:flex-row md:gap-4">
+      <DialogContentBlank
+        onPointerDownOutside={(e) => {
+          // Prevent closing when clicking on elements inside the dialog
+          const target = e.target as HTMLElement;
+          if (
+            target.closest('[class*="lightbox"], .yarl__container, .yarl__')
+          ) {
+            e.preventDefault();
+          }
+        }}
+        className="fixed left-[50%] top-[50%] z-50 flex h-full w-full translate-x-[-50%] translate-y-[-50%] flex-col justify-center gap-1 overflow-y-auto py-4 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] md:max-h-full md:max-w-[98%] md:flex-row md:gap-4"
+      >
         <div
           ref={printComponentRef}
           className="#shadow-lg no-visible-scrollbar relative grid h-full w-full shrink grow-0 flex-col items-center justify-center gap-4 overflow-y-auto rounded-md border bg-background p-6 md:h-[90vh] md:w-[740px] md:flex-row"
@@ -272,17 +359,14 @@ export default function InvoiceModalBody({
                   className="flex items-center justify-center gap-1 rounded bg-[#6571FF] px-2 py-1 text-sm text-white md:px-4 md:text-base"
                   href={`/dashboard/estimate/edit/${invoice.id}?clientId=${invoice.clientId}`}
                 >
-                  <SquarePen className="h-3 w-3 md:h-4 md:w-4" />
+                  <SquarePen className="h-4 w-4 md:h-4 md:w-4" />
                   <span className="hidden md:inline">Edit</span>
                 </Link>
                 <Link
                   href={`/dashboard/communication/client/${invoice.clientId}?chat=true`}
                   className="flex items-center justify-center gap-1 rounded bg-[#6571FF] px-2 py-1 text-sm text-white md:px-4 md:text-base"
                 >
-                  <MessageCircleMore
-                    size={22}
-                    className="text-sm text-white md:text-xl"
-                  />
+                  <MessageCircleMore className="size-4 md:size-[22px] text-white md:text-xl" />
                   <span className="invisible absolute bottom-full left-14 mb-1 w-max -translate-x-1/2 transform whitespace-nowrap rounded-md border-2 border-white bg-[#66738C] px-2 py-1 text-xs text-white shadow-lg transition-opacity group-hover:visible">
                     Communications
                   </span>
@@ -315,7 +399,7 @@ export default function InvoiceModalBody({
                   <span className="hidden md:inline">Print</span>
                 </button>
 
-                <button className="flex items-center justify-center gap-1 rounded bg-[#6571FF] px-2 py-0.5 text-xs text-white md:px-4 md:py-1 md:text-base">
+                <button className="flex items-center justify-center gap-1 rounded bg-[#6571FF] px-2 py-1 text-xs text-white md:px-4 md:py-1 md:text-base">
                   {client && (
                     <DownloadPDF
                       id={invoice.id}
@@ -324,6 +408,7 @@ export default function InvoiceModalBody({
                       vehicle={vehicle}
                       companyDetails={company}
                       authorizedName={authorizedName}
+                      signImageUrl={signImage ?? undefined}
                       isStripe={
                         (stripeAccountData?.success &&
                           stripeAccountData?.enabled &&
@@ -335,15 +420,17 @@ export default function InvoiceModalBody({
                   )}
                 </button>
 
-                <div className="flex items-center gap-x-2 rounded-md border border-gray-300 px-2 py-1">
-                  <span className="mr-1 font-semibold">Share via</span>
+                <div className="flex items-center gap-x-2 rounded-md border border-gray-300 px-2 py-0.5">
+                  <span className="mr-1 font-semibold text-sm md:text-base">
+                    Share via
+                  </span>
                   <Popconfirm
                     title="Send invoice via Email now?"
                     onConfirm={handleEmail}
                     okText="Yes"
                     cancelText="No"
                   >
-                    <button className="flex items-center justify-center gap-1 rounded bg-[#6571FF] px-2 py-1 text-sm text-white md:px-4 md:text-base">
+                    <button className="flex items-center justify-center gap-1 rounded bg-[#6571FF] px-1 py-0.5 text-sm text-white md:px-4 md:text-base">
                       <Mail className="h-4 w-4 md:h-4 md:w-4" />
                       <span className="hidden md:inline">Email</span>
                     </button>
@@ -580,13 +667,19 @@ export default function InvoiceModalBody({
                     </h2>
                     <div className="mt-2 flex w-full items-center justify-center">
                       <div className="grid w-full grid-cols-3 gap-4 px-2 sm:px-4 [@media(max-width:374px)]:grid-cols-2">
-                        {invoice.photos.map((x) => {
+                        {invoice.photos.map((x, index) => {
+                          const allImageUrls = invoice.photos.map(
+                            (photo) => photo.photo
+                          );
+                          const urlsParam = encodeURIComponent(
+                            JSON.stringify(allImageUrls)
+                          );
                           return (
                             <Link
                               href={
                                 isPublic
-                                  ? `/public-invoice/${invoiceId}/photo?url=${x.photo}`
-                                  : `/dashboard/estimate/photo?url=${x.photo}`
+                                  ? `/public-invoice/${invoiceId}/photo?urls=${urlsParam}&index=${index}`
+                                  : `/dashboard/estimate/photo?urls=${urlsParam}&index=${index}`
                               }
                               key={x.id}
                               className="relative mx-auto aspect-square w-full max-w-[120px]"
@@ -728,41 +821,44 @@ export default function InvoiceModalBody({
                     />
                     <button
                       className="absolute -right-[10px] -top-4 bg-red-700 rounded-full print:hidden"
-                      onClick={() => setShowAuthorizedName(false)}
+                      onClick={() => {
+                        setShowAuthorizedName(false);
+                        setShowSignaturePad(false);
+                      }}
                     >
                       <X size={20} className="text-white p-1" />
                     </button>
                   </div>
                   <button
-                    onClick={async () => {
-                      const res = await authorizeInvoice(
-                        invoice.id,
-                        authorizedNameInput,
-                        invoice.type
-                      );
-                      if (res?.type === "success") {
-                        successToast("Invoice Authorized");
-                        await authorizedLeadsConvertion(invoice.id);
-                        setAuthorizedName(authorizedNameInput);
+                    // onClick={async () => {
+                    //   const res = await authorizeInvoice(
+                    //     invoice.id,
+                    //     authorizedNameInput,
+                    //     invoice.type
+                    //   );
+                    //   if (res?.type === "success") {
+                    //     successToast("Invoice Authorized");
+                    //     await authorizedLeadsConvertion(invoice.id);
+                    //     setAuthorizedName(authorizedNameInput);
 
-                        // Update the invoice object in state to reflect the change
-                        setInvoice((prev) => {
-                          if (!prev) return prev;
-                          return {
-                            ...prev,
-                            authorizedName: authorizedNameInput,
-                          };
-                        });
-                      }
-                      setShowAuthorizedName(false);
-                    }}
+                    //     // Update the invoice object in state to reflect the change
+                    //     setInvoice((prev) => {
+                    //       if (!prev) return prev;
+                    //       return {
+                    //         ...prev,
+                    //         authorizedName: authorizedNameInput,
+                    //       };
+                    //     });
+                    //   }
+                    //   setShowAuthorizedName(false);
+                    // }}
                     className="text-md rounded bg-green-500 px-1.5 pb-1 text-center text-white print:hidden"
                   >
                     Authorize
                   </button>
                 </div>
               )}
-              {authorizedName && !showAuthorizedName && (
+              {authorizedName && (
                 <div className="flex flex-col items-center gap-y-2">
                   <span className="font-semibold italic">{authorizedName}</span>
 
@@ -805,32 +901,24 @@ export default function InvoiceModalBody({
                   </div>
                 </div>
               )}
-              {!showAuthorizedName && !authorizedName && (
-                <button
-                  onClick={() => {
-                    setShowAuthorizedName(true);
-                  }}
-                  className="rounded bg-[#6571FF] px-8 pb-1 text-white print:hidden"
-                >
-                  Authorize
-                </button>
-              )}
+              {!showAuthorizedName &&
+                !sigImageURL &&
+                !invoice?.signatureImage && (
+                  <button
+                    onClick={() => {
+                      // setShowAuthorizedName(true);
+                      setShowSignaturePad(true);
+                    }}
+                    className="rounded bg-[#6571FF] px-8 pb-1 text-white print:hidden"
+                  >
+                    {invoice?.wasAuthorized ? "Re-Authorize" : "Authorize"}
+                  </button>
+                )}
             </div>
           </div>
-          {!showSignaturePad && !sigImageURL && (
-            <div className="flex justify-end">
-              <button
-                onClick={() => {
-                  setShowSignaturePad(true);
-                }}
-                className="rounded bg-[#6571FF] px-8 pb-1 text-white print:hidden"
-              >
-                Signature
-              </button>
-            </div>
-          )}
+
           <div className="flex justify-end items-center">
-            {showSignaturePad && !sigImageURL && (
+            {showSignaturePad && !sigImageURL && !invoice?.signatureImage && (
               <div className="flex justify-end items-center gap-4">
                 <SignatureCanvas
                   ref={sigCanvas}
@@ -846,10 +934,19 @@ export default function InvoiceModalBody({
                 <div className="flex flex-col gap-3">
                   <button
                     onClick={() => {
+                      if (!sigCanvas.current || sigCanvas.current.isEmpty()) {
+                        errorToast(
+                          "Please provide your signature before saving."
+                        );
+                        return;
+                      }
                       const dataURL = sigCanvas.current
                         .getCanvas()
                         .toDataURL("image/png");
                       setSigImageURL(dataURL);
+                      handleSaveSignature(invoice.id);
+                      setShowAuthorizedName(false);
+                      setShowSignaturePad(false);
                     }}
                     className="px-4 py-2 bg-blue-600 text-white rounded-md"
                   >
@@ -858,6 +955,7 @@ export default function InvoiceModalBody({
                   <button
                     onClick={() => {
                       sigCanvas.current.clear();
+                      setShowSignaturePad(false);
                       setSigImageURL(null);
                     }}
                     className="px-4 py-2 bg-gray-500 text-white rounded-md"
@@ -877,7 +975,21 @@ export default function InvoiceModalBody({
                   className="border border-gray-300 rounded-md"
                 />
                 <span className="rounded-sm border border-[#6571ff] px-4 py-1 text-sm text-[#6571ff]">
-                  Signatured
+                  Authorized
+                </span>
+              </div>
+            )}
+            {invoice?.signatureImage && (
+              <div className="mt-2 text-center flex flex-col items-end gap-2">
+                <Image
+                  src={invoice?.signatureImage}
+                  width={200}
+                  height={50}
+                  alt="signature"
+                  className="border border-gray-300 rounded-md"
+                />
+                <span className="rounded-sm border border-[#6571ff] px-4 py-1 text-sm text-[#6571ff]">
+                  Authorized
                 </span>
               </div>
             )}
@@ -935,13 +1047,19 @@ export default function InvoiceModalBody({
                   Attachments
                 </h2>
                 <div className="flex grid-cols-1 gap-4 overflow-x-auto md:grid">
-                  {invoice.photos.map((x) => {
+                  {invoice.photos.map((x, index) => {
+                    const allImageUrls = invoice.photos.map(
+                      (photo) => photo.photo
+                    );
+                    const urlsParam = encodeURIComponent(
+                      JSON.stringify(allImageUrls)
+                    );
                     return (
                       <Link
                         href={
                           isPublic
-                            ? `/public-invoice/${invoiceId}/photo?url=${x.photo}`
-                            : `/dashboard/estimate/photo?url=${x.photo}`
+                            ? `/public-invoice/${invoiceId}/photo?urls=${urlsParam}&index=${index}`
+                            : `/dashboard/estimate/photo?urls=${urlsParam}&index=${index}`
                         }
                         key={x.id}
                         className="relative aspect-square size-36 md:h-full md:w-full"

@@ -1,17 +1,22 @@
 "use client";
+
 import {
   getWorkOrderData,
   IWorkOrderData,
 } from "@/actions/estimate/invoice/getWorkOrderData";
 import {
+  Dialog,
+  DialogTrigger,
   DialogContent,
   DialogOverlay,
   DialogPortal,
 } from "@/components/Dialog";
+import { ImagesDialogContent } from "@/components/ImagesDialogContent";
 import { useServerGet } from "@/hooks/useServerGet";
 import { cn } from "@/lib/cn";
 import moment from "moment";
 import Image from "next/image";
+import { Image as LucideImage } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import DueDate from "./DueDateInput";
@@ -19,7 +24,18 @@ import { InvoiceItems } from "./InvoiceItems";
 import SaveWorkOrderBtn from "./SaveWorkOrderBtn";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
+import { time } from "console";
+import { TechnicianImage } from "@prisma/client";
+import { useIsAdminOrManager } from "@/utils/useIsAdminOrManager";
 
+export interface TechnicianPhoto {
+  id: number | string;
+  photo: string;
+  technicianName: string;
+  timestamp: string;
+  invoiceId?: string;
+  technicianId?: number;
+}
 export default function WorkOrderModalBody({
   invoiceId,
   setOpen,
@@ -30,14 +46,8 @@ export default function WorkOrderModalBody({
   onWorkOrderCreated?: () => void;
 }) {
   const [dueDate, setDueDate] = useState<string | null>("");
-  // const [refreshKey, setRefreshKey] = useState(0);
-
-  // const { data, error, loading } = useServerGet(
-  //   getWorkOrderData,
-  //   invoiceId,
-  //   refreshKey
-  // );
-
+  const isAdminOrManager = useIsAdminOrManager();
+   const [openService, setOpenService] = useState<number | null>(null);
   const { data, error, isLoading, isFetched } = useQuery({
     queryKey: queryKeys.getWorkOrderDataKey(invoiceId),
     queryFn: () => getWorkOrderData(invoiceId),
@@ -71,11 +81,8 @@ export default function WorkOrderModalBody({
     return null;
   }
 
-  if (!data) {
-    return null;
-  }
+  if (!data) return null;
 
-  // Now it's safe to destructure after we've confirmed data exists
   const {
     invoice,
     company,
@@ -84,8 +91,38 @@ export default function WorkOrderModalBody({
     techniciansPerItem,
   } = data as IWorkOrderData;
 
-  // console.log("invoiceTechnicians", invoiceTechnicians);
 
+
+  const getTechnicianPhotos = (): TechnicianPhoto[] => {
+    const finalPhotosArray: TechnicianPhoto[] = [];
+
+    const allTechnicians = techniciansPerItem
+      ? Object.values(techniciansPerItem).flat()
+      : [];
+
+    allTechnicians.forEach((t) => {
+      const technicianName = t.name || "Unknown Technician";
+
+      if (t.images && t.images.length > 0) {
+        t.images.forEach((image) => {
+          finalPhotosArray.push({
+            id: image.id,
+            photo: image.fileUrl,
+            technicianName: technicianName,
+            invoiceId: invoice?.id,
+            technicianId: image.technicianId,
+            timestamp: image.uploadedAt
+              ? new Date(image.uploadedAt).toISOString()
+              : new Date().toISOString(),
+          });
+        });
+      }
+    });
+
+    return finalPhotosArray;
+  };
+
+  const technicianPhotos = getTechnicianPhotos();
   return (
     <DialogContent className="h-full min-w-fit overflow-y-auto sm:max-w-[740px] lg:h-fit">
       <div className="mt-4 flex items-center justify-between gap-1 lg:mt-4">
@@ -107,6 +144,7 @@ export default function WorkOrderModalBody({
             "Logo"
           )}
         </div>
+
         <div className="text-right text-xs">
           <h2 className="font-bold">Contact Information:</h2>
           <p>
@@ -119,7 +157,6 @@ export default function WorkOrderModalBody({
             {company?.zip && `${company.zip}`}
           </p>
           <p>{company?.phone}</p>
-          <p>{company?.email}</p>
           <div className="flex justify-end text-right">
             {writePermission ? (
               <DueDate dueDate={dueDate} setDueDate={setDueDate} />
@@ -136,9 +173,6 @@ export default function WorkOrderModalBody({
 
       <hr />
 
-      {/**
-       * Information
-       */}
       <div className="flex">
         <div className="grid grow grid-cols-3 gap-2 text-xs">
           <h1 className="col-span-full text-3xl font-bold uppercase text-slate-500">
@@ -160,11 +194,6 @@ export default function WorkOrderModalBody({
               {invoice?.vehicle?.other}
               {invoice?.vehicle?.type}
             </p>
-            {/* <p>{invoice?.vehicle?.year}</p>
-            <p>{invoice?.vehicle?.make}</p>
-            <p>{invoice?.vehicle?.model}</p>
-            <p>{invoice?.vehicle?.submodel}</p>
-            <p>{invoice?.vehicle?.type}</p> */}
           </div>
           <div>
             <h2 className="font-bold text-slate-500">Estimate Details:</h2>
@@ -184,14 +213,40 @@ export default function WorkOrderModalBody({
         </div>
       </div>
 
-      <div className="space-y-2">
+      <div className="relative space-y-2">
         <InvoiceItems
           items={JSON.parse(JSON.stringify(invoice?.invoiceItems ?? ""))}
           invoiceTechnicians={invoiceTechnicians}
           invoiceStatus={invoice?.column?.title}
           writePermission={writePermission}
           techniciansPerItem={techniciansPerItem}
+          openService={openService}
+          setOpenService={setOpenService}
         />
+
+        {/* see images dialog trigger (uses its own internal state) */}
+        {isAdminOrManager && (
+          <div className="absolute right-5 md:right-16 top-0">
+            <Dialog>
+              <DialogTrigger asChild>
+                <button className="md:bg-[#6571ff] md:text-white px-5 py-0.5 rounded-md">
+                  <span className="lg:hidden">
+                    <LucideImage className="h-5 w-5 text-[#6571ff]" />
+                  </span>
+                  <span className="hidden lg:inline">Attachments</span>
+                </button>
+              </DialogTrigger>
+
+              <DialogContent className="max-w-3xl  overflow-y-auto h-full lg:h-fit">
+                <ImagesDialogContent
+                  technicianPhotos={technicianPhotos}
+                  clientId={invoice?.client?.id}
+                  invoiceId={invoice?.id}
+                />
+              </DialogContent>
+            </Dialog>
+          </div>
+        )}
       </div>
 
       {writePermission && (

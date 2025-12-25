@@ -5,7 +5,6 @@ import { Box, Paper, Typography, Switch } from "@mui/material";
 import MultiSelect from "./MultiSelect";
 import { SlimInput } from "@/components/SlimInput";
 import ActiveTemplate from "./ActiveTemplate";
-import TemplateVariable from "./TemplateVariable";
 import { usePipelineStagesStore } from "@/stores/pipelineStagesStore";
 import { timeDelays } from "./constants";
 import { errorToast } from "@/lib/toast";
@@ -23,6 +22,12 @@ import {
 import CustomRadioGroup from "./CustomRadioGroup";
 import { Company, TwilioCredentials, InfobipConfig } from "@prisma/client";
 import { useCharacterLimit } from "@/hooks/useCharecterLimit";
+import CarLoading from "@/components/common/CarLoading";
+import { AppointmentTemplateVariable } from "@/components/Lists/NewTemplate";
+import TooltipLabel from "./ToolTipLabel";
+import { ArrowRight } from "lucide-react";
+import { TipBox } from "./TagautomationHelper";
+import { TEMPLATE_VARIABLES } from "./TemplateVariable";
 
 type RuleFormProps = {
   mode: "create" | "edit" | undefined;
@@ -160,6 +165,10 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
   const handleChange = (field: keyof Rule, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
 
+    if (field === "communicationType") {
+      if (value === "SMS") setActiveTemplate("SMS");
+      if (value === "EMAIL") setActiveTemplate("EMAIL");
+    }
     if (error[field]) {
       setError((prev) => {
         const newErrors = { ...prev };
@@ -214,7 +223,7 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
 
     if (!formData.title || !formData.title.trim())
       newError.title = "Title is required.";
-    if (!Array.isArray(formData.stages) || formData.stages.length === 0) {
+    if (!Array.isArray(formData.stages) || formData?.stages?.length === 0) {
       newError.stages = "At least one stage is required.";
     }
     if (formData.timeDelay === null)
@@ -355,7 +364,7 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
     <>
       {isLoading || isFetching || stagesLoading ? (
         <div className="flex h-[800px] w-full animate-pulse items-center justify-center rounded-md bg-gray-200 p-4 shadow-sm md:p-6">
-          <Spin />
+          <CarLoading />
         </div>
       ) : (
         <div>
@@ -374,14 +383,35 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
 
                 {/* Stage */}
                 <div>
+                  <TooltipLabel
+                    label="Stage"
+                    tooltipText={
+                      <div className="space-y-1">
+                        <p className="font-semibold mb-1">
+                          Select source stages:
+                        </p>
+                        <p>
+                          Choose one or multiple stages where leads will trigger
+                          this automation.
+                        </p>
+                        <p className="mt-2">
+                          <strong>Example:</strong> Select "Lead Lost" and "New
+                          Leads" to monitor leads in both stages.
+                        </p>
+                      </div>
+                    }
+                    required
+                    icon="question"
+                  />
                   <MultiSelect
                     options={stages}
                     value={formData.stages}
                     onChange={(value) => handleChange("stages", value)}
-                    label="Stage"
+                    // label="Stage"
                     placeholder="Select options"
                     required
                     error={error.stages}
+                    labelClassName="hidden"
                   />
                 </div>
 
@@ -397,29 +427,78 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
                 />
 
                 {/* Action */}
-                <Selector
-                  name="action"
-                  label="Action"
-                  options={actionOptions}
-                  value={formData.targetColumnId!}
-                  onChange={(value) => handleChange("targetColumnId", value)}
-                  // error={error.targetColumnId}
-                  // disabled={loading}
-                  isClear={true}
-                />
+                <div>
+                  <TooltipLabel
+                    label="Action"
+                    tooltipText={
+                      <div className="space-y-1">
+                        <p className="font-semibold mb-1">
+                          Destination column:
+                        </p>
+                        <p>
+                          Choose which column leads should move to when the
+                          condition is met.
+                        </p>
+                        <p className="mt-2">
+                          <strong>Note:</strong> Stages selected in the "Stage"
+                          field are automatically excluded to prevent loops.
+                        </p>
+                      </div>
+                    }
+                    // required
+                    icon="question"
+                  />
+                  <Selector
+                    name="action"
+                    // label="Action"
+                    options={actionOptions}
+                    value={formData.targetColumnId!}
+                    onChange={(value) => handleChange("targetColumnId", value)}
+                    // error={error.targetColumnId}
+                    // disabled={loading}
+                    isClear={true}
+                    labelClassName="hidden"
+                  />
+
+                  {formData?.stages?.length > 0 && formData.targetColumnId && (
+                    <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded flex items-center gap-2 text-xs text-green-900">
+                      <ArrowRight className="w-4 h-4 flex-shrink-0" />
+                      <span>
+                        A lead in "
+                        {formData.stages
+                          .map((id) => stages.find((s) => s.id === id)?.title)
+                          .join(", ")}{" "}
+                        {}
+                        will move to "
+                        {
+                          stages.find(
+                            (s) => s.id === Number(formData?.targetColumnId)
+                          )?.title
+                        }
+                        " when the condition is met.
+                      </span>
+                    </div>
+                  )}
+                </div>
 
                 {/* Communication Type */}
-                <CustomRadioGroup
-                  name="communicationType"
-                  label="Select Communication Type"
-                  value={formData.communicationType}
-                  onChange={handleChange}
-                  options={[
-                    { label: "SMS", value: "SMS" },
-                    { label: "Email", value: "EMAIL" },
-                    { label: "Both", value: "BOTH" },
-                  ]}
-                />
+                <div>
+                  <TooltipLabel
+                    label="Select Communication Type"
+                    tooltipText="Choose how you want to send message: SMS for quick messages, Email for detailed content, or Both for maximum reach."
+                  />
+                  <CustomRadioGroup
+                    name="communicationType"
+                    // label="Select Communication Type"
+                    value={formData.communicationType}
+                    onChange={handleChange}
+                    options={[
+                      { label: "SMS", value: "SMS" },
+                      { label: "Email", value: "EMAIL" },
+                      { label: "Both", value: "BOTH" },
+                    ]}
+                  />
+                </div>
 
                 {/* Send on Weekdays Only */}
                 <div className="mb-3 flex items-center">
@@ -531,7 +610,14 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
                   )}
 
                   {/* Template Variables */}
-                  <TemplateVariable />
+                  <AppointmentTemplateVariable
+                    VARIABLES={TEMPLATE_VARIABLES}
+                    hasBackground={true}
+                  />
+                  <TipBox
+                    message="Click any variable to copy it, then paste it into your template where you want the dynamic content to appear. For example: 'Hi <CLIENT>, your invoice is ready: <INVOICE_LINK>'"
+                    variant="info"
+                  />
                 </Box>
 
                 {/* Save & Cancel Buttons */}

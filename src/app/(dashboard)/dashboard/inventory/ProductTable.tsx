@@ -1,21 +1,15 @@
 "use client";
 
 import { deleteInventory } from "@/actions/inventory/delete";
-import { cn } from "@/lib/cn";
-import { Category, InventoryProduct, User, Vendor } from "@prisma/client";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import React, { useEffect, useState } from "react";
-import EditProduct from "./EditProduct";
 import InventoryResponsiveCard from "@/components/mobile-responsive/inventory/ResponsiveInventoryCard";
+import { cn } from "@/lib/cn";
 import { ProductCardProps } from "@/types/inventory";
-import { Pagination, Popconfirm } from "antd"; // Importing the Pagination component from Ant Design
-import { Tooltip } from "antd";
-import {
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/Tooltip";
+import { Category, InventoryProduct, User, Vendor } from "@prisma/client";
+import { Pagination, Popconfirm, Tooltip } from "antd"; // Importing the Pagination component from Ant Design
 import { X } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import EditProduct from "./EditProduct";
 
 const evenColor = "bg-background";
 const oddColor = "bg-blue-100";
@@ -95,11 +89,27 @@ export default function ProductTable({
           );
         })}
 
+        {/* Mobile Pagination */}
+        {showPagination && (
+          <div className="mt-4 flex justify-center">
+            <Pagination
+              className="custom-pagination"
+              current={currentPage}
+              pageSize={pageSize}
+              total={totalItems}
+              onChange={handlePageChange}
+              showSizeChanger
+              onShowSizeChange={handlePageChange}
+              simple
+            />
+          </div>
+        )}
+
         {/* Extra bottom padding to prevent overlap */}
         <div className="h-20 lg:hidden" />
       </div>
 
-      <div className="thin-scrollbar hidden h-[calc(70vh-78px)] overflow-auto lg:block">
+      <div className="thin-scrollbar hidden lg:block pb-4 h-[calc(70vh-78px)] overflow-auto overflow-x-clip">
         <table className="w-full">
           <thead className="bg-background">
             <tr className="h-10 border-b">
@@ -110,12 +120,12 @@ export default function ProductTable({
               <th className="px-4 text-left 2xl:px-10">Unit</th>
               {(user?.employeeType === "Admin" ||
                 user?.employeeType === "Manager") && (
-                <th className="px-4 text-left 2xl:px-10">Action</th>
-              )}
+                  <th className="px-4 text-left 2xl:px-10">Action</th>
+                )}
             </tr>
           </thead>
 
-          <tbody>
+          <tbody className="max-h-[40vh] overflow-y-auto">
             {products.map((product, index) => {
               const params = new URLSearchParams(search);
               params.set("productId", product.id.toString());
@@ -126,7 +136,7 @@ export default function ProductTable({
                     "h-full cursor-pointer rounded-md py-3",
                     index % 2 === 0 ? evenColor : oddColor,
                     currentProductId === product.id &&
-                      "border-2 border-[#6571FF]"
+                    "border-2 border-[#6571FF]"
                   )}
                   onClick={() =>
                     router.push(`${pathname}?${params.toString()}`)
@@ -239,40 +249,39 @@ export default function ProductTable({
 
                   {(user?.employeeType === "Admin" ||
                     user?.employeeType === "Manager") && (
-                    <td>
-                      <div className="flex h-12 items-center justify-start gap-3 px-4 2xl:px-10">
-                        <button className="text-2xl text-blue-600">
-                          <EditProduct productData={product} />
-                        </button>
-                        <Popconfirm
-                          title={`Are you sure you want to delete this ${viewTab === "products" ? "product" : "supply"}?`}
-                          onConfirm={async () => {
-                            await deleteInventory(product.id);
-                            router.push(
-                              `/dashboard/inventory?view=${search?.get("view")}`
-                            );
-                          }}
-                          okText="Yes"
-                          cancelText="No"
-                        >
-                          <X
-                            size={20}
-                            strokeWidth={3}
-                            className="text-red-400"
-                          />
-                        </Popconfirm>
-                      </div>
-                    </td>
-                  )}
+                      <td>
+                        <div className="flex h-12 items-center justify-start gap-3 px-4 2xl:px-10">
+                          <button className="text-2xl text-blue-600">
+                            <EditProduct productData={product} />
+                          </button>
+                          <Popconfirm
+                            title={`Are you sure you want to delete this ${viewTab === "products" ? "product" : "supply"}?`}
+                            onConfirm={async () => {
+                              await deleteInventory(product.id);
+                              router.push(
+                                `/dashboard/inventory?view=${search?.get("view")}`
+                              );
+                            }}
+                            okText="Yes"
+                            cancelText="No"
+                          >
+                            <X
+                              size={20}
+                              strokeWidth={3}
+                              className="text-red-400"
+                            />
+                          </Popconfirm>
+                        </div>
+                      </td>
+                    )}
                 </tr>
               );
             })}
           </tbody>
         </table>
       </div>
-
       {showPagination && (
-        <div className="mt-4 hidden h-10 items-center justify-end lg:flex">
+        <div className="mt-4 hidden items-center justify-end lg:flex">
           <Pagination
             className="custom-pagination"
             current={currentPage}

@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 
 export async function connectWithCompany(
   targetCompanyId: number,
-  revalidatePathName?: string | undefined,
+  revalidatePathName?: string | undefined
 ): Promise<{
   success: boolean;
   message: string;
@@ -18,8 +18,20 @@ export async function connectWithCompany(
     const existingConnection = await db.companyJoin.findFirst({
       where: {
         OR: [
-          { companyOneId: userCompanyId, companyTwoId: targetCompanyId },
-          { companyOneId: targetCompanyId, companyTwoId: userCompanyId },
+          {
+            companyOneId: userCompanyId,
+            companyTwoId: targetCompanyId,
+            companyTwo: {
+              isCollaborators: true,
+            },
+          },
+          {
+            companyOneId: targetCompanyId,
+            companyTwoId: userCompanyId,
+            companyOne: {
+              isCollaborators: true,
+            },
+          },
         ],
       },
     });
@@ -171,7 +183,7 @@ export async function toggleAddressVisibility(): Promise<{
 
 export async function setLatLong(
   latitude: number | null,
-  longitude: number | null,
+  longitude: number | null
 ): Promise<{
   success: boolean;
   message: string;
@@ -201,7 +213,7 @@ function getDistanceFromLatLonInMiles(
   lat1: number,
   lon1: number,
   lat2: number,
-  lon2: number,
+  lon2: number
 ): number {
   const R = 3958.8; // Radius of the Earth in miles
   const dLat = deg2rad(lat2 - lat1);
@@ -225,7 +237,7 @@ function deg2rad(deg: number): number {
 export async function findNearbyCompanies(
   latitude: number,
   longitude: number,
-  range: [number, number], // e.g., [minDistance, maxDistance]
+  range: [number, number] // e.g., [minDistance, maxDistance]
 ): Promise<{
   success: boolean;
   data: Company[] | [];
@@ -247,8 +259,8 @@ export async function findNearbyCompanies(
     // Extract connected company IDs
     const connectedIds = connectedCompanyIds.flatMap((join) =>
       [join.companyOneId, join.companyTwoId].filter(
-        (id) => id !== userCompanyId,
-      ),
+        (id) => id !== userCompanyId
+      )
     );
 
     // Step 2: Get all unconnected companies (excluding connected companies and your own company)
@@ -271,12 +283,12 @@ export async function findNearbyCompanies(
             latitude,
             longitude,
             company.companyLatitude,
-            company.companyLongitude,
+            company.companyLongitude
           );
           return distance <= range[1] && distance >= range[0]; // Filter based on the distance range
         }
         return false;
-      },
+      }
     );
 
     return {

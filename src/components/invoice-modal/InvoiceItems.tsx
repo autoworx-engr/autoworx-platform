@@ -75,7 +75,9 @@ export function InvoiceItems({ items, isPrinting = false }: InvoiceItemsProps) {
         </div>
         {(openService === item.id || isPrinting) && (
           <>
-            <p>{item.serviceDesc || item.service.description}</p>
+            <p className="whitespace-pre-wrap">
+              {item.serviceDesc || item.service.description}
+            </p>
             <div className="mt-2 text-[#6571FF]">
               <div>
                 {item.materials.map((material, index) => {

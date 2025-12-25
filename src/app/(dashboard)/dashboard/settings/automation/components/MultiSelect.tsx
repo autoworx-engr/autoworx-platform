@@ -11,12 +11,13 @@ type MultiSelectProps = {
   options: Option[];
   value: (string | number)[];
   onChange: (newValue: (string | number)[]) => void;
-  label: string;
+  label?: string;
   placeholder?: string;
   isSearch?: boolean;
   disabled?: boolean;
   required: boolean;
   error?: string;
+  labelClassName?: string;
 };
 
 const MultiSelect: React.FC<MultiSelectProps> = ({
@@ -29,6 +30,7 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
   disabled = false,
   isSearch = false,
   placeholder = "Select options",
+  labelClassName = "",
 }) => {
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -63,8 +65,8 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
     }
   }, [open]);
   const handleSelect = (id: string | number) => {
-    if (value.includes(id)) {
-      onChange(value.filter((v) => v !== id));
+    if (value?.includes(id)) {
+      onChange(value?.filter((v) => v !== id));
     } else {
       onChange([...value, id]);
     }
@@ -92,12 +94,12 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
   // ADDED: Filter options based on search query
   const filteredOptions = searchTerm
     ? options.filter((opt) =>
-        opt.title.toLowerCase().includes(searchTerm.toLowerCase())
+        opt.title.toLowerCase()?.includes(searchTerm.toLowerCase())
       )
     : options;
   return (
     <div className="relative" ref={wrapperRef}>
-      <div className={cn("mb-1 font-medium text-gray-500")}>
+      <div className={cn("mb-1 font-medium text-gray-500", labelClassName)}>
         {label}
         {required && <span className="text-red-500"> *</span>}
       </div>

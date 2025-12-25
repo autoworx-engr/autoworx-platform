@@ -10,8 +10,8 @@ import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { useCreateCompanyPermission } from "@/hooks/feature-permissions/useCreateCompanyPermission";
 import { useGetCompanyPermissions } from "@/hooks/feature-permissions/useGetCompanyPersmissions";
 import {
-  useUpdateCompanyPermission,
   useBulkUpdatePermissions,
+  useUpdateCompanyPermission,
 } from "@/hooks/feature-permissions/useUpdateCompanyPermission";
 import {
   PermissionCreate,
@@ -19,11 +19,15 @@ import {
   PermissionUpdate,
   StaticPermissionItem,
 } from "@/types/feature-permission";
-import getMissing, { formatPermissions } from "@/utils/formatPermission";
-import { Spin, Switch } from "antd";
+import getMissing, {
+  formatPermissions,
+  mergePermissions,
+} from "@/utils/formatPermission";
+import { Switch } from "antd";
 import { useEffect, useState } from "react";
-import { PermissionItemComponent } from "./PermissionItemComponent";
 import { MissingPermissionItemComponent } from "./MissingPermissionItemComponent";
+import { PermissionItemComponent } from "./PermissionItemComponent";
+import CarLoading from "@/components/common/CarLoading";
 
 export default function FeaturePermission({
   companyId,
@@ -125,7 +129,7 @@ export default function FeaturePermission({
       return 0;
     }
   );
-
+  // console.log("sortedFormatted", sortedFormatted);
   // Sort the missing permissions based on staticPermissions order
   const finalMissingPermissions = getMissing(
     staticPermissions,
@@ -139,9 +143,14 @@ export default function FeaturePermission({
     );
     return aIndex - bIndex;
   });
-
+  // console.log("finalMissingPermissions", finalMissingPermissions);
   // const staticFormatted = formatPermissions(missionPermissions as any);
   // const finalMissingPermissions = missionPermissions;
+
+  const combinedPermissions = mergePermissions(
+    sortedFormatted,
+    finalMissingPermissions
+  );
 
   const toggleExpanded = (title: string) => {
     setExpandedItems((prev) => {
@@ -161,7 +170,7 @@ export default function FeaturePermission({
     const updatePermissionRecursive = (
       items: PermissionItem[]
     ): PermissionItem[] => {
-      return items.map((item) => {
+      return items?.map((item) => {
         const foundUpdate = updates.find(
           (u) => u.permission_name === item.permission_name
         );
@@ -344,7 +353,7 @@ export default function FeaturePermission({
         group
           .filter((p) => p !== itemName)
           .forEach((child) => {
-            permissionsToCreate.push(createPermissionObj(child, false));
+            permissionsToCreate.push(createPermissionObj(child, true));
           });
       }
 
@@ -555,7 +564,7 @@ export default function FeaturePermission({
   if (isLoading) {
     return (
       <div className="flex h-screen w-full animate-pulse items-center justify-center rounded-md bg-gray-200 p-4 shadow-sm md:p-6">
-        <Spin />
+        <CarLoading />
       </div>
     );
   }
@@ -569,7 +578,7 @@ export default function FeaturePermission({
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
               <span className="text-xl font-semibold text-[#66738C]">
-                Master Toggle:
+                Toggle:
               </span>
               <Switch
                 checked={allPermissionsEnabled()}
@@ -582,7 +591,7 @@ export default function FeaturePermission({
           </div>
         </div>
 
-        {sortedFormatted?.map((item: PermissionItem) => (
+        {combinedPermissions?.map((item: PermissionItem) => (
           <PermissionItemComponent
             key={item.id}
             item={item}
@@ -592,7 +601,7 @@ export default function FeaturePermission({
             isPending={isPending}
           />
         ))}
-        {finalMissingPermissions?.map((missingItem: StaticPermissionItem) => (
+        {/* {finalMissingPermissions?.map((missingItem: StaticPermissionItem) => (
           <MissingPermissionItemComponent
             key={missingItem.title}
             item={missingItem}
@@ -601,7 +610,7 @@ export default function FeaturePermission({
             handleCreateToggle={handleCreateToggle}
             isCreatePending={isCreatePending}
           />
-        ))}
+        ))} */}
       </div>
     </div>
   );

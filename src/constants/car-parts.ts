@@ -1,0 +1,18 @@
+
+export const carParts: string[] = [
+    "Front Bumper",
+    "Hood",
+    "Fender",
+    "Front Door",
+    "Rocker Panel",
+    "Quarter Panel",
+    "Roof",
+    "Trunk",
+    "Back Bumper",
+    "Side Mirror",
+    "Door Handles",
+    "Spoiler",
+    "Flares",
+    "Side Skirts",
+    "Antenna",
+  ];

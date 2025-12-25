@@ -209,7 +209,7 @@ export async function updateInvoice(
           },
         });
 
-        // create new inspections 
+        // create new inspections
         const inspectionsToSave = data.inspections.filter((inspection) => {
           const hasTitle =
             !!inspection.title && inspection.title.toString().trim() !== "";
@@ -253,11 +253,21 @@ export async function updateInvoice(
                 findExistingLabor = await txDb.labor.findUnique({
                   where: {
                     id: item?.labor?.id,
+                    cannedLabor: false,
                   },
                 });
               }
 
               if (!findExistingLabor && item.labor) {
+                //TODO: delete old labor if labor id exist and not canned labor
+                if (item?.labor?.id && !item?.labor?.cannedLabor) {
+                  await txDb.labor.delete({
+                    where: {
+                      id: item.labor?.id,
+                      cannedLabor: false,
+                    },
+                  });
+                }
                 findExistingLabor = await txDb.labor.create({
                   data: {
                     name: item?.labor?.name ?? "",
@@ -289,7 +299,7 @@ export async function updateInvoice(
                   },
                 });
               }
-
+              console.log({ updatedLabor });
               // update item
               const updatedInvoiceItem = await txDb.invoiceItem.update({
                 where: {
@@ -526,6 +536,8 @@ export async function updateInvoice(
             completedAt,
             deliveredAt,
             damageNotes: data.damageNotes,
+            authorizedName: null, 
+            signatureImage: null,
             serviceIndex: JSON.stringify(
               updatedInvoiceItem
                 .map((item) => item?.id)

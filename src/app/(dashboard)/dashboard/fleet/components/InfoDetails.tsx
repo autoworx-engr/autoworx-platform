@@ -17,6 +17,16 @@ const InfoDetails = ({
     tag: Tag | null;
   };
 }) => {
+  const DataField = ({ label, value }: { label: string; value?: string | number | null }) => (
+    <div className="flex items-start py-2">
+      <label className="block w-24 shrink-0 text-sm font-medium text-slate-500 lg:w-28">
+        {label}
+      </label>
+      <div className="flex-1 text-sm font-semibold text-slate-600 leading-relaxed">
+        {value || <span className="text-slate-400 italic">N/A</span>}
+      </div>
+    </div>
+  );
   const unpaidInvoices = client?.Invoice?.filter(
     (invoice: any) =>
       invoice?.grandTotal == 0 || (invoice?.grandTotal > 0 && invoice?.due > 0)
@@ -34,8 +44,7 @@ const InfoDetails = ({
   return (
     <div className="flex w-full flex-col justify-between gap-3 lg:flex-row lg:gap-5">
       <div className="relative lg:hidden">
-        <div className="absolute left-1 top-1">
-          {/* <EditClient client={client} settingIcon /> */}
+        <div className="absolute right-2 top-2">
           <NewFleet
             fleet={client}
             buttonElement={<Settings size={14} />}
@@ -44,40 +53,52 @@ const InfoDetails = ({
         </div>
         <ResponsiveEmployeeCard data={client} index={0} />
       </div>
-      <div className="clients-center relative hidden flex-[0.4] rounded border border-gray-300 bg-background p-3 pt-10 lg:flex lg:gap-3">
-        <div className="absolute left-1 top-1 cursor-pointer">
-          <NewFleet
-            fleet={client}
-            buttonElement={<Settings size={16} />}
-            isEdit={true}
-          />
-        </div>
 
-        <div className="flex flex-col gap-4">
-          <div className="clients-center mr-3 flex flex-col">
-            <Avatar photo={client.photo} width={150} height={150} />
+      {/* Desktop Card */}
+      <div className="hidden flex-[0.4] lg:block">
+        <div className="relative rounded-2xl bg-white p-6 shadow-md ring-1 ring-slate-900/5 transition-all duration-300 hover:shadow-2xl hover:shadow-[#6571FF]/10">
+
+          {/* Action Buttons (Top Right) */}
+          <div className="absolute right-4 top-4">
+            <div className="flex items-center gap-2">
+              <div className="absolute right-4 top-4 cursor-pointer">
+                <NewFleet
+                  fleet={client}
+                  buttonElement={<Settings size={16} />}
+                  isEdit={true}
+                />
+              </div>
+            </div>
           </div>
 
-          <div className="flex h-6 gap-2 text-xs font-bold">
-            {client?.tag && (
-              <div
-                style={{ backgroundColor: client?.tag?.bgColor }}
-                className="px-2 py-1"
+          {/* Profile and Details */}
+          <div className="flex w-full flex-col items-center gap-6 pt-6 lg:flex-row lg:items-start lg:pt-0">
+            <div className="shrink-0">
+              <Avatar photo={client.photo} width={150} height={150} />
+            </div>
+
+            <div className="w-full divide-y divide-slate-100 lg:w-3/5">
+              <DataField label="Fleet Name" value={client?.fleet?.fleetName} />
+              <DataField label="Contact" value={client?.fleet?.contactName} />
+              <DataField label="Phone" value={client.mobile || ""} />
+              <DataField label="Address" value={client.address || ""} />
+            </div>
+          </div>
+
+          {/* Tags / Source */}
+          <div className="mt-6 flex items-center gap-x-4 border-t border-slate-100 pt-4">
+            {client.tag && (
+              <span
+                className="rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wider shadow-md"
+                style={{
+                  backgroundColor: client.tag.bgColor,
+                  color: client.tag.textColor,
+                }}
               >
-                {client?.tag?.name}
-              </div>
+                {client.tag.name}
+              </span>
             )}
           </div>
-        </div>
-
-        <div className="flex-1 text-sm">
-          <InputDetails label="Fleet Name" value={client?.fleet?.fleetName} />
-          <InputDetails
-            label="Name of Contact"
-            value={client.fleet?.contactName}
-          />
-          <InputDetails label="Phone" value={client.mobile!} />
-          <InputDetails label="Address" value={client?.address!} />
         </div>
       </div>
       {/* <div className="relative lg:hidden">

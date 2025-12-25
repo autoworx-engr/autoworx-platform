@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
         console.log(`Processing MMS for company ${infobipConfig.companyId}`);
 
         // Find client by the "from" phone number (client's phone)
-        const client = await db.client.findFirst({
+        let client = await db.client.findFirst({
           where: {
             mobile: {
               endsWith: from.replace("+", ""),
@@ -84,6 +84,17 @@ export async function POST(req: NextRequest) {
             companyId: infobipConfig.companyId,
           },
         });
+
+        if (!client) {
+          client = await db.client.create({
+            data: {
+              firstName: from,
+              lastName: " ",
+              mobile: from,
+              companyId: infobipConfig.companyId,
+            },
+          });
+        }
 
         console.log(`Client found: ${client ? client.id : "none"}`);
 

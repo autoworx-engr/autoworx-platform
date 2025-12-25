@@ -4,7 +4,7 @@ import { DialogClose, DialogContent, DialogFooter } from "@/components/Dialog";
 import FormError from "@/components/FormError";
 import { SlimInput } from "@/components/SlimInput";
 import Submit from "@/components/Submit";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { updateEmployee } from "@/actions/employee/update";
 import { getCompany } from "@/actions/settings/getCompany";
@@ -20,6 +20,10 @@ import moment from "moment";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import SelectEmployeeType from "./SelectEmployeeType";
+import { useQueryClient } from "@tanstack/react-query";
+import { useEmployeeFilterStore } from "@/stores/employeeFilter";
+import { EMPLOYEE_LIST_KEY } from "./_hook/useEmployeeQuery";
+import PhoneInput from "@/components/PhoneInput";
 
 type TEditClientModalBodyProps = {
   employee: User;
@@ -41,6 +45,20 @@ export default function EditClientModalBody({
   const [openChangePassword, setOpenChangePassword] = useState(false);
   const { showError, clearError } = useFormErrorStore();
 
+  const phoneDataRef = useRef({
+    phoneNumber: "",
+    countryCode: "",
+    isoCode: "",
+  });
+  const {
+    dateRange,
+    search,
+    type: employeeType,
+    currentPage,
+    pageSize,
+  } = useEmployeeFilterStore();
+  const queryClient = useQueryClient();
+
   useEffect(() => {
     setProfilePic(employee.image !== DEFAULT_IMAGE_URL ? employee.image : null);
   }, [employee.image]);
@@ -54,7 +72,10 @@ export default function EditClientModalBody({
     }
   }, [newProfilePic]);
 
+  const { phoneNumber, countryCode, isoCode } = phoneDataRef.current;
   async function handleSubmit(data: FormData) {
+    const fullPhone = `${countryCode}${phoneNumber}`;
+    data.set("mobileNumber", fullPhone);
     let photo;
     const firstName = data.get("firstName") as string;
     const lastName = data.get("lastName") as string;
@@ -93,15 +114,6 @@ export default function EditClientModalBody({
       showError({
         field: "email",
         message: "Please enter a valid email address.",
-      });
-      return;
-    }
-
-    // Validate mobile number format
-    if (!mobileNumber?.trim() || !/^\+?\d*$/.test(mobileNumber.trim())) {
-      showError({
-        field: "mobileNumber",
-        message: "Please enter a valid mobile number (digits only).",
       });
       return;
     }
@@ -164,6 +176,7 @@ export default function EditClientModalBody({
       lastName,
       email,
       mobileNumber,
+      countryCode: isoCode,
       address,
       changePassword,
       city,
@@ -190,6 +203,18 @@ export default function EditClientModalBody({
     } else if (res.type === "success") {
       setNewProfilePic(null);
       onClose();
+      //employees 1 50 Admin  null null
+      queryClient.invalidateQueries({
+        queryKey: [
+          EMPLOYEE_LIST_KEY,
+          currentPage,
+          pageSize,
+          employeeType,
+          search,
+          dateRange[0],
+          dateRange[1],
+        ],
+      });
       successToast("Employee updated successfully");
     }
   }
@@ -197,6 +222,7 @@ export default function EditClientModalBody({
   const isAdminOrManager =
     session?.user?.employeeType === "Admin" ||
     session?.user?.employeeType === "Manager";
+
   return (
     <DialogContent
       className="max-h-full max-w-xl grid-rows-[auto,1fr,auto]"
@@ -294,7 +320,7 @@ export default function EditClientModalBody({
             required={false}
           />
         </div>
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
           <SlimInput
             name="email"
             defaultValue={employee.email}
@@ -316,22 +342,25 @@ export default function EditClientModalBody({
               }
             }}
           />
-          <SlimInput
-            type="tel"
-            name="mobileNumber"
-            defaultValue={employee.phone!}
-            onChange={(e) => {
-              const value = e.target.value;
-              if (!/^\+?\d*$/.test(value)) {
-                showError({
-                  field: "mobileNumber",
-                  message: "Please enter a valid mobile number (digits only).",
-                });
-              } else {
+
+          <div className="md:w-[248px]">
+            <PhoneInput
+              label="Mobile"
+              placeholder="1234567890"
+              required={false}
+              defaultValue={employee.phone!}
+              // value={phoneNumber}
+              defaultIsoCode={employee.countryCode!}
+              onChange={(phone, code, iso) => {
+                phoneDataRef.current = {
+                  phoneNumber: phone,
+                  countryCode: code,
+                  isoCode: iso || "",
+                };
                 clearError();
-              }
-            }}
-          />
+              }}
+            />
+          </div>
         </div>
         {isAdminOrManager && !openChangePassword && (
           <span

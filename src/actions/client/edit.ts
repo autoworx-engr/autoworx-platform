@@ -24,6 +24,7 @@ export async function editClient(data: {
   sourceId?: number;
   isPremium?: boolean;
   skipEmailCheck?: boolean; // New optional parameter
+  countryCode?:string
 }): Promise<ServerAction | TErrorHandler> {
   try {
     await updateClientValidationSchema.parseAsync(data);
@@ -54,6 +55,7 @@ export async function editClient(data: {
         lastName: data.lastName,
         email: data.email,
         mobile: data.mobile,
+        countryCode:data.countryCode,
         customerCompany: data.customerCompany,
         address: data.address,
         city: data.city,

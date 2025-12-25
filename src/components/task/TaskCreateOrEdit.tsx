@@ -22,6 +22,21 @@ type NewTaskProps = {
   onTaskDelete?: (taskId: number) => void;
 };
 
+// **Helper Class for Primary CTA Styling**
+const primaryCtaClasses = `
+  flex items-center justify-center gap-2 px-6 py-2 text-sm font-semibold text-white transition-all duration-300 ease-in-out
+
+  // Gradient Background (Blue/Indigo)
+  bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+
+  // Subtle Lift and Shadow Glow on Hover
+  shadow-md shadow-[#6571FF]/50
+  hover:-translate-y-0.5
+  hover:scale-[1.01]
+  hover:shadow-lg hover:shadow-[#6571FF]/60
+  dark:shadow-[#6571FF]/50 dark:hover:shadow-[#6571FF]/60
+`;
+
 export default function TaskCreateOrEdit({
   onlyOneUser = false,
   isClientTask = false,
@@ -45,22 +60,33 @@ export default function TaskCreateOrEdit({
 
   let openButtonIcon = null;
 
+  // --- Context-Aware Button Rendering ---
+
   if (isClientTask) {
+    // 1. Client Task Context (likely a button in a client detail view)
     openButtonIcon = (
-      <button className="flex items-center justify-center gap-1 rounded-full bg-blue-600 px-6 py-2 text-[15px] text-white">
+      <button
+        className={`${primaryCtaClasses} rounded-full`} // Full rounded shape for high visibility
+      >
         <Plus size={20} />
-        <span>Add task</span>
+        <span>Add Task</span>
       </button>
     );
   } else if (triggerIcon) {
+    // 2. Custom Trigger Context (used by TaskListBox, etc.) - No change, uses provided trigger.
     openButtonIcon = triggerIcon;
   } else {
+    // 3. Default/Edit Context (General-purpose button)
     openButtonIcon = (
-      <button className="flex w-full min-w-32 items-center justify-center gap-1 rounded-md bg-blue-600 px-2 py-2 text-[15px] text-white max-[1300px]:py-1">
+      // Compact, professional design
+      <button
+        className={`${primaryCtaClasses} rounded-xl w-full px-4 py-2`} // Modern rounded-xl shape
+      >
         {fromEdit ? (
-          <SquarePen className="w-5 h-5 text-[#6571FF] mr-2 cursor-pointer" />
+          // Icon for edit action (using SquarePen, with subtle color change to match theme)
+          <SquarePen className="h-5 w-5 text-white" />
         ) : (
-          <Plus size={20} className="" />
+          <Plus size={20} />
         )}
         <span className="block">{fromEdit ? "Update Task" : "Add Task"}</span>
       </button>
@@ -73,6 +99,7 @@ export default function TaskCreateOrEdit({
         <DialogTrigger
           asChild
           onClick={(e) => {
+            // Ensure click handler prevents propagation if needed (good practice for components inside lists)
             e.stopPropagation();
           }}
         >

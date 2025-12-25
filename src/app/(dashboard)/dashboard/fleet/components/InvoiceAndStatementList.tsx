@@ -1,9 +1,8 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import InvoiceList from "./InvoiceList";
-import { FleetTab, TabsContent, TabsList, TabsTrigger } from "./FleetTab";
-import { Invoice } from "@prisma/client";
 import { getFleetStatements } from "@/actions/fleet/statement";
+import { useEffect, useState } from "react";
+import { FleetTab, TabsContent, TabsList, TabsTrigger } from "./FleetTab";
+import InvoiceList from "./InvoiceList";
 
 type InvoiceAndStatementListProps = {
   client: any;
@@ -16,44 +15,45 @@ const InvoiceAndStatementList = ({
   client,
   searchParams,
 }: InvoiceAndStatementListProps) => {
-  const [refreshKey, setRefreshKey] = useState(0);
   const [fleetStatements, setFleetStatements] = useState<any[]>([]);
   const [loadingStatements, setLoadingStatements] = useState(false);
 
   const fleetId = client?.fleet?.id;
 
-  // Load fleet statements when component mounts or when refreshKey changes
-  useEffect(() => {
-    const loadFleetStatements = async () => {
-      if (fleetId) {
-        setLoadingStatements(true);
-        try {
-          const result = await getFleetStatements(fleetId);
-          if (result.type === "success") {
-            setFleetStatements(result.data);
-          } else {
-            console.error("Error loading fleet statements:", result.message);
-            setFleetStatements([]);
-          }
-        } catch (error) {
-          console.error("Error loading fleet statements:", error);
+  // Function to load fleet statements
+  const loadFleetStatements = async () => {
+    if (fleetId) {
+      setLoadingStatements(true);
+      try {
+        const result = await getFleetStatements(fleetId);
+        if (result.type === "success") {
+          setFleetStatements(result.data);
+        } else {
+          console.error("Error loading fleet statements:", result.message);
           setFleetStatements([]);
-        } finally {
-          setLoadingStatements(false);
         }
+      } catch (error) {
+        console.error("Error loading fleet statements:", error);
+        setFleetStatements([]);
+      } finally {
+        setLoadingStatements(false);
       }
-    };
+    }
+  };
 
+  // Load fleet statements when component mounts or fleetId changes
+  useEffect(() => {
     loadFleetStatements();
-  }, [fleetId, refreshKey]);
+  }, [fleetId]);
 
-  const handleStatementCreated = () => {
-    // Trigger a refresh of the component
-    setRefreshKey((prev) => prev + 1);
+  // Handler for when a statement is created or deleted
+  const handleStatementRefresh = () => {
+    // Reload statements without remounting component
+    loadFleetStatements();
   };
 
   return (
-    <div className="py-5" key={refreshKey}>
+    <div className="py-5">
       <FleetTab defaultValue="invoice">
         <TabsList>
           <TabsTrigger value="statement">Statement</TabsTrigger>
@@ -66,7 +66,7 @@ const InvoiceAndStatementList = ({
             invoiceData={client?.Invoice}
             type="Invoice"
             fleetId={fleetId}
-            onStatementCreated={handleStatementCreated}
+            onStatementCreated={handleStatementRefresh}
           />
         </TabsContent>
         <TabsContent value="statement">
@@ -75,9 +75,9 @@ const InvoiceAndStatementList = ({
             invoiceData={fleetStatements}
             type="Statement"
             fleetId={fleetId}
-            onStatementCreated={handleStatementCreated}
+            onStatementCreated={handleStatementRefresh}
             loading={loadingStatements}
-            onRefresh={handleStatementCreated} // Use the same handler to refresh statements
+            onRefresh={handleStatementRefresh}
           />
         </TabsContent>
       </FleetTab>

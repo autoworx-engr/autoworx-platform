@@ -1,59 +1,91 @@
 "use client";
 
-import { Client, Source, Tag } from "@prisma/client";
-import React, { useEffect, useState } from "react";
-import { useClientFilterStore } from "@/stores/clientFilter";
 import ResponsiveEmployeeCard from "@/components/mobile-responsive/employee/ResponsiveEmployeeCard";
+import { useClientFilterStore } from "@/stores/clientFilter";
+import { Client, Source, Tag } from "@prisma/client";
+import { Pagination } from "antd";
+import useClientQuery from "./_hook/useClientQuery";
 import ClientListTable from "./ClientListTable";
-import { padId } from "@/lib/padId";
-// import * as PusherPushNotifications from "@pusher/push-notifications-web";
+import { ClientTableSkeleton } from "./ClientTableSkeleton";
 
 export default function ClientList({
-  clients,
+  clients = [],
   needCompanyName = false,
 }: {
-  clients: (Client & { tag: Tag | null; source: Source | null })[];
   needCompanyName?: boolean;
+  clients?: (Client & { tag: Tag | null; source: Source | null })[];
 }) {
-  const randomIds: { [key: number]: string } = {};
-  const { search } = useClientFilterStore();
-  const [filteredClients, setFilteredClients] = useState(clients);
+  const { search, currentPage, pageSize, setCurrentPage, setPageSize } =
+    useClientFilterStore();
+  const { data, isLoading, isError } = useClientQuery({
+    search,
+    currentPage,
+    pageSize,
+    enabled: clients?.length === 0,
+  });
 
-  useEffect(() => {
-    const searchWords = (search || "").toLowerCase().trim().split(/\s+/);
+  let clientData = clients;
+  let totalClients = clients?.length;
+  if (clients.length === 0 && data && data?.clients.length > 0) {
+    clientData = data.clients;
+    totalClients = data?.totalClients || 0;
+  }
 
-    setFilteredClients(
-      clients.filter((client: any) => {
-        const fullName =
-          `${client.firstName || ""} ${client.lastName || ""}`.toLowerCase();
-        const email = client?.email?.toLowerCase() || "";
-        const mobile = client?.mobile?.toLowerCase() || "";
-        const id = padId(client.id);
+  const handlePageChange = (page: number, pageSize?: number) => {
+    setCurrentPage(page ?? 0);
+    if (pageSize) {
+      setPageSize(pageSize);
+    }
+  };
 
-        return searchWords.every(
-          (word) =>
-            id.includes(word) ||
-            fullName.includes(word) ||
-            email.includes(word) ||
-            mobile.includes(word)
-        );
-      })
+  const showPagination = totalClients > pageSize;
+
+  let content;
+  if (isLoading && !isError) {
+    content = <ClientTableSkeleton />;
+  } else if (isError && !isLoading) {
+    content = <div>Error loading clients.</div>;
+  } else if (!isError && !isLoading && clientData.length === 0) {
+    content = <div>No clients found.</div>;
+  } else {
+    content = (
+      <ClientListTable
+        clients={clientData}
+        needCompanyName={needCompanyName}
+        totalClients={totalClients}
+      />
     );
-  }, [search, clients]);
+  }
 
   return (
     <div>
-      <div className="h-[60%] overflow-y-auto lg:hidden">
-        {filteredClients.map((employee, index) => (
-          <ResponsiveEmployeeCard key={index} data={employee} index={index} />
-        ))}
+      {/* Mobile View */}
+      <div className="lg:hidden">
+        <div className="h-[60%] overflow-y-auto">
+          {clientData.map((employee, index) => (
+            <ResponsiveEmployeeCard key={index} data={employee} index={index} />
+          ))}
+        </div>
+
+        {/* Mobile Pagination */}
+        {showPagination && (
+          <div className="my-2 flex justify-center">
+            <Pagination
+              className="custom-pagination"
+              current={currentPage}
+              pageSize={pageSize}
+              total={totalClients ?? 0}
+              onChange={handlePageChange}
+              showSizeChanger
+              onShowSizeChange={handlePageChange}
+              simple // Optional: use simple pagination for mobile
+            />
+          </div>
+        )}
       </div>
 
-      <ClientListTable
-        filteredClients={filteredClients}
-        randomIds={randomIds}
-        needCompanyName={needCompanyName}
-      />
+      {/* Desktop View */}
+      {content}
     </div>
   );
 }

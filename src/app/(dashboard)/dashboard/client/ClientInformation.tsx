@@ -2,67 +2,99 @@ import Avatar from "@/components/Avatar";
 import { Client, Source, Tag } from "@prisma/client";
 import React from "react";
 import EditClient from "./EditClient";
+import Link from "next/link";
+import { MessageCircleMore } from "lucide-react";
 
 export default function ClientInformation({
   client,
 }: {
   client: Client & { tag: Tag | null; source: Source | null };
 }) {
+
+  const DataField = ({ label, value }: { label: string; value: string }) => (
+    <div className="flex items-start py-2">
+      <label className="block w-24 shrink-0 text-sm font-medium text-slate-500 lg:w-28">
+        {label}
+      </label>
+      <div className="flex-1 text-sm font-semibold text-slate-600 leading-relaxed">
+        {value || <span className="text-slate-400 italic">N/A</span>}
+      </div>
+    </div>
+  );
+
   return (
-    <div className="mb-3 hidden w-full p-2 lg:block">
-      <h3 className="text-lg font-semibold">Client Details</h3>
-      <div className="rounded-md border border-gray-200 p-3">
-        <div className="relative flex w-full items-center rounded pt-8">
-          <div className="absolute right-1 top-0">
+    <div className="mb-3 w-full p-4">
+      <h3 className="mb-4 text-xl font-bold tracking-tight text-slate-600">
+        Client Details
+      </h3>
+
+      {/* Premium Card Container */}
+      <div className="relative rounded-2xl bg-white p-6 shadow-md ring-1 ring-slate-900/5 transition-all duration-300 hover:shadow-2xl hover:shadow-[#6571FF]/10">
+
+        {/* Action Buttons (Top Right) */}
+        <div className="absolute right-4 top-4">
+          <div className="flex items-center gap-2">
+
+            {/* Chat Link */}
+            <Link
+              href={`/dashboard/communication/client/${client.id}?chat=true`}
+              className="group p-1 text-[#6571FF] transition-all duration-300 hover:scale-[1.1] hover:shadow-lg hover:shadow-[#6571FF]/20 rounded-full"
+              title="Open Chat"
+            >
+              <MessageCircleMore className="h-4 w-4" />
+            </Link>
+
+            {/* Edit Button */}
             <EditClient client={client} settingIcon />
           </div>
-          <div className="mr-8 flex flex-col items-center">
+        </div>
+
+        {/* Profile and Details Wrapper */}
+        <div className="flex w-full flex-col items-center gap-6 pt-6 lg:flex-row lg:items-start lg:pt-0">
+
+          {/* Avatar Area */}
+          <div className="shrink-0">
             <Avatar photo={client.photo} width={100} height={100} />
           </div>
 
-          <div className="w-full space-y-2 text-sm">
-            <div className="mb-1 flex items-center">
-              <label className="mr-6 block w-20 text-gray-600">Name</label>
-              <input
-                type="text"
-                value={client.firstName + " " + client.lastName}
-                readOnly
-                className="block w-full rounded border border-gray-200 px-4 py-2 text-gray-600"
-              />
-            </div>
-            <div className="mb-1 flex items-center">
-              <label className="mr-6 block w-20 text-gray-600">Email</label>
-              <input
-                type="email"
-                value={client.email!}
-                readOnly
-                className="block w-full rounded border border-gray-200 px-4 py-2 text-gray-600"
-              />
-            </div>
-            <div className="mb-1 flex items-center">
-              <label className="mr-6 block w-20 text-gray-600">Phone</label>
-              <input
-                type="text"
-                value={client.mobile!}
-                readOnly
-                className="block w-full rounded border border-gray-200 px-4 py-2 text-gray-600"
-              />
-            </div>
-            <div className="flex items-center">
-              <label className="mr-6 block w-20 text-gray-600">Address</label>
-              <input
-                type="text"
-                value={`${client.address || ""} ${client.city || ""} ${client.state || ""} ${client.zip || ""}`}
-                readOnly
-                className="block w-full rounded border border-gray-200 px-4 py-2 text-gray-600"
-              />
-            </div>
+          {/* Details Grid */}
+          <div className="w-full divide-y divide-slate-100 lg:w-3/5">
+            <DataField
+              label="Name"
+              value={`${client.firstName} ${client.lastName}`}
+            />
+            <DataField
+              label="Email"
+              value={client.email || ""}
+            />
+            <DataField
+              label="Phone"
+              value={client.mobile || ""}
+            />
+            <DataField
+              label="Address"
+              value={client.address || ""}
+            />
           </div>
         </div>
-        <div className="tags mt-4 flex items-center gap-x-4">
+
+        {/* Tags Section */}
+        <div className="mt-6 flex items-center gap-x-4 border-t border-slate-100 pt-4">
+          {client.source?.name && (
+            <div className="flex items-center gap-4">
+              <label className="block w-24 shrink-0 text-sm font-medium text-slate-500 lg:w-28">
+                Source:
+              </label>
+              <span className='text-sm font-medium text-slate-600'>
+                {client.source?.name || 'Manual Entry'}
+              </span>
+            </div>
+          )}
+
+
           {client.tag && (
             <span
-              className="rounded-sm px-3 py-1 text-xs"
+              className="rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wider shadow-md"
               style={{
                 backgroundColor: client.tag.bgColor,
                 color: client.tag.textColor,

@@ -36,6 +36,7 @@ type DownloadInvoiceProps = {
   companyDetails: Company;
   authorizedName: string;
   isStripe: boolean;
+  signImageUrl?: string;
 };
 
 export default function DownloadInvoice({
@@ -46,6 +47,7 @@ export default function DownloadInvoice({
   companyDetails,
   authorizedName,
   isStripe,
+  signImageUrl,
 }: DownloadInvoiceProps) {
   const [isClient, setIsClient] = useState(false);
   const [isPdfReady, setIsPdfReady] = useState(false);
@@ -84,21 +86,53 @@ export default function DownloadInvoice({
               vehicle={vehicle}
               companyDetails={companyDetails}
               authorizedName={authorizedName}
+              signImageUrl={signImageUrl}
               isStripe={isStripe}
             />
           }
           fileName="invoice.pdf"
         >
-          {/* @ts-ignore */}
-          {({ loading, error }: any) => {
-            if (loading || error) return "Loading PDF...";
-            if (error) {
-              console.error("Error generating PDF:", error);
-              // Trigger a retry when an error occurs
-              handleErrorRetry();
-            }
-            return <span>Download PDF</span>;
-          }}
+            {/* @ts-ignore */}
+            {({ loading, error }: any) => {
+              if (error) {
+                console.error("Error generating PDF:", error);
+                return (
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleErrorRetry();
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        handleErrorRetry();
+                      }
+                    }}
+                    className="text-red-600 cursor-pointer"
+                  >
+                    Retry Download
+                  </span>
+                );
+              }
+
+              return (
+                <span
+                  onClick={(e) => {
+                    if (loading) {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }
+                  }}
+                  className={loading ? "cursor-not-allowed" : "cursor-pointer"}
+                >
+                  {/* {loading ? "Download PDF..." : "Download PDF"} */}
+                  Download PDF
+                </span>
+              );
+            }}
         </PDFDownloadLink>
       )}
       {isClient && !isPdfReady && <span>Download PDF</span>}

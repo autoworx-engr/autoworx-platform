@@ -89,131 +89,146 @@ export async function getAttendanceInfo(
   const now = moment.tz(companyTimezone); // Current date and time in company timezone
   const standardWorkingHours = 8; // Standard working hours per day
 
+  const startDate = moment
+    .tz(startDateParam, companyTimezone)
+    .startOf("day")
+    .toDate();
+
+  const endDate = moment
+    .tz(endDateParam, companyTimezone)
+    .endOf("day")
+    .toDate();
+
+  const holidays = await db.holiday.findMany({
+    where: {
+      companyId: company?.id,
+      date: {
+        gte: startDate,
+        lte: endDate,
+      },
+    },
+  });
+
   // Helper function to get attendance info for a given date range
-  const getAttendanceInfoForRange = async (
+  const getAttendanceInfoForRange = (
     startDate: Moment,
     endDate: Moment
-  ): Promise<AttendanceRecord[]> => {
-    const attInfo: AttendanceRecord[] = [];
-    // Clone the dates to avoid modifying the original
-    const start = moment(startDate);
-    const end = moment(endDate);
+  ): AttendanceRecord[] => {
+    const records: AttendanceRecord[] = [];
+
+    // ---------- CLOCK MAP ----------
+    const clockMap = new Map<string, (typeof user.ClockInOut)[0]>();
+
+    user.ClockInOut.forEach((clock) => {
+      const key = moment
+        .utc(clock.clockIn)
+        .tz(companyTimezone)
+        .format("YYYY-MM-DD");
+
+      clockMap.set(key, clock);
+    });
+
+    // ---------- APPROVED LEAVES ----------
+    const approvedLeaves = user.LeaveRequest.filter(
+      (leave) => leave.status === "Approved"
+    );
+
+    // ---------- HOLIDAYS ----------
+    const startRange = moment
+      .tz(companyTimezone)
+      .subtract(1, "month")
+      .startOf("month")
+      .toDate();
+
+    const endRange = moment.tz(companyTimezone).endOf("month").toDate();
+
+    const holidayMap = new Set(
+      holidays.map((h) => moment(h.date).format("YYYY-MM-DD"))
+    );
 
     for (
-      let date = start;
-      date.isSameOrBefore(end, "day");
+      let date = startDate.clone();
+      date.isSameOrBefore(endDate, "day");
       date.add(1, "day")
     ) {
-      const currentDate = moment(date);
-      const dayOfWeek = currentDate.format("dddd").toLowerCase();
-      const weekend1 = calendarSettings.weekend1.toLowerCase();
-      const weekend2 = calendarSettings.weekend2.toLowerCase();
+      const dayKey = date.format("YYYY-MM-DD");
+      const dayName = date.format("dddd").toLowerCase();
 
-      // Fetch holiday for the current date
-      const holiday = await db.holiday.findFirst({
-        where: {
-          date: {
-            equals: new Date(currentDate.format("YYYY-MM-DD")),
-          },
-          companyId: company?.id,
-        },
-      });
-
-      // 1. Check if the user hasn't joined yet (should be first check)
-      if (user.joinDate && currentDate.isBefore(moment(user.joinDate), "day")) {
-        attInfo.push(createAttendanceRecord(currentDate, "NOT_JOINED"));
+      // NOT JOINED
+      if (user.joinDate && date.isBefore(moment(user.joinDate), "day")) {
+        records.push(createAttendanceRecord(date, "NOT_JOINED"));
         continue;
       }
 
-      // 2. Check if the day hasn't come yet (future dates) - but allow if clock record exists
-      if (currentDate.isAfter(now, "day")) {
-        // Check if there's a clock record for this future date
-        const futureClock = user.ClockInOut.find((clock) =>
-          moment(clock.clockIn).isSame(currentDate, "day")
-        );
-
-        if (!futureClock) {
-          attInfo.push(createAttendanceRecord(currentDate, "-"));
-          continue;
-        }
-      }
-
-      // 3. Check if the current day is a weekend
-      if (dayOfWeek === weekend1 || dayOfWeek === weekend2) {
-        attInfo.push(createAttendanceRecord(currentDate, "WEEKEND"));
+      // FUTURE
+      if (date.isAfter(now, "day") && !clockMap.has(dayKey)) {
+        records.push(createAttendanceRecord(date, "-"));
         continue;
       }
 
-      // 4. Check if the current day is a holiday
-      if (holiday) {
-        attInfo.push(createAttendanceRecord(currentDate, "HOLIDAY"));
+      // WEEKEND
+      if (
+        dayName === calendarSettings.weekend1.toLowerCase() ||
+        dayName === calendarSettings.weekend2.toLowerCase()
+      ) {
+        records.push(createAttendanceRecord(date, "WEEKEND"));
         continue;
       }
 
-      // 5. Check if the user is on approved leave
-      const leaveRequest = user.LeaveRequest.find(
-        (leave) =>
-          moment(leave.startDate).isSameOrBefore(currentDate, "day") &&
-          moment(leave.endDate).isSameOrAfter(currentDate, "day") &&
-          leave.status === "Approved"
+      // HOLIDAY
+      if (holidayMap.has(dayKey)) {
+        records.push(createAttendanceRecord(date, "HOLIDAY"));
+        continue;
+      }
+
+      // LEAVE
+      const onLeave = approvedLeaves.some((leave) =>
+        date.isBetween(
+          moment(leave.startDate),
+          moment(leave.endDate),
+          "day",
+          "[]"
+        )
       );
 
-      if (leaveRequest) {
-        attInfo.push(createAttendanceRecord(currentDate, "LEAVE"));
+      if (onLeave) {
+        records.push(createAttendanceRecord(date, "LEAVE"));
         continue;
       }
 
-      // 6. Check if the user has clocked in and out on the current date
-      const clockInOut = user.ClockInOut.find((clock) =>
-        moment.utc(clock.clockIn).tz(companyTimezone).isSame(currentDate, "day")
-      );
+      // CLOCK DATA
+      const clock = clockMap.get(dayKey);
+      if (clock) {
+        const breakMinutes = clock.ClockBreak.reduce((sum, b) => {
+          if (!b.breakEnd) return sum;
+          return sum + moment(b.breakEnd).diff(moment(b.breakStart), "minutes");
+        }, 0);
 
-      if (clockInOut) {
-        const totalBreak = clockInOut.ClockBreak.reduce(
-          (total, breakPeriod) => {
-            if (breakPeriod.breakEnd) {
-              return (
-                total +
-                moment(breakPeriod.breakEnd).diff(
-                  moment(breakPeriod.breakStart),
-                  "minutes"
-                )
-              );
-            }
-            return total;
-          },
-          0
-        );
+        const workedMinutes = clock.clockOut
+          ? moment(clock.clockOut).diff(moment(clock.clockIn), "minutes")
+          : 0;
 
-        const totalHours = clockInOut.clockOut
-          ? moment
-              .duration(
-                moment(clockInOut.clockOut).diff(moment(clockInOut.clockIn))
-              )
-              .asMinutes()
-              .toFixed(2)
-          : "N/A";
-
+        const workedHours = (workedMinutes / 60).toFixed(2);
         const extraHours =
-          totalHours !== "N/A" && parseFloat(totalHours) > standardWorkingHours
-            ? (parseFloat(totalHours) - standardWorkingHours).toFixed(2)
+          workedMinutes / 60 > standardWorkingHours
+            ? (workedMinutes / 60 - standardWorkingHours).toFixed(2)
             : "0";
 
-        attInfo.push({
-          id: clockInOut.id,
-          date: new Date(currentDate.format("YYYY-MM-DD")),
-          clockedIn: clockInOut.clockIn,
-          clockedOut: clockInOut.clockOut ?? "N/A",
-          hours: totalHours,
+        records.push({
+          id: clock.id,
+          date: new Date(dayKey),
+          clockedIn: clock.clockIn,
+          clockedOut: clock.clockOut ?? "N/A",
+          hours: workedHours,
           extraHours,
-          totalBreaks: totalBreak.toFixed(2),
+          totalBreaks: (breakMinutes / 60).toFixed(2),
         });
       } else {
-        // 7. If no clock record exists, mark as absent
-        attInfo.push(createAttendanceRecord(currentDate, "ABSENT"));
+        records.push(createAttendanceRecord(date, "ABSENT"));
       }
     }
-    return attInfo;
+
+    return records;
   };
 
   // Helper function to create an attendance record
@@ -452,7 +467,6 @@ export async function getAttendanceInfo(
     parseFloat(previousNoShowRate)
   );
 
-  console.log("🚀 ~ getAttendanceInfo ~ attInfo:", attInfo);
   return {
     attInfo,
     absentDays,

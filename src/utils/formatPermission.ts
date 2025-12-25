@@ -24,6 +24,7 @@ export function formatPermissions(permissions: any[]) {
     "inventoryAutomation",
 
     "invoiceAutomation",
+    "tagAutomation",
   ];
 
   const communicationHubChildren = [
@@ -117,3 +118,57 @@ export default function getMissing(
     staticArr.filter((sp) => !backendNames.has(sp.permission_name))
   );
 }
+
+type Permission = {
+  title: string;
+  permission_name: string;
+  status?: boolean;
+  enabled: boolean;
+  children?: Permission[];
+};
+
+export const mergePermissions = (
+  dbPerms: Permission[],
+  staticPerms: Permission[]
+): Permission[] => {
+  const staticMap = new Map(staticPerms.map((p) => [p.permission_name, p]));
+
+  const mergeRecursive = (
+    dbList: Permission[],
+    staticList: Permission[]
+  ): Permission[] => {
+    const result: Permission[] = [];
+    const used = new Set<string>();
+
+    // 1️⃣ DB permissions first (priority)
+    dbList.forEach((dbPerm) => {
+      const staticPerm = staticMap.get(dbPerm.permission_name);
+      used.add(dbPerm.permission_name);
+
+      result.push({
+        ...staticPerm,
+        ...dbPerm,
+        enabled: dbPerm.enabled ?? staticPerm?.status ?? false,
+        children: mergeRecursive(
+          dbPerm.children || [],
+          staticPerm?.children || []
+        ),
+      });
+    });
+
+    // 2️⃣ Static permissions missing in DB
+    staticList.forEach((staticPerm) => {
+      if (!used.has(staticPerm.permission_name)) {
+        result.push({
+          ...staticPerm,
+          enabled: staticPerm.status ?? false,
+          children: mergeRecursive([], staticPerm.children || []),
+        });
+      }
+    });
+
+    return result;
+  };
+
+  return mergeRecursive(dbPerms, staticPerms);
+};

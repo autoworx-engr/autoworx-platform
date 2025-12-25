@@ -91,6 +91,24 @@ export async function POST(
         },
       });
 
+      if (!client) {
+        client = await db.client.create({
+          data: {
+            firstName: body.From,
+            lastName: " ",
+            mobile: body.From,
+            companyId: companyId,
+          },
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            companyId: true,
+            Lead: true,
+          },
+        });
+      }
+
       if (client) {
         const dbMessage = await db.clientSMS.create({
           data: {
@@ -104,10 +122,12 @@ export async function POST(
         });
         let attachments = [];
         for (const file of images) {
+          // Extract file extension from URL
+          const fileExtension = file.split(".").pop()?.split("?")[0] || "jpg";
           let atc = await db.clientSmsAttachments.create({
             data: {
               url: file,
-              name: `${dbMessage.id}_${Date.now()}`,
+              name: `${dbMessage.id}_${Date.now()}.${fileExtension}`,
               clientSMSId: dbMessage.id,
             },
           });

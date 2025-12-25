@@ -1,9 +1,8 @@
 import { FleetStatement, Invoice } from "@prisma/client";
 import FilterBySearchBox from "../../reporting/components/filter/FilterBySearchBox";
 import CreateStatementModal from "./CreateStatementModal";
-import FleetSubHeading from "./FleetSubHeading";
-import InvoiceListTable from "./InvoiceListTable";
 import FleetStatementListTable from "./FleetStatementListTable";
+import InvoiceListTable from "./InvoiceListTable";
 
 export interface InVoiceDataType {
   id: string;
@@ -70,9 +69,7 @@ const InvoiceList = ({
       {/* <FleetSubHeading text={`${type} List`} /> */}
 
       <div className="flex  items-center justify-between pr-5">
-        <div className="md:max-w-[700px] flex-1 rounded border border-gray-300 bg-background p-3">
-          <FilterBySearchBox searchText={searchParams?.search as string} />
-        </div>
+        <FilterBySearchBox searchText={searchParams?.search as string} />
 
         {/* Only show CreateStatementModal for Invoice type and when fleetId is available */}
         {type === "Invoice" && fleetId && (

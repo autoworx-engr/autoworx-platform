@@ -27,9 +27,24 @@ type THeadingProps = {
 
 const days = ["SUN", "MON", "TUE", "WED", "THUS", "FRI", "SAT"];
 
-const BUTTON_STYLE = "app-shadow rounded-md p-2 text-[#797979]";
-const DROPDOWN_STYLE =
-  "app-shadow rounded-md bg-background px-3 py-2 text-[#797979] capitalize";
+const BUTTON_STYLE = `
+  // Base look: Clean background, premium ring border, rounded-md corners
+  bg-white/50 backdrop-blur-sm 
+  rounded-md ring-1 ring-slate-900/5 dark:bg-slate-900/50 dark:ring-slate-700/50
+  p-2 border
+  // Text & Color: Professional slate tones
+  text-slate-600 dark:text-slate-300 font-medium text-sm
+  // Interaction: Smooth transition and subtle hover
+  transition-all duration-300 ease-in-out
+  hover:bg-white/80 dark:hover:bg-slate-800/80
+  hover:-translate-y-0.5 hover:shadow-md
+  focus:outline-none focus:ring-2 focus:ring-[#6571FF]
+`;
+const DROPDOWN_STYLE = `
+  // Inherits utility button style for consistency, plus specific padding
+  ${BUTTON_STYLE}
+  px-4 py-2 capitalize
+`;
 
 const ALLOWED_ROLES_FOR_NEW_APPOINTMENT = ["Admin", "Manager", "Sales"];
 
@@ -170,10 +185,10 @@ export default function Heading({ type }: THeadingProps) {
         {ALLOWED_ROLES_FOR_NEW_APPOINTMENT.includes(
           user?.employeeType ?? ""
         ) && (
-          <AppointmentCreateOrEdit
-            onAppointmentCreated={handleAppointmentCreate}
-          />
-        )}
+            <AppointmentCreateOrEdit
+              onAppointmentCreated={handleAppointmentCreate}
+            />
+          )}
 
         <Settings />
 
@@ -184,11 +199,10 @@ export default function Heading({ type }: THeadingProps) {
             {days.map((day, index) => (
               <p
                 key={day}
-                className={` p-1 rounded-full ${
-                  index === currentDayIndex
-                    ? "bg-blue-500 text-white font-bold"
-                    : ""
-                }`}
+                className={` p-1 rounded-full ${index === currentDayIndex
+                  ? "bg-blue-500 text-white font-bold"
+                  : ""
+                  }`}
               >
                 {day}
               </p>

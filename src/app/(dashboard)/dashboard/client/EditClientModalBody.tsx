@@ -13,10 +13,14 @@ import { DEFAULT_IMAGE_URL } from "@/lib/consts";
 import { successToast } from "@/lib/toast";
 import { useFormErrorStore } from "@/stores/form-error";
 import { Client, Source, Tag } from "@prisma/client";
+import { useQueryClient } from "@tanstack/react-query";
 import { CircleUserRound, SquarePen, X } from "lucide-react";
 import Image from "next/image";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { RotatingLines } from "react-loader-spinner";
+import { CLIENT_LIST_KEY } from "./_hook/useClientQuery";
+import { useClientFilterStore } from "@/stores/clientFilter";
+import PhoneInput from "@/components/PhoneInput";
 
 type TEditClientModalBodyProps = {
   client: Client & {
@@ -35,6 +39,9 @@ export default function EditClientModalBody({
   );
   const [pending, startTransition] = useTransition();
 
+  const queryClient = useQueryClient();
+  const { search, currentPage, pageSize } = useClientFilterStore();
+
   const [openClientSource, setOpenClientSource] = useState(false);
   const [tagOpenDropdown, setTagOpenDropdown] = useState(false);
   const [tag, setTag] = useState<Tag | undefined>(client.tag!);
@@ -45,7 +52,11 @@ export default function EditClientModalBody({
   const [newProfilePic, setNewProfilePic] = useState<File | null>(null);
   const [clientSources, setClientSources] = useState<Source[]>([]);
   const { showError, clearError } = useFormErrorStore();
-
+  const phoneDataRef = useRef({
+    phoneNumber: "",
+    countryCode: "",
+    isoCode: "",
+  });
   useEffect(() => {
     setIsPremium(client?.isFleet!);
     setTag(client.tag || undefined);
@@ -78,7 +89,12 @@ export default function EditClientModalBody({
     const lastName =
       document.querySelector<HTMLInputElement>("#lastName")?.value;
     const email = document.querySelector<HTMLInputElement>("#email")?.value;
-    const mobile = document.querySelector<HTMLInputElement>("#mobile")?.value;
+    // const mobile = document.querySelector<HTMLInputElement>("#mobile")?.value;
+    const { phoneNumber, countryCode, isoCode } = phoneDataRef.current;
+    const mobile =
+      countryCode && phoneNumber
+        ? `${countryCode}${phoneNumber}`
+        : phoneNumber || "";
     const customerCompany =
       document.querySelector<HTMLInputElement>("#customerCompany")?.value;
     const address = document.querySelector<HTMLInputElement>("#address")?.value;
@@ -134,6 +150,7 @@ export default function EditClientModalBody({
       lastName,
       email,
       mobile,
+      countryCode: isoCode,
       customerCompany,
       address,
       city,
@@ -155,6 +172,9 @@ export default function EditClientModalBody({
             : res.message,
       });
     } else if (res.type === "success") {
+      queryClient.invalidateQueries({
+        queryKey: [CLIENT_LIST_KEY, search, currentPage, pageSize],
+      });
       clearError();
       onClose();
       successToast("Client updated successfully");
@@ -265,7 +285,7 @@ export default function EditClientModalBody({
           />
         </div>
 
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
           <SlimInput
             name="email"
             label="Email"
@@ -284,25 +304,24 @@ export default function EditClientModalBody({
               // }
             }}
           />
-          <SlimInput
-            name="mobile"
-            label="Mobile"
-            required={false}
-            defaultValue={client.mobile!}
-            onChange={(e) => {
-              const value = e.target.value;
-              // Allow only numeric values
-              if (!/^\+?\d*$/.test(value)) {
-                showError({
-                  field: "mobile",
-                  message:
-                    "Invalid phone number format. Only numbers are allowed.",
-                });
-              } else {
+          <div className="md:w-[248px]">
+            <PhoneInput
+              label="Mobile"
+              placeholder="1234567890"
+              required={false}
+              defaultValue={client.mobile!}
+              // value={phoneNumber}
+              defaultIsoCode={client.countryCode!}
+              onChange={(phone, code, iso) => {
+                phoneDataRef.current = {
+                  phoneNumber: phone,
+                  countryCode: code,
+                  isoCode: iso || "",
+                };
                 clearError();
-              }
-            }}
-          />
+              }}
+            />
+          </div>
         </div>
 
         <div className="flex items-center justify-between">

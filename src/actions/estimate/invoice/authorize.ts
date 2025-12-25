@@ -1,21 +1,22 @@
-'use server';
+"use server";
 
-import getProductByInvoiceId from '@/actions/common/getProductByInvoiceId';
-import { errorHandler } from '@/error-boundary/globalErrorHandler';
-import { db } from '@/lib/db';
-import { lowInventoryNotification } from '@/lib/notification/inventory-notify';
+import getProductByInvoiceId from "@/actions/common/getProductByInvoiceId";
+import { errorHandler } from "@/error-boundary/globalErrorHandler";
+import { db } from "@/lib/db";
+import { lowInventoryNotification } from "@/lib/notification/inventory-notify";
 import {
   sendInvoiceAuthorizeNotification,
   sendInvoiceConvertedNotification,
-} from '@/lib/notification/invoice-notify';
-import { ServerAction } from '@/types/action';
-import { TErrorHandler } from '@/types/globalError';
-import { InvoiceType } from '@prisma/client';
-import { revalidatePath } from 'next/cache';
+} from "@/lib/notification/invoice-notify";
+import { ServerAction } from "@/types/action";
+import { TErrorHandler } from "@/types/globalError";
+import { InvoiceType } from "@prisma/client";
+import { revalidatePath } from "next/cache";
 
 export async function authorizeInvoice(
   invoiceId: string,
   authorizedName: string,
+  url: string,
   invoiceType: string
 ): Promise<ServerAction | TErrorHandler> {
   try {
@@ -25,7 +26,9 @@ export async function authorizeInvoice(
       },
       data: {
         authorizedName,
+        signatureImage: url,
         type: InvoiceType.Invoice,
+        wasAuthorized: true,
         convertedAt: new Date(),
       },
     });
@@ -51,7 +54,7 @@ export async function authorizeInvoice(
 
           if (product.quantity > Number(findInventoryProduct?.quantity ?? 0)) {
             // low inventory send notification to all admins and managers
-            console.log('convert to estimate', invoiceId);
+            console.log("convert to estimate", invoiceId);
             await db.invoice.update({
               where: {
                 id: invoiceId,
@@ -85,7 +88,7 @@ export async function authorizeInvoice(
               ).toFixed(2),
               vendorId: productsWithQuantity.find((m) => m.id === product.id)
                 ?.vendorId,
-              type: 'Sale',
+              type: "Sale",
               invoiceId,
             },
           });
@@ -113,12 +116,12 @@ export async function authorizeInvoice(
           firstName: true,
         },
       });
-      clientName = res?.firstName || 'Client';
+      clientName = res?.firstName || "Client";
     } else {
-      clientName = 'Client';
+      clientName = "Client";
     }
 
-    if (updatedInvoice.type === 'Invoice') {
+    if (updatedInvoice.type === "Invoice") {
       // send notification to all admins and managers or sales when invoice is authorized
       sendInvoiceAuthorizeNotification({
         invoiceId: updatedInvoice.id,
@@ -146,12 +149,12 @@ export async function authorizeInvoice(
       // });
     }
 
-    revalidatePath('/estimate');
+    revalidatePath("/estimate");
   } catch (err) {
     return errorHandler(err);
   } finally {
     return {
-      type: 'success',
+      type: "success",
     };
   }
 }
@@ -166,13 +169,14 @@ export async function deleteInvoiceAuthorize(
       },
       data: {
         authorizedName: null,
+        signatureImage: null,
       },
     });
 
-    revalidatePath('/estimate');
+    revalidatePath("/estimate");
 
     return {
-      type: 'success',
+      type: "success",
     };
   } catch (err) {
     return errorHandler(err);

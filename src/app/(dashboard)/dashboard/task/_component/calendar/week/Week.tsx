@@ -30,6 +30,13 @@ import CalendarTooltip from "../CalendarTooltip";
 import DraggableTaskTooltip from "../DraggableTaskTooltip";
 import { Skeleton } from "antd";
 
+// Gradient priority classes for tasks
+const priorityClasses = {
+  Low: "bg-gradient-to-r from-blue-500 to-indigo-600 shadow-indigo-600/50",
+  Medium: "bg-gradient-to-r from-cyan-600 to-blue-500 shadow-cyan-600/50",
+  High: "bg-gradient-to-r from-teal-700 to-green-700 shadow-teal-700/50",
+};
+
 // Generate the hourly rows
 const hourlyRows = Array.from({ length: 24 }, (_, i) => {
   const emptyCells = Array.from({ length: 7 }, () => "");
@@ -469,7 +476,7 @@ export default function Week() {
                       cellWidth,
                       fontSize,
                       columnIndex === 0 &&
-                        "border-0 absolute -left-[6px] p-2 text-end -top-[35.5px] justify-end pr-3",
+                      "border-0 absolute -left-[6px] p-2 text-end -top-[35.5px] justify-end pr-3",
                       columnIndex === 1 && "border-l",
                       rowIndex === 0 && "border-t"
                     );
@@ -503,7 +510,7 @@ export default function Week() {
                         style={{
                           backgroundColor:
                             draggedOverRow?.r === rowIndex &&
-                            draggedOverRow?.c === columnIndex
+                              draggedOverRow?.c === columnIndex
                               ? "rgba(0, 0, 0, 0.1)"
                               : cellBgColor,
                         }}
@@ -522,11 +529,10 @@ export default function Week() {
               let top = `${71 * event.rowStartIndex + 71}px`;
               // width according to the cell width
               let width = "calc(12.5% - 4px)"; // prev = 12.9%
-              // @ts-ignore
-              const backgroundColor = event.priority
-                ? // @ts-ignore
-                  TASK_COLOR[event.priority]
-                : "#FAF9F6";
+              // Apply gradient based on priority
+              const priorityClass =
+                priorityClasses[event.priority as keyof typeof priorityClasses] ||
+                priorityClasses.Low;
               // Calculate how many tasks are in the same row
               //TODO:
               const eventStartTime = moment(event.startTime, "HH:mm");
@@ -579,12 +585,14 @@ export default function Week() {
                   <Tooltip key={`${event.id}-${index}`}>
                     <DraggableTaskTooltip
                       //@ts-ignore
-                      className={`absolute top-0 w-full rounded-lg border`}
+                      className={cn(
+                        `absolute top-0 w-full rounded-lg border transition-all duration-300 ease-in-out hover:shadow-lg hover:scale-[1.01]`,
+                        event.type !== "appointment" ? priorityClass : "bg-white/95 dark:bg-slate-800/95 border-slate-200"
+                      )}
                       style={{
                         left,
                         top: `${topPosition}px`,
                         height,
-                        backgroundColor,
                         width,
                       }}
                       task={event}

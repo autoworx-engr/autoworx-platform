@@ -5,11 +5,13 @@ import type { db } from "@/lib/db";
 import React, { useState } from "react";
 import LaborItems from "./LaborItems";
 import ReDoModal from "./ReDoModal";
-import { Technician, VehicleParts } from "@prisma/client";
+import { Technician, TechnicianImage, VehicleParts } from "@prisma/client";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
 type TProps = {
   invoiceTechnicians: (Technician & { name: string })[];
+  openService: number | null;
+  setOpenService: React.Dispatch<React.SetStateAction<number | null>>;
   items: Awaited<
     ReturnType<
       typeof db.invoiceItem.findMany<{
@@ -29,6 +31,7 @@ type TProps = {
       name: string;
       hasPermission: boolean;
       vehicleParts: VehicleParts[];
+      images?: TechnicianImage[];
     })[]
   >;
 };
@@ -39,8 +42,10 @@ export function InvoiceItems({
   invoiceStatus,
   writePermission,
   techniciansPerItem,
+  openService,
+  setOpenService,
 }: TProps) {
-  const [openService, setOpenService] = useState<number | null>(null);
+  // const [openService, setOpenService] = useState<number | null>(null);
   return items?.map((item) => {
     if (!item.service) return null;
     return (
@@ -100,7 +105,7 @@ export function InvoiceItems({
               invoiceId={item?.invoiceId as string}
               serviceId={item?.serviceId as number}
               writePermission={writePermission}
-              technicianList={techniciansPerItem[item.id] || []}
+              technicianList={(techniciansPerItem[item.id] || []) as any}
             />
           </div>
         )}

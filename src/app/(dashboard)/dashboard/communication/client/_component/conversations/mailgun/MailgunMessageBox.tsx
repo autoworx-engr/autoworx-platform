@@ -15,7 +15,10 @@ import RedirectToSettings from "./RedirectToSettings";
 
 type TProps = {
   clientId: number;
-  conversations?: (MailgunEmail & { attachments: MailgunEmailAttachment[] })[];
+  conversations?: (MailgunEmail & { attachments: MailgunEmailAttachment[], user?: {
+      firstName: string;
+      lastName: string | null;
+    } | null; })[];
   clientEmail: boolean;
 };
 
@@ -26,7 +29,7 @@ export default function MailgunMessageBox({
 }: TProps) {
   const [conversations, setConversations] = useState(initialMessages);
   const setClientConversationTrack = useClientCommunicationStore(
-    (state) => state.setClientConversationTrack,
+    (state) => state.setClientConversationTrack
   );
 
   const user = useGetCurrentUser();
@@ -44,7 +47,7 @@ export default function MailgunMessageBox({
             if (!prevMails) return [data];
             return [...prevMails, data];
           });
-        },
+        }
       );
     return () => {
       return pusher
@@ -73,8 +76,16 @@ export default function MailgunMessageBox({
     <>
       {clientEmail ? (
         <div className="flex flex-col h-full gap-0">
-          <div className="flex-1 overflow-hidden"><MaiGunBox conversations={conversations} clientId={clientId} /></div>
-          <div className="flex-shrink-0"><SendMail clientId={clientId} setConversations={setConversations} /></div>
+          <div className="flex-1 overflow-hidden">
+            <MaiGunBox conversations={conversations} clientId={clientId} />
+          </div>
+          <div className="flex-shrink-0">
+            <SendMail
+              clientId={clientId}
+              companyId={user!.companyId}
+              setConversations={setConversations}
+            />
+          </div>
         </div>
       ) : (
         <RedirectToSettings

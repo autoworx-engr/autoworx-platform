@@ -79,7 +79,7 @@ export async function POST(
 
     // Process for each matching company configuration
     for (const infobipConfig of infobipConfigs) {
-      const client = await db.client.findFirst({
+      let client = await db.client.findFirst({
         where: {
           mobile: {
             endsWith: from.replace("+", ""),
@@ -95,6 +95,25 @@ export async function POST(
           },
         },
       });
+
+      if (!client) {
+        client = await db.client.create({
+          data: {
+            firstName: from,
+            lastName: " ",
+            mobile: from,
+            companyId: infobipConfig.companyId,
+          },
+          include: {
+            Lead: {
+              select: {
+                id: true,
+                columnId: true,
+              },
+            },
+          },
+        });
+      }
 
       if (client) {
         // Create SMS record in database
@@ -132,7 +151,7 @@ export async function POST(
         });
 
         // Update chat track
-        await updateNewSMSChatTrack({
+        updateNewSMSChatTrack({
           clientId: client.id,
           smsLastMessage: messageText,
           lastMessageBy: "Client",
@@ -150,15 +169,15 @@ export async function POST(
         pusher.trigger(channelName, "client", { count: totalUnReadMessages });
 
         // Send Pusher message for real-time updates
-        await receiveTwiloMessage(clientSMS);
+        receiveTwiloMessage(clientSMS);
 
         // Send client mail or SMS notification
-        await sendClientMailOrSMSNotify(client.id);
+        sendClientMailOrSMSNotify(client.id);
 
         // Trigger pipeline automation if applicable
         try {
           if (client.Lead?.id && client.Lead?.columnId) {
-            await updatePipelineAutomationTriggerWithToken({
+            updatePipelineAutomationTriggerWithToken({
               companyId: client.companyId,
               condition: "MESSAGE_RECEIVED_CLIENT",
               leadId: client.Lead.id,

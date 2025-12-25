@@ -44,7 +44,6 @@ type EmployeeParams = {
 };
 export const getEmployeesForPaginate = cache(
   async ({ companyId, page, take, filter }: EmployeeParams) => {
-    console.log({ filter: filter?.dateRange });
     const whereClause: Prisma.UserWhereInput = {
       companyId,
     };
@@ -54,6 +53,8 @@ export const getEmployeesForPaginate = cache(
     }
 
     if (filter?.searchParams) {
+      const trimmed = filter?.searchParams.trim();
+      const numericId = /^\d+$/.test(trimmed) ? Number(trimmed) : null;
       whereClause.OR = filter.searchParams
         .split(" ")
         .flatMap(searchText => [
@@ -62,6 +63,9 @@ export const getEmployeesForPaginate = cache(
           { email: { contains: searchText, mode: "insensitive" } },
           { phone: { contains: searchText, mode: "insensitive" } },
         ]) as Prisma.UserWhereInput[];
+      whereClause.OR.push(
+        ...(numericId !== null ? [{ id: numericId }] : [])
+      )
     }
 
     if (
@@ -97,6 +101,7 @@ export const getEmployeesForPaginate = cache(
         zip: true,
         companyName: true,
         image: true,
+        countryCode:true,
         salaryHistory: {
           where: {
             isActive: true,

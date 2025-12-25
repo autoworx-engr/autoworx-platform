@@ -12,6 +12,7 @@ import moment from "moment";
 import { useEffect, useState } from "react";
 import Filter from "./Filter";
 import { Spin } from "antd";
+import CarLoading from "@/components/common/CarLoading";
 
 const WorkOrders = () => {
   const { data: invoices } = useServerGet(getWorkOrders);
@@ -126,7 +127,7 @@ const WorkOrders = () => {
           <WorkOrdersTableSkeleton rows={15} />
         ) : !filteredInvoices ? (
           <div className="flex h-[70vh] pb-10 w-full items-center justify-center">
-            <Spin size="large" />
+            <CarLoading />
           </div>
         ) : (
           <table className="hidden w-full h-full shadow-md lg:table">

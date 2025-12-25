@@ -6,12 +6,12 @@ import {
   useEstimateCreateStore,
 } from "@/stores/estimate-create";
 import { FullPayment } from "@/types/db";
-import { Invoice, InvoicePhoto, Task } from "@prisma/client";
+import { Invoice, InvoicePhoto, InvoiceTemplate, Task } from "@prisma/client";
 import { useEffect } from "react";
 
 export async function fetchImageAsFile(
   url: string,
-  filename: string,
+  filename: string
 ): Promise<File> {
   const response = await fetch(url);
   const blob = await response.blob();
@@ -25,15 +25,18 @@ export default function SyncEstimate({
   tasks,
   payment,
   inspections,
+  template,
 }: {
-  invoice: Invoice;
+  invoice?: Invoice;
+  template?: InvoiceTemplate;
   items: Item[];
   photos: InvoicePhoto[];
   tasks: Task[];
   payment: FullPayment;
   inspections: InspectionType[];
 }) {
-  console.log({ photos });
+  const { invoiceId } = useEstimateCreateStore();
+  console.log("template", template);
   useEffect(() => {
     // async function fetchPhotos() {
     //   const photoFiles = await Promise.all(
@@ -52,24 +55,53 @@ export default function SyncEstimate({
     // }
 
     useEstimateCreateStore.setState({
-      invoiceId: invoice.id,
-      subtotal: parseFloat(invoice.subtotal?.toString() || "0"),
-      type: invoice.type,
+      invoiceId: invoice ? invoice.id : invoiceId,
+      template: template,
+      subtotal: parseFloat(
+        invoice
+          ? invoice.subtotal?.toString() || "0"
+          : template?.subtotal?.toString() || "0"
+      ),
+      type: invoice && invoice.type,
       photos: photos.map((photo) => ({
         id: photo.id,
-        photo: photo.photo, 
+        photo: photo.photo,
       })),
-      discount: parseFloat(invoice.discount?.toString() || "0"),
-      tax: parseFloat(invoice.tax?.toString() || "0"),
-      serviceFee: parseFloat(invoice.serviceFee?.toString() || "0"),
-      deposit: parseFloat(invoice.deposit?.toString() || "0"),
-      grandTotal: parseFloat(invoice.grandTotal?.toString() || "0"),
-      due: parseFloat(invoice.due?.toString() || "0"),
-      internalNotes: invoice.internalNotes || "",
-      terms: invoice.terms || "",
-      policy: invoice.policy || "",
-      customerNotes: invoice.customerNotes || "",
-      customerComments: invoice.customerComments || "",
+      discount: parseFloat(
+        invoice
+          ? invoice.discount?.toString() || "0"
+          : template?.discount?.toString() || "0"
+      ),
+      tax: parseFloat(
+        invoice
+          ? invoice.tax?.toString() || "0"
+          : template?.tax?.toString() || "0"
+      ),
+      serviceFee: parseFloat(
+        invoice
+          ? invoice.serviceFee?.toString() || "0"
+          : template?.serviceFee?.toString() || "0"
+      ),
+      deposit: parseFloat((invoice && invoice.deposit?.toString()) || "0"),
+      grandTotal: parseFloat(
+        invoice
+          ? invoice.grandTotal?.toString() || "0"
+          : template?.grandTotal?.toString() || "0"
+      ),
+      due: invoice
+        ? Number(invoice?.due ?? 0)
+        : Math.max(
+            Number(template?.grandTotal ?? 0) - (Number(0) + Number(0)),
+            0
+          ),
+      internalNotes: invoice
+        ? invoice.internalNotes || ""
+        : template?.internalNotes || "",
+      terms: (invoice && invoice.terms) || "",
+      policy: (invoice && invoice.policy) || "",
+      customerNotes:
+        (invoice ? invoice.customerNotes : template?.customerNotes) || "",
+      customerComments: (invoice && invoice.customerComments) || "",
       tasks: tasks.map((task) => ({
         id: task.id,
         task: `${task.title}: ${task.description || ""}`,
@@ -77,9 +109,13 @@ export default function SyncEstimate({
       items,
       currentSelectedCategoryId: null,
       payment,
-      totalPayment: parseFloat(invoice.totalPayment?.toString() || "0"),
-      damageNotes: invoice.damageNotes || "",
+      totalPayment: parseFloat(
+        (invoice && invoice.totalPayment?.toString()) || "0"
+      ),
+      damageNotes:
+        (invoice ? invoice.damageNotes : template?.damageNotes) || "",
       inspections,
+      title: (template && template?.title) || "",
     });
 
     // fetchPhotos();

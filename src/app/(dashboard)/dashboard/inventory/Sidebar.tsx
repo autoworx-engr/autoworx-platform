@@ -18,6 +18,7 @@ import QRcode from "./QRcode";
 import ReplenishProductForm from "./ReplenishProductForm";
 import SalesPurchaseHistory from "./SalesPurchaseHistory";
 import UseProductForm from "./UseProductForm";
+import ProductTooltipContainer from "./ProductTooltipContainer";
 
 export default async function Sidebar({
   productId,
@@ -72,36 +73,37 @@ export default async function Sidebar({
     <div
       className={`mt-3 ${
         hidden ? "hidden" : !!productId ? "flex" : "hidden md:flex"
-      }  h-fit lg:h-full w-fit mx-auto flex-col overflow-y-scroll md:mt-12 md:w-1/2`}
+      }  h-fit lg:h-full w-full mx-auto flex-col md:mt-12 md:w-1/2`}
     >
-      <div className="flex flex-col gap-4 lg:flex-row">
-        <div className="flex flex-col justify-between px-5 md:px-0">
-          <div className="app-shadow rounded-lg bg-background px-6 py-2 2xl:py-6">
-            <div className="#h-16 #w-32 px-2 py-3 md:py-0 2xl:p-4">
-              <h3 className="text-md text-nowrap text-center font-semibold 2xl:text-2xl">
+      <div className="flex flex-col gap-6 lg:flex-row">
+        {/* LEFT COLUMN: Financial Metrics */}
+        <div className="flex flex-col gap-4 lg:w-1/3 xl:w-1/4">
+          {/* Total Value Card */}
+          <div className="group relative flex-1 flex items-center justify-center overflow-hidden rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-900/5 transition-all duration-300 hover:-translate-y-1 hover:shadow-md dark:bg-slate-950 dark:ring-slate-800">
+            <div className="absolute inset-0 bg-gradient-to-br from-[#6571FF]/10 to-[#6571FF]/10 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+
+            <div className="relative z-10 flex flex-col my-auto items-center justify-center space-y-2 text-center">
+              <h3 className="text-sm font-medium uppercase tracking-wider text-slate-500">
                 Total Value
               </h3>
-              <p className="mt-2 text-center text-2xl font-bold 2xl:text-4xl">
+              <div className="text-3xl font-bold tracking-tight md:text-4xl">
                 {product && (
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <span className="cursor-default text-3xl">
+                        <span className="cursor-default bg-gradient-to-br from-slate-900 to-slate-700 bg-clip-text text-transparent dark:from-white dark:to-slate-300">
                           {(() => {
                             const totalPrice =
                               parseFloat(product.price?.toString() || "0") *
                               parseFloat(product.quantity?.toString() || "0");
-
-                            const totalStr = totalPrice.toLocaleString(); // comma separated
-
-                            // Shorten display if too long
-                            return totalStr.length > 6
-                              ? totalStr.slice(0, 6) + ".."
+                            const totalStr = totalPrice.toLocaleString();
+                            return totalStr.length > 8
+                              ? totalStr.slice(0, 8) + ".."
                               : totalStr;
                           })()}
                         </span>
                       </TooltipTrigger>
-                      <TooltipContent>
+                      <TooltipContent className="bg-slate-900 text-white border-none shadow-xl">
                         <p>
                           {formatCurrency(
                             parseFloat(product.price?.toString() || "0") *
@@ -112,241 +114,229 @@ export default async function Sidebar({
                     </Tooltip>
                   </TooltipProvider>
                 )}
-              </p>
+              </div>
             </div>
           </div>
-          <div className="app-shadow mt-4 rounded-lg bg-background p-6 px-6">
-            <div className="#h-16 #w-32 px-2 py-0 2xl:p-4">
-              <h3 className="text-md text-center font-semibold 2xl:text-2xl">
-                Price
-              </h3>
-              <p className="mt-2 text-nowrap text-center text-2xl font-bold 2xl:text-3xl">
-                {product && (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="cursor-default text-3xl">
-                          {(() => {
-                            const price = parseFloat(
-                              product.price?.toString() || "0"
-                            );
-                            const priceStr = price.toLocaleString(); // comma separated
 
-                            return priceStr.length > 6
-                              ? priceStr.slice(0, 6) + ".."
-                              : priceStr;
-                          })()}
-                          <span className="text-base">/{product.unit}</span>
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>
-                          {formatCurrency(
-                            parseFloat(product.price?.toString() || "0")
-                          )}
-                        </p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                )}
-              </p>
+          {/* Unit Price Card */}
+          <div className="group relative flex-1 flex items-center justify-center overflow-hidden rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-900/5 transition-all duration-300 hover:-translate-y-1 hover:shadow-md dark:bg-slate-950 dark:ring-slate-800">
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-100 to-white opacity-0 transition-opacity duration-300 group-hover:opacity-100 dark:from-slate-900 dark:to-slate-900" />
+
+            <div className="relative z-10 flex flex-col items-center justify-center space-y-2 text-center">
+              <h3 className="text-sm font-medium uppercase tracking-wider text-slate-500">
+                Unit Price
+              </h3>
+              <div className="flex items-baseline gap-1">
+                <span className="text-2xl font-bold text-slate-700 dark:text-slate-200">
+                  {product && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="cursor-default">
+                            {(() => {
+                              const price = parseFloat(
+                                product.price?.toString() || "0"
+                              );
+                              const priceStr = price.toLocaleString();
+                              return priceStr.length > 6
+                                ? priceStr.slice(0, 6) + ".."
+                                : priceStr;
+                            })()}
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent className="bg-slate-900 text-white border-none">
+                          <p>
+                            {formatCurrency(
+                              parseFloat(product.price?.toString() || "0")
+                            )}
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                </span>
+                <span className="text-sm font-medium text-slate-400">
+                  /{product?.unit || "unit"}
+                </span>
+              </div>
             </div>
           </div>
         </div>
-        <div className="app-shadow mb-2 w-full rounded-lg bg-[#F8F9FA] p-4 text-xs md:mb-0 md:bg-background 2xl:text-base">
-          <div className="grid grid-cols-1 gap-0  lg:grid-cols-5 md:gap-10">
-            <div className="order-2 col-span-2 px-[10px] py-1 md:order-1 md:px-0 md:py-0">
-              <h3 className="hidden text-lg font-semibold md:block text-nowrap">
-                Inventory Details
-              </h3>
 
-              <p className="mt-2">
-                <span className="font-semibold">Name: </span>{" "}
-                {product && (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="cursor-default">
-                          {product.name?.length > 20
-                            ? product.name.slice(0, 20) + "..."
-                            : product.name}
-                        </span>
-                      </TooltipTrigger>
-                      {product.name?.length > 20 && (
-                        <TooltipContent>
-                          <p>{product.name}</p>
-                        </TooltipContent>
-                      )}
-                    </Tooltip>
-                  </TooltipProvider>
-                )}
-              </p>
-
-              <p className="mt-2">
-                <span className="font-semibold">Type: </span>{" "}
-                {product && (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="cursor-default">
-                          {product.type?.length > 20
-                            ? product.type.slice(0, 20) + "..."
-                            : product.type}
-                        </span>
-                      </TooltipTrigger>
-                      {product.type?.length > 20 && (
-                        <TooltipContent>
-                          <p>{product.type}</p>
-                        </TooltipContent>
-                      )}
-                    </Tooltip>
-                  </TooltipProvider>
-                )}
-              </p>
-
-              <p className="mt-2 text-justify">
-                <span className="font-semibold">Description: </span>{" "}
-                {product && (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="cursor-default">
-                          {product.description &&
-                          product.description.length > 80
-                            ? product.description.slice(0, 80) + "..."
-                            : product.description}
-                        </span>
-                      </TooltipTrigger>
-                      {product.description &&
-                        product.description.length > 80 && (
-                          <TooltipContent className="max-w-xs">
-                            <p>{product.description}</p>
-                          </TooltipContent>
-                        )}
-                    </Tooltip>
-                  </TooltipProvider>
-                )}
-              </p>
-            </div>
-
-            {product && (
-              <div className="order-1 col-span-3 grid grid-cols-2 md:order-2 md:gap-10">
-                {/* qr code */}
-                <div className="block md:hidden">
-                  <div>
-                    {imgUrl && (
-                      //  eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={imgUrl}
-                        alt="qr code"
-                        className="mx-auto h-40 w-40 rounded-lg border border-gray-500 p-0.5"
-                      />
-                    )}
-                  </div>
-                  {/* <button
-                      className="mx-auto mt-3 flex w-fit items-center gap-1 rounded-md border border-slate-400 p-1 px-3"
-                    >
-                      <FaPrint className="text-sm" />
-                      Print
-                    </button> */}
-                  <QRcode imgUrl={imgUrl!} />
+        {/* RIGHT COLUMN: Inventory Details & Actions */}
+        <div className="flex-1 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-900/5 dark:bg-slate-950 dark:ring-slate-800">
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-12">
+            {/* Details Section */}
+            <div className="col-span-1 md:col-span-7 lg:col-span-8 flex flex-col justify-center space-y-6">
+              <div className="space-y-4 border p-2 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-800 dark:text-slate-100">
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#00b8b0]"></span>
+                    Inventory Details
+                  </h3>
+                  {/* Mobile Edit Trigger - kept from original */}
+                  {product && (
+                    <div className="md:hidden">
+                      <EditProduct productData={product as any} />
+                    </div>
+                  )}
                 </div>
-                <div className="flex flex-col items-center justify-center">
-                  <div className="relative hidden text-nowrap rounded-lg border p-4 text-center font-semibold md:block">
-                    {isWarningForQuantity && (
-                      <div className="absolute right-2 top-2">
-                        <CircleAlert size={24} className="text-red-600" />
-                      </div>
-                    )}
-                    <div>
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span
-                              className={cn(
-                                "text-3xl cursor-default",
-                                Number(product.quantity) === 0 && "text-red-600"
-                              )}
-                            >
-                              {String(product.quantity).length > 4
-                                ? String(product.quantity).slice(0, 4) + ".."
-                                : Number(product.quantity)}
-                            </span>
-                          </TooltipTrigger>
-                          {String(product.quantity).length > 4 && (
-                            <TooltipContent>
-                              <p>{Number(product.quantity)}</p>
-                            </TooltipContent>
-                          )}
-                        </Tooltip>
-                      </TooltipProvider>
 
-                      <span className="truncate">
-                        /
-                        {product.unit ? (
+                <div className="grid gap-y-4 text-sm">
+                  {/* Name */}
+                  <div className="grid grid-cols-3 gap-1 sm:gap-4 px-2">
+                    <span className="font-medium text-slate-500">Name</span>
+                    <div className="col-span-2 font-medium text-slate-700 dark:text-slate-300">
+                      {product && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="cursor-default">
+                                {product.name?.length > 30
+                                  ? product.name.slice(0, 30) + "..."
+                                  : product.name}
+                              </span>
+                            </TooltipTrigger>
+                            {product.name?.length > 30 && (
+                              <TooltipContent>
+                                <p>{product.name}</p>
+                              </TooltipContent>
+                            )}
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Type */}
+                  <div className="grid grid-cols-3 gap-1 sm:gap-4 border-y p-2">
+                    <span className="font-medium text-slate-500">Type</span>
+                    <div className="col-span-2">
+                      <span className="inline-flex items-center rounded-md bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-800 dark:bg-slate-800 dark:text-slate-200">
+                        {product && (
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <span className="cursor-default">
-                                  {product.unit.length > 5
-                                    ? product.unit.slice(0, 5) + "..."
-                                    : product.unit}
+                                  {product.type?.length > 20
+                                    ? product.type.slice(0, 20) + "..."
+                                    : product.type}
                                 </span>
                               </TooltipTrigger>
-                              {product.unit.length > 5 && (
+                              {product.type?.length > 20 && (
                                 <TooltipContent>
-                                  <p>{product.unit}</p>
+                                  <p>{product.type}</p>
                                 </TooltipContent>
                               )}
                             </Tooltip>
                           </TooltipProvider>
-                        ) : (
-                          "-"
                         )}
                       </span>
                     </div>
-                    <span>Remaining</span>
                   </div>
-                  {(user.employeeType === "Admin" ||
-                    user.employeeType === "Manager") && (
-                    <div className="mt-3 flex flex-col space-y-2">
-                      <button className="flex items-center justify-center rounded-md border px-2 py-1 text-center text-[12px] md:hidden">
-                        <EditProduct productData={product as any} />
-                      </button>
-                      <UseProductForm
-                        productId={productId}
-                        invoiceIds={invoiceWithClient}
-                        cost={parseFloat(product.price?.toString() || "0")} // This should still work
-                        productType={product.type}
-                      />
-                      <ReplenishProductForm
-                        lastUnit={product.unit}
-                        productId={productId}
-                      />
+
+                  {/* Description */}
+                  <div className="grid grid-cols-1 gap-1 sm:grid-cols-3 sm:gap-4 px-2">
+                    <span className="font-medium text-slate-500">
+                      Description
+                    </span>
+                    <div className="col-span-2 text-slate-600 dark:text-slate-400">
+                      {product && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="cursor-default leading-relaxed">
+                                {product.description &&
+                                product.description.length > 80
+                                  ? product.description.slice(0, 80) + "..."
+                                  : product.description ||
+                                    "No description available."}
+                              </span>
+                            </TooltipTrigger>
+                            {product.description &&
+                              product.description.length > 80 && (
+                                <TooltipContent className="max-w-xs p-3">
+                                  <p>{product.description}</p>
+                                </TooltipContent>
+                              )}
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Admin Actions */}
+              {product &&
+                (user.employeeType === "Admin" ||
+                  user.employeeType === "Manager") && (
+                  <div className="flex w-full flex-col gap-2">
+                    <div className="flex w-full items-center justify-center gap-2 rounded-lg dark:bg-slate-900">
+                      <div className="grid w-full grid-cols-2 gap-2">
+                        {/* Wrapping these forms/buttons to ensure they stretch evenly */}
+                        <div className="w-full [&>button]:w-full">
+                          <UseProductForm
+                            productId={productId}
+                            invoiceIds={invoiceWithClient}
+                            cost={parseFloat(product.price?.toString() || "0")}
+                            productType={product.type}
+                          />
+                        </div>
+                        <div className="w-full [&>button]:w-full">
+                          <ReplenishProductForm
+                            lastUnit={product.unit}
+                            productId={productId}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+            </div>
+
+            {/* Right Side: QR & Quantity & Actions */}
+            {product && (
+              <div className="col-span-1 md:col-span-5 lg:col-span-4 flex flex-col items-center justify-between gap-6 border-t border-slate-100 pt-6 md:border-l md:border-t-0 md:pl-6 md:pt-0 dark:border-slate-800">
+                {/* Quantity Display */}
+                <div className="relative w-full rounded-xl border border-dashed border-slate-200 bg-slate-50/50 p-4 text-center dark:border-slate-800 dark:bg-slate-900/50">
+                  {isWarningForQuantity && (
+                    <div className="absolute right-2 top-2 animate-pulse">
+                      <CircleAlert size={18} className="text-amber-500" />
                     </div>
                   )}
-                </div>
-                {/* qr code */}
-                <div className="hidden md:block">
-                  <div>
-                    {imgUrl && (
-                      <Image
-                        src={imgUrl}
-                        alt="qr code"
-                        className="mx-auto h-40 w-40 rounded-lg border border-gray-500 p-0.5"
-                        width={160}
-                        height={160}
-                      />
-                    )}
+
+                  <div className="text-xs font-semibold uppercase tracking-widest text-slate-400">
+                    Stock Level
                   </div>
-                  {/* <button
-                      className="mx-auto mt-3 flex w-fit items-center gap-1 rounded-md border border-slate-400 p-1 px-3"
-                    >
-                      <FaPrint className="text-sm" />
-                      Print
-                    </button> */}
-                  <QRcode imgUrl={imgUrl!} />
+
+                  <div className="mt-1 flex items-center justify-center gap-1">
+                    <ProductTooltipContainer product={product} />
+                    <span className="text-sm font-medium text-slate-400 mt-3">
+                      / {product?.unit}
+                    </span>
+                  </div>
                 </div>
+
+                {/* QR Code */}
+                {product && (
+                  <div className="flex flex-col items-center justify-center gap-2">
+                    <div className="group relative rounded-xl bg-white p-2 shadow-sm ring-1 ring-slate-200 transition-all hover:ring-slate-300 dark:bg-slate-900 dark:ring-slate-800">
+                      {imgUrl ? (
+                        <div className="relative h-32 w-32 overflow-hidden rounded-lg">
+                          <Image
+                            src={imgUrl}
+                            alt="QR Code"
+                            fill
+                            className="object-contain"
+                          />
+                        </div>
+                      ) : (
+                        <QRcode imgUrl={imgUrl!} />
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>

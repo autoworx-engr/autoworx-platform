@@ -9,6 +9,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRef, useState, useTransition } from "react";
 import { ChangePassword } from "./changePassword";
+import PhoneInput from "@/components/PhoneInput";
 
 const MyAccount = ({ user }: { user: User }) => {
   const [profilePic, setProfilePic] = useState<File | null>(null);
@@ -23,7 +24,19 @@ const MyAccount = ({ user }: { user: User }) => {
     city: user?.city || "",
     state: user?.state || "",
     zip: user?.zip || "",
+    countryCode: user?.countryCode || "",
   });
+
+  const handlePhoneChange = (num: string, code: string, isoCode:string) => {
+    
+    const fullPhoneNumber = `${code}${num}`; 
+
+    setUserInfo((prev) => ({
+      ...prev,
+      phone: fullPhoneNumber,
+      countryCode: isoCode || ""
+    }));
+  };
   const isUserInfoChanged =
     JSON.stringify(userInfo) !==
       JSON.stringify({
@@ -103,6 +116,7 @@ const MyAccount = ({ user }: { user: User }) => {
     let result = await editMyAccountInfo({
       ...userInfo,
       image: imageUrl,
+      countryCode: userInfo.countryCode,
     });
     setUserInfo({
       ...userInfo,
@@ -211,16 +225,16 @@ const MyAccount = ({ user }: { user: User }) => {
                   }}
                   readOnly
                 />
-                <SlimInput
-                  name="phone"
-                  value={userInfo?.phone || ""}
-                  onChange={(e) => {
-                    setUserInfo({
-                      ...userInfo,
-                      [e.target.name]: e.target.value,
-                    });
-                  }}
-                />
+                
+                <PhoneInput
+    
+    defaultValue={user?.phone || ""} 
+     defaultIsoCode={user?.countryCode!}
+    // value={userInfo.phone}
+   
+    onChange={handlePhoneChange} 
+    label="Phone" 
+  />
               </div>
               {/* address */}
               <div className="grid grid-cols-1">

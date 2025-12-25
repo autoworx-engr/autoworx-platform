@@ -13,22 +13,29 @@ type ImageItem = {
 type LightboxProps = {
   getItems: ImageItem[];
   startIndex?: number;
+  onClose?: () => void;
 };
 
-const ComponentsLightbox = ({ getItems = [], startIndex = 0 }: LightboxProps) => {
+const ComponentsLightbox = ({
+  getItems = [],
+  startIndex = 0,
+  onClose,
+}: LightboxProps) => {
   const [isOpen, setIsOpen] = useState<any>(true);
   const [maxZoomPixelRatio, setMaxZoomPixelRatio] = React.useState(4);
 
   const router = useRouter();
 
   const handleImageClick = () => {
-    router.back();
+    if (onClose) {
+      onClose();
+    } else {
+      router.back();
+    }
   };
 
-  
-
   return (
-    <div className="mt-10 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
       <Lightbox
         styles={{ container: { backgroundColor: "rgba(0,0,0,0.6)" } }}
         open={isOpen}
@@ -37,6 +44,10 @@ const ComponentsLightbox = ({ getItems = [], startIndex = 0 }: LightboxProps) =>
           setIsOpen(false);
         }}
         slides={getItems}
+        render={{
+          buttonPrev: getItems.length > 1 ? undefined : () => null,
+          buttonNext: getItems.length > 1 ? undefined : () => null,
+        }}
         index={startIndex}
         plugins={[Zoom]}
         zoom={{ maxZoomPixelRatio }}

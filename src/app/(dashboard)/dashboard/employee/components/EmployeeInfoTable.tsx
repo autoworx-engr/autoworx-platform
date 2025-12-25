@@ -5,6 +5,7 @@ import { WORK_ORDER_STATUS_COLOR } from "@/lib/consts";
 import { useEmployeeWorkFilterStore } from "@/stores/employeeWorkFilter";
 import moment from "moment-timezone";
 import React, { useEffect } from "react";
+import { Pagination } from "antd";
 import { EmployeeWorkInfo } from "./employeeWorkInfoType";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { convertDateToMidnightInTimezone } from "@/utils/convertDateToMidnightInTimezone";
@@ -19,6 +20,10 @@ export default function EmployeeInfoTable({
     useEmployeeWorkFilterStore();
   const [filteredInfo, setFilteredInfo] =
     React.useState<EmployeeWorkInfo>(info);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = React.useState<number>(1);
+  const [pageSize, setPageSize] = React.useState<number>(20);
 
   useEffect(() => {
     let filtered = info;
@@ -49,7 +54,6 @@ export default function EmployeeInfoTable({
       // Rebuild moment using Detroit timezone from date strings
       const convertedStart = moment.tz(startStr, timezone).startOf("day").utc();
       const convertedEnd = moment.tz(endStr, timezone).endOf("day").utc();
-  
 
       filtered = filtered.filter((row) => {
         const rowDate = moment.utc(row.dateClosed); // Backend returns UTC
@@ -100,7 +104,26 @@ export default function EmployeeInfoTable({
 
     // Update the filtered info state
     setFilteredInfo(filtered);
+    // reset to first page
+    setCurrentPage(1);
   }, [search, dateRange, amount, service, category, status, info]);
+
+  const totalItems = filteredInfo.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(totalPages);
+    if (currentPage < 1) setCurrentPage(1);
+  }, [currentPage, totalPages]);
+
+  const pageStart = (currentPage - 1) * pageSize;
+  const pageEnd = pageStart + pageSize;
+  const paginatedInfo = filteredInfo.slice(pageStart, pageEnd);
+
+  const handlePageChange = (page: number, size: number) => {
+    setCurrentPage(page);
+    if (size && size !== pageSize) setPageSize(size);
+  };
 
   return (
     <div className="mt-5 w-full pb-20">
@@ -108,7 +131,7 @@ export default function EmployeeInfoTable({
         <div className="mx-2 mb-2.5 flex items-center justify-between font-bold text-[#66738C]">
           <p>Invoice/Estimate</p>
         </div>
-        {filteredInfo.map((info, index) => (
+        {paginatedInfo.map((info, index) => (
           <div
             key={index}
             className="mx-1 mb-1.5 flex justify-between rounded-[5px] border border-[#BFC4FF] p-[10px] font-normal"
@@ -128,6 +151,18 @@ export default function EmployeeInfoTable({
                 {info.invoice?.vehicle?.year || ""}{" "}
                 {info.invoice?.vehicle?.make} {info.invoice?.vehicle?.model}{" "}
                 {info.invoice?.vehicle?.other}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Assigned:{" "}
+                {info.date
+                  ? moment.tz(info.date, timezone).format("DD.MM.YYYY")
+                  : "-"}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Closed:{" "}
+                {info.dateClosed
+                  ? moment.tz(info.dateClosed, timezone).format("DD.MM.YYYY")
+                  : "-"}
               </p>
             </div>
             <div>
@@ -156,7 +191,7 @@ export default function EmployeeInfoTable({
             </tr>
           </thead>
           <tbody>
-            {filteredInfo.map((row, index) => (
+            {paginatedInfo.map((row, index) => (
               <tr
                 key={index}
                 className={index % 2 === 0 ? "bg-background" : "bg-blue-100"}
@@ -204,6 +239,33 @@ export default function EmployeeInfoTable({
             ))}
           </tbody>
         </table>
+        {/* Desktop pagination  */}
+        <div className="mt-3 flex items-center justify-end">
+          <Pagination
+            className="custom-pagination"
+            current={currentPage}
+            pageSize={pageSize}
+            total={totalItems}
+            onChange={(page, size) => {
+              handlePageChange(page, size!);
+            }}
+            showSizeChanger
+          />
+        </div>
+      </div>
+      {/* Mobile pagination */}
+      <div className="lg:hidden mx-2 mt-2 mb-6 flex items-center justify-center">
+        <Pagination
+          current={currentPage}
+          pageSize={pageSize}
+          total={totalItems}
+          onChange={(page, size) => {
+            handlePageChange(page, size!);
+          }}
+          showSizeChanger
+          pageSizeOptions={["5", "10", "25"]}
+          size="small"
+        />
       </div>
     </div>
   );

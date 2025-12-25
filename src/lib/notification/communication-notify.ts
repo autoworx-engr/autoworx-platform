@@ -135,3 +135,38 @@ export const sendInternalMessageNotification = async ({
     throw err;
   }
 };
+
+
+type TCollaborationMessageNotification = {
+  companyName?: string;
+  toUserId: number;
+};
+// COMMUNICATION NOTIFICATION FOR COLLABORATION MESSAGES
+export const sendCollaborationMessageNotification = async ({
+  toUserId,
+  companyName,
+}: TCollaborationMessageNotification) => {
+  try {
+    const sessionUser = await getUser();
+    const toUser = await getUser(toUserId);
+    const redirectUrl = `/dashboard/communication/collaboration`;
+    const sessionUserFullName = `${sessionUser.firstName} ${sessionUser.lastName}`;
+    const description = `New collaboration message from ${sessionUserFullName} in ${companyName}. View it in Autoworx`;
+    const title = "New Collaboration Message";
+    sendUserNotifications({
+      userId: toUserId,
+      userName: `${toUser.firstName} ${toUser.lastName}`,
+      userEmail: toUser.email || "",
+      userPhoneNo: toUser.phone || "",
+      companyId: toUser.companyId,
+      iconType: "message",
+      title,
+      description,
+      type: "COLLABORATION_MESSAGE_ALERT",
+      redirectUrl,
+    });
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
+};

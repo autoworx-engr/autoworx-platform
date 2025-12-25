@@ -5,10 +5,10 @@ import { Prisma, User } from "@prisma/client";
 import { Pagination } from "antd";
 import moment from "moment-timezone";
 import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useMediaQuery } from "react-responsive";
 import WorkforceMobileCard from "./WorkforceMobileCard";
-import { useSearchParams } from "next/navigation";
 
 type TProps = {
   employees: (User & {
@@ -22,6 +22,8 @@ type TProps = {
   hasDateRange: boolean;
   formattedStartDate: any;
   formattedEndDate: any;
+  page?: number;
+  take?: number;
 };
 
 export default function WorkforceDisplay({
@@ -29,14 +31,26 @@ export default function WorkforceDisplay({
   formattedEndDate,
   formattedStartDate,
   hasDateRange,
+  page,
+  take,
 }: TProps) {
   const isDesktop = useMediaQuery({ query: "(min-width: 640px)" });
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(50); // Default page size set to 50
-  const [showPagination, setShowPagination] = useState(false);
 
+  const [currentPage, setCurrentPage] = useState(page ?? 1);
+  const [pageSize, setPageSize] = useState(take ?? 50); // Default page size set to 50
+  const [showPagination, setShowPagination] = useState(false);
+  const router = useRouter();
   const params = useSearchParams();
   const search = params.get("search");
+  const pathname = usePathname();
+
+  useEffect(() => {
+    setCurrentPage(page ?? 1);
+  }, [page]);
+
+  useEffect(() => {
+    setPageSize(take ?? 50);
+  }, [take]);
 
   useEffect(() => {
     if (employees.length > 0) {
@@ -47,10 +61,18 @@ export default function WorkforceDisplay({
   }, [employees]);
 
   const handlePageChange = (page: number, pageSize?: number) => {
+    const searchParams = new URLSearchParams(params.toString());
     setCurrentPage(page);
+    searchParams.set("page", page.toString());
     if (pageSize) {
       setPageSize(pageSize);
+      searchParams.set("take", pageSize.toString());
+    } else {
+      searchParams.delete("take");
     }
+
+    const newPath = `${pathname}?${searchParams.toString()}`;
+    router.push(newPath);
   };
 
   const startIndex = (currentPage - 1) * pageSize;
@@ -176,19 +198,23 @@ export default function WorkforceDisplay({
   }
 
   return (
-    <div className="space-y-4 md:hidden">
-      {employees.map((employee, index) => (
-        <WorkforceMobileCard
-          key={employee.id}
-          employee={employee}
-          index={index}
-          formattedEndDate={formattedEndDate}
-          formattedStartDate={formattedStartDate}
-          hasDateRange={hasDateRange}
-        />
-      ))}
+    <div>
+      <div className="space-y-4 md:hidden">
+        {paginatedEmployees.map((employee, index) => (
+          <WorkforceMobileCard
+            key={employee.id}
+            employee={employee}
+            index={index}
+            formattedEndDate={formattedEndDate}
+            formattedStartDate={formattedStartDate}
+            hasDateRange={hasDateRange}
+          />
+        ))}
+      </div>
+
+      {/* Mobile Pagination */}
       {showPagination && (
-        <div className="mt-4 flex justify-end">
+        <div className="mt-4 flex justify-center pb-4 md:hidden">
           <Pagination
             className="custom-pagination"
             current={currentPage}
@@ -197,6 +223,7 @@ export default function WorkforceDisplay({
             onChange={handlePageChange}
             showSizeChanger
             onShowSizeChange={handlePageChange}
+            simple
           />
         </div>
       )}

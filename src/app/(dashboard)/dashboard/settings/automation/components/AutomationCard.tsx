@@ -16,6 +16,9 @@ import { useUpdateInvoiceAutomationRule } from "@/hooks/invoice-automation/useUp
 import { useDeleteInventoryAutomationRule } from "@/hooks/inventory-automation/useDeleteInventoryAutomationRule";
 import { useUpdateInventoryAutomationRule } from "@/hooks/inventory-automation/useUpdateInventoryAutomationRule";
 import { CirclePause, CirclePlay, SquarePen, Trash2 } from "lucide-react";
+import { useUpdateTagAutomationRule } from "@/hooks/tag-automation/useUpdateTagAutomationRule";
+import { useDeleteTagAutomationRule } from "@/hooks/tag-automation/useDeleteTagAutomationRule";
+import CarLoading from "@/components/common/CarLoading";
 
 interface Item {
   id: string;
@@ -73,11 +76,15 @@ const AutomationCard: FC<AutomationCardProps> = ({
 
   const { mutate: deleteInventoryRule, isPending: isInventoryDeleting } =
     useDeleteInventoryAutomationRule();
+  const { mutate: deleteTagRule, isPending: isTagDeleting } =
+    useDeleteTagAutomationRule();
 
   const { mutate: updateInvoiceRule, isPending: isInvoiceUpdating } =
     useUpdateInvoiceAutomationRule();
   const { mutate: updateInventory, isPending: isInventoryUpdating } =
     useUpdateInventoryAutomationRule();
+  const { mutate: updateTagRule, isPending: isTagUpdating } =
+    useUpdateTagAutomationRule();
 
   const handleSetIsEdit = (id: any) => {
     setId(id);
@@ -99,6 +106,8 @@ const AutomationCard: FC<AutomationCardProps> = ({
       updateInvoiceRule({ id: id, data: data });
     } else if (type === "inventory") {
       updateInventory({ id, data: data });
+    } else if (type === "tag") {
+      updateTagRule({ id, companyId, data });
     } else if (type == "marketing") {
       const now = Date.now();
 
@@ -157,6 +166,8 @@ const AutomationCard: FC<AutomationCardProps> = ({
       deleteInvoiceRule(id);
     } else if (type == "inventory") {
       deleteInventoryRule(id);
+    } else if (type === "tag") {
+      deleteTagRule(id);
     }
 
     setIsCreate(false);
@@ -175,8 +186,8 @@ const AutomationCard: FC<AutomationCardProps> = ({
 
         {item.startTime && type == "marketing" ? (
           <div className="absolute left-1/2 top-0 flex w-[85%] -translate-x-1/2 -translate-y-1/2 items-center justify-center gap-2 rounded-md bg-[#6571FF] px-4 py-0.5 text-xs text-white shadow-md 2xl:w-[60%]">
-            <span className="font-semibold">Starts:</span>
-            <span>
+            <span className="font-semibold text-xs">Starts:</span>
+            <span className="text-xs">
               {moment(item.startTime).format("MMM-DD-YY, h:mm A")}{" "}
               {item.isActive && (
                 <span
@@ -193,7 +204,10 @@ const AutomationCard: FC<AutomationCardProps> = ({
           {isPipelineUpdating ||
           isCommunicationUpdating ||
           isMarketingUpdating ||
-          isServiceUpdating ? (
+          isServiceUpdating ||
+          isTagUpdating ||
+          isInventoryUpdating ||
+          isInvoiceUpdating ? (
             <button>
               <Spin />
             </button>
@@ -220,7 +234,10 @@ const AutomationCard: FC<AutomationCardProps> = ({
           {isPipelineDeleting ||
           isCommunicationDeleting ||
           isMarketingDeleting ||
-          isServiceDeleting ? (
+          isServiceDeleting ||
+          isTagDeleting ||
+          isInventoryDeleting ||
+          isInvoiceDeleting ? (
             <button>
               <Spin />
             </button>

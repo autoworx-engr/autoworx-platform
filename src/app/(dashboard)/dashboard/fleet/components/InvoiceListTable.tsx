@@ -1,17 +1,17 @@
 "use client";
-import { cn } from "@/lib/cn";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/DropdownMenu";
+import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
+import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/cn";
+import { formatCurrency } from "@/utils/formatCurrency";
+import { FleetStatement, Invoice } from "@prisma/client";
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
-import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
-import { FleetStatement, Invoice } from "@prisma/client";
-import { Card, CardContent } from "@/components/ui/card";
-import { formatCurrency } from "@/utils/formatCurrency";
 
 const InvoiceListTable = ({
   invoiceData,
@@ -43,8 +43,7 @@ const InvoiceListTable = ({
       );
 
     const statusMatch =
-      statusFilters.length === 0 ||
-      statusFilters.includes(item.column?.title);
+      statusFilters.length === 0 || statusFilters.includes(item.column?.title);
 
     return paymentMatch && statusMatch;
   });
@@ -62,6 +61,20 @@ const InvoiceListTable = ({
     } else {
       setStatusFilters(statusFilters.filter((p) => p !== status));
     }
+  };
+
+  const getPaymentBadgeClasses = (item: any) =>
+    item?.grandTotal > 0 && item?.due == 0
+      ? "bg-[#27837c]/90 text-white"
+      : "bg-[#dc4757]/90 text-white";
+
+  const getStatusBadgeClasses = (title?: string) => {
+    const t = (title || "").toLowerCase();
+    if (t.includes("complete") || t.includes("completed"))
+      return "bg-[#27837c]/90 text-white";
+    if (t.includes("progress") || t.includes("in progress"))
+      return "bg-[#4791ed]/90 text-white";
+    return "bg-gray-100 text-gray-700";
   };
 
   return (
@@ -89,12 +102,16 @@ const InvoiceListTable = ({
                         </button>
                       </DropdownMenuTrigger>
 
-                      <DropdownMenuContent align="start" className="w-40">
+                      <DropdownMenuContent
+                        align="start"
+                        className="w-40 space-y-1"
+                      >
                         <DropdownMenuCheckboxItem
                           checked={paymentFilters.includes("Paid")}
                           onCheckedChange={(checked) =>
                             handlePaymentFilter("Paid", checked)
                           }
+                          className={`${paymentFilters.includes("Paid") ? "bg-gradient-to-r from-[#6571FF] to-[#8088FF] text-white" : ""}`}
                         >
                           Paid
                         </DropdownMenuCheckboxItem>
@@ -103,6 +120,7 @@ const InvoiceListTable = ({
                           onCheckedChange={(checked) =>
                             handlePaymentFilter("Unpaid", checked)
                           }
+                          className={`${paymentFilters.includes("Unpaid") ? "bg-gradient-to-r from-[#6571FF] to-[#8088FF] text-white" : ""}`}
                         >
                           Unpaid
                         </DropdownMenuCheckboxItem>
@@ -120,7 +138,10 @@ const InvoiceListTable = ({
                           <ChevronDown className="h-4 w-4" />
                         </button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="start" className="w-40">
+                      <DropdownMenuContent
+                        align="start"
+                        className="w-40 space-y-1"
+                      >
                         {uniqueStatuses?.map((status: any, index: number) => (
                           <DropdownMenuCheckboxItem
                             key={index}
@@ -133,6 +154,11 @@ const InvoiceListTable = ({
                                 checked
                               )
                             }
+                            className={`${
+                              statusFilters.includes(status?.status as string)
+                                ? "bg-gradient-to-r from-[#6571FF] to-[#8088FF] text-white"
+                                : ""
+                            }`}
                           >
                             {status?.status}
                           </DropdownMenuCheckboxItem>
@@ -151,7 +177,7 @@ const InvoiceListTable = ({
                     key={item.id}
                     className={cn(
                       "cursor-pointer rounded-md border py-3",
-                      index % 2 === 0 ? "bg-background" : "bg-[#EEF4FF]"
+                      index % 2 === 0 ? "bg-background" : "bg-[#EEF4FF]/40"
                     )}
                   >
                     <td className="border-b px-4 py-2 text-left text-[#6571FF]">
@@ -183,12 +209,24 @@ const InvoiceListTable = ({
                       {formatCurrency(item?.grandTotal)}
                     </td>
                     <td className="border-b px-4 py-2 text-left">
-                      {item?.grandTotal > 0 && item?.due == 0
-                        ? "Paid"
-                        : "Unpaid"}
+                      <span
+                        className={`rounded px-2 py-1 text-xs font-medium ${getPaymentBadgeClasses(
+                          item
+                        )}`}
+                      >
+                        {item?.grandTotal > 0 && item?.due == 0
+                          ? "Paid"
+                          : "Unpaid"}
+                      </span>
                     </td>
                     <td className="border-b px-4 py-2 text-left">
-                      {item.column?.title}
+                      <span
+                        className={`rounded px-2 py-1 text-xs font-medium ${getStatusBadgeClasses(
+                          item.column?.title
+                        )}`}
+                      >
+                        {item.column?.title}
+                      </span>
                     </td>
                   </tr>
                 );
@@ -270,19 +308,21 @@ const InvoiceListTable = ({
                     buttonChild={<button>{item?.id}</button>}
                     buttonChildClassName="block w-full text-blue-600"
                   />
-                  <div className="flex gap-2">
+                  <div className="flex flex-col items-end gap-2">
                     <span
-                      className={`rounded px-2 py-1 text-xs font-medium ${
-                        item.due > 0
-                          ? "bg-red-100 text-red-700"
-                          : "bg-green-100 text-green-700"
-                      }`}
+                      className={`rounded px-2 py-1 text-xs font-medium ${getPaymentBadgeClasses(
+                        item
+                      )}`}
                     >
                       {item?.grandTotal > 0 && item?.due == 0
                         ? "Paid"
                         : "Unpaid"}
                     </span>
-                    <span className="rounded bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700">
+                    <span
+                      className={`rounded px-2 py-1 text-xs font-medium ${getStatusBadgeClasses(
+                        item.column?.title
+                      )}`}
+                    >
                       {item.column?.title}
                     </span>
                   </div>

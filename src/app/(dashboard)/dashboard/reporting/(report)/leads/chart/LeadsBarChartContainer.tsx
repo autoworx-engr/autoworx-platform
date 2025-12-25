@@ -6,7 +6,6 @@ import { Bar, Label, LabelList, Legend, Tooltip, XAxis, YAxis } from "recharts";
 import useGetLeadInfoQuery from "../_hook/useGetLeadInfoQuery";
 import LeadsChartSkeleton from "@/components/ui/LeadsChartSkeleton";
 
-
 type TProps = {
   searchParams: {
     startDate?: string;
@@ -67,7 +66,10 @@ export default function LeadsBarChartContainer({ searchParams }: TProps) {
   );
   const [isFiltered, setIsFiltered] = useState<boolean>(false);
 
-  const { data } = useGetLeadInfoQuery({ startDate, endDate });
+  const { data } = useGetLeadInfoQuery({
+    startDate: startDate ? decodeURIComponent(startDate) : undefined,
+    endDate: endDate ? decodeURIComponent(endDate) : undefined,
+  });
 
   // Update local state when searchParams change
   useEffect(() => {
@@ -104,7 +106,7 @@ export default function LeadsBarChartContainer({ searchParams }: TProps) {
           </Label>
         </YAxis>
         <Tooltip />
-        <Legend verticalAlign="top" align="right" layout="horizontal" />
+        <Legend verticalAlign="bottom" align="center" layout="horizontal" />
 
         <Bar
           dataKey="qualified"

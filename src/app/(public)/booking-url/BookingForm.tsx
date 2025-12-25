@@ -6,6 +6,7 @@ import {
   processBooking,
 } from "@/actions/booking/processBooking";
 import { getCompanyById } from "@/actions/settings/getCompnayById";
+import PhoneInput from "@/components/PhoneInput";
 import { SlimInput, slimInputClassName } from "@/components/SlimInput";
 import useBookingFormQueryById from "@/hooks/bookingForm/useBookingFormQueryById";
 import { cn } from "@/lib/utils";
@@ -27,13 +28,15 @@ type FormData = {
   email: string;
   mobile: string;
   notes: string;
+  countryCode:string;
 };
 
 const BookingForm = () => {
   const searchParams = useSearchParams();
   const refParam = searchParams.get("ref");
   const [companyId, bookingFormId] = refParam ? decodeCompanyId(refParam) : [];
-
+  const [callingCode, setCallingCode] = useState("+1")
+  const [isoCode, setIsoCode] = useState("")
   const { data: bookingForm, isLoading: bookingFromLoading } =
     useBookingFormQueryById(Number(bookingFormId));
 
@@ -55,6 +58,7 @@ const BookingForm = () => {
     email: "",
     mobile: "+1",
     notes: "",
+    countryCode: "US"
   });
 
   // State for handling title dropdown and custom input
@@ -62,13 +66,20 @@ const BookingForm = () => {
   const [customTitle, setCustomTitle] = useState("");
 
   // Predefined title options
+  const titleOptionsForCrmEnable = ["Book a Demo", "Customer Support"];
+
+  // Predefined title options
   const titleOptions = [
     "Phone Call Request",
     "Free Consultation",
-    "Wrap Design Consultation",
+    // "Wrap Design Consultation",
     "Virtual Appointment",
     "Custom",
   ];
+
+  const availableTitleOptions = companyInfo?.isCRMEnabled
+    ? titleOptionsForCrmEnable
+    : titleOptions;
 
   const [error, setError] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -97,10 +108,10 @@ const BookingForm = () => {
 
         const options = getTimeOptions();
         // Filter out already booked times
-        const filteredOptions = options.filter(option => {
+        const filteredOptions = options.filter((option) => {
           const isBooked =
             getAppointmentByDate?.filter(
-              appt => appt.startTime === option.value
+              (appt) => appt.startTime === option.value
             ).length ?? 0;
           return isBooked < (bookingForm?.stack || 6);
         });
@@ -141,7 +152,7 @@ const BookingForm = () => {
       // fetchCompanyInfo(companyId).then(setCompanyInfo);
 
       // Fetch calendar settings for the company
-      getCompanyCalendarSettings(companyId.toString()).then(settings => {
+      getCompanyCalendarSettings(companyId.toString()).then((settings) => {
         setCalendarSettings(settings);
       });
     }
@@ -164,7 +175,7 @@ const BookingForm = () => {
       // Check if the selected time is still available in the current options
       const availableOptions = timeOptions;
       const isTimeAvailable = availableOptions.some(
-        option => option.value === formData.startTime
+        (option) => option.value === formData.startTime
       );
 
       if (!isTimeAvailable) {
@@ -176,24 +187,24 @@ const BookingForm = () => {
   const handleChange = (field: keyof FormData, value: any) => {
     let processedValue = value;
 
-    if (field === "mobile") {
-      processedValue = processedValue.replace(/\D/g, "");
+    // if (field === "mobile") {
+    //   processedValue = processedValue.replace(/\D/g, "");
 
-      if (!processedValue.startsWith("+1")) {
-        if (processedValue.startsWith("+")) {
-          processedValue = "+1" + processedValue.slice(1);
-        } else if (processedValue.startsWith("1")) {
-          processedValue = "+" + processedValue;
-        } else {
-          processedValue = "+1" + processedValue;
-        }
-      }
-    }
+    //   if (!processedValue.startsWith("+1")) {
+    //     if (processedValue.startsWith("+")) {
+    //       processedValue = "+1" + processedValue.slice(1);
+    //     } else if (processedValue.startsWith("1")) {
+    //       processedValue = "+" + processedValue;
+    //     } else {
+    //       processedValue = "+1" + processedValue;
+    //     }
+    //   }
+    // }
 
-    setFormData(prev => ({ ...prev, [field]: processedValue }));
-
+    // setFormData((prev) => ({ ...prev, [field]: processedValue }));
+setFormData((prev) => ({ ...prev, [field]: value }));
     if (error[field]) {
-      setError(prev => {
+      setError((prev) => {
         const newErrors = { ...prev };
         delete newErrors[field];
         return newErrors;
@@ -206,15 +217,15 @@ const BookingForm = () => {
     setSelectedTitleOption(value);
 
     if (value === "Custom") {
-      setFormData(prev => ({ ...prev, title: customTitle }));
+      setFormData((prev) => ({ ...prev, title: customTitle }));
     } else {
-      setFormData(prev => ({ ...prev, title: value }));
+      setFormData((prev) => ({ ...prev, title: value }));
       setCustomTitle(""); // Clear custom title when selecting predefined option
     }
 
     // Clear title error if exists
     if (error.title) {
-      setError(prev => {
+      setError((prev) => {
         const newErrors = { ...prev };
         delete newErrors.title;
         return newErrors;
@@ -225,11 +236,11 @@ const BookingForm = () => {
   // Handle custom title input
   const handleCustomTitleChange = (value: string) => {
     setCustomTitle(value);
-    setFormData(prev => ({ ...prev, title: value }));
+    setFormData((prev) => ({ ...prev, title: value }));
 
     // Clear title error if exists
     if (error.title) {
-      setError(prev => {
+      setError((prev) => {
         const newErrors = { ...prev };
         delete newErrors.title;
         return newErrors;
@@ -360,7 +371,7 @@ const BookingForm = () => {
         // Additional validation - check if selected time is still available
         const availableOptions = timeOptions;
         const isTimeAvailable = availableOptions.some(
-          option => option.value === formData.startTime
+          (option) => option.value === formData.startTime
         );
 
         if (!isTimeAvailable) {
@@ -379,10 +390,13 @@ const BookingForm = () => {
 
     if (!formData.mobile.trim()) {
       newError.mobile = "Mobile is required.";
-    } else if (!/^\+1[\d\s\-$$$$]+$/.test(formData.mobile)) {
-      newError.mobile =
-        "Phone number must start with '+1' and contain valid characters.";
-    }
+    } else if (formData.mobile.length < 10) {
+    newError.mobile = "Please enter a valid phone number.";
+  }
+    //  else if (!/^\+1[\d\s\-$$$$]+$/.test(formData.mobile)) {
+    //   newError.mobile =
+    //     "Phone number must start with '+1' and contain valid characters.";
+    // }
 
     if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newError.email = "Invalid email address.";
@@ -416,9 +430,14 @@ const BookingForm = () => {
     }
 
     try {
+      const fullPhoneNumber = `${callingCode}${formData.mobile}`;
+      const bookingData = {
+      ...formData,
+      mobile: fullPhoneNumber, 
+    };
       // Process the booking
       const result = await processBooking(
-        formData,
+        bookingData,
         companyId,
         bookingForm?.id!
       );
@@ -434,8 +453,9 @@ const BookingForm = () => {
           email: "",
           mobile: "+1",
           notes: "",
+          countryCode: "US"
         });
-
+        setCallingCode("+1");
         // Reset title selection states
         setSelectedTitleOption("");
         setCustomTitle("");
@@ -562,7 +582,7 @@ const BookingForm = () => {
             <select
               id="title-select"
               value={selectedTitleOption}
-              onChange={e => handleTitleSelection(e.target.value)}
+              onChange={(e) => handleTitleSelection(e.target.value)}
               className={cn(
                 slimInputClassName,
                 "h-[33px] px-3 w-full",
@@ -572,7 +592,7 @@ const BookingForm = () => {
               required
             >
               <option value="">Select appointment type...</option>
-              {titleOptions.map(option => (
+              {availableTitleOptions.map((option) => (
                 <option key={option} value={option}>
                   {option === "Custom" ? "Custom (Enter your own)" : option}
                 </option>
@@ -583,7 +603,7 @@ const BookingForm = () => {
             {selectedTitleOption === "Custom" && (
               <SlimInput
                 value={customTitle}
-                onChange={e => handleCustomTitleChange(e.target.value)}
+                onChange={(e) => handleCustomTitleChange(e.target.value)}
                 name="customTitle"
                 label="Enter Custom Title"
                 placeholder="Enter your custom appointment title"
@@ -602,7 +622,7 @@ const BookingForm = () => {
               error={error.date}
               min={minDate}
               value={formData.date}
-              onChange={e => handleChange("date", e.target.value)}
+              onChange={(e) => handleChange("date", e.target.value)}
               name="date"
               label="Date"
               type="date"
@@ -620,7 +640,7 @@ const BookingForm = () => {
                 </label>
                 <Select
                   value={formData.startTime}
-                  onChange={value => handleChange("startTime", value)}
+                  onChange={(value) => handleChange("startTime", value)}
                   placeholder="Select time..."
                   disabled={!formData.date || timeOptions.length === 0}
                   className={cn(
@@ -688,7 +708,7 @@ const BookingForm = () => {
               <SlimInput
                 error={error.firstName}
                 value={formData.firstName}
-                onChange={e => handleChange("firstName", e.target.value)}
+                onChange={(e) => handleChange("firstName", e.target.value)}
                 name="firstName"
                 label="First Name"
                 className={`${inputClass}`}
@@ -696,7 +716,7 @@ const BookingForm = () => {
               />
               <SlimInput
                 value={formData.lastName}
-                onChange={e => handleChange("lastName", e.target.value)}
+                onChange={(e) => handleChange("lastName", e.target.value)}
                 name="lastName"
                 label="Last Name"
                 className={`${inputClass}`}
@@ -708,22 +728,47 @@ const BookingForm = () => {
               <SlimInput
                 error={error.email}
                 value={formData.email}
-                onChange={e => handleChange("email", e.target.value)}
+                onChange={(e) => handleChange("email", e.target.value)}
                 name="email"
                 label="Email"
                 className={`${inputClass}`}
                 type="email"
               />
-              <SlimInput
+              {/* <SlimInput
                 type="tel"
                 error={error.mobile}
                 value={formData.mobile}
-                onChange={e => handleChange("mobile", e.target.value)}
+                onChange={(e) => handleChange("mobile", e.target.value)}
                 name="mobile"
                 label="Mobile"
                 className={`${inputClass}`}
                 required
-              />
+              /> */}
+
+              <PhoneInput
+  // value={formData.mobile}
+  onChange={(phone, code, isoCode) => {
+    setFormData(prev => ({
+      ...prev,
+      mobile: phone,
+      countryCode: isoCode
+    }));
+    setCallingCode(code);
+   
+    if (error.mobile) {
+      setError(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.mobile;
+        return newErrors;
+      });
+    }
+  }}
+  label="Mobile"
+  placeholder="1234567890"
+  required
+  error={error.mobile}
+  // defaultIsoCode="US" 
+/>
             </div>
 
             <div className="space-y-2">
@@ -734,7 +779,7 @@ const BookingForm = () => {
                 id="notes"
                 name="notes"
                 value={formData.notes}
-                onChange={e => handleChange("notes", e.target.value)}
+                onChange={(e) => handleChange("notes", e.target.value)}
                 placeholder="Add any additional notes for your appointment..."
                 rows={3}
                 className={cn(

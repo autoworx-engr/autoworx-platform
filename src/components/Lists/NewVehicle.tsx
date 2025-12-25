@@ -1,5 +1,6 @@
 "use client";
 
+import ColorSelector from "@/components/ColorSelector";
 import {
   Dialog,
   DialogClose,
@@ -12,25 +13,27 @@ import {
 import FormError from "@/components/FormError";
 import { SlimInput } from "@/components/SlimInput";
 import Submit from "@/components/Submit";
-import { useFormErrorStore } from "@/stores/form-error";
-import { Vehicle, VehicleColor } from "@prisma/client";
-import { useEffect, useState } from "react";
-import { addVehicle } from "../../actions/vehicle/addVehicle";
-import ColorSelector from "@/components/ColorSelector";
 import {
   useGetAllYears,
   useGetMake,
   useGetModelsByYearAndMake,
 } from "@/hooks/useCarData";
-import SelectorWithSearch from "./SelectorWithSearch";
+import { useFormErrorStore } from "@/stores/form-error";
+import { Vehicle, VehicleColor } from "@prisma/client";
 import { Spin } from "antd";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { addVehicle } from "../../actions/vehicle/addVehicle";
+import SelectorWithSearch from "./SelectorWithSearch";
+import VINInputCamera from "../vin-decoder/vin-input";
 
 type TProps = {
   newButton?: React.ReactNode;
   onAdd?: (vehicle: Vehicle) => void;
   clientId: number;
   setIsAppointmentModalOpen?: React.Dispatch<React.SetStateAction<boolean>>;
+  open?: boolean;
+  setOpen?: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 export default function NewVehicle({
@@ -38,12 +41,15 @@ export default function NewVehicle({
   onAdd,
   clientId,
   setIsAppointmentModalOpen,
+  open: externalOpen,
+  setOpen: externalSetOpen,
 }: TProps) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const pathname = usePathname();
   const { showError, clearError } = useFormErrorStore();
   const [selectedColor, setSelectedColor] = useState<VehicleColor | null>(null);
+  const [engineSize, setEngineSize] = useState<string>("");
   const [formData, setFormData] = useState({
     vehicleYear: null,
     vehicleMake: null,
@@ -51,15 +57,24 @@ export default function NewVehicle({
     other: "",
   });
   const [isOtherPopulated, setIsOtherPopulated] = useState(false);
+
+  // Use external open state if provided, otherwise use internal
+  const isControlled =
+    externalOpen !== undefined && externalSetOpen !== undefined;
+  const open = isControlled ? externalOpen : internalOpen;
+  const setOpen = isControlled ? externalSetOpen : setInternalOpen;
+
   useEffect(() => {
-    setFormData({
-      vehicleYear: null,
-      vehicleMake: null,
-      vehicleModel: null,
-      other: "",
-    });
-    setIsOtherPopulated(false);
-    setSelectedColor(null);
+    if (open) {
+      setFormData({
+        vehicleYear: null,
+        vehicleMake: null,
+        vehicleModel: null,
+        other: "",
+      });
+      setIsOtherPopulated(false);
+      setSelectedColor(null);
+    }
   }, [open]);
 
   const { data: years, isError: isYearFetchError }: any = useGetAllYears();
@@ -82,8 +97,9 @@ export default function NewVehicle({
           id: vehicle.name,
         }))
       : [];
+
   const handleInputChange = (name: string, value: string) => {
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
       [name]: value,
     }));
@@ -158,18 +174,21 @@ export default function NewVehicle({
   }
 
   return (
-    <Dialog open={open && loading === false} onOpenChange={setOpen}>
-      <DialogTrigger disabled={loading} asChild>
-        {loading ? (
-          <Spin />
-        ) : newButton ? (
-          newButton
-        ) : (
-          <button type="button" className="text-xs text-[#6571FF]">
-            + New Vehicle
-          </button>
-        )}
-      </DialogTrigger>
+    <Dialog open={open && !loading} onOpenChange={setOpen}>
+      {/* Only show trigger if NOT controlled externally */}
+      {!isControlled && (
+        <DialogTrigger disabled={loading} asChild>
+          {loading ? (
+            <Spin />
+          ) : newButton ? (
+            newButton
+          ) : (
+            <button type="button" className="text-xs text-[#6571FF]">
+              + New Vehicle
+            </button>
+          )}
+        </DialogTrigger>
+      )}
 
       <DialogContent
         className="max-h-full max-w-xl grid-rows-[auto,1fr,auto] overflow-y-auto"
@@ -181,10 +200,6 @@ export default function NewVehicle({
         <div>
           <FormError />
           <div className="grid gap-2 overflow-y-auto sm:grid-cols-2">
-            {/* <SlimInput name="year" type="number" required={false} />
-            <SlimInput name="make" required={false} />
-            <SlimInput name="model" required={false} /> */}
-
             {/* Year */}
             <SelectorWithSearch
               name="year"
@@ -216,6 +231,7 @@ export default function NewVehicle({
               error={isMakeFetchError ? "Failed to fetch Makes" : undefined}
               disabled={isOtherPopulated}
             />
+
             {/* Vehicle Model */}
             <SelectorWithSearch
               name="model"
@@ -232,6 +248,7 @@ export default function NewVehicle({
               disabled={!formData.vehicleMake || isOtherPopulated}
               error={isModelsFetchError ? "Failed to fetch Models" : undefined}
             />
+
             <SlimInput name="submodel" required={false} label="Sub Model" />
             <SlimInput name="type" required={false} />
 
@@ -242,9 +259,30 @@ export default function NewVehicle({
             />
 
             <SlimInput name="transmission" required={false} />
-            <SlimInput name="engineSize" required={false} />
+            <SlimInput
+              name="engineSize"
+              required={false}
+              value={engineSize}
+              onChange={e => setEngineSize(e.target.value)}
+            />
             <SlimInput name="license" required={false} label="License Plate" />
-            <SlimInput name="vin" required={false} />
+            <div className="flex items-end gap-2">
+              <SlimInput name="vin" required={false} />
+
+              <VINInputCamera
+                onVehicleInfo={value => {
+                  const { make, model, year, specs } = value?.data?.data || {};
+                  const { displacement_cc } = specs || {};
+                  setFormData({
+                    vehicleYear: year,
+                    vehicleMake: make,
+                    vehicleModel: model,
+                    other: "",
+                  });
+                  setEngineSize(displacement_cc || "");
+                }}
+              />
+            </div>
             <SlimInput
               name="other"
               label="Other (Vehicle not listed or non-vehicle job? Enter details here)"
@@ -255,7 +293,7 @@ export default function NewVehicle({
                 !!formData.vehicleModel &&
                 "cursor-not-allowed bg-gray-100 opacity-50"
               }`}
-              onChange={(e) => {
+              onChange={e => {
                 let value = e.target.value;
                 setIsOtherPopulated(value?.length > 0);
               }}

@@ -6,7 +6,7 @@ import { DateRangePicker } from "react-date-range";
 import "react-date-range/dist/styles.css"; // main style file
 import "react-date-range/dist/theme/default.css"; // theme css file
 
-const DateRange = ({
+const PaymentDateRange = ({
   onOk,
   onCancel,
 }: {
@@ -21,23 +21,12 @@ const DateRange = ({
     },
   });
   const ref = useRef<HTMLDivElement>(null);
-  const buttonRef = useRef<HTMLButtonElement>(null);
 
   const [showPicker, setShowPicker] = useState(false);
   const [tempRange, setTempRange] = useState(state.selection);
   const [isRangeSelected, setIsRangeSelected] = useState(false);
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        ref.current &&
-        !ref.current.contains(event.target as Node) &&
-        buttonRef.current &&
-        !buttonRef.current.contains(event.target as Node)
-      ) {
-        setShowPicker(false);
-      }
-    };
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
@@ -57,6 +46,12 @@ const DateRange = ({
     setShowPicker(false);
     setIsRangeSelected(true);
     onOk(tempRange.startDate, tempRange.endDate);
+  };
+
+  const handleClickOutside = (event: any) => {
+    if (ref.current && !ref.current.contains(event.target)) {
+      setShowPicker(false);
+    }
   };
 
   const handleCancel = () => {
@@ -85,23 +80,29 @@ const DateRange = ({
   };
 
   return (
-    <div className="relative w-full md:w-auto" ref={ref}>
+    <div ref={ref} className="relative z-50">
       <button
-        ref={buttonRef}
         onClick={togglePicker}
-        className="flex w-[150px] items-center gap-2 rounded-lg border border-gray-400 p-2 text-gray-400 hover:border-blue-600 md:w-full md:text-sm"
+        className={`
+            flex w-full items-center justify-between gap-3 rounded-xl px-4 py-2.5 text-sm transition-all duration-300 ease-out
+            ${showPicker
+            ? 'bg-white ring-2 ring-[#6571FF] shadow-md shadow-indigo-500/10 dark:bg-slate-900'
+            : 'bg-white ring-1 ring-slate-200 hover:ring-indigo-500/50 hover:shadow-sm dark:bg-slate-900 dark:ring-slate-700'
+          }
+        `}
       >
-        <span className="truncate">
+        <span className={`font-medium ${isRangeSelected ? 'text-slate-700 dark:text-slate-200' : 'text-slate-400'}`}>
           {isRangeSelected
             ? formatRange(state.selection.startDate, state.selection.endDate)
-            : "Date Range"}
+            : "Select Date Range"}
         </span>
-        <Calendar size={16} className="ml-3 text-lg md:ml-0 md:text-base" />
+        <Calendar className={`w-4 h-4 ${showPicker || isRangeSelected ? 'text-[#6571FF]' : 'text-slate-400'}`} />
       </button>
 
       {showPicker && (
-        <div className="absolute left-48 right-auto top-72 z-50 mt-2 w-[338px] -translate-x-1/2 -translate-y-1/2 transform overflow-y-auto rounded-lg border border-gray-300 bg-background p-4 shadow-lg md:left-auto md:right-auto md:top-full md:w-[600px] md:translate-x-0 md:translate-y-0 md:transform-none">
+        <div className="absolute left-0 top-full mt-2 z-10 w-[338px] lg:w-[600px] rounded-2xl border border-slate-100 bg-white p-5 shadow-[0_20px_40px_-12px_rgba(0,0,0,0.15)] ring-1 ring-slate-900/5 animate-in fade-in zoom-in-95 dark:bg-slate-900 dark:border-slate-800 dark:ring-white/10">
           <DateRangePicker
+            inputRanges={[]}
             ranges={[tempRange]}
             onChange={handleSelect}
             moveRangeOnFirstSelection={false}
@@ -111,25 +112,18 @@ const DateRange = ({
             calendarFocus="forwards"
             className={`[&_.rdrDayStartPreview]:!color-transparent [&_.rdrDayEndPreview]:!color-transparent [&_.rdrDateDisplayItem]:p-2 [&_.rdrDateDisplayItem_input]:text-sm [&_.rdrDateDisplayWrapper]:!w-[300px] [&_.rdrDateDisplay]:text-sm [&_.rdrDayEndPreview]:!border-0 [&_.rdrDayHovered]:!border-0 [&_.rdrDayHovered]:!bg-transparent [&_.rdrDayInPreview]:!border-0 [&_.rdrDayInPreview]:!bg-transparent [&_.rdrDayNumber]:text-sm [&_.rdrDayStartPreview]:!border-0 [&_.rdrDayToday]:!bg-[#6571FF] [&_.rdrDayToday]:after:hidden [&_.rdrDayToday_.rdrDayNumber]:!text-white [&_.rdrDay]:!bg-transparent [&_.rdrDay_today]:!border-0 [&_.rdrDay_today]:!bg-transparent [&_.rdrDefinedRangesWrapper]:hidden md:[&_.rdrDefinedRangesWrapper]:block [&_.rdrMonthAndYearWrapper]:!w-[300px] [&_.rdrMonthName]:text-sm [&_.rdrMonthPicker]:text-sm [&_.rdrMonth]:!w-[300px] [&_.rdrMonths]:!w-[300px] [&_.rdrNextPrevButton]:h-8 [&_.rdrNextPrevButton]:w-8 [&_.rdrWeekDay]:text-xs [&_.rdrYearPicker]:text-sm`}
           />
-
-          <div className="mt-4 flex justify-end gap-2">
+          <div className="mt-2 flex justify-end gap-3 border-t border-slate-100 pt-4 dark:border-slate-800">
             <button
               onClick={handleCancel}
-              className="min-w-[60px] rounded bg-red-500 px-3 py-2 text-sm text-white md:px-4 md:text-base"
+              className="rounded-lg px-4 py-2 text-sm font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-700 dark:hover:bg-slate-800 dark:text-slate-400"
             >
               Clear
             </button>
             <button
               onClick={handleOk}
-              className="min-w-[60px] rounded bg-blue-500 px-3 py-2 text-sm text-white md:px-4 md:text-base"
+              className="rounded-lg bg-gradient-to-r from-[#6571FF] to-[#5a66ee] px-6 py-2 text-sm font-bold text-white shadow-md shadow-indigo-500/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-indigo-500/30 transition-all"
             >
-              OK
-            </button>
-            <button
-              onClick={togglePicker}
-              className="min-w-[60px] rounded bg-gray-300 px-3 py-2 text-sm md:px-4 md:text-base"
-            >
-              Cancel
+              Apply Filter
             </button>
           </div>
         </div>
@@ -138,4 +132,4 @@ const DateRange = ({
   );
 };
 
-export default DateRange;
+export default PaymentDateRange;
