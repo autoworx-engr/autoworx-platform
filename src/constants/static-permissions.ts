@@ -105,7 +105,7 @@ export const staticPermissions = [
   {
     title: "Visualization",
     permission_name: "visualization",
-    status: false,
+    status: true,
   },
 ];
 
