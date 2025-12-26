@@ -17,7 +17,7 @@ const SalaryTypes: SalaryType[] = [
 
 const SalaryTypeLabels: Record<SalaryType, string> = {
   "HOURLY": "Hourly",
-  "WEEKLY": "Weekly", 
+  "WEEKLY": "Weekly",
   "BI_WEEKLY": "Bi-Weekly",
   "MONTHLY": "Monthly",
 };
@@ -47,12 +47,12 @@ export default function SelectEmployeeSalaryType({
   }, [defaultType]);
 
   return (
-    <div className={cn("w-1/2")}>
+    <div className={cn("w-full")}>
       <input type="hidden" name="salaryType" value={salaryType || ""} />
 
       {labelPosition !== "none" && (
         <label
-          className={cn("text-semibold flex items-center gap-1", {
+          className={cn("text-slate-600 font-medium flex items-center gap-1 mt-1", {
             "w-28 text-end text-sm": labelPosition === "left",
           })}
         >

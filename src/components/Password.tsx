@@ -3,6 +3,7 @@
 import { useFormErrorStore } from "@/stores/form-error";
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
+import { slimInputClassName } from "./SlimInput";
 
 export default function Input({
   name,
@@ -24,12 +25,12 @@ export default function Input({
   const { error } = useFormErrorStore();
 
   return (
-    <div className="relative">
+    <div className="relative mt-1">
       <input
         type={showPassword ? "text" : "password"}
         name={name}
         id={name}
-        className={className + " pr-10"}
+        className={slimInputClassName + " pr-10"}
         required={required}
         value={value || inputValue}
         onChange={(e) => {
@@ -42,7 +43,7 @@ export default function Input({
         onClick={() => setShowPassword(!showPassword)}
         className="absolute inset-y-0 right-0 flex items-center pr-3 text-sm leading-5"
       >
-        {showPassword ? <EyeOff /> : <Eye />}
+        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
       </button>
 
       {error && error.field === name && (

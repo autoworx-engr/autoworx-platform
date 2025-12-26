@@ -21,7 +21,7 @@ import { useListsStore } from "@/stores/lists";
 import { stateStore } from "@/stores/stateStore";
 import { Client, Source, Tag } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { UserIcon, X } from "lucide-react";
+import { CircleUserRound as UserIcon, X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { RotatingLines } from "react-loader-spinner";
@@ -261,9 +261,9 @@ export default function NewCustomer({
             </button>
           )}
         </DialogTrigger>
-        <DialogContent className="max-h-full max-w-xl grid-rows-[auto,1fr,auto]">
+        <DialogContent className="max-h-full max-w-lg grid-rows-[auto,1fr,auto]">
           <div className="mt-8 flex items-center justify-between">
-            <div>
+            <div className="px-2">
               <h1 className="text-2xl font-bold tracking-tight text-slate-600 dark:text-slate-100">
                 Add Client
               </h1>
@@ -320,11 +320,12 @@ export default function NewCustomer({
 
           <FormError />
 
-          <div className="space-y-2 overflow-y-auto">
+          <div className="space-y-2 overflow-y-auto px-2">
             <div className="flex items-center justify-between gap-x-2">
               <SlimInput
                 name="firstName"
                 label="First Name"
+                placeholder="Enter first name"
                 required
                 value={clientInfo.firstName}
                 onChange={(e) => {
@@ -335,6 +336,8 @@ export default function NewCustomer({
               />
               <SlimInput
                 name="lastName"
+                label="Last Name"
+                placeholder="Enter last name"
                 required={false}
                 value={clientInfo.lastName}
                 onChange={(e) => {
@@ -343,10 +346,11 @@ export default function NewCustomer({
                 }}
               />
             </div>
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               <SlimInput
                 name="email"
                 label="Email"
+                placeholder="Enter email address"
                 value={clientInfo.email}
                 // required
                 onChange={(e) => {
@@ -365,19 +369,17 @@ export default function NewCustomer({
                 }}
               />
 
-              <div className="md:w-[248px]">
-                <PhoneInput
-                  label="Mobile Number"
-                  placeholder="1234567890"
-                  required
-                  onChange={(phoneNum, code, isoCode) => {
-                    setMobile(phoneNum);
-                    setCountry(code);
-                    if (isoCode) setCountryIsoCode(isoCode);
-                    clearError();
-                  }}
-                />
-              </div>
+              <PhoneInput
+                label="Mobile Number"
+                placeholder="1234567890"
+                required
+                onChange={(phoneNum, code, isoCode) => {
+                  setMobile(phoneNum);
+                  setCountry(code);
+                  if (isoCode) setCountryIsoCode(isoCode);
+                  clearError();
+                }}
+              />
             </div>
 
             <div className="flex items-center justify-between">
@@ -385,6 +387,7 @@ export default function NewCustomer({
                 value={clientInfo.address}
                 rootClassName="flex-1"
                 name="address"
+                placeholder="Enter address"
                 required={false}
                 onChange={(e) => {
                   const value = e.target.value;
@@ -397,6 +400,7 @@ export default function NewCustomer({
               <SlimInput
                 value={clientInfo.city}
                 name="city"
+                placeholder="city"
                 required={false}
                 onChange={(e) => {
                   setClientInfo((prev) => ({ ...prev, city: e.target.value }));
@@ -405,6 +409,7 @@ export default function NewCustomer({
               <SlimInput
                 value={clientInfo.state}
                 name="state"
+                placeholder="state"
                 required={false}
                 onChange={(e) => {
                   setClientInfo((prev) => ({ ...prev, state: e.target.value }));
@@ -412,6 +417,7 @@ export default function NewCustomer({
               />
               <SlimInput
                 name="zip"
+                placeholder="zip code"
                 value={clientInfo.zip}
                 required={false}
                 onChange={(e) => {
@@ -420,11 +426,12 @@ export default function NewCustomer({
               />
             </div>
 
-            <div className="flex items-center justify-between gap-x-4">
+            <div className="grid grid-cols-2 gap-x-4">
               <SlimInput
                 name="customerCompany"
                 required={false}
                 label="Company"
+                placeholder="Enter company"
                 value={clientInfo.customerCompany}
                 onChange={(e) => {
                   const value = e.target.value;
@@ -501,7 +508,7 @@ export default function NewCustomer({
           <DialogFooter>
             <DialogClose
               className="
-                rounded-xl px-5 py-2.5 text-sm font-medium text-slate-500
+                rounded-xl mt-2 sm:mt-0 px-5 py-2.5 text-sm font-medium text-slate-500
                 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
                 transition-colors border
               "
