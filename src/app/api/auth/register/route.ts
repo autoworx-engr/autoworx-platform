@@ -1,4 +1,4 @@
-import login from "@/actions/auth/login";
+import { register } from "@/actions/auth/register";
 import { NextRequest, NextResponse } from "next/server";
 import httpStatus from "http-status";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
@@ -6,16 +6,30 @@ import { errorHandler } from "@/error-boundary/globalErrorHandler";
 export async function POST(req: NextRequest) {
   try {
     const reqBody = await req.json();
-    const { email, password } = reqBody;
-
-    const loggedInUser = await login({
+    const {
+      firstName,
+      lastName,
       email,
       password,
+      company,
+      accessCode,
+      timezone,
+    } = reqBody;
+
+    const registerUser = await register({
+      firstName,
+      lastName,
+      email,
+      password,
+      company,
+      accessCode,
+      timezone,
     });
+
     return NextResponse.json({
       statusCode: httpStatus.OK,
-      message: "Login successful",
-      data: loggedInUser,
+      message: "Registration successful",
+      data: registerUser,
     });
   } catch (err) {
     console.log("Auth Error", err);
