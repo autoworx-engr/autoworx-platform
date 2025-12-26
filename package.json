@@ -74,7 +74,6 @@
     "googleapis": "^134.0.0",
     "groq-sdk": "^0.34.0",
     "html-to-text": "^9.0.5",
-    "http-status": "^2.0.0",
     "infobip-rtc": "^2.7.18",
     "jsonwebtoken": "^9.0.2",
     "lottie-react": "^2.4.1",
