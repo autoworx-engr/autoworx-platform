@@ -1,3 +1,6 @@
+"use client";
+
+import React, { memo, useState, useRef, useEffect } from "react";
 import { removeLeadFromPipeline } from "@/actions/pipelines/updateLeadSalesUser";
 import { updateLeadColumn } from "@/actions/pipelines/getLeads";
 import { actionTypes } from "@/constants/lead.constant";
@@ -8,26 +11,41 @@ import {
 import { cn } from "@/lib/cn";
 import { LeadWithSalesUser } from "@/types/invoiceLead";
 import { Popconfirm } from "antd";
-import { memo, useState } from "react";
 import { errorToast, successToast } from "@/lib/toast";
 import ColumnDropdown from "./ColumnDropdown";
 import LeadActions from "./LeadActions";
 import LeadTags from "./LeadTags";
-import { ArrowRightLeft, CircleX, X } from "lucide-react";
+import { ArrowRightLeft, X } from "lucide-react";
+import {
+  draggable,
+  dropTargetForElements,
+} from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
+
 
 type LeadCardProps = {
   leadData: LeadWithSalesUser;
   highlight?: boolean;
+  index?: number;
+  columnIndex?: number;
+  isDragDisabled?: boolean;
+  leadIndex?: number;
 };
 
 export default memo(function LeadCard({
   leadData,
   highlight = false,
+  index,
+  columnIndex,
+  isDragDisabled,
+  leadIndex,
 }: LeadCardProps) {
   const dispatch = useColumnDispatch();
   const pipelineColumns = useColumnState() || [];
   const [showColumnSelect, setShowColumnSelect] = useState(false);
-  const [isOpen, setIsOpen] = useState(true);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isDropTarget, setIsDropTarget] = useState(false);
+  const cardRef = useRef<HTMLLIElement>(null);
 
   const handleRemoveLead = async (leadId: number, columnId: number) => {
     try {
@@ -37,7 +55,7 @@ export default memo(function LeadCard({
         payload: { leadId, columnId },
       });
     } catch (error) {
-      console.error("Error removing lead:", error);
+      console.error(error);
     }
   };
 
@@ -54,20 +72,11 @@ export default memo(function LeadCard({
       const destinationColumnIndex = pipelineColumns.findIndex(
         (col) => col.id === parseInt(newColumnId)
       );
-
-      if (currentColumnIndex === -1 || destinationColumnIndex === -1) {
-        errorToast("Invalid column selection");
-        return;
-      }
+      if (currentColumnIndex === -1 || destinationColumnIndex === -1) return;
 
       const leadIndex = pipelineColumns[currentColumnIndex].leads.findIndex(
-        (lead) => lead.id === leadData.id
+        (l) => l.id === leadData.id
       );
-
-      if (leadIndex === -1) {
-        errorToast("Lead not found in current column");
-        return;
-      }
 
       dispatch({
         type: actionTypes.DRAG_END,
@@ -84,14 +93,50 @@ export default memo(function LeadCard({
         },
       });
 
-      successToast("Job moved successfully");
       await updateLeadColumn(leadData.id, parseInt(newColumnId));
       setShowColumnSelect(false);
+      successToast("Job moved successfully");
     } catch (error) {
-      errorToast("Failed to move job. Please try again.");
-      console.error("Error moving job:", error);
+      errorToast("Failed to move job.");
     }
   };
+
+  useEffect(() => {
+    const element = cardRef.current;
+    if (!element || isDragDisabled) {
+      return;
+    }
+
+    return combine(
+      draggable({
+        element,
+        getInitialData: (): {
+          leadId: string;
+          columnIndex: number | undefined;
+          leadIndex: number | undefined;
+        } => ({
+          leadId: leadData.id.toString(),
+          columnIndex,
+          leadIndex,
+        }),
+        onDragStart: () => setIsDragging(true),
+        onDrop: () => setIsDragging(false),
+      }),
+      dropTargetForElements({
+        element,
+        getData: () => ({
+          leadId: leadData.id.toString(),
+          columnIndex,
+          leadIndex,
+          targetType: "card",
+          targetLeadIndex: leadIndex,
+        }),
+        onDragEnter: () => setIsDropTarget(true),
+        onDragLeave: () => setIsDropTarget(false),
+        onDrop: () => setIsDropTarget(false),
+      })
+    );
+  }, [leadData.id, columnIndex, leadIndex, isDragDisabled]);
 
   const columnOptions = pipelineColumns
     .filter((col) => col.id !== leadData.columnId && col.id != null)
@@ -103,9 +148,15 @@ export default memo(function LeadCard({
 
   return (
     <li
+      ref={cardRef}
+      data-lead-id={leadData.id}
+      data-column-index={columnIndex}
+      data-lead-index={leadIndex}
       className={cn(
-        "max-w-auto relative mx-1 my-1 h-fit animate-none rounded-xl duration-300 hover:bg-slate-100",
-        highlight && "bg-yellow-100"
+        "max-w-auto relative mx-1 my-1 h-fit rounded-xl border bg-background p-1 duration-300 hover:bg-slate-100 cursor-grab active:cursor-grabbing",
+        highlight && "bg-yellow-100",
+        isDragging && "opacity-20 grayscale bg-slate-200 ",
+        isDropTarget && "ring-2 ring-blue-500 bg-blue-50"
       )}
     >
       <div className="relative flex justify-between">
@@ -114,35 +165,18 @@ export default memo(function LeadCard({
         </h3>
         <div className="flex items-center gap-2">
           <button
-            onClick={() => {
-              setShowColumnSelect(!showColumnSelect);
-              setIsOpen(!isOpen);
-            }}
-            className="cursor-pointer hover:text-blue-600 transition-colors md:hidden text-xl"
-            title="Move to different column"
+            onClick={() => setShowColumnSelect(!showColumnSelect)}
+            className="cursor-pointer transition-colors md:hidden text-xl hover:text-blue-600"
           >
-            <ArrowRightLeft
-              size={24}
-              strokeWidth={2}
-              style={{ color: "#6571FFed" }}
-            />
+            <ArrowRightLeft size={24} style={{ color: "#6571FFed" }} />
           </button>
 
           <Popconfirm
             title="Delete the lead"
-            description="Are you sure to delete this lead?It can't be undone"
-            okText="Yes"
-            cancelText="No"
-            disabled={false}
-            className="disabled:cursor-not-allowed disabled:opacity-50"
             onConfirm={() => handleRemoveLead(leadData.id, leadData?.columnId!)}
           >
-            <div className="-mr-4 -mt-10 bg-[#6571FFed] rounded-full">
-              <X
-                size={18}
-                strokeWidth={3}
-                className=" cursor-pointer text-white p-0.5"
-              />
+            <div className="absolute -top-3 -right-2 bg-[#6571FFed] rounded-full">
+              <X size={18} className="cursor-pointer text-white p-0.5" />
             </div>
           </Popconfirm>
         </div>
@@ -159,11 +193,10 @@ export default memo(function LeadCard({
 
       <LeadTags leadTags={leadData.leadTags} lead={leadData} />
       <p className="text-xs">{leadData.vehicleInfo}</p>
-
       <p className="text-xs text-blue-500">{leadData.services}</p>
       <p className="text-xs">{leadData.source}</p>
       <p className="mb-2 text-xs">
-        Creation Date: {new Date(leadData.createdAt).toLocaleDateString()}
+        {new Date(leadData.createdAt).toLocaleDateString()}
       </p>
 
       <LeadActions lead={leadData} />

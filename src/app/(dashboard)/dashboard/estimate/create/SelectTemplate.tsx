@@ -35,17 +35,10 @@ export default function SelectTemplate({
   }, [searchTerm]);
 
   // Infinite query
-  const {
-    data: infiniteData,
-    // fetchNextPage,
-    // hasNextPage,
-    // isFetchingNextPage,
-  } = useTemplateListInfiniteQuery(debouncedSearchTerm);
+  const { data: infiniteData } =
+    useTemplateListInfiniteQuery(debouncedSearchTerm);
 
-  const templateList = useMemo(
-    () => infiniteData?.pages.flatMap((page) => page.templates) ?? [],
-    [infiniteData]
-  );
+  const templateList = useMemo(() => infiniteData ?? [], [infiniteData]);
 
   const handleSelect = (t: InvoiceTemplate | null) => {
     setTemplate(t);
@@ -65,7 +58,6 @@ export default function SelectTemplate({
       <input type="hidden" name={"templateId"} value={template?.id ?? ""} />
 
       <div>
-        {" "}
         <Selector
           className=" cursor-pointer"
           label={(t: InvoiceTemplate | null) => t?.title ?? "Template"}
