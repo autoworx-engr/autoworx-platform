@@ -12,14 +12,13 @@ import {
 import { Switch } from "@/components/Switch";
 import { Button } from "@/components/ui/button";
 import { CompanyCard } from "@/components/ui/companyCard";
-import { getJoinMeta } from "@/helpers/getJoinMeta";
 import { useDebounceCallback } from "@/hooks/useDebounceCallback";
 import { errorToast, successToast } from "@/lib/toast";
 import Slider from "@mui/material/Slider";
-import { Company, CompanyJoin } from "@prisma/client";
+import { Company } from "@prisma/client";
 import { Search, Link as LinkIcon, MapPin, Phone, Globe } from "lucide-react";
 import Image from "next/image";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 function formatDate(date: Date) {
   const options: Intl.DateTimeFormatOptions = {
     year: "numeric",
@@ -33,11 +32,28 @@ type Props = {
   unconnectedCompanies: Company[] | [];
   currentCompany: Company | null;
   collaborationDates: Date[] | [];
+  pendingSent: {
+    company: Company;
+    createdAt: Date;
+    joinId: number;
+  }[];
+  pendingReceived: {
+    company: Company;
+    createdAt: Date;
+    joinId: number;
+  }[];
+  active: {
+    company: Company;
+    joinedAt: Date;
+    joinId: number;
+  }[];
 };
 
 const NetworksPage = ({
   connectedCompanies: connectedCompaniesData = [],
-  collaborationDates = [],
+  pendingSent,
+  pendingReceived,
+  active,
   unconnectedCompanies,
   currentCompany,
 }: Props) => {
@@ -142,37 +158,6 @@ const NetworksPage = ({
     }
   }, [currentCompany]);
 
-  const pendingSent = [];
-  const pendingReceived = [];
-  const active = [];
-
-  for (const company of connectedCompanies) {
-    const { sent, received } = getJoinMeta(company);
-
-    const join = sent || received;
-    if (!join) continue;
-
-    // 🟡 Pending
-    if (join.status === "PENDING") {
-      if (sent) {
-        pendingSent.push(company);
-      }
-      if (received) {
-        pendingReceived.push({
-          company,
-          joinId: received.id,
-        });
-      }
-    }
-
-    if (join.status === "ACCEPTED") {
-      active.push({
-        company,
-        joinedAt: join.createdAt,
-      });
-    }
-  }
-
   return (
     <div className="min-h-full w-full">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -193,23 +178,11 @@ const NetworksPage = ({
               <>
                 <p className="text-sm text-gray-500">Requests sent by you</p>
                 <div className="space-y-4">
-                  {pendingSent.map((company) => {
-                    // const join =
-                    //   company.companyJoinsAsOne.find(
-                    //     (j: CompanyJoin) => j.id === company?.joinId
-                    //   ) ||
-                    //   company.companyJoinsAsTwo.find(
-                    //     (j: CompanyJoin) => j.id === company?.joinId
-                    //   );
-                    // console.log("join", join);
-                    // const isAllowed =
-                    //   join &&
-                    //   join.status === "PENDING" &&
-                    //   join.companyTwoId === Number(currentCompany?.id);
+                  {pendingSent.map((join: any) => {
                     return (
                       <CompanyCard
-                        key={company.id}
-                        company={company}
+                        key={join?.joinId}
+                        company={join?.company}
                         rightSlot={
                           <p className="text-sm italic text-gray-500 pt-1">
                             Collaboration request pending
@@ -227,53 +200,48 @@ const NetworksPage = ({
               <>
                 <p className="text-sm text-gray-500">Requests received</p>
                 <div className="space-y-4">
-                  {pendingReceived.map(({ company, joinId }) => {
-                    // const join =
-                    //   company.companyJoinsAsOne.find(
-                    //     (j: CompanyJoin) => j.id === joinId
-                    //   ) ||
-                    //   company.companyJoinsAsTwo.find(
-                    //     (j: CompanyJoin) => j.id === joinId
-                    //   );
-                    // console.log("join", join);
-                    // const isAllowed =
-                    //   join &&
-                    //   join.status === "PENDING" &&
-                    //   join.companyTwoId === Number(currentCompany?.id);
-
-                    return (
-                      <CompanyCard
-                        key={company.id}
-                        company={company}
-                        rightSlot={
-                          <div className="flex gap-2 pt-1">
-                            <Button
-                              className="bg-green-500"
-                              onClick={() =>
-                                acceptCompanyJoin(
-                                  joinId,
-                                  Number(currentCompany?.id)
-                                )
-                              }
-                            >
-                              Accept
-                            </Button>
-                            <Button
-                              className="bg-red-500"
-                              onClick={() =>
-                                rejectCompanyJoin(
-                                  joinId,
-                                  Number(currentCompany?.id)
-                                )
-                              }
-                            >
-                              Reject
-                            </Button>
-                          </div>
-                        }
-                      />
-                    );
-                  })}
+                  {pendingReceived.map(
+                    ({
+                      company,
+                      joinId,
+                    }: {
+                      company: Company;
+                      joinId: number;
+                    }) => {
+                      return (
+                        <CompanyCard
+                          key={joinId}
+                          company={company}
+                          rightSlot={
+                            <div className="flex gap-2 pt-1">
+                              <Button
+                                className="bg-green-500"
+                                onClick={() =>
+                                  acceptCompanyJoin(
+                                    joinId,
+                                    Number(currentCompany?.id)
+                                  )
+                                }
+                              >
+                                Accept
+                              </Button>
+                              <Button
+                                className="bg-red-500"
+                                onClick={() =>
+                                  rejectCompanyJoin(
+                                    joinId,
+                                    Number(currentCompany?.id)
+                                  )
+                                }
+                              >
+                                Reject
+                              </Button>
+                            </div>
+                          }
+                        />
+                      );
+                    }
+                  )}
                 </div>
               </>
             )}
@@ -296,20 +264,30 @@ const NetworksPage = ({
             )}
 
             <div className="space-y-4">
-              {active.map(({ company, joinedAt }) => (
-                <CompanyCard
-                  key={company.id}
-                  company={company}
-                  rightSlot={
-                    <div className="text-right text-xs italic text-gray-500 pt-1">
-                      <p className="font-semibold text-gray-600">
-                        Collaborating Since
-                      </p>
-                      <p>{formatDate(joinedAt)}</p>
-                    </div>
-                  }
-                />
-              ))}
+              {active.map(
+                ({
+                  company,
+                  joinId,
+                  joinedAt,
+                }: {
+                  company: Company;
+                  joinId: number;
+                  joinedAt: Date;
+                }) => (
+                  <CompanyCard
+                    key={joinId}
+                    company={company}
+                    rightSlot={
+                      <div className="text-right text-xs italic text-gray-500 pt-1">
+                        <p className="font-semibold text-gray-600">
+                          Collaborating Since
+                        </p>
+                        <p>{formatDate(joinedAt)}</p>
+                      </div>
+                    }
+                  />
+                )
+              )}
             </div>
           </div>
         </div>
