@@ -271,6 +271,9 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
       }
     }
 
+    if (!formData.targetColumnId)
+      newError.targetColumnId = "Action is required.";
+
     if (errors.length > 0) {
       errors.forEach((err) => errorToast(err));
 
@@ -497,6 +500,7 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
                 disabled={stageLoading}
                 isClear={true}
                 labelClassName="hidden"
+                error={error.targetColumnId}
               />
 
               {conditionActionHelp && (
