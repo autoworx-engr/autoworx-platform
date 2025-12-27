@@ -42,6 +42,16 @@ type Props = {
     createdAt: Date;
     joinId: number;
   }[];
+  rejectSent: {
+    company: Company;
+    createdAt: Date;
+    joinId: number;
+  }[];
+  rejectReceived: {
+    company: Company;
+    createdAt: Date;
+    joinId: number;
+  }[];
   active: {
     company: Company;
     joinedAt: Date;
@@ -54,6 +64,8 @@ const NetworksPage = ({
   pendingSent,
   pendingReceived,
   active,
+  rejectReceived,
+  rejectSent,
   unconnectedCompanies,
   currentCompany,
 }: Props) => {
@@ -168,12 +180,12 @@ const NetworksPage = ({
           </h2>
 
           <div className="space-y-6 rounded-xl border bg-white p-4 shadow-xl min-h-[300px]">
-            {/* 🔵 Pending */}
+            {/* Pending */}
             <h3 className="text-xl font-semibold text-gray-800">
               Pending Collaborations
             </h3>
 
-            {/* 🟡 Pending Sent */}
+            {/* Pending Sent */}
             {pendingSent.length > 0 && (
               <>
                 <p className="text-sm text-gray-500">Requests sent by you</p>
@@ -195,7 +207,7 @@ const NetworksPage = ({
               </>
             )}
 
-            {/* 🟠 Pending Received */}
+            {/* Pending Received */}
             {pendingReceived.length > 0 && (
               <>
                 <p className="text-sm text-gray-500">Requests received</p>
@@ -252,7 +264,7 @@ const NetworksPage = ({
               </p>
             )}
 
-            {/* 🟢 Active */}
+            {/* Active */}
             <h3 className="text-xl font-semibold text-gray-800 pt-6">
               Active Collaborations
             </h3>
@@ -289,6 +301,94 @@ const NetworksPage = ({
                 )
               )}
             </div>
+
+            {/* Rejected */}
+            <h3 className="text-xl font-semibold text-gray-800">
+              Rejected Collaborations
+            </h3>
+
+            {/* Rejected Sent */}
+            {rejectSent?.length > 0 && (
+              <>
+                <p className="text-sm text-gray-500">
+                  Rejected Requests sent by you
+                </p>
+                <div className="space-y-4">
+                  {rejectSent?.map((join: any) => {
+                    return (
+                      <CompanyCard
+                        key={join?.joinId}
+                        company={join?.company}
+                        rightSlot={
+                          <p className="text-sm italic text-gray-500 pt-1">
+                            Collaboration request rejected
+                          </p>
+                        }
+                      />
+                    );
+                  })}
+                </div>
+              </>
+            )}
+
+            {/* 🟠 Reject Received */}
+            {rejectReceived?.length > 0 && (
+              <>
+                <p className="text-sm text-gray-500">
+                  Rejected Requests received
+                </p>
+                <div className="space-y-4">
+                  {rejectReceived?.map(
+                    ({
+                      company,
+                      joinId,
+                    }: {
+                      company: Company;
+                      joinId: number;
+                    }) => {
+                      return (
+                        <CompanyCard
+                          key={joinId}
+                          company={company}
+                          rightSlot={
+                            <div className="flex gap-2 pt-1">
+                              <Button
+                                className="bg-green-500"
+                                onClick={() =>
+                                  acceptCompanyJoin(
+                                    joinId,
+                                    Number(currentCompany?.id)
+                                  )
+                                }
+                              >
+                                Accept
+                              </Button>
+                              {/* <Button
+                                className="bg-red-500"
+                                onClick={() =>
+                                  rejectCompanyJoin(
+                                    joinId,
+                                    Number(currentCompany?.id)
+                                  )
+                                }
+                              >
+                                Reject
+                              </Button> */}
+                            </div>
+                          }
+                        />
+                      );
+                    }
+                  )}
+                </div>
+              </>
+            )}
+
+            {rejectSent?.length === 0 && rejectReceived?.length === 0 && (
+              <p className="text-sm text-gray-500 italic">
+                No rejected collaboration
+              </p>
+            )}
           </div>
         </div>
 

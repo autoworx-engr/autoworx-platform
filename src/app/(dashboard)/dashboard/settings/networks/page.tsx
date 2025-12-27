@@ -54,6 +54,8 @@ const page = async (props: Props) => {
 
   const pendingSent = [];
   const pendingReceived = [];
+  const rejectSent = [];
+  const rejectReceived = [];
   const active = [];
 
   for (const join of connectedCompanyIds) {
@@ -80,6 +82,24 @@ const page = async (props: Props) => {
       }
     }
 
+    if (join.status === "REJECTED") {
+      if (isSender) {
+        rejectSent.push({
+          company: otherCompany,
+          joinId: join.id,
+          createdAt: join.createdAt,
+        });
+      }
+
+      if (isReceiver) {
+        rejectReceived.push({
+          company: otherCompany,
+          joinId: join.id,
+          createdAt: join.createdAt,
+        });
+      }
+    }
+
     if (join.status === "ACCEPTED") {
       active.push({
         company: otherCompany,
@@ -98,6 +118,8 @@ const page = async (props: Props) => {
       active={active}
       pendingReceived={pendingReceived}
       pendingSent={pendingSent}
+      rejectReceived={rejectReceived}
+      rejectSent={rejectSent}
     />
   );
 };
