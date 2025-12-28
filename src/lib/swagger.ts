@@ -1,4 +1,9 @@
 import swaggerJSDoc from "swagger-jsdoc";
+import path from "path";
+
+// Use an absolute, cross-platform glob so swagger-jsdoc can find TS route files
+const projectRoot = process.cwd().split(path.sep).join("/");
+const apiGlob = `${projectRoot}/src/app/api/**/*.ts`;
 
 export const swaggerSpec = swaggerJSDoc({
   definition: {
@@ -20,5 +25,5 @@ export const swaggerSpec = swaggerJSDoc({
     },
     security: [{ bearerAuth: [] }],
   },
-  apis: ["./app/api/**/*.ts"],
+  apis: [apiGlob, `${projectRoot}/src/app/api/**/*.js`],
 });

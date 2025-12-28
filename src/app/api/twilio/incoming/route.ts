@@ -4,6 +4,31 @@ import { twiml } from "twilio";
 import { v4 as uuidv4 } from "uuid";
 import { sendPushNotification } from "@/actions/notification/sendPushNotification";
 
+/**
+ * @swagger
+ * /api/twilio/incoming:
+ *   post:
+ *     summary: Twilio incoming call webhook
+ *     tags: [Twilio]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/x-www-form-urlencoded:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               From:
+ *                 type: string
+ *               To:
+ *                 type: string
+ *               CallSid:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Incoming call processed
+ *       400:
+ *         description: Missing parameters
+ */
 export async function POST(request: Request) {
   console.log("📞 [Incoming] Webhook called at:", new Date().toISOString());
   try {
