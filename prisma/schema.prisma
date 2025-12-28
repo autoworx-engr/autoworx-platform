@@ -669,6 +669,7 @@ model Company {
   shortLinks                       ShortLink[]
   smsGateway                       SmsGateway                         @default(TWILIO)
   invoiceTemplates                 InvoiceTemplate[]
+  callForwardingNumber             String?                            @map("call_forwarding_number")
 }
 
 enum SmsGateway {
