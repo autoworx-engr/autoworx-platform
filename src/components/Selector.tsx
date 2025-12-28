@@ -110,7 +110,7 @@ export default function Selector<T>({
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-      <div className={cn("w-full transition-all duration-300", className)}>
+      <div className={cn("w-full max-w-sm transition-all duration-300", className)}>
         <DropdownMenuTrigger
           disabled={disabledDropdown}
           className={cn(
@@ -151,7 +151,7 @@ export default function Selector<T>({
           align="start"
           sideOffset={8}
           className={cn(
-            "z-50 w-[var(--radix-popper-anchor-width)] overflow-hidden rounded-xl",
+            "z-50 w-[var(--radix-popper-anchor-width)] min-w-[280px] overflow-hidden rounded-xl",
             "border border-slate-200/60 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl shadow-2xl animate-in fade-in zoom-in-95 duration-200"
           )}
         >
@@ -187,7 +187,7 @@ export default function Selector<T>({
                 </button>
               ))
             ) : (
-              <div className="py-3 text-center text-xs text-slate-400">No results found</div>
+              <div className="p-3 text-center text-xs text-slate-400">No results found</div>
             )}
 
             {isFetchingNextPage && (

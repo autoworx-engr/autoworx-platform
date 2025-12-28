@@ -494,14 +494,16 @@ export default function NewCustomer({
                 />
               </div>
             </div>
-            <div className="">
-              <p className="mb-1 font-medium">Tag</p>
-              <ClientTagSelector
-                value={tag}
-                setValue={setTag}
-                open={tagOpenDropdown}
-                setOpen={setTagOpenDropdown}
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
+              <div className="w-full">
+                <p className="mb-1 font-medium">Tag</p>
+                <ClientTagSelector
+                  value={tag}
+                  setValue={setTag}
+                  open={tagOpenDropdown}
+                  setOpen={setTagOpenDropdown}
+                />
+              </div>
             </div>
           </div>
 

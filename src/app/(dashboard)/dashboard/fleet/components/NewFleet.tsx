@@ -208,15 +208,15 @@ export default function NewFleet({
       </DialogTrigger>
       <DialogContent
         className="max-h-full max-w-xl grid-rows-[auto,1fr,auto]"
-        // form
+      // form
       >
-        <div className="mt-8 flex items-center justify-between">
+        <div className="mt-8 flex items-center justify-between px-2 md:px-4">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-slate-600 dark:text-slate-100">
               {isEdit ? "Edit" : "Add"} Fleet
             </h1>
             <p className="text-sm text-slate-500 mt-1">
-              Enter details for the new fleet
+              Enter details for the {isEdit ? "fleet" : "new fleet"}
             </p>
           </div>
 
@@ -273,8 +273,8 @@ export default function NewFleet({
 
         <FormError />
 
-        <div className="space-y-2 overflow-y-auto">
-          <div className="flex items-center justify-between gap-x-2">
+        <div className="space-y-4 overflow-y-auto py-2 px-2 md:px-4 thin-scrollbar scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <SlimInput
               name="fleetName"
               label="Fleet Name"
@@ -302,7 +302,7 @@ export default function NewFleet({
             />
           </div>
 
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <SlimInput
               name="email"
               label="Email Address"
@@ -322,30 +322,7 @@ export default function NewFleet({
                 // }
               }}
             />
-            {/* <SlimInput
-              type="tel"
-              name="mobile"
-              label="Mobile Number"
-              required
-              defaultValue={mobile}
-              onChange={(e) => {
-                const value = e.target.value;
-
-                // Ensure the value starts with +1 and only allows numeric values
-                if (value.startsWith("+1") && /^\+1\d*$/.test(value)) {
-                  setMobile(value);
-                  clearError();
-                } else {
-                  showError({
-                    field: "mobile",
-                    message:
-                      "Invalid phone number format. Only numbers are allowed.",
-                  });
-                }
-              }}
-            /> */}
-
-            <div className="md:w-[248px]">
+            <div>
               <PhoneInput
                 required
                 defaultValue={fleet?.mobile || ""}
@@ -370,7 +347,7 @@ export default function NewFleet({
             />
           </div>
 
-          <div className="flex items-center justify-between gap-x-2">
+          <div className="grid grid-cols-3 gap-3">
             <SlimInput
               name="city"
               required={false}
@@ -384,7 +361,7 @@ export default function NewFleet({
             <SlimInput name="zip" required={false} defaultValue={fleet?.zip!} />
           </div>
 
-          <div className="flex items-center justify-between gap-x-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="w-full">
               <SelectComponent
                 label="Preferred Payment Term"
