@@ -301,9 +301,10 @@ export async function register({
     console.error("The error: ", err);
     console.log({ err: errorHandler(err) });
 
-    return {
-      // error: "A server side error occured",
-      error: errorHandler(err),
-    };
+    // return {
+    //   // error: "A server side error occured",
+    //   error: errorHandler(err),
+    // };
+    throw err;
   }
 }
