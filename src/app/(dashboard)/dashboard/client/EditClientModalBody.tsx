@@ -109,6 +109,13 @@ export default function EditClientModalBody({
       return;
     }
 
+    if (!mobile || mobile.length < 10) {
+      showError({
+        field: "mobile",
+        message: "Please enter a valid phone number (at least 10 digits).",
+      });
+      return;
+    }
     // For email
     // if (!email?.trim()) {
     //   showError({
@@ -308,7 +315,7 @@ export default function EditClientModalBody({
             <PhoneInput
               label="Mobile"
               placeholder="1234567890"
-              required={false}
+              required
               defaultValue={client.mobile!}
               // value={phoneNumber}
               defaultIsoCode={client.countryCode!}
