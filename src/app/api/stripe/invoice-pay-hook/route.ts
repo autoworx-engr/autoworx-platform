@@ -9,6 +9,30 @@ const stripe = new Stripe(
   (process.env.STRIPE_SECRET_KEY || env("STRIPE_SECRET_KEY")) as string
 );
 
+/**
+ * @swagger
+ * /api/stripe/invoice-pay-hook:
+ *   post:
+ *     summary: Stripe webhook for payment events
+ *     tags: [Stripe]
+ *     parameters:
+ *       - in: header
+ *         name: stripe-signature
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json: {}
+ *     responses:
+ *       200:
+ *         description: Webhook processed
+ *       400:
+ *         description: Missing signature or invalid event
+ *       500:
+ *         description: Server error
+ */
 export async function POST(req: NextRequest) {
   let event;
   const signature = req.headers.get("stripe-signature");
