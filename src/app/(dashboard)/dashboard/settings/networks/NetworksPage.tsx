@@ -180,6 +180,44 @@ const NetworksPage = ({
           </h2>
 
           <div className="space-y-6 rounded-xl border bg-white p-4 shadow-xl min-h-[300px]">
+            {/* Active */}
+            <h3 className="text-xl font-semibold text-gray-800 pt-6">
+              Active Collaborations
+            </h3>
+
+            {active.length === 0 && (
+              <p className="text-sm text-gray-500 italic">
+                No active collaborations found
+              </p>
+            )}
+
+            <div className="space-y-4">
+              {active.map(
+                ({
+                  company,
+                  joinId,
+                  joinedAt,
+                }: {
+                  company: Company;
+                  joinId: number;
+                  joinedAt: Date;
+                }) => (
+                  <CompanyCard
+                    key={joinId}
+                    company={company}
+                    rightSlot={
+                      <div className="text-right text-xs italic text-gray-500 pt-1">
+                        <p className="font-semibold text-gray-600">
+                          Collaborating Since
+                        </p>
+                        <p>{formatDate(joinedAt)}</p>
+                      </div>
+                    }
+                  />
+                )
+              )}
+            </div>
+
             {/* Pending */}
             <h3 className="text-xl font-semibold text-gray-800">
               Pending Collaborations
@@ -263,44 +301,6 @@ const NetworksPage = ({
                 No pending collaboration requests
               </p>
             )}
-
-            {/* Active */}
-            <h3 className="text-xl font-semibold text-gray-800 pt-6">
-              Active Collaborations
-            </h3>
-
-            {active.length === 0 && (
-              <p className="text-sm text-gray-500 italic">
-                No active collaborations found
-              </p>
-            )}
-
-            <div className="space-y-4">
-              {active.map(
-                ({
-                  company,
-                  joinId,
-                  joinedAt,
-                }: {
-                  company: Company;
-                  joinId: number;
-                  joinedAt: Date;
-                }) => (
-                  <CompanyCard
-                    key={joinId}
-                    company={company}
-                    rightSlot={
-                      <div className="text-right text-xs italic text-gray-500 pt-1">
-                        <p className="font-semibold text-gray-600">
-                          Collaborating Since
-                        </p>
-                        <p>{formatDate(joinedAt)}</p>
-                      </div>
-                    }
-                  />
-                )
-              )}
-            </div>
 
             {/* Rejected */}
             <h3 className="text-xl font-semibold text-gray-800">
