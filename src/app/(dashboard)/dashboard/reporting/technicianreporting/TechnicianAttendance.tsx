@@ -2,12 +2,12 @@
 // @ts-ignore
 import { getAttendanceInfo } from "@/actions/employee/getAttendanceInfo";
 import DateRange from "@/app/(dashboard)/dashboard/payments/components/PaymentDateRange";
+import AttendanceTableSkeleton from "@/components/ui/AttendanceTableSkeleton";
+import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { useServerGet } from "@/hooks/useServerGet";
 import { convertDuration } from "@/lib/convertDurations";
-import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import moment from "moment-timezone";
-import { useState, useEffect } from "react";
-import AttendanceTableSkeleton from "@/components/ui/AttendanceTableSkeleton";
+import { useEffect, useState } from "react";
 
 const daysOfWeek = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 
@@ -143,15 +143,18 @@ const TechnicianAttendance = ({ currentUserId }: { currentUserId: string }) => {
                         } else {
                           // If Date object, extract just the date portion to avoid timezone shifts
                           // The server sends dates as UTC midnight, so we parse as UTC and extract the date
-                          const utcDate = moment.utc(data.date);
-                          dateMoment = moment.tz(
-                            {
-                              year: utcDate.year(),
-                              month: utcDate.month(),
-                              date: utcDate.date(),
-                            },
-                            timezone
-                          );
+                          // const utcDate = moment.utc(data.date);
+                          // dateMoment = moment.tz(
+                          //   {
+                          //     year: utcDate.year(),
+                          //     month: utcDate.month(),
+                          //     date: utcDate.date(),
+                          //   },
+                          //   timezone
+                          // );
+                          // FIX: Parse as-is without shifting time
+                          // The 'true' parameter keeps the same date values when converting timezone
+                          dateMoment = moment(data.date).tz(timezone, true);
                         }
 
                         const dayOfWeek = dateMoment.day();
