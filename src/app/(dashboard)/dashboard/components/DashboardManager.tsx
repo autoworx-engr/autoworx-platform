@@ -2,6 +2,7 @@ import AppointmentListBox from "./box/AppointmentListBox";
 import EmployeeLeaveRequestsBox from "./box/EmployeeLeaveRequestsBox";
 import EmployeePayoutBox from "./box/EmployeePayoutBox";
 import InventoryBox from "./box/InventoryBox";
+import ReputationBox from "./box/ReputationBox";
 import RevenueBox from "./box/RevenueBox";
 import SalesPipelineBox from "./box/SalesPipelineBox";
 import ShopPipelineBox from "./box/ShopPipelineBox";
@@ -26,6 +27,9 @@ const DashboardManager = () => {
       <div className="order-4 flex w-full flex-col h-full min-h-0 gap-4 lg:order-2 lg:w-[20%]">
         <div className="flex-1 min-h-0">
           <TaskListBox />
+        </div>
+        <div className="flex-1 min-h-0 lg:hidden">
+          <ReputationBox />
         </div>
       </div>
 
@@ -52,9 +56,10 @@ const DashboardManager = () => {
         {/* Row 2: Payout */}
         {/* NOTE: Remove redundant styling from parent */}
         <EmployeePayoutBox />
-
-        {/* Row 3: Employee Leave Request */}
-        <EmployeeLeaveRequestsBox />
+        {/* <EmployeeLeaveRequestsBox /> */}
+        <div className="hidden lg:flex flex-1 min-h-0">
+          <ReputationBox />
+        </div>
       </div>
     </div>
   );

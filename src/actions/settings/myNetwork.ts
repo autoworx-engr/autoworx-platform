@@ -1,8 +1,11 @@
 "use server";
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
+import getUser from "@/lib/getUser";
+import { sendCollaborationMessageNotification } from "@/lib/notification/communication-notify";
 import { Company } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import { sendUserNotifications } from "../notification/sendUserNotification";
 
 export async function connectWithCompany(
   targetCompanyId: number,
@@ -48,8 +51,56 @@ export async function connectWithCompany(
       data: {
         companyOneId: userCompanyId,
         companyTwoId: targetCompanyId,
+        status: "PENDING",
       },
     });
+
+    const company = await db.company.findUnique({
+      where: { id: targetCompanyId },
+      select: { name: true },
+    });
+
+    const targetUsers = await db.user.findMany({
+      where: {
+        companyId: targetCompanyId,
+        employeeType: {
+          in: ["Admin", "Manager", "Sales"],
+        },
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        phone: true,
+        companyId: true,
+      },
+    });
+
+    const sessionUser = await getUser();
+
+    const redirectUrl = `/dashboard/settings/networks`;
+    const sessionUserFullName = `${sessionUser.firstName} ${sessionUser.lastName}`;
+    const description = `New collaboration invitation from ${sessionUserFullName} in ${company?.name}. View it in Autoworx`;
+    const title = "New Collaboration Invitation";
+
+    await Promise.all(
+      targetUsers.map((user) =>
+        sendUserNotifications({
+          userId: user.id,
+          userName: `${user.firstName} ${user.lastName}`,
+          userEmail: user.email || "",
+          userPhoneNo: user.phone || "",
+          companyId: user.companyId,
+          iconType: "message",
+          title,
+          description,
+          type: "COLLABORATION_INVITATION",
+          redirectUrl,
+        })
+      )
+    );
+
     revalidatePathName && revalidatePath(revalidatePathName);
     return {
       success: true,

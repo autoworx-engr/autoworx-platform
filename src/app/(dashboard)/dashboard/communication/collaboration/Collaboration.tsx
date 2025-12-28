@@ -33,7 +33,7 @@ export default function Collaboration({
   const unreadCounts = useUnreadCollaborationMessages(
     parseInt(currentUser?.id)
   );
-  console.log("currentUser", currentUser);
+
   return (
     <div className="flex gap-5 sm:mt-5">
       <List
