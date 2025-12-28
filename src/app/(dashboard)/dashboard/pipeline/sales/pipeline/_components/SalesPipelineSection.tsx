@@ -1,4 +1,6 @@
 "use client";
+
+import React, { useEffect, useRef, useState } from "react";
 import { updateLeadColumn } from "@/actions/pipelines/getLeads";
 import { actionTypes } from "@/constants/lead.constant";
 import {
@@ -6,147 +8,184 @@ import {
   useColumnState,
 } from "@/context/sales-pipeline.context";
 import { errorToast, successToast } from "@/lib/toast";
-import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd";
-import { useEffect, useRef, useState } from "react";
+import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
 import LeadCard from "./LeadCard";
 import LeadInfinityScroll from "./LeadInfinityScroll";
 
 export default function SalesPipelineSection() {
   const pipelineColumns = useColumnState() || [];
-  const columnRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
-  const [screenWidth, setScreenWidth] = useState<number>(window.innerWidth);
-
-  function updateWidth() {
-    setScreenWidth(window.innerWidth);
-  }
+  const dispatch = useColumnDispatch();
+  const [screenWidth, setScreenWidth] = useState<number>(
+    typeof window !== "undefined" ? window.innerWidth : 1200
+  );
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    updateWidth();
+    function updateWidth() {
+      setScreenWidth(window.innerWidth);
+    }
     window.addEventListener("resize", updateWidth);
     return () => window.removeEventListener("resize", updateWidth);
   }, []);
 
-  // Mark initial load as complete after first render
+  
   useEffect(() => {
-    if (isInitialLoad && pipelineColumns.length > 0) {
-      // Small delay to ensure the UI is fully rendered before allowing background operations
-      const timer = setTimeout(() => {
-        setIsInitialLoad(false);
-      }, 300);
-      return () => clearTimeout(timer);
-    }
-  }, [isInitialLoad, pipelineColumns.length]);
-
-  // DnD logic - optimized with better error handling
-  const dispatch = useColumnDispatch();
-  const handleDragEnd = async (result: any) => {
-    const { destination, source, draggableId } = result;
-    if (!destination) return;
-    if (
-      destination.droppableId === source.droppableId &&
-      destination.index === source.index
-    ) {
+    // Disable drag and drop on mobile
+    if (screenWidth < 768) {
       return;
     }
 
-    // Optimistic update - update UI immediately
-    dispatch({
-      type: actionTypes.DRAG_END,
-      payload: { source, destination, draggableId },
-    });
-
-    // Only make API call if moving between columns
-    if (destination.droppableId !== source.droppableId) {
-      try {
-        const newColumnId =
-          pipelineColumns[Number(destination.droppableId)]?.id;
-        if (newColumnId) {
-          successToast("Lead column updated successfully");
-          await updateLeadColumn(Number(draggableId), newColumnId);
+    return monitorForElements({
+      onDrop({ source, location }) {
+        const destination = location.current.dropTargets[0];
+        if (!destination) {
+          return;
         }
-      } catch (error) {
-        console.error("Failed to update lead column:", error);
-        // Revert the optimistic update on error
+
+        const dragData = source.data as {
+          leadId: string;
+          columnIndex: number;
+          leadIndex: number;
+        };
+        const dropData = destination.data as {
+          columnIndex: number;
+          targetType: "column" | "card";
+          targetLeadIndex?: number;
+          closestEdge?: "top" | "bottom";
+        };
+
+        const sourceColumnIndex = dragData.columnIndex;
+        const sourceLeadIndex = dragData.leadIndex;
+        const destinationColumnIndex = dropData.columnIndex;
+
+        // Calculate destination index - get all leads in destination column
+        // const destinationLeads =
+        //   pipelineColumns[destinationColumnIndex]?.leads || [];
+        // const destinationLeadIndex = destinationLeads.length;
+
+        let destinationLeadIndex: number;
+
+        if (
+          dropData.targetType === "card" &&
+          dropData.targetLeadIndex !== undefined
+        ) {
+          // Dropped on a specific card
+          const edge = dropData.closestEdge;
+          destinationLeadIndex = dropData.targetLeadIndex;
+
+          // If dropping below, insert after the target
+          if (edge === "bottom") {
+            destinationLeadIndex += 1;
+          }
+
+          // Adjust index if moving within same column
+          if (
+            sourceColumnIndex === destinationColumnIndex &&
+            sourceLeadIndex < destinationLeadIndex
+          ) {
+            destinationLeadIndex -= 1;
+          }
+        } else {
+          // Dropped on empty column area - add to end
+          const destinationLeads =
+            pipelineColumns[destinationColumnIndex]?.leads || [];
+          destinationLeadIndex = destinationLeads.length;
+        }
+        // Don't do anything if dropped in same position
+        if (
+          sourceColumnIndex === destinationColumnIndex &&
+          sourceLeadIndex === destinationLeadIndex
+        ) {
+          return;
+        }
+
+        // Optimistic update - update UI immediately
         dispatch({
           type: actionTypes.DRAG_END,
           payload: {
-            source: destination,
-            destination: source,
-            draggableId,
+            source: {
+              droppableId: sourceColumnIndex.toString(),
+              index: sourceLeadIndex,
+            },
+            destination: {
+              droppableId: destinationColumnIndex.toString(),
+              index: destinationLeadIndex,
+            },
+            draggableId: dragData.leadId,
           },
         });
-        errorToast("Failed to update lead column. Please try again.");
-      }
-    }
-  };
 
-  return (
-    <DragDropContext onDragEnd={handleDragEnd}>
-      <div className="h-full w-full overflow-hidden px-2">
-        <div className="thin-scrollbar flex touch-pan-x snap-x snap-mandatory flex-nowrap justify-between gap-2 overflow-x-auto">
-          {pipelineColumns.map((column, columnIndex) => {
-            return (
-              <Droppable
-                droppableId={`${columnIndex}`}
-                key={columnIndex}
-                isDropDisabled={screenWidth < 768}
-              >
-                {(provided) => (
-                  <div
-                    ref={(el) => {
-                      provided.innerRef(el);
-                      columnRefs.current[columnIndex] = el;
-                    }}
-                    className="mx-2 w-[calc(100vw-2rem)] flex-shrink-0 rounded-md border sm:min-w-80 sm:flex-1 lg:min-w-[calc(100%/3-1.5rem)] xl:min-w-[calc(100%/4-1.5rem)] 2xl:min-w-[calc(100%/6-1.5rem)]"
-                    style={{
-                      backgroundColor: "rgba(101, 113, 255, 0.15)",
-                      padding: "0",
-                    }}
-                  >
-                    <h2 className="rounded-lg bg-[#6571FF] px-4 py-3 text-center text-white">
-                      <p className="text-base font-bold">
-                        {column.title || ""}
-                        <span className="ml-2 rounded-lg bg-[#3F49B9] px-2">
-                          {column?.totalLeads || 0}
-                        </span>
-                      </p>
-                    </h2>
-                    <LeadInfinityScroll
-                      provided={provided}
-                      columnTitle={column.title || ""}
-                      columnId={column.id}
-                      leads={column.leads}
-                    >
-                      {(leads) =>
-                        leads.map((lead, leadIndex) => (
-                          <Draggable
-                            key={lead.id}
-                            draggableId={lead.id.toString()}
-                            index={leadIndex}
-                            isDragDisabled={screenWidth < 768}
-                          >
-                            {(provided) => (
-                              <li
-                                {...provided.draggableProps}
-                                {...provided.dragHandleProps}
-                                ref={provided.innerRef}
-                                className="max-w-auto relative mx-1 my-1 h-fit animate-none rounded-xl border bg-background p-1 duration-300 hover:bg-slate-100"
-                              >
-                                <LeadCard leadData={lead} />
-                              </li>
-                            )}
-                          </Draggable>
-                        ))
-                      }
-                    </LeadInfinityScroll>
-                  </div>
-                )}
-              </Droppable>
+        // Only make API call if moving between columns
+        if (sourceColumnIndex !== destinationColumnIndex) {
+          const newColumnId = pipelineColumns[destinationColumnIndex]?.id;
+          if (newColumnId) {
+            successToast("Lead column updated successfully");
+            updateLeadColumn(Number(dragData.leadId), newColumnId).catch(
+              (error) => {
+                console.error("Failed to update lead column:", error);
+                // Revert the optimistic update on error
+                dispatch({
+                  type: actionTypes.DRAG_END,
+                  payload: {
+                    source: {
+                      droppableId: destinationColumnIndex.toString(),
+                      index: destinationLeadIndex,
+                    },
+                    destination: {
+                      droppableId: sourceColumnIndex.toString(),
+                      index: sourceLeadIndex,
+                    },
+                    draggableId: dragData.leadId,
+                  },
+                });
+                errorToast("Failed to update lead column. Please try again.");
+              }
             );
-          })}
-        </div>
+          }
+        }
+      },
+    });
+  }, [dispatch, pipelineColumns, screenWidth]);
+
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!el || screenWidth < 768) return;
+    return autoScrollForElements({ element: el });
+  }, [screenWidth]);
+  return (
+    <div className="h-full w-full overflow-hidden px-2">
+      <div
+        ref={scrollContainerRef}
+        className="thin-scrollbar flex touch-pan-x snap-x snap-mandatory flex-nowrap justify-between gap-2 overflow-x-auto"
+      >
+        {pipelineColumns.map((column, columnIndex) => {
+          return (
+            <LeadInfinityScroll
+              key={columnIndex}
+              columnTitle={column.title || ""}
+              columnId={column.id}
+              columnIndex={columnIndex}
+              leads={column.leads}
+              screenWidth={screenWidth}
+              totalLeads={column?.totalLeads || 0}
+            >
+              {(leads) =>
+                leads.map((lead, leadIndex) => (
+                  <LeadCard
+                    key={lead.id}
+                    leadData={lead}
+                    index={leadIndex}
+                    columnIndex={columnIndex}
+                    isDragDisabled={screenWidth < 768}
+                    leadIndex={leadIndex}
+                  />
+                ))
+              }
+            </LeadInfinityScroll>
+          );
+        })}
       </div>
-    </DragDropContext>
+    </div>
   );
 }
