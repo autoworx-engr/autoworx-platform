@@ -65,13 +65,13 @@ export type Rule = {
 
 // Template variables
 const template_variable_options = [
-  { name: "<CONTACT>", description: "Contact" },
+  { name: "<CLIENT>", description: "Client name" },
   { name: "<INTEREST>", description: "Interest" },
-  { name: "<VEHICLE>", description: "Vehicle" },
+  { name: "<VEHICLE>", description: "Vehicle details" },
   { name: "<SERVICE>", description: "Service" },
   { name: "<BUSINESS_NAME>", description: "Your business name" },
-  { name: "<BUSINESS_PHONE>", description: "Your business phone" },
-  { name: "<BUSINESS_ADDRESS>", description: "Your business address" },
+  { name: "<PHONE>", description: "Your business phone number" },
+  { name: "<ADDRESS>", description: "Your business address" },
   { name: "<VIDEO_DIRECTION>", description: "Video direction" },
   { name: "<GOOGLE_MAP_LINK>", description: "Google map link" },
 ];
