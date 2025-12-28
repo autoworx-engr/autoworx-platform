@@ -2,15 +2,39 @@ import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 import { twiml } from "twilio";
 import { v4 as uuidv4 } from "uuid";
+
+/**
+ * @swagger
+ * /api/twilio/receive:
+ *   post:
+ *     summary: Twilio outgoing call receive endpoint
+ *     tags: [Twilio]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/x-www-form-urlencoded:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               To:
+ *                 type: string
+ *               From:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Call received
+ *       400:
+ *         description: Missing parameters
+ */
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
-    console.log("🚀 ~ POST ~ formData:", formData)
+    console.log("🚀 ~ POST ~ formData:", formData);
     const to = formData.get("To") as string;
-    console.log("🚀 ~ POST ~ to:", to)
+    console.log("🚀 ~ POST ~ to:", to);
     //@ts-ignore
     const from = (formData.get("From") ?? "")?.split(":")[1] as string; // Ensure correct retrieval
-    console.log("🚀 ~ POST ~ from:", from)
+    console.log("🚀 ~ POST ~ from:", from);
 
     if (!to || !from) {
       return NextResponse.json(
@@ -34,7 +58,7 @@ export async function POST(request: Request) {
         },
       },
     });
-    console.log("🚀 ~ POST ~ twilioCredentials:", twilioCredentials)
+    console.log("🚀 ~ POST ~ twilioCredentials:", twilioCredentials);
 
     if (!twilioCredentials) {
       return NextResponse.json(
@@ -51,10 +75,10 @@ export async function POST(request: Request) {
         },
       },
     });
-    console.log("🚀 ~ POST ~ client:", client)
+    console.log("🚀 ~ POST ~ client:", client);
 
     let callId = uuidv4();
-    console.log("🚀 ~ POST ~ callId:", callId)
+    console.log("🚀 ~ POST ~ callId:", callId);
     // Prepare database insert for ClientCall
     await db.clientCall.create({
       data: {
