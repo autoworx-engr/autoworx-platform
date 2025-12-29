@@ -3,6 +3,25 @@ import fs from "fs";
 import os from "os";
 
 import { NextResponse } from "next/server";
+
+/**
+ * @swagger
+ * /api/images/{filename}:
+ *   get:
+ *     summary: Get image by filename
+ *     tags: [Images]
+ *     parameters:
+ *       - in: path
+ *         name: filename
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Image file
+ *       404:
+ *         description: Image not found
+ */
 export async function GET(
   req: Request,
   { params }: { params: { filename: string } }

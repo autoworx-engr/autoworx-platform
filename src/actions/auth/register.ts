@@ -288,7 +288,7 @@ export async function register({
     await db.companyEmailTemplate.create({
       data: {
         subject: `Estimate for services requested at <BUSINESS_NAME>`,
-        message: `Hey <CLIENT>, your estimate for <VEHICLE> is ready.  – <BUSINESS_NAME>`,
+        message: `Hey <CLIENT>, your estimate for <VEHICLE> is ready. If everything looks good, please approve it so we can move forward. Thanks!– <BUSINESS_NAME>`,
         companyId: newCompany.id,
       },
     });
@@ -301,9 +301,10 @@ export async function register({
     console.error("The error: ", err);
     console.log({ err: errorHandler(err) });
 
-    return {
-      // error: "A server side error occured",
-      error: errorHandler(err),
-    };
+    // return {
+    //   // error: "A server side error occured",
+    //   error: errorHandler(err),
+    // };
+    throw err;
   }
 }

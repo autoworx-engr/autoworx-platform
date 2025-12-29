@@ -669,6 +669,7 @@ model Company {
   shortLinks                       ShortLink[]
   smsGateway                       SmsGateway                         @default(TWILIO)
   invoiceTemplates                 InvoiceTemplate[]
+  callForwardingNumber             String?                            @map("call_forwarding_number")
 }
 
 enum SmsGateway {
@@ -678,13 +679,20 @@ enum SmsGateway {
 
 // create model that will handle multiple companies join and collaboration
 model CompanyJoin {
-  id           Int      @id @default(autoincrement())
+  id           Int               @id @default(autoincrement())
   companyOneId Int
   companyTwoId Int
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
-  companyOne   Company  @relation(fields: [companyOneId], references: [id], onDelete: Cascade, name: "CompanyOne")
-  companyTwo   Company  @relation(fields: [companyTwoId], references: [id], onDelete: Cascade, name: "CompanyTwo")
+  createdAt    DateTime          @default(now()) @map("created_at")
+  updatedAt    DateTime          @default(now()) @updatedAt @map("updated_at")
+  companyOne   Company           @relation(fields: [companyOneId], references: [id], onDelete: Cascade, name: "CompanyOne")
+  companyTwo   Company           @relation(fields: [companyTwoId], references: [id], onDelete: Cascade, name: "CompanyTwo")
+  status       CompanyJoinStatus @default(ACCEPTED)
+}
+
+enum CompanyJoinStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
 }
 
 // Calendar settings for a company.
@@ -1692,6 +1700,7 @@ enum NotificationType {
   CLIENT_CALL_ALERT
   CLIENT_EMAIL_ALERT
   COLLABORATION_MESSAGE_ALERT
+  COLLABORATION_INVITATION
 }
 
 enum NotificationSection {

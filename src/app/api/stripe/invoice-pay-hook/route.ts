@@ -9,6 +9,30 @@ const stripe = new Stripe(
   (process.env.STRIPE_SECRET_KEY || env("STRIPE_SECRET_KEY")) as string
 );
 
+/**
+ * @swagger
+ * /api/stripe/invoice-pay-hook:
+ *   post:
+ *     summary: Stripe webhook for payment events
+ *     tags: [Stripe]
+ *     parameters:
+ *       - in: header
+ *         name: stripe-signature
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json: {}
+ *     responses:
+ *       200:
+ *         description: Webhook processed
+ *       400:
+ *         description: Missing signature or invalid event
+ *       500:
+ *         description: Server error
+ */
 export async function POST(req: NextRequest) {
   let event;
   const signature = req.headers.get("stripe-signature");
@@ -335,26 +359,62 @@ export async function POST(req: NextRequest) {
         if (findInvoice) {
           // Update invoice differently based on payment type
           if (isDeposit) {
-            // For deposits, increment the deposit field
-            stripeInvoice = await db.invoice.update({
-              where: {
-                id: paymentData.invoiceId,
-                companyId: paymentData.companyId,
-              },
-              data: {
-                deposit: {
-                  increment: paymentData.amount,
+            // For deposits, first pay off any due amount, then keep the rest as deposit
+            const currentDue = Number(findInvoice.due ?? 0);
+            const depositAmount = Number(paymentData.amount);
+
+            if (currentDue > 0) {
+              // Deposit can cover part or all of the due amount
+              const amountToCoverDue = Math.min(depositAmount, currentDue);
+              const remainingDeposit = depositAmount - amountToCoverDue;
+
+              stripeInvoice = await db.invoice.update({
+                where: {
+                  id: paymentData.invoiceId,
+                  companyId: paymentData.companyId,
                 },
-              },
-              include: {
-                client: {
-                  select: {
-                    firstName: true,
-                    lastName: true,
+                data: {
+                  due: {
+                    decrement: amountToCoverDue,
+                  },
+                  totalPayment: {
+                    increment: amountToCoverDue,
+                  },
+                  deposit: {
+                    increment: remainingDeposit,
                   },
                 },
-              },
-            });
+                include: {
+                  client: {
+                    select: {
+                      firstName: true,
+                      lastName: true,
+                    },
+                  },
+                },
+              });
+            } else {
+              // No due amount, all deposit goes to deposit field
+              stripeInvoice = await db.invoice.update({
+                where: {
+                  id: paymentData.invoiceId,
+                  companyId: paymentData.companyId,
+                },
+                data: {
+                  deposit: {
+                    increment: depositAmount,
+                  },
+                },
+                include: {
+                  client: {
+                    select: {
+                      firstName: true,
+                      lastName: true,
+                    },
+                  },
+                },
+              });
+            }
           } else {
             // For payments, decrement due and increment totalPayment
             stripeInvoice = await db.invoice.update({
