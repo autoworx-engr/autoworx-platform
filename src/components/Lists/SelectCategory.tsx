@@ -92,7 +92,7 @@ export default function SelectCategory({
       {labelPosition !== "none" && (
         <div className="relative">
           <label
-            className={cn("text-semibold", {
+            className={cn("font-medium text-slate-600", {
               "w-28 text-end text-sm": labelPosition === "left",
             })}
           >
@@ -129,7 +129,7 @@ export default function SelectCategory({
                   }
                   setCategoryInput(e.target.value);
                 }}
-                className="w-full rounded-md border-2 border-slate-400 p-1"
+                className="w-full rounded-md border-2 border-slate-200 p-1 focus:outline-none focus:border-[#6571FF]/30 focus:ring-2 focus:ring-[#6571FF]/10"
               />
               {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
             </div>
@@ -138,7 +138,7 @@ export default function SelectCategory({
               onClick={handleNewCategory}
               className={cn(
                 "text-nowrap rounded-md px-2 text-white",
-                categoryInput ? "bg-slate-700" : "bg-slate-400"
+                categoryInput ? "bg-[#6571FF]" : "bg-slate-400"
               )}
               type="button"
               disabled={!categoryInput}

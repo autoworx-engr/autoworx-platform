@@ -496,7 +496,7 @@ export default function NewCustomer({
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
               <div className="w-full">
-                <p className="mb-1 font-medium">Tag</p>
+                <p className="mb-1 font-medium text-slate-600">Tag</p>
                 <ClientTagSelector
                   value={tag}
                   setValue={setTag}

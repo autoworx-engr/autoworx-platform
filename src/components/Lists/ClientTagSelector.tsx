@@ -121,7 +121,7 @@ export function ClientTagSelector({
             setOpen && setOpen(!open);
           }}
         >
-          <span>
+          <span className="text-slate-600 text-sm font-medium">
             {showPlaceholder ? (tag?.name ?? "Select Client Tag") : ""}
           </span>
           <ChevronDown className="text-slate-500" />

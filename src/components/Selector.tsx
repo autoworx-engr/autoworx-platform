@@ -114,7 +114,7 @@ export default function Selector<T>({
         <DropdownMenuTrigger
           disabled={disabledDropdown}
           className={cn(
-            "group flex h-9 mt-1 w-full items-center justify-between rounded-lg px-4 transition-all duration-300 outline-none",
+            "group flex h-9 mt-1 w-[99%] items-center justify-between rounded-lg px-4 transition-all duration-300 outline-none",
             "bg-white/80 dark:bg-slate-900/50 backdrop-blur-sm shadow-sm hover:shadow-md",
             "ring-1 ring-slate-200 dark:ring-slate-800",
             isOpen ? "ring-2 ring-[#6571FF]/60 border-transparent" : "hover:ring-slate-300",

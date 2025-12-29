@@ -4,6 +4,7 @@ import { useFormErrorStore } from "@/stores/form-error";
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { slimInputClassName } from "./SlimInput";
+import { usePathname } from "next/navigation";
 
 export default function Input({
   name,
@@ -24,13 +25,16 @@ export default function Input({
   const [showPassword, setShowPassword] = useState(false);
   const { error } = useFormErrorStore();
 
+  const pathname = usePathname();
+  const isLoginPage = pathname === "/login";
+
   return (
     <div className="relative mt-1">
       <input
         type={showPassword ? "text" : "password"}
         name={name}
         id={name}
-        className={slimInputClassName + " pr-10"}
+        className={`${isLoginPage ? "w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 transition-colors focus:border-[#6571FF]/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50 dark:focus:border-[#6571FF]" : `${slimInputClassName + "pr-10"}`}`}
         required={required}
         value={value || inputValue}
         onChange={(e) => {
