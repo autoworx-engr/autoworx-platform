@@ -96,9 +96,9 @@ export default function TemplateTable({ take, page, data }: TTableProps) {
     if (res.type === "success") {
       toast.success("The estimate template duplicated successfully!");
 
-      router.push(
-        `/dashboard/estimate/templates/create?isEdit=true&templateId=${res?.data?.id}`
-      );
+      // router.push(
+      //   `/dashboard/estimate/templates/create?isEdit=true&templateId=${res?.data?.id}`
+      // );
     } else if (res.type === "globalError") {
       errorToast(res.message);
     }
