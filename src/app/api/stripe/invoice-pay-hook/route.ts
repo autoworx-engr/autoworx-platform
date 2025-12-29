@@ -367,6 +367,7 @@ export async function POST(req: NextRequest) {
               // Deposit can cover part or all of the due amount
               const amountToCoverDue = Math.min(depositAmount, currentDue);
               const remainingDeposit = depositAmount - amountToCoverDue;
+              const newDue = Math.max(0, currentDue - amountToCoverDue);
 
               stripeInvoice = await db.invoice.update({
                 where: {
@@ -374,9 +375,7 @@ export async function POST(req: NextRequest) {
                   companyId: paymentData.companyId,
                 },
                 data: {
-                  due: {
-                    decrement: amountToCoverDue,
-                  },
+                  due: newDue,
                   totalPayment: {
                     increment: amountToCoverDue,
                   },
