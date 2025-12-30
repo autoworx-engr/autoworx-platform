@@ -24,10 +24,10 @@ type ServerAction =
   | { type: "success"; data: Vendor }
   | { type: "error"; message: string }
   | {
-      type: "globalError";
-      errorSource?: { message: string }[];
-      message?: string;
-    };
+    type: "globalError";
+    errorSource?: { message: string }[];
+    message?: string;
+  };
 
 export default function EditVendor({
   button,
@@ -208,7 +208,7 @@ export default function EditVendor({
 
         <FormError />
 
-        <div className="grid gap-2 overflow-y-auto sm:grid-cols-2">
+        <div className="grid gap-2 overflow-y-auto sm:grid-cols-2 px-1">
           <SlimInput
             name="contactName"
             defaultValue={vendor.name ?? ""}
@@ -364,7 +364,11 @@ export default function EditVendor({
 
         <DialogFooter>
           <DialogClose
-            className="rounded-lg border-2 border-slate-400 p-2"
+            className="
+                rounded-xl px-5 py-2.5 text-sm font-medium text-slate-500 
+                hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
+                transition-colors border
+              "
             onClick={() => {
               clearError();
             }}
@@ -372,7 +376,15 @@ export default function EditVendor({
             Cancel
           </DialogClose>
           <button
-            className="rounded-lg border bg-[#6571FF] px-5 py-2 text-white"
+            className="
+                rounded-xl px-6 py-2.5 text-sm font-medium text-white
+                bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+                shadow-lg shadow-indigo-500/30
+                hover:shadow-xl hover:shadow-indigo-500/40
+                hover:-translate-y-0.5 hover:scale-[1.02]
+                active:translate-y-0 active:scale-100
+                transition-all duration-200
+              "
             onClick={handleSubmit}
           >
             Save Changes

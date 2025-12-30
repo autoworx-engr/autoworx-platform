@@ -10,7 +10,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import moment from "moment";
 import { useEffect, useState } from "react";
 import UpdateTemplate from "./UpdateTemplate";
-import { CircleAlert, Trash2, UserRoundX, X } from "lucide-react";
+import { Bell, Calendar, CircleAlert, FileText, Trash2, UserRoundX, X } from "lucide-react";
 
 type TReminderProps = {
   client: Partial<Client> | null;
@@ -172,7 +172,7 @@ export function Reminder({
     <>
       <div className="mx-auto w-[350px] space-y-4 p-2 md:w-full">
         <div className="flex items-center">
-          <h2>Confirmation</h2>
+          <h2 className="text-lg font-semibold text-slate-600">Confirmation</h2>
           <Switch
             name="confirmation"
             className="ml-auto scale-75"
@@ -182,6 +182,7 @@ export function Reminder({
         </div>
 
         <Selector
+          className="max-w-full"
           border
           clickabled={false}
           label={(template: EmailTemplate | null) =>
@@ -202,31 +203,43 @@ export function Reminder({
             (template: EmailTemplate) => template.type === "Confirmation"
           )}
           displayList={(template: EmailTemplate) => (
-            <div className="flex">
+            <div className="group relative flex items-center justify-between">
               <button
-                className="w-full text-left text-sm font-bold"
+                className="flex flex-1 items-center gap-3 text-left outline-none"
                 onClick={() => {
                   setConfirmationTemplate(template);
                   setOpenConfirmation(false);
                 }}
                 type="button"
               >
-                {template.subject}
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-slate-200 group-hover:bg-[#6571FF]/10 group-hover:ring-[#6571FF]/20 transition-colors">
+                  <FileText className="h-4 w-4 text-slate-400 group-hover:text-[#6571FF]" />
+                </div>
+                <span className="text-sm font-semibold text-slate-600 transition-colors group-hover:text-slate-900">
+                  {template.subject}
+                </span>
               </button>
-              <div className="flex items-center gap-2">
-                <UpdateTemplate
-                  id={template.id}
-                  subject={template.subject}
-                  message={template.message || ""}
-                />
-                <button
-                  type="button"
-                  onClick={() =>
-                    handleDelete({ id: template.id, type: "Confirmation" })
-                  }
-                >
-                  <X size={20} />
-                </button>
+
+              <div className="flex items-center gap-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                <div className="flex items-center gap-1.5 rounded-lg bg-slate-100/50 p-1 ring-1 ring-slate-200/50">
+                  <UpdateTemplate
+                    id={template.id}
+                    subject={template.subject}
+                    message={template.message || ""}
+                  />
+
+                  <div className="h-4 w-[1px] bg-slate-200" />
+
+                  <button
+                    type="button"
+                    className="flex h-7 w-7 items-center justify-center rounded-md transition-all bg-rose-50 text-rose-500"
+                    onClick={() =>
+                      handleDelete({ id: template.id, type: "Confirmation" })
+                    }
+                  >
+                    <X size={16} strokeWidth={2.5} />
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -242,7 +255,7 @@ export function Reminder({
       </div>
       <div className="mx-auto w-[350px] space-y-4 p-2 md:w-full">
         <div className="flex items-center">
-          <h2>Reminder</h2>
+          <h2 className="text-lg font-semibold text-slate-600">Reminder</h2>
           <Switch
             name="reminder"
             className="ml-auto scale-75"
@@ -252,6 +265,7 @@ export function Reminder({
         </div>
 
         <Selector
+          className="max-w-full"
           border
           clickabled={false}
           label={(template: EmailTemplate | null) =>
@@ -272,31 +286,43 @@ export function Reminder({
             (template: EmailTemplate) => template.type === "Reminder"
           )}
           displayList={(template: EmailTemplate) => (
-            <div className="flex">
+            <div className="group relative flex items-center justify-between">
               <button
-                className="w-full text-left text-sm font-bold"
+                className="flex flex-1 items-center gap-3 text-left outline-none"
                 onClick={() => {
                   setReminderTemplate(template);
                   setOpenReminder(false);
                 }}
                 type="button"
               >
-                {template.subject}
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-slate-200 group-hover:bg-[#6571FF]/10 group-hover:ring-[#6571FF]/20 transition-colors">
+                  <FileText className="h-4 w-4 text-slate-400 group-hover:text-[#6571FF]" />
+                </div>
+                <span className="text-sm font-semibold text-slate-600 transition-colors group-hover:text-slate-900">
+                  {template.subject}
+                </span>
               </button>
-              <div className="flex items-center gap-2">
-                <UpdateTemplate
-                  id={template.id}
-                  subject={template.subject}
-                  message={template.message || ""}
-                />
-                <button
-                  type="button"
-                  onClick={() =>
-                    handleDelete({ id: template.id, type: "Reminder" })
-                  }
-                >
-                  <X size={20} />
-                </button>
+
+              <div className="flex items-center gap-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                <div className="flex items-center gap-1.5 rounded-lg bg-slate-100/50 p-1 ring-1 ring-slate-200/50">
+                  <UpdateTemplate
+                    id={template.id}
+                    subject={template.subject}
+                    message={template.message || ""}
+                  />
+
+                  <div className="h-4 w-[1px] bg-slate-200" />
+
+                  <button
+                    type="button"
+                    className="flex h-7 w-7 items-center justify-center rounded-md transition-all bg-rose-50 text-rose-500"
+                    onClick={() =>
+                      handleDelete({ id: template.id, type: "Reminder" })
+                    }
+                  >
+                    <X size={16} strokeWidth={2.5} />
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -311,83 +337,89 @@ export function Reminder({
         />
       </div>
 
-      <div className="mx-auto my-2 w-[350px] rounded-md border-2 border-slate-400 md:w-[95%]">
-        <div className="flex items-center justify-evenly gap-2 border-b p-3">
-          {/* input time */}
-          <input
-            type="time"
-            className="w-[120px] rounded-lg border-2 border-slate-400 px-2 md:w-full"
-            value={time}
-            onChange={(e) => setTime(e.target.value)}
-          />
-          {/* <TimeInput
-            id="time"
-            name="time"
-            rootClassName="grow"
-            value={time}
-            minTime={dateInput === minDate ? minStartTime : undefined}
-            onChange={(value) => setTime(value)}
-            required
-          /> */}
-          <input
-            type="date"
-            className="w-[120px] rounded-md border border-slate-400 px-1 py-[1px] placeholder-slate-800 md:w-full"
-            value={dateInput}
-            onChange={(e) => setDateInput(e.target.value)}
-            min={minDate}
-          />
+      <div className="mx-auto my-4 w-full max-w-[500px] overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200 shadow-sm">
+        {/* Input Header Area */}
+        <div className="flex flex-col gap-3 bg-slate-50/50 p-4 border-b border-slate-100 md:flex-row md:items-end">
+          <div className="flex-1 space-y-1.5">
+            <label className="text-base font-medium text-slate-600 ml-1">Time</label>
+            <input
+              type="time"
+              className="w-full h-10 rounded-lg border-none bg-white px-3 text-sm text-slate-600 ring-1 ring-slate-200 transition-all focus:ring-2 focus:ring-[#6571FF]/30 outline-none"
+              value={time}
+              onChange={(e) => setTime(e.target.value)}
+            />
+          </div>
+
+          <div className="flex-1 space-y-1.5">
+            <label className="text-base font-medium text-slate-600 ml-1">Date</label>
+            <input
+              type="date"
+              className="w-full h-10 rounded-lg border-none bg-white px-3 text-sm text-slate-600 ring-1 ring-slate-200 transition-all focus:ring-2 focus:ring-[#6571FF]/30 outline-none"
+              value={dateInput}
+              onChange={(e) => setDateInput(e.target.value)}
+              min={minDate}
+            />
+          </div>
+
           <button
             type="button"
-            className="rounded-lg bg-[#6571FF] p-2 px-4 text-white"
+            className="h-10 rounded-lg bg-[#6571FF] px-6 text-sm font-bold text-white shadow-md shadow-[#6571FF]/20 transition-all hover:scale-[1.02] active:scale-95"
             onClick={handleAddReminder}
           >
             Add
           </button>
         </div>
 
-        <div className="h-[200px] overflow-scroll border-b border-slate-400 p-2 md:h-[300px]">
-          {/* Calculate current time and dateInput with endTime and date */}
-          {/* Like:  6 days 7 hours before appointment */}
-          {/* also format date and times to use with moment */}
+        {/* Reminders List Area */}
+        <div className="no-visible-scrollbar h-[250px] overflow-y-auto bg-white md:h-[320px]">
+          {times.length > 0 ? (
+            <div className="space-y-1">
+              {times.map((timeObj, index) => {
+                const timeObjMoment = moment(`${timeObj.date} ${timeObj.time}`, "YYYY-MM-DD HH:mm");
+                const formattedTime = timeObjMoment.format("MMM Do, YYYY");
+                const formattedHour = timeObjMoment.format("h:mm A");
 
-          {times.map((timeObj, index) => {
-            // const appointmentTime = moment(
-            //   `${date} ${startTime}`,
-            //   "YYYY-MM-DD HH:mm",
-            // ).utc();
+                return (
+                  <div
+                    key={index}
+                    className="group flex items-center justify-between rounded-xl p-3 transition-all duration-200 hover:bg-slate-50 animate-in fade-in slide-in-from-bottom-2"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                        <Bell size={14} />
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold text-slate-400 uppercase tracking-tight">Reminder</p>
+                        <p className="text-sm font-medium text-slate-700">
+                          {formattedTime} at <span className="font-bold text-slate-900">{formattedHour}</span>
+                        </p>
+                      </div>
+                    </div>
 
-            const timeObjMoment = moment(
-              `${timeObj.date} ${timeObj.time}`,
-              "YYYY-MM-DD HH:mm"
-            );
-
-            const formattedTime = moment(timeObjMoment).format(
-              "MMMM Do YYYY, h:mm A"
-            );
-
-            // const diff = moment.duration(appointmentTime.diff(timeObjMoment));
-
-            // const days = diff.days();
-            // const hours = diff.hours();
-            // const minutes = diff.minutes();
-
-            return (
-              <div key={index} className="flex justify-between px-5">
-                <p>
-                  Appointment Reminder:{" "}
-                  <span className="text-green-600">{formattedTime}</span>
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setTimes(times.filter((_, i) => i !== index))}
-                >
-                  <Trash2 size={20} className="text-red-400" />
-                </button>
+                    <button
+                      type="button"
+                      className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-300 opacity-0 transition-all hover:bg-rose-50 hover:text-rose-500 group-hover:opacity-100"
+                      onClick={() => setTimes(times.filter((_, i) => i !== index))}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="flex h-full flex-col items-center justify-center text-center p-6">
+              <div className="mb-2 rounded-full bg-slate-50 p-3 text-slate-300">
+                <Calendar size={24} />
               </div>
-            );
-          })}
+              <p className="text-sm font-medium text-slate-400">No reminders scheduled</p>
+              <p className="text-[11px] text-slate-300">Add a time and date above to notify the user.</p>
+            </div>
+          )}
         </div>
       </div>
+
+
       <div className="flex items-start gap-2 p-2 text-sm text-yellow-800">
         <CircleAlert className="mt-1 h-5 w-5 flex-shrink-0 text-yellow-600" />
         <div className="flex-1 min-w-0">

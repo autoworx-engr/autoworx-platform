@@ -363,12 +363,12 @@ export default function EditProduct({ productData }: TProps) {
             </div>
 
             <div className="py-2 md:py-0">
-              <label>Description</label>
+              <label className="font-medium text-slate-600">Description</label>
               <textarea
                 onChange={handleChange}
                 name="description"
                 required={false}
-                className={cn("h-20 w-full rounded-md border border-slate-300 outline-none bg-background px-2 py-0.5 leading-6 transition-all duration-300 thin-scrollbar",
+                className={cn("h-20 w-full rounded-md border border-slate-300 outline-none bg-background px-2 py-0.5 leading-6 transition-all duration-300 thin-scrollbar mt-1",
                   "bg-white/80 backdrop-blur-sm dark:bg-slate-900/50", // Subtle glass texture
                   "text-slate-600 dark:text-slate-300 placeholder:text-slate-400",
                   "focus:border-[#6571FF]/60 focus:ring-2 focus:ring-[#6571FF]/40", // Brand focus state

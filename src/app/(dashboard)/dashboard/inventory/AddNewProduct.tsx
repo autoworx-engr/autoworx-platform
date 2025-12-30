@@ -513,7 +513,7 @@ export default function AddNewProduct({
           </div>
 
           <div className="py-2 md:py-0">
-            <label>Description</label>
+            <label className="font-medium text-slate-600">Description</label>
             <p className="text-xs text-slate-500 mb-1">
               Description must be less than 250 characters
             </p>

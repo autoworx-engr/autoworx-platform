@@ -110,7 +110,7 @@ export default function SelectCategory({
           category
             ? category.name || `Category ${category.id}`
             : required
-              ? "Category*"
+              ? "Select Category*"
               : "Category"
         }
         newButton={
