@@ -1,6 +1,15 @@
 "use client";
 import { deleteLabor } from "@/actions/estimate/labor/deleteLabor";
 import { updateLabor } from "@/actions/estimate/labor/updateLabor";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/Dialog";
 import SelectCategory from "@/components/Lists/SelectCategory";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
@@ -17,10 +26,10 @@ import { useEstimateCreateStore } from "@/stores/estimate-create";
 import { useListsStore } from "@/stores/lists";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { Category, Labor } from "@prisma/client";
-import { Pagination, Popconfirm, message } from "antd"; // Added message for notifications
-import { CircleCheckBig, SquarePen, Trash2, X } from "lucide-react";
+import { Pagination, Popconfirm } from "antd";
+import { SquarePen, Trash2 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState } from "react";
 import FilterBySearchBox from "../reporting/components/filter/FilterBySearchBox";
 import CannedFilterBySelection from "./CannedFilterBySelected";
 import NewLabor from "./NewLabor";
@@ -46,6 +55,9 @@ export default function CannedLabor({
     {}
   );
 
+  // Ref to scroll to top
+  const contentRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     const filtered = labors.filter((row) => {
       const categoryName = row?.category?.name?.toLowerCase() || "";
@@ -64,9 +76,10 @@ export default function CannedLabor({
     });
 
     setFilteredData(filtered);
+    // Reset to page 1 whenever search or filter changes
+    setCurrentPage(1);
   }, [laborSearch, selectedCategory, labors]);
 
-  //  Show pagination if many labors
   useEffect(() => {
     setShowPagination(filteredData?.length > 10);
   }, [filteredData]);
@@ -74,6 +87,14 @@ export default function CannedLabor({
   const handlePageChange = (page: number, pageSize?: number) => {
     setCurrentPage(page);
     if (pageSize) setPageSize(pageSize);
+
+    // Scroll to top when page changes
+    if (contentRef.current) {
+      contentRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
   };
 
   const paginatedLabors = filteredData.slice(
@@ -102,40 +123,48 @@ export default function CannedLabor({
     }));
   };
 
-  console.log("search params==>", laborSearch);
-
   return (
-    <div className="h-full w-full flex flex-col">
+    <div ref={contentRef} className="h-full w-full flex flex-col">
       <section className="pb-4 border-b border-gray-200">
         <div className="flex items-center gap-x-4">
-          <h3 className="text-2xl font-extrabold text-gray-800">🛠️ Canned Labor</h3>
+          <h3 className="text-2xl font-extrabold text-gray-800">
+            Canned Labor
+          </h3>
         </div>
         {/* Changed layout for horizontal alignment of search, filter, and add labor */}
-        <div className=" pt-3">
-          <FilterBySearchBox
-            searchText={laborSearch as string}
-            paramKey="laborSearch"
-          />
+        <div className="mt-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between gap-y-3">
+          <div className="flex-1">
+            <FilterBySearchBox
+              searchText={laborSearch as string}
+              paramKey="laborSearch"
+            />
           </div>
-          <div className="flex justify-between items-center mt-3">
-          <CannedFilterBySelection
-            selectedItem={selectedCategory}
-            items={uniqueCategories}
-            type="laborCategory" // unique param for labors
-            modalName="laborCategory"
-            closeModal={closeModal}
-            activeModal={activeModal}
-            toggleModal={toggleModal}
-          />
-          <NewLabor
-            newButton={
-              <button className="rounded-lg bg-indigo-600 w-full min-w-32 md:w-36 p-2 text-white font-medium hover:bg-indigo-700 transition-colors shadow-md">
-                + Add Labor
-              </button>
-            }
-            isCanned={true}
-            fromCanned={true}
-          />
+          <div className="flex items-center gap-3">
+            <CannedFilterBySelection
+              selectedItem={selectedCategory}
+              items={uniqueCategories}
+              type="laborCategory" // unique param for labors
+              modalName="laborCategory"
+              closeModal={closeModal}
+              activeModal={activeModal}
+              toggleModal={toggleModal}
+            />
+            <NewLabor
+              newButton={
+                <button
+                  className="rounded-lg bg-gradient-to-r from-[#6571FF] to-[#5a66ee] w-full min-w-32 md:w-36 p-2 text-white font-medium shadow-indigo-500/30
+                hover:shadow-xl hover:shadow-indigo-500/40
+                hover:-translate-y-0.5 hover:scale-[1.02]
+                active:translate-y-0 active:scale-100
+                transition-all duration-200"
+                >
+                  + Add Labor
+                </button>
+              }
+              isCanned={true}
+              fromCanned={true}
+            />
+          </div>
         </div>
       </section>
       {/* Desktop View */}
@@ -143,13 +172,21 @@ export default function CannedLabor({
         <Table className="h-full border border-gray-200 rounded-lg">
           <TableHeader className="sticky top-0 bg-gray-50 border-b border-gray-200">
             <TableRow>
-              <TableHead className="font-semibold text-gray-700">Labor Name</TableHead>
-              <TableHead className="font-semibold text-gray-700">Category</TableHead>
-              <TableHead className="font-semibold text-gray-700">$/Hour</TableHead>
-              <TableHead className="font-semibold text-gray-700">Actions</TableHead>
+              <TableHead className="font-semibold text-gray-700">
+                Labor Name
+              </TableHead>
+              <TableHead className="font-semibold text-gray-700">
+                Category
+              </TableHead>
+              <TableHead className="font-semibold text-gray-700">
+                $/Hour
+              </TableHead>
+              <TableHead className="font-semibold text-gray-700">
+                Actions
+              </TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody className="overflow-y-auto h-full">
+          <TableBody className="overflow-y-auto thin-scrollbar h-full">
             {paginatedLabors.length > 0 ? (
               paginatedLabors.map((labor, index) => (
                 <LaborComponent
@@ -202,6 +239,24 @@ export default function CannedLabor({
           />
         </div>
       )}
+
+      {/* Mobile View */}
+      {showPagination && (
+        <div className="flex justify-center lg:hidden flex-shrink-0 mt-4">
+          <Pagination
+            className="custom-pagination"
+            current={currentPage}
+            pageSize={pageSize}
+            // total={filteredData.length}
+            total={labors.length}
+            onChange={handlePageChange}
+            showSizeChanger
+            onShowSizeChange={handlePageChange}
+            simple={false}
+            size="small"
+          />
+        </div>
+      )}
     </div>
   );
 }
@@ -215,65 +270,56 @@ const LaborComponent = ({
   view: "table" | "card";
   index: number;
 }) => {
-  const [isEdit, setIsEdit] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState<string>(labor.name);
+  const [nameError, setNameError] = useState<string>("");
+  const [charge, setCharge] = useState<string>(
+    labor.charge ? Number(labor.charge).toFixed(2) : "0.00"
+  );
   const [category, setCategory] = useState<Category | null>(
     labor?.category || null
   );
+  const [categoryOpen, setCategoryOpen] = useState(false);
   const { categories } = useListsStore();
   const { currentSelectedCategoryId } = useEstimateCreateStore();
-  const [categoryOpen, setCategoryOpen] = useState(false);
-  const [hours, setHours] = useState<string>(
-    labor.charge ? Number(labor.charge).toFixed(2) : "0.00"
-  );
-  const [name, setName] = useState<string>(labor.name);
-  const [nameError, setNameError] = useState<string>("");
+  const [isPending, setIsPending] = useState(false);
 
   useEffect(() => {
-    if (currentSelectedCategoryId) {
+    if (currentSelectedCategoryId && !category) {
       setCategory(
         categories.find((cat) => cat.id === currentSelectedCategoryId)!
       );
     }
-  }, [currentSelectedCategoryId]);
+  }, [currentSelectedCategoryId, category, categories]);
 
-  const validateName = (): boolean => {
-    if (!name.trim()) {
-      setNameError("Labor name is required");
-      return false;
-    }
+  const handleDialogClose = () => {
+    setOpen(false);
     setNameError("");
-    return true;
-  };
-
-  const [isPending, startTransition] = useTransition();
-
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.value.length > 50) {
-      setNameError("Labor name must be less than 50 characters");
-      return false;
-    }
-    setName(e.target.value);
-    if (e.target.value.trim()) {
-      setNameError("");
-    }
   };
 
   const handleEdit = async () => {
-    if (!validateName()) {
-      message.error("Labor name is required");
+    if (!name.trim()) {
+      setNameError("Labor name is required");
       return;
     }
 
+    setIsPending(true);
     const res = await updateLabor({
       id: labor.id,
       name,
-      charge: parseFloat(hours) || 0,
-      categoryId: category?.id,
+      charge: parseFloat(charge) || 0,
+      categoryId: category?.id || undefined,
     });
-    if (res.success) successToast("Labor updated successfully");
-    if (!res?.success)
-      return errorToast(res?.message || "Failed to update labor");
-    setIsEdit(false);
+
+    if (res.success) {
+      successToast("Labor updated successfully");
+      // Reload the page to refresh the labor list
+      window.location.reload();
+      handleDialogClose();
+    } else {
+      errorToast(res?.message || "Failed to update labor");
+    }
+    setIsPending(false);
   };
 
   if (view === "card") {
@@ -284,56 +330,95 @@ const LaborComponent = ({
           index !== undefined && index % 2 === 0
             ? "border-indigo-500 bg-white"
             : "border-teal-500 bg-gray-50",
-          isEdit ? "shadow-2xl ring-2 ring-indigo-400" : "shadow-md hover:shadow-lg"
+          "shadow-md hover:shadow-lg"
         )}
       >
         <CardHeader className="p-4">
           <div className="flex items-start justify-between">
-            {!isEdit ? (
-              <h3 className="line-clamp-2 text-xl font-extrabold text-gray-800">
-                {labor.name}
-              </h3>
-            ) : (
-              <div className="flex-1">
-                <input
-                  type="text"
-                  id="name"
-                  value={name}
-                  onChange={handleNameChange}
-                  className={cn(
-                    "w-full rounded-lg border p-2 text-base font-semibold focus:ring-2 focus:ring-indigo-500 transition-colors",
-                    nameError ? "border-red-500" : "border-gray-300 focus:border-indigo-500"
-                  )}
-                  placeholder="Labor Name"
-                />
-                {nameError && (
-                  <p className="mt-1 text-xs text-red-500">{nameError}</p>
-                )}
-              </div>
-            )}
+            <h3 className="line-clamp-2 text-xl font-extrabold text-gray-800">
+              {labor.name}
+            </h3>
             <div className="flex items-center gap-3 ml-4">
-              {isEdit && (
-                <button
-                  onClick={() => startTransition(() => handleEdit())}
-                  className="text-2xl text-green-600 hover:text-green-700 disabled:text-gray-400 transition-colors"
-                  disabled={isPending}
-                  title="Save"
-                >
-                  <CircleCheckBig className="w-6 h-6" />
-                </button>
-              )}
-              <button
-                onClick={() => setIsEdit(!isEdit)}
-                className="text-2xl text-indigo-500 hover:text-indigo-600 transition-colors"
-                title={isEdit ? "Cancel" : "Edit"}
-              >
-                {!isEdit ? (
-                  <SquarePen className="w-5 h-5" />
-                ) : (
-                  <X className="w-6 h-6 text-red-500" />
-                )}
-              </button>
-              {!isEdit && (
+              <Dialog open={open} onOpenChange={setOpen}>
+                <DialogTrigger asChild>
+                  <button
+                    className="text-2xl text-indigo-500 hover:text-indigo-600 transition-colors"
+                    title="Edit"
+                  >
+                    <SquarePen className="w-5 h-5" />
+                  </button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Edit Canned Labor</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-gray-700">
+                        Labor Name
+                      </label>
+                      <input
+                        type="text"
+                        value={name}
+                        onChange={(e) => {
+                          setName(e.target.value);
+                          if (nameError) setNameError("");
+                        }}
+                        className={cn(
+                          "w-full rounded-lg border p-2 text-base focus:ring-2 focus:ring-indigo-500 transition-colors",
+                          nameError
+                            ? "border-red-500"
+                            : "border-gray-300 focus:border-indigo-500"
+                        )}
+                        placeholder="Labor Name"
+                      />
+                      {nameError && (
+                        <p className="mt-1 text-xs text-red-500">{nameError}</p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-gray-700">
+                        Category
+                      </label>
+                      <SelectCategory
+                        onCategoryChange={setCategory}
+                        labelPosition="none"
+                        categoryData={category}
+                        categoryOpen={categoryOpen}
+                        setCategoryOpen={setCategoryOpen}
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-gray-700">
+                        $/Hour
+                      </label>
+                      <input
+                        type="number"
+                        value={charge}
+                        onChange={(e) => setCharge(e.target.value)}
+                        step="0.01"
+                        className="w-full rounded-lg border border-gray-300 p-2 text-base focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition-colors"
+                        placeholder="$/Hour"
+                      />
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <DialogClose asChild>
+                      <button className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">
+                        Cancel
+                      </button>
+                    </DialogClose>
+                    <button
+                      onClick={handleEdit}
+                      disabled={isPending}
+                      className="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:bg-gray-400"
+                    >
+                      {isPending ? "Updating..." : "Update Labor"}
+                    </button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+              {
                 <Popconfirm
                   title="Delete the Canned Labor"
                   description="Are you sure to delete this Canned Labor?"
@@ -343,7 +428,7 @@ const LaborComponent = ({
                 >
                   <Trash2 className="w-5 h-5 text-red-500 hover:text-red-700 cursor-pointer transition-colors" />
                 </Popconfirm>
-              )}
+              }
             </div>
           </div>
         </CardHeader>
@@ -351,37 +436,15 @@ const LaborComponent = ({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="mb-1 text-sm font-medium text-gray-500">Category</p>
-              {!isEdit ? (
-                <p className="line-clamp-1 text-lg font-semibold text-indigo-600">
-                  {labor.category?.name}
-                </p>
-              ) : (
-                <SelectCategory
-                  onCategoryChange={setCategory}
-                  labelPosition="none"
-                  categoryData={category}
-                  categoryOpen={categoryOpen}
-                  setCategoryOpen={setCategoryOpen}
-                />
-              )}
+              <p className="line-clamp-1 text-lg font-semibold text-indigo-600">
+                {labor.category?.name}
+              </p>
             </div>
             <div>
               <p className="mb-1 text-sm font-medium text-gray-500">$/Hour</p>
-              {!isEdit ? (
-                <p className="text-lg font-bold text-gray-700">
-                  {formatCurrency(labor.charge ? Number(labor.charge) : 0)}
-                </p>
-              ) : (
-                <input
-                  type="number"
-                  id="hours"
-                  value={hours}
-                  onChange={(e) => setHours(e.target.value)}
-                  step="0.01"
-                  className="w-full rounded-lg border border-gray-300 p-2 text-base focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition-colors"
-                  placeholder="$/Hour"
-                />
-              )}
+              <p className="text-lg font-bold text-gray-700">
+                {formatCurrency(labor.charge ? Number(labor.charge) : 0)}
+              </p>
             </div>
           </div>
         </CardContent>
@@ -389,101 +452,104 @@ const LaborComponent = ({
     );
   }
 
-  console.log(isPending, "isPending");
-
   return (
-   <TableRow
+    <TableRow
       className={cn(
         "border-b border-gray-200 transition-colors hover:bg-indigo-50",
-        index % 2 === 0 ? "bg-white" : "bg-gray-50",
-        isEdit ? "bg-yellow-50 shadow-inner" : ""
+        index % 2 === 0 ? "bg-white" : "bg-gray-50"
       )}
     >
       <TableCell className="py-3">
-        {!isEdit ? (
-          <span className="font-medium text-gray-800">{labor.name}</span>
-        ) : (
-          <div>
-            <input
-              type="text"
-              id="name"
-              value={name}
-              onChange={handleNameChange}
-              className={cn(
-                "w-full min-w-[150px] rounded-md border p-1 px-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500",
-                nameError ? "border-red-500" : "border-gray-300"
-              )}
-              placeholder="Labor Name"
-            />
-            {nameError && (
-              <p className="mt-1 text-xs text-red-500">{nameError}</p>
-            )}
-          </div>
-        )}
+        <span className="font-medium text-gray-800">{labor.name}</span>
       </TableCell>
       <TableCell className="py-3">
-        {!isEdit ? (
-          <span className="text-gray-600">{labor.category?.name}</span>
-        ) : (
-          <SelectCategory
-            onCategoryChange={setCategory}
-            labelPosition="none"
-            categoryData={category}
-            categoryOpen={categoryOpen}
-            setCategoryOpen={setCategoryOpen}
-          />
-        )}
+        <span className="text-gray-600">{labor.category?.name}</span>
       </TableCell>
       <TableCell className="py-3">
-        {!isEdit ? (
-          <span className="text-gray-700 font-semibold">
-            {formatCurrency(labor.charge ? Number(labor.charge) : 0)}
-          </span>
-        ) : (
-          <div>
-            <input
-              type="number"
-              id="hours"
-              value={hours}
-              onChange={(e) => setHours(e.target.value)}
-              step="0.01"
-              className="w-full min-w-[100px] max-w-[150px] rounded-md border border-gray-300 p-1 px-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-              placeholder="$/Hour"
-            />
-          </div>
-        )}
+        <span className="text-gray-700 font-semibold">
+          {formatCurrency(labor.charge ? Number(labor.charge) : 0)}
+        </span>
       </TableCell>
       <TableCell className="flex items-center space-x-3 py-3 h-full">
-        {isEdit && (
-          <div className="flex items-center space-x-2">
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
             <button
-              onClick={() => setIsEdit(false)}
-              title="Cancel Edit"
+              className="text-xl text-indigo-500 hover:text-indigo-600 transition-colors"
+              title="Edit"
             >
-              <X
-                color="#f87171"
-                className="w-5 h-5 hover:text-red-700 transition-colors"
-              />
+              <SquarePen className="w-5 h-5" />
             </button>
-            <button
-              onClick={() => startTransition(() => handleEdit())}
-              className="text-lg text-indigo-600 hover:text-indigo-700 disabled:cursor-not-allowed disabled:text-gray-400 transition-colors"
-              disabled={isPending}
-              title="Save Changes"
-            >
-              <CircleCheckBig className="w-5 h-5" strokeWidth={2.5} />
-            </button>
-          </div>
-        )}
-        {!isEdit && (
-          <button
-            onClick={() => setIsEdit(!isEdit)}
-            className="text-xl text-indigo-500 hover:text-indigo-600 transition-colors"
-            title="Edit"
-          >
-            <SquarePen className="w-5 h-5" />
-          </button>
-        )}
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Canned Labor</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-700">
+                  Labor Name
+                </label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => {
+                    setName(e.target.value);
+                    if (nameError) setNameError("");
+                  }}
+                  className={cn(
+                    "w-full rounded-lg border p-2 text-base focus:ring-2 focus:ring-indigo-500 transition-colors",
+                    nameError
+                      ? "border-red-500"
+                      : "border-gray-300 focus:border-indigo-500"
+                  )}
+                  placeholder="Labor Name"
+                />
+                {nameError && (
+                  <p className="mt-1 text-xs text-red-500">{nameError}</p>
+                )}
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-700">
+                  Category
+                </label>
+                <SelectCategory
+                  onCategoryChange={setCategory}
+                  labelPosition="none"
+                  categoryData={category}
+                  categoryOpen={categoryOpen}
+                  setCategoryOpen={setCategoryOpen}
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-700">
+                  $/Hour
+                </label>
+                <input
+                  type="number"
+                  value={charge}
+                  onChange={(e) => setCharge(e.target.value)}
+                  step="0.01"
+                  className="w-full rounded-lg border border-gray-300 p-2 text-base focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition-colors"
+                  placeholder="$/Hour"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <DialogClose asChild>
+                <button className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">
+                  Cancel
+                </button>
+              </DialogClose>
+              <button
+                onClick={handleEdit}
+                disabled={isPending}
+                className="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:bg-gray-400"
+              >
+                {isPending ? "Updating..." : "Update Labor"}
+              </button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
         <Popconfirm
           title="Delete the Canned Labor"
           description="Are you sure to delete this Canned Labor?"
@@ -491,7 +557,7 @@ const LaborComponent = ({
           cancelText="No"
           onConfirm={() => deleteLabor(labor.id)}
         >
-          <Trash2 className="w-5 h-5 text-red-500 hover:text-red-700 cursor-pointer transition-colors"  />
+          <Trash2 className="w-5 h-5 text-red-500 hover:text-red-700 cursor-pointer transition-colors" />
         </Popconfirm>
       </TableCell>
     </TableRow>

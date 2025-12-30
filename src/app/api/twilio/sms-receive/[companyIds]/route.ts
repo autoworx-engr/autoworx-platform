@@ -10,6 +10,38 @@ import { NextRequest } from "next/server";
 
 const pusher = getPusherInstance();
 
+/**
+ * @swagger
+ * /api/twilio/sms-receive/{companyIds}:
+ *   post:
+ *     summary: Twilio SMS webhook for multiple companies
+ *     tags: [Twilio]
+ *     parameters:
+ *       - in: path
+ *         name: companyIds
+ *         required: true
+ *         schema:
+ *           type: string
+ *           description: Comma-separated company IDs
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/x-www-form-urlencoded:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               From:
+ *                 type: string
+ *               To:
+ *                 type: string
+ *               Body:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: SMS received and processed
+ *       400:
+ *         description: Unsupported content type
+ */
 export async function POST(
   req: NextRequest,
   context: { params: Promise<{ companyIds: string }> }
@@ -122,10 +154,12 @@ export async function POST(
         });
         let attachments = [];
         for (const file of images) {
+          // Extract file extension from URL
+          const fileExtension = file.split(".").pop()?.split("?")[0] || "jpg";
           let atc = await db.clientSmsAttachments.create({
             data: {
               url: file,
-              name: `${dbMessage.id}_${Date.now()}`,
+              name: `${dbMessage.id}_${Date.now()}.${fileExtension}`,
               clientSMSId: dbMessage.id,
             },
           });

@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import Collaboration from "./Collaboration";
+import { getCompany } from "@/actions/settings/getCompany";
 
 export const metadata: Metadata = {
   title: "Communication Hub - Collaboration",
@@ -13,13 +14,29 @@ export default async function CollaborationPage() {
   const session = await getServerSession(authOptions);
   const userCompanyId = session?.user?.companyId;
 
+  const company = await getCompany();
+
   if (!userCompanyId) {
     throw new Error("Company ID is required to create an email template.");
   }
 
   const connectedCompanies = await db.companyJoin.findMany({
     where: {
-      OR: [{ companyOneId: userCompanyId }, { companyTwoId: userCompanyId }],
+      OR: [
+        {
+          companyOneId: userCompanyId,
+          companyTwo: {
+            isCollaborators: true,
+          },
+        },
+        {
+          companyTwoId: userCompanyId,
+          companyOne: {
+            isCollaborators: true,
+          },
+        },
+      ],
+      status: "ACCEPTED",
     },
     include: {
       companyOne: {
@@ -74,6 +91,7 @@ export default async function CollaborationPage() {
   const companyWithAdmin = await db.company.findMany({
     where: {
       NOT: { id: userCompanyId },
+      isCollaborators: true,
     },
     select: {
       id: true,
@@ -114,6 +132,7 @@ export default async function CollaborationPage() {
         companies={oppositeCompanies}
         currentUser={session?.user}
         messages={messages}
+        isCollaborators={company?.isCollaborators}
       />
     </div>
   );

@@ -22,6 +22,7 @@ import UserBugReport from "./bug-report/UserBugReport";
 import { VoiceDeviceProvider } from "@/context/VoiceDeviceContext";
 import VoiceAutoSetup from "./VoiceAutoSetup";
 import CarLoading from "./common/CarLoading";
+import path from "path";
 
 const navbarList = [
   {
@@ -129,10 +130,24 @@ const navbarList = [
       },
     ],
   },
+
+   {
+    title: "Visualization",
+    icon: "/icons/navbar/visualization.svg",
+    link: "/dashboard/visualization",
+    path: "/dashboard/visualization",
+  },
+  
 ];
 
 const mobileNav = [
   ...navbarList, // Existing navList
+  // {
+  //   title: "Visualization",
+  //   icon: "/icons/navbar/visualization.svg",
+  //   link: "/dashboard/visualization",
+  //   path: "/dashboard/visualization",
+  // },
   {
     title: "Settings", // Add settings here
     icon: "/icons/navbar/Settings.svg", // Ensure this icon exists

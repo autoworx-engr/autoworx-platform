@@ -65,7 +65,7 @@ export default function useSmsSendMutation(clientId: number) {
     },
 
     // 🔁 Optimistic update
-    onMutate: async (newClientSms) => {
+    onMutate: async newClientSms => {
       await queryClient.cancelQueries({
         queryKey: smsQueryKey.allSmsByClientId(newClientSms.clientId),
       });
@@ -78,7 +78,7 @@ export default function useSmsSendMutation(clientId: number) {
         id: newClientSms.id,
         clientId: newClientSms.clientId,
         message: newClientSms.message,
-        attachments: newClientSms.files.map((file) => ({
+        attachments: newClientSms.files.map(file => ({
           name: file.name,
           url: URL.createObjectURL(file), // Temporary blob URL
         })),

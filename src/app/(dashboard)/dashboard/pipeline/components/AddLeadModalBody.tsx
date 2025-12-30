@@ -7,6 +7,7 @@ import { Company } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
+import PhoneInput from "@/components/PhoneInput";
 import ServiceSelectAndAdd from "@/components/ServiceSelectAndAdd";
 import {
   useGetAllYears,
@@ -15,13 +16,12 @@ import {
 } from "@/hooks/useCarData";
 import { salesPipelineKeyStr } from "@/utils/enums/query-key-constant";
 import Selector from "../../settings/automation/components/Selector";
-import PhoneInput from "@/components/PhoneInput";
 
 const AddLeads = ({ onClose }: { onClose?: () => void }) => {
   const queryClient = useQueryClient();
-   const [phoneNumber, setPhoneNumber] = useState("")
-  const [countryCode, setCountryCode] = useState("")
-  const [isoCode, setIsoCode] = useState("")
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [countryCode, setCountryCode] = useState("");
+  const [isoCode, setIsoCode] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -93,20 +93,24 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
     fetchTokenAndSetSource();
   }, []);
 
-   useEffect(() => {
-    const fullPhone = `${countryCode}${phoneNumber}`
-    setFormData((prev) => ({ ...prev, phone: fullPhone, countryCode: isoCode }));
+  useEffect(() => {
+    const fullPhone = `${countryCode}${phoneNumber}`;
+    setFormData((prev) => ({
+      ...prev,
+      phone: fullPhone,
+      countryCode: isoCode,
+    }));
 
     // Validate phone number length (at least 10 digits)
     if (phoneNumber && phoneNumber.length < 10) {
       setFieldErrors({
         ...fieldErrors,
         phone: "Phone number must be at least 10 digits",
-      })
+      });
     } else if (phoneNumber) {
-      clearFieldError("phone")
+      clearFieldError("phone");
     }
-  }, [phoneNumber, countryCode, isoCode])
+  }, [phoneNumber, countryCode, isoCode]);
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
 
@@ -181,6 +185,7 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
             countryCode: formData.countryCode,
             serviceId: formData.service,
             opportunity_source: opportunitySource,
+            source: formData.source,
           }),
         }
       );
@@ -214,9 +219,9 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
           service: "",
           source: "",
           countryCode: "US",
-        })
-        setPhoneNumber("")
-        setCountryCode("+1")
+        });
+        setPhoneNumber("");
+        setCountryCode("+1");
       } else {
         setFormStatus({
           message: "Failed to create lead. Please try again.",
@@ -301,38 +306,14 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
           />
         </div>
 
-        {/* <div className="space-y-2">
-          <label
-            htmlFor="phone"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Phone Number<span className="text-red-500"> *</span>
-          </label>
-          <input
-            id="phone"
-            type="text"
-            name="phone"
-            placeholder="+1 (555) 123-4567"
-            value={formData.phone}
-            onChange={handleChange}
-            required
-            className={`w-full rounded-sm border ${
-              fieldErrors.phone ? "border-red-500" : "border-slate-400"
-            } bg-background px-2 py-0.5 leading-6 outline-none`}
-          />
-          {fieldErrors.phone && (
-            <p className="mt-1 text-sm text-red-600">{fieldErrors.phone}</p>
-          )}
-        </div> */}
-
-  <PhoneInput
+        <PhoneInput
           label="Phone Number"
           placeholder="(555) 123-4567"
           required
           onChange={(phone, code, isoCode) => {
-            setPhoneNumber(phone)
-            setCountryCode(code)
-            setIsoCode(isoCode)
+            setPhoneNumber(phone);
+            setCountryCode(code);
+            setIsoCode(isoCode);
           }}
           error={fieldErrors.phone}
         />

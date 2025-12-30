@@ -2,6 +2,31 @@ import { getTwilioCredentials } from "@/actions/communication/client/sendTwilioM
 import { NextRequest, NextResponse } from "next/server";
 import twilio from "twilio";
 
+/**
+ * @swagger
+ * /api/twilio/token:
+ *   post:
+ *     summary: Get Twilio access token
+ *     tags: [Twilio]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               identity:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Access token generated
+ *       400:
+ *         description: Credentials not found
+ *       500:
+ *         description: Server error
+ */
 export async function POST(request: NextRequest) {
   const { identity } = await request.json();
 

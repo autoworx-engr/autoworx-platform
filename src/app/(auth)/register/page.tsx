@@ -3,6 +3,7 @@ import Password from "@/components/Password";
 import SubmitButton from "./SubmitButton";
 import Link from "next/link";
 import FormError from "@/components/FormError";
+import Image from "next/image";
 import { Metadata } from "next";
 
 
@@ -13,106 +14,93 @@ export const metadata: Metadata = {
 
 export default function Page() {
   return (
-    
-      <form className="mx-auto mt-44 max-w-md rounded-lg border p-6">
-        <h1 className="mb-4 text-center text-2xl font-semibold">Register</h1>
+    <div className="min-h-screen w-full flex items-center justify-center bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-50 via-slate-100 to-blue-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 p-4">
+      <form className="relative w-full max-w-xl overflow-hidden rounded-2xl border border-white/30 bg-white/80 p-8 shadow-2xl backdrop-blur-2xl dark:bg-slate-900/90 dark:border-slate-700/50">
+        {/* Top Accent Gradient Line */}
+        <div className="absolute top-0 left-0 h-[2px] w-full bg-gradient-to-r from-transparent via-[#00b8b0] to-transparent opacity-50" />
+
+        {/* Header Section */}
+        <div className="mb-8 text-center flex flex-col items-center">
+          <div className="mb-6 relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-[#a855f7] to-[#00b8b0] opacity-10 rounded-full blur-2xl" />
+            <Image
+              src="/icons/autoworx-logo.svg"
+              alt="Autoworx Logo"
+              width={120}
+              height={120}
+              className="mx-auto relative z-10"
+              style={{ filter: "drop-shadow(0 0 20px rgba(101, 113, 255, 0.1))" }}
+            />
+          </div>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Create your account</h1>
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Start your journey with Autoworx.</p>
+        </div>
 
         <FormError />
 
-        <div>
-          <label htmlFor="firstName" className="mb-2 block">
-            First Name
-          </label>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="group transition-all duration-300">
+            <label htmlFor="firstName" className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">First Name</label>
+            <Input
+              type="text"
+              name="firstName"
+              autoFocus
+              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 transition-colors focus:border-[#6571FF]/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50"
+            />
+          </div>
 
-          <Input
-            type="text"
-            name="firstName"
-            className="w-full rounded-md border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            // required
-            autoFocus
-          />
+          <div className="group transition-all duration-300">
+            <label htmlFor="lastName" className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Last Name</label>
+            <Input
+              type="text"
+              name="lastName"
+              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 transition-colors focus:border-[#6571FF]/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50"
+            />
+          </div>
+
+          <div className="group transition-all duration-300">
+            <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Email</label>
+            <Input
+              type="email"
+              name="email"
+              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 text-slate-900 transition-colors focus:border-[#6571FF]/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50 dark:text-white"
+            />
+          </div>
+
+          <div className="group transition-all duration-300">
+            <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Password</label>
+            <Password
+              name="password"
+              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 transition-colors focus:border-[#6571FF]/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50"
+            />
+          </div>
+
+          <div className="group transition-all duration-300">
+            <label htmlFor="company" className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Company</label>
+            <Input
+              type="text"
+              name="company"
+              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 transition-colors focus:border-[#6571FF]/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50"
+            />
+          </div>
+
+          <div className="group transition-all duration-300">
+            <label htmlFor="access" className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Access Code</label>
+            <Input
+              name="access"
+              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 px-4 py-2.5 transition-colors focus:border-[#6571FF]/50 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50"
+            />
+          </div>
+          <div className="md:col-span-2"></div>
         </div>
-
-        <div className="mt-4">
-          <label htmlFor="lastName" className="mb-2 block">
-            Last Name
-          </label>
-
-          <Input
-            type="text"
-            name="lastName"
-            className="w-full rounded-md border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-
-        <div className="mt-4">
-          <label htmlFor="email" className="mb-2 block">
-            Email
-          </label>
-
-          <Input
-            type="email"
-            name="email"
-            className="w-full rounded-md border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-
-        <div className="mt-4">
-          <label htmlFor="company" className="mb-2 block">
-            Company
-          </label>
-
-          <Input
-            type="text"
-            name="company"
-            className="w-full rounded-md border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            // required
-          />
-        </div>
-
-        <div className="mt-4">
-          <label htmlFor="password" className="mb-2 block">
-            Password
-          </label>
-
-          <Password
-            name="password"
-            className="w-full rounded-md border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            // required
-          />
-        </div>
-
-        <div className="mt-4">
-          <label htmlFor="access" className="mb-2 block">
-            Access Code
-          </label>
-
-          <Input
-            name="access"
-            className="w-full rounded-md border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            // required
-          />
-        </div>
-
-        {/* Google Authentication */}
-        {/* TODO */}
-        {/* <a
-          href={route("auth.google")}
-          className="border mx-auto w-[200px] text-center mt-4 py-2 rounded-md hover:bg-gray-100 flex items-center justify-center"
-          >
-          <FaGoogle className="inline-block mr-2 text-[#DB4437]" />
-          Sign up using Google
-          </a> */}
 
         <SubmitButton />
 
-        <Link
-          href="/login"
-          className="mt-4 block rounded-md text-center text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-        >
-          Already registered? Login
-        </Link>
+        <p className="mt-8 text-center text-sm text-slate-600 dark:text-slate-400">
+          Already registered?{" "}
+          <Link href="/login" className="font-semibold text-[#6571FF] transition-colors hover:text-[#5059d4] hover:underline">Login</Link>
+        </p>
       </form>
-    
+    </div>
   );
 }

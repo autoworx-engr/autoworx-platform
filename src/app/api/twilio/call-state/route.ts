@@ -3,6 +3,36 @@ import { getPusherInstance } from "@/lib/pusher/server";
 import { NextResponse } from "next/server";
 import { updateNewSMSChatTrack } from "@/actions/communication/client/chat-track";
 
+/**
+ * @swagger
+ * /api/twilio/call-state:
+ *   post:
+ *     summary: Update Twilio call state
+ *     tags: [Twilio]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               callSid:
+ *                 type: string
+ *               action:
+ *                 type: string
+ *                 enum: [accepted, rejected, ended]
+ *               companyId:
+ *                 type: integer
+ *               deviceId:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Call state updated
+ *       400:
+ *         description: Missing required parameters
+ */
 export async function POST(request: Request) {
   try {
     const body = await request.json();

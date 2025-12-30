@@ -33,10 +33,10 @@ const ACCESS_CODE = env("ACCESS_CODE");
 
 const insertDefaultColumns = async (columnId: number, type: string) => {
   const columnsFortypes = defaultColumnWithColor.filter(
-    (column) => column.type === type
+    column => column.type === type
   );
 
-  const columnsWithCompany = columnsFortypes.map((column) => ({
+  const columnsWithCompany = columnsFortypes.map(column => ({
     ...column,
     companyId: columnId,
   }));
@@ -71,11 +71,11 @@ export async function register({
       throw new AppError(httpStatus.BAD_REQUEST, "Invalid access code");
     }
 
-    const lowerCaseEmail = userInfo.email.toLowerCase();
+    const userEmail = userInfo.email;
 
     // check if the user already created
     const user = await db.user.findUnique({
-      where: { email: lowerCaseEmail },
+      where: { email: userEmail },
     });
 
     if (user) {
@@ -83,7 +83,10 @@ export async function register({
     }
 
     // hash the password
-    const hashedPassword = await bcrypt.hash(userInfo.password, 10);
+    const hashedPassword = await bcrypt.hash(
+      userInfo.password,
+      process.env.SALT_ROUNDS ?? "12"
+    );
 
     // Create the company
     const newCompany = await db.company.create({
@@ -210,7 +213,7 @@ export async function register({
     ];
 
     await Promise.all(
-      defaultPermissions.map((perm) =>
+      defaultPermissions.map(perm =>
         db.companyPermissionModule.create({
           data: {
             companyId: newCompany.id,
@@ -226,8 +229,7 @@ export async function register({
       data: {
         firstName: userInfo.firstName,
         lastName: userInfo.lastName,
-        email: lowerCaseEmail,
-        companyName: userInfo.company,
+        email: userEmail,
         password: hashedPassword,
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         companyId: newCompany.id,
@@ -289,7 +291,7 @@ export async function register({
     await db.companyEmailTemplate.create({
       data: {
         subject: `Estimate for services requested at <BUSINESS_NAME>`,
-        message: `Hey <CLIENT>, your estimate for <VEHICLE> is ready.  – <BUSINESS_NAME>`,
+        message: `Hey <CLIENT>, your estimate for <VEHICLE> is ready. If everything looks good, please approve it so we can move forward. Thanks!– <BUSINESS_NAME>`,
         companyId: newCompany.id,
       },
     });
@@ -302,9 +304,10 @@ export async function register({
     console.error("The error: ", err);
     console.log({ err: errorHandler(err) });
 
-    return {
-      // error: "A server side error occured",
-      error: errorHandler(err),
-    };
+    // return {
+    //   // error: "A server side error occured",
+    //   error: errorHandler(err),
+    // };
+    throw err;
   }
 }

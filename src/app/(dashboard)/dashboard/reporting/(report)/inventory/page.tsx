@@ -1,5 +1,7 @@
+import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
 import { authOptions } from "@/authOptions";
 import { db } from "@/lib/db";
+import { normalizeSearch } from "@/utils/normalizeSearch";
 import {
   InventoryProductHistoryType,
   InventoryProductType,
@@ -12,8 +14,6 @@ import AnalyticsVisibility from "./AnalyticsVisibility";
 import CalculationContainer from "./CalculationContainer";
 import FilterHeader from "./FilterHeader";
 import InventoryDisplay from "./InventoryDisplay";
-import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
-import { normalizeSearch } from "@/utils/normalizeSearch";
 
 type TProps = {
   searchParams: {

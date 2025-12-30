@@ -9,7 +9,6 @@ import type {
   User,
   Vehicle,
   Vendor,
-  Status,
   PaymentMethod,
   Invoice,
   Column,

@@ -6,7 +6,7 @@ import { Service, Technician } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import dynamic from "next/dynamic";
 
-const Pipelines = dynamic(() => import("../../components/Pipelines"));
+const Pipelines = dynamic(() => import("../../components/PipelinesCopy"));
 
 const PipelinePage = async () => {
   const session = await getServerSession(authOptions);
@@ -20,33 +20,33 @@ const PipelinePage = async () => {
   let pipelineData: ShopPipelineData[] = [];
 
   if (invoices && pipelineColumns) {
-    const filteredInvoices = invoices.filter(invoice => {
+    const filteredInvoices = invoices.filter((invoice) => {
       return invoice.type === "Invoice";
     });
-    const transformedLeads: ShopLead[] = filteredInvoices.map(invoice => {
+    const transformedLeads: ShopLead[] = filteredInvoices.map((invoice) => {
       const completedServices: string[] = [];
       const incompleteServices: string[] = [];
       const allTechnicians: Technician[] = [];
       const unAssignedServices: string[] = [];
-      invoice.invoiceItems.forEach(item => {
+      invoice.invoiceItems.forEach((item) => {
         const technicians =
           item.service?.Technician?.filter(
-            tech => tech.invoiceId === invoice.id
+            (tech) => tech.invoiceId === invoice.id
           ) || [];
 
         if (Array.isArray(technicians) && technicians.length > 0) {
-          const statuses = technicians.map(tech =>
+          const statuses = technicians.map((tech) =>
             tech.status?.toLowerCase().trim()
           );
 
           servicesOfCurrentUser.push(
             ...technicians.filter(
-              tech => tech.userId === Number(currentUser?.id)
+              (tech) => tech.userId === Number(currentUser?.id)
             )
           );
 
           const isServiceComplete = statuses.every(
-            status => status === "complete"
+            (status) => status === "complete"
           );
 
           if (isServiceComplete) {
@@ -79,7 +79,7 @@ const PipelinePage = async () => {
           incomplete: incompleteServices,
           unAssigned: unAssignedServices,
         },
-        tags: invoice.tags.map(tag => ({ id: tag.id, tag: tag.tag })),
+        tags: invoice.tags.map((tag) => ({ id: tag.id, tag: tag.tag })),
         tasks: invoice.tasks,
         assignedTo: invoice.assignedTo,
         createdAt: new Date(invoice.createdAt).toDateString(),
@@ -89,11 +89,11 @@ const PipelinePage = async () => {
       };
     });
 
-    let updatedPipelineData = pipelineColumns.map(column => ({
+    let updatedPipelineData = pipelineColumns.map((column) => ({
       id: column.id,
       title: column.title,
       leads: transformedLeads
-        .filter(lead => lead.columnId === column.id)
+        .filter((lead) => lead.columnId === column.id)
         .sort((a, b) => {
           const dateA = a.deliveredAt
             ? new Date(a.deliveredAt).getTime()
@@ -109,9 +109,9 @@ const PipelinePage = async () => {
 
     // Only filter for technicians
     if (currentUser?.employeeType === "Technician") {
-      updatedPipelineData = updatedPipelineData.map(column => ({
+      updatedPipelineData = updatedPipelineData.map((column) => ({
         ...column,
-        leads: column.leads.filter(lead =>
+        leads: column.leads.filter((lead) =>
           servicesOfCurrentUser.some(
             (service: any) => lead.invoiceId === service.invoiceId
           )

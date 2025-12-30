@@ -5,7 +5,14 @@ import { useDate } from "../../_hook/lib/useDate";
 import TaskError from "../ui/TaskError";
 import TaskSpinner from "../ui/TaskSpinner";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
-import { CalendarX2 } from "lucide-react";
+import { Calendar, CalendarX2, Clock, Mail, Phone, UserIcon, Users } from "lucide-react";
+
+const SHADOW_COLOR = "shadow-md shadow-slate-900/10 dark:shadow-white/5";
+const BASE_TEXT_COLOR = "text-slate-600 dark:text-white";
+const INFO_TEXT_COLOR = "text-slate-500 dark:text-slate-400";
+const LINK_BLUE = "text-blue-500 hover:text-blue-400";
+const LINK_EMERALD = "text-emerald-500 hover:text-emerald-400";
+const STATUS_COLOR = "#6571FF"; // Used for the left status border
 
 export default function AppointmentLists() {
   const date = useDate();
@@ -57,59 +64,84 @@ export default function AppointmentLists() {
       return (
         <div
           key={appointment?.id}
-          className="mb-4 flex justify-between rounded-md border-r-4 border-[#6571FF] bg-background p-3 shadow-md"
+          // Apply softer shadow, rounded corners, and elevated status border style
+          className={`mb-4 rounded-xl border-l-4 p-4 ${SHADOW_COLOR} bg-white dark:bg-slate-800/80 transition-colors duration-200`}
+          style={{ borderColor: STATUS_COLOR, borderRightWidth: 0 }} // Use border-l-4 for the left status bar, ensure no right border
         >
           {/* Left: Client Info */}
-          <div className="w-1/2 text-wrap">
-            <p className="text-lg font-semibold text-gray-900">
+          <div className="pr-3 space-y-1">
+
+            {/* Title */}
+            <p className={`text-lg font-extrabold ${BASE_TEXT_COLOR} leading-snug`}>
               {appointment?.title}
             </p>
-            <p className="text-sm leading-tight text-gray-500">
-              Client:{" "}
-              {appointment?.client?.firstName && appointment?.client?.lastName
-                ? `${appointment.client.firstName} ${appointment.client.lastName}`
-                : "N/A"}
+
+            {/* Time Range */}
+            <p className={`flex items-center gap-1 text-sm font-medium ${BASE_TEXT_COLOR} pt-1`}>
+              <Clock size={14} className="text-cyan-600 dark:text-cyan-400" />
+              {/* Placeholder for Moment objects/formatted strings */}
+              {start && end ? `${start.format("h:mm A")} - ${end.format("h:mm A")}` : "Time N/A"}
             </p>
 
-            <p className="text-sm text-gray-500">
-              Email:{" "}
+            {/* Date */}
+            {appointment?.date && (
+              <div className={`flex items-center gap-1`}>
+                <Calendar size={14} className="text-cyan-600 dark:text-cyan-400" />
+                <p className={`text-sm font-medium ${BASE_TEXT_COLOR}`}>
+                  {/* Placeholder for date string/Moment object */}
+                  {date}
+                </p>
+              </div>
+            )}
+
+            {/* Client Name (Iconified) */}
+            <p className={`flex items-center gap-1 text-sm ${INFO_TEXT_COLOR}`}>
+              <UserIcon size={16} className="text-cyan-600 dark:text-cyan-400" />
+              <span className={`font-semibold ${BASE_TEXT_COLOR}`}>Client:</span>
+              {appointment?.client?.firstName && appointment?.client?.lastName
+                ? <span className={`font-semibold`}>{appointment.client.firstName} {appointment.client.lastName}</span>
+                : <span className="italic">N/A</span>}
+            </p>
+
+            {/* Email Link (Iconified) */}
+            <p className="flex items-center gap-1 text-sm">
+              <Mail size={16} strokeWidth={2.5} className="text-blue-500/80" />
+              <span className={`font-semibold ${BASE_TEXT_COLOR}`}>Email:</span>
               <a
                 href={`mailto:${appointment.client?.email}`}
-                className="w-full break-all text-sm text-blue-500"
+                className={`w-full break-all text-sm font-medium ${LINK_BLUE}`}
               >
-                {appointment.client?.email || "N/A"}
+                {appointment.client?.email || <span className={`italic ${INFO_TEXT_COLOR}`}>N/A</span>}
               </a>
             </p>
-            <p className="text-sm text-gray-500">
-              Phone:{" "}
+
+            {/* Phone Link (Iconified) */}
+            <p className="flex items-center gap-1 text-sm">
+              <Phone size={14} className="text-emerald-500/80" />
+              <span className={`font-semibold ${BASE_TEXT_COLOR}`}>Phone:</span>
               <a
                 href={`tel:${appointment.client?.mobile}`}
-                className="cursor-pointer text-sm text-blue-500"
+                className={`cursor-pointer text-sm font-medium ${LINK_EMERALD}`}
               >
-                {appointment.client?.mobile || "N/A"}
+                {appointment.client?.mobile || <span className={`italic ${INFO_TEXT_COLOR}`}>N/A</span>}
               </a>
             </p>
           </div>
 
-          {/* Right: Assigned By & Time */}
-          <div className="w-1/2 text-wrap text-right">
-            <h2 className="w-full break-all text-sm font-medium text-gray-800">
-              Assigned To:{" "}
+          {/* Assigned To (Iconified) */}
+          <div className={`flex items-center gap-1 text-sm font-semibold ${BASE_TEXT_COLOR}`}>
+            <Users size={14} className="text-[#6571FF] dark:text-[#6571FF]" />
+            <span className={`font-semibold ${BASE_TEXT_COLOR}`}>Assigned To:</span>
+            <span className="text-sm font-medium">
               {appointment.assignedUsers && appointment.assignedUsers.length > 0
                 ? appointment.assignedUsers
-                    .map(
-                      (user: any) =>
-                        `${user?.firstName ?? ""} ${user?.lastName ?? ""}`
-                    )
-                    .join(", ")
-                : "N/A"}
-            </h2>
-            <p className="mt-[6px] text-sm text-gray-600">
-              {`${start.format("h:mm A")} - ${end.format("h:mm A")}`}
-            </p>
-            {appointment?.date && (
-              <p className="mt-2 text-sm font-semibold text-gray-600">{date}</p>
-            )}
+                  .map(
+                    (user: any) =>
+                      `${user?.firstName ?? ""} ${user?.lastName ?? ""}`
+                  )
+                  .join(", ")
+                : <span className="italic font-normal">N/A</span>}
+            </span>
           </div>
         </div>
       );

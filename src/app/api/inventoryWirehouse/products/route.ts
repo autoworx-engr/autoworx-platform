@@ -3,6 +3,39 @@ import { db } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
+/**
+ * @swagger
+ * /api/inventoryWirehouse/products:
+ *   get:
+ *     summary: Get inventory warehouse products
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: categoryName
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Paginated products list
+ *       500:
+ *         description: Server error
+ */
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;

@@ -166,12 +166,24 @@ const TEMPLATE_VARIABLES: TemplateVariable[] = [
 ];
 
 export const AppointmentTemplateVariable = ({
-  VARIABLES = TEMPLATE_VARIABLES, // Use the default TEMPLATE_VARIABLES if none are provided
+  VARIABLES = TEMPLATE_VARIABLES,
+  hasBackground = false, // Use the default TEMPLATE_VARIABLES if none are provided
 }: {
   VARIABLES?: TemplateVariable[];
+  hasBackground?: boolean;
 }) => {
+  const [copiedVar, setCopiedVar] = useState<string | null>(null);
+
+  const copyToClipboard = (variable: string | null) => {
+    navigator.clipboard.writeText(variable!);
+    setCopiedVar(variable);
+    setTimeout(() => setCopiedVar(null), 2000);
+  };
+
   return (
-    <div className="rounded-lg bg-white p-4 font-sans text-gray-700 shadow-md">
+    <div
+      className={`rounded-lg   bg-white  font-sans text-gray-700 ${hasBackground ? "" : "shadow-md p-4"} `}
+    >
       {/* Section title for template variables */}
       <h4 className="mb-3 text-lg font-semibold text-gray-800">
         TEMPLATE VARIABLES
@@ -181,7 +193,12 @@ export const AppointmentTemplateVariable = ({
         {VARIABLES.map((variable) => (
           <div
             key={variable.name}
-            className="flex flex-col rounded-md border border-gray-200 bg-gray-50 p-3"
+            onClick={() => copyToClipboard(variable.name)}
+            className={`flex flex-col rounded-md border cursor-pointer p-3 ${
+              copiedVar === variable.name
+                ? "border-green-400 bg-green-50"
+                : "border-gray-200 hover:border-indigo-300"
+            }`}
           >
             {/* Display the variable name */}
             <span className="mb-1 text-xs font-bold text-blue-600">
@@ -189,7 +206,7 @@ export const AppointmentTemplateVariable = ({
             </span>
             {/* Display the variable description */}
             <span className="text-xs text-gray-600">
-              {variable.description}
+              {copiedVar === variable.name ? "✓ Copied!" : variable.description}
             </span>
           </div>
         ))}

@@ -18,17 +18,21 @@ export default function Collaboration({
   companies,
   currentUser,
   messages,
+  isCollaborators,
 }: {
   companyWithAdmin: Partial<User>[];
   companies: (Company & { users: User[] })[];
   currentUser: Session["user"];
   messages: (DbMessage & { attachment: Attachment[] | null })[];
+  isCollaborators: boolean | null | undefined;
 }) {
   const [selectedUsersList, setSelectedUsersList] = useState<User[]>([]);
   const [companyAdmins, setCompanyAdmins] = useState(companyWithAdmin);
-  
+
   // Use the hook to get real-time unread message counts
-  const unreadCounts = useUnreadCollaborationMessages(parseInt(currentUser?.id));
+  const unreadCounts = useUnreadCollaborationMessages(
+    parseInt(currentUser?.id)
+  );
 
   return (
     <div className="flex gap-5 sm:mt-5">
@@ -41,6 +45,8 @@ export default function Collaboration({
         setSelectedUsersList={setSelectedUsersList}
         unreadCounts={unreadCounts}
         currentUserId={parseInt(currentUser?.id)}
+        companyId={currentUser?.companyId}
+        isCollaborators={isCollaborators}
       />
       <UsersArea
         className={cn(selectedUsersList.length === 0 ? "hidden" : "grid")}

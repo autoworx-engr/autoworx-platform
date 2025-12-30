@@ -36,9 +36,9 @@ export default function Table({
     );
   });
   return (
-    <div className="hidden h-[90%] w-[70%] overflow-y-auto lg:block">
-      <table className="w-[98%]">
-        <thead className="bg-background">
+    <div className="hidden h-[85%] w-[70%] overflow-y-auto thin-scrollbar lg:block">
+      <table className="relative w-[98%] rounded-lg">
+        <thead className="bg-background sticky top-0 z-10">
           <tr className="h-10 border-b">
             <th className="px-2 text-left">#</th>
             <th className="px-4 text-left">Name</th>

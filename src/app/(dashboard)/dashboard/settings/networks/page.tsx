@@ -19,17 +19,16 @@ const page = async (props: Props) => {
     where: {
       OR: [{ companyOneId: userCompanyId }, { companyTwoId: userCompanyId }],
     },
-    select: {
-      companyOneId: true,
-      companyTwoId: true,
-      createdAt: true,
+    include: {
+      companyOne: true,
+      companyTwo: true,
     },
   });
 
   const collaborationDates = connectedCompanyIds.map((join) => join.createdAt);
 
   const connectedIds = connectedCompanyIds.flatMap((join) =>
-    [join.companyOneId, join.companyTwoId].filter((id) => id !== userCompanyId),
+    [join.companyOneId, join.companyTwoId].filter((id) => id !== userCompanyId)
   );
 
   const connectedCompanies = await db.company.findMany({
@@ -37,6 +36,10 @@ const page = async (props: Props) => {
       id: {
         in: connectedIds,
       },
+    },
+    include: {
+      companyJoinsAsOne: true,
+      companyJoinsAsTwo: true,
     },
   });
 
@@ -49,12 +52,74 @@ const page = async (props: Props) => {
     },
   });
 
+  const pendingSent = [];
+  const pendingReceived = [];
+  const rejectSent = [];
+  const rejectReceived = [];
+  const active = [];
+
+  for (const join of connectedCompanyIds) {
+    const isSender = join.companyOneId === userCompanyId;
+    const isReceiver = join.companyTwoId === userCompanyId;
+
+    const otherCompany = isSender ? join.companyTwo : join.companyOne;
+
+    if (join.status === "PENDING") {
+      if (isSender) {
+        pendingSent.push({
+          company: otherCompany,
+          joinId: join.id,
+          createdAt: join.createdAt,
+        });
+      }
+
+      if (isReceiver) {
+        pendingReceived.push({
+          company: otherCompany,
+          joinId: join.id,
+          createdAt: join.createdAt,
+        });
+      }
+    }
+
+    if (join.status === "REJECTED") {
+      if (isSender) {
+        rejectSent.push({
+          company: otherCompany,
+          joinId: join.id,
+          createdAt: join.createdAt,
+        });
+      }
+
+      if (isReceiver) {
+        rejectReceived.push({
+          company: otherCompany,
+          joinId: join.id,
+          createdAt: join.createdAt,
+        });
+      }
+    }
+
+    if (join.status === "ACCEPTED") {
+      active.push({
+        company: otherCompany,
+        joinId: join.id,
+        joinedAt: join.createdAt,
+      });
+    }
+  }
+
   return (
     <NetworksPage
       connectedCompanies={connectedCompanies}
       collaborationDates={collaborationDates}
       unconnectedCompanies={unconnectedCompanies}
       currentCompany={currentCompany}
+      active={active}
+      pendingReceived={pendingReceived}
+      pendingSent={pendingSent}
+      rejectReceived={rejectReceived}
+      rejectSent={rejectSent}
     />
   );
 };

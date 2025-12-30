@@ -36,6 +36,7 @@ import VehicleParts from "./VehicleParts";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import { ImageIcon, X } from "lucide-react";
+import ComponentsLightbox from "@/components/common/LightBox";
 import {
   handleFileSelection,
   uploadAllAttachments,
@@ -121,6 +122,9 @@ export default function CreateAndEditLabor({
 
   const [imageUploadIsLoading, setImageUploadIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [lightboxItems, setLightboxItems] = useState<{ src: string }[] | null>(
+    null
+  );
   const [priority, setPriority] = useState<Priority>("Low");
   const [loading, setLoading] = useState(false); // Loading state
 
@@ -248,12 +252,22 @@ export default function CreateAndEditLabor({
         );
 
         if (response.type === "success") {
+          const newImages: TechnicianImage[] = finalImageUrls.map((url) => {
+            return {
+              fileUrl: url,
+              uploadedAt: new Date(),
+              technicianId: technician.id,
+            } as TechnicianImage;
+          });
+
+          setFormData({ attachments: newImages });
           setOpen(false);
           setTechnicians((prev) =>
             prev.map((tech) =>
               tech.id === technician.id
                 ? {
                     ...response.data,
+                    images: newImages,
                     hasPermission: tech.hasPermission,
                     vehicleParts: selectedVehicleParts as Parts[],
                   }
@@ -338,6 +352,21 @@ export default function CreateAndEditLabor({
     setPriority("Low");
     setError("");
     setEmployee(null);
+  };
+
+  const handleCancel = () => {
+    if (technician) {
+      setFormData({
+        attachments:
+          (technician.images as (TechnicianImage | LocalAttachment)[]) || [],
+      });
+      setTechnicianNote(technician.technicianNote || "");
+      setStatus(technician.status as TStatus);
+    } else {
+      reset();
+    }
+    setImageUploadIsLoading(false);
+    setError("");
   };
 
   useEffect(() => {
@@ -615,7 +644,12 @@ export default function CreateAndEditLabor({
                           <img
                             src={att.fileUrl || "/placeholder.svg"}
                             alt={`attachment-${idx}`}
-                            className="h-20 w-20 rounded-md border border-slate-200 object-cover shadow-sm transition-transform group-hover:scale-105"
+                            onClick={() =>
+                              setLightboxItems([
+                                { src: att.fileUrl || "/placeholder.svg" },
+                              ])
+                            }
+                            className="h-20 w-20 rounded-md border border-slate-200 object-cover shadow-sm transition-transform group-hover:scale-105 cursor-pointer"
                           />
                           <button
                             type="button"
@@ -638,6 +672,14 @@ export default function CreateAndEditLabor({
                       No photos uploaded
                     </p>
                   )}
+                  {/* Lightbox  */}
+                  {lightboxItems && (
+                    <ComponentsLightbox
+                      getItems={lightboxItems.map((i) => ({ src: i.src }))}
+                      startIndex={0}
+                      onClose={() => setLightboxItems(null)}
+                    />
+                  )}
                 </div>
               </div>
             </div>
@@ -652,7 +694,10 @@ export default function CreateAndEditLabor({
           isWriteAccess={isAdminOrManger && !isTechnician}
         />
         <DialogFooter>
-          <DialogClose className="mt-2 rounded-lg border-2 border-slate-400 p-2 text-sm md:mt-0 md:text-base">
+          <DialogClose
+            className="mt-2 rounded-lg border-2 border-slate-400 p-2 text-sm md:mt-0 md:text-base"
+            onClick={handleCancel}
+          >
             Cancel
           </DialogClose>
           <button

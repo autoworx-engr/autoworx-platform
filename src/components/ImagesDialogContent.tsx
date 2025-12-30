@@ -9,6 +9,7 @@ import { queryKeys } from "@/lib/queryKeys";
 import { errorToast, successToast } from "@/lib/toast";
 import { ImagesDialogueShareButtons } from "./workorder-modal/ImagesDialogueShareButtons";
 import { ImageContentCard } from "./workorder-modal/ImageContentCard";
+import ComponentsLightbox from "@/components/common/LightBox";
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
 import { useIsAdminOrManager } from "@/utils/useIsAdminOrManager";
 import { SelectionToolbar } from "./workorder-modal/SelectionToolbar";
@@ -49,6 +50,11 @@ export function ImagesDialogContent({
   const allSelectableSelected =
     selectableIds.length > 0 &&
     selectableIds.every((id) => selectedIds.includes(id));
+
+  const [lightboxItems, setLightboxItems] = useState<{ src: string }[] | null>(
+    null
+  );
+  const [lightboxIndex, setLightboxIndex] = useState<number>(0);
 
   function toggleSelect(id?: number) {
     if (!id) return;
@@ -231,9 +237,9 @@ export function ImagesDialogContent({
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 ">
       {/* Header */}
-      <div className="flex flex-col gap-4 border-b border-border bg-background p-4 md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col gap-4 border-b border-border bg-background  md:flex-row md:items-center md:justify-between pb-2 px-4">
         <div className="flex flex-col gap-1">
           <h2 className="text-xl font-semibold text-foreground md:text-2xl">
             Images
@@ -270,15 +276,26 @@ export function ImagesDialogContent({
           </p>
         )}
 
-        {photosState.map((img) => (
+        {photosState.map((img, idx) => (
           <ImageContentCard
             key={img.id}
             img={img}
             selectedIds={selectedIds}
             toggleSelect={toggleSelect}
             handleDelete={handleDelete}
+            onOpen={() => {
+              setLightboxItems(photosState.map((p) => ({ src: p.photo })));
+              setLightboxIndex(idx);
+            }}
           />
         ))}
+        {lightboxItems && (
+          <ComponentsLightbox
+            getItems={lightboxItems}
+            startIndex={lightboxIndex}
+            onClose={() => setLightboxItems(null)}
+          />
+        )}
       </div>
     </div>
   );

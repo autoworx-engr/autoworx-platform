@@ -1,15 +1,15 @@
-import { ChatTrack, Group, Message, User } from "@prisma/client";
-import CreateGroupModal from "./CreateGroupModal";
+import { fetchUsersWithLatestMessages } from "@/actions/communication/internal/fetchUsersWithLatestMessages";
+import { getGroupById } from "@/actions/communication/internal/query";
 import Avatar from "@/components/Avatar";
 import { cn } from "@/lib/cn";
-import { useEffect, useState, useCallback } from "react";
 import { pusher } from "@/lib/pusher/client";
-import { useSession } from "next-auth/react";
-import { getGroupById } from "@/actions/communication/internal/query";
-import UserSelectButton from "./UserSelectButton";
 import { useChatTrackStore } from "@/stores/chatTrackStore";
-import { fetchUsersWithLatestMessages } from "@/actions/communication/internal/fetchUsersWithLatestMessages";
+import { ChatTrack, Group, Message, User } from "@prisma/client";
 import { Search } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useCallback, useEffect, useState } from "react";
+import CreateGroupModal from "./CreateGroupModal";
+import UserSelectButton from "./UserSelectButton";
 
 type TListProps = {
   users: (User & { unreadCount: number; latestMessage?: Message | null })[];
@@ -703,7 +703,7 @@ export default function List({
         <input
           onChange={(e) => setSearchTerm(e.target.value)}
           type="text"
-          placeholder="Search here..."
+          placeholder="Search by name,email or phone"
           className={cn(
             "w-full rounded-md border bg-white pl-9 pr-9 py-2 text-sm text-zinc-700 placeholder-zinc-400 outline-none",
             "border-zinc-300 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20",

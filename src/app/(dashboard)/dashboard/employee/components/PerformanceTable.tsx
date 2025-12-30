@@ -43,10 +43,23 @@ export default function PerformanceTable() {
 
   const [infoIndex, setInfoIndex] = useState<number | null>(null);
 
+  const formatJobTime = (hours: number) => {
+    const days = Math.floor(hours / 24);
+    const remainingHours = Math.floor(hours % 24);
+
+    if (days === 0) {
+      return `${remainingHours} hours`;
+    } else if (remainingHours === 0) {
+      return `${days} ${days === 1 ? "day" : "days"}`;
+    } else {
+      return `${days} ${days === 1 ? "day" : "days"} ${remainingHours} hours`;
+    }
+  };
+
   const metricData: MetricData[] = [
     {
       label: "Average Time to Complete a Job",
-      value: Math.floor(averageJobTime || 0) + " hours",
+      value: formatJobTime(averageJobTime || 0),
       percentage: Number(
         averageJobTimeGrowthRate ? averageJobTimeGrowthRate?.toFixed(2) : 0
       ),
@@ -90,6 +103,7 @@ export default function PerformanceTable() {
       value: totalJobsCompletedLate || 0,
     },
   ];
+
   return (
     <div className="my-4 flex h-full flex-col lg:w-1/2">
       <h2 className="mb-2 text-xl font-bold">Performance</h2>
@@ -127,10 +141,14 @@ export default function PerformanceTable() {
                     <div
                       className={cn(
                         "font-inter text-xl font-semibold",
-                        metric.percentage ? "text-green-500" : "text-red-500"
+                        metric.percentage > 0
+                          ? "text-green-500"
+                          : metric.percentage < 0
+                            ? "text-red-500"
+                            : ""
                       )}
                     >
-                      {metric.percentage}%
+                      {metric.percentage ? metric.percentage.toFixed(2) : 0}%
                     </div>
                   )}
                 </div>

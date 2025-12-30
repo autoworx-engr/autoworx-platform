@@ -406,15 +406,7 @@ export default function BusinessForm({ company }: TProps) {
             Contact & Digital Presence
           </h4>
           <div className="grid md:grid-cols-2 grid-cols-1 gap-x-8 gap-y-4">
-            {/* <SlimInput
-              required={true}
-              value={businessSettings.businessPhone}
-              onChange={handleChange}
-              label="Business Phone"
-              name="businessPhone"
-              error={validationErrors.businessPhone}
-            /> */}
-
+           
             <PhoneInput
     label="Business Phone"
     defaultValue={company?.phone || ""}

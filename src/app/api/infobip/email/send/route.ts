@@ -12,6 +12,36 @@ import { authOptions } from "@/authOptions";
 
 const pump = promisify(pipeline);
 
+/**
+ * @swagger
+ * /api/infobip/email/send:
+ *   post:
+ *     summary: Send email via Infobip
+ *     tags: [Infobip]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               recipient:
+ *                 type: string
+ *               text:
+ *                 type: string
+ *               files:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Email sent successfully
+ *       400:
+ *         description: Recipient not provided
+ *       500:
+ *         description: Server error
+ */
 // Helper: Web Stream -> Node Readable
 function webStreamToNodeStream(
   webStream: ReadableStream<Uint8Array>
@@ -33,7 +63,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const files = formData.getAll("files") as File[];
     const recipient = formData.get("recipient") as string | null;
     const text = (formData.get("text") as string | null) ?? "";
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession(authOptions);
     const currentUser = session?.user;
     if (!recipient) throw new Error("Recipient not provided");
 
@@ -150,7 +180,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           clientId: parseInt(recipient),
           messageId, // store Infobip's messageId
           userId: Number(currentUser?.id) || null,
-
         },
       });
 
@@ -197,12 +226,13 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       MailData = await db.mailgunEmail.findFirst({
         where: { id: mailData.id },
         include: {
-          attachments: true, user: {
+          attachments: true,
+          user: {
             select: {
               firstName: true,
               lastName: true,
-            }
-          }
+            },
+          },
         },
       });
     }
@@ -211,7 +241,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     for (const fp of filePaths) {
       try {
         if (fs.existsSync(fp)) fs.unlinkSync(fp);
-      } catch { }
+      } catch {}
     }
 
     // Trigger pipeline automations
@@ -224,7 +254,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           columnId: client.Lead.columnId,
         });
       }
-    } catch { }
+    } catch {}
 
     return NextResponse.json({ success: true, data: MailData });
   } catch (error: unknown) {

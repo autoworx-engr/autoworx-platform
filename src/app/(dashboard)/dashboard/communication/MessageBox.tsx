@@ -1,25 +1,15 @@
-import { useEffect, useRef, useState, useTransition } from "react";
+import { deleteUserFromGroup } from "@/actions/communication/internal/deleteUserFromGroup";
+import { getUserInGroup } from "@/actions/communication/internal/query";
+import { renameGroup } from "@/actions/communication/internal/renameGroup";
+import { updateChatTrack } from "@/actions/communication/internal/updateChatTrack";
+import Avatar from "@/components/Avatar";
+import { Dialog, DialogContent, DialogFooter } from "@/components/Dialog";
+import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { cn } from "@/lib/cn";
-import Image from "next/image";
-import { Message as TMessage } from "./internal/UsersArea";
+import { useChatTrackStore } from "@/stores/chatTrackStore";
 import { sendType } from "@/types/Chat";
 import { Attachment, Group, User } from "@prisma/client";
-import { deleteUserFromGroup } from "@/actions/communication/internal/deleteUserFromGroup";
-import { useSession } from "next-auth/react";
-import Avatar from "@/components/Avatar";
-import Message from "./Message";
-import toast from "react-hot-toast";
-import { usePathname, useRouter } from "next/navigation";
-import InvoiceEstimateModal from "./collaboration/InvoiceEstimateModal";
-import { Dialog, DialogContent, DialogFooter } from "@/components/Dialog";
-import { getUserInGroup } from "@/actions/communication/internal/query";
-import AddUsersInGroupModal from "./internal/AddUsersInGroupModal";
-import { useChatTrackStore } from "@/stores/chatTrackStore";
-import { errorHandler } from "@/error-boundary/globalErrorHandler";
-import { updateChatTrack } from "@/actions/communication/internal/updateChatTrack";
 import { format } from "date-fns";
-import { formatDate } from "./client/_component/conversations/mailgun/MailgunConversation";
-import { renameGroup } from "@/actions/communication/internal/renameGroup";
 import {
   ArrowLeft,
   CircleCheckBig,
@@ -29,6 +19,16 @@ import {
   SquarePen,
   X,
 } from "lucide-react";
+import { useSession } from "next-auth/react";
+import Image from "next/image";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useRef, useState, useTransition } from "react";
+import toast from "react-hot-toast";
+import { formatDate } from "./client/_component/conversations/mailgun/MailgunConversation";
+import InvoiceEstimateModal from "./collaboration/InvoiceEstimateModal";
+import AddUsersInGroupModal from "./internal/AddUsersInGroupModal";
+import { Message as TMessage } from "./internal/UsersArea";
+import Message from "./Message";
 
 type TSection = "collaboration" | "internal";
 
@@ -589,6 +589,7 @@ export default function MessageBox({
           className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#006D77] focus:border-transparent"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
+          disabled
         />
         <button disabled={pending} className="" type="submit">
           {/* <Image src="/icons/Send.svg" width={20} height={20} alt="send" /> */}

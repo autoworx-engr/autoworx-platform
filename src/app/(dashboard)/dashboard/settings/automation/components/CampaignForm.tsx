@@ -11,7 +11,6 @@ import { Box, Switch, Typography } from "@mui/material";
 import MultiSelect from "./MultiSelect";
 import { SlimInput } from "@/components/SlimInput";
 import ActiveTemplate from "./ActiveTemplate";
-import TemplateVariable from "./TemplateVariable";
 import { targetConditions, targetOptions } from "./constants";
 import { errorToast } from "@/lib/toast";
 import { useCreateMarketingAutomationRule } from "@/hooks/marketing-automation/useCreateMarketingAutomationRule";
@@ -35,6 +34,12 @@ import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import moment from "moment-timezone";
 import { useCharacterLimit } from "@/hooks/useCharecterLimit";
 import CarLoading from "@/components/common/CarLoading";
+import { AppointmentTemplateVariable } from "@/components/Lists/NewTemplate";
+import TooltipLabel from "./ToolTipLabel";
+import { getCampaignConditionHelp, getTargetHelp } from "./AllAutomationHelper";
+import InfoCard from "./InfoCard";
+import { TipBox } from "./TagautomationHelper";
+import { TEMPLATE_VARIABLES } from "./TemplateVariable";
 
 export type Campaign = {
   id?: number;
@@ -218,6 +223,10 @@ const CampaignForm = ({
   const handleChange = (field: keyof Campaign, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
 
+    if (field === "communicationType") {
+      if (value === "SMS") setActiveTemplate("SMS");
+      if (value === "EMAIL") setActiveTemplate("EMAIL");
+    }
     if (error[field]) {
       setError((prev) => {
         const newErrors = { ...prev };
@@ -444,6 +453,24 @@ const CampaignForm = ({
     handleChange(name as keyof Campaign, value);
   };
 
+  const selectedTargets = targetOptions
+    .filter((opt) => formData?.target?.includes(opt.id))
+    .map((opt) => opt?.title)
+    .join(", ");
+
+  const condition = targetConditions?.find(
+    (c) => c.id === formData?.targetCondition
+  );
+
+  const targetHelp = getTargetHelp({
+    selectedTargets,
+    length: formData?.target?.length,
+  });
+
+  const conditionHelp = getCampaignConditionHelp({
+    conditionLabel: condition ? condition.title : "",
+  });
+
   if (isLoading || isFetching || isYearsLoading || isMakeLoading) {
     return (
       <div className="flex h-[800px] w-full animate-pulse items-center justify-center rounded-md bg-gray-200 p-4 shadow-sm md:p-6">
@@ -467,33 +494,93 @@ const CampaignForm = ({
               required
               error={error.target}
             />
+
+            {targetHelp && (
+              <InfoCard
+                icon={targetHelp.icon}
+                title={targetHelp.title}
+                description={targetHelp.desc}
+                bgColor={targetHelp.bgColor}
+                borderColor={targetHelp.borderColor}
+                textColor={targetHelp.textColor}
+              />
+            )}
           </div>
 
           {/* Target Conditions Field */}
-          <Selector
-            name="targetCondition"
-            label="Target Conditions"
-            options={targetConditions}
-            value={formData.targetCondition}
-            onChange={(value) => handleInputChange("targetCondition", value)}
-            required
-            error={error.targetCondition}
-          />
+
+          <div>
+            <TooltipLabel
+              label="Target Conditions"
+              tooltipText={
+                <div className="space-y-2">
+                  <p className="font-semibold mb-1">Time-based filtering:</p>
+                  <p>
+                    Choose the time period for targeting customers based on
+                    their last interaction with your business.
+                  </p>
+                  <p className="mt-2">
+                    <strong>Example:</strong> "All clients from 2 months" will
+                    target customers who interacted in the last 2 months.
+                  </p>
+                </div>
+              }
+              required
+            />
+            <Selector
+              name="targetCondition"
+              // label="Target Conditions"
+              options={targetConditions}
+              value={formData.targetCondition}
+              onChange={(value) => handleInputChange("targetCondition", value)}
+              required
+              error={error.targetCondition}
+              labelClassName="hidden"
+            />
+
+            {conditionHelp && (
+              <InfoCard
+                icon={conditionHelp.icon}
+                title={conditionHelp.title}
+                description={conditionHelp.desc}
+                bgColor={conditionHelp.bgColor}
+                borderColor={conditionHelp.borderColor}
+                textColor={conditionHelp.textColor}
+              />
+            )}
+          </div>
 
           {/* Date and Time Selector */}
           <div className="mb-4">
+            <TooltipLabel
+              label="Select Date and Time"
+              tooltipText={
+                <div className="space-y-2">
+                  <p className="font-semibold mb-1">Schedule your campaign:</p>
+                  <p>
+                    Choose when you want this campaign to start. The system will
+                    automatically send messages at the scheduled time.
+                  </p>
+                  <p className="mt-2 text-xs italic">
+                    Make sure to schedule within your business hours for better
+                    engagement.
+                  </p>
+                </div>
+              }
+            />
             <div className="flew-wrap flex items-center gap-2">
               <SlimInput
                 name="date"
-                label="Select Date and Time"
+                // label="Select Date and Time"
                 className=""
                 type="date"
                 value={formData.date ?? ""}
                 min={minDate}
                 onChange={(e) => handleInputChange("date", e.target.value)}
                 error={error.date}
+                labelClassName="hidden"
               />
-              <div className="mt-6 w-full">
+              <div className=" w-full">
                 <div className="flex items-center gap-1">
                   <TimePicker
                     format="h:mm A"
@@ -595,18 +682,23 @@ const CampaignForm = ({
           </div>
 
           {/* Communication Type */}
-          <CustomRadioGroup
-            name="communicationType"
-            label="Select Communication Type"
-            value={formData.communicationType}
-            onChange={handleChange}
-            options={[
-              { label: "SMS", value: "SMS" },
-              { label: "Email", value: "EMAIL" },
-              { label: "Both", value: "BOTH" },
-            ]}
-          />
-
+          <div>
+            <TooltipLabel
+              label="Select Communication Type"
+              tooltipText="Choose how you want to send your campaign: SMS for quick messages, Email for detailed content, or Both for maximum reach."
+            />
+            <CustomRadioGroup
+              name="communicationType"
+              // label="Select Communication Type"
+              value={formData.communicationType}
+              onChange={handleChange}
+              options={[
+                { label: "SMS", value: "SMS" },
+                { label: "Email", value: "EMAIL" },
+                { label: "Both", value: "BOTH" },
+              ]}
+            />
+          </div>
           {/* Templates */}
           <Box className="my-4">
             <label className="mb-2 font-semibold text-gray-500">
@@ -684,7 +776,14 @@ const CampaignForm = ({
             )}
 
             {/* Template Variables */}
-            <TemplateVariable />
+            <AppointmentTemplateVariable
+              VARIABLES={TEMPLATE_VARIABLES}
+              hasBackground={true}
+            />
+            <TipBox
+              message="Click any variable to copy it, then paste it into your campaign message. Example: 'Hi <CLIENT>, check out our special offer for your <VEHICLE>!'"
+              variant="info"
+            />
           </Box>
 
           {/* Submit Button */}

@@ -122,6 +122,11 @@ export default function InvoiceModalBody({
   const [isPrinting, setIsPrinting] = useState(false);
   const [refundAmount, setRefundAmount] = useState<number>(0);
 
+  // Detect if we're coming from an intercepted route
+  const fromInterceptedRoute =
+    params.get("fromRoute") === "invoice" ||
+    params.get("fromRoute") === "public-invoice";
+
   useEffect(() => {
     if (isFetched && !isLoading && data) {
       setInvoice(data.invoice);
@@ -189,6 +194,22 @@ export default function InvoiceModalBody({
       setIsStripeDialogOpen(true);
     }
   }, [isStripe]);
+
+  // Track invoice view for public users
+  useEffect(() => {
+    if (isPublic && invoiceId && isFetched && !isLoading) {
+      // Call the track-view endpoint
+      fetch("/api/invoice/track-view", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ invoiceId }),
+      }).catch((error) => {
+        console.error("Failed to track invoice view:", error);
+      });
+    }
+  }, [isPublic, invoiceId, isFetched, isLoading]);
 
   if (isLoading) {
     return (
@@ -314,7 +335,18 @@ export default function InvoiceModalBody({
   return (
     <DialogPortal>
       <DialogOverlay />
-      <DialogContentBlank className="fixed left-[50%] top-[50%] z-50 flex h-full w-full translate-x-[-50%] translate-y-[-50%] flex-col justify-center gap-1 overflow-y-auto py-4 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] md:max-h-full md:max-w-[98%] md:flex-row md:gap-4">
+      <DialogContentBlank
+        onPointerDownOutside={(e) => {
+          // Prevent closing when clicking on elements inside the dialog
+          const target = e.target as HTMLElement;
+          if (
+            target.closest('[class*="lightbox"], .yarl__container, .yarl__')
+          ) {
+            e.preventDefault();
+          }
+        }}
+        className="fixed left-[50%] top-[50%] z-50 flex h-full w-full translate-x-[-50%] translate-y-[-50%] flex-col justify-center gap-1 overflow-y-auto py-4 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] md:max-h-full md:max-w-[98%] md:flex-row md:gap-4"
+      >
         <div
           ref={printComponentRef}
           className="#shadow-lg no-visible-scrollbar relative grid h-full w-full shrink grow-0 flex-col items-center justify-center gap-4 overflow-y-auto rounded-md border bg-background p-6 md:h-[90vh] md:w-[740px] md:flex-row"
@@ -635,13 +667,19 @@ export default function InvoiceModalBody({
                     </h2>
                     <div className="mt-2 flex w-full items-center justify-center">
                       <div className="grid w-full grid-cols-3 gap-4 px-2 sm:px-4 [@media(max-width:374px)]:grid-cols-2">
-                        {invoice.photos.map((x) => {
+                        {invoice.photos.map((x, index) => {
+                          const allImageUrls = invoice.photos.map(
+                            (photo) => photo.photo
+                          );
+                          const urlsParam = encodeURIComponent(
+                            JSON.stringify(allImageUrls)
+                          );
                           return (
                             <Link
                               href={
                                 isPublic
-                                  ? `/public-invoice/${invoiceId}/photo?url=${x.photo}`
-                                  : `/dashboard/estimate/photo?url=${x.photo}`
+                                  ? `/public-invoice/${invoiceId}/photo?urls=${urlsParam}&index=${index}`
+                                  : `/dashboard/estimate/photo?urls=${urlsParam}&index=${index}`
                               }
                               key={x.id}
                               className="relative mx-auto aspect-square w-full max-w-[120px]"
@@ -873,7 +911,7 @@ export default function InvoiceModalBody({
                     }}
                     className="rounded bg-[#6571FF] px-8 pb-1 text-white print:hidden"
                   >
-                    Authorize
+                    {invoice?.wasAuthorized ? "Re-Authorize" : "Authorize"}
                   </button>
                 )}
             </div>
@@ -1009,13 +1047,19 @@ export default function InvoiceModalBody({
                   Attachments
                 </h2>
                 <div className="flex grid-cols-1 gap-4 overflow-x-auto md:grid">
-                  {invoice.photos.map((x) => {
+                  {invoice.photos.map((x, index) => {
+                    const allImageUrls = invoice.photos.map(
+                      (photo) => photo.photo
+                    );
+                    const urlsParam = encodeURIComponent(
+                      JSON.stringify(allImageUrls)
+                    );
                     return (
                       <Link
                         href={
                           isPublic
-                            ? `/public-invoice/${invoiceId}/photo?url=${x.photo}`
-                            : `/dashboard/estimate/photo?url=${x.photo}`
+                            ? `/public-invoice/${invoiceId}/photo?urls=${urlsParam}&index=${index}`
+                            : `/dashboard/estimate/photo?urls=${urlsParam}&index=${index}`
                         }
                         key={x.id}
                         className="relative aspect-square size-36 md:h-full md:w-full"

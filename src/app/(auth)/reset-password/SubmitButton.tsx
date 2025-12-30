@@ -62,8 +62,8 @@ export default function SubmitButton({
 
       const responseData = await res.json(); // Resolve the JSON response
       const res2 = await signIn("credentials", {
-        email: responseData.email, 
-        password: newPassword, 
+        email: responseData.email,
+        password: newPassword,
         redirect: false,
       });
 
@@ -88,10 +88,10 @@ export default function SubmitButton({
 
   return (
     <Submit
-      className="mx-auto mt-4 block rounded-md bg-blue-500 px-10 py-2 text-white"
+      className="mx-auto w-full mt-4 rounded-md bg-gradient-to-r from-[#6571FF] to-[#5a66ee] px-10 py-2 text-white min-h-[44px] flex items-center justify-center"
       formAction={handler}
     >
-      {action === "verify-otp" ? "Verify OTP" : "Reset Password"}
+      {action === "verify-otp" ? "Verify code" : "Reset password"}
     </Submit>
   );
 }

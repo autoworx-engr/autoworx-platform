@@ -14,6 +14,7 @@ export const searchCompanyQuery = async (searchTerm: string) => {
           { website: { contains: searchTerm } },
           { phone: { contains: searchTerm } },
         ],
+        isCollaborators: true,
       },
       select: {
         id: true,

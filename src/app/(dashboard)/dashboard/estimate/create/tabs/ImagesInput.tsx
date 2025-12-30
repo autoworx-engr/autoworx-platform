@@ -7,8 +7,12 @@ import { X } from "lucide-react";
 import Image from "next/image";
 import { ChangeEvent, useTransition } from "react";
 
-export function ImagesInput() {
-  const { photos, setPhotos } = useEstimateCreateStore();
+interface ImagesInputProps {
+  photos: { id?: number; photo?: string }[];
+  setPhotos: (photos: { id?: number; photo?: string }[]) => void;
+}
+export function ImagesInput({ photos, setPhotos }: ImagesInputProps) {
+  // const { photos, setPhotos } = useEstimateCreateStore();
   const [pending, startTransition] = useTransition();
   const handleUploadImage = async (event: ChangeEvent<HTMLInputElement>) => {
     try {
