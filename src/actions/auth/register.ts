@@ -83,7 +83,10 @@ export async function register({
     }
 
     // hash the password
-    const hashedPassword = await bcrypt.hash(userInfo.password, 10);
+    const hashedPassword = await bcrypt.hash(
+      userInfo.password,
+      process.env.SALT_ROUNDS ?? "12"
+    );
 
     // Create the company
     const newCompany = await db.company.create({
