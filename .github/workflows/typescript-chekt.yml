@@ -18,15 +18,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "18"
-          cache: "npm"
+          # 1. Changed cache provider to yarn
+          cache: "yarn"
 
       - name: Install Dependencies
-        run: npm install
-
-      - name: Install dependencies
-        run: npm ci
+        # 2. Combined redundant steps and used --frozen-lockfile for CI integrity
+        # Use 'yarn install --immutable' if you are using Yarn Berry (v2+)
+        run: yarn install --frozen-lockfile
 
       - name: TypeScript check
-        run: npx tsc --noEmit
+        # 3. Using yarn to execute the local tsc binary
+        run: yarn tsc --noEmit
         env:
           NODE_OPTIONS: "--max-old-space-size=4096"
