@@ -17,8 +17,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "18"
-          # 1. Changed cache provider to yarn
+          # Change from "18" to "20" (or "22" for the current LTS)
+          node-version: "20"
           cache: "yarn"
 
       - name: Install Dependencies
