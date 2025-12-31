@@ -743,28 +743,40 @@ export default function AppointmentModalBody({
         <DialogTitle>{fromEdit ? "Edit" : "New"} Appointment</DialogTitle>
 
         {/* Options */}
-        <div className="flex items-center justify-self-center rounded-full bg-gray-300 p-1">
+        <div className="flex items-center justify-self-center rounded-full bg-slate-100 p-1.5 shadow-inner ring-1 ring-slate-200/50">
           <button
             type="button"
             className={cn(
-              "rounded-full px-4 py-1 font-semibold",
-              tab === Tab.Schedule && "bg-background"
+              "flex items-center justify-center rounded-full px-6 py-2 text-sm font-bold transition-all duration-300 ease-out",
+              tab === Tab.Schedule
+                ? "bg-white text-slate-600 shadow-sm ring-1 ring-slate-200"
+                : "text-slate-400 hover:text-slate-600 hover:bg-slate-200/50"
             )}
             onClick={() => setTab(Tab.Schedule)}
           >
-            <Calendar className="mr-2 inline" size={24} />
+            <Calendar
+              className={cn("mr-2 transition-colors", tab === Tab.Schedule ? "text-slate-600" : "text-slate-400")}
+              size={18}
+              strokeWidth={2.5}
+            />
             Schedule
           </button>
 
           <button
             type="button"
             className={cn(
-              "rounded-full px-4 py-1 font-semibold",
-              tab === Tab.Reminder && "bg-background"
+              "flex items-center justify-center rounded-full px-6 py-2 text-sm font-bold transition-all duration-300 ease-out",
+              tab === Tab.Reminder
+                ? "bg-white text-slate-600 shadow-sm ring-1 ring-slate-200"
+                : "text-slate-400 hover:text-slate-600 hover:bg-slate-200/50"
             )}
             onClick={() => setTab(Tab.Reminder)}
           >
-            <Bell className="mr-2 inline" size={24} />
+            <Bell
+              className={cn("mr-2 transition-colors", tab === Tab.Reminder ? "text-slate-600" : "text-slate-400")}
+              size={18}
+              strokeWidth={2.5}
+            />
             Reminder
           </button>
         </div>

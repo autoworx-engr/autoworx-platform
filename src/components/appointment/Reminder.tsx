@@ -161,9 +161,30 @@ export function Reminder({
 
   if (!client) {
     return (
-      <div className="grid h-full place-content-center place-items-center gap-2 border-[1.5rem] border-solid border-white bg-neutral-300 text-center text-slate-500">
-        <UserRoundX size={64} />
-        <span>No Client Selected</span>
+      <div className="flex h-full min-h-[400px] w-full flex-col items-center justify-center gap-4 rounded-3xl bg-slate-50/50 p-8 text-center ring-1 ring-inset ring-slate-100 shadow-inner">
+        {/* Elevated Icon Container */}
+        <div className="relative flex h-24 w-24 items-center justify-center rounded-full bg-white shadow-xl shadow-slate-200/50 ring-1 ring-slate-100">
+          <UserRoundX
+            size={40}
+            strokeWidth={1.5}
+            className="text-slate-300 transition-transform duration-500 group-hover:scale-110"
+          />
+
+          {/* Subtle Decorative Pulsing Ring */}
+          <div className="absolute inset-0 animate-ping rounded-full bg-slate-200/30 opacity-20" />
+        </div>
+
+        <div className="space-y-1">
+          <h3 className="text-lg font-bold tracking-tight text-slate-700">
+            No Client Selected
+          </h3>
+          <p className="mx-auto max-w-[240px] text-sm font-medium text-slate-400">
+            Select a client from the list on the left to view their profile and activity.
+          </p>
+        </div>
+
+        {/* Optional Call to Action to make it feel functional */}
+        <div className="mt-2 h-1 w-12 rounded-full bg-[#6571FF]/20" />
       </div>
     );
   }
