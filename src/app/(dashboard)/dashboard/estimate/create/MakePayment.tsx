@@ -150,6 +150,12 @@ export default function MakePayment() {
       errorToast(`amount exceeds the due of $${roundedDue}  `);
       return;
     }
+
+    if (tab === "DEPOSIT" && formatAmount(deposit) > due) {
+      errorToast("Deposit amount cannot be greater than due amount");
+      return;
+    }
+    
     try {
       await additionalDataValidation.parseAsync({
         creditCard: card,
@@ -199,6 +205,12 @@ export default function MakePayment() {
         }
         // Add deposit
         if (tab === "DEPOSIT") {
+          console.log(
+            "🚀 ~ handleSubmit ~ formatAmount(deposit) :",
+            formatAmount(deposit)
+          );
+          console.log("🚀 ~ handleSubmit ~ due:", due);
+
           if (depositMethod === "") {
             errorToast("Deposit method is required");
             return;
