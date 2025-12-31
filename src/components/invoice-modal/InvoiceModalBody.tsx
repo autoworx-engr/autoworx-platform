@@ -7,6 +7,7 @@ import { sendInvoiceEmail } from "@/actions/estimate/invoice/sendInvoiceEmail";
 import { sendInvoiceSms } from "@/actions/estimate/invoice/sendInvoiceSms";
 import { getOrCreateShortLinkAction } from "@/actions/shortener/getOrCreateShortLink";
 import { getStripeAccount } from "@/app/(dashboard)/dashboard/settings/payments/stripe";
+import { getPaymentGatewayInfo } from "@/app/(dashboard)/dashboard/settings/payments/getPaymentGatewayInfo";
 import {
   DialogClose,
   DialogContentBlank,
@@ -49,7 +50,7 @@ import { useReactToPrint } from "react-to-print";
 import WorkOrderModal from "../workorder-modal/WorkOrderModal";
 import { InspectionItems } from "./InspectionItems";
 import { InvoiceItems } from "./InvoiceItems";
-import { StripePay } from "./StripePay";
+import { PayNow } from "./PayNow";
 import { Files, Mail, MessageCircleMore, SquarePen, X } from "lucide-react";
 import SignatureCanvas from "react-signature-canvas";
 import { uploadSignature } from "@/actions/estimate/invoice/uploadSignature";
@@ -181,6 +182,8 @@ export default function InvoiceModalBody({
   }
   const companyId = data?.invoice?.companyId;
   const { data: stripeAccountData } = useServerGet(getStripeAccount, companyId);
+  const { data: gatewayInfo } = useServerGet(getPaymentGatewayInfo, companyId);
+  console.log("🚀 ~ InvoiceModalBody ~ gatewayInfo:", gatewayInfo);
 
   useEffect(() => {
     if (isSuccess && !isSuccessMsgShown) {
@@ -410,8 +413,9 @@ export default function InvoiceModalBody({
                       authorizedName={authorizedName}
                       signImageUrl={signImage ?? undefined}
                       isStripe={
-                        (stripeAccountData?.success &&
-                          stripeAccountData?.enabled &&
+                        (gatewayInfo?.success &&
+                          (gatewayInfo?.hasStripe ||
+                            gatewayInfo?.hasAuthorizeNet) &&
                           parseFloat(Number(invoice?.due ?? 0).toFixed(2)) >
                             0) ??
                         false
@@ -996,10 +1000,10 @@ export default function InvoiceModalBody({
           </div>
           {!isPrinting && (
             <div className="text-right">
-              {stripeAccountData?.success &&
-                stripeAccountData?.enabled &&
+              {gatewayInfo?.success &&
+                (gatewayInfo?.hasStripe || gatewayInfo?.hasAuthorizeNet) &&
                 parseFloat(Number(invoice?.due ?? 0).toFixed(2)) > 0 && (
-                  <StripePay
+                  <PayNow
                     invoiceId={invoice.id}
                     companyId={invoice.companyId}
                     due={parseFloat(
@@ -1007,6 +1011,11 @@ export default function InvoiceModalBody({
                     ).toString()}
                     open={isStripeDialogOpen}
                     setOpen={setIsStripeDialogOpen}
+                    gatewayInfo={{
+                      paymentGateway: gatewayInfo.paymentGateway || "STRIPE",
+                      hasStripe: gatewayInfo.hasStripe,
+                      hasAuthorizeNet: gatewayInfo.hasAuthorizeNet,
+                    }}
                   />
                 )}
             </div>

@@ -10,13 +10,26 @@ import {
 } from "@/components/Dialog";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { createStripePaymentLink } from "@/actions/payment/stripePayment";
+import { createAuthorizeNetPaymentLink } from "@/actions/payment/authorizeNetPayment";
 import { errorToast } from "@/lib/toast";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@radix-ui/react-select";
 
 interface StatementPaymentDialogProps {
   statementId: string;
   companyId: number;
   totalDue: number;
   isEnabled: boolean;
+  gatewayInfo?: {
+    paymentGateway: "STRIPE" | "AUTHORIZE_NET" | "BOTH";
+    hasStripe: boolean;
+    hasAuthorizeNet: boolean;
+  };
 }
 
 export const StatementPaymentDialog: React.FC<StatementPaymentDialogProps> = ({
@@ -24,14 +37,74 @@ export const StatementPaymentDialog: React.FC<StatementPaymentDialogProps> = ({
   companyId,
   totalDue,
   isEnabled,
+  gatewayInfo,
 }) => {
   const [open, setOpen] = React.useState(false);
   const [amount, setAmount] = React.useState(String(totalDue.toFixed(2)));
   const [isLoading, setIsLoading] = React.useState(false);
+  const [selectedGateway, setSelectedGateway] = React.useState<
+    "STRIPE" | "AUTHORIZE_NET"
+  >("STRIPE");
+
+  // Determine available gateways
+  const availableGateways: Array<"STRIPE" | "AUTHORIZE_NET"> = [];
+  if (gatewayInfo?.hasStripe) availableGateways.push("STRIPE");
+  if (gatewayInfo?.hasAuthorizeNet) availableGateways.push("AUTHORIZE_NET");
+
+  // Set default gateway based on company settings
+  React.useEffect(() => {
+    if (gatewayInfo) {
+      if (
+        gatewayInfo.paymentGateway === "AUTHORIZE_NET" &&
+        gatewayInfo.hasAuthorizeNet
+      ) {
+        setSelectedGateway("AUTHORIZE_NET");
+      } else if (gatewayInfo.hasStripe) {
+        setSelectedGateway("STRIPE");
+      } else if (gatewayInfo.hasAuthorizeNet) {
+        setSelectedGateway("AUTHORIZE_NET");
+      }
+    }
+  }, [gatewayInfo]);
 
   if (!isEnabled) {
     return null;
   }
+
+  const gatewayName = selectedGateway === "STRIPE" ? "Stripe" : "Authorize.Net";
+
+  const handlePayment = async () => {
+    setIsLoading(true);
+    try {
+      let res;
+
+      if (selectedGateway === "STRIPE") {
+        res = await createStripePaymentLink({
+          amount,
+          statementId,
+          companyId,
+          payType: "statement",
+        });
+      } else {
+        res = await createAuthorizeNetPaymentLink({
+          amount,
+          statementId,
+          companyId,
+          payType: "statement",
+        });
+      }
+
+      if (res.url) {
+        window.open(res.url, "_self");
+      } else if (!res?.success) {
+        errorToast(res?.message ?? "Failed to initiate payment checkout");
+      }
+    } catch (error) {
+      errorToast("An error occurred while processing payment");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="mt-4 flex justify-center lg:justify-end">
@@ -67,12 +140,44 @@ export const StatementPaymentDialog: React.FC<StatementPaymentDialogProps> = ({
               </div>
 
               <DialogTitle className="text-lg font-semibold text-slate-900 dark:text-white">
-                Make Payment with Stripe
+                Make Payment with {gatewayName}
               </DialogTitle>
             </div>
           </DialogHeader>
 
           <div className="mt-4 grid gap-4">
+            {/* Gateway Selection - only show if multiple gateways available */}
+            {availableGateways.length > 1 && (
+              <div className="space-y-2">
+                <label
+                  htmlFor="gateway"
+                  className="text-sm font-medium text-slate-700 dark:text-slate-200"
+                >
+                  Payment Gateway
+                </label>
+                <Select
+                  value={selectedGateway}
+                  onValueChange={(value) =>
+                    setSelectedGateway(value as "STRIPE" | "AUTHORIZE_NET")
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select payment gateway" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {gatewayInfo?.hasStripe && (
+                      <SelectItem value="STRIPE">Stripe</SelectItem>
+                    )}
+                    {gatewayInfo?.hasAuthorizeNet && (
+                      <SelectItem value="AUTHORIZE_NET">
+                        Authorize.Net
+                      </SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             <label
               htmlFor="amount"
               className="text-sm font-medium text-slate-700 dark:text-slate-200"
@@ -125,21 +230,7 @@ export const StatementPaymentDialog: React.FC<StatementPaymentDialogProps> = ({
             <button
               type="button"
               disabled={isLoading || !amount || Number(amount) <= 0}
-              onClick={async () => {
-                setIsLoading(true);
-                const res = await createStripePaymentLink({
-                  amount,
-                  statementId,
-                  companyId,
-                  payType: "statement",
-                });
-                if (res.url) {
-                  window.open(res.url, "_self");
-                } else if (!res?.success) {
-                  errorToast(res?.message ?? "Failed initiate Stripe checkout");
-                }
-                setIsLoading(false);
-              }}
+              onClick={handlePayment}
               className={`
                 px-4 py-2 rounded-lg text-sm font-semibold text-white
                 bg-gradient-to-r from-blue-500 to-indigo-600
@@ -148,7 +239,7 @@ export const StatementPaymentDialog: React.FC<StatementPaymentDialogProps> = ({
                 disabled:opacity-50 disabled:cursor-not-allowed
               `}
             >
-              {isLoading ? "Processing..." : "Checkout to Stripe"}
+              {isLoading ? "Processing..." : `Checkout with ${gatewayName}`}
             </button>
           </DialogFooter>
         </DialogContent>
