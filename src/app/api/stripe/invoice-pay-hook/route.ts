@@ -361,13 +361,18 @@ export async function POST(req: NextRequest) {
           if (isDeposit) {
             // For deposits, first pay off any due amount, then keep the rest as deposit
             const currentDue = Number(findInvoice.due ?? 0);
+            console.log("🚀 ~ POST ~ currentDue:", currentDue);
             const depositAmount = Number(paymentData.amount);
+            console.log("🚀 ~ POST ~ depositAmount:", depositAmount);
 
             if (currentDue > 0) {
               // Deposit can cover part or all of the due amount
               const amountToCoverDue = Math.min(depositAmount, currentDue);
+              console.log("🚀 ~ POST ~ amountToCoverDue:", amountToCoverDue);
               const remainingDeposit = depositAmount - amountToCoverDue;
+              console.log("🚀 ~ POST ~ remainingDeposit:", remainingDeposit);
               const newDue = Math.max(0, currentDue - amountToCoverDue);
+              console.log("🚀 ~ POST ~ newDue:", newDue);
 
               stripeInvoice = await db.invoice.update({
                 where: {
@@ -415,18 +420,21 @@ export async function POST(req: NextRequest) {
               });
             }
           } else {
-            // For payments, decrement due and increment totalPayment
+            // For normal payments, apply up to the current due and never let due go negative
+            const currentDue = Number(findInvoice.due ?? 0);
+            const paymentAmount = Number(paymentData.amount ?? 0);
+            const amountToApply = Math.min(paymentAmount, currentDue);
+            const newDue = Math.max(0, currentDue - amountToApply);
+
             stripeInvoice = await db.invoice.update({
               where: {
                 id: paymentData.invoiceId,
                 companyId: paymentData.companyId,
               },
               data: {
-                due: {
-                  decrement: paymentData.amount,
-                },
+                due: newDue,
                 totalPayment: {
-                  increment: paymentData.amount,
+                  increment: amountToApply,
                 },
               },
               include: {
