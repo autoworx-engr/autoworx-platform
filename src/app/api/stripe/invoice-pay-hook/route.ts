@@ -359,20 +359,14 @@ export async function POST(req: NextRequest) {
         if (findInvoice) {
           // Update invoice differently based on payment type
           if (isDeposit) {
-            // For deposits, first pay off any due amount, then keep the rest as deposit
+            // For deposits, first pay off any due amount, but always keep the full deposit amount on the invoice
             const currentDue = Number(findInvoice.due ?? 0);
-            console.log("🚀 ~ POST ~ currentDue:", currentDue);
             const depositAmount = Number(paymentData.amount);
-            console.log("🚀 ~ POST ~ depositAmount:", depositAmount);
 
             if (currentDue > 0) {
               // Deposit can cover part or all of the due amount
               const amountToCoverDue = Math.min(depositAmount, currentDue);
-              console.log("🚀 ~ POST ~ amountToCoverDue:", amountToCoverDue);
-              const remainingDeposit = depositAmount - amountToCoverDue;
-              console.log("🚀 ~ POST ~ remainingDeposit:", remainingDeposit);
               const newDue = Math.max(0, currentDue - amountToCoverDue);
-              console.log("🚀 ~ POST ~ newDue:", newDue);
 
               stripeInvoice = await db.invoice.update({
                 where: {
@@ -384,8 +378,9 @@ export async function POST(req: NextRequest) {
                   totalPayment: {
                     increment: amountToCoverDue,
                   },
+                  // Store the original deposit amount on the invoice
                   deposit: {
-                    increment: remainingDeposit,
+                    increment: depositAmount,
                   },
                 },
                 include: {
