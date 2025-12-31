@@ -415,18 +415,21 @@ export async function POST(req: NextRequest) {
               });
             }
           } else {
-            // For payments, decrement due and increment totalPayment
+            // For normal payments, apply up to the current due and never let due go negative
+            const currentDue = Number(findInvoice.due ?? 0);
+            const paymentAmount = Number(paymentData.amount ?? 0);
+            const amountToApply = Math.min(paymentAmount, currentDue);
+            const newDue = Math.max(0, currentDue - amountToApply);
+
             stripeInvoice = await db.invoice.update({
               where: {
                 id: paymentData.invoiceId,
                 companyId: paymentData.companyId,
               },
               data: {
-                due: {
-                  decrement: paymentData.amount,
-                },
+                due: newDue,
                 totalPayment: {
-                  increment: paymentData.amount,
+                  increment: amountToApply,
                 },
               },
               include: {
