@@ -375,9 +375,6 @@ export async function POST(req: NextRequest) {
                 },
                 data: {
                   due: newDue,
-                  totalPayment: {
-                    increment: amountToCoverDue,
-                  },
                   // Store the original deposit amount on the invoice
                   deposit: {
                     increment: depositAmount,
