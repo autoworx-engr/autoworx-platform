@@ -290,7 +290,11 @@ export default async function Page({
         <div>
           <Create />
         </div>
-        <TemplateBillSummary isEdit={isEdit} />
+        <TemplateBillSummary
+          isEdit={isEdit}
+          isEstimateServiceFee={Number(invoice.serviceFee) > 0}
+          isEstimateTax={Number(invoice.tax) > 0}
+        />
       </div>
     </div>
   );
