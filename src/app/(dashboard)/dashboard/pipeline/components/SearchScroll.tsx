@@ -165,7 +165,7 @@ export default function SearchScroll({
             handleSearchChange(value);
             setSearchTerm(value);
           }}
-          placeholder="Search by client name or vehicle..."
+          placeholder="Search by Client Name or Vehicle"
           className="h-full w-[510px] flex-grow border-none bg-transparent text-sm outline-none"
         />
         {searchTerm && (

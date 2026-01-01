@@ -23,7 +23,7 @@ type DateSelectorProps = {
 
 // Custom hook for detecting clicks outside an element
 function useOnClickOutside(
-  ref: React.RefObject<HTMLElement>,
+  ref: React.RefObject<HTMLElement | null>,
   handler: () => void
 ) {
   useEffect(() => {

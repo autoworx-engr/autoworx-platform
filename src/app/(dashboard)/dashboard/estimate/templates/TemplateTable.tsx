@@ -9,11 +9,12 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 import { useMediaQuery } from "react-responsive";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
-import { SquarePen, Trash2 } from "lucide-react";
+import { SquarePen, Trash2, Copy } from "lucide-react";
 import ResponsiveTemplateCard from "./ResponsiveTemplateCard";
 import { deleteEstimateTemplate } from "@/actions/estimate-template/delete";
 import { errorToast } from "@/lib/toast";
 import toast from "react-hot-toast";
+import { duplicateEstimateTemplate } from "@/actions/estimate-template/duplicate";
 
 export interface TemplateData {
   id: string;
@@ -87,6 +88,21 @@ export default function TemplateTable({ take, page, data }: TTableProps) {
       errorToast(res.message);
     }
   }
+  async function handleDuplicateTemplate(id: string) {
+    const res = await duplicateEstimateTemplate({
+      templateId: id,
+    });
+
+    if (res.type === "success") {
+      toast.success("The estimate template duplicated successfully!");
+
+      // router.push(
+      //   `/dashboard/estimate/templates/create?isEdit=true&templateId=${res?.data?.id}`
+      // );
+    } else if (res.type === "globalError") {
+      errorToast(res.message);
+    }
+  }
 
   return (
     <div className="min-h-[65vh] overflow-x-scroll rounded-md bg-background xl:overflow-auto xl:overflow-y-hidden flex flex-col ">
@@ -149,6 +165,10 @@ export default function TemplateTable({ take, page, data }: TTableProps) {
                   </td>
 
                   <td className="flex items-center gap-3 px-4 py-2">
+                    <button onClick={() => handleDuplicateTemplate(data?.id)}>
+                      <Copy size={18} className="text-[#6571FF]" />
+                    </button>
+
                     <Link
                       href={`/dashboard/estimate/templates/create?isEdit=true&templateId=${data?.id}`}
                       className="text-2xl text-blue-600"

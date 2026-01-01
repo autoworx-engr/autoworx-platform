@@ -359,14 +359,14 @@ export async function POST(req: NextRequest) {
         if (findInvoice) {
           // Update invoice differently based on payment type
           if (isDeposit) {
-            // For deposits, first pay off any due amount, then keep the rest as deposit
+            // For deposits, first pay off any due amount, but always keep the full deposit amount on the invoice
             const currentDue = Number(findInvoice.due ?? 0);
             const depositAmount = Number(paymentData.amount);
 
             if (currentDue > 0) {
               // Deposit can cover part or all of the due amount
               const amountToCoverDue = Math.min(depositAmount, currentDue);
-              const remainingDeposit = depositAmount - amountToCoverDue;
+              const newDue = Math.max(0, currentDue - amountToCoverDue);
 
               stripeInvoice = await db.invoice.update({
                 where: {
@@ -374,14 +374,10 @@ export async function POST(req: NextRequest) {
                   companyId: paymentData.companyId,
                 },
                 data: {
-                  due: {
-                    decrement: amountToCoverDue,
-                  },
-                  totalPayment: {
-                    increment: amountToCoverDue,
-                  },
+                  due: newDue,
+                  // Store the original deposit amount on the invoice
                   deposit: {
-                    increment: remainingDeposit,
+                    increment: depositAmount,
                   },
                 },
                 include: {
@@ -416,18 +412,21 @@ export async function POST(req: NextRequest) {
               });
             }
           } else {
-            // For payments, decrement due and increment totalPayment
+            // For normal payments, apply up to the current due and never let due go negative
+            const currentDue = Number(findInvoice.due ?? 0);
+            const paymentAmount = Number(paymentData.amount ?? 0);
+            const amountToApply = Math.min(paymentAmount, currentDue);
+            const newDue = Math.max(0, currentDue - amountToApply);
+
             stripeInvoice = await db.invoice.update({
               where: {
                 id: paymentData.invoiceId,
                 companyId: paymentData.companyId,
               },
               data: {
-                due: {
-                  decrement: paymentData.amount,
-                },
+                due: newDue,
                 totalPayment: {
-                  increment: paymentData.amount,
+                  increment: amountToApply,
                 },
               },
               include: {
