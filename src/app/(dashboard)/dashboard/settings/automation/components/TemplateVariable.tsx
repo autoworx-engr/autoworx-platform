@@ -10,8 +10,10 @@ type TemplateVariable = {
   { name: "<BUSINESS_NAME>", description: "Your business name" },
   { name: "<PHONE>", description: "Your business phone number" },
   { name: "<ADDRESS>", description: "Your business address" },
+  { name: "<DATE>", description: "Date" },
   { name: "<VIDEO_DIRECTIONS>", description: "Video directions" },
   { name: "<GOOGLE_MAP_LINK>", description: "Google Maps link" },
+  { name: "<GOOGLE_REVIEW_LINK>", description: "Google review link" },
 ];
 const TemplateVariable = ({
   VARIABLES = TEMPLATE_VARIABLES,
