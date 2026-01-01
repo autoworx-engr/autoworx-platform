@@ -92,7 +92,7 @@ export function Filter({ startDate, endDate, status }: TFilterProps) {
   };
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger className="hidden h-10 items-center gap-2 rounded-xl bg-white px-4 text-sm font-bold text-slate-600 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-50 hover:ring-[#6571FF]/30 active:scale-95 md:flex">
+      <DialogTrigger className="hidden h-10 items-center gap-2 rounded-xl bg-white px-4 text-sm font-bold text-slate-500 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-50 hover:ring-[#6571FF]/30 active:scale-95 md:flex">
         <Image
           src="/icons/Filter.svg"
           alt="Filter"
@@ -105,7 +105,7 @@ export function Filter({ startDate, endDate, status }: TFilterProps) {
 
       <DialogContent form className="max-w-xl overflow-hidden rounded-[1.5rem] border-none bg-white p-0 shadow-2xl">
         <DialogHeader className="bg-slate-50/50 px-6 py-4">
-          <DialogTitle className="text-lg font-bold tracking-tight text-slate-600">
+          <DialogTitle className="text-lg font-bold tracking-tight text-slate-500">
             Customize
           </DialogTitle>
         </DialogHeader>

@@ -37,8 +37,8 @@ export default async function Page({
 
   const client = clientId
     ? await db.client.findUnique({
-        where: { id: clientId },
-      })
+      where: { id: clientId },
+    })
     : null;
 
   const customers = await db.client.findMany({ where: { companyId } });
@@ -104,7 +104,7 @@ export default async function Page({
 
   return (
     <div className="gap-3 space-y-4 overflow-clip py-2 md:-my-2 md:min-h-[93vh] xl:grid xl:grid-cols-4 xl:space-y-0">
-      <div className="col-span-3 space-y-4">
+      <div className="col-span-3 flex flex-col gap-4">
         <Title>Estimate</Title>
 
         <SyncLists
@@ -127,7 +127,7 @@ export default async function Page({
 
         <Tabs
           defaultValue="create"
-          className="col-start-1 flex min-h-[40vh] lg:min-h-[69vh] flex-col overflow-clip"
+          className="col-start-1 flex min-h-[40vh] lg:min-h-[69vh] flex-col overflow-clip flex-1"
         >
           <TabsList className="grid grid-cols-4 md:inline-flex">
             <TabsTriggerCreate value="payments" className="order-4 md:order-1">
