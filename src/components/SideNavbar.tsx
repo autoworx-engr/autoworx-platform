@@ -83,6 +83,7 @@ const iconMap: Record<string, React.ComponentType<any> | string> = {
   // "/icons/navbar/Employee.png": Users,
   Directory: Users,
   // "/icons/navbar/Settings.svg": Settings,
+  Visualization: "/icons/navbar/visualization.svg",
   Settings: Settings,
 };
 
