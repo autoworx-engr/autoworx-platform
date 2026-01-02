@@ -24,6 +24,10 @@ import { NextRequest, NextResponse } from "next/server";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
+    console.log(
+      "Authorize.Net Webhook raw body:",
+      JSON.stringify(body, null, 2)
+    );
 
     // Authorize.Net sends webhook notifications with event type
     const eventType = body.eventType;
@@ -37,12 +41,18 @@ export async function POST(req: NextRequest) {
       eventType === "net.authorize.payment.authorization.created"
     ) {
       const transactionId = payload.id;
-      const merchantReferenceId = payload.merchantReferenceId;
       const authAmount = parseFloat(payload.authAmount);
+      const invoiceNumber = payload.invoiceNumber as string | undefined;
+
+      console.log("Authorize.Net payload parsed:", {
+        transactionId,
+        authAmount,
+        invoiceNumber,
+      });
 
       // Check if already processed
       const alreadyProcessed = await db.authorizeNetPayment.findFirst({
-        where: { transactionId: transactionId },
+        where: { transactionId },
       });
 
       if (alreadyProcessed) {
@@ -52,192 +62,71 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      // Extract metadata from custom fields
-      const userFields = payload.userFields || [];
-      const companyIdField = userFields.find(
-        (f: any) => f.name === "companyId"
-      );
-      const payTypeField = userFields.find((f: any) => f.name === "payType");
-      const invoiceIdField = userFields.find(
-        (f: any) => f.name === "invoiceId"
-      );
-      const statementIdField = userFields.find(
-        (f: any) => f.name === "statementId"
-      );
-
-      if (!companyIdField) {
+      if (!invoiceNumber) {
+        console.warn("Authorize.Net webhook missing invoiceNumber in payload", {
+          transactionId,
+        });
         return NextResponse.json(
-          { error: "Missing company ID in transaction" },
-          { status: 400 }
+          { message: "No invoice to process" },
+          { status: 200 }
         );
       }
 
-      const companyId = parseInt(companyIdField.value);
-      const payType = payTypeField?.value || "payment";
-      const invoiceId = invoiceIdField?.value;
-      const statementId = statementIdField?.value;
-
-      // Handle fleet statement payments
-      if (payType === "statement" && statementId) {
-        const statement = await db.fleetStatement.findUnique({
-          where: { id: statementId },
-          include: {
-            invoice: {
-              where: { companyId: companyId },
-              include: {
-                client: {
-                  select: {
-                    firstName: true,
-                    lastName: true,
-                  },
-                },
-              },
-            },
-          },
+      // Try to interpret invoiceNumber as our internal ID, similar to Stripe's metadata
+      const numericId = invoiceNumber;
+      if (Number.isNaN(numericId)) {
+        console.warn("Authorize.Net invoiceNumber is not numeric, skipping", {
+          invoiceNumber,
+          transactionId,
         });
-
-        if (!statement || !statement.invoice.length) {
-          return NextResponse.json(
-            { error: "Statement or invoices not found" },
-            { status: 400 }
-          );
-        }
-
-        // Get or create Authorize.Net payment method
-        let paymentMethod = await db.paymentMethod.findFirst({
-          where: {
-            companyId: companyId,
-            name: "Authorize.Net",
-          },
-        });
-
-        if (!paymentMethod) {
-          paymentMethod = await db.paymentMethod.create({
-            data: {
-              name: "Authorize.Net",
-              companyId: companyId,
-            },
-          });
-        }
-
-        // Process payment for each invoice in the statement
-        let totalPaid = 0;
-        const invoicesWithDue = statement.invoice.filter(
-          (inv) => inv.due && Number(inv.due) > 0
+        return NextResponse.json(
+          { message: "Unrecognized invoice number" },
+          { status: 200 }
         );
+      }
 
-        const paymentRecords = [];
-
-        for (const invoice of invoicesWithDue) {
-          const paymentAmount = Math.min(
-            Number(invoice.due ?? 0),
-            authAmount - totalPaid
-          );
-
-          if (paymentAmount <= 0) break;
-
-          // Create payment record
-          const payment = await db.payment.create({
-            data: {
-              companyId: companyId,
-              invoiceId: invoice.id,
-              amount: paymentAmount,
-              type: "OTHER",
-              date: new Date(),
-              gateway: "AUTHORIZE_NET",
-              other: {
-                create: {
-                  paymentMethodId: paymentMethod.id,
-                },
-              },
+      // First, try treating it as an invoice payment (Stripe individual invoice logic)
+      const invoice = await db.invoice.findUnique({
+        where: { id: numericId },
+        include: {
+          client: {
+            select: {
+              firstName: true,
+              lastName: true,
             },
-          });
-
-          paymentRecords.push({
-            paymentId: payment.id,
-            invoiceId: invoice.id,
-          });
-
-          // Update invoice
-          await db.invoice.update({
-            where: {
-              id: invoice.id,
-              companyId: companyId,
-            },
-            data: {
-              due: { decrement: paymentAmount },
-              totalPayment: { increment: paymentAmount },
-            },
-          });
-
-          // Convert estimate to invoice if needed
-          try {
-            if (invoice.type === "Estimate") {
-              convertInvoicePublic(invoice.id, companyId);
-            }
-          } catch (error) {
-            console.log("Convert invoice error:", error);
-          }
-
-          totalPaid += paymentAmount;
-        }
-
-        // Create Authorize.Net payment record linked to first payment
-        if (paymentRecords.length > 0) {
-          await db.authorizeNetPayment.create({
-            data: {
-              transactionId: transactionId,
-              companyId: companyId,
-              paymentId: paymentRecords[0].paymentId,
-              invoiceId: paymentRecords[0].invoiceId,
-            },
-          });
-        }
-
-        // Send notification
-        const firstInvoice = statement.invoice[0];
-        sendPaymentReceivedNotification({
-          companyId: companyId,
-          amount: totalPaid,
-          clientName: `${firstInvoice?.client?.firstName} ${firstInvoice?.client?.lastName}`,
-          invoiceId: statementId,
-          isDeposit: false,
-        });
-      } else {
-        // Handle individual invoice payments
-        if (!invoiceId) {
-          return NextResponse.json(
-            { error: "Missing invoice ID" },
-            { status: 400 }
-          );
-        }
-
-        let paymentMethod = await db.paymentMethod.findFirst({
-          where: {
-            companyId: companyId,
-            name: "Authorize.Net",
           },
-        });
+        },
+      });
 
-        if (!paymentMethod) {
-          paymentMethod = await db.paymentMethod.create({
-            data: {
-              name: "Authorize.Net",
-              companyId: companyId,
-            },
-          });
-        }
-
-        const isDeposit = payType === "deposit";
+      if (invoice) {
+        const companyId = invoice.companyId;
+        const isDeposit = false; // We don't have payType in webhook payload, default to normal payment
         const paymentType = isDeposit ? "DEPOSIT" : "OTHER";
 
-        // Create payment record
+        // Get or create Authorize.Net payment method (same idea as Stripe's "Stripe" method)
+        let paymentMethod = await db.paymentMethod.findFirst({
+          where: {
+            companyId,
+            name: "Authorize.Net",
+          },
+        });
+
+        if (!paymentMethod && !isDeposit) {
+          paymentMethod = await db.paymentMethod.create({
+            data: {
+              name: "Authorize.Net",
+              companyId,
+            },
+          });
+        }
+
+        // Create payment record (mirroring Stripe's individual invoice path)
         let payment;
         if (isDeposit) {
           payment = await db.payment.create({
             data: {
-              companyId: companyId,
-              invoiceId: invoiceId,
+              companyId,
+              invoiceId: numericId,
               amount: authAmount,
               type: paymentType,
               date: new Date(),
@@ -253,17 +142,19 @@ export async function POST(req: NextRequest) {
         } else {
           payment = await db.payment.create({
             data: {
-              companyId: companyId,
-              invoiceId: invoiceId,
+              companyId,
+              invoiceId: numericId,
               amount: authAmount,
               type: paymentType,
               date: new Date(),
               gateway: "AUTHORIZE_NET",
-              other: {
-                create: {
-                  paymentMethodId: paymentMethod.id,
-                },
-              },
+              other: paymentMethod
+                ? {
+                    create: {
+                      paymentMethodId: paymentMethod.id,
+                    },
+                  }
+                : undefined,
             },
           });
         }
@@ -271,98 +162,195 @@ export async function POST(req: NextRequest) {
         // Create Authorize.Net payment record
         await db.authorizeNetPayment.create({
           data: {
-            transactionId: transactionId,
-            companyId: companyId,
+            transactionId,
+            companyId,
             paymentId: payment.id,
-            invoiceId: invoiceId,
+            invoiceId: numericId,
           },
         });
 
-        // Update invoice
-        const invoice = await db.invoice.findUnique({
+        // Update invoice balances (same business rules as Stripe non-deposit)
+        await db.invoice.update({
           where: {
-            id: invoiceId,
-            companyId: companyId,
+            id: numericId,
+            companyId,
           },
-          include: {
-            client: {
-              select: {
-                firstName: true,
-                lastName: true,
+          data: {
+            due: { decrement: authAmount },
+            totalPayment: { increment: authAmount },
+          },
+        });
+
+        // Convert estimate to invoice if needed
+        try {
+          if (invoice.type === "Estimate") {
+            convertInvoicePublic(numericId, companyId);
+          }
+        } catch (error) {
+          console.log("Convert invoice error:", error);
+        }
+
+        // Send notification (same shape as Stripe)
+        sendPaymentReceivedNotification({
+          companyId,
+          amount: authAmount,
+          clientName: `${invoice.client?.firstName} ${invoice.client?.lastName}`,
+          invoiceId: numericId,
+          isDeposit,
+        });
+
+        return NextResponse.json(
+          { message: "Webhook processed" },
+          { status: 200 }
+        );
+      }
+
+      // If no invoice, try treating it as a fleet statement payment (Stripe statement logic)
+      const statement = await db.fleetStatement.findUnique({
+        where: { id: numericId },
+        include: {
+          invoice: {
+            include: {
+              client: {
+                select: {
+                  firstName: true,
+                  lastName: true,
+                },
+              },
+            },
+          },
+          Fleet: {
+            include: {
+              client: {
+                select: {
+                  companyId: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!statement || !statement.invoice.length) {
+        console.warn(
+          "Authorize.Net could not match invoiceNumber to invoice or statement",
+          {
+            invoiceNumber,
+            transactionId,
+          }
+        );
+        return NextResponse.json(
+          { message: "No matching invoice/statement" },
+          { status: 200 }
+        );
+      }
+
+      const companyId = statement.Fleet.client.companyId;
+
+      // Get or create Authorize.Net payment method for statement invoices
+      let paymentMethod = await db.paymentMethod.findFirst({
+        where: {
+          companyId,
+          name: "Authorize.Net",
+        },
+      });
+
+      if (!paymentMethod) {
+        paymentMethod = await db.paymentMethod.create({
+          data: {
+            name: "Authorize.Net",
+            companyId,
+          },
+        });
+      }
+
+      let totalPaid = 0;
+      const invoicesWithDue = statement.invoice.filter(
+        (inv) => inv.due && Number(inv.due) > 0
+      );
+
+      const paymentRecords: { paymentId: number; invoiceId: any }[] = [];
+
+      for (const inv of invoicesWithDue) {
+        const paymentAmount = Math.min(
+          Number(inv.due ?? 0),
+          authAmount - totalPaid
+        );
+
+        if (paymentAmount <= 0) break;
+
+        const payment = await db.payment.create({
+          data: {
+            companyId,
+            invoiceId: inv.id,
+            amount: paymentAmount,
+            type: "OTHER",
+            date: new Date(),
+            gateway: "AUTHORIZE_NET",
+            other: {
+              create: {
+                paymentMethodId: paymentMethod.id,
               },
             },
           },
         });
 
-        if (invoice) {
-          if (isDeposit) {
-            const currentDue = Number(invoice.due ?? 0);
-            const depositAmount = authAmount;
+        paymentRecords.push({
+          paymentId: payment.id,
+          invoiceId: inv.id,
+        });
 
-            if (currentDue > 0) {
-              const amountToCoverDue = Math.min(depositAmount, currentDue);
-              const remainingDeposit = depositAmount - amountToCoverDue;
-              const newDue = Math.max(0, currentDue - amountToCoverDue);
+        await db.invoice.update({
+          where: {
+            id: inv.id,
+            companyId,
+          },
+          data: {
+            due: { decrement: paymentAmount },
+            totalPayment: { increment: paymentAmount },
+          },
+        });
 
-              await db.invoice.update({
-                where: {
-                  id: invoiceId,
-                  companyId: companyId,
-                },
-                data: {
-                  due: newDue,
-                  totalPayment: { increment: amountToCoverDue },
-                  deposit: { increment: remainingDeposit },
-                },
-              });
-            } else {
-              await db.invoice.update({
-                where: {
-                  id: invoiceId,
-                  companyId: companyId,
-                },
-                data: {
-                  deposit: { increment: depositAmount },
-                },
-              });
-            }
-          } else {
-            await db.invoice.update({
-              where: {
-                id: invoiceId,
-                companyId: companyId,
-              },
-              data: {
-                due: { decrement: authAmount },
-                totalPayment: { increment: authAmount },
-              },
-            });
+        try {
+          if (inv.type === "Estimate") {
+            convertInvoicePublic(inv.id, companyId);
           }
-
-          // Convert estimate to invoice if needed
-          try {
-            if (invoice.type === "Estimate") {
-              convertInvoicePublic(invoiceId, companyId);
-            }
-          } catch (error) {
-            console.log("Convert invoice error:", error);
-          }
-
-          // Send notification
-          sendPaymentReceivedNotification({
-            companyId: companyId,
-            amount: authAmount,
-            clientName: `${invoice.client?.firstName} ${invoice.client?.lastName}`,
-            invoiceId: invoiceId,
-            isDeposit,
-          });
+        } catch (error) {
+          console.log("Convert invoice error:", error);
         }
+
+        totalPaid += paymentAmount;
       }
+
+      if (paymentRecords.length > 0) {
+        await db.authorizeNetPayment.create({
+          data: {
+            transactionId,
+            companyId,
+            paymentId: paymentRecords[0].paymentId,
+            invoiceId: paymentRecords[0].invoiceId,
+          },
+        });
+      }
+
+      const firstInvoice = statement.invoice[0];
+      sendPaymentReceivedNotification({
+        companyId,
+        amount: totalPaid,
+        clientName: `${firstInvoice?.client?.firstName} ${firstInvoice?.client?.lastName}`,
+        invoiceId: numericId,
+        isDeposit: false,
+      });
+
+      return NextResponse.json(
+        { message: "Webhook processed" },
+        { status: 200 }
+      );
     }
 
     return NextResponse.json({ message: "Webhook processed" }, { status: 200 });
   } catch (error: any) {
-    console.error("Authorize.Net Webhook Error:", error);
+    console.error("Authorize.Net Webhook Error:", error?.message, error?.stack);
     return NextResponse.json(
       { error: `Webhook Error: ${error?.message}` },
       { status: 400 }
