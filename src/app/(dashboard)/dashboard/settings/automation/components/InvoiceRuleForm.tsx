@@ -64,6 +64,7 @@ const template_variable_options = [
   { name: "<REVIEW_LINK>", description: "Review link" },
   { name: "<SERVICE>", description: "Service" },
   { name: "<PHONE>", description: "Your business phone number" },
+  { name: "<GOOGLE_REVIEW_LINK>", description: "Google review link" }
 ];
 
 const InvoiceRuleForm: React.FC<RuleFormProps> = ({
