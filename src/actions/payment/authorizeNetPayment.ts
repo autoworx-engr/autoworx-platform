@@ -77,7 +77,23 @@ export const createAuthorizeNetPaymentLink = async ({
     const productName = invoiceId
       ? `INVOICE-${invoiceId}`
       : `STATEMENT-${statementId}`;
-    orderType.setInvoiceNumber(invoiceId || statementId || "");
+
+    // Encode payType into invoiceNumber so the webhook can
+    // reliably distinguish deposits vs normal payments and
+    // statements, similar to how Stripe uses metadata.
+    let invoiceNumberForGateway = "";
+    if (invoiceId) {
+      if (payType === "deposit") {
+        invoiceNumberForGateway = `DEP-${invoiceId}`;
+      } else {
+        // Treat everything else on an invoice as a normal payment
+        invoiceNumberForGateway = `INV-${invoiceId}`;
+      }
+    } else if (statementId) {
+      invoiceNumberForGateway = `STM-${statementId}`;
+    }
+
+    orderType.setInvoiceNumber(invoiceNumberForGateway);
     orderType.setDescription(
       `${payType === "deposit" ? "Deposit" : "Payment"} for ${productName}`
     );

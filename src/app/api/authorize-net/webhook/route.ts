@@ -72,22 +72,34 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      // Try to interpret invoiceNumber as our internal ID, similar to Stripe's metadata
-      const numericId = invoiceNumber;
-      if (Number.isNaN(numericId)) {
-        console.warn("Authorize.Net invoiceNumber is not numeric, skipping", {
-          invoiceNumber,
-          transactionId,
-        });
-        return NextResponse.json(
-          { message: "Unrecognized invoice number" },
-          { status: 200 }
-        );
+      // Decode our own prefixes from invoiceNumber so we know whether
+      // this is a deposit, normal invoice payment, or a statement
+      // payment. This mirrors how Stripe uses metadata.
+      const rawInvoiceNumber = invoiceNumber;
+      let targetId = rawInvoiceNumber;
+      let sourceType: "deposit" | "invoice" | "statement" | "unknown" =
+        "unknown";
+
+      if (rawInvoiceNumber.startsWith("DEP-")) {
+        sourceType = "deposit";
+        targetId = rawInvoiceNumber.substring(4);
+      } else if (rawInvoiceNumber.startsWith("INV-")) {
+        sourceType = "invoice";
+        targetId = rawInvoiceNumber.substring(4);
+      } else if (rawInvoiceNumber.startsWith("STM-")) {
+        sourceType = "statement";
+        targetId = rawInvoiceNumber.substring(4);
       }
+
+      console.log("Authorize.Net decoded invoiceNumber", {
+        rawInvoiceNumber,
+        sourceType,
+        targetId,
+      });
 
       // First, try treating it as an invoice payment (Stripe individual invoice logic)
       const invoice = await db.invoice.findUnique({
-        where: { id: numericId },
+        where: { id: targetId },
         include: {
           client: {
             select: {
@@ -100,7 +112,38 @@ export async function POST(req: NextRequest) {
 
       if (invoice) {
         const companyId = invoice.companyId;
-        const isDeposit = false; // We don't have payType in webhook payload, default to normal payment
+
+        // Infer deposit vs normal payment primarily from the
+        // encoded invoiceNumber prefix, mirroring Stripe's
+        // payType-based behavior.
+        const isDepositFromPrefix = sourceType === "deposit";
+
+        // Keep a small heuristic as a fallback (in case some
+        // old transactions didn't have the prefix yet).
+        const orderDescription =
+          (payload.order?.description as string | undefined) ||
+          (payload.order?.invoiceDescription as string | undefined) ||
+          (payload.description as string | undefined) ||
+          "";
+
+        const lowerOrderDescription = orderDescription.toString().toLowerCase();
+        const serializedPayload = JSON.stringify(payload || {}).toLowerCase();
+
+        const isDepositHeuristic =
+          lowerOrderDescription.includes("deposit") ||
+          serializedPayload.includes("deposit payment");
+
+        const isDeposit = isDepositFromPrefix || isDepositHeuristic;
+
+        console.log("Authorize.Net webhook invoice payment classification", {
+          invoiceId: targetId,
+          authAmount,
+          rawInvoiceNumber,
+          sourceType,
+          orderDescription,
+          isDeposit,
+        });
+
         const paymentType = isDeposit ? "DEPOSIT" : "OTHER";
 
         // Get or create Authorize.Net payment method (same idea as Stripe's "Stripe" method)
@@ -126,7 +169,7 @@ export async function POST(req: NextRequest) {
           payment = await db.payment.create({
             data: {
               companyId,
-              invoiceId: numericId,
+              invoiceId: targetId,
               amount: authAmount,
               type: paymentType,
               date: new Date(),
@@ -143,7 +186,7 @@ export async function POST(req: NextRequest) {
           payment = await db.payment.create({
             data: {
               companyId,
-              invoiceId: numericId,
+              invoiceId: targetId,
               amount: authAmount,
               type: paymentType,
               date: new Date(),
@@ -165,26 +208,69 @@ export async function POST(req: NextRequest) {
             transactionId,
             companyId,
             paymentId: payment.id,
-            invoiceId: numericId,
+            invoiceId: targetId,
           },
         });
 
-        // Update invoice balances (same business rules as Stripe non-deposit)
-        await db.invoice.update({
-          where: {
-            id: numericId,
-            companyId,
-          },
-          data: {
-            due: { decrement: authAmount },
-            totalPayment: { increment: authAmount },
-          },
-        });
+        // Update invoice balances using the same business rules as Stripe
+        const currentDue = Number(invoice.due ?? 0);
+
+        if (isDeposit) {
+          const depositAmount = authAmount;
+          console.log("🚀 ~ POST ~ depositAmount:", depositAmount);
+
+          if (currentDue > 0) {
+            const amountToCoverDue = Math.min(depositAmount, currentDue);
+            const newDue = Math.max(0, currentDue - amountToCoverDue);
+
+            await db.invoice.update({
+              where: {
+                id: targetId,
+                companyId,
+              },
+              data: {
+                due: newDue,
+                deposit: {
+                  increment: depositAmount,
+                },
+              },
+            });
+          } else {
+            await db.invoice.update({
+              where: {
+                id: targetId,
+                companyId,
+              },
+              data: {
+                deposit: {
+                  increment: depositAmount,
+                },
+              },
+            });
+          }
+        } else {
+          const paymentAmount = authAmount;
+          const amountToApply = Math.min(paymentAmount, currentDue);
+          const newDue = Math.max(0, currentDue - amountToApply);
+
+          await db.invoice.update({
+            where: {
+              id: targetId,
+              companyId,
+            },
+            data: {
+              due: newDue,
+              totalPayment: {
+                increment: amountToApply,
+              },
+            },
+          });
+        }
 
         // Convert estimate to invoice if needed
         try {
           if (invoice.type === "Estimate") {
-            convertInvoicePublic(numericId, companyId);
+            convertInvoicePublic(targetId, companyId);
           }
         } catch (error) {
           console.log("Convert invoice error:", error);
@@ -195,7 +281,7 @@ export async function POST(req: NextRequest) {
           companyId,
           amount: authAmount,
           clientName: `${invoice.client?.firstName} ${invoice.client?.lastName}`,
-          invoiceId: numericId,
+          invoiceId: targetId,
           isDeposit,
         });
 
@@ -207,7 +293,7 @@ export async function POST(req: NextRequest) {
 
       // If no invoice, try treating it as a fleet statement payment (Stripe statement logic)
       const statement = await db.fleetStatement.findUnique({
-        where: { id: numericId },
+        where: { id: targetId },
         include: {
           invoice: {
             include: {
@@ -338,7 +424,7 @@ export async function POST(req: NextRequest) {
         companyId,
         amount: totalPaid,
         clientName: `${firstInvoice?.client?.firstName} ${firstInvoice?.client?.lastName}`,
-        invoiceId: numericId,
+        invoiceId: targetId,
         isDeposit: false,
       });
 
