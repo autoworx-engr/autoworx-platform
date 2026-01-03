@@ -150,7 +150,7 @@ export default async function Page({
             </TabsTriggerCreate>
           </TabsList>
 
-          <TabsContent value="create" className="h-full w-full">
+          <TabsContent value="create" className="h-full w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto thin-scrollbar">
             <CreateTab />
           </TabsContent>
 
@@ -173,7 +173,7 @@ export default async function Page({
         </Tabs>
       </div>
 
-      <div className="app-shadow grid grid-rows-[1fr,auto,auto] divide-y rounded-md">
+      <div className="app-shadow grid grid-rows-[1fr,auto,auto] divide-y rounded-md bg-slate-50 xl:max-h-[calc(100vh-5rem)] overflow-y-auto thin-scrollbar">
         <div>
           <ConvertButton
             type={InvoiceType.Estimate}
