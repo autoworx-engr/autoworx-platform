@@ -10,6 +10,10 @@ const PUBLIC_API_ROUTES = [
   "/api/auth/forgot-password",
   "/api/auth/reset-password",
   "/api/auth/refresh-token",
+  "/api/auth/providers",
+  "/api/auth/signin",
+  "/api/auth/callback/credentials",
+  "/api/auth/csrf",
 ];
 
 export async function middleware(request: NextRequest) {
@@ -21,6 +25,10 @@ export async function middleware(request: NextRequest) {
     !token &&
     pathname.startsWith("/api/") &&
     !PUBLIC_API_ROUTES.includes(pathname);
+
+  console.log("Middleware - isExternalApiRequest:", isExternalApiRequest);
+  console.log("Middleware - Authorization Header:", authHeader);
+  console.log("Middleware - Request Pathname:", pathname);
 
   // check api access token
   if (!authHeader && isExternalApiRequest) {
