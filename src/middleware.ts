@@ -14,6 +14,12 @@ const PUBLIC_API_ROUTES = [
   "/api/auth/signin",
   "/api/auth/callback/credentials",
   "/api/auth/csrf",
+  // Webhook endpoints
+  "/api/stripe/invoice-pay-hook",
+  "/api/twilio",
+  "/api/infobip",
+  "/api/lead-generate",
+  "/api/authorize-net",
 ];
 
 export async function middleware(request: NextRequest) {
