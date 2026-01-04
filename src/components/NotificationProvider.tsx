@@ -91,7 +91,7 @@ export function NotificationsPopover() {
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
-        <button className="relative h-8 w-8 rounded-full hover:bg-slate-100 p-1">
+        <button className="relative h-9 w-9 rounded-full hover:bg-slate-100 p-1">
           <svg
             viewBox="-1.28 -1.28 18.56 18.56"
             xmlns="http://www.w3.org/2000/svg"
@@ -122,8 +122,8 @@ export function NotificationsPopover() {
       <PopoverContent align="end" className="w-[380px] rounded-[2rem] p-0 shadow-2xl border-slate-100 overflow-hidden">
         <div className="flex items-center justify-between p-5">
           <div className="space-y-0.5">
-            <h3 className="text-sm font-black uppercase tracking-widest text-slate-800">Notifications</h3>
-            <p className="text-xs font-medium text-slate-400">
+            <h3 className="text-lg font-semibold text-slate-700">Notifications</h3>
+            <p className="text-xs font-medium text-slate-500">
               {totalUnRead > 0 ? `You have ${totalUnRead} unread updates` : "All caught up!"}
             </p>
           </div>
@@ -157,14 +157,13 @@ export function NotificationsPopover() {
         </ScrollArea>
 
         {!isViewAll && notifications.length > 0 && (
-          <div className="p-3 bg-slate-50/50">
-            <Button
-              variant="ghost"
-              className="w-full text-[10px] font-black uppercase tracking-widest text-[#6571FF]"
+          <div className="p-3 bg-slate-50/50 hover:bg-slate-100 border-t border-slate-200">
+            <button
+              className="w-full font-semibold text-[#6571FF]"
               onClick={() => { setLimit(maxLimit); setIsViewAll(true); }}
             >
               View All
-            </Button>
+            </button>
           </div>
         )}
       </PopoverContent>
@@ -184,7 +183,7 @@ function NotificationItem({ notification, setIsOpen, onMarkRead }: any) {
 
   return (
     <div className={cn("group relative flex items-start gap-4 p-4 transition-all hover:bg-slate-50", notification.isUnRead && "bg-[#6571FF]/[0.02]")}>
-      <div className={cn("mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl", notification.isUnRead ? "bg-[#6571FF] text-white shadow-lg shadow-[#6571FF]/30" : "bg-slate-100")}>
+      <div className={cn("mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl", notification.isUnRead ? "bg-[#6571FF] text-white shadow-lg shadow-[#6571FF]/30" : "bg-[#6571FF]/20 text-[#6571FF]")}>
         {avatarUrl}
       </div>
 
