@@ -68,22 +68,30 @@ export default function Selector<T>({
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { setFilteredItems(items); }, [items]);
-  useEffect(() => { setSelected(selectedItem); }, [selectedItem]);
-
-  const handleScroll = useCallback(() => {
-    if (!useInfiniteScroll || !scrollContainerRef.current || !hasNextPage || isFetchingNextPage) return;
-    const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
-    if (scrollTop + clientHeight >= scrollHeight - 10 && fetchNextPage) fetchNextPage();
-  }, [useInfiniteScroll, hasNextPage, isFetchingNextPage, fetchNextPage]);
-
   useEffect(() => {
-    const scrollContainer = scrollContainerRef.current;
-    if (useInfiniteScroll && scrollContainer) {
-      scrollContainer.addEventListener("scroll", handleScroll);
-      return () => scrollContainer.removeEventListener("scroll", handleScroll);
+    setFilteredItems(items);
+  }, [items]);
+  useEffect(() => {
+    setSelected(selectedItem);
+  }, [selectedItem]);
+
+  // Update selected item when selectedItem prop changes
+  useEffect(() => {
+    setSelected(selectedItem);
+  }, [selectedItem]);
+
+  // Infinite scroll handler
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    if (!useInfiniteScroll || !hasNextPage || isFetchingNextPage) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+
+    const isNearBottom = scrollTop + clientHeight >= scrollHeight - 20;
+
+    if (isNearBottom) {
+      fetchNextPage?.();
     }
-  }, [handleScroll, useInfiniteScroll]);
+  };
 
   function handleSearchChange(e: ChangeEvent<HTMLInputElement>) {
     const searchQuery = e.target.value;
@@ -92,9 +100,16 @@ export default function Selector<T>({
       setFilteredItems(onSearch(searchQuery));
     } else {
       const searchedItems = searchQuery.trim()
-        ? items.filter((item: any) =>
-        (item.clientName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          item.id?.toString().toLowerCase().includes(searchQuery.toLowerCase())))
+        ? items.filter(
+            (item: any) =>
+              item.clientName
+                ?.toLowerCase()
+                .includes(searchQuery.toLowerCase()) ||
+              item.id
+                ?.toString()
+                .toLowerCase()
+                .includes(searchQuery.toLowerCase())
+          )
         : items;
       setFilteredItems(searchedItems);
     }
@@ -110,14 +125,18 @@ export default function Selector<T>({
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-      <div className={cn("w-full max-w-sm transition-all duration-300", className)}>
+      <div
+        className={cn("w-full max-w-sm transition-all duration-300", className)}
+      >
         <DropdownMenuTrigger
           disabled={disabledDropdown}
           className={cn(
             "group flex h-9 mt-1 w-[99%] items-center justify-between rounded-lg px-4 transition-all duration-300 outline-none",
             "bg-white/80 dark:bg-slate-900/50 backdrop-blur-sm shadow-sm hover:shadow-md",
             "ring-1 ring-slate-200 dark:ring-slate-800",
-            isOpen ? "ring-2 ring-[#6571FF]/60 border-transparent" : "hover:ring-slate-300",
+            isOpen
+              ? "ring-2 ring-[#6571FF]/60 border-transparent"
+              : "hover:ring-slate-300",
             disabledDropdown && "opacity-50 cursor-not-allowed"
           )}
         >
@@ -157,7 +176,10 @@ export default function Selector<T>({
         >
           {/* Modern Search Area */}
           <div className="relative p-2 border-b border-slate-100 dark:border-slate-800">
-            <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search
+              size={14}
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+            />
             <input
               type="text"
               placeholder="Search items..."
@@ -168,26 +190,56 @@ export default function Selector<T>({
             />
           </div>
 
-          {/* List Content */}
-          <div ref={scrollContainerRef} className="max-h-60 overflow-y-auto p-1 custom-scrollbar space-y-1">
-            {filteredItems?.length > 0 ? (
-              filteredItems.map((item, index) => (
-                <button
-                  key={index}
-                  type="button"
-                  onClick={() => clickabled && handleSelectItem(item)}
-                  className={cn(
-                    "w-full border rounded-md px-3 py-2 text-left text-sm transition-all duration-200",
-                    "hover:bg-[#6571FF]/10 hover:text-[#6571FF]",
-                    selected === item ? "bg-[#6571FF]/5 text-[#6571FF] font-semibold border-[#6571FF]" : "text-slate-600 dark:text-slate-400",
-                    border && "my-1 ring-1 ring-slate-100 hover:ring-[#6571FF]/30"
-                  )}
-                >
-                  {displayList(item)}
-                </button>
-              ))
-            ) : (
-              <div className="p-3 text-center text-xs text-slate-400">No results found</div>
+          {/* Display list of items */}
+          <div
+            ref={scrollContainerRef}
+            onScroll={handleScroll}
+            className="mb-5 flex max-h-40 flex-col overflow-y-auto"
+          >
+            {filteredItems?.map((item, index) => {
+              // Use a unique key that combines the item's id if available, otherwise fall back to index
+              const key = (item as any)?.id
+                ? `item-${(item as any).id}`
+                : `index-${index}`;
+
+              if (clickabled) {
+                return (
+                  <button
+                    onClick={() => {
+                      handleSelectItem(item);
+                    }}
+                    type="button"
+                    key={key}
+                    className={cn(
+                      "w-full p-1 px-2 text-left hover:bg-gray-100",
+                      border &&
+                        "relative left-1/2 my-1 w-[95%] -translate-x-1/2 rounded-md border-2 border-slate-400 py-[0.3rem]"
+                    )}
+                  >
+                    {displayList(item)}
+                  </button>
+                );
+              } else {
+                return (
+                  <div
+                    key={key}
+                    className={cn(
+                      "w-full p-1 px-2 text-left hover:bg-gray-100",
+                      border &&
+                        "relative left-1/2 my-1 w-[95%] -translate-x-1/2 rounded-md border-2 border-slate-400 py-[0.3rem]"
+                    )}
+                  >
+                    {displayList(item)}
+                  </div>
+                );
+              }
+            })}
+
+            {/* Loading indicator for infinite scroll */}
+            {useInfiniteScroll && isFetchingNextPage && (
+              <div className="flex justify-center py-2">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600"></div>
+              </div>
             )}
 
             {isFetchingNextPage && (
