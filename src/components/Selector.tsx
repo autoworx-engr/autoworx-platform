@@ -105,33 +105,17 @@ export default function Selector<T>({
   }, [selectedItem]);
 
   // Infinite scroll handler
-  const handleScroll = useCallback(() => {
-    if (
-      !useInfiniteScroll ||
-      !scrollContainerRef.current ||
-      !hasNextPage ||
-      isFetchingNextPage
-    ) {
-      return;
-    }
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    if (!useInfiniteScroll || !hasNextPage || isFetchingNextPage) return;
 
-    const { scrollTop, scrollHeight, clientHeight } =
-      scrollContainerRef.current;
-    const isNearBottom = scrollTop + clientHeight >= scrollHeight - 10;
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
 
-    if (isNearBottom && fetchNextPage) {
-      fetchNextPage();
-    }
-  }, [useInfiniteScroll, hasNextPage, isFetchingNextPage, fetchNextPage]);
+    const isNearBottom = scrollTop + clientHeight >= scrollHeight - 20;
 
-  // Attach scroll event listener
-  useEffect(() => {
-    const scrollContainer = scrollContainerRef.current;
-    if (useInfiniteScroll && scrollContainer) {
-      scrollContainer.addEventListener("scroll", handleScroll);
-      return () => scrollContainer.removeEventListener("scroll", handleScroll);
+    if (isNearBottom) {
+      fetchNextPage?.();
     }
-  }, [handleScroll, useInfiniteScroll]);
+  };
 
   /**
    * Handle search input change
@@ -250,6 +234,7 @@ export default function Selector<T>({
           {/* Display list of items */}
           <div
             ref={scrollContainerRef}
+            onScroll={handleScroll}
             className="mb-5 flex max-h-40 flex-col overflow-y-auto"
           >
             {filteredItems?.map((item, index) => {
