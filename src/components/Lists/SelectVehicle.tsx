@@ -7,6 +7,7 @@ import { useSearchParams } from "next/navigation";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import NewVehicle from "./NewVehicle";
 import { SelectProps } from "./select-props";
+import { cn } from "@/lib/cn";
 
 export function SelectVehicle({
   name = "vehicleId",
@@ -66,67 +67,66 @@ export function SelectVehicle({
     <>
       <input type="hidden" name={name} value={vehicle?.id ?? ""} />
 
-      <div className="flex items-center gap-2">
-        <Selector
-          // disabledDropdown={clientId && !vehicle?.fromRequest ? false : true}
-          label={(vehicle: Vehicle | null) =>
-            vehicle
-              ? `${vehicle.year || ""} ${vehicle.make ?? ""} ${vehicle.model ?? ""} ${vehicle.other ?? ""}`
-              : "Vehicle"
-          }
-          newButton={
-            clientId && <NewVehicle
-              clientId={Number(clientId)}
-              onAdd={(vehicle: Vehicle) => {
-                setVehicle(vehicle);
-                useListsStore.setState({ vehicle });
-                useListsStore.setState(({ vehicles }) => ({
-                  vehicles: [...vehicles, vehicle],
-                  newAddedVehicle: vehicle,
-                }));
-                vehicle && setOpenDropdown && setOpenDropdown(false);
+      <Selector
+        className={cn(vehicle ? "w-[200px]" : "w-[150px]")}
+        // disabledDropdown={clientId && !vehicle?.fromRequest ? false : true}
+        label={(vehicle: Vehicle | null) =>
+          vehicle
+            ? `${vehicle.year || ""} ${vehicle.make ?? ""} ${vehicle.model ?? ""} ${vehicle.other ?? ""}`
+            : "Vehicle"
+        }
+        newButton={
+          clientId && <NewVehicle
+            clientId={Number(clientId)}
+            onAdd={(vehicle: Vehicle) => {
+              setVehicle(vehicle);
+              useListsStore.setState({ vehicle });
+              useListsStore.setState(({ vehicles }) => ({
+                vehicles: [...vehicles, vehicle],
+                newAddedVehicle: vehicle,
+              }));
+              vehicle && setOpenDropdown && setOpenDropdown(false);
+            }}
+          />
+        }
+        items={vehicleList?.filter(
+          (vehicle) => vehicle.clientId === +clientId!
+        )}
+        onSearch={(search: string) =>
+          vehicleList.filter(
+            (vehicle) =>
+              vehicle.make?.toLowerCase().includes(search.toLowerCase()) ||
+              vehicle.model?.toLowerCase().includes(search.toLowerCase()) ||
+              vehicle.other?.toLowerCase().includes(search.toLowerCase())
+          )
+        }
+        openState={[
+          openDropdown as boolean,
+          setOpenDropdown as Dispatch<SetStateAction<boolean>>,
+        ]}
+        selectedItem={vehicle}
+        onSelect={(vehicle) => {
+          setVehicle(vehicle);
+          useListsStore.setState({ vehicle, newAddedVehicle: null });
+        }}
+        displayList={(item) => (
+          <p>{`${item.year || ""} ${item.make ?? ""} ${item.model ?? ""} ${item.other ?? ""}`}</p>
+        )}
+        footer={
+          isClear && vehicle ? (
+            <button
+              type="button"
+              onClick={() => {
+                handleClear();
+                setOpenDropdown && setOpenDropdown(false);
               }}
-            />
-          }
-          items={vehicleList?.filter(
-            (vehicle) => vehicle.clientId === +clientId!
-          )}
-          onSearch={(search: string) =>
-            vehicleList.filter(
-              (vehicle) =>
-                vehicle.make?.toLowerCase().includes(search.toLowerCase()) ||
-                vehicle.model?.toLowerCase().includes(search.toLowerCase()) ||
-                vehicle.other?.toLowerCase().includes(search.toLowerCase())
-            )
-          }
-          openState={[
-            openDropdown as boolean,
-            setOpenDropdown as Dispatch<SetStateAction<boolean>>,
-          ]}
-          selectedItem={vehicle}
-          onSelect={(vehicle) => {
-            setVehicle(vehicle);
-            useListsStore.setState({ vehicle, newAddedVehicle: null });
-          }}
-          displayList={(item) => (
-            <p>{`${item.year || ""} ${item.make ?? ""} ${item.model ?? ""} ${item.other ?? ""}`}</p>
-          )}
-          footer={
-            isClear && vehicle ? (
-              <button
-                type="button"
-                onClick={() => {
-                  handleClear();
-                  setOpenDropdown && setOpenDropdown(false);
-                }}
-                className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"
-              >
-                Clear Vehicle
-              </button>
-            ) : null
-          }
-        />
-      </div>
+              className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+            >
+              Clear Vehicle
+            </button>
+          ) : null
+        }
+      />
     </>
   );
 }

@@ -23,16 +23,16 @@ export default function SelectEmployeeType({
   );
 
   return (
-    <div className={cn("w-1/2")}>
+    <div className={cn("w-full")}>
       <input type="hidden" name="type" value={employeeType || ""} />
 
       {labelPosition !== "none" && (
         <label
-          className={cn("text-semibold flex items-center gap-1", {
-            "w-28 text-end text-sm": labelPosition === "left",
+          className={cn("text-slate-600 font-medium flex items-center gap-1", {
+            "w-28 text-end text-sm text-red-600": labelPosition === "left",
           })}
         >
-          Type {required && <span className="text-red-500">*</span>}
+          Employee Type {required && <span className="text-red-500">*</span>}
         </label>
       )}
 

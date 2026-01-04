@@ -18,9 +18,9 @@ interface SlimSalaryManagementProps {
   setSalaryTypeOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-export default function SlimSalaryManagement({ 
-  userId, 
-  initialData, 
+export default function SlimSalaryManagement({
+  userId,
+  initialData,
   onSalaryChange,
   salaryTypeOpen,
   setSalaryTypeOpen
@@ -30,7 +30,7 @@ export default function SlimSalaryManagement({
     salaryAmount: number;
   } | null>(initialData || null);
   const [loading, setLoading] = useState(false);
-  
+
   const { showError, clearError } = useFormErrorStore();
 
   // Load existing salary data if userId is provided
@@ -42,7 +42,7 @@ export default function SlimSalaryManagement({
 
   const loadSalaryData = async () => {
     if (!userId) return;
-    
+
     setLoading(true);
     try {
       const result = await getEmployeeSalary(userId);
@@ -76,7 +76,7 @@ export default function SlimSalaryManagement({
 
   return (
     <>
-      <div className="flex items-center justify-between gap-x-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
         <SelectEmployeeSalaryType
           key={`salary-type-${userId}`}
           required={false}
@@ -92,7 +92,6 @@ export default function SlimSalaryManagement({
             required={false}
             step="0.01"
             min="0"
-            placeholder="Enter salary amount"
             defaultValue={
               currentSalary?.salaryAmount
                 ? Number(currentSalary.salaryAmount).toString()
