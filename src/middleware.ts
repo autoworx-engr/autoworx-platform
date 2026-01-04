@@ -1,5 +1,5 @@
 import { getToken } from "next-auth/jwt";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, URLPattern } from "next/server";
 import { jwtVerify } from "jose";
 
 const PUBLIC_ROUTES = ["/login", "/register", "/forgot-password", "/"];
@@ -16,21 +16,38 @@ const PUBLIC_API_ROUTES = [
   "/api/auth/csrf",
   // Webhook endpoints
   "/api/stripe/invoice-pay-hook",
-  "/api/twilio",
-  "/api/infobip",
   "/api/lead-generate",
   "/api/authorize-net",
 ];
+
+const PUBLIC_DYNAMIC_API_ROUTES = [
+  "/api/twilio/sms-receive/:companyId",
+  "/api/infobip",
+];
+
+const isDynamicPublicApiRoute = (pathname: string) => {
+  const isPublic = PUBLIC_DYNAMIC_API_ROUTES.some(route => {
+    const pattern = new URLPattern({ pathname: route });
+    return pattern.test({ pathname: pathname });
+  });
+  return isPublic;
+};
 
 export async function middleware(request: NextRequest) {
   const token = await getToken({ req: request });
   const { pathname } = request.nextUrl;
 
   const authHeader = request.headers.get("authorization");
+  console.log({
+    isDynamicPublicApiRoute: isDynamicPublicApiRoute(pathname),
+    publicApiRoute: PUBLIC_API_ROUTES.includes(pathname),
+  });
   const isExternalApiRequest =
     !token &&
     pathname.startsWith("/api/") &&
-    !PUBLIC_API_ROUTES.includes(pathname);
+    !(
+      isDynamicPublicApiRoute(pathname) || PUBLIC_API_ROUTES.includes(pathname)
+    );
 
   console.log("Middleware - isExternalApiRequest:", isExternalApiRequest);
   console.log("Middleware - Authorization Header:", authHeader);
