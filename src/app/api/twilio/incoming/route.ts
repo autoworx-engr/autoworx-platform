@@ -196,6 +196,7 @@ export async function POST(request: Request) {
           recordingStatusCallbackMethod: "POST",
           timeout: 30,
           answerOnBridge: true,
+          action: `${process.env.NEXT_PUBLIC_APP_URL}/api/twilio/call-status`,
         },
         callForwardingNumber
       );
@@ -207,6 +208,7 @@ export async function POST(request: Request) {
         recordingStatusCallbackMethod: "POST",
         timeout: 60, // Give 60 seconds for the call to be answered
         answerOnBridge: true, // Only answer when the call is bridged (connected)
+        action: `${process.env.NEXT_PUBLIC_APP_URL}/api/twilio/call-status`,
       });
 
       // Connect to the user's device

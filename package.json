@@ -79,6 +79,7 @@
     "html-to-text": "^9.0.5",
     "http-status": "^2.1.0",
     "infobip-rtc": "^2.7.18",
+    "jose": "^6.1.3",
     "jsonwebtoken": "^9.0.2",
     "lottie-react": "^2.4.1",
     "lucide-react": "^0.511.0",
