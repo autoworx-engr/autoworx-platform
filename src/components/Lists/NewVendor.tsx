@@ -271,27 +271,26 @@ export default function NewVendor({
             }}
           />
           <SlimInput id="address" name="address" required={false} placeholder="Street address" />
-          <div className="flex flex-col gap-3 lg:flex-row">
-            <SlimInput id="city" name="city" required={false} placeholder="City" />
-            <SlimInput id="state" name="state" required={false} placeholder="State" />
-            <SlimInput
-              id="zip"
-              name="zip"
-              placeholder="Zip Code"
-              required={false}
-              onChange={(e) => {
-                const value = e.target.value;
-                if (value && !/^\d*$/.test(value)) {
-                  showError({
-                    field: "zip",
-                    message: "Zip code should contain only numbers.",
-                  });
-                } else {
-                  clearError();
-                }
-              }}
-            />
-          </div>
+          <SlimInput id="city" name="city" required={false} placeholder="City" />
+          <SlimInput id="state" name="state" required={false} placeholder="State" />
+          <SlimInput
+            id="zip"
+            name="zip"
+            placeholder="Zip Code"
+            required={false}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (value && !/^\d*$/.test(value)) {
+                showError({
+                  field: "zip",
+                  message: "Zip code should contain only numbers.",
+                });
+              } else {
+                clearError();
+              }
+            }}
+          />
+
           <div className="space-y-2 sm:col-span-2">
             <SlimInput
               id="website"
