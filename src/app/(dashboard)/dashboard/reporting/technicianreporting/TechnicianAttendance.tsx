@@ -2,12 +2,12 @@
 // @ts-ignore
 import { getAttendanceInfo } from "@/actions/employee/getAttendanceInfo";
 import DateRange from "@/app/(dashboard)/dashboard/payments/components/PaymentDateRange";
-import AttendanceTableSkeleton from "@/components/ui/AttendanceTableSkeleton";
-import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { useServerGet } from "@/hooks/useServerGet";
 import { convertDuration } from "@/lib/convertDurations";
+import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import moment from "moment-timezone";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
+import AttendanceTableSkeleton from "@/components/ui/AttendanceTableSkeleton";
 
 const daysOfWeek = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 
@@ -38,7 +38,7 @@ const TechnicianAttendance = ({ currentUserId }: { currentUserId: string }) => {
   console.log("🚀 ~ TechnicianAttendance ~ attendanceInfo:", attendanceInfo);
 
   return (
-    <div className="my-4 box-border flex flex-col lg:w-full z-10">
+    <div className="my-4 box-border flex flex-col lg:w-full">
       <h2 className="mb-2 text-xl font-bold">Attendance</h2>
       <div className="relative flex h-auto w-full flex-col gap-8 rounded border bg-background p-1 lg:p-6">
         <div className="left-3 top-3 w-fit">
@@ -143,18 +143,15 @@ const TechnicianAttendance = ({ currentUserId }: { currentUserId: string }) => {
                         } else {
                           // If Date object, extract just the date portion to avoid timezone shifts
                           // The server sends dates as UTC midnight, so we parse as UTC and extract the date
-                          // const utcDate = moment.utc(data.date);
-                          // dateMoment = moment.tz(
-                          //   {
-                          //     year: utcDate.year(),
-                          //     month: utcDate.month(),
-                          //     date: utcDate.date(),
-                          //   },
-                          //   timezone
-                          // );
-                          // FIX: Parse as-is without shifting time
-                          // The 'true' parameter keeps the same date values when converting timezone
-                          dateMoment = moment(data.date).tz(timezone, true);
+                          const utcDate = moment.utc(data.date);
+                          dateMoment = moment.tz(
+                            {
+                              year: utcDate.year(),
+                              month: utcDate.month(),
+                              date: utcDate.date(),
+                            },
+                            timezone
+                          );
                         }
 
                         const dayOfWeek = dateMoment.day();
@@ -164,8 +161,8 @@ const TechnicianAttendance = ({ currentUserId }: { currentUserId: string }) => {
                         const effectiveHours = isNaN(Number(data.hours))
                           ? data.hours
                           : convertDuration(
-                            Number(data.hours) - Number(data.totalBreaks)
-                          );
+                              Number(data.hours) - Number(data.totalBreaks)
+                            );
 
                         return (
                           <tr
@@ -183,17 +180,17 @@ const TechnicianAttendance = ({ currentUserId }: { currentUserId: string }) => {
                               {typeof data.clockedIn === "string"
                                 ? data.clockedIn
                                 : moment
-                                  .utc(data.clockedIn)
-                                  .tz(timezone)
-                                  .format("hh:mm A")}
+                                    .utc(data.clockedIn)
+                                    .tz(timezone)
+                                    .format("hh:mm A")}
                             </td>
                             <td className="px-2 py-2 sm:px-4">
                               {typeof data?.clockedOut === "string"
                                 ? data?.clockedOut
                                 : moment
-                                  .utc(data?.clockedOut)
-                                  .tz(timezone)
-                                  .format("hh:mm A")}
+                                    .utc(data?.clockedOut)
+                                    .tz(timezone)
+                                    .format("hh:mm A")}
                             </td>
                             <td className="hidden justify-center px-2 py-2 sm:px-4 lg:flex">
                               {data.totalBreaks}

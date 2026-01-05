@@ -8,39 +8,6 @@ import { sendCRMDemoNotification } from "@/lib/notification/crm-demo-notifiy";
 import { sendNewLeadNotification } from "@/lib/notification/pipeline-notify";
 import { NextRequest, NextResponse } from "next/server";
 
-/**
- * @swagger
- * /api/lead-generate:
- *   post:
- *     summary: Generate new lead from Zapier
- *     tags: [Leads]
- *     parameters:
- *       - in: header
- *         name: X-TOKEN
- *         required: true
- *         schema:
- *           type: string
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               name:
- *                 type: string
- *               email:
- *                 type: string
- *               phone:
- *                 type: string
- *     responses:
- *       200:
- *         description: Lead created successfully
- *       401:
- *         description: Invalid token
- *       500:
- *         description: Server error
- */
 export async function POST(request: NextRequest) {
   try {
     const token = request.headers.get("X-TOKEN");

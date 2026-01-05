@@ -21,7 +21,6 @@ import Password from "@/components/Password";
 import SlimSalaryInput from "@/components/employee/SlimSalaryInput";
 import { CircleUserRound as UserIcon } from "lucide-react";
 import PhoneInput from "../PhoneInput";
-import { cn } from "@/lib/cn";
 
 export default function AddNewEmployee({
   onSuccess,
@@ -39,10 +38,10 @@ export default function AddNewEmployee({
   // const [countryIsoCode, setCountryIsoCode] = useState('');
 
   const phoneDataRef = useRef({
-    mobile: "",
-    country: "",
-    countryIsoCode: ""
-  });
+  mobile: "",
+  country: "",
+  countryIsoCode: ""
+});
   const [salaryData, setSalaryData] = useState<{
     salaryType: SalaryType;
     salaryAmount: number;
@@ -50,7 +49,7 @@ export default function AddNewEmployee({
 
   const { data: companyName } = useServerGet(getCompany);
   const { showError, clearError } = useFormErrorStore();
-  const { mobile, country, countryIsoCode } = phoneDataRef.current;
+const { mobile, country, countryIsoCode } = phoneDataRef.current;
   async function handleSubmit() {
     clearError();
     let photo;
@@ -65,7 +64,7 @@ export default function AddNewEmployee({
     // const mobileNumber = document.querySelector<HTMLInputElement>(
     //   "[name='mobileNumber']"
     // )?.value;
-
+    
     const mobileNumber = country && mobile ? `${country}${mobile}` : mobile || ""
     const address =
       document.querySelector<HTMLInputElement>("[name='address']")?.value;
@@ -130,8 +129,8 @@ export default function AddNewEmployee({
     //   return;
     // }
 
-
-    if (!mobile || mobile.length < 10) {
+   
+    if (!mobile ||  mobile.length < 10) {
       showError({
         field: "mobile",
         message: "Please enter a valid phone number (at least 10 digits).",
@@ -257,7 +256,7 @@ export default function AddNewEmployee({
     setOpen(false);
   };
 
-
+ 
   return (
     <div className="">
       <Dialog
@@ -285,7 +284,7 @@ export default function AddNewEmployee({
           )}
         </DialogTrigger>
         <DialogContent className="max-h-full max-w-xl grid-rows-[auto,1fr,auto]">
-          <div className="mt-8 flex items-center justify-between px-2 md:px-4">
+          <div className="mt-8 flex items-center justify-between px-4">
             <div>
               <h1 className="text-2xl font-bold tracking-tight text-slate-600 dark:text-slate-100">
                 Add Employee
@@ -342,11 +341,10 @@ export default function AddNewEmployee({
 
           <FormError />
 
-          <div className="space-y-4 overflow-y-auto py-2 px-2 md:px-4 thin-scrollbar scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-5 overflow-y-auto py-2 px-4 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent">
+            <div className="grid grid-cols-2 gap-4">
               <SlimInput
                 name="firstName"
-                placeholder="Enter first name"
                 required
                 onChange={(e: any) => {
                   const value = e.target.value;
@@ -360,13 +358,12 @@ export default function AddNewEmployee({
                   }
                 }}
               />
-              <SlimInput name="lastName" placeholder="Enter last name" />
+              <SlimInput name="lastName" />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <SlimInput
                 name="email"
-                placeholder="Enter email address"
                 required
                 onChange={(e: any) => {
                   const value = e.target.value;
@@ -404,31 +401,28 @@ export default function AddNewEmployee({
               /> */}
 
               <PhoneInput
-                label="Mobile"
-                placeholder="1234567890"
-                required={false}
-                // value={mobile}
-                onChange={(phone, code, isoCode) => {
-                  phoneDataRef.current = {
-                    mobile: phone,
-                    country: code,
-                    countryIsoCode: isoCode || ""
-                  };
-                  clearError()
-                }}
-              />
+                          label="Mobile"
+                          placeholder="1234567890"
+                          required={false}
+                          // value={mobile}
+                          onChange={(phone, code, isoCode) => {
+                            phoneDataRef.current = {
+                              mobile: phone,
+                              country: code,
+                              countryIsoCode: isoCode || ""
+                            };
+                            clearError()
+                          }}
+                        />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <div className="mb-1">
-                <label htmlFor="password" className={cn(
-                  "flex items-center gap-1 text-base font-medium text-slate-700 dark:text-slate-200 transition-colors duration-300",
-                )}>
+                <label htmlFor="password" className="mb-1 px-2 font-medium">
                   Password <span className="text-[#E9405F]">*</span>
                 </label>
                 <Password
                   name="password"
-                  placeholder="Enter password"
                   required={true}
                   className="w-full rounded-sm border border-slate-400 bg-background px-2 py-0.5 leading-6 outline-none"
                 />
@@ -436,15 +430,12 @@ export default function AddNewEmployee({
               <div className="mb-1">
                 <label
                   htmlFor="confirmPassword"
-                  className={cn(
-                    "flex items-center gap-1 text-base font-medium text-slate-700 dark:text-slate-200 transition-colors duration-300",
-                  )}
+                  className="mb-1 px-2 font-medium"
                 >
                   Confirm Password <span className="text-[#E9405F]">*</span>
                 </label>
                 <Password
                   name="confirmPassword"
-                  placeholder="Enter confirm password"
                   required={true}
                   className="w-full rounded-sm border border-slate-400 bg-background px-2 py-0.5 leading-6 outline-none"
                 />
@@ -455,17 +446,15 @@ export default function AddNewEmployee({
               <SlimInput
                 rootClassName="flex-1"
                 name="address"
-                placeholder="Enter address"
                 required={false}
               />
             </div>
 
             <div className="grid grid-cols-3 gap-3">
-              <SlimInput name="city" placeholder="city" required={false} />
-              <SlimInput name="state" placeholder="state" required={false} />
+              <SlimInput name="city" required={false} />
+              <SlimInput name="state" required={false} />
               <SlimInput
                 name="zip"
-                placeholder="zip code"
                 required={false}
                 onChange={(e: any) => {
                   const value = e.target.value;
@@ -482,11 +471,10 @@ export default function AddNewEmployee({
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <SlimInput name="companyName" placeholder="Enter company name" defaultValue={companyName?.name} />
+              <SlimInput name="companyName" defaultValue={companyName?.name} />
               <SlimInput
                 name="commission"
                 label="Commission %"
-                placeholder="commission"
                 type="number"
                 required={false}
                 onChange={(e: any) => {
@@ -530,7 +518,7 @@ export default function AddNewEmployee({
           <DialogFooter className="px-4">
             <DialogClose
               className="
-                rounded-xl mt-2 sm:mt-0 px-5 py-2.5 text-sm font-medium text-slate-500 
+                rounded-xl px-5 py-2.5 text-sm font-medium text-slate-500 
                 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
                 transition-colors border
               "

@@ -2,31 +2,6 @@ import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
 
-/**
- * @swagger
- * /api/infobip/voice/incoming:
- *   post:
- *     summary: Infobip incoming call webhook
- *     tags: [Infobip]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               from:
- *                 type: string
- *               to:
- *                 type: string
- *               callId:
- *                 type: string
- *     responses:
- *       200:
- *         description: Incoming call processed
- *       400:
- *         description: Missing parameters
- */
 export async function POST(request: Request) {
   try {
     const body = await request.json();

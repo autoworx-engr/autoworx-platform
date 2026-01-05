@@ -69,10 +69,10 @@ export default function DirectShareButton() {
   }
   if (!client) return null;
   return (
-    <div className="flex items-center gap-x-3">
+    <div className="flex items-center gap-x-4">
       <button
         className={cn(
-          "flex w-full items-center justify-center gap-2.5 whitespace-nowrap rounded-xl bg-slate-50 px-4 py-2.5 text-sm font-bold text-slate-500 ring-1 ring-inset ring-slate-200 transition-all hover:bg-[#6571FF]/5 hover:text-[#6571FF] hover:ring-[#6571FF]/30 disabled:opacity-40 disabled:pointer-events-none active:scale-95"
+          "flex w-full items-center justify-center gap-2 text-nowrap  border-slate-600 p-2 text-center text-sm disabled:opacity-35 border rounded-md bg-slate-100 px-3 py-2 hover:bg-slate-200 border-none"
         )}
         onClick={() =>
           startEmailTransition(() => handleSubmit({ type: "Email" }))
@@ -80,12 +80,12 @@ export default function DirectShareButton() {
         disabled={pendingEmail}
       >
         {pendingEmail ? (
-          <div className="flex h-5 items-center justify-center">
-            <RotatingLines strokeColor="#6571FF" strokeWidth="5" width="20" />
+          <div className="flex items-center justify-center h-6">
+            <RotatingLines strokeColor="#fff" strokeWidth="5" width="25" />
           </div>
         ) : (
           <>
-            <Send size={16} strokeWidth={2.5} />
+            <Send size={18} />
             <span>Email</span>
           </>
         )}
@@ -93,18 +93,18 @@ export default function DirectShareButton() {
 
       <button
         className={cn(
-          "flex w-full items-center justify-center gap-2.5 whitespace-nowrap rounded-xl bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-500 ring-1 ring-inset ring-slate-200 transition-all hover:bg-[#6571FF]/5 hover:text-[#6571FF] hover:ring-[#6571FF]/30 disabled:opacity-40 disabled:pointer-events-none active:scale-95"
+          "flex w-full items-center justify-center gap-2 text-nowrap  border-slate-600 p-2 text-center text-sm disabled:opacity-35 border rounded-md bg-slate-100 px-3 py-2 hover:bg-slate-200 border-none"
         )}
         onClick={() => startSmsTransition(() => handleSubmit({ type: "SMS" }))}
         disabled={pendingSms}
       >
         {pendingSms ? (
-          <div className="flex h-5 items-center justify-center">
-            <RotatingLines strokeColor="#6571FF" strokeWidth="5" width="20" />
+          <div className="flex items-center justify-center h-6">
+            <RotatingLines strokeColor="#5622f2" strokeWidth="5" width="25" />
           </div>
         ) : (
           <>
-            <Send size={16} strokeWidth={2.5} />
+            <Send size={18} />
             <span>SMS</span>
           </>
         )}

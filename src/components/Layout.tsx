@@ -130,24 +130,16 @@ const navbarList = [
       },
     ],
   },
+];
 
-   {
+const mobileNav = [
+  ...navbarList, // Existing navList
+  {
     title: "Visualization",
     icon: "/icons/navbar/visualization.svg",
     link: "/dashboard/visualization",
     path: "/dashboard/visualization",
   },
-  
-];
-
-const mobileNav = [
-  ...navbarList, // Existing navList
-  // {
-  //   title: "Visualization",
-  //   icon: "/icons/navbar/visualization.svg",
-  //   link: "/dashboard/visualization",
-  //   path: "/dashboard/visualization",
-  // },
   {
     title: "Settings", // Add settings here
     icon: "/icons/navbar/Settings.svg", // Ensure this icon exists

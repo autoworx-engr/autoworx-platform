@@ -1,37 +1,6 @@
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 
-/**
- * @swagger
- * /api/twilio/call-recording:
- *   post:
- *     summary: Twilio call recording webhook
- *     tags: [Twilio]
- *     requestBody:
- *       required: true
- *       content:
- *         application/x-www-form-urlencoded:
- *           schema:
- *             type: object
- *             properties:
- *               CallStatus:
- *                 type: string
- *               CallDuration:
- *                 type: integer
- *               RecordingUrl:
- *                 type: string
- *     parameters:
- *       - in: query
- *         name: callId
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Recording received
- *       400:
- *         description: Missing callId
- */
 export async function POST(request: Request) {
   try {
     const { searchParams } = new URL(request.url);

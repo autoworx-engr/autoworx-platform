@@ -92,31 +92,24 @@ export function Filter({ startDate, endDate, status }: TFilterProps) {
   };
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger className="hidden h-10 items-center gap-2 rounded-xl bg-white px-4 text-sm font-bold text-slate-500 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-50 hover:ring-[#6571FF]/30 active:scale-95 md:flex">
+      <DialogTrigger className="hidden h-10 items-center gap-2 rounded-md border-2 border-slate-400 p-1 md:flex">
         <Image
           src="/icons/Filter.svg"
           alt="Filter"
-          width={18}
-          height={18}
-          className="cursor-pointer opacity-70"
+          width={20}
+          height={20}
+          className="cursor-pointer"
         />
         Customize
       </DialogTrigger>
-
-      <DialogContent form className="max-w-xl overflow-hidden rounded-[1.5rem] border-none bg-white p-0 shadow-2xl">
-        <DialogHeader className="bg-slate-50/50 px-6 py-4">
-          <DialogTitle className="text-lg font-bold tracking-tight text-slate-500">
-            Customize
-          </DialogTitle>
+      <DialogContent form>
+        <DialogHeader>
+          <DialogTitle>Customize</DialogTitle>
         </DialogHeader>
-
-        <div className="grid grid-cols-2 gap-6 px-6">
-          {/* Start Date */}
-          <div className="space-y-1.5">
-            <label className="ml-1 text-sm font-semibold tracking-wider text-slate-600">
-              Start Date
-            </label>
-            <div className="flex items-center gap-2">
+        <div className="grid grid-cols-2 gap-8">
+          <div>
+            <label className="mb-1 px-2 font-medium">Start Date</label>
+            <div className="flex">
               <input
                 name="startDate"
                 id="startDate"
@@ -130,67 +123,65 @@ export function Filter({ startDate, endDate, status }: TFilterProps) {
                       .format("YYYY-MM-DD")
                   );
                 }}
-                className={cn(slimInputClassName, "h-10 w-full rounded-lg border-none bg-slate-50 px-3 text-sm ring-1 ring-slate-200 transition-all focus:bg-white focus:ring-2 focus:ring-[#6571FF]/30 outline-none")}
+                className={slimInputClassName}
               />
               <button
                 type="button"
                 onClick={() => setStart("")}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-300 transition-colors hover:bg-rose-50 hover:text-rose-500"
+                className="rounded-full p-2 transition-colors hover:bg-red-200 hover:text-red-500"
               >
-                <X size={18} />
+                <X size={20} />
               </button>
             </div>
           </div>
 
-          {/* End Date */}
-          <div className="space-y-1.5">
-            <label className="ml-1 text-sm font-semibold tracking-wider text-slate-600">
-              End Date
-            </label>
-            <div className="flex items-center gap-2">
+          <div>
+            <label className="mb-1 px-2 font-medium">End Date</label>
+            <div className="flex">
               <input
                 name="endDate"
                 id="endDate"
                 type="date"
-                onChange={(event) => setEnd(event.currentTarget.value)}
+                onChange={(event) => {
+                  setEnd(event.currentTarget.value);
+                }}
                 value={end}
                 min={start}
-                className={cn(slimInputClassName, "h-10 w-full rounded-lg border-none bg-slate-50 px-3 text-sm ring-1 ring-slate-200 transition-all focus:bg-white focus:ring-2 focus:ring-[#6571FF]/30 outline-none")}
+                // max={today}
+                className={slimInputClassName}
               />
               <button
                 type="button"
-                onClick={() => setEnd("")}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-300 transition-colors hover:bg-rose-50 hover:text-rose-500"
+                onClick={() => {
+                  setEnd("");
+                }}
+                className="rounded-full p-2 transition-colors hover:bg-red-200 hover:text-red-500"
               >
-                <X size={18} className="cursor-pointer" />
+                <X size={20} />
               </button>
             </div>
           </div>
-
-          {/* Status Section */}
-          <div className="col-span-full space-y-2">
-            <label className="ml-1 text-sm font-semibold tracking-wider text-slate-600">
-              Status
-            </label>
-            <div className="relative rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
-              <div className="flex flex-col gap-4">
-                <div className="relative flex items-center">
-                  <Search size={16} className="absolute left-3 text-slate-400 z-50" />
+          <div className="col-span-full">
+            <label className="mb-1 px-2 font-medium">Status</label>
+            <div className="relative rounded border border-solid border-slate-500 p-2">
+              <div className="flex flex-col gap-x-2">
+                <div>
+                  <Search size={16} className="absolute m-2" />
                   <input
                     type="search"
                     value={statusSearch}
-                    onChange={(event) => setStatusSearch(event.currentTarget.value)}
-                    className={cn(slimInputClassName, "h-9 w-1/2 rounded-lg border-none bg-white ps-9 text-sm ring-1 ring-slate-200 focus:ring-2 focus:ring-[#6571FF]/30 outline-none")}
+                    onChange={(event) =>
+                      setStatusSearch(event.currentTarget.value)
+                    }
+                    className={cn(slimInputClassName, "w-1/2 ps-8")}
                   />
                 </div>
-
-                {/* Selected Statuses */}
-                <div className="flex flex-wrap gap-2">
+                <div className="mt-2 flex flex-wrap gap-2">
                   {statuses?.map((status) => (
                     <button
                       key={status.id}
                       type="button"
-                      className="flex items-center gap-1.5 rounded-lg px-2.5 pt-1 pb-1.5 mb-2 text-sm font-semibold shadow-sm ring-1 ring-inset ring-black/5 transition-transform active:scale-95"
+                      className="my-1 flex cursor-default items-center gap-x-1 rounded px-2"
                       style={{
                         color: status.textColor || undefined,
                         backgroundColor: status.bgColor || undefined,
@@ -198,27 +189,24 @@ export function Filter({ startDate, endDate, status }: TFilterProps) {
                     >
                       {status.title}
                       <XCircle
-                        onClick={(e) => {
-                          e.stopPropagation();
+                        onClick={() => {
                           setStatuses((prev) =>
                             prev ? prev.filter((s) => s.id !== status.id) : []
                           );
                         }}
-                        size={16}
-                        className="cursor-pointer"
+                        size={18}
+                        className="cursor-pointer text-red-400"
                       />
                     </button>
                   ))}
                 </div>
               </div>
-
-              {/* Search Suggestions */}
-              <div className="flex flex-wrap gap-2 border-t border-slate-200 pt-4">
+              <div className="mt-2 flex flex-wrap gap-2">
                 {searchedStatuses.map((x) => (
                   <button
                     type="button"
                     key={x.id}
-                    className="rounded-lg px-2.5 pt-1 pb-1.5 text-sm font-semibold transition-all hover:brightness-95 active:scale-95 shadow-sm"
+                    className="rounded px-2"
                     style={{
                       color: x.textColor || undefined,
                       backgroundColor: x.bgColor || undefined,
@@ -239,14 +227,13 @@ export function Filter({ startDate, endDate, status }: TFilterProps) {
             </div>
           </div>
         </div>
-
-        <DialogFooter className="bg-slate-50/50 p-4">
+        <DialogFooter>
           <Submit
-            className="mx-auto flex h-10 items-center gap-2 rounded-xl bg-[#6571FF] px-8 text-sm font-bold text-white shadow-lg shadow-[#6571FF]/25 transition-all hover:scale-[1.02] active:scale-95"
+            className="mx-auto flex items-center gap-2 rounded-md bg-[#6571FF] px-4 py-1 text-white"
             formAction={handleFilter}
           >
             <Funnel size={16} />
-            Filter Results
+            Filter
           </Submit>
         </DialogFooter>
       </DialogContent>

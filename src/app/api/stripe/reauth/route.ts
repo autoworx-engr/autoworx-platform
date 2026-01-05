@@ -3,26 +3,6 @@ import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
-/**
- * @swagger
- * /api/stripe/reauth:
- *   get:
- *     summary: Get Stripe reauth URL
- *     tags: [Stripe]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: companyId
- *         required: true
- *         schema:
- *           type: integer
- *     responses:
- *       200:
- *         description: Redirects to Stripe account onboarding
- *       400:
- *         description: Missing Company ID or account not found
- */
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const companyId = searchParams.get("companyId");
@@ -30,7 +10,7 @@ export async function GET(req: Request) {
   if (!companyId) {
     return Response.json(
       { success: false, message: "Missing Company ID" },
-      { status: 400 }
+      { status: 400 },
     );
   }
   const company = await db.company.findUnique({
@@ -41,7 +21,7 @@ export async function GET(req: Request) {
   if (!company?.stripeAccountId) {
     return Response.json(
       { success: false, error: "Stripe account not found" },
-      { status: 400 }
+      { status: 400 },
     );
   }
   try {

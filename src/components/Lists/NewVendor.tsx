@@ -33,7 +33,7 @@ export default function NewVendor({
   const [companyName, setCompanyName] = useState("");
   const { showError, clearError } = useFormErrorStore();
 
-  const phoneDataRef = useRef({
+    const phoneDataRef = useRef({
     mobile: "",
     country: "",
     countryIsoCode: ""
@@ -179,18 +179,17 @@ export default function NewVendor({
 
       <DialogContent className="max-h-full max-w-xl grid-rows-[auto,1fr,auto]">
         <DialogHeader>
-          <DialogTitle className="text-slate-600">Add New Vendor</DialogTitle>
+          <DialogTitle>Add New Vendor</DialogTitle>
         </DialogHeader>
 
         <FormError />
 
-        <div className="grid gap-2 overflow-y-auto sm:grid-cols-2 px-1">
-          <SlimInput id="contactName" name="contactName" placeholder="Enter contact name" />
+        <div className="grid gap-2 overflow-y-auto sm:grid-cols-2">
+          <SlimInput id="contactName" name="contactName" />
           <div className="space-y-1">
             <SlimInput
               id="companyName"
               name="companyName"
-              placeholder="Enter company"
               required
               value={companyName}
               maxLength={50}
@@ -239,24 +238,23 @@ export default function NewVendor({
             }}
           /> */}
 
-          <PhoneInput
-            label="Phone"
-            placeholder="1234567890"
-            required={false}
-            // value={mobile}
-            onChange={(phone, code, isoCode) => {
-              phoneDataRef.current = {
-                mobile: phone,
-                country: code,
-                countryIsoCode: isoCode || ""
-              };
-              clearError()
-            }}
-          />
+           <PhoneInput
+                                    label="Phone"
+                                    placeholder="1234567890"
+                                    required={false}
+                                    // value={mobile}
+                                    onChange={(phone, code, isoCode) => {
+                                      phoneDataRef.current = {
+                                        mobile: phone,
+                                        country: code,
+                                        countryIsoCode: isoCode || ""
+                                      };
+                                      clearError()
+                                    }}
+                                  />
           <SlimInput
             id="email"
             name="email"
-            placeholder="Enter email address"
             required={false}
             onChange={(e) => {
               const value = e.target.value;
@@ -270,32 +268,31 @@ export default function NewVendor({
               }
             }}
           />
-          <SlimInput id="address" name="address" required={false} placeholder="Street address" />
-          <SlimInput id="city" name="city" required={false} placeholder="City" />
-          <SlimInput id="state" name="state" required={false} placeholder="State" />
-          <SlimInput
-            id="zip"
-            name="zip"
-            placeholder="Zip Code"
-            required={false}
-            onChange={(e) => {
-              const value = e.target.value;
-              if (value && !/^\d*$/.test(value)) {
-                showError({
-                  field: "zip",
-                  message: "Zip code should contain only numbers.",
-                });
-              } else {
-                clearError();
-              }
-            }}
-          />
-
+          <SlimInput id="address" name="address" required={false} />
+          <div className="flex flex-col gap-3 lg:flex-row">
+            <SlimInput id="city" name="city" required={false} />
+            <SlimInput id="state" name="state" required={false} />
+            <SlimInput
+              id="zip"
+              name="zip"
+              required={false}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value && !/^\d*$/.test(value)) {
+                  showError({
+                    field: "zip",
+                    message: "Zip code should contain only numbers.",
+                  });
+                } else {
+                  clearError();
+                }
+              }}
+            />
+          </div>
           <div className="space-y-2 sm:col-span-2">
             <SlimInput
               id="website"
               name="website"
-              placeholder="Enter website URL"
               required={false}
               onChange={(e) => {
                 const value = e.target.value;
@@ -314,7 +311,7 @@ export default function NewVendor({
                 }
               }}
             />
-            <SlimTextarea id="notes" name="notes" required={false} placeholder="Additional notes" />
+            <SlimTextarea id="notes" name="notes" required={false} />
           </div>
         </div>
 

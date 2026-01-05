@@ -10,26 +10,6 @@ import os from "os";
 
 const pump = promisify(pipeline);
 
-/**
- * @swagger
- * /api/communication/client:
- *   get:
- *     summary: Get client communication history
- *     tags: [Communication]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: clientId
- *         required: true
- *         schema:
- *           type: integer
- *     responses:
- *       200:
- *         description: Client emails and attachments
- *       400:
- *         description: Client not found or missing parameters
- */
 export async function GET(request: NextRequest) {
   try {
     const url = new URL(request.url);

@@ -3,35 +3,6 @@ import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
 
-/**
- * @swagger
- * /api/infobip/voice/make-call:
- *   post:
- *     summary: Make outgoing call via Infobip
- *     tags: [Infobip]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               to:
- *                 type: string
- *               companyId:
- *                 type: integer
- *               clientId:
- *                 type: integer
- *     responses:
- *       200:
- *         description: Call initiated
- *       400:
- *         description: Missing parameters or config not found
- *       500:
- *         description: Server error
- */
 export async function POST(request: NextRequest) {
   try {
     const { to, companyId, clientId } = await request.json();

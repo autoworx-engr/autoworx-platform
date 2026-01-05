@@ -7,31 +7,6 @@ import { updateNewEmailChatTrack } from "@/actions/communication/client/chat-tra
 import sendClientMailOrSMSNotify from "@/lib/pusher/client-conversation-notify";
 import { updatePipelineAutomationTrigger } from "@/actions/automation/pipeline/triggerPipelineAutomation";
 
-/**
- * @swagger
- * /api/mailgun/receive:
- *   post:
- *     summary: Mailgun email webhook
- *     tags: [Mailgun]
- *     requestBody:
- *       required: true
- *       content:
- *         multipart/form-data:
- *           schema:
- *             type: object
- *             properties:
- *               recipient:
- *                 type: string
- *               sender:
- *                 type: string
- *               subject:
- *                 type: string
- *     responses:
- *       200:
- *         description: Email received and processed
- *       400:
- *         description: Invalid email data
- */
 export async function POST(request: Request) {
   try {
     const contentType = request.headers.get("content-type") || "";

@@ -27,7 +27,6 @@ import FormError from "../FormError";
 import Submit from "../Submit";
 import { useEstimateCreateStore } from "@/stores/estimate-create";
 import { Activity, ChevronUp, Palette, Search, X } from "lucide-react";
-import { cn } from "@/lib/cn";
 
 type SelectedColor = { textColor: string; bgColor: string } | null;
 
@@ -101,26 +100,26 @@ export function SelectStatus({
   const { due } = useEstimateCreateStore();
 
   return (
-    <div className="relative">
+    <div>
       <input type="hidden" name={name} value={status?.title ?? ""} />
       <DropdownMenu
         open={open}
         onOpenChange={(open) => {
-          /* Logic remains untouched */
+          // !open && setOpen && setOpen(open);
         }}
       >
         <DropdownMenuTrigger
-          className="flex h-9 items-center gap-2 rounded-lg px-4 py-1 text-sm font-semibold transition-all hover:brightness-95 disabled:opacity-50 ring-1 ring-inset ring-black/5 shadow-sm"
+          className="flex h-10 items-center gap-2 rounded-md border-2 border-gray-400 bg-slate-100 px-4 py-1"
           style={{
-            backgroundColor: status?.bgColor || "#FFF",
-            color: status?.textColor || "#64748B",
+            backgroundColor: status?.bgColor || undefined,
+            color: status?.textColor || undefined,
           }}
           onClick={() => {
             setOpen && setOpen(!open);
           }}
           disabled={isDelivered}
         >
-          <Activity size={16} strokeWidth={2.5} />
+          <Activity size={18} />
           {status?.title ?? "Status"}
         </DropdownMenuTrigger>
 
@@ -128,120 +127,126 @@ export function SelectStatus({
           side="bottom"
           align="start"
           sideOffset={8}
-          className="w-96 overflow-hidden rounded-2xl border-none bg-white p-0 shadow-[0_20px_50px_rgba(0,0,0,0.15)] ring-1 ring-slate-200"
+          className="space-y-1 p-0"
         >
-          {/* Search Header */}
-          <div className="bg-slate-50/50 p-3">
-            <div className="relative flex items-center">
-              <Search
-                size={14}
-                className="absolute left-3 text-slate-400"
-              />
-              <input
-                type="text"
-                placeholder="Search statuses..."
-                className="h-9 w-full rounded-xl border-none bg-white pl-9 pr-8 text-xs font-medium ring-1 ring-slate-200 transition-all focus:ring-2 focus:ring-[#6571FF]/30 outline-none"
-              />
-              <button
-                className="absolute right-2 flex h-6 w-6 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100"
-                onClick={() => setOpen && setOpen(!open)}
-              >
-                <ChevronUp size={14} />
-              </button>
-            </div>
+          {/* Search */}
+          <div className="relative m-2">
+            <Search
+              size={18}
+              className="absolute left-2 top-1/2 -translate-y-1/2 transform text-[#797979]"
+            />
+            <input
+              type="text"
+              placeholder="Search"
+              className="w-full rounded-md border-2 border-slate-400 p-1 pl-6 pr-10 focus:outline-none"
+            />
+            <button
+              onClick={() => {
+                setOpen && setOpen(!open);
+              }}
+            >
+              <ChevronUp className="absolute right-2 top-1/2 -translate-y-1/2 transform text-[#797979]" />
+            </button>
           </div>
-
-          {/* List Area */}
-          <div className="max-h-[250px] overflow-y-auto thin-scrollbar p-2 space-y-1">
+          <div className="space-y-1">
             {filteredShopStatus.map((statusItem) => (
               <div
                 key={statusItem.id}
                 onClick={() => {
-                  /* Logic remains untouched */
-                  if (statusItem.title === "Delivered" && due > 0) return errorToast("You cannot update this order to Delivered until all dues are cleared.");
-                  if (statusItem.title === "Delivered" && !isAllServicesCompleted) return errorToast("All services must be completed by Technicians before moving to delivered.");
+                  if (statusItem.title === "Delivered" && due > 0) {
+                    return errorToast(
+                      "You cannot update this order to Delivered until all dues are cleared."
+                    );
+                  }
+                  if (
+                    statusItem.title === "Delivered" &&
+                    !isAllServicesCompleted
+                  ) {
+                    return errorToast(
+                      "All services must be completed by Technicians before moving to delivered."
+                    );
+                  }
+
                   setStatus(statusItem);
                   setOpen && setOpen(false);
                 }}
-                className="group flex w-full cursor-pointer items-center justify-between rounded-lg px-3 py-2 text-sm font-bold transition-all hover:scale-[1.02] active:scale-95"
+                className="flex w-full cursor-pointer items-center justify-between rounded border-none px-4 py-2"
                 style={{
                   backgroundColor: statusItem?.bgColor ?? undefined,
                   color: statusItem?.textColor ?? undefined,
-                  boxShadow: statusItem?.id === status?.id ? `inset 0 0 0 2px ${status.textColor}40` : "none",
+                  border:
+                    statusItem?.id === status?.id
+                      ? `1px solid ${status.textColor}`
+                      : "",
                 }}
               >
                 {statusItem.title}
                 {!restrictedColumns.includes(statusItem.title) && (
                   <button
-                    className="rounded-md p-1 opacity-0 transition-opacity hover:bg-black/10 group-hover:opacity-100"
+                    className="px-2 text-lg text-[#66738C] hover:text-gray-900"
                     onClick={(event) => {
                       event.stopPropagation();
                       setStatusToDelete(statusItem.id);
                       setDeleteConfirmOpen(true);
                     }}
                   >
-                    <X size={14} />
+                    <X size={18} />
                   </button>
                 )}
               </div>
             ))}
           </div>
-
-          <div className="border-t border-slate-100 p-2">
-            <FormError />
-            <QuickAddForm
-              onSuccess={(status) => {
-                setStatus(status);
-                if (setOpen) setOpen(false);
-              }}
-              setPickerOpen={setPickerOpen}
-              selectedColor={selectedColor}
-            />
-
-            {pickerOpen && (
-              <div className="mt-2 grid grid-cols-4 gap-2 rounded-xl bg-slate-50 p-2 ring-1 ring-inset ring-slate-200">
-                {INVOICE_COLORS.map((color, index) => (
-                  <button
-                    key={index}
-                    onClick={() => {
-                      setSelectedColor({
-                        textColor: color.textColor,
-                        bgColor: color.bgColor,
-                      });
-                    }}
-                    style={{
-                      backgroundColor: color.bgColor,
-                      color: color.textColor,
-                    }}
-                    className={cn(
-                      "flex h-8 items-center justify-center rounded-lg text-[10px] font-black transition-all hover:scale-110 shadow-sm",
-                      selectedColor?.textColor === color.textColor ? "ring-2 ring-offset-1 ring-slate-400" : ""
-                    )}
-                  >
-                    Aa
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          <FormError />
+          <QuickAddForm
+            onSuccess={(status) => {
+              setStatus(status);
+              if (setOpen) setOpen(false);
+              // setOpen(false);
+            }}
+            setPickerOpen={setPickerOpen}
+            selectedColor={selectedColor}
+          />
+          {pickerOpen && (
+            <div className="grid grid-cols-4 gap-2 p-2">
+              {INVOICE_COLORS.map((color, index) => (
+                <button
+                  key={index}
+                  onClick={() => {
+                    setSelectedColor({
+                      textColor: color.textColor,
+                      bgColor: color.bgColor,
+                    });
+                  }}
+                  style={{
+                    backgroundColor: color.bgColor,
+                    color: color.textColor,
+                    border:
+                      selectedColor?.textColor === color.textColor
+                        ? `1px solid ${color.textColor}`
+                        : "none",
+                  }}
+                  className="rounded-md p-2"
+                >
+                  Aa
+                </button>
+              ))}
+            </div>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
-
       {/* Confirmation Dialog */}
       <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
-        <DialogContent className="max-w-sm rounded-[2rem] border-none shadow-2xl">
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle className="text-center text-lg font-extrabold text-slate-800">Delete Status</DialogTitle>
+            <DialogTitle>Delete Status</DialogTitle>
           </DialogHeader>
-          <p className="text-center text-sm font-medium text-slate-500 px-4">
-            Are you sure you want to delete this status? This action cannot be undone.
-          </p>
-          <DialogFooter className="mt-4 flex gap-2 sm:justify-center">
-            <DialogClose className="flex-1 rounded-xl border-none bg-slate-100 py-2.5 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-200">
+          <p>Are you sure you want to delete this status?</p>
+          <DialogFooter>
+            <DialogClose className="rounded-lg border-2 border-slate-400 p-2">
               Cancel
             </DialogClose>
             <button
-              className="flex-1 rounded-xl bg-rose-500 py-2.5 text-sm font-bold text-white shadow-lg shadow-rose-500/25 transition-all hover:bg-rose-600 active:scale-95"
+              className="z-50 rounded-lg border bg-red-500 px-5 py-2 text-white hover:bg-red-600"
               onClick={handleDelete}
             >
               Delete
@@ -286,17 +291,16 @@ function QuickAddForm({
   }
 
   return (
-    <form ref={formRef} className="flex items-center gap-2 p-3 bg-slate-50/50 rounded-xl mt-2 ring-1 ring-inset ring-slate-100">
+    <form ref={formRef} className="flex gap-2 p-2">
       <input
         name="name"
         type="text"
         required
-        placeholder="New status name..."
-        className="h-10 flex-1 rounded-lg border-none bg-white px-3 text-sm font-medium ring-1 ring-slate-200 transition-all focus:ring-2 focus:ring-[#6571FF]/30 outline-none placeholder:text-slate-400"
+        className="flex-1 rounded-sm border border-solid border-black p-1"
       />
 
       <button
-        className="flex h-10 w-10 shrink-0 items-center text-lg justify-center rounded-lg bg-white text-slate-500 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-50 hover:text-[#6571FF] active:scale-95"
+        className="rounded bg-[#6470FF] p-2 text-white"
         onClick={() => setPickerOpen((prev: boolean) => !prev)}
         type="button"
       >
@@ -304,10 +308,11 @@ function QuickAddForm({
       </button>
 
       <Submit
-        className="h-10 shrink-0 rounded-lg bg-[#6571FF] px-4 text-xs font-bold uppercase tracking-tight text-white shadow-lg shadow-[#6571FF]/20 transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50"
+        className="rounded bg-slate-500 p-1 text-xs leading-3 text-white"
         formAction={handleSubmit}
       >
-        Add
+        Quick
+        <br /> Add
       </Submit>
     </form>
   );
