@@ -11,7 +11,7 @@ export default function Close() {
 
   return (
     <button
-      className="w-fit rounded-xl border border-slate-200 bg-white px-6 py-2.5 text-sm font-bold text-slate-600 transition-all hover:bg-slate-50 hover:text-slate-800 active:scale-95 active:bg-slate-100"
+      className="w-fit rounded-md border-2 border-slate-400 p-1 px-5"
       onClick={handleClose}
       type="button"
     >

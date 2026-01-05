@@ -3,26 +3,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
-/**
- * @swagger
- * /api/template/{id}:
- *   get:
- *     summary: Get invoice template by ID
- *     tags: [Template]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Invoice template with items
- *       404:
- *         description: Template not found
- */
 export async function GET(req: Request, context: { params: { id: string } }) {
   try {
     const { id } = context.params;

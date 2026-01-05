@@ -15,7 +15,6 @@ import { useFormErrorStore } from "@/stores/form-error";
 import { updateTemplate } from "@/actions/appointment/updateTemplate";
 import { useListsStore } from "@/stores/lists";
 import { AppointmentTemplateVariable } from "@/components/Lists/NewTemplate";
-import { SquarePen } from "lucide-react";
 
 export default function UpdateTemplate({
   id,
@@ -64,8 +63,8 @@ export default function UpdateTemplate({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button type="button" className="flex h-7 w-7 items-center justify-center rounded-md transition-all bg-white text-[#6571FF] active:scale-90">
-          <SquarePen size={16} strokeWidth={2} />
+        <button type="button" className="text-xs text-[#6571FF]">
+          Edit
         </button>
       </DialogTrigger>
 
@@ -74,10 +73,10 @@ export default function UpdateTemplate({
         form
       >
         <DialogHeader>
-          <DialogTitle className="px-1">Custom Template: Edit</DialogTitle>
+          <DialogTitle>Custom Template: Edit</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 overflow-y-auto px-1">
+        <div className="space-y-4 overflow-y-auto">
           <FormError />
 
           <SlimInput
@@ -100,23 +99,11 @@ export default function UpdateTemplate({
         </div>
 
         <DialogFooter>
-          <DialogClose className="
-                rounded-xl mt-2 sm:mt-0 px-5 py-2.5 text-sm font-medium text-slate-500 
-                hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
-                transition-colors border
-              ">
+          <DialogClose className="rounded-lg border-2 border-slate-400 p-2">
             Cancel
           </DialogClose>
           <Submit
-            className="
-                rounded-xl px-6 py-2.5 text-sm font-medium text-white
-                bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
-                shadow-lg shadow-indigo-500/30
-                hover:shadow-xl hover:shadow-indigo-500/40
-                hover:-translate-y-0.5 hover:scale-[1.02]
-                active:translate-y-0 active:scale-100
-                transition-all duration-200
-              "
+            className="rounded-lg border bg-[#6571FF] px-5 py-2 text-white"
             formAction={handleSubmit}
           >
             Save

@@ -1,6 +1,8 @@
 "use client";
 import { deleteLabor } from "@/actions/estimate/labor/deleteLabor";
 import { updateLabor } from "@/actions/estimate/labor/updateLabor";
+import SelectCategory from "@/components/Lists/SelectCategory";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   Dialog,
   DialogClose,
@@ -10,8 +12,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/Dialog";
-import SelectCategory from "@/components/Lists/SelectCategory";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -29,7 +29,7 @@ import { Category, Labor } from "@prisma/client";
 import { Pagination, Popconfirm } from "antd";
 import { SquarePen, Trash2 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import FilterBySearchBox from "../reporting/components/filter/FilterBySearchBox";
 import CannedFilterBySelection from "./CannedFilterBySelected";
 import NewLabor from "./NewLabor";
@@ -55,9 +55,6 @@ export default function CannedLabor({
     {}
   );
 
-  // Ref to scroll to top
-  const contentRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
     const filtered = labors.filter((row) => {
       const categoryName = row?.category?.name?.toLowerCase() || "";
@@ -65,7 +62,7 @@ export default function CannedLabor({
 
       const matchesSearch = laborSearch
         ? laborName.includes(laborSearch.toLowerCase()) ||
-          categoryName.includes(laborSearch.toLowerCase())
+        categoryName.includes(laborSearch.toLowerCase())
         : true;
 
       const matchesCategory = selectedCategory
@@ -87,14 +84,6 @@ export default function CannedLabor({
   const handlePageChange = (page: number, pageSize?: number) => {
     setCurrentPage(page);
     if (pageSize) setPageSize(pageSize);
-
-    // Scroll to top when page changes
-    if (contentRef.current) {
-      contentRef.current.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    }
   };
 
   const paginatedLabors = filteredData.slice(
@@ -124,7 +113,7 @@ export default function CannedLabor({
   };
 
   return (
-    <div ref={contentRef} className="h-full w-full flex flex-col">
+    <div className="h-full w-full flex flex-col">
       <section className="pb-4 border-b border-gray-200">
         <div className="flex items-center gap-x-4">
           <h3 className="text-2xl font-extrabold text-gray-800">
@@ -236,24 +225,6 @@ export default function CannedLabor({
             onChange={handlePageChange}
             showSizeChanger
             onShowSizeChange={handlePageChange}
-          />
-        </div>
-      )}
-
-      {/* Mobile View */}
-      {showPagination && (
-        <div className="flex justify-center lg:hidden flex-shrink-0 mt-4">
-          <Pagination
-            className="custom-pagination"
-            current={currentPage}
-            pageSize={pageSize}
-            // total={filteredData.length}
-            total={labors.length}
-            onChange={handlePageChange}
-            showSizeChanger
-            onShowSizeChange={handlePageChange}
-            simple={false}
-            size="small"
           />
         </div>
       )}

@@ -55,7 +55,7 @@ export default function UsersArea({
       )}
 
       {(!selectedUsersList || selectedUsersList.length === 0) && (
-        <CollaborationEmptyBox />
+        <CollaborationEmptyBox/>
       )}
     </div>
   );

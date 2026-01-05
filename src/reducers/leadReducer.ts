@@ -83,7 +83,7 @@ export function leadReducer<T>(
             const sourceColumn = state[sourceColumnIndex];
             const destinationColumn = state[destinationColumnIndex];
 
-            // Find the lead to drag
+            // Remove the lead from the source column
             const findDraggableLead = sourceColumn.leads.find(
                 lead => lead.id.toString() === draggableId
             );
@@ -92,60 +92,18 @@ export function leadReducer<T>(
                 return state; // If the lead is not found, do nothing
             }
 
-            // Check if dragging within the same column
-            const isSameColumn = sourceColumnIndex === destinationColumnIndex;
+            const updatedSourceLeads = sourceColumn.leads.filter(
+                lead => lead.id.toString() !== draggableId
+            );
 
-            if (isSameColumn) {
-                // Handle same column reordering
-                const updatedLeads = sourceColumn.leads.filter(
-                    lead => lead.id.toString() !== draggableId
-                );
-                
-                // Calculate new position based on old and new indices
-                let newIndex = destination.index;
-                if (source.index < destination.index) {
-                    newIndex = destination.index - 1;
-                }
-                
-                // Ensure newIndex is within bounds
-                newIndex = Math.max(0, Math.min(newIndex, updatedLeads.length));
-                
-                // Insert at new position
-                updatedLeads.splice(newIndex, 0, findDraggableLead);
-                
-                // Return new state with updated column
-                return state.map(column => {
-                    if (column.id === sourceColumn.id) {
-                        return {
-                            ...column,
-                            leads: updatedLeads,
-                        };
-                    }
-                    return column;
-                });
-            } else {
-                
-                // Remove the lead from the source column
-                const updatedSourceLeads = sourceColumn.leads.filter(
-                    lead => lead.id.toString() !== draggableId
-                );
-
-                // Create the new list for destination column
-                const updatedDestinationLeads = [...destinationColumn.leads];
-                
-                // Insert at destination index
-                let insertIndex = destination.index;
-                insertIndex = Math.max(0, Math.min(insertIndex, updatedDestinationLeads.length));
-                
-                // Insert the lead at the correct position
-                updatedDestinationLeads.splice(insertIndex, 0, {
-                    ...findDraggableLead,
-                    columnId: destinationColumn.id,
-                });
+            destinationColumn.leads.splice(0, 0, {
+                ...findDraggableLead,
+                columnId: destinationColumn.id,
+            });
 
                 const updatedDestinationColumn = {
                     ...destinationColumn,
-                    leads: updatedDestinationLeads,
+                    leads: destinationColumn.leads,
                     totalLeads: destinationColumn.totalLeads + 1,
                 };
 
@@ -155,16 +113,15 @@ export function leadReducer<T>(
                     totalLeads: sourceColumn.totalLeads - 1,
                 };
 
-                return state.map(column => {
-                    if (column.id === sourceColumn.id) {
-                        return updatedSourceColumn;
-                    }
-                    if (column.id === destinationColumn.id) {
-                        return updatedDestinationColumn;
-                    }
-                    return column;
-                });
-            }
+            return state.map(column => {
+                if (column.id === sourceColumn.id) {
+                    return updatedSourceColumn; // Update the source column
+                }
+                if (column.id === destinationColumn.id) {
+                    return updatedDestinationColumn; // Update the destination column
+                }
+                return column; // Return other columns unchanged
+            });
         }
 
         case actionTypes.REMOVE_LEAD: {

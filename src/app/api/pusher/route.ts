@@ -1,9 +1,6 @@
 import { authOptions } from "@/authOptions";
 import { db } from "@/lib/db";
-import {
-  sendInternalMessageNotification,
-  sendCollaborationMessageNotification,
-} from "@/lib/notification/communication-notify";
+import { sendInternalMessageNotification, sendCollaborationMessageNotification } from "@/lib/notification/communication-notify";
 import { getPusherInstance } from "@/lib/pusher/server";
 import { sendType } from "@/types/Chat";
 import { MessageSection } from "@prisma/client";
@@ -21,33 +18,6 @@ type TMessageDate = {
 
 const pusher = getPusherInstance();
 
-/**
- * @swagger
- * /api/pusher:
- *   post:
- *     summary: Send message via Pusher
- *     tags: [Messaging]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               to:
- *                 type: integer
- *               message:
- *                 type: string
- *               type:
- *                 type: string
- *     responses:
- *       200:
- *         description: Message sent
- *       401:
- *         description: Unauthorized
- */
 // POST /api/pusher/trigger
 // Trigger a message to the client
 // Body: { message, roomId }
@@ -63,36 +33,31 @@ export async function POST(req: Request) {
     }
 
     // Helper function to generate lastMessage text
-    const generateLastMessageText = (
-      message: string,
-      attachmentFiles: any[] | null
-    ) => {
+    const generateLastMessageText = (message: string, attachmentFiles: any[] | null) => {
       // If there's a text message, use it
       if (message && message.trim()) {
         return message;
       }
-
+      
       // If there are attachments but no text message, generate descriptive text
       if (attachmentFiles && attachmentFiles.length > 0) {
-        const imageCount = attachmentFiles.filter(
-          (file) => file.fileType && file.fileType.startsWith("image/")
+        const imageCount = attachmentFiles.filter(file => 
+          file.fileType && file.fileType.startsWith('image/')
         ).length;
         const otherFileCount = attachmentFiles.length - imageCount;
-
+        
         const parts = [];
         if (imageCount > 0) {
-          parts.push(`${imageCount} ${imageCount === 1 ? "image" : "images"}`);
+          parts.push(`${imageCount} ${imageCount === 1 ? 'image' : 'images'}`);
         }
         if (otherFileCount > 0) {
-          parts.push(
-            `${otherFileCount} ${otherFileCount === 1 ? "file" : "files"}`
-          );
+          parts.push(`${otherFileCount} ${otherFileCount === 1 ? 'file' : 'files'}`);
         }
-
-        return parts.join(" and ");
+        
+        return parts.join(' and ');
       }
-
-      return message || "";
+      
+      return message || '';
     };
 
     let channel = `user-${userId}`;
@@ -130,7 +95,7 @@ export async function POST(req: Request) {
             message: "User is not in the group",
             success: false,
           }),
-          { status: 400 }
+          { status: 400 },
         );
       }
       channel = `group-${to}`;
@@ -151,19 +116,19 @@ export async function POST(req: Request) {
     const isChatTrackExist = await db.chatTrack.findFirst({
       where: {
         OR: [
-          {
+          { 
             AND: [
-              { senderId: userId },
+              { senderId: userId }, 
               { receiverId: to as number },
-              { section: section },
-            ],
+              { section: section }
+            ]
           },
-          {
+          { 
             AND: [
-              { senderId: to as number },
+              { senderId: to as number }, 
               { receiverId: userId },
-              { section: section },
-            ],
+              { section: section }
+            ]
           },
         ],
       },
@@ -244,7 +209,7 @@ export async function POST(req: Request) {
     });
     // send the track last message for the user (sender)
     pusher.trigger(`track-${userId}`, "chat-track", { ...userChatTrack });
-
+    
     // send the track last message for the receiver as well (for real-time notification updates)
     if (type === sendType.User && to) {
       pusher.trigger(`track-${to}`, "chat-track", { ...userChatTrack });
@@ -260,16 +225,16 @@ export async function POST(req: Request) {
       });
     }
 
-    if (type === sendType.User && section === "collaboration" && to) {
+    if (type === sendType.User && section === "collaboration" && to) { 
       const receiver = await db.user.findUnique({
         where: { id: to },
-        select: { companyId: true },
+        select: { companyId: true }
       });
 
       const company = await db.company.findUnique({
         where: { id: receiver?.companyId },
-        select: { name: true },
-      });
+        select: { name: true }
+      })
       // send collaboration message notification
       // Send a notification to the user about the new message
       sendCollaborationMessageNotification({
@@ -287,7 +252,7 @@ export async function POST(req: Request) {
         attachments,
         newMessage: createdMessage,
         chatTrack: userChatTrack,
-      })
+      }),
     );
   } catch (e: any) {
     console.error(e);
@@ -295,7 +260,7 @@ export async function POST(req: Request) {
       JSON.stringify({ message: "Failed to send message", success: false }),
       {
         status: 500,
-      }
+      },
     );
   }
 }

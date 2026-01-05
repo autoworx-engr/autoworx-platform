@@ -7,29 +7,6 @@ import { NextRequest, NextResponse } from "next/server";
 
 const pusher = getPusherInstance();
 
-/**
- * @swagger
- * /api/twilio:
- *   post:
- *     summary: Twilio SMS webhook
- *     tags: [Twilio]
- *     requestBody:
- *       required: true
- *       content:
- *         application/x-www-form-urlencoded:
- *           schema:
- *             type: object
- *             properties:
- *               From:
- *                 type: string
- *               To:
- *                 type: string
- *               Body:
- *                 type: string
- *     responses:
- *       200:
- *         description: SMS received and processed
- */
 export async function POST(req: NextRequest) {
   try {
     let body;

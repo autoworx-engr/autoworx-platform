@@ -535,7 +535,7 @@ export default function AppointmentModalBody({
       startTime !== originalValues.startTime ||
       endTime !== originalValues.endTime ||
       JSON.stringify(assignedUsers) !==
-      JSON.stringify(originalValues.assignedUsers) ||
+        JSON.stringify(originalValues.assignedUsers) ||
       client?.id !== originalValues.client?.id ||
       vehicle?.id !== originalValues.vehicle?.id ||
       draft !== originalValues.draft ||
@@ -543,7 +543,7 @@ export default function AppointmentModalBody({
       confirmationTemplate?.id !== originalValues.confirmationTemplate?.id ||
       reminderTemplate?.id !== originalValues.reminderTemplate?.id ||
       confirmationTemplateStatus !==
-      originalValues.confirmationTemplateStatus ||
+        originalValues.confirmationTemplateStatus ||
       reminderTemplateStatus !== originalValues.reminderTemplateStatus ||
       JSON.stringify(times) !== JSON.stringify(originalValues.times)
     ) {
@@ -743,40 +743,28 @@ export default function AppointmentModalBody({
         <DialogTitle>{fromEdit ? "Edit" : "New"} Appointment</DialogTitle>
 
         {/* Options */}
-        <div className="flex items-center justify-self-center rounded-full bg-slate-100 p-1.5 shadow-inner ring-1 ring-slate-200/50">
+        <div className="flex items-center justify-self-center rounded-full bg-gray-300 p-1">
           <button
             type="button"
             className={cn(
-              "flex items-center justify-center rounded-full px-6 py-2 text-sm font-bold transition-all duration-300 ease-out",
-              tab === Tab.Schedule
-                ? "bg-white text-slate-600 shadow-sm ring-1 ring-slate-200"
-                : "text-slate-400 hover:text-slate-600 hover:bg-slate-200/50"
+              "rounded-full px-4 py-1 font-semibold",
+              tab === Tab.Schedule && "bg-background"
             )}
             onClick={() => setTab(Tab.Schedule)}
           >
-            <Calendar
-              className={cn("mr-2 transition-colors", tab === Tab.Schedule ? "text-slate-600" : "text-slate-400")}
-              size={18}
-              strokeWidth={2.5}
-            />
+            <Calendar className="mr-2 inline" size={24} />
             Schedule
           </button>
 
           <button
             type="button"
             className={cn(
-              "flex items-center justify-center rounded-full px-6 py-2 text-sm font-bold transition-all duration-300 ease-out",
-              tab === Tab.Reminder
-                ? "bg-white text-slate-600 shadow-sm ring-1 ring-slate-200"
-                : "text-slate-400 hover:text-slate-600 hover:bg-slate-200/50"
+              "rounded-full px-4 py-1 font-semibold",
+              tab === Tab.Reminder && "bg-background"
             )}
             onClick={() => setTab(Tab.Reminder)}
           >
-            <Bell
-              className={cn("mr-2 transition-colors", tab === Tab.Reminder ? "text-slate-600" : "text-slate-400")}
-              size={18}
-              strokeWidth={2.5}
-            />
+            <Bell className="mr-2 inline" size={24} />
             Reminder
           </button>
         </div>
@@ -810,8 +798,8 @@ export default function AppointmentModalBody({
 
             <div className="flex items-end gap-2">
               <label className="flex flex-col items-start">
-                <span className="mb-2 font-medium text-slate-600">
-                  Start Time <span className="text-[#E9405F]">*</span>
+                <span className="mb-1 text-sm font-medium text-gray-700">
+                  Start Time
                 </span>
                 <div>
                   <Select
@@ -819,31 +807,11 @@ export default function AppointmentModalBody({
                     onChange={(value) =>
                       handleTimeChange({ target: { value } } as any, "start")
                     }
-                    style={{ width: "100%" }}
-                    className="
-                        h-[38px] w-full 
-                        rounded-lg border-none 
-                        bg-slate-50/50 
-                        ring-1 ring-slate-200 
-                        transition-all duration-300 
-                        hover:bg-white hover:ring-[#6571FF]/80 hover:scale-[1.01] hover:shadow-sm
-                        focus-within:ring-2 focus-within:ring-[#6571FF]/40 focus:outline-none
-                        text-slate-600 font-medium thin-scrollbar
-                      "
-                    dropdownClassName="rounded-xl border-none shadow-2xl backdrop-blur-md bg-white/90"
+                    style={{ width: "100%", height: 34 }}
+                    className="border-slate-400 border rounded-md"
                   >
                     {timeOptions.map((time) => (
-                      <Option
-                        key={time.value}
-                        value={time.value}
-                        className="
-                            py-2 px-3 
-                            text-slate-600 
-                            transition-colors 
-                            hover:bg-[#6571FF]/10 
-                            hover:text-[#6571FF]
-                          "
-                      >
+                      <Option key={time.value} value={time.value}>
                         <p className="text-base text-gray-600"> {time.label}</p>
                       </Option>
                     ))}
@@ -852,39 +820,19 @@ export default function AppointmentModalBody({
               </label>
 
               <label className="flex flex-col items-start">
-                <span className="mb-2 font-medium text-slate-600">
-                  End Time <span className="text-[#E9405F]">*</span>
+                <span className="mb-1 text-sm font-medium text-gray-700">
+                  End Time
                 </span>
                 <Select
                   value={endTime}
                   onChange={(value) =>
                     handleTimeChange({ target: { value } } as any, "end")
                   }
-                  style={{ width: "100%" }}
-                  className="
-                        h-[38px] w-full 
-                        rounded-lg border-none 
-                        bg-slate-50/50 
-                        ring-1 ring-slate-200 
-                        transition-all duration-300 
-                        hover:bg-white hover:ring-[#6571FF]/80 hover:scale-[1.01] hover:shadow-sm
-                        focus-within:ring-2 focus-within:ring-[#6571FF]/40 focus:outline-none
-                        text-slate-600 font-medium thin-scrollbar
-                      "
-                  dropdownClassName="rounded-xl border-none shadow-2xl backdrop-blur-md bg-white/90"
+                  style={{ width: "100%", height: 34 }}
+                  className="border-slate-400 border rounded-md"
                 >
                   {timeOptions.map((time) => (
-                    <Option
-                      key={time.value}
-                      value={time.value}
-                      className="
-                            py-2 px-3 
-                            text-slate-600
-                            transition-colors 
-                            hover:bg-[#6571FF]/10 
-                            hover:text-[#6571FF]
-                          "
-                    >
+                    <Option key={time.value} value={time.value}>
                       {time.label}
                     </Option>
                   ))}
@@ -926,6 +874,7 @@ export default function AppointmentModalBody({
               );
             }}
           />
+          <br />
           {/* assign technicians */}
           <AssignUsers
             assignedUsers={assignedUsers.filter(
@@ -945,68 +894,60 @@ export default function AppointmentModalBody({
         </div>
 
         <div className="row-start-2 space-y-4 bg-background p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <SelectAppointmentClient
-              clientId={clientId}
-              fromLead={fromLead}
-              value={client}
-              setValue={setClient}
-              openDropdown={clientOpenDropdown}
-              setOpenDropdown={setClientOpenDropdown}
-              setIsAppointmentModalOpen={setIsAppointmentModalOpen}
-            />
+          <SelectAppointmentClient
+            clientId={clientId}
+            fromLead={fromLead}
+            value={client}
+            setValue={setClient}
+            openDropdown={clientOpenDropdown}
+            setOpenDropdown={setClientOpenDropdown}
+            setIsAppointmentModalOpen={setIsAppointmentModalOpen}
+          />
 
-            <SelectAppointmentVehicle
-              vehicleId={vehicleId}
-              fromLead={fromLead}
-              clientId={client?.id ?? clientId}
-              value={vehicle}
-              setValue={setVehicle}
-              openDropdown={vehicleOpenDropdown}
-              setOpenDropdown={setVehicleOpenDropdown}
-              setIsAppointmentModalOpen={setIsAppointmentModalOpen}
-            />
+          <SelectAppointmentVehicle
+            vehicleId={vehicleId}
+            fromLead={fromLead}
+            clientId={client?.id ?? clientId}
+            value={vehicle}
+            setValue={setVehicle}
+            openDropdown={vehicleOpenDropdown}
+            setOpenDropdown={setVehicleOpenDropdown}
+            setIsAppointmentModalOpen={setIsAppointmentModalOpen}
+          />
 
-            <Selector
-              label={(draft: string | null) =>
-                draft ? draft : "Draft Estimates"
-              }
-              openState={[draftOpen, setDraftOpen]}
-              newButton={
-                <button
-                  className="text-[#6571FF] disabled:text-zinc-400"
-                  onClick={() => {
-                    setDraft(customAlphabet("1234567890", 10)());
-                    setDraftOpen(false);
-                  }}
-                  disabled={!client || !vehicle}
-                  type="button"
-                >
-                  + New Draft Estimate
-                </button>
-              }
-              items={draftEstimates}
-              selectedItem={draft}
-              setSelectedItem={setDraft}
-              displayList={(item) => <p className="text-[#6571FF]">{item}</p>}
-              onSearch={(search) => {
-                return draftEstimates.filter((draft) =>
-                  draft.toLowerCase().includes(search.toLowerCase())
-                );
-              }}
-            />
-
-          </div>
+          <Selector
+            label={(draft: string | null) =>
+              draft ? draft : "Draft Estimates"
+            }
+            openState={[draftOpen, setDraftOpen]}
+            newButton={
+              <button
+                className="text-[#6571FF] disabled:text-zinc-400"
+                onClick={() => {
+                  setDraft(customAlphabet("1234567890", 10)());
+                  setDraftOpen(false);
+                }}
+                disabled={!client || !vehicle}
+                type="button"
+              >
+                + New Draft Estimate
+              </button>
+            }
+            items={draftEstimates}
+            selectedItem={draft}
+            setSelectedItem={setDraft}
+            displayList={(item) => <p className="text-[#6571FF]">{item}</p>}
+            onSearch={(search) => {
+              return draftEstimates.filter((draft) =>
+                draft.toLowerCase().includes(search.toLowerCase())
+              );
+            }}
+          />
 
           <textarea
             name="notes"
             placeholder="Notes"
-            className={cn("h-20 w-full rounded-md border border-slate-300 outline-none bg-background px-2 py-0.5 leading-6 transition-all duration-300 thin-scrollbar",
-              "bg-white/80 backdrop-blur-sm dark:bg-slate-900/50",
-              "text-slate-600 dark:text-slate-300 placeholder:text-slate-400",
-              "focus:border-[#6571FF]/60 focus:ring-2 focus:ring-[#6571FF]/40",
-              "disabled:opacity-50 disabled:cursor-not-allowed"
-            )}
+            className={cn(slimInputClassName, "border-2 border-slate-400")}
             rows={3}
             value={notes}
             onChange={(event) => setNotes(event.currentTarget.value)}
@@ -1089,11 +1030,7 @@ export default function AppointmentModalBody({
             <DialogClose asChild>
               <button
                 type="button"
-                className="
-                rounded-xl mt-2 sm:mt-0 px-5 py-2.5 text-sm font-medium text-slate-500 
-                hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
-                transition-colors border
-                "
+                className="rounded-md border px-4 py-1"
                 onClick={() => resetAll()}
               >
                 Cancel
@@ -1101,13 +1038,11 @@ export default function AppointmentModalBody({
             </DialogClose>
             <button
               type="button"
-              className={`rounded-xl px-6 py-2.5 text-sm font-medium text-white shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40
-                hover:-translate-y-0.5 hover:scale-[1.02]
-                active:translate-y-0 active:scale-100
-                transition-all duration-200 ${formChanged && !isSubmitting
-                  ? "bg-gradient-to-r from-[#6571FF] to-[#5a66ee] cursor-pointer"
+              className={`rounded-md border px-4 py-1 text-white ${
+                formChanged && !isSubmitting
+                  ? "bg-[#6571FF] cursor-pointer hover:bg-blue-600"
                   : "cursor-not-allowed bg-gray-400"
-                }`}
+              }`}
               onClick={handleSubmit}
               disabled={
                 !formChanged ||

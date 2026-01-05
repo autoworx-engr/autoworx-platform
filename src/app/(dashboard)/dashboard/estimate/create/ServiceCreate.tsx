@@ -9,7 +9,6 @@ import { Category } from "@prisma/client";
 import { create } from "mutative";
 import { useEffect, useState } from "react";
 import Close from "./CloseEstimate";
-import { cn } from "@/lib/cn";
 
 export default function ServiceCreate() {
   const { close, data } = useEstimatePopupStore();
@@ -113,67 +112,47 @@ export default function ServiceCreate() {
   }
 
   return (
-    <div className="flex flex-col gap-6 p-10 bg-white rounded-3xl">
-      <h3 className="w-full text-2xl font-bold text-slate-600 tracking-tight">
+    <div className="flex flex-col gap-5 p-10">
+      <h3 className="w-full text-xl font-semibold">
         {edit ? "Update Service" : "Add New Service"}
       </h3>
 
-      <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-600 ml-1">
-          Service Name
-        </label>
-        <input
-          type="text"
-          placeholder="Service Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className={cn(
-            "h-11 rounded-xl bg-white px-4 text-sm font-medium ring-1 ring-inset ring-slate-200 transition-all focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30",
-            data.service?.canned && "bg-slate-50 text-slate-600 cursor-not-allowed shadow-inner"
-          )}
-          readOnly={data.service?.canned}
-        />
-      </div>
+      <input
+        type="text"
+        placeholder="Service Name"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        className="rounded-md border-2 border-slate-400 p-2"
+        readOnly={data.service?.canned}
+      />
 
-      <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-600 ml-1">
-          Category
-        </label>
-        <SelectCategory
-          onCategoryChange={setCategory}
-          labelPosition="none"
-          categoryData={category}
-          categoryOpen={data.service?.canned ? false : categoryOpen}
-          setCategoryOpen={data.service?.canned ? undefined : setCategoryOpen}
-          className="max-w-full"
-        />
-      </div>
+      <SelectCategory
+        onCategoryChange={setCategory}
+        labelPosition="none"
+        categoryData={category}
+        categoryOpen={data.service?.canned ? false : categoryOpen}
+        setCategoryOpen={data.service?.canned ? undefined : setCategoryOpen}
+        className="max-w-full "
+      />
 
-      <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-500 ml-1">
-          Description
-        </label>
-        <textarea
-          placeholder="Provide details about this service..."
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          className="h-32 rounded-xl bg-white p-4 text-sm font-medium ring-1 ring-inset ring-slate-200 transition-all focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30 resize-none"
-        />
-      </div>
+      <textarea
+        placeholder="Description"
+        value={description}
+        onChange={(e) => {
+          setDescription(e.target.value);
+        }}
+        className="h-40 rounded-md border-2 border-slate-400 p-2"
+      />
 
-      <div className="mt-4 flex items-center justify-end gap-3">
-        <div className="contents child:px-6 child:py-2.5 child:rounded-xl child:text-sm child:font-bold child:transition-all">
-          <Close />
-          {/* Assuming Close is a component, ensure its internal classes match a 'ghost' style */}
-
-          <button
-            className="bg-[#6571FF] text-white shadow-lg shadow-[#6571FF]/30 hover:bg-[#525ceb] hover:shadow-[#6571FF]/40 active:scale-95 px-8 py-2.5 rounded-xl text-sm font-bold"
-            onClick={edit ? handleEdit : handleSubmit}
-            type="button"
-          >
-            {edit ? "Save Changes" : "Create Service"}
-          </button>
-        </div>
+      <div className="flex justify-center gap-5">
+        <Close />
+        <button
+          className="w-fit rounded-md bg-[#6571FF] p-1 px-5 text-white"
+          onClick={edit ? handleEdit : handleSubmit}
+          type="button"
+        >
+          Done
+        </button>
       </div>
     </div>
   );

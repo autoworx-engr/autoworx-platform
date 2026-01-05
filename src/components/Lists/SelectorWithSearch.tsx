@@ -87,8 +87,8 @@ export function SelectorWithSearch({
 
   const filteredOptions = searchTerm
     ? normalizedOptions.filter((opt) =>
-      opt.title.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+        opt.title.toLowerCase().includes(searchTerm.toLowerCase())
+      )
     : normalizedOptions;
 
   const handleSelect = (id: string) => {
@@ -122,42 +122,36 @@ export function SelectorWithSearch({
 
   return (
     <div className={cn("block", rootClassName)} ref={dropdownRef}>
-      <div
-        className={cn(
-          "mb-1 text-sm font-semibold text-slate-700 dark:text-slate-200",
-          labelClassName
-        )}
-      >
+      <div className={cn("mb-1 font-medium text-gray-500", labelClassName)}>
         {label ?? sentenceCase(name)}
-        {required && <span className="text-[#E9405F]"> *</span>}
+        {required && <span className="text-red-500"> *</span>}
       </div>
       <div className="relative">
         <button
           type="button"
           className={cn(
-            "flex w-full items-center justify-between rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-left text-sm leading-6 text-slate-700 dark:text-slate-200 outline-none transition-all duration-200",
-            "focus:ring-2 focus:ring-[#6571FF]/30 focus:border-[#6571FF] hover:border-[#6571FF] hover:shadow-md",
-            error && "border-red-500 focus:border-red-500 focus:ring-red-200",
-            disabled && "cursor-not-allowed bg-slate-100 text-slate-400 opacity-70 dark:bg-slate-800"
+            "flex w-full items-center justify-between rounded-sm border border-slate-400 bg-background px-2 py-0.5 text-left leading-6 outline-none",
+            error && "border-red-500 focus:border-red-500",
+            disabled && "cursor-not-allowed bg-gray-100 opacity-50"
           )}
           onClick={() => !disabled && setIsOpen(!isOpen)}
           id={name}
-          disabled={disabled}
+          disabled={disabled} // Also set native disabled for accessibility
         >
-          <span className={selectedLabel ? "" : "text-slate-400"}>
+          <span className={selectedLabel ? "" : "text-gray-400"}>
             {selectedLabel || placeholder}
           </span>
-          <ChevronDown className="text-slate-500 dark:text-slate-400" />
+          <ChevronDown className="text-gray-500" />
         </button>
 
         {isOpen && (
-          <div className="thin-scrollbar absolute z-20 mt-2 w-full overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-lg shadow-slate-200/60 dark:shadow-black/30">
+          <div className="thin-scrollbar absolute z-10 mt-1 w-full overflow-hidden rounded-sm border border-slate-200 bg-white shadow-md">
             {isSearch && (
-              <div className="sticky top-0 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-2">
+              <div className="sticky top-0 border-b border-slate-200 bg-white p-2">
                 <input
                   ref={searchInputRef}
                   type="text"
-                  className="w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 outline-none focus:border-[#6571FF] focus:ring-2 focus:ring-[#6571FF]/30"
+                  className="w-full rounded-sm border border-slate-300 px-2 py-1 text-sm outline-none focus:border-blue-500"
                   placeholder="Search..."
                   value={searchTerm}
                   required={required}
@@ -167,15 +161,15 @@ export function SelectorWithSearch({
                 />
               </div>
             )}
-            <div className="h-[240px] overflow-y-auto">
+            <div className="h-[200px] overflow-y-auto pl-2">
               {filteredOptions?.length > 0 ? (
                 filteredOptions?.map((opt) => (
                   <div
                     key={opt?.id}
                     className={cn(
-                      "cursor-pointer px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800",
+                      "cursor-pointer px-2 py-1 hover:bg-slate-100",
                       selectedValue === opt?.id.toString() &&
-                      "bg-[#6571FF]/10 text-[#6571FF] dark:text-[#8ea0ff]"
+                        "bg-blue-50 text-blue-700"
                     )}
                     onClick={() => handleSelect(opt?.id.toString())}
                   >
@@ -184,22 +178,22 @@ export function SelectorWithSearch({
                 ))
               ) : searchTerm ? (
                 <div
-                  className="cursor-pointer px-3 py-2 text-sm text-[#6571FF] hover:bg-slate-100 dark:hover:bg-slate-800"
+                  className="cursor-pointer px-2 py-1 hover:bg-slate-100 text-blue-600"
                   onClick={() => handleSelect(searchTerm)}
                 >
                   "{searchTerm}"
                 </div>
               ) : (
-                <div className="px-3 py-3 text-sm text-slate-500 dark:text-slate-400">
+                <div className="px-2 py-2 text-sm text-gray-500">
                   No matching options
                 </div>
               )}
             </div>
             {isClear && value && (
-              <div className="border-t border-slate-200 dark:border-slate-700 px-3 py-2 bg-slate-50 dark:bg-slate-900/60">
+              <div className="border-t border-slate-200 px-2 py-1">
                 <button
                   onClick={handleClear}
-                  className="w-full rounded-md bg-red-50 dark:bg-red-900/30 py-2 text-sm font-medium text-red-600 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/50"
+                  className="w-full rounded-sm bg-red-50 py-1 text-sm text-red-600 hover:bg-red-100"
                 >
                   Clear
                 </button>

@@ -5,7 +5,7 @@ import { DropdownMenuContent } from "@radix-ui/react-dropdown-menu";
 import { useEffect, useRef, useState } from "react";
 import { DropdownMenu, DropdownMenuTrigger } from "./DropdownMenu";
 import { useMediaQuery } from "react-responsive";
-import { ChevronDown, ChevronUp, Plus, Search, SquarePen, X } from "lucide-react";
+import { ChevronDown, ChevronUp, Search, SquarePen, X } from "lucide-react";
 
 export default function ItemSelector<T>({
   label,
@@ -132,10 +132,10 @@ export default function ItemSelector<T>({
     >
       <DropdownMenu open={open} onOpenChange={setOpen}>
         <div className="relative basis-full md:basis-96">
-          {/* Delete button - Floating Action */}
+          {/* Delete button */}
           {alwaysShowDeleteButton && !selected && (
             <button
-              className="absolute -right-2 -top-2 z-10 transition-transform hover:scale-110"
+              className="absolute -right-2 -top-2"
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
@@ -143,8 +143,8 @@ export default function ItemSelector<T>({
                 onDelete && onDelete();
               }}
             >
-              <div className="rounded-full bg-[#6571FF] p-1.5 text-white shadow-md shadow-[#6571FF]/40">
-                <X size={10} strokeWidth={3} />
+              <div className="rounded-full bg-[#6571FF] p-1 text-white">
+                <X size={10} />
               </div>
             </button>
           )}
@@ -153,78 +153,81 @@ export default function ItemSelector<T>({
             <DropdownMenuTrigger
               onClick={() => setOpen(true)}
               className={cn(
-                "flex h-11 w-full items-center justify-between rounded-xl bg-white px-4 ring-1 ring-inset ring-slate-200 transition-all hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30",
+                "flex h-10 w-full items-center justify-between rounded-md border-2 border-slate-400 px-4",
                 open && "invisible"
               )}
             >
               <p className="text-sm font-medium text-slate-400">{label}</p>
-              <ChevronDown size={18} className="text-slate-400" />
+              <ChevronDown className="text-[#797979]" />
             </DropdownMenuTrigger>
           ) : (
             <div
               className={cn(
-                "relative flex h-11 w-full items-center justify-between rounded-xl bg-slate-50/50 px-4 ring-1 ring-inset ring-[#6571FF]/20"
+                "relative flex h-10 w-full items-center justify-between rounded-md border-2 border-slate-400 px-4"
               )}
             >
-              <p className="text-sm font-semibold text-slate-700">
-                {/* @ts-ignore */}
-                {selected[display]}
+              <p className="text-sm font-medium text-slate-400">
+                {
+                  // @ts-ignore
+                  selected[display]
+                }
               </p>
 
-              <div className="flex items-center gap-1">
-                {/* Edit button */}
-                <button
-                  className="transition-transform hover:scale-110"
-                  type="button"
-                  onClick={() => {
-                    onEdit && onEdit();
-                  }}
-                >
-                  <div className="rounded-lg bg-[#6571FF] p-1.5 text-white shadow-sm shadow-[#6571FF]/30">
-                    <SquarePen size={12} strokeWidth={2.5} />
-                  </div>
-                </button>
+              {/* Edit button */}
+              <button
+                className="absolute -top-2 right-3.5"
+                type="button"
+                onClick={() => {
+                  onEdit && onEdit();
+                }}
+              >
+                <div className="rounded-full bg-[#6571FF] p-1 text-white">
+                  <SquarePen className="w-3 h-3 cursor-pointer" />
+                </div>
+              </button>
 
-                {/* Delete button */}
-                <button
-                  className="transition-transform hover:scale-110"
-                  type="button"
-                  onClick={() => {
-                    if (searchRef?.current?.value) searchRef.current.value = "";
-                    if (onSearch) {
-                      const results = onSearch("");
-                      setSearchText("");
-                      setItemIist(results);
-                    }
-                    onDelete && onDelete();
-                    setSelected(null);
-                  }}
-                >
-                  <div className="rounded-lg bg-slate-200 p-1.5 text-slate-600 transition-colors hover:bg-rose-100 hover:text-rose-600">
-                    <X size={12} strokeWidth={2.5} />
-                  </div>
-                </button>
-              </div>
+              {/* Delete button */}
+              <button
+                className="absolute -right-2 -top-2"
+                type="button"
+                onClick={() => {
+                  if (searchRef?.current?.value) searchRef.current.value = "";
+
+                  if (onSearch) {
+                    const results = onSearch("");
+                    setSearchText("");
+
+                    setItemIist(results);
+                  }
+
+                  onDelete && onDelete();
+                  setSelected(null);
+                }}
+              >
+                <div className="rounded-full bg-[#6571FF] p-1 text-white">
+                  <X size={10} />
+                </div>
+              </button>
             </div>
           )}
 
           <DropdownMenuContent
             align="start"
-            sideOffset={-44}
-            className="z-50 w-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-0 shadow-2xl ring-1 ring-black/5"
+            sideOffset={-40}
+            className="z-50 w-full rounded-lg border-2 border-slate-400 bg-background"
             style={{ minWidth: "var(--radix-popper-anchor-width)" }}
           >
-            {/* Search Header */}
-            <div className="relative border-b border-slate-100 bg-slate-50/50 p-2">
+            {/* Search */}
+            <div className="relative m-2">
               <Search
-                size={16}
-                className="absolute left-4 top-1/2 -translate-y-1/2 transform text-slate-400"
+                size={18}
+                className="absolute left-2 top-1/2 -translate-y-1/2 transform text-[#797979]"
               />
               <input
                 ref={searchRef}
                 type="text"
-                placeholder={`Search ${label}...`}
-                className="h-9 w-full rounded-lg bg-white pl-9 pr-10 text-sm font-medium ring-1 ring-slate-200 focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30"
+                placeholder="Search"
+                className="w-full rounded-md border-2 border-slate-400 p-1 pl-6 pr-10 focus:outline-none"
                 onChange={(e) => {
                   if (onSearch) {
                     const search = e.target.value;
@@ -234,45 +237,48 @@ export default function ItemSelector<T>({
                   }
                 }}
               />
-              <button
-                onClick={() => setOpen(false)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-              >
-                <ChevronUp size={16} />
+              <button onClick={() => setOpen(false)}>
+                <ChevronUp className="absolute right-2 top-1/2 -translate-y-1/2 transform text-[#797979]" />
               </button>
             </div>
 
-            {/* List Area */}
-            <div className="thin-scrollbar my-2 max-h-[200px] space-y-0.5 overflow-y-auto px-2">
+            <div className="thin-scrollbar mb-5 max-h-[160px] overflow-y-auto">
               {itemIist.map((item, i) => (
                 <button
+                  className="mx-auto my-1 flex w-[95%] cursor-pointer items-center justify-between gap-1 rounded-md border border-[#6571FF] p-1 text-[#6571FF] hover:bg-gray-100"
                   key={i}
                   type="button"
-                  className="flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium text-slate-600 transition-colors hover:bg-[#6571FF]/10 hover:text-[#6571FF]"
                   onClick={() => {
                     setSelected(item);
                     onSelect && onSelect(item);
                     setOpen(false);
-                    setDropdownsOpen(() => ({
-                      ...dropdownsOpen,
-                      [type]: [-1, -1],
-                    }));
+                    setDropdownsOpen(() => {
+                      return {
+                        ...dropdownsOpen,
+                        [type]: [-1, -1],
+                      };
+                    });
                   }}
                 >
-                  {/* @ts-ignore */}
-                  {item[display]}
+                  <p className="w-full text-left">
+                    {
+                      // @ts-ignore
+                      item[display]
+                    }
+                  </p>
                 </button>
               ))}
             </div>
-
-            {/* Footer "New" Button */}
-            <div className="bg-slate-50 p-2">
+            {/* New button */}
+            <div className="border-t-2 border-slate-400 p-2">
               <button
                 type="button"
-                className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-slate-300 py-2 text-xs font-bold uppercase tracking-wider text-slate-500 transition-all hover:border-[#6571FF] hover:bg-white hover:text-[#6571FF]"
                 onClick={(e) => {
                   e.stopPropagation();
-                  openPopup(type, { itemId: item.id, materialIndex });
+                  openPopup(type, {
+                    itemId: item.id,
+                    materialIndex,
+                  });
                   setOpen(false);
                   setDropdownsOpen({
                     SERVICE: [-1, -1],
@@ -282,7 +288,7 @@ export default function ItemSelector<T>({
                   });
                 }}
               >
-                <Plus size={14} /> New {label}
+                + New {label}
               </button>
             </div>
           </DropdownMenuContent>

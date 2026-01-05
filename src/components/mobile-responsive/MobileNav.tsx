@@ -25,11 +25,11 @@ type TProps = {
     link?: string | null;
     path: string;
     subnav?:
-    | {
-      title: string;
-      link: string;
-    }[]
-    | null;
+      | {
+          title: string;
+          link: string;
+        }[]
+      | null;
   }[];
   permissions: PermissionsResult | null;
 };
@@ -158,7 +158,7 @@ export default function MobileNav({ navList, permissions }: TProps) {
               isDashboard && <QuickLink />}
             {!isDashboard && <BugReport />}
 
-            <NotificationsPopover />
+            <NotificationsPopover className="text-white" />
             <div className="text-white">{/* <ThemeSwitch /> */}</div>
             <LogoutBtn className="text-[1.7rem] font-bold text-white" />
           </div>

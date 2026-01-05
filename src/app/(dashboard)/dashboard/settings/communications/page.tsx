@@ -1,7 +1,5 @@
 import { getCompany } from "@/actions/settings/getCompany";
 import BookingGenerate from "@/components/BookingGenerate";
-import CallForwardingSettings from "@/components/CallForwardingSettings";
-import GoogleReviewSettings from "@/components/GoogleReviewSettings";
 import { TermsAndPolicyEditor } from "@/components/TermsAndPolicyEditor";
 import { getCompanyId } from "@/lib/companyId";
 import SecurityPage from "../security/SecurityPage";
@@ -15,12 +13,10 @@ export default async function CommunicationPage() {
       {/* Security/Zapier Token  */}
       <div>
         <SecurityPage company={JSON.parse(JSON.stringify(company))} />
-        <GoogleReviewSettings initialReviewLink={company?.googleReviewLink} />
         <BookingGenerate companyId={companyId.toString()} />
       </div>
       {/* Sidebar */}
       <div className="space-y-4">
-        <CallForwardingSettings initialNumber={company?.callForwardingNumber} />
         <div className="mt-4">
           <TermsAndPolicyEditor />
         </div>

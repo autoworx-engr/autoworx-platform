@@ -1,9 +1,7 @@
-"use client";
+"use client"
 import { useRef, useEffect } from "react";
 
-export function useAutoScrollWhileDragging(
-  containerRef: React.RefObject<HTMLElement | null>
-) {
+export function useAutoScrollWhileDragging(containerRef: React.RefObject<HTMLElement>) {
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       const container = containerRef.current;

@@ -20,7 +20,7 @@ export default function FormError() {
   if (error && !error.success) {
     return (
       <div
-        className="bg-red-50 border border-red-200 rounded-lg p-2 flex items-center gap-3 shadow-sm"
+        className="mb-6 bg-red-50 border border-red-200 rounded-lg p-2 flex items-center gap-3 shadow-sm"
         ref={buttonRef}
       >
         <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />

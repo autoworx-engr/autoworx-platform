@@ -28,20 +28,22 @@ export default function SettingsModalContent({
         <div className="mt-4 flex border-b">
           <button
             onClick={() => setActiveTab("general")}
-            className={`px-4 py-2 font-medium ${activeTab === "general"
+            className={`px-4 py-2 font-medium ${
+              activeTab === "general"
                 ? "border-b-2 border-[#6571FF] text-[#6571FF]"
                 : "text-gray-600"
-              }`}
+            }`}
           >
             General
           </button>
           {isAdmin && (
             <button
               onClick={() => setActiveTab("holidays")}
-              className={`px-4 py-2 font-medium ${activeTab === "holidays"
+              className={`px-4 py-2 font-medium ${
+                activeTab === "holidays"
                   ? "border-b-2 border-[#6571FF] text-[#6571FF]"
                   : "text-gray-600"
-                }`}
+              }`}
             >
               Holidays
             </button>

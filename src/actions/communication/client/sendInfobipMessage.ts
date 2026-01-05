@@ -48,15 +48,7 @@ export async function sendInfobipMessage({
       };
     }
 
-    let user: Awaited<ReturnType<typeof getUser>> | null = null;
-    try {
-      user = await getUser();
-    } catch (error) {
-      console.error(
-        "sendInfobipMessage: getUser failed, continuing without user context",
-        error
-      );
-    }
+    const user = await getUser();
     const client = await db.client.findFirst({
       where: {
         id: clientId,

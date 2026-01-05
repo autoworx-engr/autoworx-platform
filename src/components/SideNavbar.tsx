@@ -431,7 +431,7 @@ export default function SideNavbar({ navList, permissions }: TProps) {
             )
           )}
           {/* Visualization */}
-          {/* <Tooltip>
+          <Tooltip>
             <TooltipTrigger asChild>
               <Link
                 href="/dashboard/visualization"
@@ -459,7 +459,7 @@ export default function SideNavbar({ navList, permissions }: TProps) {
             >
               Visualization
             </TooltipContent>
-          </Tooltip> */}
+          </Tooltip>
         </div>
 
         {/* Settings */}

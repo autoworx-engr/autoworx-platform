@@ -10,36 +10,6 @@ import os from "os";
 
 const pump = promisify(pipeline);
 
-/**
- * @swagger
- * /api/mailgun/send:
- *   post:
- *     summary: Send email via Mailgun
- *     tags: [Mailgun]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         multipart/form-data:
- *           schema:
- *             type: object
- *             properties:
- *               recipient:
- *                 type: string
- *               text:
- *                 type: string
- *               files:
- *                 type: string
- *                 format: binary
- *     responses:
- *       200:
- *         description: Email sent successfully
- *       400:
- *         description: Recipient not provided
- *       500:
- *         description: Server error
- */
 // Helper function to convert Web Stream to Node.js Readable stream
 function webStreamToNodeStream(
   webStream: ReadableStream<Uint8Array>

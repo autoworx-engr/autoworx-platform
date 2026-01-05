@@ -18,18 +18,14 @@ export default async function login(credentials: {
       where: { email: credentials.email },
     });
 
-    if (!user || !user.password) {
-      throw new AppError(HttpStatusCode.Unauthorized, "Invalid credentials");
-    }
+    if (!user || !user.password) return null;
 
     const isPasswordMatched = await bcrypt.compare(
       credentials.password,
-      user.password
+      user.password,
     );
 
-    if (!isPasswordMatched) {
-      throw new AppError(HttpStatusCode.Unauthorized, "Invalid credentials");
-    }
+    if (!isPasswordMatched) return null;
 
     const newAccessToken = generateAccessToken(user) as string;
     const newRefreshToken = generateRefreshToken(user) as string;

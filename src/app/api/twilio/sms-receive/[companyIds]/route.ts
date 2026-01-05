@@ -10,38 +10,6 @@ import { NextRequest } from "next/server";
 
 const pusher = getPusherInstance();
 
-/**
- * @swagger
- * /api/twilio/sms-receive/{companyIds}:
- *   post:
- *     summary: Twilio SMS webhook for multiple companies
- *     tags: [Twilio]
- *     parameters:
- *       - in: path
- *         name: companyIds
- *         required: true
- *         schema:
- *           type: string
- *           description: Comma-separated company IDs
- *     requestBody:
- *       required: true
- *       content:
- *         application/x-www-form-urlencoded:
- *           schema:
- *             type: object
- *             properties:
- *               From:
- *                 type: string
- *               To:
- *                 type: string
- *               Body:
- *                 type: string
- *     responses:
- *       200:
- *         description: SMS received and processed
- *       400:
- *         description: Unsupported content type
- */
 export async function POST(
   req: NextRequest,
   context: { params: Promise<{ companyIds: string }> }

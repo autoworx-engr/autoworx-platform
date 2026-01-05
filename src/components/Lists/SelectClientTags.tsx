@@ -113,7 +113,7 @@ export function SelectClientTags({
         }}
       >
         <DropdownMenuTrigger
-          className={`flex w-full justify-between h-10 items-center gap-x-8 rounded-md border border-slate-300 bg-white px-3 py-2 ${customStyles}`}
+          className={`flex h-10 items-center gap-x-8 rounded-md border-2 border-slate-400 px-2 py-1 ${customStyles}`}
           style={{
             backgroundColor: tag?.bgColor,
             color: tag?.textColor,
@@ -123,22 +123,22 @@ export function SelectClientTags({
             setOpen && setOpen(!open);
           }}
         >
-          <span className="text-slate-600 text-sm font-medium">{showPlaceholder ? (tag?.name ?? "Select Tag") : ""}</span>
-          <ChevronDown className="text-slate-500" />
+          <span>{showPlaceholder ? (tag?.name ?? "Select Tag") : ""}</span>
+          <ChevronDown />
         </DropdownMenuTrigger>
 
         <DropdownMenuContent
           side="bottom"
           align="start"
           sideOffset={8}
-          className="space-y-1 rounded-md border border-slate-300 bg-background p-0 shadow-md"
+          className="space-y-1 p-0"
           ref={dropdownRef}
         >
           {/* Search */}
           <div className="relative m-2">
             <Search
               size={18}
-              className="absolute left-2 top-1/2 -translate-y-1/2 transform text-slate-500"
+              className="absolute left-2 top-1/2 -translate-y-1/2 transform text-[#797979]"
             />
             <Input search={search} setSearch={setSearch} key="search" />
             <button
@@ -146,15 +146,15 @@ export function SelectClientTags({
                 setOpen && setOpen(!open);
               }}
             >
-              <ChevronUp className="absolute right-2 top-1/2 -translate-y-1/2 transform text-slate-500" />
+              <ChevronUp className="absolute right-2 top-1/2 -translate-y-1/2 transform text-[#797979]" />
             </button>
           </div>
 
-          <div className="thin-scrollbar max-h-28 space-y-1 overflow-y-auto">
+          <div className="space-y-1">
             {filteredTagList.map((tagItem) => (
               <div
                 key={tagItem.id}
-                className="mx-4 flex cursor-pointer items-center justify-between rounded-full px-4 py-2"
+                className="mx-4 flex cursor-pointer items-center justify-between rounded-full px-4"
                 style={{
                   backgroundColor: tagItem?.bgColor,
                   color: tagItem?.textColor,
@@ -172,7 +172,7 @@ export function SelectClientTags({
                   {tagItem.name}
                 </button>
                 <button
-                  className="text-lg text-slate-600 hover:text-slate-800"
+                  className="text-lg text-[#66738C]"
                   onClick={() => handleDelete(tagItem.id)}
                 >
                   <X size={20} />
@@ -233,7 +233,7 @@ const Input = ({
     <input
       type="text"
       placeholder="Search"
-      className="w-full rounded-md border border-slate-300 p-2 pl-8 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-slate-200"
+      className="w-full rounded-md border-2 border-slate-400 p-1 pl-6 pr-10 focus:outline-none"
       value={search}
       onChange={(e) => {
         setSearch(e.target.value);
@@ -276,12 +276,12 @@ function QuickAddForm({
   }
 
   return (
-    <form ref={formRef} className="flex w-[200px] gap-2 p-2">
+    <form ref={formRef} className="flex gap-2 p-2">
       <input
         name="name"
         type="text"
         required
-        className="w-[80%] flex-1 rounded-md border border-slate-300 p-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-200"
+        className="flex-1 rounded-sm border border-solid border-black p-1"
       />
 
       <button

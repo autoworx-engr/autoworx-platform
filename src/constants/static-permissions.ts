@@ -102,11 +102,6 @@ export const staticPermissions = [
     permission_name: "aiSmartReplies",
     status: false,
   },
-  {
-    title: "Visualization",
-    permission_name: "visualization",
-    status: false,
-  },
 ];
 
 export const CHILD_PERMISSIONS = [

@@ -1,26 +1,6 @@
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
-/**
- * @swagger
- * /api/fleet/statement/{statementId}:
- *   get:
- *     summary: Get fleet statement details
- *     tags: [Fleet]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: statementId
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Fleet statement details
- *       404:
- *         description: Statement not found
- */
 export async function GET(
   request: NextRequest,
   { params }: { params: { statementId: string } }
