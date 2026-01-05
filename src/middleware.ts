@@ -16,7 +16,7 @@ const PUBLIC_API_ROUTES = [
   "/api/auth/csrf",
   // Webhook endpoints
   "/api/stripe/invoice-pay-hook",
-  "/api/twilio",
+  "/api/twilio/token",
   "/api/infobip",
   "/api/lead-generate",
   "/api/authorize-net",
