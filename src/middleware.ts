@@ -18,11 +18,20 @@ const PUBLIC_API_ROUTES = [
   "/api/stripe/invoice-pay-hook",
   "/api/lead-generate",
   "/api/authorize-net",
+  "/api/infobip/mms/receive",
+  "/api/infobip/email/receive",
+  "/api/twilio/call-recording",
+  "/api/twilio/call-state",
+  "/api/twilio/call-status",
+  "/api/twilio/incoming",
+  "/api/twilio/receive/route",
+  "/api/twilio/token",
 ];
 
 const PUBLIC_DYNAMIC_API_ROUTES = [
-  "/api/twilio/sms-receive/:companyId",
-  "/api/infobip",
+  "/api/infobip/sms/receive/:companyIds",
+  "/api/twilio/sms-receive/:companyIds",
+  "/api/twilio/call-recording/:recordingSid",
 ];
 
 const isDynamicPublicApiRoute = (pathname: string) => {
