@@ -64,7 +64,7 @@ export default function SlimSalaryInput({
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between gap-x-4">
+      <div className="grid grid-cols-2 gap-x-4">
         <SelectEmployeeSalaryType
           required={false}
           salaryTypeOpen={salaryTypeOpen}
@@ -79,7 +79,7 @@ export default function SlimSalaryInput({
             required={false}
             step="0.01"
             min="0"
-            placeholder="Enter salary amount"
+            placeholder="Salary amount"
             defaultValue={
               initialSalaryAmount ? initialSalaryAmount.toString() : ""
             }
