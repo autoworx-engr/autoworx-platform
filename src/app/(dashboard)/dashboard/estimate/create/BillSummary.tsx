@@ -10,6 +10,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { RotatingLines } from "react-loader-spinner";
 import MakePayment from "./MakePayment";
+import { cn } from "@/lib/cn";
 
 export function BillSummary({
   isEstimateTax = true,
@@ -181,8 +182,8 @@ export function BillSummary({
         setCoupon(res.data);
         setDiscount(
           Number(discount) +
-            Number(res.data.discount) -
-            Number(coupon ? coupon.discount : 0)
+          Number(res.data.discount) -
+          Number(coupon ? coupon.discount : 0)
         );
       } else {
         errorToast(res.message!);
@@ -216,21 +217,25 @@ export function BillSummary({
           return (
             <div
               key={index}
-              className="relative flex items-center justify-between gap-4 rounded-md border border-solid border-slate-600 px-2 py-1"
+              className="group relative flex items-center justify-between gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 transition-all hover:border-slate-200 hover:shadow-sm"
             >
-              <div className="mr-auto text-xs uppercase">{title}</div>
+              <div className="mr-auto text-sm font-semibold text-slate-500 capitalize">
+                {title}
+              </div>
 
               {isToggleItem && (
                 <div
                   onClick={() => toggleSetter((prev) => !prev)}
-                  className={`ml-2 flex h-5 w-10 cursor-pointer items-center rounded-full px-1 transition-colors ${
-                    toggleState ? "bg-[#6571FF]" : "bg-gray-400"
-                  }`}
+                  className={cn(
+                    "relative flex h-5 w-9 cursor-pointer items-center rounded-full px-1 transition-all duration-200",
+                    toggleState ? "bg-[#6571FF]" : "bg-slate-200"
+                  )}
                 >
                   <div
-                    className={`h-3 w-3 transform rounded-full bg-white transition-transform ${
-                      toggleState ? "translate-x-5" : "translate-x-0"
-                    }`}
+                    className={cn(
+                      "h-3.5 w-3.5 transform rounded-full bg-white shadow-sm transition-transform duration-200 ease-in-out",
+                      toggleState ? "translate-x-3.5" : "translate-x-0"
+                    )}
                   />
                 </div>
               )}
@@ -240,40 +245,43 @@ export function BillSummary({
                 readOnly
                 value={
                   isToggleItem
-                    ? `${toggleState ? originalValue : 0}%${
-                        toggleState && originalValue > 0
-                          ? ` | ${(((subtotal - discount) * originalValue) / 100).toFixed(2)}`
-                          : ""
-                      }`
+                    ? `${toggleState ? originalValue : 0}%${toggleState && originalValue > 0
+                      ? ` | $${(((subtotal - discount) * originalValue) / 100).toFixed(2)}`
+                      : ""
+                    }`
                     : data
                 }
-                className="w-[130px] rounded-md bg-slate-500 px-2 py-1 text-right text-xs text-white"
+                className="w-[130px] rounded-lg bg-gray-500 px-3 py-1 text-right text-sm font-bold text-white ring-1 ring-inset ring-slate-100 focus:outline-none"
               />
             </div>
           );
         })}
       </div>
 
-      <div className="space-y-2 rounded-md bg-[#006d77] p-2 px-4 pb-4 text-sm text-white">
-        <dl className="flex justify-between">
-          <dt>Due</dt> <dd>{formatCurrency(due)}</dd>
+      <div className="mt-4 flex flex-col gap-4 rounded-lg bg-[#006d77] p-5 text-white shadow-xl shadow-[#006d77]/20">
+        {/* Total Amount Display */}
+        <dl className="flex items-center justify-between border-b border-white/10 pb-4">
+          <dt className="font-semibold">Total Due</dt>
+          <dd className="text-xl font-semibold">{formatCurrency(due)}</dd>
         </dl>
 
         {/* Coupon code */}
         {pathname?.includes("/estimate/create") && (
-          <div className="flex justify-between rounded-md border p-1">
+          <div className="group relative flex items-center gap-2 rounded-xl bg-white/10 p-1.5 ring-1 ring-inset ring-white/20 transition-all focus-within:bg-white/15 focus-within:ring-white/40">
             <input
               type="text"
               placeholder="Add Coupon"
-              className="w-full bg-transparent p-2 focus:outline-none"
+              className="w-full bg-transparent px-3 py-1.5 text-sm font-medium text-white placeholder:text-white/50 focus:outline-none"
               value={couponInput}
               onChange={(e) => setCouponInput(e.target.value)}
             />
             {couponLoading ? (
-              <RotatingLines width="24" strokeColor="#fff" />
+              <div className="px-3">
+                <RotatingLines width="20" strokeColor="#fff" />
+              </div>
             ) : (
               <button
-                className="rounded-md p-2 transition-colors hover:bg-background/20 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
+                className="rounded-lg bg-white px-4 py-1.5 text-xs font-bold text-[#006d77] transition-all hover:bg-slate-100 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
                 onClick={checkCoupon}
                 disabled={!client}
                 title={!client ? "Please select a client" : undefined}
@@ -283,7 +291,14 @@ export function BillSummary({
             )}
           </div>
         )}
-        <MakePayment />
+
+        {/* Payment Action */}
+        <div className="pt-2">
+          <MakePayment />
+          {/* Ensure MakePayment internal button uses: 
+        w-full bg-white text-[#6571FF] font-bold rounded-xl py-3 shadow-lg 
+    */}
+        </div>
       </div>
     </>
   );

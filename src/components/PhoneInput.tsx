@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import countriesData from "@/utils/allcountries.json";
 import { ChevronDown, X } from "lucide-react";
+import { cn } from "@/lib/cn";
 
 type CountryOption = {
   id: string;
@@ -204,28 +205,29 @@ export default function PhoneInput({
   };
 
   return (
-    <div className="w-full ">
+    <div className="w-full">
       {label && (
-        <label className="block mb-1 text-sm font-medium ">
+        <label className={cn(
+          "flex items-center gap-1 text-base font-medium text-slate-700 dark:text-slate-200 transition-colors duration-300",
+        )}>
           {label}
           {required && <span className="text-red-500 ml-1">*</span>}
         </label>
       )}
 
-      <div className="relative" ref={dropdownRef}>
+      <div className="relative mt-1.5" ref={dropdownRef}>
         <div
-          className={`flex items-center rounded-lg border transition-all ${
-            error
-              ? "border-red-500 focus-within:border-red-500"
-              : "border-slate-300 dark:border-slate-600 focus-within:border-indigo-500 dark:focus-within:border-indigo-400"
-          } ${disabled ? "opacity-50 cursor-not-allowed bg-slate-100 dark:bg-slate-800" : "bg-white dark:bg-slate-900"}`}
+          className={`flex items-center rounded-lg border transition-all ${error
+            ? "border-rose-400 focus-within:border-rose-500 focus-within:ring-2 focus-within:ring-rose-500/40"
+            : "border-slate-300 dark:border-slate-700 focus-within:border-[#6571FF]/60 dark:focus-within:border-[#6571FF]/60 focus-within:ring-2 focus-within:ring-[#6571FF]/40"
+            } ${disabled ? "opacity-50 cursor-not-allowed bg-slate-100 dark:bg-slate-800" : "bg-white dark:bg-slate-900"}`}
         >
           {/* Country Code Button */}
           <button
             type="button"
             onClick={() => !disabled && setIsOpen(!isOpen)}
             disabled={disabled || isLoading}
-            className="flex items-center gap-1.5 px-3 py-2 border-r border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors disabled:cursor-not-allowed disabled:hover:bg-transparent"
+            className="flex items-center gap-1.5 px-3 py-2 border-r border-slate-200 dark:border-slate-700 hover:bg-slate-50 hover:rounded-lg dark:hover:bg-slate-800 transition-colors disabled:cursor-not-allowed disabled:hover:bg-transparent"
           >
             {selectedCountry?.flagUrl ? (
               <img
@@ -284,18 +286,17 @@ export default function PhoneInput({
             </div>
 
             {/* Country List */}
-            <div className="max-h-64 overflow-y-auto">
+            <div className="max-h-64 overflow-y-auto thin-scrollbar">
               {filteredCountries.length > 0 ? (
                 filteredCountries.map((country) => (
                   <button
                     key={country.id}
                     type="button"
                     onClick={() => handleCountrySelect(country)}
-                    className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left transition-colors ${
-                      selectedCountry?.id === country.id
-                        ? "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-medium"
-                        : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
-                    }`}
+                    className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left transition-colors ${selectedCountry?.id === country.id
+                      ? "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-medium"
+                      : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                      }`}
                   >
                     {country.flagUrl && (
                       <img

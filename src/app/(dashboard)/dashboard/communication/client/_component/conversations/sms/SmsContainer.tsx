@@ -26,54 +26,56 @@ export default function SmsContainer({ clientId }: TProps) {
 
   // subscribe to pusher channel for realtime updates
   useEffect(() => {
-    pusher
-      .subscribe(`sms-${user?.companyId}-${clientId}`)
-      .bind(
-        "sms",
-        (data: ClientSMS & {user?: {
-      firstName: string;
-      lastName: string | null;
-    } | null;} & { attachments?: ClientSmsAttachments[] }) => {
-          if (!data) return;
+    pusher.subscribe(`sms-${user?.companyId}-${clientId}`).bind(
+      "sms",
+      (
+        data: ClientSMS & {
+          user?: {
+            firstName: string;
+            lastName: string | null;
+          } | null;
+        } & { attachments?: ClientSmsAttachments[] }
+      ) => {
+        if (!data) return;
 
-          // update caches data
-          queryClient?.setQueryData(
-            smsQueryKey.allSmsByClientId(clientId),
-            (oldData: any) => {
-              if (!oldData) return oldData;
-              if (oldData.pages.length === 0) return oldData;
-              const initialPage = oldData.pages[0];
-              const updatedLastPageMessages = [data, ...initialPage.data];
-              const updatedPages = oldData.pages.map(
-                (
-                  page: {
-                    data: ClientSMS[];
-                    total: number;
-                    nextPage: number;
-                    hasMore: boolean;
-                  },
-                  index: number
-                ) => {
-                  if (index === 0) {
-                    return {
-                      ...page,
-                      data: updatedLastPageMessages,
-                    };
-                  }
-                  return page;
+        // update caches data
+        queryClient?.setQueryData(
+          smsQueryKey.allSmsByClientId(clientId),
+          (oldData: any) => {
+            if (!oldData) return oldData;
+            if (oldData.pages.length === 0) return oldData;
+            const initialPage = oldData.pages[0];
+            const updatedLastPageMessages = [data, ...initialPage.data];
+            const updatedPages = oldData.pages.map(
+              (
+                page: {
+                  data: ClientSMS[];
+                  total: number;
+                  nextPage: number;
+                  hasMore: boolean;
+                },
+                index: number
+              ) => {
+                if (index === 0) {
+                  return {
+                    ...page,
+                    data: updatedLastPageMessages,
+                  };
                 }
-              );
-              return {
-                ...oldData,
-                pages: updatedPages,
-              };
-            }
-          );
-          // setMessages(prevMessages => [...prevMessages, data]);
-        }
-      );
+                return page;
+              }
+            );
+            return {
+              ...oldData,
+              pages: updatedPages,
+            };
+          }
+        );
+        // setMessages(prevMessages => [...prevMessages, data]);
+      }
+    );
     return () => {
-      pusher.unbind("mail").unsubscribe(`mail-${user?.companyId}-${clientId}`);
+      pusher.unbind("sms").unsubscribe(`sms-${user?.companyId}-${clientId}`);
     };
   }, []);
 
