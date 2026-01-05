@@ -50,7 +50,14 @@ import WorkOrderModal from "../workorder-modal/WorkOrderModal";
 import { InspectionItems } from "./InspectionItems";
 import { InvoiceItems } from "./InvoiceItems";
 import { StripePay } from "./StripePay";
-import { Files, Mail, MessageCircleMore, SquarePen, X } from "lucide-react";
+import {
+  Eye,
+  Files,
+  Mail,
+  MessageCircleMore,
+  SquarePen,
+  X,
+} from "lucide-react";
 import SignatureCanvas from "react-signature-canvas";
 import { uploadSignature } from "@/actions/estimate/invoice/uploadSignature";
 import { getFileFromCanvas } from "@/utils/getFileFromCanvas";
@@ -654,6 +661,13 @@ export default function InvoiceModalBody({
                     >
                       {invoice.column?.title}
                     </p>
+
+                    {invoice.isViewed &&  (
+                      <div className="mt-1 flex items-center gap-1">
+                        <Eye className="h-4 w-4 text-green-500" />
+                        <span className="text-xs text-green-500">Viewed</span>
+                      </div>
+                    )}
                   </div>
                 </>
               )}
