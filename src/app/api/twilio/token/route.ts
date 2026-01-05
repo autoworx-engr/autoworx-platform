@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     const AccessToken = twilio.jwt.AccessToken;
     const VoiceGrant = AccessToken.VoiceGrant;
 
-    let twilioCredentials = await getTwilioCredentials(companyId);
+    let twilioCredentials = await getTwilioCredentials({ companyId });
 
     if (!twilioCredentials) {
       return NextResponse.json(
