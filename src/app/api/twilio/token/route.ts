@@ -54,6 +54,7 @@ export async function POST(request: NextRequest) {
       const voiceGrant = new VoiceGrant({
         outgoingApplicationSid: twilioCredentials.twimlAppSid,
         incomingAllow: true, // Allows incoming calls
+        pushCredentialSid: process.env.TWILIO_PUSH_CREDENTIAL_SID,
       });
 
       token.addGrant(voiceGrant);
