@@ -2,6 +2,26 @@ import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import { NextRequest } from "next/server";
 
+/**
+ * @swagger
+ * /api/twilio/call-recording/{recordingSid}:
+ *   get:
+ *     summary: Get Twilio call recording by SID
+ *     tags: [Twilio]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: recordingSid
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Audio file (mp3)
+ *       400:
+ *         description: Missing recording SID
+ */
 export async function GET(
   req: NextRequest,
   { params }: { params: { recordingSid: string } }

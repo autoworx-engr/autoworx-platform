@@ -20,7 +20,7 @@ import { CirclePlus, CircleX } from "lucide-react";
 
 type TProps = {};
 
-export default function ResponsiveEstimateCreateTab({}: TProps) {
+export default function ResponsiveEstimateCreateTab({ }: TProps) {
   const { items, removeMaterial } = useEstimateCreateStore();
 
   const {
@@ -131,7 +131,7 @@ export default function ResponsiveEstimateCreateTab({}: TProps) {
                 case "service":
                   return (
                     <div>
-                      <Label className="mb-1 font-bold">Services</Label>
+                      <Label className="mb-1 font-semibold text-slate-600">Services</Label>
                       <Selector
                         type="SERVICE"
                         label="Service"
@@ -191,7 +191,7 @@ export default function ResponsiveEstimateCreateTab({}: TProps) {
                 case "materials":
                   return item.materials.length >= 0 ? (
                     <div className="relative mb-4">
-                      <Label className="mb-1 font-bold">Material/Parts</Label>
+                      <Label className="mb-1 font-semibold text-slate-600">Material/Parts</Label>
                       {item.materials.length > 0 &&
                         item.materials.map((material, j) => (
                           <div
@@ -360,7 +360,7 @@ export default function ResponsiveEstimateCreateTab({}: TProps) {
                 case "labor":
                   return (
                     <div>
-                      <Label className="mb-1 font-bold">Labor</Label>
+                      <Label className="mb-1 font-semibold text-slate-600">Labor</Label>
                       <Selector
                         type="LABOR"
                         label="Labor"
@@ -421,7 +421,7 @@ export default function ResponsiveEstimateCreateTab({}: TProps) {
                 case "tags":
                   return (
                     <div key={`tags-${i}-${j}`}>
-                      <Label className="mb-1 font-bold">Tags</Label>
+                      <Label className="mb-1 font-semibold text-slate-600">Tags</Label>
                       <SelectTags
                         type="TAG"
                         value={item.tags}
@@ -452,6 +452,7 @@ export default function ResponsiveEstimateCreateTab({}: TProps) {
                   items: items.toSpliced(i, 1),
                 }));
               }}
+              className="bg-red-50 text-red-500"
             >
               Remove
               <CircleX size="1.2em" />

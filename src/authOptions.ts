@@ -3,9 +3,9 @@ import { NextAuthOptions } from "next-auth";
 import { JWT } from "next-auth/jwt";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
-import login from "./actions/auth/login";
 import { db } from "./lib/db";
 import { env } from "next-runtime-env";
+import nextAxios from "./helpers/next-axios";
 
 declare module "next-auth" {
   interface Session {
@@ -103,10 +103,11 @@ export const authOptions: NextAuthOptions = {
       },
       authorize: async credentials => {
         if (!credentials?.email || !credentials?.password) return null;
-        const loggedInUser = await login({
+        const response = await nextAxios.post("/auth/login", {
           email: credentials.email,
           password: credentials.password,
         });
+        const loggedInUser = response.data.data;
         return loggedInUser;
       },
     }),

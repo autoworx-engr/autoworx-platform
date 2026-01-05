@@ -139,14 +139,14 @@ export default function TaskListBox() {
                     flex w-full min-w-36 items-center justify-center gap-1 rounded-xl px-6 py-2.5 text-base font-bold text-white transition-all duration-300 ease-in-out
 
                     // Gradient Background (Blue to Indigo)
-                    bg-gradient-to-r from-blue-600 to-indigo-700
+                    bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
 
                     // Subtle Lift and Shadow Glow on Hover
-                    shadow-md shadow-blue-500/50
+                    shadow-md shadow-[#6571FF]/40 
                     hover:-translate-y-0.5
                     hover:scale-[1.01]
-                    hover:shadow-xl hover:shadow-blue-500/70
-                    dark:shadow-indigo-600/50 dark:hover:shadow-indigo-600/70
+                    hover:shadow-lg hover:shadow-[#6571FF]/60
+                    dark:shadow-[#6571FF]/50 dark:hover:shadow-[#6571FF]/60
                   `}
                   aria-label="Add new task"
                 >

@@ -2,6 +2,28 @@ import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 
+/**
+ * @swagger
+ * /api/infobip:
+ *   get:
+ *     summary: Get Infobip configuration
+ *     tags: [Infobip]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Infobip configuration
+ *       404:
+ *         description: Configuration not found
+ *       500:
+ *         description: Server error
+ *   post:
+ *     summary: Infobip placeholder
+ *     tags: [Infobip]
+ *     responses:
+ *       200:
+ *         description: Use /api/infobip/sms/send for sending messages
+ */
 export async function GET() {
   try {
     const companyId = await getCompanyId();

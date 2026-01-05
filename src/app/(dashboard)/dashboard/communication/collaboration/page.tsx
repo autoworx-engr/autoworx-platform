@@ -36,6 +36,7 @@ export default async function CollaborationPage() {
           },
         },
       ],
+      status: "ACCEPTED",
     },
     include: {
       companyOne: {

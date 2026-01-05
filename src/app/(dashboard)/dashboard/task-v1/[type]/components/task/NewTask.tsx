@@ -222,12 +222,12 @@ export default function NewTask({
       <DialogTrigger asChild>
         {/* if its a task which will be created from C.Hub Client, then it will show a different styled button  */}
         {isClientTask ? (
-          <button className="flex items-center justify-center gap-1 rounded-full bg-blue-600 px-6 py-2 text-[15px] text-white">
+          <button className="flex items-center justify-center gap-1 rounded-full bg-[#6571FF] px-6 py-2 text-[15px] text-white">
             <Plus className="" />
             <span>Add task</span>
           </button>
         ) : (
-          <button className="flex w-full min-w-32 items-center justify-center gap-1 rounded-md bg-blue-600 px-2 py-2 text-[15px] text-white max-[1300px]:py-1">
+          <button className="flex w-full min-w-32 items-center justify-center gap-1 rounded-md bg-[#6571FF] px-2 py-2 text-[15px] text-white max-[1300px]:py-1">
             <Plus className="" />
             <span className="block">Add Task</span>
           </button>

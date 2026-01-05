@@ -3,6 +3,29 @@ import { db } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/authOptions";
 
+/**
+ * @swagger
+ * /api/invoice/track-view:
+ *   post:
+ *     summary: Track invoice view
+ *     tags: [Invoice]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               invoiceId:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: View tracked
+ *       400:
+ *         description: Invoice ID required
+ *       500:
+ *         description: Server error
+ */
 export async function POST(req: NextRequest) {
   try {
     const { invoiceId } = await req.json();

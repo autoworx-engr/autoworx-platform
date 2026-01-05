@@ -3,6 +3,30 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/authOptions";
 
+/**
+ * @swagger
+ * /api/client/by-phone:
+ *   get:
+ *     summary: Find client by phone number
+ *     tags: [Client]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: phone
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Client found
+ *       400:
+ *         description: Phone number required
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);

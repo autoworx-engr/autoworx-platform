@@ -4,6 +4,7 @@ import {
   getOrCreateEmailTemplate,
   updateEmailTemplate,
 } from "@/actions/settings/emailTemplates";
+import { AppointmentTemplateVariable } from "@/components/Lists/NewTemplate";
 import { successToast } from "@/lib/toast";
 import { CompanyEmailTemplate } from "@prisma/client";
 import { Input } from "antd";
@@ -99,7 +100,8 @@ export default function EstimateAndInvoicePage() {
             }`}
           />
         </label>
-
+        
+        <AppointmentTemplateVariable hasBackground/>
         <div className="flex justify-end pt-2">
           <button
             type="button"

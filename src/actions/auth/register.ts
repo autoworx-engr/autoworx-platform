@@ -33,10 +33,10 @@ const ACCESS_CODE = env("ACCESS_CODE");
 
 const insertDefaultColumns = async (columnId: number, type: string) => {
   const columnsFortypes = defaultColumnWithColor.filter(
-    column => column.type === type
+    (column) => column.type === type
   );
 
-  const columnsWithCompany = columnsFortypes.map(column => ({
+  const columnsWithCompany = columnsFortypes.map((column) => ({
     ...column,
     companyId: columnId,
   }));
@@ -82,9 +82,10 @@ export async function register({
       throw new AppError(httpStatus.NOT_FOUND, "User already exist!");
     }
 
-    // hash the password
-    const hashedPassword = await bcrypt.hash(userInfo.password, 10);
+    const SALT_ROUNDS = Number(process.env.SALT_ROUNDS ?? 12);
 
+    // hash the password
+    const hashedPassword = await bcrypt.hash(userInfo.password, SALT_ROUNDS);
     // Create the company
     const newCompany = await db.company.create({
       data: {
@@ -210,7 +211,7 @@ export async function register({
     ];
 
     await Promise.all(
-      defaultPermissions.map(perm =>
+      defaultPermissions.map((perm) =>
         db.companyPermissionModule.create({
           data: {
             companyId: newCompany.id,
@@ -288,7 +289,7 @@ export async function register({
     await db.companyEmailTemplate.create({
       data: {
         subject: `Estimate for services requested at <BUSINESS_NAME>`,
-        message: `Hey <CLIENT>, your estimate for <VEHICLE> is ready.  – <BUSINESS_NAME>`,
+        message: `Hey <CLIENT>, your estimate for <VEHICLE> is ready. If everything looks good, please approve it so we can move forward. Thanks!– <BUSINESS_NAME>`,
         companyId: newCompany.id,
       },
     });
@@ -301,9 +302,10 @@ export async function register({
     console.error("The error: ", err);
     console.log({ err: errorHandler(err) });
 
-    return {
-      // error: "A server side error occured",
-      error: errorHandler(err),
-    };
+    // return {
+    //   // error: "A server side error occured",
+    //   error: errorHandler(err),
+    // };
+    throw err;
   }
 }

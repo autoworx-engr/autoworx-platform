@@ -6,8 +6,11 @@ const PAGE_SIZE = 20;
 
 export default function useClientListInfiniteQuery(search?: string) {
   return useInfiniteQuery({
-    queryKey: [queryKeys.clientList, "infinite", search],
-    queryFn: async ({ pageParam = 0 }) => {
+    queryKey: [queryKeys.clientList, "infinite", search ?? ""],
+
+    queryFn: async ({ pageParam }) => {
+      const page = pageParam as number;
+
       const { clients } = await getClientList(
         {
           select: {
@@ -25,21 +28,25 @@ export default function useClientListInfiniteQuery(search?: string) {
             },
             mobile: true,
           },
-          skip: pageParam * PAGE_SIZE,
+          skip: page * PAGE_SIZE,
           take: PAGE_SIZE,
-          orderBy: {
-            createdAt: "desc",
-          },
+          orderBy: { createdAt: "desc" },
         },
         search
       );
 
       return {
         clients,
-        nextPage: clients?.length === PAGE_SIZE ? pageParam + 1 : undefined,
+        page,
+        hasMore: clients.length === PAGE_SIZE,
       };
     },
-    getNextPageParam: lastPage => lastPage.nextPage,
+
     initialPageParam: 0,
+
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore ? lastPage.page + 1 : undefined,
+
+    enabled: true,
   });
 }
