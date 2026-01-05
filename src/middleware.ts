@@ -19,7 +19,7 @@ const PUBLIC_API_ROUTES = [
   "/api/twilio/token",
   "/api/infobip",
   "/api/lead-generate",
-  "/api/authorize-net",
+  "/api/authorize-net/webhook",
 ];
 
 export async function middleware(request: NextRequest) {

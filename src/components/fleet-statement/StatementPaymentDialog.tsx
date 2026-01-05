@@ -11,7 +11,7 @@ import {
 import { formatCurrency } from "@/utils/formatCurrency";
 import { createStripePaymentLink } from "@/actions/payment/stripePayment";
 import { createAuthorizeNetPaymentLink } from "@/actions/payment/authorizeNetPayment";
-import { errorToast } from "@/lib/toast";
+import { errorToast, successToast } from "@/lib/toast";
 import {
   Select,
   SelectContent,
@@ -45,31 +45,65 @@ export const StatementPaymentDialog: React.FC<StatementPaymentDialogProps> = ({
   const [selectedGateway, setSelectedGateway] = React.useState<
     "STRIPE" | "AUTHORIZE_NET"
   >("STRIPE");
+  const [authorizeNetToken, setAuthorizeNetToken] = React.useState<
+    string | null
+  >(null);
+  const [showPaymentIframe, setShowPaymentIframe] = React.useState(false);
+  const [isIframeLoading, setIsIframeLoading] = React.useState(false);
+  const formRef = React.useRef<HTMLFormElement>(null);
 
-  // Determine available gateways
+  // Determine available gateways based on company settings
   const availableGateways: Array<"STRIPE" | "AUTHORIZE_NET"> = [];
-  if (gatewayInfo?.hasStripe) availableGateways.push("STRIPE");
-  if (gatewayInfo?.hasAuthorizeNet) availableGateways.push("AUTHORIZE_NET");
+
+  if (gatewayInfo) {
+    if (gatewayInfo.paymentGateway === "STRIPE") {
+      if (gatewayInfo.hasStripe) availableGateways.push("STRIPE");
+    } else if (gatewayInfo.paymentGateway === "AUTHORIZE_NET") {
+      if (gatewayInfo.hasAuthorizeNet) availableGateways.push("AUTHORIZE_NET");
+    } else {
+      // BOTH or any fallback value: allow all configured gateways
+      if (gatewayInfo.hasStripe) availableGateways.push("STRIPE");
+      if (gatewayInfo.hasAuthorizeNet) availableGateways.push("AUTHORIZE_NET");
+    }
+  }
 
   // Set default gateway based on company settings
   React.useEffect(() => {
-    if (gatewayInfo) {
-      if (
-        gatewayInfo.paymentGateway === "AUTHORIZE_NET" &&
-        gatewayInfo.hasAuthorizeNet
-      ) {
-        setSelectedGateway("AUTHORIZE_NET");
-      } else if (gatewayInfo.hasStripe) {
-        setSelectedGateway("STRIPE");
-      } else if (gatewayInfo.hasAuthorizeNet) {
-        setSelectedGateway("AUTHORIZE_NET");
-      }
+    if (!gatewayInfo) return;
+
+    const nextAvailable: Array<"STRIPE" | "AUTHORIZE_NET"> = [];
+
+    if (gatewayInfo.paymentGateway === "STRIPE") {
+      if (gatewayInfo.hasStripe) nextAvailable.push("STRIPE");
+    } else if (gatewayInfo.paymentGateway === "AUTHORIZE_NET") {
+      if (gatewayInfo.hasAuthorizeNet) nextAvailable.push("AUTHORIZE_NET");
+    } else {
+      if (gatewayInfo.hasStripe) nextAvailable.push("STRIPE");
+      if (gatewayInfo.hasAuthorizeNet) nextAvailable.push("AUTHORIZE_NET");
+    }
+
+    let defaultGateway: "STRIPE" | "AUTHORIZE_NET" | null = null;
+
+    if (
+      gatewayInfo.paymentGateway === "AUTHORIZE_NET" &&
+      nextAvailable.includes("AUTHORIZE_NET")
+    ) {
+      defaultGateway = "AUTHORIZE_NET";
+    } else if (
+      gatewayInfo.paymentGateway === "STRIPE" &&
+      nextAvailable.includes("STRIPE")
+    ) {
+      defaultGateway = "STRIPE";
+    } else if (nextAvailable.includes("STRIPE")) {
+      defaultGateway = "STRIPE";
+    } else if (nextAvailable.includes("AUTHORIZE_NET")) {
+      defaultGateway = "AUTHORIZE_NET";
+    }
+
+    if (defaultGateway) {
+      setSelectedGateway(defaultGateway);
     }
   }, [gatewayInfo]);
-
-  if (!isEnabled) {
-    return null;
-  }
 
   const gatewayName = selectedGateway === "STRIPE" ? "Stripe" : "Authorize.Net";
 
@@ -92,6 +126,18 @@ export const StatementPaymentDialog: React.FC<StatementPaymentDialogProps> = ({
           companyId,
           payType: "statement",
         });
+        if (res.success && res.token) {
+          // Use the same embedded iframe flow as invoice payments
+          setAuthorizeNetToken(res.token);
+          setOpen(false);
+          setIsIframeLoading(true);
+          setShowPaymentIframe(true);
+        } else if (res.url) {
+          window.open(res.url, "_self");
+        } else if (!res?.success) {
+          errorToast(res?.message ?? "Failed to initiate payment checkout");
+        }
+        return;
       }
 
       if (res.url) {
@@ -105,6 +151,54 @@ export const StatementPaymentDialog: React.FC<StatementPaymentDialogProps> = ({
       setIsLoading(false);
     }
   };
+
+  // Handle postMessage from Authorize.Net iframe
+  React.useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (
+        event.origin !== "https://test.authorize.net" &&
+        event.origin !== "https://accept.authorize.net"
+      ) {
+        return;
+      }
+
+      if (typeof event.data === "string" && event.data.includes("response=")) {
+        const responseData = event.data.split("response=")[1];
+        try {
+          const jsonObject = JSON.parse(responseData);
+          const transId = jsonObject?.transId;
+
+          if (transId) {
+            successToast("Payment successful!");
+            setShowPaymentIframe(false);
+            setIsIframeLoading(false);
+            setOpen(false);
+            window.location.reload();
+          } else if (jsonObject?.error) {
+            errorToast(jsonObject.error.message || "Payment failed");
+            setShowPaymentIframe(false);
+            setIsIframeLoading(false);
+          }
+        } catch (error) {
+          console.error("Error parsing payment response:", error);
+        }
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, []);
+
+  // Auto-submit form when token is set
+  React.useEffect(() => {
+    if (authorizeNetToken && formRef.current && showPaymentIframe) {
+      formRef.current.submit();
+    }
+  }, [authorizeNetToken, showPaymentIframe]);
+
+  if (!isEnabled) {
+    return null;
+  }
 
   return (
     <div className="mt-4 flex justify-center lg:justify-end">
@@ -244,6 +338,58 @@ export const StatementPaymentDialog: React.FC<StatementPaymentDialogProps> = ({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Authorize.Net Payment Iframe for statement payments */}
+      {showPaymentIframe && authorizeNetToken && (
+        <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center">
+          <div className="bg-white rounded-lg w-full max-w-4xl h-[90vh] relative mx-4 flex flex-col">
+            <div className="flex justify-end p-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowPaymentIframe(false);
+                  setAuthorizeNetToken(null);
+                  setIsIframeLoading(false);
+                }}
+                className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 h-auto text-sm rounded-md shadow"
+              >
+                Cancel Payment
+              </button>
+            </div>
+            <div className="relative flex-1 pb-3 px-3">
+              <iframe
+                id="authorize_net_payment_iframe"
+                name="authorize_net_payment_iframe"
+                className="w-full h-full rounded-lg"
+                src="/IFrameCommunicator.html"
+                onLoad={() => setIsIframeLoading(false)}
+              />
+              {isIframeLoading && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/70">
+                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#6571ff] border-t-transparent" />
+                  <p className="mt-3 text-sm text-gray-600 text-center px-4">
+                    Loading secure payment page...
+                  </p>
+                </div>
+              )}
+            </div>
+            <form
+              ref={formRef}
+              id="send_token_form"
+              method="post"
+              target="authorize_net_payment_iframe"
+              action={
+                process.env.NODE_ENV === "production"
+                  ? "https://accept.authorize.net/payment/payment"
+                  : "https://test.authorize.net/payment/payment"
+              }
+              style={{ display: "none" }}
+            >
+              <input type="hidden" name="token" value={authorizeNetToken} />
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

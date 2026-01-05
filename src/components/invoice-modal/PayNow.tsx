@@ -51,26 +51,59 @@ export function PayNow({
     null
   );
   const [showPaymentIframe, setShowPaymentIframe] = useState(false);
+  const [isIframeLoading, setIsIframeLoading] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
 
-  // Determine available gateways
+  // Determine available gateways based on company settings
   const availableGateways: Array<"STRIPE" | "AUTHORIZE_NET"> = [];
-  if (gatewayInfo?.hasStripe) availableGateways.push("STRIPE");
-  if (gatewayInfo?.hasAuthorizeNet) availableGateways.push("AUTHORIZE_NET");
+
+  if (gatewayInfo) {
+    if (gatewayInfo.paymentGateway === "STRIPE") {
+      if (gatewayInfo.hasStripe) availableGateways.push("STRIPE");
+    } else if (gatewayInfo.paymentGateway === "AUTHORIZE_NET") {
+      if (gatewayInfo.hasAuthorizeNet) availableGateways.push("AUTHORIZE_NET");
+    } else {
+      // BOTH or any fallback value: allow all configured gateways
+      if (gatewayInfo.hasStripe) availableGateways.push("STRIPE");
+      if (gatewayInfo.hasAuthorizeNet) availableGateways.push("AUTHORIZE_NET");
+    }
+  }
 
   // Set default gateway based on company settings
   useEffect(() => {
-    if (gatewayInfo) {
-      if (
-        gatewayInfo.paymentGateway === "AUTHORIZE_NET" &&
-        gatewayInfo.hasAuthorizeNet
-      ) {
-        setSelectedGateway("AUTHORIZE_NET");
-      } else if (gatewayInfo.hasStripe) {
-        setSelectedGateway("STRIPE");
-      } else if (gatewayInfo.hasAuthorizeNet) {
-        setSelectedGateway("AUTHORIZE_NET");
-      }
+    if (!gatewayInfo) return;
+
+    const nextAvailable: Array<"STRIPE" | "AUTHORIZE_NET"> = [];
+
+    if (gatewayInfo.paymentGateway === "STRIPE") {
+      if (gatewayInfo.hasStripe) nextAvailable.push("STRIPE");
+    } else if (gatewayInfo.paymentGateway === "AUTHORIZE_NET") {
+      if (gatewayInfo.hasAuthorizeNet) nextAvailable.push("AUTHORIZE_NET");
+    } else {
+      if (gatewayInfo.hasStripe) nextAvailable.push("STRIPE");
+      if (gatewayInfo.hasAuthorizeNet) nextAvailable.push("AUTHORIZE_NET");
+    }
+
+    let defaultGateway: "STRIPE" | "AUTHORIZE_NET" | null = null;
+
+    if (
+      gatewayInfo.paymentGateway === "AUTHORIZE_NET" &&
+      nextAvailable.includes("AUTHORIZE_NET")
+    ) {
+      defaultGateway = "AUTHORIZE_NET";
+    } else if (
+      gatewayInfo.paymentGateway === "STRIPE" &&
+      nextAvailable.includes("STRIPE")
+    ) {
+      defaultGateway = "STRIPE";
+    } else if (nextAvailable.includes("STRIPE")) {
+      defaultGateway = "STRIPE";
+    } else if (nextAvailable.includes("AUTHORIZE_NET")) {
+      defaultGateway = "AUTHORIZE_NET";
+    }
+
+    if (defaultGateway) {
+      setSelectedGateway(defaultGateway);
     }
   }, [gatewayInfo]);
 
@@ -153,6 +186,9 @@ export function PayNow({
         if (result.success && result.token) {
           console.log("🎫 Received Authorize.Net token, opening iframe");
           setAuthorizeNetToken(result.token);
+          // Close the dialog and then show the dedicated Authorize.Net iframe overlay
+          setOpen(false);
+          setIsIframeLoading(true);
           setShowPaymentIframe(true);
         } else if (!result?.success) {
           errorToast(result?.message ?? "Failed to initiate payment checkout");
@@ -288,22 +324,37 @@ export function PayNow({
       {/* Authorize.Net Payment Iframe */}
       {showPaymentIframe && authorizeNetToken && (
         <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center">
-          <div className="bg-white rounded-lg w-full max-w-4xl h-[90vh] relative">
-            <button
-              onClick={() => {
-                setShowPaymentIframe(false);
-                setAuthorizeNetToken(null);
-              }}
-              className="absolute top-4 right-4 z-10 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-            >
-              Cancel Payment
-            </button>
-            <iframe
-              id="authorize_net_payment_iframe"
-              name="authorize_net_payment_iframe"
-              className="w-full h-full rounded-lg"
-              src="/IFrameCommunicator.html"
-            />
+          <div className="bg-white rounded-lg w-full max-w-4xl h-[90vh] relative mx-4 flex flex-col">
+            <div className="flex justify-end p-3">
+              <Button
+                type="button"
+                onClick={() => {
+                  setShowPaymentIframe(false);
+                  setAuthorizeNetToken(null);
+                  setIsIframeLoading(false);
+                }}
+                className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 h-auto text-sm rounded-md shadow"
+              >
+                Cancel Payment
+              </Button>
+            </div>
+            <div className="relative flex-1 pb-3 px-3">
+              <iframe
+                id="authorize_net_payment_iframe"
+                name="authorize_net_payment_iframe"
+                className="w-full h-full rounded-lg"
+                src="/IFrameCommunicator.html"
+                onLoad={() => setIsIframeLoading(false)}
+              />
+              {isIframeLoading && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/70">
+                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#6571ff] border-t-transparent" />
+                  <p className="mt-3 text-sm text-gray-600 text-center px-4">
+                    Loading secure payment page...
+                  </p>
+                </div>
+              )}
+            </div>
             <form
               ref={formRef}
               id="send_token_form"
