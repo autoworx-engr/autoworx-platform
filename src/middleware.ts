@@ -26,7 +26,7 @@ const PUBLIC_API_ROUTES = [
   "/api/twilio/call-state",
   "/api/twilio/call-status",
   "/api/twilio/incoming",
-  "/api/twilio/receive/route",
+  "/api/twilio/receive",
   "/api/twilio/token",
 ];
 
