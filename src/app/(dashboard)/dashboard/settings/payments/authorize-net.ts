@@ -45,7 +45,8 @@ async function createAuthorizeNetWebhook(
       return;
     }
 
-    const isProduction = process.env.NODE_ENV === "production";
+    const isProduction = process.env.AUTHORIZE_NET_ENVIRONMENT === "production";
+
     const host = isProduction
       ? "https://api.authorize.net"
       : "https://apitest.authorize.net";
