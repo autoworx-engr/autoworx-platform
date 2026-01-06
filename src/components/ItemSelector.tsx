@@ -163,7 +163,7 @@ export default function ItemSelector<T>({
           ) : (
             <div
               className={cn(
-                "relative flex h-11 w-full items-center justify-between rounded-xl bg-slate-50/50 px-4 ring-1 ring-inset ring-[#6571FF]/20"
+                "relative flex min-h-11 w-full max-w-[320px] items-center justify-between rounded-xl bg-slate-50/50 py-2 px-4 ring-1 ring-inset ring-[#6571FF]/20"
               )}
             >
               <p className="text-sm font-semibold text-slate-700">
