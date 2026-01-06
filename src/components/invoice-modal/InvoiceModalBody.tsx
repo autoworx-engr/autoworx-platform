@@ -6,8 +6,8 @@ import { getIsWorkorderCreated } from "@/actions/estimate/invoice/getworkorderCr
 import { sendInvoiceEmail } from "@/actions/estimate/invoice/sendInvoiceEmail";
 import { sendInvoiceSms } from "@/actions/estimate/invoice/sendInvoiceSms";
 import { getOrCreateShortLinkAction } from "@/actions/shortener/getOrCreateShortLink";
-import { getStripeAccount } from "@/app/(dashboard)/dashboard/settings/payments/stripe";
 import { getPaymentGatewayInfo } from "@/app/(dashboard)/dashboard/settings/payments/getPaymentGatewayInfo";
+import { getStripeAccount } from "@/app/(dashboard)/dashboard/settings/payments/stripe";
 import {
   DialogClose,
   DialogContentBlank,
@@ -20,6 +20,7 @@ import { queryKeys } from "@/lib/queryKeys";
 import { errorToast, successToast } from "@/lib/toast";
 import { calculateDue } from "@/utils/calculateDue";
 import { formatCurrency } from "@/utils/formatCurrency";
+import { getFileFromCanvas } from "@/utils/getFileFromCanvas";
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
 import {
   Client,
@@ -40,22 +41,20 @@ import {
 } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
 import { Popconfirm, Tooltip } from "antd";
+import { Eye, Mail, MessageCircleMore, SquarePen, X } from "lucide-react";
 import moment from "moment";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import SignatureCanvas from "react-signature-canvas";
 import { useReactToPrint } from "react-to-print";
+import CarLoading from "../common/CarLoading";
 import WorkOrderModal from "../workorder-modal/WorkOrderModal";
 import { InspectionItems } from "./InspectionItems";
 import { InvoiceItems } from "./InvoiceItems";
 import { PayNow } from "./PayNow";
-import { Files, Mail, MessageCircleMore, SquarePen, X } from "lucide-react";
-import SignatureCanvas from "react-signature-canvas";
-import { uploadSignature } from "@/actions/estimate/invoice/uploadSignature";
-import { getFileFromCanvas } from "@/utils/getFileFromCanvas";
-import CarLoading from "../common/CarLoading";
 
 const DownloadPDF = dynamic(() => import("./DownloadInvoice"), {
   ssr: false,
@@ -658,6 +657,13 @@ export default function InvoiceModalBody({
                     >
                       {invoice.column?.title}
                     </p>
+
+                    {invoice.isViewed && (
+                      <div className="mt-1 flex items-center gap-1">
+                        <Eye className="h-4 w-4 text-green-500" />
+                        <span className="text-xs text-green-500">Viewed</span>
+                      </div>
+                    )}
                   </div>
                 </>
               )}
