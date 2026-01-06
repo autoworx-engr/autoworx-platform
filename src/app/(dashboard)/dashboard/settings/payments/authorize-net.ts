@@ -45,15 +45,10 @@ async function createAuthorizeNetWebhook(
       return;
     }
 
-    const environment =
-      process.env.AUTHORIZE_NET_ENVIRONMENT ||
-      process.env.NODE_ENV ||
-      "sandbox";
-    const isProduction = environment === "production";
+    const isProduction = process.env.NODE_ENV === "production";
     const host = isProduction
       ? "https://api.authorize.net"
       : "https://apitest.authorize.net";
-    console.log("🚀 ~ createAuthorizeNetWebhook ~ isProduction:", isProduction);
 
     const auth = Buffer.from(`${apiLoginId}:${transactionKey}`).toString(
       "base64"
@@ -179,10 +174,6 @@ export async function saveAuthorizeNetCredentials(
     const verification = await verifyAuthorizeNetCredentials(
       apiLoginId,
       transactionKey
-    );
-    console.log(
-      "🚀 ~ saveAuthorizeNetCredentials ~ verification:",
-      verification
     );
 
     if (!verification.success) {
