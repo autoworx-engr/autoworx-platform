@@ -19,7 +19,7 @@ const PUBLIC_API_ROUTES = [
   "/api/twilio/token",
   "/api/infobip",
   "/api/lead-generate",
-  "/api/authorize-net",
+  "/api/authorize-net/webhook",
   "/api/infobip/mms/receive",
   "/api/infobip/email/receive",
   "/api/twilio/call-recording",
@@ -37,7 +37,7 @@ const PUBLIC_DYNAMIC_API_ROUTES = [
 ];
 
 const isDynamicPublicApiRoute = (pathname: string) => {
-  const isPublic = PUBLIC_DYNAMIC_API_ROUTES.some(route => {
+  const isPublic = PUBLIC_DYNAMIC_API_ROUTES.some((route) => {
     const pattern = new URLPattern({ pathname: route });
     return pattern.test({ pathname: pathname });
   });
