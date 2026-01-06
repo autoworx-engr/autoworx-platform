@@ -18,7 +18,7 @@ export default function PaymentsPage() {
   const {
     data: stripeData,
     loading,
-    refetch: refetchStripe,
+    // refetch: refetchStripe,
   } = useServerGet(
     getStripeAccount,
     // @ts-ignore
@@ -27,7 +27,7 @@ export default function PaymentsPage() {
   const {
     data: authorizeNetData,
     loading: authorizeNetLoading,
-    refetch: refetchAuthorizeNet,
+    // refetch: refetchAuthorizeNet,
   } = useServerGet(
     getAuthorizeNetStatus,
     // @ts-ignore
@@ -56,8 +56,8 @@ export default function PaymentsPage() {
   };
 
   const handleRefresh = () => {
-    refetchStripe();
-    refetchAuthorizeNet();
+    // refetchStripe();
+    // refetchAuthorizeNet();
   };
 
   return (

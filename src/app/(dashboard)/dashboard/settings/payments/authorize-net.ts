@@ -45,7 +45,7 @@ async function createAuthorizeNetWebhook(
       return;
     }
 
-    const isProduction = process.env.AUTHORIZE_NET_ENVIRONMENT === "production";
+    const isProduction = process.env.NODE_ENV === "production";
     const host = isProduction
       ? "https://api.authorize.net"
       : "https://apitest.authorize.net";
@@ -183,6 +183,18 @@ export async function saveAuthorizeNetCredentials(
       };
     }
 
+    try {
+      // Best-effort: create webhook subscription in Authorize.Net
+      await createAuthorizeNetWebhook(apiLoginId, transactionKey);
+    } catch (error) {
+      console.error("Error creating Authorize.Net webhook:", error);
+      // throw new Error("Failed to create Authorize.Net webhook");
+      return {
+        success: false,
+        message: "Failed to save credentials",
+      };
+    }
+
     // Save credentials
     await db.company.update({
       where: { id: user.companyId },
@@ -191,9 +203,6 @@ export async function saveAuthorizeNetCredentials(
         authorizeNetTransactionKey: transactionKey,
       },
     });
-
-    // Best-effort: create webhook subscription in Authorize.Net
-    await createAuthorizeNetWebhook(apiLoginId, transactionKey);
 
     return { success: true, message: "Credentials saved successfully" };
   } catch (error: any) {

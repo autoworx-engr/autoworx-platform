@@ -52,6 +52,7 @@ export default function AuthorizeNetConfig({
         errorToast(result.message || "Failed to save credentials");
       }
     } catch (error) {
+      console.log("🚀 ~ handleSave ~ error:", error);
       errorToast("An error occurred while saving credentials");
     } finally {
       setIsLoading(false);
