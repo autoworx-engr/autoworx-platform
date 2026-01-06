@@ -9,7 +9,7 @@ type TProps = {
   categories: any[];
 };
 
-export default function DatabaseFilterHeader({ categories }: TProps) {
+export default function DatabaseFilterHeader({ categories = [] }: TProps) {
   const { setSearch, setPage, categoryName, setCategoryName } =
     useInventoryDatabaseSearchStore();
 
