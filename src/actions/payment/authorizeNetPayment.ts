@@ -179,10 +179,6 @@ export const createAuthorizeNetPaymentLink = async ({
     getRequest.setHostedPaymentSettings(hostedPaymentSettings);
 
     // Log the complete request for debugging
-    console.log(
-      "🚀 ~ Authorize.Net Request:",
-      JSON.stringify(getRequest.getJSON(), null, 2)
-    );
 
     // Execute the request
     return new Promise((resolve, reject) => {
@@ -191,7 +187,11 @@ export const createAuthorizeNetPaymentLink = async ({
       );
 
       // Set endpoint to production or sandbox
-      const environment = process.env.NODE_ENV || "sandbox";
+      const environment =
+        process.env.AUTHORIZE_NET_ENVIRONMENT ||
+        process.env.NODE_ENV ||
+        "sandbox";
+
       if (environment === "production") {
         ctrl.setEnvironment(SDKConstants.endpoint.production);
       } else {
@@ -203,7 +203,6 @@ export const createAuthorizeNetPaymentLink = async ({
         const response = new ApiContracts.GetHostedPaymentPageResponse(
           apiResponse
         );
-        console.log("🚀 ~ createAuthorizeNetPaymentLink ~ response:", response);
 
         if (response != null) {
           if (
@@ -214,7 +213,10 @@ export const createAuthorizeNetPaymentLink = async ({
             console.log("✅ Token generated successfully:", token);
 
             // Construct the hosted payment page URL (for POST submission)
-            const environment = process.env.NODE_ENV || "sandbox";
+            const environment =
+              process.env.AUTHORIZE_NET_ENVIRONMENT ||
+              process.env.NODE_ENV ||
+              "sandbox";
             const hostedPaymentUrl =
               environment === "production"
                 ? `https://accept.authorize.net/payment/payment`
@@ -280,7 +282,12 @@ export const verifyAuthorizeNetCredentials = async (
         getRequest.getJSON()
       );
 
-      if (process.env.NODE_ENV === "production") {
+      const environment =
+        process.env.AUTHORIZE_NET_ENVIRONMENT ||
+        process.env.NODE_ENV ||
+        "sandbox";
+
+      if (environment === "production") {
         ctrl.setEnvironment(SDKConstants.endpoint.production);
       } else {
         ctrl.setEnvironment(SDKConstants.endpoint.sandbox);
@@ -315,6 +322,7 @@ export const verifyAuthorizeNetCredentials = async (
       });
     });
   } catch (error: any) {
+    console.log("🚀 ~ verifyAuthorizeNetCredentials ~ error:", error);
     return {
       success: false,
       message: error?.message ?? "Failed to verify credentials",
