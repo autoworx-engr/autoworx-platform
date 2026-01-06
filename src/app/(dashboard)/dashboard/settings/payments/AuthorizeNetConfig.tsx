@@ -91,7 +91,7 @@ export default function AuthorizeNetConfig({
         <img
           src="/icons/authorizenet.png"
           alt="Authorize.Net"
-          className="h-12 w-12"
+          className="#h-12 w-24"
         />
       </div>
 
@@ -155,11 +155,24 @@ export default function AuthorizeNetConfig({
           </div>
 
           <div className="rounded-lg bg-blue-50 p-3 text-sm text-blue-700">
-            <p className="font-medium">Where to find your credentials:</p>
+            <p className="font-medium">What you need from Authorize.Net:</p>
             <ol className="ml-4 mt-2 list-decimal space-y-1">
               <li>Log in to your Authorize.Net account</li>
-              <li>Go to Account → Settings → API Credentials & Keys</li>
-              <li>Generate new Transaction Key if needed</li>
+              <li>
+                Go to{" "}
+                <span className="font-semibold">
+                  Account → Settings → API Credentials &amp; Keys
+                </span>
+              </li>
+              <li>
+                Copy your <span className="font-semibold">API Login ID </span>
+                and generate a new
+                <span className="font-semibold"> Transaction Key</span>
+              </li>
+              <li>
+                Generate a <span className="font-semibold">Signature Key</span>,
+                which is required for webhooks
+              </li>
             </ol>
           </div>
 
