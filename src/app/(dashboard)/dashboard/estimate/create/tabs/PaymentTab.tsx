@@ -6,6 +6,8 @@ import { formatCurrency } from "@/utils/formatCurrency";
 import { PaymentType, Service } from "@prisma/client";
 import moment from "moment-timezone";
 import EditPaymentModal from "../EditPayment";
+import { Card } from "@/components/ui/card";
+import { ArrowDownCircle, Wallet } from "lucide-react";
 
 const evenColor = "bg-background";
 const oddColor = "bg-[#F8FAFF]";
@@ -154,8 +156,8 @@ export default async function PaymentTab({
 
     const vehicle = originalInvoice.vehicleId
       ? await db.vehicle.findUnique({
-          where: { id: originalInvoice.vehicleId },
-        })
+        where: { id: originalInvoice.vehicleId },
+      })
       : null;
 
     let paymentMethodText = "";
@@ -357,34 +359,34 @@ export default async function PaymentTab({
   });
 
   return (
-    <div className="w-full mx-auto h-full">
+    <div className="w-full mx-auto h-full space-y-4">
       {/* Section 1 */}
-      <div className="flex h-[25%] flex-wrap items-center justify-between gap-4 2xl:flex-nowrap md:gap-0">
-        <div className="grid w-full grid-cols-2 justify-between border border-slate-400 md:flex md:w-fit">
-          <div className="bg-[#F8FAFF] p-5 px-2 text-center font-semibold md:px-10">
-            <h3>Total Quoted</h3>
-            <p className="text-center">{formatCurrency(totalAmount)}</p>
+      <div className="flex flex-wrap items-center justify-between gap-4 2xl:flex-nowrap md:gap-0">
+        <div className="grid w-full grid-cols-2 justify-between border-none bg-white shadow-sm rounded-[2rem] overflow-hidden md:flex md:w-fit">
+          <div className="bg-[#F8FAFF] p-5 px-2 text-center md:px-10 border-r border-slate-50">
+            <h3 className="text-sm font-semibold text-slate-500">Total Quoted</h3>
+            <p className="text-center font-bold text-slate-600">{formatCurrency(totalAmount)}</p>
           </div>
-          <div className="bg-[#F8FAFF] p-5 px-2 text-center font-semibold md:px-10">
-            <h3>Total Paid</h3>
-            <p className="text-center">
+          <div className="bg-[#F8FAFF] p-5 px-2 text-center md:px-10 border-r border-slate-50">
+            <h3 className="text-sm font-semibold text-slate-500">Total Paid</h3>
+            <p className="text-center font-bold text-[#6571FF]">
               {formatCurrency(totalCustomerPaidAmount)}
             </p>
           </div>
-          <div className="p-5 px-2 text-center font-semibold md:px-10">
-            <h3>Total Refunded</h3>
-            <p className="text-center text-red-600">
+          <div className="p-5 px-2 text-center md:px-10 border-r border-slate-50">
+            <h3 className="text-sm font-semibold text-slate-500">Total Refunded</h3>
+            <p className="text-center font-bold text-red-500">
               {formatCurrency(totalRefundedAmount)}
             </p>
           </div>
-          <div className="p-5 px-2 text-center font-semibold md:px-10">
-            <h3>Total Transactions</h3>
-            <p className="text-center">{allTransactionEntries?.length || 0}</p>
+          <div className="p-5 px-2 text-center md:px-10">
+            <h3 className="text-sm font-semibold text-slate-500">Total Transactions</h3>
+            <p className="text-center font-bold text-slate-700">{allTransactionEntries?.length || 0}</p>
           </div>
         </div>
 
-        <div className="w-full md:w-96 lg:w-[420px] xl:w-[480px] 2xl:w-[520px] border border-slate-400 text-center text-sm md:text-start">
-          <h3 className="p-3 py-1 font-semibold">Top Services</h3>
+        <div className="w-full md:w-96 lg:w-[420px] xl:w-[480px] 2xl:w-[520px] border-none bg-white shadow-sm rounded-[1.5rem] overflow-hidden text-center text-sm md:text-start">
+          <h3 className="p-2 text-lg font-semibold text-slate-600 bg-slate-50/50">Top Services</h3>
           <div>
             {totalServices
               .sort((a, b) => b.count - a.count)
@@ -393,12 +395,14 @@ export default async function PaymentTab({
                 <div
                   key={service.id}
                   className={cn(
-                    "flex justify-between items-center gap-4 p-3 py-1",
-                    index % 2 === 0 ? evenColor : oddColor
+                    "flex justify-between items-center gap-4 p-3 py-2 transition-colors",
+                    index % 2 === 0 ? "bg-white" : "bg-slate-50/30"
                   )}
                 >
-                  <p className="truncate pr-2">{service.name}</p>
-                  <p className="text-nowrap">Ordered {service.count} times</p>
+                  <p className="truncate pr-2 font-semibold text-slate-600">{service.name}</p>
+                  <p className="text-nowrap text-sm font-bold text-[#6571FF] bg-[#6571FF]/5 px-2 py-1 rounded-lg">
+                    Ordered {service.count} times
+                  </p>
                 </div>
               ))}
           </div>
@@ -410,7 +414,7 @@ export default async function PaymentTab({
       <div className="h-[30%] overflow-scroll rounded-lg border md:rounded-none">
         {/* Desktop */}
         <div className="hidden md:block">
-          <table className="table-auto w-full text-xs">
+          <table className="table-auto w-full text-xs thin-scrollbar">
             <thead className="bg-background">
               <tr className="h-10 border-b">
                 <th className="px-10 text-left">Invoice ID</th>
@@ -458,8 +462,8 @@ export default async function PaymentTab({
                     <td className="px-10 text-left">{data.paymentMethod}</td>
                     <td className="px-10 text-left">
                       {data.paymentMethodInfo &&
-                      "receivedCash" in data.paymentMethodInfo &&
-                      data.paymentMethodInfo.receivedCash
+                        "receivedCash" in data.paymentMethodInfo &&
+                        data.paymentMethodInfo.receivedCash
                         ? data.paymentMethodInfo.receivedCash
                         : "N/A"}
                     </td>
@@ -497,7 +501,6 @@ export default async function PaymentTab({
             const totalPaidForInvoice = invoicesWithFull
               .filter((inv) => inv.id === data.id)
               .reduce((sum, inv) => sum + Number(inv.amountPaid || 0), 0);
-
             return (
               <div
                 key={data.id}
@@ -546,8 +549,8 @@ export default async function PaymentTab({
                     <p className="text-sm text-[#66738C]">Cash Received</p>
                     <p className="text-sm font-medium">
                       {data.paymentMethodInfo &&
-                      "receivedCash" in data.paymentMethodInfo &&
-                      data.paymentMethodInfo.receivedCash
+                        "receivedCash" in data.paymentMethodInfo &&
+                        data.paymentMethodInfo.receivedCash
                         ? data.paymentMethodInfo.receivedCash
                         : "N/A"}
                     </p>
@@ -601,11 +604,10 @@ export default async function PaymentTab({
                 >
                   <td className="h-8 px-10 text-left">
                     <span
-                      className={`rounded px-2 py-1 text-xs font-medium ${
-                        transaction.type === "PAYMENT"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
-                      }`}
+                      className={`rounded px-2 py-1 text-xs font-medium ${transaction.type === "PAYMENT"
+                        ? "bg-green-100 text-green-800"
+                        : "bg-red-100 text-red-800"
+                        }`}
                     >
                       {transaction.type}
                     </span>
@@ -622,9 +624,8 @@ export default async function PaymentTab({
                   </td>
                   <td className="px-10 text-left">{transaction.vehicle}</td>
                   <td
-                    className={`px-10 text-left ${
-                      transaction.type === "REFUND" ? "text-red-600" : ""
-                    }`}
+                    className={`px-10 text-left ${transaction.type === "REFUND" ? "text-red-600" : ""
+                      }`}
                   >
                     {formatCurrency(Math.abs(transaction.amount))}
                   </td>
@@ -657,11 +658,10 @@ export default async function PaymentTab({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span
-                    className={`rounded px-2 py-1 text-xs font-medium ${
-                      transaction.type === "PAYMENT"
-                        ? "bg-green-100 text-green-800"
-                        : "bg-red-100 text-red-800"
-                    }`}
+                    className={`rounded px-2 py-1 text-xs font-medium ${transaction.type === "PAYMENT"
+                      ? "bg-green-100 text-green-800"
+                      : "bg-red-100 text-red-800"
+                      }`}
                   >
                     {transaction.type}
                   </span>
@@ -676,18 +676,16 @@ export default async function PaymentTab({
                 </div>
                 <div className="text-right">
                   <p
-                    className={`text-lg font-bold ${
-                      transaction.type === "REFUND"
-                        ? "text-red-600"
-                        : "text-[#6571FF]"
-                    }`}
+                    className={`text-lg font-bold ${transaction.type === "REFUND"
+                      ? "text-red-600"
+                      : "text-[#6571FF]"
+                      }`}
                   >
                     ${Math.abs(transaction.amount).toFixed(2)}
                     {transaction.type === "REFUND" && " (Refunded)"}
                   </p>
                 </div>
               </div>
-
               <div className="mt-2 space-y-2">
                 <div className="flex justify-between">
                   <p className="text-sm text-[#66738C]">Vehicle</p>
