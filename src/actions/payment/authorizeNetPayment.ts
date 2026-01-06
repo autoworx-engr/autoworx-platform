@@ -191,7 +191,7 @@ export const createAuthorizeNetPaymentLink = async ({
       );
 
       // Set endpoint to production or sandbox
-      const environment = env("AUTHORIZE_NET_ENVIRONMENT") || "sandbox";
+      const environment = process.env.NODE_ENV || "sandbox";
       if (environment === "production") {
         ctrl.setEnvironment(SDKConstants.endpoint.production);
       } else {
@@ -214,7 +214,7 @@ export const createAuthorizeNetPaymentLink = async ({
             console.log("✅ Token generated successfully:", token);
 
             // Construct the hosted payment page URL (for POST submission)
-            const environment = env("AUTHORIZE_NET_ENVIRONMENT") || "sandbox";
+            const environment = process.env.NODE_ENV || "sandbox";
             const hostedPaymentUrl =
               environment === "production"
                 ? `https://accept.authorize.net/payment/payment`
@@ -280,7 +280,7 @@ export const verifyAuthorizeNetCredentials = async (
         getRequest.getJSON()
       );
 
-      if (process.env.AUTHORIZE_NET_ENVIRONMENT === "production") {
+      if (process.env.NODE_ENV === "production") {
         ctrl.setEnvironment(SDKConstants.endpoint.production);
       } else {
         ctrl.setEnvironment(SDKConstants.endpoint.sandbox);
