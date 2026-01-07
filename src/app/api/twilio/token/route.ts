@@ -28,13 +28,13 @@ import twilio from "twilio";
  *         description: Server error
  */
 export async function POST(request: NextRequest) {
-  const { identity } = await request.json();
+  const { identity, companyId } = await request.json();
 
   try {
     const AccessToken = twilio.jwt.AccessToken;
     const VoiceGrant = AccessToken.VoiceGrant;
 
-    let twilioCredentials = await getTwilioCredentials();
+    let twilioCredentials = await getTwilioCredentials({ companyId });
 
     if (!twilioCredentials) {
       return NextResponse.json(
@@ -54,6 +54,7 @@ export async function POST(request: NextRequest) {
       const voiceGrant = new VoiceGrant({
         outgoingApplicationSid: twilioCredentials.twimlAppSid,
         incomingAllow: true, // Allows incoming calls
+        pushCredentialSid: process.env.TWILIO_PUSH_CREDENTIAL_SID,
       });
 
       token.addGrant(voiceGrant);

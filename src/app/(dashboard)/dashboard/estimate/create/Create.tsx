@@ -9,6 +9,7 @@ import ServiceCreate from "./ServiceCreate";
 import { useMediaQuery } from "react-responsive";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import { cn } from "@/lib/cn";
 
 export default function Create() {
   const { type } = useEstimatePopupStore();
@@ -32,14 +33,14 @@ export default function Create() {
             acc +
             (material && material.sell
               ? parseFloat(material.sell.toString()) *
-                Number(material.quantity!)
+              Number(material.quantity!)
               : 0)
           );
         }, 0);
 
         const laborCost = item.labor?.charge
           ? parseFloat(item.labor?.charge.toString()) *
-            Number(item.labor?.hours)
+          Number(item.labor?.hours)
           : 0;
 
         const totalDiscount =
@@ -58,69 +59,79 @@ export default function Create() {
         return (
           <div
             key={item.id}
-            className="rounded-md border border-[#6571FF] px-2 py-1"
+            className={cn(
+              "overflow-hidden rounded-xl border border-slate-300 transition-all duration-200",
+              openService === item.id ? "bg-slate-50 shadow-sm" : "bg-white hover:border-[#6571FF]/30"
+            )}
           >
-            <div className="flex w-full justify-between text-[#6571FF]">
-              <p>{item.service.name}</p>
-              <button
-                type="button"
-                onClick={() =>
-                  setOpenService(
-                    openService === item.id ? null : (item.id as string)
-                  )
-                }
-                className="flex items-center gap-1"
-              >
-                <p>{formatCurrency(serviceTotal)}</p>
-                {openService === item.id ? <ChevronUp /> : <ChevronDown />}
-              </button>
+            {/* Header / Summary Row */}
+            <div
+              className={cn(
+                "flex w-full items-center justify-between px-4 py-3 cursor-pointer select-none",
+                openService === item.id ? "text-[#6571FF]" : "text-slate-600"
+              )}
+              onClick={() => setOpenService(openService === item.id ? null : (item.id as string))}
+            >
+              <p className="font-semibold tracking-tight">{item.service.name}</p>
+              <div className="flex items-center gap-3">
+                <p className="font-semibold text-sm">{formatCurrency(serviceTotal)}</p>
+                <div className={cn(
+                  "transition-transform duration-200",
+                  openService === item.id ? "rotate-180" : "rotate-0"
+                )}>
+                  <ChevronDown size={18} className={openService === item.id ? "text-[#6571FF]" : "text-slate-400"} />
+                </div>
+              </div>
             </div>
 
+            {/* Expanded Details */}
             {openService === item.id && (
-              <>
-                <div className="mt-2 text-[#6571FF]">
-                  <div>
-                    {item.materials.map((material, index) => {
-                      if (!material) return null;
+              <div className="border-t border-white bg-white/50 px-4 pb-4 pt-2">
+                <div className="space-y-2.5">
+                  {/* Materials Section */}
+                  {item.materials.map((material, index) => {
+                    if (!material) return null;
+                    return (
+                      <div key={index} className="flex justify-between text-sm text-slate-500 font-medium">
+                        <p className="flex items-center gap-1.5">
+                          <span className="h-1 w-1 rounded-full bg-slate-300" />
+                          {material.name}
+                        </p>
+                        <p className="text-slate-700">
+                          {formatCurrency(
+                            material.sell
+                              ? parseFloat(material.sell.toString()) * Number(material.quantity!)
+                              : 0
+                          )}
+                        </p>
+                      </div>
+                    );
+                  })}
 
-                      return (
-                        <div key={index} className="flex justify-between">
-                          <p>{material.name}</p>
-                          <p>
-                            {formatCurrency(
-                              material.sell
-                                ? parseFloat(material.sell.toString()) *
-                                    Number(material.quantity!)
-                                : 0
-                            )}
-                          </p>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div className="mt-2 text-[#6571FF]">
-                  <div className="flex justify-between">
-                    <p>{item.labor ? item.labor.name : "Labor"}</p>
-                    <p>
+                  {/* Labor Section */}
+                  <div className="flex justify-between text-sm text-slate-500 font-medium">
+                    <p className="flex items-center gap-1.5">
+                      <span className="h-1 w-1 rounded-full bg-slate-300" />
+                      {item.labor ? item.labor.name : "Labor"}
+                    </p>
+                    <p className="text-slate-700 text-base font-medium">
                       {formatCurrency(
                         item.labor?.charge
-                          ? parseFloat(item.labor?.charge.toString()) *
-                              Number(item.labor?.hours)
+                          ? parseFloat(item.labor?.charge.toString()) * Number(item.labor?.hours)
                           : 0
                       )}
                     </p>
                   </div>
+
+                  {/* Discount Section */}
+                  {totalDiscount > 0 && (
+                    <div className="mt-2 flex justify-between border-t border-slate-100 pt-2 text-xs font-bold text-emerald-600">
+                      <p>Discount</p>
+                      <p>- {formatCurrency(totalDiscount)}</p>
+                    </div>
+                  )}
                 </div>
-                {/* Combined Discount Section */}
-                <div className="mt-2 text-[#6571FF]">
-                  <div className="flex justify-between">
-                    <p>Discount</p>
-                    <p>{formatCurrency(totalDiscount)}</p>
-                  </div>
-                </div>
-              </>
+              </div>
             )}
           </div>
         );

@@ -22,6 +22,7 @@ import { useListsStore } from "@/stores/lists";
 import { Category, InventoryProductType, Vendor } from "@prisma/client";
 import { useEffect, useState } from "react";
 import { createProduct } from "../../../../actions/inventory/create";
+import { cn } from "@/lib/cn";
 
 type ProductProps = {
   product?: {
@@ -371,29 +372,27 @@ export default function AddNewProduct({
       </DialogTrigger>
       <DialogContent
         onOpenAutoFocus={(e) => e.preventDefault()}
-        className="max-h-[80%] max-w-[96%] grid-rows-[auto,1fr,auto] md:max-w-xl lg:max-w-3xl"
+        className="max-h-[80%] w-[96%] max-w-xl grid-rows-[auto,1fr,auto] thin-scrollbar"
         form
       >
         <DialogHeader>
-          <DialogTitle>Add New Product</DialogTitle>
+          <DialogTitle className="text-slate-600">Add New Product</DialogTitle>
         </DialogHeader>
 
         <FormError />
 
-        <div className="grid-cols-2 gap-5 overflow-y-auto md:grid">
-          <div className="space-y-2">
+        <div className="gap-5 overflow-y-auto pl-1 space-y-2">
+          <div className="space-y-2 grid grid-cols-1 md:grid-cols-2 gap-x-5">
             {isDatabase ? (
-              // Display a non-editable field when isDatabase is true
               <div>
-                <label className="block font-medium">Category</label>
-
+                <label className="block font-medium text-slate-600">Category</label>
                 <div className="rounded-md border border-gray-300 bg-gray-100 px-3 py-2">
                   {product?.category || "No category selected"}
                 </div>
               </div>
             ) : (
-              // Render SelectCategory when isDatabase is false
               <SelectCategory
+                categoryData={category}
                 onCategoryChange={(selectedCategory) => {
                   setCategory(selectedCategory);
                   clearError();
@@ -403,6 +402,44 @@ export default function AddNewProduct({
                 required={true}
               />
             )}
+
+            {/* Product Type */}
+            <div className={`${isDatabase ? "hidden" : "block"}`}>
+              <label className="font-medium text-slate-600">Product Type</label>
+              <div className="mt-1 flex gap-5">
+                <div>
+                  <input
+                    id="product"
+                    type="radio"
+                    name="type"
+                    value={InventoryProductType.Product}
+                    checked={productType === InventoryProductType.Product}
+                    onChange={() => {
+                      setProductType(InventoryProductType.Product);
+                      clearError();
+                    }}
+                    className="mr-1"
+                  />
+                  <label htmlFor="product">Products</label>
+                </div>
+                <div>
+                  <input
+                    id="supply"
+                    type="radio"
+                    name="type"
+                    value={InventoryProductType.Supply}
+                    checked={productType === InventoryProductType.Supply}
+                    onChange={() => {
+                      setProductType(InventoryProductType.Supply);
+                      clearError();
+                    }}
+                    className="mr-1"
+                  />
+                  <label htmlFor="supply">Supplies</label>
+                </div>
+              </div>
+            </div>
+
             <SlimInput
               name="productName"
               required
@@ -410,9 +447,9 @@ export default function AddNewProduct({
               onChange={(e) => {
                 const value = e.target.value;
                 if (isDatabase) {
-                  setDatabaseName(value); // Update name when isDatabase is true
+                  setDatabaseName(value);
                 } else {
-                  setProductName(value); // Update productName otherwise
+                  setProductName(value);
                 }
 
                 if (!value.trim()) {
@@ -426,12 +463,10 @@ export default function AddNewProduct({
               }}
             />
 
-            <div className="mt-2">
-              <label>
-                Vendor
-                <span className="ml-1 text-red-500">*</span>
+            <div className="space-y-2">
+              <label className="font-medium text-slate-600">
+                Vendor <span className="text-red-500">*</span>
               </label>
-
               <Selector
                 label={(vendor: Vendor | null) =>
                   vendor
@@ -443,11 +478,10 @@ export default function AddNewProduct({
                     bgShadow={false}
                     afterSubmit={(ven) => {
                       setVendor(ven);
-                      // setVendorOpen(false);
                       clearError();
                     }}
                     button={
-                      <button type="button" className="text-xs text-[#6571FF]">
+                      <button type="button" className="text-xs text-[#6571FF] hover:underline">
                         + New Vendor
                       </button>
                     }
@@ -477,52 +511,28 @@ export default function AddNewProduct({
               />
             </div>
           </div>
-          <div className="w-full py-2 md:py-0">
-            <label>Description</label>
-            <p className="text-xs">
+
+          <div className="py-2 md:py-0">
+            <label className="font-medium text-slate-600">Description</label>
+            <p className="text-xs text-slate-500 mb-1">
               Description must be less than 250 characters
             </p>
             <textarea
               name="description"
               required={false}
               minLength={20}
-              maxLength={150}
-              className="h-28 w-full rounded-sm border border-primary-foreground border-slate-400 bg-background px-2 py-0.5 leading-6 md:w-[95%]"
+              maxLength={250}
+              className={cn("h-20 w-full rounded-md border border-slate-300 outline-none bg-background px-2 py-0.5 leading-6 transition-all duration-300 thin-scrollbar",
+                "bg-white/80 backdrop-blur-sm dark:bg-slate-900/50",
+                "text-slate-600 dark:text-slate-300 placeholder:text-slate-400",
+                "focus:border-[#6571FF]/60 focus:ring-2 focus:ring-[#6571FF]/40",
+                "disabled:opacity-50 disabled:cursor-not-allowed"
+              )}
             />
-            <div>
-              <div className={`${isDatabase ? "hidden" : "block"} `}>
-                <input
-                  id="product"
-                  type="radio"
-                  name="type"
-                  value={InventoryProductType.Product}
-                  checked={productType === InventoryProductType.Product}
-                  onChange={() => {
-                    setProductType(InventoryProductType.Product);
-                    clearError();
-                  }}
-                  className="mr-1"
-                />
-                <label htmlFor="product">Products</label>
-              </div>
-              <div className={`${isDatabase ? "hidden" : "block"} `}>
-                <input
-                  id="supply"
-                  type="radio"
-                  name="type"
-                  value={InventoryProductType.Supply}
-                  checked={productType === InventoryProductType.Supply}
-                  onChange={() => {
-                    setProductType(InventoryProductType.Supply);
-                    clearError();
-                  }}
-                  className="mr-1"
-                />
-                <label htmlFor="supply">Supplies</label>
-              </div>
-            </div>
           </div>
-          <div className="col-span-3 mt-5 hidden w-[90%] flex-wrap gap-5 md:flex-nowrap lg:flex">
+
+          {/* Desktop screen */}
+          <div className="md:grid grid-cols-1 hidden md:grid-cols-4 w-full gap-5">
             <SlimInput
               name="quantity"
               type="number"
@@ -547,36 +557,38 @@ export default function AddNewProduct({
             />
             <SlimInput name="lot" label="Lot#" required={false} />
           </div>
+
+          {/* mobile screen */}
+          <div className="block md:hidden space-y-4">
+            <SlimInput
+              name="quantity"
+              type="number"
+              required
+              value={quantity}
+              onChange={handleQuantityChange}
+            />
+
+            <SlimInput
+              name="price"
+              type="number"
+              required
+              value={price}
+              onChange={handlePriceChange}
+            />
+
+            <SlimInput
+              name="unit"
+              required
+              value={isDatabase ? databaseUnit : unit}
+              onChange={handleUnitChange}
+            />
+            <SlimInput name="lot" label="Lot#" required={false} />
+          </div>
+
           <div>
             <SlimInput name="receipt" label="Receipt#" required={false} />
           </div>
 
-          {/* mobile form */}
-          <div className="mt-5 block space-y-2 md:hidden">
-            <SlimInput
-              name="quantity"
-              type="number"
-              required
-              value={quantity}
-              onChange={handleQuantityChange}
-            />
-
-            <SlimInput
-              name="price"
-              type="number"
-              required
-              value={price}
-              onChange={handlePriceChange}
-            />
-
-            <SlimInput
-              name="unit"
-              required
-              value={isDatabase ? databaseUnit : unit}
-              onChange={handleUnitChange}
-            />
-            <SlimInput name="lot" label="Lot#" required={false} />
-          </div>
           <div className="mt-5 rounded-md bg-[#6571FF5E] p-2 md:mt-0">
             <p className="font-semibold">Quantity for Low Inventory</p>
             <i className="text-xs">(Leave blank to disable notifications)</i>
@@ -590,19 +602,23 @@ export default function AddNewProduct({
         </div>
 
         <DialogFooter>
-          <DialogClose className="rounded-lg px-5 py-2.5 text-sm font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 transition-colors border">
+          <DialogClose className="
+                rounded-xl mt-2 sm:mt-0 px-5 py-2.5 text-sm font-medium text-slate-500 
+                hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
+                transition-colors border
+              ">
             Cancel
           </DialogClose>
           <Submit
             className="
-              rounded-lg px-6 py-2.5 text-sm font-medium text-white
-              bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
-              shadow-lg shadow-indigo-500/30
-              hover:shadow-xl hover:shadow-indigo-500/40
-              hover:-translate-y-0.5 hover:scale-[1.02]
-              active:translate-y-0 active:scale-100
-              transition-all duration-200
-            "
+                rounded-xl px-6 py-2.5 text-sm font-medium text-white
+                bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+                shadow-lg shadow-indigo-500/30
+                hover:shadow-xl hover:shadow-indigo-500/40
+                hover:-translate-y-0.5 hover:scale-[1.02]
+                active:translate-y-0 active:scale-100
+                transition-all duration-200
+              "
             formAction={handleSubmit}
           >
             Add

@@ -85,17 +85,17 @@ export default function NewVehicle({
   const vehicleOptions =
     makes?.data && makes.data.length > 0
       ? makes?.data?.map((vehicle: any) => ({
-          title: vehicle.name ?? "Unknown",
-          id: vehicle.name,
-        }))
+        title: vehicle.name ?? "Unknown",
+        id: vehicle.name,
+      }))
       : [];
 
   const vehicleModelOptions =
     models?.data && models.data.length > 0
       ? models?.data?.map((vehicle: any) => ({
-          title: vehicle.name ?? "Unknown",
-          id: vehicle.name,
-        }))
+        title: vehicle.name ?? "Unknown",
+        id: vehicle.name,
+      }))
       : [];
 
   const handleInputChange = (name: string, value: string) => {
@@ -191,15 +191,22 @@ export default function NewVehicle({
       )}
 
       <DialogContent
-        className="max-h-full max-w-xl grid-rows-[auto,1fr,auto] overflow-y-auto"
+        className="max-h-full max-w-xl grid-rows-[auto,1fr,auto]"
         form
       >
-        <DialogHeader>
-          <DialogTitle>Create Vehicle</DialogTitle>
-        </DialogHeader>
-        <div>
-          <FormError />
-          <div className="grid gap-2 overflow-y-auto sm:grid-cols-2">
+        <div className="mt-8 flex items-center justify-between px-2 md:px-4">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-600 dark:text-slate-100">
+              Add Vehicle
+            </h1>
+            <p className="text-sm text-slate-500 mt-1">Enter vehicle details for the client</p>
+          </div>
+        </div>
+
+        <FormError />
+
+        <div className="space-y-4 overflow-y-auto py-2 px-2 md:px-4 thin-scrollbar scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent">
+          <div className="grid gap-4 sm:grid-cols-2">
             {/* Year */}
             <SelectorWithSearch
               name="year"
@@ -287,12 +294,11 @@ export default function NewVehicle({
               name="other"
               label="Other (Vehicle not listed or non-vehicle job? Enter details here)"
               required={false}
-              rootClassName={`col-span-full ${
-                !!formData.vehicleYear &&
+              rootClassName={`col-span-full ${!!formData.vehicleYear &&
                 !!formData.vehicleMake &&
                 !!formData.vehicleModel &&
                 "cursor-not-allowed bg-gray-100 opacity-50"
-              }`}
+                }`}
               onChange={e => {
                 let value = e.target.value;
                 setIsOtherPopulated(value?.length > 0);
@@ -312,11 +318,25 @@ export default function NewVehicle({
         </div>
 
         <DialogFooter>
-          <DialogClose className="mt-1 rounded-lg border-2 border-slate-400 p-2 lg:mt-0">
+          <DialogClose
+            className="
+              rounded-xl mt-2 sm:mt-0 px-5 py-2.5 text-sm font-medium text-slate-500
+              hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
+              transition-colors border
+            "
+          >
             Cancel
           </DialogClose>
           <Submit
-            className="rounded-lg border bg-[#6571FF] px-5 py-2 text-white"
+            className="
+              rounded-xl px-6 py-2.5 text-sm font-medium text-white
+              bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+              shadow-lg shadow-indigo-500/30
+              hover:shadow-xl hover:shadow-indigo-500/40
+              hover:-translate-y-0.5 hover:scale-[1.02]
+              active:translate-y-0 active:scale-100
+              transition-all duration-200
+            "
             formAction={handleSubmit}
             disabled={loading}
           >

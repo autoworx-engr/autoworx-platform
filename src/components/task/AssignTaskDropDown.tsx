@@ -64,10 +64,10 @@ export default function AssignTaskDropDown({
 
   return (
     <div className="mb-3 flex flex-col">
-      <label htmlFor="assigned_users">Assign</label>
+      <label htmlFor="assigned_users" className="font-medium text-slate-600">Assign</label>
 
       {/* Display assigned users */}
-      <div className="#no-visible-scrollbar my-2 flex max-h-40 w-full flex-wrap items-center gap-1 overflow-y-auto">
+      {/* <div className="#no-visible-scrollbar my-2 flex max-h-40 w-full flex-wrap items-center gap-1 overflow-y-auto">
         {assignedUserObjects.map((userInfo) => {
           const fullName = `${userInfo?.firstName} ${userInfo?.lastName}`;
           return (
@@ -83,11 +83,51 @@ export default function AssignTaskDropDown({
             </div>
           );
         })}
+      </div> */}
+      <div className="no-visible-scrollbar my-3 flex max-h-44 w-full flex-wrap items-center gap-2 overflow-y-auto p-1">
+        {assignedUserObjects.map((userInfo) => {
+          const fullName = `${userInfo?.firstName} ${userInfo?.lastName}`;
+          return (
+            <div
+              key={userInfo?.id}
+              className="
+          group flex items-center gap-x-2 rounded-full 
+          bg-slate-100/80 px-3 py-1.5 
+          ring-1 ring-slate-200/60
+          transition-all duration-300
+          hover:bg-white hover:ring-[#6571FF]/30 hover:shadow-sm
+          animate-in fade-in zoom-in-95
+        "
+            >
+              <span className="text-sm font-medium text-slate-600 group-hover:text-slate-900 transition-colors">
+                {fullName}
+              </span>
+
+              <button
+                type="button"
+                onClick={() => handleRemoveUser(userInfo?.id!)}
+                className="
+            flex h-5 w-5 items-center justify-center 
+            rounded-full transition-all duration-200
+            hover:bg-rose-100 hover:text-rose-600
+            text-slate-400
+          "
+              >
+                <X className="h-3.5 w-3.5" strokeWidth={2.5} />
+              </button>
+            </div>
+          );
+        })}
+
+        {assignedUserObjects.length === 0 && (
+          <p className="text-xs italic text-slate-400 ml-1">No users assigned yet.</p>
+        )}
       </div>
 
       {/* User selector */}
       <div className="w-full">
         <Selector
+          className="max-w-full"
           label={() =>
             availableUsers.length === 0 ? "No users available" : "Select user"
           }
