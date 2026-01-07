@@ -379,7 +379,7 @@ export const StatementPaymentDialog: React.FC<StatementPaymentDialogProps> = ({
               method="post"
               target="authorize_net_payment_iframe"
               action={
-                process.env.NODE_ENV === "production"
+                process.env.AUTHORIZE_NET_ENVIRONMENT === "production"
                   ? "https://accept.authorize.net/payment/payment"
                   : "https://test.authorize.net/payment/payment"
               }
