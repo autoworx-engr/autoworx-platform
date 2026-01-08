@@ -1,10 +1,11 @@
 import { deleteTemplate } from "@/actions/appointment/deleteTemplate";
 import { emailTemplateQueryKey } from "@/app/(dashboard)/dashboard/task/_constant";
+import FormError from "@/components/FormError";
 import NewTemplate from "@/components/Lists/NewTemplate";
 import Selector from "@/components/Selector";
 import { Switch } from "@/components/Switch";
 import useTemplatesQuery from "@/hooks/query-hook/useTemplatesQuery";
-import { errorToast } from "@/lib/toast";
+import { useFormErrorStore } from "@/stores/form-error";
 import type { Client, EmailTemplate, Vehicle } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
 import moment from "moment";
@@ -63,6 +64,11 @@ export function Reminder({
   const { data: templates = [] } = useTemplatesQuery();
 
   const queryClient = useQueryClient();
+  const { showError, clearError, error } = useFormErrorStore();
+
+  useEffect(() => {
+    return () => clearError();
+  }, []);
 
   // Add state for minimum date and time validation
   const [minDate, setMinDate] = useState<string>("");
@@ -121,21 +127,27 @@ export function Reminder({
   }
 
   const handleAddReminder = () => {
-    // Validate that date is selected
-    if (!dateInput) {
-      errorToast("Please select a date for the reminder!");
+    // Validate that time is selected
+    if (!time) {
+      showError({
+        message: "Please select a time for the reminder!",
+        success: false,
+      });
       return;
     }
 
-    // Validate that time is selected
-    if (!time) {
-      errorToast("Please select a time for the reminder!");
+    // Validate that date is selected
+    if (!dateInput) {
+      showError({
+        message: "Please select a date for the reminder!",
+        success: false,
+      });
       return;
     }
 
     // Validate that reminder is not in the past
     // if (dateInput === minDate && time < minStartTime) {
-    //   errorToast("Reminder time cannot be in the past!");
+    //   showError({ message: "Reminder time cannot be in the past!", success: false });
     //   return;
     // }
 
@@ -147,12 +159,16 @@ export function Reminder({
     const reminderDateTime = moment(`${dateInput} ${time}`, "YYYY-MM-DD HH:mm");
 
     if (reminderDateTime.isAfter(appointmentDateTime)) {
-      errorToast("Reminder must be scheduled before the appointment!");
+      showError({
+        message: "Reminder must be scheduled before the appointment!",
+        success: false,
+      });
       return;
     }
 
     // Add the reminder
     setTimes([...times, { time, date: dateInput }]);
+    clearError();
 
     // Optionally clear inputs after adding
     setTime("");
@@ -362,7 +378,7 @@ export function Reminder({
         {/* Input Header Area */}
         <div className="flex flex-col gap-3 bg-slate-50/50 p-4 border-b border-slate-100 md:flex-row md:items-end">
           <div className="flex-1 space-y-1.5">
-            <label className="text-base font-medium text-slate-600 ml-1">Time</label>
+            <label className="text-base font-medium text-slate-600 ml-1">Time <span className="text-rose-500">*</span></label>
             <input
               type="time"
               className="w-full h-10 rounded-lg border-none bg-white px-3 text-sm text-slate-600 ring-1 ring-slate-200 transition-all focus:ring-2 focus:ring-[#6571FF]/30 outline-none"
@@ -372,7 +388,7 @@ export function Reminder({
           </div>
 
           <div className="flex-1 space-y-1.5">
-            <label className="text-base font-medium text-slate-600 ml-1">Date</label>
+            <label className="text-base font-medium text-slate-600 ml-1">Date <span className="text-rose-500">*</span></label>
             <input
               type="date"
               className="w-full h-10 rounded-lg border-none bg-white px-3 text-sm text-slate-600 ring-1 ring-slate-200 transition-all focus:ring-2 focus:ring-[#6571FF]/30 outline-none"

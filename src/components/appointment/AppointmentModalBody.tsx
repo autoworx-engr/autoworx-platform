@@ -998,19 +998,25 @@ export default function AppointmentModalBody({
 
           </div>
 
-          <textarea
-            name="notes"
-            placeholder="Notes"
-            className={cn("h-20 w-full rounded-md border border-slate-300 outline-none bg-background px-2 py-0.5 leading-6 transition-all duration-300 thin-scrollbar",
-              "bg-white/80 backdrop-blur-sm dark:bg-slate-900/50",
-              "text-slate-600 dark:text-slate-300 placeholder:text-slate-400",
-              "focus:border-[#6571FF]/60 focus:ring-2 focus:ring-[#6571FF]/40",
-              "disabled:opacity-50 disabled:cursor-not-allowed"
-            )}
-            rows={3}
-            value={notes}
-            onChange={(event) => setNotes(event.currentTarget.value)}
-          />
+          <div className="relative w-full">
+            <textarea
+              name="notes"
+              placeholder="Notes"
+              className={cn("h-20 w-full rounded-md border border-slate-300 outline-none bg-background px-2 py-0.5 leading-6 transition-all duration-300 thin-scrollbar",
+                "bg-white/80 backdrop-blur-sm dark:bg-slate-900/50",
+                "text-slate-600 dark:text-slate-300 placeholder:text-slate-400",
+                "focus:border-[#6571FF]/60 focus:ring-2 focus:ring-[#6571FF]/40",
+                "disabled:opacity-50 disabled:cursor-not-allowed"
+              )}
+              rows={3}
+              maxLength={1000}
+              value={notes}
+              onChange={(event) => setNotes(event.currentTarget.value)}
+            />
+            <span className="absolute -bottom-2 right-2 text-xs text-slate-400 pointer-events-none">
+              {notes.length}/1000
+            </span>
+          </div>
         </div>
 
         <div className="relative row-span-2 min-h-36 divide-y bg-background">
