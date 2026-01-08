@@ -684,14 +684,24 @@ const SearchTerms = React.memo(function SearchTerms({
   );
 
   return (
-    <div className="relative min-w-0 flex-1">
-      <Search size={20} className="absolute left-3 top-2.5 text-gray-400" />
+    <div className="relative min-w-0 flex-1 group">
+      <Search
+        size={18}
+        className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-[#6571FF]"
+      />
+
       <input
         type="text"
         value={search}
-        placeholder="Search by client, vehicle, services, lead source"
-        className="w-full rounded border border-gray-300 p-2 pl-10"
+        placeholder="Search by client, vehicle, services..."
         onChange={handleSearchChange}
+        className={cn(
+          "w-full h-11 pl-12 pr-4 rounded-xl border-2 border-slate-100 bg-white",
+          "text-sm font-medium text-slate-700 placeholder:text-slate-400 outline-none",
+          "transition-all duration-300 ease-in-out",
+          "hover:border-slate-200 hover:bg-slate-50/30",
+          "focus:border-[#6571FF]/40 focus:bg-white focus:ring-4 focus:ring-[#6571FF]/10",
+        )}
       />
     </div>
   );
@@ -779,7 +789,7 @@ const DropdownMenuDemo = React.memo(function DropdownMenuDemo({
           className="data-[side=top]:animate-slideDownAndFade data-[side=right]:animate-slideLeftAndFade data-[side=bottom]:animate-slideUpAndFade data-[side=left]:animate-slideRightAndFade min-w-[220px] rounded-md bg-background p-[5px] py-8 shadow-[0px_10px_38px_-10px_rgba(22,_23,_24,_0.35),_0px_10px_20px_-15px_rgba(22,_23,_24,_0.2)] will-change-[opacity,transform]"
           sideOffset={5}
         >
-          <div className="flex flex-col gap-y-2">
+          <div className="flex flex-col gap-y-2 px-4">
             <SelectComponent
               label="Assigned To"
               items={[
@@ -842,7 +852,12 @@ const DropdownMenuDemo = React.memo(function DropdownMenuDemo({
             <div className="px-4 pt-2">
               <button
                 onClick={clearFilters}
-                className="w-full rounded-md bg-gray-100 px-4 py-2 text-sm text-gray-700 hover:bg-gray-200"
+                className={cn(
+                  "group mt-4 flex w-full items-center justify-center gap-2 rounded-lg py-2 transition-all duration-200 ",
+                  "hover:bg-red-50", // Soft background shift
+                  " text-slate-500 hover:text-red-500", // Typography style
+                  "active:scale-95 border border-slate-200 hover:border-red-100" // Tactile feedback
+                )}
               >
                 Clear All Filters
               </button>
