@@ -632,8 +632,8 @@ const Leads = ({ salesColumn }: TProps) => {
         // </div>
 
         <>
-         <LeadsTableSkeleton/>
-         <LeadsMobileSkeleton/>
+          <LeadsTableSkeleton />
+          <LeadsMobileSkeleton />
         </>
       ) : (
         <div className="my-20 flex w-full justify-center text-gray-500">
@@ -795,8 +795,8 @@ const DropdownMenuDemo = React.memo(function DropdownMenuDemo({
               value={
                 filter?.assignedTo
                   ? salesPersonItems.find(
-                      (item) => item.value === filter?.assignedTo
-                    )?.value || ""
+                    (item) => item.value === filter?.assignedTo
+                  )?.value || ""
                   : ""
               }
             />

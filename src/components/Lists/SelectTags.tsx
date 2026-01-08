@@ -71,10 +71,8 @@ export function SelectTags({
       <DropdownMenu
         open={open}
         onOpenChange={(open) => {
-          // !open && setOpen && setOpen(open);
         }}
       >
-        {/* Selected Tags Display */}
         {tags && tags.length > 0 && (
           <div className="mb-2 flex flex-wrap gap-2 max-w-[260px]">
             {tags.map((tag, i) => (
