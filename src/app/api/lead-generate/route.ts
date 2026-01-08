@@ -80,7 +80,14 @@ export async function POST(request: NextRequest) {
     // console.log("🚀 ~ POST ~ opportunity:", opportunity);
     const crmMsg = body.message;
     const multipleServices = body.multiServices as number[] | undefined;
-
+    // now extract the source, services and vehicle info from opportunity
+    // the format is this: (source) vehicle | service
+    const source = opportunity.split(")")[0].replace("(", "").trim();
+    // console.log("🚀 ~ POST ~ source:", source);
+    const vehicleInfo = opportunity.split(")")[1].split("|")[0].trim();
+    // console.log("🚀 ~ POST ~ vehicleInfo:", vehicleInfo);
+    const services = opportunity.split(")")[1].split("|")[1].trim();
+    // console.log("🚀 ~ POST ~ services:", services);
     // console.log("crmMsg", crmMsg);
     //check if crm company
     const isCRMCompany = company.isCRMEnabled || false;
@@ -89,17 +96,14 @@ export async function POST(request: NextRequest) {
       // For demo requests
       const source = body.source || "Marketing Site";
 
-      let vehicleInfo = "N/A";
-      let services = crmMsg || "Service Request";
-
       // Create lead with demo-specific handling
       const newLead = await db.lead.create({
         data: {
           clientName,
           clientEmail,
           clientPhone,
-          vehicleInfo,
-          services,
+          vehicleInfo: vehicleInfo || "N/A",
+          services: services || crmMsg || "Service Request",
           countryCode,
           source,
           serviceId: null,
@@ -228,15 +232,6 @@ export async function POST(request: NextRequest) {
         { status: 201 }
       );
     }
-
-    // now extract the source, services and vehicle info from opportunity
-    // the format is this: (source) vehicle | service
-    const source = opportunity.split(")")[0].replace("(", "").trim();
-    // console.log("🚀 ~ POST ~ source:", source);
-    const vehicleInfo = opportunity.split(")")[1].split("|")[0].trim();
-    // console.log("🚀 ~ POST ~ vehicleInfo:", vehicleInfo);
-    const services = opportunity.split(")")[1].split("|")[1].trim();
-    // console.log("🚀 ~ POST ~ services:", services);
 
     // check if the required fields are provided
     if (!clientName || !vehicleInfo || !services || !source) {
