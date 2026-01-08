@@ -94,32 +94,48 @@ export default function SelectCategory({
             category ? category.name || `Category ${category.id}` : "Category"
           }
           newButton={
-            <div className="flex gap-2">
+            <div className="flex gap-2 p-1">
               <input
                 type="text"
-                placeholder="Category Name"
+                placeholder="New category..."
                 value={categoryInput}
                 onChange={(e) => setCategoryInput(e.target.value)}
-                className="w-full rounded-md border-2 border-slate-400 p-1"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && categoryInput) {
+                    e.preventDefault();
+                    handleNewCategory();
+                  }
+                }}
+                className={cn(
+                  "w-full rounded-lg bg-slate-50 px-3 py-1.5 text-sm outline-none transition-all",
+                  "ring-1 ring-inset ring-slate-200 placeholder:text-slate-400",
+                  "focus:bg-white focus:ring-2 focus:ring-[#6571FF]/40"
+                )}
               />
               <button
                 onClick={handleNewCategory}
-                className={cn(
-                  "text-nowrap rounded-md px-2 text-white",
-                  categoryInput ? "bg-slate-700" : "bg-slate-400",
-                )}
                 type="button"
                 disabled={!categoryInput}
+                className={cn(
+                  "text-nowrap rounded-lg px-4 font-medium text-white transition-all active:scale-95",
+                  categoryInput
+                    ? "bg-[#6571FF] shadow-sm shadow-[#6571FF]/20 hover:bg-[#525ee5]"
+                    : "bg-slate-200 cursor-not-allowed text-slate-400"
+                )}
               >
-                Quick Add
+                Add
               </button>
             </div>
           }
           items={categories}
-          displayList={(category: Category) => <p>{category.name}</p>}
+          displayList={(category: Category) => (
+            <p className="text-sm font-medium text-slate-700 group-hover:text-[#6571FF] transition-colors">
+              {category.name}
+            </p>
+          )}
           onSearch={(search: string) =>
             categories.filter((cat) =>
-              cat.name.toLowerCase().includes(search.toLowerCase()),
+              cat.name.toLowerCase().includes(search.toLowerCase())
             )
           }
           openState={[categoryOpen as boolean, setCategoryOpen]}
