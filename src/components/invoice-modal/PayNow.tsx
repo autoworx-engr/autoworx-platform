@@ -323,9 +323,17 @@ export function PayNow({
 
       {/* Authorize.Net Payment Iframe */}
       {showPaymentIframe && authorizeNetToken && (
-        <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center">
-          <div className="bg-white rounded-lg w-full max-w-4xl h-[90vh] relative mx-4 flex flex-col">
-            <div className="flex justify-end p-3">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gradient-to-br from-slate-900/80 via-slate-900/70 to-indigo-900/80 backdrop-blur-sm">
+          <div className="bg-white/95 border border-slate-200 shadow-2xl rounded-2xl w-full max-w-4xl h-[90vh] relative mx-4 flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-slate-100 bg-slate-900/90 text-slate-50">
+              <div>
+                <p className="text-sm font-semibold tracking-wide uppercase text-slate-200">
+                  Secure Payment
+                </p>
+                <p className="text-xs text-slate-300">
+                  Powered by Authorize.Net • Encrypted checkout
+                </p>
+              </div>
               <Button
                 type="button"
                 onClick={() => {
@@ -333,16 +341,23 @@ export function PayNow({
                   setAuthorizeNetToken(null);
                   setIsIframeLoading(false);
                 }}
-                className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 h-auto text-sm rounded-md shadow"
+                className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 h-auto text-xs md:text-sm rounded-full shadow-md"
               >
                 Cancel Payment
               </Button>
             </div>
-            <div className="relative flex-1 pb-3 px-3">
+            <div className="relative flex-1 pb-4 px-4 bg-slate-50">
+              <div className="mb-2 flex items-center justify-between text-[11px] text-slate-500">
+                <span>Autoworx Secure Checkout</span>
+                <span className="flex items-center gap-1">
+                  <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>SSL Protected</span>
+                </span>
+              </div>
               <iframe
                 id="authorize_net_payment_iframe"
                 name="authorize_net_payment_iframe"
-                className="w-full h-full rounded-lg"
+                className="w-full h-full rounded-xl bg-white shadow-inner border border-slate-200"
                 src="/IFrameCommunicator.html"
                 onLoad={() => setIsIframeLoading(false)}
               />
