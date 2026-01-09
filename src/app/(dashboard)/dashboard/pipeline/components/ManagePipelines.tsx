@@ -195,7 +195,7 @@ export default function ManagePipelines({
   };
 
   return (
-     <DndProvider backend={HTML5Backend}>
+    <DndProvider backend={HTML5Backend}>
       <div
         className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
         onClick={onClose}
@@ -239,7 +239,7 @@ export default function ManagePipelines({
                 />
               ))}
             </div>
-            
+
             {/* Add Button */}
             <button
               onClick={handleAddColumn}
@@ -254,13 +254,25 @@ export default function ManagePipelines({
           <div className="px-6 py-4 border-t border-slate-200 flex justify-end gap-3 flex-shrink-0 bg-slate-50">
             <button
               onClick={onClose}
-              className="px-5 py-2.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
+              className="
+                rounded-xl mt-2 sm:mt-0 px-5 py-2.5 text-sm font-medium text-slate-500 
+                hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
+                transition-colors border
+              "
             >
               Cancel
             </button>
             <button
               onClick={handleSave}
-              className="px-6 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+              className="
+                rounded-xl px-6 py-2.5 text-sm font-medium text-white
+                bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+                shadow-lg shadow-indigo-500/30
+                hover:shadow-xl hover:shadow-indigo-500/40
+                hover:-translate-y-0.5 hover:scale-[1.02]
+                active:translate-y-0 active:scale-100
+                transition-all duration-200
+              "
             >
               Apply Changes
             </button>
