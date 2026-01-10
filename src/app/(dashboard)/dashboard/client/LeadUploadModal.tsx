@@ -211,16 +211,15 @@ export function LeadUploadModal({ buttonElement }: FileUploadModalProps) {
             onDragLeave={handleDragLeave}
             onDragOver={handleDragOver}
             onDrop={handleDrop}
-            className={`border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer ${
-              isDragging
-                ? "border-blue-500 bg-blue-50 scale-105"
-                : "border-gray-300 bg-gray-50 hover:border-gray-400"
-            }`}
+            className={`border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer ${isDragging
+              ? "border-blue-500 bg-blue-50 scale-105"
+              : "border-gray-300 bg-gray-50 hover:border-gray-400"
+              }`}
+            onClick={() => fileInputRef.current?.click()}
           >
             <Upload
-              className={`w-12 h-12 mx-auto mb-3 transition-colors ${
-                isDragging ? "text-blue-500" : "text-gray-400"
-              }`}
+              className={`w-12 h-12 mx-auto mb-3 transition-colors ${isDragging ? "text-blue-500" : "text-gray-400"
+                }`}
             />
             <p className="text-sm font-semibold text-gray-900 mb-1">
               Drag and drop your file here
@@ -238,7 +237,6 @@ export function LeadUploadModal({ buttonElement }: FileUploadModalProps) {
               aria-label="File upload input"
             />
             <button
-              onClick={() => fileInputRef.current?.click()}
               className="text-sm text-blue-600 hover:text-blue-700 font-semibold transition-colors"
             >
               Browse Files

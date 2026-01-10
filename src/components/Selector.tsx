@@ -80,6 +80,8 @@ export default function Selector<T>({
     setSelected(selectedItem);
   }, [selectedItem]);
 
+
+
   // Infinite scroll handler
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     if (!useInfiniteScroll || !hasNextPage || isFetchingNextPage) return;
@@ -121,6 +123,7 @@ export default function Selector<T>({
     if (onSelect) onSelect(item);
     setIsOpen(false);
     setSearchTerm("");
+    setFilteredItems(items)
   }
 
   return (
