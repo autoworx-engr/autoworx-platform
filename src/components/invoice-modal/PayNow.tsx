@@ -232,7 +232,7 @@ export function PayNow({
                 <button
                   onClick={() => {
                     setPayType("deposit");
-                    setAmount("");
+                    setAmount(due);
                   }}
                   className="w-full rounded py-1 bg-[#6571ff] text-white"
                 >
@@ -297,14 +297,27 @@ export function PayNow({
                   className="w-full rounded-lg border px-2 py-2"
                   onChange={(e) => {
                     let inputValue = e.target.value;
-                    if (/^\d*\.?\d*$/.test(inputValue)) {
-                      setAmount(inputValue);
+
+                    // Allow only numeric input with optional decimal
+                    if (!/^\d*\.?\d*$/.test(inputValue)) return;
+
+                    // Do not allow more than the invoice's remaining
+                    // due amount for either payments or deposits. If
+                    // the user types above the max, clamp it back to
+                    // the max due.
+                    const maxDue = parseFloat(due || "0");
+                    const numeric = parseFloat(inputValue || "0");
+                    if (!isNaN(maxDue) && numeric > maxDue) {
+                      inputValue = maxDue.toString();
                     }
+
+                    setAmount(inputValue);
                   }}
                 />
-                {payType === "payment" && (
-                  <span className="text-xs">( Max. {due} )</span>
-                )}
+
+                <span className="block w-full text-xs text-right mt-2">
+                  ( Max. {due} )
+                </span>
               </div>
             </div>
           </div>
