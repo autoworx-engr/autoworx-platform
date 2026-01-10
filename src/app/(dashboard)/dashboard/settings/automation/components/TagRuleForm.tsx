@@ -36,11 +36,7 @@ import {
 import { errorToast } from "@/lib/toast";
 import { Spin } from "antd";
 import { AppointmentTemplateVariable } from "@/components/Lists/NewTemplate";
-import {
-  getConditionHelp,
-  GuideCard,
-  TipBox,
-} from "./TagautomationHelper";
+import { getConditionHelp, GuideCard, TipBox } from "./TagautomationHelper";
 import TooltipLabel from "./ToolTipLabel";
 import InfoCard from "./InfoCard";
 import { TEMPLATE_VARIABLES } from "./TemplateVariable";
@@ -427,7 +423,15 @@ const TagRuleForm = ({
     //   newErrors.funnel = "Funnel is required.";
     // }
     if (!formData.condition_type) {
-      newErrors.condition = "Condition is required.";
+      newErrors.condition_type = "Condition is required.";
+    }
+
+    if (
+      formData.timeDelay === null ||
+      formData.timeDelay === undefined ||
+      String(formData.timeDelay).trim() === ""
+    ) {
+      newErrors.timeDelay = "Time delay is required.";
     }
 
     // condition-specific
@@ -649,7 +653,7 @@ const TagRuleForm = ({
               icon="question"
             />
             <Selector
-              name="condition"
+              name="condition_type"
               label="Condition"
               options={Conditions}
               value={formData.condition_type!}
@@ -710,6 +714,7 @@ const TagRuleForm = ({
             onChange={(value) => handleChange("timeDelay", value)}
             required
             placeholder="Select a time delay"
+            error={error.timeDelay}
           />
 
           {formData.condition_type === "pipeline" && (
@@ -872,7 +877,10 @@ const TagRuleForm = ({
 
                 {/* Template Variables */}
                 {/* <TemplateVariable /> */}
-                <AppointmentTemplateVariable VARIABLES={TEMPLATE_VARIABLES} hasBackground={true} />
+                <AppointmentTemplateVariable
+                  VARIABLES={TEMPLATE_VARIABLES}
+                  hasBackground={true}
+                />
               </Box>
             </>
           )}

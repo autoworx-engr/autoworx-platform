@@ -389,6 +389,7 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
               labelClassName="text-gray-500"
               onChange={(e) => handleChange("title", e.target.value)}
               error={error.title}
+              required
             />
 
             {/* Service */}
