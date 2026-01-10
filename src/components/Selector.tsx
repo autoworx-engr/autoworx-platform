@@ -80,6 +80,8 @@ export default function Selector<T>({
     setSelected(selectedItem);
   }, [selectedItem]);
 
+
+
   // Infinite scroll handler
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     if (!useInfiniteScroll || !hasNextPage || isFetchingNextPage) return;
@@ -101,15 +103,15 @@ export default function Selector<T>({
     } else {
       const searchedItems = searchQuery.trim()
         ? items.filter(
-            (item: any) =>
-              item.clientName
-                ?.toLowerCase()
-                .includes(searchQuery.toLowerCase()) ||
-              item.id
-                ?.toString()
-                .toLowerCase()
-                .includes(searchQuery.toLowerCase())
-          )
+          (item: any) =>
+            item.clientName
+              ?.toLowerCase()
+              .includes(searchQuery.toLowerCase()) ||
+            item.id
+              ?.toString()
+              .toLowerCase()
+              .includes(searchQuery.toLowerCase())
+        )
         : items;
       setFilteredItems(searchedItems);
     }
@@ -121,6 +123,7 @@ export default function Selector<T>({
     if (onSelect) onSelect(item);
     setIsOpen(false);
     setSearchTerm("");
+    setFilteredItems(items)
   }
 
   return (
@@ -194,7 +197,7 @@ export default function Selector<T>({
           <div
             ref={scrollContainerRef}
             onScroll={handleScroll}
-            className="mb-5 flex max-h-40 flex-col overflow-y-auto"
+            className="mb-5 flex max-h-40 flex-col overflow-y-auto thin-scrollbar"
           >
             {filteredItems?.map((item, index) => {
               // Use a unique key that combines the item's id if available, otherwise fall back to index
@@ -213,7 +216,7 @@ export default function Selector<T>({
                     className={cn(
                       "w-full p-1 px-2 text-left hover:bg-gray-100",
                       border &&
-                        "relative left-1/2 my-1 w-[95%] -translate-x-1/2 rounded-md border-2 border-slate-400 py-[0.3rem]"
+                      "relative left-1/2 my-1 w-[95%] -translate-x-1/2 rounded-md border-2 border-slate-400 py-[0.3rem]"
                     )}
                   >
                     {displayList(item)}
@@ -226,7 +229,7 @@ export default function Selector<T>({
                     className={cn(
                       "w-full p-1 px-2 text-left hover:bg-gray-100",
                       border &&
-                        "relative left-1/2 my-1 w-[95%] -translate-x-1/2 rounded-md border-2 border-slate-400 py-[0.3rem]"
+                      "relative left-1/2 my-1 w-[95%] -translate-x-1/2 rounded-md border-2 border-slate-400 py-[0.3rem]"
                     )}
                   >
                     {displayList(item)}

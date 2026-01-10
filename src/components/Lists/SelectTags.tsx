@@ -62,7 +62,7 @@ export function SelectTags({
   }, [dropdownsOpen]);
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col max-w-sm">
       <input
         type="hidden"
         name={name}
@@ -71,12 +71,10 @@ export function SelectTags({
       <DropdownMenu
         open={open}
         onOpenChange={(open) => {
-          // !open && setOpen && setOpen(open);
         }}
       >
-        {/* Selected Tags Display */}
         {tags && tags.length > 0 && (
-          <div className="mb-2 flex flex-wrap gap-2">
+          <div className="mb-2 flex flex-wrap gap-2 max-w-[260px]">
             {tags.map((tag, i) => (
               <div
                 key={tag.id}
@@ -133,7 +131,7 @@ export function SelectTags({
               }, 50);
             }
           }}
-          className="flex min-h-11 w-full items-center justify-between rounded-xl bg-white px-4 ring-1 ring-inset ring-slate-200 transition-all hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30"
+          className="flex min-h-11 min-w-[150px] w-full items-center justify-between rounded-xl bg-white px-4 ring-1 ring-inset ring-slate-200 transition-all hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30"
         >
           <p className="text-sm font-medium text-slate-400">Tags</p>
           <ChevronDown size={18} className="text-slate-400" />

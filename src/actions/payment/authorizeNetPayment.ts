@@ -153,7 +153,7 @@ export const createAuthorizeNetPaymentLink = async ({
     transactionUserFields.setUserField(userFieldsArray);
     transactionRequestType.setUserFields(transactionUserFields);
 
-    // Configure hosted payment page settings to match Authorize.Net sample
+    // Configure hosted payment page settings to control look & flow
     const settings = [];
 
     // Button text (optional, from sample)
@@ -167,6 +167,30 @@ export const createAuthorizeNetPaymentLink = async ({
     orderSetting.setSettingName("hostedPaymentOrderOptions");
     orderSetting.setSettingValue('{"show": false}');
     settings.push(orderSetting);
+
+    // Hide billing & shipping address blocks on the hosted form.
+    // Note: the account's Payment Form > Form Fields settings must
+    // also NOT mark these fields as "Required", otherwise Authorize.Net
+    // can still enforce them even if they are hidden here.
+    const billingOptions = new ApiContracts.SettingType();
+    billingOptions.setSettingName("hostedPaymentBillingAddressOptions");
+    billingOptions.setSettingValue('{"show": false, "required": false}');
+    settings.push(billingOptions);
+
+    const shippingOptions = new ApiContracts.SettingType();
+    shippingOptions.setSettingName("hostedPaymentShippingAddressOptions");
+    shippingOptions.setSettingValue('{"show": false, "required": false}');
+    settings.push(shippingOptions);
+
+    // Disable the built-in receipt page so there is no extra
+    // "Continue" screen. With showReceipt=false, the iframe
+    // communicator sends a transactResponse message which we
+    // already listen for in PayNow.tsx to close the modal
+    // and reload the page.
+    const returnOptions = new ApiContracts.SettingType();
+    returnOptions.setSettingName("hostedPaymentReturnOptions");
+    returnOptions.setSettingValue('{"showReceipt": false}');
+    settings.push(returnOptions);
 
     // Wrap settings in proper structure
     const hostedPaymentSettings = new ApiContracts.ArrayOfSetting();

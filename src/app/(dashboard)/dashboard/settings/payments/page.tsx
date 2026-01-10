@@ -2,7 +2,7 @@
 import { useServerGet } from "@/hooks/useServerGet";
 /* eslint-disable @next/next/no-img-element */
 import { useSession } from "next-auth/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { getStripeAccount } from "./stripe";
 import { getAuthorizeNetStatus, updatePaymentGateway } from "./authorize-net";
 import StripeStatus from "./StripeStatus";
@@ -12,6 +12,7 @@ import { CircleCheckBig } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { successToast, errorToast } from "@/lib/toast";
+import { getPaymentGatewayInfo } from "./getPaymentGatewayInfo";
 
 export default function PaymentsPage() {
   const { data: session } = useSession();
@@ -33,9 +34,18 @@ export default function PaymentsPage() {
     // @ts-ignore
     session?.user?.companyId
   );
+  const {
+    data: paymentGatewayInfo,
+    // refetch: refetchAuthorizeNet,
+  } = useServerGet(
+    getPaymentGatewayInfo,
+    // @ts-ignore
+    session?.user?.companyId
+  );
+
   const [isLoading, setIsLoading] = useState(false);
   const [selectedGateway, setSelectedGateway] = useState<string>(
-    authorizeNetData?.paymentGateway || "STRIPE"
+    paymentGatewayInfo?.paymentGateway || "STRIPE"
   );
 
   const handleGatewayChange = async (value: string) => {
@@ -59,6 +69,12 @@ export default function PaymentsPage() {
     // refetchStripe();
     // refetchAuthorizeNet();
   };
+
+  useEffect(() => {
+    if (paymentGatewayInfo?.paymentGateway) {
+      setSelectedGateway(paymentGatewayInfo.paymentGateway);
+    }
+  }, [paymentGatewayInfo]);
 
   return (
     <div className="flex flex-col space-y-5 px-5">

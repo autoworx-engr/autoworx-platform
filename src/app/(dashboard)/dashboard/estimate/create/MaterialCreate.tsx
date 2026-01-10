@@ -556,14 +556,43 @@ export default function MaterialCreate() {
       {/* Inventory Checkbox */}
       {!data.edit && (
         <div className="ml-36 flex items-center">
-          <label className="flex cursor-pointer items-center gap-3 group">
-            <input
-              type="checkbox"
-              checked={addToInventory}
-              onChange={(e) => setAddToInventory(e.target.checked)}
-              className="h-5 w-5 rounded-md border-slate-300 text-[#6571FF] focus:ring-[#6571FF]/30 transition-all"
-            />
-            <span className="text-sm font-bold text-slate-600 group-hover:text-slate-800">Add to Inventory</span>
+          <label className="group flex cursor-pointer items-center gap-3">
+            <div className="relative flex items-center mt-1">
+              <input
+                type="checkbox"
+                checked={addToInventory}
+                onChange={(e) => setAddToInventory(e.target.checked)}
+                className="peer sr-only"
+              />
+              <div className={cn(
+                "flex h-6 w-6 items-center justify-center rounded-lg border-2 transition-all duration-200",
+                "border-slate-200 bg-white shadow-sm",
+                "peer-checked:border-[#6571FF] peer-checked:bg-[#6571FF] peer-checked:shadow-md peer-checked:shadow-[#6571FF]/20",
+                "group-hover:border-[#6571FF]/50 peer-focus:ring-2 peer-focus:ring-[#6571FF]/20"
+              )}>
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="white"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className={cn(
+                    "h-3.5 w-3.5 transition-transform duration-200",
+                    addToInventory ? "scale-100" : "scale-0"
+                  )}
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </div>
+            </div>
+
+            <span className={cn(
+              "text-sm font-semibold transition-colors",
+              addToInventory ? "text-slate-800" : "text-slate-600"
+            )}>
+              Add to Inventory
+            </span>
           </label>
         </div>
       )}
