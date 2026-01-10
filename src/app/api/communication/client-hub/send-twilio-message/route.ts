@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { sendTwilioMessageService } from "@/actions/services/communication/client/sendTwilioMessage.service";
+import { sendTwilioMessage } from "@/actions/communication/client/sendTwilioMessage";
 
 /**
  * @swagger
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    const data = await sendTwilioMessageService({
+    const data = await sendTwilioMessage({
       companyId: body.companyId,
       clientId: body.clientId,
       message: body.message,
