@@ -2,6 +2,8 @@ import { createStripePaymentLink } from "@/actions/payment/stripePayment";
 import { createAuthorizeNetPaymentLink } from "@/actions/payment/authorizeNetPayment";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+
 import {
   Dialog,
   DialogContent,
@@ -26,24 +28,38 @@ interface PaymentGatewayInfo {
   hasAuthorizeNet: boolean;
 }
 
+export function hardReload() {
+  const url = new URL(window.location.href);
+  url.searchParams.set("_reload", Date.now().toString());
+  window.location.href = url.toString();
+}
+
 export function PayNow({
   due,
   invoiceId,
+  statementId,
+  mode = "invoice",
   companyId,
   open,
   setOpen,
   gatewayInfo,
 }: {
   due: string;
-  invoiceId: string;
+  invoiceId?: string;
+  statementId?: string;
+  mode?: "invoice" | "statement";
   companyId: number;
   open: boolean;
   setOpen: any;
   gatewayInfo?: PaymentGatewayInfo;
 }) {
+  const router = useRouter();
+
   const [amount, setAmount] = useState(due);
   const [isLoading, setIsLoading] = useState(false);
-  const [payType, setPayType] = useState<"payment" | "deposit">("payment");
+  const [payType, setPayType] = useState<"payment" | "deposit" | "statement">(
+    () => (mode === "statement" ? "statement" : "payment")
+  );
   const [selectedGateway, setSelectedGateway] = useState<
     "STRIPE" | "AUTHORIZE_NET"
   >("STRIPE");
@@ -107,16 +123,20 @@ export function PayNow({
     }
   }, [gatewayInfo]);
 
-  // Handle postMessage from Authorize.Net iframe
+  // Handle postMessage from Authorize.Net iframe / communicator
   useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      // Only accept messages from Authorize.Net domains
-      if (
-        event.origin !== "https://test.authorize.net" &&
-        event.origin !== "https://accept.authorize.net"
-      ) {
-        return;
-      }
+    const handleMessage = async (event: MessageEvent) => {
+      // Accept messages from Authorize.Net and from our own
+      // iframe communicator (same-origin). This is needed
+      // because Authorize.Net posts to the communicator, and
+      // the communicator relays the message to window.top.
+      const allowedOrigins = [
+        "https://test.authorize.net",
+        "https://accept.authorize.net",
+        window.location.origin,
+      ];
+
+      if (!allowedOrigins.includes(event.origin)) return;
 
       console.log("🔔 Received message from Authorize.Net:", event.data);
 
@@ -134,7 +154,7 @@ export function PayNow({
             setShowPaymentIframe(false);
             setOpen(false);
             // Reload page to show updated payment status
-            window.location.reload();
+            hardReload();
           } else if (jsonObject?.error) {
             errorToast(jsonObject.error.message || "Payment failed");
             setShowPaymentIframe(false);
@@ -163,12 +183,21 @@ export function PayNow({
       let result;
 
       if (selectedGateway === "STRIPE") {
-        result = await createStripePaymentLink({
-          amount,
-          invoiceId,
-          companyId,
-          payType,
-        });
+        if (mode === "statement") {
+          result = await createStripePaymentLink({
+            amount,
+            statementId: statementId!,
+            companyId,
+            payType: "statement",
+          });
+        } else {
+          result = await createStripePaymentLink({
+            amount,
+            invoiceId: invoiceId!,
+            companyId,
+            payType,
+          });
+        }
 
         if (result.url) {
           window.open(result.url, "_self");
@@ -176,12 +205,21 @@ export function PayNow({
           errorToast(result?.message ?? "Failed to initiate payment checkout");
         }
       } else {
-        result = await createAuthorizeNetPaymentLink({
-          amount,
-          invoiceId,
-          companyId,
-          payType,
-        });
+        if (mode === "statement") {
+          result = await createAuthorizeNetPaymentLink({
+            amount,
+            statementId: statementId!,
+            companyId,
+            payType: "statement",
+          });
+        } else {
+          result = await createAuthorizeNetPaymentLink({
+            amount,
+            invoiceId: invoiceId!,
+            companyId,
+            payType,
+          });
+        }
 
         if (result.success && result.token) {
           console.log("🎫 Received Authorize.Net token, opening iframe");
@@ -206,47 +244,60 @@ export function PayNow({
   return (
     <>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className="w-fit ml-auto bg-[#6571ff] text-white font-medium py-1 pb-1.5 px-7 rounded transition-colors duration-200 shadow-sm flex items-center justify-between text-sm">
+        {mode === "invoice" ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="w-fit ml-auto bg-[#6571ff] text-white font-medium py-1 pb-1.5 px-7 rounded transition-colors duration-200 shadow-sm flex items-center justify-between text-sm">
+                Pay Now
+                <ChevronDown className="w-4 h-4 ml-1.5" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-full bg-[#6571ff]">
+              <DropdownMenuItem className="w-full text-white bg-[#6571ff] cursor-pointer p-0.5">
+                <DialogTrigger asChild>
+                  <button
+                    onClick={() => {
+                      setPayType("payment");
+                      setAmount(due);
+                    }}
+                    className="w-full rounded py-1 bg-[#6571ff] text-white"
+                  >
+                    Payment
+                  </button>
+                </DialogTrigger>
+              </DropdownMenuItem>
+              <DropdownMenuItem className="text-white bg-[#6571ff] cursor-pointer p-0.5">
+                <DialogTrigger asChild>
+                  <button
+                    onClick={() => {
+                      setPayType("deposit");
+                      setAmount(due);
+                    }}
+                    className="w-full rounded py-1 bg-[#6571ff] text-white"
+                  >
+                    Deposit
+                  </button>
+                </DialogTrigger>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <DialogTrigger asChild>
+            <button
+              type="button"
+              className="relative inline-flex items-center px-6 py-2 text-sm font-semibold text-white rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-blue-400 ml-auto"
+            >
               Pay Now
-              <ChevronDown className="w-4 h-4 ml-1.5" />
             </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-full bg-[#6571ff]">
-            <DropdownMenuItem className="w-full text-white bg-[#6571ff] cursor-pointer p-0.5">
-              <DialogTrigger asChild>
-                <button
-                  onClick={() => {
-                    setPayType("payment");
-                    setAmount(due);
-                  }}
-                  className="w-full rounded py-1 bg-[#6571ff] text-white"
-                >
-                  Payment
-                </button>
-              </DialogTrigger>
-            </DropdownMenuItem>
-            <DropdownMenuItem className="text-white bg-[#6571ff] cursor-pointer p-0.5">
-              <DialogTrigger asChild>
-                <button
-                  onClick={() => {
-                    setPayType("deposit");
-                    setAmount(due);
-                  }}
-                  className="w-full rounded py-1 bg-[#6571ff] text-white"
-                >
-                  Deposit
-                </button>
-              </DialogTrigger>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+          </DialogTrigger>
+        )}
 
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>
-              Make {payType === "payment" ? "Payment" : "Deposit"}
+              {mode === "statement"
+                ? "Make Statement Payment"
+                : `Make ${payType === "payment" ? "Payment" : "Deposit"}`}
             </DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -289,10 +340,13 @@ export function PayNow({
                   id="amount"
                   value={amount}
                   type="text"
+                  disabled={mode === "statement"}
                   placeholder={
-                    payType === "deposit"
-                      ? "Enter deposit amount"
-                      : "Enter payment amount"
+                    mode === "statement"
+                      ? "Statement amount"
+                      : payType === "deposit"
+                        ? "Enter deposit amount"
+                        : "Enter payment amount"
                   }
                   className="w-full rounded-lg border px-2 py-2"
                   onChange={(e) => {

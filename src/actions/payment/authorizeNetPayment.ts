@@ -183,14 +183,35 @@ export const createAuthorizeNetPaymentLink = async ({
     settings.push(shippingOptions);
 
     // Disable the built-in receipt page so there is no extra
-    // "Continue" screen. With showReceipt=false, the iframe
-    // communicator sends a transactResponse message which we
-    // already listen for in PayNow.tsx to close the modal
-    // and reload the page.
+    // "Continue" screen. With showReceipt=false, Authorize.Net sends
+    // a transactResponse message via the iframe communicator, which
+    // we listen for in PayNow.tsx to close the modal and reload.
     const returnOptions = new ApiContracts.SettingType();
     returnOptions.setSettingName("hostedPaymentReturnOptions");
     returnOptions.setSettingValue('{"showReceipt": false}');
     settings.push(returnOptions);
+
+    // Configure iframe communicator URL so Authorize.Net can send
+    // transactResponse / cancel / resizeWindow messages to our
+    // domain. This URL must:
+    //  - be HTTPS
+    //  - be on the same domain as the page hosting the iframe
+    // NEXT_PUBLIC_APP_URL should point to that origin in both
+    // dev (ngrok/dev-tunnel) and production.
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+    if (appUrl) {
+      const normalized = appUrl.replace(/\/+$/, "");
+      const communicatorSetting = new ApiContracts.SettingType();
+      communicatorSetting.setSettingName("hostedPaymentIFrameCommunicatorUrl");
+      communicatorSetting.setSettingValue(
+        JSON.stringify({ url: `${normalized}/IFrameCommunicator.html` })
+      );
+      settings.push(communicatorSetting);
+    } else {
+      console.warn(
+        "NEXT_PUBLIC_APP_URL is not set; hostedPaymentIFrameCommunicatorUrl will not be configured for Authorize.Net."
+      );
+    }
 
     // Wrap settings in proper structure
     const hostedPaymentSettings = new ApiContracts.ArrayOfSetting();
