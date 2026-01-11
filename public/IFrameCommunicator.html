@@ -7,6 +7,7 @@
   <body>
     <script>
       function receiveMessage(event) {
+        console.log("🚀 ~ receiveMessage ~ event:", event);
         // Only accept messages from Authorize.Net domains
         if (
           event.origin === "https://test.authorize.net" ||

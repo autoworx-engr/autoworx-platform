@@ -59,7 +59,7 @@ export default function TaskContentModal({
   onTaskUpdated,
   onTaskDeleted,
 }: NewTaskProps) {
-  const { data: companyUsers = [] } = useCompanyUsersQuery();
+  const { data: companyUsers = [], isLoading: isCompanyUsersLoading } = useCompanyUsersQuery();
   const {
     data: taskData,
     isError,
@@ -86,7 +86,7 @@ export default function TaskContentModal({
 
   // get task task data for update task
   useEffect(() => {
-    if (fromEdit && taskId && !taskData && !isFetched) {
+    if (fromEdit && taskId && !taskData && !isFetched && !companyUsers) {
       setIsLoading(true);
       return;
     }
@@ -126,7 +126,7 @@ export default function TaskContentModal({
     } else if (isFetched && !taskData && fromEdit) {
       setIsLoading(false);
     }
-  }, [taskData, fromEdit, taskId, isFetched]);
+  }, [taskData, fromEdit, taskId, isFetched, companyUsers]);
 
   // Add function to generate a reasonable default end time based on start time
   const getDefaultEndTime = (start: string) => {
@@ -358,7 +358,7 @@ export default function TaskContentModal({
         <DialogTitle>{fromEdit ? "Update Task" : "Add Task"}</DialogTitle>
       </DialogHeader>
       <FormError />
-      {isLoading ? (
+      {isLoading || isCompanyUsersLoading ? (
         <div className="flex min-h-[500px] my-auto items-center justify-center py-10 text-center">
           <TaskSpinner />
         </div>

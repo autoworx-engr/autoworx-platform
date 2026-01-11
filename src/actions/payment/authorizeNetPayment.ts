@@ -153,7 +153,7 @@ export const createAuthorizeNetPaymentLink = async ({
     transactionUserFields.setUserField(userFieldsArray);
     transactionRequestType.setUserFields(transactionUserFields);
 
-    // Configure hosted payment page settings to match Authorize.Net sample
+    // Configure hosted payment page settings to control look & flow
     const settings = [];
 
     // Button text (optional, from sample)
@@ -167,6 +167,51 @@ export const createAuthorizeNetPaymentLink = async ({
     orderSetting.setSettingName("hostedPaymentOrderOptions");
     orderSetting.setSettingValue('{"show": false}');
     settings.push(orderSetting);
+
+    // Hide billing & shipping address blocks on the hosted form.
+    // Note: the account's Payment Form > Form Fields settings must
+    // also NOT mark these fields as "Required", otherwise Authorize.Net
+    // can still enforce them even if they are hidden here.
+    const billingOptions = new ApiContracts.SettingType();
+    billingOptions.setSettingName("hostedPaymentBillingAddressOptions");
+    billingOptions.setSettingValue('{"show": false, "required": false}');
+    settings.push(billingOptions);
+
+    const shippingOptions = new ApiContracts.SettingType();
+    shippingOptions.setSettingName("hostedPaymentShippingAddressOptions");
+    shippingOptions.setSettingValue('{"show": false, "required": false}');
+    settings.push(shippingOptions);
+
+    // Disable the built-in receipt page so there is no extra
+    // "Continue" screen. With showReceipt=false, Authorize.Net sends
+    // a transactResponse message via the iframe communicator, which
+    // we listen for in PayNow.tsx to close the modal and reload.
+    const returnOptions = new ApiContracts.SettingType();
+    returnOptions.setSettingName("hostedPaymentReturnOptions");
+    returnOptions.setSettingValue('{"showReceipt": false}');
+    settings.push(returnOptions);
+
+    // Configure iframe communicator URL so Authorize.Net can send
+    // transactResponse / cancel / resizeWindow messages to our
+    // domain. This URL must:
+    //  - be HTTPS
+    //  - be on the same domain as the page hosting the iframe
+    // NEXT_PUBLIC_APP_URL should point to that origin in both
+    // dev (ngrok/dev-tunnel) and production.
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+    if (appUrl) {
+      const normalized = appUrl.replace(/\/+$/, "");
+      const communicatorSetting = new ApiContracts.SettingType();
+      communicatorSetting.setSettingName("hostedPaymentIFrameCommunicatorUrl");
+      communicatorSetting.setSettingValue(
+        JSON.stringify({ url: `${normalized}/IFrameCommunicator.html` })
+      );
+      settings.push(communicatorSetting);
+    } else {
+      console.warn(
+        "NEXT_PUBLIC_APP_URL is not set; hostedPaymentIFrameCommunicatorUrl will not be configured for Authorize.Net."
+      );
+    }
 
     // Wrap settings in proper structure
     const hostedPaymentSettings = new ApiContracts.ArrayOfSetting();

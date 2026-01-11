@@ -65,7 +65,7 @@ export default function CannedServices({
 
       const matchesSearch = serviceSearch
         ? row.name.toLowerCase().includes(serviceSearch.toLowerCase()) ||
-          categoryName.includes(serviceSearch.toLowerCase())
+        categoryName.includes(serviceSearch.toLowerCase())
         : true;
 
       const matchesCategory = selectedCategory
@@ -295,11 +295,6 @@ const ServiceComponent = ({
   async function handleUpdateService() {
     if (!name.trim()) {
       setNameError("Service name is required");
-      return;
-    }
-
-    if (name.length > 50) {
-      setNameError("Service name must be less than 50 characters");
       return;
     }
 
@@ -548,17 +543,11 @@ const ServiceComponent = ({
                   value={description || ""}
                   onChange={(e) => {
                     const value = e.target.value;
-                    if (value.length > 250) {
-                      setDescriptionError(
-                        "Description must be less than 250 characters"
-                      );
-                      return;
-                    }
                     setDescription(value);
                     setDescriptionError("");
                   }}
                   className={cn(
-                    "min-h-[100px] w-full rounded-lg border p-2 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition-colors",
+                    "min-h-[100px] thin-scrollbar w-full rounded-lg border p-2 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition-colors",
                     descriptionError ? "border-red-500" : "border-gray-300"
                   )}
                 />
