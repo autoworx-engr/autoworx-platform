@@ -395,12 +395,12 @@ export default async function PaymentTab({
                 <div
                   key={service.id}
                   className={cn(
-                    "flex justify-between items-center gap-4 p-3 py-2 transition-colors",
-                    index % 2 === 0 ? "bg-white" : "bg-slate-50/30"
+                    "flex justify-between items-center gap-4 p-3 py-2 transition-colors border-b rounded-xl",
+                    index % 2 === 0 ? "bg-white" : "bg-slate-50"
                   )}
                 >
                   <p className="truncate pr-2 font-semibold text-slate-600">{service.name}</p>
-                  <p className="text-nowrap text-sm font-bold text-[#6571FF] bg-[#6571FF]/5 px-2 py-1 rounded-lg">
+                  <p className="text-nowrap text-sm font-medium text-[#6571FF] bg-[#6571FF]/5 px-1 py-o.5 rounded-lg">
                     Ordered {service.count} times
                   </p>
                 </div>
