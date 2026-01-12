@@ -276,13 +276,6 @@ export default function NewService({
                 value={name}
                 onChange={(e) => {
                   const value = e.target.value;
-
-                  if (value.length > 50) {
-                    setNameError(
-                      "Service name must be less than 50 characters"
-                    );
-                    return false;
-                  }
                   setName(value);
                   // Clear error when user starts typing
                   if (value.trim()) {
@@ -291,11 +284,10 @@ export default function NewService({
                   }
                 }}
                 onBlur={() => setNameTouched(true)}
-                className={`w-full px-4 py-2.5 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder:text-slate-400 ${
-                  nameError
+                className={`w-full px-4 py-2.5 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder:text-slate-400 ${nameError
                     ? "border-red-500 focus:ring-red-500"
                     : "border-slate-300"
-                }`}
+                  }`}
                 aria-invalid={nameError ? "true" : "false"}
                 aria-describedby={nameError ? "name-error" : undefined}
               />
@@ -369,11 +361,10 @@ export default function NewService({
                   Description
                 </label>
                 <span
-                  className={`text-xs ${
-                    descriptionLength > maxDescriptionLength * 0.9
+                  className={`text-xs ${descriptionLength > maxDescriptionLength * 0.9
                       ? "text-red-600 font-medium"
                       : "text-slate-500"
-                  }`}
+                    }`}
                 >
                   {descriptionLength}/{maxDescriptionLength}
                 </span>

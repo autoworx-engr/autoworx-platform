@@ -272,11 +272,6 @@ const ServiceComponent = ({
       return;
     }
 
-    if (name.length > 50) {
-      setNameError("Service name must be less than 50 characters");
-      return;
-    }
-
     setIsPending(true);
     const res = await updateService({
       id: service.id,
@@ -520,12 +515,6 @@ const ServiceComponent = ({
                   value={description || ""}
                   onChange={(e) => {
                     const value = e.target.value;
-                    if (value.length > 250) {
-                      setDescriptionError(
-                        "Description must be less than 250 characters"
-                      );
-                      return;
-                    }
                     setDescription(value);
                     setDescriptionError("");
                   }}
