@@ -84,8 +84,71 @@ async function sendInfobipEmailAPI(
   }
 }
 
+/**
+ * @swagger
+ * /api/auth/forgot-password:
+ *   post:
+ *     summary: Request a password reset via email or OTP
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: user@example.com
+ *     responses:
+ *       200:
+ *         description: Password reset instructions sent successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Password reset instructions sent
+ *       400:
+ *         description: Bad Request - Missing email
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Email is required
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: User not found
+ *       500:
+ *         description: Failed to send password reset email
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Failed to send password reset email
+ */
+
 export async function POST(req: Request) {
   const { email } = await req.json();
+  console.log("email", email);
   if (!email)
     return NextResponse.json({ error: "Email is required" }, { status: 400 });
 
@@ -122,7 +185,7 @@ export async function POST(req: Request) {
     where: { id: user.companyId },
   });
 
-  const fromEmail = company?.name 
+  const fromEmail = company?.name
     ? `${company.name} <mail@${process.env.INFOBIP_DOMAIN}>`
     : `AutoWorx <mail@${process.env.INFOBIP_DOMAIN}>`;
 
