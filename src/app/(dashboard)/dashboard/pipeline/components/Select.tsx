@@ -43,12 +43,12 @@ const SelectComponent = ({
         <Select.Portal>
           <Select.Content position="popper" className="z-[100] min-w-[300px] overflow-hidden rounded-2xl border border-slate-50 bg-white shadow-xl animate-in fade-in zoom-in-95">
             <Select.Viewport className="p-2">
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-1 max-h-60 overflow-y-auto thin-scrollbar">
                 {items.map((item) => (
                   <Select.Item
                     key={item.id}
                     value={item.value}
-                    className="relative flex h-10 cursor-pointer select-none items-center rounded-lg px-3 text-sm font-medium text-slate-600 outline-none data-[highlighted]:bg-[#6571FF] data-[highlighted]:text-white data-[state=checked]:bg-[#6571FF]/10 data-[state=checked]:text-[#6571FF]"
+                    className="relative flex py-3 cursor-pointer select-none items-center rounded-lg px-3 text-sm font-medium text-slate-600 outline-none border-b data-[highlighted]:bg-[#6571FF] data-[highlighted]:text-white data-[state=checked]:bg-[#6571FF]/10 data-[state=checked]:text-[#6571FF]"
                   >
                     <Select.ItemText>{item.label}</Select.ItemText>
                   </Select.Item>
