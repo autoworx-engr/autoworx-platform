@@ -154,6 +154,7 @@ export default function UseProductForm({
                     </p>
                   )}
                   newButton={<></>}
+                  border={true}
                 />
               </div>
             )}

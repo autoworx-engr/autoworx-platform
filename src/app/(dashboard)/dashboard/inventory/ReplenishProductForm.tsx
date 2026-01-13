@@ -153,6 +153,7 @@ export default function ReplenishProductForm({
                 openState={[vendorOpen, setVendorOpen]}
                 selectedItem={vendor}
                 setSelectedItem={setVendor}
+                border={true}
               />
             </div>
           </div>
