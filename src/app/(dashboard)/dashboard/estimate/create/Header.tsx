@@ -96,8 +96,20 @@ export default function Header({
     ) {
       setClientOpenDropdown(false);
       setVehicleOpenDropdown(false);
+    } else if (
+      templateOpenDropdown &&
+      (clientOpenDropdown || vehicleOpenDropdown || statusOpenDropdown)
+    ) {
+      setClientOpenDropdown(false);
+      setVehicleOpenDropdown(false);
+      setStatusOpenDropdown(false);
     }
-  }, [statusOpenDropdown, clientOpenDropdown, vehicleOpenDropdown]);
+  }, [
+    statusOpenDropdown,
+    clientOpenDropdown,
+    vehicleOpenDropdown,
+    templateOpenDropdown,
+  ]);
 
   return (
     <div className="app-shadow col-start-1 flex flex-wrap items-center gap-3 rounded-md p-3">

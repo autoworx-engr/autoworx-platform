@@ -1030,9 +1030,9 @@ export default function InvoiceModalBody({
         </div>
 
         <div className="flex w-full flex-col gap-1 space-y-1 md:flex md:h-[90vh] md:w-[394px] md:shrink md:grow-0 md:gap-4 md:space-y-0 md:overflow-y-auto print:hidden">
-          <div className="#shadow-lg hidden h-[calc(100%-50px)] flex-1 overflow-y-auto rounded-md border bg-background p-3 md:p-6 lg:block">
+          <div className="#shadow-lg hidden h-[calc(100%-50px)] flex-1 overflow-y-auto rounded-md border bg-background p-3 md:p-6 md:block">
             {/* Desktop tabs are here */}
-            <div className="hidden lg:mb-4 lg:flex lg:justify-center lg:gap-4">
+            <div className="hidden md:mb-4 md:flex md:justify-center md:gap-4">
               <button
                 className={`rounded px-4 py-1 text-sm font-medium ${
                   desktopActiveTab === "attachments"
@@ -1058,7 +1058,7 @@ export default function InvoiceModalBody({
             {/* Attachments Tab Content - Desktop */}
             {desktopActiveTab === "attachments" && (
               <>
-                <h2 className="col-span-full mb-3 text-xl font-bold uppercase text-slate-500 md:text-3xl">
+                <h2 className="col-span-full mb-3  text-xl font-bold uppercase text-slate-500 md:text-3xl">
                   Attachments
                 </h2>
                 <div className="flex grid-cols-1 gap-4 overflow-x-auto md:grid">
