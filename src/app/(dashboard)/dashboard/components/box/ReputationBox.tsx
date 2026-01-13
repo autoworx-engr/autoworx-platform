@@ -33,7 +33,7 @@ export default async function ReputationBox({ className }: ReputationBoxProps) {
 
         <BoxTitle
           title="Reputation Management"
-          redirectLink="/dashboard/task/day"
+          redirectLink="#"
         />
         <div className="custom-scrollbar flex flex-1 flex-col space-y-4">
           <div className="flex flex-1 flex-col items-center justify-center py-2 text-center">

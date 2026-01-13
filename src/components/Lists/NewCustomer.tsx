@@ -261,7 +261,7 @@ export default function NewCustomer({
             </button>
           )}
         </DialogTrigger>
-        <DialogContent className="max-h-full max-w-xl grid-rows-[auto,1fr,auto]">
+        <DialogContent className="max-h-full max-w-2xl grid-rows-[auto,1fr,auto]">
           <div className="mt-8 flex items-center justify-between">
             <div className="px-2">
               <h1 className="text-2xl font-bold tracking-tight text-slate-600 dark:text-slate-100">
@@ -369,17 +369,19 @@ export default function NewCustomer({
                 }}
               />
 
-              <PhoneInput
-                label="Mobile Number"
-                placeholder="1234567890"
-                required
-                onChange={(phoneNum, code, isoCode) => {
-                  setMobile(phoneNum);
-                  setCountry(code);
-                  if (isoCode) setCountryIsoCode(isoCode);
-                  clearError();
-                }}
-              />
+              <div className="w-full">
+                <PhoneInput
+                  label="Mobile Number"
+                  placeholder="1234567890"
+                  required
+                  onChange={(phoneNum, code, isoCode) => {
+                    setMobile(phoneNum);
+                    setCountry(code);
+                    if (isoCode) setCountryIsoCode(isoCode);
+                    clearError();
+                  }}
+                />
+              </div>
             </div>
 
             <div className="flex items-center justify-between">
