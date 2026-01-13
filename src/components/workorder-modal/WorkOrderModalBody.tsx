@@ -226,14 +226,14 @@ export default function WorkOrderModalBody({
 
         {/* see images dialog trigger (uses its own internal state) */}
         {isAdminOrManager && (
-          <div className="absolute right-5 md:right-16 top-0">
+          <div className="absolute right-5 md:right-28 top-0">
             <Dialog>
               <DialogTrigger asChild>
                 <button className="md:bg-[#6571ff] md:text-white px-5 py-0.5 rounded-md">
-                  <span className="lg:hidden">
+                  <span className="md:hidden">
                     <LucideImage className="h-5 w-5 text-[#6571ff]" />
                   </span>
-                  <span className="hidden lg:inline">Attachments</span>
+                  <span className="hidden md:inline">Attachments</span>
                 </button>
               </DialogTrigger>
 
