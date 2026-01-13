@@ -70,15 +70,15 @@ export function CreateTab() {
 
   return (
     <>
-      <div className="-mx-8">
+      <div>
         {isMax640 ? (
           <ResponsiveEstimateCreateTab />
         ) : (
-          <table className="w-full border-separate border-spacing-x-8 border-spacing-y-5">
+          <table className="w-full table-fixed border-separate border-spacing-x-1.5 border-spacing-y-8">
             <thead>
               <tr>
                 {["Services", "Materials/Parts", "Labor", "Tags"].map((x) => (
-                  <th key={x}>{x}</th>
+                  <th key={x} className="w-[24%]">{x}</th>
                 ))}
                 <th>
                   <span className="sr-only">Actions</span>
@@ -87,7 +87,7 @@ export function CreateTab() {
             </thead>
             <tbody>
               {items.map((item, i) => (
-                <tr key={`item-${i}`}>
+                <tr key={`item-${i}`} className="align-bottom">
                   {["service", "materials", "labor", "tags"].map(
                     (itemKey, j) => {
                       switch (itemKey) {
@@ -236,7 +236,7 @@ export function CreateTab() {
                                     {j === item.materials.length - 1 ? (
                                       <button
                                         type="button"
-                                        className="absolute flex items-center gap-1 text-sm text-[#6571FF]"
+                                        className="absolute flex items-center gap-1 text-sm text-[#6571FF] mt-1"
                                         onClick={() => {
                                           useEstimateCreateStore.setState((x) =>
                                             create(x, (x) => {
@@ -425,7 +425,7 @@ export function CreateTab() {
                       }
                     }
                   )}
-                  <td>
+                  <td className="w-[1rem] pb-2">
                     <button
                       type="button"
                       className="flex items-center justify-center rounded-lg p-1.5 text-slate-400 transition-all hover:bg-rose-50 hover:text-rose-600 active:scale-90"
