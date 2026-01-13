@@ -164,8 +164,15 @@ const TechnicianAttendance = ({ currentUserId }: { currentUserId: string }) => {
                         const effectiveHours = isNaN(Number(data.hours))
                           ? data.hours
                           : convertDuration(
-                            Number(data.hours) - Number(data.totalBreaks)
-                          );
+                              Math.max(
+                                0,
+                                Number(data.hours) - Number(data.totalBreaks)
+                              )
+                            );
+
+                        const totalBreaks = isNaN(Number(data.totalBreaks))
+                          ? data.totalBreaks
+                          : convertDuration(Number(data.totalBreaks));
 
                         return (
                           <tr
@@ -183,20 +190,22 @@ const TechnicianAttendance = ({ currentUserId }: { currentUserId: string }) => {
                               {typeof data.clockedIn === "string"
                                 ? data.clockedIn
                                 : moment
-                                  .utc(data.clockedIn)
-                                  .tz(timezone)
-                                  .format("hh:mm A")}
+                                    .utc(data.clockedIn)
+                                    .tz(timezone)
+                                    .format("hh:mm A")}
                             </td>
                             <td className="px-2 py-2 sm:px-4">
                               {typeof data?.clockedOut === "string"
                                 ? data?.clockedOut
                                 : moment
-                                  .utc(data?.clockedOut)
-                                  .tz(timezone)
-                                  .format("hh:mm A")}
+                                    .utc(data?.clockedOut)
+                                    .tz(timezone)
+                                    .format("hh:mm A")}
                             </td>
                             <td className="hidden justify-center px-2 py-2 sm:px-4 lg:flex">
-                              {data.totalBreaks}
+                              {/* {data.totalBreaks } */}
+                              {/* convert duration */}
+                              {totalBreaks}
                             </td>
                             <td className="px-2 py-2 lg:px-4">
                               {effectiveHours}
