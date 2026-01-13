@@ -117,7 +117,9 @@ export default function Header({
         <p>{invoiceId || template?.id}</p>
       </div>
 
-      <CreateEstimateActionsButtons status={status! || selectedStatus} />
+      {!isTemplate && (
+        <CreateEstimateActionsButtons status={status! || selectedStatus} />
+      )}
 
       <div className="flex basis-full flex-wrap items-end gap-3">
         {isTemplate ? (
