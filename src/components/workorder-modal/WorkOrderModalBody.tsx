@@ -47,7 +47,7 @@ export default function WorkOrderModalBody({
 }) {
   const [dueDate, setDueDate] = useState<string | null>("");
   const isAdminOrManager = useIsAdminOrManager();
-   const [openService, setOpenService] = useState<number | null>(null);
+  const [openService, setOpenService] = useState<number | null>(null);
   const { data, error, isLoading, isFetched } = useQuery({
     queryKey: queryKeys.getWorkOrderDataKey(invoiceId),
     queryFn: () => getWorkOrderData(invoiceId),
@@ -90,8 +90,6 @@ export default function WorkOrderModalBody({
     writePermission,
     techniciansPerItem,
   } = data as IWorkOrderData;
-
-
 
   const getTechnicianPhotos = (): TechnicianPhoto[] => {
     const finalPhotosArray: TechnicianPhoto[] = [];
@@ -225,7 +223,7 @@ export default function WorkOrderModalBody({
         />
 
         {/* see images dialog trigger (uses its own internal state) */}
-        {isAdminOrManager && (
+        {technicianPhotos.length > 0 && isAdminOrManager && (
           <div className="absolute right-5 md:right-28 top-0">
             <Dialog>
               <DialogTrigger asChild>
