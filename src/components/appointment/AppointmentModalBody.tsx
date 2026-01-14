@@ -9,8 +9,7 @@ import {
   DialogTitle,
 } from "@/components/Dialog";
 import FormError from "@/components/FormError";
-import Selector from "@/components/Selector";
-import { SlimInput, slimInputClassName } from "@/components/SlimInput";
+import { SlimInput } from "@/components/SlimInput";
 import { cn } from "@/lib/cn";
 import { useFormErrorStore } from "@/stores/form-error";
 import AppointmentTitleSelectAndAdd from "./AppointmentTitleSelectAndAdd";
@@ -38,7 +37,7 @@ import { addOneHour, formatDateToToday, getCurrentTime } from "@/utils/time";
 import { useQueryClient } from "@tanstack/react-query";
 import moment from "moment-timezone";
 import { customAlphabet } from "nanoid";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import AssignUsers from "./AssignUsers";
 import { Reminder } from "./Reminder";
 import ScheduleTab from "./ScheduleTab";
@@ -47,7 +46,11 @@ import { SelectAppointmentVehicle } from "./SelectAppointmentVehicle";
 import { formatTime12Hour } from "@/utils/formateTime12Hours";
 import { Popconfirm, Select } from "antd";
 import { normalizeTime } from "@/utils/normalizeTime";
-import { Bell, Calendar, Trash2 } from "lucide-react";
+import { Bell, Calendar, Car, ChevronDown, Hash, Plus, Search, Trash2 } from "lucide-react";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { getVehicleByInvoiceId } from "@/actions/vehicle/getVehicleByInvoiceId";
+import { getVehicles } from "@/actions/vehicle/getVehicles";
+import useVehicleByClientIdQuery from "@/hooks/query-hook/useVehicleByClientIdQuery";
 enum Tab {
   Schedule = 0,
   Reminder = 1,
@@ -109,11 +112,14 @@ export default function AppointmentModalBody({
   const { data: estimates = [], isFetched: estimateIsFetched } =
     useEstimatesQueryByClient(
       client?.id!,
-      { id: true, clientId: true },
+      {
+        id: true, clientId: true,
+        grandTotal: true,
+        vehicle: true,
+      },
       { enabled: !!client?.id }
     );
 
-  const draftEstimates = estimates.map((estimate) => estimate.id);
 
   const timezone = useCompanyTimezone();
   const today = moment.tz(timezone).format("YYYY-MM-DD");
@@ -134,6 +140,7 @@ export default function AppointmentModalBody({
   const [allDay, setAllDay] = useState(false);
   const [vehicle, setVehicle] = useState<Partial<Vehicle> | null>(null);
   const [draft, setDraft] = useState<string | null>(null);
+  const [draftSearch, setDraftSearch] = useState("");
   const [assignedUsers, setAssignedUsers] = useState<User[]>([]);
 
   const [times, setTimes] = useState<{ time: string; date: string }[]>([]);
@@ -155,6 +162,51 @@ export default function AppointmentModalBody({
 
   const [openConfirmation, setOpenConfirmation] = useState(false);
   const [openReminder, setOpenReminder] = useState(false);
+
+  const draftEstimateOptions = useMemo(
+    () =>
+      estimates.map((estimate) => {
+        const vehicleLabel = [
+          (estimate as any)?.vehicle?.year,
+          (estimate as any)?.vehicle?.make,
+          (estimate as any)?.vehicle?.model,
+        ]
+          .filter(Boolean)
+          .join(" ") || (estimate as any)?.vehicle?.other;
+
+        console.log(estimate);
+
+        return {
+          id: String(estimate.id),
+          price: Number((estimate as any)?.grandTotal ?? 0),
+          vehicle: vehicleLabel,
+        };
+      }),
+    [estimates]
+  );
+
+  const filteredDraftEstimateOptions = useMemo(() => {
+    const term = draftSearch.toLowerCase();
+    return draftEstimateOptions.filter(
+      (item) =>
+        item.id.includes(draftSearch) ||
+        item.vehicle.toLowerCase().includes(term)
+    );
+  }, [draftSearch, draftEstimateOptions]);
+
+  const selectedDraftOption = useMemo(() => {
+    if (!draft) return null;
+
+    const existing = draftEstimateOptions.find((item) => item.id === draft);
+    if (existing) return existing;
+
+    // Keep showing a freshly created draft ID even before it exists in options
+    return {
+      id: draft,
+      price: 0,
+      vehicle: "New Draft Estimate",
+    };
+  }, [draft, draftEstimateOptions]);
 
   useEffect(() => {
     if (fromEdit && appointment) {
@@ -651,6 +703,12 @@ export default function AppointmentModalBody({
   ]);
 
   useEffect(() => {
+    if (!draftOpen) {
+      setDraftSearch("");
+    }
+  }, [draftOpen]);
+
+  useEffect(() => {
     let now = moment.tz(timezone);
 
     const roundedMinutes = Math.ceil(now.minute() / 15) * 15;
@@ -967,34 +1025,112 @@ export default function AppointmentModalBody({
               setIsAppointmentModalOpen={setIsAppointmentModalOpen}
             />
 
-            <Selector
-              label={(draft: string | null) =>
-                draft ? draft : "Draft Estimates"
-              }
-              openState={[draftOpen, setDraftOpen]}
-              newButton={
-                <button
-                  className="text-[#6571FF] disabled:text-zinc-400"
-                  onClick={() => {
-                    setDraft(customAlphabet("1234567890", 10)());
-                    setDraftOpen(false);
-                  }}
-                  disabled={!client || !vehicle}
-                  type="button"
-                >
-                  + New Draft Estimate
-                </button>
-              }
-              items={draftEstimates}
-              selectedItem={draft}
-              setSelectedItem={setDraft}
-              displayList={(item) => <p className="text-[#6571FF]">{item}</p>}
-              onSearch={(search) => {
-                return draftEstimates.filter((draft) =>
-                  draft.toLowerCase().includes(search.toLowerCase())
-                );
-              }}
-            />
+            <div className="w-full">
+              <DropdownMenu.Root open={draftOpen} onOpenChange={setDraftOpen}>
+                <DropdownMenu.Trigger asChild>
+                  <button
+                    type="button"
+                    className={cn(
+                      "flex h-11 w-full items-center justify-between rounded-xl px-4 py-2 text-sm transition-all",
+                      "border border-slate-200 bg-white shadow-sm hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900",
+                      "focus:outline-none focus:ring-2 focus:ring-[#6571FF]/40",
+                      draftOpen && "ring-2 ring-[#6571FF]/40 border-[#6571FF]"
+                    )}
+                  >
+                    <div className="flex flex-col items-start overflow-hidden text-left">
+                      {selectedDraftOption ? (
+                        <>
+                          <span className="w-full text-sm truncate font-semibold text-slate-900 dark:text-white">
+                            {selectedDraftOption.vehicle}
+                          </span>
+                          <span className="text-xs text-slate-500">
+                            ID: {selectedDraftOption.id} • ${selectedDraftOption.price.toFixed(2)}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-slate-500">Select Draft Estimate</span>
+                      )}
+                    </div>
+                    <ChevronDown
+                      size={18}
+                      className={cn(
+                        "text-slate-400 transition-transform",
+                        draftOpen && "rotate-180"
+                      )}
+                    />
+                  </button>
+                </DropdownMenu.Trigger>
+
+                <DropdownMenu.Portal>
+                  <DropdownMenu.Content
+                    sideOffset={8}
+                    className="z-50 w-[var(--radix-dropdown-menu-trigger-width)] min-w-[300px] overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-xl animate-in fade-in zoom-in-95 dark:border-slate-800 dark:bg-slate-900"
+                  >
+                    <div className="relative mb-1 flex items-center p-2">
+                      <Search className="absolute left-4 h-4 w-4 text-slate-400" />
+                      <input
+                        className="w-full rounded-lg bg-slate-50 py-2 pl-9 pr-3 text-sm outline-none dark:bg-slate-800"
+                        placeholder="Search ID or Vehicle..."
+                        value={draftSearch}
+                        onChange={(e) => setDraftSearch(e.target.value)}
+                        autoFocus
+                      />
+                    </div>
+
+                    <div className="max-h-72 overflow-y-auto overflow-x-hidden px-1">
+                      {filteredDraftEstimateOptions.length > 0 ? (
+                        filteredDraftEstimateOptions.map((item) => (
+                          <DropdownMenu.Item
+                            key={item.id}
+                            onSelect={() => {
+                              setDraft(item.id);
+                              setDraftOpen(false);
+                            }}
+                            className="group flex cursor-pointer flex-col gap-1 rounded-lg px-3 py-2.5 outline-none hover:bg-slate-50 data-[highlighted]:bg-[#6571FF]/10 dark:hover:bg-slate-800"
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-200">
+                                {item.vehicle}
+                              </div>
+                              <span className="text-sm font-bold text-[#6571FF]">
+                                ${item.price.toFixed(2)}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1 text-xs text-slate-400">
+                              <Hash size={10} />
+                              {item.id}
+                            </div>
+                          </DropdownMenu.Item>
+                        ))
+                      ) : (
+                        <div className="py-6 text-center text-xs text-slate-400">
+                          No results found
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="mt-1 border-t border-slate-100 p-2 dark:border-slate-800">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDraft(customAlphabet("1234567890", 10)());
+                          setDraftOpen(false);
+                        }}
+                        disabled={!client || !vehicle}
+                        className={cn(
+                          "flex w-full items-center justify-center gap-2 rounded-lg bg-[#6571FF] py-2.5 text-sm font-semibold text-white transition-opacity",
+                          "hover:opacity-90 active:scale-[0.98]",
+                          (!client || !vehicle) && "cursor-not-allowed opacity-60"
+                        )}
+                      >
+                        <Plus size={16} />
+                        New Draft Estimate
+                      </button>
+                    </div>
+                  </DropdownMenu.Content>
+                </DropdownMenu.Portal>
+              </DropdownMenu.Root>
+            </div>
 
           </div>
 

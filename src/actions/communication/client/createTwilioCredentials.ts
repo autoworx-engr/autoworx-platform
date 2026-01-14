@@ -160,11 +160,29 @@ export const createTwilioCredentials = async ({
         });
       }
 
-      const application = await cuurentClient.applications.create({
-        friendlyName: `User TwiML App`,
-        voiceUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/twilio/receive`,
-        voiceMethod: "POST",
+      const twimlAppName = "Autoworx_TwiML_App";
+
+      const existingApps = await cuurentClient.applications.list({
+        friendlyName: twimlAppName,
+        limit: 1,
       });
+
+      let application;
+      if (existingApps.length > 0) {
+        application = await cuurentClient
+          .applications(existingApps[0].sid)
+          .update({
+            friendlyName: twimlAppName,
+            voiceUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/twilio/receive`,
+            voiceMethod: "POST",
+          });
+      } else {
+        application = await cuurentClient.applications.create({
+          friendlyName: twimlAppName,
+          voiceUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/twilio/receive`,
+          voiceMethod: "POST",
+        });
+      }
 
       if (application.sid) {
         await db.twilioCredentials.update({

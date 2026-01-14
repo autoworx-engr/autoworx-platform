@@ -96,8 +96,20 @@ export default function Header({
     ) {
       setClientOpenDropdown(false);
       setVehicleOpenDropdown(false);
+    } else if (
+      templateOpenDropdown &&
+      (clientOpenDropdown || vehicleOpenDropdown || statusOpenDropdown)
+    ) {
+      setClientOpenDropdown(false);
+      setVehicleOpenDropdown(false);
+      setStatusOpenDropdown(false);
     }
-  }, [statusOpenDropdown, clientOpenDropdown, vehicleOpenDropdown]);
+  }, [
+    statusOpenDropdown,
+    clientOpenDropdown,
+    vehicleOpenDropdown,
+    templateOpenDropdown,
+  ]);
 
   return (
     <div className="app-shadow col-start-1 flex flex-wrap items-center gap-3 rounded-md p-3">
@@ -105,7 +117,9 @@ export default function Header({
         <p>{invoiceId || template?.id}</p>
       </div>
 
-      <CreateEstimateActionsButtons status={status! || selectedStatus} />
+      {!isTemplate && (
+        <CreateEstimateActionsButtons status={status! || selectedStatus} />
+      )}
 
       <div className="flex basis-full flex-wrap items-end gap-3">
         {isTemplate ? (

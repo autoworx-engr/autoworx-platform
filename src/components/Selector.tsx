@@ -216,7 +216,7 @@ export default function Selector<T>({
                     className={cn(
                       "w-full p-1 px-2 text-left hover:bg-gray-100",
                       border &&
-                      "relative left-1/2 my-1 w-[95%] -translate-x-1/2 rounded-md border-2 border-slate-400 py-[0.3rem]"
+                      "relative border-b border-slate-200 dark:border-slate-800 px-2 py-1.5 rounded-xl"
                     )}
                   >
                     {displayList(item)}
@@ -229,7 +229,7 @@ export default function Selector<T>({
                     className={cn(
                       "w-full p-1 px-2 text-left hover:bg-gray-100",
                       border &&
-                      "relative left-1/2 my-1 w-[95%] -translate-x-1/2 rounded-md border-2 border-slate-400 py-[0.3rem]"
+                      "relative border-b border-slate-200 dark:border-slate-800 px-2 py-1.5 rounded-xl"
                     )}
                   >
                     {displayList(item)}

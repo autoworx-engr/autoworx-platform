@@ -266,13 +266,6 @@ export default function NewLabor({
                 value={name}
                 onChange={(e) => {
                   const value = e.target.value;
-                  if (value.length > 30) {
-                    showError({
-                      field: "name",
-                      message: "Labor name must be less than 30 characters",
-                    });
-                    return false;
-                  }
                   setName(value);
                   if (value.trim()) {
                     clearError();

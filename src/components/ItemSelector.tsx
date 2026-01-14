@@ -153,7 +153,7 @@ export default function ItemSelector<T>({
             <DropdownMenuTrigger
               onClick={() => setOpen(true)}
               className={cn(
-                "flex h-11 w-full items-center justify-between rounded-xl bg-white px-4 ring-1 ring-inset ring-slate-200 transition-all hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30",
+                "flex h-11 w-full items-center justify-between rounded-lg shadow-sm shadow-black/20 bg-gray-100/40 px-4 ring-1 ring-inset ring-slate-200 transition-all hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30",
                 open && "invisible"
               )}
             >
