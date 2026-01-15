@@ -20,9 +20,13 @@ type TCalendarTooltipProps = {
     client?: Client;
     assignedUsers?: User[];
   };
+  onClose?: () => void;
 };
 
-export default function CalendarTooltip({ event }: TCalendarTooltipProps) {
+export default function CalendarTooltip({
+  event,
+  onClose,
+}: TCalendarTooltipProps) {
   const date = useDate();
   const dateFormat = date.format("YYYY-MM-DD");
   const queryClient = useQueryClient();
@@ -110,11 +114,10 @@ export default function CalendarTooltip({ event }: TCalendarTooltipProps) {
   return (
     <>
       <TooltipPortal>
-        <TooltipContent 
+        <TooltipContent
           className="w-72 rounded-md border border-slate-400 bg-background p-3"
           onClick={(e) => e.stopPropagation()}
           onMouseDown={(e) => e.stopPropagation()}
-          
         >
           {event.type === "appointment" ? (
             <AppointmentTooltip
@@ -122,6 +125,7 @@ export default function CalendarTooltip({ event }: TCalendarTooltipProps) {
               onModalOpen={() => {
                 setIsAppointmentOpen(true);
               }}
+              onClose={onClose}
             />
           ) : (
             <TaskTooltip

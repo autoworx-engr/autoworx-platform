@@ -587,7 +587,11 @@ export default function Week() {
                 const isTooltipOpen = openTooltipId === eventKey;
                 return (
                   // open={isTooltipOpen} onOpenChange={() => {}}
-                  <Tooltip key={eventKey} open={isTooltipOpen} onOpenChange={()=>{}}>
+                  <Tooltip
+                    key={eventKey}
+                    open={isTooltipOpen}
+                    onOpenChange={() => {}}
+                  >
                     <DraggableTaskTooltip
                       //@ts-ignore
                       className={cn(
@@ -605,6 +609,7 @@ export default function Week() {
                       task={event}
                       onClick={(e: React.MouseEvent) => {
                         e.stopPropagation();
+                        e.preventDefault();
                         setOpenTooltipId(isTooltipOpen ? null : eventKey);
                       }}
                       onNavigate={() => {
@@ -658,7 +663,12 @@ export default function Week() {
                       }
                     </DraggableTaskTooltip>
 
-                    {isTooltipOpen && <CalendarTooltip event={event} />}
+                    {isTooltipOpen && (
+                      <CalendarTooltip
+                        event={event}
+                        onClose={() => setOpenTooltipId(null)}
+                      />
+                    )}
                   </Tooltip>
                 );
               } else {

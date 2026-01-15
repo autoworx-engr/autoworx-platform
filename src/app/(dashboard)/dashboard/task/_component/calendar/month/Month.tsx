@@ -30,6 +30,7 @@ import { Skeleton } from "antd";
 import { useQuery } from "@tanstack/react-query";
 import { calenderQueryKey } from "../../../_constant";
 import getHoliday from "@/actions/task/getHoliday";
+import { useState } from "react";
 
 // Gradient priority classes for tasks
 const priorityClasses = {
@@ -60,7 +61,7 @@ export default function Month() {
 
   const router = useRouter();
   const { data: session } = useSession();
-
+  const [openTooltipId, setOpenTooltipId] = useState<number | string | null>(null);
   const authUser = session?.user;
   const {
     data: holidays,
@@ -338,9 +339,9 @@ export default function Month() {
         {cells.slice(7).map((cell: any, index) => {
           // Check if this date has any holidays
           const isHoliday = cell[3] && cell[3].length > 0;
-
+         
           return (
-            <Tooltip key={index}>
+            <Tooltip key={index} >
               <TooltipTrigger
                 type="button"
                 className={cn(

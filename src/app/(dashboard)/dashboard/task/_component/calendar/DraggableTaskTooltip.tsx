@@ -69,7 +69,13 @@ export default function DraggableTaskTooltip({
       // @ts-ignore
       ref={drag}
       onDragStart={handleDragStart}
-      onMouseDown={(e) => e.preventDefault()}
+      // onMouseDown={(e) => e.preventDefault()}
+      onMouseDown={(e) => {
+       
+        if (e.button === 0) { 
+          return;
+        }
+      }}
       style={{
         ...style,
         opacity: isDragging ? 0.5 : 1,
