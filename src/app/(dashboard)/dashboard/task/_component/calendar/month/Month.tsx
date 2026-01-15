@@ -488,6 +488,43 @@ export default function Month() {
                         );
                       })}
 
+                    {/* More tasks button (if more than 2 tasks) */}
+                    {cell[0] && (
+                      <div>
+                        {(() => {
+                          const moreTasksLeft = (cell[1]?.length || 0) - 2;
+                          if (moreTasksLeft > 0) {
+                            return (
+                              <button
+                                className="text-center text-xs font-normal text-slate-500"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  setOpenListIndex(index);
+                                  // Follow same behavior as appointments 'more'
+                                  // if (
+                                  //   event.target instanceof Node &&
+                                  //   event.currentTarget.contains(event.target)
+                                  // ) {
+                                  //   const dateString =
+                                  //     cell[0] instanceof Date
+                                  //       ? cell[0].toLocaleDateString("en-CA")
+                                  //       : moment(cell[0]).format("YYYY-MM-DD");
+                                  //   setNavigating(true);
+                                  //   setDate(dateString);
+                                  //   setTimeout(() => setNavigating(false), 30000);
+                                  // }
+                                  // router.push("/dashboard/task/day");
+                                }}
+                              >
+                                +{moreTasksLeft} more...
+                              </button>
+                            );
+                          }
+                          return null;
+                        })()}
+                      </div>
+                    )}
+
                     {cell[0] && (
                       <div>
                         {cell[2]
@@ -505,28 +542,28 @@ export default function Month() {
                                         event.stopPropagation();
                                         setOpenListIndex(index);
                                         // Navigation on '+more' click is disabled; list opens inline instead
-                                        if (
-                                          event.target instanceof Node &&
-                                          event.currentTarget.contains(
-                                            event.target
-                                          )
-                                        ) {
-                                          const dateString =
-                                            cell[0] instanceof Date
-                                              ? cell[0].toLocaleDateString(
-                                                  "en-CA"
-                                                )
-                                              : moment(cell[0]).format(
-                                                  "YYYY-MM-DD"
-                                                );
-                                          setNavigating(true);
-                                          setDate(dateString);
-                                          setTimeout(
-                                            () => setNavigating(false),
-                                            30000
-                                          );
-                                        }
-                                        router.push("/dashboard/task/day");
+                                        // if (
+                                        //   event.target instanceof Node &&
+                                        //   event.currentTarget.contains(
+                                        //     event.target
+                                        //   )
+                                        // ) {
+                                        //   const dateString =
+                                        //     cell[0] instanceof Date
+                                        //       ? cell[0].toLocaleDateString(
+                                        //           "en-CA"
+                                        //         )
+                                        //       : moment(cell[0]).format(
+                                        //           "YYYY-MM-DD"
+                                        //         );
+                                        //   setNavigating(true);
+                                        //   setDate(dateString);
+                                        //   setTimeout(
+                                        //     () => setNavigating(false),
+                                        //     30000
+                                        //   );
+                                        // }
+                                        // router.push("/dashboard/task/day");
                                       }}
                                     >
                                       +{moreLeft} more...
@@ -576,7 +613,18 @@ export default function Month() {
                 {/* Large list shows only when '+more' clicked */}
                 {openListIndex === index && (
                   <TooltipContent>
-                    <div className="max-h-[350px] w-[350px] overflow-y-scroll">
+                    <div className="relative max-h-[350px] w-[350px] overflow-y-scroll">
+                      {/* Close button – top-right corner */}
+                      <button
+                        aria-label="Close list"
+                        className="absolute right-2 top-2 rounded p-1 text-slate-500 hover:text-slate-700"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpenListIndex(null);
+                        }}
+                      >
+                        <X size={18} />
+                      </button>
                       {/* Tasks section */}
                       {cell[1]?.length > 0 && (
                         <>
@@ -608,7 +656,7 @@ export default function Month() {
                         <>
                           <div className="mt-3 flex items-center justify-between">
                             <h3 className="text-lg font-bold">Appointments</h3>
-                            <button
+                            {/* <button
                               aria-label="Close appointments list"
                               className="rounded p-1 text-slate-500 hover:text-slate-700"
                               onClick={(e) => {
@@ -617,7 +665,7 @@ export default function Month() {
                               }}
                             >
                               <X size={18} />
-                            </button>
+                            </button> */}
                           </div>
                           <div className="flex flex-col gap-1">
                             {cell[2]?.map(
