@@ -35,6 +35,10 @@ import { createTwilioCredentials } from "@/actions/communication/client/createTw
  *                 type: string
  *               phoneNumberSid:
  *                 type: string
+ *               notifyServiceSid:
+ *                 type: string
+ *               voipPushCredentialSid:
+ *                 type: string
  *     responses:
  *       200:
  *         description: Twilio credentials created successfully
@@ -50,6 +54,8 @@ export async function POST(req: NextRequest) {
       apiKeySid: body.apiKeySid,
       apiKeySecret: body.apiKeySecret,
       phoneNumberSid: body.phoneNumberSid,
+      notifyServiceSid: body.notifyServiceSid,
+      voipPushCredentialSid: body.voipPushCredentialSid,
     });
 
     if (!data.success) {
