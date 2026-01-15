@@ -31,6 +31,7 @@ import { useQuery } from "@tanstack/react-query";
 import { calenderQueryKey } from "../../../_constant";
 import getHoliday from "@/actions/task/getHoliday";
 import { useState } from "react";
+import { Cross, X } from "lucide-react";
 
 // Gradient priority classes for tasks
 const priorityClasses = {
@@ -61,7 +62,10 @@ export default function Month() {
 
   const router = useRouter();
   const { data: session } = useSession();
-  const [openTooltipId, setOpenTooltipId] = useState<number | string | null>(null);
+  const [openTooltipId, setOpenTooltipId] = useState<number | string | null>(
+    null
+  );
+  const [openListIndex, setOpenListIndex] = useState<number | null>(null);
   const authUser = session?.user;
   const {
     data: holidays,
@@ -339,9 +343,14 @@ export default function Month() {
         {cells.slice(7).map((cell: any, index) => {
           // Check if this date has any holidays
           const isHoliday = cell[3] && cell[3].length > 0;
-         
+
           return (
-            <Tooltip key={index} >
+            <Tooltip
+              key={index}
+              open={openListIndex === index}
+              // Prevent hover from toggling open; only open via '+more' click
+              onOpenChange={() => {}}
+            >
               <TooltipTrigger
                 type="button"
                 className={cn(
@@ -401,28 +410,40 @@ export default function Month() {
                     {/* Appointments */}
                     {cell[2]
                       .slice(0, 1)
-                      .map((appointment: CalendarAppointment, i: number) => (
-                        <Tooltip key={i}>
-                          <TooltipTrigger asChild>
-                            <div
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleRedirectToDay(cell[0]);
-                              }}
-                              className="cursor-pointer truncate rounded border px-1 py-0.5 text-xs text-slate-700 lg:block xl:text-sm"
-                            >
-                              {appointment.title}
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipPortal>
-                            <CalendarTooltip
-                              event={
-                                { ...appointment, type: "appointment" } as any
-                              }
-                            />
-                          </TooltipPortal>
-                        </Tooltip>
-                      ))}
+                      .map((appointment: CalendarAppointment, i: number) => {
+                        const eventKey = `appointment-${appointment.id}-${index}-${i}`;
+                        const isTooltipOpen = openTooltipId === eventKey;
+                        return (
+                          <Tooltip
+                            key={eventKey}
+                            open={isTooltipOpen}
+                            onOpenChange={() => {}}
+                          >
+                            <TooltipTrigger asChild>
+                              <div
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  // handleRedirectToDay(cell[0]);
+                                  setOpenTooltipId(
+                                    isTooltipOpen ? null : eventKey
+                                  );
+                                }}
+                                className="cursor-pointer truncate rounded border px-1 py-0.5 text-xs text-slate-700 lg:block xl:text-sm"
+                              >
+                                {appointment.title}
+                              </div>
+                            </TooltipTrigger>
+                            {isTooltipOpen && (
+                              <CalendarTooltip
+                                event={
+                                  { ...appointment, type: "appointment" } as any
+                                }
+                                onClose={() => setOpenTooltipId(null)}
+                              />
+                            )}
+                          </Tooltip>
+                        );
+                      })}
 
                     {/* Tasks */}
                     {cell[1]
@@ -432,13 +453,22 @@ export default function Month() {
                           priorityClasses[
                             task.priority as keyof typeof priorityClasses
                           ] || priorityClasses.Low;
+                        const eventKey = `task-${task.id}-${index}-${i}`;
+                        const isTooltipOpen = openTooltipId === eventKey;
                         return (
-                          <Tooltip key={i}>
+                          <Tooltip
+                            key={eventKey}
+                            open={isTooltipOpen}
+                            onOpenChange={() => {}}
+                          >
                             <TooltipTrigger asChild>
                               <div
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleRedirectToDay(cell[0]);
+                                  // handleRedirectToDay(cell[0]);
+                                  setOpenTooltipId(
+                                    isTooltipOpen ? null : eventKey
+                                  );
                                 }}
                                 className={cn(
                                   "cursor-pointer truncate rounded px-1 py-2 text-xs text-white lg:block lg:text-sm transition-all duration-300 ease-in-out hover:shadow-lg hover:scale-[1.01]",
@@ -448,11 +478,12 @@ export default function Month() {
                                 {task.title}
                               </div>
                             </TooltipTrigger>
-                            <TooltipPortal>
+                            {isTooltipOpen && (
                               <CalendarTooltip
                                 event={{ ...task, type: "task" } as any}
+                                onClose={() => setOpenTooltipId(null)}
                               />
-                            </TooltipPortal>
+                            )}
                           </Tooltip>
                         );
                       })}
@@ -466,32 +497,30 @@ export default function Month() {
                               const moreLeft = cell[2].length - 1;
 
                               return (
-                                <Tooltip key={i}>
+                                <Tooltip key={i} open={openListIndex === i}>
                                   {moreLeft > 0 && (
                                     <button
-                                      className="text-left text-xs font-normal text-slate-500"
+                                      className="text-center text-xs font-normal text-slate-500"
                                       onClick={(event) => {
+                                        event.stopPropagation();
+                                        setOpenListIndex(index);
+                                        // Navigation on '+more' click is disabled; list opens inline instead
                                         if (
                                           event.target instanceof Node &&
                                           event.currentTarget.contains(
                                             event.target
                                           )
                                         ) {
-                                          // Convert Date object to string to avoid timezone issues
                                           const dateString =
                                             cell[0] instanceof Date
                                               ? cell[0].toLocaleDateString(
                                                   "en-CA"
-                                                ) // 'YYYY-MM-DD' format
+                                                )
                                               : moment(cell[0]).format(
                                                   "YYYY-MM-DD"
                                                 );
-
-                                          // Set navigation flag to prevent reset, then set date and navigate
                                           setNavigating(true);
                                           setDate(dateString);
-
-                                          // Clear navigation flag after a short delay to allow navigation to complete
                                           setTimeout(
                                             () => setNavigating(false),
                                             30000
@@ -544,8 +573,8 @@ export default function Month() {
               </TooltipTrigger>
 
               <TooltipPortal>
-                {/* Large tooltip that shows more details when hovering */}
-                {(cell[1]?.length || cell[2]?.length) && (
+                {/* Large list shows only when '+more' clicked */}
+                {openListIndex === index && (
                   <TooltipContent>
                     <div className="max-h-[350px] w-[350px] overflow-y-scroll">
                       {/* Tasks section */}
@@ -577,15 +606,25 @@ export default function Month() {
                       {/* Appointments section */}
                       {cell[2]?.length > 0 && (
                         <>
-                          <h3 className="mt-3 text-lg font-bold">
-                            Appointments
-                          </h3>
+                          <div className="mt-3 flex items-center justify-between">
+                            <h3 className="text-lg font-bold">Appointments</h3>
+                            <button
+                              aria-label="Close appointments list"
+                              className="rounded p-1 text-slate-500 hover:text-slate-700"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOpenListIndex(null);
+                              }}
+                            >
+                              <X size={18} />
+                            </button>
+                          </div>
                           <div className="flex flex-col gap-1">
                             {cell[2]?.map(
                               (appointment: CalendarAppointment, i: number) => (
                                 <div
                                   key={i}
-                                  className="flex items-center gap-2 rounded bg-gray-600 p-2 text-white"
+                                  className="flex items-center cursor-pointer gap-2 rounded bg-gray-600 p-2 text-white"
                                 >
                                   <p>{appointment.title}</p>
                                 </div>
