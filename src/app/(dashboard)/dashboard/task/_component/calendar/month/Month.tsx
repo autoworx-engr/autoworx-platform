@@ -408,7 +408,7 @@ export default function Month() {
                   <div className="mt-2 flex flex-col space-y-1 overflow-hidden">
                     {/* Appointments */}
                     {cell[2]
-                      .slice(0,1)
+                      .slice(0, 1)
                       .map((appointment: CalendarAppointment, i: number) => {
                         const eventKey = `appointment-${appointment.id}-${index}-${i}`;
                         const isTooltipOpen = openTooltipId === eventKey;
@@ -446,7 +446,7 @@ export default function Month() {
 
                     {/* Tasks */}
                     {cell[1]
-                      ?.slice(0,1)
+                      ?.slice(0, 1)
                       .map((task: CalendarTask, i: number) => {
                         const taskPriorityClass =
                           priorityClasses[
@@ -487,7 +487,42 @@ export default function Month() {
                         );
                       })}
 
-                
+                    {cell[0] && !cell[2].length && cell[1].length > 2 && (
+                      <div>
+                        {(() => {
+                          const moreTasksLeft = (cell[1]?.length || 0) - 2;
+                          if (moreTasksLeft > 0) {
+                            return (
+                              <button
+                                className="text-center py-1 w-full text-xs font-normal text-slate-500"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  setOpenListIndex(index);
+                                  // Follow same behavior as appointments 'more'
+                                  // if (
+                                  //   event.target instanceof Node &&
+                                  //   event.currentTarget.contains(event.target)
+                                  // ) {
+                                  //   const dateString =
+                                  //     cell[0] instanceof Date
+                                  //       ? cell[0].toLocaleDateString("en-CA")
+                                  //       : moment(cell[0]).format("YYYY-MM-DD");
+                                  //   setNavigating(true);
+                                  //   setDate(dateString);
+                                  //   setTimeout(() => setNavigating(false), 30000);
+                                  // }
+                                  // router.push("/dashboard/task/day");
+                                }}
+                              >
+                                +{moreTasksLeft} more...
+                              </button>
+                            );
+                          }
+                          return null;
+                        })()}
+                      </div>
+                    )}
+
                     {cell[0] && (
                       <div>
                         {cell[2]
@@ -495,7 +530,10 @@ export default function Month() {
                           .map(
                             (appointment: CalendarAppointment, i: number) => {
                               const moreLeft = Math.max(0, cell[2].length - 1);
-                              const moreTasksLeft = Math.max(0, (cell[1]?.length || 0) - 1);
+                              const moreTasksLeft = Math.max(
+                                0,
+                                (cell[1]?.length || 0) - 1
+                              );
                               const totalLeft = moreLeft + moreTasksLeft;
 
                               return (
@@ -595,60 +633,14 @@ export default function Month() {
                         <>
                           <h3 className="text-lg font-bold">Tasks</h3>
                           <div className="flex flex-col gap-1">
-                            {cell[1]?.slice(1).map((task: CalendarTask, i: number) => {
-                              const taskPriorityClass =
-                                priorityClasses[
-                                  task.priority as keyof typeof priorityClasses
-                                ] || priorityClasses.Low;
-                              const eventKey = `list-task-${task.id}-${index}-${i}`;
-                              const isTooltipOpen = openTooltipId === eventKey;
-                              return (
-                                <Tooltip
-                                  key={eventKey}
-                                  open={isTooltipOpen}
-                                  onOpenChange={() => {}}
-                                >
-                                  <TooltipTrigger asChild>
-                                    <div
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setOpenTooltipId(
-                                          isTooltipOpen ? null : eventKey
-                                        );
-                                      }}
-                                      className={cn(
-                                        "flex cursor-pointer items-center gap-2 rounded p-2 text-white transition-all duration-300 ease-in-out",
-                                        taskPriorityClass
-                                      )}
-                                    >
-                                      <p className="text-left w-full">
-                                        {task.title}
-                                      </p>
-                                    </div>
-                                  </TooltipTrigger>
-                                  {isTooltipOpen && (
-                                    <CalendarTooltip
-                                      event={{ ...task, type: "task" } as any}
-                                      onClose={() => setOpenTooltipId(null)}
-                                    />
-                                  )}
-                                </Tooltip>
-                              );
-                            })}
-                          </div>
-                        </>
-                      )}
-
-                      {/* Appointments section */}
-                      {cell[2]?.length > 0 && (
-                        <>
-                          <div className="mt-3 flex items-center justify-between">
-                            <h3 className="text-lg font-bold">Appointments</h3>
-                          </div>
-                          <div className="flex flex-col gap-1">
-                            {cell[2]?.slice(1).map(
-                              (appointment: CalendarAppointment, i: number) => {
-                                const eventKey = `list-appointment-${appointment.id}-${index}-${i}`;
+                            {cell[1]
+                              ?.slice(1)
+                              .map((task: CalendarTask, i: number) => {
+                                const taskPriorityClass =
+                                  priorityClasses[
+                                    task.priority as keyof typeof priorityClasses
+                                  ] || priorityClasses.Low;
+                                const eventKey = `list-task-${task.id}-${index}-${i}`;
                                 const isTooltipOpen =
                                   openTooltipId === eventKey;
                                 return (
@@ -665,28 +657,82 @@ export default function Month() {
                                             isTooltipOpen ? null : eventKey
                                           );
                                         }}
-                                        className="flex cursor-pointer items-center gap-2 rounded bg-gray-600 p-2 text-white"
+                                        className={cn(
+                                          "flex cursor-pointer items-center gap-2 rounded p-2 text-white transition-all duration-300 ease-in-out",
+                                          taskPriorityClass
+                                        )}
                                       >
                                         <p className="text-left w-full">
-                                          {appointment.title}
+                                          {task.title}
                                         </p>
                                       </div>
                                     </TooltipTrigger>
                                     {isTooltipOpen && (
                                       <CalendarTooltip
-                                        event={
-                                          {
-                                            ...appointment,
-                                            type: "appointment",
-                                          } as any
-                                        }
+                                        event={{ ...task, type: "task" } as any}
                                         onClose={() => setOpenTooltipId(null)}
                                       />
                                     )}
                                   </Tooltip>
                                 );
-                              }
-                            )}
+                              })}
+                          </div>
+                        </>
+                      )}
+
+                      {/* Appointments section */}
+                      {cell[2]?.length > 0 && (
+                        <>
+                          <div className="mt-3 flex items-center justify-between">
+                            <h3 className="text-lg font-bold">Appointments</h3>
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            {cell[2]
+                              ?.slice(1)
+                              .map(
+                                (
+                                  appointment: CalendarAppointment,
+                                  i: number
+                                ) => {
+                                  const eventKey = `list-appointment-${appointment.id}-${index}-${i}`;
+                                  const isTooltipOpen =
+                                    openTooltipId === eventKey;
+                                  return (
+                                    <Tooltip
+                                      key={eventKey}
+                                      open={isTooltipOpen}
+                                      onOpenChange={() => {}}
+                                    >
+                                      <TooltipTrigger asChild>
+                                        <div
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setOpenTooltipId(
+                                              isTooltipOpen ? null : eventKey
+                                            );
+                                          }}
+                                          className="flex cursor-pointer items-center gap-2 rounded bg-gray-600 p-2 text-white"
+                                        >
+                                          <p className="text-left w-full">
+                                            {appointment.title}
+                                          </p>
+                                        </div>
+                                      </TooltipTrigger>
+                                      {isTooltipOpen && (
+                                        <CalendarTooltip
+                                          event={
+                                            {
+                                              ...appointment,
+                                              type: "appointment",
+                                            } as any
+                                          }
+                                          onClose={() => setOpenTooltipId(null)}
+                                        />
+                                      )}
+                                    </Tooltip>
+                                  );
+                                }
+                              )}
                           </div>
                         </>
                       )}
