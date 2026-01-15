@@ -114,6 +114,7 @@ export default function CalendarTooltip({ event }: TCalendarTooltipProps) {
           className="w-72 rounded-md border border-slate-400 bg-background p-3"
           onClick={(e) => e.stopPropagation()}
           onMouseDown={(e) => e.stopPropagation()}
+          
         >
           {event.type === "appointment" ? (
             <AppointmentTooltip

@@ -75,6 +75,7 @@ export default function Week() {
   const router = useRouter();
 
   const { setDate, setNavigating } = useCalendarStore();
+  const [openTooltipId, setOpenTooltipId] = useState<string | null>(null);
 
   const today = week.toDate();
   const parentRef = useRef<HTMLDivElement>(null);
@@ -476,7 +477,7 @@ export default function Week() {
                       cellWidth,
                       fontSize,
                       columnIndex === 0 &&
-                      "border-0 absolute -left-[6px] p-2 text-end -top-[35.5px] justify-end pr-3",
+                        "border-0 absolute -left-[6px] p-2 text-end -top-[35.5px] justify-end pr-3",
                       columnIndex === 1 && "border-l",
                       rowIndex === 0 && "border-t"
                     );
@@ -510,7 +511,7 @@ export default function Week() {
                         style={{
                           backgroundColor:
                             draggedOverRow?.r === rowIndex &&
-                              draggedOverRow?.c === columnIndex
+                            draggedOverRow?.c === columnIndex
                               ? "rgba(0, 0, 0, 0.1)"
                               : cellBgColor,
                         }}
@@ -531,8 +532,9 @@ export default function Week() {
               let width = "calc(12.5% - 4px)"; // prev = 12.9%
               // Apply gradient based on priority
               const priorityClass =
-                priorityClasses[event.priority as keyof typeof priorityClasses] ||
-                priorityClasses.Low;
+                priorityClasses[
+                  event.priority as keyof typeof priorityClasses
+                ] || priorityClasses.Low;
               // Calculate how many tasks are in the same row
               //TODO:
               const eventStartTime = moment(event.startTime, "HH:mm");
@@ -581,13 +583,18 @@ export default function Week() {
                 left = `calc(10% + 12.9% * ${event.columnIndex} + ${taskIndex * 2}%)`;
               }
               if (taskIndex < limitOfTasks) {
+                const eventKey = `${event.id}-${index}`;
+                const isTooltipOpen = openTooltipId === eventKey;
                 return (
-                  <Tooltip key={`${event.id}-${index}`}>
+                  // open={isTooltipOpen} onOpenChange={() => {}}
+                  <Tooltip key={eventKey} open={isTooltipOpen} onOpenChange={()=>{}}>
                     <DraggableTaskTooltip
                       //@ts-ignore
                       className={cn(
                         `absolute top-0 w-full rounded-lg border transition-all duration-300 ease-in-out hover:shadow-lg hover:scale-[1.01]`,
-                        event.type !== "appointment" ? priorityClass : "bg-white/95 dark:bg-slate-800/95 border-slate-200"
+                        event.type !== "appointment"
+                          ? priorityClass
+                          : "bg-white/95 dark:bg-slate-800/95 border-slate-200"
                       )}
                       style={{
                         left,
@@ -596,6 +603,10 @@ export default function Week() {
                         width,
                       }}
                       task={event}
+                      onClick={(e: React.MouseEvent) => {
+                        e.stopPropagation();
+                        setOpenTooltipId(isTooltipOpen ? null : eventKey);
+                      }}
                       onNavigate={() => {
                         // Convert Date object to string to avoid timezone issues
                         const dateString =
@@ -646,7 +657,8 @@ export default function Week() {
                         </>
                       }
                     </DraggableTaskTooltip>
-                    <CalendarTooltip event={event} />
+
+                    {isTooltipOpen && <CalendarTooltip event={event} />}
                   </Tooltip>
                 );
               } else {

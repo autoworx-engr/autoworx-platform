@@ -10,6 +10,7 @@ import { ReactElement } from "react";
 import { useDrag } from "react-dnd";
 import { useDate } from "../../_hook/lib/useDate";
 import useWeekStartEndDays from "../../_hook/lib/useWeekStartEndDays";
+import { PopoverTrigger } from "@/components/ui/popover";
 
 type TDraggableTaskTooltipProps = {
   children: ReactElement;
@@ -68,6 +69,7 @@ export default function DraggableTaskTooltip({
       // @ts-ignore
       ref={drag}
       onDragStart={handleDragStart}
+      onMouseDown={(e) => e.preventDefault()}
       style={{
         ...style,
         opacity: isDragging ? 0.5 : 1,
@@ -79,26 +81,28 @@ export default function DraggableTaskTooltip({
     </TooltipTrigger>
   );
 
-  return (
-    <>
-      {task.type === "task" && (
-        <TaskCreateOrEdit
-          fromEdit
-          taskId={task.id}
-          onTaskUpdated={revalidateTaskQueries}
-          onTaskDelete={revalidateTaskQueries}
-          triggerIcon={event}
-        />
-      )}
-      {task.type === "appointment" && (
-        <AppointmentCreateOrEdit
-          fromEdit
-          appointmentId={task.id}
-          triggerIcon={event}
-          onAppointmentUpdated={revalidateAppointmentQueries}
-          onAppointmentDeleted={revalidateAppointmentQueries}
-        />
-      )}
-    </>
-  );
+  // return (
+  //   <>
+  //     {task.type === "task" && (
+  //       <TaskCreateOrEdit
+  //         fromEdit
+  //         taskId={task.id}
+  //         onTaskUpdated={revalidateTaskQueries}
+  //         onTaskDelete={revalidateTaskQueries}
+  //         triggerIcon={event}
+  //       />
+  //     )}
+  //     {task.type === "appointment" && (
+  //       <AppointmentCreateOrEdit
+  //         fromEdit
+  //         appointmentId={task.id}
+  //         triggerIcon={event}
+  //         onAppointmentUpdated={revalidateAppointmentQueries}
+  //         onAppointmentDeleted={revalidateAppointmentQueries}
+  //       />
+  //     )}
+  //   </>
+  // );
+
+  return event
 }
