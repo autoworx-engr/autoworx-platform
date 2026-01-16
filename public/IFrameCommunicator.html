@@ -1,0 +1,23 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Payment Iframe Communicator</title>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <script>
+      function receiveMessage(event) {
+        console.log("🚀 ~ receiveMessage ~ event:", event);
+        // Only accept messages from Authorize.Net domains
+        if (
+          event.origin === "https://test.authorize.net" ||
+          event.origin === "https://accept.authorize.net"
+        ) {
+          // Forward the message to the parent window
+          window.top.postMessage(event.data, "*");
+        }
+      }
+      window.addEventListener("message", receiveMessage, false);
+    </script>
+  </body>
+</html>

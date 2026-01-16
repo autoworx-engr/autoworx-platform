@@ -15,7 +15,7 @@ const pump = promisify(pipeline);
  * /api/communication/client:
  *   get:
  *     summary: Get client communication history
- *     tags: [Communication]
+ *     tags: [Communication Client]
  *     security:
  *       - bearerAuth: []
  *     parameters:

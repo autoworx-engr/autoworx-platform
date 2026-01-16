@@ -40,17 +40,13 @@ export function SelectClient({
   }, [searchTerm]);
 
   // Use infinite query for client list
-  const {
-    data: infiniteData,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useClientListInfiniteQuery(debouncedSearchTerm);
+
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useClientListInfiniteQuery(debouncedSearchTerm);
 
   // Flatten the infinite data into a single array`
-  const clientList = useMemo(() => {
-    return infiniteData?.pages.flatMap((page) => page?.clients) ?? [];
-  }, [infiniteData]);
+
+  const clientList = data?.pages.flatMap((page) => page.clients) ?? [];
 
   const newAddedCustomer = useListsStore((x) => x.newAddedCustomer);
   const searchParams = useSearchParams();

@@ -74,6 +74,7 @@ const template_variable_options = [
   { name: "<ADDRESS>", description: "Your business address" },
   { name: "<VIDEO_DIRECTION>", description: "Video direction" },
   { name: "<GOOGLE_MAP_LINK>", description: "Google map link" },
+  { name: "<GOOGLE_REVIEW_LINK>", description: "Google review link" }
 ];
 
 const ServiceRuleForm: React.FC<RuleFormProps> = ({
@@ -388,6 +389,7 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
               labelClassName="text-gray-500"
               onChange={(e) => handleChange("title", e.target.value)}
               error={error.title}
+              required
             />
 
             {/* Service */}

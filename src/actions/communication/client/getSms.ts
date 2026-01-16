@@ -7,8 +7,9 @@ import { ClientSMS, ClientSmsAttachments } from "@prisma/client";
 
 const getSms = async (
   clientId: number,
+  companyId?: number
 ): Promise<(ClientSMS & { attachments: ClientSmsAttachments[] })[]> => {
-  const companyId = await getCompanyId();
+  const cId = companyId || (await getCompanyId());
 
   const client = await db.client.findUnique({
     where: {
@@ -22,7 +23,7 @@ const getSms = async (
   const messages = await db.clientSMS.findMany({
     where: {
       clientId: +clientId!,
-      companyId,
+      companyId: cId,
     },
     include: {
       attachments: true,

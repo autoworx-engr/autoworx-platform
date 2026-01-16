@@ -65,7 +65,7 @@ export default function CannedLabor({
 
       const matchesSearch = laborSearch
         ? laborName.includes(laborSearch.toLowerCase()) ||
-          categoryName.includes(laborSearch.toLowerCase())
+        categoryName.includes(laborSearch.toLowerCase())
         : true;
 
       const matchesCategory = selectedCategory
@@ -480,7 +480,7 @@ const LaborComponent = ({
               <SquarePen className="w-5 h-5" />
             </button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>Edit Canned Labor</DialogTitle>
             </DialogHeader>
@@ -513,6 +513,7 @@ const LaborComponent = ({
                   Category
                 </label>
                 <SelectCategory
+                  className="min-w-full"
                   onCategoryChange={setCategory}
                   labelPosition="none"
                   categoryData={category}

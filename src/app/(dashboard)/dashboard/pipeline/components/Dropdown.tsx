@@ -8,6 +8,7 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { ChevronDown } from "lucide-react";
 import { useEffect, useState } from "react";
 import Select from "./Select";
+import { cn } from "@/lib/cn";
 interface DropdownProps {
   pipelineType: string;
 }
@@ -56,10 +57,10 @@ const DropdownMenuDemo = ({ pipelineType }: DropdownProps) => {
 
       <DropdownMenu.Portal>
         <DropdownMenu.Content
-          className="data-[side=top]:animate-slideDownAndFade data-[side=right]:animate-slideLeftAndFade data-[side=bottom]:animate-slideUpAndFade data-[side=left]:animate-slideRightAndFade min-w-[220px] rounded-md bg-background p-[5px] py-8 shadow-[0px_10px_38px_-10px_rgba(22,_23,_24,_0.35),_0px_10px_20px_-15px_rgba(22,_23,_24,_0.2)] will-change-[opacity,transform]"
+          className="data-[side=top]:animate-slideDownAndFade data-[side=right]:animate-slideLeftAndFade data-[side=bottom]:animate-slideUpAndFade data-[side=left]:animate-slideRightAndFade min-w-[220px] rounded-md bg-background p-[5px] py-8 z-50 shadow-[0px_10px_38px_-10px_rgba(22,_23,_24,_0.35),_0px_10px_20px_-15px_rgba(22,_23,_24,_0.2)] will-change-[opacity,transform]"
           sideOffset={5}
         >
-          <div className="flex flex-col gap-y-2">
+          <div className="flex flex-col gap-y-2 px-4">
             <Select
               label="Status"
               items={[
@@ -88,12 +89,17 @@ const DropdownMenuDemo = ({ pipelineType }: DropdownProps) => {
               value={service}
             />
             <button
-              className="rounded border border-gray-300 px-2 py-2"
               onClick={() => {
                 resetStatus();
               }}
+              className={cn(
+                "group mt-4 flex w-full items-center justify-center gap-2 rounded-lg py-2 transition-all duration-200 ",
+                "hover:bg-red-50", // Soft background shift
+                " text-slate-500 hover:text-red-500", // Typography style
+                "active:scale-95 border border-slate-200 hover:border-red-100" // Tactile feedback
+              )}
             >
-              Clear All
+              Clear All Filters
             </button>
           </div>
         </DropdownMenu.Content>

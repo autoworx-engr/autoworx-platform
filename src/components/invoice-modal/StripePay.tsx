@@ -67,7 +67,7 @@ export function StripePay({
               <button
                 onClick={() => {
                   setPayType("deposit");
-                  setAmount(""); // Clear amount for deposits
+                  setAmount(due); // Default deposit amount to full due
                 }}
                 className="w-full rounded py-1 bg-[#6571ff] text-white"
               >
@@ -95,7 +95,7 @@ export function StripePay({
                 type="text"
                 placeholder={
                   payType === "deposit"
-                    ? "Enter deposit amount"
+                    ? `Enter deposit amount (Max. ${due})`
                     : "Enter payment amount"
                 }
                 className="w-full rounded-lg border px-2 py-2"
@@ -108,9 +108,7 @@ export function StripePay({
                   }
                 }}
               />
-              {payType === "payment" && (
-                <span className="text-xs">( Max. {due} )</span>
-              )}
+              <span className="text-xs">( Max. {due} )</span>
             </div>
           </div>
         </div>
@@ -120,6 +118,19 @@ export function StripePay({
             type="button"
             disabled={isLoading || !amount || Number(amount) <= 0}
             onClick={async () => {
+              const numericAmount = Number(amount);
+              const numericDue = Number(due);
+
+              if (Number.isNaN(numericAmount) || numericAmount <= 0) {
+                errorToast("Please enter a valid amount");
+                return;
+              }
+
+              if (payType === "deposit" && numericAmount > numericDue) {
+                errorToast("Deposit amount cannot exceed total due");
+                return;
+              }
+
               setIsLoading(true);
               const res = await createStripePaymentLink({
                 amount,

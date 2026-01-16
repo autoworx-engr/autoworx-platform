@@ -168,7 +168,6 @@ export default function TemplateTable({ take, page, data }: TTableProps) {
                     <button onClick={() => handleDuplicateTemplate(data?.id)}>
                       <Copy size={18} className="text-[#6571FF]" />
                     </button>
-
                     <Link
                       href={`/dashboard/estimate/templates/create?isEdit=true&templateId=${data?.id}`}
                       className="text-2xl text-blue-600"
@@ -185,7 +184,7 @@ export default function TemplateTable({ take, page, data }: TTableProps) {
                       onConfirm={() => handleDeleteTemplate(data?.id)}
                     >
                       <button
-                        className="flex items-center gap-2 rounded-md text-red-400 px-3 py-1 hover:text-red-500"
+                        className="flex items-center  rounded-md text-red-400 py-1 hover:text-red-500"
                         aria-label="Delete"
                       >
                         <Trash2 size={18} />
