@@ -133,6 +133,7 @@ export default function CalendarTooltip({
               onModalOpen={() => {
                 setIsTaskModalOpen(true);
               }}
+              onClose={onClose}
             />
           )}
         </TooltipContent>
