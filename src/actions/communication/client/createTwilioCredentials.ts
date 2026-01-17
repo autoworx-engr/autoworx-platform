@@ -89,6 +89,8 @@ export const createTwilioCredentials = async ({
   apiKeySid,
   apiKeySecret,
   phoneNumberSid,
+  notifyServiceSid,
+  voipPushCredentialSid,
 }: {
   companyId: number;
   accountSid: string;
@@ -96,6 +98,8 @@ export const createTwilioCredentials = async ({
   apiKeySid: string;
   apiKeySecret: string;
   phoneNumberSid: string;
+  notifyServiceSid?: string;
+  voipPushCredentialSid?: string;
 }) => {
   console.log("🚀 ~ createTwilioCredentials ~ companyId:", companyId);
   try {
@@ -112,6 +116,8 @@ export const createTwilioCredentials = async ({
         apiKeySecret,
         companyId: companyId as number,
         phoneNumberSid,
+        notifyServiceSid,
+        voipPushCredentialSid,
       },
       update: {
         accountSid,
@@ -119,6 +125,8 @@ export const createTwilioCredentials = async ({
         apiKeySid,
         apiKeySecret,
         phoneNumberSid,
+        notifyServiceSid,
+        voipPushCredentialSid,
       },
     });
 

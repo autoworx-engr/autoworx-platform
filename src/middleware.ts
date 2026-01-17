@@ -17,6 +17,7 @@ const PUBLIC_API_ROUTES = [
   // Webhook endpoints
   "/api/stripe/invoice-pay-hook",
   "/api/twilio/token",
+  "/api/twilio/register-voip",
   "/api/infobip",
   "/api/lead-generate",
   "/api/authorize-net/webhook",
@@ -28,6 +29,7 @@ const PUBLIC_API_ROUTES = [
   "/api/twilio/incoming",
   "/api/twilio/receive",
   "/api/twilio/token",
+  "/api/invoice/track-view",
 ];
 
 const PUBLIC_DYNAMIC_API_ROUTES = [
