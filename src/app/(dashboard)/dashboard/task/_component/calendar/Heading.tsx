@@ -17,12 +17,17 @@ import DateSelector from "./DateSelector";
 import { useDate } from "../../_hook/lib/useDate";
 import useMonth from "../../_hook/lib/useMonth";
 import useWeekStartEndDays from "../../_hook/lib/useWeekStartEndDays";
-import { Appointment, Lead } from "@prisma/client";
+import { Appointment, Lead, Technician, User } from "@prisma/client";
 import { updatePipelineAutomationTrigger } from "@/actions/automation/pipeline/triggerPipelineAutomation";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
+import Selector from "@/components/Selector";
+import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
+import { useEffect, useState } from "react";
+import { getEmployees } from "@/actions/employee/get";
 
 type THeadingProps = {
   type: CalendarType;
+  technicianList?: Technician[];
 };
 
 const days = ["SUN", "MON", "TUE", "WED", "THUS", "FRI", "SAT"];
@@ -48,7 +53,11 @@ const DROPDOWN_STYLE = `
 
 const ALLOWED_ROLES_FOR_NEW_APPOINTMENT = ["Admin", "Manager", "Sales"];
 
-export default function Heading({ type }: THeadingProps) {
+export default function Heading({ type, technicianList }: THeadingProps) {
+  const [employeeList, setEmployeeList] = useState<User[]>([]);
+  const [employeeOpen, setEmployeeOpen] = useState(false);
+  const [employee, setEmployee] = useState<User | null>(null);
+
   const date = useDate();
   const dateFormat = date.format("YYYY-MM-DD");
   const month = useMonth();
@@ -72,9 +81,25 @@ export default function Heading({ type }: THeadingProps) {
   });
   const router = useRouter();
   const calenderQueryType = type === "day" ? "date" : type;
+
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      const employees = await getEmployees({ notType: "Sales" });
+      setEmployeeList(employees);
+    };
+    fetchEmployees();
+  }, []);
+
   const { setDate, setNavigating, date: currentDate } = useCalendarStore();
 
   const currentDayIndex = moment(currentDate).day();
+
+  const availableEmployees = employeeList.filter(
+    (emp) => !technicianList?.some((tech) => tech.userId === emp.id)
+  );
+
+  const currentUser = useGetCurrentUser();
+  const isTechnician = currentUser?.employeeType === "Technician";
 
   const handleTodayClick = () => {
     const today = moment().format("YYYY-MM-DD");
@@ -139,7 +164,35 @@ export default function Heading({ type }: THeadingProps) {
         <div className="mb-2 hidden w-full md:mb-0 lg:block lg:w-64 xl:w-80">
           <CalendarSearch type={type} />
         </div>
-
+        <div
+          className={
+            isTechnician ? "pointer-events-none opacity-50 w-full" : ""
+          }
+        >
+          <Selector
+            label={(employee) =>
+              employee?.firstName ? `${employee.firstName}` : "Employee"
+            }
+            newButton={<div></div>}
+            items={availableEmployees}
+            displayList={(employee: User) => (
+              <p>
+                {employee.firstName} {employee.lastName}
+              </p>
+            )}
+            onSearch={(search: string) =>
+              availableEmployees.filter((employee) =>
+                `${employee.firstName} ${employee.lastName}`
+                  .toLowerCase()
+                  .includes(search.toLowerCase())
+              )
+            }
+            openState={[employeeOpen, setEmployeeOpen]}
+            selectedItem={employee}
+            //@ts-ignore
+            setSelectedItem={setEmployee}
+          />
+        </div>
         {/* Custom Date Selector - replaces GoToDate */}
         <DateSelector type={type} weekStart={settings?.weekStart} />
 
@@ -181,14 +234,15 @@ export default function Heading({ type }: THeadingProps) {
             contentClassName="capitalize"
           />
         </div>
+
         {/* new appointment */}
         {ALLOWED_ROLES_FOR_NEW_APPOINTMENT.includes(
           user?.employeeType ?? ""
         ) && (
-            <AppointmentCreateOrEdit
-              onAppointmentCreated={handleAppointmentCreate}
-            />
-          )}
+          <AppointmentCreateOrEdit
+            onAppointmentCreated={handleAppointmentCreate}
+          />
+        )}
 
         <Settings />
 
@@ -199,10 +253,11 @@ export default function Heading({ type }: THeadingProps) {
             {days.map((day, index) => (
               <p
                 key={day}
-                className={` p-1 rounded-full ${index === currentDayIndex
-                  ? "bg-blue-500 text-white font-bold"
-                  : ""
-                  }`}
+                className={` p-1 rounded-full ${
+                  index === currentDayIndex
+                    ? "bg-blue-500 text-white font-bold"
+                    : ""
+                }`}
               >
                 {day}
               </p>
