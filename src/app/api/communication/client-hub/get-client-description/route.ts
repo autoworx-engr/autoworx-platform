@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import getSms from "@/app/(dashboard)/dashboard/communication/client/_actions/getSms";
+import { getClientDescription } from "@/app/(dashboard)/dashboard/communication/client/_actions/getClientDescription";
 
 /**
  * @swagger
- * /api/communication/client-hub/get-sms:
+ * /api/communication/client-hub/get-client-description:
  *   get:
- *     summary: Get SMS messages for a client
+ *     summary: Get client description with conversations and company users
  *     tags: [Communication Client]
  *     security:
  *       - bearerAuth: []
@@ -15,44 +15,17 @@ import getSms from "@/app/(dashboard)/dashboard/communication/client/_actions/ge
  *         required: true
  *         schema:
  *           type: number
- *         example: 1
- *
+ *         example: 11
  *       - in: query
  *         name: companyId
  *         required: false
  *         schema:
  *           type: number
- *         example: 2
- *
- *       - in: query
- *         name: take
- *         required: false
- *         schema:
- *           type: number
- *           default: 20
- *         description: Number of records per page
- *         example: 20
- *
- *       - in: query
- *         name: page
- *         required: false
- *         schema:
- *           type: number
- *           default: 1
- *         description: Page number (1-based)
  *         example: 1
- *
- *       - in: query
- *         name: params
- *         required: false
- *         description: Prisma ClientSMSFindManyArgs as JSON string
- *         schema:
- *           type: string
- *         example: '{"orderBy":{"createdAt":"desc"}}'
  *
  *     responses:
  *       200:
- *         description: SMS messages retrieved successfully
+ *         description: Client description retrieved successfully
  *         content:
  *           application/json:
  *             schema:
@@ -63,22 +36,44 @@ import getSms from "@/app/(dashboard)/dashboard/communication/client/_actions/ge
  *                   example: true
  *                 message:
  *                   type: string
- *                   example: SMS messages retrieved successfully
+ *                   example: Client description retrieved successfully
  *                 data:
  *                   type: object
  *                   properties:
- *                     data:
+ *                     conversationsData:
+ *                       type: object
+ *                     companyUsers:
  *                       type: array
  *                       items:
  *                         type: object
- *                     totalSmsCount:
- *                       type: number
  *
  *       400:
  *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: clientId is required
  *
  *       500:
  *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: Failed to retrieve client description
  */
 
 export async function GET(req: NextRequest) {
@@ -87,8 +82,6 @@ export async function GET(req: NextRequest) {
 
     const clientIdParam = searchParams.get("clientId");
     const companyIdParam = searchParams.get("companyId");
-    const take = searchParams.get("take");
-    const page = searchParams.get("page");
 
     if (!clientIdParam) {
       return NextResponse.json(
@@ -98,6 +91,8 @@ export async function GET(req: NextRequest) {
     }
 
     const clientId = Number(clientIdParam);
+    const companyId = Number(companyIdParam);
+
     if (isNaN(clientId)) {
       return NextResponse.json(
         { success: false, message: "clientId must be a valid number" },
@@ -105,28 +100,25 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const companyId = companyIdParam ? Number(companyIdParam) : undefined;
+    if (companyIdParam && isNaN(companyId)) {
+      return NextResponse.json(
+        { success: false, message: "companyId must be a valid number" },
+        { status: 400 }
+      );
+    }
 
-    const data = await getSms(
-      clientId,
-      {
-        take: Number(take) || (20 as number),
-        skip: (Number(page) - 1) * Number(take) || 20,
-        orderBy: { createdAt: "desc" },
-      },
-      companyId
-    );
+    const data = await getClientDescription(clientId, companyId);
 
     return NextResponse.json({
       success: true,
-      message: "SMS messages retrieved successfully",
+      message: "Client description retrieved successfully",
       data,
     });
   } catch (error: any) {
     return NextResponse.json(
       {
         success: false,
-        message: error.message || "Failed to retrieve SMS messages",
+        message: error?.message || "Failed to retrieve client description",
       },
       { status: 500 }
     );
