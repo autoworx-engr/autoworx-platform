@@ -31,7 +31,7 @@ import { useQuery } from "@tanstack/react-query";
 import { calenderQueryKey } from "../../../_constant";
 import getHoliday from "@/actions/task/getHoliday";
 import { useState } from "react";
-import { Cross, X } from "lucide-react";
+import {  X } from "lucide-react";
 
 // Gradient priority classes for tasks
 const priorityClasses = {
@@ -273,6 +273,8 @@ export default function Month() {
     // setTimeout(() => setNavigating(false), 30000);
   };
   const clientTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  
+  
 
   if (isTasksLoading || isAppointmentsLoading) {
     return (
@@ -612,10 +614,11 @@ export default function Month() {
                 )}
               </TooltipTrigger>
 
-              <TooltipPortal>
+              <TooltipPortal >
                 {/* Large list shows only when '+more' clicked */}
                 {openListIndex === index && (
                   <TooltipContent>
+                     
                     <div className="relative max-h-[350px] w-[350px] overflow-y-scroll">
                       {/* Close button – top-right corner */}
                       <button
@@ -644,12 +647,13 @@ export default function Month() {
                                 const isTooltipOpen =
                                   openTooltipId === eventKey;
                                 return (
-                                  <Tooltip
+                                  <div
                                     key={eventKey}
-                                    open={isTooltipOpen}
-                                    onOpenChange={() => {}}
+                                    // open={isTooltipOpen}
+                                    // onOpenChange={() => {}}
+                                    className="relative"
                                   >
-                                    <TooltipTrigger asChild>
+                                    <div>
                                       <div
                                         onClick={(e) => {
                                           e.stopPropagation();
@@ -666,14 +670,14 @@ export default function Month() {
                                           {task.title}
                                         </p>
                                       </div>
-                                    </TooltipTrigger>
+                                    </div>
                                     {isTooltipOpen && (
                                       <CalendarTooltip
                                         event={{ ...task, type: "task" } as any}
                                         onClose={() => setOpenTooltipId(null)}
                                       />
                                     )}
-                                  </Tooltip>
+                                  </div>
                                 );
                               })}
                           </div>
@@ -698,12 +702,13 @@ export default function Month() {
                                   const isTooltipOpen =
                                     openTooltipId === eventKey;
                                   return (
-                                    <Tooltip
+                                    <div
                                       key={eventKey}
-                                      open={isTooltipOpen}
-                                      onOpenChange={() => {}}
+                                      // open={isTooltipOpen}
+                                      // onOpenChange={() => {}}
+                                      className="relative"
                                     >
-                                      <TooltipTrigger asChild>
+                                      <div>
                                         <div
                                           onClick={(e) => {
                                             e.stopPropagation();
@@ -717,7 +722,7 @@ export default function Month() {
                                             {appointment.title}
                                           </p>
                                         </div>
-                                      </TooltipTrigger>
+                                      </div>
                                       {isTooltipOpen && (
                                         <CalendarTooltip
                                           event={
@@ -729,7 +734,7 @@ export default function Month() {
                                           onClose={() => setOpenTooltipId(null)}
                                         />
                                       )}
-                                    </Tooltip>
+                                    </div>
                                   );
                                 }
                               )}
