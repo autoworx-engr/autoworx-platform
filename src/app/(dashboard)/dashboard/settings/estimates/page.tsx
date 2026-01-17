@@ -204,7 +204,7 @@ export default function EstimateAndInvoicePage() {
                 <div className="relative group">
                   <textarea
                     className={cn(
-                      "h-64 w-full resize-none rounded-2xl bg-slate-50/50 p-4 text-sm leading-relaxed text-slate-600 outline-none transition-all focus:bg-white focus:ring-4 focus:ring-[#6571FF]/5",
+                      "h-64 w-full resize-none rounded-2xl bg-slate-50/50 p-4 text-sm leading-relaxed text-slate-600 outline-none transition-all thin-scrollbar focus:bg-white focus:ring-4 focus:ring-[#6571FF]/5",
                       field.len > maxLength ? "border-2 border-red-400" : "border border-slate-200 focus:border-[#6571FF]/30"
                     )}
                     value={field.val || ""}
