@@ -156,6 +156,11 @@ export default function SideNavbar({ navList, permissions }: TProps) {
         companyUserPermissions?.communicationHubCollaboration);
   const [visibleTooltip, setVisibleTooltip] = useState<number | null>(null);
   const [activeDropdown, setActiveDropdown] = useState<number | null>(null);
+
+  // Reset any highlighted dropdown when route changes so previous sub-route icons don't stay active
+  useEffect(() => {
+    setActiveDropdown(null);
+  }, [modifiedPathName]);
   // Helper: Check if company feature permission allows access to this route
   function canAccessCompanyFeatureRoute(route: string): boolean {
     if (!companyFeaturePermission || companyFeaturePermission.length === 0)
@@ -338,6 +343,14 @@ export default function SideNavbar({ navList, permissions }: TProps) {
           {filteredNavList.map((item, index) => {
             const IconComponent = navIconMap[item.title];
             const isCustomSvg = typeof IconComponent === "string";
+            const hasActiveSubnav = item.subnav?.some((sub) =>
+              modifiedPathName.startsWith(sub.link)
+            );
+            const isActive =
+              modifiedPathName === item.path ||
+              (item.link && modifiedPathName.startsWith(item.link)) ||
+              hasActiveSubnav;
+            const shouldHighlightIcon = isActive || activeDropdown === index;
             return item.subnav ? (
               <Dropdown
                 key={index}
@@ -345,7 +358,7 @@ export default function SideNavbar({ navList, permissions }: TProps) {
                 index={index}
                 activeDropdown={activeDropdown}
                 setActiveDropdown={setActiveDropdown}
-                active={modifiedPathName === item.path ? true : false}
+                active={isActive as boolean}
                 icon={
                   <span className="relative inline-flex items-center justify-center">
                     {isCustomSvg ? (
@@ -354,11 +367,23 @@ export default function SideNavbar({ navList, permissions }: TProps) {
                         alt={item.title}
                         width={20}
                         height={20}
-                        className="w-5 h-5 opacity-60"
+                        className={cn(
+                          "w-5 h-5 transition-all duration-300",
+                          shouldHighlightIcon
+                            ? "brightness-0 invert opacity-100"
+                            : "opacity-60"
+                        )}
                       />
                     ) : (
                       IconComponent && (
-                        <IconComponent className="w-5 h-5 text-gray-700" />
+                        <IconComponent
+                          className={cn(
+                            "w-5 h-5 transition-all duration-300",
+                            shouldHighlightIcon
+                              ? "text-white drop-shadow-md"
+                              : "text-gray-700"
+                          )}
+                        />
                       )
                     )}
                     {item.title === "Communication Hub" &&
@@ -591,7 +616,7 @@ function Dropdown({
             <button
               type="button"
               className={cn(
-                "rounded-2xl p-2.5 transition-all duration-300 backdrop-blur-sm",
+                "rounded-2xl px-3 pt-2.5 pb-2 transition-all duration-300 backdrop-blur-sm",
                 (open && activeDropdown === index) || active
                   ? "bg-gradient-to-br from-blue-500 to-cyan-500 shadow-[0_8px_20px_rgba(59,130,246,0.35)] scale-105"
                   : "hover:bg-white/60 bg-[#e0e0e0] hover:bg-[#e8e8e8] shadow-[-12px -12px 24px 5px rgba(255, 255, 255, 0.035),12px 12px 24px 5px rgba(0, 0, 0, 0.07)] shadow-[inset_-3px_-3px_8px_rgba(255,255,255,0.8),inset_3px_3px_8px_rgba(0,0,0,0.08)]"
