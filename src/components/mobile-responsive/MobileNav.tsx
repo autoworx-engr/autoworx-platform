@@ -123,18 +123,18 @@ export default function MobileNav({ navList, permissions }: TProps) {
 
   return (
     <div className="z-50 sm:hidden">
-      <div className="fixed top-0 z-50 w-full bg-[#0C1427]">
-        <div className="flex h-14 items-center justify-between bg-[#0C1427] p-1.5">
+      <div className="fixed top-0 z-50 w-full bg-white border-b border-slate-200">
+        <div className="flex h-14 items-center justify-between bg-white p-1.5">
           <div
             onClick={() => setOpenNav((prev) => !prev)}
             className="w-20 flex-shrink-0"
           >
-            <Menu size={30} className="text-white" />
+            <Menu size={30} className="text-slate-800" />
           </div>
           <div className="flex w-full items-center justify-center">
             <Link href="/">
               <Image
-                src="/icons/Logo.png"
+                src="/images/solution/logo1.png"
                 alt="Company Logo"
                 priority
                 width={40}
@@ -147,10 +147,10 @@ export default function MobileNav({ navList, permissions }: TProps) {
           </div>
           <div className="flex items-center gap-1 px-3">
             <button className="" onClick={() => window.location.reload()}>
-              <RotateCw className="size-5 text-white" />
+              <RotateCw className="size-5 text-slate-800" />
             </button>
             <Link href="/dashboard/resources" className="px-3">
-              <SquarePlay className="size-5 text-white" />
+              <SquarePlay className="size-5 text-slate-800" />
             </Link>
             {(currentUser?.employeeType == "Admin" ||
               currentUser?.employeeType == "Manager" ||
@@ -159,52 +159,58 @@ export default function MobileNav({ navList, permissions }: TProps) {
             {!isDashboard && <BugReport />}
 
             <NotificationsPopover />
-            <div className="text-white">{/* <ThemeSwitch /> */}</div>
-            <LogoutBtn className="text-[1.7rem] font-bold text-white" />
+            <div className="text-slate-800">{/* <ThemeSwitch /> */}</div>
+            <LogoutBtn className="text-[1.7rem] font-bold text-slate-800" />
           </div>
         </div>
       </div>
       {/* nav sidebar */}
       <div
         className={cn(
-          "w-0 bg-[#0C1427] duration-300",
-          openNav && "fixed inset-0 w-full overflow-scroll duration-300"
+          "fixed inset-0 z-[999] bg-white transform transition-transform duration-300 overflow-y-auto will-change-transform",
+          openNav
+            ? "translate-x-0 translate-y-0"
+            : "-translate-x-full -translate-y-3"
         )}
-        style={{
-          zIndex: 999,
-        }}
+        aria-hidden={!openNav}
       >
-        {openNav && (
-          <div className="flex h-full flex-col overflow-y-auto p-5">
-            <div className="flex justify-center">
-              <Image
-                src="/icons/navbar/mobile-nav-logo.svg"
-                alt="company logo"
-                priority
-                width={275}
-                height={50}
-                className="mt-7"
-              />
-              <button
-                onClick={() => setOpenNav(false)}
-                className="absolute right-5 top-5 text-2xl text-white hover:text-gray-400"
-              >
-                <CircleX strokeWidth={2} size={24} />
-              </button>
-            </div>
-            <ul className="mt-10 flex flex-col items-center justify-center gap-y-8">
-              {filteredNavList.map((item, index) => {
-                return (
-                  <MobileNavList
-                    key={index}
-                    item={item}
-                    setOpenNav={setOpenNav}
-                  />
-                );
-              })}
-            </ul>
+        <div className="flex h-full flex-col p-5">
+          <div className="ml-4 flex items-center gap-3">
+            <Image
+              src="/images/solution/logo1.png"
+              alt="company logo"
+              priority
+              width={50}
+              height={50}
+              className="mt-7"
+            />
+            <Image
+              src="/images/solution/logo2.png"
+              alt="company logo"
+              priority
+              width={220}
+              height={50}
+              className="mt-7"
+            />
+            <button
+              onClick={() => setOpenNav(false)}
+              className="absolute right-5 top-5 text-2xl text-slate-700 hover:text-gray-400"
+            >
+              <CircleX strokeWidth={2} size={24} />
+            </button>
           </div>
-        )}
+          <ul className="mt-10 pb-4 ml-4 flex flex-col items-start justify-center gap-y-4">
+            {filteredNavList.map((item, index) => {
+              return (
+                <MobileNavList
+                  key={index}
+                  item={item}
+                  setOpenNav={setOpenNav}
+                />
+              );
+            })}
+          </ul>
+        </div>
       </div>
     </div>
   );

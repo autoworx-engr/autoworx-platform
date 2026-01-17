@@ -221,7 +221,7 @@ const AWXBugReport = () => {
           }}
           className="flex items-center"
         >
-          <MessageCircleWarning className="mr-2 h-5 w-5 sm:h-7 sm:w-7 text-white sm:text-[#6571FF]" />
+          <MessageCircleWarning className="mr-2 h-5 w-5 sm:h-7 sm:w-7 text-slate-800 sm:text-[#6571FF]" />
         </button>
 
         {/* Dropdown */}

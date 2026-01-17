@@ -96,7 +96,7 @@ export function NotificationsPopover() {
             viewBox="-1.28 -1.28 18.56 18.56"
             xmlns="http://www.w3.org/2000/svg"
             fill="currentColor"
-            className="h-5 w-5 sm:h-7 sm:w-7 text-white sm:text-[#6571FF]"
+            className="h-5 w-5 sm:h-7 sm:w-7 text-slate-800 sm:text-[#6571FF]"
             stroke="currentColor"
             stroke-width="0.41600000000000004"
           >

@@ -175,7 +175,7 @@ const QuickLink = () => {
         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
         className="flex items-center"
       >
-        <Zap className="h-5 w-5 sm:h-7 sm:w-7 text-white sm:text-[#6571FF]" />
+        <Zap className="h-5 w-5 sm:h-7 sm:w-7 text-slate-800 sm:text-[#6571FF]" />
       </button>
       {isDropdownOpen && (
         <Card className="custom-scrollbar absolute top-10 -right-16 md:right-0 z-30 w-72 sm:w-80 max-h-80 overflow-y-auto shadow-xl">

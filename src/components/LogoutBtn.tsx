@@ -119,7 +119,7 @@ export default function LogoutBtn({ className, ...props }: TProps) {
           xmlns="http://www.w3.org/2000/svg"
           fill="currentColor"
           stroke="currentColor"
-          className="h-5 w-5 sm:h-7 sm:w-7 text-white sm:text-[#6571FF]"
+          className="h-5 w-5 sm:h-7 sm:w-7 text-slate-800 sm:text-[#6571FF]"
           stroke-width="0.80"
         >
           <g id="SVGRepo_bgCarrier" stroke-width="0"></g>

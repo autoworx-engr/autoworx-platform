@@ -30,22 +30,8 @@ import {
 import { useChatTrackStore } from "@/stores/chatTrackStore";
 import { useSession } from "next-auth/react";
 import { filterNavList } from "@/lib/navListAuthorization";
-import {
-  BarChart3,
-  Calendar,
-  ChartPie,
-  CheckSquare,
-  CreditCard,
-  FileText,
-  GitBranch,
-  LayoutDashboard,
-  LucideIcon,
-  MessageSquare,
-  Package,
-  Settings,
-  SquareActivity,
-  Users,
-} from "lucide-react";
+import { Settings } from "lucide-react";
+import { navIconMap } from "./navIconMap";
 
 type TProps = {
   navList: {
@@ -61,30 +47,6 @@ type TProps = {
     | null;
   }[];
   permissions: PermissionsResult | null;
-};
-
-const iconMap: Record<string, React.ComponentType<any> | string> = {
-  // "/icons/navbar/Dashboard.svg": LayoutDashboard,
-  Dashboard: LayoutDashboard,
-  // "/icons/navbar/Community.svg": MessageSquare,
-  "Communication Hub": "/icons/navbar/message.svg",
-  // "/icons/navbar/Sales.svg": GitBranch,
-  Pipelines: SquareActivity,
-  // "/icons/navbar/Task.svg": CheckSquare,
-  "Task and Activity Management": Calendar,
-  // "/icons/navbar/Analytics.svg": BarChart3,
-  "Analytics and Reporting": ChartPie,
-  // "/icons/navbar/Invoices.svg": FileText,
-  Invoices: FileText,
-  // "/icons/navbar/Payments.svg": CreditCard,
-  Payments: "/icons/navbar/coin.svg",
-  // "/icons/navbar/Inventory.svg": Package,
-  Inventory: Package,
-  // "/icons/navbar/Employee.png": Users,
-  Directory: Users,
-  // "/icons/navbar/Settings.svg": Settings,
-  Visualization: "/icons/navbar/visualization.svg",
-  Settings: Settings,
 };
 
 export default function SideNavbar({ navList, permissions }: TProps) {
@@ -356,25 +318,25 @@ export default function SideNavbar({ navList, permissions }: TProps) {
 
   return (
     <TooltipProvider delayDuration={200}>
-      <nav className="fixed z-10 hidden h-screen flex-col items-center gap-8 overflow-y-auto overflow-x-hidden bg-gradient-to-b from-gray-50 to-gray-100 backdrop-blur-xl px-3 py-12 sm:flex lg:w-[5%] shadow-[8px_0_24px_rgba(0,0,0,0.06)] border-r border-white/50">
+      <nav className="fixed z-10 hidden h-screen flex-col items-center gap-8 overflow-y-auto overflow-x-hidden bg-gradient-to-b from-gray-50 to-gray-100 backdrop-blur-xl px-3 py-12 sm:flex lg:w-[5%]  border-r border-slate-200">
         <Link href="/" className="relative">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500 via-cyan-500 to-blue-600 flex items-center justify-center shadow-[0_8px_16px_rgba(59,130,246,0.3)] hover:shadow-[0_12px_24px_rgba(59,130,246,0.4)] transition-all duration-300 hover:scale-105">
-            <Image
-              src="/icons/logo1.webp"
-              alt="Company Logo"
-              width={24}
-              height={24}
-              className="brightness-0 invert"
-            />
-          </div>
-          <div className="absolute -right-2 -top-1 rotate-12 transform rounded-md bg-gradient-to-r from-cyan-400 to-blue-500 px-1.5 py-0.5 text-[7px] font-bold tracking-wider text-white shadow-lg backdrop-blur-sm">
+          {/* <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500 via-cyan-500 to-blue-600 flex items-center justify-center shadow-[0_8px_16px_rgba(59,130,246,0.3)] hover:shadow-[0_12px_24px_rgba(59,130,246,0.4)] transition-all duration-300 hover:scale-105"> */}
+          <Image
+            src="/images/solution/logo1.png"
+            alt="Company Logo"
+            width={40}
+            height={40}
+
+          />
+          {/* </div> */}
+          <div className="py-0.1 absolute top-0 ml-6 rotate-12 transform gap-2 rounded-md border border-white bg-gradient-to-r from-[#00b8b0] to-[#0098da] px-1 text-[8px] font-bold tracking-wider text-black shadow-lg">
             Beta
           </div>
         </Link>
 
         <div className="mb-auto mt-16 flex flex-col items-center gap-3">
           {filteredNavList.map((item, index) => {
-            const IconComponent = iconMap[item.title];
+            const IconComponent = navIconMap[item.title];
             const isCustomSvg = typeof IconComponent === "string";
             return item.subnav ? (
               <Dropdown
