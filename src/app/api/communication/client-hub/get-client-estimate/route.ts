@@ -76,7 +76,7 @@ import { getClientEstimate } from "@/app/(dashboard)/dashboard/communication/cli
  *                   example: Failed to retrieve client estimates
  */
 
-export const invoiceSelect = {
+const invoiceSelect = {
   id: true,
   createdAt: true,
   updatedAt: true,
@@ -146,7 +146,7 @@ export async function GET(req: NextRequest) {
     if (!clientIdParam) {
       return NextResponse.json(
         { success: false, message: "clientId is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -155,7 +155,7 @@ export async function GET(req: NextRequest) {
     if (isNaN(clientId)) {
       return NextResponse.json(
         { success: false, message: "clientId must be a valid number" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -178,7 +178,7 @@ export async function GET(req: NextRequest) {
         success: false,
         message: error?.message || "Failed to retrieve client estimates",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
