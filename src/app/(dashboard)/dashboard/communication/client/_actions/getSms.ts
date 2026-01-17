@@ -6,8 +6,8 @@ import { Prisma } from "@prisma/client";
 
 const getSms = async (
   clientId: number,
-  companyId?: number,
-  params?: Prisma.ClientSMSFindManyArgs
+  params?: Prisma.ClientSMSFindManyArgs,
+  companyId?: number
 ) => {
   const cId = companyId || (await getCompanyId());
   const { where, ...restParams } = params || {};
