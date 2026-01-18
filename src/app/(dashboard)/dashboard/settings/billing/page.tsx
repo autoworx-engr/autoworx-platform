@@ -11,6 +11,8 @@ import { useSession } from "next-auth/react";
 import { CheckoutForm } from "@/components/platform-billing/CheckoutForm";
 import { toast } from "react-hot-toast";
 import { PlatformSubscriptionStatus } from "@prisma/client";
+import { cancelSubscription } from "@/actions/platform-billing/cancel";
+import { AlertCircle } from "lucide-react";
 
 const paymentHistory = [
   { amount: "$100", method: "Credit Card", date: "2024-08-01" },
@@ -37,6 +39,7 @@ export default function Page() {
   const [plans, setPlans] = useState<any[]>([]);
   const [subscription, setSubscription] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isCancelling, setIsCancelling] = useState(false);
   const timezone = useCompanyTimezone();
 
   useEffect(() => {
@@ -63,7 +66,23 @@ export default function Page() {
 
   const currentPlan = subscription?.plan || null;
   const currentPlanName = currentPlan?.name || "No Active Plan";
-  const subStatus = subscription?.status || "NONE";
+  const subStatus = (subscription?.status as PlatformSubscriptionStatus) || "NONE";
+
+  const handleCancelClick = async () => {
+    if (!window.confirm("Are you sure you want to cancel your subscription? This will immediately revoke access to plan features.")) {
+      return;
+    }
+
+    setIsCancelling(true);
+    const res = await cancelSubscription(session!.user.companyId);
+    if (res.success) {
+      toast.success("Subscription cancelled successfully");
+      window.location.reload();
+    } else {
+      toast.error(res.message);
+    }
+    setIsCancelling(false);
+  };
 
   return (
     <div className="min-h-screen ">
@@ -84,7 +103,7 @@ export default function Page() {
                 >
                   {currentPlanName}
                 </span>
-                {subStatus !== "ACTIVE" && subStatus !== "NONE" && (
+                {subStatus !== PlatformSubscriptionStatus.ACTIVE && subStatus !== ("NONE" as any) && (
                   <span className="ml-2 text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full uppercase">
                     {subStatus}
                   </span>
@@ -101,7 +120,7 @@ export default function Page() {
                     </p>
                     <p>
                       Next Billing:{" "}
-                      <span className={`font-semibold ${subStatus === "PAST_DUE" ? "text-red-500" : "text-gray-800"}`}>
+                      <span className={`font-semibold ${subStatus === PlatformSubscriptionStatus.PAST_DUE ? "text-red-500" : "text-gray-800"}`}>
                         {subscription.currentPeriodEnd
                           ? moment(subscription.currentPeriodEnd).format("Do MMMM YYYY")
                           : "N/A"}
@@ -114,19 +133,32 @@ export default function Page() {
               </div>
 
               <div className="mt-8 flex flex-col space-y-3 sm:flex-row sm:space-x-4 sm:space-y-0 lg:mt-10">
-                <button
-                  className="h-11 w-full rounded-lg border border-gray-400 bg-gray-50 text-base font-semibold text-gray-700 shadow-sm hover:bg-gray-100 transition sm:w-32 lg:w-36"
-                  onClick={() => setPlansOpen(true)}
-                >
-                  Re-new
-                </button>
-                <button
-                  className="h-11 w-full rounded-lg bg-[#6571FF] text-base font-bold text-white shadow-md hover:bg-[#525fec] transition sm:w-36 lg:w-40"
-                  onClick={() => setPlansOpen(true)}
-                >
-                  <Award className="w-5 h-5 inline mr-1" />
-                  Upgrade
-                </button>
+                {subStatus === "ACTIVE" || subStatus === "PAST_DUE" ? (
+                  <>
+                    <button
+                      className="h-11 w-full rounded-lg border border-red-200 bg-red-50 text-base font-semibold text-red-600 shadow-sm hover:bg-red-100 transition sm:w-32 lg:w-40 disabled:opacity-50"
+                      onClick={handleCancelClick}
+                      disabled={isCancelling}
+                    >
+                      {isCancelling ? <Loader2 className="w-4 h-4 animate-spin inline mr-1" /> : null}
+                      Cancel Plan
+                    </button>
+                    <button
+                      className="h-11 w-full rounded-lg bg-[#6571FF] text-base font-bold text-white shadow-md hover:bg-[#525fec] transition sm:w-36 lg:w-40"
+                      onClick={() => setPlansOpen(true)}
+                    >
+                      <Award className="w-5 h-5 inline mr-1" />
+                      Upgrade
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    className="h-11 w-full rounded-lg bg-[#6571FF] text-base font-bold text-white shadow-md hover:bg-[#525fec] transition sm:w-48"
+                    onClick={() => setPlansOpen(true)}
+                  >
+                    Choose a Plan
+                  </button>
+                )}
               </div>
               <p className="mt-4 text-xs font-normal italic leading-4 text-gray-500 pt-2">
                 If you want a package customized according to your preferences,

@@ -2525,7 +2525,7 @@ model PlatformInvoice {
   subscriptionId    String?
   amount            Decimal  @db.Decimal(10, 2)
   status            String   // e.g. "PAID", "OPEN", "VOID"
-  authNetTransId    String?  // Linking to a specific capture trans
+  authNetTransId    String?  @unique // Linking to a specific capture trans
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
@@ -2538,7 +2538,7 @@ model PlatformPayment {
   platformInvoiceId String
   amount            Decimal  @db.Decimal(10, 2)
   status            String
-  authNetTransId    String?
+  authNetTransId    String?  @unique
   createdAt         DateTime @default(now())
 
   invoice           PlatformInvoice @relation(fields: [platformInvoiceId], references: [id], onDelete: Cascade)

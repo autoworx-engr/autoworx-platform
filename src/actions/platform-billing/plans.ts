@@ -31,6 +31,16 @@ export async function getCurrentSubscription(companyId: number) {
       where: { companyId },
       include: {
         plan: true,
+        billingCustomer: {
+          include: {
+            paymentMethods: {
+              where: { isDefault: true },
+            },
+            invoices: {
+              orderBy: { createdAt: "desc" },
+            },
+          }
+        }
       },
     });
 

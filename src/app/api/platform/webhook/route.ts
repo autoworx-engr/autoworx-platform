@@ -65,7 +65,17 @@ async function handleSubscriptionPayment(payload: any) {
     return;
   }
 
-  // Create local invoice and payment record
+  // 1. Check if we've already processed this transaction
+  const existingInvoice = await db.platformInvoice.findFirst({
+    where: { authNetTransId: authNetTransId.toString() },
+  });
+
+  if (existingInvoice) {
+    console.log("Transaction already processed, skipping invoice creation:", authNetTransId);
+    return;
+  }
+
+  // 2. Create local invoice and payment record
   const invoice = await db.platformInvoice.create({
     data: {
       billingCustomerId: subscription.billingCustomerId,
@@ -86,8 +96,10 @@ async function handleSubscriptionPayment(payload: any) {
       },
     });
 
-    // Update subscription period
-    const nextPeriodEnd = new Date();
+    // 3. Update subscription period
+    // If the subscription is successful, we bump the period end by 1 month
+    const currentEnd = subscription.currentPeriodEnd || new Date();
+    const nextPeriodEnd = new Date(currentEnd);
     nextPeriodEnd.setMonth(nextPeriodEnd.getMonth() + 1);
 
     await db.platformSubscription.update({
@@ -95,6 +107,7 @@ async function handleSubscriptionPayment(payload: any) {
       data: {
         status: PlatformSubscriptionStatus.ACTIVE,
         currentPeriodEnd: nextPeriodEnd,
+        currentPeriodStart: currentEnd,
       },
     });
   } else {
