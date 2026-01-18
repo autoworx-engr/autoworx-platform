@@ -35,6 +35,9 @@ export async function cancelSubscription(companyId: number) {
     return { success: true };
   } catch (error: any) {
     console.error("❌ Cancellation failed:", error);
-    return { success: false, message: error.message || "Failed to cancel subscription" };
+    return {
+      success: false,
+      message: error.message || "Failed to cancel subscription",
+    };
   }
 }

@@ -78,7 +78,10 @@ async function handleSubscriptionPayment(payload: any) {
   });
 
   if (existingInvoice) {
-    console.log("Transaction already processed, skipping invoice creation:", authNetTransId);
+    console.log(
+      "Transaction already processed, skipping invoice creation:",
+      authNetTransId
+    );
     return;
   }
 

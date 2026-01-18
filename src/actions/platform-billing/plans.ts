@@ -38,8 +38,8 @@ export async function getCurrentSubscription(companyId: number) {
             invoices: {
               orderBy: { createdAt: "desc" },
             },
-          }
-        }
+          },
+        },
       },
     });
 
