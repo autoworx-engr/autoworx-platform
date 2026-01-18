@@ -8,10 +8,11 @@ import crypto from "crypto";
  */
 export async function POST(req: NextRequest) {
   try {
+
     const signature = req.headers.get("x-anet-signature");
     const bodyText = await req.text();
     const event = JSON.parse(bodyText);
-
+console.log("🔔 Authorize.net Platform Billing Webhook Received",event);
     // TODO: Verify Signature using PLATFORM_AUTHNET_SIGNATURE_KEY
     // if (!verifySignature(bodyText, signature)) {
     //   return new NextResponse("Invalid signature", { status: 401 });
@@ -20,6 +21,9 @@ export async function POST(req: NextRequest) {
     console.log("🔔 Platform Billing Webhook Received:", event.eventType);
 
     switch (event.eventType) {
+      case "net.authorize.customer.subscription.created":
+        console.log("Subscription created successfully:", event.payload.id);
+        break;
       case "net.authorize.customer.subscription.payment":
         await handleSubscriptionPayment(event.payload);
         break;
@@ -42,7 +46,12 @@ export async function POST(req: NextRequest) {
 }
 
 async function handleSubscriptionPayment(payload: any) {
-  const subscriptionId = payload.subscriptionId;
+  const subscriptionId = payload.subscriptionId || payload.id;
+  if (!subscriptionId) {
+    console.error("No subscription ID found in payload:", payload);
+    return;
+  }
+
   const status = payload.responseCode === 1 ? "PAID" : "FAILED";
   const authNetTransId = payload.transactionId;
 
@@ -98,16 +107,20 @@ async function handleSubscriptionPayment(payload: any) {
 }
 
 async function handleSubscriptionCancelled(payload: any) {
-  const subscriptionId = payload.subscriptionId;
-  await db.platformSubscription.update({
+  const subscriptionId = payload.subscriptionId || payload.id;
+  if (!subscriptionId) return;
+
+  await db.platformSubscription.updateMany({
     where: { authNetSubscriptionId: subscriptionId.toString() },
     data: { status: PlatformSubscriptionStatus.CANCELED },
   });
 }
 
 async function handleSubscriptionSuspended(payload: any) {
-  const subscriptionId = payload.subscriptionId;
-  await db.platformSubscription.update({
+  const subscriptionId = payload.subscriptionId || payload.id;
+  if (!subscriptionId) return;
+
+  await db.platformSubscription.updateMany({
     where: { authNetSubscriptionId: subscriptionId.toString() },
     data: { status: PlatformSubscriptionStatus.PAST_DUE },
   });

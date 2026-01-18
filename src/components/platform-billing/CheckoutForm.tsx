@@ -19,6 +19,8 @@ declare const Accept: any;
 export function CheckoutForm({ plan, companyId, email, onSuccess, onCancel }: CheckoutFormProps) {
   const [loading, setLoading] = useState(false);
   const [cardData, setCardData] = useState({
+    firstName: "",
+    lastName: "",
     cardNumber: "",
     month: "",
     year: "",
@@ -34,20 +36,33 @@ export function CheckoutForm({ plan, companyId, email, onSuccess, onCancel }: Ch
       apiLoginID: process.env.NEXT_PUBLIC_PLATFORM_AUTHNET_API_LOGIN_ID,
     };
 
+    console.log("authData", authData);
+
     const cardDetails = {
       cardNumber: cardData.cardNumber.replace(/\s+/g, ""),
-      expiryMonth: cardData.month,
-      expiryYear: cardData.year,
+      month: cardData.month.padStart(2, "0"),
+      year: cardData.year.length === 2 ? `20${cardData.year}` : cardData.year,
       cardCode: cardData.cardCode,
+    };
+
+    console.log("cardDetails", cardDetails);
+
+    const billTo = {
+      firstName: cardData.firstName,
+      lastName: cardData.lastName,
     };
 
     const secureData = {
       authData,
       cardData: cardDetails,
+      billTo,
     };
+
+    console.log("secureData", secureData);
 
     try {
       Accept.dispatchData(secureData, async (response: any) => {
+        console.log("response", response);
         if (response.messages.resultCode === "Error") {
           response.messages.message.forEach((msg: any) => {
             toast.error(msg.text);
@@ -59,8 +74,12 @@ export function CheckoutForm({ plan, companyId, email, onSuccess, onCancel }: Ch
             companyId,
             planId: plan.id,
             email,
+            firstName: cardData.firstName,
+            lastName: cardData.lastName,
             opaqueData: response.opaqueData,
           });
+
+          console.log("result", result);
 
           if (result.success) {
             toast.success("Successfully subscribed!");
@@ -107,6 +126,31 @@ export function CheckoutForm({ plan, companyId, email, onSuccess, onCancel }: Ch
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+            <input
+              type="text"
+              placeholder="John"
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6571FF] outline-none"
+              value={cardData.firstName}
+              onChange={(e) => setCardData({ ...cardData, firstName: e.target.value })}
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+            <input
+              type="text"
+              placeholder="Doe"
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6571FF] outline-none"
+              value={cardData.lastName}
+              onChange={(e) => setCardData({ ...cardData, lastName: e.target.value })}
+              required
+            />
+          </div>
+        </div>
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Card Number</label>
           <div className="relative">

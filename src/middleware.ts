@@ -28,6 +28,7 @@ const PUBLIC_API_ROUTES = [
   "/api/twilio/incoming",
   "/api/twilio/receive",
   "/api/twilio/token",
+  "/api/platform/webhook"
 ];
 
 const PUBLIC_DYNAMIC_API_ROUTES = [

@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { createPlatformARBSubscription, createPlatformCustomerProfile } from "@/lib/platform-billing/authorize-net";
+import { createPlatformARBSubscription, createPlatformCustomerProfile, createPlatformPaymentProfile, cancelPlatformARBSubscription, chargePlatformCustomerProfile } from "@/lib/platform-billing/authorize-net";
 import { PlatformSubscriptionStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
@@ -9,11 +9,15 @@ export async function subscribeToPlatformPlan({
   companyId,
   planId,
   email,
+  firstName,
+  lastName,
   opaqueData,
 }: {
   companyId: number;
   planId: string;
   email: string;
+  firstName: string;
+  lastName: string;
   opaqueData: { dataDescriptor: string; dataValue: string };
 }) {
   try {
@@ -33,7 +37,7 @@ export async function subscribeToPlatformPlan({
 
     if (!customerProfileId) {
       // Create new CIM profile
-      const cim = await createPlatformCustomerProfile(companyId, email, opaqueData);
+      const cim = await createPlatformCustomerProfile(companyId, email, firstName, lastName, opaqueData);
       customerProfileId = cim.customerProfileId;
       customerPaymentProfileId = cim.customerPaymentProfileId;
 
@@ -43,18 +47,44 @@ export async function subscribeToPlatformPlan({
         create: { companyId, authNetProfileId: customerProfileId, email },
       });
     } else {
-      // TODO: Handle existing profile (maybe update payment profile?)
-      // For now assume they need a new profile or we just use the existing one if we had its payment profile
-      throw new Error("Update payment method flow not yet implemented");
+      // Add new payment profile to existing customer
+      const pp = await createPlatformPaymentProfile(customerProfileId, firstName, lastName, opaqueData);
+      customerPaymentProfileId = pp.customerPaymentProfileId;
     }
 
-    // 2. Create ARB Subscription
+    // 2. Handle Existing Subscription (if any)
+    const existingSub = await db.platformSubscription.findUnique({
+      where: { companyId }
+    });
+
+    if (existingSub?.authNetSubscriptionId) {
+      // For now, cancel old and create new to avoid logic complexity of ARB Update
+      try {
+        await cancelPlatformARBSubscription(existingSub.authNetSubscriptionId);
+      } catch (err) {
+        console.error("Failed to cancel old subscription:", err);
+      }
+    }
+
+    // 2. Immediate First Month Charge
+    // This ensures they are charged NOW and we get an instant invoice
+    const charge = await chargePlatformCustomerProfile({
+      customerProfileId,
+      customerPaymentProfileId,
+      amount: Number(plan.price),
+      description: `Immediate first month charge for ${plan.name}`,
+    });
+
+    // 3. Create ARB Subscription (Starting 1 month from now)
+    const arbStartDate = new Date();
+    arbStartDate.setMonth(arbStartDate.getMonth() + 1);
+
     const arb = await createPlatformARBSubscription({
       customerProfileId,
       customerPaymentProfileId,
       amount: Number(plan.price),
       intervalMonths: 1,
-      startDate: new Date(),
+      startDate: arbStartDate,
       planName: plan.name,
     });
 
@@ -62,13 +92,15 @@ export async function subscribeToPlatformPlan({
     const nextPeriodEnd = new Date();
     nextPeriodEnd.setMonth(nextPeriodEnd.getMonth() + 1);
 
-    await db.platformSubscription.upsert({
+    if (!billingCustomer) throw new Error("Billing customer record not found");
+
+    const subscription = await db.platformSubscription.upsert({
       where: { companyId },
       update: {
         planId: plan.id,
         authNetSubscriptionId: arb.subscriptionId,
         status: PlatformSubscriptionStatus.ACTIVE,
-        currentPeriodEnd: nextPeriodEnd,
+        currentPeriodEnd: arbStartDate,
       },
       create: {
         companyId,
@@ -76,14 +108,34 @@ export async function subscribeToPlatformPlan({
         planId: plan.id,
         authNetSubscriptionId: arb.subscriptionId,
         status: PlatformSubscriptionStatus.ACTIVE,
-        currentPeriodEnd: nextPeriodEnd,
+        currentPeriodEnd: arbStartDate,
       },
     });
 
-    // 4. Create initial subscription item
+    // 4. Create local invoice and payment record for the immediate charge
+    const invoice = await db.platformInvoice.create({
+      data: {
+        billingCustomerId: billingCustomer.id,
+        subscriptionId: subscription.id,
+        amount: plan.price,
+        status: "PAID",
+        authNetTransId: charge.transactionId,
+      },
+    });
+
+    await db.platformPayment.create({
+      data: {
+        platformInvoiceId: invoice.id,
+        amount: plan.price,
+        status: "SUCCESS",
+        authNetTransId: charge.transactionId,
+      },
+    });
+
+    // 5. Create initial subscription item
     await db.platformSubscriptionItem.create({
       data: {
-        subscriptionId: (await db.platformSubscription.findUnique({ where: { companyId } }))!.id,
+        subscriptionId: subscription.id,
         name: plan.name,
         price: plan.price,
         quantity: 1,

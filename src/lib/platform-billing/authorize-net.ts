@@ -37,6 +37,8 @@ function getEnvironment() {
 export async function createPlatformCustomerProfile(
   companyId: number,
   email: string,
+  firstName: string,
+  lastName: string,
   opaqueData: { dataDescriptor: string; dataValue: string }
 ) {
   const merchantAuthenticationType = getPlatformAuthNetCredentials();
@@ -50,6 +52,11 @@ export async function createPlatformCustomerProfile(
   const customerPaymentProfileType = new ApiContracts.CustomerPaymentProfileType();
   customerPaymentProfileType.setCustomerType(ApiContracts.CustomerTypeEnum.INDIVIDUAL);
   customerPaymentProfileType.setPayment(paymentType);
+
+  const billTo = new ApiContracts.CustomerAddressType();
+  billTo.setFirstName(firstName);
+  billTo.setLastName(lastName);
+  customerPaymentProfileType.setBillTo(billTo);
 
   const paymentProfileList = [customerPaymentProfileType];
 
@@ -68,7 +75,7 @@ export async function createPlatformCustomerProfile(
       const ctrl = new ApiControllers.CreateCustomerProfileController(createRequest.getJSON());
       ctrl.setEnvironment(getEnvironment());
 
-      ctrl.execute(() => {
+      ctrl.execute(async () => {
         const apiResponse = ctrl.getResponse();
         const response = new ApiContracts.CreateCustomerProfileResponse(apiResponse);
 
@@ -78,11 +85,113 @@ export async function createPlatformCustomerProfile(
           resolve({ customerProfileId: profileId, customerPaymentProfileId: paymentIds[0] });
         } else {
           const error = response?.getMessages().getMessage()[0];
-          reject(new Error(error?.getText() || "Failed to create customer profile"));
+          const errorText = error?.getText() || "";
+          const errorCode = error?.getCode() || "";
+
+          if (errorCode === "E00039") {
+            console.log("Detected duplicate customer profile, attempting recovery...");
+            const match = errorText.match(/(\d+)/);
+            if (match) {
+              const customerProfileId = match[1];
+              try {
+                const profile = await getCustomerProfile(customerProfileId);
+                const pps = typeof profile.getPaymentProfiles === 'function' ? profile.getPaymentProfiles() : (profile.paymentProfiles || []);
+                if (pps && pps.length > 0) {
+                  const paymentProfileId = typeof pps[0].getCustomerPaymentProfileId === 'function'
+                    ? pps[0].getCustomerPaymentProfileId()
+                    : (pps[0].customerPaymentProfileId || pps[0].paymentProfileId);
+
+                  console.log(`Recovered IDs: Customer=${customerProfileId}, Payment=${paymentProfileId}`);
+                  return resolve({ customerProfileId, customerPaymentProfileId: paymentProfileId });
+                }
+              } catch (e) {
+                console.error("Duplicate recovery failed:", e);
+              }
+            }
+          }
+
+          reject(new Error(errorText || "Failed to create customer profile"));
         }
       });
     }
   );
+}
+
+/**
+ * 2. Create Payment Profile (for existing customers)
+ */
+export async function createPlatformPaymentProfile(
+  customerProfileId: string,
+  firstName: string,
+  lastName: string,
+  opaqueData: { dataDescriptor: string; dataValue: string }
+) {
+  const merchantAuthenticationType = getPlatformAuthNetCredentials();
+
+  const paymentType = new ApiContracts.PaymentType();
+  const opaqueDataType = new ApiContracts.OpaqueDataType();
+  opaqueDataType.setDataDescriptor(opaqueData.dataDescriptor);
+  opaqueDataType.setDataValue(opaqueData.dataValue);
+  paymentType.setOpaqueData(opaqueDataType);
+
+  const billTo = new ApiContracts.CustomerAddressType();
+  billTo.setFirstName(firstName);
+  billTo.setLastName(lastName);
+
+  const customerPaymentProfileType = new ApiContracts.CustomerPaymentProfileType();
+  customerPaymentProfileType.setCustomerType(ApiContracts.CustomerTypeEnum.INDIVIDUAL);
+  customerPaymentProfileType.setPayment(paymentType);
+  customerPaymentProfileType.setBillTo(billTo);
+
+  const createRequest = new ApiContracts.CreateCustomerPaymentProfileRequest();
+  createRequest.setMerchantAuthentication(merchantAuthenticationType);
+  createRequest.setCustomerProfileId(customerProfileId);
+  createRequest.setPaymentProfile(customerPaymentProfileType);
+
+  return new Promise<{ customerPaymentProfileId: string }>((resolve, reject) => {
+    const ctrl = new ApiControllers.CreateCustomerPaymentProfileController(createRequest.getJSON());
+    ctrl.setEnvironment(getEnvironment());
+
+    ctrl.execute(async () => {
+      const apiResponse = ctrl.getResponse();
+      const response = new ApiContracts.CreateCustomerPaymentProfileResponse(apiResponse);
+
+      if (response != null && response.getMessages().getResultCode() === ApiContracts.MessageTypeEnum.OK) {
+        resolve({ customerPaymentProfileId: response.getCustomerPaymentProfileId() });
+      } else {
+        const error = response?.getMessages().getMessage()[0];
+        const errorText = error?.getText() || "";
+        const errorCode = error?.getCode() || "";
+
+        console.log(`Authorize.Net Error: [${errorCode}] ${errorText}`);
+
+        // Handle duplicate profile error E00039
+        if (errorCode === "E00039") {
+          console.log("Detected duplicate payment profile, attempting recovery...");
+          const match = errorText.match(/(\d+)/);
+          if (match) {
+            console.log(`Recovered Payment Profile ID: ${match[1]}`);
+            return resolve({ customerPaymentProfileId: match[1] });
+          } else {
+            try {
+              const profile = await getCustomerProfile(customerProfileId);
+              const pps = typeof profile.getPaymentProfiles === 'function' ? profile.getPaymentProfiles() : (profile.paymentProfiles || []);
+              if (pps && pps.length > 0) {
+                const paymentProfileId = typeof pps[0].getCustomerPaymentProfileId === 'function'
+                  ? pps[0].getCustomerPaymentProfileId() : (pps[0].customerPaymentProfileId || pps[0].paymentProfileId);
+                console.log(`Recovered Payment Profile ID via fetch: ${paymentProfileId}`);
+                return resolve({ customerPaymentProfileId: paymentProfileId });
+              }
+            } catch (e) {
+              console.error("Duplicate recovery fallback failed:", e);
+            }
+          }
+        }
+
+        reject(new Error(errorText || "Failed to create payment profile"));
+      }
+    });
+  });
 }
 
 /**
@@ -169,6 +278,90 @@ export async function cancelPlatformARBSubscription(subscriptionId: string) {
       } else {
         const error = response?.getMessages().getMessage()[0];
         reject(new Error(error?.getText() || "Failed to cancel ARB subscription"));
+      }
+    });
+  });
+}
+
+/**
+ * 4. Get Customer Profile
+ */
+export async function getCustomerProfile(customerProfileId: string) {
+  const merchantAuthenticationType = getPlatformAuthNetCredentials();
+
+  const getRequest = new ApiContracts.GetCustomerProfileRequest();
+  getRequest.setMerchantAuthentication(merchantAuthenticationType);
+  getRequest.setCustomerProfileId(customerProfileId);
+
+  return new Promise<any>((resolve, reject) => {
+    const ctrl = new ApiControllers.GetCustomerProfileController(getRequest.getJSON());
+    ctrl.setEnvironment(getEnvironment());
+
+    ctrl.execute(() => {
+      const apiResponse = ctrl.getResponse();
+      const response = new ApiContracts.GetCustomerProfileResponse(apiResponse);
+
+      if (response != null && response.getMessages().getResultCode() === ApiContracts.MessageTypeEnum.OK) {
+        resolve(response.getProfile());
+      } else {
+        const error = response?.getMessages().getMessage()[0];
+        reject(new Error(error?.getText() || "Failed to get customer profile"));
+      }
+    });
+  });
+}
+
+/**
+ * 5. Charge Customer Profile (One-time Transaction)
+ */
+export async function chargePlatformCustomerProfile({
+  customerProfileId,
+  customerPaymentProfileId,
+  amount,
+  description,
+}: {
+  customerProfileId: string;
+  customerPaymentProfileId: string;
+  amount: number;
+  description: string;
+}) {
+  const merchantAuthenticationType = getPlatformAuthNetCredentials();
+
+  // We use a plain object for the transaction request to ensure proper XML element ordering.
+  // Authorize.Net's XML schema is very strict about the order of fields (transactionType MUST be first).
+  const transactionRequest = {
+    transactionType: "authCaptureTransaction",
+    amount: amount.toFixed(2),
+    profile: {
+      customerProfileId: customerProfileId,
+      paymentProfile: {
+        paymentProfileId: customerPaymentProfileId
+      }
+    }
+  };
+
+  const createRequest = new ApiContracts.CreateTransactionRequest();
+  createRequest.setMerchantAuthentication(merchantAuthenticationType);
+  createRequest.setTransactionRequest(transactionRequest);
+
+  return new Promise<{ transactionId: string }>((resolve, reject) => {
+    const ctrl = new ApiControllers.CreateTransactionController(createRequest.getJSON());
+    ctrl.setEnvironment(getEnvironment());
+
+    ctrl.execute(() => {
+      const apiResponse = ctrl.getResponse();
+      const response = new ApiContracts.CreateTransactionResponse(apiResponse);
+
+      if (response != null && response.getMessages().getResultCode() === ApiContracts.MessageTypeEnum.OK) {
+        const transResponse = response.getTransactionResponse();
+        if (transResponse && transResponse.getResponseCode() === "1") {
+          resolve({ transactionId: transResponse.getTransId() });
+        } else {
+          reject(new Error(transResponse?.getErrors()?.getError()[0].getErrorText() || "Transaction failed"));
+        }
+      } else {
+        const error = response?.getMessages().getMessage()[0];
+        reject(new Error(error?.getText() || "Failed to charge customer profile"));
       }
     });
   });
