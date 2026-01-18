@@ -19,14 +19,15 @@ export async function cancelSubscription(companyId: number) {
     await cancelPlatformARBSubscription(subscription.authNetSubscriptionId);
 
     // 2. Update DB status
-    // We set it to CANCELED.
-    // Optimization: We could set a flag 'cancelAtPeriodEnd' if we wanted them to keep access until the end.
-    // For now, let's keep it simple and just cancel.
+    // For now we treat cancellation as immediate from the
+    // application perspective. If we later support "cancel at
+    // period end" semantics, we can keep the ARB subscription
+    // active until currentPeriodEnd and use `cancelAtPeriodEnd`.
     await db.platformSubscription.update({
       where: { companyId },
       data: {
         status: PlatformSubscriptionStatus.CANCELED,
-        cancelAtPeriodEnd: true,
+        cancelAtPeriodEnd: false,
       },
     });
 

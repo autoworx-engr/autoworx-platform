@@ -11,7 +11,6 @@ export async function getPlatformPlans() {
         features: true,
       },
     });
-    console.log("plans",plans);
 
     return {
       success: true,

@@ -8,15 +8,22 @@ import crypto from "crypto";
  */
 export async function POST(req: NextRequest) {
   try {
-
     const signature = req.headers.get("x-anet-signature");
     const bodyText = await req.text();
+
+    // In production, webhooks must be verified. In non-production
+    // environments we allow missing signature or key to simplify
+    // local testing.
+    const shouldVerify =
+      process.env.NODE_ENV === "production" &&
+      !!process.env.PLATFORM_AUTHNET_SIGNATURE_KEY;
+
+    if (shouldVerify && !verifySignature(bodyText, signature)) {
+      console.warn("❌ Invalid Authorize.Net platform webhook signature");
+      return new NextResponse("Invalid signature", { status: 401 });
+    }
+
     const event = JSON.parse(bodyText);
-console.log("🔔 Authorize.net Platform Billing Webhook Received",event);
-    // TODO: Verify Signature using PLATFORM_AUTHNET_SIGNATURE_KEY
-    // if (!verifySignature(bodyText, signature)) {
-    //   return new NextResponse("Invalid signature", { status: 401 });
-    // }
 
     console.log("🔔 Platform Billing Webhook Received:", event.eventType);
 
