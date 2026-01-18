@@ -3,7 +3,7 @@ import { getCalenderSettings } from "@/actions/task/getCalendarSettings";
 import { DropdownSelection } from "@/components/DropDownSelection";
 import { CalendarType } from "@/types/calendar";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { appointmentQueryKey, calenderQueryKey } from "../../_constant";
 import DisplayDate from "./DisplayDate";
 import Settings from "./Settings";
@@ -58,6 +58,9 @@ export default function Heading({ type, technicianList }: THeadingProps) {
   const [employeeOpen, setEmployeeOpen] = useState(false);
   const [employee, setEmployee] = useState<User | null>(null);
 
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+
   const date = useDate();
   const dateFormat = date.format("YYYY-MM-DD");
   const month = useMonth();
@@ -90,12 +93,30 @@ export default function Heading({ type, technicianList }: THeadingProps) {
     fetchEmployees();
   }, []);
 
+  useEffect(() => {
+    if (!employee?.id) return;
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("employee", employee?.id.toString());
+
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [employee?.id]);
+
+  const handleClearEmployee = () => {
+    setEmployee(null);
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("employee");
+
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  };
+
   const { setDate, setNavigating, date: currentDate } = useCalendarStore();
 
   const currentDayIndex = moment(currentDate).day();
 
   const availableEmployees = employeeList.filter(
-    (emp) => !technicianList?.some((tech) => tech.userId === emp.id)
+    (emp) => !technicianList?.some((tech) => tech.userId === emp.id),
   );
 
   const currentUser = useGetCurrentUser();
@@ -116,7 +137,7 @@ export default function Heading({ type, technicianList }: THeadingProps) {
   };
 
   const handleAppointmentCreate = async (
-    newAppointment: Appointment & { lead: Lead | null }
+    newAppointment: Appointment & { lead: Lead | null },
   ) => {
     try {
       // Invalidate queries for appointments based on the current month and year
@@ -184,13 +205,24 @@ export default function Heading({ type, technicianList }: THeadingProps) {
               availableEmployees.filter((employee) =>
                 `${employee.firstName} ${employee.lastName}`
                   .toLowerCase()
-                  .includes(search.toLowerCase())
+                  .includes(search.toLowerCase()),
               )
             }
             openState={[employeeOpen, setEmployeeOpen]}
             selectedItem={employee}
             //@ts-ignore
             setSelectedItem={setEmployee}
+            footer={
+              employee && (
+                <button
+                  type="button"
+                  onClick={handleClearEmployee}
+                  className="w-full text-sm text-red-600 hover:text-red-700"
+                >
+                  Clear employee
+                </button>
+              )
+            }
           />
         </div>
         {/* Custom Date Selector - replaces GoToDate */}
@@ -237,7 +269,7 @@ export default function Heading({ type, technicianList }: THeadingProps) {
 
         {/* new appointment */}
         {ALLOWED_ROLES_FOR_NEW_APPOINTMENT.includes(
-          user?.employeeType ?? ""
+          user?.employeeType ?? "",
         ) && (
           <AppointmentCreateOrEdit
             onAppointmentCreated={handleAppointmentCreate}

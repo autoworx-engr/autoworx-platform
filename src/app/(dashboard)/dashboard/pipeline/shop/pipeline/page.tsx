@@ -31,22 +31,22 @@ const PipelinePage = async () => {
       invoice.invoiceItems.forEach((item) => {
         const technicians =
           item.service?.Technician?.filter(
-            (tech) => tech.invoiceId === invoice.id
+            (tech) => tech.invoiceId === invoice.id,
           ) || [];
 
         if (Array.isArray(technicians) && technicians.length > 0) {
           const statuses = technicians.map((tech) =>
-            tech.status?.toLowerCase().trim()
+            tech.status?.toLowerCase().trim(),
           );
 
           servicesOfCurrentUser.push(
             ...technicians.filter(
-              (tech) => tech.userId === Number(currentUser?.id)
-            )
+              (tech) => tech.userId === Number(currentUser?.id),
+            ),
           );
 
           const isServiceComplete = statuses.every(
-            (status) => status === "complete"
+            (status) => status === "complete",
           );
 
           if (isServiceComplete) {
@@ -113,8 +113,8 @@ const PipelinePage = async () => {
         ...column,
         leads: column.leads.filter((lead) =>
           servicesOfCurrentUser.some(
-            (service: any) => lead.invoiceId === service.invoiceId
-          )
+            (service: any) => lead.invoiceId === service.invoiceId,
+          ),
         ),
       }));
     }
