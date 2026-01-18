@@ -39,7 +39,7 @@ const PUBLIC_DYNAMIC_API_ROUTES = [
 ];
 
 const isDynamicPublicApiRoute = (pathname: string) => {
-  const isPublic = PUBLIC_DYNAMIC_API_ROUTES.some((route) => {
+  const isPublic = PUBLIC_DYNAMIC_API_ROUTES.some(route => {
     const pattern = new URLPattern({ pathname: route });
     return pattern.test({ pathname: pathname });
   });
@@ -62,9 +62,9 @@ export async function middleware(request: NextRequest) {
       isDynamicPublicApiRoute(pathname) || PUBLIC_API_ROUTES.includes(pathname)
     );
 
-  console.log("Middleware - isExternalApiRequest:", isExternalApiRequest);
-  console.log("Middleware - Authorization Header:", authHeader);
-  console.log("Middleware - Request Pathname:", pathname);
+  // console.log("Middleware - isExternalApiRequest:", isExternalApiRequest);
+  // console.log("Middleware - Authorization Header:", authHeader);
+  // console.log("Middleware - Request Pathname:", pathname);
 
   // check api access token
   if (!authHeader && isExternalApiRequest) {

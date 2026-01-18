@@ -23,32 +23,34 @@ export default async function PerformanceBoxForTechnician({
   // 1. Total Jobs
   const totalJobsCount = performance?.totalJobs?.count || 0;
   const totalJobsGrowthRate = parseFloat(
-    (performance?.totalJobs?.growth?.rate ?? 0).toFixed(2)
+    (performance?.totalJobs?.growth?.rate ?? 0).toFixed(2),
   );
   const isTotalJobsPositive =
     performance?.totalJobs?.growth?.isPositive ?? false;
 
   // 2. On-time Completion Rate
   const onTimeRate = parseFloat(
-    (performance?.onTimeCompletionRate?.rate ?? 0).toFixed(2)
+    (performance?.onTimeCompletionRate?.rate ?? 0).toFixed(2),
   );
   const onTimeGrowthRate = parseFloat(
-    (performance?.onTimeCompletionRate?.growth?.rate ?? 0).toFixed(2)
+    (performance?.onTimeCompletionRate?.growth?.rate ?? 0).toFixed(2),
   );
   const isOnTimePositive =
     performance?.onTimeCompletionRate?.growth?.isPositive ?? false;
+
+  console.log({ onTimeRate, onTimeGrowthRate, isOnTimePositive });
 
   // 3. Rework/Return Rate (Jobs Return Rate)
   // FIX: Accessing 'rate' on 'redoJobs' causes a TypeScript error based on the type definition.
   // We use '.count' as the primary number for the display value, ensuring it's always a number.
   const redoJobsRate = parseFloat(
-    (performance?.redoJobs?.count ?? 0).toFixed(2)
+    (performance?.redoJobs?.count ?? 0).toFixed(2),
   );
 
   const isRedoGrowthPositive =
     performance?.redoJobs?.growth?.isPositive ?? false;
   const redoGrowthRate = parseFloat(
-    (performance?.redoJobs?.growth?.rate ?? 0).toFixed(2)
+    (performance?.redoJobs?.growth?.rate ?? 0).toFixed(2),
   );
 
   // CRITICAL LOGIC FIX: An increase in Redo Rate is NEGATIVE performance.
@@ -61,9 +63,9 @@ export default async function PerformanceBoxForTechnician({
     <div
       className={cn(
         `
-          flex flex-1 flex-col p-4 md:p-6 rounded-2xl transition-all duration-300 h-full
+          flex flex-1 flex-col md:p-6 rounded-2xl transition-all duration-300 h-full
 
-          // Glassmorphism aesthetic (Replaces old rounded-md p-4 shadow-lg)
+             Glassmorphism aesthetic (Replaces old p-4 shadow-lg)
           bg-white/50 dark:bg-slate-900/50
           backdrop-blur-md
 
@@ -75,7 +77,7 @@ export default async function PerformanceBoxForTechnician({
           hover:shadow-xl hover:shadow-blue-500/10 dark:hover:shadow-indigo-500/10
           hover:translate-y-[-1px]
         `,
-        className // Apply parent classes (like flex-1)
+        className, // Apply parent classes (like flex-1)
       )}
     >
       <BoxTitle
