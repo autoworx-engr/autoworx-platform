@@ -51,10 +51,10 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const authHeader = request.headers.get("authorization");
-  console.log({
-    isDynamicPublicApiRoute: isDynamicPublicApiRoute(pathname),
-    publicApiRoute: PUBLIC_API_ROUTES.includes(pathname),
-  });
+  // console.log({
+  //   isDynamicPublicApiRoute: isDynamicPublicApiRoute(pathname),
+  //   publicApiRoute: PUBLIC_API_ROUTES.includes(pathname),
+  // });
   const isExternalApiRequest =
     !token &&
     pathname.startsWith("/api/") &&
