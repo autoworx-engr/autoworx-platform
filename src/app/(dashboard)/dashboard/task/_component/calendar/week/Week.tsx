@@ -75,6 +75,7 @@ export default function Week() {
   const router = useRouter();
 
   const { setDate, setNavigating } = useCalendarStore();
+  const [openTooltipId, setOpenTooltipId] = useState<string | null>(null);
 
   const today = week.toDate();
   const parentRef = useRef<HTMLDivElement>(null);
@@ -85,7 +86,7 @@ export default function Week() {
     useAppointmentQueryByWeek(weekStartDate, weekEndDate);
   const { data: tasks = [], isLoading: isTaskLoading } = useTaskQueryByWeek(
     weekStartDate,
-    weekEndDate
+    weekEndDate,
   );
 
   const [{ canDrop, isOver }, dropRef] = useDrop({
@@ -160,7 +161,7 @@ export default function Week() {
             key={day.dayName}
             className={cn(
               "relative flex flex-col items-center justify-center px-1 py-2",
-              isToday && "font-medium text-[#6571FF]"
+              isToday && "font-medium text-[#6571FF]",
             )}
           >
             {/* Day name */}
@@ -178,7 +179,7 @@ export default function Week() {
                 "my-0.5 flex h-8 w-8 items-center justify-center rounded-full",
                 isToday
                   ? "bg-[#6571FF] text-white"
-                  : "text-[#797979] hover:bg-gray-200"
+                  : "text-[#797979] hover:bg-gray-200",
               )}
             >
               <span className="text-sm sm:text-base">{date.format("D")}</span>{" "}
@@ -191,7 +192,7 @@ export default function Week() {
   }, [days, screenSize.isMobile, screenSize.isTablet]);
 
   // Combine the all-day row and the hourly rows into a single array
-  const rows = [allDayRow, ...hourlyRows];
+  const rows = useMemo(() => [allDayRow, ...hourlyRows], [allDayRow]);
 
   // Filter out the tasks that are within the current week
   const events = useMemo<any[]>(() => {
@@ -215,10 +216,10 @@ export default function Week() {
         const taskDayName = taskDate.format("dddd");
         const weekStartDayName = startOfWeek.format("dddd");
         const findTaskDayIndex = days.findIndex(
-          (day) => day.dayName === taskDayName
+          (day) => day.dayName === taskDayName,
         );
         const findWeekStartDayIndex = days.findIndex(
-          (day) => day.dayName === weekStartDayName
+          (day) => day.dayName === weekStartDayName,
         );
         const columnIndex = findTaskDayIndex - findWeekStartDayIndex;
 
@@ -228,10 +229,10 @@ export default function Week() {
 
         // Find the rowStartIndex and rowEndIndex by looping over the hourlyRows
         const rowStartIndex = hourlyRows.findIndex((row) =>
-          row.includes(taskStartTime)
+          row.includes(taskStartTime),
         );
         const rowEndIndex = hourlyRows.findIndex((row) =>
-          row.includes(taskEndTime)
+          row.includes(taskEndTime),
         );
 
         return { ...event, columnIndex, rowStartIndex, rowEndIndex };
@@ -242,7 +243,7 @@ export default function Week() {
     event: React.DragEvent,
     rowIndex: number,
     columnIndex: number,
-    rowTime: string
+    rowTime: string,
   ) {
     if (rowTime === "All Day" || columnIndex === 0) return;
     const startTime = formatTime(hourlyRows[rowIndex - 1]?.[0]);
@@ -287,7 +288,7 @@ export default function Week() {
         const { newStartTime, newEndTime } = updateTimeSpace(
           oldTask?.startTime as string,
           oldTask?.endTime as string,
-          rowTime
+          rowTime,
         );
 
         oldTask?.id &&
@@ -304,12 +305,12 @@ export default function Week() {
       const appointmentId = parseInt(attributeData[1]);
       // Find the appointment in your state
       const oldAppointment = appointments.find(
-        (appointment) => appointment.id === appointmentId
+        (appointment) => appointment.id === appointmentId,
       );
       const { newStartTime, newEndTime } = updateTimeSpace(
         oldAppointment?.startTime as string,
         oldAppointment?.endTime as string,
-        rowTime
+        rowTime,
       );
       if (oldAppointment) {
         appointmentMutation.mutate({
@@ -344,9 +345,10 @@ export default function Week() {
   });
 
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const hasScrolledRef = useRef(false);
   useEffect(() => {
     const scrollToStartTime = () => {
-      if (containerRef.current) {
+      if (containerRef.current && !hasScrolledRef.current && rows.length > 0) {
         const startTimeIndex = rows.findIndex((row) => {
           if (typeof row[0] !== "string") return false;
           const rowTime = formatTime(row[0]);
@@ -359,6 +361,7 @@ export default function Week() {
             top: scrollPosition,
             behavior: "smooth",
           });
+          hasScrolledRef.current = true;
         }
       }
     };
@@ -369,8 +372,8 @@ export default function Week() {
   function handleAddTaskModalOpen(columnIndex: number, rowTime: string) {
     const date = formatDate(
       new Date(
-        today.setDate(today.getDate() - today.getDay() + columnIndex - 1)
-      )
+        today.setDate(today.getDate() - today.getDay() + columnIndex - 1),
+      ),
     );
     const startTime = formatTime(rowTime);
     // open("ADD_TASK", { date, startTime, companyUsers });
@@ -456,7 +459,7 @@ export default function Week() {
                   className={cn(
                     "relative flex h-[71px] justify-end border-neutral-200",
                     rowIndex !== rows.length - 1 && "",
-                    rowIndex === 0 && "sticky top-0 z-10"
+                    rowIndex === 0 && "sticky top-0 z-10",
                   )}
                   key={rowIndex}
                 >
@@ -476,9 +479,9 @@ export default function Week() {
                       cellWidth,
                       fontSize,
                       columnIndex === 0 &&
-                      "border-0 absolute -left-[6px] p-2 text-end -top-[35.5px] justify-end pr-3",
+                        "border-0 absolute -left-[6px] p-2 text-end -top-[35.5px] justify-end pr-3",
                       columnIndex === 1 && "border-l",
-                      rowIndex === 0 && "border-t"
+                      rowIndex === 0 && "border-t",
                     );
 
                     const cellBgColor =
@@ -510,7 +513,7 @@ export default function Week() {
                         style={{
                           backgroundColor:
                             draggedOverRow?.r === rowIndex &&
-                              draggedOverRow?.c === columnIndex
+                            draggedOverRow?.c === columnIndex
                               ? "rgba(0, 0, 0, 0.1)"
                               : cellBgColor,
                         }}
@@ -531,8 +534,9 @@ export default function Week() {
               let width = "calc(12.5% - 4px)"; // prev = 12.9%
               // Apply gradient based on priority
               const priorityClass =
-                priorityClasses[event.priority as keyof typeof priorityClasses] ||
-                priorityClasses.Low;
+                priorityClasses[
+                  event.priority as keyof typeof priorityClasses
+                ] || priorityClasses.Low;
               // Calculate how many tasks are in the same row
               //TODO:
               const eventStartTime = moment(event.startTime, "HH:mm");
@@ -581,13 +585,22 @@ export default function Week() {
                 left = `calc(10% + 12.9% * ${event.columnIndex} + ${taskIndex * 2}%)`;
               }
               if (taskIndex < limitOfTasks) {
+                const eventKey = `${event.id}-${index}`;
+                const isTooltipOpen = openTooltipId === eventKey;
                 return (
-                  <Tooltip key={`${event.id}-${index}`}>
+                  // open={isTooltipOpen} onOpenChange={() => {}}
+                  <Tooltip
+                    key={eventKey}
+                    open={isTooltipOpen}
+                    onOpenChange={() => {}}
+                  >
                     <DraggableTaskTooltip
                       //@ts-ignore
                       className={cn(
                         `absolute top-0 w-full rounded-lg border transition-all duration-300 ease-in-out hover:shadow-lg hover:scale-[1.01]`,
-                        event.type !== "appointment" ? priorityClass : "bg-white/95 dark:bg-slate-800/95 border-slate-200"
+                        event.type !== "appointment"
+                          ? priorityClass
+                          : "bg-white/95 dark:bg-slate-800/95 border-slate-200",
                       )}
                       style={{
                         left,
@@ -596,6 +609,11 @@ export default function Week() {
                         width,
                       }}
                       task={event}
+                      onClick={(e: React.MouseEvent) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        setOpenTooltipId(isTooltipOpen ? null : eventKey);
+                      }}
                       onNavigate={() => {
                         // Convert Date object to string to avoid timezone issues
                         const dateString =
@@ -621,7 +639,7 @@ export default function Week() {
                                 "w-full truncate font-medium",
                                 event?.type === "appointment"
                                   ? "text-gray-700"
-                                  : "text-white"
+                                  : "text-white",
                               )}
                             >
                               {event.title}
@@ -631,11 +649,11 @@ export default function Week() {
                                 "text-xxs hidden lg:block",
                                 event?.type === "appointment"
                                   ? "text-gray-500"
-                                  : "text-gray-200"
+                                  : "text-gray-200",
                               )}
                             >
                               {moment(event.startTime, "HH:mm").format(
-                                "h:mm A"
+                                "h:mm A",
                               )}{" "}
                               -{moment(event.endTime, "HH:mm").format("h:mm A")}
                             </p>
@@ -646,7 +664,13 @@ export default function Week() {
                         </>
                       }
                     </DraggableTaskTooltip>
-                    <CalendarTooltip event={event} />
+
+                    {isTooltipOpen && (
+                      <CalendarTooltip
+                        event={event}
+                        onClose={() => setOpenTooltipId(null)}
+                      />
+                    )}
                   </Tooltip>
                 );
               } else {
@@ -672,7 +696,7 @@ export default function Week() {
                     className={cn(
                       `absolute top-0 flex items-center justify-center rounded-lg border`,
                       taskIndex === limitOfTasks && "bg-opacity-25",
-                      lastIndex === taskIndex && "z-40"
+                      lastIndex === taskIndex && "z-40",
                     )}
                     style={{
                       left: `calc(10% + 12.9% * ${event.columnIndex} + 160px)`,
