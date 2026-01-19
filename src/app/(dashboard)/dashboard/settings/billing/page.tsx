@@ -6,7 +6,10 @@ import moment from "moment-timezone";
 import { Award, CreditCard, History, Zap, Loader2 } from "lucide-react";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { PricePlans } from "./PricePlans";
-import { getPlatformPlans, getCurrentSubscription } from "@/actions/platform-billing/plans";
+import {
+  getPlatformPlans,
+  getCurrentSubscription,
+} from "@/actions/platform-billing/plans";
 import { useSession } from "next-auth/react";
 import { CheckoutForm } from "@/components/platform-billing/CheckoutForm";
 import { toast } from "react-hot-toast";
@@ -28,14 +31,15 @@ const paymentHistory = [
 const planColors: { [key: string]: string } = {
   "Starter (Text Only)": "text-gray-500",
   "Starter (Call + Text)": "text-[#6571FF]",
-  "Growth": "text-[#6571FF]",
-  "Scale": "text-yellow-500",
+  Growth: "text-[#6571FF]",
+  Scale: "text-yellow-500",
 };
 
 export default function Page() {
   const { data: session } = useSession();
   const [plansOpen, setPlansOpen] = useState(false);
-  const [selectedPlanForCheckout, setSelectedPlanForCheckout] = useState<any>(null);
+  const [selectedPlanForCheckout, setSelectedPlanForCheckout] =
+    useState<any>(null);
   const [plans, setPlans] = useState<any[]>([]);
   const [subscription, setSubscription] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -45,8 +49,12 @@ export default function Page() {
   useEffect(() => {
     async function init() {
       const [plansRes, subRes] = await Promise.all([
-        getPlatformPlans(),
-        session?.user?.companyId ? getCurrentSubscription(session.user.companyId) : Promise.resolve({ success: false, data: null })
+        session?.user?.companyId
+          ? getPlatformPlans(session.user.companyId)
+          : getPlatformPlans(),
+        session?.user?.companyId
+          ? getCurrentSubscription(session.user.companyId)
+          : Promise.resolve({ success: false, data: null }),
       ]);
 
       if (plansRes.success) setPlans(plansRes.data || []);
@@ -66,10 +74,15 @@ export default function Page() {
 
   const currentPlan = subscription?.plan || null;
   const currentPlanName = currentPlan?.name || "No Active Plan";
-  const subStatus = (subscription?.status as PlatformSubscriptionStatus) || "NONE";
+  const subStatus =
+    (subscription?.status as PlatformSubscriptionStatus) || "NONE";
 
   const handleCancelClick = async () => {
-    if (!window.confirm("Are you sure you want to cancel your subscription? This will immediately revoke access to plan features.")) {
+    if (
+      !window.confirm(
+        "Are you sure you want to cancel your subscription? This will immediately revoke access to plan features."
+      )
+    ) {
       return;
     }
 
@@ -98,16 +111,18 @@ export default function Page() {
               <p className="text-lg font-semibold leading-7 text-gray-700 sm:text-xl">
                 Current Plan:{" "}
                 <span
-                  className={`text-2xl font-extrabold ${planColors[currentPlanName] || "text-gray-500"
-                    }`}
+                  className={`text-2xl font-extrabold ${
+                    planColors[currentPlanName] || "text-gray-500"
+                  }`}
                 >
                   {currentPlanName}
                 </span>
-                {subStatus !== PlatformSubscriptionStatus.ACTIVE && subStatus !== ("NONE" as any) && (
-                  <span className="ml-2 text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full uppercase">
-                    {subStatus}
-                  </span>
-                )}
+                {subStatus !== PlatformSubscriptionStatus.ACTIVE &&
+                  subStatus !== ("NONE" as any) && (
+                    <span className="ml-2 text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full uppercase">
+                      {subStatus}
+                    </span>
+                  )}
               </p>
               <div className="space-y-1 text-base font-normal text-gray-600">
                 {subscription ? (
@@ -120,9 +135,13 @@ export default function Page() {
                     </p>
                     <p>
                       Next Billing:{" "}
-                      <span className={`font-semibold ${subStatus === PlatformSubscriptionStatus.PAST_DUE ? "text-red-500" : "text-gray-800"}`}>
+                      <span
+                        className={`font-semibold ${subStatus === PlatformSubscriptionStatus.PAST_DUE ? "text-red-500" : "text-gray-800"}`}
+                      >
                         {subscription.currentPeriodEnd
-                          ? moment(subscription.currentPeriodEnd).format("Do MMMM YYYY")
+                          ? moment(subscription.currentPeriodEnd).format(
+                              "Do MMMM YYYY"
+                            )
                           : "N/A"}
                       </span>
                     </p>
@@ -140,7 +159,9 @@ export default function Page() {
                       onClick={handleCancelClick}
                       disabled={isCancelling}
                     >
-                      {isCancelling ? <Loader2 className="w-4 h-4 animate-spin inline mr-1" /> : null}
+                      {isCancelling ? (
+                        <Loader2 className="w-4 h-4 animate-spin inline mr-1" />
+                      ) : null}
                       Cancel Plan
                     </button>
                     <button
@@ -168,7 +189,7 @@ export default function Page() {
             {/* Icon section */}
             <div className="flex justify-center lg:justify-end lg:items-center">
               <Image
-                src={`/icons/CompanyLogo${plans.findIndex(p => p.id === currentPlan?.id) + 1 || 1}.svg`}
+                src={`/icons/CompanyLogo${plans.findIndex((p) => p.id === currentPlan?.id) + 1 || 1}.svg`}
                 width={150}
                 height={150}
                 alt="Company logo"
@@ -192,15 +213,21 @@ export default function Page() {
                   key={pm.id}
                   className="flex flex-col h-32 w-full justify-center rounded-lg border border-gray-300 bg-white p-4 shadow-sm hover:shadow-md transition sm:w-48"
                 >
-                  <p className="text-sm font-bold text-gray-400 uppercase">{pm.cardType || 'Card'}</p>
-                  <p className="mt-auto text-xl font-bold text-gray-700">•••• {pm.last4}</p>
+                  <p className="text-sm font-bold text-gray-400 uppercase">
+                    {pm.cardType || "Card"}
+                  </p>
+                  <p className="mt-auto text-xl font-bold text-gray-700">
+                    •••• {pm.last4}
+                  </p>
                   <p className="text-xs text-gray-500">Exp: {pm.expiry}</p>
                 </div>
               ))
             ) : (
-                <div className="flex h-24 w-full items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50 sm:h-32 sm:w-40">
-                  <p className="text-sm font-medium text-gray-400">No cards saved</p>
-                </div>
+              <div className="flex h-24 w-full items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50 sm:h-32 sm:w-40">
+                <p className="text-sm font-medium text-gray-400">
+                  No cards saved
+                </p>
+              </div>
             )}
           </div>
         </div>
@@ -222,25 +249,40 @@ export default function Page() {
               </thead>
               <tbody className="divide-y divide-gray-100 text-sm text-gray-800">
                 {subscription?.billingCustomer?.invoices?.length > 0 ? (
-                  subscription.billingCustomer.invoices.map((inv: any, index: number) => (
-                    <tr
-                      key={inv.id}
-                      className={index % 2 === 0 ? "bg-white hover:bg-gray-50" : "bg-blue-50 hover:bg-gray-100"}
-                    >
-                      <td className="px-6 py-3 font-medium">${inv.amount}</td>
-                      <td className="px-6 py-3">
-                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${inv.status === 'PAID' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                          {inv.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-3 whitespace-nowrap">
-                        {moment.tz(inv.createdAt, timezone).format("MM/DD/YYYY")}
-                      </td>
-                    </tr>
-                  ))
+                  subscription.billingCustomer.invoices.map(
+                    (inv: any, index: number) => (
+                      <tr
+                        key={inv.id}
+                        className={
+                          index % 2 === 0
+                            ? "bg-white hover:bg-gray-50"
+                            : "bg-blue-50 hover:bg-gray-100"
+                        }
+                      >
+                        <td className="px-6 py-3 font-medium">${inv.amount}</td>
+                        <td className="px-6 py-3">
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-bold ${inv.status === "PAID" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}
+                          >
+                            {inv.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-3 whitespace-nowrap">
+                          {moment
+                            .tz(inv.createdAt, timezone)
+                            .format("MM/DD/YYYY")}
+                        </td>
+                      </tr>
+                    )
+                  )
                 ) : (
                   <tr>
-                    <td colSpan={3} className="px-6 py-10 text-center text-gray-400 italic">No payment history found</td>
+                    <td
+                      colSpan={3}
+                      className="px-6 py-10 text-center text-gray-400 italic"
+                    >
+                      No payment history found
+                    </td>
                   </tr>
                 )}
               </tbody>

@@ -31,7 +31,10 @@ export async function POST(req: NextRequest) {
       case "net.authorize.customer.subscription.created":
         console.log("Subscription created successfully:", event.payload.id);
         break;
-      case "net.authorize.customer.subscription.payment":
+      // Recurring subscription charges come through as payment events, not a
+      // dedicated "subscription.payment" event. We listen for successful
+      // auth+capture payments that are tied to a subscription.
+      case "net.authorize.payment.authcapture.created":
         await handleSubscriptionPayment(event.payload);
         break;
       case "net.authorize.customer.subscription.cancelled":
@@ -39,6 +42,7 @@ export async function POST(req: NextRequest) {
         await handleSubscriptionCancelled(event.payload);
         break;
       case "net.authorize.customer.subscription.suspended":
+      case "net.authorize.customer.subscription.failed":
         await handleSubscriptionSuspended(event.payload);
         break;
       default:
@@ -53,18 +57,31 @@ export async function POST(req: NextRequest) {
 }
 
 async function handleSubscriptionPayment(payload: any) {
-  const subscriptionId = payload.subscriptionId || payload.id;
+  // For payment webhooks, subscription info (for ARB) is nested under
+  // payload.subscription. We fall back to a few reasonable keys so this
+  // remains robust if Authorize.Net slightly varies the shape.
+  const subscriptionId =
+    payload.subscription?.id ||
+    payload.subscription?.subscriptionId ||
+    payload.subscriptionId ||
+    payload.id;
+
   if (!subscriptionId) {
     console.error("No subscription ID found in payload:", payload);
     return;
   }
 
   const status = payload.responseCode === 1 ? "PAID" : "FAILED";
-  const authNetTransId = payload.transactionId;
+  const authNetTransId = payload.id || payload.transactionId || payload.transId;
+
+  if (!authNetTransId) {
+    console.error("No transaction ID found in payment payload:", payload);
+    return;
+  }
 
   const subscription = await db.platformSubscription.findUnique({
     where: { authNetSubscriptionId: subscriptionId.toString() },
-    include: { billingCustomer: true },
+    include: { billingCustomer: true, plan: true },
   });
 
   if (!subscription) {
@@ -86,11 +103,17 @@ async function handleSubscriptionPayment(payload: any) {
   }
 
   // 2. Create local invoice and payment record
+  const amount =
+    payload.authAmount ??
+    payload.settleAmount ??
+    payload.amount ??
+    subscription.plan.price;
+
   const invoice = await db.platformInvoice.create({
     data: {
       billingCustomerId: subscription.billingCustomerId,
       subscriptionId: subscription.id,
-      amount: payload.amount,
+      amount,
       status: status,
       authNetTransId: authNetTransId.toString(),
     },
@@ -100,7 +123,7 @@ async function handleSubscriptionPayment(payload: any) {
     await db.platformPayment.create({
       data: {
         platformInvoiceId: invoice.id,
-        amount: payload.amount,
+        amount,
         status: "SUCCESS",
         authNetTransId: authNetTransId.toString(),
       },
@@ -130,8 +153,12 @@ async function handleSubscriptionPayment(payload: any) {
 }
 
 async function handleSubscriptionCancelled(payload: any) {
-  const subscriptionId = payload.subscriptionId || payload.id;
-  if (!subscriptionId) return;
+  // Subscription webhooks use payload.id as the subscription id
+  const subscriptionId = payload.id;
+  if (!subscriptionId) {
+    console.error("Subscription cancelled event missing id:", payload);
+    return;
+  }
 
   await db.platformSubscription.updateMany({
     where: { authNetSubscriptionId: subscriptionId.toString() },
@@ -140,8 +167,13 @@ async function handleSubscriptionCancelled(payload: any) {
 }
 
 async function handleSubscriptionSuspended(payload: any) {
-  const subscriptionId = payload.subscriptionId || payload.id;
-  if (!subscriptionId) return;
+  // For suspended/failed/expired style events, payload.id is also
+  // the Authorize.Net subscription id.
+  const subscriptionId = payload.id;
+  if (!subscriptionId) {
+    console.error("Subscription status event missing id:", payload);
+    return;
+  }
 
   await db.platformSubscription.updateMany({
     where: { authNetSubscriptionId: subscriptionId.toString() },

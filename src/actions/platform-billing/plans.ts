@@ -2,10 +2,16 @@
 
 import { db } from "@/lib/db";
 
-export async function getPlatformPlans() {
+export async function getPlatformPlans(companyId?: number) {
   try {
+    const where: any = { isActive: true };
+
+    if (typeof companyId === "number") {
+      where.OR = [{ companyId: null }, { companyId }];
+    }
+
     const plans = await db.platformPlan.findMany({
-      where: { isActive: true },
+      where,
       orderBy: { displayOrder: "asc" },
       include: {
         features: true,

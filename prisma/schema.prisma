@@ -677,6 +677,7 @@ model Company {
   googleReviewLink     String? @map("google_review_link") @db.VarChar(500)
   billingCustomer      PlatformBillingCustomer?
   platformSubscription PlatformSubscription?
+  platformPlans        PlatformPlan[]
 }
 
 enum SmsGateway {
@@ -2438,9 +2439,11 @@ model PlatformPlan {
   trialLengthDays  Int                  @default(0)
   displayOrder     Int                  @default(0)
   isActive         Boolean              @default(true)
+  companyId        Int?
   createdAt        DateTime             @default(now())
   updatedAt        DateTime             @updatedAt
 
+  company          Company?             @relation(fields: [companyId], references: [id], onDelete: Cascade)
   features         PlanFeature[]
   subscriptions    PlatformSubscription[]
 }

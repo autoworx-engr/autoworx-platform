@@ -1,9 +1,17 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { subscribeToPlatformPlan } from "@/actions/platform-billing/subscribe";
 import { toast } from "react-hot-toast";
-import { Loader2, CreditCard, Lock } from "lucide-react";
+import {
+  Loader2,
+  CreditCard,
+  Lock,
+  ShieldCheck,
+  Calendar,
+  Hash,
+  User,
+} from "lucide-react";
 import Script from "next/script";
 
 interface CheckoutFormProps {
@@ -16,7 +24,13 @@ interface CheckoutFormProps {
 
 declare const Accept: any;
 
-export function CheckoutForm({ plan, companyId, email, onSuccess, onCancel }: CheckoutFormProps) {
+export function CheckoutForm({
+  plan,
+  companyId,
+  email,
+  onSuccess,
+  onCancel,
+}: CheckoutFormProps) {
   const [loading, setLoading] = useState(false);
   const [cardData, setCardData] = useState({
     firstName: "",
@@ -36,8 +50,6 @@ export function CheckoutForm({ plan, companyId, email, onSuccess, onCancel }: Ch
       apiLoginID: process.env.NEXT_PUBLIC_PLATFORM_AUTHNET_API_LOGIN_ID,
     };
 
-    console.log("authData", authData);
-
     const cardDetails = {
       cardNumber: cardData.cardNumber.replace(/\s+/g, ""),
       month: cardData.month.padStart(2, "0"),
@@ -45,31 +57,20 @@ export function CheckoutForm({ plan, companyId, email, onSuccess, onCancel }: Ch
       cardCode: cardData.cardCode,
     };
 
-    console.log("cardDetails", cardDetails);
-
     const billTo = {
       firstName: cardData.firstName,
       lastName: cardData.lastName,
     };
-
-    const secureData = {
-      authData,
-      cardData: cardDetails,
-      billTo,
-    };
-
-    console.log("secureData", secureData);
+    const secureData = { authData, cardData: cardDetails, billTo };
 
     try {
       Accept.dispatchData(secureData, async (response: any) => {
-        console.log("response", response);
         if (response.messages.resultCode === "Error") {
-          response.messages.message.forEach((msg: any) => {
-            toast.error(msg.text);
-          });
+          response.messages.message.forEach((msg: any) =>
+            toast.error(msg.text)
+          );
           setLoading(false);
         } else {
-          // Send nonce to server
           const result = await subscribeToPlatformPlan({
             companyId,
             planId: plan.id,
@@ -78,8 +79,6 @@ export function CheckoutForm({ plan, companyId, email, onSuccess, onCancel }: Ch
             lastName: cardData.lastName,
             opaqueData: response.opaqueData,
           });
-
-          console.log("result", result);
 
           if (result.success) {
             toast.success("Successfully subscribed!");
@@ -97,138 +96,229 @@ export function CheckoutForm({ plan, companyId, email, onSuccess, onCancel }: Ch
   };
 
   return (
-    <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100 max-w-md w-full">
+    <div className="relative max-w-md w-full animate-in fade-in zoom-in-95 duration-300">
       <Script
-        src={process.env.NEXT_PUBLIC_PLATFORM_AUTHNET_ENVIRONMENT === "production"
-          ? "https://js.authorize.net/v1/Accept.js"
-          : "https://jstest.authorize.net/v1/Accept.js"}
+        src={
+          process.env.NEXT_PUBLIC_PLATFORM_AUTHNET_ENVIRONMENT === "production"
+            ? "https://js.authorize.net/v1/Accept.js"
+            : "https://jstest.authorize.net/v1/Accept.js"
+        }
       />
 
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold text-gray-800">Complete Subscription</h2>
-        <div className="flex items-center text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
-          <Lock className="w-3 h-3 mr-1" /> Secure
+      {/* Main Glassmorphic Container */}
+      <div className="overflow-hidden rounded-3xl bg-white dark:bg-slate-950/90 backdrop-blur-xl ring-1 ring-slate-900/5 dark:ring-white/10 shadow-2xl">
+        {/* Header: Visual striking but professional */}
+        <div className="bg-gradient-to-r from-[#00b8b0] to-[#0098da] p-1" />
+        <div className="px-8 pt-8 pb-6 flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
+              Checkout
+            </h2>
+            <p className="text-slate-500 text-xs mt-0.5">
+              Secure payment processing
+            </p>
+          </div>
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-500/20 shadow-sm">
+            <ShieldCheck size={14} className="animate-pulse" />
+            <span className="text-[10px] font-bold uppercase tracking-wider">
+              SSL Encrypted
+            </span>
+          </div>
+        </div>
+
+        {/* Plan Summary Card - High Contrast */}
+        <div className="mx-8 mb-8 p-5 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/50 dark:border-slate-800/50 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+            <CreditCard size={48} className="text-slate-900 dark:text-white" />
+          </div>
+          <div className="relative z-10 flex justify-between items-end">
+            <div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-1">
+                Selected Plan
+              </p>
+              <h3 className="text-lg font-bold text-slate-800 dark:text-white">
+                {plan.name}
+              </h3>
+            </div>
+            <div className="text-right">
+              <p className="text-2xl font-black text-[#6571FF] tracking-tighter">
+                ${plan.price}
+                <span className="text-xs text-slate-400 font-medium lowercase">
+                  /mo
+                </span>
+              </p>
+              {plan.setupFee > 0 && (
+                <p className="text-[10px] text-slate-500 font-medium">
+                  + ${plan.setupFee} setup fee
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Form Body */}
+        <form onSubmit={handleSubmit} className="px-8 pb-8 space-y-5">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-500 ml-1">
+                First Name
+              </label>
+              <div className="relative group">
+                <input
+                  type="text"
+                  placeholder="John"
+                  className="w-full pl-10 pr-4 py-3 bg-white dark:bg-slate-900 border-none ring-1 ring-slate-200 dark:ring-slate-800 rounded-xl focus:ring-2 focus:ring-[#6571FF] focus:shadow-[0_0_15px_-5px_#6571FF] outline-none transition-all duration-300 text-sm text-slate-600 dark:text-slate-200"
+                  value={cardData.firstName}
+                  onChange={(e) =>
+                    setCardData({ ...cardData, firstName: e.target.value })
+                  }
+                  required
+                />
+                <User
+                  size={16}
+                  className="absolute left-3.5 top-3.5 text-slate-400 group-focus-within:text-[#6571FF] transition-colors"
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-500 ml-1">
+                Last Name
+              </label>
+              <input
+                type="text"
+                placeholder="Doe"
+                className="w-full px-4 py-3 bg-white dark:bg-slate-900 border-none ring-1 ring-slate-200 dark:ring-slate-800 rounded-xl focus:ring-2 focus:ring-[#6571FF] outline-none transition-all duration-300 text-sm text-slate-600 dark:text-slate-200"
+                value={cardData.lastName}
+                onChange={(e) =>
+                  setCardData({ ...cardData, lastName: e.target.value })
+                }
+                required
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-slate-500 ml-1">
+              Card Number
+            </label>
+            <div className="relative group">
+              <input
+                type="text"
+                placeholder="••••  ••••  ••••  ••••"
+                className="w-full pl-10 pr-4 py-3 bg-white dark:bg-slate-900 border-none ring-1 ring-slate-200 dark:ring-slate-800 rounded-xl focus:ring-2 focus:ring-[#6571FF] outline-none transition-all duration-300 text-sm tracking-widest text-slate-600 dark:text-slate-200"
+                value={cardData.cardNumber}
+                onChange={(e) =>
+                  setCardData({ ...cardData, cardNumber: e.target.value })
+                }
+                required
+              />
+              <CreditCard
+                size={16}
+                className="absolute left-3.5 top-3.5 text-slate-400 group-focus-within:text-[#6571FF] transition-colors"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-500 ml-1">
+                Month
+              </label>
+              <div className="relative group">
+                <input
+                  type="text"
+                  placeholder="MM"
+                  maxLength={2}
+                  className="w-full pl-9 pr-2 py-3 bg-white dark:bg-slate-900 border-none ring-1 ring-slate-200 dark:ring-slate-800 rounded-xl focus:ring-2 focus:ring-[#6571FF] outline-none text-sm text-slate-600 dark:text-slate-200"
+                  value={cardData.month}
+                  onChange={(e) =>
+                    setCardData({ ...cardData, month: e.target.value })
+                  }
+                  required
+                />
+                <Calendar
+                  size={14}
+                  className="absolute left-3 top-4 text-slate-400 group-focus-within:text-[#6571FF]"
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-500 ml-1">
+                Year
+              </label>
+              <input
+                type="text"
+                placeholder="YYYY"
+                maxLength={4}
+                className="w-full px-4 py-3 bg-white dark:bg-slate-900 border-none ring-1 ring-slate-200 dark:ring-slate-800 rounded-xl focus:ring-2 focus:ring-[#6571FF] outline-none text-sm text-slate-600 dark:text-slate-200"
+                value={cardData.year}
+                onChange={(e) =>
+                  setCardData({ ...cardData, year: e.target.value })
+                }
+                required
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-500 ml-1">
+                CVC
+              </label>
+              <div className="relative group">
+                <input
+                  type="text"
+                  placeholder="•••"
+                  maxLength={4}
+                  className="w-full pl-9 pr-2 py-3 bg-white dark:bg-slate-900 border-none ring-1 ring-slate-200 dark:ring-slate-800 rounded-xl focus:ring-2 focus:ring-[#6571FF] outline-none text-sm text-slate-600 dark:text-slate-200"
+                  value={cardData.cardCode}
+                  onChange={(e) =>
+                    setCardData({ ...cardData, cardCode: e.target.value })
+                  }
+                  required
+                />
+                <Hash
+                  size={14}
+                  className="absolute left-3 top-4 text-slate-400 group-focus-within:text-[#6571FF]"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-4 flex flex-col gap-3">
+            <button
+              type="submit"
+              disabled={loading}
+              className="group relative w-full overflow-hidden bg-[#6571FF] text-white font-bold py-4 rounded-2xl shadow-xl shadow-[#6571FF]/20 hover:shadow-[#6571FF]/40 hover:-translate-y-0.5 transition-all duration-300 active:scale-95 disabled:opacity-50"
+            >
+              <span className="relative z-10 flex items-center justify-center gap-2">
+                {loading ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <Lock size={18} />
+                )}
+                {loading ? "Processing..." : "Authorize Subscription"}
+              </span>
+              {/* Shimmer Effect */}
+              <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-1000" />
+            </button>
+
+            <button
+              type="button"
+              onClick={onCancel}
+              disabled={loading}
+              className="w-full text-slate-500 font-semibold py-2 text-sm hover:text-slate-800 dark:hover:text-slate-300 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+
+        <div className="bg-slate-50/80 dark:bg-slate-900/80 p-6 border-t border-slate-200/50 dark:border-slate-800/50">
+          <p className="text-[10px] leading-relaxed text-slate-400 text-center font-medium">
+            Payments are processed by Authorize.Net. Your sensitive data never
+            touches our servers. By clicking "Authorize", you agree to monthly
+            recurring billing.
+          </p>
         </div>
       </div>
-
-      <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-        <p className="text-sm text-gray-500 uppercase tracking-wider font-semibold">Selected Plan</p>
-        <div className="flex justify-between items-center mt-1">
-          <span className="text-lg font-bold text-gray-800">{plan.name}</span>
-          <span className="text-lg font-bold text-[#6571FF]">${plan.price}/mo</span>
-        </div>
-        {plan.setupFee > 0 && (
-          <div className="flex justify-between items-center mt-1 text-sm text-gray-600">
-            <span>Setup Fee (One-time)</span>
-            <span>${plan.setupFee}</span>
-          </div>
-        )}
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
-            <input
-              type="text"
-              placeholder="John"
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6571FF] outline-none"
-              value={cardData.firstName}
-              onChange={(e) => setCardData({ ...cardData, firstName: e.target.value })}
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
-            <input
-              type="text"
-              placeholder="Doe"
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6571FF] outline-none"
-              value={cardData.lastName}
-              onChange={(e) => setCardData({ ...cardData, lastName: e.target.value })}
-              required
-            />
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Card Number</label>
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="0000 0000 0000 0000"
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6571FF] focus:border-transparent outline-none transition"
-              value={cardData.cardNumber}
-              onChange={(e) => setCardData({ ...cardData, cardNumber: e.target.value })}
-              required
-            />
-            <CreditCard className="absolute right-3 top-3 text-gray-400" />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">MM</label>
-            <input
-              type="text"
-              placeholder="MM"
-              maxLength={2}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6571FF] outline-none"
-              value={cardData.month}
-              onChange={(e) => setCardData({ ...cardData, month: e.target.value })}
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">YYYY</label>
-            <input
-              type="text"
-              placeholder="YYYY"
-              maxLength={4}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6571FF] outline-none"
-              value={cardData.year}
-              onChange={(e) => setCardData({ ...cardData, year: e.target.value })}
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">CVC</label>
-            <input
-              type="text"
-              placeholder="CVC"
-              maxLength={4}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6571FF] outline-none"
-              value={cardData.cardCode}
-              onChange={(e) => setCardData({ ...cardData, cardCode: e.target.value })}
-              required
-            />
-          </div>
-        </div>
-
-        <div className="pt-4 flex flex-col gap-3">
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-[#6571FF] text-white font-bold py-3 rounded-lg shadow-md hover:bg-[#525fec] transition flex items-center justify-center disabled:opacity-50"
-          >
-            {loading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : null}
-            Subscribe Now
-          </button>
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={loading}
-            className="w-full text-gray-500 font-medium py-2 text-sm hover:text-gray-700 transition"
-          >
-            Cancel
-          </button>
-        </div>
-      </form>
-
-      <p className="text-[10px] text-gray-400 mt-6 text-center">
-        Your payment information is encrypted and processed securely by Authorize.Net.
-        By subscribing, you agree to recurring monthly charges.
-      </p>
     </div>
   );
 }
