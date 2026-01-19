@@ -29,16 +29,20 @@ export default async function PerformanceBoxForTechnician({
     performance?.totalJobs?.growth?.isPositive ?? false;
 
   // 2. On-time Completion Rate
-  const onTimeRate = parseFloat(
-    (performance?.onTimeCompletionRate?.rate ?? 0).toFixed(2),
-  );
-  const onTimeGrowthRate = parseFloat(
-    (performance?.onTimeCompletionRate?.growth?.rate ?? 0).toFixed(2),
-  );
+  const onTimeRate =
+    parseFloat((performance?.onTimeCompletionRate?.rate ?? 0).toFixed(2)) || 0;
+  const onTimeGrowthRate =
+    parseFloat(
+      (performance?.onTimeCompletionRate?.growth?.rate ?? 0).toFixed(2),
+    ) || 0;
   const isOnTimePositive =
     performance?.onTimeCompletionRate?.growth?.isPositive ?? false;
 
-  console.log({ onTimeRate, onTimeGrowthRate, isOnTimePositive });
+  // console.log({
+  //   onTimeRate: performance?.onTimeCompletionRate?.rate,
+  //   onTimeGrowthRate: performance?.onTimeCompletionRate?.growth?.rate,
+  //   isOnTimePositive,
+  // });
 
   // 3. Rework/Return Rate (Jobs Return Rate)
   // FIX: Accessing 'rate' on 'redoJobs' causes a TypeScript error based on the type definition.
