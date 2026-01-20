@@ -70,14 +70,14 @@ export async function getCurrentProjects() {
   });
 
   // Map invoices to projects where the technician is the current user
-  const projects = invoices.map((invoice) => {
+  const projects = invoices.map(invoice => {
     const technicians = invoice.technician.filter(
-      (technician) => technician.userId === userId
+      technician => technician.userId === userId,
     );
 
     const totalPayout = technicians.reduce(
       (acc, technician) => acc + Number(technician.amount),
-      0
+      0,
     );
 
     // Get the earliest start date from technicians
@@ -87,7 +87,7 @@ export async function getCurrentProjects() {
         if (!earliest) return technician.date;
         return technician.date < earliest ? technician.date : earliest;
       },
-      null
+      null,
     );
 
     // Get the earliest due date from technicians
@@ -97,12 +97,12 @@ export async function getCurrentProjects() {
         if (!earliest) return technician.due;
         return technician.due < earliest ? technician.due : earliest;
       },
-      null
+      null,
     );
 
     return {
       id: invoice.id,
-      services: technicians.map((technician) => ({
+      services: technicians.map(technician => ({
         name: technician.service?.name,
         due: technician.due,
         startDate: technician.date,
@@ -141,7 +141,7 @@ export async function getPerformance(timezone: string) {
 
   // Calculate on-time completion rate for the current month
   const onTimeJobs = currentMonthJobs.filter(
-    (job) => job.status === "Completed" && job.dateClosed! <= job.due!
+    job => job.status === "Completed" && job.dateClosed! <= job.due!,
   );
   const onTimeCompletionRate = onTimeJobs.length / currentMonthJobs.length;
 
@@ -158,7 +158,7 @@ export async function getPerformance(timezone: string) {
 
   // Calculate on-time completion rate for the previous month
   const previousOnTimeJobs = previousMonthJobs.filter(
-    (job) => job.status === "Completed" && job.dateClosed! <= job.due!
+    job => job.status === "Completed" && job.dateClosed! <= job.due!,
   );
   const previousOnTimeCompletionRate =
     previousOnTimeJobs.length / previousMonthJobs.length;
@@ -184,10 +184,12 @@ export async function getPerformance(timezone: string) {
     },
   });
 
+  const currentMonthJobsLength = currentMonthJobs?.length ?? 0;
+  const previousMonthJobsLength = previousMonthJobs?.length ?? 0;
   return {
     totalJobs: {
-      count: currentMonthJobs.length,
-      growth: growthRate(currentMonthJobs.length, previousMonthJobs.length),
+      count: currentMonthJobsLength,
+      growth: growthRate(currentMonthJobsLength, previousMonthJobsLength),
     },
     onTimeCompletionRate: {
       rate: onTimeCompletionRate,
@@ -225,7 +227,7 @@ export async function getMonthlyPayout(timezone: string) {
 
   const totalPayout = completedJobs.reduce(
     (acc, job) => acc + Number(job.amount),
-    0
+    0,
   );
 
   // Get pending jobs for the current month
@@ -244,7 +246,7 @@ export async function getMonthlyPayout(timezone: string) {
 
   const pendingPayout = pendingJobs.reduce(
     (acc, job) => acc + Number(job.amount),
-    0
+    0,
   );
 
   // Get completed jobs for the previous month
@@ -261,7 +263,7 @@ export async function getMonthlyPayout(timezone: string) {
 
   const previousTotalPayout = previousMonthCompletedJobs.reduce(
     (acc, job) => acc + Number(job.amount),
-    0
+    0,
   );
 
   return {

@@ -29,7 +29,7 @@ export default function ServiceCreate() {
 
       setCategory(categories.find((cat) => cat.id === data.service.categoryId));
 
-      setDescription(data?.serviceDesc);
+      setDescription(data?.serviceDesc || data?.service?.description);
     } else {
       setName("");
       setCategory(undefined);
@@ -129,7 +129,8 @@ export default function ServiceCreate() {
           onChange={(e) => setName(e.target.value)}
           className={cn(
             "h-11 rounded-xl bg-white px-4 text-sm font-medium ring-1 ring-inset ring-slate-200 transition-all focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30",
-            data.service?.canned && "bg-slate-50 text-slate-600 cursor-not-allowed shadow-inner"
+            data.service?.canned &&
+              "bg-slate-50 text-slate-600 cursor-not-allowed shadow-inner"
           )}
           readOnly={data.service?.canned}
         />
