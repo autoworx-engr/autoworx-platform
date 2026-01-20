@@ -42,9 +42,8 @@ export default function Page() {
               <p className="text-lg font-semibold leading-7 text-gray-700 sm:text-xl">
                 Current Plan:{" "}
                 <span
-                  className={`text-2xl font-extrabold ${
-                    planColors[selectedPlan] || "text-gray-500"
-                  }`}
+                  className={`text-2xl font-extrabold ${planColors[selectedPlan] || "text-gray-500"
+                    }`}
                 >
                   {selectedPlan}
                 </span>
@@ -127,7 +126,7 @@ export default function Page() {
           <div className="max-h-80 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-100">
-                <tr className="sticky top-0 text-left text-sm font-bold uppercase tracking-wider text-gray-600">
+                <tr className="sticky top-0 text-left text-sm font-bold uppercase tracking-wider text-gray-600 bg-white">
                   <th className="px-6 py-3">Amount</th>
                   <th className="px-6 py-3">Payment Method</th>
                   <th className="px-6 py-3">Date</th>

@@ -70,15 +70,15 @@ export function CreateTab() {
 
   return (
     <>
-      <div className="-mx-8">
+      <div>
         {isMax640 ? (
           <ResponsiveEstimateCreateTab />
         ) : (
-          <table className="w-full border-separate border-spacing-x-8 border-spacing-y-5">
+          <table className="w-full table-fixed border-separate border-spacing-x-1.5 border-spacing-y-8">
             <thead>
               <tr>
                 {["Services", "Materials/Parts", "Labor", "Tags"].map((x) => (
-                  <th key={x}>{x}</th>
+                  <th key={x} className="w-[24%]">{x}</th>
                 ))}
                 <th>
                   <span className="sr-only">Actions</span>
@@ -87,7 +87,7 @@ export function CreateTab() {
             </thead>
             <tbody>
               {items.map((item, i) => (
-                <tr key={`item-${i}`}>
+                <tr key={`item-${i}`} className="align-bottom">
                   {["service", "materials", "labor", "tags"].map(
                     (itemKey, j) => {
                       switch (itemKey) {
@@ -236,7 +236,7 @@ export function CreateTab() {
                                     {j === item.materials.length - 1 ? (
                                       <button
                                         type="button"
-                                        className="absolute flex items-center gap-1 text-sm text-[#6571FF]"
+                                        className="absolute flex items-center gap-1 text-sm text-[#6571FF] mt-1"
                                         onClick={() => {
                                           useEstimateCreateStore.setState((x) =>
                                             create(x, (x) => {
@@ -314,7 +314,7 @@ export function CreateTab() {
                                   {j === item.materials.length - 1 ? (
                                     <button
                                       type="button"
-                                      className="absolute flex items-center gap-1 text-sm text-[#6571FF]"
+                                      className="absolute -bottom-6 left-0 flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-bold uppercase tracking-wider text-[#6571FF] transition-all hover:bg-[#6571FF]/10 active:scale-95"
                                       onClick={() => {
                                         useEstimateCreateStore.setState((x) =>
                                           create(x, (x) => {
@@ -323,7 +323,7 @@ export function CreateTab() {
                                         );
                                       }}
                                     >
-                                      <CirclePlus size="1.2em" /> Add More
+                                      <CirclePlus size={16} strokeWidth={2.5} /> Add More
                                     </button>
                                   ) : null}
                                 </div>
@@ -425,16 +425,17 @@ export function CreateTab() {
                       }
                     }
                   )}
-                  <td>
+                  <td className="w-[1rem] pb-2">
                     <button
                       type="button"
+                      className="flex items-center justify-center rounded-lg p-1.5 text-slate-400 transition-all hover:bg-rose-50 hover:text-rose-600 active:scale-90"
                       onClick={() => {
                         useEstimateCreateStore.setState((x) => ({
                           items: items.toSpliced(i, 1),
                         }));
                       }}
                     >
-                      <CircleX size="1.2em" />
+                      <CircleX size={20} strokeWidth={2} />
                     </button>
                   </td>
                 </tr>
@@ -443,14 +444,16 @@ export function CreateTab() {
           </table>
         )}
       </div>
-      <div className="flex py-2 md:gap-52 md:bg-slate-50">
+      <div className="flex py-3 md:gap-52 md:bg-slate-50/80 md:backdrop-blur-sm border-t border-slate-100 px-4 md:px-6">
         <button
           type="button"
-          className="sticky bottom-2 z-10 flex w-full items-center justify-center gap-2 p-2 text-[#6571FF] md:static md:w-auto md:justify-start"
+          className="sticky bottom-4 z-10 flex w-full items-center justify-center gap-2 rounded-xl bg-white p-3 text-sm font-semibold tracking-wide text-[#6571FF] shadow-lg shadow-[#6571FF]/10 ring-1 ring-[#6571FF]/20 transition-all hover:bg-[#6571FF] hover:text-white active:scale-95 md:static md:w-auto md:bg-transparent md:p-2 md:shadow-none md:ring-0 md:hover:bg-[#6571FF]/10 md:hover:text-[#6571FF]"
           onClick={addService}
         >
-          <CirclePlus size="1.2em" />
-          Add Service
+          <CirclePlus size={20} strokeWidth={2.5} />
+          <span className="uppercase tracking-wider text-[11px] md:text-sm md:capitalize md:tracking-normal">
+            Add Service
+          </span>
         </button>
       </div>
     </>

@@ -29,6 +29,7 @@ import moment from "moment-timezone";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { SquarePen } from "lucide-react";
 import { successToast } from "@/lib/toast";
+import { cn } from "@/lib/cn";
 
 type TProps = {
   productId: number;
@@ -213,115 +214,116 @@ export default function EditSalePurchaseList({
       </DialogTrigger>
 
       <DialogContent
-        className="max-h-full w-[96%] max-w-xl overflow-y-auto md:w-[30rem]"
+        className="max-h-[80%] w-[96%] max-w-xl grid-rows-[auto,1fr,auto] thin-scrollbar"
         form
       >
         <DialogHeader>
-          <DialogTitle>Edit {fromSales ? "Sales" : "Purchase"}</DialogTitle>
+          <DialogTitle className="text-slate-600">Edit {fromSales ? "Sales" : "Purchase"}</DialogTitle>
         </DialogHeader>
 
         <FormError />
 
-        <div className="flex flex-col gap-3 p-2">
-          <SlimInput
-            name="date"
-            type="date"
-            className="col-span-1"
-            value={formState.date}
-            onChange={handleInputChange}
-          />
-
-          <div>
-            <label>Vendor</label>
-            <Selector
-              label={(selectedVendor: Vendor | null) =>
-                selectedVendor
-                  ? selectedVendor.companyName ||
-                  selectedVendor.name ||
-                  `Vendor ${selectedVendor.id}`
-                  : "Select Vendor"
-              }
-              newButton={
-                <NewVendor
-                  afterSubmit={(ven) => {
-                    setVendor(ven);
-                    setVendorOpen(false);
-                  }}
-                  button={
-                    <button type="button" className="text-xs text-[#6571FF]">
-                      + New Vendor
-                    </button>
-                  }
-                />
-              }
-              displayList={(vendor: Vendor) => (
-                <p>{vendor.companyName || vendor.name}</p>
-              )}
-              items={vendors}
-              onSearch={(search: string) =>
-                vendors.filter(
-                  (vendor) =>
-                    vendor.companyName
-                      ?.toLowerCase()
-                      ?.includes(search.toLowerCase()) ||
-                    vendor.name?.toLowerCase().includes(search.toLowerCase())
-                )
-              }
-              openState={[vendorOpen, setVendorOpen]}
-              selectedItem={vendor}
-              setSelectedItem={setVendor}
+        <div className="gap-5 overflow-y-auto pl-1 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <SlimInput
+              name="date"
+              type="date"
+              label="Date"
+              value={formState.date}
+              onChange={handleInputChange}
             />
+
+            <div className="space-y-1">
+              <label className="font-medium text-slate-600">Vendor</label>
+              <Selector
+                label={(selectedVendor: Vendor | null) =>
+                  selectedVendor
+                    ? selectedVendor.companyName ||
+                    selectedVendor.name ||
+                    `Vendor ${selectedVendor.id}`
+                    : "Select Vendor"
+                }
+                newButton={
+                  <NewVendor
+                    afterSubmit={(ven) => {
+                      setVendor(ven);
+                      setVendorOpen(false);
+                    }}
+                    button={
+                      <button type="button" className="text-xs text-[#6571FF] hover:underline">
+                        + New Vendor
+                      </button>
+                    }
+                  />
+                }
+                displayList={(vendor: Vendor) => (
+                  <p>{vendor.companyName || vendor.name}</p>
+                )}
+                items={vendors}
+                onSearch={(search: string) =>
+                  vendors.filter(
+                    (vendor) =>
+                      vendor.companyName
+                        ?.toLowerCase()
+                        ?.includes(search.toLowerCase()) ||
+                      vendor.name?.toLowerCase().includes(search.toLowerCase())
+                  )
+                }
+                openState={[vendorOpen, setVendorOpen]}
+                selectedItem={vendor}
+                setSelectedItem={setVendor}
+              />
+            </div>
           </div>
 
-          <div className="flex flex-wrap gap-3 md:flex-nowrap">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
             <SlimInput
               name="quantity"
               type="number"
+              label="Quantity"
               value={formState.quantity}
               onChange={handleInputChange}
               required={false}
             />
 
-            <div>
-              <label htmlFor="price" className="px-2 font-medium">
-                Total Price
-              </label>
-              <div className="flex gap-1 rounded-sm border border-primary-foreground bg-background px-2 py-0.5 leading-6">
-                <span className="text-lg">$</span>
-                <input
-                  type="number"
-                  name="price"
-                  value={formState.price} // Display total price
-                  onChange={handleInputChange}
-                  className="w-full rounded-sm border border-slate-400 px-2 py-0.5 outline-none"
-                  id="price"
-                  step="0.01"
-                />
-              </div>
-            </div>
+            <SlimInput
+              name="price"
+              type="number"
+              label="Total Price"
+              value={formState.price}
+              onChange={handleInputChange}
+              step="0.01"
+            />
 
             <SlimInput
               name="unit"
+              label="Unit"
               value={formState.unit}
               onChange={handleInputChange}
               required={false}
             />
             <SlimInput
               name="lot"
+              label="Lot#"
               value={formState.lot}
               onChange={handleInputChange}
               required={false}
             />
           </div>
 
-          <div className="col-span-2">
-            <label htmlFor="notes">Notes</label>
+          <div className="space-y-1">
+            <label htmlFor="notes" className="font-medium text-slate-600">Notes</label>
             <textarea
               id="notes"
               name="notes"
               value={formState.notes}
               onChange={handleInputChange}
-              className="h-28 w-full rounded-sm border border-primary-foreground border-slate-400 bg-background px-2 py-0.5 leading-6 outline-none"
+              className={cn("h-24 w-full rounded-md border border-slate-300 outline-none bg-background px-3 py-2 leading-6 transition-all duration-300 thin-scrollbar",
+                "bg-white/80 backdrop-blur-sm dark:bg-slate-900/50",
+                "text-slate-600 dark:text-slate-300 placeholder:text-slate-400",
+                "focus:border-[#6571FF]/60 focus:ring-2 focus:ring-[#6571FF]/40",
+                "disabled:opacity-50 disabled:cursor-not-allowed"
+              )}
             />
           </div>
         </div>

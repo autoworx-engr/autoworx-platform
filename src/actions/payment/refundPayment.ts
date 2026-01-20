@@ -13,10 +13,6 @@ interface RefundPaymentParams {
   refundDate?: Date;
 }
 
-/**
- * New refund system that creates separate refund records instead of modifying original payments
- * This maintains payment history integrity and provides proper audit trails
- */
 export async function refundPayment({
   paymentId,
   refundAmount,
@@ -31,7 +27,7 @@ export async function refundPayment({
     const payment = await db.payment.findUnique({
       where: { id: paymentId, companyId },
       include: {
-        Refund: true, // Include existing refunds
+        Refund: true,
       },
     });
 
@@ -45,7 +41,6 @@ export async function refundPayment({
 
     const originalAmount = Number(payment.amount) || 0;
 
-    // For validation, check if the new refund amount exceeds the original payment
     if (refundAmount > originalAmount) {
       return {
         type: "globalError" as const,
@@ -60,17 +55,19 @@ export async function refundPayment({
         message: "Refund amount must be greater than 0",
         errorSource: [],
       };
-    } // Start transaction - create or update refund record (only one refund per payment)
+    }
+
+    // ** Check if original payment was a DEPOSIT**
+    const isDeposit = payment.type === "DEPOSIT";
+
     const updatedPayment = await db.$transaction(async (tx) => {
-      // Check if a refund record already exists for this payment
       const existingRefund = await tx.refund.findFirst({
         where: { paymentId: paymentId },
       });
 
-      // Get the current invoice to update the due amount and totalPayment
       const invoice = await tx.invoice.findUnique({
         where: { id: payment.invoiceId! },
-        select: { due: true, totalPayment: true },
+        select: { due: true, totalPayment: true, deposit: true },
       });
 
       if (!invoice) {
@@ -79,20 +76,27 @@ export async function refundPayment({
 
       const currentDue = Number(invoice.due) || 0;
       const currentTotalPayment = Number(invoice.totalPayment) || 0;
+      const currentDeposit = Number(invoice.deposit) || 0;
+
       let newDue = currentDue;
       let newTotalPayment = currentTotalPayment;
+      let newDeposit = currentDeposit;
 
       if (existingRefund) {
-        // Calculate the difference between old and new refund amounts
         const oldRefundAmount = Number(existingRefund.amount) || 0;
         const refundDifference = refundAmount - oldRefundAmount;
 
-        // When refund increases: due increases (less payment received), totalPayment decreases
-        // When refund decreases: due decreases (more payment received), totalPayment increases
-        newDue = currentDue + refundDifference;
-        newTotalPayment = currentTotalPayment - refundDifference;
+        // ** Update deposit or totalPayment based on payment type**
+        if (isDeposit) {
+          // Refunding a deposit: adjust deposit field
+          newDeposit = currentDeposit - refundDifference;
+          newDue = currentDue + refundDifference;
+        } else {
+          // Refunding a payment: adjust totalPayment field
+          newDue = currentDue + refundDifference;
+          newTotalPayment = currentTotalPayment - refundDifference;
+        }
 
-        // Update existing refund record
         await tx.refund.update({
           where: { id: existingRefund.id },
           data: {
@@ -104,11 +108,17 @@ export async function refundPayment({
           },
         });
       } else {
-        // First time creating refund: due increases by refund amount, totalPayment decreases
-        newDue = currentDue + refundAmount;
-        newTotalPayment = currentTotalPayment - refundAmount;
+        // ** First time creating refund - check payment type**
+        if (isDeposit) {
+          // Refunding a deposit: decrease deposit and increase due
+          newDeposit = currentDeposit - refundAmount;
+          newDue = currentDue + refundAmount;
+        } else {
+          // Refunding a payment: decrease totalPayment and increase due
+          newDue = currentDue + refundAmount;
+          newTotalPayment = currentTotalPayment - refundAmount;
+        }
 
-        // Create new refund record
         await tx.refund.create({
           data: {
             amount: refundAmount,
@@ -118,35 +128,39 @@ export async function refundPayment({
             paymentId: paymentId,
             invoiceId: payment.invoiceId!,
             companyId: companyId,
-            // processedBy can be added when we have user context
           },
         });
       }
 
-      // Update invoice due amount and totalPayment
-      // await tx.invoice.update({
-      //   where: { id: payment.invoiceId! },
-      //   data: {
-      //     due: newDue,
-      //     totalPayment: newTotalPayment,
-      //   },
-      // });
+      // ** Update invoice with correct fields**
+      await tx.invoice.update({
+        where: { id: payment.invoiceId! },
+        data: {
+          due: newDue,
+          totalPayment: newTotalPayment,
+          deposit: newDeposit,
+        },
+      });
 
-      // Update payment's refunded amount for quick access (but don't modify original amount)
       const updatedPayment = await tx.payment.update({
         where: { id: paymentId },
         data: {
-          refundedAmount: refundAmount, // Set to the current refund amount (not accumulated)
+          refundedAmount: refundAmount,
           refundMethod: refundMethod,
           refundReason: refundReason,
           refundCreatedAt: refundDate || new Date(),
           refundUpdatedAt: new Date(),
         },
       });
+
       return updatedPayment;
     });
+
     revalidatePath("/dashboard/estimate/edit");
+    revalidatePath("/dashboard/estimate/view");
     revalidatePath("/dashboard/payments");
+    revalidatePath("/dashboard/client");
+
     return {
       type: "success" as const,
       message: "Refund processed successfully",
@@ -162,9 +176,6 @@ export async function refundPayment({
   }
 }
 
-/**
- * Delete refund - removes all refund records for a payment and resets payment state
- */
 export async function deleteRefund({ paymentId }: { paymentId: number }) {
   try {
     const companyId = await getCompanyId();
@@ -181,46 +192,55 @@ export async function deleteRefund({ paymentId }: { paymentId: number }) {
       };
     }
 
+    // ** Check if original payment was a DEPOSIT**
+    const isDeposit = payment.type === "DEPOSIT";
+
     const updatedPayment = await db.$transaction(async (tx) => {
-      // Get the refund amount before deleting to adjust the invoice due and totalPayment
       const refundToDelete = await tx.refund.findFirst({
         where: { paymentId },
         select: { amount: true },
       });
 
       if (refundToDelete) {
-        // Get the current invoice to update the due amount and totalPayment
         const invoice = await tx.invoice.findUnique({
           where: { id: payment.invoiceId! },
-          select: { due: true, totalPayment: true },
+          select: { due: true, totalPayment: true, deposit: true },
         });
 
         if (invoice) {
           const currentDue = Number(invoice.due) || 0;
           const currentTotalPayment = Number(invoice.totalPayment) || 0;
+          const currentDeposit = Number(invoice.deposit) || 0;
           const refundAmount = Number(refundToDelete.amount) || 0;
 
-          // When deleting refund: due decreases (more payment received), totalPayment increases
-          const newDue = currentDue - refundAmount;
-          const newTotalPayment = currentTotalPayment + refundAmount;
+          // ** Restore deposit or totalPayment based on payment type**
+          let newDue = currentDue - refundAmount;
+          let newTotalPayment = currentTotalPayment;
+          let newDeposit = currentDeposit;
 
-          // Update invoice due amount and totalPayment by restoring the refunded amount
-          // await tx.invoice.update({
-          //   where: { id: payment.invoiceId! },
-          //   data: {
-          //     due: newDue,
-          //     totalPayment: newTotalPayment,
-          //   },
-          // });
+          if (isDeposit) {
+            // Deleting deposit refund: restore deposit
+            newDeposit = currentDeposit + refundAmount;
+          } else {
+            // Deleting payment refund: restore totalPayment
+            newTotalPayment = currentTotalPayment + refundAmount;
+          }
+
+          await tx.invoice.update({
+            where: { id: payment.invoiceId! },
+            data: {
+              due: newDue,
+              totalPayment: newTotalPayment,
+              deposit: newDeposit,
+            },
+          });
         }
       }
 
-      // Delete all refund records for this payment
       await tx.refund.deleteMany({
         where: { paymentId },
       });
 
-      // Reset payment refund fields to restore original payment state
       const updatedPayment = await tx.payment.update({
         where: { id: paymentId },
         data: {
@@ -231,11 +251,15 @@ export async function deleteRefund({ paymentId }: { paymentId: number }) {
           refundUpdatedAt: null,
         },
       });
+
       return updatedPayment;
     });
 
     revalidatePath("/dashboard/estimate/edit");
+    revalidatePath("/dashboard/estimate/view");
     revalidatePath("/dashboard/payments");
+    revalidatePath("/dashboard/client");
+
     return {
       type: "success" as const,
       message: "Refund deleted successfully",
@@ -251,9 +275,6 @@ export async function deleteRefund({ paymentId }: { paymentId: number }) {
   }
 }
 
-/**
- * Get payment summary with proper refund calculations
- */
 export async function getPaymentSummary(invoiceIds: string[]) {
   const companyId = await getCompanyId();
 

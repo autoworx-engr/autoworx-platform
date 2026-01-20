@@ -106,8 +106,8 @@ export function DropdownSelection({
                 key={value}
                 value={value}
                 className={cn(
-                  "group flex items-center justify-between px-3 py-2 rounded-lg text-sm",
-                  "text-slate-600 dark:text-slate-200 hover:bg-slate-100/60 dark:hover:bg-slate-800/60",
+                  "group flex items-center justify-between px-3 py-2 rounded-lg text-sm border-b border-slate-200 dark:border-slate-800",
+                  "text-slate-600 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60",
                   "transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#6470fd]/20",
                   "data-[state=checked]:bg-[#6470fd] data-[state=checked]:text-white",
                   "data-[state=checked]:shadow-[0_8px_30px_rgba(100,112,253,0.12)]"
@@ -123,8 +123,8 @@ export function DropdownSelection({
               key={defaultValue}
               value={defaultValue || ""}
               className={cn(
-                "group flex items-center justify-between px-3 py-2 rounded-lg text-sm",
-                "text-slate-600 dark:text-slate-200 hover:bg-slate-100/60 dark:hover:bg-slate-800/60",
+                "group flex items-center justify-between px-3 py-2 rounded-lg text-sm border-b border-slate-200 dark:border-slate-800",
+                "text-slate-600 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60",
                 "transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#6470fd]/20",
                 "data-[state=checked]:bg-[#6470fd] data-[state=checked]:text-white",
                 "data-[state=checked]:shadow-[0_8px_30px_rgba(100,112,253,0.12)]"

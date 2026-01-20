@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { EmployeeType, Role } from "@prisma/client";
 
 const prisma = db;
+
 export const teamManagementUser = async (): Promise<
   {
     id: number;
@@ -158,6 +159,7 @@ interface PrismaClientWithIndex {
   [key: string]: any;
 }
 interface PermissionModelMap {
+  Admin: string;
   Manager: string;
   Sales: string;
   Technician: string;
@@ -165,6 +167,7 @@ interface PermissionModelMap {
 }
 
 const permissionModelMap: PermissionModelMap = {
+  Admin: "permissionForManager", // Admin uses Manager permissions
   Manager: "permissionForManager",
   Sales: "permissionForSales",
   Technician: "permissionForTechnician",
@@ -179,12 +182,36 @@ const getRoleModel = (role: string): string => {
   return roleModel;
 };
 
-// Fetch user permissions (role + user-specific overrides)
-export const getUserPermissions = async (userId: number, role: string) => {
+// FIXED: Fetch user permissions (role + user-specific overrides)
+// Now accepts userId and optional companyId parameter
+export const getUserPermissions = async (
+  userId: number,
+  role: string,
+  userCompanyId?: number
+) => {
   const roleModel = getRoleModel(role);
 
   try {
-    const companyId = await getCompanyId();
+    // CRITICAL FIX: Get the company ID of the USER being checked, not the current session user
+    let companyId: number;
+
+    if (userCompanyId) {
+      // If companyId is provided, use it
+      companyId = userCompanyId;
+    } else {
+      // Otherwise, fetch it from the user's record
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { companyId: true },
+      });
+
+      if (!user) {
+        console.error(`User not found: ${userId}`);
+        return {};
+      }
+
+      companyId = user.companyId;
+    }
 
     const rolePermission = await (prisma as PrismaClientWithIndex)[
       roleModel
