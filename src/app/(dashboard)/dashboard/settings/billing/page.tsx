@@ -73,14 +73,20 @@ export default function Page() {
   }
 
   const currentPlan = subscription?.plan || null;
-  const currentPlanName = currentPlan?.name || "No Active Plan";
   const subStatus =
     (subscription?.status as PlatformSubscriptionStatus) || "NONE";
+  const currentPlanName = currentPlan?.name || "No Active Plan";
+
+  const currentPlanIdForModal =
+    subStatus === PlatformSubscriptionStatus.ACTIVE ||
+    subStatus === PlatformSubscriptionStatus.PAST_DUE
+      ? currentPlan?.id
+      : null;
 
   const handleCancelClick = async () => {
     if (
       !window.confirm(
-        "Are you sure you want to cancel your subscription? This will immediately revoke access to plan features."
+        "Are you sure you want to cancel your subscription? This will immediately revoke access to plan features.",
       )
     ) {
       return;
@@ -140,7 +146,7 @@ export default function Page() {
                       >
                         {subscription.currentPeriodEnd
                           ? moment(subscription.currentPeriodEnd).format(
-                              "Do MMMM YYYY"
+                              "Do MMMM YYYY",
                             )
                           : "N/A"}
                       </span>
@@ -273,7 +279,7 @@ export default function Page() {
                             .format("MM/DD/YYYY")}
                         </td>
                       </tr>
-                    )
+                    ),
                   )
                 ) : (
                   <tr>
@@ -299,7 +305,7 @@ export default function Page() {
             setPlansOpen(false);
           }}
           setClose={() => setPlansOpen(false)}
-          currentPlanId={currentPlan?.id}
+          currentPlanId={currentPlanIdForModal}
         />
       )}
 

@@ -11,6 +11,23 @@ import {
 import { Button } from "@/components/ui/button";
 import Input from "@/components/Input";
 import { PlatformFeatureType, PlatformPlan, PlanFeature } from "@prisma/client";
+import {
+  Settings2,
+  Save,
+  Layers,
+  DollarSign,
+  Info,
+  ShieldCheck,
+  Loader2,
+} from "lucide-react";
+
+// Formatting Helper
+const formatKey = (key: string) =>
+  key
+    .toLowerCase()
+    .split("_")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
 
 export type PlatformPlanWithFeatures = PlatformPlan & {
   features: PlanFeature[];
@@ -37,22 +54,14 @@ export function CompanyCustomPlanDialog({
   const [isPending, startTransition] = useTransition();
   const [selectedPlanId, setSelectedPlanId] = useState<string>("");
 
-  const selectedPlan = useMemo(
-    () => plans.find((p) => p.id === selectedPlanId) || plans[0],
-    [plans, selectedPlanId]
-  );
-
   const [price, setPrice] = useState<string>("");
   const [label, setLabel] = useState<string>("Custom Plan");
   const [features, setFeatures] = useState<EditableFeature[]>([]);
 
-  // Whenever dialog opens, initialize with current plan or first available plan
   useEffect(() => {
     if (!open || plans.length === 0) return;
-
     const initialPlanId = currentPlanId || plans[0].id;
     setSelectedPlanId(initialPlanId);
-
     const plan = plans.find((p) => p.id === initialPlanId) || plans[0];
     setPrice(String(plan.price));
     setLabel(`${plan.name} (Custom)`);
@@ -61,7 +70,7 @@ export function CompanyCustomPlanDialog({
         key: f.featureKey,
         type: f.type,
         value: f.value,
-      }))
+      })),
     );
   }, [open, plans, currentPlanId]);
 
@@ -76,7 +85,7 @@ export function CompanyCustomPlanDialog({
           key: f.featureKey,
           type: f.type,
           value: f.value,
-        }))
+        })),
       );
     }
   };
@@ -90,17 +99,7 @@ export function CompanyCustomPlanDialog({
   };
 
   const handleSubmit = () => {
-    if (!selectedPlanId) {
-      console.error("Please select a base plan");
-      return;
-    }
-
-    const numericPrice = Number(price);
-    if (!numericPrice || numericPrice <= 0) {
-      console.error("Price must be greater than zero");
-      return;
-    }
-
+    if (!selectedPlanId || Number(price) <= 0) return;
     startTransition(async () => {
       try {
         const res = await fetch("/api/awx/custom-plan", {
@@ -109,7 +108,7 @@ export function CompanyCustomPlanDialog({
           body: JSON.stringify({
             companyId,
             label,
-            price: numericPrice,
+            price: Number(price),
             basePlanId: selectedPlanId,
             features: features.map((f) => ({
               key: f.key,
@@ -118,13 +117,8 @@ export function CompanyCustomPlanDialog({
             })),
           }),
         });
-
-        const data = await res.json();
-        if (!res.ok || !data.success) {
-          throw new Error(data?.message || "Failed to create custom plan");
-        }
-        setOpen(false);
-      } catch (error: any) {
+        if (res.ok) setOpen(false);
+      } catch (error) {
         console.error(error);
       }
     });
@@ -133,139 +127,170 @@ export function CompanyCustomPlanDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button
-          className="rounded-xl px-4 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-[#6571FF] to-[#5a66ee] shadow-[0_4px_14px_0_rgba(101,113,255,0.39)] hover:shadow-[0_6px_20px_rgba(101,113,255,0.23)] hover:-translate-y-0.5 active:translate-y-0 active:scale-100 transition-all duration-300 ease-in-out"
-          type="button"
-        >
+        <button className="group flex items-center gap-2 rounded-xl bg-gradient-to-br from-[#6571FF] to-[#5a66ee] px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-[#6571FF]/20 transition-all hover:-translate-y-0.5 hover:shadow-[#6571FF]/40 active:scale-95">
+          <Settings2
+            size={16}
+            className="transition-transform group-hover:rotate-45"
+          />
           Configure Plan
-        </Button>
+        </button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle className="text-base font-semibold text-slate-800">
-            Configure Custom Plan
-          </DialogTitle>
-        </DialogHeader>
-        <div className="mt-2 space-y-5">
-          <p className="text-xs text-slate-500">
-            Start from an existing package, then fine-tune price and feature
-            limits for this specific shop.
-          </p>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                Base plan template
-              </label>
-              <select
-                value={selectedPlanId}
-                onChange={(e) => handlePlanChange(e.target.value)}
-                className="w-full rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2 text-xs font-medium text-slate-700 shadow-sm focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-200"
-              >
-                {plans.map((plan) => (
-                  <option key={plan.id} value={plan.id}>
-                    {plan.name}
-                  </option>
-                ))}
-              </select>
+      <DialogContent className="max-w-2xl overflow-hidden rounded-[2.5rem] border-none bg-white/90 dark:bg-slate-950/90 p-0 shadow-2xl backdrop-blur-2xl ring-1 ring-slate-900/5 dark:ring-white/10">
+        {/* Header Branding */}
+        <div className="flex items-center justify-between border-b border-slate-200/50 dark:border-slate-800/50 px-8 py-6">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600 dark:bg-slate-900 dark:text-slate-400">
+              <Layers size={20} />
             </div>
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                Plan display name
+            <div>
+              <DialogTitle className="text-lg font-bold text-slate-900 dark:text-white">
+                Custom Configuration
+              </DialogTitle>
+              <p className="text-xs font-medium text-slate-500 tracking-tight">
+                Tailoring features for Company #{companyId}
+              </p>
+            </div>
+          </div>
+          <div className="hidden items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-bold text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 sm:flex">
+            <ShieldCheck size={12} /> Live Sync
+          </div>
+        </div>
+
+        <div className="p-8 space-y-8">
+          {/* Base Settings Grid */}
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <div className="space-y-2">
+              <label className="ml-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                Base Template
+              </label>
+              <div className="relative">
+                <select
+                  value={selectedPlanId}
+                  onChange={(e) => handlePlanChange(e.target.value)}
+                  className="w-full appearance-none rounded-xl border-none bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700 outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-[#6571FF] dark:bg-slate-900 dark:text-slate-200 dark:ring-slate-800"
+                >
+                  {plans.map((plan) => (
+                    <option key={plan.id} value={plan.id}>
+                      {plan.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="ml-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                Public Label
               </label>
               <Input
-                name="custom_label"
+                name="CUSTOM LABEL"
                 value={label}
                 onChange={(e: any) => setLabel(e.target.value)}
-                className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                className="h-11 rounded-xl border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-[#6571FF] dark:ring-slate-800 px-4"
               />
             </div>
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                Monthly price (USD)
+
+            <div className="md:col-span-2 space-y-2">
+              <label className="ml-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                Monthly Rate (USD)
               </label>
-              <Input
-                name="custom_price"
-                type="number"
-                value={price}
-                onChange={(e: any) => setPrice(e.target.value)}
-                className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-              />
+              <div className="relative">
+                <div className="absolute left-4 top-3 text-slate-400">
+                  <DollarSign size={18} />
+                </div>
+                <Input
+                  name="price"
+                  type="number"
+                  value={price}
+                  onChange={(e: any) => setPrice(e.target.value)}
+                  className="h-11 rounded-xl border-none pl-10 font-bold text-[#00b8b0] ring-1 ring-slate-200 focus:ring-2 focus:ring-emerald-500 dark:ring-slate-800"
+                />
+              </div>
             </div>
           </div>
 
-          <div className="mt-1 max-h-80 space-y-2 overflow-y-auto rounded-xl border border-slate-200 bg-slate-50/60 p-3">
-            <div className="mb-1 flex items-center justify-between">
-              <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                Feature limits & toggles
-              </div>
-              <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
-                {features.length} items
+          {/* Feature List Section */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between px-1">
+              <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                <Info size={12} /> Entitlement Overrides
+              </h4>
+              <span className="rounded-lg bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500 dark:bg-slate-800">
+                {features.length} features
               </span>
             </div>
-            {features.length === 0 && (
-              <p className="text-xs text-slate-500">
-                No features defined for this plan.
-              </p>
-            )}
-            {features.map((feature, index) => (
-              <div
-                key={`${feature.key}-${index}`}
-                className="flex items-center justify-between gap-3 border-b border-slate-100 py-1.5 last:border-b-0"
-              >
-                <div className="flex-1">
-                  <div className="text-xs font-medium text-slate-700">
-                    {feature.key}
-                  </div>
-                  <div className="text-[11px] uppercase text-slate-400">
-                    {feature.type}
-                  </div>
-                </div>
-                <div className="w-32">
-                  {feature.type === "BOOLEAN" ? (
-                    <select
-                      value={feature.value === "true" ? "true" : "false"}
-                      onChange={(e) =>
-                        handleFeatureChange(index, e.target.value)
-                      }
-                      className="w-full rounded-lg border border-slate-300 bg-white px-2 py-1 text-[11px] font-medium text-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                    >
-                      <option value="true">Enabled</option>
-                      <option value="false">Disabled</option>
-                    </select>
-                  ) : (
-                    <Input
-                      name={feature.key}
-                      value={feature.value}
-                      onChange={(e: any) =>
-                        handleFeatureChange(index, e.target.value)
-                      }
-                      className="h-8 w-full rounded-lg border border-slate-200 bg-white px-2 text-[11px] shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-200"
-                    />
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
 
-          <div className="mt-4 flex justify-end gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setOpen(false)}
-              className="h-9 px-3 text-xs"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              onClick={handleSubmit}
-              disabled={isPending}
-              className="h-9 px-4 text-xs font-semibold"
-            >
-              {isPending ? "Saving..." : "Save Custom Plan"}
-            </Button>
+            <div className="max-h-72 overflow-y-auto rounded-[1.5rem] border border-slate-200/60 bg-slate-50/50 p-2 dark:border-slate-800/60 dark:bg-slate-900/40 custom-scrollbar overflow-x-hidden">
+              {features.map((feature, index) => (
+                <div
+                  key={`${feature.key}-${index}`}
+                  className="group flex items-center justify-between gap-4 rounded-xl px-4 py-3 transition-colors hover:bg-white dark:hover:bg-slate-800/50"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-bold text-slate-700 dark:text-slate-200">
+                      {formatKey(feature.key)}
+                    </p>
+                    <p className="text-[10px] font-medium uppercase text-slate-400 tracking-tighter">
+                      {feature.type}
+                    </p>
+                  </div>
+
+                  <div className="w-36 flex-shrink-0">
+                    {feature.type === "BOOLEAN" ? (
+                      <div className="flex h-9 rounded-lg bg-slate-200 p-1 dark:bg-slate-800">
+                        {["true", "false"].map((val) => (
+                          <button
+                            key={val}
+                            onClick={() => handleFeatureChange(index, val)}
+                            className={`flex-1 rounded-md text-[10px] font-black transition-all ${
+                              feature.value === val
+                                ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white"
+                                : "text-slate-500"
+                            }`}
+                          >
+                            {val === "true" ? "ENABLED" : "DISABLED"}
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <Input
+                        name="label"
+                        value={feature.value}
+                        onChange={(e: any) =>
+                          handleFeatureChange(index, e.target.value)
+                        }
+                        className="px-4 w-full h-9 rounded-lg border-none text-right font-mono text-[11px] font-bold text-[#6571FF] ring-1 ring-slate-200 focus:ring-2 focus:ring-[#6571FF] dark:ring-slate-700"
+                      />
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
+        </div>
+
+        {/* Footer Actions */}
+        <div className="flex items-center justify-end gap-3 border-t border-slate-200/50 bg-slate-50/50 px-8 py-6 dark:border-slate-800/50 dark:bg-slate-900/50">
+          <button
+            onClick={() => setOpen(false)}
+            className="text-xs font-bold text-slate-500 transition-colors hover:text-slate-800 dark:hover:text-slate-300"
+          >
+            Discard Changes
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={isPending}
+            className="group relative flex items-center gap-2 overflow-hidden rounded-xl bg-slate-900 px-6 py-2.5 text-xs font-bold text-white transition-all hover:bg-slate-800 dark:bg-white dark:text-slate-900"
+          >
+            {isPending ? (
+              <Loader2 size={14} className="animate-spin" />
+            ) : (
+              <Save size={14} />
+            )}
+            {isPending ? "Syncing..." : "Apply Custom Plan"}
+            <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-1000 group-hover:translate-x-full" />
+          </button>
         </div>
       </DialogContent>
     </Dialog>

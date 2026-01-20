@@ -51,7 +51,7 @@ export async function subscribeToPlatformPlan({
         email,
         firstName,
         lastName,
-        opaqueData
+        opaqueData,
       );
       customerProfileId = cim.customerProfileId;
       customerPaymentProfileId = cim.customerPaymentProfileId;
@@ -67,7 +67,7 @@ export async function subscribeToPlatformPlan({
         customerProfileId,
         firstName,
         lastName,
-        opaqueData
+        opaqueData,
       );
       customerPaymentProfileId = pp.customerPaymentProfileId;
     }
@@ -91,6 +91,11 @@ export async function subscribeToPlatformPlan({
         const card = currentPP.getPayment
           ? currentPP.getPayment().getCreditCard()
           : currentPP.payment?.creditCard;
+        // Ensure only the latest method is marked as default
+        await db.platformPaymentMethod.updateMany({
+          where: { billingCustomerId: billingCustomer!.id },
+          data: { isDefault: false },
+        });
         await db.platformPaymentMethod.upsert({
           where: { authNetPaymentProfileId: customerPaymentProfileId! },
           update: {
