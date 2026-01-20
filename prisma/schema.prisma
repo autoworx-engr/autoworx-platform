@@ -2428,3 +2428,95 @@ model VehicleParts {
   invoice      Invoice?    @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
   service      Service?    @relation(fields: [serviceId], references: [id], onDelete: Cascade)
 }
+
+//TODO: Ai sales agent configuration for a company
+model CompanyInfo {
+  id                  String   @id @default(uuid())
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+  
+  // Basic Info
+  shopName            String   @map("shop_name")
+  about               String?
+  address             String?
+  email               String?
+  phone               String?
+  websiteUrl          String?  @map("website_url")
+  hours               String?
+  policies            String?
+  
+  // Personal & AI Configuration
+  personalName         String?  @map("personal_name")
+  personalType         String?  @map("personal_type")
+  systemPrompt        String?  @db.Text @map("system_prompt")
+  openingMessage      String?  @map("opening_message")
+  conversationStyle   Json?    @map("conversation_style")
+  personality         Json?
+  
+  // Operations
+  services            Json?
+  pricing             Json?
+  overallFaqs         Json?    @map("overall_faqs")
+  
+  // Settings
+  smsResponseDelayMin Int      @map("sms_response_delay_min")
+  smsResponseDelayMax Int      @map("sms_response_delay_max")
+
+  @@map("company_info")
+}
+
+model ConversationExample {
+  id            String   @id @default(uuid())
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  
+  imageUrl      String   @map("image_url")
+  extractedText String?  @map("extracted_text")
+  notes         String?
+
+  @@map("conversation_examples")
+}
+
+model KnowledgeBaseDocument {
+  id          String   @id @default(uuid())
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  
+  title       String
+  category    String
+  content     String
+  status      String
+  
+  // File Metadata
+  fileName    String?  @map("file_name")
+  fileType    String?  @map("file_type")
+  fileUrl     String?  @map("file_url")
+
+  @@map("knowledge_base_documents")
+}
+
+model ServicePlaybook {
+  id              String   @id @default(uuid())
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  
+  serviceName     String   @map("service_name")
+  category        String
+  isActive        Boolean  @default(true) @map("is_active")
+  
+  // Details
+  overview        String?
+  timeEstimate    String?  @map("time_estimate")
+  schedulingNotes String?  @map("scheduling_notes")
+  warrantyPolicy  String?  @map("warranty_policy")
+  
+  // AI Instructions (Json fields based on types)
+  intakeQuestions Json     @map("intake_questions")
+  pricingRules    Json     @map("pricing_rules")
+  upsells         Json
+  faqs            Json
+  doSay           Json     @map("do_say")
+  dontSay         Json     @map("dont_say")
+
+  @@map("service_playbooks")
+}
