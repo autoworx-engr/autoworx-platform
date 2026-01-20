@@ -1,5 +1,12 @@
 import { db } from "@/lib/db";
-import { PlatformSubscriptionStatus } from "@prisma/client";
+import {
+  PlatformFeatureType,
+  PlatformSubscriptionStatus,
+} from "@prisma/client";
+import {
+  normalizeFeatureKey,
+  parseFeatureValue,
+} from "@/lib/platform-billing/entitlements";
 
 export type Entitlements = {
   canUseVoice: boolean;
@@ -31,7 +38,9 @@ const DEFAULT_ENTITLEMENTS: Entitlements = {
  * Resolves the current entitlements for a company.
  * Caches results (TODO: Redis/Memory cache) to avoid DB hits on every request.
  */
-export async function getCompanyEntitlements(companyId: number): Promise<Entitlements> {
+export async function getCompanyEntitlements(
+  companyId: number
+): Promise<Entitlements> {
   const subscription = await db.platformSubscription.findUnique({
     where: { companyId },
     include: {
@@ -43,37 +52,47 @@ export async function getCompanyEntitlements(companyId: number): Promise<Entitle
     },
   });
 
-  if (!subscription || subscription.status === PlatformSubscriptionStatus.CANCELED || subscription.status === PlatformSubscriptionStatus.UNPAID) {
+  if (
+    !subscription ||
+    subscription.status === PlatformSubscriptionStatus.CANCELED ||
+    subscription.status === PlatformSubscriptionStatus.UNPAID
+  ) {
     return DEFAULT_ENTITLEMENTS;
   }
 
-  const features = (subscription as any).plan.features;
+  const features = (subscription as any).plan.features as {
+    featureKey: string;
+    value: string;
+    type: PlatformFeatureType;
+  }[];
   const entitlements: Entitlements = { ...DEFAULT_ENTITLEMENTS };
 
   features.forEach((f: any) => {
-    const key = convertSnakeToCamel(f.featureKey);
-    if (f.type === "BOOLEAN") {
-      (entitlements as any)[key] = f.value === "true";
-    } else if (f.type === "NUMERIC") {
-      (entitlements as any)[key] = parseInt(f.value);
-    } else if (f.type === "TEXT" && key === "automationModules") {
-      entitlements.automationModules = f.value.split(",").map((s: string) => s.trim());
+    const key = normalizeFeatureKey(f.featureKey);
+
+    // Special handling: automationModules is stored as comma-separated TEXT
+    if (f.type === PlatformFeatureType.TEXT && key === "automationModules") {
+      entitlements.automationModules = f.value
+        .split(",")
+        .map((s: string) => s.trim())
+        .filter(Boolean);
+      return;
     }
+
+    const parsed = parseFeatureValue(f.type, f.value);
+    (entitlements as any)[key] = parsed;
   });
 
   return entitlements;
 }
 
-function convertSnakeToCamel(str: string) {
-  return str.replace(/([-_][a-z])/g, (group) =>
-    group.toUpperCase().replace("-", "").replace("_", "")
-  );
-}
-
 /**
  * Fast check for a specific feature
  */
-export async function hasFeature(companyId: number, feature: keyof Entitlements): Promise<boolean> {
+export async function hasFeature(
+  companyId: number,
+  feature: keyof Entitlements
+): Promise<boolean> {
   const ents = await getCompanyEntitlements(companyId);
   const val = ents[feature];
   if (typeof val === "boolean") return val;
@@ -84,7 +103,10 @@ export async function hasFeature(companyId: number, feature: keyof Entitlements)
 /**
  * Check if the company can add another automation rule
  */
-export async function canAddAutomationRule(companyId: number, currentCount: number): Promise<boolean> {
+export async function canAddAutomationRule(
+  companyId: number,
+  currentCount: number
+): Promise<boolean> {
   const ents = await getCompanyEntitlements(companyId);
   if (ents.maxAutomationRules === -1) return true; // Unlimited
   return currentCount < ents.maxAutomationRules;

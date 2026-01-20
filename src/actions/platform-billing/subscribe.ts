@@ -1,9 +1,25 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { createPlatformARBSubscription, createPlatformCustomerProfile, createPlatformPaymentProfile, cancelPlatformARBSubscription, chargePlatformCustomerProfile, getCustomerProfile } from "@/lib/platform-billing/authorize-net";
+import {
+  createPlatformARBSubscription,
+  createPlatformCustomerProfile,
+  createPlatformPaymentProfile,
+  cancelPlatformARBSubscription,
+  chargePlatformCustomerProfile,
+  getCustomerProfile,
+} from "@/lib/platform-billing/authorize-net";
 import { PlatformSubscriptionStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+
+type SubscribeToPlatformPlanInput = {
+  companyId: number;
+  planId: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  opaqueData: { dataDescriptor: string; dataValue: string };
+};
 
 export async function subscribeToPlatformPlan({
   companyId,
@@ -12,14 +28,7 @@ export async function subscribeToPlatformPlan({
   firstName,
   lastName,
   opaqueData,
-}: {
-  companyId: number;
-  planId: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  opaqueData: { dataDescriptor: string; dataValue: string };
-}) {
+}: SubscribeToPlatformPlanInput) {
   try {
     const plan = await db.platformPlan.findUnique({
       where: { id: planId },
@@ -37,7 +46,13 @@ export async function subscribeToPlatformPlan({
 
     if (!customerProfileId) {
       // Create new CIM profile
-      const cim = await createPlatformCustomerProfile(companyId, email, firstName, lastName, opaqueData);
+      const cim = await createPlatformCustomerProfile(
+        companyId,
+        email,
+        firstName,
+        lastName,
+        opaqueData
+      );
       customerProfileId = cim.customerProfileId;
       customerPaymentProfileId = cim.customerPaymentProfileId;
 
@@ -48,36 +63,57 @@ export async function subscribeToPlatformPlan({
       });
     } else {
       // Add new payment profile to existing customer
-      const pp = await createPlatformPaymentProfile(customerProfileId, firstName, lastName, opaqueData);
+      const pp = await createPlatformPaymentProfile(
+        customerProfileId,
+        firstName,
+        lastName,
+        opaqueData
+      );
       customerPaymentProfileId = pp.customerPaymentProfileId;
     }
 
     // 1.5 Sync Payment Method details to DB
     try {
       const profile = await getCustomerProfile(customerProfileId!);
-      const pps = typeof profile.getPaymentProfiles === 'function' ? profile.getPaymentProfiles() : (profile.paymentProfiles || []);
+      const pps =
+        typeof profile.getPaymentProfiles === "function"
+          ? profile.getPaymentProfiles()
+          : profile.paymentProfiles || [];
       const currentPP = pps.find((p: any) => {
-        const id = typeof p.getCustomerPaymentProfileId === 'function' ? p.getCustomerPaymentProfileId() : (p.customerPaymentProfileId || p.paymentProfileId);
+        const id =
+          typeof p.getCustomerPaymentProfileId === "function"
+            ? p.getCustomerPaymentProfileId()
+            : p.customerPaymentProfileId || p.paymentProfileId;
         return id === customerPaymentProfileId;
       });
 
       if (currentPP) {
-        const card = currentPP.getPayment ? currentPP.getPayment().getCreditCard() : (currentPP.payment?.creditCard);
+        const card = currentPP.getPayment
+          ? currentPP.getPayment().getCreditCard()
+          : currentPP.payment?.creditCard;
         await db.platformPaymentMethod.upsert({
           where: { authNetPaymentProfileId: customerPaymentProfileId! },
           update: {
             cardType: card?.getCardType ? card.getCardType() : card?.cardType,
-            last4: card?.getCardNumber ? card.getCardNumber().slice(-4) : card?.cardNumber?.slice(-4),
-            expiry: card?.getExpirationDate ? card.getExpirationDate() : card?.expirationDate,
+            last4: card?.getCardNumber
+              ? card.getCardNumber().slice(-4)
+              : card?.cardNumber?.slice(-4),
+            expiry: card?.getExpirationDate
+              ? card.getExpirationDate()
+              : card?.expirationDate,
           },
           create: {
             billingCustomerId: billingCustomer!.id,
             authNetPaymentProfileId: customerPaymentProfileId!,
             cardType: card?.getCardType ? card.getCardType() : card?.cardType,
-            last4: card?.getCardNumber ? card.getCardNumber().slice(-4) : card?.cardNumber?.slice(-4),
-            expiry: card?.getExpirationDate ? card.getExpirationDate() : card?.expirationDate,
+            last4: card?.getCardNumber
+              ? card.getCardNumber().slice(-4)
+              : card?.cardNumber?.slice(-4),
+            expiry: card?.getExpirationDate
+              ? card.getExpirationDate()
+              : card?.expirationDate,
             isDefault: true,
-          }
+          },
         });
       }
     } catch (err) {
@@ -87,7 +123,7 @@ export async function subscribeToPlatformPlan({
 
     // 2. Handle Existing Subscription (if any)
     const existingSub = await db.platformSubscription.findUnique({
-      where: { companyId }
+      where: { companyId },
     });
 
     if (existingSub?.authNetSubscriptionId) {
@@ -122,9 +158,6 @@ export async function subscribeToPlatformPlan({
     });
 
     // 3. Update DB
-    const nextPeriodEnd = new Date();
-    nextPeriodEnd.setMonth(nextPeriodEnd.getMonth() + 1);
-
     if (!billingCustomer) throw new Error("Billing customer record not found");
 
     const subscription = await db.platformSubscription.upsert({

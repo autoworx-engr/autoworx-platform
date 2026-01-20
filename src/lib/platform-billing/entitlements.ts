@@ -3,14 +3,14 @@ import { PlatformFeatureType } from "@prisma/client";
 
 export type PlatformEntitlements = Record<string, boolean | number | string>;
 
-function normalizeFeatureKey(featureKey: string): string {
+export function normalizeFeatureKey(featureKey: string): string {
   // Convert snake_case or kebab-case keys to camelCase for easier usage in TS.
   return featureKey
     .toLowerCase()
     .replace(/[-_]+([a-z0-9])/g, (_, ch: string) => ch.toUpperCase());
 }
 
-function parseFeatureValue(
+export function parseFeatureValue(
   type: PlatformFeatureType,
   raw: string
 ): boolean | number | string {
