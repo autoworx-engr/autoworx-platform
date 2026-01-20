@@ -17,6 +17,7 @@ const PUBLIC_API_ROUTES = [
   // Webhook endpoints
   "/api/stripe/invoice-pay-hook",
   "/api/twilio/token",
+  "/api/twilio/register-voip",
   "/api/infobip",
   "/api/lead-generate",
   "/api/authorize-net/webhook",
@@ -28,6 +29,7 @@ const PUBLIC_API_ROUTES = [
   "/api/twilio/incoming",
   "/api/twilio/receive",
   "/api/twilio/token",
+  "/api/invoice/track-view",
 ];
 
 const PUBLIC_DYNAMIC_API_ROUTES = [
@@ -37,7 +39,7 @@ const PUBLIC_DYNAMIC_API_ROUTES = [
 ];
 
 const isDynamicPublicApiRoute = (pathname: string) => {
-  const isPublic = PUBLIC_DYNAMIC_API_ROUTES.some((route) => {
+  const isPublic = PUBLIC_DYNAMIC_API_ROUTES.some(route => {
     const pattern = new URLPattern({ pathname: route });
     return pattern.test({ pathname: pathname });
   });
@@ -49,10 +51,10 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const authHeader = request.headers.get("authorization");
-  console.log({
-    isDynamicPublicApiRoute: isDynamicPublicApiRoute(pathname),
-    publicApiRoute: PUBLIC_API_ROUTES.includes(pathname),
-  });
+  // console.log({
+  //   isDynamicPublicApiRoute: isDynamicPublicApiRoute(pathname),
+  //   publicApiRoute: PUBLIC_API_ROUTES.includes(pathname),
+  // });
   const isExternalApiRequest =
     !token &&
     pathname.startsWith("/api/") &&
@@ -60,9 +62,9 @@ export async function middleware(request: NextRequest) {
       isDynamicPublicApiRoute(pathname) || PUBLIC_API_ROUTES.includes(pathname)
     );
 
-  console.log("Middleware - isExternalApiRequest:", isExternalApiRequest);
-  console.log("Middleware - Authorization Header:", authHeader);
-  console.log("Middleware - Request Pathname:", pathname);
+  // console.log("Middleware - isExternalApiRequest:", isExternalApiRequest);
+  // console.log("Middleware - Authorization Header:", authHeader);
+  // console.log("Middleware - Request Pathname:", pathname);
 
   // check api access token
   if (!authHeader && isExternalApiRequest) {
