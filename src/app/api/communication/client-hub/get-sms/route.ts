@@ -42,14 +42,6 @@ import getSms from "@/app/(dashboard)/dashboard/communication/client/_actions/ge
  *         description: Page number (1-based)
  *         example: 1
  *
- *       - in: query
- *         name: params
- *         required: false
- *         description: Prisma ClientSMSFindManyArgs as JSON string
- *         schema:
- *           type: string
- *         example: '{"orderBy":{"createdAt":"desc"}}'
- *
  *     responses:
  *       200:
  *         description: SMS messages retrieved successfully
@@ -93,7 +85,7 @@ export async function GET(req: NextRequest) {
     if (!clientIdParam) {
       return NextResponse.json(
         { success: false, message: "clientId is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -101,7 +93,7 @@ export async function GET(req: NextRequest) {
     if (isNaN(clientId)) {
       return NextResponse.json(
         { success: false, message: "clientId must be a valid number" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -114,7 +106,7 @@ export async function GET(req: NextRequest) {
         skip: (Number(page) - 1) * Number(take) || 20,
         orderBy: { createdAt: "desc" },
       },
-      companyId
+      companyId,
     );
 
     return NextResponse.json({
@@ -128,7 +120,7 @@ export async function GET(req: NextRequest) {
         success: false,
         message: error.message || "Failed to retrieve SMS messages",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
