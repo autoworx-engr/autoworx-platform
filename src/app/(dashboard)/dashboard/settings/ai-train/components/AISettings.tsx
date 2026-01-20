@@ -467,7 +467,7 @@ const AISettings = () => {
               <div className="grid gap-6 md:grid-cols-2">
                 {/* Basic Info */}
                 <div className="space-y-4">
-                  <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
+                  <h3 className="font-semibold text-sm uppercase tracking-wide">
                     Basic Information
                   </h3>
                   <div className="space-y-3">
@@ -584,7 +584,7 @@ const AISettings = () => {
 
                 {/* About & Policies */}
                 <div className="space-y-4">
-                  <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
+                  <h3 className="font-semibold text-sm uppercase tracking-wide">
                     About & Policies
                   </h3>
                   <div className="space-y-3">

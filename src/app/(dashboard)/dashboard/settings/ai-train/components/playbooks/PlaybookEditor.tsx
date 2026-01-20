@@ -30,18 +30,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Trash2, Save, X, GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const categories: { value: ServiceCategory; label: string; icon: string }[] = [
-  { value: "vinyl_wrap", label: "Vinyl Wrap", icon: "🎨" },
-  { value: "ppf", label: "Paint Protection Film", icon: "🛡️" },
-  { value: "tint", label: "Window Tinting", icon: "🕶️" },
-  { value: "ceramic_coating", label: "Ceramic Coating", icon: "✨" },
-  { value: "detailing", label: "Detailing", icon: "🧽" },
-  { value: "audio", label: "Car Audio", icon: "🔊" },
-  { value: "lighting", label: "Lighting", icon: "💡" },
-  { value: "paint", label: "Paint", icon: "🖌️" },
-  { value: "powder_coat", label: "Powder Coating", icon: "⚙️" },
-  { value: "auto_body", label: "Auto Body", icon: "🔧" },
-  { value: "other", label: "Other", icon: "📦" },
+const categories: { value: ServiceCategory; label: string }[] = [
+  { value: "vinyl_wrap", label: "Vinyl Wrap" },
+  { value: "ppf", label: "Paint Protection Film" },
+  { value: "tint", label: "Window Tinting" },
+  { value: "ceramic_coating", label: "Ceramic Coating" },
+  { value: "detailing", label: "Detailing" },
+  { value: "audio", label: "Car Audio" },
+  { value: "lighting", label: "Lighting" },
+  { value: "paint", label: "Paint" },
+  { value: "powder_coat", label: "Powder Coating" },
+  { value: "auto_body", label: "Auto Body" },
+  { value: "other", label: "Other" },
 ];
 
 interface PlaybookEditorProps {
@@ -228,10 +228,7 @@ export function PlaybookEditor({
                     <SelectContent>
                       {categories.map((cat) => (
                         <SelectItem key={cat.value} value={cat.value}>
-                          <span className="flex items-center gap-2">
-                            <span>{cat.icon}</span>
-                            <span>{cat.label}</span>
-                          </span>
+                          <span>{cat.label}</span>
                         </SelectItem>
                       ))}
                     </SelectContent>
