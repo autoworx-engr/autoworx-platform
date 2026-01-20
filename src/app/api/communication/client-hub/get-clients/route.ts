@@ -187,7 +187,21 @@ export async function GET(req: NextRequest) {
 
     if (!companyId) {
       return NextResponse.json(
-        { success: false, message: "companyId is required" },
+        { success: false, message: "Company Id is required" },
+        { status: 400 },
+      );
+    }
+
+    if (!userId) {
+      return NextResponse.json(
+        { success: false, message: "User Id is required" },
+        { status: 400 },
+      );
+    }
+
+    if (!takeParam) {
+      return NextResponse.json(
+        { success: false, message: "Take is required" },
         { status: 400 },
       );
     }
