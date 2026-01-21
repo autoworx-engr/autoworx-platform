@@ -2,16 +2,23 @@
 
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
+import { Prisma } from "@prisma/client";
 import { cache } from "react";
 
 export const fetchMailsMailgun = cache(
-  async (clientId: number, companyId?: number) => {
+  async (
+    clientId: number,
+    companyId?: number,
+    params?: Prisma.MailgunEmailFindManyArgs,
+  ) => {
+    const { where, ...restParams } = params || {};
     try {
       let cId = companyId || (await getCompanyId());
       const mailgunMails = await db.mailgunEmail.findMany({
         where: {
           clientId: clientId,
           companyId: cId,
+          ...(where || {}),
         },
         include: {
           attachments: true,
@@ -22,6 +29,7 @@ export const fetchMailsMailgun = cache(
             },
           },
         },
+        ...restParams,
       });
 
       return { success: true, data: mailgunMails };
@@ -29,7 +37,7 @@ export const fetchMailsMailgun = cache(
       console.error("", error);
       return { success: false };
     }
-  }
+  },
 );
 
 export const updateLastMailReadId = async ({
