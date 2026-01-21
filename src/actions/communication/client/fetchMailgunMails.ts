@@ -15,6 +15,7 @@ export const fetchMailsMailgun = cache(
     try {
       let cId = companyId || (await getCompanyId());
       const mailgunMails = await db.mailgunEmail.findMany({
+        ...restParams,
         where: {
           clientId: clientId,
           companyId: cId,
@@ -29,7 +30,6 @@ export const fetchMailsMailgun = cache(
             },
           },
         },
-        ...restParams,
       });
 
       return { success: true, data: mailgunMails };
