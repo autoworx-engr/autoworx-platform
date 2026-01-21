@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import moment from "moment";
 import Link from "next/link";
+import { useEffect, useRef } from "react";
 
 type TAppointmentTooltipProps = {
   event: Appointment & {
@@ -48,8 +49,38 @@ export default function AppointmentTooltip({
   onModalOpen,
   onClose,
 }: TAppointmentTooltipProps) {
+  const tooltipRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Handle outside clicks
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        tooltipRef.current &&
+        !tooltipRef.current.contains(e.target as Node)
+      ) {
+        onClose?.();
+      }
+    };
+
+    // Handle scroll events
+    const handleScroll = () => {
+      onClose?.();
+    };
+
+    // Add event listeners
+    document.addEventListener("mousedown", handleClickOutside);
+    window.addEventListener("scroll", handleScroll, true);
+
+    // Cleanup
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("scroll", handleScroll, true);
+    };
+  }, [onClose]);
+
   return (
     <div
+      ref={tooltipRef}
       onClick={(e) => e.stopPropagation()}
       onMouseDown={(e) => e.stopPropagation()}
     >
