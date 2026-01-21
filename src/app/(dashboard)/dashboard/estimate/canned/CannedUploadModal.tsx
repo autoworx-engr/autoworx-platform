@@ -21,7 +21,7 @@ import type { JSX } from "react/jsx-runtime"; // Declare JSX variable
 
 interface FileUploadModalProps {
   buttonElement?: JSX.Element;
-  companyId?:string
+  companyId?: string;
 }
 
 type UploadType = "labor" | "service";
@@ -29,16 +29,19 @@ type UploadType = "labor" | "service";
 const uploadConfig: Record<UploadType, { label: string; sampleFile: string }> =
   {
     labor: {
-      label: "Canned Upload",
-      sampleFile: "/sample_canned_service.xlsx",
+      label: "Canned Labor Upload",
+      sampleFile: "/sample_labor_service.xlsx",
     },
     service: {
-      label: "Service Upload",
-      sampleFile: "/sample_labor_service.xlsx",
+      label: "Canned Service Upload",
+      sampleFile: "/sample_canned_service.xlsx",
     },
   };
 
-export function CannedUploadModal({ buttonElement, companyId }: FileUploadModalProps) {
+export function CannedUploadModal({
+  buttonElement,
+  companyId,
+}: FileUploadModalProps) {
   const { isUploadCannedOpen, setIsUploadCannedOpen } = stateStore();
   const currentUser = useGetCurrentUser();
 
