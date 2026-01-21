@@ -191,7 +191,7 @@ const NetworksPage = ({
               </p>
             )}
 
-            <div className="space-y-4">
+            <div className="space-y-4 lg:max-h-72 lg:overflow-y-auto thin-scrollbar pb-4">
               {active.map(
                 ({
                   company,
