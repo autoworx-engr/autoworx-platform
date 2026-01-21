@@ -17,9 +17,27 @@ import { fetchMailsMailgun } from "@/actions/communication/client/fetchMailgunMa
  *           type: number
  *       - in: query
  *         name: companyId
- *         required: false
+ *         required: true
  *         schema:
  *           type: number
+ *       - in: query
+ *         name: take
+ *         required: true
+ *         schema:
+ *           type: number
+ *           default: 20
+ *         description: Number of records per page
+ *         example: 10
+ *
+ *       - in: query
+ *         name: page
+ *         required: true
+ *         schema:
+ *           type: number
+ *           default: 1
+ *         description: Page number (1-based)
+ *         example: 1
+ *
  *     responses:
  *       200:
  *         description: All mails retrieved successfully
@@ -77,10 +95,25 @@ import { fetchMailsMailgun } from "@/actions/communication/client/fetchMailgunMa
  *                         type: object
  *                         nullable: true
  *                         example: null
- *       401:
- *         description: Unauthorized
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *             example:
+ *               success: false
+ *               message: clientId is required
+ *
  *       500:
  *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *             example:
+ *               success: false
+ *               message: Failed to retrieve SMS messages
  */
 
 export async function GET(req: NextRequest) {
@@ -90,20 +123,38 @@ export async function GET(req: NextRequest) {
     const companyId = searchParams.get("companyId")
       ? parseInt(searchParams.get("companyId")!)
       : undefined;
+    const take = searchParams.get("take");
+    const page = searchParams.get("page");
 
     if (!clientId) {
       return NextResponse.json(
         { success: false, message: "clientId is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    const data = await fetchMailsMailgun(clientId, companyId);
+    if (!companyId) {
+      return NextResponse.json(
+        { success: false, message: "companyId is required" },
+        { status: 400 },
+      );
+    }
+
+    const takeNumber = Number(take) || 20;
+    const pageNumber = Number(page) || 1;
+
+    const skip = (pageNumber - 1) * takeNumber;
+
+    const data = await fetchMailsMailgun(clientId, companyId, {
+      take: takeNumber,
+      skip,
+      orderBy: { createdAt: "desc" },
+    });
 
     if (!data.success) {
       return NextResponse.json(
         { success: false, message: "Failed to fetch emails" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -115,7 +166,7 @@ export async function GET(req: NextRequest) {
   } catch (error: any) {
     return NextResponse.json(
       { success: false, message: error.message },
-      { status: 400 }
+      { status: 400 },
     );
   }
 }
