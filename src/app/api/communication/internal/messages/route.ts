@@ -4,16 +4,89 @@ import { db } from "@/lib/db";
 import { Message } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
-type TParams = {
-  companyId: string;
-  to?: string;
-  from?: string;
-  groupId?: string;
-  sortBy?: string;
-  sortOrder?: "asc" | "desc";
-  page?: string;
-  limit?: string;
-};
+/**
+ * @swagger
+ * /api/communication/internal/messages:
+ *   get:
+ *     summary: Get internal messages
+ *     tags: [Communication Internal]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: to
+ *         required: false
+ *         schema:
+ *           type: integer
+ *         description: Recipient user ID
+ *       - in: query
+ *         name: from
+ *         required: false
+ *         schema:
+ *           type: integer
+ *         description: Sender user ID
+ *       - in: query
+ *         name: companyId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Company ID
+ *       - in: query
+ *         name: groupId
+ *         required: false
+ *         schema:
+ *           type: integer
+ *         description: Group ID
+ *       - in: query
+ *         name: sortBy
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Sort field (default: createdAt)
+ *       - in: query
+ *         name: sortOrder
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *         description: Sort order (default: desc)
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: Page number (default: 1)
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: Number of messages per page (default: 20)
+ *     responses:
+ *       200:
+ *         description: Messages fetched successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Message'
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: Bad request - missing or invalid parameters
+ *       404:
+ *         description: Company, user, or group not found
+ *       500:
+ *         description: Internal server error
+ */
 
 export async function GET(request: NextRequest) {
   try {
