@@ -89,6 +89,12 @@ import { NextRequest, NextResponse } from "next/server";
  *                       type: integer
  *                     limit:
  *                       type: integer
+ *                     totalPages:
+ *                       type: integer
+ *                     hasNextPage:
+ *                       type: boolean
+ *                     hasPrevPage
+ *                       type: boolean
  *       400:
  *         description: Bad request - missing or invalid parameters
  *       404:
@@ -223,6 +229,10 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    const hasNextPage = pageNum * limitNum < totalRecords;
+    const hasPrevPage = pageNum > 1;
+    const totalPages = Math.ceil(totalRecords / limitNum);
+
     return NextResponse.json(
       {
         success: true,
@@ -232,6 +242,9 @@ export async function GET(request: NextRequest) {
           totalRecords: totalRecords,
           page: pageNum,
           limit: limitNum,
+          totalPages,
+          hasNextPage,
+          hasPrevPage,
         },
       },
       { status: 200 },
