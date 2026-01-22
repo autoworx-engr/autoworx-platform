@@ -316,6 +316,10 @@ export const GET = async (req: NextRequest) => {
 export const PUT = async (req: NextRequest) => {
   try {
     const { groupId, name, users } = await req.json();
+
+    if (!groupId) {
+      throw new AppError(400, "Group ID is required");
+    }
     const findGroup = await db.group.findUnique({
       where: { id: groupId },
     });
