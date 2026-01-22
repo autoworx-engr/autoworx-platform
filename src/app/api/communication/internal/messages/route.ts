@@ -80,12 +80,27 @@ import { NextRequest, NextResponse } from "next/server";
  *                     $ref: '#/components/schemas/Message'
  *                 message:
  *                   type: string
+ *                 meta:
+ *                   type: object
+ *                   properties:
+ *                     totalRecords:
+ *                       type: integer
+ *                     page:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
  *       400:
  *         description: Bad request - missing or invalid parameters
  *       404:
  *         description: Company, user, or group not found
  *       500:
  *         description: Internal server error
+ * components:
+ *   securitySchemes:
+ *     bearerAuth:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
  */
 
 export async function GET(request: NextRequest) {
@@ -139,6 +154,7 @@ export async function GET(request: NextRequest) {
     }
 
     let messages: Message[] = [];
+    let totalRecords = 0;
     if (toId && fromId) {
       if (toId === fromId) {
         throw new AppError(400, "Cannot send message to oneself");
@@ -171,6 +187,12 @@ export async function GET(request: NextRequest) {
         skip: (pageNum - 1) * limitNum,
         take: limitNum,
       });
+      totalRecords = await db.message.count({
+        where: {
+          AND: [{ AND: [{ from: fromId }, { to: toId }] }, { groupId: null }],
+          section: "internal",
+        },
+      });
     } else if (groupIdNum) {
       const findGroup = await db.group.findUnique({
         where: { id: groupIdNum },
@@ -194,6 +216,11 @@ export async function GET(request: NextRequest) {
         skip: (pageNum - 1) * limitNum,
         take: limitNum,
       });
+      totalRecords = await db.message.count({
+        where: {
+          groupId: groupIdNum,
+        },
+      });
     }
 
     return NextResponse.json(
@@ -201,6 +228,11 @@ export async function GET(request: NextRequest) {
         success: true,
         data: messages,
         message: "Messages fetched successfully",
+        meta: {
+          totalRecords: totalRecords,
+          page: pageNum,
+          limit: limitNum,
+        },
       },
       { status: 200 },
     );
