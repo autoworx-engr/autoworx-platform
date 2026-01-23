@@ -24,8 +24,9 @@ export async function POST(req: NextRequest) {
     }
 
     const event = JSON.parse(bodyText);
+    console.log("🚀 ~ POST ~ event2:", event);
 
-    console.log("🔔 Platform Billing Webhook Received:", event.eventType);
+    console.log("🔔 Platform Billing Webhook Received2:", event.eventType);
 
     switch (event.eventType) {
       case "net.authorize.customer.subscription.created":
@@ -63,11 +64,18 @@ async function handleSubscriptionPayment(payload: any) {
   const subscriptionId =
     payload.subscription?.id ||
     payload.subscription?.subscriptionId ||
-    payload.subscriptionId ||
-    payload.id;
+    payload.subscriptionId;
 
   if (!subscriptionId) {
-    console.error("No subscription ID found in payload:", payload);
+    // Many payment.authcapture.created events are for standalone
+    // transactions (like the initial one-time charge) and do not
+    // include subscription information. We ignore those here and
+    // only process payments that are explicitly tied to a
+    // subscription.
+    console.log(
+      "Skipping payment webhook without subscription reference:",
+      payload,
+    );
     return;
   }
 
@@ -97,7 +105,7 @@ async function handleSubscriptionPayment(payload: any) {
   if (existingInvoice) {
     console.log(
       "Transaction already processed, skipping invoice creation:",
-      authNetTransId
+      authNetTransId,
     );
     return;
   }

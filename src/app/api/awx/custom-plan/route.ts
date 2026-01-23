@@ -36,16 +36,21 @@ export async function POST(req: NextRequest) {
           },
         });
 
-        if (existingSub.authNetSubscriptionId) {
+        // Only attempt to update ARB amount for active or past-due
+        // subscriptions that still have a remote id.
+        if (
+          existingSub.authNetSubscriptionId &&
+          (existingSub.status === "ACTIVE" || existingSub.status === "PAST_DUE")
+        ) {
           try {
             await updatePlatformARBSubscriptionAmount(
               existingSub.authNetSubscriptionId,
-              Number(result.plan.price)
+              Number(result.plan.price),
             );
           } catch (err) {
             console.error(
               "Failed to update ARB subscription amount for custom plan:",
-              err
+              err,
             );
           }
         }
@@ -60,7 +65,7 @@ export async function POST(req: NextRequest) {
         success: false,
         message: error?.message || "Failed to create custom plan",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

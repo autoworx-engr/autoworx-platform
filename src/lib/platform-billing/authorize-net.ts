@@ -1,5 +1,3 @@
-import { db } from "@/lib/db";
-
 const ApiContracts = require("authorizenet").APIContracts;
 const ApiControllers = require("authorizenet").APIControllers;
 const SDKConstants = require("authorizenet").Constants;
@@ -45,7 +43,7 @@ export async function createPlatformCustomerProfile(
   email: string,
   firstName: string,
   lastName: string,
-  opaqueData: { dataDescriptor: string; dataValue: string }
+  opaqueData: { dataDescriptor: string; dataValue: string },
 ) {
   const merchantAuthenticationType = getPlatformAuthNetCredentials();
 
@@ -58,7 +56,7 @@ export async function createPlatformCustomerProfile(
   const customerPaymentProfileType =
     new ApiContracts.CustomerPaymentProfileType();
   customerPaymentProfileType.setCustomerType(
-    ApiContracts.CustomerTypeEnum.INDIVIDUAL
+    ApiContracts.CustomerTypeEnum.INDIVIDUAL,
   );
   customerPaymentProfileType.setPayment(paymentType);
 
@@ -84,14 +82,14 @@ export async function createPlatformCustomerProfile(
     customerPaymentProfileId: string;
   }>((resolve, reject) => {
     const ctrl = new ApiControllers.CreateCustomerProfileController(
-      createRequest.getJSON()
+      createRequest.getJSON(),
     );
     ctrl.setEnvironment(getEnvironment());
 
     ctrl.execute(async () => {
       const apiResponse = ctrl.getResponse();
       const response = new ApiContracts.CreateCustomerProfileResponse(
-        apiResponse
+        apiResponse,
       );
 
       if (
@@ -114,7 +112,7 @@ export async function createPlatformCustomerProfile(
 
         if (errorCode === "E00039") {
           console.log(
-            "Detected duplicate customer profile, attempting recovery..."
+            "Detected duplicate customer profile, attempting recovery...",
           );
           const match = errorText.match(/(\d+)/);
           if (match) {
@@ -133,7 +131,7 @@ export async function createPlatformCustomerProfile(
                       pps[0].paymentProfileId;
 
                 console.log(
-                  `Recovered IDs: Customer=${customerProfileId}, Payment=${paymentProfileId}`
+                  `Recovered IDs: Customer=${customerProfileId}, Payment=${paymentProfileId}`,
                 );
                 return resolve({
                   customerProfileId,
@@ -159,7 +157,7 @@ export async function createPlatformPaymentProfile(
   customerProfileId: string,
   firstName: string,
   lastName: string,
-  opaqueData: { dataDescriptor: string; dataValue: string }
+  opaqueData: { dataDescriptor: string; dataValue: string },
 ) {
   const merchantAuthenticationType = getPlatformAuthNetCredentials();
 
@@ -176,7 +174,7 @@ export async function createPlatformPaymentProfile(
   const customerPaymentProfileType =
     new ApiContracts.CustomerPaymentProfileType();
   customerPaymentProfileType.setCustomerType(
-    ApiContracts.CustomerTypeEnum.INDIVIDUAL
+    ApiContracts.CustomerTypeEnum.INDIVIDUAL,
   );
   customerPaymentProfileType.setPayment(paymentType);
   customerPaymentProfileType.setBillTo(billTo);
@@ -189,14 +187,14 @@ export async function createPlatformPaymentProfile(
   return new Promise<{ customerPaymentProfileId: string }>(
     (resolve, reject) => {
       const ctrl = new ApiControllers.CreateCustomerPaymentProfileController(
-        createRequest.getJSON()
+        createRequest.getJSON(),
       );
       ctrl.setEnvironment(getEnvironment());
 
       ctrl.execute(async () => {
         const apiResponse = ctrl.getResponse();
         const response = new ApiContracts.CreateCustomerPaymentProfileResponse(
-          apiResponse
+          apiResponse,
         );
 
         if (
@@ -214,45 +212,40 @@ export async function createPlatformPaymentProfile(
 
           console.log(`Authorize.Net Error: [${errorCode}] ${errorText}`);
 
-          // Handle duplicate profile error E00039
-          if (errorCode === "E00039") {
+          // Handle duplicate/limit profile errors where we should
+          // reuse an existing payment profile instead of failing.
+          if (errorCode === "E00039" || errorCode === "E00042") {
             console.log(
-              "Detected duplicate payment profile, attempting recovery..."
+              "Detected duplicate or max payment profiles, attempting recovery via existing profiles...",
             );
-            const match = errorText.match(/(\d+)/);
-            if (match) {
-              console.log(`Recovered Payment Profile ID: ${match[1]}`);
-              return resolve({ customerPaymentProfileId: match[1] });
-            } else {
-              try {
-                const profile = await getCustomerProfile(customerProfileId);
-                const pps =
-                  typeof profile.getPaymentProfiles === "function"
-                    ? profile.getPaymentProfiles()
-                    : profile.paymentProfiles || [];
-                if (pps && pps.length > 0) {
-                  const paymentProfileId =
-                    typeof pps[0].getCustomerPaymentProfileId === "function"
-                      ? pps[0].getCustomerPaymentProfileId()
-                      : pps[0].customerPaymentProfileId ||
-                        pps[0].paymentProfileId;
-                  console.log(
-                    `Recovered Payment Profile ID via fetch: ${paymentProfileId}`
-                  );
-                  return resolve({
-                    customerPaymentProfileId: paymentProfileId,
-                  });
-                }
-              } catch (e) {
-                console.error("Duplicate recovery fallback failed:", e);
+            try {
+              const profile = await getCustomerProfile(customerProfileId);
+              const pps =
+                typeof profile.getPaymentProfiles === "function"
+                  ? profile.getPaymentProfiles()
+                  : profile.paymentProfiles || [];
+              if (pps && pps.length > 0) {
+                const paymentProfileId =
+                  typeof pps[0].getCustomerPaymentProfileId === "function"
+                    ? pps[0].getCustomerPaymentProfileId()
+                    : pps[0].customerPaymentProfileId ||
+                      pps[0].paymentProfileId;
+                console.log(
+                  `Recovered Payment Profile ID via profile fetch: ${paymentProfileId}`,
+                );
+                return resolve({
+                  customerPaymentProfileId: paymentProfileId,
+                });
               }
+            } catch (e) {
+              console.error("Payment profile recovery via fetch failed:", e);
             }
           }
 
           reject(new Error(errorText || "Failed to create payment profile"));
         }
       });
-    }
+    },
   );
 }
 
@@ -301,14 +294,14 @@ export async function createPlatformARBSubscription({
 
   return new Promise<{ subscriptionId: string }>((resolve, reject) => {
     const ctrl = new ApiControllers.ARBCreateSubscriptionController(
-      createRequest.getJSON()
+      createRequest.getJSON(),
     );
     ctrl.setEnvironment(getEnvironment());
 
     ctrl.execute(() => {
       const apiResponse = ctrl.getResponse();
       const response = new ApiContracts.ARBCreateSubscriptionResponse(
-        apiResponse
+        apiResponse,
       );
 
       if (
@@ -320,7 +313,7 @@ export async function createPlatformARBSubscription({
       } else {
         const error = response?.getMessages().getMessage()[0];
         reject(
-          new Error(error?.getText() || "Failed to create ARB subscription")
+          new Error(error?.getText() || "Failed to create ARB subscription"),
         );
       }
     });
@@ -339,14 +332,14 @@ export async function cancelPlatformARBSubscription(subscriptionId: string) {
 
   return new Promise<{ success: boolean }>((resolve, reject) => {
     const ctrl = new ApiControllers.ARBCancelSubscriptionController(
-      cancelRequest.getJSON()
+      cancelRequest.getJSON(),
     );
     ctrl.setEnvironment(getEnvironment());
 
     ctrl.execute(() => {
       const apiResponse = ctrl.getResponse();
       const response = new ApiContracts.ARBCancelSubscriptionResponse(
-        apiResponse
+        apiResponse,
       );
 
       if (
@@ -358,7 +351,7 @@ export async function cancelPlatformARBSubscription(subscriptionId: string) {
       } else {
         const error = response?.getMessages().getMessage()[0];
         reject(
-          new Error(error?.getText() || "Failed to cancel ARB subscription")
+          new Error(error?.getText() || "Failed to cancel ARB subscription"),
         );
       }
     });
@@ -370,7 +363,7 @@ export async function cancelPlatformARBSubscription(subscriptionId: string) {
  */
 export async function updatePlatformARBSubscriptionAmount(
   subscriptionId: string,
-  newAmount: number
+  newAmount: number,
 ) {
   const merchantAuthenticationType = getPlatformAuthNetCredentials();
 
@@ -384,14 +377,14 @@ export async function updatePlatformARBSubscriptionAmount(
 
   return new Promise<{ success: boolean }>((resolve, reject) => {
     const ctrl = new ApiControllers.ARBUpdateSubscriptionController(
-      updateRequest.getJSON()
+      updateRequest.getJSON(),
     );
     ctrl.setEnvironment(getEnvironment());
 
     ctrl.execute(() => {
       const apiResponse = ctrl.getResponse();
       const response = new ApiContracts.ARBUpdateSubscriptionResponse(
-        apiResponse
+        apiResponse,
       );
 
       if (
@@ -404,8 +397,8 @@ export async function updatePlatformARBSubscriptionAmount(
         const error = response?.getMessages().getMessage()[0];
         reject(
           new Error(
-            error?.getText() || "Failed to update ARB subscription amount"
-          )
+            error?.getText() || "Failed to update ARB subscription amount",
+          ),
         );
       }
     });
@@ -424,7 +417,7 @@ export async function getCustomerProfile(customerProfileId: string) {
 
   return new Promise<any>((resolve, reject) => {
     const ctrl = new ApiControllers.GetCustomerProfileController(
-      getRequest.getJSON()
+      getRequest.getJSON(),
     );
     ctrl.setEnvironment(getEnvironment());
 
@@ -481,7 +474,7 @@ export async function chargePlatformCustomerProfile({
 
   return new Promise<{ transactionId: string }>((resolve, reject) => {
     const ctrl = new ApiControllers.CreateTransactionController(
-      createRequest.getJSON()
+      createRequest.getJSON(),
     );
     ctrl.setEnvironment(getEnvironment());
 
@@ -501,14 +494,14 @@ export async function chargePlatformCustomerProfile({
           reject(
             new Error(
               transResponse?.getErrors()?.getError()[0].getErrorText() ||
-                "Transaction failed"
-            )
+                "Transaction failed",
+            ),
           );
         }
       } else {
         const error = response?.getMessages().getMessage()[0];
         reject(
-          new Error(error?.getText() || "Failed to charge customer profile")
+          new Error(error?.getText() || "Failed to charge customer profile"),
         );
       }
     });

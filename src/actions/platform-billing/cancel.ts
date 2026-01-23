@@ -28,6 +28,9 @@ export async function cancelSubscription(companyId: number) {
       data: {
         status: PlatformSubscriptionStatus.CANCELED,
         cancelAtPeriodEnd: false,
+        // Clear the remote subscription id so future flows
+        // don't keep trying to cancel or update a non-existent ARB.
+        authNetSubscriptionId: null,
       },
     });
 
