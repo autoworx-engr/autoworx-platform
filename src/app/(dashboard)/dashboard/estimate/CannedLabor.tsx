@@ -65,7 +65,7 @@ export default function CannedLabor({
 
       const matchesSearch = laborSearch
         ? laborName.includes(laborSearch.toLowerCase()) ||
-        categoryName.includes(laborSearch.toLowerCase())
+          categoryName.includes(laborSearch.toLowerCase())
         : true;
 
       const matchesCategory = selectedCategory
@@ -355,7 +355,7 @@ const LaborComponent = ({
                   <div className="space-y-4">
                     <div>
                       <label className="mb-2 block text-sm font-medium text-gray-700">
-                        Labor Name
+                        Labor Name<span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"

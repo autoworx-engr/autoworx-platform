@@ -65,7 +65,7 @@ export default function CannedServices({
 
       const matchesSearch = serviceSearch
         ? row.name.toLowerCase().includes(serviceSearch.toLowerCase()) ||
-        categoryName.includes(serviceSearch.toLowerCase())
+          categoryName.includes(serviceSearch.toLowerCase())
         : true;
 
       const matchesCategory = selectedCategory
@@ -349,7 +349,7 @@ const ServiceComponent = ({
                   <div className="space-y-4">
                     <div>
                       <label className="mb-2 block text-sm font-medium text-gray-700">
-                        Service Name
+                        Service Name<span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"

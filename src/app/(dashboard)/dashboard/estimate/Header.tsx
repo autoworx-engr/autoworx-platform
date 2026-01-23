@@ -1,17 +1,15 @@
 "use client";
 
-import React from "react";
-import { Filter } from "./Filter";
-import Link from "next/link";
-import { useEstimateFilterStore } from "@/stores/estimate-filter";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useActionStoreCreateEdit } from "@/stores/createEditStore";
-import { useListsStore } from "@/stores/lists";
-import { useEstimateCreateStore } from "@/stores/estimate-create";
-import { useEstimatePopupStore } from "@/stores/estimate-popup";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useActionStoreCreateEdit } from "@/stores/createEditStore";
+import { useEstimateCreateStore } from "@/stores/estimate-create";
+import { useEstimateFilterStore } from "@/stores/estimate-filter";
+import { useEstimatePopupStore } from "@/stores/estimate-popup";
+import { useListsStore } from "@/stores/lists";
 import { Search } from "lucide-react";
-
+import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Filter } from "./Filter";
 
 type THeaderProps = {
   searchTerm?: string;
@@ -65,8 +63,8 @@ export default function Header({
           <input
             type="text"
             placeholder={
-              isCanned
-                ? "Search labor, service, category..."
+              isTemplate
+                ? "Search by Template ID"
                 : "Search ID, name, vehicle, email..."
             }
             className="h-11 w-full rounded-xl border-none bg-slate-50 pl-11 pr-4 text-sm font-medium text-slate-700 ring-1 ring-slate-200 transition-all duration-300 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-[#6571FF]/30 outline-none md:max-w-[450px]"
@@ -145,8 +143,6 @@ export default function Header({
             + Create Template
           </Link>
         )}
-
-       
       </div>
     </div>
   );
