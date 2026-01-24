@@ -107,12 +107,10 @@ export const GET = async (request: NextRequest) => {
 
     const usersWithChatTrack = await Promise.all(
       usersData.map(async user => {
+        const { id, password, ...restUser } = user;
         const userChatTrack = await db.chatTrack.findMany({
           where: {
-            OR: [
-              { senderId: userId as number },
-              { receiverId: userId as number },
-            ],
+            OR: [{ senderId: id as number }, { receiverId: id as number }],
             section: "internal",
           },
           include: {
@@ -120,7 +118,7 @@ export const GET = async (request: NextRequest) => {
           },
         });
         return {
-          ...user,
+          ...restUser,
           chatTrack: userChatTrack,
         };
       }),
