@@ -72,58 +72,66 @@ export async function subscribeToPlatformPlan({
       customerPaymentProfileId = pp.customerPaymentProfileId;
     }
 
-    // 1.5 Sync Payment Method details to DB
-    try {
-      const profile = await getCustomerProfile(customerProfileId!);
-      const pps =
-        typeof profile.getPaymentProfiles === "function"
-          ? profile.getPaymentProfiles()
-          : profile.paymentProfiles || [];
-      const currentPP = pps.find((p: any) => {
-        const id =
-          typeof p.getCustomerPaymentProfileId === "function"
-            ? p.getCustomerPaymentProfileId()
-            : p.customerPaymentProfileId || p.paymentProfileId;
-        return id === customerPaymentProfileId;
-      });
+    // 1.5 Sync Payment Method details to DB (best-effort)
+    if (!customerProfileId || !customerPaymentProfileId || !billingCustomer) {
+      console.warn(
+        "Skipping payment method sync; missing profile or billing customer",
+      );
+    } else {
+      try {
+        const profile = await getCustomerProfile(customerProfileId);
+        const pps =
+          typeof profile.getPaymentProfiles === "function"
+            ? profile.getPaymentProfiles()
+            : profile.paymentProfiles || [];
+        const currentPP = pps.find((p: any) => {
+          const id =
+            typeof p.getCustomerPaymentProfileId === "function"
+              ? p.getCustomerPaymentProfileId()
+              : p.customerPaymentProfileId || p.paymentProfileId;
+          return id === customerPaymentProfileId;
+        });
 
-      if (currentPP) {
-        const card = currentPP.getPayment
-          ? currentPP.getPayment().getCreditCard()
-          : currentPP.payment?.creditCard;
-        // Ensure only the latest method is marked as default
-        await db.platformPaymentMethod.updateMany({
-          where: { billingCustomerId: billingCustomer!.id },
-          data: { isDefault: false },
-        });
-        await db.platformPaymentMethod.upsert({
-          where: { authNetPaymentProfileId: customerPaymentProfileId! },
-          update: {
-            cardType: card?.getCardType ? card.getCardType() : card?.cardType,
-            last4: card?.getCardNumber
-              ? card.getCardNumber().slice(-4)
-              : card?.cardNumber?.slice(-4),
-            expiry: card?.getExpirationDate
-              ? card.getExpirationDate()
-              : card?.expirationDate,
-          },
-          create: {
-            billingCustomerId: billingCustomer!.id,
-            authNetPaymentProfileId: customerPaymentProfileId!,
-            cardType: card?.getCardType ? card.getCardType() : card?.cardType,
-            last4: card?.getCardNumber
-              ? card.getCardNumber().slice(-4)
-              : card?.cardNumber?.slice(-4),
-            expiry: card?.getExpirationDate
-              ? card.getExpirationDate()
-              : card?.expirationDate,
-            isDefault: true,
-          },
-        });
+        if (currentPP) {
+          const card = currentPP.getPayment
+            ? currentPP.getPayment().getCreditCard()
+            : currentPP.payment?.creditCard;
+          if (!card) return;
+
+          // Ensure only the latest method is marked as default
+          await db.platformPaymentMethod.updateMany({
+            where: { billingCustomerId: billingCustomer.id },
+            data: { isDefault: false },
+          });
+          await db.platformPaymentMethod.upsert({
+            where: { authNetPaymentProfileId: customerPaymentProfileId },
+            update: {
+              cardType: card.getCardType ? card.getCardType() : card.cardType,
+              last4: card.getCardNumber
+                ? card.getCardNumber().slice(-4)
+                : card.cardNumber?.slice(-4),
+              expiry: card.getExpirationDate
+                ? card.getExpirationDate()
+                : card.expirationDate,
+            },
+            create: {
+              billingCustomerId: billingCustomer.id,
+              authNetPaymentProfileId: customerPaymentProfileId,
+              cardType: card.getCardType ? card.getCardType() : card.cardType,
+              last4: card.getCardNumber
+                ? card.getCardNumber().slice(-4)
+                : card.cardNumber?.slice(-4),
+              expiry: card.getExpirationDate
+                ? card.getExpirationDate()
+                : card.expirationDate,
+              isDefault: true,
+            },
+          });
+        }
+      } catch (err) {
+        console.error("Failed to sync payment method details:", err);
+        // Don't fail the whole subscription if just syncing details fails
       }
-    } catch (err) {
-      console.error("Failed to sync payment method details:", err);
-      // Don't fail the whole subscription if just syncing details fails
     }
 
     // 2. Handle Existing Subscription (if any)
