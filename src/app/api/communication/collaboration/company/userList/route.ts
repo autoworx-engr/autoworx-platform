@@ -7,31 +7,39 @@ import { NextRequest, NextResponse } from "next/server";
 
 /**
  * @swagger
- * /api/communication/collaboration/company/list:
+ * /api/communication/collaboration/company/userList:
  *   get:
- *     summary: Retrieve a list of collaborating companies with their users
- *     tags: [Collaboration]
+ *     summary: Retrieve collaborating companies and their users
+ *     description: Fetches a paginated list of companies that have an active collaboration status with the authenticated user's company.
+ *     tags:
+ *       - Collaboration
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: query
  *         name: page
  *         schema:
  *           type: integer
+ *           minimum: 1
  *           default: 1
- *         description: Page number for pagination
+ *         description: The page number to retrieve.
  *       - in: query
  *         name: limit
  *         schema:
  *           type: integer
+ *           minimum: 1
+ *           maximum: 100
  *           default: 20
- *         description: Number of items per page
+ *         description: The number of items to return per page.
  *     responses:
  *       200:
- *         description: Successfully retrieved company list
+ *         description: Successfully retrieved the list of collaborating companies.
  *       401:
- *         description: Unauthorized - Company ID is required
+ *         description: Unauthorized. Authentication token is missing, invalid, or does not contain a valid Company ID.
  *       500:
- *         description: Internal Server Error
+ *         description: Internal Server Error.
  */
+
 export const GET = async (request: NextRequest) => {
   try {
     const searchParams = request.nextUrl.searchParams;
