@@ -2435,7 +2435,8 @@ model VehicleParts {
 
 //TODO: Ai sales agent configuration for a company
 model CompanyInfo {
-  id        String   @id @default(uuid())
+  id        Int      @id @default(autoincrement())
+  companyId Int      @map("company_id")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -2463,8 +2464,8 @@ model CompanyInfo {
   overallFaqs Json? @map("overall_faqs")
 
   // Settings
-  smsResponseDelayMin Int @map("sms_response_delay_min")
-  smsResponseDelayMax Int @map("sms_response_delay_max")
+  smsResponseDelayMin Int @default(0) @map("sms_response_delay_min")
+  smsResponseDelayMax Int @default(0) @map("sms_response_delay_max")
 
   @@map("company_info")
 }
