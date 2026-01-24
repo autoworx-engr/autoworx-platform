@@ -62,7 +62,7 @@ export default function VINScannerModal({
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-4 top-4 text-black hover:text-white"
+          className="absolute right-4 top-4 text-black"
         >
           <X className="h-6 w-6" />
         </button>
@@ -78,11 +78,10 @@ export default function VINScannerModal({
               setActiveTab("barcode");
               // stopCamera();
             }}
-            className={`pb-3 px-4 font-medium transition-colors ${
-              activeTab === "barcode"
-                ? "border-b-2 border-black text-black"
-                : "text-gray-500 hover:text-black"
-            }`}
+            className={`pb-3 px-4 font-medium transition-colors ${activeTab === "barcode"
+              ? "border-b-2 border-black text-black"
+              : "text-gray-500 hover:text-black"
+              }`}
           >
             Barcode Scan
           </button>
@@ -92,11 +91,10 @@ export default function VINScannerModal({
               setActiveTab("text");
               // stopCamera();
             }}
-            className={`pb-3 px-4 font-medium transition-colors ${
-              activeTab === "text"
-                ? "border-b-2 border-black text-black"
-                : "text-gray-500 hover:text-black"
-            }`}
+            className={`pb-3 px-4 font-medium transition-colors ${activeTab === "text"
+              ? "border-b-2 border-black text-black"
+              : "text-gray-500 hover:text-black"
+              }`}
           >
             Text Input
           </button>
