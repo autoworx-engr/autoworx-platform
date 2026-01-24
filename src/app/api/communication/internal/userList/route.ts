@@ -107,7 +107,7 @@ export const GET = async (request: NextRequest) => {
 
     const usersWithChatTrack = await Promise.all(
       usersData.map(async user => {
-        const { id, password, ...restUser } = user;
+        const { id, password, isSuperAdmin, ...restUser } = user;
         const userChatTrack = await db.chatTrack.findMany({
           where: {
             OR: [{ senderId: id as number }, { receiverId: id as number }],
