@@ -4,9 +4,16 @@ import { db } from "@/lib/db";
 import { cancelPlatformARBSubscription } from "@/lib/platform-billing/authorize-net";
 import { PlatformSubscriptionStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import {
+  assertCompanyAccess,
+  requireBillingSession,
+} from "@/lib/platform-billing/guards";
 
 export async function cancelSubscription(companyId: number) {
   try {
+    const session = await requireBillingSession();
+    assertCompanyAccess(session, companyId);
+
     const subscription = await db.platformSubscription.findUnique({
       where: { companyId },
     });

@@ -1,5 +1,8 @@
 import { db } from "@/lib/db";
-import { PlatformFeatureType } from "@prisma/client";
+import {
+  PlatformFeatureType,
+  PlatformSubscriptionStatus,
+} from "@prisma/client";
 
 export type PlatformEntitlements = Record<string, boolean | number | string>;
 
@@ -12,7 +15,7 @@ export function normalizeFeatureKey(featureKey: string): string {
 
 export function parseFeatureValue(
   type: PlatformFeatureType,
-  raw: string
+  raw: string,
 ): boolean | number | string {
   switch (type) {
     case PlatformFeatureType.BOOLEAN:
@@ -32,7 +35,7 @@ export function parseFeatureValue(
  * Keys are normalized to camelCase (e.g. "can_use_voice" -> "canUseVoice").
  */
 export function buildEntitlementsFromFeatures(
-  features: { featureKey: string; value: string; type: PlatformFeatureType }[]
+  features: { featureKey: string; value: string; type: PlatformFeatureType }[],
 ): PlatformEntitlements {
   const entitlements: PlatformEntitlements = {};
 
@@ -48,7 +51,7 @@ export function buildEntitlementsFromFeatures(
  * Get entitlements for a specific platform plan (by plan ID).
  */
 export async function getPlanEntitlements(
-  planId: string
+  planId: string,
 ): Promise<PlatformEntitlements | null> {
   const plan = await db.platformPlan.findUnique({
     where: { id: planId },
@@ -65,7 +68,7 @@ export async function getPlanEntitlements(
  * Returns null if the company has no active subscription/plan.
  */
 export async function getCompanyEntitlements(
-  companyId: number
+  companyId: number,
 ): Promise<PlatformEntitlements | null> {
   const subscription = await db.platformSubscription.findUnique({
     where: { companyId },
@@ -76,7 +79,14 @@ export async function getCompanyEntitlements(
     },
   });
 
-  if (!subscription || !subscription.plan) return null;
+  if (
+    !subscription ||
+    !subscription.plan ||
+    subscription.status === PlatformSubscriptionStatus.CANCELED ||
+    subscription.status === PlatformSubscriptionStatus.UNPAID
+  ) {
+    return null;
+  }
 
   return buildEntitlementsFromFeatures(subscription.plan.features);
 }

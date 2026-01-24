@@ -117,47 +117,49 @@ async function handleSubscriptionPayment(payload: any) {
     payload.amount ??
     subscription.plan.price;
 
-  const invoice = await db.platformInvoice.create({
-    data: {
-      billingCustomerId: subscription.billingCustomerId,
-      subscriptionId: subscription.id,
-      amount,
-      status: status,
-      authNetTransId: authNetTransId.toString(),
-    },
-  });
-
-  if (status === "PAID") {
-    await db.platformPayment.create({
+  await db.$transaction(async (tx) => {
+    const invoice = await tx.platformInvoice.create({
       data: {
-        platformInvoiceId: invoice.id,
+        billingCustomerId: subscription.billingCustomerId,
+        subscriptionId: subscription.id,
         amount,
-        status: "SUCCESS",
+        status: status,
         authNetTransId: authNetTransId.toString(),
       },
     });
 
-    // 3. Update subscription period
-    // If the subscription is successful, we bump the period end by 1 month
-    const currentEnd = subscription.currentPeriodEnd || new Date();
-    const nextPeriodEnd = new Date(currentEnd);
-    nextPeriodEnd.setMonth(nextPeriodEnd.getMonth() + 1);
+    if (status === "PAID") {
+      await tx.platformPayment.create({
+        data: {
+          platformInvoiceId: invoice.id,
+          amount,
+          status: "SUCCESS",
+          authNetTransId: authNetTransId.toString(),
+        },
+      });
 
-    await db.platformSubscription.update({
-      where: { id: subscription.id },
-      data: {
-        status: PlatformSubscriptionStatus.ACTIVE,
-        currentPeriodEnd: nextPeriodEnd,
-        currentPeriodStart: currentEnd,
-      },
-    });
-  } else {
-    await db.platformSubscription.update({
-      where: { id: subscription.id },
-      data: { status: PlatformSubscriptionStatus.PAST_DUE },
-    });
-    // TODO: Send dunning email
-  }
+      // 3. Update subscription period
+      // If the subscription is successful, we bump the period end by 1 month
+      const currentEnd = subscription.currentPeriodEnd || new Date();
+      const nextPeriodEnd = new Date(currentEnd);
+      nextPeriodEnd.setMonth(nextPeriodEnd.getMonth() + 1);
+
+      await tx.platformSubscription.update({
+        where: { id: subscription.id },
+        data: {
+          status: PlatformSubscriptionStatus.ACTIVE,
+          currentPeriodEnd: nextPeriodEnd,
+          currentPeriodStart: currentEnd,
+        },
+      });
+    } else {
+      await tx.platformSubscription.update({
+        where: { id: subscription.id },
+        data: { status: PlatformSubscriptionStatus.PAST_DUE },
+      });
+      // TODO: Send dunning email
+    }
+  });
 }
 
 async function handleSubscriptionCancelled(payload: any) {
@@ -170,7 +172,11 @@ async function handleSubscriptionCancelled(payload: any) {
 
   await db.platformSubscription.updateMany({
     where: { authNetSubscriptionId: subscriptionId.toString() },
-    data: { status: PlatformSubscriptionStatus.CANCELED },
+    data: {
+      status: PlatformSubscriptionStatus.CANCELED,
+      cancelAtPeriodEnd: false,
+      authNetSubscriptionId: null,
+    },
   });
 }
 

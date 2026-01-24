@@ -11,6 +11,10 @@ import {
 } from "@/lib/platform-billing/authorize-net";
 import { PlatformSubscriptionStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import {
+  assertCompanyAccess,
+  requireBillingSession,
+} from "@/lib/platform-billing/guards";
 
 type SubscribeToPlatformPlanInput = {
   companyId: number;
@@ -30,8 +34,15 @@ export async function subscribeToPlatformPlan({
   opaqueData,
 }: SubscribeToPlatformPlanInput) {
   try {
-    const plan = await db.platformPlan.findUnique({
-      where: { id: planId },
+    const session = await requireBillingSession();
+    assertCompanyAccess(session, companyId);
+
+    const plan = await db.platformPlan.findFirst({
+      where: {
+        id: planId,
+        isActive: true,
+        OR: [{ companyId: null }, { companyId }],
+      },
     });
 
     if (!plan) throw new Error("Plan not found");
@@ -148,16 +159,7 @@ export async function subscribeToPlatformPlan({
       }
     }
 
-    // 2. Immediate First Month Charge
-    // This ensures they are charged NOW and we get an instant invoice
-    const charge = await chargePlatformCustomerProfile({
-      customerProfileId,
-      customerPaymentProfileId,
-      amount: Number(plan.price),
-      description: `Immediate first month charge for ${plan.name}`,
-    });
-
-    // 3. Create ARB Subscription (Starting 1 month from now)
+    // 2. Create ARB Subscription (Starting 1 month from now)
     const arbStartDate = new Date();
     arbStartDate.setMonth(arbStartDate.getMonth() + 1);
 
@@ -169,6 +171,24 @@ export async function subscribeToPlatformPlan({
       startDate: arbStartDate,
       planName: plan.name,
     });
+
+    // 3. Immediate First Month Charge (after ARB creation)
+    let charge: { transactionId: string };
+    try {
+      charge = await chargePlatformCustomerProfile({
+        customerProfileId,
+        customerPaymentProfileId,
+        amount: Number(plan.price),
+        description: `Immediate first month charge for ${plan.name}`,
+      });
+    } catch (err) {
+      try {
+        await cancelPlatformARBSubscription(arb.subscriptionId);
+      } catch (cancelErr) {
+        console.error("Failed to cancel ARB after charge failure:", cancelErr);
+      }
+      throw err;
+    }
 
     // 3. Update DB
     if (!billingCustomer) throw new Error("Billing customer record not found");

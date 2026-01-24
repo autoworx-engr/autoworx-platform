@@ -2,9 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { createCustomPlatformPlan } from "@/actions/platform-billing/custom-plan";
 import { db } from "@/lib/db";
 import { updatePlatformARBSubscriptionAmount } from "@/lib/platform-billing/authorize-net";
+import {
+  assertSuperAdmin,
+  requireBillingSession,
+} from "@/lib/platform-billing/guards";
 
 export async function POST(req: NextRequest) {
   try {
+    const session = await requireBillingSession();
+    assertSuperAdmin(session);
+
     const body = await req.json();
     const { companyId, ...planInput } = body as {
       companyId?: number;
@@ -60,10 +67,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, plan: result.plan });
   } catch (error: any) {
     console.error("❌ Custom plan API error", error);
+    const message = error?.message || "Failed to create custom plan";
+    if (message === "Unauthorized") {
+      return NextResponse.json({ success: false, message }, { status: 401 });
+    }
+    if (message === "Forbidden") {
+      return NextResponse.json({ success: false, message }, { status: 403 });
+    }
     return NextResponse.json(
       {
         success: false,
-        message: error?.message || "Failed to create custom plan",
+        message,
       },
       { status: 500 },
     );

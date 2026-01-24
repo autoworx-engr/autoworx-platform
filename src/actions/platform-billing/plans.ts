@@ -1,13 +1,22 @@
 "use server";
 
 import { db } from "@/lib/db";
+import {
+  assertCompanyAccess,
+  requireBillingSession,
+} from "@/lib/platform-billing/guards";
 
 export async function getPlatformPlans(companyId?: number) {
   try {
+    const session = await requireBillingSession();
+
     const where: any = { isActive: true };
 
     if (typeof companyId === "number") {
+      assertCompanyAccess(session, companyId);
       where.OR = [{ companyId: null }, { companyId }];
+    } else if (!session.user.isSuperAdmin) {
+      where.OR = [{ companyId: null }, { companyId: session.user.companyId }];
     }
 
     const plans = await db.platformPlan.findMany({
@@ -32,6 +41,9 @@ export async function getPlatformPlans(companyId?: number) {
 
 export async function getCurrentSubscription(companyId: number) {
   try {
+    const session = await requireBillingSession();
+    assertCompanyAccess(session, companyId);
+
     const subscription = await db.platformSubscription.findUnique({
       where: { companyId },
       include: {
