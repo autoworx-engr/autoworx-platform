@@ -65,7 +65,7 @@ export async function POST(req: Request) {
     // Helper function to generate lastMessage text
     const generateLastMessageText = (
       message: string,
-      attachmentFiles: any[] | null
+      attachmentFiles: any[] | null,
     ) => {
       // If there's a text message, use it
       if (message && message.trim()) {
@@ -75,7 +75,7 @@ export async function POST(req: Request) {
       // If there are attachments but no text message, generate descriptive text
       if (attachmentFiles && attachmentFiles.length > 0) {
         const imageCount = attachmentFiles.filter(
-          (file) => file.fileType && file.fileType.startsWith("image/")
+          file => file.fileType && file.fileType.startsWith("image/"),
         ).length;
         const otherFileCount = attachmentFiles.length - imageCount;
 
@@ -85,7 +85,7 @@ export async function POST(req: Request) {
         }
         if (otherFileCount > 0) {
           parts.push(
-            `${otherFileCount} ${otherFileCount === 1 ? "file" : "files"}`
+            `${otherFileCount} ${otherFileCount === 1 ? "file" : "files"}`,
           );
         }
 
@@ -130,7 +130,7 @@ export async function POST(req: Request) {
             message: "User is not in the group",
             success: false,
           }),
-          { status: 400 }
+          { status: 400 },
         );
       }
       channel = `group-${to}`;
@@ -287,7 +287,7 @@ export async function POST(req: Request) {
         attachments,
         newMessage: createdMessage,
         chatTrack: userChatTrack,
-      })
+      }),
     );
   } catch (e: any) {
     console.error(e);
@@ -295,7 +295,7 @@ export async function POST(req: Request) {
       JSON.stringify({ message: "Failed to send message", success: false }),
       {
         status: 500,
-      }
+      },
     );
   }
 }
