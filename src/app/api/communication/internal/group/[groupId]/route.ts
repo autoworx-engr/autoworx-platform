@@ -2,6 +2,26 @@ import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 
+/**
+ * @swagger
+ * /api/communication/internal/group/{groupId}:
+ *   get:
+ *     summary: Retrieve group details by ID
+ *     tags: [Group]
+ *     parameters:
+ *       - in: path
+ *         name: groupId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the group to retrieve
+ *     responses:
+ *       200:
+ *         description: Group details retrieved successfully
+ *       404:
+ *         description: Group not found
+ */
+
 export const GET = async (
   req: Request,
   { params }: { params: { groupId: string } },

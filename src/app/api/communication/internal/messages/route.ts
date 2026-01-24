@@ -8,105 +8,56 @@ import { NextRequest, NextResponse } from "next/server";
  * @swagger
  * /api/communication/internal/messages:
  *   get:
- *     summary: Get internal messages
- *     tags: [Communication Internal]
- *     security:
- *       - bearerAuth: []
+ *     summary: Retrieve internal messages
+ *     tags: [Messages]
  *     parameters:
  *       - in: query
  *         name: to
- *         required: false
  *         schema:
  *           type: integer
- *         description: Recipient user ID
+ *         description: ID of the recipient user
  *       - in: query
  *         name: from
- *         required: false
  *         schema:
  *           type: integer
- *         description: Sender user ID
+ *         description: ID of the sender user
  *       - in: query
  *         name: companyId
- *         required: true
  *         schema:
  *           type: integer
- *         description: Company ID
+ *         description: ID of the company
  *       - in: query
  *         name: groupId
- *         required: false
  *         schema:
  *           type: integer
- *         description: Group ID
- *       - in: query
- *         name: sortBy
- *         required: false
- *         schema:
- *           type: string
- *         description: Sort field (default: createdAt)
- *       - in: query
- *         name: sortOrder
- *         required: false
- *         schema:
- *           type: string
- *           enum: [asc, desc]
- *         description: Sort order (default: desc)
+ *         description: ID of the group
  *       - in: query
  *         name: page
- *         required: false
  *         schema:
  *           type: integer
- *           minimum: 1
- *         description: Page number (default: 1)
+ *         description: Page number for pagination (default is 1)
  *       - in: query
  *         name: limit
- *         required: false
  *         schema:
  *           type: integer
- *           minimum: 1
- *         description: Number of messages per page (default: 20)
+ *         description: Number of records per page (default is 20)
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *         description: Field to sort by (default is createdAt)
+ *       - in: query
+ *         name: sortOrder
+ *         schema:
+ *           type: string
+ *         description: Sort order, either asc or desc (default is desc)
  *     responses:
  *       200:
- *         description: Messages fetched successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 data:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/Message'
- *                 message:
- *                   type: string
- *                 meta:
- *                   type: object
- *                   properties:
- *                     totalRecords:
- *                       type: integer
- *                     page:
- *                       type: integer
- *                     limit:
- *                       type: integer
- *                     totalPages:
- *                       type: integer
- *                     hasNextPage:
- *                       type: boolean
- *                     hasPrevPage
- *                       type: boolean
+ *         description: Messages retrieved successfully
  *       400:
- *         description: Bad request - missing or invalid parameters
+ *         description: Bad request
  *       404:
- *         description: Company, user, or group not found
- *       500:
- *         description: Internal server error
- * components:
- *   securitySchemes:
- *     bearerAuth:
- *       type: http
- *       scheme: bearer
- *       bearerFormat: JWT
+ *         description: Not found
  */
 
 export async function GET(request: NextRequest) {
