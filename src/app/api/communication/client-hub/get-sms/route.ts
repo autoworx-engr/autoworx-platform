@@ -15,27 +15,27 @@ import getSms from "@/app/(dashboard)/dashboard/communication/client/_actions/ge
  *         required: true
  *         schema:
  *           type: number
- *         example: 1
+ *         example: 3460
  *
  *       - in: query
  *         name: companyId
- *         required: false
+ *         required: true
  *         schema:
  *           type: number
- *         example: 2
+ *         example: 4
  *
  *       - in: query
  *         name: take
- *         required: false
+ *         required: true
  *         schema:
  *           type: number
  *           default: 20
  *         description: Number of records per page
- *         example: 20
+ *         example: 10
  *
  *       - in: query
  *         name: page
- *         required: false
+ *         required: true
  *         schema:
  *           type: number
  *           default: 1
@@ -52,25 +52,68 @@ import getSms from "@/app/(dashboard)/dashboard/communication/client/_actions/ge
  *               properties:
  *                 success:
  *                   type: boolean
- *                   example: true
  *                 message:
  *                   type: string
- *                   example: SMS messages retrieved successfully
  *                 data:
  *                   type: object
  *                   properties:
- *                     data:
+ *                     sms:
  *                       type: array
  *                       items:
  *                         type: object
  *                     totalSmsCount:
  *                       type: number
- *
+ *             example:
+ *               success: true
+ *               message: SMS messages retrieved successfully
+ *               data:
+ *                 sms:
+ *                   - id: 12533
+ *                     message: You missed a call from this number. Call to respond.
+ *                     from: "+18788797134"
+ *                     to: "+14702560094"
+ *                     sentBy: Client
+ *                     isRead: false
+ *                     userId: null
+ *                     companyId: 4
+ *                     clientId: 3460
+ *                     createdAt: "2026-01-11T19:06:03.431Z"
+ *                     updatedAt: "2026-01-11T19:06:03.431Z"
+ *                     attachments: []
+ *                     user: null
+ *                   - id: 12528
+ *                     message: You have a missed call from TC Customs Atlanta. We'll try to reach you again soon or feel free to call us back.
+ *                     from: "+14702560094"
+ *                     to: "+18788797134"
+ *                     sentBy: Company
+ *                     isRead: true
+ *                     userId: null
+ *                     companyId: 4
+ *                     clientId: 3460
+ *                     createdAt: "2026-01-10T20:05:29.409Z"
+ *                     updatedAt: "2026-01-10T20:05:29.409Z"
+ *                     attachments: []
+ *                     user: null
+ *                 totalSmsCount: 71
  *       400:
  *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *             example:
+ *               success: false
+ *               message: clientId is required
  *
  *       500:
  *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *             example:
+ *               success: false
+ *               message: Failed to retrieve SMS messages
  */
 
 export async function GET(req: NextRequest) {
@@ -88,6 +131,24 @@ export async function GET(req: NextRequest) {
         { status: 400 },
       );
     }
+    if (!companyIdParam) {
+      return NextResponse.json(
+        { success: false, message: "companyId is required" },
+        { status: 400 },
+      );
+    }
+    if (!take) {
+      return NextResponse.json(
+        { success: false, message: "take is required" },
+        { status: 400 },
+      );
+    }
+    if (!page) {
+      return NextResponse.json(
+        { success: false, message: "page is required" },
+        { status: 400 },
+      );
+    }
 
     const clientId = Number(clientIdParam);
     if (isNaN(clientId)) {
@@ -99,11 +160,16 @@ export async function GET(req: NextRequest) {
 
     const companyId = companyIdParam ? Number(companyIdParam) : undefined;
 
-    const data = await getSms(
+    const takeNumber = Number(take) || 20;
+    const pageNumber = Number(page) || 1;
+
+    const skip = (pageNumber - 1) * takeNumber;
+
+    const { data, totalSmsCount } = await getSms(
       clientId,
       {
-        take: Number(take) || (20 as number),
-        skip: (Number(page) - 1) * Number(take) || 20,
+        take: takeNumber,
+        skip,
         orderBy: { createdAt: "desc" },
       },
       companyId,
@@ -112,7 +178,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       success: true,
       message: "SMS messages retrieved successfully",
-      data,
+      data: {
+        sms: data,
+        totalSmsCount,
+      },
     });
   } catch (error: any) {
     return NextResponse.json(

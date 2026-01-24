@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { Popconfirm } from "antd";
 import { X } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 export default function SelectCategory({
   categoryData = null,
@@ -32,6 +33,7 @@ export default function SelectCategory({
   const [error, setError] = useState<string | null>();
   const [category, setCategory] = useState<Category | null>(categoryData);
   const [categoryInput, setCategoryInput] = useState("");
+  const pathname = usePathname();
 
   useEffect(() => {
     if (categoryData) {
@@ -198,6 +200,7 @@ export default function SelectCategory({
         selectedItem={category}
         setSelectedItem={setCategory}
         className={className}
+        disabledDropdown={!!category && pathname.includes("/estimate/")}
       />
     </div>
   );

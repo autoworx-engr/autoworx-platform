@@ -1,6 +1,6 @@
 import { Task } from "@prisma/client";
 import { SquarePen, X, Zap } from "lucide-react"; // Zap for priority icon
-
+import {useEffect, useRef} from "react";
 type TTaskTooltipProps = {
   event: Task;
   onModalOpen?: () => void;
@@ -32,9 +32,38 @@ export default function TaskTooltip({
   onModalOpen,
   onClose,
 }: TTaskTooltipProps) {
+  const tooltipRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Handle outside clicks
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        tooltipRef.current &&
+        !tooltipRef.current.contains(e.target as Node)
+      ) {
+        onClose?.();
+      }
+    };
+
+    // Handle scroll events
+    const handleScroll = () => {
+      onClose?.();
+    };
+
+    // Add event listeners
+    document.addEventListener("mousedown", handleClickOutside);
+    window.addEventListener("scroll", handleScroll, true);
+
+    // Cleanup
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("scroll", handleScroll, true);
+    };
+  }, [onClose]);
   return (
     // Outer div maintains click/drag isolation
     <div
+      ref={tooltipRef}
       onClick={(e) => e.stopPropagation()}
       onMouseDown={(e) => e.stopPropagation()}
       className="space-y-3"

@@ -11,6 +11,12 @@ import { getClients } from "@/app/(dashboard)/dashboard/communication/client/_ac
  *       - bearerAuth: []
  *     parameters:
  *       - in: query
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: number
+ *         example: 1
+ *       - in: query
  *         name: companyId
  *         required: true
  *         schema:
@@ -177,15 +183,36 @@ export async function GET(req: NextRequest) {
     const search = searchParams.get("search") || undefined;
     const takeParam = searchParams.get("take");
     const take = takeParam ? parseInt(takeParam) : undefined;
+    const userId = searchParams.get("userId");
 
     if (!companyId) {
       return NextResponse.json(
-        { success: false, message: "companyId is required" },
-        { status: 400 }
+        { success: false, message: "Company Id is required" },
+        { status: 400 },
       );
     }
 
-    const data = await getClients({ companyId, filter, search, take });
+    if (!userId) {
+      return NextResponse.json(
+        { success: false, message: "User Id is required" },
+        { status: 400 },
+      );
+    }
+
+    if (!takeParam) {
+      return NextResponse.json(
+        { success: false, message: "Take is required" },
+        { status: 400 },
+      );
+    }
+
+    const data = await getClients({
+      companyId,
+      filter,
+      search,
+      take,
+      userId: Number(userId),
+    });
 
     return NextResponse.json({
       success: true,
@@ -198,7 +225,7 @@ export async function GET(req: NextRequest) {
         success: false,
         message: error.message || "Failed to retrieve clients",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
