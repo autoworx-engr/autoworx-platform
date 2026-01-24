@@ -676,6 +676,8 @@ model Company {
   callForwardingNumber             String?                            @map("call_forwarding_number")
   googleReviewLink                 String?                            @map("google_review_link") @db.VarChar(500)
   servicePlaybooks                 ServicePlaybook[]
+  conversationExamples             ConversationExample[]
+  knowledgeBaseDocuments           KnowledgeBaseDocument[]
 }
 
 enum SmsGateway {
@@ -2468,31 +2470,31 @@ model CompanyInfo {
 }
 
 model ConversationExample {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  imageUrl      String  @map("image_url")
-  extractedText String? @map("extracted_text")
+  id            Int      @id @default(autoincrement())
+  companyId     Int      @map("company_id")
+  imageUrl      String   @map("image_url")
+  extractedText String?  @map("extracted_text")
   notes         String?
+  company       Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
 
   @@map("conversation_examples")
 }
 
 model KnowledgeBaseDocument {
-  id        String   @id @default(uuid())
+  id        Int      @id @default(autoincrement())
+  title     String
+  category  String
+  content   String
+  status    String
+  companyId Int      @map("company_id")
+  fileName  String?  @map("file_name")
+  fileType  String?  @map("file_type")
+  fileUrl   String?  @map("file_url")
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
-
-  title    String
-  category String
-  content  String
-  status   String
-
-  // File Metadata
-  fileName String? @map("file_name")
-  fileType String? @map("file_type")
-  fileUrl  String? @map("file_url")
 
   @@map("knowledge_base_documents")
 }

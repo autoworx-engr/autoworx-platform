@@ -338,7 +338,7 @@ const AISettings = () => {
       return;
     }
 
-    setIsUploadingExample(true);
+    // setIsUploadingExample(true);
   };
 
   const handleDeleteConversationExample = async (
@@ -399,19 +399,6 @@ const AISettings = () => {
         <div className="text-2xl font-semibold text-gray-800">
           <h2>AI Settings</h2>
         </div>
-        <Button onClick={handleSaveAll} disabled={isSaving} size="lg">
-          {isSaving ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Saving...
-            </>
-          ) : (
-            <>
-              <Save className="mr-2 h-4 w-4" />
-              Save All Training Data
-            </>
-          )}
-        </Button>
       </div>
 
       <Tabs defaultValue="company" className="space-y-6">
@@ -688,9 +675,26 @@ const AISettings = () => {
         <TabsContent value="examples" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MessageSquare className="h-5 w-5" />
-                Conversation Examples
+              <CardTitle className="flex items-center justify-between gap-2">
+                <div>
+                  <MessageSquare className="h-5 w-5" />
+                  Conversation Examples
+                </div>
+                <div>
+                  <Button onClick={handleSaveAll} disabled={isSaving} size="lg">
+                    {isSaving ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="mr-2 h-4 w-4" />
+                        Save Example
+                      </>
+                    )}
+                  </Button>
+                </div>
               </CardTitle>
               <CardDescription>
                 Upload screenshots of previous text conversations so the AI can
