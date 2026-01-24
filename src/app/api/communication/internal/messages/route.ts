@@ -9,7 +9,7 @@ import { NextRequest, NextResponse } from "next/server";
  * /api/communication/internal/messages:
  *   get:
  *     summary: Retrieve internal messages
- *     tags: [Messages]
+ *     tags: [Internal]
  *     parameters:
  *       - in: query
  *         name: to

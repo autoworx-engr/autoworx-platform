@@ -30,7 +30,7 @@ const findUsers = (users: { id: number }[]) => {
  * /api/communication/internal/group:
  *   post:
  *     summary: Create a new group
- *     tags: [Group]
+ *     tags: [Internal]
  *     description: Creates a new group with the given name and connects it to the specified users.
  *     requestBody:
  *       required: true
@@ -138,7 +138,7 @@ export const POST = async (req: NextRequest) => {
  * /api/communication/internal/group:
  *   get:
  *     summary: Get groups for a user
- *     tags: [Group]
+ *     tags: [Internal]
  *     description: Retrieves paginated list of groups that the specified user is part of.
  *     parameters:
  *       - in: query
@@ -260,7 +260,7 @@ export const GET = async (req: NextRequest) => {
  * /api/communication/internal/group:
  *   put:
  *     summary: Update a group
- *     tags: [Group]
+ *     tags: [Internal]
  *     description: Updates the name and users of an existing group.
  *     requestBody:
  *       required: true

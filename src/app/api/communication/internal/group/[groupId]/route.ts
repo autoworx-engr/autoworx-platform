@@ -7,7 +7,7 @@ import { NextResponse } from "next/server";
  * /api/communication/internal/group/{groupId}:
  *   get:
  *     summary: Retrieve group details by ID
- *     tags: [Group]
+ *     tags: [Internal]
  *     parameters:
  *       - in: path
  *         name: groupId

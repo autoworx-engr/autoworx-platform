@@ -4,19 +4,64 @@ import { db } from "@/lib/db";
 import { jwtVerifyToken } from "@/lib/jwtVerify";
 import { NextRequest, NextResponse } from "next/server";
 
+/**
+ * @swagger
+ * /api/communication/internal/userList:
+ *   get:
+ *     summary: Retrieve a list of users for a specific company
+ *     tags: [Internal]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: companyId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the company
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *         description: Field to sort by
+ *       - in: query
+ *         name: sortOrder
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *         description: Order of sorting
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved user list
+ *       400:
+ *         description: Company ID is required
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Company not found
+ */
+
 export const GET = async (request: NextRequest) => {
   try {
     const searchParams = request.nextUrl.searchParams;
     const authHeader = request.headers.get("authorization") ?? "";
-    const accessToken = authHeader.startsWith("Bearer ")
+    const accessToken = authHeader.startsWith("Bearer")
       ? authHeader.split(" ")[1]
       : authHeader;
 
     const verifyToken = await jwtVerifyToken(accessToken);
 
-    const userId = verifyToken?.payload?.userId ?? "";
-
-    console.log("Verified User ID:", userId);
+    const userId = verifyToken?.payload?.id ?? "";
 
     const companyId = searchParams.get("companyId");
     const sortBy = searchParams.get("sortBy");
@@ -56,29 +101,30 @@ export const GET = async (request: NextRequest) => {
         : { createdAt: "asc" },
     });
 
-    const userChatTrack = await db.chatTrack.findMany({
-      where: {
-        OR: [{ senderId: userId as number }, { receiverId: userId as number }],
-      },
-      include: {
-        message: true,
-      },
-    });
+    if (!userId) {
+      throw new AppError(401, "Unauthorized");
+    }
 
-    // Calculate simple unread indicator per user (0 or 1)
-    const usersWithUnreadCounts = usersData.map(user => {
-      const hasUnreadMessage = userChatTrack.some(
-        chat =>
-          chat.receiverId === parseInt(userId as string) &&
-          chat.senderId === user.id &&
-          !chat.isRead,
-      );
-
-      return {
-        ...user,
-        unreadCount: hasUnreadMessage ? 1 : 0,
-      };
-    });
+    const usersWithChatTrack = await Promise.all(
+      usersData.map(async user => {
+        const userChatTrack = await db.chatTrack.findMany({
+          where: {
+            OR: [
+              { senderId: userId as number },
+              { receiverId: userId as number },
+            ],
+            section: "internal",
+          },
+          include: {
+            message: true,
+          },
+        });
+        return {
+          ...user,
+          chatTrack: userChatTrack,
+        };
+      }),
+    );
 
     const totalRecords = await db.user.count({
       where: { companyId: companyIdNum },
@@ -91,7 +137,7 @@ export const GET = async (request: NextRequest) => {
     return NextResponse.json(
       {
         success: true,
-        data: usersWithUnreadCounts,
+        data: usersWithChatTrack,
         message: "Messages fetched successfully",
         meta: {
           totalRecords: totalRecords,
