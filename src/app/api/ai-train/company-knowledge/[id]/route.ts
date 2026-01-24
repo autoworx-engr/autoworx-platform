@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
+import { validateCompanyId } from "../../utils";
 
 
 /**
@@ -30,18 +31,10 @@ import { NextResponse } from "next/server";
  *         description: Internal server error
  */
 export async function GET(req: Request, { params }: { params: { id: number } }) {
-
     try {
-        const { searchParams } = new URL(req.url);
-        const companyIdParam = searchParams.get("companyId");
-        const companyId = Number(companyIdParam);
-
-        if (!companyIdParam || !Number.isFinite(companyId)) {
-            return NextResponse.json(
-                { success: false, message: "Company ID is required" },
-                { status: 400 },
-            );
-        }
+        const validation = validateCompanyId(req);
+        if (validation instanceof NextResponse) return validation;
+        const { companyId } = validation;
 
         const companyInfo = await db.companyInfo.findFirst({
             where: {
@@ -136,16 +129,9 @@ export async function GET(req: Request, { params }: { params: { id: number } }) 
 export async function PATCH(req: Request, { params }: { params: { id: number } }) {
     try {
         const body = await req.json();
-        const { searchParams } = new URL(req.url);
-        const companyIdParam = searchParams.get("companyId");
-        const companyId = Number(companyIdParam);
-
-        if (!companyIdParam || !Number.isFinite(companyId)) {
-            return NextResponse.json(
-                { success: false, message: "Company ID is required" },
-                { status: 400 },
-            );
-        }
+        const validation = validateCompanyId(req);
+        if (validation instanceof NextResponse) return validation;
+        const { companyId } = validation;
 
         // Check if record exists and belongs to the company
         const existingInfo = await db.companyInfo.findFirst({
@@ -222,16 +208,9 @@ export async function PATCH(req: Request, { params }: { params: { id: number } }
  */
 export async function DELETE(req: Request, { params }: { params: { id: number } }) {
     try {
-        const { searchParams } = new URL(req.url);
-        const companyIdParam = searchParams.get("companyId");
-        const companyId = Number(companyIdParam);
-
-        if (!companyIdParam || !Number.isFinite(companyId)) {
-            return NextResponse.json(
-                { success: false, message: "Company ID is required" },
-                { status: 400 },
-            );
-        }
+        const validation = validateCompanyId(req);
+        if (validation instanceof NextResponse) return validation;
+        const { companyId } = validation;
 
         // Check if record exists and belongs to the company
         const existingInfo = await db.companyInfo.findFirst({

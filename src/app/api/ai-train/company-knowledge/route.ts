@@ -1,5 +1,7 @@
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
+import { validateCompanyId } from "../utils";
+
 
 /**
  * @swagger
@@ -44,16 +46,9 @@ import { NextResponse } from "next/server";
  */
 export async function GET(req: Request) {
     try {
-        const { searchParams } = new URL(req.url)
-        const companyIdParam = searchParams.get("companyId")
-        const companyId = Number(companyIdParam)
-
-        if (!companyIdParam || !Number.isFinite(companyId)) {
-            return NextResponse.json(
-                { success: false, message: "Company ID is required" },
-                { status: 400 },
-            );
-        }
+        const validation = validateCompanyId(req);
+        if (validation instanceof NextResponse) return validation;
+        const { companyId } = validation;
 
         const data = await db.companyInfo.findMany({
             where: { companyId: Number(companyId) },
