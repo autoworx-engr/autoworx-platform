@@ -3,9 +3,7 @@ import {
   ServicePlaybook,
   ServiceCategory,
   PricingRule,
-  IntakeQuestion,
   FAQ,
-  Upsell,
 } from "@/types/ai-settings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -61,9 +59,9 @@ export function PlaybookEditor({
       category: "other",
       overview: "",
       pricing_rules: [],
-      intake_questions: [],
+      // intake_questions: [],
       faqs: [],
-      upsells: [],
+      // upsells: [],
       do_say: [],
       dont_say: [],
       warranty_policy: "",
