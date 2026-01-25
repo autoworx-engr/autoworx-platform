@@ -131,13 +131,12 @@ const navbarList = [
     ],
   },
 
-   {
+  {
     title: "Visualization",
     icon: "/icons/navbar/visualization.svg",
     link: "/dashboard/visualization",
     path: "/dashboard/visualization",
   },
-  
 ];
 
 const mobileNav = [
@@ -183,6 +182,7 @@ export default function Layout({
   session: Session | null;
   children: React.ReactNode;
 }) {
+  console.log("Layout session:", session);
   const pathname = usePathname(); // Get the current route path
   const isSuperAdminRoute = pathname?.startsWith("/awx-dashboard");
   useSetPermissions(session); // Set user permissions based on session
@@ -191,7 +191,7 @@ export default function Layout({
   const currentUser = useGetCurrentUser();
   const [voicePhoneNumber, setVoicePhoneNumber] = useState<string | null>(null);
   const [voiceProvider, setVoiceProvider] = useState<"TWILIO" | "INFOBIP">(
-    "TWILIO"
+    "TWILIO",
   );
 
   useEffect(() => {
@@ -201,7 +201,7 @@ export default function Layout({
           const response = await uploadNotificationSettings(
             Number(currentUser?.id),
             currentUser?.employeeType as EmployeeType,
-            currentUser?.companyId
+            currentUser?.companyId,
           );
         }
       } catch (error) {
