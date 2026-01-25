@@ -11,28 +11,29 @@ type TGetClientsProps = {
   filter?: string;
   search?: string;
   take?: number;
+  page?: number;
 };
 
-export const getClients = cache(
+export const getClientsWithPagination = cache(
   async ({
     companyId,
     filter,
     search,
     take = 20,
+    page = 1,
     userId,
   }: TGetClientsProps) => {
     const user = await getUserFromSession(userId);
 
-    // Base query object
+    const skip = (page - 1) * take;
+
     const baseWhere: Prisma.ClientWhereInput = {
       companyId,
     };
 
     const searchTerm = search?.trim();
-
     if (searchTerm) {
       const tokens = searchTerm.split(/\s+/).filter(Boolean);
-
       baseWhere.AND = tokens.map((token) => ({
         OR: [
           { firstName: { contains: token, mode: "insensitive" } },
@@ -49,13 +50,13 @@ export const getClients = cache(
         conversationsTrack: true,
       },
     };
-    let clients: (Client & { conversationsTrack?: ClientConversationTrack })[] =
-      [];
+
     try {
+      let allClients: any[] = [];
+
       switch (filter) {
         case "Unread":
-          // Get all clients with unread messages, then sort and limit
-          const allUnreadClients = await db.client.findMany({
+          allClients = await db.client.findMany({
             ...queryObj,
             where: {
               ...queryObj.where,
@@ -64,59 +65,54 @@ export const getClients = cache(
               },
             },
           });
-          const sortedUnreadClients =
-            clientSortByUpdatedMessage(allUnreadClients);
-          clients = sortedUnreadClients.slice(0, take) as typeof clients;
           break;
+
         case "Starred":
-          // Get all starred clients, then sort and limit
-          const allStarredClients = await db.client.findMany({
+          allClients = await db.client.findMany({
             ...queryObj,
             where: {
               ...queryObj.where,
               isStarred: true,
             },
           });
-          const sortedStarredClients =
-            clientSortByUpdatedMessage(allStarredClients);
-          clients = sortedStarredClients.slice(0, take) as typeof clients;
           break;
+
         case "Assigned":
-          // Get all assigned clients, then sort and limit
-          const allAssignedClients = await db.client.findMany({
+          allClients = await db.client.findMany({
             ...queryObj,
             where: {
               ...queryObj.where,
               Lead: {
                 assignedSalesUserId: {
-                  in: [parseInt(user.id)],
+                  in: [Number(user.id)],
                 },
               },
             },
           });
-          const sortedAssignedClients =
-            clientSortByUpdatedMessage(allAssignedClients);
-          clients = sortedAssignedClients.slice(0, take) as typeof clients;
           break;
+
         default:
-          // For the initial load, we need to get ALL clients, sort them properly,
-          // and then take the top 'take' number of clients
-          // This ensures we get the actual top clients, not just a random 20
-          const allClients = await db.client.findMany({
-            ...queryObj,
-            // Remove the 'take' limit here - we need all clients to sort properly
-          });
-
-          // Apply proper sorting to get the actual top clients
-          const sortedAllClients = clientSortByUpdatedMessage(allClients);
-
-          // Now take only the top 'take' number of clients
-          clients = sortedAllClients.slice(0, take) as typeof clients;
-          break;
+          allClients = await db.client.findMany(queryObj);
       }
-      return clients || [];
+
+      // 🔥 JS-level sorting
+      const sortedClients = clientSortByUpdatedMessage(allClients);
+
+      // ✅ Proper pagination
+      const paginatedClients = sortedClients.slice(skip, skip + take);
+
+      return {
+        data: paginatedClients,
+        meta: {
+          page,
+          take,
+          total: sortedClients.length,
+          totalPages: Math.ceil(sortedClients.length / take),
+          hasNextPage: skip + take < sortedClients.length,
+        },
+      };
     } catch (err) {
-      console.error("getClients: Error occurred:", err);
+      console.error("getClients error:", err);
       throw err;
     }
   },

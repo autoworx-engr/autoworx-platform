@@ -48,7 +48,7 @@ export default function NewService({
       if (data?.service && data.edit) {
         setName(data.service.name);
         setCategory(
-          categories.find((cat) => cat.id === data.service.categoryId)
+          categories.find((cat) => cat.id === data.service.categoryId),
         );
         setDescription(data.service.description);
       } else {
@@ -284,10 +284,11 @@ export default function NewService({
                   }
                 }}
                 onBlur={() => setNameTouched(true)}
-                className={`w-full px-4 py-2.5 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder:text-slate-400 ${nameError
+                className={`w-full px-4 py-2.5 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder:text-slate-400 ${
+                  nameError
                     ? "border-red-500 focus:ring-red-500"
                     : "border-slate-300"
-                  }`}
+                }`}
                 aria-invalid={nameError ? "true" : "false"}
                 aria-describedby={nameError ? "name-error" : undefined}
               />
@@ -353,22 +354,13 @@ export default function NewService({
 
             {/* Description */}
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label
-                  htmlFor="description"
-                  className="block text-sm font-medium text-slate-700"
-                >
-                  Description
-                </label>
-                <span
-                  className={`text-xs ${descriptionLength > maxDescriptionLength * 0.9
-                      ? "text-red-600 font-medium"
-                      : "text-slate-500"
-                    }`}
-                >
-                  {descriptionLength}/{maxDescriptionLength}
-                </span>
-              </div>
+              <label
+                htmlFor="description"
+                className="block text-sm font-medium text-slate-700"
+              >
+                Description
+              </label>
+
               <textarea
                 id="description"
                 placeholder="Add any additional details about this service..."
@@ -378,7 +370,7 @@ export default function NewService({
 
                   if (value.length > maxDescriptionLength) {
                     toast.error(
-                      "Description must be less than 1500 characters"
+                      "Description must be less than 1500 characters",
                     );
                     return false;
                   }
@@ -387,9 +379,20 @@ export default function NewService({
                 rows={5}
                 className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder:text-slate-400 resize-none"
               />
-              <p className="text-xs text-slate-500">
-                Provide a detailed description of what this service includes
-              </p>
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-slate-500">
+                  Provide a detailed description of what this service includes
+                </p>
+                <span
+                  className={`text-xs ${
+                    descriptionLength > maxDescriptionLength * 0.9
+                      ? "text-red-600 font-medium"
+                      : "text-slate-500"
+                  }`}
+                >
+                  {descriptionLength}/{maxDescriptionLength}
+                </span>
+              </div>
             </div>
 
             {/* Info Box */}

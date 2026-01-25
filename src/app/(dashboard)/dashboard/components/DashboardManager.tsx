@@ -1,3 +1,4 @@
+import React from "react";
 import AppointmentListBox from "./box/AppointmentListBox";
 import EmployeeLeaveRequestsBox from "./box/EmployeeLeaveRequestsBox";
 import EmployeePayoutBox from "./box/EmployeePayoutBox";
@@ -7,59 +8,63 @@ import RevenueBox from "./box/RevenueBox";
 import SalesPipelineBox from "./box/SalesPipelineBox";
 import ShopPipelineBox from "./box/ShopPipelineBox";
 import TaskListBox from "./box/TaskListBox";
-// import { useAutoRefreshRoute } from "@/hooks/useAutoRefreshRoute.ts";
+
+const DashboardColumn = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
+  <div className={`flex flex-col gap-2 h-full ${className}`}>
+    {children}
+  </div>
+);
 
 const DashboardManager = () => {
   return (
-    // Outer Container: Set items-start/items-stretch and consistent gap
-    <div className="flex w-full h-full min-h-0 flex-col gap-4 lg:flex-row lg:items-stretch xl:gap-6 2xl:gap-8">
-      {/* Col 1: Pipeline Boxes (20%)
-        (Sales & Shop)
-      */}
-      <div className="order-1 flex w-full flex-col h-full min-h-0 gap-4 lg:w-[20%]">
-        <SalesPipelineBox />
-        <ShopPipelineBox />
-      </div>
+    <div className="min-h-screen w-full bg-slate-50 p-2 lg:p-3">
+      <div className="grid w-full grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 items-stretch">
 
-      {/* Col 2: Task List (20%)
-        (The `flex-1` component must stretch to fill height)
-      */}
-      <div className="order-4 flex w-full flex-col h-full min-h-0 gap-4 lg:order-2 lg:w-[20%]">
-        <div className="flex-1 min-h-0">
+        <DashboardColumn>
+          <SalesPipelineBox />
+          <ShopPipelineBox className="h-full" />
+        </DashboardColumn>
+
+        <DashboardColumn>
           <TaskListBox />
-        </div>
-        <div className="flex-1 min-h-0 lg:hidden">
-          <ReputationBox />
-        </div>
-      </div>
+          <div className="lg:hidden xl:hidden">
+            <ReputationBox />
+          </div>
+          <div className="hidden lg:block xl:hidden">
+            <AppointmentListBox />
+          </div>
+        </DashboardColumn>
 
-      {/* Col 3: Appointments List (20%)
-        (The `flex-1` component must stretch to fill height)
-      */}
-      <div className="order-3 flex w-full flex-col h-full min-h-0 gap-4 lg:w-[20%]">
-        <div className="flex-1 min-h-0">
-          <AppointmentListBox />
-        </div>
-      </div>
+        <DashboardColumn>
+          <div className="hidden h-full xl:block">
+            <AppointmentListBox />
+          </div>
 
-      {/* Col 4: Metrics & Actions (40%)
-        (Revenue, Inventory, Payout, Leave Requests)
-      */}
-      <div className="order-2 flex w-full flex-col h-full min-h-0 gap-4 lg:order-4 lg:w-[40%]">
-        {/* Row 1: Revenue & Inventory (Must share space) */}
-        <div className="flex flex-col items-start gap-4 lg:flex-row">
-          {/* NOTE: We must remove the redundant shadow/padding/rounded classes from the parent and rely on the child component */}
-          <RevenueBox className="w-full lg:w-1/2" />
-          <InventoryBox className="w-full lg:w-1/2" />
-        </div>
+          <div className="flex flex-col gap-2 xl:hidden h-full">
+            <RevenueBox />
+            <InventoryBox className="h-full"/>
+          </div>
 
-        {/* Row 2: Payout */}
-        {/* NOTE: Remove redundant styling from parent */}
-        <EmployeePayoutBox />
-        {/* <EmployeeLeaveRequestsBox /> */}
-        <div className="hidden lg:flex flex-1 min-h-0">
-          <ReputationBox />
-        </div>
+          <div className="lg:hidden">
+            <EmployeePayoutBox className="h-full" />
+          </div>
+        </DashboardColumn>
+
+        <DashboardColumn className="lg:col-span-1 xl:col-span-2">
+          <div className="hidden xl:grid grid-cols-2 gap-2 h-full">
+            <RevenueBox />
+            <InventoryBox />
+          </div>
+
+          <EmployeePayoutBox className="h-full hidden lg:block" />
+          <div className="lg:hidden h-full">
+            <AppointmentListBox />
+          </div>
+
+          <div className="hidden lg:block h-full">
+            <ReputationBox />
+          </div>
+        </DashboardColumn>
       </div>
     </div>
   );
