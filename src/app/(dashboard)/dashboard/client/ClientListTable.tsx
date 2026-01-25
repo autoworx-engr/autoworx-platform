@@ -34,7 +34,7 @@ const ClientListTable = ({
 
   return (
     <div className="hidden lg:block overflow-hidden rounded-xl p-2 bg-white dark:bg-slate-900 ring-1 ring-slate-200 dark:ring-slate-800 shadow-sm">
-      <div className="md:overflow-x-auto">
+      <div>
         <table className="w-full">
           <thead className="">
             <tr className="h-10 border-b">

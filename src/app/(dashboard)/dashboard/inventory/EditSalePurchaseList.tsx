@@ -14,6 +14,9 @@ import NewVendor from "@/components/Lists/NewVendor";
 import Selector from "@/components/Selector";
 import { SlimInput } from "@/components/SlimInput";
 import Submit from "@/components/Submit";
+import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
+import { cn } from "@/lib/cn";
+import { successToast } from "@/lib/toast";
 import { useFormErrorStore } from "@/stores/form-error";
 import { useListsStore } from "@/stores/lists";
 import {
@@ -23,13 +26,10 @@ import {
   User,
   Vendor,
 } from "@prisma/client";
-import { useState, useEffect, useRef } from "react";
-import { UpdatePurchase } from "../../../../actions/inventory/updatePurchase";
-import moment from "moment-timezone";
-import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { SquarePen } from "lucide-react";
-import { successToast } from "@/lib/toast";
-import { cn } from "@/lib/cn";
+import moment from "moment-timezone";
+import { useEffect, useRef, useState } from "react";
+import { UpdatePurchase } from "../../../../actions/inventory/updatePurchase";
 
 type TProps = {
   productId: number;
@@ -69,9 +69,9 @@ export default function EditSalePurchaseList({
     price:
       history?.price && history?.quantity
         ? (typeof history.price === "object" && history.price.toNumber
-          ? history.price.toNumber() * Number(history.quantity)
-          : Number(history.price) * Number(history.quantity)
-        ).toFixed(2)
+            ? history.price.toNumber() * Number(history.quantity)
+            : Number(history.price) * Number(history.quantity)
+          ).toFixed(2)
         : "0.00",
     unit: product?.unit || "",
     lot: product?.lot || "",
@@ -91,9 +91,9 @@ export default function EditSalePurchaseList({
         price:
           history?.price && history?.quantity
             ? (typeof history.price === "object" && history.price.toNumber
-              ? history.price.toNumber() * Number(history.quantity)
-              : Number(history.price) * Number(history.quantity)
-            ).toFixed(2)
+                ? history.price.toNumber() * Number(history.quantity)
+                : Number(history.price) * Number(history.quantity)
+              ).toFixed(2)
             : "0.00",
         unit: product?.unit || "",
         lot: product?.lot || "",
@@ -218,7 +218,9 @@ export default function EditSalePurchaseList({
         form
       >
         <DialogHeader>
-          <DialogTitle className="text-slate-600">Edit {fromSales ? "Sales" : "Purchase"}</DialogTitle>
+          <DialogTitle className="text-slate-600">
+            Edit {fromSales ? "Sales" : "Purchase"}
+          </DialogTitle>
         </DialogHeader>
 
         <FormError />
@@ -239,8 +241,8 @@ export default function EditSalePurchaseList({
                 label={(selectedVendor: Vendor | null) =>
                   selectedVendor
                     ? selectedVendor.companyName ||
-                    selectedVendor.name ||
-                    `Vendor ${selectedVendor.id}`
+                      selectedVendor.name ||
+                      `Vendor ${selectedVendor.id}`
                     : "Select Vendor"
                 }
                 newButton={
@@ -250,7 +252,10 @@ export default function EditSalePurchaseList({
                       setVendorOpen(false);
                     }}
                     button={
-                      <button type="button" className="text-xs text-[#6571FF] hover:underline">
+                      <button
+                        type="button"
+                        className="text-xs text-[#6571FF] hover:underline"
+                      >
                         + New Vendor
                       </button>
                     }
@@ -312,13 +317,16 @@ export default function EditSalePurchaseList({
           </div>
 
           <div className="space-y-1">
-            <label htmlFor="notes" className="font-medium text-slate-600">Notes</label>
+            <label htmlFor="notes" className="font-medium text-slate-600">
+              Notes
+            </label>
             <textarea
               id="notes"
               name="notes"
               value={formState.notes}
               onChange={handleInputChange}
-              className={cn("h-24 w-full rounded-md border border-slate-300 outline-none bg-background px-3 py-2 leading-6 transition-all duration-300 thin-scrollbar",
+              className={cn(
+                "h-24 w-full rounded-md border border-slate-300 outline-none bg-background px-3 py-2 leading-6 transition-all duration-300 thin-scrollbar",
                 "bg-white/80 backdrop-blur-sm dark:bg-slate-900/50",
                 "text-slate-600 dark:text-slate-300 placeholder:text-slate-400",
                 "focus:border-[#6571FF]/60 focus:ring-2 focus:ring-[#6571FF]/40",
@@ -329,11 +337,13 @@ export default function EditSalePurchaseList({
         </div>
 
         <DialogFooter>
-          <DialogClose className="
+          <DialogClose
+            className="
             rounded-xl px-5 py-2.5 text-sm font-medium text-slate-500 mt-2 md:mt-0 
           hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
             transition-colors border
-          ">
+          "
+          >
             Cancel
           </DialogClose>
           <Submit

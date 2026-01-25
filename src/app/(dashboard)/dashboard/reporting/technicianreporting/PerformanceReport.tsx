@@ -1,11 +1,11 @@
 "use client";
-import { cn } from "@/lib/cn.ts";
-import { useServerGet } from "@/hooks/useServerGet";
 import { getPerformanceInfo } from "@/actions/employee/getPerformanceInfo";
-import { useState } from "react";
-import { useSession } from "next-auth/react";
-import BarChartComponent from "../../employee/components/BarChartComponent";
+import { useServerGet } from "@/hooks/useServerGet";
+import { cn } from "@/lib/cn.ts";
 import { Info } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useState } from "react";
+import BarChartComponent from "../../employee/components/BarChartComponent";
 
 interface MetricData {
   label: string;
@@ -19,6 +19,8 @@ const arrayOfPerformanceWord = ["Average", "Return"];
 
 export default function PerformanceReport() {
   const { data: currentUser } = useSession();
+
+  console.log("getPerformanceInfo ==>", getPerformanceInfo);
   const { data } = useServerGet(
     getPerformanceInfo,
     Number(currentUser?.user?.id)
@@ -32,6 +34,7 @@ export default function PerformanceReport() {
     totalJobsCompletedLate,
     totalJobs,
   } = data || {};
+  console.log("avarageJobTime ==>", averageJobTime);
   const [infoIndex, setInfoIndex] = useState<number | null>(null);
 
   const getPerformanceContent = (label: string): string | undefined => {
