@@ -2,7 +2,7 @@ import { changePassword } from "@/actions/settings/myAccount";
 import { SlimInput } from "@/components/SlimInput";
 import { errorToast, successToast } from "@/lib/toast";
 import { Eye, EyeOff } from "lucide-react";
-import { useState, useTransition } from "react";
+import { useState } from "react";
 
 export const ChangePassword = () => {
   const [currentPw, setCurrentPw] = useState("");
@@ -23,6 +23,7 @@ export const ChangePassword = () => {
             name="currentPassword"
             type={toggleCurrentPassword ? "text" : "password"}
             value={currentPw}
+            required={true}
             onChange={(e) => setCurrentPw(e.target.value)}
           />
           <span
@@ -40,6 +41,7 @@ export const ChangePassword = () => {
         <div className="relative">
           <SlimInput
             name="newPassword"
+            required={true}
             type={toggleNewPassword ? "text" : "password"}
             value={newPw}
             onChange={(e) => setNewPw(e.target.value)}
@@ -60,6 +62,7 @@ export const ChangePassword = () => {
           <SlimInput
             name="confirmNewPassword"
             type={toggleConfirmPassword ? "text" : "password"}
+            required={true}
             value={confirmNewPw}
             onChange={(e) => setConfirmNewPw(e.target.value)}
           />

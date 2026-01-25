@@ -9,35 +9,33 @@ import TaskListBox from "./box/TaskListBox";
 
 const Dashboard = async () => {
   return (
-    <div className="flex h-full flex-col gap-4 lg:flex-row xl:gap-x-8 bg-slate-50 dark:bg-slate-900/90 overflow-y-auto overflow-x-hidden">
-      {/* col 1 */}
-      <div className="flex h-full w-full flex-col justify-around space-y-4 lg:w-[23%]">
-        {/* sales pipeline */}
-        <SalesPipelineBox />
-        {/* Shop pipeline */}
-        <ShopPipelineBox />
-      </div>
-      {/* col 2 */}
-      <div className="flex h-full w-full flex-col justify-around space-y-4 lg:w-[23%]">
-        {/* Revenue */}
-        <RevenueBox />
-        {/* Inventory */}
-        <InventoryBox />
-        {/* Employee Payout */}
-        <EmployeePayoutBox />
-      </div>
-
-      {/* col 3 */}
-      <div className="flex h-full w-full flex-1 flex-col space-y-4 lg:w-[26%]">
-        <AppointmentListBox />
-      </div>
-      {/* col 4*/}
-      <div className="flex h-full w-full flex-1 flex-col space-y-4 lg:w-[27%]">
-        <div className="flex-1 min-h-0">
-          <TaskListBox />
+    <div className="min-h-screen w-full bg-[#f8fafc] p-4 sm:p-0 dark:bg-[#0f172a]">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:gap-4 items-stretch">
+        
+        <div className="flex flex-col gap-4 xl:gap-6">
+          <SalesPipelineBox />
+          <ShopPipelineBox />
         </div>
-        <div className="flex-1 min-h-0">
-          <ReputationBox />
+
+        <div className="flex flex-col gap-4 xl:gap-6">
+          <RevenueBox />
+          <InventoryBox />
+          <EmployeePayoutBox />
+        </div>
+
+        <div className="flex flex-col">
+          <AppointmentListBox />
+        </div>
+
+        <div className="md:col-span-full lg:col-span-1">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-1 lg:h-full xl:gap-6">
+            <div className="flex flex-col h-full">
+              <TaskListBox />
+            </div>
+            <div className="flex flex-col h-full">
+              <ReputationBox />
+            </div>
+          </div>
         </div>
       </div>
     </div>
