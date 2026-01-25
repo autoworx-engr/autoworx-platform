@@ -25,7 +25,8 @@ const pusher = getPusherInstance();
  * @swagger
  * /api/pusher:
  *   post:
- *     summary: Send message via Pusher
+ *     summary: Send a real-time message
+ *     description: Dispatches a message via Pusher, updates chat history, and triggers relevant notifications.
  *     tags: [Messaging]
  *     security:
  *       - bearerAuth: []
@@ -35,22 +36,53 @@ const pusher = getPusherInstance();
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - to
  *             properties:
  *               to:
  *                 type: integer
+ *                 description: Recipient user ID or group ID.
  *               message:
  *                 type: string
+ *                 description: Text content of the message.
  *               type:
  *                 type: string
+ *                 description: The type of message being sent.
+ *               section:
+ *                 type: string
+ *                 enum: [INTERNAL, COLLABORATION]
+ *                 description: The section context for the message.
+ *               attachmentFiles:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     fileName:
+ *                       type: string
+ *                     fileType:
+ *                       type: string
+ *                     fileUrl:
+ *                       type: string
+ *                     fileSize:
+ *                       type: integer
+ *                 description: Optional array of file attachments.
+ *               requestEstimate:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                 description: Optional associated estimate request.
  *     responses:
  *       200:
- *         description: Message sent
+ *         description: Message sent successfully.
+ *       400:
+ *         description: Bad request - missing required arguments.
  *       401:
- *         description: Unauthorized
+ *         description: Unauthorized - valid session required.
+ *       500:
+ *         description: Internal server error.
  */
-// POST /api/pusher/trigger
-// Trigger a message to the client
-// Body: { message, roomId }
+
 export async function POST(req: Request) {
   const body = await req.json();
   const { to, message, type, section, attachmentFiles, requestEstimate } = body;
