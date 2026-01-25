@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-service";
 import { NextResponse } from "next/server";
 import { twiml } from "twilio";
 import { v4 as uuidv4 } from "uuid";
@@ -39,7 +40,7 @@ export async function POST(request: Request) {
     if (!to || !from) {
       return NextResponse.json(
         { error: "Both 'To' and 'From' parameters are required." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -47,7 +48,7 @@ export async function POST(request: Request) {
     if (to === from) {
       return NextResponse.json(
         { error: "Cannot call the same Twilio number." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -63,8 +64,19 @@ export async function POST(request: Request) {
     if (!twilioCredentials) {
       return NextResponse.json(
         { error: "Twilio credentials not found" },
-        { status: 400 }
+        { status: 400 },
       );
+    }
+
+    const entitlements = await getCompanyEntitlements(
+      twilioCredentials.companyId,
+    );
+    if (!entitlements.canUseVoice) {
+      const voiceResponse = new twiml.VoiceResponse();
+      voiceResponse.reject();
+      return new Response(voiceResponse.toString(), {
+        headers: { "Content-Type": "text/xml" },
+      });
     }
 
     const client = await db.client.findFirst({
@@ -101,7 +113,7 @@ export async function POST(request: Request) {
         recordingStatusCallback: `${process.env.NEXT_PUBLIC_APP_URL}/api/twilio/call-recording?callId=${callId}`,
         recordingStatusCallbackMethod: "POST",
       },
-      to
+      to,
     );
 
     return new Response(voiceResponse.toString(), {

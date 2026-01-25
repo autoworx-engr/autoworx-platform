@@ -1,4 +1,9 @@
 import { getTwilioCredentials } from "@/actions/communication/client/sendTwilioMessage";
+import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-service";
+import {
+  assertCompanyAccess,
+  requireBillingSession,
+} from "@/lib/platform-billing/guards";
 import { NextRequest, NextResponse } from "next/server";
 import twilio from "twilio";
 
@@ -30,16 +35,26 @@ import twilio from "twilio";
 export async function POST(request: NextRequest) {
   const { identity, companyId, platform } = await request.json();
 
+  const entitlements = await getCompanyEntitlements(companyId);
+  if (!entitlements.canUseVoice) {
+    return NextResponse.json(
+      { error: "Voice calling is not enabled for this plan." },
+      { status: 403 },
+    );
+  }
+
   try {
     const AccessToken = twilio.jwt.AccessToken;
     const VoiceGrant = AccessToken.VoiceGrant;
 
-    let twilioCredentials = await getTwilioCredentials({ companyId });
+    let twilioCredentials = await getTwilioCredentials({
+      companyId,
+    });
 
     if (!twilioCredentials) {
       return NextResponse.json(
         { error: "Twilio credentials not found" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -47,7 +62,7 @@ export async function POST(request: NextRequest) {
       twilioCredentials.accountSid,
       twilioCredentials.apiKeySid,
       twilioCredentials.apiKeySecret,
-      { identity }
+      { identity },
     );
 
     let pushCredentialSid;

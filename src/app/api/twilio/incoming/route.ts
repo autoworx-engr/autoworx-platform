@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-service";
 import { NextResponse } from "next/server";
 import { twiml } from "twilio";
 import { v4 as uuidv4 } from "uuid";
@@ -51,7 +52,7 @@ export async function POST(request: Request) {
       console.error("❌ [Incoming] Missing From or To");
       return NextResponse.json(
         { error: "Missing 'From' or 'To' parameters." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -77,8 +78,17 @@ export async function POST(request: Request) {
     if (!twilioCredentials || !company) {
       return NextResponse.json(
         { error: "Twilio credentials or company not found" },
-        { status: 400 }
+        { status: 400 },
       );
+    }
+
+    const entitlements = await getCompanyEntitlements(company.id);
+    if (!entitlements.canUseVoice) {
+      const voiceResponse = new twiml.VoiceResponse();
+      voiceResponse.reject();
+      return new Response(voiceResponse.toString(), {
+        headers: { "Content-Type": "text/xml" },
+      });
     }
 
     const companyId = company?.id;
@@ -166,14 +176,14 @@ export async function POST(request: Request) {
         }).catch((error) => {
           console.error(
             `Failed to send push notification to user ${user.id}:`,
-            error
+            error,
           );
-        })
+        }),
       );
 
       await Promise.allSettled(notificationPromises);
       console.log(
-        `📱 Push notifications sent to ${companyUsers.length} user(s)`
+        `📱 Push notifications sent to ${companyUsers.length} user(s)`,
       );
     } catch (notificationError) {
       console.error("Error sending push notifications:", notificationError);
@@ -198,7 +208,7 @@ export async function POST(request: Request) {
           answerOnBridge: true,
           action: `${process.env.NEXT_PUBLIC_APP_URL}/api/twilio/call-status`,
         },
-        callForwardingNumber
+        callForwardingNumber,
       );
     } else {
       // Dial to the client identity (the browser device) - original behavior
