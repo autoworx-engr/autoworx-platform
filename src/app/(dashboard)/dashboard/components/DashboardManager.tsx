@@ -26,8 +26,10 @@ const DashboardManager = () => {
         </DashboardColumn>
 
         <DashboardColumn>
-          <TaskListBox />
-          <div className="lg:hidden xl:hidden">
+          <div className="max-h-[25rem] xl:max-h-[113vh] md:h-full">
+            <TaskListBox />
+          </div>
+          <div className="lg:hidden xl:hidden flex-grow">
             <ReputationBox />
           </div>
           <div className="hidden lg:block xl:hidden">
@@ -42,7 +44,7 @@ const DashboardManager = () => {
 
           <div className="flex flex-col gap-2 xl:hidden h-full">
             <RevenueBox />
-            <InventoryBox className="h-full"/>
+            <InventoryBox className="h-full" />
           </div>
 
           <div className="lg:hidden">
