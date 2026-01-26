@@ -22,7 +22,6 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { ServicePlaybook } from "@/types/ai-settings";
 // import { humanPersonas } from "@/lib/humanPersona";
 import {
   Building2,
@@ -57,10 +56,11 @@ import {
   Volume2,
   Sparkles,
 } from "lucide-react";
-import { PlaybookEditor } from "./playbooks/PlaybookEditor";
-import { PlaybookCard } from "./playbooks/PlaybookCard";
 import toast from "react-hot-toast";
 import { humanPersonas } from "@/lib/humanPersona";
+import { PlaybooksTab } from "./playbooks/PlaybooksTab";
+import { useServicePlaybooks } from "@/hooks/ai-train/useServicePlaybooks";
+import { convertToServicePlaybook } from "./playbooks/utils";
 
 interface FAQ {
   question: string;
@@ -123,46 +123,6 @@ interface CompanyInfo {
   conversation_style: ConversationStyle;
 }
 
-interface DBPlaybook {
-  id: string;
-  service_name: string;
-  category: string;
-  overview: string | null;
-  pricing_rules: any;
-  intake_questions: any;
-  faqs: any;
-  upsells: any;
-  do_say: any;
-  dont_say: any;
-  warranty_policy: string | null;
-  time_estimate: string | null;
-  scheduling_notes: string | null;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
-function convertToServicePlaybook(db: DBPlaybook): ServicePlaybook {
-  return {
-    id: db.id,
-    shop_id: "default",
-    service_name: db.service_name,
-    category: db.category as any,
-    overview: db.overview || "",
-    pricing_rules: db.pricing_rules || [],
-    intake_questions: db.intake_questions || [],
-    faqs: db.faqs || [],
-    upsells: db.upsells || [],
-    do_say: db.do_say || [],
-    dont_say: db.dont_say || [],
-    warranty_policy: db.warranty_policy || "",
-    time_estimate: db.time_estimate || "",
-    scheduling_notes: db.scheduling_notes || "",
-    is_active: db.is_active,
-    created_at: db.created_at,
-    updated_at: db.updated_at,
-  };
-}
 
 const documentExamples = [
   {
@@ -191,27 +151,98 @@ const documentExamples = [
   },
 ];
 
+function ServiceFAQsSection() {
+  const { data: playbooksData } = useServicePlaybooks({
+    isActive: true,
+    page: 1,
+    limit: 100,
+  });
+
+  const activePlaybooks =
+    playbooksData?.data?.map(convertToServicePlaybook).filter((p) => p.is_active) || [];
+
+  if (activePlaybooks.length === 0) {
+    return (
+      <div className="text-center py-8 text-muted-foreground border rounded-lg border-dashed">
+        <BookOpen className="h-10 w-10 mx-auto mb-2 opacity-50" />
+        <p>No active Service Playbooks yet.</p>
+        <p className="text-sm mt-1">
+          Create playbooks in the Playbooks tab to see service FAQs here.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <Accordion type="single" collapsible className="space-y-2">
+      {activePlaybooks.map((pb) => (
+        <AccordionItem
+          key={pb.id}
+          value={pb.id}
+          className="border rounded-lg px-4"
+        >
+          <AccordionTrigger className="hover:no-underline">
+            <div className="flex items-center gap-3">
+              <span className="font-medium">{pb.service_name}</span>
+              <Badge variant="secondary">{pb.faqs.length} FAQs</Badge>
+              {pb.warranty_policy && (
+                <Badge variant="outline">Warranty</Badge>
+              )}
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="pt-2 pb-4">
+            {pb.faqs.length > 0 ? (
+              <div className="space-y-3">
+                {pb.faqs.map((faq: FAQ, idx: number) => (
+                  <div key={idx} className="p-3 bg-muted/50 rounded-lg">
+                    <p className="font-medium text-sm">{faq.question}</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {faq.answer}
+                    </p>
+                  </div>
+                ))}
+                {pb.warranty_policy && (
+                  <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+                    <p className="font-medium text-sm flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      Warranty Policy
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {pb.warranty_policy}
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                No FAQs added for this service yet.
+              </p>
+            )}
+            <div className="mt-4">
+              <Button variant="outline" size="sm" asChild>
+                <a href="#playbooks">Edit Playbook</a>
+              </Button>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      ))}
+    </Accordion>
+  );
+}
+
 const AISettings = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
   const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(null);
-  const [playbooks, setPlaybooks] = useState<ServicePlaybook[]>([]);
   const [documents, setDocuments] = useState<KBDocument[]>([]);
   const [conversationExamples, setConversationExamples] = useState<
     ConversationExample[]
   >([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [playbookSearchQuery, setPlaybookSearchQuery] = useState("");
   const [isUploadingExample, setIsUploadingExample] = useState(false);
   const [isScrapingWebsite, setIsScrapingWebsite] = useState(false);
-
-  // Playbook editor state
-  const [isEditingPlaybook, setIsEditingPlaybook] = useState(false);
-  const [editingPlaybook, setEditingPlaybook] = useState<
-    ServicePlaybook | undefined
-  >();
 
   // Form states
   const [newFAQ, setNewFAQ] = useState<FAQ>({ question: "", answer: "" });
@@ -282,22 +313,6 @@ const AISettings = () => {
     // }
   };
 
-  // Playbook handlers
-  const handleCreatePlaybook = () => {
-    setEditingPlaybook(undefined);
-    setIsEditingPlaybook(true);
-  };
-
-  const handleEditPlaybook = (playbook: ServicePlaybook) => {
-    setEditingPlaybook(playbook);
-    setIsEditingPlaybook(true);
-  };
-
-  const handleSavePlaybook = async (data: Partial<ServicePlaybook>) => {};
-
-  const handleDeletePlaybook = async (playbook: ServicePlaybook) => {};
-
-  const handleTogglePlaybook = async (playbook: ServicePlaybook) => {};
 
   const handleAddFAQ = () => {
     if (!newFAQ.question.trim() || !newFAQ.answer.trim() || !companyInfo)
@@ -354,43 +369,8 @@ const AISettings = () => {
       doc.content.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  const filteredPlaybooks = playbooks.filter(
-    (pb) =>
-      pb.service_name
-        .toLowerCase()
-        .includes(playbookSearchQuery.toLowerCase()) ||
-      pb.category.toLowerCase().includes(playbookSearchQuery.toLowerCase()),
-  );
-
-  const activePlaybooks = playbooks.filter((p) => p.is_active);
-
   const categories = ["general", "services", "pricing", "policies", "faq"];
 
-  // if (isLoading) {
-  //   return (
-  //     <div>
-  //       <div className="flex items-center justify-center h-64">
-  //         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-  //       </div>
-  //     </div>
-  //   );
-  // }
-
-  // Show playbook editor fullscreen when editing
-  if (isEditingPlaybook) {
-    return (
-      <div>
-        <PlaybookEditor
-          playbook={editingPlaybook}
-          onSave={handleSavePlaybook}
-          onCancel={() => {
-            setIsEditingPlaybook(false);
-            setEditingPlaybook(undefined);
-          }}
-        />
-      </div>
-    );
-  }
 
   return (
     <div>
@@ -610,65 +590,7 @@ const AISettings = () => {
 
         {/* 2. Service Playbooks */}
         <TabsContent value="playbooks" className="space-y-6">
-          <div className="space-y-6">
-            {/* Header Actions */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Search playbooks..."
-                  value={playbookSearchQuery}
-                  onChange={(e) => setPlaybookSearchQuery(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm">
-                  <Filter className="mr-2 h-4 w-4" />
-                  Filter
-                </Button>
-                <Button onClick={handleCreatePlaybook}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create Playbook
-                </Button>
-              </div>
-            </div>
-
-            {/* Playbooks Grid */}
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {filteredPlaybooks.map((playbook) => (
-                <PlaybookCard
-                  key={playbook.id}
-                  playbook={playbook}
-                  onEdit={() => handleEditPlaybook(playbook)}
-                  onDelete={() => handleDeletePlaybook(playbook)}
-                  onToggle={() => handleTogglePlaybook(playbook)}
-                />
-              ))}
-            </div>
-
-            {filteredPlaybooks.length === 0 && (
-              <div className="rounded-xl border-2 border-dashed border-border p-12 text-center">
-                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-                  <Plus className="h-6 w-6 text-muted-foreground" />
-                </div>
-                <h3 className="text-lg font-semibold text-foreground">
-                  No playbooks found
-                </h3>
-                <p className="mt-1 text-muted-foreground">
-                  {playbookSearchQuery
-                    ? "Try adjusting your search query"
-                    : "Create your first playbook to train the AI on services"}
-                </p>
-                {!playbookSearchQuery && (
-                  <Button onClick={handleCreatePlaybook} className="mt-4">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Create Playbook
-                  </Button>
-                )}
-              </div>
-            )}
-          </div>
+          <PlaybooksTab />
         </TabsContent>
 
         {/* 3. Conversation Examples */}
@@ -1018,85 +940,7 @@ const AISettings = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {activePlaybooks.length > 0 ? (
-                <Accordion type="single" collapsible className="space-y-2">
-                  {activePlaybooks.map((pb) => (
-                    <AccordionItem
-                      key={pb.id}
-                      value={pb.id}
-                      className="border rounded-lg px-4"
-                    >
-                      <AccordionTrigger className="hover:no-underline">
-                        <div className="flex items-center gap-3">
-                          <span className="font-medium">{pb.service_name}</span>
-                          <Badge variant="secondary">
-                            {pb.faqs.length} FAQs
-                          </Badge>
-                          {pb.warranty_policy && (
-                            <Badge variant="outline">Warranty</Badge>
-                          )}
-                        </div>
-                      </AccordionTrigger>
-                      <AccordionContent className="pt-2 pb-4">
-                        {pb.faqs.length > 0 ? (
-                          <div className="space-y-3">
-                            {pb.faqs.map((faq: FAQ, idx: number) => (
-                              <div
-                                key={idx}
-                                className="p-3 bg-muted/50 rounded-lg"
-                              >
-                                <p className="font-medium text-sm">
-                                  {faq.question}
-                                </p>
-                                <p className="text-sm text-muted-foreground mt-1">
-                                  {faq.answer}
-                                </p>
-                              </div>
-                            ))}
-                            {pb.warranty_policy && (
-                              <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
-                                <p className="font-medium text-sm flex items-center gap-2">
-                                  <CheckCircle className="h-4 w-4 text-green-500" />
-                                  Warranty Policy
-                                </p>
-                                <p className="text-sm text-muted-foreground mt-1">
-                                  {pb.warranty_policy}
-                                </p>
-                              </div>
-                            )}
-                          </div>
-                        ) : (
-                          <p className="text-sm text-muted-foreground">
-                            No FAQs added for this service yet.
-                          </p>
-                        )}
-                        <div className="mt-4">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEditPlaybook(pb)}
-                          >
-                            Edit Playbook
-                          </Button>
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                  ))}
-                </Accordion>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground border rounded-lg border-dashed">
-                  <BookOpen className="h-10 w-10 mx-auto mb-2 opacity-50" />
-                  <p>No active Service Playbooks yet.</p>
-                  <Button
-                    onClick={handleCreatePlaybook}
-                    variant="outline"
-                    className="mt-4"
-                  >
-                    <Plus className="mr-2 h-4 w-4" />
-                    Create your first playbook
-                  </Button>
-                </div>
-              )}
+              <ServiceFAQsSection />
             </CardContent>
           </Card>
         </TabsContent>

@@ -18,4 +18,12 @@ export const queryKeys = {
   ],
   getWorkOrderDataKey: (invoiceId: string) => ["work-order-data", invoiceId],
   getNotifications: (userId: number) => ["notifications", userId],
+  servicePlaybooks: (params?: {
+    companyId?: number;
+    search?: string;
+    categoryId?: number;
+    isActive?: boolean;
+    page?: number;
+    limit?: number;
+  }) => ["service-playbooks", params],
 };

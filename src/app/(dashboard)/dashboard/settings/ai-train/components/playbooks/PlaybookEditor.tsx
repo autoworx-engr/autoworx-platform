@@ -1,7 +1,6 @@
 import { useState } from "react";
 import {
   ServicePlaybook,
-  ServiceCategory,
   PricingRule,
   FAQ,
 } from "@/types/ai-settings";
@@ -11,13 +10,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Card,
   CardContent,
   CardDescription,
@@ -25,22 +17,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Trash2, Save, X, GripVertical } from "lucide-react";
+import { Plus, Trash2, Save, X, GripVertical, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const categories: { value: ServiceCategory; label: string }[] = [
-  { value: "vinyl_wrap", label: "Vinyl Wrap" },
-  { value: "ppf", label: "Paint Protection Film" },
-  { value: "tint", label: "Window Tinting" },
-  { value: "ceramic_coating", label: "Ceramic Coating" },
-  { value: "detailing", label: "Detailing" },
-  { value: "audio", label: "Car Audio" },
-  { value: "lighting", label: "Lighting" },
-  { value: "paint", label: "Paint" },
-  { value: "powder_coat", label: "Powder Coating" },
-  { value: "auto_body", label: "Auto Body" },
-  { value: "other", label: "Other" },
-];
+import SelectCategory from "@/components/Lists/SelectCategory";
+import { Category } from "@prisma/client";
+import toast from "react-hot-toast";
 
 interface PlaybookEditorProps {
   playbook?: ServicePlaybook;
@@ -59,9 +40,7 @@ export function PlaybookEditor({
       category: "other",
       overview: "",
       pricing_rules: [],
-      // intake_questions: [],
       faqs: [],
-      // upsells: [],
       do_say: [],
       dont_say: [],
       warranty_policy: "",
@@ -73,9 +52,89 @@ export function PlaybookEditor({
 
   const [newDoSay, setNewDoSay] = useState("");
   const [newDontSay, setNewDontSay] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(
+    playbook?.categoryData || (playbook?.categoryId ? { id: Number(playbook.categoryId), name: "", companyId: 0, createdAt: new Date(), updatedAt: new Date() } : null)
+  );
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    // Service name validation
+    if (!formData.service_name || !formData.service_name.trim()) {
+      newErrors.service_name = "Service name is required";
+    } else if (formData.service_name.length > 100) {
+      newErrors.service_name = "Service name must be less than 100 characters";
+    }
+
+    // Overview validation
+    if (formData.overview && formData.overview.length > 1000) {
+      newErrors.overview = "Overview must be less than 1000 characters";
+    }
+
+    // Pricing rules validation
+    formData.pricing_rules?.forEach((rule, index) => {
+      if (!rule.description || !rule.description.trim()) {
+        newErrors[`pricing_rule_${index}_description`] = "Description is required";
+      }
+      const minPrice = rule.price_range?.min || 0;
+      const maxPrice = rule.price_range?.max || 0;
+      if (minPrice < 0) {
+        newErrors[`pricing_rule_${index}_min`] = "Min price cannot be negative";
+      }
+      if (maxPrice < 0) {
+        newErrors[`pricing_rule_${index}_max`] = "Max price cannot be negative";
+      }
+      if (minPrice > maxPrice) {
+        newErrors[`pricing_rule_${index}_range`] = "Min price cannot be greater than max price";
+      }
+    });
+
+    // FAQ validation
+    formData.faqs?.forEach((faq, index) => {
+      if (!faq.question || !faq.question.trim()) {
+        newErrors[`faq_${index}_question`] = "Question is required";
+      }
+      if (!faq.answer || !faq.answer.trim()) {
+        newErrors[`faq_${index}_answer`] = "Answer is required";
+      }
+      if (faq.question && faq.question.length > 500) {
+        newErrors[`faq_${index}_question`] = "Question must be less than 500 characters";
+      }
+      if (faq.answer && faq.answer.length > 2000) {
+        newErrors[`faq_${index}_answer`] = "Answer must be less than 2000 characters";
+      }
+    });
+
+    // Time estimate validation
+    if (formData.time_estimate && formData.time_estimate.length > 100) {
+      newErrors.time_estimate = "Time estimate must be less than 100 characters";
+    }
+
+    // Warranty policy validation
+    if (formData.warranty_policy && formData.warranty_policy.length > 500) {
+      newErrors.warranty_policy = "Warranty policy must be less than 500 characters";
+    }
+
+    // Scheduling notes validation
+    if (formData.scheduling_notes && formData.scheduling_notes.length > 1000) {
+      newErrors.scheduling_notes = "Scheduling notes must be less than 1000 characters";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSave = () => {
-    onSave(formData);
+    if (!validateForm()) {
+      toast.error("Please fix the errors before saving");
+      return;
+    }
+
+    onSave({
+      ...formData,
+      categoryId: selectedCategory?.id,
+    });
   };
 
   const addPricingRule = () => {
@@ -202,35 +261,38 @@ export function PlaybookEditor({
             <CardContent className="space-y-6">
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="service_name">Service Name</Label>
+                  <Label htmlFor="service_name">
+                    Service Name <span className="text-destructive">*</span>
+                  </Label>
                   <Input
                     id="service_name"
                     value={formData.service_name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, service_name: e.target.value })
-                    }
+                    onChange={(e) => {
+                      setFormData({ ...formData, service_name: e.target.value });
+                      if (errors.service_name) {
+                        setErrors({ ...errors, service_name: "" });
+                      }
+                    }}
                     placeholder="e.g., Full Vehicle Wrap"
+                    className={cn(errors.service_name && "border-destructive")}
+                    maxLength={100}
                   />
+                  {errors.service_name && (
+                    <p className="text-sm text-destructive flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      {errors.service_name}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="category">Category</Label>
-                  <Select
-                    value={formData.category}
-                    onValueChange={(value: ServiceCategory) =>
-                      setFormData({ ...formData, category: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((cat) => (
-                        <SelectItem key={cat.value} value={cat.value}>
-                          <span>{cat.label}</span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <SelectCategory
+                    categoryData={selectedCategory}
+                    onCategoryChange={(category) => {
+                      setSelectedCategory(category);
+                    }}
+                    labelPosition="top"
+                    required={false}
+                  />
                 </div>
               </div>
 
@@ -239,12 +301,26 @@ export function PlaybookEditor({
                 <Textarea
                   id="overview"
                   value={formData.overview}
-                  onChange={(e) =>
-                    setFormData({ ...formData, overview: e.target.value })
-                  }
+                  onChange={(e) => {
+                    setFormData({ ...formData, overview: e.target.value });
+                    if (errors.overview) {
+                      setErrors({ ...errors, overview: "" });
+                    }
+                  }}
                   placeholder="Describe what this service includes and its main benefits..."
-                  className="min-h-[120px]"
+                  className={cn("min-h-[120px]", errors.overview && "border-destructive")}
                 />
+                {errors.overview && (
+                  <p className="text-sm text-destructive flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {errors.overview}
+                  </p>
+                )}
+                {formData.overview && (
+                  <p className="text-xs text-muted-foreground text-right">
+                    {formData.overview.length}/1000 characters
+                  </p>
+                )}
               </div>
 
               <div className="flex items-center justify-between rounded-lg border border-border p-4">
@@ -308,43 +384,91 @@ export function PlaybookEditor({
                         <Label>Description</Label>
                         <Input
                           value={rule.description}
-                          onChange={(e) =>
+                          onChange={(e) => {
                             updatePricingRule(index, {
                               description: e.target.value,
-                            })
-                          }
+                            });
+                            if (errors[`pricing_rule_${index}_description`]) {
+                              setErrors({ ...errors, [`pricing_rule_${index}_description`]: "" });
+                            }
+                          }}
                           placeholder="e.g., Standard sedan"
+                          className={cn(errors[`pricing_rule_${index}_description`] && "border-destructive")}
                         />
+                        {errors[`pricing_rule_${index}_description`] && (
+                          <p className="text-sm text-destructive flex items-center gap-1">
+                            <AlertCircle className="h-3 w-3" />
+                            {errors[`pricing_rule_${index}_description`]}
+                          </p>
+                        )}
                       </div>
                       <div className="space-y-2">
                         <Label>Min Price ($)</Label>
                         <Input
                           type="number"
+                          min="0"
+                          step="0.01"
                           value={rule.price_range?.min || ""}
-                          onChange={(e) =>
+                          onChange={(e) => {
                             updatePricingRule(index, {
                               price_range: {
                                 ...rule.price_range!,
                                 min: Number(e.target.value),
                               },
-                            })
-                          }
+                            });
+                            const errorKeys = [`pricing_rule_${index}_min`, `pricing_rule_${index}_range`];
+                            const newErrors = { ...errors };
+                            errorKeys.forEach((key) => delete newErrors[key]);
+                            setErrors(newErrors);
+                          }}
+                          className={cn(
+                            (errors[`pricing_rule_${index}_min`] || errors[`pricing_rule_${index}_range`]) &&
+                              "border-destructive"
+                          )}
                         />
+                        {errors[`pricing_rule_${index}_min`] && (
+                          <p className="text-sm text-destructive flex items-center gap-1">
+                            <AlertCircle className="h-3 w-3" />
+                            {errors[`pricing_rule_${index}_min`]}
+                          </p>
+                        )}
+                        {errors[`pricing_rule_${index}_range`] && (
+                          <p className="text-sm text-destructive flex items-center gap-1">
+                            <AlertCircle className="h-3 w-3" />
+                            {errors[`pricing_rule_${index}_range`]}
+                          </p>
+                        )}
                       </div>
                       <div className="space-y-2">
                         <Label>Max Price ($)</Label>
                         <Input
                           type="number"
+                          min="0"
+                          step="0.01"
                           value={rule.price_range?.max || ""}
-                          onChange={(e) =>
+                          onChange={(e) => {
                             updatePricingRule(index, {
                               price_range: {
                                 ...rule.price_range!,
                                 max: Number(e.target.value),
                               },
-                            })
-                          }
+                            });
+                            const errorKeys = [`pricing_rule_${index}_max`, `pricing_rule_${index}_range`];
+                            const newErrors = { ...errors };
+                            errorKeys.forEach((key) => delete newErrors[key]);
+                            setErrors(newErrors);
+                          }}
+                          className={cn(
+                            (errors[`pricing_rule_${index}_max`] || errors[`pricing_rule_${index}_range`]) &&
+                              "border-destructive"
+                          )}
                         />
+                        {errors[`pricing_rule_${index}_max`] && (
+                          <p className="text-sm text-destructive flex items-center gap-1">
+                            <AlertCircle className="h-3 w-3" />
+                            {errors[`pricing_rule_${index}_max`]}
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -396,21 +520,51 @@ export function PlaybookEditor({
                         <Label>Question</Label>
                         <Input
                           value={faq.question}
-                          onChange={(e) =>
-                            updateFAQ(index, { question: e.target.value })
-                          }
+                          onChange={(e) => {
+                            updateFAQ(index, { question: e.target.value });
+                            if (errors[`faq_${index}_question`]) {
+                              setErrors({ ...errors, [`faq_${index}_question`]: "" });
+                            }
+                          }}
                           placeholder="What question might customers ask?"
+                          className={cn(errors[`faq_${index}_question`] && "border-destructive")}
                         />
+                        {errors[`faq_${index}_question`] && (
+                          <p className="text-sm text-destructive flex items-center gap-1">
+                            <AlertCircle className="h-3 w-3" />
+                            {errors[`faq_${index}_question`]}
+                          </p>
+                        )}
+                        {faq.question && (
+                          <p className="text-xs text-muted-foreground text-right">
+                            {faq.question.length}/500 characters
+                          </p>
+                        )}
                       </div>
                       <div className="space-y-2">
                         <Label>Answer</Label>
                         <Textarea
                           value={faq.answer}
-                          onChange={(e) =>
-                            updateFAQ(index, { answer: e.target.value })
-                          }
+                          onChange={(e) => {
+                            updateFAQ(index, { answer: e.target.value });
+                            if (errors[`faq_${index}_answer`]) {
+                              setErrors({ ...errors, [`faq_${index}_answer`]: "" });
+                            }
+                          }}
                           placeholder="How should the AI respond?"
+                          className={cn(errors[`faq_${index}_answer`] && "border-destructive")}
                         />
+                        {errors[`faq_${index}_answer`] && (
+                          <p className="text-sm text-destructive flex items-center gap-1">
+                            <AlertCircle className="h-3 w-3" />
+                            {errors[`faq_${index}_answer`]}
+                          </p>
+                        )}
+                        {faq.answer && (
+                          <p className="text-xs text-muted-foreground text-right">
+                            {faq.answer.length}/2000 characters
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -525,28 +679,50 @@ export function PlaybookEditor({
                   <Input
                     id="time_estimate"
                     value={formData.time_estimate}
-                    onChange={(e) =>
+                    onChange={(e) => {
                       setFormData({
                         ...formData,
                         time_estimate: e.target.value,
-                      })
-                    }
+                      });
+                      if (errors.time_estimate) {
+                        setErrors({ ...errors, time_estimate: "" });
+                      }
+                    }}
                     placeholder="e.g., 3-5 business days"
+                    className={cn(errors.time_estimate && "border-destructive")}
+                    maxLength={100}
                   />
+                  {errors.time_estimate && (
+                    <p className="text-sm text-destructive flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      {errors.time_estimate}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="warranty">Warranty Policy</Label>
                   <Input
                     id="warranty"
                     value={formData.warranty_policy}
-                    onChange={(e) =>
+                    onChange={(e) => {
                       setFormData({
                         ...formData,
                         warranty_policy: e.target.value,
-                      })
-                    }
+                      });
+                      if (errors.warranty_policy) {
+                        setErrors({ ...errors, warranty_policy: "" });
+                      }
+                    }}
                     placeholder="e.g., 3-year warranty on materials"
+                    className={cn(errors.warranty_policy && "border-destructive")}
+                    maxLength={500}
                   />
+                  {errors.warranty_policy && (
+                    <p className="text-sm text-destructive flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      {errors.warranty_policy}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -555,14 +731,29 @@ export function PlaybookEditor({
                 <Textarea
                   id="scheduling"
                   value={formData.scheduling_notes}
-                  onChange={(e) =>
+                  onChange={(e) => {
                     setFormData({
                       ...formData,
                       scheduling_notes: e.target.value,
-                    })
-                  }
+                    });
+                    if (errors.scheduling_notes) {
+                      setErrors({ ...errors, scheduling_notes: "" });
+                    }
+                  }}
                   placeholder="Any special scheduling requirements or recommendations..."
+                  className={cn(errors.scheduling_notes && "border-destructive")}
                 />
+                {errors.scheduling_notes && (
+                  <p className="text-sm text-destructive flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {errors.scheduling_notes}
+                  </p>
+                )}
+                {formData.scheduling_notes && (
+                  <p className="text-xs text-muted-foreground text-right">
+                    {formData.scheduling_notes.length}/1000 characters
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>

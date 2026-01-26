@@ -47,6 +47,12 @@ export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const companyId = Number(searchParams.get("companyId"));
+    const search = searchParams.get("search") || "";
+    const categoryId = searchParams.get("categoryId");
+    const isActive = searchParams.get("isActive");
+    const page = Number(searchParams.get("page")) || 1;
+    const limit = Number(searchParams.get("limit")) || 10;
+    const skip = (page - 1) * limit;
 
     if (!companyId) {
       return NextResponse.json(
@@ -55,22 +61,51 @@ export async function GET(req: Request) {
       );
     }
 
-    const data = await db.servicePlaybook.findMany({
-      where: { companyId: Number(companyId) },
-      include: {
-        category: true,
-        pricingRules: true,
-        faqs: true,
-      },
-      orderBy: { createdAt: "desc" },
-    });
+    const where: any = { companyId };
+
+    if (search) {
+      where.OR = [
+        { serviceName: { contains: search, mode: "insensitive" } },
+        { overview: { contains: search, mode: "insensitive" } },
+      ];
+    }
+
+    if (categoryId) {
+      where.categoryId = Number(categoryId);
+    }
+
+    if (isActive !== null && isActive !== undefined) {
+      where.isActive = isActive === "true";
+    }
+
+    const [data, total] = await Promise.all([
+      db.servicePlaybook.findMany({
+        where,
+        include: {
+          category: true,
+          pricingRules: true,
+          faqs: true,
+        },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+      }),
+      db.servicePlaybook.count({ where }),
+    ]);
 
     return NextResponse.json({
       success: true,
       message: "Service playbooks retrieved successfully",
       data,
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
     });
   } catch (error) {
+    console.error("Error fetching playbooks:", error);
     return NextResponse.json(
       { success: false, message: "Internal server error" },
       { status: 500 },
@@ -217,7 +252,7 @@ export async function POST(req: Request) {
       data: {
         companyId: Number(body.companyId),
         serviceName: body.serviceName,
-        categoryId: Number(body.categoryId),
+        categoryId: body.categoryId ? Number(body.categoryId) : null,
         overview: body.overview,
         timeEstimate: body.timeEstimate,
         schedulingNotes: body.schedulingNotes,
