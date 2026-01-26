@@ -1,13 +1,13 @@
 import { ReturnPayment } from "@/actions/payment/getPayments";
+import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
+import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { usePaymentFilterStore } from "@/stores/paymentFilter";
+import { formatCurrency } from "@/utils/formatCurrency";
+import { FormatUtcToTimezone } from "@/utils/FormatUtcToTimezone";
+import { Pagination } from "antd";
 import moment from "moment-timezone";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { formatCurrency } from "@/utils/formatCurrency";
-import { Pagination } from "antd";
-import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
-import { FormatUtcToTimezone } from "@/utils/FormatUtcToTimezone";
-import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import RefundModal from "./RefundModal";
 // refundedAmount
 export default function PaymentTable({
@@ -63,7 +63,7 @@ export default function PaymentTable({
         const isWithinDateRange =
           dateRange[0] && dateRange[1]
             ? moment.utc(item.date).isSameOrAfter(convertedStart) &&
-            moment.utc(item.date).isSameOrBefore(convertedEnd)
+              moment.utc(item.date).isSameOrBefore(convertedEnd)
             : true;
 
         const isWithinAmountRange =
@@ -80,8 +80,8 @@ export default function PaymentTable({
 
         const isSearchMatch = search
           ? item.vehicle?.toLowerCase().includes(search.toLowerCase()) ||
-          item.invoiceId.toLowerCase().includes(search.toLowerCase()) ||
-          item.client.name?.toLowerCase().includes(search.toLowerCase())
+            item.invoiceId.toLowerCase().includes(search.toLowerCase()) ||
+            item.client.name?.toLowerCase().includes(search.toLowerCase())
           : true;
 
         const isRefundMatch =
@@ -122,7 +122,12 @@ export default function PaymentTable({
     <div className="w-full p-4 bg-background dark:bg-slate-950 min-h-[65vh]">
       <div className="mx-auto space-y-6">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-bold text-slate-600 dark:text-slate-100">Payments <span className="text-slate-400 font-normal">({filteredData.length})</span></h3>
+          <h3 className="text-lg font-bold text-slate-600 dark:text-slate-100">
+            Payments{" "}
+            <span className="text-slate-400 font-normal">
+              ({filteredData.length})
+            </span>
+          </h3>
         </div>
 
         {/* Desktop View */}
@@ -130,14 +135,18 @@ export default function PaymentTable({
           <div className="md:overflow-x-auto">
             <table className="w-full">
               {/*  Header */}
-              <thead className="bg-background">
+              <thead className="bg-background sticky top-0 ">
                 <tr className="h-10 border-b">
                   <th className="border-b px-4 py-2 text-left">Invoice#</th>
                   <th className="border-b px-4 py-2 text-left">Customer</th>
                   <th className="border-b px-4 py-2 text-left">Vehicle Info</th>
-                  <th className="border-b px-4 py-2 text-left">Transaction Date</th>
+                  <th className="border-b px-4 py-2 text-left">
+                    Transaction Date
+                  </th>
                   <th className="border-b px-4 py-2 text-left">Amount</th>
-                  <th className="border-b px-4 py-2 text-left">Cash Received</th>
+                  <th className="border-b px-4 py-2 text-left">
+                    Cash Received
+                  </th>
                   <th className="border-b px-4 py-2 text-left">Method</th>
                   <th className="border-b px-4 py-2 text-left">Refund</th>
                 </tr>
@@ -147,10 +156,11 @@ export default function PaymentTable({
                 {paginatedData.map((item, index) => (
                   <tr
                     key={index}
-                    className={`duration-200 hover:bg-slate-50 dark:hover:bg-slate-800/50 ${index % 2 !== 0
-                      ? "bg-blue-50/80 dark:bg-slate-900"
-                      : "bg-white dark:bg-slate-900"
-                      }`}
+                    className={`duration-200 hover:bg-slate-50 dark:hover:bg-slate-800/50 ${
+                      index % 2 !== 0
+                        ? "bg-blue-50/80 dark:bg-slate-900"
+                        : "bg-white dark:bg-slate-900"
+                    }`}
                   >
                     <td className="border-b px-4 py-2">
                       <InvoiceModal
@@ -215,8 +225,11 @@ export default function PaymentTable({
           {filteredData.map((item, index) => (
             <div
               key={index}
-              className={`w-full rounded-lg border border-gray-100 p-6 shadow-md transition-all duration-200 ${index % 2 !== 0 ? "bg-blue-50/80 dark:bg-slate-900" : "bg-white dark:bg-slate-900"
-                }`}
+              className={`w-full rounded-lg border border-gray-100 p-6 shadow-md transition-all duration-200 ${
+                index % 2 !== 0
+                  ? "bg-blue-50/80 dark:bg-slate-900"
+                  : "bg-white dark:bg-slate-900"
+              }`}
             >
               <div className="space-y-4">
                 <div className="flex items-center justify-between">

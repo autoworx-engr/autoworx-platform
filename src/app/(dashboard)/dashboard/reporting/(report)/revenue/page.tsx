@@ -1,5 +1,6 @@
 import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
 import { authOptions } from "@/authOptions";
+import { cn } from "@/lib/cn";
 import { db } from "@/lib/db";
 import { normalizeSearch } from "@/utils/normalizeSearch";
 import { Invoice, Prisma, Refund } from "@prisma/client";
@@ -13,7 +14,6 @@ import Analytics from "./Analytics";
 import AnalyticsVisibility from "./AnalyticsVisibility";
 import FilterHeader from "./FilterHeader";
 import RevenueDisplay from "./RevenueDisplay";
-import { cn } from "@/lib/cn";
 
 type TProps = {
   searchParams: {
@@ -182,7 +182,7 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
   let filteredInvoicesWithOutDate: Invoice[] = [];
   let filteredInvoices =
     searchParams?.search && invoices
-      ? invoices.filter(invoice => {
+      ? invoices.filter((invoice) => {
           if (!invoice.client && !invoice.id) {
             return false;
           }
@@ -221,7 +221,7 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
       : null;
     filteredInvoicesWithOutDate = filteredInvoices;
 
-    filteredInvoices = filteredInvoices.filter(invoice => {
+    filteredInvoices = filteredInvoices.filter((invoice) => {
       if (!invoice.deliveredAt) {
         return false;
       }
@@ -244,16 +244,16 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
     // });
   }
 
-  const getService = services.map(service => service.name);
-  const getCategory = categories.map(category => category.name);
+  const getService = services.map((service) => service.name);
+  const getCategory = categories.map((category) => category.name);
   const maxPrice = Math.max(
-    ...filteredInvoices.map(invoice => Number(invoice.grandTotal))
+    ...filteredInvoices.map((invoice) => Number(invoice.grandTotal))
   );
 
   let maxCost = 0;
   let maxProfit = 0;
 
-  const filteredInvoice = filteredInvoices.filter(invoice => {
+  const filteredInvoice = filteredInvoices.filter((invoice) => {
     const laborCost = invoice?.technician.reduce((acc, technician) => {
       acc += Number(technician?.amount);
       return acc;
@@ -443,7 +443,7 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
     searchParams.startDate && searchParams.endDate
       ? filteredInvoicesWithOutDate
       : filteredInvoices
-  ).filter(invoice => {
+  ).filter((invoice) => {
     if (!invoice.deliveredAt) return false;
 
     const deliveredAt = moment.tz(invoice.deliveredAt, timezone);
@@ -469,7 +469,7 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
     searchParams.startDate && searchParams.endDate
       ? filteredInvoicesWithOutDate
       : filteredInvoices
-  ).filter(invoice => {
+  ).filter((invoice) => {
     if (!invoice.deliveredAt) return false;
 
     const deliveredAt = moment.tz(invoice.deliveredAt, timezone);
@@ -508,7 +508,7 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
       : totalRevenue; // Use total revenue when no date filter
 
   let getFilteredCategoryId = categories.find(
-    category => category.name === searchParams.category
+    (category) => category.name === searchParams.category
   )?.id;
 
   let filterByValue = 0;
@@ -591,7 +591,7 @@ export default async function RevenueReportPage({ searchParams }: TProps) {
 
     // Find the service ID for the selected service name
     const selectedService = services.find(
-      service => service.name === searchParams.service?.trim()
+      (service) => service.name === searchParams.service?.trim()
     );
 
     if (selectedService) {
