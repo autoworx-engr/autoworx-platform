@@ -40,7 +40,7 @@ const FleetListTable = ({ filteredFleets }: { filteredFleets: any }) => {
       <div className="hidden lg:block overflow-hidden rounded-xl p-2 bg-white dark:bg-slate-900 ring-1 ring-slate-200 dark:ring-slate-800 shadow-sm">
         <div className="md:overflow-x-auto">
           <table className="w-full">
-            <thead className="">
+            <thead className="sticky top-0 bg-background">
               <tr className="h-10 border-b">
                 <th className="border-b px-4 py-2 text-left">Fleet ID</th>
                 <th className="border-b px-4 py-2 text-left">Fleet Name</th>

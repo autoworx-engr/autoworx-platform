@@ -1,19 +1,19 @@
 "use client";
 
+import ResponsiveEmployeeCard from "@/components/mobile-responsive/employee/ResponsiveEmployeeCard";
 import { cn } from "@/lib/cn";
-import moment from "moment";
-import Link from "next/link";
-import React, { useEffect, useState } from "react";
-import EditEmployee from "../EditEmployee";
-import DeleteEmployee from "../DeleteEmployee";
-import { SalaryHistory, User } from "@prisma/client";
-import { Pagination } from "antd"; // Importing the Pagination component from Ant Design
 import { padId } from "@/lib/padId";
 import { useEmployeeFilterStore } from "@/stores/employeeFilter";
-import ResponsiveEmployeeCard from "@/components/mobile-responsive/employee/ResponsiveEmployeeCard";
-import useEmployeeQuery from "../_hook/useEmployeeQuery";
-import { EmployeeTableSkeleton } from "./EmployeeTableSkeleton";
+import { SalaryHistory, User } from "@prisma/client";
+import { Pagination } from "antd"; // Importing the Pagination component from Ant Design
 import { UserIcon } from "lucide-react";
+import moment from "moment";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import useEmployeeQuery from "../_hook/useEmployeeQuery";
+import DeleteEmployee from "../DeleteEmployee";
+import EditEmployee from "../EditEmployee";
+import { EmployeeTableSkeleton } from "./EmployeeTableSkeleton";
 
 const defaultPageSize = 20;
 type UserWithSalaryHistory = (User & { salaryHistory: SalaryHistory[] })[];
@@ -111,7 +111,7 @@ const EmployeeTable = ({
       <div className="hidden lg:block overflow-hidden rounded-xl p-2 bg-white dark:bg-slate-900 ring-1 ring-slate-200 dark:ring-slate-800 shadow-sm">
         <div className="md:overflow-x-auto">
           <table className="w-full">
-            <thead>
+            <thead className="sticky top-0  bg-background">
               <tr className="h-10">
                 <th className="border-b px-4 py-2 text-left">Employee ID</th>
                 <th className="border-b px-4 py-2 text-left">Name </th>
@@ -132,8 +132,9 @@ const EmployeeTable = ({
                   key={index}
                   className={cn(
                     " duration-200 hover:bg-slate-50 dark:hover:bg-slate-800/50",
-                    index % 2 !== 0 ? "bg-blue-50/80 dark:bg-slate-900" : "bg-white dark:bg-slate-900",
-
+                    index % 2 !== 0
+                      ? "bg-blue-50/80 dark:bg-slate-900"
+                      : "bg-white dark:bg-slate-900"
                   )}
                 >
                   <td className="border-b px-4 py-2 text-left">
@@ -221,9 +222,13 @@ const EmployeeTable = ({
   return (
     <div className="w-full p-4 bg-slate-50 dark:bg-slate-950 min-h-[500px]">
       <div className="mx-auto space-y-6">
-
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-bold text-slate-600 dark:text-slate-100">Team Members <span className="text-slate-400 font-normal">({totalEmployeeCount})</span></h3>
+          <h3 className="text-lg font-bold text-slate-600 dark:text-slate-100">
+            Team Members{" "}
+            <span className="text-slate-400 font-normal">
+              ({totalEmployeeCount})
+            </span>
+          </h3>
           {/* Pagination placeholder if needed up top */}
         </div>
 
