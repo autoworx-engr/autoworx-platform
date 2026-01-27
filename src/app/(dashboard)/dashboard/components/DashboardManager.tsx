@@ -26,7 +26,7 @@ const DashboardManager = () => {
         </DashboardColumn>
 
         <DashboardColumn>
-          <div className=" max-h-[90vh] h-[30rem] md:h-full flex-1 min-h-0">
+          <div className="min-h-[25rem] lg:max-h-[90vh] md:h-full flex-1 lg:min-h-0">
             <TaskListBox />
           </div>
           <div className="hidden lg:block h-[30rem] flex-1 min-h-0">
