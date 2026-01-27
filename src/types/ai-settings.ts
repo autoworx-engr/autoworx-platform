@@ -32,6 +32,8 @@ export interface ServicePlaybook {
   shop_id: string;
   service_name: string;
   category: ServiceCategory;
+  categoryId?: string | number;
+  categoryData?: any;
   overview: string;
   pricing_rules: PricingRule[];
   intake_questions: IntakeQuestion[];

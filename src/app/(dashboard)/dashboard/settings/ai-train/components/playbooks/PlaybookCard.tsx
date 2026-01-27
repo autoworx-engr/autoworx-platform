@@ -12,6 +12,7 @@ import {
   HelpCircle,
   ArrowUpRight,
   Clock,
+  X,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -20,34 +21,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-const categoryIcons: Record<ServiceCategory, string> = {
-  vinyl_wrap: "🎨",
-  ppf: "🛡️",
-  tint: "🕶️",
-  ceramic_coating: "✨",
-  detailing: "🧽",
-  audio: "🔊",
-  lighting: "💡",
-  paint: "🖌️",
-  powder_coat: "⚙️",
-  auto_body: "🔧",
-  other: "📦",
-};
-
-const categoryLabels: Record<ServiceCategory, string> = {
-  vinyl_wrap: "Vinyl Wrap",
-  ppf: "PPF",
-  tint: "Window Tint",
-  ceramic_coating: "Ceramic Coating",
-  detailing: "Detailing",
-  audio: "Audio",
-  lighting: "Lighting",
-  paint: "Paint",
-  powder_coat: "Powder Coat",
-  auto_body: "Auto Body",
-  other: "Other",
-};
+import { Popconfirm } from "antd";
 
 interface PlaybookCardProps {
   playbook: ServicePlaybook;
@@ -88,14 +62,14 @@ export function PlaybookCard({
       <div
         className={cn(
           "pointer-events-none absolute top-0 right-0 h-16 w-16 rounded-bl-3xl transition-colors",
-          playbook.is_active ? "bg-success/10" : "bg-muted",
+          playbook.is_active ? "bg-green-500/10" : "bg-muted",
         )}
       />
       <div
         className={cn(
           "pointer-events-none absolute top-3 right-3 h-2.5 w-2.5 rounded-full",
           playbook.is_active
-            ? "bg-success animate-pulse"
+            ? "bg-green-500 animate-pulse"
             : "bg-muted-foreground/50",
         )}
       />
@@ -103,13 +77,12 @@ export function PlaybookCard({
       {/* Header */}
       <div className="relative z-10 flex items-start justify-between">
         <div className="flex items-center gap-3">
-          <span className="text-3xl">{categoryIcons[playbook.category]}</span>
           <div>
             <h3 className="font-semibold text-foreground">
               {playbook.service_name}
             </h3>
             <Badge variant="secondary" className="mt-1">
-              {categoryLabels[playbook.category]}
+              {playbook.category}
             </Badge>
           </div>
         </div>
@@ -147,13 +120,18 @@ export function PlaybookCard({
               )}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onSelect={() => onDelete?.()}
-              className="text-destructive"
+
+            <Popconfirm
+              title={`Are you sure you want to delete this service?`}
+              onConfirm={() => onDelete?.()}
+              okText="Yes"
+              cancelText="No"
             >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete
-            </DropdownMenuItem>
+              <div className="flex gap-2 mr-2 cursor-pointer">
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </div>
+            </Popconfirm>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
