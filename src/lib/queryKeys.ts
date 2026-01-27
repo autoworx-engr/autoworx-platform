@@ -26,4 +26,12 @@ export const queryKeys = {
     page?: number;
     limit?: number;
   }) => ["service-playbooks", params],
+  conversationExamples: (params?: { companyId?: number }) => [
+    "conversation-examples",
+    params,
+  ],
+  knowledgeBaseDocuments: (params?: { companyId?: number }) => [
+    "knowledge-base-documents",
+    params,
+  ],
 };

@@ -23,10 +23,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Popconfirm } from "antd";
 
-
-
-
-
 interface PlaybookCardProps {
   playbook: ServicePlaybook;
   onEdit?: () => void;
@@ -81,7 +77,6 @@ export function PlaybookCard({
       {/* Header */}
       <div className="relative z-10 flex items-start justify-between">
         <div className="flex items-center gap-3">
-         
           <div>
             <h3 className="font-semibold text-foreground">
               {playbook.service_name}
@@ -126,18 +121,17 @@ export function PlaybookCard({
             </DropdownMenuItem>
             <DropdownMenuSeparator />
 
-
             <Popconfirm
-                            title={`Are you sure you want to delete this service?`}
-                            onConfirm={() => onDelete?.()}
-                            okText="Yes"
-                            cancelText="No"
-                          >
-                           <div className="flex gap-2 mr-2 cursor-pointer">
-                           <Trash2 className="mr-2 h-4 w-4" />
-                           Delete
-                           </div>
-                          </Popconfirm>
+              title={`Are you sure you want to delete this service?`}
+              onConfirm={() => onDelete?.()}
+              okText="Yes"
+              cancelText="No"
+            >
+              <div className="flex gap-2 mr-2 cursor-pointer">
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </div>
+            </Popconfirm>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

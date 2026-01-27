@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Card,
   CardContent,
@@ -13,39 +13,25 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-// import { humanPersonas } from "@/lib/humanPersona";
 import {
   Building2,
   Phone,
   Mail,
   MapPin,
   Clock,
-  Save,
   Plus,
   X,
   Loader2,
-  FileText,
   Brain,
   MessageCircle,
   Upload,
   HelpCircle,
   Timer,
-  Search,
-  Trash2,
   BookOpen,
   Lightbulb,
-  CheckCircle,
-  Filter,
-  Image,
   MessageSquare,
   Globe,
   RefreshCw,
@@ -59,8 +45,10 @@ import {
 import toast from "react-hot-toast";
 import { humanPersonas } from "@/lib/humanPersona";
 import { PlaybooksTab } from "./playbooks/PlaybooksTab";
-import { useServicePlaybooks } from "@/hooks/ai-train/useServicePlaybooks";
-import { convertToServicePlaybook } from "./playbooks/utils";
+import { ConversationExamplesTab } from "./ConversationExamplesTab";
+import { KnowledgeBaseDocumentsTab } from "./KnowledgeBaseDocumentsTab";
+import { ServicePlaybook } from "@/types/ai-settings";
+import ServiceFAQsSection from "./playbooks/ServiceFAQsSection";
 
 interface FAQ {
   question: string;
@@ -76,14 +64,6 @@ interface KBDocument {
   file_url: string | null;
   file_type: string | null;
   status: string;
-  created_at: string;
-}
-
-interface ConversationExample {
-  id: string;
-  image_url: string;
-  extracted_text: string | null;
-  notes: string | null;
   created_at: string;
 }
 
@@ -123,136 +103,17 @@ interface CompanyInfo {
   conversation_style: ConversationStyle;
 }
 
-
-const documentExamples = [
-  {
-    title: "Price List PDF",
-    description: "Upload your detailed pricing sheet",
-  },
-  {
-    title: "Service Menu",
-    description: "Complete list of services with descriptions",
-  },
-  {
-    title: "Warranty Documentation",
-    description: "Warranty terms for each service type",
-  },
-  {
-    title: "FAQ Document",
-    description: "Common questions and answers from customers",
-  },
-  {
-    title: "Training Materials",
-    description: "Internal guides on service procedures",
-  },
-  {
-    title: "Product Spec Sheets",
-    description: "Manufacturer info for products used",
-  },
-];
-
-function ServiceFAQsSection() {
-  const { data: playbooksData } = useServicePlaybooks({
-    isActive: true,
-    page: 1,
-    limit: 100,
-  });
-
-  const activePlaybooks =
-    playbooksData?.data?.map(convertToServicePlaybook).filter((p) => p.is_active) || [];
-
-  if (activePlaybooks.length === 0) {
-    return (
-      <div className="text-center py-8 text-muted-foreground border rounded-lg border-dashed">
-        <BookOpen className="h-10 w-10 mx-auto mb-2 opacity-50" />
-        <p>No active Service Playbooks yet.</p>
-        <p className="text-sm mt-1">
-          Create playbooks in the Playbooks tab to see service FAQs here.
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <Accordion type="single" collapsible className="space-y-2">
-      {activePlaybooks.map((pb) => (
-        <AccordionItem
-          key={pb.id}
-          value={pb.id}
-          className="border rounded-lg px-4"
-        >
-          <AccordionTrigger className="hover:no-underline">
-            <div className="flex items-center gap-3">
-              <span className="font-medium">{pb.service_name}</span>
-              <Badge variant="secondary">{pb.faqs.length} FAQs</Badge>
-              {pb.warranty_policy && (
-                <Badge variant="outline">Warranty</Badge>
-              )}
-            </div>
-          </AccordionTrigger>
-          <AccordionContent className="pt-2 pb-4">
-            {pb.faqs.length > 0 ? (
-              <div className="space-y-3">
-                {pb.faqs.map((faq: FAQ, idx: number) => (
-                  <div key={idx} className="p-3 bg-muted/50 rounded-lg">
-                    <p className="font-medium text-sm">{faq.question}</p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {faq.answer}
-                    </p>
-                  </div>
-                ))}
-                {pb.warranty_policy && (
-                  <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
-                    <p className="font-medium text-sm flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      Warranty Policy
-                    </p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {pb.warranty_policy}
-                    </p>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                No FAQs added for this service yet.
-              </p>
-            )}
-            <div className="mt-4">
-              <Button variant="outline" size="sm" asChild>
-                <a href="#playbooks">Edit Playbook</a>
-              </Button>
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-      ))}
-    </Accordion>
-  );
-}
-
 const AISettings = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
+  const [isEditingPlaybook, setIsEditingPlaybook] = useState(false);
+  const [editingPlaybook, setEditingPlaybook] = useState<
+    ServicePlaybook | undefined
+  >();
 
   const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(null);
-  const [documents, setDocuments] = useState<KBDocument[]>([]);
-  const [conversationExamples, setConversationExamples] = useState<
-    ConversationExample[]
-  >([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isUploadingExample, setIsUploadingExample] = useState(false);
   const [isScrapingWebsite, setIsScrapingWebsite] = useState(false);
 
   // Form states
   const [newFAQ, setNewFAQ] = useState<FAQ>({ question: "", answer: "" });
-  const [newDoc, setNewDoc] = useState({
-    title: "",
-    category: "general",
-    content: "",
-  });
-
-  const handleSaveAll = async () => {};
 
   // Website scraping handler
   const handleScrapeWebsite = async () => {
@@ -313,7 +174,6 @@ const AISettings = () => {
     // }
   };
 
-
   const handleAddFAQ = () => {
     if (!newFAQ.question.trim() || !newFAQ.answer.trim() || !companyInfo)
       return;
@@ -331,46 +191,6 @@ const AISettings = () => {
       overall_faqs: companyInfo.overall_faqs.filter((_, i) => i !== index),
     });
   };
-
-  const handleAddDocument = async () => {
-    if (!newDoc.title.trim() || !newDoc.content.trim()) {
-      toast.error("Please enter a title and content.");
-      return;
-    }
-  };
-
-  const handleDeleteDocument = async (id: string) => {};
-
-  const handleUploadConversationExample = async (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    // Validate file type
-    if (!file.type.startsWith("image/")) {
-      toast.error("Please upload an image file (JPG, PNG, etc.)");
-      return;
-    }
-
-    // setIsUploadingExample(true);
-  };
-
-  const handleDeleteConversationExample = async (
-    id: string,
-    imageUrl: string,
-  ) => {};
-
-  const handleUpdateExampleNotes = async (id: string, notes: string) => {};
-
-  const filteredDocs = documents.filter(
-    (doc) =>
-      doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      doc.content.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
-
-  const categories = ["general", "services", "pricing", "policies", "faq"];
-
 
   return (
     <div>
@@ -590,156 +410,17 @@ const AISettings = () => {
 
         {/* 2. Service Playbooks */}
         <TabsContent value="playbooks" className="space-y-6">
-          <PlaybooksTab />
+          <PlaybooksTab
+            editingPlaybook={editingPlaybook}
+            isEditingPlaybook={isEditingPlaybook}
+            setIsEditingPlaybook={setIsEditingPlaybook}
+            setEditingPlaybook={setEditingPlaybook}
+          />
         </TabsContent>
 
         {/* 3. Conversation Examples */}
         <TabsContent value="examples" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between gap-2">
-                <div>
-                  <MessageSquare className="h-5 w-5" />
-                  Conversation Examples
-                </div>
-                <div>
-                  <Button onClick={handleSaveAll} disabled={isSaving} size="lg">
-                    {isSaving ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Saving...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="mr-2 h-4 w-4" />
-                        Save Example
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </CardTitle>
-              <CardDescription>
-                Upload screenshots of previous text conversations so the AI can
-                learn your communication style and common interactions
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Upload Section */}
-              <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleUploadConversationExample}
-                  className="hidden"
-                  id="conversation-upload"
-                  disabled={isUploadingExample}
-                />
-                <label
-                  htmlFor="conversation-upload"
-                  className="cursor-pointer flex flex-col items-center gap-3"
-                >
-                  {isUploadingExample ? (
-                    <Loader2 className="h-10 w-10 text-muted-foreground animate-spin" />
-                  ) : (
-                    <Image className="h-10 w-10 text-muted-foreground" />
-                  )}
-                  <div>
-                    <p className="font-medium text-foreground">
-                      {isUploadingExample
-                        ? "Uploading..."
-                        : "Click to upload conversation screenshot"}
-                    </p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      JPG, PNG or other image formats
-                    </p>
-                  </div>
-                </label>
-              </div>
-
-              {/* Examples Grid */}
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {conversationExamples.map((example) => (
-                  <div
-                    key={example.id}
-                    className="border rounded-lg overflow-hidden bg-card"
-                  >
-                    <div className="aspect-[3/4] relative">
-                      <img
-                        src={example.image_url}
-                        alt="Conversation example"
-                        className="w-full h-full object-cover"
-                      />
-                      <Button
-                        variant="destructive"
-                        className="absolute top-2 right-2"
-                        onClick={() =>
-                          handleDeleteConversationExample(
-                            example.id,
-                            example.image_url,
-                          )
-                        }
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <div className="p-3">
-                      <Textarea
-                        placeholder="Add notes about this conversation (optional)..."
-                        value={example.notes || ""}
-                        onChange={(e) =>
-                          handleUpdateExampleNotes(example.id, e.target.value)
-                        }
-                        rows={2}
-                        className="text-sm"
-                      />
-                      <p className="text-xs text-muted-foreground mt-2">
-                        Added{" "}
-                        {new Date(example.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {conversationExamples.length === 0 && (
-                <div className="text-center py-8 text-muted-foreground border rounded-lg border-dashed">
-                  <MessageSquare className="h-10 w-10 mx-auto mb-2 opacity-50" />
-                  <p>No conversation examples uploaded yet.</p>
-                  <p className="text-sm mt-1">
-                    Upload screenshots of your best text conversations to help
-                    the AI learn.
-                  </p>
-                </div>
-              )}
-
-              {/* Tips */}
-              <div className="rounded-lg border border-border bg-muted/20 p-4">
-                <div className="flex items-start gap-3">
-                  <Lightbulb className="h-5 w-5 text-yellow-500 mt-0.5" />
-                  <div>
-                    <p className="font-medium text-sm">
-                      Tips for best results:
-                    </p>
-                    <ul className="text-sm text-muted-foreground mt-2 space-y-1">
-                      <li>
-                        • Upload conversations that show great customer
-                        interactions
-                      </li>
-                      <li>
-                        • Include examples of how you handle common questions
-                      </li>
-                      <li>
-                        • Add notes to explain what makes each conversation good
-                      </li>
-                      <li>
-                        • Include examples of successful sales or bookings
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <ConversationExamplesTab />
         </TabsContent>
 
         {/* 4. SMS Response Delay */}
@@ -940,7 +621,12 @@ const AISettings = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ServiceFAQsSection />
+              <ServiceFAQsSection
+                editingPlaybook={editingPlaybook}
+                isEditingPlaybook={isEditingPlaybook}
+                setIsEditingPlaybook={setIsEditingPlaybook}
+                setEditingPlaybook={setEditingPlaybook}
+              />
             </CardContent>
           </Card>
         </TabsContent>
@@ -1432,175 +1118,7 @@ Rules:
 
         {/* 7. Document Uploads */}
         <TabsContent value="documents" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Upload className="h-5 w-5" />
-                Knowledge Base Documents
-              </CardTitle>
-              <CardDescription>
-                Upload or paste documents that contain information your AI
-                should know
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Add Document */}
-              <div className="space-y-4">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label>Title</Label>
-                    <Input
-                      value={newDoc.title}
-                      onChange={(e) =>
-                        setNewDoc((prev) => ({
-                          ...prev,
-                          title: e.target.value,
-                        }))
-                      }
-                      placeholder="e.g., PPF Warranty Info"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Category</Label>
-                    <select
-                      value={newDoc.category}
-                      onChange={(e) =>
-                        setNewDoc((prev) => ({
-                          ...prev,
-                          category: e.target.value,
-                        }))
-                      }
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
-                      {categories.map((cat) => (
-                        <option key={cat} value={cat}>
-                          {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Content</Label>
-                  <Textarea
-                    value={newDoc.content}
-                    onChange={(e) =>
-                      setNewDoc((prev) => ({
-                        ...prev,
-                        content: e.target.value,
-                      }))
-                    }
-                    placeholder="Paste the content from your document here..."
-                    rows={6}
-                  />
-                </div>
-                <Button onClick={handleAddDocument} disabled={isUploading}>
-                  {isUploading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Adding...
-                    </>
-                  ) : (
-                    <>
-                      <Plus className="mr-2 h-4 w-4" />
-                      Add to Knowledge Base
-                    </>
-                  )}
-                </Button>
-              </div>
-
-              {/* Example Documents */}
-              <div className="rounded-lg border border-border bg-muted/20 p-4">
-                <div className="flex items-start gap-3">
-                  <Lightbulb className="h-5 w-5 text-yellow-500 mt-0.5" />
-                  <div>
-                    <p className="font-medium text-sm">
-                      What documents should you add?
-                    </p>
-                    <div className="grid gap-2 md:grid-cols-2 mt-3">
-                      {documentExamples.map((ex, idx) => (
-                        <div
-                          key={idx}
-                          className="text-sm p-2 rounded bg-background/50"
-                        >
-                          <span className="font-medium">{ex.title}</span>
-                          <span className="text-muted-foreground">
-                            {" "}
-                            - {ex.description}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Document List */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Uploaded Documents ({documents.length})</CardTitle>
-                <div className="relative w-64">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search documents..."
-                    className="pl-9"
-                  />
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {filteredDocs.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                  <p>
-                    No documents yet. Add your first knowledge base entry above!
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {filteredDocs.map((doc) => (
-                    <div
-                      key={doc.id}
-                      className="flex items-start gap-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-                    >
-                      <FileText className="h-5 w-5 text-primary mt-0.5" />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-medium">{doc.title}</span>
-                          <Badge variant="outline" className="text-xs">
-                            {doc.category}
-                          </Badge>
-                          <Badge
-                            variant={
-                              doc.status === "indexed" ? "default" : "secondary"
-                            }
-                            className="text-xs"
-                          >
-                            {doc.status}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                          {doc.content}
-                        </p>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        onClick={() => handleDeleteDocument(doc.id)}
-                        className="text-muted-foreground hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <KnowledgeBaseDocumentsTab />
         </TabsContent>
       </Tabs>
     </div>

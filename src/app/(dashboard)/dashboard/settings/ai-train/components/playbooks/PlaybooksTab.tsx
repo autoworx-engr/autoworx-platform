@@ -16,19 +16,28 @@ import {
 import { convertToServicePlaybook } from "./utils";
 import toast from "react-hot-toast";
 
-export function PlaybooksTab() {
+export function PlaybooksTab({
+  isEditingPlaybook,
+  setIsEditingPlaybook,
+  setEditingPlaybook,
+  editingPlaybook,
+}: {
+  isEditingPlaybook: boolean;
+  setIsEditingPlaybook: (val: boolean) => void;
+  setEditingPlaybook: (val: ServicePlaybook | undefined) => void;
+  editingPlaybook: ServicePlaybook | undefined;
+}) {
   const [playbookSearchQuery, setPlaybookSearchQuery] = useState("");
-  const [isEditingPlaybook, setIsEditingPlaybook] = useState(false);
-  const [editingPlaybook, setEditingPlaybook] = useState<
-    ServicePlaybook | undefined
-  >();
 
-  const { data: playbooksData, isLoading: isLoadingPlaybooks, isFetching } =
-    useServicePlaybooks({
-      search: playbookSearchQuery || undefined,
-      page: 1,
-      limit: 100,
-    });
+  const {
+    data: playbooksData,
+    isLoading: isLoadingPlaybooks,
+    isFetching,
+  } = useServicePlaybooks({
+    search: playbookSearchQuery || undefined,
+    page: 1,
+    limit: 100,
+  });
 
   const createPlaybook = useCreatePlaybook();
   const updatePlaybook = useUpdatePlaybook();
@@ -47,7 +56,9 @@ export function PlaybooksTab() {
     setIsEditingPlaybook(true);
   };
 
-  const validatePlaybookData = (data: Partial<ServicePlaybook>): string | null => {
+  const validatePlaybookData = (
+    data: Partial<ServicePlaybook>,
+  ): string | null => {
     // Service name validation
     if (!data.service_name || !data.service_name.trim()) {
       return "Service name is required";
@@ -142,7 +153,6 @@ export function PlaybooksTab() {
   };
 
   const handleDeletePlaybook = async (playbook: ServicePlaybook) => {
-
     try {
       await deletePlaybook.mutateAsync(Number(playbook.id));
     } catch (error) {
@@ -160,8 +170,6 @@ export function PlaybooksTab() {
       console.error("Error toggling playbook:", error);
     }
   };
-
-  
 
   if (isEditingPlaybook) {
     return (
@@ -208,25 +216,27 @@ export function PlaybooksTab() {
         <div className="flex items-center justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
-      ) : playbooks.length === 0 ?  <div className="rounded-xl border-2 border-dashed border-border p-12 text-center">
-      <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-        <Plus className="h-6 w-6 text-muted-foreground" />
-      </div>
-      <h3 className="text-lg font-semibold text-foreground">
-        No playbooks found
-      </h3>
-      <p className="mt-1 text-muted-foreground">
-        {playbookSearchQuery
-          ? "Try adjusting your search query"
-          : "Create your first playbook to train the AI on services"}
-      </p>
-      {!playbookSearchQuery && (
-        <Button onClick={handleCreatePlaybook} className="mt-4">
-          <Plus className="mr-2 h-4 w-4" />
-          Create Playbook
-        </Button>
-      )}
-    </div>:(
+      ) : playbooks.length === 0 ? (
+        <div className="rounded-xl border-2 border-dashed border-border p-12 text-center">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+            <Plus className="h-6 w-6 text-muted-foreground" />
+          </div>
+          <h3 className="text-lg font-semibold text-foreground">
+            No playbooks found
+          </h3>
+          <p className="mt-1 text-muted-foreground">
+            {playbookSearchQuery
+              ? "Try adjusting your search query"
+              : "Create your first playbook to train the AI on services"}
+          </p>
+          {!playbookSearchQuery && (
+            <Button onClick={handleCreatePlaybook} className="mt-4">
+              <Plus className="mr-2 h-4 w-4" />
+              Create Playbook
+            </Button>
+          )}
+        </div>
+      ) : (
         <>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {playbooks.map((playbook) => (
@@ -239,8 +249,6 @@ export function PlaybooksTab() {
               />
             ))}
           </div>
-
-
         </>
       )}
     </div>
