@@ -50,11 +50,15 @@ export async function POST(req: NextRequest) {
       attachments: body.attachments ?? [],
     });
 
-    return NextResponse.json({ success: true, data });
+    if (data?.success) {
+      return NextResponse.json({ success: true, data });
+    } else {
+      return NextResponse.json({ ...data });
+    }
   } catch (error: any) {
     return NextResponse.json(
       { success: false, message: error.message },
-      { status: 400 }
+      { status: 400 },
     );
   }
 }
