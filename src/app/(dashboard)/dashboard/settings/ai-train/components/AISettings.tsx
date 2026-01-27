@@ -41,6 +41,7 @@ import {
   Zap,
   Volume2,
   Sparkles,
+  Save,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { humanPersonas } from "@/lib/humanPersona";

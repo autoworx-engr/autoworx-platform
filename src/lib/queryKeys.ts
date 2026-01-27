@@ -34,4 +34,12 @@ export const queryKeys = {
     "knowledge-base-documents",
     params,
   ],
+  companyKnowledge: (params?: { companyId?: number }) => [
+    "company-knowledge",
+    params,
+  ],
+  overallFaqs: (params?: { companyId?: number }) => [
+    "overall-faqs",
+    params,
+  ],
 };
