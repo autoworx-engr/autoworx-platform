@@ -380,6 +380,7 @@ const ServiceComponent = ({
                         categoryData={category}
                         categoryOpen={categoryOpen}
                         setCategoryOpen={setCategoryOpen}
+                        allowEdit={true}
                       />
                     </div>
                     <div>
@@ -534,6 +535,7 @@ const ServiceComponent = ({
                   categoryData={category}
                   categoryOpen={categoryOpen}
                   setCategoryOpen={setCategoryOpen}
+                  allowEdit={true}
                 />
               </div>
               <div>

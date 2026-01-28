@@ -287,6 +287,7 @@ export default function NewLabor({
                 categoryData={category}
                 categoryOpen={categoryOpen}
                 setCategoryOpen={setCategoryOpen}
+                allowEdit={true}
               />
             </div>
 

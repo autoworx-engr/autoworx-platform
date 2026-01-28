@@ -132,8 +132,11 @@ export default function PaymentTable({
 
         {/* Desktop View */}
         <div className="hidden lg:block overflow-hidden rounded-xl p-2 bg-white dark:bg-slate-900 ring-1 ring-slate-200 dark:ring-slate-800 shadow-sm">
-          <div className="md:overflow-x-auto">
-            <table className="w-full">
+          <div
+            // className="md:overflow-x-auto"
+            className="hidden lg:block overflow-auto max-h-[60vh] rounded-xl border border-slate-200 dark:border-slate-800 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+          >
+            <table className="w-full border-separate border-spacing-0">
               {/*  Header */}
               <thead className="bg-background sticky top-0 ">
                 <tr className="h-10 border-b">

@@ -16,8 +16,13 @@ export default function ClientNotes({ clientId, clientNotes }: TProps) {
   }, 500);
 
   const handleSaveNote = async (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    debouncedSave(e.target.value);
-    setNotes(e.target.value);
+    // debouncedSave(e.target.value);
+    // setNotes(e.target.value);
+    const value = e.target.value;
+    if (value.length <= 250) {
+      debouncedSave(value);
+      setNotes(value);
+    }
   };
   return (
     <div>
@@ -32,6 +37,9 @@ export default function ClientNotes({ clientId, clientNotes }: TProps) {
         onChange={handleSaveNote}
         placeholder="Type your notes here..."
       />
+      <div className="mt-1 text-right text-xs text-zinc-500">
+        {notes?.length || 0}/250
+      </div>
     </div>
   );
 }
