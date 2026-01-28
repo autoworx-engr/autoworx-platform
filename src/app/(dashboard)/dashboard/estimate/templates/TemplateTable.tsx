@@ -105,7 +105,12 @@ export default function TemplateTable({ take, page, data }: TTableProps) {
   }
 
   return (
-    <div className="min-h-[65vh] overflow-x-scroll rounded-md bg-background xl:overflow-auto xl:overflow-y-hidden flex flex-col ">
+    <div
+      // className="min-h-[65vh] overflow-x-scroll rounded-md bg-background xl:overflow-auto xl:overflow-y-hidden flex flex-col "
+
+      className="relative max-h-[70vh] overflow-auto rounded-md bg-background flex flex-col 
+    [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+    >
       <div className="flex-grow">
         {isMax640 ? (
           <div className="flex  w-full flex-col items-center justify-center gap-y-4">
@@ -139,8 +144,8 @@ export default function TemplateTable({ take, page, data }: TTableProps) {
                 </p>
               </div>
             ) : (
-              <table className="w-full">
-                <thead className="sticky top-0  bg-background">
+              <table className="w-full border-separate border-spacing-0">
+                <thead className="sticky top-0 z-10 bg-white shadow-sm">
                   <tr className="h-10 border-b">
                     <th className="px-4 py-2 text-left">Template ID</th>
                     <th className="px-4 py-2 text-left">Title</th>

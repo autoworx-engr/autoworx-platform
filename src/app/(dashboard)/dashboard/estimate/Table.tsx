@@ -139,8 +139,12 @@ export default function Table({
   };
 
   return (
-    <div className="min-h-[65vh] overflow-x-scroll rounded-md bg-background xl:overflow-auto xl:overflow-y-hidden flex flex-col ">
-      <div className="flex-grow">
+    <div
+      // className="min-h-[65vh] overflow-x-scroll rounded-md bg-background xl:overflow-auto xl:overflow-y-hidden flex flex-col "
+      className="relative max-h-[70vh] overflow-auto rounded-md bg-background flex flex-col 
+    [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+    >
+      <div className="flex-grow ">
         {isMax640 ? (
           <div className="flex  w-full flex-col items-center justify-center gap-y-4">
             {estimateData?.data?.map((data, index) => (
@@ -177,9 +181,15 @@ export default function Table({
                 </p>
               </div>
             ) : (
-              <table className="w-full">
+              <table
+                // className="w-full"
+                className="w-full border-separate border-spacing-0"
+              >
                 {/* Estimate Header */}
-                <thead className="sticky top-0  bg-background">
+                <thead
+                  // className="sticky top-0  bg-background"
+                  className="sticky top-0 z-10 bg-white shadow-sm"
+                >
                   <tr className="h-10 border-b">
                     <th className="px-4 py-2 text-left">Invoice ID</th>
                     <th className="px-4 py-2 text-left">Client</th>
