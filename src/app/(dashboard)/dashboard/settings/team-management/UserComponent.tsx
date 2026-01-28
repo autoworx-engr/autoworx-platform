@@ -1,12 +1,12 @@
 "use client";
-import { teamManagementUser } from "@/actions/settings/teamManagement";
+import React, { useState, useEffect } from "react";
 import Search from "@/app/(dashboard)/dashboard/employee/components/Search";
-import { useEmployeeWorkFilterStore } from "@/stores/employeeWorkFilter";
-import { EmployeeType, Role } from "@prisma/client";
-import { SquarePen } from "lucide-react";
 import Image from "next/image";
-import React, { useEffect, useState } from "react";
 import CustomizeUserRole from "./CustomizeUserRole";
+import { EmployeeType, Role } from "@prisma/client";
+import { teamManagementUser } from "@/actions/settings/teamManagement";
+import { useEmployeeWorkFilterStore } from "@/stores/employeeWorkFilter";
+import { SquarePen } from "lucide-react";
 
 interface User {
   id: number;
@@ -33,7 +33,7 @@ const UserList: React.FC = () => {
         );
         if (searchedUsers) {
           filteredUsers = filteredUsers.filter((user) =>
-            `${user.firstName} ${user.lastName}`
+            `${user.firstName}${user.lastName}`
               .toLowerCase()
               .includes(searchedUsers)
           );
@@ -58,9 +58,7 @@ const UserList: React.FC = () => {
   };
 
   return (
-    <div className="relative w-full p-6">
-      {" "}
-      {/* Added internal padding */}
+   <div className="relative w-full p-6"> {/* Added internal padding */}
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-800">
           User Roles (Custom)
@@ -69,6 +67,7 @@ const UserList: React.FC = () => {
           View all users and customize permissions individually.
         </p>
       </div>
+
       <div className="h-full">
         {selectedUser ? (
           <CustomizeUserRole user={selectedUser} onBack={handleBackClick} />
@@ -77,9 +76,7 @@ const UserList: React.FC = () => {
             <div className="mb-4">
               <Search />
             </div>
-            <div className="thin-scrollbar max-h-[95vh] overflow-y-auto pr-2">
-              {" "}
-              {/* Improved scroll container */}
+            <div className="thin-scrollbar max-h-[95vh] overflow-y-auto pr-2"> {/* Improved scroll container */}
               <ul className="space-y-3">
                 {users.map((user) => {
                   const name = `${user.firstName} ${user.lastName || ""}`;

@@ -22,39 +22,35 @@ const SelectComponent = ({
   value,
 }: SelectProps) => {
   return (
-    <div className="w-full min-w-[300px] space-y-2">
-      {label && (
-        <label className="font-semibold text-slate-600 ml-1">
-          {label}
-        </label>
-      )}
-
-      <Select.Root onValueChange={onChange} value={value || ""}>
+    <div className="px-4">
+      <div className="my-2">{label} : </div>
+      <Select.Root onValueChange={onChange} value={value ? value : ""}>
         <Select.Trigger
-          className="flex h-12 w-full items-center justify-between rounded-xl border border-slate-100 bg-white px-4 text-sm font-semibold text-slate-600 outline-none hover:bg-slate-50 transition-all"
+          className="text-violet11 hover:bg-mauve3 data-[placeholder]:text-violet9 inline-flex h-[35px] items-center justify-center gap-[5px] rounded bg-background px-[15px] text-[13px] leading-none shadow-[0_2px_10px] shadow-black/10 outline-none focus:shadow-[0_0_0_2px] focus:shadow-black"
+          aria-label="Food"
         >
           <Select.Value placeholder={`Select ${label}`} />
-
-          <Select.Icon>
-            <ChevronDown size={16} className="text-slate-400" />
+          <Select.Icon className="text-violet11">
+            <ChevronDown size={16} />
           </Select.Icon>
         </Select.Trigger>
-
         <Select.Portal>
-          <Select.Content position="popper" className="z-[100] min-w-[300px] overflow-hidden rounded-2xl border border-slate-50 bg-white shadow-xl animate-in fade-in zoom-in-95">
-            <Select.Viewport className="p-2">
-              <div className="flex flex-col gap-1 max-h-60 overflow-y-auto thin-scrollbar">
+          <Select.Content className="overflow-hidden rounded-md bg-background p-4 shadow-[0px_10px_38px_-10px_rgba(22,_23,_24,_0.35),0px_10px_20px_-15px_rgba(22,_23,_24,_0.2)]">
+            <Select.ScrollUpButton className="text-violet11 flex h-[25px] cursor-default items-center justify-center bg-background">
+              <ChevronUp size={16} />
+            </Select.ScrollUpButton>
+            <Select.Viewport className="p-[5px]">
+              <Select.Group>
                 {items.map((item) => (
-                  <Select.Item
-                    key={item.id}
-                    value={item.value}
-                    className="relative flex py-3 cursor-pointer select-none items-center rounded-lg px-3 text-sm font-medium text-slate-600 outline-none border-b data-[highlighted]:bg-[#6571FF] data-[highlighted]:text-white data-[state=checked]:bg-[#6571FF]/10 data-[state=checked]:text-[#6571FF]"
-                  >
-                    <Select.ItemText>{item.label}</Select.ItemText>
-                  </Select.Item>
+                  <SelectItem key={item.id} value={item.value}>
+                    {item.label}
+                  </SelectItem>
                 ))}
-              </div>
+              </Select.Group>
             </Select.Viewport>
+            <Select.ScrollDownButton className="text-violet11 flex h-[25px] cursor-default items-center justify-center bg-background">
+              <ChevronDown size={16} />
+            </Select.ScrollDownButton>
           </Select.Content>
         </Select.Portal>
       </Select.Root>

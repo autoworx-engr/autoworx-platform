@@ -2,57 +2,45 @@
 
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
-import { Prisma } from "@prisma/client";
 import { cache } from "react";
 
-export const fetchMailsMailgun = cache(
-  async (
-    clientId: number,
-    companyId?: number,
-    params?: Prisma.MailgunEmailFindManyArgs,
-  ) => {
-    const { where, ...restParams } = params || {};
-    try {
-      let cId = companyId || (await getCompanyId());
-      const mailgunMails = await db.mailgunEmail.findMany({
-        ...restParams,
-        where: {
-          clientId: clientId,
-          companyId: cId,
-          ...(where || {}),
-        },
-        include: {
-          attachments: true,
-          user: {
-            select: {
-              firstName: true,
-              lastName: true,
-            },
-          },
-        },
-      });
-
-      return { success: true, data: mailgunMails };
-    } catch (error) {
-      console.error("", error);
-      return { success: false };
-    }
-  },
-);
-
-export const updateLastMailReadId = async ({
-  clientId,
-  companyId,
-}: {
-  clientId: number;
-  companyId?: number;
-}) => {
+export const fetchMailsMailgun = cache(async (clientId: number) => {
   try {
-    let cId = companyId || (await getCompanyId());
+    let companyId = await getCompanyId();
     const mailgunMails = await db.mailgunEmail.findMany({
       where: {
         clientId: clientId,
-        companyId: cId,
+        companyId: companyId,
+      },
+      include: {
+        attachments: true,
+        user: {
+          select: {
+            firstName: true,
+            lastName:true
+          }
+        }
+      },
+    });
+
+    return { success: true, data: mailgunMails };
+  } catch (error) {
+    console.error("", error);
+    return { success: false };
+  }
+});
+
+export const updateLastMailReadId = async ({
+  clientId,
+}: {
+  clientId: number;
+}) => {
+  try {
+    let companyId = await getCompanyId();
+    const mailgunMails = await db.mailgunEmail.findMany({
+      where: {
+        clientId: clientId,
+        companyId: companyId,
       },
       select: {
         id: true,

@@ -385,7 +385,12 @@ export default function AddNewProduct({
           <div className="space-y-2 grid grid-cols-1 md:grid-cols-2 gap-x-5">
             {isDatabase ? (
               <div>
+<<<<<<< HEAD
                 <label className={cn("block font-medium text-slate-600", `${product?.category && "py-1.5"}`)}>Category</label>
+=======
+                <label className="block font-medium">Category</label>
+
+>>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
                 <div className="rounded-md border border-gray-300 bg-gray-100 px-3 py-2">
                   {product?.category || "No category selected"}
                 </div>

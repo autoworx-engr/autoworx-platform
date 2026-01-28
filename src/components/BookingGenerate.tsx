@@ -37,7 +37,7 @@ const BookingGenerate = ({ companyId }: { companyId?: string }) => {
   }
 
   return (
-    <div className="mx-auto w-full max-w-6xl mt-10">
+    <div className="mx-auto w-full max-w-6xl sm:px-6 md:px-8 mt-10">
       <h2 className="mb-4 text-xl font-semibold text-gray-500 sm:text-2xl">
         Booking form
       </h2>
@@ -47,8 +47,9 @@ const BookingGenerate = ({ companyId }: { companyId?: string }) => {
           <div className="max-h-[70vh] space-y-6 overflow-y-auto pr-1">
             <div className="space-y-3">
               <div
-                className={`rounded-lg border ${showQR ? "border-blue-400" : "border-gray-200"
-                  } transition-all duration-200 hover:shadow-md`}
+                className={`rounded-lg border ${
+                  showQR ? "border-blue-400" : "border-gray-200"
+                } transition-all duration-200 hover:shadow-md`}
               >
                 {content}
               </div>

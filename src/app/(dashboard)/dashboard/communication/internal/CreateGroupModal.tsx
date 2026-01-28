@@ -1,6 +1,3 @@
-import { createGroup } from "@/actions/communication/internal/creategroup";
-import { searchUsers } from "@/actions/communication/internal/searchUser";
-import Avatar from "@/components/Avatar";
 import {
   Dialog,
   DialogClose,
@@ -9,11 +6,14 @@ import {
   DialogTrigger,
 } from "@/components/Dialog";
 import { SlimInput } from "@/components/SlimInput";
-import { useDebounce } from "@/hooks/useDebounce";
-import { Group, User } from "@prisma/client";
-import { ChevronDown, ChevronUp, CircleX, Search, Users } from "lucide-react";
-import { useSession } from "next-auth/react";
 import React, { useEffect, useRef, useState } from "react";
+import { Group, User } from "@prisma/client";
+import { createGroup } from "@/actions/communication/internal/creategroup";
+import { useSession } from "next-auth/react";
+import Avatar from "@/components/Avatar";
+import { useDebounce } from "@/hooks/useDebounce";
+import { searchUsers } from "@/actions/communication/internal/searchUser";
+import { ChevronDown, ChevronUp, CircleX, Search, Users } from "lucide-react";
 
 type TProps = {
   users: User[];
@@ -220,11 +220,7 @@ export default function CreateGroupModal({
                 setError(null);
               }
             }}
-            label={
-              <>
-                Group name <span className="text-red-500">*</span>{" "}
-              </>
-            }
+            label="Group name"
             name="groupName"
             type="text"
             className="w-full text-slate-600 dark:text-white"
@@ -292,11 +288,7 @@ export default function CreateGroupModal({
             <div className="relative mt-4">
               {/* Contact List closed state - uses SlimInput for consistent form look */}
               <SlimInput
-                label={
-                  <>
-                    Contact List <span className="text-red-500">*</span>
-                  </>
-                }
+                label="Contact List"
                 name="ContactList"
                 type="text"
                 readOnly

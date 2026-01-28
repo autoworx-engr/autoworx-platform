@@ -1,8 +1,8 @@
 "use client";
 
-import { useCompanyTimezone } from "@/hooks/useCompanyTimezone"; // ← adjust path if needed
-import moment from "moment-timezone";
 import { useEffect, useState, useTransition } from "react";
+import moment from "moment-timezone";
+import { useCompanyTimezone } from "@/hooks/useCompanyTimezone"; // ← adjust path if needed
 
 import {
   Dialog,
@@ -17,10 +17,12 @@ import FormError from "@/components/FormError";
 import Selector from "@/components/Selector";
 import { SlimInput } from "@/components/SlimInput";
 import Submit from "@/components/Submit";
-import { cn } from "@/lib/cn";
-import { useFormErrorStore } from "@/stores/form-error";
 import { InventoryProductType } from "@prisma/client";
 import { useProduct as productUse } from "../../../../actions/inventory/useProduct";
+<<<<<<< HEAD
+=======
+import { useFormErrorStore } from "@/stores/form-error";
+>>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
 
 type TProps = {
   productId: number;
@@ -92,6 +94,7 @@ export default function UseProductForm({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
+<<<<<<< HEAD
         <button
           className="
           w-28 rounded-lg px-4 py-2 text-sm font-semibold text-white
@@ -103,14 +106,21 @@ export default function UseProductForm({
           transition-all duration-300 ease-in-out
         "
         >
+=======
+        <button className="w-28 rounded-md bg-[#FF6262] p-1 text-white">
+>>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
           {productType === "Product" ? "Loss" : "Use"}
         </button>
       </DialogTrigger>
 
+<<<<<<< HEAD
       <DialogContent
         className="max-h-[80%] w-[96%] max-w-xl grid-rows-[auto,1fr,auto] thin-scrollbar"
         form
       >
+=======
+      <DialogContent className="max-h-full w-[96%] max-w-xl md:w-[30rem]" form>
+>>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
         <DialogHeader>
           <DialogTitle className="text-slate-600">
             {productType === "Product" ? "Loss" : "Use"} Product
@@ -119,6 +129,7 @@ export default function UseProductForm({
 
         <FormError />
 
+<<<<<<< HEAD
         <div className="gap-5 overflow-y-auto pl-1 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <SlimInput
@@ -170,10 +181,56 @@ export default function UseProductForm({
               {" "}
               Notes
             </label>
+=======
+        <div className="grid grid-cols-2 gap-3 overflow-y-auto p-2">
+          <SlimInput
+            name="date"
+            type="date"
+            className="col-span-1"
+            // ✅ default value in the company timezone
+            defaultValue={todayInCompanyTz}
+          />
+          <br className="block md:hidden" />
+
+          <SlimInput name="quantity" className="col-span-1" />
+          <br className="block md:hidden" />
+
+          <SlimInput
+            name="cost"
+            className="col-span-1"
+            defaultValue={cost}
+            disabled
+          />
+
+          {productType === "Product" && (
+            <div className="col-span-2">
+              <Selector
+                label={(invoice: { id: string; clientName: string } | null) =>
+                  invoice
+                    ? `${invoice.id} - ${invoice.clientName}`
+                    : "Select Invoice"
+                }
+                items={invoiceIds}
+                selectedItem={invoiceId}
+                setSelectedItem={setInvoiceId}
+                displayList={(invoice) => (
+                  <p>
+                    <strong>{invoice.id}</strong> - {invoice.clientName}
+                  </p>
+                )}
+                newButton={<></>}
+              />
+            </div>
+          )}
+
+          <div className="col-span-2">
+            <label htmlFor="notes"> Notes</label>
+>>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
             <textarea
               id="notes"
               name="notes"
               required={false}
+<<<<<<< HEAD
               className={cn(
                 "h-24 w-full rounded-md border border-slate-300 outline-none bg-background px-3 py-2 leading-6 transition-all duration-300 thin-scrollbar",
                 "bg-white/80 backdrop-blur-sm dark:bg-slate-900/50",
@@ -181,11 +238,15 @@ export default function UseProductForm({
                 "focus:border-[#6571FF]/60 focus:ring-2 focus:ring-[#6571FF]/40",
                 "disabled:opacity-50 disabled:cursor-not-allowed"
               )}
+=======
+              className="h-28 w-full rounded-sm border border-primary-foreground border-slate-400 bg-background px-2 py-0.5 leading-6 outline-none"
+>>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
             />
           </div>
         </div>
 
         <DialogFooter>
+<<<<<<< HEAD
           <DialogClose
             className="
             rounded-xl px-5 py-2.5 text-sm font-medium text-slate-500 mt-2 md:mt-0 
@@ -193,6 +254,9 @@ export default function UseProductForm({
             transition-colors border
           "
           >
+=======
+          <DialogClose className="rounded-lg border-2 border-slate-400 p-2">
+>>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
             Cancel
           </DialogClose>
           <Submit

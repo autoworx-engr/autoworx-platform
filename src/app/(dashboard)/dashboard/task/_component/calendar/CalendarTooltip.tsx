@@ -20,15 +20,9 @@ type TCalendarTooltipProps = {
     client?: Client;
     assignedUsers?: User[];
   };
-  onClose?: () => void;
-  onEditOpen?: () => void;
 };
 
-export default function CalendarTooltip({
-  event,
-  onClose,
-  onEditOpen,
-}: TCalendarTooltipProps) {
+export default function CalendarTooltip({ event }: TCalendarTooltipProps) {
   const date = useDate();
   const dateFormat = date.format("YYYY-MM-DD");
   const queryClient = useQueryClient();
@@ -88,35 +82,35 @@ export default function CalendarTooltip({
 
   if (!event) return null;
 
-  // let editModalContent = null;
-  // if (event.type === "appointment") {
-  //   editModalContent = (
-  //     <AppointmentCreateOrEdit
-  //       fromEdit
-  //       appointmentId={event.id}
-  //       isModalOpen={isAppointmentModalOpen}
-  //       setIsModalOpen={setIsAppointmentOpen}
-  //       onAppointmentUpdated={revalidateAppointmentQueries}
-  //       onAppointmentDeleted={revalidateAppointmentQueries}
-  //     />
-  //   );
-  // } else if (event.type === "task") {
-  //   editModalContent = (
-  //     <TaskCreateOrEdit
-  //       fromEdit
-  //       taskId={event.id}
-  //       onTaskUpdated={revalidateTaskQueries}
-  //       isModalOpen={isTaskModalOpen}
-  //       setIsModalOpen={setIsTaskModalOpen}
-  //       onTaskDelete={revalidateTaskQueries}
-  //     />
-  //   );
-  // }
+  let editModalContent = null;
+  if (event.type === "appointment") {
+    editModalContent = (
+      <AppointmentCreateOrEdit
+        fromEdit
+        appointmentId={event.id}
+        isModalOpen={isAppointmentModalOpen}
+        setIsModalOpen={setIsAppointmentOpen}
+        onAppointmentUpdated={revalidateAppointmentQueries}
+        onAppointmentDeleted={revalidateAppointmentQueries}
+      />
+    );
+  } else if (event.type === "task") {
+    editModalContent = (
+      <TaskCreateOrEdit
+        fromEdit
+        taskId={event.id}
+        onTaskUpdated={revalidateTaskQueries}
+        isModalOpen={isTaskModalOpen}
+        setIsModalOpen={setIsTaskModalOpen}
+        onTaskDelete={revalidateTaskQueries}
+      />
+    );
+  }
 
   return (
     <>
       <TooltipPortal>
-        <TooltipContent
+        <TooltipContent 
           className="w-72 rounded-md border border-slate-400 bg-background p-3"
           onClick={(e) => e.stopPropagation()}
           onMouseDown={(e) => e.stopPropagation()}
@@ -124,19 +118,21 @@ export default function CalendarTooltip({
           {event.type === "appointment" ? (
             <AppointmentTooltip
               event={event as Appointment}
-              onModalOpen={onEditOpen}
-              onClose={onClose}
+              onModalOpen={() => {
+                setIsAppointmentOpen(true);
+              }}
             />
           ) : (
             <TaskTooltip
               event={event as Task}
-              onModalOpen={onEditOpen}
-              onClose={onClose}
+              onModalOpen={() => {
+                setIsTaskModalOpen(true);
+              }}
             />
           )}
         </TooltipContent>
       </TooltipPortal>
-      {/* {editModalContent} */}
+      {editModalContent}
     </>
   );
 }

@@ -164,6 +164,7 @@ const TechnicianAttendance = ({ currentUserId }: { currentUserId: string }) => {
                         const effectiveHours = isNaN(Number(data.hours))
                           ? data.hours
                           : convertDuration(
+<<<<<<< HEAD
                               Math.max(
                                 0,
                                 Number(data.hours) - Number(data.totalBreaks)
@@ -173,6 +174,10 @@ const TechnicianAttendance = ({ currentUserId }: { currentUserId: string }) => {
                         const totalBreaks = isNaN(Number(data.totalBreaks))
                           ? data.totalBreaks
                           : convertDuration(Number(data.totalBreaks));
+=======
+                              Number(data.hours) - Number(data.totalBreaks)
+                            );
+>>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
 
                         return (
                           <tr
@@ -203,9 +208,7 @@ const TechnicianAttendance = ({ currentUserId }: { currentUserId: string }) => {
                                     .format("hh:mm A")}
                             </td>
                             <td className="hidden justify-center px-2 py-2 sm:px-4 lg:flex">
-                              {/* {data.totalBreaks } */}
-                              {/* convert duration */}
-                              {totalBreaks}
+                              {data.totalBreaks}
                             </td>
                             <td className="px-2 py-2 lg:px-4">
                               {effectiveHours}

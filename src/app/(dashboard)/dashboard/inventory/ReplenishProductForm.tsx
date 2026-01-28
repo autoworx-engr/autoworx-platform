@@ -15,7 +15,6 @@ import Selector from "@/components/Selector";
 import { SlimInput } from "@/components/SlimInput";
 import Submit from "@/components/Submit";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
-import { cn } from "@/lib/cn";
 import { useFormErrorStore } from "@/stores/form-error";
 import { useListsStore } from "@/stores/lists";
 import { Vendor } from "@prisma/client";
@@ -84,6 +83,7 @@ export default function ReplenishProductForm({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
+<<<<<<< HEAD
         <button
           className="
           w-28 rounded-lg px-4 py-2 text-sm font-semibold text-white
@@ -95,6 +95,9 @@ export default function ReplenishProductForm({
           transition-all duration-300 ease-in-out
         "
         >
+=======
+        <button className="w-28 rounded-md bg-[#69DBD0] p-1 text-white">
+>>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
           Replenish
         </button>
       </DialogTrigger>
@@ -104,6 +107,7 @@ export default function ReplenishProductForm({
         form
       >
         <DialogHeader>
+<<<<<<< HEAD
           <DialogTitle className="text-slate-600">
             Replenish Product
           </DialogTitle>
@@ -174,16 +178,94 @@ export default function ReplenishProductForm({
             <SlimInput name="quantity" required={true} label="Quantity" />
 
             <SlimInput name="price" required={true} label="Total Price" />
+=======
+          <DialogTitle>Replenish Product</DialogTitle>
+        </DialogHeader>
+        <FormError />
+        <div className="flex flex-col gap-3 p-2">
+          <SlimInput
+            name="date"
+            type="date"
+            className="col-span-1"
+            defaultValue={todayInCompanyTz}
+          />
+          {/* TODO: make reusable component */}
+          <div>
+            <label>Vendor</label>
+
+            <Selector
+              label={(vendor: Vendor | null) =>
+                vendor
+                  ? vendor?.companyName || vendor?.name || `Vendor ${vendor.id}`
+                  : "Vendor"
+              }
+              newButton={
+                <NewVendor
+                  afterSubmit={(ven) => {
+                    setVendor(ven);
+                    setVendorOpen(false);
+                  }}
+                  button={
+                    <button type="button" className="text-xs text-[#6571FF]">
+                      + New Vendor
+                    </button>
+                  }
+                />
+              }
+              displayList={(vendor: Vendor) => (
+                <p>{vendor?.companyName || vendor.name}</p>
+              )}
+              items={vendors}
+              onSearch={(search: string) =>
+                vendors.filter(
+                  (vendor) =>
+                    vendor?.companyName
+                      ?.toLowerCase()
+                      ?.includes(search.toLowerCase()) ||
+                    (vendor?.name?.toLowerCase() || "").includes(
+                      search.toLowerCase()
+                    )
+                )
+              }
+              openState={[vendorOpen, setVendorOpen]}
+              selectedItem={vendor}
+              setSelectedItem={setVendor}
+            />
+          </div>
+
+          <div className="flex flex-wrap gap-3 md:flex-nowrap">
+            <SlimInput name="quantity" required={false} />
+
+            <div>
+              <label htmlFor="price" className="px-2 font-medium">
+                Total Price
+              </label>
+              <div className="#mt-1 flex gap-1 rounded-sm border border-primary-foreground bg-background px-2 py-0.5 leading-6">
+                <span className="text-lg">$</span>
+                <input
+                  type="text"
+                  name="price"
+                  className="w-full rounded-sm border border-slate-400 px-2 py-0.5 outline-none"
+                  id="price"
+                />
+              </div>
+            </div>
+>>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
 
             <SlimInput
               defaultValue={lastUnit || ""}
               name="unit"
+<<<<<<< HEAD
               required={true}
               label="Unit"
+=======
+              required={false}
+>>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
             />
             <SlimInput name="lot" required={false} label="Lot#" />
           </div>
 
+<<<<<<< HEAD
           <div className="space-y-1">
             <label htmlFor="notes" className="font-medium text-slate-600">
               {" "}
@@ -199,6 +281,14 @@ export default function ReplenishProductForm({
                 "focus:border-[#6571FF]/60 focus:ring-2 focus:ring-[#6571FF]/40",
                 "disabled:opacity-50 disabled:cursor-not-allowed"
               )}
+=======
+          <div className="col-span-2">
+            <label htmlFor="notes"> Notes</label>
+            <textarea
+              id="notes"
+              name="notes"
+              className="h-28 w-full rounded-sm border border-primary-foreground border-slate-400 bg-background px-2 py-0.5 leading-6 outline-none"
+>>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
             />
           </div>
         </div>

@@ -123,16 +123,16 @@ export default function MessageBox({
         attachmentFiles:
           attachmentFileUrl && attachmentFileUrl.length > 0
             ? (attachmentFileUrl as string[]).map((fileUrl, urlIndex) => {
-              const findFileIntoMultiFile = multiAttachmentFile?.find(
-                (_, fileIndex) => fileIndex === urlIndex
-              );
-              return {
-                fileName: findFileIntoMultiFile?.name,
-                fileType: findFileIntoMultiFile?.type,
-                fileUrl: fileUrl,
-                fileSize: findFileIntoMultiFile?.size,
-              };
-            })
+                const findFileIntoMultiFile = multiAttachmentFile?.find(
+                  (_, fileIndex) => fileIndex === urlIndex
+                );
+                return {
+                  fileName: findFileIntoMultiFile?.name,
+                  fileType: findFileIntoMultiFile?.type,
+                  fileUrl: fileUrl,
+                  fileSize: findFileIntoMultiFile?.size,
+                };
+              })
             : null,
       };
 

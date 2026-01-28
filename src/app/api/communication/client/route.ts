@@ -10,6 +10,7 @@ import os from "os";
 
 const pump = promisify(pipeline);
 
+<<<<<<< HEAD
 /**
  * @swagger
  * /api/communication/client:
@@ -30,6 +31,8 @@ const pump = promisify(pipeline);
  *       400:
  *         description: Client not found or missing parameters
  */
+=======
+>>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
 export async function GET(request: NextRequest) {
   try {
     const url = new URL(request.url);

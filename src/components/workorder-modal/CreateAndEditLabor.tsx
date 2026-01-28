@@ -2,7 +2,6 @@
 import { getEmployees } from "@/actions/employee/get";
 import { addTechnician } from "@/actions/estimate/technician/addTechnician";
 import { updateTechnician } from "@/actions/estimate/technician/updateTechnician";
-import ComponentsLightbox from "@/components/common/LightBox";
 import {
   Dialog,
   DialogClose,
@@ -14,11 +13,6 @@ import { DropdownSelection } from "@/components/DropDownSelection";
 import Selector from "@/components/Selector";
 import { SlimInput } from "@/components/SlimInput";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
-import { queryKeys } from "@/lib/queryKeys";
-import {
-  handleFileSelection,
-  uploadAllAttachments,
-} from "@/utils/handleFileAttachment";
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
 import { useIsAdminOrManager } from "@/utils/useIsAdminOrManager";
 import {
@@ -28,8 +22,6 @@ import {
   TechnicianImage,
   User,
 } from "@prisma/client";
-import { useQueryClient } from "@tanstack/react-query";
-import { ImageIcon, X } from "lucide-react";
 import moment from "moment";
 import {
   Dispatch,
@@ -41,6 +33,14 @@ import {
 } from "react";
 import { Circles } from "react-loader-spinner"; // Importing the spinner
 import VehicleParts from "./VehicleParts";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/queryKeys";
+import { ImageIcon, X } from "lucide-react";
+import ComponentsLightbox from "@/components/common/LightBox";
+import {
+  handleFileSelection,
+  uploadAllAttachments,
+} from "@/utils/handleFileAttachment";
 
 type LocalAttachment = {
   fileUrl: string;

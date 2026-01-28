@@ -4,19 +4,13 @@ import PayoutCard from "../../employee/components/PayoutCard";
 import PerformanceTable from "./PerformanceTable";
 import { getSalesReportData } from "./getSalesReport";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
-import CarLoading from "../../../../../components/common/CarLoading";
 
 export default function Page() {
   const timezone = useCompanyTimezone();
 
   const { data } = useServerGet(getSalesReportData, timezone);
-
   if (!data) {
-    return (
-      <div className="flex items-center justify-center">
-        <CarLoading />
-      </div>
-    );
+    return <div>Loading...</div>;
   }
   const {
     previousCommission,

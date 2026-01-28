@@ -127,7 +127,7 @@ export function getDateRanges(timezone: string) {
 // }
 
 export function growthRate(current: number, previous: number) {
-  let rate = 0;
+  let rate;
   if (previous === 0) {
     rate = current > 0 ? 100 : 0;
   } else {

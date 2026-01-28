@@ -15,8 +15,6 @@ interface State {
   setIsNewBugOpen: (isOpen: boolean) => void;
   isUploadLeadOpen:boolean;
   setIsUploadLeadOpen: (isOpen:boolean)=>void;
-  isUploadCannedOpen:boolean;
-  setIsUploadCannedOpen: (isOpen:boolean)=>void;
 }
 
 export const stateStore = create<State>((set) => ({
@@ -34,6 +32,4 @@ export const stateStore = create<State>((set) => ({
   setIsNewBugOpen: (isOpen: boolean) => set({ isNewBugOpen: isOpen }),
   isUploadLeadOpen:false,
   setIsUploadLeadOpen:(isOpen:boolean)=>set({isUploadLeadOpen:isOpen}),
-  isUploadCannedOpen:false,
-  setIsUploadCannedOpen:(isOpen:boolean)=>set({isUploadCannedOpen:isOpen}),
 }));

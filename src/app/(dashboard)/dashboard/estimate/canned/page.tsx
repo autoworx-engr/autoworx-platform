@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { normalizeSearch } from "@/utils/normalizeSearch";
 import { getServerSession } from "next-auth";
 import CannedTable from "../CannedTable";
+import Header from "../Header";
 import NavigationTabs from "../NavigationTabs";
 
 type TProps = {
@@ -90,7 +91,7 @@ export default async function CannedPage({ searchParams }: TProps) {
 
       <SyncLists categories={categories} tags={tags} statuses={statuses} />
 
-      {/* <Header /> */}
+      <Header />
 
       {/* Use the NavigationTabs component with the 'c-canned' tab as active */}
       <NavigationTabs activeTab="c-canned">

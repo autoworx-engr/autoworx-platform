@@ -29,7 +29,7 @@ export default function CouponDateComponent({
 
   // Initialize the state with defaultValue if provided
   const [value, setValue] = React.useState<Dayjs | null>(
-    defaultValue ? dayjs(defaultValue) : null
+    defaultValue ? dayjs(defaultValue) : null,
   );
 
   if (isMobile) {
@@ -57,6 +57,7 @@ export default function CouponDateComponent({
               onDateChange(newValue.toISOString());
             }
           }}
+          // @ts-ignore
           renderInput={(params) => <TextField {...params} />}
         />
       </Box>

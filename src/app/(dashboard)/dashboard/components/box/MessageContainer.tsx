@@ -83,13 +83,27 @@ export default function MessageContainer({
       ) : (
         <>
           {/* Redesigned Search Input Field */}
-          <div className="relative flex items-center m-1 mb-4 flex-shrink-0">
-            <SearchIcon className="w-5 h-5 absolute left-3 top-3 text-slate-400 dark:text-slate-300 transition-colors duration-300" />
+          <div className="relative flex items-center mb-4 flex-shrink-0">
+            <SearchIcon className="absolute left-3 w-5 h-5 text-slate-400 dark:text-slate-500" />
             <input
+              className={cn(
+                `
+                h-10 w-full rounded-lg pl-10 pr-4 py-2 text-sm transition-all duration-300
+
+                // Base style: Soft white/dark slate background
+                bg-slate-50/70 dark:bg-slate-800/70
+                border border-slate-200 dark:border-slate-700
+
+                // Focus state: Indigo ring and shadow
+                focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50 focus:outline-none
+
+                // Hover effect
+                hover:border-indigo-400 dark:hover:border-indigo-500
+                `
+              )}
               type="text"
-              aria-label="Search"
-              placeholder="Search messages by Name"
-              className="w-full border border-slate-300 ring-0 rounded-xl bg-transparent pr-3 pl-10 py-2 text-slate-600 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6571FF] focus:shadow-[0_8px_24px_rgba(101,113,255,0.08)] transition-all duration-300"
+              placeholder="Search by name..."
+              value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
               }}
@@ -97,7 +111,7 @@ export default function MessageContainer({
           </div>
 
           {/* Message List Container - Filling remaining height and scrolling */}
-          <div className="custom-scrollbar flex flex-1 flex-col space-y-3 overflow-y-auto w-full self-center pr-1 m-1">
+          <div className="custom-scrollbar flex flex-1 flex-col space-y-3 overflow-y-auto w-full self-center pr-1">
             {/* 1. Client Messages (Sales focus) */}
             {filteredClientMessages.map((data) => {
               if (data.MailgunEmail?.length === 0) return null;
@@ -121,7 +135,7 @@ export default function MessageContainer({
                   redirectUrl={`/dashboard/communication/client/${data.id}`}
                   communicationType="Client"
                   photoUrl={data.photo}
-                // timestamp={latestEmail.createdAt} // Pass timestamp for sorting/display
+                  // timestamp={latestEmail.createdAt} // Pass timestamp for sorting/display
                 />
               );
             })}
@@ -147,7 +161,7 @@ export default function MessageContainer({
                   redirectUrl={`/dashboard/communication/internal/?id=${targetUser?.id}`}
                   communicationType="Internal"
                   photoUrl={targetUser?.image} // Use the target user's image
-                // timestamp={data.createdAt} // Pass timestamp for sorting/display
+                  // timestamp={data.createdAt} // Pass timestamp for sorting/display
                 />
               );
             })}

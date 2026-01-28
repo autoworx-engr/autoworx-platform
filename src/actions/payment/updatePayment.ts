@@ -49,12 +49,11 @@ export async function updatePayment({
   amount,
   additionalData,
 }: PaymentData): Promise<ServerAction> {
+  // console.log("Updating payment:", { id, type, date, notes, amount });
+
   const existingPayment = await db.payment.findUnique({
     where: { id },
-    include: {
-      deposit: true,
-      Refund: true, // ** Include refunds to check if payment has been refunded**
-    },
+    include: { deposit: true },
   });
 
   if (!existingPayment) throw new Error("Payment not found");
@@ -63,26 +62,6 @@ export async function updatePayment({
   const originalType = existingPayment.type;
   const isOriginalDeposit = originalType === "DEPOSIT";
   const isNewDeposit = type === "DEPOSIT";
-
-  // ** Calculate total refunded amount**
-  const totalRefunded = existingPayment.Refund.reduce(
-    (sum, refund) => sum + Number(refund.amount),
-    0
-  );
-
-  // ** Validate that new amount is not less than refunded amount**
-  if (amount < totalRefunded) {
-    throw new Error(
-      `Cannot reduce payment amount below refunded amount ($${totalRefunded.toFixed(
-        2
-      )})`
-    );
-    // return {
-    //   type: "globalError",
-    //   message: `Cannot reduce payment amount below refunded amount ($${totalRefunded.toFixed(2)})`,
-    //   errorSource: [],
-    // };
-  }
 
   const paymentTypeHandlers = {
     CARD: {
@@ -157,7 +136,7 @@ export async function updatePayment({
     throw new Error("Invalid payment type");
   }
 
-  // Use transaction to ensure atomicity
+  //  Use transaction to ensure atomicity
   await db.$transaction(async (tx) => {
     // UPDATE PAYMENT
     const updatedPayment = await tx.payment.update({
@@ -171,13 +150,15 @@ export async function updatePayment({
       },
     });
 
+    // console.log("Updated payment:", updatedPayment);
+
     // FETCH INVOICE
     const invoice = await tx.invoice.findUnique({
       where: { id: updatedPayment.invoiceId! },
     });
     if (!invoice) throw new Error("Invoice not found");
 
-    // Handle deposit field changes in invoice
+    //  Handle deposit field changes in invoice
     if (isOriginalDeposit && isNewDeposit) {
       // Editing deposit amount - adjust invoice deposit
       const depositDifference = amount - originalAmount;
@@ -232,30 +213,20 @@ export async function updatePayment({
     const payments = await tx.payment.findMany({
       where: { invoiceId: updatedPayment.invoiceId },
       orderBy: { createdAt: "asc" },
-      include: {
-        Refund: true, // ** Include refunds in calculation**
-      },
     });
 
-    // RECALCULATE dueAfterPayment for all payments
+    //  RECALCULATE dueAfterPayment for all payments
     let cumulativePaid = 0;
     let cumulativeDeposit = 0;
 
     for (const p of payments) {
-      // ** Subtract refunds from the payment amount**
-      const paymentRefunds = p.Refund.reduce(
-        (sum, refund) => sum + Number(refund.amount),
-        0
-      );
-      const netPaymentAmount = Number(p.amount) - paymentRefunds;
-
       if (p.type === "DEPOSIT") {
-        cumulativeDeposit += netPaymentAmount;
+        cumulativeDeposit += Number(p.amount);
       } else {
-        cumulativePaid += netPaymentAmount;
+        cumulativePaid += Number(p.amount);
       }
 
-      // Calculate due after this payment (considering refunds)
+      // Due
       const dueAfterPayment =
         Number(invoice.grandTotal) - (cumulativeDeposit + cumulativePaid);
 
@@ -265,7 +236,7 @@ export async function updatePayment({
       });
     }
 
-    // UPDATE INVOICE DUE (final calculation with all refunds)
+    //  UPDATE INVOICE DUE
     const finalDue =
       Number(invoice.grandTotal) - (cumulativeDeposit + cumulativePaid);
     await tx.invoice.update({
@@ -276,13 +247,8 @@ export async function updatePayment({
     });
   });
 
-  // ** Revalidate ALL paths that display payment/invoice data**
   revalidatePath("/estimate");
-  revalidatePath("/dashboard/estimate/edit");
-  revalidatePath("/dashboard/estimate/view");
   revalidatePath("/dashboard/clients");
-  revalidatePath("/dashboard/client");
-  revalidatePath("/dashboard/payments");
 
   return { type: "success", data: { id, type, amount } };
 }

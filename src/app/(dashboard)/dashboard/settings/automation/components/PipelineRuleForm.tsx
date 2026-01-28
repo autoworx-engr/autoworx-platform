@@ -277,7 +277,6 @@ const PipelineRuleForm = ({
             onChange={(e) => handleInputChange("title", e.target.value)}
             disabled={stagesLoading}
             error={error.title}
-            required
           />
 
           {/* Stage */}

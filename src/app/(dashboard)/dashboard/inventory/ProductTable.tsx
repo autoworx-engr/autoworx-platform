@@ -111,7 +111,7 @@ export default function ProductTable({
 
       <div className="thin-scrollbar hidden lg:block pb-4 h-[calc(70vh-78px)] overflow-auto overflow-x-clip">
         <table className="w-full">
-          <thead className="bg-background sticky top-0 ">
+          <thead className="bg-background">
             <tr className="h-10 border-b">
               <th className="px-4 text-left">#</th>
               <th className="px-4 text-left">Name</th>
@@ -120,8 +120,8 @@ export default function ProductTable({
               <th className="px-4 text-left 2xl:px-10">Unit</th>
               {(user?.employeeType === "Admin" ||
                 user?.employeeType === "Manager") && (
-                <th className="px-4 text-left 2xl:px-10">Action</th>
-              )}
+                  <th className="px-4 text-left 2xl:px-10">Action</th>
+                )}
             </tr>
           </thead>
 
@@ -136,7 +136,7 @@ export default function ProductTable({
                     "h-full cursor-pointer rounded-md py-3",
                     index % 2 === 0 ? evenColor : oddColor,
                     currentProductId === product.id &&
-                      "border-2 border-[#6571FF]"
+                    "border-2 border-[#6571FF]"
                   )}
                   onClick={() =>
                     router.push(`${pathname}?${params.toString()}`)
@@ -249,31 +249,31 @@ export default function ProductTable({
 
                   {(user?.employeeType === "Admin" ||
                     user?.employeeType === "Manager") && (
-                    <td>
-                      <div className="flex h-12 items-center justify-start gap-3 px-4 2xl:px-10">
-                        <button className="text-2xl text-blue-600">
-                          <EditProduct productData={product} />
-                        </button>
-                        <Popconfirm
-                          title={`Are you sure you want to delete this ${viewTab === "products" ? "product" : "supply"}?`}
-                          onConfirm={async () => {
-                            await deleteInventory(product.id);
-                            router.push(
-                              `/dashboard/inventory?view=${search?.get("view")}`
-                            );
-                          }}
-                          okText="Yes"
-                          cancelText="No"
-                        >
-                          <X
-                            size={20}
-                            strokeWidth={3}
-                            className="text-red-400"
-                          />
-                        </Popconfirm>
-                      </div>
-                    </td>
-                  )}
+                      <td>
+                        <div className="flex h-12 items-center justify-start gap-3 px-4 2xl:px-10">
+                          <button className="text-2xl text-blue-600">
+                            <EditProduct productData={product} />
+                          </button>
+                          <Popconfirm
+                            title={`Are you sure you want to delete this ${viewTab === "products" ? "product" : "supply"}?`}
+                            onConfirm={async () => {
+                              await deleteInventory(product.id);
+                              router.push(
+                                `/dashboard/inventory?view=${search?.get("view")}`
+                              );
+                            }}
+                            okText="Yes"
+                            cancelText="No"
+                          >
+                            <X
+                              size={20}
+                              strokeWidth={3}
+                              className="text-red-400"
+                            />
+                          </Popconfirm>
+                        </div>
+                      </td>
+                    )}
                 </tr>
               );
             })}

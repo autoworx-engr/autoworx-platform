@@ -4,11 +4,9 @@ import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import { InfobipConfig } from "@prisma/client";
 
-export const getSmsGateway = async (
-  companyId?: number
-): Promise<string | null> => {
+export const getSmsGateway = async (): Promise<string | null> => {
   try {
-    const cId = companyId || (await getCompanyId());
+    const cId = await getCompanyId();
 
     const company = await db.company.findFirst({
       where: {
@@ -24,14 +22,12 @@ export const getSmsGateway = async (
   }
 };
 
-export const getInfobipConfig = async (
-  companyId?: number
-): Promise<{
+export const getInfobipConfig = async (): Promise<{
   success: boolean;
   data?: InfobipConfig | null;
 }> => {
   try {
-    const cId = companyId || (await getCompanyId());
+    const cId = await getCompanyId();
 
     const infobipConfig = await db.infobipConfig.findFirst({
       where: {
@@ -93,13 +89,13 @@ export const createInfobipConfig = async ({
   }
 };
 
-export const deleteInfobipConfig = async (companyId?: number) => {
+export const deleteInfobipConfig = async () => {
   try {
-    const cId = companyId || (await getCompanyId());
+    const companyId = await getCompanyId();
 
     await db.infobipConfig.delete({
       where: {
-        companyId: cId,
+        companyId,
       },
     });
 
@@ -110,12 +106,12 @@ export const deleteInfobipConfig = async (companyId?: number) => {
   }
 };
 
-export const getFromNumberInfobip = async (companyId?: number) => {
+export const getFromNumberInfobip = async () => {
   try {
-    const cId = companyId || (await getCompanyId());
+    const companyId = await getCompanyId();
     const infobipConfig = await db.infobipConfig.findFirst({
       where: {
-        companyId: cId,
+        companyId,
       },
     });
     return infobipConfig?.phoneNumber;

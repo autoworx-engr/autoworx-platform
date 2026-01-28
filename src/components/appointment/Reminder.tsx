@@ -1,11 +1,10 @@
 import { deleteTemplate } from "@/actions/appointment/deleteTemplate";
 import { emailTemplateQueryKey } from "@/app/(dashboard)/dashboard/task/_constant";
-import FormError from "@/components/FormError";
 import NewTemplate from "@/components/Lists/NewTemplate";
 import Selector from "@/components/Selector";
 import { Switch } from "@/components/Switch";
 import useTemplatesQuery from "@/hooks/query-hook/useTemplatesQuery";
-import { useFormErrorStore } from "@/stores/form-error";
+import { errorToast } from "@/lib/toast";
 import type { Client, EmailTemplate, Vehicle } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
 import moment from "moment";
@@ -64,11 +63,6 @@ export function Reminder({
   const { data: templates = [] } = useTemplatesQuery();
 
   const queryClient = useQueryClient();
-  const { showError, clearError, error } = useFormErrorStore();
-
-  useEffect(() => {
-    return () => clearError();
-  }, []);
 
   // Add state for minimum date and time validation
   const [minDate, setMinDate] = useState<string>("");
@@ -127,27 +121,21 @@ export function Reminder({
   }
 
   const handleAddReminder = () => {
-    // Validate that time is selected
-    if (!time) {
-      showError({
-        message: "Please select a time for the reminder!",
-        success: false,
-      });
+    // Validate that date is selected
+    if (!dateInput) {
+      errorToast("Please select a date for the reminder!");
       return;
     }
 
-    // Validate that date is selected
-    if (!dateInput) {
-      showError({
-        message: "Please select a date for the reminder!",
-        success: false,
-      });
+    // Validate that time is selected
+    if (!time) {
+      errorToast("Please select a time for the reminder!");
       return;
     }
 
     // Validate that reminder is not in the past
     // if (dateInput === minDate && time < minStartTime) {
-    //   showError({ message: "Reminder time cannot be in the past!", success: false });
+    //   errorToast("Reminder time cannot be in the past!");
     //   return;
     // }
 
@@ -159,16 +147,12 @@ export function Reminder({
     const reminderDateTime = moment(`${dateInput} ${time}`, "YYYY-MM-DD HH:mm");
 
     if (reminderDateTime.isAfter(appointmentDateTime)) {
-      showError({
-        message: "Reminder must be scheduled before the appointment!",
-        success: false,
-      });
+      errorToast("Reminder must be scheduled before the appointment!");
       return;
     }
 
     // Add the reminder
     setTimes([...times, { time, date: dateInput }]);
-    clearError();
 
     // Optionally clear inputs after adding
     setTime("");
@@ -374,6 +358,7 @@ export function Reminder({
         />
       </div>
 
+<<<<<<< HEAD
       <div className="mx-auto my-4 w-full max-w-[500px] overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200 shadow-sm">
         {/* Input Header Area */}
         <div className="flex flex-col gap-3 bg-slate-50/50 p-4 border-b border-slate-100 md:flex-row md:items-end">
@@ -398,6 +383,33 @@ export function Reminder({
             />
           </div>
 
+=======
+      <div className="mx-auto my-2 w-[350px] rounded-md border-2 border-slate-400 md:w-[95%]">
+        <div className="flex items-center justify-evenly gap-2 border-b p-3">
+          {/* input time */}
+          <input
+            type="time"
+            className="w-[120px] rounded-lg border-2 border-slate-400 px-2 md:w-full"
+            value={time}
+            onChange={(e) => setTime(e.target.value)}
+          />
+          {/* <TimeInput
+            id="time"
+            name="time"
+            rootClassName="grow"
+            value={time}
+            minTime={dateInput === minDate ? minStartTime : undefined}
+            onChange={(value) => setTime(value)}
+            required
+          /> */}
+          <input
+            type="date"
+            className="w-[120px] rounded-md border border-slate-400 px-1 py-[1px] placeholder-slate-800 md:w-full"
+            value={dateInput}
+            onChange={(e) => setDateInput(e.target.value)}
+            min={minDate}
+          />
+>>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
           <button
             type="button"
             className="h-10 rounded-lg bg-[#6571FF] px-6 text-sm font-bold text-white shadow-md shadow-[#6571FF]/20 transition-all hover:scale-[1.02] active:scale-95"

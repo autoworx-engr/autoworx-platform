@@ -109,27 +109,25 @@ export default function FilterBySelection({
         <div
           ref={dropdownRef}
           className={cn(
-            "absolute left-0 right-0 z-50 flex max-h-52 w-full flex-col bg-white/60 dark:bg-slate-900/50 backdrop-blur-md rounded-2xl p-2 shadow-lg border-transparent md:w-44",
+            "absolute left-0 right-0 z-50 flex max-h-52 w-full flex-col space-y-1 thin-scrollbar overflow-y-auto bg-white/60 dark:bg-slate-900/50 backdrop-blur-md rounded-2xl p-2 shadow-lg border-transparent md:w-44",
             "ring-1 ring-slate-900/5 dark:ring-slate-700/20 transition-all duration-200"
           )}
         >
-          <div className="flex-1 overflow-y-auto overflow-x-hidden space-y-1 thin-scrollbar pb-1 min-w-0">
-            {items.map((item) => (
-              <button
-                onClick={() => handleSelection(item)}
-                key={item}
-                className={cn(
-                  "group flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors duration-200 w-full",
-                  item === selectedItem
-                    ? "bg-[#6470fd] text-white shadow-[0_8px_30px_rgba(100,112,253,0.12)]"
-                    : "text-slate-600 border dark:text-slate-200 hover:bg-slate-100/60 dark:hover:bg-slate-800/60"
-                )}
-              >
-                <span className="truncate">{item}</span>
-              </button>
-            ))}
-          </div>
-          <div className="pt-1 border-t border-transparent bottom-0 sticky bg-white/60 dark:bg-slate-900/60 backdrop-blur-md">
+          {items.map((item) => (
+            <button
+              onClick={() => handleSelection(item)}
+              key={item}
+              className={cn(
+                "group flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors duration-200",
+                item === selectedItem
+                  ? "bg-[#6470fd] text-white shadow-[0_8px_30px_rgba(100,112,253,0.12)]"
+                  : "text-slate-600 border dark:text-slate-200 hover:bg-slate-100/60 dark:hover:bg-slate-800/60"
+              )}
+            >
+              <span className="truncate">{item}</span>
+            </button>
+          ))}
+          <div className="pt-1 border-t border-transparent">
             <button
               onClick={handleClear}
               className="w-full text-left px-3 py-2 text-sm text-white bg-[#de5967] rounded-lg"

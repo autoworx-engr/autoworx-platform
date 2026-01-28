@@ -29,7 +29,7 @@ export default function ServiceCreate() {
 
       setCategory(categories.find((cat) => cat.id === data.service.categoryId));
 
-      setDescription(data?.serviceDesc || data?.service?.description);
+      setDescription(data?.serviceDesc);
     } else {
       setName("");
       setCategory(undefined);
@@ -118,6 +118,7 @@ export default function ServiceCreate() {
         {edit ? "Update Service" : "Add New Service"}
       </h3>
 
+<<<<<<< HEAD
       <div className="flex flex-col gap-1.5">
         <label className="text-xs font-bold uppercase tracking-wider text-slate-600 ml-1">
           Service Name
@@ -135,6 +136,16 @@ export default function ServiceCreate() {
           readOnly={data.service?.canned}
         />
       </div>
+=======
+      <input
+        type="text"
+        placeholder="Service Name"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        className="rounded-md border-2 border-slate-400 p-2"
+        readOnly={data.service?.canned}
+      />
+>>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
 
       <div className="flex flex-col gap-1.5">
         <label className="text-xs font-bold uppercase tracking-wider text-slate-600 ml-1">

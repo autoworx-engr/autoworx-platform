@@ -1,15 +1,16 @@
 "use client";
 
-import { useDebounce } from "@/hooks/useDebounce";
-import { useActionStoreCreateEdit } from "@/stores/createEditStore";
-import { useEstimateCreateStore } from "@/stores/estimate-create";
-import { useEstimateFilterStore } from "@/stores/estimate-filter";
-import { useEstimatePopupStore } from "@/stores/estimate-popup";
-import { useListsStore } from "@/stores/lists";
-import { Search } from "lucide-react";
-import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import React from "react";
 import { Filter } from "./Filter";
+import Link from "next/link";
+import { useEstimateFilterStore } from "@/stores/estimate-filter";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useActionStoreCreateEdit } from "@/stores/createEditStore";
+import { useListsStore } from "@/stores/lists";
+import { useEstimateCreateStore } from "@/stores/estimate-create";
+import { useEstimatePopupStore } from "@/stores/estimate-popup";
+import { useDebounce } from "@/hooks/useDebounce";
+import { Search } from "lucide-react";
 
 type THeaderProps = {
   searchTerm?: string;
@@ -49,6 +50,7 @@ export default function Header({
   }, 500);
 
   return (
+<<<<<<< HEAD
     <div
       className={`mt-5 flex justify-between items-center flex-col-reverse gap-4 lg:gap-0 lg:flex-row`}
     >
@@ -66,6 +68,19 @@ export default function Header({
               isTemplate
                 ? "Search by Template ID"
                 : "Search ID, name, vehicle, email..."
+=======
+    <div className={`mt-5 flex justify-between flex-col-reverse lg:flex-row `}>
+      <div className={`app-shadow gap-3 rounded-md p-3 md:flex`}>
+        {/* Search */}
+        <div className="relative flex items-center">
+          <Search size={20} className="absolute left-3 text-gray-400" />{" "}
+          <input
+            type="text"
+            placeholder={
+              isCanned
+                ? "Search by labor, service, category"
+                : "Search by ID, name, vehicle, email, or phone"
+>>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
             }
             className="h-11 w-full rounded-xl border-none bg-slate-50 pl-11 pr-4 text-sm font-medium text-slate-700 ring-1 ring-slate-200 transition-all duration-300 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-[#6571FF]/30 outline-none md:max-w-[450px]"
             defaultValue={searchTerm || ""}
@@ -86,6 +101,7 @@ export default function Header({
 
         {/* Filter Section */}
         {!isCanned && (
+<<<<<<< HEAD
           <div className="flex items-center gap-2 border-l border-slate-100 pl-0 md:pl-4">
             <Filter
               startDate={startDate}
@@ -94,6 +110,9 @@ export default function Header({
               /* Ensure the Filter component interior matches the h-11 and rounded-xl style */
             />
           </div>
+=======
+          <Filter startDate={startDate} endDate={endDate} status={status} />
+>>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
         )}
       </div>
 
@@ -125,13 +144,7 @@ export default function Header({
         {isTemplate && (
           <Link
             href="/dashboard/estimate/templates/create"
-            className="flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white
-              bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
-              shadow-[0_4px_14px_0_rgba(101,113,255,0.39)]
-              hover:shadow-[0_6px_20px_rgba(101,113,255,0.23)]
-              hover:-translate-y-0.5
-              active:translate-y-0 active:scale-100
-              transition-all duration-300 ease-in-out"
+            className="app-shadow mx-3 flex h-10 items-center justify-center rounded-md bg-[#6571FF] px-5 text-white md:mx-0 lg:max-w-max"
             onClick={() => {
               setActionType("create");
 

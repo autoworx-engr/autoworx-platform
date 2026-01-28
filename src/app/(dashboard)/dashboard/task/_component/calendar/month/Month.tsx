@@ -27,13 +27,6 @@ import { getDayNumber } from "../../../_utils/utils.DateSelector";
 import CalendarTooltip from "../CalendarTooltip";
 import HolidayDeleteConfirmation from "../HolidayDeleteConfirmation";
 import { Skeleton } from "antd";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { appointmentQueryKey, calenderQueryKey, taskQueryKey } from "../../../_constant";
-import getHoliday from "@/actions/task/getHoliday";
-import { useState } from "react";
-import {  X } from "lucide-react";
-import { AppointmentCreateOrEdit } from "@/components/appointment/AppointmentCreateOrEdit";
-import TaskCreateOrEdit from "@/components/task/TaskCreateOrEdit";
 
 // Gradient priority classes for tasks
 const priorityClasses = {
@@ -57,38 +50,12 @@ export default function Month() {
     ? moment(month, "YYYY-MM").year()
     : moment().year();
   const { data: settings } = useSettingsQuery();
-  // const { data: holidays = [] } = useHolidaysQuery(
-  //   formattedMonth,
-  //   formattedYear
-  // );
-
+  const { data: holidays = [] } = useHolidaysQuery(
+    formattedMonth,
+    formattedYear
+  );
   const router = useRouter();
   const { data: session } = useSession();
-  const [openTooltipId, setOpenTooltipId] = useState<number | string | null>(
-    null
-  );
-  const [openListIndex, setOpenListIndex] = useState<number | null>(null);
-
-  const [isAppointmentModalOpen, setIsAppointmentOpen] = useState(false);
-  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
-  const [selectedEventId, setSelectedEventId] = useState<number | null>(null);
-
- 
- 
-  const authUser = session?.user;
-  const {
-    data: holidays,
-    isLoading,
-    isError,
-  } = useQuery({
-    queryKey: [calenderQueryKey.holidays],
-    queryFn: async () => {
-      if (!authUser?.companyId) return [];
-      const companyId = authUser?.companyId;
-      const holidays = await getHoliday(companyId);
-      return holidays;
-    },
-  });
 
   // Fetch tasks for the current month
   const { data: tasks = [], isLoading: isTasksLoading } = useTaskQueryByMonth(
@@ -187,7 +154,7 @@ export default function Month() {
   function getHolidays(date: Date) {
     const currDateLocal = date.toLocaleDateString("en-CA"); // e.g. '2025-04-07'
 
-    const holiday = holidays?.find((holiday: any) => {
+    const holiday = holidays.find((holiday: any) => {
       const holidayDateLocal = new Date(holiday.date).toLocaleDateString(
         "en-CA"
       );
@@ -282,26 +249,6 @@ export default function Month() {
     // setTimeout(() => setNavigating(false), 30000);
   };
   const clientTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const queryClient = useQueryClient();
- const revalidateTaskQueries = () => {
-    // Invalidate queries for tasks based on the current month and year
-    queryClient.invalidateQueries({
-      queryKey: [taskQueryKey.allTasks, formattedMonth, formattedYear],
-    });
-
-  };
-
-  const revalidateAppointmentQueries = () => {
-    // Invalidate queries for appointments based on the current month and year
-    queryClient.invalidateQueries({
-      queryKey: [
-        appointmentQueryKey.allAppointments,
-        formattedMonth,
-        formattedYear,
-      ],
-    });
-   
-  };
 
   if (isTasksLoading || isAppointmentsLoading) {
     return (
@@ -374,11 +321,7 @@ export default function Month() {
           const isHoliday = cell[3] && cell[3].length > 0;
 
           return (
-            <Tooltip
-              key={index}
-              open={openListIndex === index}
-              onOpenChange={() => {}}
-            >
+            <Tooltip key={index}>
               <TooltipTrigger
                 type="button"
                 className={cn(
@@ -438,71 +381,43 @@ export default function Month() {
                     {/* Appointments */}
                     {cell[2]
                       .slice(0, 1)
-                      .map((appointment: CalendarAppointment, i: number) => {
-                        const eventKey = `appointment-${appointment.id}-${index}-${i}`;
-                        const isTooltipOpen = openTooltipId === eventKey;
-                        return (
-                          <Tooltip
-                            key={eventKey}
-                            open={isTooltipOpen}
-                            onOpenChange={() => {}}
-                          >
-                            <TooltipTrigger asChild>
-                              <div
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  // handleRedirectToDay(cell[0]);
-                                  setOpenTooltipId(
-                                    isTooltipOpen ? null : eventKey
-                                  );
-                                }}
-                                className="cursor-pointer truncate rounded border px-1 py-0.5 text-xs text-slate-700 lg:block xl:text-sm"
-                              >
-                                {appointment.title}
-                              </div>
-                            </TooltipTrigger>
-                            {isTooltipOpen && (
-                              <CalendarTooltip
-                                event={
-                                  { ...appointment, type: "appointment" } as any
-                                }
-                                onClose={() => setOpenTooltipId(null)}
-                                onEditOpen={() => {
-    setSelectedEventId(appointment.id);
-    setIsAppointmentOpen(true);
-    setOpenTooltipId(null); 
-  }}
-                                
-                              />
-                            )}
-                          </Tooltip>
-                        );
-                      })}
+                      .map((appointment: CalendarAppointment, i: number) => (
+                        <Tooltip key={i}>
+                          <TooltipTrigger asChild>
+                            <div
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRedirectToDay(cell[0]);
+                              }}
+                              className="cursor-pointer truncate rounded border px-1 py-0.5 text-xs text-slate-700 lg:block xl:text-sm"
+                            >
+                              {appointment.title}
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipPortal>
+                            <CalendarTooltip
+                              event={
+                                { ...appointment, type: "appointment" } as any
+                              }
+                            />
+                          </TooltipPortal>
+                        </Tooltip>
+                      ))}
 
                     {/* Tasks */}
                     {cell[1]
-                      ?.slice(0, 1)
+                      ?.slice(0, 2)
                       .map((task: CalendarTask, i: number) => {
                         const taskPriorityClass =
-                          priorityClasses[
-                            task.priority as keyof typeof priorityClasses
-                          ] || priorityClasses.Low;
-                        const eventKey = `task-${task.id}-${index}-${i}`;
-                        const isTooltipOpen = openTooltipId === eventKey;
+                          priorityClasses[task.priority as keyof typeof priorityClasses] ||
+                          priorityClasses.Low;
                         return (
-                          <Tooltip
-                            key={eventKey}
-                            open={isTooltipOpen}
-                            onOpenChange={() => {}}
-                          >
+                          <Tooltip key={i}>
                             <TooltipTrigger asChild>
                               <div
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  // handleRedirectToDay(cell[0]);
-                                  setOpenTooltipId(
-                                    isTooltipOpen ? null : eventKey
-                                  );
+                                  handleRedirectToDay(cell[0]);
                                 }}
                                 className={cn(
                                   "cursor-pointer truncate rounded px-1 py-2 text-xs text-white lg:block lg:text-sm transition-all duration-300 ease-in-out hover:shadow-lg hover:scale-[1.01]",
@@ -512,56 +427,14 @@ export default function Month() {
                                 {task.title}
                               </div>
                             </TooltipTrigger>
-                            {isTooltipOpen && (
+                            <TooltipPortal>
                               <CalendarTooltip
                                 event={{ ...task, type: "task" } as any}
-                                onClose={() => setOpenTooltipId(null)}
-                                onEditOpen={() => {
-    setSelectedEventId(task.id);
-    setIsTaskModalOpen(true);
-    setOpenTooltipId(null); 
-  }}
                               />
-                            )}
+                            </TooltipPortal>
                           </Tooltip>
                         );
                       })}
-
-                    {cell[0] && !cell[2].length && cell[1].length > 2 && (
-                      <div>
-                        {(() => {
-                          const moreTasksLeft = (cell[1]?.length || 0) - 2;
-                          if (moreTasksLeft > 0) {
-                            return (
-                              <button
-                                className="text-center py-1 w-full text-xs font-normal text-slate-500"
-                                onClick={(event) => {
-                                  event.stopPropagation();
-                                  setOpenListIndex(index);
-                                  // Follow same behavior as appointments 'more'
-                                  // if (
-                                  //   event.target instanceof Node &&
-                                  //   event.currentTarget.contains(event.target)
-                                  // ) {
-                                  //   const dateString =
-                                  //     cell[0] instanceof Date
-                                  //       ? cell[0].toLocaleDateString("en-CA")
-                                  //       : moment(cell[0]).format("YYYY-MM-DD");
-                                  //   setNavigating(true);
-                                  //   setDate(dateString);
-                                  //   setTimeout(() => setNavigating(false), 30000);
-                                  // }
-                                  // router.push("/dashboard/task/day");
-                                }}
-                              >
-                                +{moreTasksLeft} more...
-                              </button>
-                            );
-                          }
-                          return null;
-                        })()}
-                      </div>
-                    )}
 
                     {cell[0] && (
                       <div>
@@ -569,47 +442,44 @@ export default function Month() {
                           .slice(0, 1)
                           .map(
                             (appointment: CalendarAppointment, i: number) => {
-                              const moreLeft = Math.max(0, cell[2].length - 1);
-                              const moreTasksLeft = Math.max(
-                                0,
-                                (cell[1]?.length || 0) - 1
-                              );
-                              const totalLeft = moreLeft + moreTasksLeft;
+                              const moreLeft = cell[2].length - 1;
 
                               return (
-                                <Tooltip key={i} open={openListIndex === i}>
+                                <Tooltip key={i}>
                                   {moreLeft > 0 && (
                                     <button
-                                      className="text-center  w-full py-1 text-xs font-normal text-slate-500"
+                                      className="text-left text-xs font-normal text-slate-500"
                                       onClick={(event) => {
-                                        event.stopPropagation();
-                                        setOpenListIndex(index);
-                                        // Navigation on '+more' click is disabled; list opens inline instead
-                                        // if (
-                                        //   event.target instanceof Node &&
-                                        //   event.currentTarget.contains(
-                                        //     event.target
-                                        //   )
-                                        // ) {
-                                        //   const dateString =
-                                        //     cell[0] instanceof Date
-                                        //       ? cell[0].toLocaleDateString(
-                                        //           "en-CA"
-                                        //         )
-                                        //       : moment(cell[0]).format(
-                                        //           "YYYY-MM-DD"
-                                        //         );
-                                        //   setNavigating(true);
-                                        //   setDate(dateString);
-                                        //   setTimeout(
-                                        //     () => setNavigating(false),
-                                        //     30000
-                                        //   );
-                                        // }
-                                        // router.push("/dashboard/task/day");
+                                        if (
+                                          event.target instanceof Node &&
+                                          event.currentTarget.contains(
+                                            event.target
+                                          )
+                                        ) {
+                                          // Convert Date object to string to avoid timezone issues
+                                          const dateString =
+                                            cell[0] instanceof Date
+                                              ? cell[0].toLocaleDateString(
+                                                "en-CA"
+                                              ) // 'YYYY-MM-DD' format
+                                              : moment(cell[0]).format(
+                                                "YYYY-MM-DD"
+                                              );
+
+                                          // Set navigation flag to prevent reset, then set date and navigate
+                                          setNavigating(true);
+                                          setDate(dateString);
+
+                                          // Clear navigation flag after a short delay to allow navigation to complete
+                                          setTimeout(
+                                            () => setNavigating(false),
+                                            30000
+                                          );
+                                        }
+                                        router.push("/dashboard/task/day");
                                       }}
                                     >
-                                      +{totalLeft} more...
+                                      +{moreLeft} more...
                                     </button>
                                   )}
                                 </Tooltip>
@@ -652,78 +522,32 @@ export default function Month() {
                 )}
               </TooltipTrigger>
 
-              <TooltipPortal >
-                {/* Large list shows only when '+more' clicked */}
-                {openListIndex === index && (
+              <TooltipPortal>
+                {/* Large tooltip that shows more details when hovering */}
+                {(cell[1]?.length || cell[2]?.length) && (
                   <TooltipContent>
-                     
-                    <div className="relative max-h-[350px] w-[350px] overflow-y-scroll">
-                      {/* Close button – top-right corner */}
-                      <button
-                        aria-label="Close list"
-                        className="absolute right-2 top-2 rounded p-1 text-slate-500 hover:text-slate-700"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setOpenListIndex(null);
-                        }}
-                      >
-                        <X size={18} />
-                      </button>
+                    <div className="max-h-[350px] w-[350px] overflow-y-scroll">
                       {/* Tasks section */}
                       {cell[1]?.length > 0 && (
                         <>
                           <h3 className="text-lg font-bold">Tasks</h3>
                           <div className="flex flex-col gap-1">
-                            {cell[1]
-                              ?.slice(1)
-                              .map((task: CalendarTask, i: number) => {
-                                const taskPriorityClass =
-                                  priorityClasses[
-                                    task.priority as keyof typeof priorityClasses
-                                  ] || priorityClasses.Low;
-                                const eventKey = `list-task-${task.id}-${index}-${i}`;
-                                const isTooltipOpen =
-                                  openTooltipId === eventKey;
-                                return (
-                                  <div
-                                    key={eventKey}
-                                    // open={isTooltipOpen}
-                                    // onOpenChange={() => {}}
-                                    className="relative"
-                                  >
-                                    <div>
-                                      <div
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          setOpenTooltipId(
-                                            isTooltipOpen ? null : eventKey
-                                          );
-                                        }}
-                                        className={cn(
-                                          "flex cursor-pointer items-center gap-2 rounded p-2 text-white transition-all duration-300 ease-in-out",
-                                          taskPriorityClass
-                                        )}
-                                      >
-                                        <p className="text-left w-full">
-                                          {task.title}
-                                        </p>
-                                      </div>
-                                    </div>
-                                    {isTooltipOpen && (
-                                      <CalendarTooltip
-                                        event={{ ...task, type: "task" } as any}
-                                        onClose={() => setOpenTooltipId(null)}
-                                        onEditOpen={() => {
-    setSelectedEventId(task.id);
-    setIsTaskModalOpen(true);
-    setOpenTooltipId(null); 
-    setOpenListIndex(null);
-  }}
-                                      />
-                                    )}
-                                  </div>
-                                );
-                              })}
+                            {cell[1]?.map((task: CalendarTask, i: number) => {
+                              const taskPriorityClass =
+                                priorityClasses[task.priority as keyof typeof priorityClasses] ||
+                                priorityClasses.Low;
+                              return (
+                                <div
+                                  key={i}
+                                  className={cn(
+                                    "flex items-center gap-2 rounded p-2 text-white transition-all duration-300 ease-in-out",
+                                    taskPriorityClass
+                                  )}
+                                >
+                                  <p>{task.title}</p>
+                                </div>
+                              );
+                            })}
                           </div>
                         </>
                       )}
@@ -731,63 +555,20 @@ export default function Month() {
                       {/* Appointments section */}
                       {cell[2]?.length > 0 && (
                         <>
-                          <div className="mt-3 flex items-center justify-between">
-                            <h3 className="text-lg font-bold">Appointments</h3>
-                          </div>
+                          <h3 className="mt-3 text-lg font-bold">
+                            Appointments
+                          </h3>
                           <div className="flex flex-col gap-1">
-                            {cell[2]
-                              ?.slice(1)
-                              .map(
-                                (
-                                  appointment: CalendarAppointment,
-                                  i: number
-                                ) => {
-                                  const eventKey = `list-appointment-${appointment.id}-${index}-${i}`;
-                                  const isTooltipOpen =
-                                    openTooltipId === eventKey;
-                                  return (
-                                    <div
-                                      key={eventKey}
-                                      // open={isTooltipOpen}
-                                      // onOpenChange={() => {}}
-                                      className="relative"
-                                    >
-                                      <div>
-                                        <div
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            setOpenTooltipId(
-                                              isTooltipOpen ? null : eventKey
-                                            );
-                                          }}
-                                          className="flex cursor-pointer items-center gap-2 rounded bg-gray-600 p-2 text-white"
-                                        >
-                                          <p className="text-left w-full">
-                                            {appointment.title}
-                                          </p>
-                                        </div>
-                                      </div>
-                                      {isTooltipOpen && (
-                                        <CalendarTooltip
-                                          event={
-                                            {
-                                              ...appointment,
-                                              type: "appointment",
-                                            } as any
-                                          }
-                                          onClose={() => setOpenTooltipId(null)}
-                                          onEditOpen={() => {
-    setSelectedEventId(appointment.id);
-    setIsAppointmentOpen(true);
-    setOpenTooltipId(null); 
-    setOpenListIndex(null);
-  }}
-                                        />
-                                      )}
-                                    </div>
-                                  );
-                                }
-                              )}
+                            {cell[2]?.map(
+                              (appointment: CalendarAppointment, i: number) => (
+                                <div
+                                  key={i}
+                                  className="flex items-center gap-2 rounded bg-gray-600 p-2 text-white"
+                                >
+                                  <p>{appointment.title}</p>
+                                </div>
+                              )
+                            )}
                           </div>
                         </>
                       )}
@@ -799,28 +580,6 @@ export default function Month() {
           );
         })}
       </div>
-      {isAppointmentModalOpen && selectedEventId && (
-        <AppointmentCreateOrEdit
-          fromEdit
-          appointmentId={selectedEventId}
-          isModalOpen={isAppointmentModalOpen}
-          setIsModalOpen={setIsAppointmentOpen}
-         onAppointmentUpdated={revalidateAppointmentQueries} 
-    onAppointmentDeleted={revalidateAppointmentQueries}
-        />
-      )}
-
-      {isTaskModalOpen && selectedEventId && (
-        <TaskCreateOrEdit
-          fromEdit
-          taskId={selectedEventId}
-          isModalOpen={isTaskModalOpen}
-          setIsModalOpen={setIsTaskModalOpen}
-          onTaskUpdated={revalidateTaskQueries} 
-          onTaskDelete={revalidateTaskQueries}
-         
-        />
-      )}
     </div>
   );
 }

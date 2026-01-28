@@ -153,7 +153,11 @@ export default function ItemSelector<T>({
             <DropdownMenuTrigger
               onClick={() => setOpen(true)}
               className={cn(
+<<<<<<< HEAD
                 "flex h-11 w-full items-center justify-between rounded-lg shadow-sm shadow-black/20 bg-gray-100/40 px-4 ring-1 ring-inset ring-slate-200 transition-all hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30",
+=======
+                "flex h-10 w-full items-center justify-between rounded-md border-2 border-slate-400 px-4",
+>>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
                 open && "invisible"
               )}
             >
@@ -163,7 +167,11 @@ export default function ItemSelector<T>({
           ) : (
             <div
               className={cn(
+<<<<<<< HEAD
                 "relative flex min-h-11 w-full max-w-[320px] items-center justify-between rounded-xl bg-slate-50/50 py-2 px-4 ring-1 ring-inset ring-[#6571FF]/20"
+=======
+                "relative flex h-10 w-full items-center justify-between rounded-md border-2 border-slate-400 px-4"
+>>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
               )}
             >
               <p className="text-sm font-semibold text-slate-700">

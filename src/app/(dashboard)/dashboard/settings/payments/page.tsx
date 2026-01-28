@@ -2,117 +2,23 @@
 import { useServerGet } from "@/hooks/useServerGet";
 /* eslint-disable @next/next/no-img-element */
 import { useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { getStripeAccount } from "./stripe";
-import { getAuthorizeNetStatus, updatePaymentGateway } from "./authorize-net";
 import StripeStatus from "./StripeStatus";
-import AuthorizeNetConfig from "./AuthorizeNetConfig";
 import Image from "next/image";
 import { CircleCheckBig } from "lucide-react";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { successToast, errorToast } from "@/lib/toast";
-import { getPaymentGatewayInfo } from "./getPaymentGatewayInfo";
 
 export default function PaymentsPage() {
   const { data: session } = useSession();
-  const {
-    data: stripeData,
-    loading,
-    // refetch: refetchStripe,
-  } = useServerGet(
+  const { data: stripeData, loading } = useServerGet(
     getStripeAccount,
     // @ts-ignore
     session?.user?.companyId
   );
-  const {
-    data: authorizeNetData,
-    loading: authorizeNetLoading,
-    // refetch: refetchAuthorizeNet,
-  } = useServerGet(
-    getAuthorizeNetStatus,
-    // @ts-ignore
-    session?.user?.companyId
-  );
-  const {
-    data: paymentGatewayInfo,
-    // refetch: refetchAuthorizeNet,
-  } = useServerGet(
-    getPaymentGatewayInfo,
-    // @ts-ignore
-    session?.user?.companyId
-  );
-
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedGateway, setSelectedGateway] = useState<string>(
-    paymentGatewayInfo?.paymentGateway || "STRIPE"
-  );
-
-  const handleGatewayChange = async (value: string) => {
-    setSelectedGateway(value);
-    // @ts-ignore
-    const companyId = session?.user?.companyId;
-    if (companyId) {
-      const result = await updatePaymentGateway(
-        companyId,
-        value as "STRIPE" | "AUTHORIZE_NET" | "BOTH"
-      );
-      if (result.success) {
-        successToast("Payment gateway updated successfully");
-      } else {
-        errorToast(result.message || "Failed to update payment gateway");
-      }
-    }
-  };
-
-  const handleRefresh = () => {
-    // refetchStripe();
-    // refetchAuthorizeNet();
-  };
-
-  useEffect(() => {
-    if (paymentGatewayInfo?.paymentGateway) {
-      setSelectedGateway(paymentGatewayInfo.paymentGateway);
-    }
-  }, [paymentGatewayInfo]);
-
   return (
     <div className="flex flex-col space-y-5 px-5">
       <h2 className="text-lg font-semibold">Payment Integration</h2>
-
-      {/* Gateway Selection */}
-      <div className="rounded-lg border bg-background p-6 shadow-lg">
-        <h3 className="mb-4 text-lg font-medium">Payment Gateway Selection</h3>
-        <RadioGroup
-          value={selectedGateway}
-          onValueChange={handleGatewayChange}
-          className="space-y-3"
-        >
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="STRIPE" id="stripe" />
-            <Label htmlFor="stripe" className="cursor-pointer font-normal">
-              Stripe Only
-            </Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="AUTHORIZE_NET" id="authorizenet" />
-            <Label
-              htmlFor="authorizenet"
-              className="cursor-pointer font-normal"
-            >
-              Authorize.Net Only
-            </Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="BOTH" id="both" />
-            <Label htmlFor="both" className="cursor-pointer font-normal">
-              Both (Customer can choose)
-            </Label>
-          </div>
-        </RadioGroup>
-      </div>
-
-      {/* Stripe Configuration */}
 
       <div className="payment-integration-card rounded-lg border bg-background p-6 text-center shadow-lg">
         <div className="my-4 flex items-center justify-center">
@@ -172,17 +78,6 @@ export default function PaymentsPage() {
         )}
         {stripeData?.success && <StripeStatus data={stripeData} />}
       </div>
-
-      {/* Authorize.Net Configuration */}
-      {!authorizeNetLoading && (
-        <AuthorizeNetConfig
-          // @ts-ignore
-          companyId={session?.user?.companyId || 0}
-          isConfigured={authorizeNetData?.configured || false}
-          hasApiLoginId={authorizeNetData?.hasApiLoginId || false}
-          onUpdate={handleRefresh}
-        />
-      )}
     </div>
   );
 }

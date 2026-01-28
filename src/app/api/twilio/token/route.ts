@@ -3,13 +3,13 @@ import { NextRequest, NextResponse } from "next/server";
 import twilio from "twilio";
 
 export async function POST(request: NextRequest) {
-  const { identity, companyId, platform } = await request.json();
+  const { identity } = await request.json();
 
   try {
     const AccessToken = twilio.jwt.AccessToken;
     const VoiceGrant = AccessToken.VoiceGrant;
 
-    let twilioCredentials = await getTwilioCredentials({ companyId });
+    let twilioCredentials = await getTwilioCredentials();
 
     if (!twilioCredentials) {
       return NextResponse.json(
@@ -25,19 +25,10 @@ export async function POST(request: NextRequest) {
       { identity }
     );
 
-    let pushCredentialSid;
-
-    if (platform === "ios") {
-      pushCredentialSid = process.env.TWILIO_PUSH_CREDENTIAL_SID_APN;
-    } else if (platform === "android") {
-      pushCredentialSid = process.env.TWILIO_PUSH_CREDENTIAL_SID_FCM;
-    }
-
     if (twilioCredentials.twimlAppSid) {
       const voiceGrant = new VoiceGrant({
         outgoingApplicationSid: twilioCredentials.twimlAppSid,
-        incomingAllow: true,
-        pushCredentialSid,
+        incomingAllow: true, // Allows incoming calls
       });
 
       token.addGrant(voiceGrant);

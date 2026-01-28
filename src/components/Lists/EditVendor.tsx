@@ -302,34 +302,34 @@ export default function EditVendor({
             defaultValue={vendor.address ?? ""}
             required={false}
           />
-          {/* <div className="flex flex-col gap-3 lg:flex-row"> */}
-          <SlimInput
-            name="city"
-            defaultValue={vendor.city ?? ""}
-            required={false}
-          />
-          <SlimInput
-            name="state"
-            defaultValue={vendor.state ?? ""}
-            required={false}
-          />
-          <SlimInput
-            name="zip"
-            defaultValue={vendor.zip ?? ""}
-            required={false}
-            onChange={(e) => {
-              const value = e.target.value;
-              if (value && !/^\d*$/.test(value)) {
-                showError({
-                  field: "zip",
-                  message: "Zip code should contain only numbers.",
-                });
-              } else {
-                clearError();
-              }
-            }}
-          />
-          {/* </div> */}
+          <div className="flex flex-col gap-3 lg:flex-row">
+            <SlimInput
+              name="city"
+              defaultValue={vendor.city ?? ""}
+              required={false}
+            />
+            <SlimInput
+              name="state"
+              defaultValue={vendor.state ?? ""}
+              required={false}
+            />
+            <SlimInput
+              name="zip"
+              defaultValue={vendor.zip ?? ""}
+              required={false}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value && !/^\d*$/.test(value)) {
+                  showError({
+                    field: "zip",
+                    message: "Zip code should contain only numbers.",
+                  });
+                } else {
+                  clearError();
+                }
+              }}
+            />
+          </div>
 
           <div className="space-y-2 sm:col-span-2">
             <SlimInput

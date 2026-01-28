@@ -2,7 +2,6 @@
 
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogFooter,
   DialogHeader,
@@ -11,7 +10,6 @@ import {
 } from "@/components/Dialog";
 import { slimInputClassName } from "@/components/SlimInput";
 import Submit from "@/components/Submit";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 import { useListsStore } from "@/stores/lists";
 import { Column } from "@prisma/client";
@@ -92,26 +90,6 @@ export function Filter({ startDate, endDate, status }: TFilterProps) {
     router.push(newPath);
     setOpen(false);
   };
-
-  const clearFilters = () => {
-    setStart("");
-    setEnd("");
-    setStatuses([]);
-
-    const searchParams = new URLSearchParams(params.toString());
-    searchParams.delete("startDate");
-    searchParams.delete("endDate");
-    searchParams.delete("status");
-    searchParams.delete("page");
-    searchParams.delete("take");
-
-    const newPath = searchParams.toString()
-      ? `${pathname}?${searchParams.toString()}`
-      : pathname;
-    router.push(newPath);
-    setOpen(false);
-  };
-
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger className="hidden h-10 items-center gap-2 rounded-xl bg-white px-4 text-sm font-bold text-slate-500 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-50 hover:ring-[#6571FF]/30 active:scale-95 md:flex">
@@ -261,6 +239,7 @@ export function Filter({ startDate, endDate, status }: TFilterProps) {
             </div>
           </div>
         </div>
+<<<<<<< HEAD
 
         <DialogFooter className="bg-slate-50/50 p-4 flex items-center justify-end gap-2">
           <DialogClose
@@ -272,6 +251,11 @@ export function Filter({ startDate, endDate, status }: TFilterProps) {
           </DialogClose>
           <Submit
             className="mx-auto flex h-10 items-center gap-2 rounded-xl bg-[#6571FF] px-8 text-sm font-semibold text-white shadow-lg shadow-[#6571FF]/25 transition-all active:scale-95"
+=======
+        <DialogFooter>
+          <Submit
+            className="mx-auto flex items-center gap-2 rounded-md bg-[#6571FF] px-4 py-1 text-white"
+>>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
             formAction={handleFilter}
           >
             <Funnel size={16} />

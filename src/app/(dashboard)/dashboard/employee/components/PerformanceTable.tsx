@@ -61,7 +61,7 @@ export default function PerformanceTable() {
       label: "Average Time to Complete a Job",
       value: formatJobTime(averageJobTime || 0),
       percentage: Number(
-        averageJobTimeGrowthRate ? averageJobTimeGrowthRate?.toFixed(2) : 0,
+        averageJobTimeGrowthRate ? averageJobTimeGrowthRate?.toFixed(2) : 0
       ),
       isPositive: (averageJobTimeGrowthRate || 0) > 0,
       isZeroGrowth: averageJobTimeGrowthRate === 0,
@@ -76,19 +76,19 @@ export default function PerformanceTable() {
     },
   ];
 
-  // const getPerformanceContent = (label: string): string | undefined => {
-  //   const labelword = label.split(" ");
-  //   for (const word of labelword) {
-  //     if (arrayOfPerformanceWord.includes(word)) {
-  //       if (word === "Average") {
-  //         return "Average Time to Complete a Job";
-  //       } else if (word === "Return") {
-  //         return "(Return Work/TotalWork)x100%";
-  //       }
-  //     }
-  //     return undefined;
-  //   }
-  // };
+  const getPerformanceContent = (label: string): string | undefined => {
+    const labelword = label.split(" ");
+    for (const word of labelword) {
+      if (arrayOfPerformanceWord.includes(word)) {
+        if (word === "Average") {
+          return "Average Time to Complete a Job";
+        } else if (word === "Return") {
+          return "(Return Work/TotalWork)x100%";
+        }
+      }
+      return undefined;
+    }
+  };
   const combinedData = [
     {
       label: "Assigned",
@@ -109,7 +109,7 @@ export default function PerformanceTable() {
       <h2 className="mb-2 text-xl font-bold">Performance</h2>
       <div className="flex w-full flex-col gap-4 lg:flex-col">
         {/* First Half */}
-        {/* <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2">
           <div className="flex justify-between gap-4">
             {metricData.map((metric, index) => (
               <div
@@ -155,7 +155,7 @@ export default function PerformanceTable() {
               </div>
             ))}
           </div>
-        </div> */}
+        </div>
         <div
           className="m-0 hidden flex-shrink rounded-lg border border-gray-300 bg-background lg:block"
           style={{ height: "60%", width: "100%" }}

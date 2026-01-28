@@ -225,7 +225,7 @@ export default function EditClientModalBody({
 
   return (
     <DialogContent
-      className="max-h-full max-w-2xl grid-rows-[auto,1fr,auto]"
+      className="max-h-full max-w-xl grid-rows-[auto,1fr,auto]"
       form
     >
       <div className="mt-8 flex items-center justify-between">

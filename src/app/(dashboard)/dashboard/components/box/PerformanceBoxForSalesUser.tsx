@@ -50,9 +50,9 @@ export default async function PerformanceBoxForSalesUser() {
     <div
       className={cn(
         `
-          flex flex-1 flex-col p-4 md:p-6 rounded-2xl transition-all duration-300 h-full overflow-y-auto thin-scrollbar
+          flex flex-1 flex-col p-4 md:p-6 rounded-2xl transition-all duration-300 h-full
 
-          // Glassmorphism aesthetic (Replaces old shadow-lg)
+          // Glassmorphism aesthetic (Replaces old rounded-md p-4 shadow-lg)
           bg-white/50 dark:bg-slate-900/50
           backdrop-blur-md
 
@@ -62,6 +62,8 @@ export default async function PerformanceBoxForSalesUser() {
 
           // Hover effect for interactivity
           hover:shadow-xl hover:shadow-blue-500/10 dark:hover:shadow-indigo-500/10
+
+          overflow-hidden // Important for clean edges
         `
       )}
     >

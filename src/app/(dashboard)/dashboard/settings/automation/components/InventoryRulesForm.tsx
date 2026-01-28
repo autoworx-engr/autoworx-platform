@@ -156,9 +156,6 @@ const InventoryRuleForm: React.FC<RuleFormProps> = ({
     if (!formData.condition) newError.condition = "Condition is required";
     if (!formData.action) newError.action = "Action is required";
 
-    if (!formData.teamMemberUserIds || formData.teamMemberUserIds.length === 0)
-      newError.teamMemberUserIds = "At least one team member is required";
-
     if (errors.length > 0) {
       errors.forEach((err) => errorToast(err));
       return;
@@ -394,7 +391,6 @@ const InventoryRuleForm: React.FC<RuleFormProps> = ({
                     required={false}
                     disabled={!employees}
                     isSearch
-                    error={error.teamMemberUserIds}
                   />
                 </div>
 

@@ -17,7 +17,6 @@ import { useFormErrorStore } from "@/stores/form-error";
 import { Vehicle, VehicleColor } from "@prisma/client";
 import { useState } from "react";
 import ColorSelector from "@/components/ColorSelector";
-import VINInputCamera from "../vin-decoder/vin-input";
 import {
   useGetAllYears,
   useGetMake,
@@ -43,8 +42,6 @@ export default function EditVehicle({
     vehicleModel: vehicle.model || "",
     other: "",
   });
-  const [engineSize, setEngineSize] = useState<string>(vehicle?.engineSize || "");
-  const [vinValue, setVinValue] = useState<string>(vehicle?.vin || "");
 
   const { data: years, isError: isYearFetchError }: any = useGetAllYears();
   const { data: makes, isError: isMakeFetchError }: any = useGetMake();
@@ -54,17 +51,17 @@ export default function EditVehicle({
   const vehicleOptions =
     makes?.data && makes.data.length > 0
       ? makes?.data?.map((vehicle: any) => ({
-        title: vehicle.name ?? "Unknown",
-        id: vehicle.name,
-      }))
+          title: vehicle.name ?? "Unknown",
+          id: vehicle.name,
+        }))
       : [];
 
   const vehicleModelOptions =
     models?.data && models.data.length > 0
       ? models?.data?.map((vehicle: any) => ({
-        title: vehicle.name ?? "Unknown",
-        id: vehicle.name,
-      }))
+          title: vehicle.name ?? "Unknown",
+          id: vehicle.name,
+        }))
       : [];
 
   const handleInputChange = (name: string, value: string | undefined) => {
@@ -234,8 +231,7 @@ export default function EditVehicle({
           />
           <SlimInput
             name="engineSize"
-            value={engineSize}
-            onChange={e => setEngineSize(e.target.value)}
+            defaultValue={vehicle?.engineSize || ""}
             required={false}
           />
           <SlimInput
@@ -244,38 +240,20 @@ export default function EditVehicle({
             required={false}
             label="License Plate"
           />
-          <div className="flex items-end gap-2">
-            <SlimInput
-              name="vin"
-              value={vinValue}
-              onChange={e => setVinValue(e.target.value)}
-              required={false}
-            />
-            <VINInputCamera
-              onVehicleInfo={value => {
-                const { make, model, year, specs, vin } = value?.data?.data || {};
-                const { displacement_cc } = specs || {};
-
-                setFormData(prev => ({
-                  ...prev,
-                  vehicleYear: year ? String(year) : prev.vehicleYear,
-                  vehicleMake: make || prev.vehicleMake,
-                  vehicleModel: model || prev.vehicleModel,
-                }));
-
-                if (displacement_cc) setEngineSize(displacement_cc);
-                if (vin) setVinValue(vin);
-              }}
-            />
-          </div>
+          <SlimInput
+            name="vin"
+            defaultValue={vehicle?.vin || ""}
+            required={false}
+          />
           <SlimInput
             name="other"
             required={false}
-            rootClassName={`col-span-full ${!!formData.vehicleYear &&
+            rootClassName={`col-span-full ${
+              !!formData.vehicleYear &&
               !!formData.vehicleMake &&
               !!formData.vehicleModel &&
               "cursor-not-allowed bg-gray-100 opacity-50"
-              }`}
+            }`}
             disabled={
               !!formData.vehicleYear &&
               !!formData.vehicleMake &&

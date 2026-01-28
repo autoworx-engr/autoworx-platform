@@ -38,11 +38,11 @@ type TProps = {
     link?: string | null;
     path: string;
     subnav?:
-      | {
-          title: string;
-          link: string;
-        }[]
-      | null;
+    | {
+      title: string;
+      link: string;
+    }[]
+    | null;
   }[];
   permissions: PermissionsResult | null;
 };
@@ -74,11 +74,11 @@ export default function SideNavbar({ navList, permissions }: TProps) {
   >([]);
 
   const clientConversationTrack = useClientCommunicationStore(
-    state => state.clientConversationTrack,
+    (state) => state.clientConversationTrack
   );
 
   const { data: unreadInternalMessageCountData } = useServerGet(
-    fetchUnreadInternalMessageCount,
+    fetchUnreadInternalMessageCount
   );
 
   useEffect(() => {
@@ -162,14 +162,14 @@ export default function SideNavbar({ navList, permissions }: TProps) {
     const featureKey = FEATURE_PERMISSIONS_MAP[routeWithoutQuery];
     if (!featureKey) return true;
     if (Array.isArray(featureKey)) {
-      return featureKey.some(key =>
+      return featureKey.some((key) =>
         companyFeaturePermission.some(
-          perm => perm.permission_name === key && perm.enabled,
-        ),
+          (perm) => perm.permission_name === key && perm.enabled
+        )
       );
     }
     return companyFeaturePermission.some(
-      perm => perm.permission_name === featureKey && perm.enabled,
+      (perm) => perm.permission_name === featureKey && perm.enabled
     );
   }
   // First filter by permissions, then by company feature permission
@@ -178,11 +178,11 @@ export default function SideNavbar({ navList, permissions }: TProps) {
     let permissionFiltered = filterNavList(navList, permissions);
     // Company feature permission filtering
     return permissionFiltered
-      .filter(item => !item.link || canAccessCompanyFeatureRoute(item.link))
-      .map(item => {
+      .filter((item) => !item.link || canAccessCompanyFeatureRoute(item.link))
+      .map((item) => {
         if (item.subnav) {
-          const filteredSubnav = item.subnav.filter(sub =>
-            canAccessCompanyFeatureRoute(sub.link),
+          const filteredSubnav = item.subnav.filter((sub) =>
+            canAccessCompanyFeatureRoute(sub.link)
           );
           return {
             ...item,
@@ -199,11 +199,11 @@ export default function SideNavbar({ navList, permissions }: TProps) {
     // Company feature permission filtering
     setFilteredNavList(
       permissionFiltered
-        .filter(item => !item.link || canAccessCompanyFeatureRoute(item.link))
-        .map(item => {
+        .filter((item) => !item.link || canAccessCompanyFeatureRoute(item.link))
+        .map((item) => {
           if (item.subnav) {
-            const filteredSubnav = item.subnav.filter(sub =>
-              canAccessCompanyFeatureRoute(sub.link),
+            const filteredSubnav = item.subnav.filter((sub) =>
+              canAccessCompanyFeatureRoute(sub.link)
             );
             return {
               ...item,
@@ -211,7 +211,7 @@ export default function SideNavbar({ navList, permissions }: TProps) {
             };
           }
           return item;
-        }),
+        })
     );
   }, [companyFeaturePermission, navList, permissions]);
 
@@ -256,10 +256,10 @@ export default function SideNavbar({ navList, permissions }: TProps) {
       .subscribe(`client-notify-${companyId}`)
       .bind("client-notify", (data: ClientConversationTrack) => {
         if (!data) return;
-        setClientConversations(prevClients => {
+        setClientConversations((prevClients) => {
           if (!prevClients) return [data];
           const findConversation = prevClients?.find(
-            conversation => conversation?.clientId === data?.clientId,
+            (conversation) => conversation?.clientId === data?.clientId
           );
           if (findConversation) {
             return prevClients;
@@ -292,8 +292,8 @@ export default function SideNavbar({ navList, permissions }: TProps) {
 
   useEffect(() => {
     if (clientConversationTrack) {
-      setClientConversations(prevClients => {
-        return prevClients.filter(client => {
+      setClientConversations((prevClients) => {
+        return prevClients.filter((client) => {
           if (
             client.clientId === clientConversationTrack.clientId &&
             clientConversationTrack.smsIsRead &&
@@ -405,7 +405,7 @@ export default function SideNavbar({ navList, permissions }: TProps) {
                     <Link
                       className={cn(
                         "rounded-sm p-2 hover:bg-background/25",
-                        modifiedPathName === item.path && "!bg-black invert",
+                        modifiedPathName === item.path && "!bg-black invert"
                       )}
                       href={item.link}
                     >
@@ -428,7 +428,7 @@ export default function SideNavbar({ navList, permissions }: TProps) {
                   </TooltipContent>
                 )}
               </Tooltip>
-            ),
+            )
           )}
           {/* Visualization */}
           <Tooltip>
@@ -468,10 +468,9 @@ export default function SideNavbar({ navList, permissions }: TProps) {
             <TooltipTrigger asChild>
               <Link
                 href="/dashboard/settings/my-account"
-                className={`rounded-sm p-2 hover:bg-background/25 hover:opacity-50 ${
-                  modifiedPathName === "/dashboard/settings" &&
+                className={`rounded-sm p-2 hover:bg-background/25 hover:opacity-50 ${modifiedPathName === "/dashboard/settings" &&
                   "!bg-black invert"
-                }`}
+                  }`}
               >
                 <Image
                   src="/icons/navbar/Settings.svg"
@@ -536,7 +535,7 @@ function Dropdown({
               className={cn(
                 "rounded-sm p-2 hover:bg-background/25",
                 open && activeDropdown === index && "!bg-black invert",
-                active && "!bg-black invert",
+                active && "!bg-black invert"
               )}
             >
               {icon}

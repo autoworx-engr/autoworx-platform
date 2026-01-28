@@ -97,7 +97,6 @@ export function SelectClient({
       <input type="hidden" name={name} value={client?.id ?? ""} />
 
       <Selector
-        className="max-w-[300px]"
         label={(client: Client | null) =>
           client ? `${client.firstName} ${client.lastName ?? ""}` : "Client"
         }

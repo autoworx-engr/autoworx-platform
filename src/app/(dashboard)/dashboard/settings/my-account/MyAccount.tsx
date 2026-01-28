@@ -1,7 +1,6 @@
 "use client";
 import { createLeaveRequest } from "@/actions/settings/my-account/leave-requests/createLeaveRequest";
 import { editMyAccountInfo } from "@/actions/settings/myAccount";
-import PhoneInput from "@/components/PhoneInput";
 import { SlimInput } from "@/components/SlimInput";
 import { SlimTextarea } from "@/components/SlimTextarea";
 import { errorToast, successToast } from "@/lib/toast";
@@ -10,6 +9,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRef, useState, useTransition } from "react";
 import { ChangePassword } from "./changePassword";
+import PhoneInput from "@/components/PhoneInput";
 
 const MyAccount = ({ user }: { user: User }) => {
   const [profilePic, setProfilePic] = useState<File | null>(null);
@@ -27,13 +27,14 @@ const MyAccount = ({ user }: { user: User }) => {
     countryCode: user?.countryCode || "",
   });
 
-  const handlePhoneChange = (num: string, code: string, isoCode: string) => {
-    const fullPhoneNumber = `${code}${num}`;
+  const handlePhoneChange = (num: string, code: string, isoCode:string) => {
+    
+    const fullPhoneNumber = `${code}${num}`; 
 
     setUserInfo((prev) => ({
       ...prev,
       phone: fullPhoneNumber,
-      countryCode: isoCode || "",
+      countryCode: isoCode || ""
     }));
   };
   const isUserInfoChanged =
@@ -193,7 +194,6 @@ const MyAccount = ({ user }: { user: User }) => {
                 <SlimInput
                   name="firstName"
                   value={userInfo?.firstName}
-                  required={true}
                   onChange={(e) => {
                     setUserInfo({
                       ...userInfo,
@@ -217,7 +217,6 @@ const MyAccount = ({ user }: { user: User }) => {
                 <SlimInput
                   name="email"
                   value={userInfo?.email}
-                  required={true}
                   onChange={(e) => {
                     setUserInfo({
                       ...userInfo,
@@ -226,16 +225,16 @@ const MyAccount = ({ user }: { user: User }) => {
                   }}
                   readOnly
                 />
-
+                
                 <PhoneInput
-                  defaultValue={user?.phone || ""}
-                  defaultIsoCode={user?.countryCode!}
-                  required={true}
-                  // value={userInfo.phone}
-
-                  onChange={handlePhoneChange}
-                  label="Phone"
-                />
+    
+    defaultValue={user?.phone || ""} 
+     defaultIsoCode={user?.countryCode!}
+    // value={userInfo.phone}
+   
+    onChange={handlePhoneChange} 
+    label="Phone" 
+  />
               </div>
               {/* address */}
               <div className="grid grid-cols-1">

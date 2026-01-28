@@ -21,6 +21,7 @@ type TMessageDate = {
 
 const pusher = getPusherInstance();
 
+<<<<<<< HEAD
 /**
  * @swagger
  * /api/pusher:
@@ -83,6 +84,11 @@ const pusher = getPusherInstance();
  *         description: Internal server error.
  */
 
+=======
+// POST /api/pusher/trigger
+// Trigger a message to the client
+// Body: { message, roomId }
+>>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
 export async function POST(req: Request) {
   const body = await req.json();
   const { to, message, type, section, attachmentFiles, requestEstimate } = body;
@@ -95,10 +101,14 @@ export async function POST(req: Request) {
     }
 
     // Helper function to generate lastMessage text
+<<<<<<< HEAD
     const generateLastMessageText = (
       message: string,
       attachmentFiles: any[] | null,
     ) => {
+=======
+    const generateLastMessageText = (message: string, attachmentFiles: any[] | null) => {
+>>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
       // If there's a text message, use it
       if (message && message.trim()) {
         return message;
@@ -106,8 +116,13 @@ export async function POST(req: Request) {
 
       // If there are attachments but no text message, generate descriptive text
       if (attachmentFiles && attachmentFiles.length > 0) {
+<<<<<<< HEAD
         const imageCount = attachmentFiles.filter(
           file => file.fileType && file.fileType.startsWith("image/"),
+=======
+        const imageCount = attachmentFiles.filter(file => 
+          file.fileType && file.fileType.startsWith('image/')
+>>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
         ).length;
         const otherFileCount = attachmentFiles.length - imageCount;
 
@@ -116,9 +131,13 @@ export async function POST(req: Request) {
           parts.push(`${imageCount} ${imageCount === 1 ? "image" : "images"}`);
         }
         if (otherFileCount > 0) {
+<<<<<<< HEAD
           parts.push(
             `${otherFileCount} ${otherFileCount === 1 ? "file" : "files"}`,
           );
+=======
+          parts.push(`${otherFileCount} ${otherFileCount === 1 ? 'file' : 'files'}`);
+>>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
         }
 
         return parts.join(" and ");

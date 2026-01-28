@@ -6,7 +6,6 @@ import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { useServerGet } from "@/hooks/useServerGet";
 import { getStripeAccount } from "@/app/(dashboard)/dashboard/settings/payments/stripe";
-import { getPaymentGatewayInfo } from "@/app/(dashboard)/dashboard/settings/payments/getPaymentGatewayInfo";
 import { StatementPaymentDialog } from "@/components/fleet-statement/StatementPaymentDialog";
 
 interface FleetStatementModalBodyProps {
@@ -26,7 +25,6 @@ export const FleetStatementModalBody: React.FC<
 
   const companyId = company?.id;
   const { data: stripeAccountData } = useServerGet(getStripeAccount, companyId);
-  const { data: gatewayInfo } = useServerGet(getPaymentGatewayInfo, companyId);
 
   // Calculate totals
   const totalAmount = invoices.reduce(
@@ -263,16 +261,11 @@ export const FleetStatementModalBody: React.FC<
               totalDue={totals.totalDue}
               isEnabled={
                 !!(
-                  gatewayInfo?.success &&
-                  (gatewayInfo?.hasStripe || gatewayInfo?.hasAuthorizeNet) &&
+                  stripeAccountData?.success &&
+                  stripeAccountData?.enabled &&
                   parseFloat(Number(totals.totalDue ?? 0).toFixed(2)) > 0
                 )
               }
-              gatewayInfo={{
-                paymentGateway: gatewayInfo?.paymentGateway || "STRIPE",
-                hasStripe: gatewayInfo?.hasStripe || false,
-                hasAuthorizeNet: gatewayInfo?.hasAuthorizeNet || false,
-              }}
             />
           </div>
         </div>

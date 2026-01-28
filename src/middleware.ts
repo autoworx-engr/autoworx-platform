@@ -1,4 +1,5 @@
 import { getToken } from "next-auth/jwt";
+<<<<<<< HEAD
 import { NextRequest, NextResponse, URLPattern } from "next/server";
 import { jwtVerifyToken } from "./lib/jwtVerify";
 
@@ -46,10 +47,17 @@ const isDynamicPublicApiRoute = (pathname: string) => {
   return isPublic;
 };
 
+=======
+import { NextRequest, NextResponse } from "next/server";
+
+const PUBLIC_ROUTES = ["/login", "/register", "/forgot-password", "/"];
+
+>>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
 export async function middleware(request: NextRequest) {
   const token = await getToken({ req: request });
   const { pathname } = request.nextUrl;
 
+<<<<<<< HEAD
   const authHeader = request.headers.get("authorization");
   // console.log({
   //   isDynamicPublicApiRoute: isDynamicPublicApiRoute(pathname),
@@ -93,6 +101,8 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+=======
+>>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
   // If user is already logged in and tries to access login/register, redirect them
   if (token && PUBLIC_ROUTES.includes(pathname)) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
