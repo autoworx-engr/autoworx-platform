@@ -2,6 +2,7 @@
 import { updatePipelineAutomationTriggerWithToken } from "@/actions/automation/pipeline/triggerPipelineAutomation";
 import { updateNewSMSChatTrack } from "@/actions/communication/client/chat-track";
 import { db } from "@/lib/db";
+import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-service";
 import { sendClientMessageNotification } from "@/lib/notification/communication-notify";
 import sendClientMailOrSMSNotify from "@/lib/pusher/client-conversation-notify";
 import receiveTwiloMessage from "@/lib/pusher/receiveTwiloMessage";
@@ -44,7 +45,7 @@ const pusher = getPusherInstance();
  */
 export async function POST(
   req: NextRequest,
-  context: { params: Promise<{ companyIds: string }> }
+  context: { params: Promise<{ companyIds: string }> },
 ) {
   try {
     const { params } = context;
@@ -62,7 +63,7 @@ export async function POST(
       body = Object.fromEntries(new URLSearchParams(formData).entries());
     } else {
       throw new Error(
-        "Unsupported content type: Twilio webhook expects form-encoded data"
+        "Unsupported content type: Twilio webhook expects form-encoded data",
       );
     }
 
@@ -93,7 +94,7 @@ export async function POST(
       const file = await fetchTwilioMedia(
         url,
         credential?.apiKeySid || "",
-        credential?.apiKeySecret || ""
+        credential?.apiKeySecret || "",
       );
       formData.append("file", file);
     }
@@ -107,6 +108,11 @@ export async function POST(
     const images = imgs?.data ?? [];
 
     for (const companyId of companyIds) {
+      const entitlements = await getCompanyEntitlements(companyId);
+      if (!entitlements.canUseSms) {
+        continue;
+      }
+
       let client = await db.client.findFirst({
         where: {
           mobile: {
@@ -224,13 +230,13 @@ export async function POST(
     // Send a success response
     return Response.json(
       { message: "Webhook subscription successful", data: body },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error: any) {
     console.error("Subscription error:", error);
     return Response.json(
       { message: "Webhook subscription failed", error: error?.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -238,7 +244,7 @@ export async function POST(
 async function fetchTwilioMedia(
   url: string,
   apiKeySid: string,
-  apiKeySecret: string
+  apiKeySecret: string,
 ) {
   const response = await fetch(url, {
     headers: {

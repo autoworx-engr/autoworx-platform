@@ -5,6 +5,7 @@ import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import getUser from "@/lib/getUser";
 import { normalizeUSPhoneNumber } from "@/lib/normalizeUSPhoneNumber";
+import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-service";
 import { revalidatePath } from "next/cache";
 import Twilio from "twilio";
 import { updateNewEmailChatTrack, updateNewSMSChatTrack } from "./chat-track";
@@ -43,6 +44,15 @@ export async function sendTwilioMessage({
   attachments: { url: string; name: string }[];
 }) {
   try {
+    const resolvedCompanyId = companyId ?? (await getCompanyId());
+    const entitlements = await getCompanyEntitlements(resolvedCompanyId);
+    if (!entitlements.canUseSms) {
+      return {
+        success: false,
+        error: "SMS is not enabled for this plan",
+      };
+    }
+
     let twilioCredentials = companyId
       ? await getTwilioCredentialsById(companyId)
       : await getTwilioCredentials();
@@ -58,7 +68,7 @@ export async function sendTwilioMessage({
       twilioCredentials.apiKeySecret,
       {
         accountSid: twilioCredentials.accountSid,
-      }
+      },
     );
 
     let user: Awaited<ReturnType<typeof getUser>> | null = null;
@@ -67,7 +77,7 @@ export async function sendTwilioMessage({
     } catch (error) {
       console.log(
         "sendTwilioMessage: getUser failed, continuing without user context",
-        error
+        error,
       );
     }
     const client = await db.client.findFirst({

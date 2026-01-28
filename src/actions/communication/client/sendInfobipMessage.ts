@@ -5,6 +5,7 @@ import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import getUser from "@/lib/getUser";
 import { normalizeUSPhoneNumber } from "@/lib/normalizeUSPhoneNumber";
+import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-service";
 import { revalidatePath } from "next/cache";
 import { updateNewSMSChatTrack } from "./chat-track";
 import { getInfobipConfig, getInfobipConfigById } from "./createInfobipConfig";
@@ -37,6 +38,15 @@ export async function sendInfobipMessage({
   attachments: { url: string; name: string }[];
 }) {
   try {
+    const resolvedCompanyId = companyId ?? (await getCompanyId());
+    const entitlements = await getCompanyEntitlements(resolvedCompanyId);
+    if (!entitlements.canUseSms) {
+      return {
+        success: false,
+        error: "SMS is not enabled for this plan",
+      };
+    }
+
     let infobipConfig = companyId
       ? (await getInfobipConfigById(companyId)).data
       : (await getInfobipCredentials()).data;
@@ -54,7 +64,7 @@ export async function sendInfobipMessage({
     } catch (error) {
       console.error(
         "sendInfobipMessage: getUser failed, continuing without user context",
-        error
+        error,
       );
     }
     const client = await db.client.findFirst({
@@ -90,7 +100,7 @@ export async function sendInfobipMessage({
     if (infobipConfig.phoneNumber && to && clientId) {
       // Normalize phone numbers for MMS compatibility
       const normalizedSender = normalizeUSPhoneNumber(
-        infobipConfig.phoneNumber
+        infobipConfig.phoneNumber,
       );
       const normalizedRecipient = normalizeUSPhoneNumber(to);
 
@@ -127,7 +137,7 @@ export async function sendInfobipMessage({
       // Helper function to fetch content type from URL
       const getContentTypeFromUrl = async (
         url: string,
-        fileName: string
+        fileName: string,
       ): Promise<string> => {
         try {
           // First try to get from file extension
@@ -162,7 +172,7 @@ export async function sendInfobipMessage({
           attachments.map(async (file) => {
             const contentType = await getContentTypeFromUrl(
               file.url,
-              file.name
+              file.name,
             );
             const contentId = `${file.name.replace(/[^a-zA-Z0-9]/g, "_")}_${Date.now()}`;
 
@@ -172,7 +182,7 @@ export async function sendInfobipMessage({
               contentType: contentType,
               contentUrl: file.url,
             };
-          })
+          }),
         );
 
         // Send MMS with direct links using v2 API format
