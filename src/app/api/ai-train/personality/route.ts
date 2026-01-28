@@ -46,27 +46,17 @@ export async function GET(req: Request) {
         if (validation instanceof NextResponse) return validation;
         const { companyId } = validation;
 
-        const info = await db.companyInfo.findFirst({
-            where: { companyId },
-            select: {
-                personalName: true,
-                personalType: true,
-                systemPrompt: true,
-                openingMessage: true,
-                conversationStyle: true,
-                personality: true,
-            },
-        });
-        if (!info) {
+        const personality = await db.aiPersonality.findFirst({ where: { companyId } });
+        if (!personality) {
             return NextResponse.json(
-                { success: false, message: "Company info not found" },
+                { success: false, message: "AI personality not found" },
                 { status: 404 }
             );
         }
         return NextResponse.json({
             success: true,
-            message: "Personality config retrieved successfully",
-            data: info,
+            message: "AI personality retrieved successfully",
+            data: personality,
         });
     } catch (error) {
         return NextResponse.json(
@@ -132,28 +122,38 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { companyId, ...data } = body;
+        const companyId = Number(body.companyId);
         if (!companyId) {
             return NextResponse.json(
                 { success: false, message: "Company ID is required" },
                 { status: 400 }
             );
         }
-        const updated = await db.companyInfo.updateMany({
-            where: { companyId: Number(companyId) },
-            data: {
-                personalName: data.personalName,
-                personalType: data.personalType,
-                systemPrompt: data.systemPrompt,
-                openingMessage: data.openingMessage,
-                conversationStyle: data.conversationStyle,
-                personality: data.personality,
-            },
-        });
+        const data = {
+            companyId,
+            personalType: body.personalType,
+            warmth: Number(body.warmth),
+            humor: Number(body.humor),
+            energy: Number(body.energy),
+            assistantName: body.assistantName,
+            useContractions: body.useContractions,
+            useCasualLanguage: body.useCasualLanguage,
+            matchCustomerTone: body.matchCustomerTone,
+            useEmojis: body.useEmojis,
+            openingMessage: body.openingMessage,
+            systemPrompt: body.systemPrompt,
+        };
+        const existing = await db.aiPersonality.findFirst({ where: { companyId } });
+        let result;
+        if (existing) {
+            result = await db.aiPersonality.update({ where: { id: existing.id }, data });
+        } else {
+            result = await db.aiPersonality.create({ data });
+        }
         return NextResponse.json({
             success: true,
-            message: "Personality config updated successfully",
-            data: updated,
+            message: "AI personality saved successfully",
+            data: result,
         });
     } catch (error) {
         return NextResponse.json(

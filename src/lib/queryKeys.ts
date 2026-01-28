@@ -42,4 +42,8 @@ export const queryKeys = {
     "overall-faqs",
     params,
   ],
+  aiPersonality: (params?: { companyId?: number }) => [
+    "ai-personality",
+    params,
+  ],
 };
