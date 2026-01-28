@@ -31,6 +31,8 @@ import DraggableTaskTooltip from "../DraggableTaskTooltip";
 import { Skeleton } from "antd";
 import { AppointmentCreateOrEdit } from "@/components/appointment/AppointmentCreateOrEdit";
 import TaskCreateOrEdit from "@/components/task/TaskCreateOrEdit";
+import { appointmentQueryKey, taskQueryKey } from "../../../_constant";
+import { useQueryClient } from "@tanstack/react-query";
 
 // Gradient priority classes for tasks
 const priorityClasses = {
@@ -381,7 +383,30 @@ export default function Week() {
     const startTime = formatTime(rowTime);
     // open("ADD_TASK", { date, startTime, companyUsers });
   }
-
+const queryClient = useQueryClient();
+   const revalidateTaskQueries = () => {
+      
+  
+      // Invalidate queries for tasks based on the current week
+      queryClient.invalidateQueries({
+        queryKey: [taskQueryKey.allTasks, weekStartDate, weekEndDate],
+      });
+  
+     
+    };
+  
+    const revalidateAppointmentQueries = () => {
+      
+      // Invalidate queries for appointments based on the current week
+      queryClient.invalidateQueries({
+        queryKey: [
+          appointmentQueryKey.allAppointments,
+          weekStartDate,
+          weekEndDate,
+        ],
+      });
+      
+    };
   const isLoading = isTaskLoading || isAppointmentLoading;
   return (
     <>
@@ -737,7 +762,9 @@ export default function Week() {
               setIsModalOpen={setIsEditModalOpen}
               onAppointmentUpdated={() => {
                   setIsEditModalOpen(false);
+                  revalidateAppointmentQueries()
               }}
+              onAppointmentDeleted={revalidateAppointmentQueries}
             />
           ) : (
             <TaskCreateOrEdit
@@ -747,7 +774,9 @@ export default function Week() {
               setIsModalOpen={setIsEditModalOpen}
               onTaskUpdated={() => {
                   setIsEditModalOpen(false);
+                  revalidateTaskQueries()
               }}
+              onTaskDelete={revalidateTaskQueries}
             />
           )}
         </>
