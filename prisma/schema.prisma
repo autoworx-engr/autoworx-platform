@@ -674,6 +674,7 @@ model Company {
   smsGateway                       SmsGateway                         @default(TWILIO)
   invoiceTemplates                 InvoiceTemplate[]
   callForwardingNumber             String?                            @map("call_forwarding_number")
+  missedCallTextBackEnabled        Boolean                            @default(true) @map("missed_call_text_back_enabled")
   googleReviewLink     String? @map("google_review_link") @db.VarChar(500)
   billingCustomer      PlatformBillingCustomer?
   platformSubscription PlatformSubscription?

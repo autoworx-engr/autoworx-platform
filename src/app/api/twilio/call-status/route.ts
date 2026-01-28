@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 import { sendInfobipMessage } from "@/actions/communication/client/sendInfobipMessage";
 import { sendTwilioMessage } from "@/actions/communication/client/sendTwilioMessage";
+import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-service";
 
 /**
  * @swagger
@@ -52,7 +53,7 @@ export async function POST(request: Request) {
       console.error("❌ [Call-Status] Missing CallSid");
       return NextResponse.json(
         { error: "Missing 'CallSid' parameter." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -96,7 +97,7 @@ export async function POST(request: Request) {
     if (isMissedCall && call.client) {
       console.log(
         "🔔 [Call-Status] Missed call detected, sending alert to client:",
-        call.client.mobile
+        call.client.mobile,
       );
 
       try {
@@ -107,42 +108,54 @@ export async function POST(request: Request) {
         const companyName = call.company?.name || "our business";
         const message = `You have a missed call from ${companyName}. We'll try to reach you again soon or feel free to call us back.`;
 
+        const entitlements = await getCompanyEntitlements(call.company?.id!);
+        if (!entitlements.canUseSms || !entitlements.missedCallTextBack) {
+          console.warn(
+            "Missed call text-back disabled by plan or setting for company:",
+            call.company?.id,
+          );
+        } else if (
+          process.env.NODE_ENV === "production" &&
+          call.company?.smsGateway === "TWILIO"
+        ) {
+          const response = await sendTwilioMessage({
+            companyId: call.company?.id,
+            clientId: call.client.id,
+            message: message,
+            attachments: [],
+          });
+
+          if (!response.success) {
+            throw new Error(`SMS sending failed`);
+          }
+          console.log("✅ [Call-Status] Missed call SMS sent via Twilio");
+        } else if (
+          process.env.NODE_ENV === "production" &&
+          call.company?.smsGateway === "INFOBIP"
+        ) {
+          const response = await sendInfobipMessage({
+            companyId: call.company?.id,
+            clientId: call.client.id,
+            message: message,
+            attachments: [],
+          });
+
+          if (!response.success) {
+            throw new Error(`SMS sending failed`);
+          }
+          console.log("✅ [Call-Status] Missed call SMS sent via Infobip");
+        } else {
+          console.warn(
+            "⚠️ [Call-Status] No SMS gateway configured for company:",
+            call.company?.id,
+          );
+        }
+
         console.log("Sending SMS via gateway:", call.company?.smsGateway);
-
-        // if (call.company?.smsGateway === "TWILIO") {
-        //   const response = await sendTwilioMessage({
-        //     companyId: call.company?.id,
-        //     clientId: call.client.id,
-        //     message: message,
-        //     attachments: [],
-        //   });
-
-        //   if (!response.success) {
-        //     throw new Error(`SMS sending failed`);
-        //   }
-        //   console.log("✅ [Call-Status] Missed call SMS sent via Twilio");
-        // } else if (call.company?.smsGateway === "INFOBIP") {
-        //   const response = await sendInfobipMessage({
-        //     companyId: call.company?.id,
-        //     clientId: call.client.id,
-        //     message: message,
-        //     attachments: [],
-        //   });
-
-        //   if (!response.success) {
-        //     throw new Error(`SMS sending failed`);
-        //   }
-        //   console.log("✅ [Call-Status] Missed call SMS sent via Infobip");
-        // } else {
-        //   console.warn(
-        //     "⚠️ [Call-Status] No SMS gateway configured for company:",
-        //     call.company?.id
-        //   );
-        // }
       } catch (error) {
         console.error(
           "❌ [Call-Status] Failed to send missed call SMS:",
-          error
+          error,
         );
         // Don't throw - we still want to update the call status
       }
@@ -163,7 +176,7 @@ export async function POST(request: Request) {
         data: { status: newStatus },
       });
       console.log(
-        `✅ [Call-Status] Updated call status from ${call.status} to ${newStatus}`
+        `✅ [Call-Status] Updated call status from ${call.status} to ${newStatus}`,
       );
     }
 
@@ -175,7 +188,7 @@ export async function POST(request: Request) {
         error: "Internal Server Error",
         details: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -2,6 +2,7 @@ import { getCompany } from "@/actions/settings/getCompany";
 import BookingGenerate from "@/components/BookingGenerate";
 import CallForwardingSettings from "@/components/CallForwardingSettings";
 import GoogleReviewSettings from "@/components/GoogleReviewSettings";
+import MissedCallTextBackSettings from "@/components/MissedCallTextBackSettings";
 import { TermsAndPolicyEditor } from "@/components/TermsAndPolicyEditor";
 import { getCompanyId } from "@/lib/companyId";
 import SecurityPage from "../security/SecurityPage";
@@ -21,6 +22,9 @@ export default async function CommunicationPage() {
       {/* Sidebar */}
       <div className="space-y-4">
         <CallForwardingSettings initialNumber={company?.callForwardingNumber} />
+        <MissedCallTextBackSettings
+          initialEnabled={company?.missedCallTextBackEnabled}
+        />
         <div className="mt-4">
           <TermsAndPolicyEditor />
         </div>
