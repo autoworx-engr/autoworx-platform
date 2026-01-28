@@ -5,8 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Phone, Mail, MapPin, Clock, Globe, Loader2, RefreshCw } from "lucide-react";
-
+import { Phone, Mail, MapPin, Clock, Globe, Loader2, RefreshCw, Building2 } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 interface CompanyInfo {
   id: string;
   shopName: string;
@@ -42,7 +48,38 @@ export default function CompanyKnowledgeCard() {
   if (isLoading || !companyInfo) return <div>Loading...</div>;
 
   return (
-    <div className="grid gap-6 md:grid-cols-2">
+    <Card>
+      <CardHeader>
+                    <CardTitle className="flex items-center justify-between gap-2">
+                      <div><Building2 className="h-5 w-5" />
+                      Company Knowledge</div>
+                      <div>
+                        <Button
+                                      onClick={handleSave}
+                                      disabled={
+                                        saveMutation.isPending 
+                                      }
+                                      size="lg"
+                                    >
+                                      {saveMutation.isPending ? (
+                                        <>
+                                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                          Saving...
+                                        </>
+                                      ) : (
+                                        <>Save Company Info</>
+                                      )}
+                                    </Button>
+                      </div>
+                    </CardTitle>
+                    <CardDescription>
+                      Basic info, contact details, and policies - the foundation of
+                      your AI's knowledge
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                                
+                       <div className="grid gap-6 md:grid-cols-2">
       {/* Basic Info */}
       <div className="space-y-4">
         <h3 className="font-semibold text-sm uppercase tracking-wide">Basic Information</h3>
@@ -93,9 +130,9 @@ export default function CompanyKnowledgeCard() {
           </div>
         </div>
       </div>
-      <div className="md:col-span-2 flex justify-end mt-4">
-        <Button onClick={handleSave} >Save</Button>
-      </div>
-    </div>
+    </div> 
+                              </CardContent>
+    </Card>
+   
   );
 }

@@ -242,22 +242,7 @@ const AISettings = () => {
 
         {/* 1. Company Knowledge */}
         <TabsContent value="company" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Building2 className="h-5 w-5" />
-                Company Knowledge
-              </CardTitle>
-              <CardDescription>
-                Basic info, contact details, and policies - the foundation of
-                your AI's knowledge
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              
-              <CompanyKnowledgeCard/>
-            </CardContent>
-          </Card>
+          <CompanyKnowledgeCard/>
         </TabsContent>
 
         {/* 2. Service Playbooks */}
@@ -363,9 +348,28 @@ const AISettings = () => {
         <TabsContent value="faqs" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <HelpCircle className="h-5 w-5" />
-                Overall FAQs
+              <CardTitle className="flex items-center justify-between gap-2">
+               <div className="flex items-center gap-2"> <HelpCircle className="h-5 w-5" />
+                Overall FAQs</div>
+
+                <div>
+                   <Button
+                                                        onClick={handleSaveFaqs}
+                                                        disabled={
+                                                          saveOverallFaqs.isPending 
+                                                        }
+                                                        size="lg"
+                                                      >
+                                                        {saveOverallFaqs.isPending ? (
+                                                          <>
+                                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                            Saving...
+                                                          </>
+                                                        ) : (
+                                                          <>Save Overall FAQs</>
+                                                        )}
+                                                      </Button>
+                </div>
               </CardTitle>
               <CardDescription>
                 General frequently asked questions about booking, appointments,
@@ -376,7 +380,7 @@ const AISettings = () => {
               {/* Existing FAQs */}
               <div className="space-y-3">
                 {faqsLoading ? (
-                  <div>Loading...</div>
+                  <div className="text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></div>
                 ) : faqs.length > 0 ? (
                   faqs.map((faq, index) => (
                     <div
@@ -441,13 +445,7 @@ const AISettings = () => {
                 </div>
               </div>
 
-              {/* Save FAQs Button */}
-              <div className="flex justify-end">
-                <Button onClick={handleSaveFaqs} >
-                   <Save className="mr-2 h-4 w-4" />
-                  Save FAQs
-                </Button>
-              </div>
+             
 
               {/* Example FAQs */}
               <div className="rounded-lg border border-border bg-muted/20 p-4">
