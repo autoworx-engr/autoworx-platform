@@ -51,7 +51,7 @@ export default function CompanyKnowledgeCard() {
     <Card>
       <CardHeader>
                     <CardTitle className="flex items-center justify-between gap-2">
-                      <div><Building2 className="h-5 w-5" />
+                      <div className="flex items-center gap-2"><Building2 className="h-5 w-5" />
                       Company Knowledge</div>
                       <div>
                         <Button

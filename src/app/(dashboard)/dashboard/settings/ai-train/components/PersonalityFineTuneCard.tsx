@@ -137,7 +137,7 @@ const handleSave = () => {
                   value={personality[config.field]}
                   onChange={(v) => handleSliderChange(config.field, v)}
                   descriptions={config.descriptions}
-                  iconClassName={config?.iconClassName}
+                  iconClassName={config.iconClassName}
                 />
               ))}
                     </div>
