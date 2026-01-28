@@ -9,7 +9,7 @@ const fetchCompanyKnowledge = async (companyId: number) => {
         throw new Error("Failed to fetch company knowledge");
     }
     const data = await response.json();
-    return data.data?.[0] || null;
+    return data.data || null;
 };
 
 export function useCompanyKnowledge() {
@@ -28,6 +28,7 @@ export function useSaveCompanyKnowledge() {
     const companyId = company?.id;
     return useMutation({
         mutationFn: async (payload: any) => {
+            // Always use POST for upsert
             const response = await fetch("/api/ai-train/company-knowledge", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },

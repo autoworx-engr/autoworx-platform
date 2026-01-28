@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 import { validateCompanyId } from "../utils";
+import { resourceLimits } from "worker_threads";
 
 
 /**
@@ -50,15 +51,14 @@ export async function GET(req: Request) {
         if (validation instanceof NextResponse) return validation;
         const { companyId } = validation;
 
-        const data = await db.companyInfo.findMany({
+        const data = await db.companyInfo.findFirst({
             where: { companyId: Number(companyId) },
-            orderBy: { createdAt: "desc" },
         })
 
         return NextResponse.json({
             success: true,
             message: "Company Info retrieved successfully",
-            data
+            data: data || {}
         })
     } catch (error) {
         return NextResponse.json(
@@ -134,8 +134,9 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
     try {
         const body = await req.json()
+        const companyId = Number(body?.companyId)
 
-        if (!body?.companyId) {
+        if (!companyId) {
             return NextResponse.json(
                 { success: false, message: "Company ID is required" },
                 { status: 400 },
@@ -143,7 +144,6 @@ export async function POST(req: Request) {
         }
 
         const data = {
-            companyId: Number(body.companyId),
             shopName: body.shopName,
             about: body.about,
             address: body.address,
@@ -154,16 +154,35 @@ export async function POST(req: Request) {
             policies: body.policies,
             smsResponseDelayMin: Number(body.smsResponseDelayMin ?? 0),
             smsResponseDelayMax: Number(body.smsResponseDelayMax ?? 0),
-
         }
-        const companyKnowledge = await db.companyInfo.create({
-            data,
-        })
+        // const companyKnowledge = await db.companyInfo.create({
+        //     data,
+        // })
 
+        const existingInfo = await db.companyInfo.findFirst({
+            where: { companyId }
+        });
+
+        let result;
+        if (existingInfo) {
+            // Update
+            result = await db.companyInfo.update({
+                where: { id: existingInfo.id },
+                data: data,
+            });
+        } else {
+            // Create
+            result = await db.companyInfo.create({
+                data: {
+                    companyId: companyId,
+                    ...data
+                },
+            });
+        }
         return NextResponse.json({
             success: true,
-            message: "CompanyInfo created successfully",
-            data: companyKnowledge,
+            message: existingInfo ? "Company settings updated" : "Company settings created",
+            data: resourceLimits,
         });
 
     } catch (error) {

@@ -18,10 +18,6 @@ import { Slider } from "@/components/ui/slider";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Building2,
-  Phone,
-  Mail,
-  MapPin,
-  Clock,
   Plus,
   X,
   Loader2,
@@ -50,6 +46,7 @@ import { ConversationExamplesTab } from "./ConversationExamplesTab";
 import { KnowledgeBaseDocumentsTab } from "./KnowledgeBaseDocumentsTab";
 import { ServicePlaybook } from "@/types/ai-settings";
 import ServiceFAQsSection from "./playbooks/ServiceFAQsSection";
+import CompanyKnowledgeCard from "./CompanyKnowledgeCard";
 
 interface FAQ {
   question: string;
@@ -252,159 +249,8 @@ const AISettings = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid gap-6 md:grid-cols-2">
-                {/* Basic Info */}
-                <div className="space-y-4">
-                  <h3 className="font-semibold text-sm uppercase tracking-wide">
-                    Basic Information
-                  </h3>
-                  <div className="space-y-3">
-                    <div className="space-y-2">
-                      <Label>Shop Name</Label>
-                      <Input
-                        value={companyInfo?.shop_name || ""}
-                        onChange={(e) =>
-                          setCompanyInfo((prev) =>
-                            prev
-                              ? { ...prev, shop_name: e.target.value }
-                              : prev,
-                          )
-                        }
-                        placeholder="Your shop name"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
-                        <Phone className="h-4 w-4" /> Phone
-                      </Label>
-                      <Input
-                        value={companyInfo?.phone || ""}
-                        onChange={(e) =>
-                          setCompanyInfo((prev) =>
-                            prev ? { ...prev, phone: e.target.value } : prev,
-                          )
-                        }
-                        placeholder="(555) 123-4567"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
-                        <Mail className="h-4 w-4" /> Email
-                      </Label>
-                      <Input
-                        value={companyInfo?.email || ""}
-                        onChange={(e) =>
-                          setCompanyInfo((prev) =>
-                            prev ? { ...prev, email: e.target.value } : prev,
-                          )
-                        }
-                        placeholder="info@yourshop.com"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4" /> Address
-                      </Label>
-                      <Input
-                        value={companyInfo?.address || ""}
-                        onChange={(e) =>
-                          setCompanyInfo((prev) =>
-                            prev ? { ...prev, address: e.target.value } : prev,
-                          )
-                        }
-                        placeholder="123 Main St, City, State"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
-                        <Clock className="h-4 w-4" /> Business Hours
-                      </Label>
-                      <Input
-                        value={companyInfo?.hours || ""}
-                        onChange={(e) =>
-                          setCompanyInfo((prev) =>
-                            prev ? { ...prev, hours: e.target.value } : prev,
-                          )
-                        }
-                        placeholder="Mon-Fri 9am-6pm, Sat 10am-4pm"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
-                        <Globe className="h-4 w-4" /> Website URL
-                      </Label>
-                      <div className="flex gap-2">
-                        <Input
-                          value={companyInfo?.website_url || ""}
-                          onChange={(e) =>
-                            setCompanyInfo((prev) =>
-                              prev
-                                ? { ...prev, website_url: e.target.value }
-                                : prev,
-                            )
-                          }
-                          placeholder="https://yourshop.com"
-                          className="flex-1"
-                        />
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={handleScrapeWebsite}
-                          disabled={
-                            isScrapingWebsite || !companyInfo?.website_url
-                          }
-                          title="Scrape website content for AI training"
-                        >
-                          {isScrapingWebsite ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <RefreshCw className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        Click the refresh button to scrape your website content
-                        for AI training
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* About & Policies */}
-                <div className="space-y-4">
-                  <h3 className="font-semibold text-sm uppercase tracking-wide">
-                    About & Policies
-                  </h3>
-                  <div className="space-y-3">
-                    <div className="space-y-2">
-                      <Label>About Your Shop</Label>
-                      <Textarea
-                        value={companyInfo?.about || ""}
-                        onChange={(e) =>
-                          setCompanyInfo((prev) =>
-                            prev ? { ...prev, about: e.target.value } : prev,
-                          )
-                        }
-                        placeholder="Tell customers about your shop, experience, certifications, what makes you special..."
-                        rows={5}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Policies & Notes</Label>
-                      <Textarea
-                        value={companyInfo?.policies || ""}
-                        onChange={(e) =>
-                          setCompanyInfo((prev) =>
-                            prev ? { ...prev, policies: e.target.value } : prev,
-                          )
-                        }
-                        placeholder="Deposit requirements, cancellation policy, general warranty info, payment methods..."
-                        rows={5}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
+              
+              <CompanyKnowledgeCard/>
             </CardContent>
           </Card>
         </TabsContent>
