@@ -29,6 +29,10 @@ import { getWeekStartNumber } from "../../../_utils/utils.DateSelector";
 import CalendarTooltip from "../CalendarTooltip";
 import DraggableTaskTooltip from "../DraggableTaskTooltip";
 import { Skeleton } from "antd";
+import { AppointmentCreateOrEdit } from "@/components/appointment/AppointmentCreateOrEdit";
+import TaskCreateOrEdit from "@/components/task/TaskCreateOrEdit";
+import { appointmentQueryKey, taskQueryKey } from "../../../_constant";
+import { useQueryClient } from "@tanstack/react-query";
 
 // Gradient priority classes for tasks
 const priorityClasses = {
@@ -76,7 +80,8 @@ export default function Week() {
 
   const { setDate, setNavigating } = useCalendarStore();
   const [openTooltipId, setOpenTooltipId] = useState<string | null>(null);
-
+  const [editingEvent, setEditingEvent] = useState<any | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false); 
   const today = week.toDate();
   const parentRef = useRef<HTMLDivElement>(null);
 
@@ -378,10 +383,34 @@ export default function Week() {
     const startTime = formatTime(rowTime);
     // open("ADD_TASK", { date, startTime, companyUsers });
   }
-
+const queryClient = useQueryClient();
+   const revalidateTaskQueries = () => {
+      
+  
+      // Invalidate queries for tasks based on the current week
+      queryClient.invalidateQueries({
+        queryKey: [taskQueryKey.allTasks, weekStartDate, weekEndDate],
+      });
+  
+     
+    };
+  
+    const revalidateAppointmentQueries = () => {
+      
+      // Invalidate queries for appointments based on the current week
+      queryClient.invalidateQueries({
+        queryKey: [
+          appointmentQueryKey.allAppointments,
+          weekStartDate,
+          weekEndDate,
+        ],
+      });
+      
+    };
   const isLoading = isTaskLoading || isAppointmentLoading;
   return (
     <>
+
       <div
         className="relative mt-3 h-[90%] overflow-auto border-neutral-200"
         // style={{
@@ -669,6 +698,11 @@ export default function Week() {
                       <CalendarTooltip
                         event={event}
                         onClose={() => setOpenTooltipId(null)}
+                        onEditOpen={() => {
+      setOpenTooltipId(null); 
+      setEditingEvent(event); 
+      setIsEditModalOpen(true);
+    }}
                       />
                     )}
                   </Tooltip>
@@ -717,6 +751,38 @@ export default function Week() {
           </>
         )}
       </div>
+
+      {isEditModalOpen && editingEvent && (
+        <>
+          {editingEvent.type === "appointment" ? (
+            <AppointmentCreateOrEdit
+              fromEdit
+              appointmentId={editingEvent.id}
+              isModalOpen={isEditModalOpen}
+              setIsModalOpen={setIsEditModalOpen}
+              onAppointmentUpdated={() => {
+                  setIsEditModalOpen(false);
+                  revalidateAppointmentQueries()
+              }}
+              onAppointmentDeleted={revalidateAppointmentQueries}
+            />
+          ) : (
+            <TaskCreateOrEdit
+              fromEdit
+              taskId={editingEvent.id}
+              isModalOpen={isEditModalOpen}
+              setIsModalOpen={setIsEditModalOpen}
+              onTaskUpdated={() => {
+                  setIsEditModalOpen(false);
+                  revalidateTaskQueries()
+              }}
+              onTaskDelete={revalidateTaskQueries}
+            />
+          )}
+        </>
+      )}
     </>
+
+    
   );
 }
