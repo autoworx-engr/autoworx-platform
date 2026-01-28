@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -47,6 +47,7 @@ import { KnowledgeBaseDocumentsTab } from "./KnowledgeBaseDocumentsTab";
 import { ServicePlaybook } from "@/types/ai-settings";
 import ServiceFAQsSection from "./playbooks/ServiceFAQsSection";
 import CompanyKnowledgeCard from "./CompanyKnowledgeCard";
+import { useOverallFaqs, useSaveOverallFaqs } from "@/hooks/ai-train/useOverallFaqs";
 
 interface FAQ {
   question: string;
@@ -112,6 +113,14 @@ const AISettings = () => {
 
   // Form states
   const [newFAQ, setNewFAQ] = useState<FAQ>({ question: "", answer: "" });
+  const { data: overallFaqs = [], isLoading: faqsLoading } = useOverallFaqs();
+  const saveOverallFaqs = useSaveOverallFaqs();
+  const [faqs, setFaqs] = useState<FAQ[]>([]);
+
+  // Sync fetched FAQs to local state
+  useEffect(() => {
+    if (overallFaqs) setFaqs(overallFaqs);
+  }, [overallFaqs]);
 
   // Website scraping handler
   const handleScrapeWebsite = async () => {
@@ -173,21 +182,17 @@ const AISettings = () => {
   };
 
   const handleAddFAQ = () => {
-    if (!newFAQ.question.trim() || !newFAQ.answer.trim() || !companyInfo)
-      return;
-    setCompanyInfo({
-      ...companyInfo,
-      overall_faqs: [...companyInfo.overall_faqs, newFAQ],
-    });
+    if (!newFAQ.question.trim() || !newFAQ.answer.trim()) return;
+    setFaqs(prev => [...prev, newFAQ]);
     setNewFAQ({ question: "", answer: "" });
   };
 
   const handleRemoveFAQ = (index: number) => {
-    if (!companyInfo) return;
-    setCompanyInfo({
-      ...companyInfo,
-      overall_faqs: companyInfo.overall_faqs.filter((_, i) => i !== index),
-    });
+    setFaqs(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSaveFaqs = () => {
+    saveOverallFaqs.mutate(faqs);
   };
 
   return (
@@ -370,31 +375,33 @@ const AISettings = () => {
             <CardContent className="space-y-6">
               {/* Existing FAQs */}
               <div className="space-y-3">
-                {companyInfo?.overall_faqs.map((faq, index) => (
-                  <div
-                    key={index}
-                    className="p-4 border rounded-lg bg-muted/30"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1">
-                        <p className="font-medium text-foreground">
-                          {faq.question}
-                        </p>
-                        <p className="text-sm text-muted-foreground mt-2">
-                          {faq.answer}
-                        </p>
+                {faqsLoading ? (
+                  <div>Loading...</div>
+                ) : faqs.length > 0 ? (
+                  faqs.map((faq, index) => (
+                    <div
+                      key={index}
+                      className="p-4 border rounded-lg bg-muted/30"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1">
+                          <p className="font-medium text-foreground">
+                            {faq.question}
+                          </p>
+                          <p className="text-sm text-muted-foreground mt-2">
+                            {faq.answer}
+                          </p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          onClick={() => handleRemoveFAQ(index)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
                       </div>
-                      <Button
-                        variant="ghost"
-                        onClick={() => handleRemoveFAQ(index)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
                     </div>
-                  </div>
-                ))}
-                {(!companyInfo?.overall_faqs ||
-                  companyInfo.overall_faqs.length === 0) && (
+                  ))
+                ) : (
                   <div className="text-center py-8 text-muted-foreground border rounded-lg border-dashed">
                     <HelpCircle className="h-10 w-10 mx-auto mb-2 opacity-50" />
                     <p>
@@ -432,6 +439,14 @@ const AISettings = () => {
                     Add FAQ
                   </Button>
                 </div>
+              </div>
+
+              {/* Save FAQs Button */}
+              <div className="flex justify-end">
+                <Button onClick={handleSaveFaqs} >
+                   <Save className="mr-2 h-4 w-4" />
+                  Save FAQs
+                </Button>
               </div>
 
               {/* Example FAQs */}
