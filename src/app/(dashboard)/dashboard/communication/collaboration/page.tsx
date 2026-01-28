@@ -1,10 +1,11 @@
+import { getCompany } from "@/actions/settings/getCompany";
+import { getUserPermissions } from "@/actions/settings/teamManagement";
 import { authOptions } from "@/authOptions";
 import Title from "@/components/Title";
 import { db } from "@/lib/db";
 import { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import Collaboration from "./Collaboration";
-import { getCompany } from "@/actions/settings/getCompany";
 
 export const metadata: Metadata = {
   title: "Communication Hub - Collaboration",
@@ -70,6 +71,43 @@ export default async function CollaborationPage() {
       return join.companyOne;
     }
   });
+  // Filter users in oppositeCompanies based on their collaboration permissions
+  const filteredOppositeCompanies = await Promise.all(
+    oppositeCompanies.map(async (company) => {
+      // Filter users who have collaboration permission
+      const filteredUsers = await Promise.all(
+        company.users.map(async (user) => {
+          try {
+            const permissions = await getUserPermissions(
+              user.id,
+              user.employeeType
+            );
+
+            // Check communicationHubCollaboration permission
+            const hasCollaboration =
+              permissions?.communicationHubCollaboration === true;
+
+            return hasCollaboration ? user : null;
+          } catch (error) {
+            console.error(`  ERROR for user ${user.firstName}:`, error);
+            return null;
+          }
+        })
+      );
+
+      const filtered = filteredUsers.filter((user) => user !== null);
+
+      return {
+        ...company,
+        users: filtered,
+      };
+    })
+  );
+
+  // Remove companies that have no users with collaboration permission
+  const finalCompanies = filteredOppositeCompanies.filter(
+    (company) => company.users.length > 0
+  );
 
   const messages = await db.message.findMany({
     where: {
@@ -98,28 +136,59 @@ export default async function CollaborationPage() {
       users: {
         where: { employeeType: "Admin" },
         select: {
+          id: true,
           firstName: true,
           lastName: true,
           companyId: true,
           email: true,
           role: true,
           image: true,
+          employeeType: true,
         },
       },
     },
   });
 
-  const filteredCompanyWithAdmin = companyWithAdmin
-    .map((company) => {
-      return company.users.map((user) => {
-        return {
-          ...user,
-          companyName: company.name,
-          isConnected: oppositeCompanies.some((c) => c.id === user.companyId),
-        };
-      });
-    })
-    .flat();
+  // Filter admins based on collaboration permission
+  const filteredCompanyWithAdminPromises = companyWithAdmin.map(
+    async (company) => {
+      const filteredAdmins = await Promise.all(
+        company.users.map(async (user) => {
+          try {
+            const permissions = await getUserPermissions(
+              user.id,
+              user.employeeType
+            );
+
+            // Check communicationHubCollaboration permission
+            const hasCollaboration =
+              permissions?.communicationHubCollaboration === true;
+
+            return hasCollaboration
+              ? {
+                  ...user,
+                  companyName: company.name,
+                  isConnected: finalCompanies.some(
+                    (c) => c.id === user.companyId
+                  ),
+                }
+              : null;
+          } catch (error) {
+            console.error(
+              `    ERROR checking permissions for admin ${user.id}:`,
+              error
+            );
+            return null;
+          }
+        })
+      );
+      return filteredAdmins.filter((user) => user !== null);
+    }
+  );
+
+  const filteredCompanyWithAdmin = (
+    await Promise.all(filteredCompanyWithAdminPromises)
+  ).flat();
 
   return (
     <div>
@@ -128,7 +197,7 @@ export default async function CollaborationPage() {
       </Title>
       <Collaboration
         companyWithAdmin={filteredCompanyWithAdmin}
-        companies={oppositeCompanies}
+        companies={finalCompanies}
         currentUser={session?.user}
         messages={messages}
         isCollaborators={company?.isCollaborators}

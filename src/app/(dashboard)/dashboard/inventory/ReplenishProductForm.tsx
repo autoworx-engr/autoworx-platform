@@ -15,6 +15,7 @@ import Selector from "@/components/Selector";
 import { SlimInput } from "@/components/SlimInput";
 import Submit from "@/components/Submit";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
+import { cn } from "@/lib/cn";
 import { useFormErrorStore } from "@/stores/form-error";
 import { useListsStore } from "@/stores/lists";
 import { Vendor } from "@prisma/client";
@@ -83,112 +84,131 @@ export default function ReplenishProductForm({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button className="w-28 rounded-md bg-[#69DBD0] p-1 text-white">
+        <button
+          className="
+          w-28 rounded-lg px-4 py-2 text-sm font-semibold text-white
+          bg-gradient-to-r from-[#69DBD0] to-[#5acbc0]
+          shadow-[0_4px_14px_0_rgba(105,219,208,0.39)]
+          hover:shadow-[0_6px_20px_rgba(105,219,208,0.23)]
+          hover:-translate-y-0.5
+          active:translate-y-0 active:scale-100
+          transition-all duration-300 ease-in-out
+        "
+        >
           Replenish
         </button>
       </DialogTrigger>
 
       <DialogContent
-        className="max-h-full w-[96%] max-w-xl overflow-y-auto md:w-[30rem]"
+        className="max-h-[80%] w-[96%] max-w-xl grid-rows-[auto,1fr,auto] thin-scrollbar"
         form
       >
         <DialogHeader>
-          <DialogTitle>Replenish Product</DialogTitle>
+          <DialogTitle className="text-slate-600">
+            Replenish Product
+          </DialogTitle>
         </DialogHeader>
         <FormError />
-        <div className="flex flex-col gap-3 p-2">
-          <SlimInput
-            name="date"
-            type="date"
-            className="col-span-1"
-            defaultValue={todayInCompanyTz}
-          />
-          {/* TODO: make reusable component */}
-          <div>
-            <label>Vendor</label>
-
-            <Selector
-              label={(vendor: Vendor | null) =>
-                vendor
-                  ? vendor?.companyName || vendor?.name || `Vendor ${vendor.id}`
-                  : "Vendor"
-              }
-              newButton={
-                <NewVendor
-                  afterSubmit={(ven) => {
-                    setVendor(ven);
-                    setVendorOpen(false);
-                  }}
-                  button={
-                    <button type="button" className="text-xs text-[#6571FF]">
-                      + New Vendor
-                    </button>
-                  }
-                />
-              }
-              displayList={(vendor: Vendor) => (
-                <p>{vendor?.companyName || vendor.name}</p>
-              )}
-              items={vendors}
-              onSearch={(search: string) =>
-                vendors.filter(
-                  (vendor) =>
-                    vendor?.companyName
-                      ?.toLowerCase()
-                      ?.includes(search.toLowerCase()) ||
-                    (vendor?.name?.toLowerCase() || "").includes(
-                      search.toLowerCase()
-                    )
-                )
-              }
-              openState={[vendorOpen, setVendorOpen]}
-              selectedItem={vendor}
-              setSelectedItem={setVendor}
+        <div className="gap-5 overflow-y-auto pl-1 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <SlimInput
+              name="date"
+              type="date"
+              label="Date"
+              defaultValue={todayInCompanyTz}
+              required={true}
             />
+            <div className="space-y-1">
+              <label className="font-medium text-slate-600">
+                Vendor <span className="text-red-500">*</span>
+              </label>
+
+              <Selector
+                label={(vendor: Vendor | null) =>
+                  vendor
+                    ? vendor?.companyName ||
+                      vendor?.name ||
+                      `Vendor ${vendor.id}`
+                    : "Vendor"
+                }
+                newButton={
+                  <NewVendor
+                    afterSubmit={(ven) => {
+                      setVendor(ven);
+                      setVendorOpen(false);
+                    }}
+                    button={
+                      <button
+                        type="button"
+                        className="text-xs text-[#6571FF] hover:underline"
+                      >
+                        + New Vendor
+                      </button>
+                    }
+                  />
+                }
+                displayList={(vendor: Vendor) => (
+                  <p>{vendor?.companyName || vendor.name}</p>
+                )}
+                items={vendors}
+                onSearch={(search: string) =>
+                  vendors.filter(
+                    (vendor) =>
+                      vendor?.companyName
+                        ?.toLowerCase()
+                        ?.includes(search.toLowerCase()) ||
+                      (vendor?.name?.toLowerCase() || "").includes(
+                        search.toLowerCase()
+                      )
+                  )
+                }
+                openState={[vendorOpen, setVendorOpen]}
+                selectedItem={vendor}
+                setSelectedItem={setVendor}
+                border={true}
+              />
+            </div>
           </div>
 
-          <div className="flex flex-wrap gap-3 md:flex-nowrap">
-            <SlimInput name="quantity" required={false} />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
+            <SlimInput name="quantity" required={true} label="Quantity" />
 
-            <div>
-              <label htmlFor="price" className="px-2 font-medium">
-                Total Price
-              </label>
-              <div className="#mt-1 flex gap-1 rounded-sm border border-primary-foreground bg-background px-2 py-0.5 leading-6">
-                <span className="text-lg">$</span>
-                <input
-                  type="text"
-                  name="price"
-                  className="w-full rounded-sm border border-slate-400 px-2 py-0.5 outline-none"
-                  id="price"
-                />
-              </div>
-            </div>
+            <SlimInput name="price" required={true} label="Total Price" />
 
             <SlimInput
               defaultValue={lastUnit || ""}
               name="unit"
-              required={false}
+              required={true}
+              label="Unit"
             />
-            <SlimInput name="lot" required={false} />
+            <SlimInput name="lot" required={false} label="Lot#" />
           </div>
 
-          <div className="col-span-2">
-            <label htmlFor="notes"> Notes</label>
+          <div className="space-y-1">
+            <label htmlFor="notes" className="font-medium text-slate-600">
+              {" "}
+              Notes
+            </label>
             <textarea
               id="notes"
               name="notes"
-              className="h-28 w-full rounded-sm border border-primary-foreground border-slate-400 bg-background px-2 py-0.5 leading-6 outline-none"
+              className={cn(
+                "h-24 w-full rounded-md border border-slate-300 outline-none bg-background px-3 py-2 leading-6 transition-all duration-300 thin-scrollbar",
+                "bg-white/80 backdrop-blur-sm dark:bg-slate-900/50",
+                "text-slate-600 dark:text-slate-300 placeholder:text-slate-400",
+                "focus:border-[#6571FF]/60 focus:ring-2 focus:ring-[#6571FF]/40",
+                "disabled:opacity-50 disabled:cursor-not-allowed"
+              )}
             />
           </div>
         </div>
 
         <DialogFooter>
-          <DialogClose className="rounded-lg border-2 border-slate-400 p-2">
+          <DialogClose className="rounded-xl mt-2 sm:mt-0 px-5 py-2.5 text-sm font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 transition-colors border">
             Cancel
           </DialogClose>
           <Submit
-            className="mb-2 flex items-center justify-center rounded-lg border bg-[#6571FF] px-5 py-2 text-white md:mb-0"
+            className="rounded-xl px-6 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#6571FF] to-[#5a66ee] shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40 hover:-translate-y-0.5 hover:scale-[1.02] active:translate-y-0 active:scale-100 transition-all duration-200"
             formAction={handleSubmit}
           >
             Submit

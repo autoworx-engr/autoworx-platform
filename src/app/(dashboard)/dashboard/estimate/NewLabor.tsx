@@ -1,11 +1,4 @@
 "use client";
-import SelectCategory from "@/components/Lists/SelectCategory";
-import { SelectTags } from "@/components/Lists/SelectTags";
-import { useEstimateCreateStore } from "@/stores/estimate-create";
-import { useEstimatePopupStore } from "@/stores/estimate-popup";
-import { useListsStore } from "@/stores/lists";
-import { Category, Tag } from "@prisma/client";
-import { useEffect, useState } from "react";
 import { newLabor } from "@/actions/estimate/labor/newLabor";
 import {
   Dialog,
@@ -17,8 +10,15 @@ import {
   DialogTrigger,
 } from "@/components/Dialog";
 import FormError from "@/components/FormError";
-import { useFormErrorStore } from "@/stores/form-error";
+import SelectCategory from "@/components/Lists/SelectCategory";
+import { SelectTags } from "@/components/Lists/SelectTags";
 import { successToast } from "@/lib/toast";
+import { useEstimateCreateStore } from "@/stores/estimate-create";
+import { useEstimatePopupStore } from "@/stores/estimate-popup";
+import { useFormErrorStore } from "@/stores/form-error";
+import { useListsStore } from "@/stores/lists";
+import { Category, Tag } from "@prisma/client";
+import { useEffect, useState } from "react";
 
 export default function NewLabor({
   newButton,
@@ -220,8 +220,18 @@ export default function NewLabor({
             type="button"
             className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 4v16m8-8H4"
+              />
             </svg>
             New Labor
           </button>
@@ -244,7 +254,10 @@ export default function NewLabor({
           <div className="space-y-3 py-3">
             {/* Labor Name */}
             <div className="space-y-2">
-              <label htmlFor="name" className="block text-sm font-medium text-slate-700">
+              <label
+                htmlFor="name"
+                className="block text-sm font-medium text-slate-700"
+              >
                 Labor Name <span className="text-red-500">*</span>
               </label>
               <input
@@ -266,7 +279,7 @@ export default function NewLabor({
             {/* Category */}
             <div className="space-y-2">
               <label className="block text-sm font-medium text-slate-700">
-                Category
+                Category <span className="text-red-500">*</span>
               </label>
               <SelectCategory
                 onCategoryChange={setCategory}
@@ -274,6 +287,7 @@ export default function NewLabor({
                 categoryData={category}
                 categoryOpen={categoryOpen}
                 setCategoryOpen={setCategoryOpen}
+                allowEdit={true}
               />
             </div>
 
@@ -291,11 +305,16 @@ export default function NewLabor({
 
             {/* Pricing Section */}
             <div className="pt-2">
-              <h3 className="text-sm font-semibold text-slate-900 mb-4">Pricing Details</h3>
+              <h3 className="text-sm font-semibold text-slate-900 mb-4">
+                Pricing Details
+              </h3>
               <div className="grid grid-cols-2 gap-4">
                 {/* Hours */}
                 <div className="space-y-2">
-                  <label htmlFor="hours" className="block text-sm font-medium text-slate-700">
+                  <label
+                    htmlFor="hours"
+                    className="block text-sm font-medium text-slate-700"
+                  >
                     Hours <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
@@ -315,17 +334,24 @@ export default function NewLabor({
                       placeholder="0.00"
                       required
                     />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">hrs</span>
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">
+                      hrs
+                    </span>
                   </div>
                 </div>
 
                 {/* Rate per Hour */}
                 <div className="space-y-2">
-                  <label htmlFor="perhour" className="block text-sm font-medium text-slate-700">
+                  <label
+                    htmlFor="perhour"
+                    className="block text-sm font-medium text-slate-700"
+                  >
                     Rate/Hour <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-500">$</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-500">
+                      $
+                    </span>
                     <input
                       type="number"
                       id="perhour"
@@ -348,11 +374,16 @@ export default function NewLabor({
 
               {/* Discount */}
               <div className="space-y-2 mt-4">
-                <label htmlFor="discount" className="block text-sm font-medium text-slate-700">
+                <label
+                  htmlFor="discount"
+                  className="block text-sm font-medium text-slate-700"
+                >
                   Discount
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-500">$</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-500">
+                    $
+                  </span>
                   <input
                     type="number"
                     id="discount"
@@ -383,9 +414,15 @@ export default function NewLabor({
                         </span>
                       </div>
                       <div className="border-t border-slate-300 mt-2 pt-2 flex justify-between items-center">
-                        <span className="font-semibold text-slate-900">Total:</span>
+                        <span className="font-semibold text-slate-900">
+                          Total:
+                        </span>
                         <span className="font-bold text-lg text-slate-900">
-                          ${(parseFloat(hours) * parseFloat(charge) - parseFloat(discount)).toFixed(2)}
+                          $
+                          {(
+                            parseFloat(hours) * parseFloat(charge) -
+                            parseFloat(discount)
+                          ).toFixed(2)}
                         </span>
                       </div>
                     </>
@@ -396,7 +433,10 @@ export default function NewLabor({
 
             {/* Notes */}
             <div className="space-y-2">
-              <label htmlFor="notes" className="block text-sm font-medium text-slate-700">
+              <label
+                htmlFor="notes"
+                className="block text-sm font-medium text-slate-700"
+              >
                 Notes
               </label>
               <textarea

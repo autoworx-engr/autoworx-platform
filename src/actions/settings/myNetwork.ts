@@ -1,25 +1,31 @@
 "use server";
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
+import getUser from "@/lib/getUser";
 import { Company } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import { sendUserNotifications } from "../notification/sendUserNotification";
 
-export async function connectWithCompany(
-  targetCompanyId: number,
-  revalidatePathName?: string | undefined
-): Promise<{
-  success: boolean;
-  message: string;
-}> {
+type TConnectWithCompany = {
+  targetCompanyId: number;
+  userCompanyId?: number;
+  revalidatePathName?: string | undefined;
+};
+
+export async function connectWithCompany({
+  targetCompanyId,
+  userCompanyId,
+  revalidatePathName,
+}: TConnectWithCompany) {
   try {
-    const userCompanyId = await getCompanyId();
+    const companyId = userCompanyId || (await getCompanyId());
 
     // Check if the connection already exists
     const existingConnection = await db.companyJoin.findFirst({
       where: {
         OR: [
           {
-            companyOneId: userCompanyId,
+            companyOneId: companyId,
             companyTwoId: targetCompanyId,
             companyTwo: {
               isCollaborators: true,
@@ -27,7 +33,7 @@ export async function connectWithCompany(
           },
           {
             companyOneId: targetCompanyId,
-            companyTwoId: userCompanyId,
+            companyTwoId: companyId,
             companyOne: {
               isCollaborators: true,
             },
@@ -46,10 +52,58 @@ export async function connectWithCompany(
     // Create a new connection
     await db.companyJoin.create({
       data: {
-        companyOneId: userCompanyId,
+        companyOneId: companyId,
         companyTwoId: targetCompanyId,
+        status: "PENDING",
       },
     });
+
+    const company = await db.company.findUnique({
+      where: { id: targetCompanyId },
+      select: { name: true },
+    });
+
+    const targetUsers = await db.user.findMany({
+      where: {
+        companyId: targetCompanyId,
+        employeeType: {
+          in: ["Admin", "Manager", "Sales"],
+        },
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        phone: true,
+        companyId: true,
+      },
+    });
+
+    const sessionUser = await getUser();
+
+    const redirectUrl = `/dashboard/settings/networks`;
+    const sessionUserFullName = `${sessionUser.firstName} ${sessionUser.lastName}`;
+    const description = `New collaboration invitation from ${sessionUserFullName} in ${company?.name}. View it in Autoworx`;
+    const title = "New Collaboration Invitation";
+
+    await Promise.all(
+      targetUsers.map(user =>
+        sendUserNotifications({
+          userId: user.id,
+          userName: `${user.firstName} ${user.lastName}`,
+          userEmail: user.email || "",
+          userPhoneNo: user.phone || "",
+          companyId: user.companyId,
+          iconType: "message",
+          title,
+          description,
+          type: "COLLABORATION_INVITATION",
+          redirectUrl,
+        }),
+      ),
+    );
+
     revalidatePathName && revalidatePath(revalidatePathName);
     return {
       success: true,
@@ -183,7 +237,7 @@ export async function toggleAddressVisibility(): Promise<{
 
 export async function setLatLong(
   latitude: number | null,
-  longitude: number | null
+  longitude: number | null,
 ): Promise<{
   success: boolean;
   message: string;
@@ -213,7 +267,7 @@ function getDistanceFromLatLonInMiles(
   lat1: number,
   lon1: number,
   lat2: number,
-  lon2: number
+  lon2: number,
 ): number {
   const R = 3958.8; // Radius of the Earth in miles
   const dLat = deg2rad(lat2 - lat1);
@@ -237,7 +291,7 @@ function deg2rad(deg: number): number {
 export async function findNearbyCompanies(
   latitude: number,
   longitude: number,
-  range: [number, number] // e.g., [minDistance, maxDistance]
+  range: [number, number], // e.g., [minDistance, maxDistance]
 ): Promise<{
   success: boolean;
   data: Company[] | [];
@@ -257,10 +311,8 @@ export async function findNearbyCompanies(
     });
 
     // Extract connected company IDs
-    const connectedIds = connectedCompanyIds.flatMap((join) =>
-      [join.companyOneId, join.companyTwoId].filter(
-        (id) => id !== userCompanyId
-      )
+    const connectedIds = connectedCompanyIds.flatMap(join =>
+      [join.companyOneId, join.companyTwoId].filter(id => id !== userCompanyId),
     );
 
     // Step 2: Get all unconnected companies (excluding connected companies and your own company)
@@ -276,20 +328,18 @@ export async function findNearbyCompanies(
     });
 
     // Step 3: Filter unconnected companies by distance
-    const nearbyUnconnectedCompanies = unconnectedCompanies.filter(
-      (company) => {
-        if (company.companyLatitude && company.companyLongitude) {
-          const distance = getDistanceFromLatLonInMiles(
-            latitude,
-            longitude,
-            company.companyLatitude,
-            company.companyLongitude
-          );
-          return distance <= range[1] && distance >= range[0]; // Filter based on the distance range
-        }
-        return false;
+    const nearbyUnconnectedCompanies = unconnectedCompanies.filter(company => {
+      if (company.companyLatitude && company.companyLongitude) {
+        const distance = getDistanceFromLatLonInMiles(
+          latitude,
+          longitude,
+          company.companyLatitude,
+          company.companyLongitude,
+        );
+        return distance <= range[1] && distance >= range[0]; // Filter based on the distance range
       }
-    );
+      return false;
+    });
 
     return {
       success: true,

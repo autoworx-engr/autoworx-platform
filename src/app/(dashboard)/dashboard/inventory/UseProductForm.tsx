@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
-import moment from "moment-timezone";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone"; // ← adjust path if needed
+import moment from "moment-timezone";
+import { useEffect, useState, useTransition } from "react";
 
 import {
   Dialog,
@@ -17,9 +17,10 @@ import FormError from "@/components/FormError";
 import Selector from "@/components/Selector";
 import { SlimInput } from "@/components/SlimInput";
 import Submit from "@/components/Submit";
+import { cn } from "@/lib/cn";
+import { useFormErrorStore } from "@/stores/form-error";
 import { InventoryProductType } from "@prisma/client";
 import { useProduct as productUse } from "../../../../actions/inventory/useProduct";
-import { useFormErrorStore } from "@/stores/form-error";
 
 type TProps = {
   productId: number;
@@ -91,78 +92,120 @@ export default function UseProductForm({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button className="w-28 rounded-md bg-[#FF6262] p-1 text-white">
+        <button
+          className="
+          w-28 rounded-lg px-4 py-2 text-sm font-semibold text-white
+          bg-gradient-to-r from-[#FF6262] to-[#ff4f4f]
+          shadow-[0_4px_14px_0_rgba(255,98,98,0.39)]
+          hover:shadow-[0_6px_20px_rgba(255,98,98,0.23)]
+          hover:-translate-y-0.5
+          active:translate-y-0 active:scale-100
+          transition-all duration-300 ease-in-out
+        "
+        >
           {productType === "Product" ? "Loss" : "Use"}
         </button>
       </DialogTrigger>
 
-      <DialogContent className="max-h-full w-[96%] max-w-xl md:w-[30rem]" form>
+      <DialogContent
+        className="max-h-[80%] w-[96%] max-w-xl grid-rows-[auto,1fr,auto] thin-scrollbar"
+        form
+      >
         <DialogHeader>
-          <DialogTitle>
+          <DialogTitle className="text-slate-600">
             {productType === "Product" ? "Loss" : "Use"} Product
           </DialogTitle>
         </DialogHeader>
 
         <FormError />
 
-        <div className="grid grid-cols-2 gap-3 overflow-y-auto p-2">
-          <SlimInput
-            name="date"
-            type="date"
-            className="col-span-1"
-            // ✅ default value in the company timezone
-            defaultValue={todayInCompanyTz}
-          />
-          <br className="block md:hidden" />
+        <div className="gap-5 overflow-y-auto pl-1 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <SlimInput
+              name="date"
+              type="date"
+              label="Date"
+              defaultValue={todayInCompanyTz}
+            />
+            <SlimInput name="quantity" label="Quantity" required />
+          </div>
 
-          <SlimInput name="quantity" className="col-span-1" />
-          <br className="block md:hidden" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <SlimInput
+              name="cost"
+              label="Cost"
+              defaultValue={cost}
+              disabled
+              required
+            />
 
-          <SlimInput
-            name="cost"
-            className="col-span-1"
-            defaultValue={cost}
-            disabled
-          />
+            {productType === "Product" && (
+              <div className="space-y-1">
+                <label className="font-medium text-slate-600">Invoice</label>
+                <Selector
+                  label={(
+                    invoice: { id: string; clientName: string } | null
+                  ) =>
+                    invoice
+                      ? `${invoice.id} - ${invoice.clientName}`
+                      : "Select Invoice"
+                  }
+                  items={invoiceIds}
+                  selectedItem={invoiceId}
+                  setSelectedItem={setInvoiceId}
+                  displayList={(invoice) => (
+                    <p>
+                      <strong>{invoice.id}</strong> - {invoice.clientName}
+                    </p>
+                  )}
+                  newButton={<></>}
+                  border={true}
+                />
+              </div>
+            )}
+          </div>
 
-          {productType === "Product" && (
-            <div className="col-span-2">
-              <Selector
-                label={(invoice: { id: string; clientName: string } | null) =>
-                  invoice
-                    ? `${invoice.id} - ${invoice.clientName}`
-                    : "Select Invoice"
-                }
-                items={invoiceIds}
-                selectedItem={invoiceId}
-                setSelectedItem={setInvoiceId}
-                displayList={(invoice) => (
-                  <p>
-                    <strong>{invoice.id}</strong> - {invoice.clientName}
-                  </p>
-                )}
-                newButton={<></>}
-              />
-            </div>
-          )}
-
-          <div className="col-span-2">
-            <label htmlFor="notes"> Notes</label>
+          <div className="space-y-1">
+            <label htmlFor="notes" className="font-medium text-slate-600">
+              {" "}
+              Notes
+            </label>
             <textarea
               id="notes"
               name="notes"
               required={false}
-              className="h-28 w-full rounded-sm border border-primary-foreground border-slate-400 bg-background px-2 py-0.5 leading-6 outline-none"
+              className={cn(
+                "h-24 w-full rounded-md border border-slate-300 outline-none bg-background px-3 py-2 leading-6 transition-all duration-300 thin-scrollbar",
+                "bg-white/80 backdrop-blur-sm dark:bg-slate-900/50",
+                "text-slate-600 dark:text-slate-300 placeholder:text-slate-400",
+                "focus:border-[#6571FF]/60 focus:ring-2 focus:ring-[#6571FF]/40",
+                "disabled:opacity-50 disabled:cursor-not-allowed"
+              )}
             />
           </div>
         </div>
 
         <DialogFooter>
-          <DialogClose className="rounded-lg border-2 border-slate-400 p-2">
+          <DialogClose
+            className="
+            rounded-xl px-5 py-2.5 text-sm font-medium text-slate-500 mt-2 md:mt-0 
+          hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
+            transition-colors border
+          "
+          >
             Cancel
           </DialogClose>
           <Submit
-            className="mb-2 flex items-center justify-center rounded-lg border bg-[#6571FF] px-5 py-2 text-white disabled:bg-slate-400 md:mb-0"
+            className="
+                rounded-xl px-6 py-2.5 text-sm font-medium text-white
+                bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+                shadow-lg shadow-indigo-500/30
+                hover:shadow-xl hover:shadow-indigo-500/40
+                hover:-translate-y-0.5 hover:scale-[1.02]
+                active:translate-y-0 active:scale-100
+                transition-all duration-200
+                disabled:from-slate-300 disabled:to-slate-300 disabled:cursor-not-allowed disabled:shadow-none
+              "
             formAction={(fromData: FormData) => {
               startTransition(() => handleSubmit(fromData));
               return Promise.resolve();

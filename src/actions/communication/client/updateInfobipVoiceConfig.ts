@@ -6,16 +6,18 @@ import { db } from "@/lib/db";
 export const updateInfobipVoiceConfig = async ({
   applicationId,
   callsConfigurationId,
+  companyId,
 }: {
   applicationId: string;
   callsConfigurationId: string;
+  companyId?: number;
 }) => {
   try {
-    const companyId = await getCompanyId();
+    const cId = companyId || (await getCompanyId());
 
     const infobipConfig = await db.infobipConfig.update({
       where: {
-        companyId,
+        companyId: cId,
       },
       data: {
         applicationId,
@@ -30,13 +32,13 @@ export const updateInfobipVoiceConfig = async ({
   }
 };
 
-export const getInfobipVoiceConfig = async () => {
+export const getInfobipVoiceConfig = async (companyId?: number) => {
   try {
-    const companyId = await getCompanyId();
+    const cId = companyId || (await getCompanyId());
 
     const infobipConfig = await db.infobipConfig.findFirst({
       where: {
-        companyId,
+        companyId: cId,
       },
       select: {
         applicationId: true,

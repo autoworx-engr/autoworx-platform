@@ -326,7 +326,7 @@ const LaborComponent = ({
                   <div className="space-y-4">
                     <div>
                       <label className="mb-2 block text-sm font-medium text-gray-700">
-                        Labor Name
+                        Labor Name<span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
@@ -349,14 +349,23 @@ const LaborComponent = ({
                     </div>
                     <div>
                       <label className="mb-2 block text-sm font-medium text-gray-700">
-                        Category
+                        Category<span className="text-red-500">*</span>
                       </label>
+                      {/* <SelectCategory
+                        onCategoryChange={setCategory}
+                        labelPosition="none"
+                        categoryData={category}
+                        categoryOpen={categoryOpen}
+                        setCategoryOpen={setCategoryOpen}
+                      /> */}
+
                       <SelectCategory
                         onCategoryChange={setCategory}
                         labelPosition="none"
                         categoryData={category}
                         categoryOpen={categoryOpen}
                         setCategoryOpen={setCategoryOpen}
+                        allowEdit={true}
                       />
                     </div>
                     <div>
@@ -406,7 +415,9 @@ const LaborComponent = ({
         <CardContent className="p-4 pt-0">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="mb-1 text-sm font-medium text-gray-500">Category</p>
+              <p className="mb-1 text-sm font-medium text-gray-500">
+                Category <span className="text-red-500">*</span>
+              </p>
               <p className="line-clamp-1 text-lg font-semibold text-indigo-600">
                 {labor.category?.name}
               </p>
@@ -451,14 +462,14 @@ const LaborComponent = ({
               <SquarePen className="w-5 h-5" />
             </button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>Edit Canned Labor</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-700">
-                  Labor Name
+                  Labor Name <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -481,14 +492,23 @@ const LaborComponent = ({
               </div>
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-700">
-                  Category
+                  Category <span className="text-red-500">*</span>
                 </label>
+                {/* <SelectCategory
+                  className="min-w-full"
+                  onCategoryChange={setCategory}
+                  labelPosition="none"
+                  categoryData={category}
+                  categoryOpen={categoryOpen}
+                  setCategoryOpen={setCategoryOpen}
+                /> */}
                 <SelectCategory
                   onCategoryChange={setCategory}
                   labelPosition="none"
                   categoryData={category}
                   categoryOpen={categoryOpen}
                   setCategoryOpen={setCategoryOpen}
+                  allowEdit={true}
                 />
               </div>
               <div>

@@ -323,7 +323,7 @@ const ServiceComponent = ({
                   <div className="space-y-4">
                     <div>
                       <label className="mb-2 block text-sm font-medium text-gray-700">
-                        Service Name
+                        Service Name<span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
@@ -346,7 +346,7 @@ const ServiceComponent = ({
                     </div>
                     <div>
                       <label className="mb-2 block text-sm font-medium text-gray-700">
-                        Category
+                        Category<span className="text-red-500">*</span>
                       </label>
                       <SelectCategory
                         onCategoryChange={setCategory}
@@ -354,6 +354,7 @@ const ServiceComponent = ({
                         categoryData={category}
                         categoryOpen={categoryOpen}
                         setCategoryOpen={setCategoryOpen}
+                        allowEdit={true}
                       />
                     </div>
                     <div>
@@ -419,7 +420,9 @@ const ServiceComponent = ({
         <CardContent className="p-4 pt-0">
           <div className="space-y-4">
             <div>
-              <p className="mb-1 text-sm font-medium text-gray-500">Category</p>
+              <p className="mb-1 text-sm font-medium text-gray-500">
+                Category <span className="text-red-500">*</span>
+              </p>
               <p className="line-clamp-1 text-lg font-semibold text-indigo-600">
                 {service.category?.name}
               </p>
@@ -473,7 +476,7 @@ const ServiceComponent = ({
             <div className="space-y-4 px-2.5">
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-700">
-                  Service Name
+                  Service Name <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -496,7 +499,7 @@ const ServiceComponent = ({
               </div>
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-700">
-                  Category
+                  Category<span className="text-red-500">*</span>
                 </label>
                 <SelectCategory
                   onCategoryChange={setCategory}
@@ -504,6 +507,7 @@ const ServiceComponent = ({
                   categoryData={category}
                   categoryOpen={categoryOpen}
                   setCategoryOpen={setCategoryOpen}
+                  allowEdit={true}
                 />
               </div>
               <div>
@@ -519,7 +523,7 @@ const ServiceComponent = ({
                     setDescriptionError("");
                   }}
                   className={cn(
-                    "min-h-[100px] w-full rounded-lg border p-2 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition-colors",
+                    "min-h-[100px] thin-scrollbar w-full rounded-lg border p-2 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition-colors",
                     descriptionError ? "border-red-500" : "border-gray-300"
                   )}
                 />

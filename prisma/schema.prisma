@@ -654,8 +654,12 @@ model Company {
   NotificationSettings             NotificationSettingsV2[]
   Notification                     Notification[]
   stripeAccountId                  String?
+  authorizeNetApiLoginId           String?                            @map("authorize_net_api_login_id")
+  authorizeNetTransactionKey       String?                            @map("authorize_net_transaction_key")
+  paymentGateway                   PaymentGateway                     @default(STRIPE)
   timezone                         String?
   stripePayment                    StripePayment[]
+  authorizeNetPayment              AuthorizeNetPayment[]
   leadLink                         LeadLink[]
   PipelineAutomationRule           PipelineAutomationRule[]
   ServiceMaintenanceAutomationRule ServiceMaintenanceAutomationRule[]
@@ -674,6 +678,12 @@ model Company {
 enum SmsGateway {
   TWILIO
   INFOBIP
+}
+
+enum PaymentGateway {
+  STRIPE
+  AUTHORIZE_NET
+  BOTH
 }
 
 // create model that will handle multiple companies join and collaboration
@@ -875,6 +885,10 @@ model TwilioCredentials {
   twimlAppSid    String? @map("twiml_app_sid")
   phoneNumberSid String  @map("phone_number_sid")
   companyId      Int     @unique @map("company_id")
+
+  // Per-subaccount Notify configuration
+  notifyServiceSid      String? @map("notify_service_sid")
+  voipPushCredentialSid String? @map("voip_push_credential_sid")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
@@ -1368,6 +1382,7 @@ model Invoice {
   damageNotes             String?                   @map("damage_notes")
   columnChangedAt         DateTime?                 @map("column_changed_at")
   stripePayments          StripePayment[]
+  authorizeNetPayments    AuthorizeNetPayment[]
   TimeDelayExecution      TimeDelayExecution[]
   Refund                  Refund[]
   FleetStatement          FleetStatement?           @relation(fields: [fleetStatementId], references: [id])
@@ -1747,10 +1762,12 @@ model Payment {
   refundUpdatedAt DateTime?       @map("refund_updated_at")
   createdAt       DateTime        @default(now()) @map("created_at")
   updatedAt       DateTime        @default(now()) @updatedAt @map("updated_at")
-  invoice         Invoice?        @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  Company         Company?        @relation(fields: [companyId], references: [id])
-  stripePayment   StripePayment?
-  Refund          Refund[]
+  invoice              Invoice?             @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  Company              Company?             @relation(fields: [companyId], references: [id])
+  gateway              PaymentGateway       @default(STRIPE)
+  stripePayment        StripePayment?
+  authorizeNetPayment  AuthorizeNetPayment?
+  Refund               Refund[]
 
   @@index([companyId])
   @@index([invoiceId])
@@ -1834,6 +1851,21 @@ model StripePayment {
   createdAt             DateTime @default(now()) @map("created_at")
   updatedAt             DateTime @default(now()) @updatedAt @map("updated_at")
   company               Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+}
+
+model AuthorizeNetPayment {
+  id            Int      @id @default(autoincrement())
+  transactionId String   @unique @map("transaction_id")
+  paymentId     Int      @unique @map("payment_id")
+  payment       Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  invoiceId     String?  @map("invoice_id")
+  invoice       Invoice? @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  companyId     Int      @map("company_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at")
+  company       Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("authorize_net_payments")
 }
 
 model PaymentMethod {
@@ -2385,4 +2417,96 @@ model VehicleParts {
   technician   Technician? @relation(fields: [technicianId], references: [id], onDelete: Cascade)
   invoice      Invoice?    @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
   service      Service?    @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+}
+
+// Ai sales agent configuration for a company
+model CompanyInfo {
+  id                  String   @id @default(uuid())
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+  
+  // Basic Info
+  shopName            String   @map("shop_name")
+  about               String?
+  address             String?
+  email               String?
+  phone               String?
+  websiteUrl          String?  @map("website_url")
+  hours               String?
+  policies            String?
+  
+  // Personal & AI Configuration
+  personalName         String?  @map("personal_name")
+  personalType         String?  @map("personal_type")
+  systemPrompt        String?  @map("system_prompt")
+  openingMessage      String?  @map("opening_message")
+  conversationStyle   Json?    @map("conversation_style")
+  personality         Json?
+  
+  // Operations
+  services            Json?
+  pricing             Json?
+  overallFaqs         Json?    @map("overall_faqs")
+  
+  // Settings
+  smsResponseDelayMin Int      @map("sms_response_delay_min")
+  smsResponseDelayMax Int      @map("sms_response_delay_max")
+
+  @@map("company_info")
+}
+
+model ConversationExample {
+  id            String   @id @default(uuid())
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  
+  imageUrl      String   @map("image_url")
+  extractedText String?  @map("extracted_text")
+  notes         String?
+
+  @@map("conversation_examples")
+}
+
+model KnowledgeBaseDocument {
+  id          String   @id @default(uuid())
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  
+  title       String
+  category    String
+  content     String
+  status      String
+  
+  // File Metadata
+  fileName    String?  @map("file_name")
+  fileType    String?  @map("file_type")
+  fileUrl     String?  @map("file_url")
+
+  @@map("knowledge_base_documents")
+}
+
+model ServicePlaybook {
+  id              String   @id @default(uuid())
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  
+  serviceName     String   @map("service_name")
+  category        String
+  isActive        Boolean  @default(true) @map("is_active")
+  
+  // Details
+  overview        String?
+  timeEstimate    String?  @map("time_estimate")
+  schedulingNotes String?  @map("scheduling_notes")
+  warrantyPolicy  String?  @map("warranty_policy")
+  
+  // AI Instructions (Json fields based on types)
+  intakeQuestions Json     @map("intake_questions")
+  pricingRules    Json     @map("pricing_rules")
+  upsells         Json
+  faqs            Json
+  doSay           Json     @map("do_say")
+  dontSay         Json     @map("dont_say")
+
+  @@map("service_playbooks")
 }

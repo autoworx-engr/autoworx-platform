@@ -165,25 +165,25 @@ export default function Users() {
         </h2>
 
         {!minimized && (
-         <form
-      className="mt-4 flex items-center justify-center gap-2"
-      // Using onSubmit for better client-side handling, preventing full page reload
-      onSubmit={(e) => {
-        e.preventDefault();
-        // Extracting value from the form input explicitly
-        const form = e.currentTarget;
-        const input = form.elements.namedItem("search") as HTMLInputElement;
-        searchUser(input.value);
-      }}
-    >
-      {/* Search Input Container for Icon and Input */}
-      <div className="relative flex-grow">
-        <Search 
-          className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500 pointer-events-none transition-colors duration-300" 
-        />
-        <input
-          type="search"
-          className="
+          <form
+            className="mt-4 flex items-center justify-center gap-2"
+            // Using onSubmit for better client-side handling, preventing full page reload
+            onSubmit={(e) => {
+              e.preventDefault();
+              // Extracting value from the form input explicitly
+              const form = e.currentTarget;
+              const input = form.elements.namedItem("search") as HTMLInputElement;
+              searchUser(input.value);
+            }}
+          >
+            {/* Search Input Container for Icon and Input */}
+            <div className="relative flex-grow">
+              <Search
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500 pointer-events-none transition-colors duration-300"
+              />
+              <input
+                type="search"
+                className="
             w-full rounded-xl border-none p-2 pl-9 text-sm 
             bg-slate-100 dark:bg-slate-700 
             text-slate-700 dark:text-slate-50 
@@ -191,17 +191,17 @@ export default function Users() {
             focus:ring-2 focus:ring-[#6571FF] focus:bg-white dark:focus:bg-slate-800
             placeholder:text-slate-500 dark:placeholder:text-slate-500
           "
-          placeholder="Search users..."
-          name="search"
-          // Continuous search as the user types (if desired by the original logic)
-          onChange={(e) => searchUser(e.target.value)}
-        />
-      </div>
+                placeholder="Search users..."
+                name="search"
+                // Continuous search as the user types (if desired by the original logic)
+                onChange={(e) => searchUser(e.target.value)}
+              />
+            </div>
 
-      {/* Submit Button - Styled as a secondary action with professional flair */}
-      <button 
-        type="submit"
-        className="
+            {/* Submit Button - Styled as a secondary action with professional flair */}
+            {/* <button
+              type="submit"
+              className="
           w-auto px-4 py-2 text-sm font-bold rounded-xl 
           text-white 
          bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
@@ -211,10 +211,10 @@ export default function Users() {
                 active:translate-y-0 active:scale-100
                 transition-all duration-300 ease-in-out
         "
-      >
-        Search
-      </button>
-    </form>
+            >
+              Search
+            </button> */}
+          </form>
         )}
       </div>
 
@@ -236,17 +236,17 @@ export default function Users() {
       {!minimized && (
         <NewEmployee
           button={
-            <button className="mt-4 w-full rounded-[5px] bg-blue-600 py-2 text-[15px] text-white flex items-center justify-center gap-2 px-6 py-2 text-sm font-semibold text-white transition-all duration-300 ease-in-out
+            <button className="mt-4 w-full rounded-xl bg-blue-600 py-2 text-[15px] text-white flex items-center justify-center gap-2 px-6 py-2 text-sm font-semibold text-white transition-all duration-300 ease-in-out
 
   // Gradient Background (Blue/Indigo)
-  bg-gradient-to-r from-blue-500 to-indigo-600
+  bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
 
   // Subtle Lift and Shadow Glow on Hover
-  shadow-lg shadow-blue-500/50
+  shadow-md shadow-[#6571FF]/40
   hover:-translate-y-0.5
   hover:scale-[1.01]
-  hover:shadow-xl hover:shadow-blue-500/70
-  dark:shadow-indigo-600/50 dark:hover:shadow-indigo-600/70">
+  hover:shadow-lg hover:shadow-[#6571FF]/60
+  dark:shadow-[#6571FF]/40 dark:hover:shadow-[#6571FF]/60">
               + Add User
             </button>
           }

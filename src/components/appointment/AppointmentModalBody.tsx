@@ -9,8 +9,7 @@ import {
   DialogTitle,
 } from "@/components/Dialog";
 import FormError from "@/components/FormError";
-import Selector from "@/components/Selector";
-import { SlimInput, slimInputClassName } from "@/components/SlimInput";
+import { SlimInput } from "@/components/SlimInput";
 import { cn } from "@/lib/cn";
 import { useFormErrorStore } from "@/stores/form-error";
 import AppointmentTitleSelectAndAdd from "./AppointmentTitleSelectAndAdd";
@@ -38,7 +37,7 @@ import { addOneHour, formatDateToToday, getCurrentTime } from "@/utils/time";
 import { useQueryClient } from "@tanstack/react-query";
 import moment from "moment-timezone";
 import { customAlphabet } from "nanoid";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import AssignUsers from "./AssignUsers";
 import { Reminder } from "./Reminder";
 import ScheduleTab from "./ScheduleTab";
@@ -47,7 +46,11 @@ import { SelectAppointmentVehicle } from "./SelectAppointmentVehicle";
 import { formatTime12Hour } from "@/utils/formateTime12Hours";
 import { Popconfirm, Select } from "antd";
 import { normalizeTime } from "@/utils/normalizeTime";
-import { Bell, Calendar, Trash2 } from "lucide-react";
+import { Bell, Calendar, Car, ChevronDown, Hash, Plus, Search, Trash2 } from "lucide-react";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { getVehicleByInvoiceId } from "@/actions/vehicle/getVehicleByInvoiceId";
+import { getVehicles } from "@/actions/vehicle/getVehicles";
+import useVehicleByClientIdQuery from "@/hooks/query-hook/useVehicleByClientIdQuery";
 enum Tab {
   Schedule = 0,
   Reminder = 1,
@@ -109,11 +112,14 @@ export default function AppointmentModalBody({
   const { data: estimates = [], isFetched: estimateIsFetched } =
     useEstimatesQueryByClient(
       client?.id!,
-      { id: true, clientId: true },
+      {
+        id: true, clientId: true,
+        grandTotal: true,
+        vehicle: true,
+      },
       { enabled: !!client?.id }
     );
 
-  const draftEstimates = estimates.map((estimate) => estimate.id);
 
   const timezone = useCompanyTimezone();
   const today = moment.tz(timezone).format("YYYY-MM-DD");
@@ -134,6 +140,7 @@ export default function AppointmentModalBody({
   const [allDay, setAllDay] = useState(false);
   const [vehicle, setVehicle] = useState<Partial<Vehicle> | null>(null);
   const [draft, setDraft] = useState<string | null>(null);
+  const [draftSearch, setDraftSearch] = useState("");
   const [assignedUsers, setAssignedUsers] = useState<User[]>([]);
 
   const [times, setTimes] = useState<{ time: string; date: string }[]>([]);
@@ -155,6 +162,51 @@ export default function AppointmentModalBody({
 
   const [openConfirmation, setOpenConfirmation] = useState(false);
   const [openReminder, setOpenReminder] = useState(false);
+
+  const draftEstimateOptions = useMemo(
+    () =>
+      estimates.map((estimate) => {
+        const vehicleLabel = [
+          (estimate as any)?.vehicle?.year,
+          (estimate as any)?.vehicle?.make,
+          (estimate as any)?.vehicle?.model,
+        ]
+          .filter(Boolean)
+          .join(" ") || (estimate as any)?.vehicle?.other;
+
+        console.log(estimate);
+
+        return {
+          id: String(estimate.id),
+          price: Number((estimate as any)?.grandTotal ?? 0),
+          vehicle: vehicleLabel,
+        };
+      }),
+    [estimates]
+  );
+
+  const filteredDraftEstimateOptions = useMemo(() => {
+    const term = draftSearch.toLowerCase();
+    return draftEstimateOptions.filter(
+      (item) =>
+        item.id.includes(draftSearch) ||
+        item.vehicle.toLowerCase().includes(term)
+    );
+  }, [draftSearch, draftEstimateOptions]);
+
+  const selectedDraftOption = useMemo(() => {
+    if (!draft) return null;
+
+    const existing = draftEstimateOptions.find((item) => item.id === draft);
+    if (existing) return existing;
+
+    // Keep showing a freshly created draft ID even before it exists in options
+    return {
+      id: draft,
+      price: 0,
+      vehicle: "New Draft Estimate",
+    };
+  }, [draft, draftEstimateOptions]);
 
   useEffect(() => {
     if (fromEdit && appointment) {
@@ -535,7 +587,7 @@ export default function AppointmentModalBody({
       startTime !== originalValues.startTime ||
       endTime !== originalValues.endTime ||
       JSON.stringify(assignedUsers) !==
-        JSON.stringify(originalValues.assignedUsers) ||
+      JSON.stringify(originalValues.assignedUsers) ||
       client?.id !== originalValues.client?.id ||
       vehicle?.id !== originalValues.vehicle?.id ||
       draft !== originalValues.draft ||
@@ -543,7 +595,7 @@ export default function AppointmentModalBody({
       confirmationTemplate?.id !== originalValues.confirmationTemplate?.id ||
       reminderTemplate?.id !== originalValues.reminderTemplate?.id ||
       confirmationTemplateStatus !==
-        originalValues.confirmationTemplateStatus ||
+      originalValues.confirmationTemplateStatus ||
       reminderTemplateStatus !== originalValues.reminderTemplateStatus ||
       JSON.stringify(times) !== JSON.stringify(originalValues.times)
     ) {
@@ -651,6 +703,12 @@ export default function AppointmentModalBody({
   ]);
 
   useEffect(() => {
+    if (!draftOpen) {
+      setDraftSearch("");
+    }
+  }, [draftOpen]);
+
+  useEffect(() => {
     let now = moment.tz(timezone);
 
     const roundedMinutes = Math.ceil(now.minute() / 15) * 15;
@@ -735,7 +793,7 @@ export default function AppointmentModalBody({
 
   return (
     <DialogContent
-      className="grid max-h-full max-w-5xl grid-rows-[auto,1fr,auto] sm:max-w-[60vw]"
+      className="grid max-w-5xl grid-rows-[auto,1fr,auto] sm:max-w-[60vw]"
       form
     >
       {/* Heading */}
@@ -743,218 +801,363 @@ export default function AppointmentModalBody({
         <DialogTitle>{fromEdit ? "Edit" : "New"} Appointment</DialogTitle>
 
         {/* Options */}
-        <div className="flex items-center justify-self-center rounded-full bg-gray-300 p-1">
+        <div className="flex items-center justify-self-center rounded-full bg-slate-100 p-1.5 shadow-inner ring-1 ring-slate-200/50">
           <button
             type="button"
             className={cn(
-              "rounded-full px-4 py-1 font-semibold",
-              tab === Tab.Schedule && "bg-background"
+              "flex items-center justify-center rounded-full px-6 py-2 text-sm font-bold transition-all duration-300 ease-out",
+              tab === Tab.Schedule
+                ? "bg-white text-slate-600 shadow-sm ring-1 ring-slate-200"
+                : "text-slate-400 hover:text-slate-600 hover:bg-slate-200/50"
             )}
             onClick={() => setTab(Tab.Schedule)}
           >
-            <Calendar className="mr-2 inline" size={24} />
+            <Calendar
+              className={cn("mr-2 transition-colors", tab === Tab.Schedule ? "text-slate-600" : "text-slate-400")}
+              size={18}
+              strokeWidth={2.5}
+            />
             Schedule
           </button>
 
           <button
             type="button"
             className={cn(
-              "rounded-full px-4 py-1 font-semibold",
-              tab === Tab.Reminder && "bg-background"
+              "flex items-center justify-center rounded-full px-6 py-2 text-sm font-bold transition-all duration-300 ease-out",
+              tab === Tab.Reminder
+                ? "bg-white text-slate-600 shadow-sm ring-1 ring-slate-200"
+                : "text-slate-400 hover:text-slate-600 hover:bg-slate-200/50"
             )}
             onClick={() => setTab(Tab.Reminder)}
           >
-            <Bell className="mr-2 inline" size={24} />
+            <Bell
+              className={cn("mr-2 transition-colors", tab === Tab.Reminder ? "text-slate-600" : "text-slate-400")}
+              size={18}
+              strokeWidth={2.5}
+            />
             Reminder
           </button>
         </div>
       </DialogHeader>
 
-      <div className="-mx-6 grid gap-px overflow-y-auto border-solid sm:grid-cols-2 md:border-y md:bg-border">
-        <div className="space-y-4 bg-background p-6 pb-12">
-          <FormError />
+      <div className="-mx-6 grid gap-px overflow-y-hidden border-solid sm:grid-cols-2 md:border-y md:bg-border">
+        <div className="h-full overflow-y-auto thin-scrollbar">
+          <div className="space-y-4 bg-background p-6 pb-20">
+            <FormError />
 
-          <AppointmentTitleSelectAndAdd
-            value={title}
-            onChange={(value) => setTitle(value)}
-          />
-
-          <div className="flex flex-wrap items-end gap-2 2xl:flex-nowrap">
-            <SlimInput
-              name="date"
-              label="Date"
-              rootClassName="grow"
-              type="date"
-              value={date ?? ""}
-              // min={minDate}
-              required
-              onChange={(event) => {
-                const newDate = moment(event.currentTarget.value).format(
-                  "YYYY-MM-DD"
-                );
-                setDate(newDate);
-              }}
+            <AppointmentTitleSelectAndAdd
+              value={title}
+              onChange={(value) => setTitle(value)}
             />
 
-            <div className="flex items-end gap-2">
-              <label className="flex flex-col items-start">
-                <span className="mb-1 text-sm font-medium text-gray-700">
-                  Start Time
-                </span>
-                <div>
+            <div className="flex flex-wrap items-end gap-2 2xl:flex-nowrap">
+              <SlimInput
+                name="date"
+                label="Date"
+                rootClassName="grow"
+                type="date"
+                value={date ?? ""}
+                // min={minDate}
+                required
+                onChange={(event) => {
+                  const newDate = moment(event.currentTarget.value).format(
+                    "YYYY-MM-DD"
+                  );
+                  setDate(newDate);
+                }}
+              />
+
+              <div className="flex items-end gap-2">
+                <label className="flex flex-col items-start">
+                  <span className="mb-2 font-medium text-slate-600">
+                    Start Time <span className="text-[#E9405F]">*</span>
+                  </span>
+                  <div>
+                    <Select
+                      value={startTime}
+                      onChange={(value) =>
+                        handleTimeChange({ target: { value } } as any, "start")
+                      }
+                      style={{ width: "100%" }}
+                      className="
+                        h-[38px] w-full 
+                        rounded-lg border-none 
+                        bg-slate-50/50 
+                        ring-1 ring-slate-200 
+                        transition-all duration-300 
+                        hover:bg-white hover:ring-[#6571FF]/80 hover:scale-[1.01] hover:shadow-sm
+                        focus-within:ring-2 focus-within:ring-[#6571FF]/40 focus:outline-none
+                        text-slate-600 font-medium thin-scrollbar
+                      "
+                      dropdownClassName="rounded-xl border-none shadow-2xl backdrop-blur-md bg-white/90"
+                    >
+                      {timeOptions.map((time) => (
+                        <Option
+                          key={time.value}
+                          value={time.value}
+                          className="
+                            py-2 px-3 
+                            text-slate-600 
+                            transition-colors 
+                            hover:bg-[#6571FF]/10 
+                            hover:text-[#6571FF]
+                          "
+                        >
+                          <p className="text-base text-gray-600"> {time.label}</p>
+                        </Option>
+                      ))}
+                    </Select>
+                  </div>
+                </label>
+
+                <label className="flex flex-col items-start">
+                  <span className="mb-2 font-medium text-slate-600">
+                    End Time <span className="text-[#E9405F]">*</span>
+                  </span>
                   <Select
-                    value={startTime}
+                    value={endTime}
                     onChange={(value) =>
-                      handleTimeChange({ target: { value } } as any, "start")
+                      handleTimeChange({ target: { value } } as any, "end")
                     }
-                    style={{ width: "100%", height: 34 }}
-                    className="border-slate-400 border rounded-md"
+                    style={{ width: "100%" }}
+                    className="
+                        h-[38px] w-full 
+                        rounded-lg border-none 
+                        bg-slate-50/50 
+                        ring-1 ring-slate-200 
+                        transition-all duration-300 
+                        hover:bg-white hover:ring-[#6571FF]/80 hover:scale-[1.01] hover:shadow-sm
+                        focus-within:ring-2 focus-within:ring-[#6571FF]/40 focus:outline-none
+                        text-slate-600 font-medium thin-scrollbar
+                      "
+                    dropdownClassName="rounded-xl border-none shadow-2xl backdrop-blur-md bg-white/90"
                   >
                     {timeOptions.map((time) => (
-                      <Option key={time.value} value={time.value}>
-                        <p className="text-base text-gray-600"> {time.label}</p>
+                      <Option
+                        key={time.value}
+                        value={time.value}
+                        className="
+                            py-2 px-3 
+                            text-slate-600
+                            transition-colors 
+                            hover:bg-[#6571FF]/10 
+                            hover:text-[#6571FF]
+                          "
+                      >
+                        {time.label}
                       </Option>
                     ))}
                   </Select>
-                </div>
-              </label>
+                </label>
+              </div>
+            </div>
 
-              <label className="flex flex-col items-start">
-                <span className="mb-1 text-sm font-medium text-gray-700">
-                  End Time
-                </span>
-                <Select
-                  value={endTime}
-                  onChange={(value) =>
-                    handleTimeChange({ target: { value } } as any, "end")
-                  }
-                  style={{ width: "100%", height: 34 }}
-                  className="border-slate-400 border rounded-md"
-                >
-                  {timeOptions.map((time) => (
-                    <Option key={time.value} value={time.value}>
-                      {time.label}
-                    </Option>
-                  ))}
-                </Select>
+            <div className="flex items-center">
+              <input
+                checked={allDay}
+                onChange={() => setAllDay(!allDay)}
+                id="all-day"
+                type="checkbox"
+                value="true"
+                className="h-4 w-4 rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600"
+                name="all-day"
+              />
+              <label
+                htmlFor="all-day"
+                className="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300"
+              >
+                All day
               </label>
             </div>
-          </div>
-
-          <div className="flex items-center">
-            <input
-              checked={allDay}
-              onChange={() => setAllDay(!allDay)}
-              id="all-day"
-              type="checkbox"
-              value="true"
-              className="h-4 w-4 rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600"
-              name="all-day"
+            {/* assign Sales */}
+            <AssignUsers
+              assignedUsers={assignedUsers.filter(
+                (user) => user.employeeType === "Sales"
+              )}
+              title="+ Assign Sales Person"
+              employeeType="Sales"
+              onAssignUser={(user: User) => {
+                setAssignedUsers((prev) => [...prev, user]);
+              }}
+              onRemoveAssignedUser={(user: User) => {
+                setAssignedUsers((prev) =>
+                  prev.filter((assignedUser) => assignedUser.id !== user.id)
+                );
+              }}
             />
-            <label
-              htmlFor="all-day"
-              className="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300"
-            >
-              All day
-            </label>
+            {/* assign technicians */}
+            <AssignUsers
+              assignedUsers={assignedUsers.filter(
+                (user) => user.employeeType === "Technician"
+              )}
+              title="+ Assign Technician"
+              employeeType="Technician"
+              onAssignUser={(user: User) => {
+                setAssignedUsers((prev) => [...prev, user]);
+              }}
+              onRemoveAssignedUser={(user: User) => {
+                setAssignedUsers((prev) =>
+                  prev.filter((assignedUser) => assignedUser.id !== user.id)
+                );
+              }}
+            />
           </div>
-          {/* assign Sales */}
-          <AssignUsers
-            assignedUsers={assignedUsers.filter(
-              (user) => user.employeeType === "Sales"
-            )}
-            title="+ Assign Sales Person"
-            employeeType="Sales"
-            onAssignUser={(user: User) => {
-              setAssignedUsers((prev) => [...prev, user]);
-            }}
-            onRemoveAssignedUser={(user: User) => {
-              setAssignedUsers((prev) =>
-                prev.filter((assignedUser) => assignedUser.id !== user.id)
-              );
-            }}
-          />
-          <br />
-          {/* assign technicians */}
-          <AssignUsers
-            assignedUsers={assignedUsers.filter(
-              (user) => user.employeeType === "Technician"
-            )}
-            title="+ Assign Technician"
-            employeeType="Technician"
-            onAssignUser={(user: User) => {
-              setAssignedUsers((prev) => [...prev, user]);
-            }}
-            onRemoveAssignedUser={(user: User) => {
-              setAssignedUsers((prev) =>
-                prev.filter((assignedUser) => assignedUser.id !== user.id)
-              );
-            }}
-          />
+
+          <div className="row-start-2 space-y-4 bg-background p-6 pb-20">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <SelectAppointmentClient
+                clientId={clientId}
+                fromLead={fromLead}
+                value={client}
+                setValue={setClient}
+                openDropdown={clientOpenDropdown}
+                setOpenDropdown={setClientOpenDropdown}
+                setIsAppointmentModalOpen={setIsAppointmentModalOpen}
+              />
+
+              <SelectAppointmentVehicle
+                vehicleId={vehicleId}
+                fromLead={fromLead}
+                clientId={client?.id ?? clientId}
+                value={vehicle}
+                setValue={setVehicle}
+                openDropdown={vehicleOpenDropdown}
+                setOpenDropdown={setVehicleOpenDropdown}
+                setIsAppointmentModalOpen={setIsAppointmentModalOpen}
+              />
+
+              <div className="w-full">
+                <DropdownMenu.Root open={draftOpen} onOpenChange={setDraftOpen}>
+                  <DropdownMenu.Trigger asChild>
+                    <button
+                      type="button"
+                      className={cn(
+                        "flex h-11 w-full items-center justify-between rounded-xl px-4 py-2 text-sm transition-all",
+                        "border border-slate-200 bg-white shadow-sm hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900",
+                        "focus:outline-none focus:ring-2 focus:ring-[#6571FF]/40",
+                        draftOpen && "ring-2 ring-[#6571FF]/40 border-[#6571FF]"
+                      )}
+                    >
+                      <div className="flex flex-col items-start overflow-hidden text-left">
+                        {selectedDraftOption ? (
+                          <>
+                            <span className="w-full text-sm truncate font-semibold text-slate-900 dark:text-white">
+                              {selectedDraftOption.vehicle}
+                            </span>
+                            <span className="text-xs text-slate-500">
+                              ID: {selectedDraftOption.id} • ${selectedDraftOption.price.toFixed(2)}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-slate-500">Select Draft Estimate</span>
+                        )}
+                      </div>
+                      <ChevronDown
+                        size={18}
+                        className={cn(
+                          "text-slate-400 transition-transform",
+                          draftOpen && "rotate-180"
+                        )}
+                      />
+                    </button>
+                  </DropdownMenu.Trigger>
+
+                  <DropdownMenu.Portal>
+                    <DropdownMenu.Content
+                      sideOffset={8}
+                      className="z-50 w-[var(--radix-dropdown-menu-trigger-width)] min-w-[300px] overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-xl animate-in fade-in zoom-in-95 dark:border-slate-800 dark:bg-slate-900"
+                    >
+                      <div className="relative mb-1 flex items-center p-2">
+                        <Search className="absolute left-4 h-4 w-4 text-slate-400" />
+                        <input
+                          className="w-full rounded-lg bg-slate-50 py-2 pl-9 pr-3 text-sm outline-none dark:bg-slate-800"
+                          placeholder="Search ID or Vehicle..."
+                          value={draftSearch}
+                          onChange={(e) => setDraftSearch(e.target.value)}
+                          autoFocus
+                        />
+                      </div>
+
+                      <div className="max-h-72 overflow-y-auto overflow-x-hidden px-1">
+                        {filteredDraftEstimateOptions.length > 0 ? (
+                          filteredDraftEstimateOptions.map((item) => (
+                            <DropdownMenu.Item
+                              key={item.id}
+                              onSelect={() => {
+                                setDraft(item.id);
+                                setDraftOpen(false);
+                              }}
+                              className="group flex cursor-pointer flex-col gap-1 rounded-lg px-3 py-2.5 outline-none hover:bg-slate-50 data-[highlighted]:bg-[#6571FF]/10 dark:hover:bg-slate-800"
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-200">
+                                  {item.vehicle}
+                                </div>
+                                <span className="text-sm font-bold text-[#6571FF]">
+                                  ${item.price.toFixed(2)}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-1 text-xs text-slate-400">
+                                <Hash size={10} />
+                                {item.id}
+                              </div>
+                            </DropdownMenu.Item>
+                          ))
+                        ) : (
+                          <div className="py-6 text-center text-xs text-slate-400">
+                            No results found
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="mt-1 border-t border-slate-100 p-2 dark:border-slate-800">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDraft(customAlphabet("1234567890", 10)());
+                            setDraftOpen(false);
+                          }}
+                          disabled={!client || !vehicle}
+                          className={cn(
+                            "flex w-full items-center justify-center gap-2 rounded-lg bg-[#6571FF] py-2.5 text-sm font-semibold text-white transition-opacity",
+                            "hover:opacity-90 active:scale-[0.98]",
+                            (!client || !vehicle) && "cursor-not-allowed opacity-60"
+                          )}
+                        >
+                          <Plus size={16} />
+                          New Draft Estimate
+                        </button>
+                      </div>
+                    </DropdownMenu.Content>
+                  </DropdownMenu.Portal>
+                </DropdownMenu.Root>
+              </div>
+
+            </div>
+
+            <div className="relative w-full">
+              <textarea
+                name="notes"
+                placeholder="Notes"
+                className={cn("h-20 w-full rounded-md border border-slate-300 outline-none bg-background px-2 py-0.5 leading-6 transition-all duration-300 thin-scrollbar",
+                  "bg-white/80 backdrop-blur-sm dark:bg-slate-900/50",
+                  "text-slate-600 dark:text-slate-300 placeholder:text-slate-400",
+                  "focus:border-[#6571FF]/60 focus:ring-2 focus:ring-[#6571FF]/40",
+                  "disabled:opacity-50 disabled:cursor-not-allowed"
+                )}
+                rows={3}
+                maxLength={1000}
+                value={notes}
+                onChange={(event) => setNotes(event.currentTarget.value)}
+              />
+              <span className="absolute -bottom-2 right-2 text-xs text-slate-400 pointer-events-none">
+                {notes.length}/1000
+              </span>
+            </div>
+          </div>
         </div>
 
-        <div className="row-start-2 space-y-4 bg-background p-6">
-          <SelectAppointmentClient
-            clientId={clientId}
-            fromLead={fromLead}
-            value={client}
-            setValue={setClient}
-            openDropdown={clientOpenDropdown}
-            setOpenDropdown={setClientOpenDropdown}
-            setIsAppointmentModalOpen={setIsAppointmentModalOpen}
-          />
-
-          <SelectAppointmentVehicle
-            vehicleId={vehicleId}
-            fromLead={fromLead}
-            clientId={client?.id ?? clientId}
-            value={vehicle}
-            setValue={setVehicle}
-            openDropdown={vehicleOpenDropdown}
-            setOpenDropdown={setVehicleOpenDropdown}
-            setIsAppointmentModalOpen={setIsAppointmentModalOpen}
-          />
-
-          <Selector
-            label={(draft: string | null) =>
-              draft ? draft : "Draft Estimates"
-            }
-            openState={[draftOpen, setDraftOpen]}
-            newButton={
-              <button
-                className="text-[#6571FF] disabled:text-zinc-400"
-                onClick={() => {
-                  setDraft(customAlphabet("1234567890", 10)());
-                  setDraftOpen(false);
-                }}
-                disabled={!client || !vehicle}
-                type="button"
-              >
-                + New Draft Estimate
-              </button>
-            }
-            items={draftEstimates}
-            selectedItem={draft}
-            setSelectedItem={setDraft}
-            displayList={(item) => <p className="text-[#6571FF]">{item}</p>}
-            onSearch={(search) => {
-              return draftEstimates.filter((draft) =>
-                draft.toLowerCase().includes(search.toLowerCase())
-              );
-            }}
-          />
-
-          <textarea
-            name="notes"
-            placeholder="Notes"
-            className={cn(slimInputClassName, "border-2 border-slate-400")}
-            rows={3}
-            value={notes}
-            onChange={(event) => setNotes(event.currentTarget.value)}
-          />
-        </div>
-
-        <div className="relative row-span-2 min-h-36 divide-y bg-background">
+        <div className="relative row-span-2 h-full overflow-y-auto thin-scrollbar divide-y bg-background">
           {tab === Tab.Schedule ? (
             <div
               ref={containerRef}
@@ -1030,7 +1233,11 @@ export default function AppointmentModalBody({
             <DialogClose asChild>
               <button
                 type="button"
-                className="rounded-md border px-4 py-1"
+                className="
+                rounded-xl mt-2 sm:mt-0 px-5 py-2.5 text-sm font-medium text-slate-500 
+                hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
+                transition-colors border
+                "
                 onClick={() => resetAll()}
               >
                 Cancel
@@ -1038,11 +1245,13 @@ export default function AppointmentModalBody({
             </DialogClose>
             <button
               type="button"
-              className={`rounded-md border px-4 py-1 text-white ${
-                formChanged && !isSubmitting
-                  ? "bg-[#6571FF] cursor-pointer hover:bg-blue-600"
+              className={`rounded-xl px-6 py-2.5 text-sm font-medium text-white shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40
+                hover:-translate-y-0.5 hover:scale-[1.02]
+                active:translate-y-0 active:scale-100
+                transition-all duration-200 ${formChanged && !isSubmitting
+                  ? "bg-gradient-to-r from-[#6571FF] to-[#5a66ee] cursor-pointer"
                   : "cursor-not-allowed bg-gray-400"
-              }`}
+                }`}
               onClick={handleSubmit}
               disabled={
                 !formChanged ||
