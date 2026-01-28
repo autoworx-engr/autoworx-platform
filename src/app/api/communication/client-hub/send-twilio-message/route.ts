@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sendTwilioMessage } from "@/actions/communication/client/sendTwilioMessage";
+import { db } from "@/lib/db";
+import { sendInfobipMessage } from "@/actions/communication/client/sendInfobipMessage";
 
 /**
  * @swagger
  * /api/communication/client-hub/send-twilio-message:
  *   post:
- *     summary: Send SMS via Twilio
+ *     summary: Send SMS via Twilio and infobip
  *     tags: [Communication Client]
  *     security:
  *       - bearerAuth: []
@@ -43,12 +45,27 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    const data = await sendTwilioMessage({
-      companyId: body.companyId,
-      clientId: body.clientId,
-      message: body.message,
-      attachments: body.attachments ?? [],
+    const companyInfo = await db.company.findFirst({
+      where: { id: body?.companyId },
     });
+
+    let data: any = null;
+
+    if (companyInfo?.smsGateway === "TWILIO") {
+      data = await sendTwilioMessage({
+        companyId: body.companyId,
+        clientId: body.clientId,
+        message: body.message,
+        attachments: body.attachments ?? [],
+      });
+    } else {
+      data = await sendInfobipMessage({
+        companyId: body.companyId,
+        clientId: body.clientId,
+        message: body.message,
+        attachments: body.attachments ?? [],
+      });
+    }
 
     if (data?.success) {
       return NextResponse.json({ success: true, data });
