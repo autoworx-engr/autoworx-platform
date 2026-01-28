@@ -66,6 +66,13 @@ export default function Month() {
     null
   );
   const [openListIndex, setOpenListIndex] = useState<number | null>(null);
+
+  const [isAppointmentModalOpen, setIsAppointmentOpen] = useState(false);
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+  const [selectedEventId, setSelectedEventId] = useState<number | null>(null);
+
+ 
+ 
   const authUser = session?.user;
   const {
     data: holidays,
@@ -440,6 +447,7 @@ export default function Month() {
                                   { ...appointment, type: "appointment" } as any
                                 }
                                 onClose={() => setOpenTooltipId(null)}
+                                
                               />
                             )}
                           </Tooltip>
@@ -483,6 +491,11 @@ export default function Month() {
                               <CalendarTooltip
                                 event={{ ...task, type: "task" } as any}
                                 onClose={() => setOpenTooltipId(null)}
+                                onEditOpen={() => {
+    setSelectedEventId(task.id);
+    setIsTaskModalOpen(true);
+    setOpenTooltipId(null); 
+  }}
                               />
                             )}
                           </Tooltip>
@@ -675,6 +688,11 @@ export default function Month() {
                                       <CalendarTooltip
                                         event={{ ...task, type: "task" } as any}
                                         onClose={() => setOpenTooltipId(null)}
+                                        onEditOpen={() => {
+    setSelectedEventId(task.id);
+    setIsTaskModalOpen(true);
+    setOpenTooltipId(null); 
+  }}
                                       />
                                     )}
                                   </div>
@@ -732,6 +750,11 @@ export default function Month() {
                                             } as any
                                           }
                                           onClose={() => setOpenTooltipId(null)}
+                                          onEditOpen={() => {
+    setSelectedEventId(appointment.id);
+    setIsTaskModalOpen(true);
+    setOpenTooltipId(null); 
+  }}
                                         />
                                       )}
                                     </div>
@@ -749,6 +772,8 @@ export default function Month() {
           );
         })}
       </div>
+
+      
     </div>
   );
 }
