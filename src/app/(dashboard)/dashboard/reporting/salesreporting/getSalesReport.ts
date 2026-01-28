@@ -253,6 +253,7 @@ export async function getSalesReportData(timezone: string) {
 //     twoMonthsAgoEnd,
 //   } = getDateRanges(timezone);
 
+//   // একবারে সব leads fetch করি সব client এবং invoice সহ
 //   const allLeads = await db.lead.findMany({
 //     where: { assignedSalesUserId: employee.id },
 //     include: {
@@ -266,6 +267,7 @@ export async function getSalesReportData(timezone: string) {
 //     },
 //   });
 
+//   // Fallback clients একবারে fetch করি
 //   const leadsWithoutClients = allLeads.filter(
 //     (lead) => lead.Client.length === 0 && lead.clientId,
 //   );
@@ -287,6 +289,7 @@ export async function getSalesReportData(timezone: string) {
 //         })
 //       : [];
 
+//   // Fallback clients map করি lead এর সাথে
 //   const clientMap = new Map(fallbackClients.map((c) => [c.id, c]));
 
 //   for (const lead of leadsWithoutClients) {
@@ -296,6 +299,7 @@ export async function getSalesReportData(timezone: string) {
 //     }
 //   }
 
+//   // এবার filter করি date range অনুযায়ী (memory তে) - null check সহ
 //   const currentMonthLeads = allLeads.map((lead) => ({
 //     ...lead,
 //     Client: lead.Client.map((client) => ({
