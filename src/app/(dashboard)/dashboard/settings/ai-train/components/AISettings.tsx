@@ -47,24 +47,15 @@ import { KnowledgeBaseDocumentsTab } from "./KnowledgeBaseDocumentsTab";
 import { ServicePlaybook } from "@/types/ai-settings";
 import ServiceFAQsSection from "./playbooks/ServiceFAQsSection";
 import CompanyKnowledgeCard from "./CompanyKnowledgeCard";
-import { useOverallFaqs, useSaveOverallFaqs } from "@/hooks/ai-train/useOverallFaqs";
+import {
+  useOverallFaqs,
+  useSaveOverallFaqs,
+} from "@/hooks/ai-train/useOverallFaqs";
 import PersonalityFineTuneCard from "./PersonalityFineTuneCard";
 
 interface FAQ {
   question: string;
   answer: string;
-}
-
-interface KBDocument {
-  id: string;
-  title: string;
-  category: string;
-  content: string;
-  file_name: string | null;
-  file_url: string | null;
-  file_type: string | null;
-  status: string;
-  created_at: string;
 }
 
 interface Personality {
@@ -110,7 +101,6 @@ const AISettings = () => {
   >();
 
   const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(null);
-  const [isScrapingWebsite, setIsScrapingWebsite] = useState(false);
 
   // Form states
   const [newFAQ, setNewFAQ] = useState<FAQ>({ question: "", answer: "" });
@@ -123,73 +113,14 @@ const AISettings = () => {
     if (overallFaqs) setFaqs(overallFaqs);
   }, [overallFaqs]);
 
-  // Website scraping handler
-  const handleScrapeWebsite = async () => {
-    if (!companyInfo?.website_url) {
-      toast.error("Please enter a website URL first.");
-      return;
-    }
-
-    setIsScrapingWebsite(true);
-    // try {
-    //   const { data, error } = await supabase.functions.invoke(
-    //     "scrape-website",
-    //     {
-    //       body: { url: companyInfo.website_url },
-    //     },
-    //   );
-
-    //   if (error) throw error;
-
-    //   if (!data?.success) {
-    //     throw new Error(data?.error || "Failed to scrape website");
-    //   }
-
-    //   // Save scraped content to knowledge base
-    //   const { error: insertError } = await supabase
-    //     .from("knowledge_base_documents")
-    //     .insert({
-    //       title: `Website Content: ${data.data.title || companyInfo.website_url}`,
-    //       category: "website",
-    //       content: `${data.data.description ? `Description: ${data.data.description}\n\n` : ""}${data.data.content}`,
-    //       status: "indexed",
-    //     });
-
-    //   if (insertError) throw insertError;
-
-    //   // Refresh documents list
-    //   const { data: docs } = await supabase
-    //     .from("knowledge_base_documents")
-    //     .select("*")
-    //     .order("created_at", { ascending: false });
-
-    //   setDocuments(docs || []);
-
-    //   toast({
-    //     title: "Website scraped!",
-    //     description: "Content has been added to your knowledge base.",
-    //   });
-    // } catch (error) {
-    //   console.error("Error scraping website:", error);
-    //   toast({
-    //     variant: "destructive",
-    //     title: "Error scraping website",
-    //     description:
-    //       error instanceof Error ? error.message : "Please try again.",
-    //   });
-    // } finally {
-    //   setIsScrapingWebsite(false);
-    // }
-  };
-
   const handleAddFAQ = () => {
     if (!newFAQ.question.trim() || !newFAQ.answer.trim()) return;
-    setFaqs(prev => [...prev, newFAQ]);
+    setFaqs((prev) => [...prev, newFAQ]);
     setNewFAQ({ question: "", answer: "" });
   };
 
   const handleRemoveFAQ = (index: number) => {
-    setFaqs(prev => prev.filter((_, i) => i !== index));
+    setFaqs((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSaveFaqs = () => {
@@ -243,7 +174,7 @@ const AISettings = () => {
 
         {/* 1. Company Knowledge */}
         <TabsContent value="company" className="space-y-6">
-          <CompanyKnowledgeCard/>
+          <CompanyKnowledgeCard />
         </TabsContent>
 
         {/* 2. Service Playbooks */}
@@ -350,26 +281,27 @@ const AISettings = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center justify-between gap-2">
-               <div className="flex items-center gap-2"> <HelpCircle className="h-5 w-5" />
-                Overall FAQs</div>
+                <div className="flex items-center gap-2">
+                  {" "}
+                  <HelpCircle className="h-5 w-5" />
+                  Overall FAQs
+                </div>
 
                 <div>
-                   <Button
-                                                        onClick={handleSaveFaqs}
-                                                        disabled={
-                                                          saveOverallFaqs.isPending 
-                                                        }
-                                                        size="lg"
-                                                      >
-                                                        {saveOverallFaqs.isPending ? (
-                                                          <>
-                                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                            Saving...
-                                                          </>
-                                                        ) : (
-                                                          <>Save Overall FAQs</>
-                                                        )}
-                                                      </Button>
+                  <Button
+                    onClick={handleSaveFaqs}
+                    disabled={saveOverallFaqs.isPending}
+                    size="lg"
+                  >
+                    {saveOverallFaqs.isPending ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>Save Overall FAQs</>
+                    )}
+                  </Button>
                 </div>
               </CardTitle>
               <CardDescription>
@@ -381,7 +313,9 @@ const AISettings = () => {
               {/* Existing FAQs */}
               <div className="space-y-3">
                 {faqsLoading ? (
-                  <div className="text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></div>
+                  <div className="text-center">
+                    <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                  </div>
                 ) : faqs.length > 0 ? (
                   faqs.map((faq, index) => (
                     <div
@@ -445,8 +379,6 @@ const AISettings = () => {
                   </Button>
                 </div>
               </div>
-
-             
 
               {/* Example FAQs */}
               <div className="rounded-lg border border-border bg-muted/20 p-4">
