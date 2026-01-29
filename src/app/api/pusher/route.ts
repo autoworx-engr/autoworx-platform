@@ -25,7 +25,8 @@ const pusher = getPusherInstance();
  * @swagger
  * /api/pusher:
  *   post:
- *     summary: Send message via Pusher
+ *     summary: Send a real-time message
+ *     description: Dispatches a message via Pusher, updates chat history, and triggers relevant notifications.
  *     tags: [Messaging]
  *     security:
  *       - bearerAuth: []
@@ -35,22 +36,53 @@ const pusher = getPusherInstance();
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - to
  *             properties:
  *               to:
  *                 type: integer
+ *                 description: Recipient user ID or group ID.
  *               message:
  *                 type: string
+ *                 description: Text content of the message.
  *               type:
  *                 type: string
+ *                 description: The type of message being sent.
+ *               section:
+ *                 type: string
+ *                 enum: [INTERNAL, COLLABORATION]
+ *                 description: The section context for the message.
+ *               attachmentFiles:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     fileName:
+ *                       type: string
+ *                     fileType:
+ *                       type: string
+ *                     fileUrl:
+ *                       type: string
+ *                     fileSize:
+ *                       type: integer
+ *                 description: Optional array of file attachments.
+ *               requestEstimate:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                 description: Optional associated estimate request.
  *     responses:
  *       200:
- *         description: Message sent
+ *         description: Message sent successfully.
+ *       400:
+ *         description: Bad request - missing required arguments.
  *       401:
- *         description: Unauthorized
+ *         description: Unauthorized - valid session required.
+ *       500:
+ *         description: Internal server error.
  */
-// POST /api/pusher/trigger
-// Trigger a message to the client
-// Body: { message, roomId }
+
 export async function POST(req: Request) {
   const body = await req.json();
   const { to, message, type, section, attachmentFiles, requestEstimate } = body;
@@ -65,7 +97,7 @@ export async function POST(req: Request) {
     // Helper function to generate lastMessage text
     const generateLastMessageText = (
       message: string,
-      attachmentFiles: any[] | null
+      attachmentFiles: any[] | null,
     ) => {
       // If there's a text message, use it
       if (message && message.trim()) {
@@ -75,7 +107,7 @@ export async function POST(req: Request) {
       // If there are attachments but no text message, generate descriptive text
       if (attachmentFiles && attachmentFiles.length > 0) {
         const imageCount = attachmentFiles.filter(
-          (file) => file.fileType && file.fileType.startsWith("image/")
+          file => file.fileType && file.fileType.startsWith("image/"),
         ).length;
         const otherFileCount = attachmentFiles.length - imageCount;
 
@@ -85,7 +117,7 @@ export async function POST(req: Request) {
         }
         if (otherFileCount > 0) {
           parts.push(
-            `${otherFileCount} ${otherFileCount === 1 ? "file" : "files"}`
+            `${otherFileCount} ${otherFileCount === 1 ? "file" : "files"}`,
           );
         }
 
@@ -130,7 +162,7 @@ export async function POST(req: Request) {
             message: "User is not in the group",
             success: false,
           }),
-          { status: 400 }
+          { status: 400 },
         );
       }
       channel = `group-${to}`;
@@ -287,7 +319,7 @@ export async function POST(req: Request) {
         attachments,
         newMessage: createdMessage,
         chatTrack: userChatTrack,
-      })
+      }),
     );
   } catch (e: any) {
     console.error(e);
@@ -295,7 +327,7 @@ export async function POST(req: Request) {
       JSON.stringify({ message: "Failed to send message", success: false }),
       {
         status: 500,
-      }
+      },
     );
   }
 }

@@ -3,6 +3,7 @@
 import { convertInvoice } from "@/actions/estimate/invoice/convert";
 import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
 import ResponsiveEstimateCard from "@/components/mobile-responsive/estimate/ResponsiveEstimateCard";
+import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { cn } from "@/lib/cn";
 import { errorToast, successToast } from "@/lib/toast";
 import { updateServiceAutomationTrigger } from "@/service/service-maintenance-automation-trigger/api";
@@ -10,14 +11,13 @@ import { useActionStoreCreateEdit } from "@/stores/createEditStore";
 import { useListsStore } from "@/stores/lists";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { Pagination } from "antd"; // Importing the Pagination component from Ant Design
+import { Search, SquarePen } from "lucide-react";
 import moment from "moment-timezone";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useMediaQuery } from "react-responsive";
 import ConvertTo from "./ConvertTo";
-import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
-import { Search, SquarePen } from "lucide-react";
 
 export interface InvoiceData {
   id: string;
@@ -139,8 +139,12 @@ export default function Table({
   };
 
   return (
-    <div className="min-h-[65vh] overflow-x-scroll rounded-md bg-background xl:overflow-auto xl:overflow-y-hidden flex flex-col ">
-      <div className="flex-grow">
+    <div
+      // className="min-h-[65vh] overflow-x-scroll rounded-md bg-background xl:overflow-auto xl:overflow-y-hidden flex flex-col "
+      className="relative max-h-[70vh] overflow-auto rounded-md bg-background flex flex-col 
+    [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+    >
+      <div className="flex-grow ">
         {isMax640 ? (
           <div className="flex  w-full flex-col items-center justify-center gap-y-4">
             {estimateData?.data?.map((data, index) => (
@@ -153,12 +157,16 @@ export default function Table({
             ))}
           </div>
         ) : (
-          <>{
-            estimateData?.data?.length === 0 ? (
+          <>
+            {estimateData?.data?.length === 0 ? (
               <div className="flex min-h-[400px] w-full flex-col items-center justify-center rounded-[2rem] border-2 border-dashed border-slate-100 bg-slate-50/30 p-12 text-center">
                 {/* Ghost Icon Illustration */}
                 <div className="relative mb-6 flex h-16 w-16 items-center justify-center rounded-3xl bg-white shadow-sm ring-1 ring-slate-200/50">
-                  <Search size={24} className="text-slate-300" strokeWidth={1.5} />
+                  <Search
+                    size={24}
+                    className="text-slate-300"
+                    strokeWidth={1.5}
+                  />
                   {/* Decorative ripple effect */}
                   <div className="absolute inset-0 animate-ping rounded-3xl bg-slate-100 opacity-20" />
                 </div>
@@ -168,13 +176,20 @@ export default function Table({
                   No Results Found
                 </h3>
                 <p className="max-w-[280px] text-sm font-medium leading-relaxed text-slate-400">
-                  We couldn't find what you're looking for. Try adjusting your filters or search terms.
+                  We couldn't find what you're looking for. Try adjusting your
+                  filters or search terms.
                 </p>
               </div>
-            ) :
-              <table className="w-full">
+            ) : (
+              <table
+                // className="w-full"
+                className="w-full border-separate border-spacing-0"
+              >
                 {/* Estimate Header */}
-                <thead className="bg-background">
+                <thead
+                  // className="sticky top-0  bg-background"
+                  className="sticky top-0 z-10 bg-white shadow-sm"
+                >
                   <tr className="h-10 border-b">
                     <th className="px-4 py-2 text-left">Invoice ID</th>
                     <th className="px-4 py-2 text-left">Client</th>
@@ -197,7 +212,10 @@ export default function Table({
                   {estimateData?.data?.map((data, index) => (
                     <tr
                       key={data.id}
-                      className={cn("py-3", index % 2 === 0 ? evenColor : oddColor)}
+                      className={cn(
+                        "py-3",
+                        index % 2 === 0 ? evenColor : oddColor
+                      )}
                     >
                       <td className="px-4 py-2 text-left">
                         <InvoiceModal
@@ -225,7 +243,9 @@ export default function Table({
                       </td>
                       <td className="px-4 py-2 text-left">
                         <p className="block h-full w-full">
-                          {moment.tz(data.createdAt, timezone).format("MM/DD/YYYY")}
+                          {moment
+                            .tz(data.createdAt, timezone)
+                            .format("MM/DD/YYYY")}
                         </p>
                       </td>
                       <td className="px-4 py-2 text-left">
@@ -247,8 +267,8 @@ export default function Table({
                           <p className="block h-full w-full">
                             {data?.deliveredAt
                               ? moment
-                                .tz(data?.deliveredAt, timezone)
-                                .format("MM/DD/YYYY")
+                                  .tz(data?.deliveredAt, timezone)
+                                  .format("MM/DD/YYYY")
                               : ""}
                           </p>
                         </td>
@@ -269,7 +289,7 @@ export default function Table({
                   ))}
                 </tbody>
               </table>
-          }
+            )}
           </>
         )}
         <div className="mt-auto">

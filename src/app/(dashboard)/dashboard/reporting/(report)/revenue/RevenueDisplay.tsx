@@ -1,13 +1,13 @@
 "use client";
 import { Refund } from "@prisma/client";
 import { Pagination } from "antd";
+import { Search } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useMediaQuery } from "react-responsive";
 import { TInvoice } from "./page";
 import RevenueMobileCard from "./RevenueMobileCard";
 import RevenueTableRow from "./RevenueTableRow";
-import { Search } from "lucide-react";
 
 type TProps = {
   filteredInvoice: (TInvoice & {
@@ -75,86 +75,88 @@ export default function RevenueDisplay({
 
   if (isDesktop) {
     return (
-      <div className="w-full">
-        {
-          invoicesToRender.length === 0 ? (
-            <div className="flex min-h-[200px] w-full flex-col items-center justify-center rounded-[2rem] border-2 border-dashed border-slate-100 bg-slate-50/30 p-12 text-center">
-              {/* Ghost Icon Illustration */}
-              <div className="relative mb-6 flex h-16 w-16 items-center justify-center rounded-3xl bg-white shadow-sm ring-1 ring-slate-200/50">
-                <Search size={24} className="text-slate-300" strokeWidth={1.5} />
-                {/* Decorative ripple effect */}
-                <div className="absolute inset-0 animate-ping rounded-3xl bg-slate-100 opacity-20" />
-              </div>
-
-              {/* Text Content */}
-              <h3 className="mb-2 text-lg font-bold text-slate-500">
-                No Results Found
-              </h3>
-              <p className="max-w-[280px] text-sm font-medium leading-relaxed text-slate-400">
-                We couldn't find what you're looking for. Try adjusting your filters or search terms.
-              </p>
+      <div className=" w-full -mt-5 pt-5">
+        {invoicesToRender.length === 0 ? (
+          <div className="flex min-h-[200px] w-full flex-col items-center justify-center rounded-[2rem] border-2 border-dashed border-slate-100 bg-slate-50/30 p-12 text-center">
+            {/* Ghost Icon Illustration */}
+            <div className="relative mb-6 flex h-16 w-16 items-center justify-center rounded-3xl bg-white shadow-sm ring-1 ring-slate-200/50">
+              <Search size={24} className="text-slate-300" strokeWidth={1.5} />
+              {/* Decorative ripple effect */}
+              <div className="absolute inset-0 animate-ping rounded-3xl bg-slate-100 opacity-20" />
             </div>
-          ) :
-            <table className="w-full shadow-md">
-              <thead className="bg-background">
-                <tr className="h-10 border-b">
-                  <th className="border-b px-4 py-2 text-left">Customer</th>
-                  <th className="border-b px-4 py-2 text-left">Vehicle Info </th>
-                  <th className="border-b px-4 py-2 text-left">Invoice #</th>
-                  <th className="border-b px-4 py-2 text-left">Date Delivered</th>
-                  <th className="border-b px-4 py-2 text-left">Price</th>
-                  <th className="border-b px-4 py-2 text-left">Cost</th>
-                  <th className="border-b px-4 py-2 text-left">Profit</th>
-                </tr>
-              </thead>
-              <tbody>
-                {invoicesToRender?.map((invoice, index) => {
-                  // Generate loss details for tooltip
-                  const lossDetails = [];
 
-                  // Inventory losses (lost products)
-                  if (invoice.inventoryLossAmount > 0) {
-                    const inventoryMaterialNames =
-                      invoice.InventoryProductHistory?.map(
-                        (item) => item.product?.name
-                      ).filter(Boolean);
-                    lossDetails.push(
-                      `Inventory Loss: ${inventoryMaterialNames?.join(", ")}`
-                    );
-                  }
+            {/* Text Content */}
+            <h3 className="mb-2 text-lg font-bold text-slate-500">
+              No Results Found
+            </h3>
+            <p className="max-w-[280px] text-sm font-medium leading-relaxed text-slate-400">
+              We couldn't find what you're looking for. Try adjusting your
+              filters or search terms.
+            </p>
+          </div>
+        ) : (
+          <table className="w-full border-collapse shadow-md">
+            <thead className="sticky top-0 bg-white shadow-sm">
+              <tr className="h-10 border-b">
+                <th className="border-b px-4 py-2 text-left">Customer</th>
+                <th className="border-b px-4 py-2 text-left">Vehicle Info </th>
+                <th className="border-b px-4 py-2 text-left">Invoice #</th>
+                <th className="border-b px-4 py-2 text-left">Date Delivered</th>
+                <th className="border-b px-4 py-2 text-left">Price</th>
+                <th className="border-b px-4 py-2 text-left">Cost</th>
+                <th className="border-b px-4 py-2 text-left">Profit</th>
+              </tr>
+            </thead>
+            <tbody>
+              {invoicesToRender?.map((invoice, index) => {
+                // Generate loss details for tooltip
+                const lossDetails = [];
 
-                  // Material losses (show actual material names with losses)
-                  if (
-                    invoice.materialLossAmount > 0 &&
-                    invoice.materialLossDetails?.length > 0
-                  ) {
-                    const materialNames = invoice.materialLossDetails.map(
-                      (detail) => `${detail.name} ($${detail.loss.toFixed(2)})`
-                    );
-                    lossDetails.push(`Material Loss: ${materialNames.join(", ")}`);
-                  }
-
-                  // Labor losses
-                  if (invoice.laborLossAmount > 0) {
-                    lossDetails.push(
-                      `Labor Loss: Technician cost exceeds charges ($${invoice.laborLossAmount.toFixed(2)})`
-                    );
-                  }
-
-                  return (
-                    <RevenueTableRow
-                      key={invoice.id}
-                      invoice={invoice}
-                      timezone={timezone as string}
-                      index={index}
-                      totalLossAmount={invoice.totalLossAmount}
-                      lossDetails={lossDetails}
-                    />
+                // Inventory losses (lost products)
+                if (invoice.inventoryLossAmount > 0) {
+                  const inventoryMaterialNames =
+                    invoice.InventoryProductHistory?.map(
+                      (item) => item.product?.name
+                    ).filter(Boolean);
+                  lossDetails.push(
+                    `Inventory Loss: ${inventoryMaterialNames?.join(", ")}`
                   );
-                })}
-              </tbody>
-            </table>
-        }
+                }
+
+                // Material losses (show actual material names with losses)
+                if (
+                  invoice.materialLossAmount > 0 &&
+                  invoice.materialLossDetails?.length > 0
+                ) {
+                  const materialNames = invoice.materialLossDetails.map(
+                    (detail) => `${detail.name} ($${detail.loss.toFixed(2)})`
+                  );
+                  lossDetails.push(
+                    `Material Loss: ${materialNames.join(", ")}`
+                  );
+                }
+
+                // Labor losses
+                if (invoice.laborLossAmount > 0) {
+                  lossDetails.push(
+                    `Labor Loss: Technician cost exceeds charges ($${invoice.laborLossAmount.toFixed(2)})`
+                  );
+                }
+
+                return (
+                  <RevenueTableRow
+                    key={invoice.id}
+                    invoice={invoice}
+                    timezone={timezone as string}
+                    index={index}
+                    totalLossAmount={invoice.totalLossAmount}
+                    lossDetails={lossDetails}
+                  />
+                );
+              })}
+            </tbody>
+          </table>
+        )}
         {showPagination && (
           <div className="mt-4 flex justify-end">
             <Pagination

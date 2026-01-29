@@ -380,12 +380,21 @@ const LaborComponent = ({
                       <label className="mb-2 block text-sm font-medium text-gray-700">
                         Category<span className="text-red-500">*</span>
                       </label>
+                      {/* <SelectCategory
+                        onCategoryChange={setCategory}
+                        labelPosition="none"
+                        categoryData={category}
+                        categoryOpen={categoryOpen}
+                        setCategoryOpen={setCategoryOpen}
+                      /> */}
+
                       <SelectCategory
                         onCategoryChange={setCategory}
                         labelPosition="none"
                         categoryData={category}
                         categoryOpen={categoryOpen}
                         setCategoryOpen={setCategoryOpen}
+                        allowEdit={true}
                       />
                     </div>
                     <div>
@@ -514,13 +523,21 @@ const LaborComponent = ({
                 <label className="mb-2 block text-sm font-medium text-gray-700">
                   Category <span className="text-red-500">*</span>
                 </label>
-                <SelectCategory
+                {/* <SelectCategory
                   className="min-w-full"
                   onCategoryChange={setCategory}
                   labelPosition="none"
                   categoryData={category}
                   categoryOpen={categoryOpen}
                   setCategoryOpen={setCategoryOpen}
+                /> */}
+                <SelectCategory
+                  onCategoryChange={setCategory}
+                  labelPosition="none"
+                  categoryData={category}
+                  categoryOpen={categoryOpen}
+                  setCategoryOpen={setCategoryOpen}
+                  allowEdit={true}
                 />
               </div>
               <div>
