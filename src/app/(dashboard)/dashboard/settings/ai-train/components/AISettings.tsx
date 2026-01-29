@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -18,10 +18,6 @@ import { Slider } from "@/components/ui/slider";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Building2,
-  Phone,
-  Mail,
-  MapPin,
-  Clock,
   Plus,
   X,
   Loader2,
@@ -41,6 +37,7 @@ import {
   Zap,
   Volume2,
   Sparkles,
+  Save,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { humanPersonas } from "@/lib/humanPersona";
@@ -49,6 +46,9 @@ import { ConversationExamplesTab } from "./ConversationExamplesTab";
 import { KnowledgeBaseDocumentsTab } from "./KnowledgeBaseDocumentsTab";
 import { ServicePlaybook } from "@/types/ai-settings";
 import ServiceFAQsSection from "./playbooks/ServiceFAQsSection";
+import CompanyKnowledgeCard from "./CompanyKnowledgeCard";
+import { useOverallFaqs, useSaveOverallFaqs } from "@/hooks/ai-train/useOverallFaqs";
+import PersonalityFineTuneCard from "./PersonalityFineTuneCard";
 
 interface FAQ {
   question: string;
@@ -114,6 +114,14 @@ const AISettings = () => {
 
   // Form states
   const [newFAQ, setNewFAQ] = useState<FAQ>({ question: "", answer: "" });
+  const { data: overallFaqs = [], isLoading: faqsLoading } = useOverallFaqs();
+  const saveOverallFaqs = useSaveOverallFaqs();
+  const [faqs, setFaqs] = useState<FAQ[]>([]);
+
+  // Sync fetched FAQs to local state
+  useEffect(() => {
+    if (overallFaqs) setFaqs(overallFaqs);
+  }, [overallFaqs]);
 
   // Website scraping handler
   const handleScrapeWebsite = async () => {
@@ -175,21 +183,17 @@ const AISettings = () => {
   };
 
   const handleAddFAQ = () => {
-    if (!newFAQ.question.trim() || !newFAQ.answer.trim() || !companyInfo)
-      return;
-    setCompanyInfo({
-      ...companyInfo,
-      overall_faqs: [...companyInfo.overall_faqs, newFAQ],
-    });
+    if (!newFAQ.question.trim() || !newFAQ.answer.trim()) return;
+    setFaqs(prev => [...prev, newFAQ]);
     setNewFAQ({ question: "", answer: "" });
   };
 
   const handleRemoveFAQ = (index: number) => {
-    if (!companyInfo) return;
-    setCompanyInfo({
-      ...companyInfo,
-      overall_faqs: companyInfo.overall_faqs.filter((_, i) => i !== index),
-    });
+    setFaqs(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSaveFaqs = () => {
+    saveOverallFaqs.mutate(faqs);
   };
 
   return (
@@ -239,173 +243,7 @@ const AISettings = () => {
 
         {/* 1. Company Knowledge */}
         <TabsContent value="company" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Building2 className="h-5 w-5" />
-                Company Knowledge
-              </CardTitle>
-              <CardDescription>
-                Basic info, contact details, and policies - the foundation of
-                your AI's knowledge
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-6 md:grid-cols-2">
-                {/* Basic Info */}
-                <div className="space-y-4">
-                  <h3 className="font-semibold text-sm uppercase tracking-wide">
-                    Basic Information
-                  </h3>
-                  <div className="space-y-3">
-                    <div className="space-y-2">
-                      <Label>Shop Name</Label>
-                      <Input
-                        value={companyInfo?.shop_name || ""}
-                        onChange={(e) =>
-                          setCompanyInfo((prev) =>
-                            prev
-                              ? { ...prev, shop_name: e.target.value }
-                              : prev,
-                          )
-                        }
-                        placeholder="Your shop name"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
-                        <Phone className="h-4 w-4" /> Phone
-                      </Label>
-                      <Input
-                        value={companyInfo?.phone || ""}
-                        onChange={(e) =>
-                          setCompanyInfo((prev) =>
-                            prev ? { ...prev, phone: e.target.value } : prev,
-                          )
-                        }
-                        placeholder="(555) 123-4567"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
-                        <Mail className="h-4 w-4" /> Email
-                      </Label>
-                      <Input
-                        value={companyInfo?.email || ""}
-                        onChange={(e) =>
-                          setCompanyInfo((prev) =>
-                            prev ? { ...prev, email: e.target.value } : prev,
-                          )
-                        }
-                        placeholder="info@yourshop.com"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4" /> Address
-                      </Label>
-                      <Input
-                        value={companyInfo?.address || ""}
-                        onChange={(e) =>
-                          setCompanyInfo((prev) =>
-                            prev ? { ...prev, address: e.target.value } : prev,
-                          )
-                        }
-                        placeholder="123 Main St, City, State"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
-                        <Clock className="h-4 w-4" /> Business Hours
-                      </Label>
-                      <Input
-                        value={companyInfo?.hours || ""}
-                        onChange={(e) =>
-                          setCompanyInfo((prev) =>
-                            prev ? { ...prev, hours: e.target.value } : prev,
-                          )
-                        }
-                        placeholder="Mon-Fri 9am-6pm, Sat 10am-4pm"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
-                        <Globe className="h-4 w-4" /> Website URL
-                      </Label>
-                      <div className="flex gap-2">
-                        <Input
-                          value={companyInfo?.website_url || ""}
-                          onChange={(e) =>
-                            setCompanyInfo((prev) =>
-                              prev
-                                ? { ...prev, website_url: e.target.value }
-                                : prev,
-                            )
-                          }
-                          placeholder="https://yourshop.com"
-                          className="flex-1"
-                        />
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={handleScrapeWebsite}
-                          disabled={
-                            isScrapingWebsite || !companyInfo?.website_url
-                          }
-                          title="Scrape website content for AI training"
-                        >
-                          {isScrapingWebsite ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <RefreshCw className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        Click the refresh button to scrape your website content
-                        for AI training
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* About & Policies */}
-                <div className="space-y-4">
-                  <h3 className="font-semibold text-sm uppercase tracking-wide">
-                    About & Policies
-                  </h3>
-                  <div className="space-y-3">
-                    <div className="space-y-2">
-                      <Label>About Your Shop</Label>
-                      <Textarea
-                        value={companyInfo?.about || ""}
-                        onChange={(e) =>
-                          setCompanyInfo((prev) =>
-                            prev ? { ...prev, about: e.target.value } : prev,
-                          )
-                        }
-                        placeholder="Tell customers about your shop, experience, certifications, what makes you special..."
-                        rows={5}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Policies & Notes</Label>
-                      <Textarea
-                        value={companyInfo?.policies || ""}
-                        onChange={(e) =>
-                          setCompanyInfo((prev) =>
-                            prev ? { ...prev, policies: e.target.value } : prev,
-                          )
-                        }
-                        placeholder="Deposit requirements, cancellation policy, general warranty info, payment methods..."
-                        rows={5}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <CompanyKnowledgeCard/>
         </TabsContent>
 
         {/* 2. Service Playbooks */}
@@ -511,9 +349,28 @@ const AISettings = () => {
         <TabsContent value="faqs" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <HelpCircle className="h-5 w-5" />
-                Overall FAQs
+              <CardTitle className="flex items-center justify-between gap-2">
+               <div className="flex items-center gap-2"> <HelpCircle className="h-5 w-5" />
+                Overall FAQs</div>
+
+                <div>
+                   <Button
+                                                        onClick={handleSaveFaqs}
+                                                        disabled={
+                                                          saveOverallFaqs.isPending 
+                                                        }
+                                                        size="lg"
+                                                      >
+                                                        {saveOverallFaqs.isPending ? (
+                                                          <>
+                                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                            Saving...
+                                                          </>
+                                                        ) : (
+                                                          <>Save Overall FAQs</>
+                                                        )}
+                                                      </Button>
+                </div>
               </CardTitle>
               <CardDescription>
                 General frequently asked questions about booking, appointments,
@@ -523,31 +380,33 @@ const AISettings = () => {
             <CardContent className="space-y-6">
               {/* Existing FAQs */}
               <div className="space-y-3">
-                {companyInfo?.overall_faqs.map((faq, index) => (
-                  <div
-                    key={index}
-                    className="p-4 border rounded-lg bg-muted/30"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1">
-                        <p className="font-medium text-foreground">
-                          {faq.question}
-                        </p>
-                        <p className="text-sm text-muted-foreground mt-2">
-                          {faq.answer}
-                        </p>
+                {faqsLoading ? (
+                  <div className="text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></div>
+                ) : faqs.length > 0 ? (
+                  faqs.map((faq, index) => (
+                    <div
+                      key={index}
+                      className="p-4 border rounded-lg bg-muted/30"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1">
+                          <p className="font-medium text-foreground">
+                            {faq.question}
+                          </p>
+                          <p className="text-sm text-muted-foreground mt-2">
+                            {faq.answer}
+                          </p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          onClick={() => handleRemoveFAQ(index)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
                       </div>
-                      <Button
-                        variant="ghost"
-                        onClick={() => handleRemoveFAQ(index)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
                     </div>
-                  </div>
-                ))}
-                {(!companyInfo?.overall_faqs ||
-                  companyInfo.overall_faqs.length === 0) && (
+                  ))
+                ) : (
                   <div className="text-center py-8 text-muted-foreground border rounded-lg border-dashed">
                     <HelpCircle className="h-10 w-10 mx-auto mb-2 opacity-50" />
                     <p>
@@ -586,6 +445,8 @@ const AISettings = () => {
                   </Button>
                 </div>
               </div>
+
+             
 
               {/* Example FAQs */}
               <div className="rounded-lg border border-border bg-muted/20 p-4">
@@ -633,487 +494,7 @@ const AISettings = () => {
 
         {/* 6. Personality, Voice & Tone, Opening Message */}
         <TabsContent value="personality" className="space-y-6">
-          {/* Choose a Personality Preset */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5" />
-                Choose a Personality
-              </CardTitle>
-              <CardDescription>
-                Pick a base personality - your AI will talk like a real person,
-                not a robot
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <RadioGroup
-                value={companyInfo?.persona_type || "friendly_professional"}
-                onValueChange={(val) => {
-                  const persona = humanPersonas[val];
-                  if (persona && companyInfo) {
-                    setCompanyInfo({
-                      ...companyInfo,
-                      persona_type: val,
-                      persona_name: persona.name,
-                      personality: {
-                        warmth: persona.personality.warmth,
-                        humor: persona.personality.humor,
-                        formality: persona.personality.formality,
-                        empathy: persona.personality.empathy,
-                        enthusiasm: persona.personality.enthusiasm,
-                      },
-                      conversation_style: {
-                        useContractions:
-                          persona.conversationRules.useContrations,
-                        useEmojis: persona.conversationRules.useEmojis,
-                        mirrorTone:
-                          persona.conversationRules.mirrorCustomerTone,
-                        casualLanguage: persona.conversationRules.useSlang,
-                      },
-                    });
-                  }
-                }}
-                className="grid gap-4 md:grid-cols-3"
-              >
-                <Label
-                  htmlFor="friendly_professional"
-                  className={`flex flex-col items-center gap-3 rounded-xl border-2 p-4 cursor-pointer transition-all ${
-                    companyInfo?.persona_type === "friendly_professional"
-                      ? "border-primary bg-primary/5"
-                      : "border-border hover:border-primary/50"
-                  }`}
-                >
-                  <RadioGroupItem
-                    value="friendly_professional"
-                    id="friendly_professional"
-                    className="sr-only"
-                  />
-                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-2xl">
-                    😊
-                  </div>
-                  <div className="text-center">
-                    <p className="font-semibold">Friendly & Professional</p>
-                  </div>
-                  <p className="text-xs text-muted-foreground text-center">
-                    Warm, helpful, knows their stuff. Like a friendly expert.
-                  </p>
-                </Label>
-
-                <Label
-                  htmlFor="casual_expert"
-                  className={`flex flex-col items-center gap-3 rounded-xl border-2 p-4 cursor-pointer transition-all ${
-                    companyInfo?.persona_type === "casual_expert"
-                      ? "border-primary bg-primary/5"
-                      : "border-border hover:border-primary/50"
-                  }`}
-                >
-                  <RadioGroupItem
-                    value="casual_expert"
-                    id="casual_expert"
-                    className="sr-only"
-                  />
-                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-2xl">
-                    🤙
-                  </div>
-                  <div className="text-center">
-                    <p className="font-semibold">Casual & Enthusiastic</p>
-                  </div>
-                  <p className="text-xs text-muted-foreground text-center">
-                    Super chill, loves cars, talks like your buddy.
-                  </p>
-                </Label>
-
-                <Label
-                  htmlFor="warm_helpful"
-                  className={`flex flex-col items-center gap-3 rounded-xl border-2 p-4 cursor-pointer transition-all ${
-                    companyInfo?.persona_type === "warm_helpful"
-                      ? "border-primary bg-primary/5"
-                      : "border-border hover:border-primary/50"
-                  }`}
-                >
-                  <RadioGroupItem
-                    value="warm_helpful"
-                    id="warm_helpful"
-                    className="sr-only"
-                  />
-                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-2xl">
-                    💝
-                  </div>
-                  <div className="text-center">
-                    <p className="font-semibold">Warm & Caring</p>
-                  </div>
-                  <p className="text-xs text-muted-foreground text-center">
-                    Patient, empathetic, makes everyone feel welcome.
-                  </p>
-                </Label>
-              </RadioGroup>
-            </CardContent>
-          </Card>
-
-          {/* Fine-tune Personality */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5" />
-                Fine-tune Personality
-              </CardTitle>
-              <CardDescription>Adjust how your AI comes across</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <Label className="flex items-center gap-2">
-                      <Heart className="h-4 w-4 text-pink-500" />
-                      Warmth
-                    </Label>
-                    <span className="text-sm text-muted-foreground">
-                      {companyInfo?.personality?.warmth ?? 8}/10
-                    </span>
-                  </div>
-                  <Slider
-                    value={[companyInfo?.personality?.warmth ?? 8]}
-                    onValueChange={(v) =>
-                      setCompanyInfo((prev) =>
-                        prev
-                          ? {
-                              ...prev,
-                              personality: {
-                                ...prev.personality,
-                                warmth: v[0],
-                              },
-                            }
-                          : prev,
-                      )
-                    }
-                    max={10}
-                    min={1}
-                    step={1}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    {(companyInfo?.personality?.warmth ?? 8) >= 7
-                      ? "Very friendly and approachable"
-                      : (companyInfo?.personality?.warmth ?? 8) >= 4
-                        ? "Pleasant but professional"
-                        : "More reserved and formal"}
-                  </p>
-                </div>
-
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <Label className="flex items-center gap-2">
-                      <Smile className="h-4 w-4 text-yellow-500" />
-                      Humor
-                    </Label>
-                    <span className="text-sm text-muted-foreground">
-                      {companyInfo?.personality?.humor ?? 6}/10
-                    </span>
-                  </div>
-                  <Slider
-                    value={[companyInfo?.personality?.humor ?? 6]}
-                    onValueChange={(v) =>
-                      setCompanyInfo((prev) =>
-                        prev
-                          ? {
-                              ...prev,
-                              personality: { ...prev.personality, humor: v[0] },
-                            }
-                          : prev,
-                      )
-                    }
-                    max={10}
-                    min={1}
-                    step={1}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    {(companyInfo?.personality?.humor ?? 6) >= 7
-                      ? "Will crack jokes and be playful"
-                      : (companyInfo?.personality?.humor ?? 6) >= 4
-                        ? "Light humor when appropriate"
-                        : "Keeps it strictly business"}
-                  </p>
-                </div>
-
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <Label className="flex items-center gap-2">
-                      <Zap className="h-4 w-4 text-orange-500" />
-                      Energy
-                    </Label>
-                    <span className="text-sm text-muted-foreground">
-                      {companyInfo?.personality?.enthusiasm ?? 7}/10
-                    </span>
-                  </div>
-                  <Slider
-                    value={[companyInfo?.personality?.enthusiasm ?? 7]}
-                    onValueChange={(v) =>
-                      setCompanyInfo((prev) =>
-                        prev
-                          ? {
-                              ...prev,
-                              personality: {
-                                ...prev.personality,
-                                enthusiasm: v[0],
-                              },
-                            }
-                          : prev,
-                      )
-                    }
-                    max={10}
-                    min={1}
-                    step={1}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    {(companyInfo?.personality?.enthusiasm ?? 7) >= 7
-                      ? "High energy, gets excited about projects"
-                      : (companyInfo?.personality?.enthusiasm ?? 7) >= 4
-                        ? "Balanced enthusiasm"
-                        : "Calm and measured"}
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="personaName">Assistant Name</Label>
-                <Input
-                  id="personaName"
-                  value={companyInfo?.persona_name || ""}
-                  onChange={(e) =>
-                    setCompanyInfo((prev) =>
-                      prev ? { ...prev, persona_name: e.target.value } : prev,
-                    )
-                  }
-                  placeholder="Alex"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Customers will see this name in the chat header
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Voice & Tone */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Volume2 className="h-5 w-5" />
-                Voice & Tone
-              </CardTitle>
-              <CardDescription>
-                Control how your AI communicates in conversations
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between rounded-lg border border-border p-4">
-                <div>
-                  <Label className="text-base">Use contractions</Label>
-                  <p className="text-sm text-muted-foreground">
-                    "I'm" instead of "I am"
-                  </p>
-                </div>
-                <Switch
-                  checked={
-                    companyInfo?.conversation_style?.useContractions ?? true
-                  }
-                  onCheckedChange={(checked) =>
-                    setCompanyInfo((prev) =>
-                      prev
-                        ? {
-                            ...prev,
-                            conversation_style: {
-                              ...prev.conversation_style,
-                              useContractions: checked,
-                            },
-                          }
-                        : prev,
-                    )
-                  }
-                />
-              </div>
-
-              <div className="flex items-center justify-between rounded-lg border border-border p-4">
-                <div>
-                  <Label className="text-base">Use casual language</Label>
-                  <p className="text-sm text-muted-foreground">
-                    "Sounds good!", "No worries", "Gotcha"
-                  </p>
-                </div>
-                <Switch
-                  checked={
-                    companyInfo?.conversation_style?.casualLanguage ?? true
-                  }
-                  onCheckedChange={(checked) =>
-                    setCompanyInfo((prev) =>
-                      prev
-                        ? {
-                            ...prev,
-                            conversation_style: {
-                              ...prev.conversation_style,
-                              casualLanguage: checked,
-                            },
-                          }
-                        : prev,
-                    )
-                  }
-                />
-              </div>
-
-              <div className="flex items-center justify-between rounded-lg border border-border p-4">
-                <div>
-                  <Label className="text-base">Match customer's tone</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Mirror their energy and formality level
-                  </p>
-                </div>
-                <Switch
-                  checked={companyInfo?.conversation_style?.mirrorTone ?? true}
-                  onCheckedChange={(checked) =>
-                    setCompanyInfo((prev) =>
-                      prev
-                        ? {
-                            ...prev,
-                            conversation_style: {
-                              ...prev.conversation_style,
-                              mirrorTone: checked,
-                            },
-                          }
-                        : prev,
-                    )
-                  }
-                />
-              </div>
-
-              <div className="flex items-center justify-between rounded-lg border border-border p-4">
-                <div>
-                  <Label className="text-base">Use emojis in chat</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Adds personality to text messages
-                  </p>
-                </div>
-                <Switch
-                  checked={companyInfo?.conversation_style?.useEmojis ?? true}
-                  onCheckedChange={(checked) =>
-                    setCompanyInfo((prev) =>
-                      prev
-                        ? {
-                            ...prev,
-                            conversation_style: {
-                              ...prev.conversation_style,
-                              useEmojis: checked,
-                            },
-                          }
-                        : prev,
-                    )
-                  }
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Opening Message */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MessageSquare className="h-5 w-5" />
-                Opening Message
-              </CardTitle>
-              <CardDescription>
-                The first message your AI sends when a customer opens the chat
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Greeting Message</Label>
-                <Textarea
-                  value={companyInfo?.opening_message || ""}
-                  onChange={(e) =>
-                    setCompanyInfo((prev) =>
-                      prev
-                        ? { ...prev, opening_message: e.target.value }
-                        : prev,
-                    )
-                  }
-                  placeholder="Hey there! 👋 What's going on?"
-                  rows={3}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Leave empty to let the AI generate a greeting based on its
-                  personality and training.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Advanced: System Prompt */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Brain className="h-5 w-5" />
-                Advanced: System Prompt
-              </CardTitle>
-              <CardDescription>
-                Full custom instructions for the AI (for advanced users)
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label>System Prompt</Label>
-                <Textarea
-                  value={companyInfo?.system_prompt || ""}
-                  onChange={(e) =>
-                    setCompanyInfo((prev) =>
-                      prev ? { ...prev, system_prompt: e.target.value } : prev,
-                    )
-                  }
-                  placeholder={`Example:
-You are ${companyInfo?.persona_name || "Alex"}, a friendly and knowledgeable sales consultant at ${companyInfo?.shop_name || "[Shop Name]"}. 
-
-Your personality:
-- Warm and welcoming, but professional
-- Enthusiastic about cars and detailing
-- Patient with questions
-- Never pushy, but helpful in guiding toward solutions
-
-Rules:
-- Always try to understand the customer's needs before quoting
-- Ask about vehicle type, condition, and goals
-- Mention warranties and aftercare
-- Collect contact info naturally to follow up
-- If unsure about pricing, offer to have the team call back with a custom quote`}
-                  rows={12}
-                  className="font-mono text-sm"
-                />
-                <p className="text-xs text-muted-foreground">
-                  This prompt shapes how your AI talks, thinks, and interacts.
-                  Be specific about personality, rules, and behaviors.
-                </p>
-              </div>
-
-              {/* Tips */}
-              <div className="rounded-lg border border-border bg-muted/20 p-4">
-                <div className="flex items-start gap-3">
-                  <Lightbulb className="h-5 w-5 text-yellow-500 mt-0.5" />
-                  <div>
-                    <p className="font-medium text-sm">
-                      Tips for a great system prompt:
-                    </p>
-                    <ul className="text-sm text-muted-foreground mt-2 space-y-1">
-                      <li>• Give your AI a name and personality</li>
-                      <li>
-                        • Define the tone (casual, professional, friendly)
-                      </li>
-                      <li>• Set rules for what the AI should/shouldn't do</li>
-                      <li>• Describe how to handle tricky situations</li>
-                      <li>
-                        • Include lead capture strategy (when to ask for contact
-                        info)
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <PersonalityFineTuneCard />
         </TabsContent>
 
         {/* 7. Document Uploads */}

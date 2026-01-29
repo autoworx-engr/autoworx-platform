@@ -2435,7 +2435,8 @@ model VehicleParts {
 
 //TODO: Ai sales agent configuration for a company
 model CompanyInfo {
-  id        String   @id @default(uuid())
+  id        Int      @id @default(autoincrement())
+  companyId Int      @unique @map("company_id")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -2450,12 +2451,12 @@ model CompanyInfo {
   policies   String?
 
   // Personal & AI Configuration
-  personalName      String? @map("personal_name")
-  personalType      String? @map("personal_type")
-  systemPrompt      String? @map("system_prompt") @db.Text
-  openingMessage    String? @map("opening_message")
-  conversationStyle Json?   @map("conversation_style")
-  personality       Json?
+  // personalName      String? @map("personal_name")
+  // personalType      String? @map("personal_type")
+  // systemPrompt      String? @map("system_prompt") @db.Text
+  // openingMessage    String? @map("opening_message")
+  // conversationStyle Json?   @map("conversation_style")
+  personality       AiPersonality?
 
   // Operations
   services    Json?
@@ -2463,12 +2464,34 @@ model CompanyInfo {
   overallFaqs Json? @map("overall_faqs")
 
   // Settings
-  smsResponseDelayMin Int @map("sms_response_delay_min")
-  smsResponseDelayMax Int @map("sms_response_delay_max")
+  smsResponseDelayMin Int @default(0) @map("sms_response_delay_min")
+  smsResponseDelayMax Int @default(0) @map("sms_response_delay_max")
 
   @@map("company_info")
 }
 
+model AiPersonality{
+  id      Int      @id @default(autoincrement())
+  companyId Int     @unique @map("company_id")
+  company  CompanyInfo @relation(fields: [companyId], references: [companyId], onDelete: Cascade)
+  personalType String?   @map("personal_type")
+
+  warmth       Int    @default(5)
+  humor        Int    @default(5)
+  energy       Int    @default(5)
+  assistantName String? @map("assistant_name")
+
+  useContractions   Boolean   @default(true)
+  useCasualLanguage Boolean   @default(true)
+  matchCustomerTone Boolean   @default(true)
+  useEmojis         Boolean   @default(true)
+
+  
+  openingMessage  String?     @db.Text
+  systemPrompt    String?     @db.Text
+
+  @@map("ai_personalities")
+}
 model ConversationExample {
   id            Int      @id @default(autoincrement())
   companyId     Int      @map("company_id")
