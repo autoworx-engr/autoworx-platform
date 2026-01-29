@@ -45,7 +45,7 @@ export default function CompanyKnowledgeCard() {
     if (companyInfo) saveMutation.mutate(companyInfo);
   };
 
-  if (isLoading || !companyInfo) return <div>Loading...</div>;
+  if (isLoading || !companyInfo) return <div className="flex justify-center p-10"><Loader2 className="animate-spin" /></div>;
 
   return (
     <Card>

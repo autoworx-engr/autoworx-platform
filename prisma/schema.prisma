@@ -2456,42 +2456,50 @@ model CompanyInfo {
   // systemPrompt      String? @map("system_prompt") @db.Text
   // openingMessage    String? @map("opening_message")
   // conversationStyle Json?   @map("conversation_style")
-  personality       AiPersonality?
-
+  personality AiPersonality?
+  smsDelay    SMSDelay?
   // Operations
   services    Json?
   pricing     Json?
   overallFaqs Json? @map("overall_faqs")
 
   // Settings
-  smsResponseDelayMin Int @default(0) @map("sms_response_delay_min")
-  smsResponseDelayMax Int @default(0) @map("sms_response_delay_max")
 
   @@map("company_info")
 }
 
-model AiPersonality{
-  id      Int      @id @default(autoincrement())
-  companyId Int     @unique @map("company_id")
-  company  CompanyInfo @relation(fields: [companyId], references: [companyId], onDelete: Cascade)
-  personalType String?   @map("personal_type")
+model SMSDelay {
+  id Int @id @default(autoincrement())
+  companyId    Int         @unique @map("company_id")
+  company      CompanyInfo @relation(fields: [companyId], references: [companyId], onDelete: Cascade)
+  smsResponseDelayMin Int @default(0) @map("sms_response_delay_min")
+  smsResponseDelayMax Int @default(0) @map("sms_response_delay_max")
 
-  warmth       Int    @default(5)
-  humor        Int    @default(5)
-  energy       Int    @default(5)
+  @@map("sms_delay")
+}
+
+model AiPersonality {
+  id           Int         @id @default(autoincrement())
+  companyId    Int         @unique @map("company_id")
+  company      CompanyInfo @relation(fields: [companyId], references: [companyId], onDelete: Cascade)
+  personalType String?     @map("personal_type")
+
+  warmth        Int     @default(5)
+  humor         Int     @default(5)
+  energy        Int     @default(5)
   assistantName String? @map("assistant_name")
 
-  useContractions   Boolean   @default(true)
-  useCasualLanguage Boolean   @default(true)
-  matchCustomerTone Boolean   @default(true)
-  useEmojis         Boolean   @default(true)
+  useContractions   Boolean @default(true)
+  useCasualLanguage Boolean @default(true)
+  matchCustomerTone Boolean @default(true)
+  useEmojis         Boolean @default(true)
 
-  
-  openingMessage  String?     @db.Text
-  systemPrompt    String?     @db.Text
+  openingMessage String? @db.Text
+  systemPrompt   String? @db.Text
 
   @@map("ai_personalities")
 }
+
 model ConversationExample {
   id            Int      @id @default(autoincrement())
   companyId     Int      @map("company_id")
