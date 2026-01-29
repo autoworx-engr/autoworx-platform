@@ -27,11 +27,13 @@ import { getDayNumber } from "../../../_utils/utils.DateSelector";
 import CalendarTooltip from "../CalendarTooltip";
 import HolidayDeleteConfirmation from "../HolidayDeleteConfirmation";
 import { Skeleton } from "antd";
-import { useQuery } from "@tanstack/react-query";
-import { calenderQueryKey } from "../../../_constant";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { appointmentQueryKey, calenderQueryKey, taskQueryKey } from "../../../_constant";
 import getHoliday from "@/actions/task/getHoliday";
 import { useState } from "react";
 import {  X } from "lucide-react";
+import { AppointmentCreateOrEdit } from "@/components/appointment/AppointmentCreateOrEdit";
+import TaskCreateOrEdit from "@/components/task/TaskCreateOrEdit";
 
 // Gradient priority classes for tasks
 const priorityClasses = {
@@ -66,6 +68,13 @@ export default function Month() {
     null
   );
   const [openListIndex, setOpenListIndex] = useState<number | null>(null);
+
+  const [isAppointmentModalOpen, setIsAppointmentOpen] = useState(false);
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+  const [selectedEventId, setSelectedEventId] = useState<number | null>(null);
+
+ 
+ 
   const authUser = session?.user;
   const {
     data: holidays,
@@ -273,8 +282,26 @@ export default function Month() {
     // setTimeout(() => setNavigating(false), 30000);
   };
   const clientTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  
-  
+  const queryClient = useQueryClient();
+ const revalidateTaskQueries = () => {
+    // Invalidate queries for tasks based on the current month and year
+    queryClient.invalidateQueries({
+      queryKey: [taskQueryKey.allTasks, formattedMonth, formattedYear],
+    });
+
+  };
+
+  const revalidateAppointmentQueries = () => {
+    // Invalidate queries for appointments based on the current month and year
+    queryClient.invalidateQueries({
+      queryKey: [
+        appointmentQueryKey.allAppointments,
+        formattedMonth,
+        formattedYear,
+      ],
+    });
+   
+  };
 
   if (isTasksLoading || isAppointmentsLoading) {
     return (
@@ -440,6 +467,12 @@ export default function Month() {
                                   { ...appointment, type: "appointment" } as any
                                 }
                                 onClose={() => setOpenTooltipId(null)}
+                                onEditOpen={() => {
+    setSelectedEventId(appointment.id);
+    setIsAppointmentOpen(true);
+    setOpenTooltipId(null); 
+  }}
+                                
                               />
                             )}
                           </Tooltip>
@@ -483,6 +516,11 @@ export default function Month() {
                               <CalendarTooltip
                                 event={{ ...task, type: "task" } as any}
                                 onClose={() => setOpenTooltipId(null)}
+                                onEditOpen={() => {
+    setSelectedEventId(task.id);
+    setIsTaskModalOpen(true);
+    setOpenTooltipId(null); 
+  }}
                               />
                             )}
                           </Tooltip>
@@ -675,6 +713,12 @@ export default function Month() {
                                       <CalendarTooltip
                                         event={{ ...task, type: "task" } as any}
                                         onClose={() => setOpenTooltipId(null)}
+                                        onEditOpen={() => {
+    setSelectedEventId(task.id);
+    setIsTaskModalOpen(true);
+    setOpenTooltipId(null); 
+    setOpenListIndex(null);
+  }}
                                       />
                                     )}
                                   </div>
@@ -732,6 +776,12 @@ export default function Month() {
                                             } as any
                                           }
                                           onClose={() => setOpenTooltipId(null)}
+                                          onEditOpen={() => {
+    setSelectedEventId(appointment.id);
+    setIsAppointmentOpen(true);
+    setOpenTooltipId(null); 
+    setOpenListIndex(null);
+  }}
                                         />
                                       )}
                                     </div>
@@ -749,6 +799,28 @@ export default function Month() {
           );
         })}
       </div>
+      {isAppointmentModalOpen && selectedEventId && (
+        <AppointmentCreateOrEdit
+          fromEdit
+          appointmentId={selectedEventId}
+          isModalOpen={isAppointmentModalOpen}
+          setIsModalOpen={setIsAppointmentOpen}
+         onAppointmentUpdated={revalidateAppointmentQueries} 
+    onAppointmentDeleted={revalidateAppointmentQueries}
+        />
+      )}
+
+      {isTaskModalOpen && selectedEventId && (
+        <TaskCreateOrEdit
+          fromEdit
+          taskId={selectedEventId}
+          isModalOpen={isTaskModalOpen}
+          setIsModalOpen={setIsTaskModalOpen}
+          onTaskUpdated={revalidateTaskQueries} 
+          onTaskDelete={revalidateTaskQueries}
+         
+        />
+      )}
     </div>
   );
 }

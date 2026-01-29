@@ -56,7 +56,7 @@ export default function DayTask({
     null,
   );
   const { weekStartDate, weekEndDate } = useWeekStartEndDays();
-
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const revalidateTaskQueries = () => {
     queryClient.invalidateQueries({
       queryKey: [taskQueryKey.allTasks, dateFormat],
@@ -297,9 +297,37 @@ export default function DayTask({
           <CalendarTooltip
             event={event}
             onClose={() => setOpenTooltipId(null)}
+            onEditOpen={() => {
+          setOpenTooltipId(null); 
+          setIsEditModalOpen(true); 
+        }}
           />
         )}
       </ResizeTaskTooltip>
+
+      {isEditModalOpen && (
+  <>
+    {event.type === "appointment" ? (
+      <AppointmentCreateOrEdit
+        fromEdit
+        appointmentId={event.id}
+        isModalOpen={isEditModalOpen}
+        setIsModalOpen={setIsEditModalOpen}
+        onAppointmentUpdated={revalidateAppointmentQueries}
+        onAppointmentDeleted={revalidateAppointmentQueries}
+      />
+    ) : (
+      <TaskCreateOrEdit
+        fromEdit
+        taskId={event.id}
+        isModalOpen={isEditModalOpen}
+        setIsModalOpen={setIsEditModalOpen}
+        onTaskUpdated={revalidateTaskQueries}
+        onTaskDelete={revalidateTaskQueries}
+      />
+    )}
+  </>
+)}
     </Tooltip>
   );
 }
