@@ -85,7 +85,7 @@ export default async function CannedPage({ searchParams }: TProps) {
   const paginatedServices = filteredServices.slice(startIndex, endIndex);
 
   return (
-    <>
+    <div className="p-2 md:p-0">
       <Title>Canned</Title>
 
       <SyncLists categories={categories} tags={tags} statuses={statuses} />
@@ -96,6 +96,6 @@ export default async function CannedPage({ searchParams }: TProps) {
       <NavigationTabs activeTab="c-canned">
         <CannedTable labors={labors as any} services={services as any} />
       </NavigationTabs>
-    </>
+    </div>
   );
 }
