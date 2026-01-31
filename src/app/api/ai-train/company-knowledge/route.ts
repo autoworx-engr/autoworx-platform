@@ -152,8 +152,6 @@ export async function POST(req: Request) {
             websiteUrl: body.websiteUrl,
             hours: body.hours,
             policies: body.policies,
-            smsResponseDelayMin: Number(body.smsResponseDelayMin ?? 0),
-            smsResponseDelayMax: Number(body.smsResponseDelayMax ?? 0),
         }
         // const companyKnowledge = await db.companyInfo.create({
         //     data,

@@ -46,4 +46,8 @@ export const queryKeys = {
     "ai-personality",
     params,
   ],
+  smsDelay: (params?: {companyId?:number})=>[
+    "sms-delay",
+    params
+  ]
 };

@@ -158,8 +158,7 @@ export async function PATCH(req: Request, { params }: { params: { id: number } }
         if (body.websiteUrl !== undefined) updateData.websiteUrl = body.websiteUrl;
         if (body.hours !== undefined) updateData.hours = body.hours;
         if (body.policies !== undefined) updateData.policies = body.policies;
-        if (body.smsResponseDelayMin !== undefined) updateData.smsResponseDelayMin = Number(body.smsResponseDelayMin);
-        if (body.smsResponseDelayMax !== undefined) updateData.smsResponseDelayMax = Number(body.smsResponseDelayMax);
+        
 
         const updatedInfo = await db.companyInfo.update({
             where: { id: Number(params.id) },
