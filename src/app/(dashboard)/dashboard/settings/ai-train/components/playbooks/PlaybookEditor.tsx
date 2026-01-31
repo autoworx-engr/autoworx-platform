@@ -127,7 +127,6 @@ export function PlaybookEditor({
 
   const handleSave = () => {
     if (!validateForm()) {
-      toast.error("Please fix the errors before saving");
       return;
     }
 
@@ -292,6 +291,7 @@ export function PlaybookEditor({
                     }}
                     labelPosition="top"
                     required={false}
+                    
                   />
                 </div>
               </div>
@@ -517,7 +517,10 @@ export function PlaybookEditor({
                     </Button>
                     <div className="space-y-4">
                       <div className="space-y-2">
-                        <Label>Question</Label>
+                     
+                        <Label>
+                        Question <span className="text-destructive">*</span>
+                  </Label>
                         <Input
                           value={faq.question}
                           onChange={(e) => {
@@ -542,7 +545,10 @@ export function PlaybookEditor({
                         )}
                       </div>
                       <div className="space-y-2">
-                        <Label>Answer</Label>
+                    
+                        <Label>
+                        Answer <span className="text-destructive">*</span>
+                  </Label>
                         <Textarea
                           value={faq.answer}
                           onChange={(e) => {

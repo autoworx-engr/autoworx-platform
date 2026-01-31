@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import {  useState } from "react";
 import {
   Card,
   CardContent,
@@ -7,50 +7,23 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Switch } from "@/components/ui/switch";
-import { Slider } from "@/components/ui/slider";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Building2,
-  Plus,
-  X,
-  Loader2,
   Brain,
   MessageCircle,
   Upload,
   HelpCircle,
   Timer,
   BookOpen,
-  Lightbulb,
   MessageSquare,
-  Globe,
-  RefreshCw,
-  User,
-  Heart,
-  Smile,
-  Zap,
-  Volume2,
-  Sparkles,
-  Save,
 } from "lucide-react";
-import toast from "react-hot-toast";
-import { humanPersonas } from "@/lib/humanPersona";
 import { PlaybooksTab } from "./playbooks/PlaybooksTab";
 import { ConversationExamplesTab } from "./ConversationExamplesTab";
 import { KnowledgeBaseDocumentsTab } from "./KnowledgeBaseDocumentsTab";
 import { ServicePlaybook } from "@/types/ai-settings";
 import ServiceFAQsSection from "./playbooks/ServiceFAQsSection";
 import CompanyKnowledgeCard from "./CompanyKnowledgeCard";
-import {
-  useOverallFaqs,
-  useSaveOverallFaqs,
-} from "@/hooks/ai-train/useOverallFaqs";
 import PersonalityFineTuneCard from "./PersonalityFineTuneCard";
 import SmsResponseDelayCard from "./SmsResponseDelayCard";
 import OverAllFaqTab from "./OverAllFaqTab";
@@ -59,6 +32,8 @@ interface FAQ {
   question: string;
   answer: string;
 }
+
+
 
 interface Personality {
   warmth: number;
@@ -75,26 +50,7 @@ interface ConversationStyle {
   casualLanguage: boolean;
 }
 
-interface CompanyInfo {
-  id: string;
-  shop_name: string;
-  phone: string | null;
-  email: string | null;
-  address: string | null;
-  hours: string | null;
-  about: string | null;
-  policies: string | null;
-  sms_response_delay_min: number;
-  sms_response_delay_max: number;
-  system_prompt: string | null;
-  overall_faqs: FAQ[];
-  website_url: string | null;
-  persona_name: string;
-  persona_type: string;
-  opening_message: string | null;
-  personality: Personality;
-  conversation_style: ConversationStyle;
-}
+
 
 const AISettings = () => {
   const [isEditingPlaybook, setIsEditingPlaybook] = useState(false);
@@ -102,32 +58,12 @@ const AISettings = () => {
     ServicePlaybook | undefined
   >();
 
-  const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(null);
 
-  // Form states
-  const [newFAQ, setNewFAQ] = useState<FAQ>({ question: "", answer: "" });
-  const { data: overallFaqs = [], isLoading: faqsLoading } = useOverallFaqs();
-  const saveOverallFaqs = useSaveOverallFaqs();
-  const [faqs, setFaqs] = useState<FAQ[]>([]);
 
-  // Sync fetched FAQs to local state
-  useEffect(() => {
-    if (overallFaqs) setFaqs(overallFaqs);
-  }, [overallFaqs]);
 
-  const handleAddFAQ = () => {
-    if (!newFAQ.question.trim() || !newFAQ.answer.trim()) return;
-    setFaqs((prev) => [...prev, newFAQ]);
-    setNewFAQ({ question: "", answer: "" });
-  };
 
-  const handleRemoveFAQ = (index: number) => {
-    setFaqs((prev) => prev.filter((_, i) => i !== index));
-  };
 
-  const handleSaveFaqs = () => {
-    saveOverallFaqs.mutate(faqs);
-  };
+
 
   return (
     <div>
@@ -176,7 +112,7 @@ const AISettings = () => {
 
         {/* 1. Company Knowledge */}
         <TabsContent value="company" className="space-y-6">
-          <CompanyKnowledgeCard />
+          <CompanyKnowledgeCard/>
         </TabsContent>
 
         {/* 2. Service Playbooks */}
@@ -196,12 +132,12 @@ const AISettings = () => {
 
         {/* 4. SMS Response Delay */}
         <TabsContent value="sms" className="space-y-6">
-          <SmsResponseDelayCard />
+          <SmsResponseDelayCard/>
         </TabsContent>
 
         {/* 4. Overall FAQs */}
         <TabsContent value="faqs" className="space-y-6">
-          <OverAllFaqTab />
+          <OverAllFaqTab/>
         </TabsContent>
 
         {/* 5. Service-Based FAQs */}
