@@ -118,7 +118,7 @@ export default function MessageContainer({
                   key={latestEmail.id}
                   userName={`${data.firstName} ${data.lastName}`}
                   message={`${emailBy} ${messageContent}`}
-                  redirectUrl={`/dashboard/communication/client/${data.id}`}
+                  redirectUrl={`/dashboard/communication/client/${data.id}?chat=true`}
                   communicationType="Client"
                   photoUrl={data.photo}
                 // timestamp={latestEmail.createdAt} // Pass timestamp for sorting/display
