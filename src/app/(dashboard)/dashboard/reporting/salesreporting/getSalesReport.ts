@@ -22,224 +22,12 @@ function sumInvoiceTotals(
     .reduce((acc, curr) => acc + (curr ? Number(curr) : 0), 0);
 }
 
-export async function getSalesReportData(timezone: string) {
-  const currentuser = await getUser();
-  const companyId = await getCompanyId();
-
-  const employee = await db.user.findUnique({
-    where: { id: currentuser.id, companyId },
-  });
-
-  if (!employee) return notFound();
-
-  const {
-    currentMonthStart,
-    currentMonthEnd,
-    previousMonthStart,
-    previousMonthEnd,
-    twoMonthsAgoStart,
-    twoMonthsAgoEnd,
-  } = getDateRanges(timezone);
-
-  // Current month
-  const currentMonthLeads = await db.lead.findMany({
-    where: { assignedSalesUserId: employee.id },
-    include: {
-      Client: {
-        include: {
-          Invoice: {
-            where: {
-              type: "Invoice",
-              convertedAt: {
-                gte: currentMonthStart,
-                lte: currentMonthEnd,
-              },
-            },
-          },
-        },
-      },
-    },
-  });
-
-  for (const lead of currentMonthLeads) {
-    if (lead.Client.length === 0 && lead.clientId) {
-      let fallbackClient = await db.client.findFirst({
-        where: {
-          companyId,
-          id: lead.clientId,
-        },
-        include: {
-          Invoice: {
-            where: {
-              type: "Invoice",
-              convertedAt: {
-                gte: currentMonthStart,
-                lte: currentMonthEnd,
-              },
-            },
-          },
-        },
-      });
-      fallbackClient && lead.Client.push(fallbackClient);
-    }
-  }
-
-  const currentTotal = sumInvoiceTotals(currentMonthLeads);
-  const currentCommission = (currentTotal * Number(employee.commission)) / 100;
-
-  // Previous month
-  const previousMonthLeads = await db.lead.findMany({
-    where: { assignedSalesUserId: employee.id },
-    include: {
-      Client: {
-        include: {
-          Invoice: {
-            where: {
-              type: "Invoice",
-              convertedAt: {
-                gte: previousMonthStart,
-                lte: previousMonthEnd,
-              },
-            },
-          },
-        },
-      },
-    },
-  });
-
-  for (const lead of previousMonthLeads) {
-    if (lead.Client.length === 0 && lead.clientId) {
-      let fallbackClient = await db.client.findFirst({
-        where: {
-          companyId,
-          id: lead.clientId,
-        },
-        include: {
-          Invoice: {
-            where: {
-              type: "Invoice",
-              convertedAt: {
-                gte: previousMonthStart,
-                lte: previousMonthEnd,
-              },
-            },
-          },
-        },
-      });
-      fallbackClient && lead.Client.push(fallbackClient);
-    }
-  }
-
-  const previousTotal = sumInvoiceTotals(previousMonthLeads);
-  const previousCommission =
-    (previousTotal * Number(employee.commission)) / 100;
-
-  // Two months ago
-  const twoMonthsAgoLeads = await db.lead.findMany({
-    where: { assignedSalesUserId: employee.id },
-    include: {
-      Client: {
-        include: {
-          Invoice: {
-            where: {
-              type: "Invoice",
-              convertedAt: {
-                gte: twoMonthsAgoStart,
-                lte: twoMonthsAgoEnd,
-              },
-            },
-          },
-        },
-      },
-    },
-  });
-
-  for (const lead of twoMonthsAgoLeads) {
-    if (lead.Client.length === 0 && lead.clientId) {
-      let fallbackClient = await db.client.findFirst({
-        where: {
-          companyId,
-          id: lead.clientId,
-        },
-        include: {
-          Invoice: {
-            where: {
-              type: "Invoice",
-              convertedAt: {
-                gte: twoMonthsAgoStart,
-                lte: twoMonthsAgoEnd,
-              },
-            },
-          },
-        },
-      });
-      fallbackClient && lead.Client.push(fallbackClient);
-    }
-  }
-
-  const twoMonthsAgoTotal = sumInvoiceTotals(twoMonthsAgoLeads);
-  const twoMonthsAgoCommission =
-    (twoMonthsAgoTotal * Number(employee.commission)) / 100;
-
-  // Growth rates
-  const growthRateCurrent = growthRate(currentCommission, previousCommission);
-  const growthRatePrevious = growthRate(
-    previousCommission,
-    twoMonthsAgoCommission,
-  );
-
-  // YTD
-  const allLeads = await db.lead.findMany({
-    where: { assignedSalesUserId: employee.id },
-    include: {
-      Client: {
-        include: {
-          Invoice: {
-            where: { type: "Invoice" },
-          },
-        },
-      },
-    },
-  });
-
-  for (const lead of allLeads) {
-    if (lead.Client.length === 0 && lead.clientId) {
-      let fallbackClient = await db.client.findFirst({
-        where: {
-          companyId,
-          id: lead.clientId,
-        },
-        include: {
-          Invoice: {
-            where: { type: "Invoice" },
-          },
-        },
-      });
-      fallbackClient && lead.Client.push(fallbackClient);
-    }
-  }
-
-  const allTotal = sumInvoiceTotals(allLeads);
-  const allCommission = (allTotal * Number(employee.commission)) / 100;
-
-  return {
-    employeeId: employee.id,
-    currentCommission,
-    previousCommission,
-    twoMonthsAgoCommission,
-    growthRateCurrent,
-    growthRatePrevious,
-    allCommission,
-  };
-}
-
 // export async function getSalesReportData(timezone: string) {
 //   const currentuser = await getUser();
 //   const companyId = await getCompanyId();
 
 //   const employee = await db.user.findUnique({
 //     where: { id: currentuser.id, companyId },
-//     select: { id: true, commission: true },
 //   });
 
 //   if (!employee) return notFound();
@@ -253,7 +41,154 @@ export async function getSalesReportData(timezone: string) {
 //     twoMonthsAgoEnd,
 //   } = getDateRanges(timezone);
 
-//   // একবারে সব leads fetch করি সব client এবং invoice সহ
+//   // Current month
+//   const currentMonthLeads = await db.lead.findMany({
+//     where: { assignedSalesUserId: employee.id },
+//     include: {
+//       Client: {
+//         include: {
+//           Invoice: {
+//             where: {
+//               type: "Invoice",
+//               convertedAt: {
+//                 gte: currentMonthStart,
+//                 lte: currentMonthEnd,
+//               },
+//             },
+//           },
+//         },
+//       },
+//     },
+//   });
+
+//   for (const lead of currentMonthLeads) {
+//     if (lead.Client.length === 0 && lead.clientId) {
+//       let fallbackClient = await db.client.findFirst({
+//         where: {
+//           companyId,
+//           id: lead.clientId,
+//         },
+//         include: {
+//           Invoice: {
+//             where: {
+//               type: "Invoice",
+//               convertedAt: {
+//                 gte: currentMonthStart,
+//                 lte: currentMonthEnd,
+//               },
+//             },
+//           },
+//         },
+//       });
+//       fallbackClient && lead.Client.push(fallbackClient);
+//     }
+//   }
+
+//   const currentTotal = sumInvoiceTotals(currentMonthLeads);
+//   const currentCommission = (currentTotal * Number(employee.commission)) / 100;
+
+//   // Previous month
+//   const previousMonthLeads = await db.lead.findMany({
+//     where: { assignedSalesUserId: employee.id },
+//     include: {
+//       Client: {
+//         include: {
+//           Invoice: {
+//             where: {
+//               type: "Invoice",
+//               convertedAt: {
+//                 gte: previousMonthStart,
+//                 lte: previousMonthEnd,
+//               },
+//             },
+//           },
+//         },
+//       },
+//     },
+//   });
+
+//   for (const lead of previousMonthLeads) {
+//     if (lead.Client.length === 0 && lead.clientId) {
+//       let fallbackClient = await db.client.findFirst({
+//         where: {
+//           companyId,
+//           id: lead.clientId,
+//         },
+//         include: {
+//           Invoice: {
+//             where: {
+//               type: "Invoice",
+//               convertedAt: {
+//                 gte: previousMonthStart,
+//                 lte: previousMonthEnd,
+//               },
+//             },
+//           },
+//         },
+//       });
+//       fallbackClient && lead.Client.push(fallbackClient);
+//     }
+//   }
+
+//   const previousTotal = sumInvoiceTotals(previousMonthLeads);
+//   const previousCommission =
+//     (previousTotal * Number(employee.commission)) / 100;
+
+//   // Two months ago
+//   const twoMonthsAgoLeads = await db.lead.findMany({
+//     where: { assignedSalesUserId: employee.id },
+//     include: {
+//       Client: {
+//         include: {
+//           Invoice: {
+//             where: {
+//               type: "Invoice",
+//               convertedAt: {
+//                 gte: twoMonthsAgoStart,
+//                 lte: twoMonthsAgoEnd,
+//               },
+//             },
+//           },
+//         },
+//       },
+//     },
+//   });
+
+//   for (const lead of twoMonthsAgoLeads) {
+//     if (lead.Client.length === 0 && lead.clientId) {
+//       let fallbackClient = await db.client.findFirst({
+//         where: {
+//           companyId,
+//           id: lead.clientId,
+//         },
+//         include: {
+//           Invoice: {
+//             where: {
+//               type: "Invoice",
+//               convertedAt: {
+//                 gte: twoMonthsAgoStart,
+//                 lte: twoMonthsAgoEnd,
+//               },
+//             },
+//           },
+//         },
+//       });
+//       fallbackClient && lead.Client.push(fallbackClient);
+//     }
+//   }
+
+//   const twoMonthsAgoTotal = sumInvoiceTotals(twoMonthsAgoLeads);
+//   const twoMonthsAgoCommission =
+//     (twoMonthsAgoTotal * Number(employee.commission)) / 100;
+
+//   // Growth rates
+//   const growthRateCurrent = growthRate(currentCommission, previousCommission);
+//   const growthRatePrevious = growthRate(
+//     previousCommission,
+//     twoMonthsAgoCommission,
+//   );
+
+//   // YTD
 //   const allLeads = await db.lead.findMany({
 //     where: { assignedSalesUserId: employee.id },
 //     include: {
@@ -267,95 +202,22 @@ export async function getSalesReportData(timezone: string) {
 //     },
 //   });
 
-//   // Fallback clients একবারে fetch করি
-//   const leadsWithoutClients = allLeads.filter(
-//     (lead) => lead.Client.length === 0 && lead.clientId,
-//   );
-
-//   const clientIds = leadsWithoutClients.map((lead) => lead.clientId!);
-
-//   const fallbackClients =
-//     clientIds.length > 0
-//       ? await db.client.findMany({
-//           where: {
-//             companyId,
-//             id: { in: clientIds },
+//   for (const lead of allLeads) {
+//     if (lead.Client.length === 0 && lead.clientId) {
+//       let fallbackClient = await db.client.findFirst({
+//         where: {
+//           companyId,
+//           id: lead.clientId,
+//         },
+//         include: {
+//           Invoice: {
+//             where: { type: "Invoice" },
 //           },
-//           include: {
-//             Invoice: {
-//               where: { type: "Invoice" },
-//             },
-//           },
-//         })
-//       : [];
-
-//   // Fallback clients map করি lead এর সাথে
-//   const clientMap = new Map(fallbackClients.map((c) => [c.id, c]));
-
-//   for (const lead of leadsWithoutClients) {
-//     const client = clientMap.get(lead.clientId!);
-//     if (client) {
-//       lead.Client.push(client);
+//         },
+//       });
+//       fallbackClient && lead.Client.push(fallbackClient);
 //     }
 //   }
-
-//   // এবার filter করি date range অনুযায়ী (memory তে) - null check সহ
-//   const currentMonthLeads = allLeads.map((lead) => ({
-//     ...lead,
-//     Client: lead.Client.map((client) => ({
-//       ...client,
-//       Invoice: client.Invoice.filter(
-//         (inv) =>
-//           inv.convertedAt !== null &&
-//           inv.convertedAt >= currentMonthStart &&
-//           inv.convertedAt <= currentMonthEnd,
-//       ),
-//     })),
-//   }));
-
-//   const previousMonthLeads = allLeads.map((lead) => ({
-//     ...lead,
-//     Client: lead.Client.map((client) => ({
-//       ...client,
-//       Invoice: client.Invoice.filter(
-//         (inv) =>
-//           inv.convertedAt !== null &&
-//           inv.convertedAt >= previousMonthStart &&
-//           inv.convertedAt <= previousMonthEnd,
-//       ),
-//     })),
-//   }));
-
-//   const twoMonthsAgoLeads = allLeads.map((lead) => ({
-//     ...lead,
-//     Client: lead.Client.map((client) => ({
-//       ...client,
-//       Invoice: client.Invoice.filter(
-//         (inv) =>
-//           inv.convertedAt !== null &&
-//           inv.convertedAt >= twoMonthsAgoStart &&
-//           inv.convertedAt <= twoMonthsAgoEnd,
-//       ),
-//     })),
-//   }));
-
-//   // Calculations
-//   const currentTotal = sumInvoiceTotals(currentMonthLeads);
-//   const currentCommission = (currentTotal * Number(employee.commission)) / 100;
-
-//   const previousTotal = sumInvoiceTotals(previousMonthLeads);
-//   const previousCommission =
-//     (previousTotal * Number(employee.commission)) / 100;
-
-//   const twoMonthsAgoTotal = sumInvoiceTotals(twoMonthsAgoLeads);
-//   const twoMonthsAgoCommission =
-//     (twoMonthsAgoTotal * Number(employee.commission)) / 100;
-
-//   const growthRateCurrent = growthRate(currentCommission, previousCommission);
-//   const growthRatePrevious = growthRate(
-//     previousCommission,
-//     twoMonthsAgoCommission,
-//   );
 
 //   const allTotal = sumInvoiceTotals(allLeads);
 //   const allCommission = (allTotal * Number(employee.commission)) / 100;
@@ -370,3 +232,219 @@ export async function getSalesReportData(timezone: string) {
 //     allCommission,
 //   };
 // }
+
+export async function getSalesReportData(
+  timezone: string,
+  startDate?: string,
+  endDate?: string,
+) {
+  const currentUser = await getUser();
+  const companyId = await getCompanyId();
+
+  const employee = await db.user.findUnique({
+    where: { id: currentUser.id, companyId },
+    select: { id: true, commission: true },
+  });
+
+  if (!employee) return notFound();
+
+  const {
+    currentMonthStart,
+    currentMonthEnd,
+    previousMonthStart,
+    previousMonthEnd,
+    twoMonthsAgoStart,
+    twoMonthsAgoEnd,
+  } = getDateRanges(timezone);
+
+  const allLeads = await db.lead.findMany({
+    where: { assignedSalesUserId: employee.id },
+    include: {
+      Client: {
+        include: {
+          Invoice: {
+            where: { type: "Invoice" },
+          },
+        },
+      },
+    },
+  });
+
+  const leadsWithoutClients = allLeads.filter(
+    (lead) => lead.Client.length === 0 && lead.clientId,
+  );
+
+  const clientIds = leadsWithoutClients.map((lead) => lead.clientId!);
+
+  const fallbackClients =
+    clientIds.length > 0
+      ? await db.client.findMany({
+          where: {
+            companyId,
+            id: { in: clientIds },
+          },
+          include: {
+            Invoice: {
+              where: { type: "Invoice" },
+            },
+          },
+        })
+      : [];
+
+  const clientMap = new Map(fallbackClients.map((c) => [c.id, c]));
+
+  for (const lead of leadsWithoutClients) {
+    const client = clientMap.get(lead.clientId!);
+    if (client) {
+      lead.Client.push(client);
+    }
+  }
+
+  // If custom date range is provided, use it; otherwise use predefined ranges
+  if (startDate && endDate) {
+    const customStart = new Date(startDate);
+    const customEnd = new Date(endDate);
+
+    // length of the custom range in milliseconds
+    const rangeMs = customEnd.getTime() - customStart.getTime();
+
+    // previous range: immediately before custom range, same length
+    const previousEnd = new Date(customStart.getTime() - 1);
+    const previousStart = new Date(previousEnd.getTime() - rangeMs);
+
+    // two-periods-ago range: immediately before previous range
+    const twoAgoEnd = new Date(previousStart.getTime() - 1);
+    const twoAgoStart = new Date(twoAgoEnd.getTime() - rangeMs);
+
+    const customRangeLeads = allLeads.map((lead) => ({
+      ...lead,
+      Client: lead.Client.map((client) => ({
+        ...client,
+        Invoice: client.Invoice.filter(
+          (inv) =>
+            inv.convertedAt !== null &&
+            inv.convertedAt >= customStart &&
+            inv.convertedAt <= customEnd,
+        ),
+      })),
+    }));
+
+    const previousRangeLeads = allLeads.map((lead) => ({
+      ...lead,
+      Client: lead.Client.map((client) => ({
+        ...client,
+        Invoice: client.Invoice.filter(
+          (inv) =>
+            inv.convertedAt !== null &&
+            inv.convertedAt >= previousStart &&
+            inv.convertedAt <= previousEnd,
+        ),
+      })),
+    }));
+
+    const twoAgoRangeLeads = allLeads.map((lead) => ({
+      ...lead,
+      Client: lead.Client.map((client) => ({
+        ...client,
+        Invoice: client.Invoice.filter(
+          (inv) =>
+            inv.convertedAt !== null &&
+            inv.convertedAt >= twoAgoStart &&
+            inv.convertedAt <= twoAgoEnd,
+        ),
+      })),
+    }));
+
+    const customTotal = sumInvoiceTotals(customRangeLeads);
+    const customCommission = (customTotal * Number(employee.commission)) / 100;
+
+    const prevTotal = sumInvoiceTotals(previousRangeLeads);
+    const prevCommission = (prevTotal * Number(employee.commission)) / 100;
+
+    const prev2Total = sumInvoiceTotals(twoAgoRangeLeads);
+    const prev2Commission = (prev2Total * Number(employee.commission)) / 100;
+
+    const growthRateCurrent = growthRate(customCommission, prevCommission);
+    const growthRatePrevious = growthRate(prevCommission, prev2Commission);
+
+    return {
+      employeeId: employee.id,
+      currentCommission: customCommission,
+      previousCommission: prevCommission,
+      twoMonthsAgoCommission: prev2Commission,
+      growthRateCurrent,
+      growthRatePrevious,
+      allCommission: customCommission,
+    };
+  }
+
+  const currentMonthLeads = allLeads.map((lead) => ({
+    ...lead,
+    Client: lead.Client.map((client) => ({
+      ...client,
+      Invoice: client.Invoice.filter(
+        (inv) =>
+          inv.convertedAt !== null &&
+          inv.convertedAt >= currentMonthStart &&
+          inv.convertedAt <= currentMonthEnd,
+      ),
+    })),
+  }));
+
+  const previousMonthLeads = allLeads.map((lead) => ({
+    ...lead,
+    Client: lead.Client.map((client) => ({
+      ...client,
+      Invoice: client.Invoice.filter(
+        (inv) =>
+          inv.convertedAt !== null &&
+          inv.convertedAt >= previousMonthStart &&
+          inv.convertedAt <= previousMonthEnd,
+      ),
+    })),
+  }));
+
+  const twoMonthsAgoLeads = allLeads.map((lead) => ({
+    ...lead,
+    Client: lead.Client.map((client) => ({
+      ...client,
+      Invoice: client.Invoice.filter(
+        (inv) =>
+          inv.convertedAt !== null &&
+          inv.convertedAt >= twoMonthsAgoStart &&
+          inv.convertedAt <= twoMonthsAgoEnd,
+      ),
+    })),
+  }));
+
+  // Calculations
+  const currentTotal = sumInvoiceTotals(currentMonthLeads);
+  const currentCommission = (currentTotal * Number(employee.commission)) / 100;
+
+  const previousTotal = sumInvoiceTotals(previousMonthLeads);
+  const previousCommission =
+    (previousTotal * Number(employee.commission)) / 100;
+
+  const twoMonthsAgoTotal = sumInvoiceTotals(twoMonthsAgoLeads);
+  const twoMonthsAgoCommission =
+    (twoMonthsAgoTotal * Number(employee.commission)) / 100;
+
+  const growthRateCurrent = growthRate(currentCommission, previousCommission);
+  const growthRatePrevious = growthRate(
+    previousCommission,
+    twoMonthsAgoCommission,
+  );
+
+  const allTotal = sumInvoiceTotals(allLeads);
+  const allCommission = (allTotal * Number(employee.commission)) / 100;
+
+  return {
+    employeeId: employee.id,
+    currentCommission,
+    previousCommission,
+    twoMonthsAgoCommission,
+    growthRateCurrent,
+    growthRatePrevious,
+    allCommission,
+  };
+}
