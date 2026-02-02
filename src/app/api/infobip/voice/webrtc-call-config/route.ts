@@ -1,31 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
 /**
- * @swagger
- * /api/infobip/voice/webrtc-call-config:
- *   post:
- *     summary: Infobip WebRTC call configuration webhook
- *     tags: [Infobip]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               to:
- *                 type: string
- *               from:
- *                 type: string
- *     responses:
- *       200:
- *         description: Call configuration returned
- *       400:
- *         description: Missing destination phone number
- *       500:
- *         description: Server error
- */
-/**
  * Infobip WebRTC Call Configuration Webhook
  *
  * This endpoint is called by Infobip when a WebRTC call is initiated from the browser.

@@ -1,8 +1,10 @@
 "use server";
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
+<<<<<<< HEAD
 import getUser from "@/lib/getUser";
-import { sendCollaborationMessageNotification } from "@/lib/notification/communication-notify";
+=======
+>>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
 import { Company } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { sendUserNotifications } from "../notification/sendUserNotification";
@@ -54,6 +56,7 @@ export async function connectWithCompany(
         status: "PENDING",
       },
     });
+<<<<<<< HEAD
 
     const company = await db.company.findUnique({
       where: { id: targetCompanyId },
@@ -85,7 +88,7 @@ export async function connectWithCompany(
     const title = "New Collaboration Invitation";
 
     await Promise.all(
-      targetUsers.map((user) =>
+      targetUsers.map(user =>
         sendUserNotifications({
           userId: user.id,
           userName: `${user.firstName} ${user.lastName}`,
@@ -97,10 +100,12 @@ export async function connectWithCompany(
           description,
           type: "COLLABORATION_INVITATION",
           redirectUrl,
-        })
-      )
+        }),
+      ),
     );
 
+=======
+>>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
     revalidatePathName && revalidatePath(revalidatePathName);
     return {
       success: true,

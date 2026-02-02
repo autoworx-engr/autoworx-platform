@@ -27,14 +27,14 @@ const primaryCtaClasses = `
   flex items-center justify-center gap-2 px-6 py-2 text-sm font-semibold text-white transition-all duration-300 ease-in-out
 
   // Gradient Background (Blue/Indigo)
-  bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+  bg-gradient-to-r from-blue-500 to-indigo-600
 
   // Subtle Lift and Shadow Glow on Hover
-  shadow-md shadow-[#6571FF]/50
+  shadow-lg shadow-blue-500/50
   hover:-translate-y-0.5
   hover:scale-[1.01]
-  hover:shadow-lg hover:shadow-[#6571FF]/60
-  dark:shadow-[#6571FF]/50 dark:hover:shadow-[#6571FF]/60
+  hover:shadow-xl hover:shadow-blue-500/70
+  dark:shadow-indigo-600/50 dark:hover:shadow-indigo-600/70
 `;
 
 export default function TaskCreateOrEdit({

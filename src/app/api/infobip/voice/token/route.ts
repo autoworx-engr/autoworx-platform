@@ -1,33 +1,6 @@
 import { getInfobipCredentials } from "@/actions/communication/client/sendInfobipMessage";
 import { NextRequest, NextResponse } from "next/server";
 
-/**
- * @swagger
- * /api/infobip/voice/token:
- *   post:
- *     summary: Get Infobip WebRTC token
- *     tags: [Infobip]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               identity:
- *                 type: string
- *               companyId:
- *                 type: integer
- *     responses:
- *       200:
- *         description: WebRTC token generated
- *       400:
- *         description: Credentials not found
- *       500:
- *         description: Server error
- */
 export async function POST(request: NextRequest) {
   const { identity, companyId } = await request.json();
 
@@ -97,17 +70,17 @@ export async function POST(request: NextRequest) {
 
     // Debug: log the tokenData returned by Infobip so we can inspect its structure
     try {
-      console.log("📋 [Infobip Token] tokenData:", tokenData);
-      if (tokenData?.token && typeof tokenData.token === "string") {
+      console.log('📋 [Infobip Token] tokenData:', tokenData);
+      if (tokenData?.token && typeof tokenData.token === 'string') {
         // Try to decode JWT payload if token looks like a JWT
-        const parts = tokenData.token.split(".");
+        const parts = tokenData.token.split('.');
         if (parts.length === 3) {
-          const payload = Buffer.from(parts[1], "base64").toString("utf8");
-          console.log("📋 [Infobip Token] decoded token payload:", payload);
+          const payload = Buffer.from(parts[1], 'base64').toString('utf8');
+          console.log('📋 [Infobip Token] decoded token payload:', payload);
         }
       }
     } catch (err) {
-      console.warn("Unable to decode tokenData for inspection", err);
+      console.warn('Unable to decode tokenData for inspection', err);
     }
 
     return NextResponse.json({

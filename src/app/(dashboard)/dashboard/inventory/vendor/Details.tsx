@@ -28,35 +28,33 @@ export default function Details({ vendor }: { vendor: Vendor | undefined }) {
         <X size={24} className="text-slate-600 dark:text-slate-300" />
       </div>
 
-      {
-        vendor && (<div className="flex items-center justify-between mb-3">
-          <h3 className="text-2xl font-extrabold" style={{ color: ACCENT_COLOR }}>
-            Vendor Details
-          </h3>
-          {/* Action Button */}
-          <div className="mt-auto">
-            <Link
-              href={`/dashboard/inventory/vendor/${vendor?.id}/history`}
-              className="inline-flex items-center gap-2 rounded-lg border-2 px-4 py-1.5 font-semibold transition-all duration-200 hover:shadow-md"
-              style={{
-                borderColor: ACCENT_COLOR,
-                color: ACCENT_COLOR
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = ACCENT_COLOR;
-                e.currentTarget.style.color = 'white';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-                e.currentTarget.style.color = ACCENT_COLOR;
-              }}
-            >
-              <History size={18} />
-              View Purchase History
-            </Link>
-          </div>
-        </div>)
-      }
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-2xl font-extrabold" style={{ color: ACCENT_COLOR }}>
+          Vendor Details
+        </h3>
+        {/* Action Button */}
+        <div className="mt-auto">
+          <Link
+            href={`/dashboard/inventory/vendor/${vendor?.id}/history`}
+            className="inline-flex items-center gap-2 rounded-lg border-2 px-4 py-1.5 font-semibold transition-all duration-200 hover:shadow-md"
+            style={{
+              borderColor: ACCENT_COLOR,
+              color: ACCENT_COLOR
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = ACCENT_COLOR;
+              e.currentTarget.style.color = 'white';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+              e.currentTarget.style.color = ACCENT_COLOR;
+            }}
+          >
+            <History size={18} />
+            View Purchase History
+          </Link>
+        </div>
+      </div>
 
       {vendor === undefined ? (
         <div className="flex h-full w-full items-center justify-center">

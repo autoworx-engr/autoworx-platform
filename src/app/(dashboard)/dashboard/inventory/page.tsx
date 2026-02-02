@@ -8,23 +8,12 @@ import Sidebar from "./Sidebar";
 import ClientInventoryList from "./ClientInventoryList";
 import { cache } from "react";
 import { InventoryProductType } from "@prisma/client";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/authOptions";
 
 async function getCategories() {
-  const session = await getServerSession(authOptions);
-  const token = session?.accessToken;
   try {
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_APP_URL}/api/inventoryWirehouse/category`,
-
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        cache: "no-store",
-      }
+      { cache: "no-store" }
     );
 
     if (!res.ok) throw new Error("Failed to fetch categories");
@@ -49,7 +38,7 @@ const getInventoryItem = cache(
       const searchTerms = search
         .toLowerCase()
         .split(/\s+/)
-        .filter((term) => term.length > 0);
+        .filter(term => term.length > 0);
       const searchFilterOR = [
         { name: { contains: search.trim() } },
         { name: { contains: search?.trim().toUpperCase() } },
@@ -59,14 +48,14 @@ const getInventoryItem = cache(
             contains: search
               .trim()
               ?.split(" ")
-              .map((t) => t.trim().charAt(0).toUpperCase() + t.slice(1))
+              .map(t => t.trim().charAt(0).toUpperCase() + t.slice(1))
               .join(" "),
           },
         },
         ...(searchTerms.length > 0
           ? [
               {
-                OR: searchTerms.flatMap((term) => [
+                OR: searchTerms.flatMap(term => [
                   { name: { contains: term.trim() } },
                 ]),
               },
@@ -135,7 +124,7 @@ export default async function Page({
   });
 
   const inventoryCategories = (await getCategories()) ?? [];
-  console.log("inventoryCategories", inventoryCategories);
+
   const categories = await db.category.findMany({ where: { companyId } });
   const vendors = await db.vendor.findMany({ where: { companyId } });
 
@@ -153,7 +142,7 @@ export default async function Page({
         {(user?.employeeType === "Admin" ||
           user?.employeeType === "Manager") && (
           <div className="mt-2">
-            <AddNewProduct view={view} />
+            <AddNewProduct view={view}/>
           </div>
         )}
       </header>

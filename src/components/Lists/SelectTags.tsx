@@ -62,7 +62,7 @@ export function SelectTags({
   }, [dropdownsOpen]);
 
   return (
-    <div className="flex flex-col max-w-sm">
+    <div className="flex flex-col">
       <input
         type="hidden"
         name={name}
@@ -71,8 +71,10 @@ export function SelectTags({
       <DropdownMenu
         open={open}
         onOpenChange={(open) => {
+          // !open && setOpen && setOpen(open);
         }}
       >
+<<<<<<< HEAD
         {tags && tags.length > 0 && (
           <div className="mb-2 flex flex-wrap gap-2 max-w-[260px]">
             {tags.map((tag, i) => (
@@ -82,6 +84,24 @@ export function SelectTags({
                 style={{
                   backgroundColor: tag.bgColor,
                   color: tag.textColor,
+=======
+        {tags &&
+          tags.length > 0 &&
+          tags.map((tag, i) => (
+            <div
+              key={tag.id}
+              className="relative mb-1 rounded px-2 text-sm"
+              style={{
+                backgroundColor: tag.bgColor,
+                color: tag.textColor,
+              }}
+            >
+              {tag.name}
+              <button
+                type="button"
+                onClick={() => {
+                  setTags((tags) => tags.toSpliced(i, 1));
+>>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
                 }}
               >
                 {tag.name}
@@ -131,7 +151,11 @@ export function SelectTags({
               }, 50);
             }
           }}
+<<<<<<< HEAD
           className="flex min-h-11 min-w-[150px] w-full items-center justify-between rounded-lg shadow-sm shadow-black/20 bg-gray-100/40 px-4 ring-1 ring-inset ring-slate-200 transition-all hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30"
+=======
+          className="flex min-h-10 w-full items-center justify-between rounded-md border-2 border-slate-400 px-4"
+>>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
         >
           <p className="text-sm font-medium text-slate-400">Tags</p>
           <ChevronDown size={18} className="text-slate-400" />

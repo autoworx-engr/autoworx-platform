@@ -20,8 +20,6 @@ type FormData = {
   apiKeySid: string;
   apiKeySecret: string;
   phoneNumberSid: string;
-  notifyServiceSid?: string;
-  voipPushCredentialSid?: string;
 };
 
 const SmsGetwayForm: React.FC = () => {
@@ -37,9 +35,6 @@ const SmsGetwayForm: React.FC = () => {
     apiKeySid: twilioCredentials?.apiKeySid ?? "",
     apiKeySecret: twilioCredentials?.apiKeySecret ?? "",
     phoneNumberSid: twilioCredentials?.phoneNumberSid ?? "",
-    notifyServiceSid: (twilioCredentials as any)?.notifyServiceSid ?? "",
-    voipPushCredentialSid:
-      (twilioCredentials as any)?.voipPushCredentialSid ?? "",
   });
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -106,9 +101,6 @@ const SmsGetwayForm: React.FC = () => {
       apiKeySid: twilioCredentials?.apiKeySid ?? "",
       apiKeySecret: twilioCredentials?.apiKeySecret ?? "",
       phoneNumberSid: twilioCredentials?.phoneNumberSid ?? "",
-      notifyServiceSid: (twilioCredentials as any)?.notifyServiceSid ?? "",
-      voipPushCredentialSid:
-        (twilioCredentials as any)?.voipPushCredentialSid ?? "",
     });
   }, [twilioCredentials]);
 
@@ -197,42 +189,6 @@ const SmsGetwayForm: React.FC = () => {
             onChange={handleChange}
             value={formData.phoneNumberSid}
             required
-            className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-          />
-        </div>
-
-        {/* Notify Service SID (optional, per subaccount) */}
-        <div className="mb-4">
-          <label
-            htmlFor="notifyServiceSid"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Notify Service SID
-          </label>
-          <input
-            type="text"
-            id="notifyServiceSid"
-            name="notifyServiceSid"
-            onChange={handleChange}
-            value={formData.notifyServiceSid || ""}
-            className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-          />
-        </div>
-
-        {/* VoIP Push Credential SID (optional, per subaccount) */}
-        <div className="mb-4">
-          <label
-            htmlFor="voipPushCredentialSid"
-            className="block text-sm font-medium text-gray-700"
-          >
-            VoIP Push Credential SID
-          </label>
-          <input
-            type="text"
-            id="voipPushCredentialSid"
-            name="voipPushCredentialSid"
-            onChange={handleChange}
-            value={formData.voipPushCredentialSid || ""}
             className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
           />
         </div>

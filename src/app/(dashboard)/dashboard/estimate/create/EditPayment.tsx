@@ -28,16 +28,14 @@ type EditPaymentModalProps = {
   mergedPaymentData: any;
   invoiceGrandTotal: number;
   totalPaidForInvoice: number;
-  refundedAmount?: number;
 };
 
 export default function EditPaymentModal({
   mergedPaymentData,
   invoiceGrandTotal,
   totalPaidForInvoice,
-  refundedAmount = 0,
 }: EditPaymentModalProps) {
-  const router = useRouter();
+  const router = useRouter(); // ADD THIS
   const { paymentMethods } = useListsStore();
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -64,13 +62,7 @@ export default function EditPaymentModal({
   });
 
   const [date, setDate] = useState<Date>(new Date(mergedPaymentData.date));
-
-  const originalAmount = mergedPaymentData.amount || 0;
-  const netAmount = originalAmount - refundedAmount;
-
-  // Show NET amount in the edit field
-  const [amount, setAmount] = useState(netAmount);
-
+  const [amount, setAmount] = useState(mergedPaymentData.amount);
   const [notes, setNotes] = useState(mergedPaymentData.notes);
 
   const [paymentMethodInput, setPaymentMethodInput] = useState("");
@@ -103,19 +95,13 @@ export default function EditPaymentModal({
 
   const [openPaymentMethod, setOpenPaymentMethod] = useState(false);
 
-  // Reset form with NET amount when modal opens
   useEffect(() => {
     if (open) {
       const methodType = mergedPaymentData.paymentMethod || "OTHER";
       setMethod(methodType);
 
       setDate(new Date(mergedPaymentData.date));
-
-      // Show NET amount (original - refunded)
-      const calcOriginal = mergedPaymentData.amount || 0;
-      const calcNet = calcOriginal - refundedAmount;
-      setAmount(calcNet);
-
+      setAmount(mergedPaymentData.amount);
       setNotes(mergedPaymentData.notes || "");
       setCard(mergedPaymentData?.card?.creditCard || "");
       setCardType(mergedPaymentData?.card?.cardType || "MASTERCARD");
@@ -133,7 +119,7 @@ export default function EditPaymentModal({
         setPaymentMethod(null);
       }
     }
-  }, [open, mergedPaymentData, paymentMethods, refundedAmount]);
+  }, [open, mergedPaymentData, paymentMethods]);
 
   async function handleNewPaymentMethod() {
     try {
@@ -184,48 +170,39 @@ export default function EditPaymentModal({
             additionalData = {};
         }
 
-        const newNetAmount = Number(amount);
-
-        // **FIX 1: Validate NET amount is greater than zero**
-        if (newNetAmount <= 0) {
-          errorToast("Payment amount must be greater than zero");
-          return;
-        }
-
-        // Convert NET to TOTAL for database
-        const newTotalPaymentAmount = newNetAmount + refundedAmount;
-
-        // ** Get the original NET and TOTAL amounts**
-        const originalTotalAmount = mergedPaymentData.amount || 0;
-        const originalNetAmount = originalTotalAmount - refundedAmount;
-
-        // ** Calculate the NET change (what affects the invoice balance)**
-        const netChange = newNetAmount - originalNetAmount;
-
-        // ** Calculate other payments' NET contribution**
-        // Subtract the original NET of this payment, not the TOTAL
-        const otherPaymentsNetTotal = totalPaidForInvoice - originalNetAmount;
-
-        // ** Calculate new total NET payments for invoice**
-        const newTotalNetPayments = otherPaymentsNetTotal + newNetAmount;
-
-        // ** Validate against invoice grand total**
-        if (newTotalNetPayments > invoiceGrandTotal) {
-          const maxAllowedNet = invoiceGrandTotal - otherPaymentsNetTotal;
-          errorToast(
-            `Net payment amount cannot exceed remaining invoice balance. Maximum allowed: ${formatCurrency(maxAllowedNet)}`
-          );
-          return;
-        }
-
         const payload = {
           id: Number(mergedPaymentData.id),
           type: method,
           date,
           notes,
-          amount: newTotalPaymentAmount,
+          amount: parseFloat(amount),
           additionalData,
         };
+
+        const newAmount = parseFloat(amount);
+        const originalPaymentAmount = mergedPaymentData.amount;
+
+        if (newAmount <= 0) {
+          errorToast("Payment amount must be greater than zero");
+          return;
+        }
+
+        if (newAmount > invoiceGrandTotal) {
+          errorToast(
+            `Payment amount (${formatCurrency(newAmount)}) cannot exceed invoice total (${formatCurrency(invoiceGrandTotal)})`
+          );
+          return;
+        }
+
+        const otherPaymentsTotal = totalPaidForInvoice - originalPaymentAmount;
+        const newTotalPaidForInvoice = otherPaymentsTotal + newAmount;
+
+        if (newTotalPaidForInvoice > invoiceGrandTotal) {
+          errorToast(
+            `Total payments for this invoice (${formatCurrency(newTotalPaidForInvoice)}) cannot exceed invoice total (${formatCurrency(invoiceGrandTotal)})`
+          );
+          return;
+        }
 
         const res = await updatePayment(payload);
         if (res?.type === "success") {
@@ -233,7 +210,6 @@ export default function EditPaymentModal({
           const isOriginalDeposit = originalPaymentType === "DEPOSIT";
           const isNewDeposit = method === "DEPOSIT";
 
-          // Update store if editing current invoice's payment
           if (
             mergedPaymentData.invoiceId ===
             useEstimateCreateStore.getState().invoiceId
@@ -241,36 +217,42 @@ export default function EditPaymentModal({
             let newTotalPayment = currentTotalPayment;
             let newDeposit = currentDeposit;
 
-            // Use NET change for store updates**
             if (isOriginalDeposit && isNewDeposit) {
-              // Deposit to Deposit: adjust deposit amount using NET change
-              newDeposit = currentDeposit + netChange;
+              const depositDifference = newAmount - originalPaymentAmount;
+              newDeposit = currentDeposit + depositDifference;
               setDeposit(newDeposit);
               const newDue = grandTotal - (newDeposit + currentTotalPayment);
               setDue(newDue);
             } else if (isOriginalDeposit && !isNewDeposit) {
-              // Deposit to Payment: move from deposit to payment
-              newDeposit = currentDeposit - originalNetAmount;
-              newTotalPayment = currentTotalPayment + newNetAmount;
+              newDeposit = currentDeposit - originalPaymentAmount;
+              newTotalPayment = currentTotalPayment + newAmount;
               setDeposit(newDeposit);
               setTotalPayment(newTotalPayment);
               const newDue = grandTotal - (newDeposit + newTotalPayment);
               setDue(newDue);
             } else if (!isOriginalDeposit && isNewDeposit) {
-              // Payment to Deposit: move from payment to deposit
-              newTotalPayment = currentTotalPayment - originalNetAmount;
-              newDeposit = currentDeposit + newNetAmount;
+              newTotalPayment = currentTotalPayment - originalPaymentAmount;
+              newDeposit = currentDeposit + newAmount;
               setTotalPayment(newTotalPayment);
               setDeposit(newDeposit);
               const newDue = grandTotal - (newDeposit + newTotalPayment);
               setDue(newDue);
             } else {
-              // Payment to Payment: adjust payment amount using NET change
-              newTotalPayment = currentTotalPayment + netChange;
+              const amountDifference = newAmount - originalPaymentAmount;
+              newTotalPayment = currentTotalPayment + amountDifference;
               setTotalPayment(newTotalPayment);
               const newDue = grandTotal - (currentDeposit + newTotalPayment);
               setDue(newDue);
             }
+          }
+
+          // Update totalPayment in the store for real-time UI update
+          if (
+            mergedPaymentData.invoiceId !==
+            useEstimateCreateStore.getState().invoiceId
+          ) {
+            // If editing a different invoice, just refresh
+            router.refresh();
           }
 
           successToast("Payment updated successfully");
@@ -279,23 +261,12 @@ export default function EditPaymentModal({
           // Refresh the server data
           router.refresh();
         }
-
-        // else if (res?.type === "globalError") {
-        //   errorToast(
-        //     res?.errorSource?.length ? res.errorSource[0].message : res.message
-        //   );
-        // }
       } catch (err) {
         console.error(err);
         errorToast("Unexpected error occurred");
       }
     });
   };
-
-  // **Calculate maximum allowed NET amount**
-  const currentNetAmount = originalAmount - refundedAmount;
-  const otherPaymentsNet = totalPaidForInvoice - currentNetAmount;
-  // const maxAllowedNetAmount = invoiceGrandTotal - otherPaymentsNet;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -341,17 +312,13 @@ export default function EditPaymentModal({
               value={moment(date).format("YYYY-MM-DD")}
               onChange={(e) => setDate(new Date(e.target.value))}
             />
-            <div>
-              <SlimInput
-                label={"Amount"}
-                name="amount"
-                type="number"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value as unknown as number)}
-                step="0.01"
-                min="0.01"
-              />
-            </div>
+            <SlimInput
+              label="Amount"
+              name="amount"
+              type="number"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+            />
           </div>
 
           {/* Conditional Fields */}

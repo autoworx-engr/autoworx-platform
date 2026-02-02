@@ -96,10 +96,10 @@ export default function NewTemplate({
         form
       >
         <DialogHeader>
-          <DialogTitle className="px-1">Custom Template</DialogTitle>
+          <DialogTitle>Custom Template</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 overflow-y-auto px-1">
+        <div className="space-y-4 overflow-y-auto">
           <FormError />
           <input type="hidden" name="type" value={type} />
           <SlimInput
@@ -123,8 +123,9 @@ export default function NewTemplate({
               name="message"
               rows={5}
               maxLength={160} // ✅ Enforce SMS strictness
-              className={`${slimInputClassName} ${message.length > 160 ? "border-red-500" : ""
-                }`}
+              className={`${slimInputClassName} ${
+                message.length > 160 ? "border-red-500" : ""
+              }`}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
             />
@@ -132,24 +133,12 @@ export default function NewTemplate({
           <AppointmentTemplateVariable />
         </div>
 
-        <DialogFooter className="px-1">
-          <DialogClose className="
-                rounded-xl mt-2 sm:mt-0 px-5 py-2.5 text-sm font-medium text-slate-500 
-                hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
-                transition-colors border
-              ">
+        <DialogFooter>
+          <DialogClose className="rounded-lg border-2 border-slate-400 p-2">
             Cancel
           </DialogClose>
           <Submit
-            className="
-                rounded-xl px-6 py-2.5 text-sm font-medium text-white
-                bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
-                shadow-lg shadow-indigo-500/30
-                hover:shadow-xl hover:shadow-indigo-500/40
-                hover:-translate-y-0.5 hover:scale-[1.02]
-                active:translate-y-0 active:scale-100
-                transition-all duration-200
-              "
+            className="rounded-lg border bg-[#6571FF] px-5 py-2 text-white"
             formAction={handleSubmit}
           >
             Save
@@ -205,10 +194,11 @@ export const AppointmentTemplateVariable = ({
           <div
             key={variable.name}
             onClick={() => copyToClipboard(variable.name)}
-            className={`flex flex-col rounded-md border cursor-pointer p-3 ${copiedVar === variable.name
-              ? "border-green-400 bg-green-50"
-              : "border-gray-200 hover:border-indigo-300"
-              }`}
+            className={`flex flex-col rounded-md border cursor-pointer p-3 ${
+              copiedVar === variable.name
+                ? "border-green-400 bg-green-50"
+                : "border-gray-200 hover:border-indigo-300"
+            }`}
           >
             {/* Display the variable name */}
             <span className="mb-1 text-xs font-bold text-blue-600">

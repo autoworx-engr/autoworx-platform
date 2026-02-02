@@ -9,29 +9,6 @@ import { NextRequest, NextResponse } from "next/server";
 
 const pusher = getPusherInstance();
 
-/**
- * @swagger
- * /api/infobip/mms/receive:
- *   post:
- *     summary: Infobip MMS webhook
- *     tags: [Infobip]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               results:
- *                 type: array
- *                 items:
- *                   type: object
- *     responses:
- *       200:
- *         description: MMS processed
- *       400:
- *         description: No results in payload
- */
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();

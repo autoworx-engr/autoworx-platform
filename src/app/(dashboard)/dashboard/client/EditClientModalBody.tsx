@@ -193,6 +193,7 @@ export default function EditClientModalBody({
   }, []);
 
   return (
+<<<<<<< HEAD
     <DialogContent className="max-h-full max-w-2xl grid-rows-[auto,1fr,auto]">
       <div className="mt-8 flex items-center justify-between px-2">
         <div>
@@ -203,6 +204,11 @@ export default function EditClientModalBody({
             Update details for the client
           </p>
         </div>
+=======
+    <DialogContent className="max-h-full max-w-xl grid-rows-[auto,1fr,auto]">
+      <div className="mt-8 flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Edit Client</h1>
+>>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
 
         {newProfilePic || profilePic ? (
           <div className="relative group">
@@ -328,7 +334,7 @@ export default function EditClientModalBody({
               // }
             }}
           />
-          <div className="w-full">
+          <div className="md:w-[248px]">
             <PhoneInput
               label="Mobile"
               placeholder="1234567890"

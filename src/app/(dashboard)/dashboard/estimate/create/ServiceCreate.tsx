@@ -118,6 +118,7 @@ export default function ServiceCreate() {
         {edit ? "Update Service" : "Add New Service"}
       </h3>
 
+<<<<<<< HEAD
       <div className="flex flex-col gap-1.5">
         <label className="text-xs font-bold uppercase tracking-wider text-slate-600 ml-1">
           Service Name
@@ -129,11 +130,22 @@ export default function ServiceCreate() {
           onChange={(e) => setName(e.target.value)}
           className={cn(
             "h-11 rounded-xl bg-white px-4 text-sm font-medium ring-1 ring-inset ring-slate-200 transition-all focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30",
-            data.service?.canned && "bg-slate-50 text-slate-600 cursor-not-allowed shadow-inner"
+            data.service?.canned &&
+              "bg-slate-50 text-slate-600 cursor-not-allowed shadow-inner"
           )}
           readOnly={data.service?.canned}
         />
       </div>
+=======
+      <input
+        type="text"
+        placeholder="Service Name"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        className="rounded-md border-2 border-slate-400 p-2"
+        readOnly={data.service?.canned}
+      />
+>>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
 
       <div className="flex flex-col gap-1.5">
         <label className="text-xs font-bold uppercase tracking-wider text-slate-600 ml-1">

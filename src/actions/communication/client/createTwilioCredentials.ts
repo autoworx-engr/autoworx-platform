@@ -5,12 +5,12 @@ import { db } from "@/lib/db";
 import { TwilioCredentials } from "@prisma/client";
 import Twilio from "twilio";
 
-export const isSmsAvailable = async (companyId?: number) => {
+export const isSmsAvailable = async () => {
   try {
-    const cId = companyId || (await getCompanyId());
+    const companyId = await getCompanyId();
     const company = await db.company.findFirst({
       where: {
-        id: cId,
+        id: companyId,
       },
       select: {
         smsGateway: true,
@@ -21,13 +21,13 @@ export const isSmsAvailable = async (companyId?: number) => {
     if (company?.smsGateway === "TWILIO") {
       smsGateway = await db.twilioCredentials.findFirst({
         where: {
-          companyId: cId,
+          companyId,
         },
       });
     } else if (company?.smsGateway === "INFOBIP") {
       smsGateway = await db.infobipConfig.findFirst({
         where: {
-          companyId: cId,
+          companyId,
         },
       });
     }
@@ -45,12 +45,12 @@ export const isSmsAvailable = async (companyId?: number) => {
     };
   }
 };
-export const getFromNumber = async (companyId?: number) => {
+export const getFromNumber = async () => {
   try {
-    const cId = companyId || (await getCompanyId());
+    const companyId = await getCompanyId();
     const twilioCredentials = await db.twilioCredentials.findFirst({
       where: {
-        companyId: cId,
+        companyId,
       },
     });
     return twilioCredentials?.phoneNumber;
@@ -60,18 +60,16 @@ export const getFromNumber = async (companyId?: number) => {
   }
 };
 
-export const getTwilioCredentials = async (
-  companyId?: number
-): Promise<{
+export const getTwilioCredentials = async (): Promise<{
   success: boolean;
   data?: TwilioCredentials | null;
 }> => {
   try {
-    const cId = companyId || (await getCompanyId());
+    const companyId = await getCompanyId();
 
     const twilioCredential = await db.twilioCredentials.findFirst({
       where: {
-        companyId: cId,
+        companyId,
       },
     });
 
@@ -89,8 +87,6 @@ export const createTwilioCredentials = async ({
   apiKeySid,
   apiKeySecret,
   phoneNumberSid,
-  notifyServiceSid,
-  voipPushCredentialSid,
 }: {
   companyId: number;
   accountSid: string;
@@ -98,8 +94,6 @@ export const createTwilioCredentials = async ({
   apiKeySid: string;
   apiKeySecret: string;
   phoneNumberSid: string;
-  notifyServiceSid?: string;
-  voipPushCredentialSid?: string;
 }) => {
   console.log("🚀 ~ createTwilioCredentials ~ companyId:", companyId);
   try {
@@ -116,8 +110,6 @@ export const createTwilioCredentials = async ({
         apiKeySecret,
         companyId: companyId as number,
         phoneNumberSid,
-        notifyServiceSid,
-        voipPushCredentialSid,
       },
       update: {
         accountSid,
@@ -125,8 +117,6 @@ export const createTwilioCredentials = async ({
         apiKeySid,
         apiKeySecret,
         phoneNumberSid,
-        notifyServiceSid,
-        voipPushCredentialSid,
       },
     });
 
@@ -168,29 +158,11 @@ export const createTwilioCredentials = async ({
         });
       }
 
-      const twimlAppName = "Autoworx_TwiML_App";
-
-      const existingApps = await cuurentClient.applications.list({
-        friendlyName: twimlAppName,
-        limit: 1,
+      const application = await cuurentClient.applications.create({
+        friendlyName: `User TwiML App`,
+        voiceUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/twilio/receive`,
+        voiceMethod: "POST",
       });
-
-      let application;
-      if (existingApps.length > 0) {
-        application = await cuurentClient
-          .applications(existingApps[0].sid)
-          .update({
-            friendlyName: twimlAppName,
-            voiceUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/twilio/receive`,
-            voiceMethod: "POST",
-          });
-      } else {
-        application = await cuurentClient.applications.create({
-          friendlyName: twimlAppName,
-          voiceUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/twilio/receive`,
-          voiceMethod: "POST",
-        });
-      }
 
       if (application.sid) {
         await db.twilioCredentials.update({
@@ -215,12 +187,12 @@ export const createTwilioCredentials = async ({
   }
 };
 
-export const buyTwilioNumber = async (companyId?: number) => {
+export const buyTwilioNumber = async () => {
   try {
-    const cId = companyId || (await getCompanyId());
+    const companyId = await getCompanyId();
     const company = await db.company.findFirst({
       where: {
-        id: cId,
+        id: companyId,
       },
     });
 
@@ -229,7 +201,7 @@ export const buyTwilioNumber = async (companyId?: number) => {
     }
     let twilioCredential = await db.twilioCredentials.findFirst({
       where: {
-        companyId: cId,
+        companyId,
       },
     });
 
@@ -244,7 +216,7 @@ export const buyTwilioNumber = async (companyId?: number) => {
 
     // 1. Create subaccount for the company
     const subaccount = await parentClient.api.accounts.create({
-      friendlyName: `Company-${cId}_${company.name}`,
+      friendlyName: `Company-${companyId}_${company.name}`,
     });
 
     const subClient = Twilio(
@@ -264,19 +236,19 @@ export const buyTwilioNumber = async (companyId?: number) => {
     const phoneNumber = numbers[0];
     const purchased = await subClient.incomingPhoneNumbers.create({
       phoneNumber: phoneNumber.phoneNumber,
-      smsUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/twilio/sms-receive/${cId}`,
+      smsUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/twilio/sms-receive/${companyId}`,
     });
 
     // 4. Create TwiML App (optional, for voice)
     const application = await subClient.applications.create({
-      friendlyName: `TwiML App - Company ${cId}`,
+      friendlyName: `TwiML App - Company ${companyId}`,
       voiceUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/twilio/receive`,
       voiceMethod: "POST",
     });
 
     // 5. Save credentials to DB
     await db.twilioCredentials.upsert({
-      where: { companyId: cId },
+      where: { companyId },
       create: {
         accountSid: subaccount.sid,
         apiKeySid: apiKey.sid,
@@ -284,7 +256,7 @@ export const buyTwilioNumber = async (companyId?: number) => {
         phoneNumber: purchased.phoneNumber,
         phoneNumberSid: purchased.sid,
         twimlAppSid: application.sid,
-        companyId: cId,
+        companyId,
       },
       update: {
         accountSid: subaccount.sid,

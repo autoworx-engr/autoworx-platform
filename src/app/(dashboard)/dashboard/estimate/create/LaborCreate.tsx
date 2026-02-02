@@ -11,7 +11,6 @@ import Close from "./CloseEstimate";
 import { errorToast } from "@/lib/toast";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { laborCreateValidationSchema } from "@/validations/schemas/estimate/labor/labor.validation";
-import { cn } from "@/lib/cn";
 
 export default function LaborCreate() {
   const { categories } = useListsStore();
@@ -341,6 +340,7 @@ export default function LaborCreate() {
 
       {/* Add to Canned Labor */}
       {!data.edit && (
+<<<<<<< HEAD
         <div className="ml-28 pl-3 flex items-center">
           <label className="group flex cursor-pointer items-center gap-3">
             <div className="relative flex items-center mt-1">
@@ -381,6 +381,16 @@ export default function LaborCreate() {
               Add to Canned Labor
             </span>
           </label>
+=======
+        <div className="ml-3 flex items-center gap-5">
+          <input
+            id="check"
+            type="checkbox"
+            checked={addToCannedLabor}
+            onChange={(e) => setAddToCannedLabor(e.target.checked)}
+          />
+          <label htmlFor="check">Add to Canned Labor</label>
+>>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
         </div>
       )}
 

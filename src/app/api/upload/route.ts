@@ -9,49 +9,6 @@ import { getSignedURL } from "@/actions/s3/signedURL";
 import { deleteObject } from "@/actions/s3/deleteObject";
 // const pump = promisify(pipeline);
 
-/**
- * @swagger
- * /api/upload:
- *   post:
- *     summary: Upload files to S3
- *     tags: [Upload]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         multipart/form-data:
- *           schema:
- *             type: object
- *             properties:
- *               file:
- *                 type: string
- *                 format: binary
- *     responses:
- *       200:
- *         description: Files uploaded successfully
- *       500:
- *         description: Upload failed
- *   delete:
- *     summary: Delete file from S3
- *     tags: [Upload]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               filePath:
- *                 type: string
- *     responses:
- *       200:
- *         description: File deleted successfully
- *       500:
- *         description: Delete failed
- */
 export async function POST(req: NextRequest, res: NextResponse) {
   try {
     // const fileNames = [];

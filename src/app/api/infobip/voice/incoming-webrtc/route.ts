@@ -2,31 +2,6 @@ import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { sendPushNotification } from "@/actions/notification/sendPushNotification";
 
-/**
- * @swagger
- * /api/infobip/voice/incoming-webrtc:
- *   post:
- *     summary: Infobip WebRTC incoming call webhook
- *     tags: [Infobip]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               from:
- *                 type: string
- *               to:
- *                 type: string
- *               callId:
- *                 type: string
- *     responses:
- *       200:
- *         description: Incoming call processed
- *       400:
- *         description: Missing parameters
- */
 // Webhook endpoint for Infobip WebRTC incoming calls
 // This is called by Infobip when someone dials your number
 export async function POST(request: NextRequest) {

@@ -133,7 +133,6 @@ export default function Pipelines({
     [key: string]: boolean;
   }>({});
 
-  
   const handleSearchResult = (
     result: { columnIndex: number; leadIndex: number } | null
   ) => {
@@ -532,7 +531,6 @@ export default function Pipelines({
       console.error("newStatusId is null");
     }
   };
-  
 
   return (
     <>
@@ -592,7 +590,6 @@ export default function Pipelines({
                             openServiceDropdown[key] || false;
                           const selectedEmployee = lead.assignedTo;
 
-                          
                           return (
                             <Draggable
                               key={lead.invoiceId}

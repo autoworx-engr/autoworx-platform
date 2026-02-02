@@ -1,11 +1,11 @@
 import { DialogContent, DialogHeader, DialogTitle } from "@/components/Dialog";
-import { EmployeeType } from "@prisma/client";
-import { useSession } from "next-auth/react";
-import { useState } from "react";
-import useSettingsQuery from "../../_hook/settings/query/useSettingsQuery";
-import TaskSpinner from "../ui/TaskSpinner";
 import General from "./General";
 import Holidays from "./Holidays";
+import { useState } from "react";
+import { useSession } from "next-auth/react";
+import { EmployeeType } from "@prisma/client";
+import useSettingsQuery from "../../_hook/settings/query/useSettingsQuery";
+import TaskSpinner from "../ui/TaskSpinner";
 
 export default function SettingsModalContent({
   onClose,
@@ -57,13 +57,7 @@ export default function SettingsModalContent({
           {isLoading ? (
             <TaskSpinner />
           ) : (
-            settings && (
-              <General
-                settings={settings}
-                authUser={authUser}
-                onClose={onClose}
-              />
-            )
+            settings && <General settings={settings} onClose={onClose} />
           )}
         </>
       )}

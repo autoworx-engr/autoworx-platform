@@ -424,17 +424,16 @@ const Dashboard = () => {
                           const effectiveHours = isNaN(Number(data.hours))
                             ? data.hours
                             : convertDuration(
-                                Number(data.hours) - Number(data.totalBreaks)
-                              );
+                              Number(data.hours) - Number(data.totalBreaks)
+                            );
 
                           return (
                             <tr
                               key={index}
-                              className={`group ${
-                                index % 2 === 0
-                                  ? "border-b bg-blue-50"
-                                  : "border-b bg-background"
-                              }`}
+                              className={`group ${index % 2 === 0
+                                ? "border-b bg-blue-50"
+                                : "border-b bg-background"
+                                }`}
                             >
                               <td className="bg-background px-2 py-2 font-medium sm:px-4">
                                 {dayAbbr}-{dayDate}
@@ -488,9 +487,8 @@ const Dashboard = () => {
                       {metric.value}
                     </div>
                     <div
-                      className={`mt-1 flex items-center justify-end gap-1 text-sm font-medium ${
-                        metric.isPositive ? "text-emerald-500" : "text-rose-500"
-                      }`}
+                      className={`mt-1 flex items-center justify-end gap-1 text-sm font-medium ${metric.isPositive ? 'text-emerald-500' : 'text-rose-500'
+                        }`}
                     >
                       {metric.isPositive ? (
                         <svg
@@ -514,10 +512,7 @@ const Dashboard = () => {
                           role="img"
                           className="transition duration-300 hover:scale-110"
                         >
-                          <path
-                            d="M12 15.5L5 8.5h14l-7 7z"
-                            fill="currentColor"
-                          />
+                          <path d="M12 15.5L5 8.5h14l-7 7z" fill="currentColor" />
                         </svg>
                       )}
                       <div className="text-nowrap">{metric.percentage}</div>

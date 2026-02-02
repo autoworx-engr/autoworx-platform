@@ -2,22 +2,6 @@ import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 
-/**
- * @swagger
- * /api/company/sms-gateway:
- *   get:
- *     summary: Get company SMS gateway setting
- *     tags: [Company]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: SMS gateway setting (TWILIO or INFOBIP)
- *       404:
- *         description: Company not found
- *       500:
- *         description: Server error
- */
 export async function GET() {
   try {
     const companyId = await getCompanyId();

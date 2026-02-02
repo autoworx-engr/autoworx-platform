@@ -198,10 +198,17 @@ export default function Users() {
               />
             </div>
 
+<<<<<<< HEAD
             {/* Submit Button - Styled as a secondary action with professional flair */}
             {/* <button
               type="submit"
               className="
+=======
+      {/* Submit Button - Styled as a secondary action with professional flair */}
+      <button 
+        type="submit"
+        className="
+>>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
           w-auto px-4 py-2 text-sm font-bold rounded-xl 
           text-white 
          bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
@@ -211,10 +218,17 @@ export default function Users() {
                 active:translate-y-0 active:scale-100
                 transition-all duration-300 ease-in-out
         "
+<<<<<<< HEAD
             >
               Search
             </button> */}
           </form>
+=======
+      >
+        Search
+      </button>
+    </form>
+>>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
         )}
       </div>
 

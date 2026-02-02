@@ -209,10 +209,6 @@ export default async function Page({
     );
   });
 
-  const status = invoice?.columnId
-    ? await db.column.findUnique({ where: { id: invoice?.columnId } })
-    : null;
-
   let materials = [] as any[];
 
   materials.push(
@@ -242,7 +238,7 @@ export default async function Page({
           paymentMethods={paymentMethods}
           client={null}
         />
-        <Header status={status!} />
+        <Header />
         {isEdit && (
           <SyncEstimate
             template={invoice}
@@ -294,11 +290,15 @@ export default async function Page({
         <div>
           <Create />
         </div>
+<<<<<<< HEAD
         <TemplateBillSummary
           isEdit={isEdit}
           isEstimateServiceFee={Number(invoice?.serviceFee) > 0}
           isEstimateTax={Number(invoice?.tax) > 0}
         />
+=======
+        <TemplateBillSummary isEdit={isEdit} />
+>>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
       </div>
     </div>
   );

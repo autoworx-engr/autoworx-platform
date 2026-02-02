@@ -23,7 +23,7 @@ type TaskProps = {
 // --- Custom Priority Classes with Gradient/Sleek Look ---
 const priorityClasses = {
   // Low: Existing Blue/Purple (#6571FF) -> Gradient for Polish
-  Low: "bg-gradient-to-r from-[#505aff] to-[#6571FF] shadow-indigo-700/50",
+  Low: "bg-gradient-to-r from-blue-500 to-indigo-600 shadow-indigo-600/50",
   // Medium: Existing Cyan (#25AADD) -> Gradient for Depth
   Medium: "bg-gradient-to-r from-cyan-600 to-blue-500 shadow-cyan-600/50",
   // High: Existing Teal/Dark Cyan (#006d77) -> Gradient for Intensity
@@ -122,7 +122,7 @@ const Task = ({ task, onTaskDeleted }: TaskProps) => {
           flex cursor-pointer items-center justify-between gap-x-2
           rounded-lg py-1.5 md:py-2 px-3 md:px-4 text-white text-sm
 
-          // Core effects: Smooth lift and
+          // Core transition effects: Smooth lift and shadow
           transition-all duration-300 ease-in-out
           shadow-lg
           hover:-translate-y-0.5

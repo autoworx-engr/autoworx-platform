@@ -9,38 +9,6 @@ import { NextRequest, NextResponse } from "next/server";
 
 const pusher = getPusherInstance();
 
-/**
- * @swagger
- * /api/infobip/sms/receive/{companyIds}:
- *   post:
- *     summary: Infobip SMS webhook for multiple companies
- *     tags: [Infobip]
- *     parameters:
- *       - in: path
- *         name: companyIds
- *         required: true
- *         schema:
- *           type: string
- *           description: Comma-separated company IDs
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               results:
- *                 type: array
- *               from:
- *                 type: string
- *               to:
- *                 type: string
- *     responses:
- *       200:
- *         description: Message processed
- *       400:
- *         description: Missing required fields
- */
 export async function POST(
   req: NextRequest,
   context: { params: Promise<{ companyIds: string }> }

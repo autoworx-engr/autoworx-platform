@@ -2,37 +2,6 @@ import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 
-/**
- * @swagger
- * /api/company/{companyId}/collaboration:
- *   patch:
- *     summary: Update company collaboration status
- *     tags: [Company]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: companyId
- *         required: true
- *         schema:
- *           type: integer
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               isCollaborators:
- *                 type: boolean
- *     responses:
- *       200:
- *         description: Collaboration status updated
- *       400:
- *         description: Invalid parameters
- *       500:
- *         description: Server error
- */
 export async function PATCH(
   req: NextRequest,
   { params }: { params: { companyId: string } }

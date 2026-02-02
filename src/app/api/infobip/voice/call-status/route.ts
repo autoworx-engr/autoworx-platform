@@ -1,33 +1,6 @@
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
-/**
- * @swagger
- * /api/infobip/voice/call-status:
- *   post:
- *     summary: Infobip call status webhook
- *     tags: [Infobip]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               callId:
- *                 type: string
- *               status:
- *                 type: string
- *               duration:
- *                 type: integer
- *     responses:
- *       200:
- *         description: Status updated
- *       400:
- *         description: Missing callId
- *       500:
- *         description: Server error
- */
 // Webhook endpoint for Infobip call status updates
 export async function POST(request: NextRequest) {
   try {

@@ -378,8 +378,7 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
                   value={formData.title!}
                   labelClassName="text-gray-500"
                   onChange={(e) => handleChange("title", e.target.value)}
-                  required
-                  error={error.title}
+                  // required
                 />
 
                 {/* Stage */}

@@ -16,8 +16,7 @@ type PermissionKeys =
     | 'businessSettings'
     | 'workforceManagementViewOnly'
     | 'reportingViewOnly'
-    | 'inventoryAllViewOnly'
-    | 'visualization';
+    | 'inventoryAllViewOnly';
 
 export const ROUTE_PERMISSIONS_MAP: Record<
     string,
@@ -40,7 +39,6 @@ export const ROUTE_PERMISSIONS_MAP: Record<
   "/dashboard/pipeline/sales/lead": "salesPipeline",
   "/dashboard/pipeline/shop/pipeline": "shopPipeline",
   "/dashboard/pipeline/shop/workorder": "shopPipeline",
-  "/dashboard/visualization": "visualization",
   "/dashboard/settings": "businessSettings",
   "/dashboard/settings/team-management": "businessSettings",
   "/dashboard/settings/payments": "businessSettings",
@@ -75,9 +73,7 @@ type CompanyFeaturePermissionKeys =
     | 'businessSettings'
     | 'workforceManagement'
     | 'serviceEstimator'
-    | 'automation'
-    | 'visualization';
-
+    | 'automation';
 
 export const FEATURE_PERMISSIONS_MAP: Record<
     string,
@@ -99,7 +95,6 @@ export const FEATURE_PERMISSIONS_MAP: Record<
     '/dashboard/pipeline/sales/pipeline': 'salesPipeline',
     '/dashboard/pipeline/sales/lead': 'salesPipeline',
     '/dashboard/pipeline/shop/pipeline': 'shopPipeline',
-    '/dashboard/visualization': 'visualization',
     '/dashboard/pipeline/shop/workorder': 'shopPipeline',
     '/dashboard/settings': 'businessSettings',
     '/dashboard/settings/team-management': 'businessSettings',

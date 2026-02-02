@@ -1,29 +1,9 @@
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
-/**
- * @swagger
- * /api/auth/user/{email}:
- *   get:
- *     summary: Get user by email
- *     tags: [Auth]
- *     parameters:
- *       - in: path
- *         name: email
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: User data
- *       404:
- *         description: User not found
- *       500:
- *         description: Server error
- */
 export async function GET(
   request: NextRequest,
-  searchParams: { params: { email: string } }
+  searchParams: { params: { email: string } },
 ) {
   const email = searchParams?.params?.email;
 

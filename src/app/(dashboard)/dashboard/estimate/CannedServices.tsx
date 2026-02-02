@@ -1,6 +1,8 @@
 "use client";
 import { deleteService } from "@/actions/estimate/service/deleteService";
 import { updateService } from "@/actions/estimate/service/updateService";
+import SelectCategory from "@/components/Lists/SelectCategory";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   Dialog,
   DialogClose,
@@ -10,8 +12,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/Dialog";
-import SelectCategory from "@/components/Lists/SelectCategory";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -28,7 +28,7 @@ import { Category, Service } from "@prisma/client";
 import { Pagination, Popconfirm } from "antd";
 import { SquarePen, Trash2 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import FilterBySearchBox from "../reporting/components/filter/FilterBySearchBox";
 import CannedFilterBySelection from "./CannedFilterBySelected";
 import NewService from "./NewService";
@@ -54,9 +54,6 @@ export default function CannedServices({
   const [activeModal, setActiveModal] = useState<{ [key: string]: boolean }>(
     {}
   );
-
-  // Ref to scroll to top - attach to the main container
-  const containerRef = useRef<HTMLDivElement>(null);
 
   //  Filter logic
   useEffect(() => {
@@ -87,14 +84,6 @@ export default function CannedServices({
   const handlePageChange = (page: number, pageSize?: number) => {
     setCurrentPage(page);
     if (pageSize) setPageSize(pageSize);
-
-    // Scroll to top when page changes
-    if (containerRef.current) {
-      containerRef.current.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    }
   };
 
   const paginatedServices = filteredData.slice(
@@ -124,7 +113,7 @@ export default function CannedServices({
   };
 
   return (
-    <div ref={containerRef} className="h-full w-full md:px-4 flex flex-col">
+    <div className="h-full w-full md:px-4 flex flex-col">
       <section className="pb-4 border-b border-gray-200">
         <div className="flex items-center gap-x-4">
           <h3 className="text-2xl font-extrabold text-gray-800">
@@ -225,26 +214,11 @@ export default function CannedServices({
         )}
       </div>
       {showPagination && (
-        <div className="hidden h-10 justify-end lg:flex flex-shrink-0 mt-4">
+        <div className=" hidden h-10 justify-end lg:flex flex-shrink-0 mt-4">
           <Pagination
             className="custom-pagination"
             current={currentPage}
             pageSize={pageSize}
-            total={services.length}
-            onChange={handlePageChange}
-            showSizeChanger
-            onShowSizeChange={handlePageChange}
-          />
-        </div>
-      )}
-      {/* Mobile Pagination */}
-      {showPagination && (
-        <div className="flex justify-center lg:hidden flex-shrink-0 mt-4">
-          <Pagination
-            className="custom-pagination"
-            current={currentPage}
-            pageSize={pageSize}
-            // total={filteredData.length}
             total={services.length}
             onChange={handlePageChange}
             showSizeChanger
@@ -402,9 +376,7 @@ const ServiceComponent = ({
                         }}
                         className={cn(
                           "min-h-[100px] w-full rounded-lg border p-2 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition-colors",
-                          descriptionError
-                            ? "border-red-500"
-                            : "border-gray-300"
+                          descriptionError ? "border-red-500" : "border-gray-300"
                         )}
                       />
                       {descriptionError && (
@@ -547,7 +519,7 @@ const ServiceComponent = ({
                     setDescriptionError("");
                   }}
                   className={cn(
-                    "min-h-[100px] thin-scrollbar w-full rounded-lg border p-2 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition-colors",
+                    "min-h-[100px] w-full rounded-lg border p-2 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition-colors",
                     descriptionError ? "border-red-500" : "border-gray-300"
                   )}
                 />

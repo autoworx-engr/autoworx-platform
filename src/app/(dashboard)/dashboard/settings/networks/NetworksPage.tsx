@@ -78,8 +78,13 @@ const NetworksPage = ({
   const [nearbyCompaniesSearch, setNearbyCompaniesSearch] =
     useState<string>("");
 
+<<<<<<< HEAD
   const [connectedCompanies, setConnectedCompanies] = useState<any[] | []>(
+    connectedCompaniesData,
+=======
+  const [connectedCompanies, setConnectedCompanies] = useState<Company[] | []>(
     connectedCompaniesData
+>>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
   );
   const [nearbyCompanies, setNearbyCompanies] = useState<Company[] | []>([]);
   const [searchedNearbyCompanies, setSearchedNearbyCompanies] = useState<
@@ -190,8 +195,9 @@ const NetworksPage = ({
                 No active collaborations found
               </p>
             )}
+<<<<<<< HEAD
 
-            <div className="space-y-4">
+            <div className="space-y-4 lg:max-h-72 lg:overflow-y-auto thin-scrollbar pb-4">
               {active.map(
                 ({
                   company,
@@ -214,7 +220,7 @@ const NetworksPage = ({
                       </div>
                     }
                   />
-                )
+                ),
               )}
             </div>
 
@@ -269,7 +275,7 @@ const NetworksPage = ({
                                 onClick={() =>
                                   acceptCompanyJoin(
                                     joinId,
-                                    Number(currentCompany?.id)
+                                    Number(currentCompany?.id),
                                   )
                                 }
                               >
@@ -280,7 +286,7 @@ const NetworksPage = ({
                                 onClick={() =>
                                   rejectCompanyJoin(
                                     joinId,
-                                    Number(currentCompany?.id)
+                                    Number(currentCompany?.id),
                                   )
                                 }
                               >
@@ -290,7 +296,7 @@ const NetworksPage = ({
                           }
                         />
                       );
-                    }
+                    },
                   )}
                 </div>
               </>
@@ -357,7 +363,7 @@ const NetworksPage = ({
                                 onClick={() =>
                                   acceptCompanyJoin(
                                     joinId,
-                                    Number(currentCompany?.id)
+                                    Number(currentCompany?.id),
                                   )
                                 }
                               >
@@ -378,7 +384,7 @@ const NetworksPage = ({
                           }
                         />
                       );
-                    }
+                    },
                   )}
                 </div>
               </>
@@ -389,6 +395,74 @@ const NetworksPage = ({
                 No rejected collaboration
               </p>
             )}
+=======
+            <div className="max-h-[500px] overflow-y-auto space-y-4">
+              {connectedCompanies.map((company, index) => (
+                <div
+                  key={index}
+                  className="flex items-start rounded-lg border border-gray-200 bg-gray-50 p-4 transition duration-200 hover:border-indigo-300 hover:shadow-sm"
+                >
+                  <div className="mr-4 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-100">
+                    <Image
+                      src="/icons/business.png"
+                      alt={company.name}
+                      width={24}
+                      height={24}
+                      className="opacity-70"
+                    />
+                  </div>
+                  <div className="flex w-full items-start justify-between">
+                    <div>
+                      <p className="text-lg font-medium text-gray-800">
+                        {company.name}
+                      </p>
+                      <div className="mt-1 space-y-0.5 text-sm text-gray-500">
+                        {company.website && (
+                          <p className="flex items-center">
+                            <Globe size={14} className="mr-1 text-indigo-500" />
+                            <a
+                              href={company.website}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="hover:text-indigo-600 transition"
+                            >
+                              {company.website}
+                            </a>
+                          </p>
+                        )}
+                        {company.phone && (
+                          <p className="flex items-center">
+                            <Phone size={14} className="mr-1 text-indigo-500" />
+                            {company.phone}
+                          </p>
+                        )}
+                        {company.address && (
+                          <p className="flex items-center">
+                            <MapPin
+                              size={14}
+                              className="mr-1 text-indigo-500"
+                            />
+                            {company.address}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    {/* Collaboration Date */}
+                    <div className="text-right text-xs italic text-gray-500 pt-1">
+                      <p className="font-semibold text-gray-600">
+                        Collaborating Since
+                      </p>
+                      <p>
+                        {collaborationDates[index]
+                          ? formatDate(collaborationDates[index])
+                          : "N/A"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+>>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
           </div>
         </div>
 

@@ -48,14 +48,13 @@ export default function ConvertButton({
     <form className="px-3">
       <Submit
         className={cn(
-          "flex w-full items-center justify-center gap-2 text-nowrap rounded-lg px-4 py-2 text-center text-sm font-semibold tracking-wide transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:grayscale-[0.5]",
-          !className?.includes('bg-') && "bg-slate-800 text-white shadow-lg shadow-slate-200 ring-1 ring-slate-900/5 hover:bg-slate-900",
+          "flex w-full items-center justify-center gap-2 text-nowrap rounded border border-solid border-slate-600 p-2 text-center text-sm disabled:opacity-35",
           className
         )}
         formAction={handleSubmit}
       >
-        {icon && <span className="shrink-0 opacity-90">{icon}</span>}
-        <span>{text}</span>
+        {icon}
+        {text}
       </Submit>
     </form>
   );

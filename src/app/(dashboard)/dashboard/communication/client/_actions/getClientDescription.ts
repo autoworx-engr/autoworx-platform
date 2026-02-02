@@ -3,16 +3,13 @@ import { fetchMailsMailgun } from "@/actions/communication/client/fetchMailgunMa
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 
-export async function getClientDescription(
-  clientId: number,
-  companyId?: number
-) {
+export async function getClientDescription(clientId: number) {
   try {
-    const cId = companyId || (await getCompanyId());
+    const companyId = await getCompanyId();
 
     const companyUsersPromise = db.user.findMany({
       where: {
-        companyId: cId,
+        companyId,
       },
     });
     const conversationsPromise = fetchMailsMailgun(clientId);

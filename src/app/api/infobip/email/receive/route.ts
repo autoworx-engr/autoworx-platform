@@ -7,33 +7,6 @@ import { updateNewEmailChatTrack } from "@/actions/communication/client/chat-tra
 import sendClientMailOrSMSNotify from "@/lib/pusher/client-conversation-notify";
 import { updatePipelineAutomationTrigger } from "@/actions/automation/pipeline/triggerPipelineAutomation";
 
-/**
- * @swagger
- * /api/infobip/email/receive:
- *   post:
- *     summary: Infobip email webhook
- *     tags: [Infobip]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               messageId:
- *                 type: string
- *               to:
- *                 type: string
- *               from:
- *                 type: string
- *               subject:
- *                 type: string
- *     responses:
- *       200:
- *         description: Email processed
- *       400:
- *         description: Invalid email data
- */
 // Infobip webhook payload interface
 interface InfobipEmailWebhook {
   messageId: string;

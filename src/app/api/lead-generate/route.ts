@@ -8,39 +8,6 @@ import { sendCRMDemoNotification } from "@/lib/notification/crm-demo-notifiy";
 import { sendNewLeadNotification } from "@/lib/notification/pipeline-notify";
 import { NextRequest, NextResponse } from "next/server";
 
-/**
- * @swagger
- * /api/lead-generate:
- *   post:
- *     summary: Generate new lead from Zapier
- *     tags: [Leads]
- *     parameters:
- *       - in: header
- *         name: X-TOKEN
- *         required: true
- *         schema:
- *           type: string
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               name:
- *                 type: string
- *               email:
- *                 type: string
- *               phone:
- *                 type: string
- *     responses:
- *       200:
- *         description: Lead created successfully
- *       401:
- *         description: Invalid token
- *       500:
- *         description: Server error
- */
 export async function POST(request: NextRequest) {
   try {
     const token = request.headers.get("X-TOKEN");
@@ -80,14 +47,7 @@ export async function POST(request: NextRequest) {
     // console.log("🚀 ~ POST ~ opportunity:", opportunity);
     const crmMsg = body.message;
     const multipleServices = body.multiServices as number[] | undefined;
-    // now extract the source, services and vehicle info from opportunity
-    // the format is this: (source) vehicle | service
-    const source = opportunity.split(")")[0].replace("(", "").trim();
-    // console.log("🚀 ~ POST ~ source:", source);
-    const vehicleInfo = opportunity.split(")")[1].split("|")[0].trim();
-    // console.log("🚀 ~ POST ~ vehicleInfo:", vehicleInfo);
-    const services = opportunity.split(")")[1].split("|")[1].trim();
-    // console.log("🚀 ~ POST ~ services:", services);
+
     // console.log("crmMsg", crmMsg);
     //check if crm company
     const isCRMCompany = company.isCRMEnabled || false;
@@ -96,14 +56,17 @@ export async function POST(request: NextRequest) {
       // For demo requests
       const source = body.source || "Marketing Site";
 
+      let vehicleInfo = "N/A";
+      let services = crmMsg || "Service Request";
+
       // Create lead with demo-specific handling
       const newLead = await db.lead.create({
         data: {
           clientName,
           clientEmail,
           clientPhone,
-          vehicleInfo: vehicleInfo || "N/A",
-          services: services || crmMsg || "Service Request",
+          vehicleInfo,
+          services,
           countryCode,
           source,
           serviceId: null,
@@ -232,6 +195,15 @@ export async function POST(request: NextRequest) {
         { status: 201 }
       );
     }
+
+    // now extract the source, services and vehicle info from opportunity
+    // the format is this: (source) vehicle | service
+    const source = opportunity.split(")")[0].replace("(", "").trim();
+    // console.log("🚀 ~ POST ~ source:", source);
+    const vehicleInfo = opportunity.split(")")[1].split("|")[0].trim();
+    // console.log("🚀 ~ POST ~ vehicleInfo:", vehicleInfo);
+    const services = opportunity.split(")")[1].split("|")[1].trim();
+    // console.log("🚀 ~ POST ~ services:", services);
 
     // check if the required fields are provided
     if (!clientName || !vehicleInfo || !services || !source) {

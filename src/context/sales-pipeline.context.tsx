@@ -14,7 +14,7 @@ import {
 
 const ColumnStateContext = createContext<ColumnWithLeads[]>([]);
 const ColumnDispatchContext = createContext<Dispatch<TColumnAction<any>>>(
-  () => {}
+  () => {},
 );
 const CompanyUserContext = createContext<User[] | null>(null);
 
@@ -33,13 +33,9 @@ export function ColumnProvider({
   companyUsers = [],
   searchTerm = "",
 }: TColumnProviderProps) {
-  const [state, dispatch] = useReducer(
-    leadReducer as (
-      state: ColumnWithLeads[],
-      action: TColumnAction<unknown>
-    ) => ColumnWithLeads[],
-    initialColumns
-  );
+  const [state, dispatch] = useReducer<
+    React.Reducer<ColumnWithLeads[], TColumnAction<any>>
+  >(leadReducer, initialColumns);
 
   // Use a ref to track the last searchTerm to prevent unnecessary dispatches
   const lastSearchTermRef = useRef(searchTerm);
@@ -48,9 +44,8 @@ export function ColumnProvider({
   useEffect(() => {
     // Only dispatch if the data has actually changed
     const searchTermChanged = lastSearchTermRef.current !== searchTerm;
-    const initialColumnsChanged =
-      lastInitialColumnsRef.current !== initialColumns;
-
+    const initialColumnsChanged = lastInitialColumnsRef.current !== initialColumns;
+    
     if (searchTermChanged || initialColumnsChanged) {
       dispatch({ type: actionTypes.RELOAD_STATE, payload: initialColumns });
       lastSearchTermRef.current = searchTerm;

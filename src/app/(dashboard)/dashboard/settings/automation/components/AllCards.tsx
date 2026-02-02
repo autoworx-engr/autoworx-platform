@@ -153,7 +153,7 @@ export default function AllCards({
                   ? allTagAutomation?.data
                   : campaigns;
 
-  const allowedCompany = [4, 14, 1, 49];
+  const allowedCompany = [4, 14, 1];
   useEffect(() => {
     if (items?.length >= 3 && !allowedCompany.includes(companyId)) {
       setIsCreate(false);

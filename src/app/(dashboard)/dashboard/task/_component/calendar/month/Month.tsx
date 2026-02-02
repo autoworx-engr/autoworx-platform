@@ -27,9 +27,6 @@ import { getDayNumber } from "../../../_utils/utils.DateSelector";
 import CalendarTooltip from "../CalendarTooltip";
 import HolidayDeleteConfirmation from "../HolidayDeleteConfirmation";
 import { Skeleton } from "antd";
-import { useQuery } from "@tanstack/react-query";
-import { calenderQueryKey } from "../../../_constant";
-import getHoliday from "@/actions/task/getHoliday";
 
 // Gradient priority classes for tasks
 const priorityClasses = {
@@ -53,28 +50,12 @@ export default function Month() {
     ? moment(month, "YYYY-MM").year()
     : moment().year();
   const { data: settings } = useSettingsQuery();
-  // const { data: holidays = [] } = useHolidaysQuery(
-  //   formattedMonth,
-  //   formattedYear
-  // );
-
+  const { data: holidays = [] } = useHolidaysQuery(
+    formattedMonth,
+    formattedYear
+  );
   const router = useRouter();
   const { data: session } = useSession();
-
-  const authUser = session?.user;
-  const {
-    data: holidays,
-    isLoading,
-    isError,
-  } = useQuery({
-    queryKey: [calenderQueryKey.holidays],
-    queryFn: async () => {
-      if (!authUser?.companyId) return [];
-      const companyId = authUser?.companyId;
-      const holidays = await getHoliday(companyId);
-      return holidays;
-    },
-  });
 
   // Fetch tasks for the current month
   const { data: tasks = [], isLoading: isTasksLoading } = useTaskQueryByMonth(
@@ -173,7 +154,7 @@ export default function Month() {
   function getHolidays(date: Date) {
     const currDateLocal = date.toLocaleDateString("en-CA"); // e.g. '2025-04-07'
 
-    const holiday = holidays?.find((holiday: any) => {
+    const holiday = holidays.find((holiday: any) => {
       const holidayDateLocal = new Date(holiday.date).toLocaleDateString(
         "en-CA"
       );
@@ -428,9 +409,8 @@ export default function Month() {
                       ?.slice(0, 2)
                       .map((task: CalendarTask, i: number) => {
                         const taskPriorityClass =
-                          priorityClasses[
-                            task.priority as keyof typeof priorityClasses
-                          ] || priorityClasses.Low;
+                          priorityClasses[task.priority as keyof typeof priorityClasses] ||
+                          priorityClasses.Low;
                         return (
                           <Tooltip key={i}>
                             <TooltipTrigger asChild>
@@ -480,11 +460,11 @@ export default function Month() {
                                           const dateString =
                                             cell[0] instanceof Date
                                               ? cell[0].toLocaleDateString(
-                                                  "en-CA"
-                                                ) // 'YYYY-MM-DD' format
+                                                "en-CA"
+                                              ) // 'YYYY-MM-DD' format
                                               : moment(cell[0]).format(
-                                                  "YYYY-MM-DD"
-                                                );
+                                                "YYYY-MM-DD"
+                                              );
 
                                           // Set navigation flag to prevent reset, then set date and navigate
                                           setNavigating(true);
@@ -554,9 +534,8 @@ export default function Month() {
                           <div className="flex flex-col gap-1">
                             {cell[1]?.map((task: CalendarTask, i: number) => {
                               const taskPriorityClass =
-                                priorityClasses[
-                                  task.priority as keyof typeof priorityClasses
-                                ] || priorityClasses.Low;
+                                priorityClasses[task.priority as keyof typeof priorityClasses] ||
+                                priorityClasses.Low;
                               return (
                                 <div
                                   key={i}

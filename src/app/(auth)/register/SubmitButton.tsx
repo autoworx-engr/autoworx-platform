@@ -1,13 +1,13 @@
 "use client";
 
-import Submit from "@/components/Submit";
-import { errorHandler } from "@/error-boundary/globalErrorHandler";
-import nextAxios from "@/helpers/next-axios";
 import { useFormErrorStore } from "@/stores/form-error";
-import { TErrorHandler } from "@/types/globalError";
-import { createUserValidation } from "@/validations/schemas/auth/user.validation";
+import { register } from "../../../actions/auth/register";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Submit from "@/components/Submit";
+import { TErrorHandler } from "@/types/globalError";
+import { createUserValidation } from "@/validations/schemas/auth/user.validation";
+import { errorHandler } from "@/error-boundary/globalErrorHandler";
 
 export default function SubmitButton() {
   const { showError } = useFormErrorStore();
@@ -30,16 +30,14 @@ export default function SubmitButton() {
         company,
         accessCode,
       });
-      console.log("User info to be sent for registration:", userInfo);
-      const res = await nextAxios.post("/auth/register", {
+
+      const res = await register({
         ...userInfo,
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       });
-      const data = res.data.data;
-      console.log("Registration response data:", data);
 
-      if (!data.success) {
-        showError(data.error as TErrorHandler);
+      if (!res.success) {
+        showError(res.error as TErrorHandler);
         return;
       }
 
@@ -63,7 +61,6 @@ export default function SubmitButton() {
       router.refresh();
     } catch (err) {
       const formattedError = errorHandler(err);
-      console.log("Registration error:", formattedError);
       showError(formattedError);
     }
   };

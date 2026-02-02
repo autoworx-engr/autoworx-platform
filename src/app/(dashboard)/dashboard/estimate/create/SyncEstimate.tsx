@@ -36,7 +36,7 @@ export default function SyncEstimate({
   inspections: InspectionType[];
 }) {
   const { invoiceId } = useEstimateCreateStore();
-
+  console.log("template", template);
   useEffect(() => {
     // async function fetchPhotos() {
     //   const photoFiles = await Promise.all(
@@ -59,7 +59,7 @@ export default function SyncEstimate({
       template: template,
       subtotal: parseFloat(
         invoice
-          ? invoice?.subtotal?.toString() || "0"
+          ? invoice.subtotal?.toString() || "0"
           : template?.subtotal?.toString() || "0"
       ),
       type: invoice && invoice.type,
@@ -69,17 +69,17 @@ export default function SyncEstimate({
       })),
       discount: parseFloat(
         invoice
-          ? invoice?.discount?.toString() || "0"
+          ? invoice.discount?.toString() || "0"
           : template?.discount?.toString() || "0"
       ),
       tax: parseFloat(
         invoice
-          ? invoice?.tax?.toString() || "0"
+          ? invoice.tax?.toString() || "0"
           : template?.tax?.toString() || "0"
       ),
       serviceFee: parseFloat(
         invoice
-          ? invoice?.serviceFee?.toString() || "0"
+          ? invoice.serviceFee?.toString() || "0"
           : template?.serviceFee?.toString() || "0"
       ),
       deposit: parseFloat((invoice && invoice.deposit?.toString()) || "0"),

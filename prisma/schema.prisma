@@ -654,12 +654,8 @@ model Company {
   NotificationSettings             NotificationSettingsV2[]
   Notification                     Notification[]
   stripeAccountId                  String?
-  authorizeNetApiLoginId           String?                            @map("authorize_net_api_login_id")
-  authorizeNetTransactionKey       String?                            @map("authorize_net_transaction_key")
-  paymentGateway                   PaymentGateway                     @default(STRIPE)
   timezone                         String?
   stripePayment                    StripePayment[]
-  authorizeNetPayment              AuthorizeNetPayment[]
   leadLink                         LeadLink[]
   PipelineAutomationRule           PipelineAutomationRule[]
   ServiceMaintenanceAutomationRule ServiceMaintenanceAutomationRule[]
@@ -673,8 +669,6 @@ model Company {
   shortLinks                       ShortLink[]
   smsGateway                       SmsGateway                         @default(TWILIO)
   invoiceTemplates                 InvoiceTemplate[]
-  callForwardingNumber             String?                            @map("call_forwarding_number")
-  googleReviewLink     String? @map("google_review_link") @db.VarChar(500)
 }
 
 enum SmsGateway {
@@ -682,28 +676,15 @@ enum SmsGateway {
   INFOBIP
 }
 
-enum PaymentGateway {
-  STRIPE
-  AUTHORIZE_NET
-  BOTH
-}
-
 // create model that will handle multiple companies join and collaboration
 model CompanyJoin {
-  id           Int               @id @default(autoincrement())
+  id           Int      @id @default(autoincrement())
   companyOneId Int
   companyTwoId Int
-  createdAt    DateTime          @default(now()) @map("created_at")
-  updatedAt    DateTime          @default(now()) @updatedAt @map("updated_at")
-  companyOne   Company           @relation(fields: [companyOneId], references: [id], onDelete: Cascade, name: "CompanyOne")
-  companyTwo   Company           @relation(fields: [companyTwoId], references: [id], onDelete: Cascade, name: "CompanyTwo")
-  status       CompanyJoinStatus @default(ACCEPTED)
-}
-
-enum CompanyJoinStatus {
-  PENDING
-  ACCEPTED
-  REJECTED
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
+  companyOne   Company  @relation(fields: [companyOneId], references: [id], onDelete: Cascade, name: "CompanyOne")
+  companyTwo   Company  @relation(fields: [companyTwoId], references: [id], onDelete: Cascade, name: "CompanyTwo")
 }
 
 // Calendar settings for a company.
@@ -894,10 +875,6 @@ model TwilioCredentials {
   twimlAppSid    String? @map("twiml_app_sid")
   phoneNumberSid String  @map("phone_number_sid")
   companyId      Int     @unique @map("company_id")
-
-  // Per-subaccount Notify configuration
-  notifyServiceSid      String? @map("notify_service_sid")
-  voipPushCredentialSid String? @map("voip_push_credential_sid")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
@@ -1391,7 +1368,6 @@ model Invoice {
   damageNotes             String?                   @map("damage_notes")
   columnChangedAt         DateTime?                 @map("column_changed_at")
   stripePayments          StripePayment[]
-  authorizeNetPayments    AuthorizeNetPayment[]
   TimeDelayExecution      TimeDelayExecution[]
   Refund                  Refund[]
   FleetStatement          FleetStatement?           @relation(fields: [fleetStatementId], references: [id])
@@ -1716,7 +1692,6 @@ enum NotificationType {
   CLIENT_CALL_ALERT
   CLIENT_EMAIL_ALERT
   COLLABORATION_MESSAGE_ALERT
-  COLLABORATION_INVITATION
 }
 
 enum NotificationSection {
@@ -1772,12 +1747,10 @@ model Payment {
   refundUpdatedAt DateTime?       @map("refund_updated_at")
   createdAt       DateTime        @default(now()) @map("created_at")
   updatedAt       DateTime        @default(now()) @updatedAt @map("updated_at")
-  invoice              Invoice?             @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  Company              Company?             @relation(fields: [companyId], references: [id])
-  gateway              PaymentGateway       @default(STRIPE)
-  stripePayment        StripePayment?
-  authorizeNetPayment  AuthorizeNetPayment?
-  Refund               Refund[]
+  invoice         Invoice?        @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  Company         Company?        @relation(fields: [companyId], references: [id])
+  stripePayment   StripePayment?
+  Refund          Refund[]
 
   @@index([companyId])
   @@index([invoiceId])
@@ -1861,21 +1834,6 @@ model StripePayment {
   createdAt             DateTime @default(now()) @map("created_at")
   updatedAt             DateTime @default(now()) @updatedAt @map("updated_at")
   company               Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-}
-
-model AuthorizeNetPayment {
-  id            Int      @id @default(autoincrement())
-  transactionId String   @unique @map("transaction_id")
-  paymentId     Int      @unique @map("payment_id")
-  payment       Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
-  invoiceId     String?  @map("invoice_id")
-  invoice       Invoice? @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  companyId     Int      @map("company_id")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at")
-  company       Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  @@map("authorize_net_payments")
 }
 
 model PaymentMethod {
