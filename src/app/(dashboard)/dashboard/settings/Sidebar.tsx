@@ -178,25 +178,28 @@ const Sidebar = (props: Props) => {
     setting,
   }: {
     setting: (typeof accountSettings)[0] & { icon: React.ElementType };
-  }) => (
-    <Link
-      className={cn(
-        "flex items-center gap-3 rounded-xl px-4 py-2.5 transition-all duration-200 text-base", // Updated padding and alignment
-        path === setting.link
-          ? "bg-[#6571FF] text-white font-medium shadow-md shadow-[#6571FF]/30" // Active link style
-          : "text-gray-600 hover:bg-gray-100 hover:text-[#6571FF]", // Inactive link style
-      )}
-      key={setting.link}
-      href={setting.link}
-      onClick={() => setIsSidebarOpen(false)} // Close sidebar on click (for mobile)
-    >
-      <setting.icon
-        size={20}
-        className={cn({ "text-white": path === setting.link })}
-      />
-      <span>{setting.label}</span>
-    </Link>
-  );
+  }) => {
+    const isActive =
+      path === setting.link ||
+      (path === "/dashboard/settings/ai-train/ai-settings" &&
+        setting.link === "/dashboard/settings/ai-train");
+    return (
+      <Link
+        className={cn(
+          "flex items-center gap-3 rounded-xl px-4 py-2.5 transition-all duration-200 text-base",
+          isActive
+            ? "bg-[#6571FF] text-white font-medium shadow-md shadow-[#6571FF]/30" // Active link style
+            : "text-gray-600 hover:bg-gray-100 hover:text-[#6571FF]", // Inactive link style
+        )}
+        key={setting.link}
+        href={setting.link}
+        onClick={() => setIsSidebarOpen(false)} // Close sidebar on click (for mobile)
+      >
+        <setting.icon size={20} className={cn({ "text-white": isActive })} />
+        <span>{setting.label}</span>
+      </Link>
+    );
+  };
 
   const SidebarContent = () => (
     <div className="p-5 space-y-8">
