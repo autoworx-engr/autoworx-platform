@@ -24,6 +24,10 @@ export const createAuthorizeNetPaymentLink = async ({
 
     const company = await db.company.findFirst({
       where: { id: companyId },
+      select: {
+        authorizeNetApiLoginId: true,
+        authorizeNetTransactionKey: true,
+      },
     });
 
     if (!company) {
@@ -37,6 +41,38 @@ export const createAuthorizeNetPaymentLink = async ({
       throw new Error("Authorize.Net credentials not configured");
     }
 
+    // Fetch related records so we can validate amounts and get customer email
+    const invoice = invoiceId
+      ? await db.invoice.findFirst({
+          where: { id: invoiceId },
+          select: {
+            due: true,
+            client: {
+              select: {
+                email: true,
+              },
+            },
+          },
+        })
+      : null;
+
+    const statement = statementId
+      ? await db.fleetStatement.findFirst({
+          where: { id: statementId },
+          select: {
+            Fleet: {
+              select: {
+                client: {
+                  select: {
+                    email: true,
+                  },
+                },
+              },
+            },
+          },
+        })
+      : null;
+
     // Validate amount
     const paymentAmount = parseFloat(amount);
     if (isNaN(paymentAmount) || paymentAmount <= 0) {
@@ -45,10 +81,6 @@ export const createAuthorizeNetPaymentLink = async ({
 
     // For payment type, validate against invoice due amount
     if (payType === "payment" && invoiceId) {
-      const invoice = await db.invoice.findFirst({
-        where: { id: invoiceId },
-      });
-
       if (
         invoice &&
         parseFloat(invoice.due?.toString() || "0") < paymentAmount
@@ -119,7 +151,15 @@ export const createAuthorizeNetPaymentLink = async ({
     // Add customer information (required for form to render properly)
     const customer = new ApiContracts.CustomerDataType();
     customer.setType(ApiContracts.CustomerTypeEnum.INDIVIDUAL);
-    customer.setEmail("customer@example.com"); // Placeholder - will be updated in webhook
+
+    // Prefer the real client email from the related invoice/statement if available
+    const customerEmail =
+      invoice?.client?.email || statement?.Fleet?.client?.email || undefined;
+
+    if (customerEmail) {
+      customer.setEmail(customerEmail);
+    }
+
     transactionRequestType.setCustomer(customer);
 
     // Add metadata as custom fields
