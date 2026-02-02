@@ -50,6 +50,7 @@ export async function sendTwilioMessage({
     if (!twilioCredentials) {
       return {
         success: false,
+        message: "Twilio credential does not setup yet!",
       };
     }
 
@@ -58,10 +59,18 @@ export async function sendTwilioMessage({
       twilioCredentials.apiKeySecret,
       {
         accountSid: twilioCredentials.accountSid,
-      }
+      },
     );
 
-    const user = await getUser();
+    let user: Awaited<ReturnType<typeof getUser>> | null = null;
+    try {
+      user = await getUser();
+    } catch (error) {
+      console.log(
+        "sendTwilioMessage: getUser failed, continuing without user context",
+        error,
+      );
+    }
     const client = await db.client.findFirst({
       where: {
         id: clientId,
