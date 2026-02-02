@@ -20,7 +20,7 @@ export default function FilterComp({ service, category }: TProps) {
 
   return (
     <div className="mt-5 flex w-full flex-col gap-4 md:flex-row md:items-center">
-      <div className="relative w-full md:max-w-4xl">
+      <div className="relative z-20 w-full md:max-w-4xl">
         <div className="relative group flex w-full items-center gap-3 rounded-2xl bg-white/60 dark:bg-slate-900/50 ring-1 ring-slate-900/5 dark:ring-slate-700/30 p-3 pl-4 backdrop-blur-md shadow-sm transition-all duration-300 hover:shadow-lg">
 
           {/* subtle shimmer on hover (light/dark aware) */}
@@ -40,15 +40,19 @@ export default function FilterComp({ service, category }: TProps) {
                   />
                 </div>
               </div>
+              <div>
+                <Filter />
+              </div>
             </div>
           </div>
         </div>
+
       </div>
 
       <div className="flex items-center gap-6 self-start md:self-auto">
         <div className="relative flex items-center">
           <div className="rounded-lg bg-transparent p-1 transition-transform duration-300 hover:-translate-y-0.5">
-            <Filter />
+
           </div>
           {/* The dropdowns are intentionally left commented to preserve existing behavior; re-enable when needed. */}
           {/* Category based filter */}

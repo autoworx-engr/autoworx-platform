@@ -80,6 +80,8 @@ export default function Selector<T>({
     setSelected(selectedItem);
   }, [selectedItem]);
 
+
+
   // Infinite scroll handler
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     if (!useInfiniteScroll || !hasNextPage || isFetchingNextPage) return;
@@ -100,7 +102,6 @@ export default function Selector<T>({
       setFilteredItems(onSearch(searchQuery));
     } else {
       const searchedItems = searchQuery.trim()
-<<<<<<< HEAD
         ? items.filter(
           (item: any) =>
             item.clientName
@@ -111,19 +112,6 @@ export default function Selector<T>({
               .toLowerCase()
               .includes(searchQuery.toLowerCase())
         )
-=======
-        ? filteredItems.filter((item: any) => {
-            return (
-              item.clientName
-                .toLowerCase()
-                .includes(searchQuery.toLowerCase()) ||
-              item.id
-                .toString()
-                .toLowerCase()
-                .includes(searchQuery.toLowerCase())
-            );
-          })
->>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
         : items;
       setFilteredItems(searchedItems);
     }
@@ -134,11 +122,8 @@ export default function Selector<T>({
     if (setSelectedItem) setSelectedItem(item);
     if (onSelect) onSelect(item);
     setIsOpen(false);
-<<<<<<< HEAD
     setSearchTerm("");
     setFilteredItems(items)
-=======
->>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
   }
 
   return (
@@ -211,12 +196,8 @@ export default function Selector<T>({
           {/* Display list of items */}
           <div
             ref={scrollContainerRef}
-<<<<<<< HEAD
             onScroll={handleScroll}
             className="mb-5 flex max-h-40 flex-col overflow-y-auto thin-scrollbar"
-=======
-            className="mb-5 flex max-h-40 flex-col overflow-y-auto"
->>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
           >
             {filteredItems?.map((item, index) => {
               // Use a unique key that combines the item's id if available, otherwise fall back to index
@@ -235,7 +216,7 @@ export default function Selector<T>({
                     className={cn(
                       "w-full p-1 px-2 text-left hover:bg-gray-100",
                       border &&
-                        "relative left-1/2 my-1 w-[95%] -translate-x-1/2 rounded-md border-2 border-slate-400 py-[0.3rem]"
+                      "relative border-b border-slate-200 dark:border-slate-800 px-2 py-1.5 rounded-xl"
                     )}
                   >
                     {displayList(item)}
@@ -248,7 +229,7 @@ export default function Selector<T>({
                     className={cn(
                       "w-full p-1 px-2 text-left hover:bg-gray-100",
                       border &&
-                        "relative left-1/2 my-1 w-[95%] -translate-x-1/2 rounded-md border-2 border-slate-400 py-[0.3rem]"
+                      "relative border-b border-slate-200 dark:border-slate-800 px-2 py-1.5 rounded-xl"
                     )}
                   >
                     {displayList(item)}

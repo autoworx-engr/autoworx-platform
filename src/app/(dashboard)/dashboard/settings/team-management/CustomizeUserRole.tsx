@@ -46,7 +46,7 @@ const CustomizeUserRole = ({ user, onBack }: CustomizeUserRolesProps) => {
 
   useEffect(() => {
     // Fetch default and user-specific permissions
-    getUserPermissions(user.id, user.employeeType).then(data => {
+    getUserPermissions(user.id, user.employeeType).then((data) => {
       setPermissions(data || {});
     });
   }, [user.id, user.employeeType, refetch]);
@@ -79,18 +79,18 @@ const CustomizeUserRole = ({ user, onBack }: CustomizeUserRolesProps) => {
 
   const handlePermissionChange = async (key: string, checked: boolean) => {
     // Check if user is trying to enable a permission that's disabled at role level
-    if (checked && !isPermissionAllowedForRole(key)) {
-      errorToast(
-        "Cannot enable this permission because it is disabled for this role in the User Roles table"
-      );
-      return;
-    }
+    // if (checked && !isPermissionAllowedForRole(key)) {
+    //   errorToast(
+    //     "Cannot enable this permission because it is disabled for this role in the User Roles table"
+    //   );
+    //   return;
+    // }
 
-    setPermissions(prev => {
+    setPermissions((prev) => {
       const { id, ...prevWithoutId } = prev;
       const updatedPermissions = { ...prevWithoutId, [key]: checked };
       // Upsert the entire permissions object
-      savePermissions(user.id, updatedPermissions).catch(error => {
+      savePermissions(user.id, updatedPermissions).catch((error) => {
         console.error("Failed to update permission:", error);
       });
       return updatedPermissions;
@@ -109,10 +109,10 @@ const CustomizeUserRole = ({ user, onBack }: CustomizeUserRolesProps) => {
     //   return;
     // }
 
-    setPermissions(prev => {
+    setPermissions((prev) => {
       const updatedPermissions = { ...prev, [viewOnlyKey]: checked };
       // Upsert the entire permissions object
-      savePermissions(user.id, updatedPermissions).catch(error => {
+      savePermissions(user.id, updatedPermissions).catch((error) => {
         console.error("Failed to update view-only permission:", error);
       });
       return updatedPermissions;
@@ -136,7 +136,7 @@ const CustomizeUserRole = ({ user, onBack }: CustomizeUserRolesProps) => {
   };
   const permissionModules: PermissionModule[] = getUserType();
   return (
-   <div className="p-0">
+    <div className="p-0">
       <div className="mb-6">
         <button
           onClick={onBack}
@@ -180,15 +180,18 @@ const CustomizeUserRole = ({ user, onBack }: CustomizeUserRolesProps) => {
               {/* Conditional header - logic preserved */}
               {(user.employeeType === "Sales" ||
                 user.employeeType === "Technician") && (
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider ">
-                    View Only Access
-                  </th>
-                )}
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider ">
+                  View Only Access
+                </th>
+              )}
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 bg-white">
             {permissionModules.map((module, index) => (
-              <tr key={index + 1} className="hover:bg-gray-50 transition duration-150">
+              <tr
+                key={index + 1}
+                className="hover:bg-gray-50 transition duration-150"
+              >
                 <td className="px-4 py-3   whitespace-nowrap">
                   {module.label}
                 </td>
@@ -208,22 +211,22 @@ const CustomizeUserRole = ({ user, onBack }: CustomizeUserRolesProps) => {
                 {/* View Only Checkbox Column */}
                 {(user.employeeType === "Sales" ||
                   user.employeeType === "Technician") && (
-                    <td className="px-4 py-3">
-                      {module.viewOnly && (
-                        <Tooltip title="View Only">
-                          <Checkbox
-                            checked={permissions[module.viewOnly] ?? false}
-                            onChange={(e) =>
-                              handleViewOnlyChange(
-                                module.viewOnly!,
-                                e.target.checked
-                              )
-                            }
-                          />
-                        </Tooltip>
-                      )}
-                    </td>
-                  )}
+                  <td className="px-4 py-3">
+                    {module.viewOnly && (
+                      <Tooltip title="View Only">
+                        <Checkbox
+                          checked={permissions[module.viewOnly] ?? false}
+                          onChange={(e) =>
+                            handleViewOnlyChange(
+                              module.viewOnly!,
+                              e.target.checked
+                            )
+                          }
+                        />
+                      </Tooltip>
+                    )}
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>

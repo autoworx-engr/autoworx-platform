@@ -23,19 +23,13 @@ import {
   User,
   Vendor,
 } from "@prisma/client";
-<<<<<<< HEAD
-import { SquarePen } from "lucide-react";
-import moment from "moment-timezone";
-import { useEffect, useRef, useState } from "react";
-import { UpdatePurchase } from "../../../../actions/inventory/updatePurchase";
-=======
 import { useState, useEffect, useRef } from "react";
 import { UpdatePurchase } from "../../../../actions/inventory/updatePurchase";
 import moment from "moment-timezone";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { SquarePen } from "lucide-react";
 import { successToast } from "@/lib/toast";
->>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
+import { cn } from "@/lib/cn";
 
 type TProps = {
   productId: number;
@@ -224,18 +218,11 @@ export default function EditSalePurchaseList({
         form
       >
         <DialogHeader>
-<<<<<<< HEAD
-          <DialogTitle className="text-slate-600">
-            Edit {fromSales ? "Sales" : "Purchase"}
-          </DialogTitle>
-=======
-          <DialogTitle>Edit {fromSales ? "Sales" : "Purchase"}</DialogTitle>
->>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
+          <DialogTitle className="text-slate-600">Edit {fromSales ? "Sales" : "Purchase"}</DialogTitle>
         </DialogHeader>
 
         <FormError />
 
-<<<<<<< HEAD
         <div className="gap-5 overflow-y-auto pl-1 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <SlimInput
@@ -252,8 +239,8 @@ export default function EditSalePurchaseList({
                 label={(selectedVendor: Vendor | null) =>
                   selectedVendor
                     ? selectedVendor.companyName ||
-                      selectedVendor.name ||
-                      `Vendor ${selectedVendor.id}`
+                    selectedVendor.name ||
+                    `Vendor ${selectedVendor.id}`
                     : "Select Vendor"
                 }
                 newButton={
@@ -263,10 +250,7 @@ export default function EditSalePurchaseList({
                       setVendorOpen(false);
                     }}
                     button={
-                      <button
-                        type="button"
-                        className="text-xs text-[#6571FF] hover:underline"
-                      >
+                      <button type="button" className="text-xs text-[#6571FF] hover:underline">
                         + New Vendor
                       </button>
                     }
@@ -290,57 +274,6 @@ export default function EditSalePurchaseList({
                 setSelectedItem={setVendor}
               />
             </div>
-=======
-        <div className="flex flex-col gap-3 p-2">
-          <SlimInput
-            name="date"
-            type="date"
-            className="col-span-1"
-            value={formState.date}
-            onChange={handleInputChange}
-          />
-
-          <div>
-            <label>Vendor</label>
-            <Selector
-              label={(selectedVendor: Vendor | null) =>
-                selectedVendor
-                  ? selectedVendor.companyName ||
-                  selectedVendor.name ||
-                  `Vendor ${selectedVendor.id}`
-                  : "Select Vendor"
-              }
-              newButton={
-                <NewVendor
-                  afterSubmit={(ven) => {
-                    setVendor(ven);
-                    setVendorOpen(false);
-                  }}
-                  button={
-                    <button type="button" className="text-xs text-[#6571FF]">
-                      + New Vendor
-                    </button>
-                  }
-                />
-              }
-              displayList={(vendor: Vendor) => (
-                <p>{vendor.companyName || vendor.name}</p>
-              )}
-              items={vendors}
-              onSearch={(search: string) =>
-                vendors.filter(
-                  (vendor) =>
-                    vendor.companyName
-                      ?.toLowerCase()
-                      ?.includes(search.toLowerCase()) ||
-                    vendor.name?.toLowerCase().includes(search.toLowerCase())
-                )
-              }
-              openState={[vendorOpen, setVendorOpen]}
-              selectedItem={vendor}
-              setSelectedItem={setVendor}
-            />
->>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
@@ -378,31 +311,19 @@ export default function EditSalePurchaseList({
             />
           </div>
 
-<<<<<<< HEAD
           <div className="space-y-1">
-            <label htmlFor="notes" className="font-medium text-slate-600">
-              Notes
-            </label>
-=======
-          <div className="col-span-2">
-            <label htmlFor="notes">Notes</label>
->>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
+            <label htmlFor="notes" className="font-medium text-slate-600">Notes</label>
             <textarea
               id="notes"
               name="notes"
               value={formState.notes}
               onChange={handleInputChange}
-<<<<<<< HEAD
-              className={cn(
-                "h-24 w-full rounded-md border border-slate-300 outline-none bg-background px-3 py-2 leading-6 transition-all duration-300 thin-scrollbar",
+              className={cn("h-24 w-full rounded-md border border-slate-300 outline-none bg-background px-3 py-2 leading-6 transition-all duration-300 thin-scrollbar",
                 "bg-white/80 backdrop-blur-sm dark:bg-slate-900/50",
                 "text-slate-600 dark:text-slate-300 placeholder:text-slate-400",
                 "focus:border-[#6571FF]/60 focus:ring-2 focus:ring-[#6571FF]/40",
                 "disabled:opacity-50 disabled:cursor-not-allowed"
               )}
-=======
-              className="h-28 w-full rounded-sm border border-primary-foreground border-slate-400 bg-background px-2 py-0.5 leading-6 outline-none"
->>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
             />
           </div>
         </div>

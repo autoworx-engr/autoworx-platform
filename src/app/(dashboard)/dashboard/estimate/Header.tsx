@@ -50,10 +50,7 @@ export default function Header({
   }, 500);
 
   return (
-<<<<<<< HEAD
-    <div
-      className={`mt-5 flex justify-between items-center flex-col-reverse gap-4 lg:gap-0 lg:flex-row`}
-    >
+    <div className={`mt-5 flex justify-between items-center flex-col-reverse gap-4 lg:gap-0 lg:flex-row`}>
       <div className="min-w-full lg:min-w-[500px] flex flex-col gap-x-4 rounded-2xl bg-white p-2.5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] ring-1 ring-slate-100 md:flex-row md:items-center">
         {/* Search Container */}
         <div className="group relative flex flex-1 items-center">
@@ -65,22 +62,9 @@ export default function Header({
           <input
             type="text"
             placeholder={
-              isTemplate
-                ? "Search by Template ID"
-                : "Search ID, name, vehicle, email..."
-=======
-    <div className={`mt-5 flex justify-between flex-col-reverse lg:flex-row `}>
-      <div className={`app-shadow gap-3 rounded-md p-3 md:flex`}>
-        {/* Search */}
-        <div className="relative flex items-center">
-          <Search size={20} className="absolute left-3 text-gray-400" />{" "}
-          <input
-            type="text"
-            placeholder={
               isCanned
-                ? "Search by labor, service, category"
-                : "Search by ID, name, vehicle, email, or phone"
->>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
+                ? "Search labor, service, category..."
+                : "Search ID, name, vehicle, email..."
             }
             className="h-11 w-full rounded-xl border-none bg-slate-50 pl-11 pr-4 text-sm font-medium text-slate-700 ring-1 ring-slate-200 transition-all duration-300 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-[#6571FF]/30 outline-none md:max-w-[450px]"
             defaultValue={searchTerm || ""}
@@ -101,18 +85,14 @@ export default function Header({
 
         {/* Filter Section */}
         {!isCanned && (
-<<<<<<< HEAD
           <div className="flex items-center gap-2 border-l border-slate-100 pl-0 md:pl-4">
             <Filter
               startDate={startDate}
               endDate={endDate}
               status={status}
-              /* Ensure the Filter component interior matches the h-11 and rounded-xl style */
+            /* Ensure the Filter component interior matches the h-11 and rounded-xl style */
             />
           </div>
-=======
-          <Filter startDate={startDate} endDate={endDate} status={status} />
->>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
         )}
       </div>
 

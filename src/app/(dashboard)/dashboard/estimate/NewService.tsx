@@ -284,11 +284,10 @@ export default function NewService({
                   }
                 }}
                 onBlur={() => setNameTouched(true)}
-                className={`w-full px-4 py-2.5 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder:text-slate-400 ${
-                  nameError
+                className={`w-full px-4 py-2.5 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder:text-slate-400 ${nameError
                     ? "border-red-500 focus:ring-red-500"
                     : "border-slate-300"
-                }`}
+                  }`}
                 aria-invalid={nameError ? "true" : "false"}
                 aria-describedby={nameError ? "name-error" : undefined}
               />
@@ -354,15 +353,6 @@ export default function NewService({
 
             {/* Description */}
             <div className="space-y-2">
-<<<<<<< HEAD
-              <label
-                htmlFor="description"
-                className="block text-sm font-medium text-slate-700"
-              >
-                Description
-              </label>
-
-=======
               <div className="flex items-center justify-between">
                 <label
                   htmlFor="description"
@@ -379,7 +369,6 @@ export default function NewService({
                   {descriptionLength}/{maxDescriptionLength}
                 </span>
               </div>
->>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
               <textarea
                 id="description"
                 placeholder="Add any additional details about this service..."

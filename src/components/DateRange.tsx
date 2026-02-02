@@ -85,18 +85,23 @@ const DateRange = ({
         onClick={togglePicker}
         className={`
             flex w-full items-center justify-between gap-3 rounded-xl px-4 py-2.5 text-sm transition-all duration-300 ease-out
-            ${showPicker
-            ? 'bg-white ring-2 ring-[#6571FF] shadow-md shadow-indigo-500/10 dark:bg-slate-900'
-            : 'bg-white ring-1 ring-slate-200 hover:ring-indigo-500/50 hover:shadow-sm dark:bg-slate-900 dark:ring-slate-700'
-          }
+            ${
+              showPicker
+                ? "bg-white ring-2 ring-[#6571FF] shadow-md shadow-indigo-500/10 dark:bg-slate-900"
+                : "bg-white ring-1 ring-slate-200 hover:ring-indigo-500/50 hover:shadow-sm dark:bg-slate-900 dark:ring-slate-700"
+            }
         `}
       >
-        <span className={`font-medium ${isRangeSelected ? 'text-slate-700 dark:text-slate-200' : 'text-slate-400'}`}>
+        <span
+          className={`font-medium ${isRangeSelected ? "text-slate-700 dark:text-slate-200" : "text-slate-400"}`}
+        >
           {isRangeSelected
             ? formatRange(state.selection.startDate, state.selection.endDate)
             : "Select Date Range"}
         </span>
-        <Calendar className={`w-4 h-4 ${showPicker || isRangeSelected ? 'text-[#6571FF]' : 'text-slate-400'}`} />
+        <Calendar
+          className={`w-4 h-4 ${showPicker || isRangeSelected ? "text-[#6571FF]" : "text-slate-400"}`}
+        />
       </button>
 
       {showPicker && (

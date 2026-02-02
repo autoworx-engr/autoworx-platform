@@ -105,25 +105,25 @@ export default function SelectClientSource<T>({
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-      <div className="basis-full md:basis-96">
+      <div className="w-full mt-1.5">
         <DropdownMenuTrigger
           onClick={() => setIsOpen(true)}
           className={cn(
-            "flex h-auto w-full items-center justify-between rounded-md border-2 border-slate-400 px-4 py-1",
+            "flex h-auto w-full items-center justify-between rounded-md border border-slate-300 bg-white px-4 py-1.5",
             isOpen && "invisible"
           )}
         >
           {/* Display selected item or label */}
-          <p className="text-sm font-medium text-slate-400">
+          <p className="text-sm font-medium text-slate-600">
             {selected ? label(selected) : label(null)}
           </p>
-          <ChevronDown className="text-[#797979]" />
+          <ChevronDown className="text-slate-500" />
         </DropdownMenuTrigger>
 
         <DropdownMenuContent
           align="start"
           sideOffset={-40}
-          className="z-50 w-full rounded-lg border-2 border-slate-400 bg-background"
+          className="z-50 w-full rounded-md border border-slate-300 bg-background shadow-md"
           style={{
             minWidth: "var(--radix-popper-anchor-width)",
             maxWidth: "var(--radix-popper-anchor-width)",
@@ -133,16 +133,16 @@ export default function SelectClientSource<T>({
           <div className="relative m-2">
             <Search
               size={16}
-              className="absolute left-2 top-1/2 -translate-y-1/2 transform text-[#797979]"
+              className="absolute left-2 top-1/2 -translate-y-1/2 transform text-slate-500"
             />
             <input
               type="text"
               placeholder="Search"
-              className="w-full rounded-md border-2 border-slate-400 p-1 pl-6 pr-10 focus:outline-none"
+              className="w-full rounded-md border border-slate-300 p-2 pl-8 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-slate-200"
               onChange={handleSearchChange}
             />
             <button onClick={handleCloseDropdown}>
-              <ChevronUp className="absolute right-2 top-1/2 -translate-y-1/2 transform text-[#797979]" />
+              <ChevronUp className="absolute right-2 top-1/2 -translate-y-1/2 transform text-slate-500" />
             </button>
           </div>
 
@@ -156,9 +156,9 @@ export default function SelectClientSource<T>({
                     type="button"
                     key={index}
                     className={cn(
-                      "w-full p-1 px-2 text-left hover:bg-gray-100",
+                      "w-full px-3 py-2 text-left text-slate-700 hover:bg-slate-100",
                       border &&
-                        "relative left-1/2 my-1 w-[95%] -translate-x-1/2 rounded-md border-2 border-slate-400 py-[0.3rem]"
+                      "relative left-1/2 my-1 w-[95%] -translate-x-1/2 rounded-md border border-slate-300"
                     )}
                   >
                     {displayList(item)}
@@ -169,9 +169,9 @@ export default function SelectClientSource<T>({
                   <div
                     key={index}
                     className={cn(
-                      "w-full p-1 px-2 text-left hover:bg-gray-100",
+                      "w-full px-3 py-2 text-left text-slate-700 hover:bg-slate-100",
                       border &&
-                        "relative left-1/2 my-1 w-[95%] -translate-x-1/2 rounded-md border-2 border-slate-400 py-[0.3rem]"
+                      "relative left-1/2 my-1 w-[95%] -translate-x-1/2 rounded-md border border-slate-300"
                     )}
                   >
                     {displayList(item)}
@@ -182,7 +182,7 @@ export default function SelectClientSource<T>({
           </div>
 
           {/* New button */}
-          <div className="border-t-2 border-slate-400 p-2">{newButton}</div>
+          <div className="border-t border-slate-300 bg-slate-50 p-2">{newButton}</div>
         </DropdownMenuContent>
       </div>
     </DropdownMenu>

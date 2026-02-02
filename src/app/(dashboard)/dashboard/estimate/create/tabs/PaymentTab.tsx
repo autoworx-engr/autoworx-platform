@@ -333,12 +333,13 @@ export default async function PaymentTab({
 
   const mergedPaymentData = invoiceData.map((inv) => {
     const tx = transactionData.find((t) => t.paymentId === inv.paymentId);
+    console.log("transactionData", tx);
 
     return {
       id: inv.paymentId,
       invoiceId: inv.id,
       paymentId: inv.paymentId,
-      amount: tx?.amount ?? inv.amountPaid ?? 0,
+      amount: inv.amountPaid,
       date: tx?.date ?? new Date(),
       type: tx?.type ?? "PAYMENT",
       notes: tx?.notes ?? inv.notes ?? "",
@@ -393,12 +394,16 @@ export default async function PaymentTab({
                 <div
                   key={service.id}
                   className={cn(
-                    "flex justify-between items-center gap-4 p-3 py-1",
-                    index % 2 === 0 ? evenColor : oddColor
+                    "flex justify-between items-center gap-4 p-3 py-2 transition-colors border-b rounded-xl",
+                    index % 2 === 0 ? "bg-white" : "bg-slate-50"
                   )}
                 >
-                  <p className="truncate pr-2">{service.name}</p>
-                  <p className="text-nowrap">Ordered {service.count} times</p>
+                  <p className="truncate pr-2 font-semibold text-slate-600">
+                    {service.name}
+                  </p>
+                  <p className="text-nowrap text-sm font-medium text-[#6571FF] bg-[#6571FF]/5 px-1 py-o.5 rounded-lg">
+                    Ordered {service.count} times
+                  </p>
                 </div>
               ))}
           </div>
@@ -452,8 +457,18 @@ export default async function PaymentTab({
                       />
                     </td>
                     <td className="px-10 text-left">{data.vehicle}</td>
-                    <td className="px-10 text-left">
+                    {/* <td className="px-10 text-left">
                       {formatCurrency(data.amountPaid)}
+                    </td> */}
+                    <td className="px-10 text-left">
+                      <div className="flex flex-col">
+                        <span>{formatCurrency(data.amountPaid)}</span>
+                        {data.refundedAmount > 0 && (
+                          <span className="text-xs flex text-red-600 mt-1">
+                            Refunded: {formatCurrency(data.refundedAmount)}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-10 text-left">{data.paymentMethod}</td>
                     <td className="px-10 text-left">
@@ -476,6 +491,7 @@ export default async function PaymentTab({
                         invoiceGrandTotal={Number(data.grandTotal)}
                         mergedPaymentData={mergedPayment}
                         totalPaidForInvoice={totalPaidForInvoice}
+                        refundedAmount={data.refundedAmount || 0}
                       />
                     </td>
                   </tr>
@@ -518,12 +534,18 @@ export default async function PaymentTab({
                   <div className="flex items-center gap-2">
                     <p className="text-lg font-bold text-[#6571FF]">
                       {formatCurrency(data.amountPaid)}
+                      {data.refundedAmount > 0 && (
+                        <span className="text-xs flex text-red-600 mt-1">
+                          Refunded: {formatCurrency(data.refundedAmount)}
+                        </span>
+                      )}
                     </p>
                     {/*  Add edit button */}
                     <EditPaymentModal
                       invoiceGrandTotal={Number(data.grandTotal)}
                       mergedPaymentData={mergedPayment}
                       totalPaidForInvoice={totalPaidForInvoice}
+                      refundedAmount={data.refundedAmount || 0}
                     />
                   </div>
                 </div>

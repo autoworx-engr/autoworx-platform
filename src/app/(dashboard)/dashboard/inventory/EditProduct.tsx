@@ -24,13 +24,11 @@ import {
 } from "@prisma/client";
 import { useEffect, useState } from "react";
 import { editProduct } from "../../../../actions/inventory/edit";
-<<<<<<< HEAD
-=======
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { errorToast, successToast } from "@/lib/toast";
 import { useFormErrorStore } from "@/stores/form-error";
 import { SquarePen } from "lucide-react";
->>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
+import { cn } from "@/lib/cn";
 
 type TProps = {
   productData: InventoryProduct & { category: Category; vendor: Vendor };
@@ -259,13 +257,10 @@ export default function EditProduct({ productData }: TProps) {
                 setCategoryOpen={setCategoryOpen}
                 required={true}
               />
-<<<<<<< HEAD
 
               {/* radio buttons for product type */}
               <div>
-                <label className="font-medium text-slate-600">
-                  Product Type
-                </label>
+                <label className="font-medium text-slate-600">Product Type</label>
                 <div className="mt-1 flex gap-5">
                   <div>
                     <input
@@ -294,8 +289,6 @@ export default function EditProduct({ productData }: TProps) {
                 </div>
               </div>
 
-=======
->>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
               <SlimInput
                 value={product.productName as string}
                 name="productName"
@@ -365,6 +358,8 @@ export default function EditProduct({ productData }: TProps) {
                   setSelectedItem={setVendor}
                 />
               </div>
+
+
             </div>
 
             <div className="py-2 md:py-0">
@@ -373,17 +368,12 @@ export default function EditProduct({ productData }: TProps) {
                 onChange={handleChange}
                 name="description"
                 required={false}
-<<<<<<< HEAD
-                className={cn(
-                  "h-20 w-full rounded-md border border-slate-300 outline-none bg-background px-2 py-0.5 leading-6 transition-all duration-300 thin-scrollbar mt-1",
+                className={cn("h-20 w-full rounded-md border border-slate-300 outline-none bg-background px-2 py-0.5 leading-6 transition-all duration-300 thin-scrollbar mt-1",
                   "bg-white/80 backdrop-blur-sm dark:bg-slate-900/50", // Subtle glass texture
                   "text-slate-600 dark:text-slate-300 placeholder:text-slate-400",
                   "focus:border-[#6571FF]/60 focus:ring-2 focus:ring-[#6571FF]/40", // Brand focus state
                   "disabled:opacity-50 disabled:cursor-not-allowed"
                 )}
-=======
-                className="h-28 w-full rounded-sm border border-primary-foreground border-slate-400 bg-background px-2 py-0.5 leading-6 md:w-[95%]"
->>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
                 value={product.description as string}
               />
             </div>
@@ -521,17 +511,11 @@ export default function EditProduct({ productData }: TProps) {
           </div>
 
           <DialogFooter>
-<<<<<<< HEAD
-            <DialogClose
-              className="
+            <DialogClose className="
                 rounded-xl mt-2 sm:mt-0 px-5 py-2.5 text-sm font-medium text-slate-500 
                 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
                 transition-colors border
-              "
-            >
-=======
-            <DialogClose className="rounded-lg border-2 border-slate-400 p-2">
->>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
+              ">
               Cancel
             </DialogClose>
             <Submit

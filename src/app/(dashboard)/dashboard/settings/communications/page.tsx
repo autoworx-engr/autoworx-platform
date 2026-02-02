@@ -19,12 +19,8 @@ export default async function CommunicationPage() {
         <BookingGenerate companyId={companyId.toString()} />
       </div>
       {/* Sidebar */}
-<<<<<<< HEAD
-      <div className="space-y-4 lg:mt-8">
-        <CallForwardingSettings initialNumber={company?.callForwardingNumber} />
-=======
       <div className="space-y-4">
->>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
+        <CallForwardingSettings initialNumber={company?.callForwardingNumber} />
         <div className="mt-4">
           <TermsAndPolicyEditor />
         </div>

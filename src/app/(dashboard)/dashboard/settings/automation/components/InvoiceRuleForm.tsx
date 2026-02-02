@@ -57,13 +57,14 @@ export type Rule = {
 // Template variables
 const template_variable_options = [
   { name: "<INVOICE_LINK>", description: "Invoice link" },
-  { name: "<ADDRESS>", description: "Address" },
-  { name: "<CLIENT>", description: "Client" },
+  { name: "<ADDRESS>", description: "Your business address" },
+  { name: "<CLIENT>", description: "Client name" },
   { name: "<BUSINESS_NAME>", description: "Your business name" },
   { name: "<DATE>", description: "Date" },
   { name: "<REVIEW_LINK>", description: "Review link" },
   { name: "<SERVICE>", description: "Service" },
-  { name: "<PHONE>", description: "Phone" },
+  { name: "<PHONE>", description: "Your business phone number" },
+  { name: "<GOOGLE_REVIEW_LINK>", description: "Google review link" }
 ];
 
 const InvoiceRuleForm: React.FC<RuleFormProps> = ({

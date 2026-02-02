@@ -21,12 +21,6 @@ const DashboardManager = () => {
         <ShopPipelineBox />
       </div>
 
-<<<<<<< HEAD
-        <DashboardColumn>
-          <SalesPipelineBox />
-          <ShopPipelineBox />
-        </DashboardColumn>
-=======
       {/* Col 2: Task List (20%)
         (The `flex-1` component must stretch to fill height)
       */}
@@ -34,8 +28,10 @@ const DashboardManager = () => {
         <div className="flex-1 min-h-0">
           <TaskListBox />
         </div>
+        <div className="flex-1 min-h-0 lg:hidden">
+          <ReputationBox />
+        </div>
       </div>
->>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
 
       {/* Col 3: Appointments List (20%)
         (The `flex-1` component must stretch to fill height)
@@ -57,28 +53,13 @@ const DashboardManager = () => {
           <InventoryBox className="w-full lg:w-1/2" />
         </div>
 
-<<<<<<< HEAD
-          <div className="h-full">
-            <EmployeePayoutBox className="h-full" />
-          </div>
-
-          <div className="h-full">
-            <div className="hidden lg:block h-full">
-              <ReputationBox />
-            </div>
-            <div className="h-[30rem] lg:hidden lg:h-full">
-              <AppointmentListBox />
-            </div>
-          </div>
-        </DashboardColumn>
-=======
         {/* Row 2: Payout */}
         {/* NOTE: Remove redundant styling from parent */}
         <EmployeePayoutBox />
-
-        {/* Row 3: Employee Leave Request */}
-        <EmployeeLeaveRequestsBox />
->>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
+        {/* <EmployeeLeaveRequestsBox /> */}
+        <div className="hidden lg:flex flex-1 min-h-0">
+          <ReputationBox />
+        </div>
       </div>
     </div>
   );

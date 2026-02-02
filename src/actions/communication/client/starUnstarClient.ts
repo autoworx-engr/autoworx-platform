@@ -7,16 +7,18 @@ import { revalidatePath } from "next/cache";
 export const starUnstarClient = async ({
   clientId,
   state,
+  companyId,
 }: {
   clientId: number;
   state: boolean;
+  companyId?: number;
 }) => {
   try {
-    let companyId = await getCompanyId();
+    let cId = companyId || (await getCompanyId());
     await db.client.update({
       where: {
         id: clientId,
-        companyId,
+        companyId: cId,
       },
       data: {
         isStarred: state,

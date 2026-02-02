@@ -2,14 +2,39 @@ import { getTwilioCredentials } from "@/actions/communication/client/sendTwilioM
 import { NextRequest, NextResponse } from "next/server";
 import twilio from "twilio";
 
+/**
+ * @swagger
+ * /api/twilio/token:
+ *   post:
+ *     summary: Get Twilio access token
+ *     tags: [Twilio]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               identity:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Access token generated
+ *       400:
+ *         description: Credentials not found
+ *       500:
+ *         description: Server error
+ */
 export async function POST(request: NextRequest) {
-  const { identity } = await request.json();
+  const { identity, companyId, platform } = await request.json();
 
   try {
     const AccessToken = twilio.jwt.AccessToken;
     const VoiceGrant = AccessToken.VoiceGrant;
 
-    let twilioCredentials = await getTwilioCredentials();
+    let twilioCredentials = await getTwilioCredentials({ companyId });
 
     if (!twilioCredentials) {
       return NextResponse.json(
@@ -25,10 +50,19 @@ export async function POST(request: NextRequest) {
       { identity }
     );
 
+    let pushCredentialSid;
+
+    if (platform === "ios") {
+      pushCredentialSid = process.env.TWILIO_PUSH_CREDENTIAL_SID_APN;
+    } else if (platform === "android") {
+      pushCredentialSid = process.env.TWILIO_PUSH_CREDENTIAL_SID_FCM;
+    }
+
     if (twilioCredentials.twimlAppSid) {
       const voiceGrant = new VoiceGrant({
         outgoingApplicationSid: twilioCredentials.twimlAppSid,
-        incomingAllow: true, // Allows incoming calls
+        incomingAllow: true,
+        pushCredentialSid,
       });
 
       token.addGrant(voiceGrant);

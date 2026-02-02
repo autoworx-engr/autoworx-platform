@@ -6,23 +6,25 @@ import { clientSortByUpdatedMessage } from "../_utils";
 type TGetClientByScrollProps = {
   skip: number;
   take: number;
+  companyId?: number;
 };
 
 export const getClientByScroll = async ({
   skip,
   take,
+  companyId,
 }: TGetClientByScrollProps) => {
   try {
-    const companyId = await getCompanyId();
-    
+    const cId = companyId || (await getCompanyId());
+
     // For proper pagination with consistent sorting, we need to:
     // 1. Get all clients and sort them first
     // 2. Then apply pagination
     // This ensures the order is always consistent across pages
-    
+
     const allClients = await db.client.findMany({
       where: {
-        companyId,
+        companyId: cId,
       },
       include: {
         conversationsTrack: true,

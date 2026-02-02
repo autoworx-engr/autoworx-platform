@@ -97,22 +97,11 @@ export default function EstimateAndInvoicePage() {
               newMessage.length > maxLength 
                 ? "border-2 border-red-500" 
                 : "border border-gray-300 focus:border-indigo-500"
-<<<<<<< HEAD
-                }`}
-            />
-          </label>
-          <span className={`absolute -bottom-2.5 right-1 text-xs font-medium ${newMessage.length > maxLength ? "text-red-500" : "text-gray-500"}`}>
-            {newMessage.length}/{maxLength}
-          </span>
-        </div>
-
-        <AppointmentTemplateVariable hasBackground />
-=======
             }`}
           />
         </label>
-
->>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
+        
+        <AppointmentTemplateVariable hasBackground/>
         <div className="flex justify-end pt-2">
           <button
             type="button"

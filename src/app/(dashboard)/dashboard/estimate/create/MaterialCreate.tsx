@@ -530,7 +530,6 @@ export default function MaterialCreate() {
         />
       </div>
 
-<<<<<<< HEAD
       {/* Pricing & Quantity Grid */}
       {[
         { id: "qt", label: "Quantity", val: quantity, set: setQuantity, placeholder: "0", type: "number" },
@@ -542,119 +541,6 @@ export default function MaterialCreate() {
           <label htmlFor={field.id} className="w-36 text-sm font-semibold text-slate-500">
             {field.label}
           </label>
-=======
-      <div className="flex items-center gap-2">
-        <label htmlFor="qt" className="w-28 text-start text-sm">
-          Quantity
-        </label>
-        <input
-          type="number"
-          id="qt"
-          min="0"
-          value={quantity || ""}
-          onChange={(e) => {
-            const inputValue = e.target.value;
-            if (inputValue === "" || inputValue === "-" || inputValue === "0") {
-              setQuantity(undefined);
-              return;
-            }
-            const value = parseFloat(inputValue);
-            if (isNaN(value) || value <= 0) {
-              setQuantity(undefined);
-            } else {
-              setQuantity(value);
-            }
-          }}
-          className="w-full rounded-md border-2 border-slate-400 p-1 text-xs"
-          placeholder="0"
-        />
-      </div>
-
-      <div className="flex items-center gap-2">
-        <label htmlFor="price" className="w-28 text-start text-sm">
-          Cost Price
-        </label>
-        <input
-          type="number"
-          id="price"
-          min="0"
-          value={cost ?? ""}
-          onChange={(e) => {
-            const inputValue = e.target.value;
-            if (inputValue === "" || inputValue === "-" || inputValue === "0") {
-              setCost(undefined);
-              return;
-            }
-            const value = parseFloat(inputValue);
-            if (isNaN(value) || value <= 0) {
-              setCost(undefined);
-            } else {
-              setCost(value);
-            }
-          }}
-          className="w-full rounded-md border-2 border-slate-400 p-1 text-xs"
-          placeholder="0"
-          disabled={data.edit}
-        />
-      </div>
-
-      <div className="flex items-center gap-2">
-        <label htmlFor="sell" className="w-28 text-start text-sm">
-          Sell Price
-        </label>
-        <input
-          type="number"
-          id="sell"
-          min="0"
-          value={sell ?? ""}
-          onChange={(e) => {
-            const inputValue = e.target.value;
-            if (inputValue === "" || inputValue === "-" || inputValue === "0") {
-              setSell(undefined);
-              return;
-            }
-            const value = parseFloat(inputValue);
-            if (isNaN(value) || value <= 0) {
-              setSell(undefined);
-            } else {
-              setSell(value);
-            }
-          }}
-          className="w-full rounded-md border-2 border-slate-400 p-1 text-xs"
-          placeholder="0"
-        />
-      </div>
-
-      <div className="flex items-center gap-2">
-        <label htmlFor="discount" className="w-28 text-start text-sm">
-          Discount
-        </label>
-        <input
-          type="number"
-          id="discount"
-          min="0"
-          value={discount ?? ""}
-          onChange={(e) => {
-            const inputValue = e.target.value;
-            if (inputValue === "" || inputValue === "-" || inputValue === "0") {
-              setDiscount(undefined);
-              return;
-            }
-            const value = parseFloat(inputValue);
-            if (isNaN(value) || value < 0) {
-              setDiscount(undefined);
-            } else {
-              setDiscount(value);
-            }
-          }}
-          className="w-full rounded-md border-2 border-slate-400 p-1 text-xs"
-          placeholder="0"
-        />
-      </div>
-
-      {!data.edit && (
-        <label className="ml-5 flex items-center gap-2">
->>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
           <input
             type={field.type}
             id={field.id}
@@ -664,7 +550,6 @@ export default function MaterialCreate() {
             className={cn(slimInputClassName, "")}
             placeholder={field.placeholder}
           />
-<<<<<<< HEAD
         </div>
       ))}
 
@@ -710,10 +595,6 @@ export default function MaterialCreate() {
             </span>
           </label>
         </div>
-=======
-          <span>Add to Inventory</span>
-        </label>
->>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
       )}
 
       {/* Form Actions */}

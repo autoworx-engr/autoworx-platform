@@ -21,13 +21,11 @@ type TMessageDate = {
 
 const pusher = getPusherInstance();
 
-<<<<<<< HEAD
 /**
  * @swagger
  * /api/pusher:
  *   post:
- *     summary: Send a real-time message
- *     description: Dispatches a message via Pusher, updates chat history, and triggers relevant notifications.
+ *     summary: Send message via Pusher
  *     tags: [Messaging]
  *     security:
  *       - bearerAuth: []
@@ -37,58 +35,22 @@ const pusher = getPusherInstance();
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - to
  *             properties:
  *               to:
  *                 type: integer
- *                 description: Recipient user ID or group ID.
  *               message:
  *                 type: string
- *                 description: Text content of the message.
  *               type:
  *                 type: string
- *                 description: The type of message being sent.
- *               section:
- *                 type: string
- *                 enum: [INTERNAL, COLLABORATION]
- *                 description: The section context for the message.
- *               attachmentFiles:
- *                 type: array
- *                 items:
- *                   type: object
- *                   properties:
- *                     fileName:
- *                       type: string
- *                     fileType:
- *                       type: string
- *                     fileUrl:
- *                       type: string
- *                     fileSize:
- *                       type: integer
- *                 description: Optional array of file attachments.
- *               requestEstimate:
- *                 type: object
- *                 properties:
- *                   id:
- *                     type: integer
- *                 description: Optional associated estimate request.
  *     responses:
  *       200:
- *         description: Message sent successfully.
- *       400:
- *         description: Bad request - missing required arguments.
+ *         description: Message sent
  *       401:
- *         description: Unauthorized - valid session required.
- *       500:
- *         description: Internal server error.
+ *         description: Unauthorized
  */
-
-=======
 // POST /api/pusher/trigger
 // Trigger a message to the client
 // Body: { message, roomId }
->>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
 export async function POST(req: Request) {
   const body = await req.json();
   const { to, message, type, section, attachmentFiles, requestEstimate } = body;
@@ -101,14 +63,10 @@ export async function POST(req: Request) {
     }
 
     // Helper function to generate lastMessage text
-<<<<<<< HEAD
     const generateLastMessageText = (
       message: string,
-      attachmentFiles: any[] | null,
+      attachmentFiles: any[] | null
     ) => {
-=======
-    const generateLastMessageText = (message: string, attachmentFiles: any[] | null) => {
->>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
       // If there's a text message, use it
       if (message && message.trim()) {
         return message;
@@ -116,13 +74,8 @@ export async function POST(req: Request) {
 
       // If there are attachments but no text message, generate descriptive text
       if (attachmentFiles && attachmentFiles.length > 0) {
-<<<<<<< HEAD
         const imageCount = attachmentFiles.filter(
-          file => file.fileType && file.fileType.startsWith("image/"),
-=======
-        const imageCount = attachmentFiles.filter(file => 
-          file.fileType && file.fileType.startsWith('image/')
->>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
+          (file) => file.fileType && file.fileType.startsWith("image/")
         ).length;
         const otherFileCount = attachmentFiles.length - imageCount;
 
@@ -131,13 +84,9 @@ export async function POST(req: Request) {
           parts.push(`${imageCount} ${imageCount === 1 ? "image" : "images"}`);
         }
         if (otherFileCount > 0) {
-<<<<<<< HEAD
           parts.push(
-            `${otherFileCount} ${otherFileCount === 1 ? "file" : "files"}`,
+            `${otherFileCount} ${otherFileCount === 1 ? "file" : "files"}`
           );
-=======
-          parts.push(`${otherFileCount} ${otherFileCount === 1 ? 'file' : 'files'}`);
->>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
         }
 
         return parts.join(" and ");
@@ -181,7 +130,7 @@ export async function POST(req: Request) {
             message: "User is not in the group",
             success: false,
           }),
-          { status: 400 },
+          { status: 400 }
         );
       }
       channel = `group-${to}`;
@@ -338,7 +287,7 @@ export async function POST(req: Request) {
         attachments,
         newMessage: createdMessage,
         chatTrack: userChatTrack,
-      }),
+      })
     );
   } catch (e: any) {
     console.error(e);
@@ -346,7 +295,7 @@ export async function POST(req: Request) {
       JSON.stringify({ message: "Failed to send message", success: false }),
       {
         status: 500,
-      },
+      }
     );
   }
 }

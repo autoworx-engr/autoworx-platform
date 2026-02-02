@@ -9,8 +9,7 @@ import {
   DialogTitle,
 } from "@/components/Dialog";
 import FormError from "@/components/FormError";
-import Selector from "@/components/Selector";
-import { SlimInput, slimInputClassName } from "@/components/SlimInput";
+import { SlimInput } from "@/components/SlimInput";
 import { cn } from "@/lib/cn";
 import { useFormErrorStore } from "@/stores/form-error";
 import AppointmentTitleSelectAndAdd from "./AppointmentTitleSelectAndAdd";
@@ -38,7 +37,7 @@ import { addOneHour, formatDateToToday, getCurrentTime } from "@/utils/time";
 import { useQueryClient } from "@tanstack/react-query";
 import moment from "moment-timezone";
 import { customAlphabet } from "nanoid";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import AssignUsers from "./AssignUsers";
 import { Reminder } from "./Reminder";
 import ScheduleTab from "./ScheduleTab";
@@ -47,7 +46,11 @@ import { SelectAppointmentVehicle } from "./SelectAppointmentVehicle";
 import { formatTime12Hour } from "@/utils/formateTime12Hours";
 import { Popconfirm, Select } from "antd";
 import { normalizeTime } from "@/utils/normalizeTime";
-import { Bell, Calendar, Trash2 } from "lucide-react";
+import { Bell, Calendar, Car, ChevronDown, Hash, Plus, Search, Trash2 } from "lucide-react";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { getVehicleByInvoiceId } from "@/actions/vehicle/getVehicleByInvoiceId";
+import { getVehicles } from "@/actions/vehicle/getVehicles";
+import useVehicleByClientIdQuery from "@/hooks/query-hook/useVehicleByClientIdQuery";
 enum Tab {
   Schedule = 0,
   Reminder = 1,
@@ -109,11 +112,14 @@ export default function AppointmentModalBody({
   const { data: estimates = [], isFetched: estimateIsFetched } =
     useEstimatesQueryByClient(
       client?.id!,
-      { id: true, clientId: true },
+      {
+        id: true, clientId: true,
+        grandTotal: true,
+        vehicle: true,
+      },
       { enabled: !!client?.id }
     );
 
-  const draftEstimates = estimates.map((estimate) => estimate.id);
 
   const timezone = useCompanyTimezone();
   const today = moment.tz(timezone).format("YYYY-MM-DD");
@@ -134,6 +140,7 @@ export default function AppointmentModalBody({
   const [allDay, setAllDay] = useState(false);
   const [vehicle, setVehicle] = useState<Partial<Vehicle> | null>(null);
   const [draft, setDraft] = useState<string | null>(null);
+  const [draftSearch, setDraftSearch] = useState("");
   const [assignedUsers, setAssignedUsers] = useState<User[]>([]);
 
   const [times, setTimes] = useState<{ time: string; date: string }[]>([]);
@@ -155,6 +162,51 @@ export default function AppointmentModalBody({
 
   const [openConfirmation, setOpenConfirmation] = useState(false);
   const [openReminder, setOpenReminder] = useState(false);
+
+  const draftEstimateOptions = useMemo(
+    () =>
+      estimates.map((estimate) => {
+        const vehicleLabel = [
+          (estimate as any)?.vehicle?.year,
+          (estimate as any)?.vehicle?.make,
+          (estimate as any)?.vehicle?.model,
+        ]
+          .filter(Boolean)
+          .join(" ") || (estimate as any)?.vehicle?.other;
+
+        console.log(estimate);
+
+        return {
+          id: String(estimate.id),
+          price: Number((estimate as any)?.grandTotal ?? 0),
+          vehicle: vehicleLabel,
+        };
+      }),
+    [estimates]
+  );
+
+  const filteredDraftEstimateOptions = useMemo(() => {
+    const term = draftSearch.toLowerCase();
+    return draftEstimateOptions.filter(
+      (item) =>
+        item.id.includes(draftSearch) ||
+        item.vehicle.toLowerCase().includes(term)
+    );
+  }, [draftSearch, draftEstimateOptions]);
+
+  const selectedDraftOption = useMemo(() => {
+    if (!draft) return null;
+
+    const existing = draftEstimateOptions.find((item) => item.id === draft);
+    if (existing) return existing;
+
+    // Keep showing a freshly created draft ID even before it exists in options
+    return {
+      id: draft,
+      price: 0,
+      vehicle: "New Draft Estimate",
+    };
+  }, [draft, draftEstimateOptions]);
 
   useEffect(() => {
     if (fromEdit && appointment) {
@@ -651,6 +703,12 @@ export default function AppointmentModalBody({
   ]);
 
   useEffect(() => {
+    if (!draftOpen) {
+      setDraftSearch("");
+    }
+  }, [draftOpen]);
+
+  useEffect(() => {
     let now = moment.tz(timezone);
 
     const roundedMinutes = Math.ceil(now.minute() / 15) * 15;
@@ -735,7 +793,7 @@ export default function AppointmentModalBody({
 
   return (
     <DialogContent
-      className="grid max-h-full max-w-5xl grid-rows-[auto,1fr,auto] sm:max-w-[60vw]"
+      className="grid max-w-5xl grid-rows-[auto,1fr,auto] sm:max-w-[60vw]"
       form
     >
       {/* Heading */}
@@ -782,33 +840,16 @@ export default function AppointmentModalBody({
         </div>
       </DialogHeader>
 
-      <div className="-mx-6 grid gap-px overflow-y-auto border-solid sm:grid-cols-2 md:border-y md:bg-border">
-        <div className="space-y-4 bg-background p-6 pb-12">
-          <FormError />
+      <div className="-mx-6 grid gap-px overflow-y-hidden border-solid sm:grid-cols-2 md:border-y md:bg-border">
+        <div className="h-full overflow-y-auto thin-scrollbar">
+          <div className="space-y-4 bg-background p-6 pb-20">
+            <FormError />
 
-          <AppointmentTitleSelectAndAdd
-            value={title}
-            onChange={(value) => setTitle(value)}
-          />
-
-          <div className="flex flex-wrap items-end gap-2 2xl:flex-nowrap">
-            <SlimInput
-              name="date"
-              label="Date"
-              rootClassName="grow"
-              type="date"
-              value={date ?? ""}
-              // min={minDate}
-              required
-              onChange={(event) => {
-                const newDate = moment(event.currentTarget.value).format(
-                  "YYYY-MM-DD"
-                );
-                setDate(newDate);
-              }}
+            <AppointmentTitleSelectAndAdd
+              value={title}
+              onChange={(value) => setTitle(value)}
             />
 
-<<<<<<< HEAD
             <div className="flex flex-wrap items-end gap-2 2xl:flex-nowrap">
               <SlimInput
                 name="date"
@@ -873,18 +914,10 @@ export default function AppointmentModalBody({
                   <span className="mb-2 font-medium text-slate-600">
                     End Time <span className="text-[#E9405F]">*</span>
                   </span>
-=======
-            <div className="flex items-end gap-2">
-              <label className="flex flex-col items-start">
-                <span className="mb-1 text-sm font-medium text-gray-700">
-                  Start Time
-                </span>
-                <div>
->>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
                   <Select
-                    value={startTime}
+                    value={endTime}
                     onChange={(value) =>
-                      handleTimeChange({ target: { value } } as any, "start")
+                      handleTimeChange({ target: { value } } as any, "end")
                     }
                     style={{ width: "100%" }}
                     className="
@@ -900,7 +933,6 @@ export default function AppointmentModalBody({
                     dropdownClassName="rounded-xl border-none shadow-2xl backdrop-blur-md bg-white/90"
                   >
                     {timeOptions.map((time) => (
-<<<<<<< HEAD
                       <Option
                         key={time.value}
                         value={time.value}
@@ -1123,152 +1155,9 @@ export default function AppointmentModalBody({
               </span>
             </div>
           </div>
-=======
-                      <Option key={time.value} value={time.value}>
-                        <p className="text-base text-gray-600"> {time.label}</p>
-                      </Option>
-                    ))}
-                  </Select>
-                </div>
-              </label>
-
-              <label className="flex flex-col items-start">
-                <span className="mb-1 text-sm font-medium text-gray-700">
-                  End Time
-                </span>
-                <Select
-                  value={endTime}
-                  onChange={(value) =>
-                    handleTimeChange({ target: { value } } as any, "end")
-                  }
-                  style={{ width: "100%", height: 34 }}
-                  className="border-slate-400 border rounded-md"
-                >
-                  {timeOptions.map((time) => (
-                    <Option key={time.value} value={time.value}>
-                      {time.label}
-                    </Option>
-                  ))}
-                </Select>
-              </label>
-            </div>
-          </div>
-
-          <div className="flex items-center">
-            <input
-              checked={allDay}
-              onChange={() => setAllDay(!allDay)}
-              id="all-day"
-              type="checkbox"
-              value="true"
-              className="h-4 w-4 rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600"
-              name="all-day"
-            />
-            <label
-              htmlFor="all-day"
-              className="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300"
-            >
-              All day
-            </label>
-          </div>
-          {/* assign Sales */}
-          <AssignUsers
-            assignedUsers={assignedUsers.filter(
-              (user) => user.employeeType === "Sales"
-            )}
-            title="+ Assign Sales Person"
-            employeeType="Sales"
-            onAssignUser={(user: User) => {
-              setAssignedUsers((prev) => [...prev, user]);
-            }}
-            onRemoveAssignedUser={(user: User) => {
-              setAssignedUsers((prev) =>
-                prev.filter((assignedUser) => assignedUser.id !== user.id)
-              );
-            }}
-          />
-          <br />
-          {/* assign technicians */}
-          <AssignUsers
-            assignedUsers={assignedUsers.filter(
-              (user) => user.employeeType === "Technician"
-            )}
-            title="+ Assign Technician"
-            employeeType="Technician"
-            onAssignUser={(user: User) => {
-              setAssignedUsers((prev) => [...prev, user]);
-            }}
-            onRemoveAssignedUser={(user: User) => {
-              setAssignedUsers((prev) =>
-                prev.filter((assignedUser) => assignedUser.id !== user.id)
-              );
-            }}
-          />
         </div>
 
-        <div className="row-start-2 space-y-4 bg-background p-6">
-          <SelectAppointmentClient
-            clientId={clientId}
-            fromLead={fromLead}
-            value={client}
-            setValue={setClient}
-            openDropdown={clientOpenDropdown}
-            setOpenDropdown={setClientOpenDropdown}
-            setIsAppointmentModalOpen={setIsAppointmentModalOpen}
-          />
-
-          <SelectAppointmentVehicle
-            vehicleId={vehicleId}
-            fromLead={fromLead}
-            clientId={client?.id ?? clientId}
-            value={vehicle}
-            setValue={setVehicle}
-            openDropdown={vehicleOpenDropdown}
-            setOpenDropdown={setVehicleOpenDropdown}
-            setIsAppointmentModalOpen={setIsAppointmentModalOpen}
-          />
-
-          <Selector
-            label={(draft: string | null) =>
-              draft ? draft : "Draft Estimates"
-            }
-            openState={[draftOpen, setDraftOpen]}
-            newButton={
-              <button
-                className="text-[#6571FF] disabled:text-zinc-400"
-                onClick={() => {
-                  setDraft(customAlphabet("1234567890", 10)());
-                  setDraftOpen(false);
-                }}
-                disabled={!client || !vehicle}
-                type="button"
-              >
-                + New Draft Estimate
-              </button>
-            }
-            items={draftEstimates}
-            selectedItem={draft}
-            setSelectedItem={setDraft}
-            displayList={(item) => <p className="text-[#6571FF]">{item}</p>}
-            onSearch={(search) => {
-              return draftEstimates.filter((draft) =>
-                draft.toLowerCase().includes(search.toLowerCase())
-              );
-            }}
-          />
-
-          <textarea
-            name="notes"
-            placeholder="Notes"
-            className={cn(slimInputClassName, "border-2 border-slate-400")}
-            rows={3}
-            value={notes}
-            onChange={(event) => setNotes(event.currentTarget.value)}
-          />
->>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
-        </div>
-
-        <div className="relative row-span-2 min-h-36 divide-y bg-background">
+        <div className="relative row-span-2 h-full overflow-y-auto thin-scrollbar divide-y bg-background">
           {tab === Tab.Schedule ? (
             <div
               ref={containerRef}

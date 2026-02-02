@@ -103,13 +103,8 @@ export default async function Page({
   );
 
   return (
-<<<<<<< HEAD
     <div className="gap-3 space-y-4 overflow-clip py-2 md:-my-2 md:min-h-[93vh] xl:flex xl:space-y-0">
       <div className="w-full xl:min-w-[68%] flex flex-col gap-4">
-=======
-    <div className="gap-3 space-y-4 overflow-clip py-2 md:-my-2 md:min-h-[93vh] xl:grid xl:grid-cols-4 xl:space-y-0">
-      <div className="col-span-3 space-y-4">
->>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
         <Title>Estimate</Title>
 
         <SyncLists
@@ -134,7 +129,7 @@ export default async function Page({
           defaultValue="create"
           className="col-start-1 flex min-h-[40vh] lg:min-h-[69vh] flex-col overflow-clip flex-1"
         >
-          <TabsList className="grid grid-cols-4 md:inline-flex">
+          <TabsList className="grid grid-cols-4 md:inline-flex -ml-4 rounded-bl-none p-0">
             <TabsTriggerCreate value="payments" className="order-4 md:order-1">
               Payments
             </TabsTriggerCreate>
@@ -155,11 +150,7 @@ export default async function Page({
             </TabsTriggerCreate>
           </TabsList>
 
-<<<<<<< HEAD
           <TabsContent value="create" className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto thin-scrollbar p-2">
-=======
-          <TabsContent value="create" className="h-full w-full">
->>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
             <CreateTab />
           </TabsContent>
 
@@ -182,11 +173,7 @@ export default async function Page({
         </Tabs>
       </div>
 
-<<<<<<< HEAD
       <div className="flex-grow w-full xl:max-w-[32%] app-shadow grid grid-rows-[1fr,auto,auto] divide-y rounded-md bg-slate-50 xl:max-h-[calc(100vh-5rem)] overflow-y-auto thin-scrollbar">
-=======
-      <div className="app-shadow grid grid-rows-[1fr,auto,auto] divide-y rounded-md">
->>>>>>> 562aae035edd611117b1950291edabf2b6d02c1d
         <div>
           <ConvertButton
             type={InvoiceType.Estimate}

@@ -16,7 +16,7 @@ import { CircleCheckBig, SquarePen } from "lucide-react";
 
 // Sleeker gradient look matching dashboard task cards
 const priorityClasses = {
-  Low: "bg-gradient-to-r from-blue-500 to-indigo-600 shadow-indigo-600/50",
+  Low: "bg-gradient-to-r from-[#505aff] to-[#6571FF] shadow-indigo-700/50",
   Medium: "bg-gradient-to-r from-cyan-600 to-blue-500 shadow-cyan-600/50",
   High: "bg-gradient-to-r from-teal-700 to-green-700 shadow-teal-700/50",
 };

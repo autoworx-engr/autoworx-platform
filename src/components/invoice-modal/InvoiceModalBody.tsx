@@ -6,6 +6,7 @@ import { getIsWorkorderCreated } from "@/actions/estimate/invoice/getworkorderCr
 import { sendInvoiceEmail } from "@/actions/estimate/invoice/sendInvoiceEmail";
 import { sendInvoiceSms } from "@/actions/estimate/invoice/sendInvoiceSms";
 import { getOrCreateShortLinkAction } from "@/actions/shortener/getOrCreateShortLink";
+import { getPaymentGatewayInfo } from "@/app/(dashboard)/dashboard/settings/payments/getPaymentGatewayInfo";
 import { getStripeAccount } from "@/app/(dashboard)/dashboard/settings/payments/stripe";
 import {
   DialogClose,
@@ -19,6 +20,7 @@ import { queryKeys } from "@/lib/queryKeys";
 import { errorToast, successToast } from "@/lib/toast";
 import { calculateDue } from "@/utils/calculateDue";
 import { formatCurrency } from "@/utils/formatCurrency";
+import { getFileFromCanvas } from "@/utils/getFileFromCanvas";
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
 import {
   Client,
@@ -39,22 +41,20 @@ import {
 } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
 import { Popconfirm, Tooltip } from "antd";
+import { Eye, Mail, MessageCircleMore, SquarePen, X } from "lucide-react";
 import moment from "moment";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import SignatureCanvas from "react-signature-canvas";
 import { useReactToPrint } from "react-to-print";
+import CarLoading from "../common/CarLoading";
 import WorkOrderModal from "../workorder-modal/WorkOrderModal";
 import { InspectionItems } from "./InspectionItems";
 import { InvoiceItems } from "./InvoiceItems";
-import { StripePay } from "./StripePay";
-import { Files, Mail, MessageCircleMore, SquarePen, X } from "lucide-react";
-import SignatureCanvas from "react-signature-canvas";
-import { uploadSignature } from "@/actions/estimate/invoice/uploadSignature";
-import { getFileFromCanvas } from "@/utils/getFileFromCanvas";
-import CarLoading from "../common/CarLoading";
+import { PayNow } from "./PayNow";
 
 const DownloadPDF = dynamic(() => import("./DownloadInvoice"), {
   ssr: false,
@@ -181,6 +181,8 @@ export default function InvoiceModalBody({
   }
   const companyId = data?.invoice?.companyId;
   const { data: stripeAccountData } = useServerGet(getStripeAccount, companyId);
+  const { data: gatewayInfo } = useServerGet(getPaymentGatewayInfo, companyId);
+  console.log("🚀 ~ InvoiceModalBody ~ gatewayInfo:", gatewayInfo);
 
   useEffect(() => {
     if (isSuccess && !isSuccessMsgShown) {
@@ -418,8 +420,9 @@ export default function InvoiceModalBody({
                       authorizedName={authorizedName}
                       signImageUrl={signImage ?? undefined}
                       isStripe={
-                        (stripeAccountData?.success &&
-                          stripeAccountData?.enabled &&
+                        (gatewayInfo?.success &&
+                          (gatewayInfo?.hasStripe ||
+                            gatewayInfo?.hasAuthorizeNet) &&
                           parseFloat(Number(invoice?.due ?? 0).toFixed(2)) >
                             0) ??
                         false
@@ -662,6 +665,13 @@ export default function InvoiceModalBody({
                     >
                       {invoice.column?.title}
                     </p>
+
+                    {invoice.isViewed && (
+                      <div className="mt-1 flex items-center gap-1">
+                        <Eye className="h-4 w-4 text-green-500" />
+                        <span className="text-xs text-green-500">Viewed</span>
+                      </div>
+                    )}
                   </div>
                 </>
               )}
@@ -1004,10 +1014,10 @@ export default function InvoiceModalBody({
           </div>
           {!isPrinting && (
             <div className="text-right">
-              {stripeAccountData?.success &&
-                stripeAccountData?.enabled &&
+              {gatewayInfo?.success &&
+                (gatewayInfo?.hasStripe || gatewayInfo?.hasAuthorizeNet) &&
                 parseFloat(Number(invoice?.due ?? 0).toFixed(2)) > 0 && (
-                  <StripePay
+                  <PayNow
                     invoiceId={invoice.id}
                     companyId={invoice.companyId}
                     due={parseFloat(
@@ -1015,6 +1025,11 @@ export default function InvoiceModalBody({
                     ).toString()}
                     open={isStripeDialogOpen}
                     setOpen={setIsStripeDialogOpen}
+                    gatewayInfo={{
+                      paymentGateway: gatewayInfo.paymentGateway || "STRIPE",
+                      hasStripe: gatewayInfo.hasStripe,
+                      hasAuthorizeNet: gatewayInfo.hasAuthorizeNet,
+                    }}
                   />
                 )}
             </div>
@@ -1023,9 +1038,9 @@ export default function InvoiceModalBody({
         </div>
 
         <div className="flex w-full flex-col gap-1 space-y-1 md:flex md:h-[90vh] md:w-[394px] md:shrink md:grow-0 md:gap-4 md:space-y-0 md:overflow-y-auto print:hidden">
-          <div className="#shadow-lg hidden h-[calc(100%-50px)] flex-1 overflow-y-auto rounded-md border bg-background p-3 md:p-6 lg:block">
+          <div className="#shadow-lg hidden h-[calc(100%-50px)] flex-1 overflow-y-auto rounded-md border bg-background p-3 md:p-6 md:block">
             {/* Desktop tabs are here */}
-            <div className="hidden lg:mb-4 lg:flex lg:justify-center lg:gap-4">
+            <div className="hidden md:mb-4 md:flex md:justify-center md:gap-4">
               <button
                 className={`rounded px-4 py-1 text-sm font-medium ${
                   desktopActiveTab === "attachments"
@@ -1051,7 +1066,7 @@ export default function InvoiceModalBody({
             {/* Attachments Tab Content - Desktop */}
             {desktopActiveTab === "attachments" && (
               <>
-                <h2 className="col-span-full mb-3 text-xl font-bold uppercase text-slate-500 md:text-3xl">
+                <h2 className="col-span-full mb-3  text-xl font-bold uppercase text-slate-500 md:text-3xl">
                   Attachments
                 </h2>
                 <div className="flex grid-cols-1 gap-4 overflow-x-auto md:grid">
