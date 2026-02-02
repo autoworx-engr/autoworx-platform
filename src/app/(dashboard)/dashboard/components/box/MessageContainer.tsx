@@ -27,7 +27,6 @@ type TMessageContainerProps = {
   internalMessages?: FullMessage[];
   user: User;
   hasMessagePermission?: boolean;
-  clientTotal?: number;
 };
 
 export default function MessageContainer({
@@ -36,7 +35,6 @@ export default function MessageContainer({
   internalMessages = [],
   user,
   hasMessagePermission = true,
-  clientTotal: initialClientTotal = 0,
 }: TMessageContainerProps) {
   const [search, setSearch] = useState("");
   const [clientMessages, setClientMessages] = useState(initialClientMessages);
@@ -120,7 +118,7 @@ export default function MessageContainer({
 
   // Fetch more client messages
   const fetchMoreClients = useCallback(async () => {
-    if (isPending || search) return;
+    if (isPending || search || !hasMore) return;
 
     startTransition(async () => {
       try {
@@ -143,7 +141,7 @@ export default function MessageContainer({
         setHasMore(false);
       }
     });
-  }, [clientMessages.length, isPending, search]);
+  }, [clientMessages.length, isPending, search, hasMore]);
 
   // Handle search input change
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -222,9 +220,9 @@ export default function MessageContainer({
                 if (data.MailgunEmail?.length === 0) return null;
 
                 // Get the latest email
-                // const latestEmail =
-                //   data.MailgunEmail[data.MailgunEmail.length - 1];
-                const latestEmail = data.MailgunEmail[0];
+                const latestEmail =
+                  data.MailgunEmail[data.MailgunEmail.length - 1];
+
                 const emailBy =
                   latestEmail.emailBy === "Company" ? "You: " : "";
                 const messageContent =

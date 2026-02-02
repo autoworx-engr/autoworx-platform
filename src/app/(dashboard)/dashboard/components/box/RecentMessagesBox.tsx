@@ -110,7 +110,6 @@ export default async function RecentMessagesBox() {
             // Only Sales gets client emails on the dashboard (as per existing logic)
             // clientMessages={user.employeeType === "Sales" ? sortedClients : []}
             initialClientMessages={clientData.messages} // Already sorted
-            clientTotal={clientData.total}
             // Technicians get internal messages
             internalMessages={
               user.employeeType === "Technician" ||

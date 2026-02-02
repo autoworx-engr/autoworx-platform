@@ -67,7 +67,8 @@ export async function getClientMessages(page: number = 1, search: string = "") {
   return {
     messages: paginatedClients,
     total: sortedClients.length,
-    hasMore: skip + paginatedClients.length < sortedClients.length,
+    // hasMore: skip + paginatedClients.length < sortedClients.length,
+    hasMore: (skip + limit) < sortedClients.length,
     
   };
 }
