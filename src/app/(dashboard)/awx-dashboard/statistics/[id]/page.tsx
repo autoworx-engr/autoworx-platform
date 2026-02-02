@@ -5,8 +5,10 @@ import CompanyReportSection from "../../components/CompanyReportSection";
 import FeaturePermission from "../../components/FeaturePermission";
 import { ConfigureCommunicationHub } from "./ConfigureCommunicationHub";
 import { CompanyCustomPlanDialog } from "./CompanyCustomPlanDialog";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Upload } from "lucide-react";
 import moment from "moment";
+import { CannedUploadModal } from "@/app/(dashboard)/dashboard/estimate/canned/CannedUploadModal";
+import { Button } from "@/components/ui/button";
 
 type propsType = {
   params: {
@@ -276,13 +278,38 @@ const Page = async (props: propsType) => {
                   currentPlanId={subscription?.planId ?? null}
                   plans={plans}
                 />
+                <button
+                  className="rounded-xl px-4 py-2.5 text-sm font-semibold text-white
+                bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
+                shadow-[0_4px_14px_0_rgba(101,113,255,0.39)]
+                hover:shadow-[0_6px_20px_rgba(101,113,255,0.23)]
+                hover:-translate-y-0.5
+                active:translate-y-0 active:scale-100
+                transition-all duration-300 ease-in-out"
+                >
+                  Upgrade
+                </button>
                 <button className="rounded-xl border border-slate-400 dark:border-slate-500 bg-white dark:bg-slate-700 px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 transition-all duration-300 hover:bg-slate-50 dark:hover:bg-slate-600">
                   Cancel
                 </button>
               </div>
             </div>
+            <div className="flex flex-col md:flex-row justify-between">
+              <ConfigureCommunicationHub />
+              <CannedUploadModal
+                buttonElement={
+                  <Button
+                    variant="outline"
+                    className=" bg-[#6571FF] hover:bg-indigo-600 focus:ring-blue-500 text-white hover:text-white"
+                  >
+                    <Upload size={16} /> <p>Canned Upload</p>
+                  </Button>
+                }
+                companyId={id}
+              />
+            </div>
             {/* communication hub configure */}
-            <ConfigureCommunicationHub />
+
             {/* reports */}
             <CompanyReportSection />
           </div>

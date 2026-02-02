@@ -1,6 +1,6 @@
 import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse, URLPattern } from "next/server";
-import { jwtVerify } from "jose";
+import { jwtVerifyToken } from "./lib/jwtVerify";
 
 const PUBLIC_ROUTES = ["/login", "/register", "/forgot-password", "/"];
 
@@ -17,6 +17,7 @@ const PUBLIC_API_ROUTES = [
   // Webhook endpoints
   "/api/stripe/invoice-pay-hook",
   "/api/twilio/token",
+  "/api/twilio/register-voip",
   "/api/infobip",
   "/api/lead-generate",
   "/api/authorize-net/webhook",
@@ -28,7 +29,8 @@ const PUBLIC_API_ROUTES = [
   "/api/twilio/incoming",
   "/api/twilio/receive",
   "/api/twilio/token",
-  "/api/platform/webhook"
+  "/api/platform/webhook",
+  "/api/invoice/track-view",
 ];
 
 const PUBLIC_DYNAMIC_API_ROUTES = [
@@ -50,10 +52,10 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const authHeader = request.headers.get("authorization");
-  console.log({
-    isDynamicPublicApiRoute: isDynamicPublicApiRoute(pathname),
-    publicApiRoute: PUBLIC_API_ROUTES.includes(pathname),
-  });
+  // console.log({
+  //   isDynamicPublicApiRoute: isDynamicPublicApiRoute(pathname),
+  //   publicApiRoute: PUBLIC_API_ROUTES.includes(pathname),
+  // });
   const isExternalApiRequest =
     !token &&
     pathname.startsWith("/api/") &&
@@ -61,9 +63,9 @@ export async function middleware(request: NextRequest) {
       isDynamicPublicApiRoute(pathname) || PUBLIC_API_ROUTES.includes(pathname)
     );
 
-  console.log("Middleware - isExternalApiRequest:", isExternalApiRequest);
-  console.log("Middleware - Authorization Header:", authHeader);
-  console.log("Middleware - Request Pathname:", pathname);
+  // console.log("Middleware - isExternalApiRequest:", isExternalApiRequest);
+  // console.log("Middleware - Authorization Header:", authHeader);
+  // console.log("Middleware - Request Pathname:", pathname);
 
   // check api access token
   if (!authHeader && isExternalApiRequest) {
@@ -76,10 +78,8 @@ export async function middleware(request: NextRequest) {
       ? authHeader.split(" ")[1]
       : authHeader;
     try {
-      const secret = new TextEncoder().encode(process.env.ACCESS_SECRET || "");
-
       // 2. Verify Token
-      const verifyToken = await jwtVerify(accessToken, secret);
+      const verifyToken = await jwtVerifyToken(accessToken);
       const expires = (verifyToken?.payload?.exp ?? 0) * 1000;
       if (Date.now() < (expires as number)) {
         return NextResponse.next();

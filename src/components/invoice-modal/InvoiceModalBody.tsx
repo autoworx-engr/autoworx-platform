@@ -253,37 +253,45 @@ export default function InvoiceModalBody({
     successToast("Invoice sent successfully");
   };
   const handleCopyLink = async () => {
+    // 1. Identify what you want to copy
+    const clientName = invoice?.client?.firstName || invoice?.client?.lastName || "";
+    
+    const shortLinkResult = await getOrCreateShortLinkAction({
+      invoiceId: invoiceId!,
+      clientName,
+    });
+
+    const urlToCopy = shortLinkResult.success && shortLinkResult.shortUrl 
+      ? shortLinkResult.shortUrl 
+      : (shortLinkResult.originalUrl || `${process.env.NEXT_PUBLIC_APP_URL}/public-invoice/${invoiceId}`);
+
     try {
-      const clientName =
-        invoice?.client?.firstName || invoice?.client?.lastName || "";
-
-      const shortLinkResult = await getOrCreateShortLinkAction({
-        invoiceId: invoiceId!,
-        clientName,
-      });
-
-      if (shortLinkResult.success && shortLinkResult.shortUrl) {
-        await navigator.clipboard.writeText(shortLinkResult.shortUrl);
-        successToast("Short link copied to clipboard");
-      } else {
-        // Fallback to original URL if short link creation fails
-        const fallbackUrl =
-          shortLinkResult.originalUrl ||
-          `${process.env.NEXT_PUBLIC_APP_URL}/public-invoice/${invoiceId}`;
-        await navigator.clipboard.writeText(fallbackUrl);
-        console.log("⚠️ Copy Link - Using original URL:", {
-          error: shortLinkResult.error,
-          originalUrl: fallbackUrl,
-          invoiceId: invoiceId,
-        });
+      // 2. Check if the Clipboard API is available AND the context is secure
+      if (typeof window !== "undefined" && navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(urlToCopy);
         successToast("Link copied to clipboard");
+      } else {
+        // 3. Fallback for insecure connections (like your IP address testing)
+        throw new Error("Clipboard API unavailable");
       }
     } catch (error) {
-      console.error("Error copying link:", error);
-      // Fallback to original URL
-      const fallbackLink = `${process.env.NEXT_PUBLIC_APP_URL}/public-invoice/${invoiceId}`;
-      await navigator.clipboard.writeText(fallbackLink);
-      successToast("Link copied to clipboard");
+      console.warn("Clipboard failed, using fallback:", error);
+      
+      // 4. The "Old School" Fallback
+      // This creates a temporary input, selects the text, and copies it.
+      // This is more compatible with older/insecure environments.
+      try {
+        const textArea = document.createElement("textarea");
+        textArea.value = urlToCopy;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand("copy"); // Older way of copying
+        document.body.removeChild(textArea);
+        successToast("Link copied (fallback)");
+      } catch (fallbackError) {
+        // 5. Final Fallback: If all else fails, just show the link to the user
+        window.prompt("Copy link manually:", urlToCopy);
+      }
     }
   };
 

@@ -152,6 +152,39 @@ export async function POST(request: Request) {
         }
 
         console.log("Sending SMS via gateway:", call.company?.smsGateway);
+
+        if (process.env.NODE_ENV === "production") {
+          if (call.company?.smsGateway === "TWILIO") {
+            const response = await sendTwilioMessage({
+              companyId: call.company?.id,
+              clientId: call.client.id,
+              message: message,
+              attachments: [],
+            });
+
+            if (!response.success) {
+              throw new Error(`SMS sending failed`);
+            }
+            console.log("✅ [Call-Status] Missed call SMS sent via Twilio");
+          } else if (call.company?.smsGateway === "INFOBIP") {
+            const response = await sendInfobipMessage({
+              companyId: call.company?.id,
+              clientId: call.client.id,
+              message: message,
+              attachments: [],
+            });
+
+            if (!response.success) {
+              throw new Error(`SMS sending failed`);
+            }
+            console.log("✅ [Call-Status] Missed call SMS sent via Infobip");
+          } else {
+            console.warn(
+              "⚠️ [Call-Status] No SMS gateway configured for company:",
+              call.company?.id,
+            );
+          }
+        }
       } catch (error) {
         console.error(
           "❌ [Call-Status] Failed to send missed call SMS:",

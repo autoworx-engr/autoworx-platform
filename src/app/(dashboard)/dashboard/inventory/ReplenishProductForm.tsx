@@ -15,13 +15,13 @@ import Selector from "@/components/Selector";
 import { SlimInput } from "@/components/SlimInput";
 import Submit from "@/components/Submit";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
+import { cn } from "@/lib/cn";
 import { useFormErrorStore } from "@/stores/form-error";
 import { useListsStore } from "@/stores/lists";
 import { Vendor } from "@prisma/client";
 import moment from "moment-timezone";
 import { useState } from "react";
 import { replenish } from "../../../../actions/inventory/replenish";
-import { cn } from "@/lib/cn";
 
 export default function ReplenishProductForm({
   productId,
@@ -84,7 +84,8 @@ export default function ReplenishProductForm({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button className="
+        <button
+          className="
           w-28 rounded-lg px-4 py-2 text-sm font-semibold text-white
           bg-gradient-to-r from-[#69DBD0] to-[#5acbc0]
           shadow-[0_4px_14px_0_rgba(105,219,208,0.39)]
@@ -92,7 +93,8 @@ export default function ReplenishProductForm({
           hover:-translate-y-0.5
           active:translate-y-0 active:scale-100
           transition-all duration-300 ease-in-out
-        ">
+        "
+        >
           Replenish
         </button>
       </DialogTrigger>
@@ -102,7 +104,9 @@ export default function ReplenishProductForm({
         form
       >
         <DialogHeader>
-          <DialogTitle className="text-slate-600">Replenish Product</DialogTitle>
+          <DialogTitle className="text-slate-600">
+            Replenish Product
+          </DialogTitle>
         </DialogHeader>
         <FormError />
         <div className="gap-5 overflow-y-auto pl-1 space-y-4">
@@ -112,14 +116,19 @@ export default function ReplenishProductForm({
               type="date"
               label="Date"
               defaultValue={todayInCompanyTz}
+              required={true}
             />
             <div className="space-y-1">
-              <label className="font-medium text-slate-600">Vendor</label>
+              <label className="font-medium text-slate-600">
+                Vendor <span className="text-red-500">*</span>
+              </label>
 
               <Selector
                 label={(vendor: Vendor | null) =>
                   vendor
-                    ? vendor?.companyName || vendor?.name || `Vendor ${vendor.id}`
+                    ? vendor?.companyName ||
+                      vendor?.name ||
+                      `Vendor ${vendor.id}`
                     : "Vendor"
                 }
                 newButton={
@@ -129,7 +138,10 @@ export default function ReplenishProductForm({
                       setVendorOpen(false);
                     }}
                     button={
-                      <button type="button" className="text-xs text-[#6571FF] hover:underline">
+                      <button
+                        type="button"
+                        className="text-xs text-[#6571FF] hover:underline"
+                      >
                         + New Vendor
                       </button>
                     }
@@ -159,25 +171,29 @@ export default function ReplenishProductForm({
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
-            <SlimInput name="quantity" required={false} label="Quantity" />
+            <SlimInput name="quantity" required={true} label="Quantity" />
 
-            <SlimInput name="price" required={false} label="Total Price" />
+            <SlimInput name="price" required={true} label="Total Price" />
 
             <SlimInput
               defaultValue={lastUnit || ""}
               name="unit"
-              required={false}
+              required={true}
               label="Unit"
             />
             <SlimInput name="lot" required={false} label="Lot#" />
           </div>
 
           <div className="space-y-1">
-            <label htmlFor="notes" className="font-medium text-slate-600"> Notes</label>
+            <label htmlFor="notes" className="font-medium text-slate-600">
+              {" "}
+              Notes
+            </label>
             <textarea
               id="notes"
               name="notes"
-              className={cn("h-24 w-full rounded-md border border-slate-300 outline-none bg-background px-3 py-2 leading-6 transition-all duration-300 thin-scrollbar",
+              className={cn(
+                "h-24 w-full rounded-md border border-slate-300 outline-none bg-background px-3 py-2 leading-6 transition-all duration-300 thin-scrollbar",
                 "bg-white/80 backdrop-blur-sm dark:bg-slate-900/50",
                 "text-slate-600 dark:text-slate-300 placeholder:text-slate-400",
                 "focus:border-[#6571FF]/60 focus:ring-2 focus:ring-[#6571FF]/40",

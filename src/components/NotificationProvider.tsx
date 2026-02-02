@@ -113,7 +113,7 @@ export function NotificationsPopover() {
           </svg>
           {totalUnRead > 0 && (
             <Badge className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-red-500 p-0 text-[10px] font-bold text-white">
-              {totalUnRead}
+              {totalUnRead > 99 ? "99+" : totalUnRead}
             </Badge>
           )}
         </button>

@@ -4,7 +4,7 @@ import { updateClientUnreadMessageToRead } from "@/actions/communication/client/
 /**
  * @swagger
  * /api/communication/client-hub/update-client-unread-message:
- *   put:
+ *   patch:
  *     summary: Mark client SMS messages as read
  *     tags: [Communication Client]
  *     security:
@@ -24,7 +24,7 @@ import { updateClientUnreadMessageToRead } from "@/actions/communication/client/
  *       200:
  *         description: Messages marked as read successfully
  */
-export async function PUT(req: NextRequest) {
+export async function PATCH(req: NextRequest) {
   try {
     const body = await req.json();
 
@@ -33,7 +33,7 @@ export async function PUT(req: NextRequest) {
     if (data.type !== "success") {
       return NextResponse.json(
         { success: false, message: "Failed to update unread messages" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -41,7 +41,7 @@ export async function PUT(req: NextRequest) {
   } catch (error: any) {
     return NextResponse.json(
       { success: false, message: error.message },
-      { status: 400 }
+      { status: 400 },
     );
   }
 }

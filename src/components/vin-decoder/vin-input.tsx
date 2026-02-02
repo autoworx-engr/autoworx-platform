@@ -40,14 +40,14 @@ export default function VINInputCamera({ onVehicleInfo }: VINInputProps) {
           </Button>
         </div>
       </div>
-      {createPortal(
-        <VINScannerModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          onScanComplete={handleScanComplete}
-        />,
-        document.body
-      )}
+      {/* {createPortal( */}
+      <VINScannerModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onScanComplete={handleScanComplete}
+      />
+      {/* document.body
+      )} */}
     </>
   );
 }

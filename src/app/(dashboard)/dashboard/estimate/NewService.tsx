@@ -1,10 +1,4 @@
 "use client";
-import SelectCategory from "@/components/Lists/SelectCategory";
-import { useEstimateCreateStore } from "@/stores/estimate-create";
-import { useEstimatePopupStore } from "@/stores/estimate-popup";
-import { useListsStore } from "@/stores/lists";
-import { Category } from "@prisma/client";
-import { useEffect, useState } from "react";
 import newService from "@/actions/estimate/service/newService";
 import {
   Dialog,
@@ -15,8 +9,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/Dialog";
-import { useFormErrorStore } from "@/stores/form-error";
+import SelectCategory from "@/components/Lists/SelectCategory";
 import { errorToast, successToast } from "@/lib/toast";
+import { useEstimateCreateStore } from "@/stores/estimate-create";
+import { useEstimatePopupStore } from "@/stores/estimate-popup";
+import { useFormErrorStore } from "@/stores/form-error";
+import { useListsStore } from "@/stores/lists";
+import { Category } from "@prisma/client";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
 export default function NewService({
@@ -284,10 +284,11 @@ export default function NewService({
                   }
                 }}
                 onBlur={() => setNameTouched(true)}
-                className={`w-full px-4 py-2.5 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder:text-slate-400 ${nameError
+                className={`w-full px-4 py-2.5 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder:text-slate-400 ${
+                  nameError
                     ? "border-red-500 focus:ring-red-500"
                     : "border-slate-300"
-                  }`}
+                }`}
                 aria-invalid={nameError ? "true" : "false"}
                 aria-describedby={nameError ? "name-error" : undefined}
               />
@@ -332,6 +333,7 @@ export default function NewService({
                 setCategoryOpen={setCategoryOpen}
                 required={true}
                 onBlur={() => validateCategory(category)}
+                allowEdit={true}
               />
               {categoryError && (
                 <p className="flex items-center gap-1 text-xs text-red-600">
@@ -353,22 +355,13 @@ export default function NewService({
 
             {/* Description */}
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label
-                  htmlFor="description"
-                  className="block text-sm font-medium text-slate-700"
-                >
-                  Description
-                </label>
-                <span
-                  className={`text-xs ${descriptionLength > maxDescriptionLength * 0.9
-                      ? "text-red-600 font-medium"
-                      : "text-slate-500"
-                    }`}
-                >
-                  {descriptionLength}/{maxDescriptionLength}
-                </span>
-              </div>
+              <label
+                htmlFor="description"
+                className="block text-sm font-medium text-slate-700"
+              >
+                Description
+              </label>
+
               <textarea
                 id="description"
                 placeholder="Add any additional details about this service..."
@@ -387,9 +380,20 @@ export default function NewService({
                 rows={5}
                 className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder:text-slate-400 resize-none"
               />
-              <p className="text-xs text-slate-500">
-                Provide a detailed description of what this service includes
-              </p>
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-slate-500">
+                  Provide a detailed description of what this service includes
+                </p>
+                <span
+                  className={`text-xs ${
+                    descriptionLength > maxDescriptionLength * 0.9
+                      ? "text-red-600 font-medium"
+                      : "text-slate-500"
+                  }`}
+                >
+                  {descriptionLength}/{maxDescriptionLength}
+                </span>
+              </div>
             </div>
 
             {/* Info Box */}

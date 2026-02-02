@@ -6,6 +6,7 @@ import {
   getPermissionsForRole,
   updatePermissionForRole,
 } from "@/actions/settings/teamManagement";
+import { successToast, errorToast } from "@/lib/toast";
 import { useTeamManagementStore } from "@/stores/teamManagementStore";
 
 interface PermissionWithIndexSignature {
@@ -22,6 +23,10 @@ interface Permissions {
 export default function UserRolesTable() {
   const [permissions, setPermissions] = useState<Permissions | null>(null); // To trigger re-render when serviceStore changes
   const roles = ["Manager", "Sales", "Technician", "Other"];
+
+  const getModuleLabel = (moduleKey: string) =>
+    permissionModuleForAdminManager.find(module => module.key === moduleKey)
+      ?.label ?? moduleKey;
 
   useEffect(() => {
     const fetchPermissions = async () => {
@@ -60,9 +65,14 @@ export default function UserRolesTable() {
         await updatePermissionForRole({ role, moduleKey, value, isViewOnly }); // Update the database
         const refetch = useTeamManagementStore.getState().refetch;
         useTeamManagementStore.setState({ refetch: !refetch });
+        const moduleLabel = getModuleLabel(moduleKey);
+        successToast(
+          `Updated ${role} - ${moduleLabel}${isViewOnly ? " (view only)" : ""}`
+        );
       }
     } catch (error) {
       console.log("Error updating permission:", error);
+      errorToast("Failed to update permission");
     }
   };
 

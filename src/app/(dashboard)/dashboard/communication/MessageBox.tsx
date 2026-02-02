@@ -123,16 +123,16 @@ export default function MessageBox({
         attachmentFiles:
           attachmentFileUrl && attachmentFileUrl.length > 0
             ? (attachmentFileUrl as string[]).map((fileUrl, urlIndex) => {
-                const findFileIntoMultiFile = multiAttachmentFile?.find(
-                  (_, fileIndex) => fileIndex === urlIndex
-                );
-                return {
-                  fileName: findFileIntoMultiFile?.name,
-                  fileType: findFileIntoMultiFile?.type,
-                  fileUrl: fileUrl,
-                  fileSize: findFileIntoMultiFile?.size,
-                };
-              })
+              const findFileIntoMultiFile = multiAttachmentFile?.find(
+                (_, fileIndex) => fileIndex === urlIndex
+              );
+              return {
+                fileName: findFileIntoMultiFile?.name,
+                fileType: findFileIntoMultiFile?.type,
+                fileUrl: fileUrl,
+                fileSize: findFileIntoMultiFile?.size,
+              };
+            })
             : null,
       };
 
@@ -589,7 +589,6 @@ export default function MessageBox({
           className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#006D77] focus:border-transparent"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          disabled
         />
         <button disabled={pending} className="" type="submit">
           {/* <Image src="/icons/Send.svg" width={20} height={20} alt="send" /> */}

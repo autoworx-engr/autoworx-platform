@@ -60,6 +60,7 @@ export async function sendTwilioMessage({
     if (!twilioCredentials) {
       return {
         success: false,
+        message: "Twilio credential does not setup yet!",
       };
     }
 
