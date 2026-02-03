@@ -2,8 +2,9 @@
 
 import { getInspections } from "@/actions/estimate/invoice/getInspections";
 import { InvoiceInspection } from "@prisma/client";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { AlertCircle, ChevronDown, ChevronUp, ClipboardCheck } from "lucide-react";
 import { useEffect, useState } from "react";
+import { cn } from "@/lib/cn";
 
 interface InspectionItemsProps {
   damageNotes?: string;
@@ -24,6 +25,7 @@ export function InspectionItems({
     const fetchInspectionData = async () => {
       try {
         const response = await getInspections(invoiceId);
+        console.log("inspection response", response);
         const filtered = response.filter(
           (r) => r.title && r.title.trim() !== "" && (r.driver || r.passenger)
         );
@@ -41,78 +43,83 @@ export function InspectionItems({
   };
 
   return (
-    <div className={`w-full space-y-4 rounded-lg ${className}`}>
-      {/* Header with toggle */}
+    <div className={`w-full space-y-4 rounded-3xl ${className}`}>
+      {/* Header with toggle - Modern Minimalist Style */}
       <div
-        className="flex cursor-pointer items-center justify-between rounded-md bg-gray-50 p-3 hover:bg-gray-100"
+        className="group flex cursor-pointer items-center justify-between rounded-2xl bg-slate-50/80 p-4 transition-all hover:bg-slate-100 dark:bg-slate-900/50 dark:hover:bg-slate-800"
         onClick={() => setIsExpanded(!isExpanded)}
       >
-        <h3 className="text-sm font-medium md:text-base">
-          Vehicle Inspection Details
-        </h3>
-        <span>{isExpanded ? <ChevronUp /> : <ChevronDown />}</span>
+        <div className="flex items-center gap-3">
+          <h3 className="text-xs font-bold uppercase tracking-widest text-slate-600 dark:text-slate-300 md:text-sm">
+            Vehicle Inspection Details
+          </h3>
+        </div>
+        <span className="text-slate-400 group-hover:text-[#6571FF]">
+          {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+        </span>
       </div>
 
       {/* Expanded content */}
       {isExpanded && (
-        <div className="space-y-4 px-1">
+        <div className="space-y-6 px-1 animate-in fade-in slide-in-from-top-2 duration-300">
           {/* Inspection table */}
-          <div className="rounded-md border border-gray-200">
-            <div className="grid grid-cols-10 gap-1 bg-[#E0E3FF] p-2 text-xs font-medium md:text-sm">
+          <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <div className="grid grid-cols-10 gap-1 bg-slate-50 p-4 text-[10px] font-black uppercase tracking-[0.15em] text-slate-500 dark:bg-slate-800/50">
               <div className="col-span-5">Parts</div>
               <div className="col-span-2 text-center">Driver</div>
               <div className="col-span-3 text-center">Passenger</div>
             </div>
 
-            <div className="thin-scrollbar max-h-64 overflow-y-auto">
+            <div className="thin-scrollbar max-h-80 overflow-y-auto">
               {inspectionData.map((item, index) => (
                 <div
                   key={index}
-                  className="border-b border-gray-100 last:border-b-0"
+                  className="group border-b border-slate-50 last:border-b-0 dark:border-slate-800/50"
                 >
                   <div
-                    className={`grid cursor-pointer grid-cols-10 gap-1 p-2 text-xs md:text-sm ${index % 2 === 0 ? "bg-background" : "bg-[#F8FAFF]"}`}
+                    className={`grid cursor-pointer grid-cols-10 gap-1 p-4 transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/30 ${index % 2 === 0 ? "bg-white dark:bg-slate-900" : "bg-[#FBFBFF] dark:bg-slate-800/10"
+                      }`}
                     onClick={() => toggleItemExpansion(index)}
                   >
                     <div className="col-span-5 flex items-center">
-                      <span className="truncate font-medium">{item.title}</span>
+                      <span className="text-sm font-semibold text-slate-600 dark:text-slate-300">{item.title}</span>
                     </div>
-                    <div className="col-span-2 flex items-center justify-center">
-                      {item.driver ? (
-                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#6571FF] text-white">
-                          ✓
-                        </span>
-                      ) : (
-                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gray-200">
-                          -
-                        </span>
-                      )}
-                    </div>
-                    <div className="col-span-3 flex items-center justify-center">
-                      {item.passenger ? (
-                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#6571FF] text-white">
-                          ✓
-                        </span>
-                      ) : (
-                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gray-200">
-                          -
-                        </span>
-                      )}
-                    </div>
+
+                    {/* Checkmark Columns */}
+                    {[item.driver, item.passenger].map((val, i) => (
+                      <div key={i} className={`${i === 0 ? "col-span-2" : "col-span-3"} flex items-center justify-center`}>
+                        <div
+                          className={cn(
+                            "flex h-5 w-5 items-center justify-center rounded-lg border-2 transition-all duration-200",
+                            "border-slate-200 bg-white shadow-sm dark:bg-slate-900 dark:border-slate-700",
+                            val && "border-[#6571FF] bg-[#6571FF] shadow-md shadow-[#6571FF]/20"
+                          )}
+                        >
+                          <svg
+                            viewBox="0 0 20 20"
+                            fill="none"
+                            stroke="white"
+                            strokeWidth="4"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className={cn(
+                              "h-2.5 w-2.5 transition-all duration-200 mb-0.5",
+                              val ? "scale-100 opacity-100" : "scale-50 opacity-0"
+                            )}
+                          >
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        </div>
+                      </div>
+                    ))}
                   </div>
 
-                  {/* Notes section for each part when expanded */}
+                  {/* Notes section with a "Bubble" look */}
                   {expandedItem === index && item.notes && (
-                    <div
-                      className={`border-t border-gray-100 p-2 text-xs ${index % 2 === 0 ? "bg-background" : "bg-[#F8FAFF]"}`}
-                    >
-                      <div className="flex gap-2">
-                        <span className="font-medium text-gray-700">
-                          Notes:
-                        </span>
-                        <span className="text-gray-600">
-                          {item.notes || "No notes available"}
-                        </span>
+                    <div className="bg-slate-50/30 px-4 pb-4 dark:bg-slate-800/20">
+                      <div className="rounded-xl border border-slate-100 bg-white p-3 text-xs shadow-sm dark:border-slate-700 dark:bg-slate-800">
+                        <p className="font-bold text-[#6571FF] uppercase text-[9px] mb-1 tracking-tighter">Technician Notes</p>
+                        <p className="text-slate-600 dark:text-slate-400 leading-relaxed">{item.notes}</p>
                       </div>
                     </div>
                   )}
@@ -123,9 +130,12 @@ export function InspectionItems({
 
           {/* Overall damage notes section */}
           {damageNotes && (
-            <div className="space-y-2 rounded-md border border-gray-200 p-3">
-              <h4 className="font-medium text-gray-700">Damage Notes:</h4>
-              <p className="text-xs text-gray-600 md:text-sm">{damageNotes}</p>
+            <div className="relative overflow-hidden rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 p-5 dark:border-slate-700 dark:bg-slate-800/30">
+              <div className="flex items-center gap-2 mb-2">
+                <AlertCircle className="h-4 w-4 text-slate-400" />
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-500">Damage Assessment</h4>
+              </div>
+              <p className="text-sm italic leading-relaxed text-slate-600 dark:text-slate-400">{damageNotes}</p>
             </div>
           )}
         </div>
