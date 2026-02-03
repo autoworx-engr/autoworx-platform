@@ -25,7 +25,7 @@ export default function OrderSelect() {
 
   return (
     <Select onValueChange={onValueChange} defaultValue={currentOrder}>
-      <SelectTrigger className="w-[180px] bg-white ">
+      <SelectTrigger className="w-[180px] bg-white rounded-xl">
         <SelectValue placeholder="Select order" />
       </SelectTrigger>
       <SelectContent position="popper">
