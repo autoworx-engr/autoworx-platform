@@ -102,6 +102,7 @@
     "pusher-js": "^8.4.0-rc2",
     "qrcode": "^1.5.4",
     "quill": "^2.0.3",
+    "radix-ui": "latest",
     "react": "^18.3.1",
     "react-date-range": "^1.4.0",
     "react-dnd": "^16.0.1",

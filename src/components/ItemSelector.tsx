@@ -5,7 +5,14 @@ import { DropdownMenuContent } from "@radix-ui/react-dropdown-menu";
 import { useEffect, useRef, useState } from "react";
 import { DropdownMenu, DropdownMenuTrigger } from "./DropdownMenu";
 import { useMediaQuery } from "react-responsive";
-import { ChevronDown, ChevronUp, Plus, Search, SquarePen, X } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  Plus,
+  Search,
+  SquarePen,
+  X,
+} from "lucide-react";
 
 export default function ItemSelector<T>({
   label,
@@ -154,7 +161,7 @@ export default function ItemSelector<T>({
               onClick={() => setOpen(true)}
               className={cn(
                 "flex h-11 w-full items-center justify-between rounded-lg shadow-sm shadow-black/20 bg-gray-100/40 px-4 ring-1 ring-inset ring-slate-200 transition-all hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30",
-                open && "invisible"
+                open && "invisible",
               )}
             >
               <p className="text-sm font-medium text-slate-400">{label}</p>
@@ -163,7 +170,7 @@ export default function ItemSelector<T>({
           ) : (
             <div
               className={cn(
-                "relative flex min-h-11 w-full max-w-[320px] items-center justify-between rounded-xl bg-slate-50/50 py-2 px-4 ring-1 ring-inset ring-[#6571FF]/20"
+                "relative flex min-h-11 w-full max-w-[320px] items-center justify-between rounded-xl bg-slate-50/50 py-2 px-4 ring-1 ring-inset ring-[#6571FF]/20",
               )}
             >
               <p className="text-sm font-semibold text-slate-700">

@@ -14,6 +14,7 @@ import { actionTypes } from "@/constants/lead.constant";
 
 type TGetLeads = {
   columnId?: number;
+  orderBy?: "asc" | "desc";
   searchTerm?: string;
   take?: number;
   skip?: number;
@@ -33,6 +34,7 @@ type TGetLeadsWithCount = {
 
 export const getLeads = async ({
   columnId,
+  orderBy,
   take,
   skip,
   searchTerm = "",
@@ -61,13 +63,14 @@ export const getLeads = async ({
       .format("YYYY-MM-DDTHH:mm:ss");
 
     const now = moment().tz(timezone ?? "");
+    console.log({ orderBy });
 
     const leadsData = await db.lead.findMany({
       where: query,
       take,
       skip,
       orderBy: {
-        createdAt: "desc",
+        createdAt: orderBy || "desc",
       },
       include: {
         salesUser: {
@@ -131,7 +134,7 @@ export const getLeads = async ({
       leadsData.map(async (lead) => {
         let client = lead.Client.find(
           (client: any) =>
-            client.companyId === companyId && client.leadId === lead.id
+            client.companyId === companyId && client.leadId === lead.id,
         );
 
         if (!client && lead.clientId) {
@@ -177,7 +180,7 @@ export const getLeads = async ({
             const end = moment.tz(
               `${moment(appointment.date).format("YYYY-MM-DD")}T${appointment.endTime}`,
               "YYYY-MM-DDTHH:mm",
-              timezone ?? ""
+              timezone ?? "",
             );
 
             // Show appointment only if endTime is same or after now
@@ -221,7 +224,7 @@ export const getLeads = async ({
           column,
           totalMessage: isShowConversationIndicator ? 1 : 0,
         };
-      })
+      }),
     );
 
     return leadsDataWithClient;
@@ -357,7 +360,7 @@ export const getLeadsWithCount = async ({
       leadsData.map(async (lead) => {
         let client = lead.Client.find(
           (client: any) =>
-            client.companyId === companyId && client.leadId === lead.id
+            client.companyId === companyId && client.leadId === lead.id,
         );
         if (!client && lead.clientId) {
           client = (await db.client.findFirst({
@@ -446,7 +449,7 @@ export const getLeadsWithCount = async ({
           column,
           totalMessage: isShowConversationIndicator ? 1 : 0,
         };
-      })
+      }),
     );
 
     return { leads: await leadsDataWithClient, totalCount };
@@ -587,7 +590,7 @@ export const getLeadsWithCountOptimized = async ({
     const leadsDataWithClient: LeadWithSalesUser[] = leadsData.map((lead) => {
       let client = lead.Client.find(
         (client: any) =>
-          client.companyId === companyId && client.leadId === lead.id
+          client.companyId === companyId && client.leadId === lead.id,
       );
 
       const appointments = client?.appointments.filter((appointment: any) => {
@@ -595,7 +598,7 @@ export const getLeadsWithCountOptimized = async ({
           const end = moment.tz(
             `${moment(appointment.date).format("YYYY-MM-DD")}T${appointment.endTime}`,
             "YYYY-MM-DDTHH:mm",
-            timezone ?? ""
+            timezone ?? "",
           );
           return end.isSameOrAfter(now);
         }
@@ -738,7 +741,7 @@ export async function updateLeadColumn(leadId: number, newColumnId: number) {
 export async function getLeadsCountByColumnId(
   columnId: number,
   companyId: number,
-  searchTerm?: string
+  searchTerm?: string,
 ) {
   try {
     const totalLeadCount = await db.lead.count({
