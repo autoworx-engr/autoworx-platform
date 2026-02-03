@@ -58,14 +58,15 @@ export function PayNow({
   const [amount, setAmount] = useState(due);
   const [isLoading, setIsLoading] = useState(false);
   const [payType, setPayType] = useState<"payment" | "deposit" | "statement">(
-    () => (mode === "statement" ? "statement" : "payment")
+    () => (mode === "statement" ? "statement" : "payment"),
   );
   const [selectedGateway, setSelectedGateway] = useState<
     "STRIPE" | "AUTHORIZE_NET"
   >("STRIPE");
   const [authorizeNetToken, setAuthorizeNetToken] = useState<string | null>(
-    null
+    null,
   );
+  const [authorizeNetUrl, setAuthorizeNetUrl] = useState<string | null>(null);
   const [showPaymentIframe, setShowPaymentIframe] = useState(false);
   const [isIframeLoading, setIsIframeLoading] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
@@ -224,6 +225,9 @@ export function PayNow({
         if (result.success && result.token) {
           console.log("🎫 Received Authorize.Net token, opening iframe");
           setAuthorizeNetToken(result.token);
+          if (result.url) {
+            setAuthorizeNetUrl(result.url);
+          }
           // Close the dialog and then show the dedicated Authorize.Net iframe overlay
           setOpen(false);
           setIsIframeLoading(true);
@@ -310,7 +314,7 @@ export function PayNow({
                   value={selectedGateway}
                   onChange={(e) =>
                     setSelectedGateway(
-                      e.target.value as "STRIPE" | "AUTHORIZE_NET"
+                      e.target.value as "STRIPE" | "AUTHORIZE_NET",
                     )
                   }
                   className="w-full rounded-lg border px-3 py-2 bg-white"
@@ -443,9 +447,7 @@ export function PayNow({
               method="post"
               target="authorize_net_payment_iframe"
               action={
-                process.env.AUTHORIZE_NET_ENVIRONMENT === "production"
-                  ? "https://accept.authorize.net/payment/payment"
-                  : "https://test.authorize.net/payment/payment"
+                authorizeNetUrl || "https://test.authorize.net/payment/payment"
               }
               style={{ display: "none" }}
             >
