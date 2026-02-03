@@ -30,6 +30,7 @@ const PUBLIC_API_ROUTES = [
   "/api/twilio/receive",
   "/api/twilio/token",
   "/api/invoice/track-view",
+  "/api/upload",
 ];
 
 const PUBLIC_DYNAMIC_API_ROUTES = [
@@ -39,7 +40,7 @@ const PUBLIC_DYNAMIC_API_ROUTES = [
 ];
 
 const isDynamicPublicApiRoute = (pathname: string) => {
-  const isPublic = PUBLIC_DYNAMIC_API_ROUTES.some(route => {
+  const isPublic = PUBLIC_DYNAMIC_API_ROUTES.some((route) => {
     const pattern = new URLPattern({ pathname: route });
     return pattern.test({ pathname: pathname });
   });

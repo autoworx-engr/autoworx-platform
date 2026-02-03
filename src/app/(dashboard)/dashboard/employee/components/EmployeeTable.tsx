@@ -14,6 +14,7 @@ import useEmployeeQuery from "../_hook/useEmployeeQuery";
 import DeleteEmployee from "../DeleteEmployee";
 import EditEmployee from "../EditEmployee";
 import { EmployeeTableSkeleton } from "./EmployeeTableSkeleton";
+import { useSession } from "next-auth/react";
 
 const defaultPageSize = 20;
 type UserWithSalaryHistory = (User & { salaryHistory: SalaryHistory[] })[];
@@ -30,7 +31,8 @@ const EmployeeTable = ({
   const { dateRange, search, type, setPaginate, currentPage, pageSize } =
     useEmployeeFilterStore();
   const [showPagination, setShowPagination] = useState(false);
-
+  const sessionUser = useSession();
+  const currentUser = sessionUser.data?.user;
   const { data, isLoading, isError } = useEmployeeQuery({
     currentPage,
     pageSize,
@@ -128,91 +130,107 @@ const EmployeeTable = ({
               </thead>
 
               <tbody>
-                {employees.map((employee: any, index: number) => (
-                  <tr
-                    key={index}
-                    className={cn(
-                      " duration-200 hover:bg-slate-50 dark:hover:bg-slate-800/50",
-                      index % 2 !== 0
-                        ? "bg-blue-50/80 dark:bg-slate-900"
-                        : "bg-white dark:bg-slate-900"
-                    )}
-                  >
-                    <td className="border-b px-4 py-2 text-left">
-                      <Link
-                        className="block h-full w-full text-blue-400"
-                        href={`/dashboard/employee/${employee.id}?view=details`}
-                      >
-                        {padId(employee.id)}
-                      </Link>
-                    </td>
-                    <td className="border-b px-4 py-2 text-left">
-                      <Link
-                        className="h-full w-full flex items-center gap-3 group "
-                        href={`/dashboard/employee/${employee.id}?view=details`}
-                      >
-                        <div className="w-6 h-6 rounded-full flex items-center justify-center text-[#6571FF]/80 ring-1 ring-indigo-100 dark:ring-indigo-900/30">
-                          <UserIcon size={16} />
-                        </div>
-                        <div>
-                          <div className="font-medium text-slate-500 dark:text-slate-200 transition-colors">
-                            {employee.firstName} {employee.lastName}
-                          </div>
-                        </div>
-                      </Link>
-                    </td>
-                    {needCompanyName && (
+                {employees.map((employee: any, index: number) => {
+                  const isAdmin = currentUser?.employeeType === "Admin";
+                  const isManager = currentUser?.employeeType === "Manager";
+                  const isSelf = currentUser?.id === employee.id;
+                  const isTargetAdmin = employee.employeeType === "Admin";
+                  // Edit permission logic
+                  const canEdit =
+                    isAdmin ||
+                    (isManager && !isTargetAdmin) ||
+                    isSelf;
+                  // Delete permission logic
+                  const canDelete =
+                    isAdmin ||
+                    (isManager && !isTargetAdmin && !isSelf);
+                  // Fix: must return the row
+                  return (
+                    <tr
+                      key={index}
+                      className={cn(
+                        " duration-200 hover:bg-slate-50 dark:hover:bg-slate-800/50",
+                        index % 2 !== 0
+                          ? "bg-blue-50/80 dark:bg-slate-900"
+                          : "bg-white dark:bg-slate-900"
+                      )}
+                    >
                       <td className="border-b px-4 py-2 text-left">
                         <Link
-                          className="block h-full w-full hover:underline hover:text-blue-500 text-slate-500 font-normal"
-                          href={`/awx-dashboard/statistics/${employee.id}`}
+                          className="block h-full w-full text-blue-400"
+                          href={`/dashboard/employee/${employee.id}?view=details`}
                         >
-                          {employee?.companyName}
+                          {padId(employee.id)}
                         </Link>
                       </td>
-                    )}
-                    <td className="border-b px-4 py-2 text-left">
-                      <Link
-                        className="block h-full w-full text-slate-500 font-normal"
-                        href={`/dashboard/employee/${employee.id}?view=details`}
-                      >
-                        {employee.email}
-                      </Link>
-                    </td>
-                    <td className="border-b px-4 py-2 text-left">
-                      <Link
-                        className="block h-full w-full text-slate-500 font-normal"
-                        href={`/dashboard/employee/${employee.id}?view=details`}
-                      >
-                        {employee.phone}
-                      </Link>
-                    </td>
-                    <td className="border-b px-4 py-2 text-left">
-                      <Link
-                        className="block h-full w-full text-slate-500 font-normal"
-                        href={`/dashboard/employee/${employee.id}?view=details`}
-                      >
-                        {employee.joinDate
-                          ? moment(employee.joinDate).format("MM/DD/YYYY")
-                          : "N/A"}
-                      </Link>
-                    </td>
-                    <td className="border-b px-4 py-2 text-center">
-                      <Link
-                        className="block h-full w-full text-slate-500 font-normal"
-                        href={`/dashboard/employee/${employee.id}?view=details`}
-                      >
-                        {employee.employeeType}
-                      </Link>
-                    </td>
-                    <td className="border-b border-l bg-background px-4 py-2 text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <EditEmployee employee={employee} />
-                        <DeleteEmployee employee={employee} />
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                      <td className="border-b px-4 py-2 text-left">
+                        <Link
+                          className="h-full w-full flex items-center gap-3 group "
+                          href={`/dashboard/employee/${employee.id}?view=details`}
+                        >
+                          <div className="w-6 h-6 rounded-full flex items-center justify-center text-[#6571FF]/80 ring-1 ring-indigo-100 dark:ring-indigo-900/30">
+                            <UserIcon size={16} />
+                          </div>
+                          <div>
+                            <div className="font-medium text-slate-500 dark:text-slate-200 transition-colors">
+                              {employee.firstName} {employee.lastName}
+                            </div>
+                          </div>
+                        </Link>
+                      </td>
+                      {needCompanyName && (
+                        <td className="border-b px-4 py-2 text-left">
+                          <Link
+                            className="block h-full w-full hover:underline hover:text-blue-500 text-slate-500 font-normal"
+                            href={`/awx-dashboard/statistics/${employee.id}`}
+                          >
+                            {employee?.companyName}
+                          </Link>
+                        </td>
+                      )}
+                      <td className="border-b px-4 py-2 text-left">
+                        <Link
+                          className="block h-full w-full text-slate-500 font-normal"
+                          href={`/dashboard/employee/${employee.id}?view=details`}
+                        >
+                          {employee.email}
+                        </Link>
+                      </td>
+                      <td className="border-b px-4 py-2 text-left">
+                        <Link
+                          className="block h-full w-full text-slate-500 font-normal"
+                          href={`/dashboard/employee/${employee.id}?view=details`}
+                        >
+                          {employee.phone}
+                        </Link>
+                      </td>
+                      <td className="border-b px-4 py-2 text-left">
+                        <Link
+                          className="block h-full w-full text-slate-500 font-normal"
+                          href={`/dashboard/employee/${employee.id}?view=details`}
+                        >
+                          {employee.joinDate
+                            ? moment(employee.joinDate).format("MM/DD/YYYY")
+                            : "N/A"}
+                        </Link>
+                      </td>
+                      <td className="border-b px-4 py-2 text-center">
+                        <Link
+                          className="block h-full w-full text-slate-500 font-normal"
+                          href={`/dashboard/employee/${employee.id}?view=details`}
+                        >
+                          {employee.employeeType}
+                        </Link>
+                      </td>
+                      <td className="border-b border-l bg-background px-4 py-2 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          {canEdit && <EditEmployee employee={employee} />}
+                          {canDelete && <DeleteEmployee employee={employee} />}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
