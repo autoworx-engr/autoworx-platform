@@ -1,14 +1,13 @@
+import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
+import { authOptions } from "@/authOptions";
 import { SyncLists } from "@/components/SyncLists";
 import Title from "@/components/Title";
-import React from "react";
+import { db } from "@/lib/db";
+import { estimateTemplateFetchAndTransformData } from "@/lib/estimateTemplateFetchAndTransformData";
+import { getServerSession } from "next-auth";
 import Header from "../Header";
 import NavigationTabs from "../NavigationTabs";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/authOptions";
-import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
-import { db } from "@/lib/db";
 import TemplateTable from "./TemplateTable";
-import { estimateTemplateFetchAndTransformData } from "@/lib/estimateTemplateFetchAndTransformData";
 
 async function TemplatesPage({
   searchParams,
@@ -57,7 +56,7 @@ async function TemplatesPage({
   ]);
 
   return (
-    <div>
+    <div className="p-2 md:p-0">
       <Title>Templates</Title>
 
       <SyncLists categories={categories} tags={tags} statuses={statuses} />

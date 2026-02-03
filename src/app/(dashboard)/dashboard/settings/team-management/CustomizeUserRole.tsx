@@ -13,7 +13,7 @@ import {
   savePermissions,
   getPermissionsForRole,
 } from "@/actions/settings/teamManagement";
-import { errorToast } from "@/lib/toast";
+import { errorToast, successToast } from "@/lib/toast";
 import { useTeamManagementStore } from "@/stores/teamManagementStore";
 import { ArrowLeft } from "lucide-react";
 
@@ -43,6 +43,20 @@ const CustomizeUserRole = ({ user, onBack }: CustomizeUserRolesProps) => {
 
   const [permissions, setPermissions] = useState<PermissionType>({});
   const [rolePermissions, setRolePermissions] = useState<any>(null);
+
+  const persistPermissions = async (
+    updatedPermissions: PermissionType,
+    previousPermissions: PermissionType
+  ) => {
+    try {
+      await savePermissions(user.id, updatedPermissions);
+      successToast("Permissions updated");
+    } catch (error) {
+      console.error("Failed to update permission:", error);
+      errorToast("Failed to update permissions. Please try again.");
+      setPermissions(previousPermissions);
+    }
+  };
 
   useEffect(() => {
     // Fetch default and user-specific permissions
@@ -78,45 +92,24 @@ const CustomizeUserRole = ({ user, onBack }: CustomizeUserRolesProps) => {
   };
 
   const handlePermissionChange = async (key: string, checked: boolean) => {
-    // Check if user is trying to enable a permission that's disabled at role level
-    // if (checked && !isPermissionAllowedForRole(key)) {
-    //   errorToast(
-    //     "Cannot enable this permission because it is disabled for this role in the User Roles table"
-    //   );
-    //   return;
-    // }
+    const previousPermissions = permissions;
+    const { id, ...prevWithoutId } = previousPermissions;
+    const updatedPermissions = { ...prevWithoutId, [key]: checked };
 
-    setPermissions((prev) => {
-      const { id, ...prevWithoutId } = prev;
-      const updatedPermissions = { ...prevWithoutId, [key]: checked };
-      // Upsert the entire permissions object
-      savePermissions(user.id, updatedPermissions).catch((error) => {
-        console.error("Failed to update permission:", error);
-      });
-      return updatedPermissions;
-    });
+    setPermissions(updatedPermissions);
+    await persistPermissions(updatedPermissions, previousPermissions);
   };
 
   const handleViewOnlyChange = async (
     viewOnlyKey: string,
     checked: boolean
   ) => {
-    // Check if user is trying to enable a view-only permission that's disabled at role level
-    // if (checked && !isPermissionAllowedForRole(viewOnlyKey)) {
-    //   errorToast(
-    //     "Cannot enable this permission because it is disabled for this role in the User Roles table"
-    //   );
-    //   return;
-    // }
+    const previousPermissions = permissions;
+    const { id, ...prevWithoutId } = previousPermissions;
+    const updatedPermissions = { ...prevWithoutId, [viewOnlyKey]: checked };
 
-    setPermissions((prev) => {
-      const updatedPermissions = { ...prev, [viewOnlyKey]: checked };
-      // Upsert the entire permissions object
-      savePermissions(user.id, updatedPermissions).catch((error) => {
-        console.error("Failed to update view-only permission:", error);
-      });
-      return updatedPermissions;
-    });
+    setPermissions(updatedPermissions);
+    await persistPermissions(updatedPermissions, previousPermissions);
   };
   const getUserType = () => {
     switch (user.employeeType) {
@@ -180,10 +173,10 @@ const CustomizeUserRole = ({ user, onBack }: CustomizeUserRolesProps) => {
               {/* Conditional header - logic preserved */}
               {(user.employeeType === "Sales" ||
                 user.employeeType === "Technician") && (
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider ">
-                  View Only Access
-                </th>
-              )}
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider ">
+                    View Only Access
+                  </th>
+                )}
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 bg-white">
@@ -211,22 +204,22 @@ const CustomizeUserRole = ({ user, onBack }: CustomizeUserRolesProps) => {
                 {/* View Only Checkbox Column */}
                 {(user.employeeType === "Sales" ||
                   user.employeeType === "Technician") && (
-                  <td className="px-4 py-3">
-                    {module.viewOnly && (
-                      <Tooltip title="View Only">
-                        <Checkbox
-                          checked={permissions[module.viewOnly] ?? false}
-                          onChange={(e) =>
-                            handleViewOnlyChange(
-                              module.viewOnly!,
-                              e.target.checked
-                            )
-                          }
-                        />
-                      </Tooltip>
-                    )}
-                  </td>
-                )}
+                    <td className="px-4 py-3">
+                      {module.viewOnly && (
+                        <Tooltip title="View Only">
+                          <Checkbox
+                            checked={permissions[module.viewOnly] ?? false}
+                            onChange={(e) =>
+                              handleViewOnlyChange(
+                                module.viewOnly!,
+                                e.target.checked
+                              )
+                            }
+                          />
+                        </Tooltip>
+                      )}
+                    </td>
+                  )}
               </tr>
             ))}
           </tbody>
