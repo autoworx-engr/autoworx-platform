@@ -16,6 +16,8 @@ import {
   User,
   Vehicle,
 } from "@prisma/client";
+import { Download } from "lucide-react";
+import { cn } from "@/lib/cn";
 
 type DownloadInvoiceProps = {
   id: string;
@@ -92,47 +94,49 @@ export default function DownloadInvoice({
           }
           fileName="invoice.pdf"
         >
-            {/* @ts-ignore */}
-            {({ loading, error }: any) => {
-              if (error) {
-                console.error("Error generating PDF:", error);
-                return (
-                  <span
-                    role="button"
-                    tabIndex={0}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleErrorRetry();
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        handleErrorRetry();
-                      }
-                    }}
-                    className="text-red-600 cursor-pointer"
-                  >
-                    Retry Download
-                  </span>
-                );
-              }
-
+          {/* @ts-ignore */}
+          {({ loading, error }: any) => {
+            if (error) {
+              console.error("Error generating PDF:", error);
               return (
                 <span
+                  role="button"
+                  tabIndex={0}
                   onClick={(e) => {
-                    if (loading) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleErrorRetry();
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
                       e.preventDefault();
-                      e.stopPropagation();
+                      handleErrorRetry();
                     }
                   }}
-                  className={loading ? "cursor-not-allowed" : "cursor-pointer"}
+                  className="text-red-600 cursor-pointer"
                 >
-                  {/* {loading ? "Download PDF..." : "Download PDF"} */}
-                  Download PDF
+                  Retry Download
                 </span>
               );
-            }}
+            }
+
+            return (
+              <span
+                onClick={(e) => {
+                  if (loading) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }
+                }}
+                className={cn(loading ? "cursor-not-allowed" : "cursor-pointer",
+                  "flex items-center gap-2"
+                )}
+              >
+                {/* {loading ? "Download PDF..." : "Download PDF"} */}
+                <Download className="h-5 w-5" strokeWidth={2} /> PDF
+              </span>
+            );
+          }}
         </PDFDownloadLink>
       )}
       {isClient && !isPdfReady && <span>Download PDF</span>}
