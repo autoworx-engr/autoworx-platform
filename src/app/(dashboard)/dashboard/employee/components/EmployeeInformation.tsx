@@ -1,7 +1,6 @@
 import Avatar from "@/components/Avatar";
 import { User } from "@prisma/client";
 import EditEmployee from "../EditEmployee";
-import { useSession } from "next-auth/react";
 import { EmployeeWorkInfo } from "./employeeWorkInfoType";
 import Payout from "./Payout";
 import PayoutSales from "./PayoutSales";
@@ -10,23 +9,21 @@ import { db } from "@/lib/db";
 import { Mail, MapPin, Phone } from "lucide-react";
 // import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 
-export default function EmployeeInformation({
+export default async function EmployeeInformation({
   employee,
   info,
 }: {
   employee: User;
   info: EmployeeWorkInfo;
 }) {
-  const sessionUser = useSession();
-  const currentUser = sessionUser.data?.user;
-  const isAdmin = currentUser?.employeeType === "Admin";
-  const isManager = currentUser?.employeeType === "Manager";
-  const isSelf = currentUser?.id && Number(currentUser.id) === employee.id;
-  const isTargetAdmin = employee.employeeType === "Admin";
-  const canEdit = isAdmin || (isManager && !isTargetAdmin) || isSelf;
+
   // const timezone = useCompanyTimezone();
+   const company = await db.company.findUnique({
+    where: { id: employee.companyId },
+    select: { timezone: true },
+  });
   // Remove db call for timezone, fallback only
-  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const timezone = company?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
   return (
     <div className="flex flex-col md:flex-row w-full gap-8">
       <div className="
@@ -66,7 +63,7 @@ export default function EmployeeInformation({
               <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Contact & Personal Details</h3>
               <p className="text-sm text-slate-500">Manage contact info and primary details.</p>
             </div>
-            {canEdit && <EditEmployee employee={employee} settingIcon />}
+             <EditEmployee employee={employee} settingIcon />
           </div>
 
           <div className="grid flex-1 grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
@@ -116,7 +113,7 @@ export default function EmployeeInformation({
       {/* --- MOBILE VIEW --- */}
       <div className="relative md:hidden">
         <div className="absolute right-2 top-2 z-10">
-          {canEdit && <EditEmployee employee={employee} settingIcon />}
+           <EditEmployee employee={employee} settingIcon />
         </div>
         <ResponsiveEmployeeCard data={employee} index={0} />
       </div>
