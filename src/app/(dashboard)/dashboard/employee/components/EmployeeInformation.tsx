@@ -1,43 +1,52 @@
 import Avatar from "@/components/Avatar";
 import { User } from "@prisma/client";
 import EditEmployee from "../EditEmployee";
-import { useSession } from "next-auth/react";
 import { EmployeeWorkInfo } from "./employeeWorkInfoType";
 import Payout from "./Payout";
 import PayoutSales from "./PayoutSales";
 import ResponsiveEmployeeCard from "@/components/mobile-responsive/employee/ResponsiveEmployeeCard";
 import { db } from "@/lib/db";
 import { Mail, MapPin, Phone } from "lucide-react";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/authOptions";
 // import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 
-export default function EmployeeInformation({
+export default async function EmployeeInformation({
   employee,
   info,
 }: {
   employee: User;
   info: EmployeeWorkInfo;
 }) {
-  const sessionUser = useSession();
-  const currentUser = sessionUser.data?.user;
+  const session = await getServerSession(authOptions);
+  const currentUser = session?.user;
+
   const isAdmin = currentUser?.employeeType === "Admin";
   const isManager = currentUser?.employeeType === "Manager";
   const isSelf = currentUser?.id && Number(currentUser.id) === employee.id;
   const isTargetAdmin = employee.employeeType === "Admin";
+
   const canEdit = isAdmin || (isManager && !isTargetAdmin) || isSelf;
+
   // const timezone = useCompanyTimezone();
-  // Remove db call for timezone, fallback only
-  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const company = await db.company.findUnique({
+    where: { id: employee.companyId },
+    select: { timezone: true },
+  });
+  const timezone =
+    company?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
   return (
     <div className="flex flex-col md:flex-row w-full gap-8">
-      <div className="
+      <div
+        className="
         hidden md:flex w-full flex-col 2xl:flex-row
         rounded-3xl 
         bg-white dark:bg-slate-900 
         shadow-[0_2px_24px_rgba(0,0,0,0.04)] dark:shadow-black/20
         ring-1 ring-slate-200 dark:ring-slate-800
         overflow-hidden
-      ">
-
+      "
+      >
         {/* Identity Column (Left) */}
         <div className="flex min-w-[300px] flex-col xl:flex-row 2xl:flex-col items-center justify-center xl:justify-start 2xl:justify-center xl:gap-6 border-r border-slate-100 bg-slate-50/50 p-8 pb-4 text-center dark:border-slate-800 dark:bg-slate-800/30">
           <div className="relative">
@@ -63,8 +72,12 @@ export default function EmployeeInformation({
         <div className="flex flex-1 flex-col p-6 sm:p-8">
           <div className="mb-6 flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
             <div>
-              <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Contact & Personal Details</h3>
-              <p className="text-sm text-slate-500">Manage contact info and primary details.</p>
+              <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">
+                Contact & Personal Details
+              </h3>
+              <p className="text-sm text-slate-500">
+                Manage contact info and primary details.
+              </p>
             </div>
             {canEdit && <EditEmployee employee={employee} settingIcon />}
           </div>
@@ -75,7 +88,10 @@ export default function EmployeeInformation({
               <label className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-slate-500">
                 <Mail size={16} /> Email Address
               </label>
-              <div className="truncate text-base ml-1 font-medium text-slate-600 dark:text-slate-300 group-hover:text-[#6571FF] transition-colors cursor-default" title={employee.email}>
+              <div
+                className="truncate text-base ml-1 font-medium text-slate-600 dark:text-slate-300 group-hover:text-[#6571FF] transition-colors cursor-default"
+                title={employee.email}
+              >
                 {employee.email}
               </div>
             </div>
@@ -130,7 +146,6 @@ export default function EmployeeInformation({
           <PayoutSales employee={employee} timezone={timezone} />
         )}
       </div>
-
     </div>
   );
 }
