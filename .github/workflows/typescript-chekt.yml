@@ -2,9 +2,9 @@ name: TypeScript Check
 
 on:
   pull_request:
-    branches: [main, development]
+    branches: [master, development]
   push:
-    branches: [main, development]
+    branches: [master, development]
 
 jobs:
   typescript-check:
