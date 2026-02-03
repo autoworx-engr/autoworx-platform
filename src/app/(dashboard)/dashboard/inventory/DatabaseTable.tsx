@@ -32,64 +32,59 @@ export default function DatabaseTable({
   };
 
   return (
-    <div className="min-h-[65vh] pb-2">
+    <div className="pb-2">
       {/* Desktop View */}
       <div
         // className="hidden overflow-hidden overflow-x-auto rounded-md bg-background md:block"
-
-        // className="hidden rounded-md bg-background md:block border border-slate-200 dark:border-slate-800 overflow-hidden"
-
-        className="hidden rounded-md bg-background md:block border border-slate-200 dark:border-slate-800 overflow-hidden"
+        className="hidden rounded-md border border-slate-200 bg-background md:block"
       >
-        <div className="overflow-x-auto">
-          <table
-            // className="w-full md:table-fixed"
-            className="w-full md:table-fixed border-spacing-0"
-          >
-            {/* Database Header */}
-            <thead className="sticky top-0  bg-background">
-              <tr className="h-10">
-                <th className="w-16 px-4 py-2 text-left">#</th>
-                <th className="px-4 py-2 text-left">Name</th>
-                <th className="px-4 py-2 text-left">Category</th>
-                <th className="px-4 py-2 text-left">Unit</th>
-                <th className="px-4 py-2 text-left"></th>
-              </tr>
-            </thead>
+        <table
+          // className="w-full md:table-fixed"
+          className="w-full border-separate border-spacing-0 md:table-fixed"
+        >
+          {/* Database Header */}
+          <thead className="sticky top-0  bg-background">
+            <tr className="h-10">
+              <th className="w-16 px-4 py-2 text-left">#</th>
+              <th className="px-4 py-2 text-left">Name</th>
+              <th className="px-4 py-2 text-left">Category</th>
+              <th className="px-4 py-2 text-left">Unit</th>
+              <th className="px-4 py-2 text-left"></th>
+            </tr>
+          </thead>
 
-            {/* Database List */}
-            <tbody className="w-full">
-              {data.map((item, index) => (
-                <tr
-                  key={item.id}
-                  className={cn("py-3", index % 2 === 0 ? evenColor : oddColor)}
-                >
-                  <td className="w-16 px-4 py-2 text-left">
-                    <p className="block h-full">{item.id}</p>
-                  </td>
-                  <td className="px-4 py-2 text-left">
-                    <p className="block h-full w-full truncate">
-                      {item.productName}
-                    </p>
-                  </td>
-                  <td className="px-4 py-2 text-left">
-                    <p className="block h-full w-full truncate">
-                      {item.category}
-                    </p>
-                  </td>
-                  <td className="px-4 py-2 text-left">
-                    <p className="block h-full w-full">{item.unit}</p>
-                  </td>
-                  <td className="px-4 py-2 text-center">
-                    <p className="block h-full w-fit">
-                      <AddNewProduct product={item} isDatabase={true} />
-                    </p>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+          {/* Database List */}
+          <tbody className="w-full">
+            {data.map((item, index) => (
+              <tr
+                key={item.id}
+                className={cn("py-3", index % 2 === 0 ? evenColor : oddColor)}
+              >
+                <td className="w-16 px-4 py-2 text-left">
+                  <p className="block h-full">{item.id}</p>
+                </td>
+                <td className="px-4 py-2 text-left">
+                  <p className="block h-full w-full truncate">
+                    {item.productName}
+                  </p>
+                </td>
+                <td className="px-4 py-2 text-left">
+                  <p className="block h-full w-full truncate">
+                    {item.category}
+                  </p>
+                </td>
+                <td className="px-4 py-2 text-left">
+                  <p className="block h-full w-full">{item.unit}</p>
+                </td>
+                <td className="px-4 py-2 text-center">
+                  <p className="block h-full w-fit">
+                    <AddNewProduct product={item} isDatabase={true} />
+                  </p>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
       {/* Mobile View - Card Layout */}
