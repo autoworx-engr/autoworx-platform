@@ -16,6 +16,12 @@ import { NextRequest } from "next/server";
  *         required: true
  *         schema:
  *           type: string
+ *       - in: query
+ *         name: companyId
+ *         required: true
+ *         schema:
+ *           type: number
+ *         example: 1
  *     responses:
  *       200:
  *         description: Audio file (mp3)
@@ -24,14 +30,21 @@ import { NextRequest } from "next/server";
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { recordingSid: string } }
+  { params }: { params: { recordingSid: string; companyId?: number } },
 ) {
+  const { searchParams } = req.nextUrl;
+
   const recordingSid = params.recordingSid;
+  let companyId = Number(searchParams.get("companyId"));
+
+  if (companyId) {
+    companyId = await getCompanyId();
+  }
+
   if (!recordingSid) {
     return new Response("Missing recording SID", { status: 400 });
   }
 
-  const companyId = await getCompanyId();
   const twilioCredentials = await db.twilioCredentials.findFirst({
     where: { companyId },
   });
