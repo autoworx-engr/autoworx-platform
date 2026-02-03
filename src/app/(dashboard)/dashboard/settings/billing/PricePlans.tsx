@@ -51,6 +51,10 @@ export function PricePlans({
             <p className="text-slate-500 text-sm">
               Unlock advanced automation and professional management tools.
             </p>
+            <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold px-3 py-1">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              1‑month free trial on all plans
+            </p>
           </div>
           <button
             onClick={setClose}
@@ -105,6 +109,9 @@ export function PricePlans({
                           /mo
                         </span>
                       </div>
+                      <p className="mt-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                        1‑month free trial included
+                      </p>
                     </div>
 
                     <button

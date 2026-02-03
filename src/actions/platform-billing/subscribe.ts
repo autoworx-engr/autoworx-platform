@@ -6,7 +6,6 @@ import {
   createPlatformCustomerProfile,
   createPlatformPaymentProfile,
   cancelPlatformARBSubscription,
-  chargePlatformCustomerProfile,
   getCustomerProfile,
 } from "@/lib/platform-billing/authorize-net";
 import { PlatformSubscriptionStatus } from "@prisma/client";
@@ -159,9 +158,14 @@ export async function subscribeToPlatformPlan({
       }
     }
 
-    // 2. Create ARB Subscription (Starting 1 month from now)
-    const arbStartDate = new Date();
-    arbStartDate.setMonth(arbStartDate.getMonth() + 1);
+    // 2. Create ARB Subscription (Starting after 1-month free trial)
+    const trialDays =
+      plan.trialLengthDays && plan.trialLengthDays > 0
+        ? plan.trialLengthDays
+        : 30;
+    const trialStart = new Date();
+    const arbStartDate = new Date(trialStart);
+    arbStartDate.setDate(arbStartDate.getDate() + trialDays);
 
     const arb = await createPlatformARBSubscription({
       customerProfileId,
@@ -172,23 +176,7 @@ export async function subscribeToPlatformPlan({
       planName: plan.name,
     });
 
-    // 3. Immediate First Month Charge (after ARB creation)
-    let charge: { transactionId: string };
-    try {
-      charge = await chargePlatformCustomerProfile({
-        customerProfileId,
-        customerPaymentProfileId,
-        amount: Number(plan.price),
-        description: `Immediate first month charge for ${plan.name}`,
-      });
-    } catch (err) {
-      try {
-        await cancelPlatformARBSubscription(arb.subscriptionId);
-      } catch (cancelErr) {
-        console.error("Failed to cancel ARB after charge failure:", cancelErr);
-      }
-      throw err;
-    }
+    // 3. No immediate charge. Trial lasts until arbStartDate.
 
     // 3. Update DB
     if (!billingCustomer) throw new Error("Billing customer record not found");
@@ -198,40 +186,23 @@ export async function subscribeToPlatformPlan({
       update: {
         planId: plan.id,
         authNetSubscriptionId: arb.subscriptionId,
-        status: PlatformSubscriptionStatus.ACTIVE,
+        status: PlatformSubscriptionStatus.TRIALING,
+        currentPeriodStart: trialStart,
         currentPeriodEnd: arbStartDate,
+        billingAnchor: arbStartDate,
       },
       create: {
         companyId,
         billingCustomerId: billingCustomer.id,
         planId: plan.id,
         authNetSubscriptionId: arb.subscriptionId,
-        status: PlatformSubscriptionStatus.ACTIVE,
+        status: PlatformSubscriptionStatus.TRIALING,
+        currentPeriodStart: trialStart,
         currentPeriodEnd: arbStartDate,
+        billingAnchor: arbStartDate,
       },
     });
-
-    // 4. Create local invoice and payment record for the immediate charge
-    const invoice = await db.platformInvoice.create({
-      data: {
-        billingCustomerId: billingCustomer.id,
-        subscriptionId: subscription.id,
-        amount: plan.price,
-        status: "PAID",
-        authNetTransId: charge.transactionId,
-      },
-    });
-
-    await db.platformPayment.create({
-      data: {
-        platformInvoiceId: invoice.id,
-        amount: plan.price,
-        status: "SUCCESS",
-        authNetTransId: charge.transactionId,
-      },
-    });
-
-    // 5. Create initial subscription item
+    // 4. Create initial subscription item
     await db.platformSubscriptionItem.create({
       data: {
         subscriptionId: subscription.id,
