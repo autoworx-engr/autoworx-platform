@@ -219,6 +219,12 @@ export async function POST(request: NextRequest) {
         clientName: newLead.clientName,
       });
 
+      // send a notification for new lead added
+      await sendNewLeadNotification({
+        companyId: company.id,
+        leadClientName: newLead.clientName,
+      });
+
       return Response.json(
         {
           id: newLead.id,
@@ -229,7 +235,7 @@ export async function POST(request: NextRequest) {
           opportunity_source: opportunity,
           countryCode: countryCode,
         },
-        { status: 201 }
+        { status: 201 },
       );
     }
 
@@ -240,7 +246,7 @@ export async function POST(request: NextRequest) {
         clientName,
         vehicleInfo,
         services,
-        source
+        source,
       );
       return Response.json({ error: "Invalid input" }, { status: 400 });
     }
@@ -260,7 +266,7 @@ export async function POST(request: NextRequest) {
     if (!newLeadsColumn) {
       return new Response(
         JSON.stringify({ error: "New Leads column not found" }),
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -420,14 +426,14 @@ export async function POST(request: NextRequest) {
         opportunity_source: opportunity,
         countryCode: countryCode,
       },
-      { status: 201 }
+      { status: 201 },
     );
     // Add CORS headers
     response.headers.set("Access-Control-Allow-Origin", "*");
     response.headers.set("Access-Control-Allow-Methods", "POST, OPTIONS");
     response.headers.set(
       "Access-Control-Allow-Headers",
-      "Content-Type, X-TOKEN"
+      "Content-Type, X-TOKEN",
     );
 
     return response;
@@ -435,7 +441,7 @@ export async function POST(request: NextRequest) {
     // check if this is json parse error
     const errorResponse = Response.json(
       { error: error.message },
-      { status: 500 }
+      { status: 500 },
     );
     errorResponse.headers.set("Access-Control-Allow-Origin", "*");
     return errorResponse;

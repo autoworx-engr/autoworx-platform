@@ -1,3 +1,4 @@
+import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
 import { authOptions } from "@/authOptions";
 import { SyncLists } from "@/components/SyncLists";
 import Title from "@/components/Title";
@@ -8,7 +9,6 @@ import { getServerSession } from "next-auth";
 import Header from "../Header";
 import NavigationTabs from "../NavigationTabs";
 import Table from "../Table";
-import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
 
 export default async function InvoicesPage({
   searchParams,
@@ -40,7 +40,7 @@ export default async function InvoicesPage({
   const statuses = await db.column.findMany({ where: { companyId } });
 
   return (
-    <div>
+    <div className="p-2 md:p-0">
       <Title>Invoices</Title>
 
       <SyncLists categories={categories} tags={tags} statuses={statuses} />

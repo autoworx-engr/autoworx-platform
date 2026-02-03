@@ -25,6 +25,7 @@ export function InspectionItems({
     const fetchInspectionData = async () => {
       try {
         const response = await getInspections(invoiceId);
+        console.log("inspection response", response);
         const filtered = response.filter(
           (r) => r.title && r.title.trim() !== "" && (r.driver || r.passenger)
         );
