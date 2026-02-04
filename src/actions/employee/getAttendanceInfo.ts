@@ -44,7 +44,7 @@ interface AttendanceInfo {
 export async function getAttendanceInfo(
   id: number,
   startDateParam?: string,
-  endDateParam?: string
+  endDateParam?: string,
 ): Promise<AttendanceInfo> {
   // Fetch company information
   const company = await getCompany();
@@ -86,18 +86,12 @@ export async function getAttendanceInfo(
 
   // Get the company timezone for consistent date processing
   const companyTimezone = company?.timezone || "UTC";
-  const now = moment.tz(companyTimezone); // Current date and time in company timezone
+  const now = moment(); // Current date and time in company timezone
   const standardWorkingHours = 8; // Standard working hours per day
 
-  const startDate = moment
-    .tz(startDateParam, companyTimezone)
-    .startOf("day")
-    .toDate();
+  const startDate = moment(startDateParam).startOf("day").toDate();
 
-  const endDate = moment
-    .tz(endDateParam, companyTimezone)
-    .endOf("day")
-    .toDate();
+  const endDate = moment(endDateParam).endOf("day").toDate();
 
   const holidays = await db.holiday.findMany({
     where: {
@@ -112,7 +106,7 @@ export async function getAttendanceInfo(
   // Helper function to get attendance info for a given date range
   const getAttendanceInfoForRange = (
     startDate: Moment,
-    endDate: Moment
+    endDate: Moment,
   ): AttendanceRecord[] => {
     const records: AttendanceRecord[] = [];
 
@@ -130,20 +124,16 @@ export async function getAttendanceInfo(
 
     // ---------- APPROVED LEAVES ----------
     const approvedLeaves = user.LeaveRequest.filter(
-      (leave) => leave.status === "Approved"
+      (leave) => leave.status === "Approved",
     );
 
     // ---------- HOLIDAYS ----------
-    const startRange = moment
-      .tz(companyTimezone)
-      .subtract(1, "month")
-      .startOf("month")
-      .toDate();
+    const startRange = moment().subtract(1, "month").startOf("month").toDate();
 
-    const endRange = moment.tz(companyTimezone).endOf("month").toDate();
+    const endRange = moment().endOf("month").toDate();
 
     const holidayMap = new Set(
-      holidays.map((h) => moment(h.date).format("YYYY-MM-DD"))
+      holidays.map((h) => moment(h.date).format("YYYY-MM-DD")),
     );
 
     for (
@@ -187,8 +177,8 @@ export async function getAttendanceInfo(
           moment(leave.startDate),
           moment(leave.endDate),
           "day",
-          "[]"
-        )
+          "[]",
+        ),
       );
 
       if (onLeave) {
@@ -215,8 +205,15 @@ export async function getAttendanceInfo(
             : "0";
 
         records.push({
+          // id: clock.id,
+          // date: new Date(dayKey),
+          // clockedIn: clock.clockIn,
+          // clockedOut: clock.clockOut ?? "N/A",
+          // hours: workedHours,
+          // extraHours,
+          // totalBreaks: (breakMinutes / 60).toFixed(2),
           id: clock.id,
-          date: new Date(dayKey),
+          date: date.clone().startOf("day").toDate(), // ✅ keeps same day in system timezone
           clockedIn: clock.clockIn,
           clockedOut: clock.clockOut ?? "N/A",
           hours: workedHours,
@@ -234,7 +231,7 @@ export async function getAttendanceInfo(
   // Helper function to create an attendance record
   const createAttendanceRecord = (
     date: Moment,
-    status: string
+    status: string,
   ): AttendanceRecord => ({
     date: new Date(date.format("YYYY-MM-DD")),
     clockedIn: status,
@@ -245,54 +242,50 @@ export async function getAttendanceInfo(
   });
 
   // Use provided dates if available, otherwise use default (current week)
-  let startOfWeek: Moment;
-  let endOfWeek: Moment;
+  let startOfWeek: Moment = moment().startOf("week");
+  let endOfWeek: Moment = moment().endOf("week");
 
   if (startDateParam && endDateParam) {
-    // Parse dates in the company timezone to avoid date shifts
-    startOfWeek = moment.tz(startDateParam, companyTimezone);
-    endOfWeek = moment.tz(endDateParam, companyTimezone);
+    startOfWeek = moment(startDateParam).startOf("day"); // Moment, time = 00:00
+    endOfWeek = moment(endDateParam).startOf("day");
+
+    const startDate = startOfWeek;
+    const endDate = endOfWeek;
   } else {
     // Use current week in company timezone
-    startOfWeek = moment.tz(companyTimezone).startOf("week");
-    endOfWeek = moment.tz(companyTimezone).endOf("week");
+    startOfWeek = moment().startOf("week");
+    endOfWeek = moment().endOf("week");
   }
 
   const attInfo = await getAttendanceInfoForRange(startOfWeek, endOfWeek);
 
   // Get current monthly attendance information using company timezone
-  const startOfMonth = moment.tz(companyTimezone).startOf("month");
-  const endOfMonth = moment.tz(companyTimezone).endOf("month");
+  const startOfMonth = moment().startOf("month");
+  const endOfMonth = moment().endOf("month");
   const attInfoMonth = await getAttendanceInfoForRange(
     startOfMonth,
-    endOfMonth
+    endOfMonth,
   );
 
   // Get previous monthly attendance information using company timezone
-  const startOfPrevMonth = moment
-    .tz(companyTimezone)
-    .subtract(1, "month")
-    .startOf("month");
-  const endOfPrevMonth = moment
-    .tz(companyTimezone)
-    .subtract(1, "month")
-    .endOf("month");
+  const startOfPrevMonth = moment().subtract(1, "month").startOf("month");
+  const endOfPrevMonth = moment().subtract(1, "month").endOf("month");
   const attInfoPrevMonth = await getAttendanceInfoForRange(
     startOfPrevMonth,
-    endOfPrevMonth
+    endOfPrevMonth,
   );
 
   // Calculate the number of days absent after the user's join date
   const absentDays = attInfoMonth.filter(
     (day) =>
       day.clockedIn === "ABSENT" &&
-      moment(day.date).isSameOrAfter(moment(user.joinDate), "day")
+      moment(day.date).isSameOrAfter(moment(user.joinDate), "day"),
   ).length;
 
   const previousAbsentDays = attInfoPrevMonth.filter(
     (day) =>
       day.clockedIn === "ABSENT" &&
-      moment(day.date).isSameOrAfter(moment(user.joinDate), "day")
+      moment(day.date).isSameOrAfter(moment(user.joinDate), "day"),
   ).length;
 
   // Calculate the total extra hours for the month
@@ -302,7 +295,7 @@ export async function getAttendanceInfo(
         day.extraHours !== "ABSENT" &&
         day.extraHours !== "WEEKEND" &&
         day.extraHours !== "LEAVE" &&
-        day.extraHours !== "-"
+        day.extraHours !== "-",
     )
     .reduce((total, day) => total + parseFloat(day.extraHours), 0)
     .toFixed(2);
@@ -312,7 +305,7 @@ export async function getAttendanceInfo(
         day.extraHours !== "ABSENT" &&
         day.extraHours !== "WEEKEND" &&
         day.extraHours !== "LEAVE" &&
-        day.extraHours !== "-"
+        day.extraHours !== "-",
     )
     .reduce((total, day) => total + parseFloat(day.extraHours), 0)
     .toFixed(2);
@@ -324,7 +317,7 @@ export async function getAttendanceInfo(
         day.hours !== "ABSENT" &&
         day.hours !== "WEEKEND" &&
         day.hours !== "LEAVE" &&
-        day.hours !== "-"
+        day.hours !== "-",
     )
     .reduce((total, day) => {
       const effectiveHours =
@@ -338,7 +331,7 @@ export async function getAttendanceInfo(
         day.hours !== "ABSENT" &&
         day.hours !== "WEEKEND" &&
         day.hours !== "LEAVE" &&
-        day.hours !== "-"
+        day.hours !== "-",
     )
     .reduce((total, day) => {
       const effectiveHours =
@@ -353,20 +346,20 @@ export async function getAttendanceInfo(
       day.hours !== "ABSENT" &&
       day.hours !== "WEEKEND" &&
       day.hours !== "LEAVE" &&
-      day.hours !== "-"
+      day.hours !== "-",
   ).length;
   const previousTotalDaysWorked = attInfoPrevMonth.filter(
     (day) =>
       day.hours !== "ABSENT" &&
       day.hours !== "WEEKEND" &&
       day.hours !== "LEAVE" &&
-      day.hours !== "-"
+      day.hours !== "-",
   ).length;
 
   // Calculate growth rates
   const calculateGrowthRate = (
     current: number,
-    previous: number
+    previous: number,
   ): GrowthRate => {
     if (previous === 0) return { rate: "N/A", isPositive: null };
     const growth = ((current - previous) / previous) * 100;
@@ -379,19 +372,19 @@ export async function getAttendanceInfo(
   // Update the growth rate calculations
   const growthRateAbsentDays = calculateGrowthRate(
     absentDays,
-    previousAbsentDays
+    previousAbsentDays,
   );
   const growthRateTotalExtraHours = calculateGrowthRate(
     parseFloat(totalExtraHours),
-    parseFloat(previousTotalExtraHours)
+    parseFloat(previousTotalExtraHours),
   );
   const growthRateTotalHoursWorked = calculateGrowthRate(
     parseFloat(totalHoursWorked),
-    parseFloat(previousTotalHoursWorked)
+    parseFloat(previousTotalHoursWorked),
   );
   const growthRateTotalDaysWorked = calculateGrowthRate(
     totalDaysWorked,
-    previousTotalDaysWorked
+    previousTotalDaysWorked,
   );
 
   // Calculate total tardiness for the current month
@@ -433,7 +426,7 @@ export async function getAttendanceInfo(
   // Calculate growth rate for tardiness
   const growthRateTotalTardiness = calculateGrowthRate(
     parseFloat(totalTardiness),
-    parseFloat(previousTotalTardiness)
+    parseFloat(previousTotalTardiness),
   );
 
   // Calculate total hours absent for the current month
@@ -464,7 +457,7 @@ export async function getAttendanceInfo(
   // Calculate growth rate for "No Show" rate
   const growthRateNoShowRate = calculateGrowthRate(
     parseFloat(noShowRate),
-    parseFloat(previousNoShowRate)
+    parseFloat(previousNoShowRate),
   );
 
   return {

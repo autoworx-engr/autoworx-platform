@@ -100,7 +100,7 @@ const Dashboard = () => {
     employeeId,
     startDate || undefined,
     endDate || undefined,
-    refetch
+    refetch,
   );
 
   const getInfoContent = (label: string): string | undefined => {
@@ -110,7 +110,7 @@ const Dashboard = () => {
 
   const handleEditClick = (
     rowIndex: number,
-    field: "clockedIn" | "clockedOut"
+    field: "clockedIn" | "clockedOut",
   ) => {
     const data = attendanceInfo?.attInfo[rowIndex];
     if (!data || !isEditable(data, field)) return;
@@ -158,7 +158,7 @@ const Dashboard = () => {
         date,
         editingState.field,
         timeWithDate,
-        data.id
+        data.id,
       );
 
       if (result.success) {
@@ -198,7 +198,7 @@ const Dashboard = () => {
 
   const isEditable = (
     data: AttendanceData | AttendanceRecord,
-    field: "clockedIn" | "clockedOut"
+    field: "clockedIn" | "clockedOut",
   ) => {
     // Check if the field exists and is not a string (like "Absent", "No Show", etc.)
     return (
@@ -209,7 +209,7 @@ const Dashboard = () => {
   const renderTimeCell = (
     data: AttendanceData | AttendanceRecord,
     field: "clockedIn" | "clockedOut",
-    rowIndex: number
+    rowIndex: number,
   ) => {
     const isCurrentlyEditing =
       editingState?.rowIndex === rowIndex && editingState?.field === field;
@@ -355,9 +355,12 @@ const Dashboard = () => {
               // When user selects dates from DateRangePicker, they're in local browser time
               // We need to ensure these dates are interpreted correctly by the server
               // Format as YYYY-MM-DD which will be interpreted by the server in company timezone
-              const formattedStartDate =
-                moment(startDateObj).format("YYYY-MM-DD");
-              const formattedEndDate = moment(endDateObj).format("YYYY-MM-DD");
+              const formattedStartDate = moment
+                .utc(startDateObj)
+                .format("YYYY-MM-DD");
+              const formattedEndDate = moment
+                .utc(endDateObj)
+                .format("YYYY-MM-DD");
 
               // Update state with the new dates
               setStartDate(formattedStartDate);
@@ -413,20 +416,33 @@ const Dashboard = () => {
                           if (typeof data.date === "string") {
                             dateMoment = moment.tz(`${data.date}`, timezone);
                           } else {
-                            // FIX: Parse as-is without shifting time
                             dateMoment = moment(data.date).tz(timezone, true);
                           }
 
-                          const dayOfWeek = dateMoment.day();
+                          // UTC ↔ company offset in hours
+                          const utcMoment = moment.utc(data.date);
+                          const offsetHours =
+                            (dateMoment.utcOffset() - utcMoment.utcOffset()) /
+                            60;
+
+                          // Apply reverse shift
+                          const adjustedMoment = dateMoment
+                            .clone()
+                            .add(-offsetHours, "hours");
+
+                          const dayOfWeek = adjustedMoment.day();
                           const dayAbbr = daysOfWeek[dayOfWeek];
-                          const dayDate = dateMoment.date();
+                          const dayDate = adjustedMoment.date();
+
+                          console.log("Original:", dateMoment.format());
+                          console.log("Adjusted:", adjustedMoment.format());
+                          console.log("dayDate:", dayDate, "dayAbbr:", dayAbbr);
 
                           const effectiveHours = isNaN(Number(data.hours))
                             ? data.hours
                             : convertDuration(
-                                Number(data.hours) - Number(data.totalBreaks)
+                                Number(data.hours) - Number(data.totalBreaks),
                               );
-
                           return (
                             <tr
                               key={index}
