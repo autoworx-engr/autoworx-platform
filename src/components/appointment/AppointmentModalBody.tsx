@@ -840,8 +840,8 @@ export default function AppointmentModalBody({
         </div>
       </DialogHeader>
 
-      <div className="-mx-6 grid gap-px overflow-y-hidden border-solid sm:grid-cols-2 md:border-y md:bg-border">
-        <div className="h-full overflow-y-auto thin-scrollbar">
+      <div className="-mx-6 h-full grid gap-px overflow-y-scroll border-solid sm:grid-cols-2 md:border-y md:bg-border">
+        <div className="h-full sm:h-full overflow-y-auto thin-scrollbar">
           <div className="space-y-4 bg-background p-6 pb-20">
             <FormError />
 
@@ -1155,9 +1155,50 @@ export default function AppointmentModalBody({
               </span>
             </div>
           </div>
+
+          <div className="relative sm:hidden row-span-2 h-full overflow-y-auto thin-scrollbar divide-y bg-background">
+            {tab === Tab.Schedule ? (
+              <div
+                ref={containerRef}
+                className="absolute inset-0 divide-y overflow-y-auto"
+              >
+                <ScheduleTab
+                  rows={rows}
+                  date={date}
+                  startTime={startTime || ""}
+                  endTime={endTime}
+                  settings={settings}
+                  onDateUpDown={(direction: "+" | "-") => handleDate(direction)}
+                />
+              </div>
+            ) : tab === Tab.Reminder ? (
+              <>
+                <Reminder
+                  client={client}
+                  vehicle={vehicle}
+                  startTime={startTime!}
+                  date={date!}
+                  times={times}
+                  setTimes={setTimes}
+                  confirmationTemplate={confirmationTemplate}
+                  setConfirmationTemplate={setConfirmationTemplate}
+                  reminderTemplate={reminderTemplate}
+                  setReminderTemplate={setReminderTemplate}
+                  confirmationTemplateStatus={confirmationTemplateStatus}
+                  setConfirmationTemplateStatus={setConfirmationTemplateStatus}
+                  reminderTemplateStatus={reminderTemplateStatus}
+                  setReminderTemplateStatus={setReminderTemplateStatus}
+                  openConfirmation={openConfirmation}
+                  openReminder={openReminder}
+                  setOpenReminder={setOpenReminder}
+                  setOpenConfirmation={setOpenConfirmation}
+                />
+              </>
+            ) : null}
+          </div>
         </div>
 
-        <div className="relative row-span-2 h-full overflow-y-auto thin-scrollbar divide-y bg-background">
+        <div className="hidden sm:block relative row-span-2 h-full overflow-y-auto thin-scrollbar divide-y bg-background">
           {tab === Tab.Schedule ? (
             <div
               ref={containerRef}
