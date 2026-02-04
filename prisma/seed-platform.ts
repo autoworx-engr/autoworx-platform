@@ -1,4 +1,8 @@
-import { PrismaClient, PlatformFeatureType, PlatformPlanInterval } from "@prisma/client";
+import {
+  PrismaClient,
+  PlatformFeatureType,
+  PlatformPlanInterval,
+} from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -14,8 +18,19 @@ async function main() {
       features: [
         { key: "can_use_sms", value: "true", type: "BOOLEAN" },
         { key: "can_use_voice", value: "false", type: "BOOLEAN" },
-        { key: "max_automation_rules", value: "3", type: "NUMERIC" },
-        { key: "automation_modules", value: "pipeline,calendar", type: "TEXT" },
+        { key: "max_automation_rules", value: "1", type: "NUMERIC" },
+        {
+          key: "automation_modules",
+          value: "pipeline,calendar,communication,invoice,inventory,tag",
+          type: "TEXT",
+        },
+        { key: "automation_limit_pipeline", value: "3", type: "NUMERIC" },
+        { key: "automation_limit_communication", value: "1", type: "NUMERIC" },
+        { key: "automation_limit_invoice", value: "1", type: "NUMERIC" },
+        { key: "automation_limit_inventory", value: "1", type: "NUMERIC" },
+        { key: "automation_limit_tag", value: "1", type: "NUMERIC" },
+        { key: "automation_limit_service", value: "0", type: "NUMERIC" },
+        { key: "automation_limit_marketing", value: "0", type: "NUMERIC" },
         { key: "website_included", value: "false", type: "BOOLEAN" },
       ],
     },
@@ -29,8 +44,19 @@ async function main() {
         { key: "can_use_voice", value: "true", type: "BOOLEAN" },
         { key: "call_recording", value: "true", type: "BOOLEAN" },
         { key: "missed_call_text_back", value: "true", type: "BOOLEAN" },
-        { key: "max_automation_rules", value: "3", type: "NUMERIC" },
-        { key: "automation_modules", value: "pipeline,calendar,tag,invoice,inventory", type: "TEXT" },
+        { key: "max_automation_rules", value: "1", type: "NUMERIC" },
+        {
+          key: "automation_modules",
+          value: "pipeline,calendar,communication,invoice,inventory,tag",
+          type: "TEXT",
+        },
+        { key: "automation_limit_pipeline", value: "3", type: "NUMERIC" },
+        { key: "automation_limit_communication", value: "1", type: "NUMERIC" },
+        { key: "automation_limit_invoice", value: "1", type: "NUMERIC" },
+        { key: "automation_limit_inventory", value: "1", type: "NUMERIC" },
+        { key: "automation_limit_tag", value: "1", type: "NUMERIC" },
+        { key: "automation_limit_service", value: "0", type: "NUMERIC" },
+        { key: "automation_limit_marketing", value: "0", type: "NUMERIC" },
         { key: "website_included", value: "false", type: "BOOLEAN" },
       ],
     },
@@ -48,7 +74,19 @@ async function main() {
         { key: "car_wrap_visualizer", value: "true", type: "BOOLEAN" },
         { key: "ai_smart_replies", value: "true", type: "BOOLEAN" },
         { key: "max_automation_rules", value: "3", type: "NUMERIC" },
-        { key: "automation_modules", value: "pipeline,calendar,communication,invoice,inventory,tag,service", type: "TEXT" },
+        {
+          key: "automation_modules",
+          value:
+            "pipeline,calendar,communication,invoice,inventory,tag,service",
+          type: "TEXT",
+        },
+        { key: "automation_limit_pipeline", value: "3", type: "NUMERIC" },
+        { key: "automation_limit_communication", value: "3", type: "NUMERIC" },
+        { key: "automation_limit_invoice", value: "3", type: "NUMERIC" },
+        { key: "automation_limit_inventory", value: "3", type: "NUMERIC" },
+        { key: "automation_limit_tag", value: "3", type: "NUMERIC" },
+        { key: "automation_limit_service", value: "3", type: "NUMERIC" },
+        { key: "automation_limit_marketing", value: "0", type: "NUMERIC" },
       ],
     },
     {
@@ -63,8 +101,20 @@ async function main() {
         { key: "website_included", value: "true", type: "BOOLEAN" },
         { key: "car_wrap_visualizer", value: "true", type: "BOOLEAN" },
         { key: "awx_sales_agent", value: "true", type: "BOOLEAN" },
-        { key: "max_automation_rules", value: "-1", type: "NUMERIC" }, // -1 for unlimited
-        { key: "automation_modules", value: "pipeline,marketing,calendar,communication,invoice,inventory,tag", type: "TEXT" },
+        { key: "max_automation_rules", value: "-1", type: "NUMERIC" },
+        {
+          key: "automation_modules",
+          value:
+            "pipeline,marketing,calendar,communication,invoice,inventory,tag,service",
+          type: "TEXT",
+        },
+        { key: "automation_limit_pipeline", value: "-1", type: "NUMERIC" },
+        { key: "automation_limit_communication", value: "-1", type: "NUMERIC" },
+        { key: "automation_limit_invoice", value: "-1", type: "NUMERIC" },
+        { key: "automation_limit_inventory", value: "-1", type: "NUMERIC" },
+        { key: "automation_limit_tag", value: "-1", type: "NUMERIC" },
+        { key: "automation_limit_service", value: "-1", type: "NUMERIC" },
+        { key: "automation_limit_marketing", value: "-1", type: "NUMERIC" },
       ],
     },
   ];

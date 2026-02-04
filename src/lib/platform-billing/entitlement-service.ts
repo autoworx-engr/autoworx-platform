@@ -1,3 +1,5 @@
+"use server";
+
 import { db } from "@/lib/db";
 import {
   PlatformFeatureType,
@@ -15,6 +17,13 @@ export type Entitlements = {
   missedCallTextBack: boolean;
   maxAutomationRules: number;
   automationModules: string[];
+  automationLimitPipeline: number;
+  automationLimitCommunication: number;
+  automationLimitInvoice: number;
+  automationLimitInventory: number;
+  automationLimitTag: number;
+  automationLimitService: number;
+  automationLimitMarketing: number;
   websiteIncluded: boolean;
   carWrapVisualizer: boolean;
   aiSmartReplies: boolean;
@@ -28,6 +37,13 @@ const DEFAULT_ENTITLEMENTS: Entitlements = {
   missedCallTextBack: false,
   maxAutomationRules: 0,
   automationModules: [],
+  automationLimitPipeline: 0,
+  automationLimitCommunication: 0,
+  automationLimitInvoice: 0,
+  automationLimitInventory: 0,
+  automationLimitTag: 0,
+  automationLimitService: 0,
+  automationLimitMarketing: 0,
   websiteIncluded: false,
   carWrapVisualizer: false,
   aiSmartReplies: false,
@@ -39,7 +55,7 @@ const DEFAULT_ENTITLEMENTS: Entitlements = {
  * Caches results (TODO: Redis/Memory cache) to avoid DB hits on every request.
  */
 export async function getCompanyEntitlements(
-  companyId: number
+  companyId: number,
 ): Promise<Entitlements> {
   const subscription = await db.platformSubscription.findUnique({
     where: { companyId },
@@ -91,7 +107,7 @@ export async function getCompanyEntitlements(
  */
 export async function hasFeature(
   companyId: number,
-  feature: keyof Entitlements
+  feature: keyof Entitlements,
 ): Promise<boolean> {
   const ents = await getCompanyEntitlements(companyId);
   const val = ents[feature];
@@ -105,7 +121,7 @@ export async function hasFeature(
  */
 export async function canAddAutomationRule(
   companyId: number,
-  currentCount: number
+  currentCount: number,
 ): Promise<boolean> {
   const ents = await getCompanyEntitlements(companyId);
   if (ents.maxAutomationRules === -1) return true; // Unlimited

@@ -149,68 +149,75 @@ export function PricePlans({
                       </div>
 
                       <ul className="space-y-4">
-                        {plan.features.map((feature: any) => {
-                          const isEnabled =
-                            feature.type === "BOOLEAN"
-                              ? feature.value === "true"
-                              : true;
+                        {plan.features
+                          .filter(
+                            (feature: any) =>
+                              !String(feature.featureKey || "")
+                                .toLowerCase()
+                                .startsWith("automation_limit_"),
+                          )
+                          .map((feature: any) => {
+                            const isEnabled =
+                              feature.type === "BOOLEAN"
+                                ? feature.value === "true"
+                                : true;
 
-                          return (
-                            <li
-                              key={feature.id}
-                              className="group/item flex items-start gap-3"
-                            >
-                              <div
-                                className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded-lg flex items-center justify-center transition-all duration-300 ${
-                                  isEnabled
-                                    ? "bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-500/20"
-                                    : "bg-slate-100 dark:bg-slate-800/50 text-slate-400 ring-1 ring-slate-200 dark:ring-slate-700"
-                                }`}
+                            return (
+                              <li
+                                key={feature.id}
+                                className="group/item flex items-start gap-3"
                               >
-                                {isEnabled ? (
-                                  <Check size={12} strokeWidth={3} />
-                                ) : (
-                                  <Check size={12} className="opacity-20" />
-                                )}
-                              </div>
-
-                              <div className="flex-1 min-w-0">
-                                <p
-                                  className={`text-[13px] font-medium leading-tight transition-colors ${
+                                <div
+                                  className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded-lg flex items-center justify-center transition-all duration-300 ${
                                     isEnabled
-                                      ? "text-slate-700 dark:text-slate-200"
-                                      : "text-slate-400"
+                                      ? "bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-500/20"
+                                      : "bg-slate-100 dark:bg-slate-800/50 text-slate-400 ring-1 ring-slate-200 dark:ring-slate-700"
                                   }`}
                                 >
-                                  {formatFeatureKey(feature.featureKey)}
-                                </p>
-                                {feature.type !== "BOOLEAN" && isEnabled && (
-                                  <div className="flex flex-wrap gap-1.5 mt-1.5">
-                                    {feature.value
-                                      .split(",")
-                                      .map((item: string, idx: number) => (
-                                        <span
-                                          key={idx}
-                                          className="text-[10px] font-semibold text-[#00b8b0] bg-[#00b8b0]/10 px-2 py-0.5 rounded-md uppercase"
-                                        >
-                                          {item.trim()}
-                                        </span>
-                                      ))}
+                                  {isEnabled ? (
+                                    <Check size={12} strokeWidth={3} />
+                                  ) : (
+                                    <Check size={12} className="opacity-20" />
+                                  )}
+                                </div>
+
+                                <div className="flex-1 min-w-0">
+                                  <p
+                                    className={`text-[13px] font-medium leading-tight transition-colors ${
+                                      isEnabled
+                                        ? "text-slate-700 dark:text-slate-200"
+                                        : "text-slate-400"
+                                    }`}
+                                  >
+                                    {formatFeatureKey(feature.featureKey)}
+                                  </p>
+                                  {feature.type !== "BOOLEAN" && isEnabled && (
+                                    <div className="flex flex-wrap gap-1.5 mt-1.5">
+                                      {feature.value
+                                        .split(",")
+                                        .map((item: string, idx: number) => (
+                                          <span
+                                            key={idx}
+                                            className="text-[10px] font-semibold text-[#00b8b0] bg-[#00b8b0]/10 px-2 py-0.5 rounded-md uppercase"
+                                          >
+                                            {item.trim()}
+                                          </span>
+                                        ))}
+                                    </div>
+                                  )}
+                                </div>
+
+                                {feature.description && (
+                                  <div className="opacity-0 group-hover/item:opacity-100 transition-opacity">
+                                    <Info
+                                      size={14}
+                                      className="text-slate-400 cursor-help"
+                                    />
                                   </div>
                                 )}
-                              </div>
-
-                              {feature.description && (
-                                <div className="opacity-0 group-hover/item:opacity-100 transition-opacity">
-                                  <Info
-                                    size={14}
-                                    className="text-slate-400 cursor-help"
-                                  />
-                                </div>
-                              )}
-                            </li>
-                          );
-                        })}
+                              </li>
+                            );
+                          })}
                       </ul>
                     </div>
                   </div>
