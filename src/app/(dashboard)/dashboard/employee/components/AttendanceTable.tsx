@@ -414,30 +414,23 @@ const Dashboard = () => {
                           // If data.date is a string in YYYY-MM-DD format, parse it as local date
                           let dateMoment;
                           if (typeof data.date === "string") {
-                            dateMoment = moment.tz(`${data.date}`, timezone);
+                            dateMoment = moment
+                              .tz(`${data.date}`, timezone)
+                              .add(1, "day");
                           } else {
-                            dateMoment = moment(data.date).tz(timezone, true);
+                            dateMoment = moment(data.date)
+                              .tz(timezone, true)
+                              .add(1, "day");
                           }
 
                           // UTC ↔ company offset in hours
-                          const utcMoment = moment.utc(data.date);
-                          const offsetHours =
-                            (dateMoment.utcOffset() - utcMoment.utcOffset()) /
-                            60;
+                          const utcMoment = moment.utc(data.date).add(1, "day");
 
-                          // Apply reverse shift
-                          const adjustedMoment = dateMoment
-                            .clone()
-                            .add(-offsetHours, "hours");
-
-                          const dayOfWeek = adjustedMoment.day();
+                          const dayOfWeek = utcMoment.day();
                           const dayAbbr = daysOfWeek[dayOfWeek];
-                          const dayDate = adjustedMoment.date();
-
-                          console.log("Original:", dateMoment.format());
-                          console.log("Adjusted:", adjustedMoment.format());
-                          console.log("dayDate:", dayDate, "dayAbbr:", dayAbbr);
-
+                          const dayDate = utcMoment.date();
+                          console.log("local", data?.date);
+                          console.log("utc", dayDate);
                           const effectiveHours = isNaN(Number(data.hours))
                             ? data.hours
                             : convertDuration(
