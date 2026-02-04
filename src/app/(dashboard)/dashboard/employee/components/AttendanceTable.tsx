@@ -355,14 +355,19 @@ const Dashboard = () => {
               // When user selects dates from DateRangePicker, they're in local browser time
               // We need to ensure these dates are interpreted correctly by the server
               // Format as YYYY-MM-DD which will be interpreted by the server in company timezone
-              const formattedStartDate = moment
-                .utc(startDateObj)
-                .format("YYYY-MM-DD");
-              const formattedEndDate = moment
-                .utc(endDateObj)
-                .format("YYYY-MM-DD");
+              // const formattedStartDate = moment
+              //   .utc(startDateObj)
+              //   .format("YYYY-MM-DD");
+              // const formattedEndDate = moment
+              //   .utc(endDateObj)
+              //   .format("YYYY-MM-DD");
+              const formattedStartDate =
+                moment(startDateObj).format("YYYY-MM-DD");
+              const formattedEndDate = moment(endDateObj).format("YYYY-MM-DD");
 
               // Update state with the new dates
+              console.log("formattedStartDate", formattedStartDate);
+              console.log("formattedEndDate", formattedEndDate);
               setStartDate(formattedStartDate);
               setEndDate(formattedEndDate);
             }}
@@ -414,17 +419,13 @@ const Dashboard = () => {
                           // If data.date is a string in YYYY-MM-DD format, parse it as local date
                           let dateMoment;
                           if (typeof data.date === "string") {
-                            dateMoment = moment
-                              .tz(`${data.date}`, timezone)
-                              .add(1, "day");
+                            dateMoment = moment.tz(`${data.date}`, timezone);
                           } else {
-                            dateMoment = moment(data.date)
-                              .tz(timezone, true)
-                              .add(1, "day");
+                            dateMoment = moment(data.date).tz(timezone, true);
                           }
 
                           // UTC ↔ company offset in hours
-                          const utcMoment = moment.utc(data.date);
+                          const utcMoment = moment.tz(data.date, timezone);
 
                           const dayOfWeek = utcMoment.day();
                           const dayAbbr = daysOfWeek[dayOfWeek];

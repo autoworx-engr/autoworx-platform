@@ -89,9 +89,9 @@ export async function getAttendanceInfo(
   const now = moment(); // Current date and time in company timezone
   const standardWorkingHours = 8; // Standard working hours per day
 
-  const startDate = moment(startDateParam).startOf("day").toDate();
+  const startDate = moment.tz(startDateParam, companyTimezone).toDate();
 
-  const endDate = moment(endDateParam).endOf("day").toDate();
+  const endDate = moment.tz(endDateParam, companyTimezone).toDate();
 
   const holidays = await db.holiday.findMany({
     where: {
@@ -205,15 +205,8 @@ export async function getAttendanceInfo(
             : "0";
 
         records.push({
-          // id: clock.id,
-          // date: new Date(dayKey),
-          // clockedIn: clock.clockIn,
-          // clockedOut: clock.clockOut ?? "N/A",
-          // hours: workedHours,
-          // extraHours,
-          // totalBreaks: (breakMinutes / 60).toFixed(2),
           id: clock.id,
-          date: date.clone().startOf("day").toDate(), // ✅ keeps same day in system timezone
+          date: date.clone().toDate(), // ✅ keeps same day in system timezone
           clockedIn: clock.clockIn,
           clockedOut: clock.clockOut ?? "N/A",
           hours: workedHours,
@@ -246,19 +239,17 @@ export async function getAttendanceInfo(
   let endOfWeek: Moment = moment().endOf("week");
 
   if (startDateParam && endDateParam) {
-    startOfWeek = moment(startDateParam).startOf("day"); // Moment, time = 00:00
-    endOfWeek = moment(endDateParam).startOf("day");
-
-    const startDate = startOfWeek;
-    const endDate = endOfWeek;
+    startOfWeek = moment.tz(startDateParam, companyTimezone); // Moment, time = 00:00
+    endOfWeek = moment.tz(endDateParam, companyTimezone);
   } else {
     // Use current week in company timezone
     startOfWeek = moment().startOf("week");
     endOfWeek = moment().endOf("week");
   }
-
+  console.log("startOfWeek", startOfWeek);
+  console.log("endOfWeek", endOfWeek);
   const attInfo = await getAttendanceInfoForRange(startOfWeek, endOfWeek);
-
+  console.log("attInfo", attInfo);
   // Get current monthly attendance information using company timezone
   const startOfMonth = moment().startOf("month");
   const endOfMonth = moment().endOf("month");
