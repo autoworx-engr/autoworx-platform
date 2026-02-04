@@ -246,10 +246,9 @@ export async function getAttendanceInfo(
     startOfWeek = moment().startOf("week");
     endOfWeek = moment().endOf("week");
   }
-  console.log("startOfWeek", startOfWeek);
-  console.log("endOfWeek", endOfWeek);
+
   const attInfo = await getAttendanceInfoForRange(startOfWeek, endOfWeek);
-  console.log("attInfo", attInfo);
+
   // Get current monthly attendance information using company timezone
   const startOfMonth = moment().startOf("month");
   const endOfMonth = moment().endOf("month");

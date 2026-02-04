@@ -366,8 +366,7 @@ const Dashboard = () => {
               const formattedEndDate = moment(endDateObj).format("YYYY-MM-DD");
 
               // Update state with the new dates
-              console.log("formattedStartDate", formattedStartDate);
-              console.log("formattedEndDate", formattedEndDate);
+
               setStartDate(formattedStartDate);
               setEndDate(formattedEndDate);
             }}
@@ -417,16 +416,21 @@ const Dashboard = () => {
                         {attendanceInfo?.attInfo?.map((data, index) => {
                           // Fix date processing to avoid timezone shifts
                           // If data.date is a string in YYYY-MM-DD format, parse it as local date
+
                           let dateMoment;
                           if (typeof data.date === "string") {
                             dateMoment = moment.tz(`${data.date}`, timezone);
                           } else {
-                            dateMoment = moment(data.date).tz(timezone, true);
+                            dateMoment = moment.tz(data.date, timezone);
                           }
 
-                          // UTC ↔ company offset in hours
-                          const utcMoment = moment.tz(data.date, timezone);
+                          // Get the timezone offset in hours relative to UTC
+                          const offsetHours = dateMoment.utcOffset() / 60;
 
+                          let utcMoment = moment.tz(data.date, timezone);
+                          if (offsetHours < 0) {
+                            utcMoment.add(1, "day");
+                          }
                           const dayOfWeek = utcMoment.day();
                           const dayAbbr = daysOfWeek[dayOfWeek];
                           const dayDate = utcMoment.date();
