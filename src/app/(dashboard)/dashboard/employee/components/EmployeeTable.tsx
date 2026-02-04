@@ -133,18 +133,16 @@ const EmployeeTable = ({
                 {employees.map((employee: any, index: number) => {
                   const isAdmin = currentUser?.employeeType === "Admin";
                   const isManager = currentUser?.employeeType === "Manager";
-                  const isSelf = currentUser?.id === employee.id;
+                  const isSelf =
+                    currentUser?.id && Number(currentUser.id) === employee.id;
                   const isTargetAdmin = employee.employeeType === "Admin";
                   // Edit permission logic
                   const canEdit =
-                    isAdmin ||
-                    (isManager && !isTargetAdmin) ||
-                    isSelf;
+                    isAdmin || (isManager && !isTargetAdmin) || isSelf;
                   // Delete permission logic
                   const canDelete =
-                    isAdmin ||
-                    (isManager && !isTargetAdmin && !isSelf);
-                  // Fix: must return the row
+                    isAdmin || (isManager && !isTargetAdmin && !isSelf);
+                 
                   return (
                     <tr
                       key={index}
@@ -152,7 +150,7 @@ const EmployeeTable = ({
                         " duration-200 hover:bg-slate-50 dark:hover:bg-slate-800/50",
                         index % 2 !== 0
                           ? "bg-blue-50/80 dark:bg-slate-900"
-                          : "bg-white dark:bg-slate-900"
+                          : "bg-white dark:bg-slate-900",
                       )}
                     >
                       <td className="border-b px-4 py-2 text-left">
