@@ -424,13 +424,12 @@ const Dashboard = () => {
                           }
 
                           // UTC ↔ company offset in hours
-                          const utcMoment = moment.utc(data.date).add(1, "day");
+                          const utcMoment = moment.utc(data.date);
 
                           const dayOfWeek = utcMoment.day();
                           const dayAbbr = daysOfWeek[dayOfWeek];
                           const dayDate = utcMoment.date();
-                          console.log("local", data?.date);
-                          console.log("utc", dayDate);
+
                           const effectiveHours = isNaN(Number(data.hours))
                             ? data.hours
                             : convertDuration(
