@@ -75,7 +75,7 @@ export function CheckoutForm({
       Accept.dispatchData(secureData, async (response: any) => {
         if (response.messages.resultCode === "Error") {
           response.messages.message.forEach((msg: any) =>
-            toast.error(msg.text)
+            toast.error(msg.text),
           );
           setLoading(false);
         } else {
@@ -88,11 +88,11 @@ export function CheckoutForm({
             opaqueData: response.opaqueData,
           });
 
-          if (result.success) {
+          if (result?.success) {
             toast.success("Successfully subscribed!");
             onSuccess();
           } else {
-            toast.error(result.message || "Subscription failed");
+            toast.error(result?.message || "Subscription failed");
           }
           setLoading(false);
         }
