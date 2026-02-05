@@ -37,7 +37,9 @@ export default function AssignUsers({
       // Always start from the original employees data and filter out assigned users
       const availableEmployees = employees.filter(
         (employee) =>
-          !assignedUsers.some((assignedUser) => assignedUser.id === employee.id)
+          !assignedUsers.some(
+            (assignedUser) => assignedUser.id === employee.id,
+          ),
       );
       setEmployeeList(availableEmployees);
     }
