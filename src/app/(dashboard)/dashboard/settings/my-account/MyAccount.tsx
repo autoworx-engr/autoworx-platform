@@ -36,6 +36,19 @@ const MyAccount = ({ user }: { user: User }) => {
       countryCode: isoCode || "",
     }));
   };
+
+  // Handle zip code change with number validation
+  const handleZipChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Only allow numbers
+    if (value === "" || /^\d+$/.test(value)) {
+      setUserInfo({
+        ...userInfo,
+        zip: value,
+      });
+    }
+  };
+
   const isUserInfoChanged =
     JSON.stringify(userInfo) !==
       JSON.stringify({
@@ -274,12 +287,7 @@ const MyAccount = ({ user }: { user: User }) => {
                 <SlimInput
                   name="zip"
                   value={userInfo?.zip || ""}
-                  onChange={(e) => {
-                    setUserInfo({
-                      ...userInfo,
-                      [e.target.name]: e.target.value,
-                    });
-                  }}
+                  onChange={handleZipChange}
                 />
               </div>
               <div className="text-right">

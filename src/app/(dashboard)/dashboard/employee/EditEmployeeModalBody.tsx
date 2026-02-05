@@ -8,21 +8,20 @@ import { updateEmployee } from "@/actions/employee/update";
 import { getCompany } from "@/actions/settings/getCompany";
 import SlimSalaryManagement from "@/components/employee/SlimSalaryManagement";
 import Password from "@/components/Password";
+import PhoneInput from "@/components/PhoneInput";
 import { useServerGet } from "@/hooks/useServerGet";
 import { DEFAULT_IMAGE_URL } from "@/lib/consts";
 import { successToast } from "@/lib/toast";
+import { useEmployeeFilterStore } from "@/stores/employeeFilter";
 import { useFormErrorStore } from "@/stores/form-error";
 import { EmployeeType, SalaryType, User } from "@prisma/client";
-import { CircleUserRound as UserIcon, SquarePen, X } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { SquarePen, CircleUserRound as UserIcon, X } from "lucide-react";
 import moment from "moment";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
-import SelectEmployeeType from "./SelectEmployeeType";
-import { useQueryClient } from "@tanstack/react-query";
-import { useEmployeeFilterStore } from "@/stores/employeeFilter";
 import { EMPLOYEE_LIST_KEY } from "./_hook/useEmployeeQuery";
-import PhoneInput from "@/components/PhoneInput";
-import { cn } from "@/lib/cn";
+import SelectEmployeeType from "./SelectEmployeeType";
 
 type TEditClientModalBodyProps = {
   employee: User;
@@ -232,7 +231,9 @@ export default function EditClientModalBody({
           <h1 className="text-2xl font-bold tracking-tight text-slate-600 dark:text-slate-100">
             Edit Employee
           </h1>
-          <p className="text-sm text-slate-500 mt-1">Update details for the team member</p>
+          <p className="text-sm text-slate-500 mt-1">
+            Update details for the team member
+          </p>
         </div>
 
         {profilePic ? (
@@ -357,7 +358,7 @@ export default function EditClientModalBody({
           <PhoneInput
             label="Mobile"
             placeholder="1234567890"
-            required={false}
+            required={true}
             defaultValue={employee.phone!}
             // value={phoneNumber}
             defaultIsoCode={employee.countryCode!}
