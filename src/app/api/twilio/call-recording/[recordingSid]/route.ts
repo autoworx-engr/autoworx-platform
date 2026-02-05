@@ -30,14 +30,14 @@ import { NextRequest } from "next/server";
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { recordingSid: string; companyId?: number } },
+  { params }: { params: { recordingSid: string } },
 ) {
   const { searchParams } = req.nextUrl;
 
   const recordingSid = params.recordingSid;
   let companyId = Number(searchParams.get("companyId"));
 
-  if (companyId) {
+  if (!companyId) {
     companyId = await getCompanyId();
   }
 
