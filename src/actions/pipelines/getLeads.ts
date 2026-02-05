@@ -9,6 +9,7 @@ import { updatePipelineAutomationTrigger } from "../automation/pipeline/triggerP
 import { getCompanyTimezone } from "../settings/getCompanyTimezone";
 import { updateCommunicationAutomationTrigger } from "../automation/communication/triggerCommunicationAutomation";
 import { updateTagAutomationTrigger } from "../automation/tag/triggerTagAutomation";
+import { revalidatePath } from "next/cache";
 
 import { actionTypes } from "@/constants/lead.constant";
 
@@ -429,7 +430,7 @@ export const getLeadsWithCount = async ({
           : {
               id: Math.random(),
               title: "Unqualified",
-              type: "sales",
+              type: "sales" as const,
               order: 0,
               textColor: null,
               bgColor: null,
@@ -669,6 +670,7 @@ export async function updateLeadColumn(leadId: number, newColumnId: number) {
         column: true,
       },
     });
+    revalidatePath("/dashboard/pipeline/sales/pipeline");
 
     if (updatedLead.column?.title === "Converted") {
       sendLeadStageChangeOrCloseNotification({
@@ -728,8 +730,6 @@ export async function updateLeadColumn(leadId: number, newColumnId: number) {
     //   });
     // }
 
-    // revalidatePath("/dashboard/pipeline/sales/lead");
-    // revalidatePath("/dashboard/pipeline/sales/pipeline");
     return updatedLead;
   } catch (error) {
     console.error("Error updating lead column:", error);
