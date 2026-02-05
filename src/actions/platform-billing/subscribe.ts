@@ -159,10 +159,14 @@ export async function subscribeToPlatformPlan({
     }
 
     // 2. Create ARB Subscription (Starting after 1-month free trial)
-    const trialDays =
-      plan.trialLengthDays && plan.trialLengthDays > 0
-        ? plan.trialLengthDays
-        : 30;
+    // DEV TESTING: shortest possible trial interval (Authorize.Net ARB
+    // supports day-level granularity). Set to 1 day to simulate trial end.
+
+    //  const trialDays =
+    //   plan.trialLengthDays && plan.trialLengthDays > 0
+    //     ? plan.trialLengthDays
+    //     : 30;
+    const trialDays = 1;
     const trialStart = new Date();
     const arbStartDate = new Date(trialStart);
     arbStartDate.setDate(arbStartDate.getDate() + trialDays);
