@@ -64,7 +64,7 @@ export const getLeads = async ({
       .format("YYYY-MM-DDTHH:mm:ss");
 
     const now = moment().tz(timezone ?? "");
-    console.log({ orderBy });
+    // console.log({ orderBy });
 
     const leadsData = await db.lead.findMany({
       where: query,
