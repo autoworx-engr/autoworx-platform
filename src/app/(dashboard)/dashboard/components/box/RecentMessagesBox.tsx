@@ -5,6 +5,7 @@ import getPermissions from "@/lib/getPermissions";
 import BoxTitle from "./BoxTitle";
 import MessageContainer from "./MessageContainer";
 import { cn } from "@/lib/cn"; // Ensure cn utility is imported
+import { getClientMessages } from "@/actions/message/getClientMessages";
 
 export default async function RecentMessagesBox() {
   const user = await getUser();
@@ -46,20 +47,24 @@ export default async function RecentMessagesBox() {
     const aLastEmailDate =
       a.MailgunEmail.length > 0
         ? new Date(
-            a.MailgunEmail[a.MailgunEmail.length - 1].createdAt
+            a.MailgunEmail[a.MailgunEmail.length - 1].createdAt,
           ).getTime()
         : new Date("1970-01-01").getTime();
 
     const bLastEmailDate =
       b.MailgunEmail.length > 0
         ? new Date(
-            b.MailgunEmail[b.MailgunEmail.length - 1].createdAt
+            b.MailgunEmail[b.MailgunEmail.length - 1].createdAt,
           ).getTime()
         : new Date("1970-01-01").getTime();
 
     return bLastEmailDate - aLastEmailDate;
   });
 
+  const clientData =
+    user.employeeType === "Sales"
+      ? await getClientMessages(1)
+      : { messages: [], total: 0, hasMore: false };
   const defaultTake = 100; // Default number of messages to fetch
 
   const internalMessages = await fetchRecentMessages(defaultTake);
@@ -83,7 +88,7 @@ export default async function RecentMessagesBox() {
           hover:shadow-xl hover:shadow-blue-500/10 dark:hover:shadow-indigo-500/10
 
           overflow-hidden // Crucial for containing the scrollable MessageContainer
-        `
+        `,
       )}
     >
       <div className="flex flex-col h-full">
@@ -103,7 +108,8 @@ export default async function RecentMessagesBox() {
             user={user}
             hasMessagePermission={hasMessagePermission}
             // Only Sales gets client emails on the dashboard (as per existing logic)
-            clientMessages={user.employeeType === "Sales" ? sortedClients : []}
+            // clientMessages={user.employeeType === "Sales" ? sortedClients : []}
+            initialClientMessages={clientData.messages} // Already sorted
             // Technicians get internal messages
             internalMessages={
               user.employeeType === "Technician" ||

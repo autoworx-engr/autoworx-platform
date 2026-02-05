@@ -231,12 +231,15 @@ export default function EditSalePurchaseList({
               name="date"
               type="date"
               label="Date"
+              required={true}
               value={formState.date}
               onChange={handleInputChange}
             />
 
             <div className="space-y-1">
-              <label className="font-medium text-slate-600">Vendor</label>
+              <label className="font-medium text-slate-600">
+                Vendor <span className="text-red-500">*</span>{" "}
+              </label>
               <Selector
                 label={(selectedVendor: Vendor | null) =>
                   selectedVendor
@@ -288,7 +291,7 @@ export default function EditSalePurchaseList({
               label="Quantity"
               value={formState.quantity}
               onChange={handleInputChange}
-              required={false}
+              required={true}
             />
 
             <SlimInput
@@ -298,6 +301,7 @@ export default function EditSalePurchaseList({
               value={formState.price}
               onChange={handleInputChange}
               step="0.01"
+              required={true}
             />
 
             <SlimInput
@@ -305,7 +309,7 @@ export default function EditSalePurchaseList({
               label="Unit"
               value={formState.unit}
               onChange={handleInputChange}
-              required={false}
+              required={true}
             />
             <SlimInput
               name="lot"

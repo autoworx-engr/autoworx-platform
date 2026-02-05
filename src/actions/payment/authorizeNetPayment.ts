@@ -24,6 +24,10 @@ export const createAuthorizeNetPaymentLink = async ({
 
     const company = await db.company.findFirst({
       where: { id: companyId },
+      select: {
+        authorizeNetApiLoginId: true,
+        authorizeNetTransactionKey: true,
+      },
     });
 
     if (!company) {
@@ -37,6 +41,38 @@ export const createAuthorizeNetPaymentLink = async ({
       throw new Error("Authorize.Net credentials not configured");
     }
 
+    // Fetch related records so we can validate amounts and get customer email
+    const invoice = invoiceId
+      ? await db.invoice.findFirst({
+          where: { id: invoiceId },
+          select: {
+            due: true,
+            client: {
+              select: {
+                email: true,
+              },
+            },
+          },
+        })
+      : null;
+
+    const statement = statementId
+      ? await db.fleetStatement.findFirst({
+          where: { id: statementId },
+          select: {
+            Fleet: {
+              select: {
+                client: {
+                  select: {
+                    email: true,
+                  },
+                },
+              },
+            },
+          },
+        })
+      : null;
+
     // Validate amount
     const paymentAmount = parseFloat(amount);
     if (isNaN(paymentAmount) || paymentAmount <= 0) {
@@ -45,10 +81,6 @@ export const createAuthorizeNetPaymentLink = async ({
 
     // For payment type, validate against invoice due amount
     if (payType === "payment" && invoiceId) {
-      const invoice = await db.invoice.findFirst({
-        where: { id: invoiceId },
-      });
-
       if (
         invoice &&
         parseFloat(invoice.due?.toString() || "0") < paymentAmount
@@ -62,13 +94,13 @@ export const createAuthorizeNetPaymentLink = async ({
       new ApiContracts.MerchantAuthenticationType();
     merchantAuthenticationType.setName(company.authorizeNetApiLoginId);
     merchantAuthenticationType.setTransactionKey(
-      company.authorizeNetTransactionKey
+      company.authorizeNetTransactionKey,
     );
 
     // Create transaction request
     const transactionRequestType = new ApiContracts.TransactionRequestType();
     transactionRequestType.setTransactionType(
-      ApiContracts.TransactionTypeEnum.AUTHCAPTURETRANSACTION
+      ApiContracts.TransactionTypeEnum.AUTHCAPTURETRANSACTION,
     );
     transactionRequestType.setAmount(paymentAmount);
 
@@ -95,7 +127,7 @@ export const createAuthorizeNetPaymentLink = async ({
 
     orderType.setInvoiceNumber(invoiceNumberForGateway);
     orderType.setDescription(
-      `${payType === "deposit" ? "Deposit" : "Payment"} for ${productName}`
+      `${payType === "deposit" ? "Deposit" : "Payment"} for ${productName}`,
     );
     transactionRequestType.setOrder(orderType);
 
@@ -105,7 +137,7 @@ export const createAuthorizeNetPaymentLink = async ({
     lineItem.setItemId(invoiceId || statementId || "1");
     lineItem.setName(productName);
     lineItem.setDescription(
-      payType === "deposit" ? "Deposit Payment" : "Payment"
+      payType === "deposit" ? "Deposit Payment" : "Payment",
     );
     lineItem.setQuantity("1");
     lineItem.setUnitPrice(paymentAmount.toString());
@@ -119,7 +151,15 @@ export const createAuthorizeNetPaymentLink = async ({
     // Add customer information (required for form to render properly)
     const customer = new ApiContracts.CustomerDataType();
     customer.setType(ApiContracts.CustomerTypeEnum.INDIVIDUAL);
-    customer.setEmail("customer@example.com"); // Placeholder - will be updated in webhook
+
+    // Prefer the real client email from the related invoice/statement if available
+    const customerEmail =
+      invoice?.client?.email || statement?.Fleet?.client?.email || undefined;
+
+    if (customerEmail) {
+      customer.setEmail(customerEmail);
+    }
+
     transactionRequestType.setCustomer(customer);
 
     // Add metadata as custom fields
@@ -204,12 +244,12 @@ export const createAuthorizeNetPaymentLink = async ({
       const communicatorSetting = new ApiContracts.SettingType();
       communicatorSetting.setSettingName("hostedPaymentIFrameCommunicatorUrl");
       communicatorSetting.setSettingValue(
-        JSON.stringify({ url: `${normalized}/IFrameCommunicator.html` })
+        JSON.stringify({ url: `${normalized}/IFrameCommunicator.html` }),
       );
       settings.push(communicatorSetting);
     } else {
       console.warn(
-        "NEXT_PUBLIC_APP_URL is not set; hostedPaymentIFrameCommunicatorUrl will not be configured for Authorize.Net."
+        "NEXT_PUBLIC_APP_URL is not set; hostedPaymentIFrameCommunicatorUrl will not be configured for Authorize.Net.",
       );
     }
 
@@ -226,23 +266,32 @@ export const createAuthorizeNetPaymentLink = async ({
     // Log the complete request for debugging
     console.log(
       "🚀 ~ Authorize.Net Request:",
-      JSON.stringify(getRequest.getJSON(), null, 2)
+      JSON.stringify(getRequest.getJSON(), null, 2),
     );
 
     // Execute the request
     return new Promise((resolve, reject) => {
       const ctrl = new ApiControllers.GetHostedPaymentPageController(
-        getRequest.getJSON()
+        getRequest.getJSON(),
       );
 
-      // Set endpoint to production or sandbox
+      // Set endpoint to production or sandbox. We intentionally
+      // do NOT fall back to NODE_ENV here; if
+      // AUTHORIZE_NET_ENVIRONMENT is not explicitly set to
+      // "production", we default to sandbox so that sandbox
+      // credentials are never sent to production hosts by
+      // accident.
       const environment =
-        process.env.AUTHORIZE_NET_ENVIRONMENT ||
-        process.env.NODE_ENV ||
-        "sandbox";
+        process.env.AUTHORIZE_NET_ENVIRONMENT === "production"
+          ? "production"
+          : "sandbox";
       console.log(
         "🚀 ~ createAuthorizeNetPaymentLink ~ environment:",
-        environment
+        environment,
+      );
+      console.log(
+        "🚀 ~ process.env.AUTHORIZE_NET_ENVIRONMENT",
+        process.env.AUTHORIZE_NET_ENVIRONMENT,
       );
 
       if (environment === "production") {
@@ -254,7 +303,7 @@ export const createAuthorizeNetPaymentLink = async ({
       ctrl.execute(() => {
         const apiResponse = ctrl.getResponse();
         const response = new ApiContracts.GetHostedPaymentPageResponse(
-          apiResponse
+          apiResponse,
         );
         console.log("🚀 ~ createAuthorizeNetPaymentLink ~ response:", response);
 
@@ -266,14 +315,17 @@ export const createAuthorizeNetPaymentLink = async ({
             const token = response.getToken();
             console.log("✅ Token generated successfully:", token);
 
-            // Construct the hosted payment page URL (for POST submission)
+            // Construct the hosted payment page URL (for POST
+            // submission), using the same environment logic as
+            // above so there is no mismatch between token
+            // generation and form host.
             const environment =
-              process.env.AUTHORIZE_NET_ENVIRONMENT ||
-              process.env.NODE_ENV ||
-              "sandbox";
+              process.env.AUTHORIZE_NET_ENVIRONMENT === "production"
+                ? "production"
+                : "sandbox";
             console.log(
               "🚀 ~ createAuthorizeNetPaymentLink ~ environment:",
-              environment
+              environment,
             );
             const hostedPaymentUrl =
               environment === "production"
@@ -324,7 +376,7 @@ export const createAuthorizeNetPaymentLink = async ({
  */
 export const verifyAuthorizeNetCredentials = async (
   apiLoginId: string,
-  transactionKey: string
+  transactionKey: string,
 ): Promise<{ success: boolean; message?: string }> => {
   try {
     const merchantAuthenticationType =
@@ -337,7 +389,7 @@ export const verifyAuthorizeNetCredentials = async (
 
     return new Promise((resolve) => {
       const ctrl = new ApiControllers.GetMerchantDetailsController(
-        getRequest.getJSON()
+        getRequest.getJSON(),
       );
 
       if (process.env.AUTHORIZE_NET_ENVIRONMENT === "production") {
@@ -349,7 +401,7 @@ export const verifyAuthorizeNetCredentials = async (
       ctrl.execute(() => {
         const apiResponse = ctrl.getResponse();
         const response = new ApiContracts.GetMerchantDetailsResponse(
-          apiResponse
+          apiResponse,
         );
 
         if (response != null) {

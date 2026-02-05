@@ -31,6 +31,7 @@ const PUBLIC_API_ROUTES = [
   "/api/twilio/token",
   "/api/platform/webhook",
   "/api/invoice/track-view",
+  "/api/upload",
 ];
 
 const PUBLIC_DYNAMIC_API_ROUTES = [
