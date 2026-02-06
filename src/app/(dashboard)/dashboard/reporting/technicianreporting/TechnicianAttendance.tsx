@@ -90,9 +90,6 @@ const TechnicianAttendance = ({ currentUserId }: { currentUserId: string }) => {
                 moment(startDateObj).format("YYYY-MM-DD");
               const formattedEndDate = moment(endDateObj).format("YYYY-MM-DD");
 
-              // Update state with the new dates
-              console.log("formattedStartDate", formattedStartDate);
-              console.log("formattedEndDate", formattedEndDate);
               setStartDate(formattedStartDate);
               setEndDate(formattedEndDate);
             }}
