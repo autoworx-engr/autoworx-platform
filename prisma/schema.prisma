@@ -2471,6 +2471,7 @@ model PlatformBillingCustomer {
   authNetProfileId      String?  @unique // Authorize.net customerProfileId
   email                 String?
   taxId                 String?
+  trialConsumedAt       DateTime?
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
 

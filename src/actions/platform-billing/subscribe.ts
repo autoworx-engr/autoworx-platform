@@ -159,17 +159,12 @@ export async function subscribeToPlatformPlan({
     }
 
     // 2. Create ARB Subscription (Starting after 1-month free trial)
-    // DEV TESTING: shortest possible trial interval (Authorize.Net ARB
-    // supports day-level granularity). Set to 1 day to simulate trial end.
-
-    //  const trialDays =
-    //   plan.trialLengthDays && plan.trialLengthDays > 0
-    //     ? plan.trialLengthDays
-    //     : 30;
-    const trialDays = 1;
+    const trialMonths = billingCustomer?.trialConsumedAt ? 0 : 1;
     const trialStart = new Date();
     const arbStartDate = new Date(trialStart);
-    arbStartDate.setDate(arbStartDate.getDate() + trialDays);
+    if (trialMonths > 0) {
+      arbStartDate.setMonth(arbStartDate.getMonth() + trialMonths);
+    }
 
     const arb = await createPlatformARBSubscription({
       customerProfileId,
@@ -185,14 +180,22 @@ export async function subscribeToPlatformPlan({
     // 3. Update DB
     if (!billingCustomer) throw new Error("Billing customer record not found");
 
+    const nextPeriodEnd = new Date(trialStart);
+    if (trialMonths === 0) {
+      nextPeriodEnd.setMonth(nextPeriodEnd.getMonth() + 1);
+    }
+
     const subscription = await db.platformSubscription.upsert({
       where: { companyId },
       update: {
         planId: plan.id,
         authNetSubscriptionId: arb.subscriptionId,
-        status: PlatformSubscriptionStatus.TRIALING,
+        status:
+          trialMonths > 0
+            ? PlatformSubscriptionStatus.TRIALING
+            : PlatformSubscriptionStatus.ACTIVE,
         currentPeriodStart: trialStart,
-        currentPeriodEnd: arbStartDate,
+        currentPeriodEnd: trialMonths > 0 ? arbStartDate : nextPeriodEnd,
         billingAnchor: arbStartDate,
       },
       create: {
@@ -200,12 +203,21 @@ export async function subscribeToPlatformPlan({
         billingCustomerId: billingCustomer.id,
         planId: plan.id,
         authNetSubscriptionId: arb.subscriptionId,
-        status: PlatformSubscriptionStatus.TRIALING,
+        status:
+          trialMonths > 0
+            ? PlatformSubscriptionStatus.TRIALING
+            : PlatformSubscriptionStatus.ACTIVE,
         currentPeriodStart: trialStart,
-        currentPeriodEnd: arbStartDate,
+        currentPeriodEnd: trialMonths > 0 ? arbStartDate : nextPeriodEnd,
         billingAnchor: arbStartDate,
       },
     });
+    if (trialMonths > 0 && !billingCustomer.trialConsumedAt) {
+      await db.platformBillingCustomer.update({
+        where: { id: billingCustomer.id },
+        data: { trialConsumedAt: trialStart },
+      });
+    }
     // 4. Create initial subscription item
     await db.platformSubscriptionItem.create({
       data: {
