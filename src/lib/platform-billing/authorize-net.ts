@@ -507,3 +507,48 @@ export async function chargePlatformCustomerProfile({
     });
   });
 }
+
+/**
+ * 7. Get Transaction Details (used to resolve subscription from transId)
+ */
+export async function getPlatformTransactionDetails(transId: string) {
+  const merchantAuthenticationType = getPlatformAuthNetCredentials();
+
+  const getRequest = new ApiContracts.GetTransactionDetailsRequest();
+  getRequest.setMerchantAuthentication(merchantAuthenticationType);
+  getRequest.setTransId(transId);
+
+  return new Promise<any>((resolve, reject) => {
+    const ctrl = new ApiControllers.GetTransactionDetailsController(
+      getRequest.getJSON(),
+    );
+    ctrl.setEnvironment(getEnvironment());
+
+    ctrl.execute(() => {
+      const apiResponse = ctrl.getResponse();
+      const response = new ApiContracts.GetTransactionDetailsResponse(
+        apiResponse,
+      );
+
+      if (
+        response != null &&
+        response.getMessages().getResultCode() ===
+          ApiContracts.MessageTypeEnum.OK
+      ) {
+        const transaction = response.getTransaction
+          ? response.getTransaction()
+          : (response as any).transaction;
+        const transactionJson =
+          transaction && typeof transaction.getJSON === "function"
+            ? transaction.getJSON()
+            : transaction;
+        resolve(transactionJson);
+      } else {
+        const error = response?.getMessages().getMessage()[0];
+        reject(
+          new Error(error?.getText() || "Failed to get transaction details"),
+        );
+      }
+    });
+  });
+}

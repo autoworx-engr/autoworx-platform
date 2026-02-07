@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { getPlatformTransactionDetails } from "@/lib/platform-billing/authorize-net";
 import { PlatformSubscriptionStatus } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
@@ -58,32 +59,44 @@ export async function POST(req: NextRequest) {
 }
 
 async function handleSubscriptionPayment(payload: any) {
-  // For payment webhooks, subscription info (for ARB) is nested under
-  // payload.subscription. We fall back to a few reasonable keys so this
-  // remains robust if Authorize.Net slightly varies the shape.
-  const subscriptionId =
-    payload.subscription?.id ||
-    payload.subscription?.subscriptionId ||
-    payload.subscriptionId;
-
-  if (!subscriptionId) {
-    // Many payment.authcapture.created events are for standalone
-    // transactions (like the initial one-time charge) and do not
-    // include subscription information. We ignore those here and
-    // only process payments that are explicitly tied to a
-    // subscription.
-    console.log(
-      "Skipping payment webhook without subscription reference:",
-      payload,
-    );
-    return;
-  }
-
   const status = payload.responseCode === 1 ? "PAID" : "FAILED";
   const authNetTransId = payload.id || payload.transactionId || payload.transId;
 
   if (!authNetTransId) {
     console.error("No transaction ID found in payment payload:", payload);
+    return;
+  }
+
+  // For payment webhooks, subscription info (for ARB) is nested under
+  // payload.subscription. If not present, fetch transaction details
+  // to resolve the subscription id.
+  let subscriptionId =
+    payload.subscription?.id ||
+    payload.subscription?.subscriptionId ||
+    payload.subscriptionId;
+
+  if (!subscriptionId) {
+    try {
+      const transaction = await getPlatformTransactionDetails(
+        authNetTransId.toString(),
+      );
+      subscriptionId =
+        transaction?.subscription?.id ||
+        transaction?.subscriptionId ||
+        transaction?.subscription?.subscriptionId;
+    } catch (error) {
+      console.error(
+        "Failed to resolve subscription from transaction details:",
+        error,
+      );
+    }
+  }
+
+  if (!subscriptionId) {
+    console.log(
+      "Skipping payment webhook without subscription reference:",
+      payload,
+    );
     return;
   }
 
