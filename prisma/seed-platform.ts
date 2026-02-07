@@ -13,7 +13,6 @@ async function main() {
     {
       name: "Starter (Text Only)",
       price: 124,
-      setupFee: 100,
       displayOrder: 1,
       features: [
         { key: "can_use_sms", value: "true", type: "BOOLEAN" },
@@ -37,7 +36,6 @@ async function main() {
     {
       name: "Starter (Call + Text)",
       price: 149,
-      setupFee: 100,
       displayOrder: 2,
       features: [
         { key: "can_use_sms", value: "true", type: "BOOLEAN" },
@@ -63,7 +61,6 @@ async function main() {
     {
       name: "Growth",
       price: 249,
-      setupFee: 0,
       displayOrder: 3,
       features: [
         { key: "can_use_sms", value: "true", type: "BOOLEAN" },
@@ -92,7 +89,6 @@ async function main() {
     {
       name: "Scale",
       price: 399,
-      setupFee: 0,
       displayOrder: 4,
       features: [
         { key: "can_use_sms", value: "true", type: "BOOLEAN" },
@@ -120,7 +116,7 @@ async function main() {
   ];
 
   for (const planData of plans) {
-    const { features, setupFee, ...planDetails } = planData;
+    const { features, ...planDetails } = planData;
 
     const plan = await prisma.platformPlan.upsert({
       where: { name: planDetails.name },

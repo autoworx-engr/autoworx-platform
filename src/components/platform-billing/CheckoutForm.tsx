@@ -18,8 +18,6 @@ type CheckoutPlan = {
   id: string;
   name: string;
   price: number;
-  // Optional setup fee can be attached at the UI layer
-  setupFee?: number | null;
 };
 
 interface CheckoutFormProps {
@@ -155,11 +153,6 @@ export function CheckoutForm({
                   /mo
                 </span>
               </p>
-              {(plan.setupFee ?? 0) > 0 && (
-                <p className="text-[10px] text-slate-500 font-medium">
-                  + ${plan.setupFee} setup fee
-                </p>
-              )}
             </div>
           </div>
         </div>

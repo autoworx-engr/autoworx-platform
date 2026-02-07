@@ -22,7 +22,7 @@ export type CreateCustomPlatformPlanInput = {
 
 function serializeFeatureValue(
   type: PlatformFeatureType,
-  value: boolean | number | string
+  value: boolean | number | string,
 ): string {
   switch (type) {
     case PlatformFeatureType.BOOLEAN:
@@ -48,7 +48,7 @@ function serializeFeatureValue(
  * flow can then use the returned planId when onboarding that shop.
  */
 export async function createCustomPlatformPlan(
-  input: CreateCustomPlatformPlanInput
+  input: CreateCustomPlatformPlanInput,
 ) {
   const {
     label,
