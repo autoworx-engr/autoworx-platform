@@ -464,12 +464,12 @@ export default function InvoiceModalBody({
           <div className="flex w-full flex-row items-start justify-between gap-6 border-b border-slate-100 pb-8 dark:border-slate-800">
             {/* Logo Container with Soft Shadow & Ring */}
             <div
-              className={cn(
-                "relative flex aspect-square items-center justify-center overflow-hidden rounded-2xl transition-all duration-300",
-                company?.image
-                  ? "w-28 ring-1 ring-slate-200/60 shadow-sm md:w-36"
-                  : "w-28 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 md:w-36"
-              )}
+            // className={cn(
+            //   "relative flex aspect-square items-center justify-center overflow-hidden rounded-2xl transition-all duration-300",
+            //   company?.image
+            //     ? "w-28 ring-1 ring-slate-200/60 shadow-sm md:w-36"
+            //     : "w-28 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 md:w-36"
+            // )}
             >
               {company?.image ? (
                 <Image
@@ -477,12 +477,14 @@ export default function InvoiceModalBody({
                   alt="company logo"
                   width={144}
                   height={144}
-                  className="object-contain p-2"
+                  className="object-contain rounded-xl"
                 />
               ) : (
-                <span className="text-sm font-black uppercase tracking-wider text-slate-400">
-                  No Logo
-                </span>
+                <div className="w-28 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 md:w-36 border border-dashed border-slate-300 dark:border-slate-700 flex h-36 md:h-36 items-center justify-center rounded-xl">
+                  <span className="text-sm font-black uppercase tracking-wider text-slate-400">
+                    No Logo
+                  </span>
+                </div>
               )}
             </div>
 
