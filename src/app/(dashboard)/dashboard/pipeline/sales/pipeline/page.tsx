@@ -22,7 +22,7 @@ export default async function SalesPipelinePage({ searchParams }: TProps) {
 
   return (
     <div className="space-y-8">
-      <div className="mb-4 px-2 flex items-center justify-between gap-2">
+      <div className="mb-4 px-2 flex items-center gap-2">
         <SearchSection searchValue={searchParams.searchTerm} />
         <OrderSelect />
       </div>
