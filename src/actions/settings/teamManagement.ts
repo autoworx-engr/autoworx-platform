@@ -119,7 +119,7 @@ export const updatePermissionForRole = async ({
         const technicianPermission = await db.permissionForTechnician.findFirst(
           {
             where: { companyId },
-          }
+          },
         );
         if (technicianPermission) {
           await db.permissionForTechnician.update({
@@ -187,7 +187,7 @@ const getRoleModel = (role: string): string => {
 export const getUserPermissions = async (
   userId: number,
   role: string,
-  userCompanyId?: number
+  userCompanyId?: number,
 ) => {
   const roleModel = getRoleModel(role);
 
@@ -234,7 +234,7 @@ export const getUserPermissions = async (
   } catch (error) {
     console.error(
       `Error fetching permissions for userId: ${userId} and role: ${role}`,
-      error
+      error,
     );
     return {};
   }
@@ -243,8 +243,8 @@ export const getUserPermissions = async (
 // Save user permissions
 export const savePermissions = async (
   userId: number,
-  newPermissions: object
-) => {
+  newPermissions: object,
+): Promise<boolean> => {
   try {
     const companyId = await getCompanyId();
 
@@ -255,7 +255,10 @@ export const savePermissions = async (
       create: { userId, companyId, ...newPermissions },
       update: { ...newPermissions },
     });
+
+    return true;
   } catch (error) {
     console.error("Error saving permissions:", error);
+    throw error;
   }
 };

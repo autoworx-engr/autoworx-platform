@@ -79,7 +79,7 @@ const NetworksPage = ({
     useState<string>("");
 
   const [connectedCompanies, setConnectedCompanies] = useState<any[] | []>(
-    connectedCompaniesData
+    connectedCompaniesData,
   );
   const [nearbyCompanies, setNearbyCompanies] = useState<Company[] | []>([]);
   const [searchedNearbyCompanies, setSearchedNearbyCompanies] = useState<
@@ -100,17 +100,17 @@ const NetworksPage = ({
 
   const handleConnectWithCompany = async (
     companyId: number,
-    companyName: string
+    companyName: string,
   ) => {
-    const result = await connectWithCompany(companyId);
+    const result = await connectWithCompany({ targetCompanyId: companyId });
     if (result.success) {
-      setNearbyCompanies((prevNearby) =>
-        prevNearby.filter((company) => company.id !== companyId)
+      setNearbyCompanies(prevNearby =>
+        prevNearby.filter(company => company.id !== companyId),
       );
-      setConnectedCompanies((prevConnected) => [
+      setConnectedCompanies(prevConnected => [
         ...prevConnected,
 
-        ...unconnectedCompanies.filter((company) => company.id === companyId),
+        ...unconnectedCompanies.filter(company => company.id === companyId),
       ]);
       successToast(`Connected with ${companyName}`);
     } else {
@@ -128,8 +128,8 @@ const NetworksPage = ({
       findNearbyCompanies(
         location.latitude,
         location.longitude,
-        nearByCompanyRange
-      ).then((res) => {
+        nearByCompanyRange,
+      ).then(res => {
         setNearbyCompanies(res.data);
       });
     }
@@ -141,8 +141,10 @@ const NetworksPage = ({
 
   useEffect(() => {
     if (nearbyCompaniesSearch.length > 0) {
-      const filteredNearbyCompanies = nearbyCompanies.filter((company) =>
-        company.name.toLowerCase().includes(nearbyCompaniesSearch.toLowerCase())
+      const filteredNearbyCompanies = nearbyCompanies.filter(company =>
+        company.name
+          .toLowerCase()
+          .includes(nearbyCompaniesSearch.toLowerCase()),
       );
       setSearchedNearbyCompanies(filteredNearbyCompanies);
     } else {
@@ -191,7 +193,7 @@ const NetworksPage = ({
               </p>
             )}
 
-            <div className="space-y-4">
+            <div className="space-y-4 lg:max-h-72 lg:overflow-y-auto thin-scrollbar pb-4">
               {active.map(
                 ({
                   company,
@@ -214,7 +216,7 @@ const NetworksPage = ({
                       </div>
                     }
                   />
-                )
+                ),
               )}
             </div>
 
@@ -269,7 +271,7 @@ const NetworksPage = ({
                                 onClick={() =>
                                   acceptCompanyJoin(
                                     joinId,
-                                    Number(currentCompany?.id)
+                                    Number(currentCompany?.id),
                                   )
                                 }
                               >
@@ -280,7 +282,7 @@ const NetworksPage = ({
                                 onClick={() =>
                                   rejectCompanyJoin(
                                     joinId,
-                                    Number(currentCompany?.id)
+                                    Number(currentCompany?.id),
                                   )
                                 }
                               >
@@ -290,7 +292,7 @@ const NetworksPage = ({
                           }
                         />
                       );
-                    }
+                    },
                   )}
                 </div>
               </>
@@ -357,7 +359,7 @@ const NetworksPage = ({
                                 onClick={() =>
                                   acceptCompanyJoin(
                                     joinId,
-                                    Number(currentCompany?.id)
+                                    Number(currentCompany?.id),
                                   )
                                 }
                               >
@@ -378,7 +380,7 @@ const NetworksPage = ({
                           }
                         />
                       );
-                    }
+                    },
                   )}
                 </div>
               </>
@@ -410,12 +412,12 @@ const NetworksPage = ({
                   <span>
                     <Switch
                       checked={businessVisibility}
-                      setChecked={async (value) => {
+                      setChecked={async value => {
                         let res = await toggleBusinessVisibility();
                         if (res?.success) {
                           setBusinessVisibility(value);
                           successToast(
-                            "Business visibility updated successfully"
+                            "Business visibility updated successfully",
                           );
                         } else {
                           errorToast("Failed to update business visibility");
@@ -431,16 +433,16 @@ const NetworksPage = ({
                   <span>
                     <Switch
                       checked={phoneVisibility}
-                      setChecked={async (value) => {
+                      setChecked={async value => {
                         let res = await togglePhoneVisibility();
                         if (res?.success) {
                           setPhoneVisibility(value);
                           successToast(
-                            "Business phone visibility updated successfully"
+                            "Business phone visibility updated successfully",
                           );
                         } else {
                           errorToast(
-                            "Failed to update Business phone visibility"
+                            "Failed to update Business phone visibility",
                           );
                         }
                       }}
@@ -454,16 +456,16 @@ const NetworksPage = ({
                   <span>
                     <Switch
                       checked={businessAddressVisibility}
-                      setChecked={async (value) => {
+                      setChecked={async value => {
                         let res = await toggleAddressVisibility();
                         if (res?.success) {
                           setBusinessAddressVisibility(value);
                           successToast(
-                            "Business address visibility updated successfully"
+                            "Business address visibility updated successfully",
                           );
                         } else {
                           errorToast(
-                            "Failed to update business address visibility"
+                            "Failed to update business address visibility",
                           );
                         }
                       }}
@@ -477,7 +479,7 @@ const NetworksPage = ({
                   <span>
                     <Switch
                       checked={locationAllow}
-                      setChecked={async (value) => {
+                      setChecked={async value => {
                         if (!value) {
                           setLocation({ latitude: null, longitude: null });
                           setNearbyCompanies([]);
@@ -486,16 +488,16 @@ const NetworksPage = ({
                         } else {
                           if (navigator.geolocation) {
                             navigator.geolocation.getCurrentPosition(
-                              (position) => {
+                              position => {
                                 setLocation({
                                   latitude: position.coords.latitude,
                                   longitude: position.coords.longitude,
                                 });
                                 setLatLong(
                                   position.coords.latitude,
-                                  position.coords.longitude
+                                  position.coords.longitude,
                                 );
-                              }
+                              },
                             );
                             setLocationAllow(true);
                           } else {
@@ -581,7 +583,7 @@ const NetworksPage = ({
                   className="h-full w-full rounded-lg border border-gray-300 pl-10 pr-4 text-gray-700 transition duration-200 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                   placeholder="Search nearby companies by name..."
                   value={nearbyCompaniesSearch}
-                  onChange={(e) => setNearbyCompaniesSearch(e.target.value)}
+                  onChange={e => setNearbyCompaniesSearch(e.target.value)}
                 />
               </div>
               <div className="space-y-4 rounded-xl border border-gray-200 bg-white p-6 shadow-xl max-h-[400px] overflow-y-auto">

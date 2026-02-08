@@ -1,9 +1,9 @@
 "use client";
 
 import { cn } from "@/lib/cn";
+import { useInventoryDatabaseSearchStore } from "@/stores/inventoryDatabaseSearchStore"; // Import Zustand store
 import { Pagination } from "antd"; // Importing the Pagination component from Ant Design
 import AddNewProduct from "./AddNewProduct";
-import { useInventoryDatabaseSearchStore } from "@/stores/inventoryDatabaseSearchStore"; // Import Zustand store
 
 export interface DatabaseData {
   id: string;
@@ -32,12 +32,18 @@ export default function DatabaseTable({
   };
 
   return (
-    <div className="min-h-[65vh] pb-2">
+    <div className="pb-2">
       {/* Desktop View */}
-      <div className="hidden overflow-hidden overflow-x-auto rounded-md bg-background md:block">
-        <table className="w-full md:table-fixed">
+      <div
+        // className="hidden overflow-hidden overflow-x-auto rounded-md bg-background md:block"
+        className="hidden rounded-md border border-slate-200 bg-background md:block"
+      >
+        <table
+          // className="w-full md:table-fixed"
+          className="w-full border-separate border-spacing-0 md:table-fixed"
+        >
           {/* Database Header */}
-          <thead className="bg-background">
+          <thead className="sticky top-0  bg-background">
             <tr className="h-10">
               <th className="w-16 px-4 py-2 text-left">#</th>
               <th className="px-4 py-2 text-left">Name</th>
@@ -82,7 +88,9 @@ export default function DatabaseTable({
       </div>
 
       {/* Mobile View - Card Layout */}
-      <div className="space-y-3 md:hidden px-2"> {/* Added some horizontal padding for mobile */}
+      <div className="space-y-3 md:hidden px-2">
+        {" "}
+        {/* Added some horizontal padding for mobile */}
         {data.map((item, index) => (
           <div
             key={item.id}
@@ -98,25 +106,31 @@ export default function DatabaseTable({
           >
             <div className="flex flex-col gap-3">
               {/* Product name and ID row */}
-              <div className="flex justify-between items-center pb-2 border-b border-slate-200/50"> {/* Subtle divider */}
+              <div className="flex justify-between items-center pb-2 border-b border-slate-200/50">
+                {" "}
+                {/* Subtle divider */}
                 <div>
                   <div className="text-xs font-medium text-slate-500">Name</div>
-                  <div className="text-base font-semibold text-slate-800 truncate max-w-[220px]"> {/* Truncate long names */}
+                  <div className="text-base font-semibold text-slate-800 truncate max-w-[220px]">
+                    {" "}
+                    {/* Truncate long names */}
                     {item.productName}
                   </div>
                 </div>
-
                 {/* Highlighted ID with subtle background and accent color */}
                 <div className="bg-slate-100/80 px-3 py-1 rounded-full ring-1 ring-slate-200">
-                  <div className="text-sm font-bold text-[#6571FF]"> {/* Accent color for ID */}
-                    #{item.id}
+                  <div className="text-sm font-bold text-[#6571FF]">
+                    {" "}
+                    {/* Accent color for ID */}#{item.id}
                   </div>
                 </div>
               </div>
 
               {/* Category */}
               <div>
-                <div className="text-xs font-medium text-slate-500">Category</div>
+                <div className="text-xs font-medium text-slate-500">
+                  Category
+                </div>
                 <div className="text-sm text-slate-700">{item.category}</div>
               </div>
 
@@ -128,7 +142,9 @@ export default function DatabaseTable({
             </div>
 
             {/* Action Button Section */}
-            <div className="mt-4 pt-4 border-t border-slate-200/50 w-full"> {/* Refined divider */}
+            <div className="mt-4 pt-4 border-t border-slate-200/50 w-full">
+              {" "}
+              {/* Refined divider */}
               <AddNewProduct product={item} isDatabase={true} />
             </div>
           </div>

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getClients } from "@/app/(dashboard)/dashboard/communication/client/_actions/getClients";
+import { getClientsWithPagination } from "@/app/(dashboard)/dashboard/communication/client/_actions/getClientsWithPagination";
 
 /**
  * @swagger
@@ -10,6 +11,12 @@ import { getClients } from "@/app/(dashboard)/dashboard/communication/client/_ac
  *     security:
  *       - bearerAuth: []
  *     parameters:
+ *       - in: query
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: number
+ *         example: 1
  *       - in: query
  *         name: companyId
  *         required: true
@@ -29,6 +36,13 @@ import { getClients } from "@/app/(dashboard)/dashboard/communication/client/_ac
  *         schema:
  *           type: string
  *         description: Optional search term
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: number
+ *         example: 1
+ *         description: Page number for pagination
  *       - in: query
  *         name: take
  *         required: false
@@ -125,6 +139,24 @@ import { getClients } from "@/app/(dashboard)/dashboard/communication/client/_ac
  *                             type: string
  *                             format: date-time
  *                             example: "2026-01-14T05:15:14.971Z"
+ *                 meta:
+ *                   type: object
+ *                   properties:
+ *                     page:
+ *                       type: number
+ *                       example: 2
+ *                     take:
+ *                       type: number
+ *                       example: 20
+ *                     total:
+ *                       type: number
+ *                       example: 134
+ *                     totalPages:
+ *                       type: number
+ *                       example: 7
+ *                     hasNextPage:
+ *                       type: boolean
+ *                       example: true
  *
  *       400:
  *         description: Bad request
@@ -177,15 +209,39 @@ export async function GET(req: NextRequest) {
     const search = searchParams.get("search") || undefined;
     const takeParam = searchParams.get("take");
     const take = takeParam ? parseInt(takeParam) : undefined;
+    const userId = searchParams.get("userId");
+    const pageParam = searchParams.get("page");
+    const page = pageParam ? parseInt(pageParam) : 1;
 
     if (!companyId) {
       return NextResponse.json(
-        { success: false, message: "companyId is required" },
-        { status: 400 }
+        { success: false, message: "Company Id is required" },
+        { status: 400 },
       );
     }
 
-    const data = await getClients({ companyId, filter, search, take });
+    if (!userId) {
+      return NextResponse.json(
+        { success: false, message: "User Id is required" },
+        { status: 400 },
+      );
+    }
+
+    if (!takeParam) {
+      return NextResponse.json(
+        { success: false, message: "Take is required" },
+        { status: 400 },
+      );
+    }
+
+    const data = await getClientsWithPagination({
+      companyId,
+      filter,
+      search,
+      take,
+      page,
+      userId: Number(userId),
+    });
 
     return NextResponse.json({
       success: true,
@@ -198,7 +254,7 @@ export async function GET(req: NextRequest) {
         success: false,
         message: error.message || "Failed to retrieve clients",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

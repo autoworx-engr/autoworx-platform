@@ -1,17 +1,15 @@
 "use client";
 
-import React from "react";
-import { Filter } from "./Filter";
-import Link from "next/link";
-import { useEstimateFilterStore } from "@/stores/estimate-filter";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useActionStoreCreateEdit } from "@/stores/createEditStore";
-import { useListsStore } from "@/stores/lists";
-import { useEstimateCreateStore } from "@/stores/estimate-create";
-import { useEstimatePopupStore } from "@/stores/estimate-popup";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useActionStoreCreateEdit } from "@/stores/createEditStore";
+import { useEstimateCreateStore } from "@/stores/estimate-create";
+import { useEstimateFilterStore } from "@/stores/estimate-filter";
+import { useEstimatePopupStore } from "@/stores/estimate-popup";
+import { useListsStore } from "@/stores/lists";
 import { Search } from "lucide-react";
-
+import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Filter } from "./Filter";
 
 type THeaderProps = {
   searchTerm?: string;
@@ -52,7 +50,9 @@ export default function Header({
 
   return (
     <div
-      className={`mt-5 flex justify-between items-center flex-col-reverse gap-4 lg:gap-0 lg:flex-row`}
+      // className={`mt-5 flex justify-between items-center flex-col-reverse gap-4 lg:gap-0 lg:flex-row`}
+
+      className="mt-5 flex  gap-4 lg:flex-row lg:items-center flex-col-reverse lg:justify-between"
     >
       <div className="min-w-full lg:min-w-[500px] flex flex-col gap-x-4 rounded-2xl bg-white p-2.5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] ring-1 ring-slate-100 md:flex-row md:items-center">
         {/* Search Container */}
@@ -65,8 +65,8 @@ export default function Header({
           <input
             type="text"
             placeholder={
-              isCanned
-                ? "Search labor, service, category..."
+              isTemplate
+                ? "Search by Template ID"
                 : "Search ID, name, vehicle, email..."
             }
             className="h-11 w-full rounded-xl border-none bg-slate-50 pl-11 pr-4 text-sm font-medium text-slate-700 ring-1 ring-slate-200 transition-all duration-300 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-[#6571FF]/30 outline-none md:max-w-[450px]"
@@ -145,8 +145,6 @@ export default function Header({
             + Create Template
           </Link>
         )}
-
-       
       </div>
     </div>
   );

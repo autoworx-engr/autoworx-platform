@@ -87,15 +87,15 @@ export function CreateTab() {
             </thead>
             <tbody>
               {items.map((item, i) => (
-                <tr key={`item-${i}`} className="align-bottom">
+                <tr key={item.id} className="align-bottom">
                   {["service", "materials", "labor", "tags"].map(
                     (itemKey, j) => {
                       switch (itemKey) {
                         case "service":
                           return (
-                            <td key={itemKey + i}>
+                            <td key={`service-${item.id}`}>
                               <ItemSelector
-                                key={itemKey + i}
+                                key={`service-${item.id}`}
                                 type="SERVICE"
                                 label="Service"
                                 item={item}
@@ -160,15 +160,15 @@ export function CreateTab() {
                           );
                         case "materials":
                           return item.materials.length >= 0 ? (
-                            <td className="relative" key={`materials-${j}`}>
+                            <td className="relative" key={`materials-${item.id}`}>
                               {item.materials.length > 0 &&
                                 item.materials.map((material, j) => (
                                   <div
                                     className={cn("mt-2.5", j === 0 && "mt-0")}
-                                    key={`material-${j}`}
+                                    key={`material-${item.id}-${j}`}
                                   >
                                     <ItemSelector
-                                      key={`material-${j}`}
+                                      key={`material-${item.id}-${j}`}
                                       type="MATERIAL"
                                       label="Materials/Parts"
                                       item={item}
@@ -254,10 +254,10 @@ export function CreateTab() {
                               {item.materials.length == 0 && (
                                 <div
                                   className={cn("mt-2.5", j === 0 && "mt-0")}
-                                  key={`material-${j}`}
+                                  key={`material-${item.id}-${j}`}
                                 >
                                   <ItemSelector
-                                    key={`material-${j}`}
+                                    key={`material-${item.id}-${j}`}
                                     type="MATERIAL"
                                     label="Materials/Parts"
                                     item={item}
@@ -334,7 +334,7 @@ export function CreateTab() {
                           );
                         case "labor":
                           return (
-                            <td key={`labor-${j}`}>
+                            <td key={`labor-${item.id}`}>
                               <ItemSelector
                                 type="LABOR"
                                 label="Labor"
@@ -402,7 +402,7 @@ export function CreateTab() {
                           );
                         case "tags":
                           return (
-                            <td key={`tags-${j}`}>
+                            <td key={`tags-${item.id}`}>
                               <SelectTags
                                 type="TAG"
                                 value={item.tags}
@@ -431,7 +431,7 @@ export function CreateTab() {
                       className="flex items-center justify-center rounded-lg p-1.5 text-slate-400 transition-all hover:bg-rose-50 hover:text-rose-600 active:scale-90"
                       onClick={() => {
                         useEstimateCreateStore.setState((x) => ({
-                          items: items.toSpliced(i, 1),
+                          items: x.items.filter((row) => row.id !== item.id),
                         }));
                       }}
                     >

@@ -15,6 +15,10 @@ import SelectCategory from "@/components/Lists/SelectCategory";
 import Selector from "@/components/Selector";
 import { SlimInput } from "@/components/SlimInput";
 import Submit from "@/components/Submit";
+import { errorHandler } from "@/error-boundary/globalErrorHandler";
+import { cn } from "@/lib/cn";
+import { errorToast, successToast } from "@/lib/toast";
+import { useFormErrorStore } from "@/stores/form-error";
 import { useListsStore } from "@/stores/lists";
 import {
   Category,
@@ -22,13 +26,9 @@ import {
   InventoryProductType,
   Vendor,
 } from "@prisma/client";
+import { SquarePen } from "lucide-react";
 import { useEffect, useState } from "react";
 import { editProduct } from "../../../../actions/inventory/edit";
-import { errorHandler } from "@/error-boundary/globalErrorHandler";
-import { errorToast, successToast } from "@/lib/toast";
-import { useFormErrorStore } from "@/stores/form-error";
-import { SquarePen } from "lucide-react";
-import { cn } from "@/lib/cn";
 
 type TProps = {
   productData: InventoryProduct & { category: Category; vendor: Vendor };
@@ -260,7 +260,9 @@ export default function EditProduct({ productData }: TProps) {
 
               {/* radio buttons for product type */}
               <div>
-                <label className="font-medium text-slate-600">Product Type</label>
+                <label className="font-medium text-slate-600">
+                  Product Type
+                </label>
                 <div className="mt-1 flex gap-5">
                   <div>
                     <input
@@ -318,8 +320,8 @@ export default function EditProduct({ productData }: TProps) {
                   label={(vendor: Vendor | null) =>
                     vendor
                       ? vendor?.companyName ||
-                      vendor.name ||
-                      `Vendor ${vendor.id}`
+                        vendor.name ||
+                        `Vendor ${vendor.id}`
                       : "Vendor"
                   }
                   newButton={
@@ -358,8 +360,6 @@ export default function EditProduct({ productData }: TProps) {
                   setSelectedItem={setVendor}
                 />
               </div>
-
-
             </div>
 
             <div className="py-2 md:py-0">
@@ -368,7 +368,8 @@ export default function EditProduct({ productData }: TProps) {
                 onChange={handleChange}
                 name="description"
                 required={false}
-                className={cn("h-20 w-full rounded-md border border-slate-300 outline-none bg-background px-2 py-0.5 leading-6 transition-all duration-300 thin-scrollbar mt-1",
+                className={cn(
+                  "h-20 w-full rounded-md border border-slate-300 outline-none bg-background px-2 py-0.5 leading-6 transition-all duration-300 thin-scrollbar mt-1",
                   "bg-white/80 backdrop-blur-sm dark:bg-slate-900/50", // Subtle glass texture
                   "text-slate-600 dark:text-slate-300 placeholder:text-slate-400",
                   "focus:border-[#6571FF]/60 focus:ring-2 focus:ring-[#6571FF]/40", // Brand focus state
@@ -385,7 +386,7 @@ export default function EditProduct({ productData }: TProps) {
                 value={product.price as number}
                 name="price"
                 type="number"
-                required={false}
+                required
               />
               <SlimInput
                 onChange={(e) => {
@@ -511,11 +512,13 @@ export default function EditProduct({ productData }: TProps) {
           </div>
 
           <DialogFooter>
-            <DialogClose className="
+            <DialogClose
+              className="
                 rounded-xl mt-2 sm:mt-0 px-5 py-2.5 text-sm font-medium text-slate-500 
                 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
                 transition-colors border
-              ">
+              "
+            >
               Cancel
             </DialogClose>
             <Submit

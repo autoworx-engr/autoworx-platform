@@ -1,13 +1,14 @@
-import newCategory from "@/actions/category/newCategory";
 import deleteCategory from "@/actions/category/deleteCategory";
+import newCategory from "@/actions/category/newCategory";
 import Selector from "@/components/Selector";
 import { cn } from "@/lib/cn";
 import { useListsStore } from "@/stores/lists";
 import { Category } from "@prisma/client";
-import { useEffect, useState } from "react";
-import toast from "react-hot-toast";
 import { Popconfirm } from "antd";
 import { X } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
 export default function SelectCategory({
   categoryData = null,
@@ -18,6 +19,7 @@ export default function SelectCategory({
   required = false,
   onBlur,
   className,
+  allowEdit = false,
 }: {
   categoryData?: Category | null;
   onCategoryChange: (category: Category) => void;
@@ -27,11 +29,13 @@ export default function SelectCategory({
   required?: boolean;
   onBlur?: () => void;
   className?: string;
+  allowEdit?: boolean;
 }) {
   const { categories } = useListsStore();
   const [error, setError] = useState<string | null>();
   const [category, setCategory] = useState<Category | null>(categoryData);
   const [categoryInput, setCategoryInput] = useState("");
+  const pathname = usePathname();
 
   useEffect(() => {
     if (categoryData) {
@@ -190,7 +194,8 @@ export default function SelectCategory({
         openState={[
           categoryOpen as boolean,
           (open: React.SetStateAction<boolean>) => {
-            const newValue = typeof open === "function" ? open(categoryOpen as boolean) : open;
+            const newValue =
+              typeof open === "function" ? open(categoryOpen as boolean) : open;
             setCategoryOpen && setCategoryOpen(newValue);
             if (!newValue && onBlur) onBlur();
           },
@@ -198,6 +203,9 @@ export default function SelectCategory({
         selectedItem={category}
         setSelectedItem={setCategory}
         className={className}
+        disabledDropdown={
+          !allowEdit && !!category && pathname.includes("/estimate/")
+        }
       />
     </div>
   );

@@ -1,6 +1,6 @@
 import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse, URLPattern } from "next/server";
-import { jwtVerify } from "jose";
+import { jwtVerifyToken } from "./lib/jwtVerify";
 
 const PUBLIC_ROUTES = ["/login", "/register", "/forgot-password", "/"];
 
@@ -30,6 +30,7 @@ const PUBLIC_API_ROUTES = [
   "/api/twilio/receive",
   "/api/twilio/token",
   "/api/invoice/track-view",
+  "/api/upload",
 ];
 
 const PUBLIC_DYNAMIC_API_ROUTES = [
@@ -39,7 +40,7 @@ const PUBLIC_DYNAMIC_API_ROUTES = [
 ];
 
 const isDynamicPublicApiRoute = (pathname: string) => {
-  const isPublic = PUBLIC_DYNAMIC_API_ROUTES.some(route => {
+  const isPublic = PUBLIC_DYNAMIC_API_ROUTES.some((route) => {
     const pattern = new URLPattern({ pathname: route });
     return pattern.test({ pathname: pathname });
   });
@@ -77,10 +78,8 @@ export async function middleware(request: NextRequest) {
       ? authHeader.split(" ")[1]
       : authHeader;
     try {
-      const secret = new TextEncoder().encode(process.env.ACCESS_SECRET || "");
-
       // 2. Verify Token
-      const verifyToken = await jwtVerify(accessToken, secret);
+      const verifyToken = await jwtVerifyToken(accessToken);
       const expires = (verifyToken?.payload?.exp ?? 0) * 1000;
       if (Date.now() < (expires as number)) {
         return NextResponse.next();

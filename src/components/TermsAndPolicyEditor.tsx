@@ -113,7 +113,7 @@ export function TermsAndPolicyEditor() {
                 onValueChange={setActiveTab}
                 className="w-full"
               >
-                <TabsList className="grid w-full grid-cols-2">
+                <TabsList className="grid grid-cols-4 md:inline-flex -ml-[14px] rounded-bl-none">
                   <TabsTrigger
                     value="terms"
                     className="text-sm md:text-base truncate"
@@ -128,7 +128,7 @@ export function TermsAndPolicyEditor() {
                   </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="terms" className="space-y-4 ">
+                <TabsContent value="terms" className="space-y-4 rounded-tl-none">
                   <div className="space-y-2">
                     <Label htmlFor="terms-editor">
                       Terms of Service Content
@@ -147,7 +147,7 @@ export function TermsAndPolicyEditor() {
                   </div>
                 </TabsContent>
 
-                <TabsContent value="policy" className="space-y-4">
+                <TabsContent value="policy" className="space-y-4 rounded-tl-none">
                   <div className="space-y-2">
                     <Label htmlFor="policy-editor">
                       Privacy Policy Content
