@@ -57,6 +57,12 @@ export default function InventoryDisplay({
   const params = useSearchParams();
   const search = params.get("search");
 
+  // Sync state with URL params when they change
+  useEffect(() => {
+    setCurrentPage(page || 1);
+    setPageSize(take || 50);
+  }, [page, take]);
+
   useEffect(() => {
     if (inventoryProducts.length > 0) {
       setShowPagination(true);
@@ -201,8 +207,13 @@ export default function InventoryDisplay({
                   <InventoryTableRow
                     key={history.id}
                     history={history}
+                    // index={
+                    //   currentPage > 1 ? index + 10 * (currentPage - 1) : index
+                    // }
                     index={
-                      currentPage > 1 ? index + 10 * (currentPage - 1) : index
+                      currentPage > 1
+                        ? index + pageSize * (currentPage - 1)
+                        : index
                     }
                     timezone={timezone}
                   />

@@ -1,45 +1,40 @@
 "use client";
-import { SlimInput } from "@/components/SlimInput";
-import Selector from "./Selector";
-import {
-  Conditions,
-  Funnels,
-  invoiceTimeDelays,
-  PipelineType,
-} from "./constants";
-import { ChangeEvent, useEffect, useState } from "react";
-import { getSalesTags } from "@/actions/pipelines/leadTag";
-import { Company, InfobipConfig, Tag, TwilioCredentials } from "@prisma/client";
-import MultiSelect from "./MultiSelect";
 import { getInvoiceTags } from "@/actions/pipelines/invoiceTag";
-import { usePipelineStagesStore } from "@/stores/pipelineStagesStore";
+import { getSalesTags } from "@/actions/pipelines/leadTag";
+import { SlimInput } from "@/components/SlimInput";
 import { useAllTagAutomationRules } from "@/hooks/tag-automation/useAllTagAutomationRules";
+import { usePipelineStagesStore } from "@/stores/pipelineStagesStore";
 import { TAttachments } from "@/types/automation";
-import CustomRadioGroup from "./CustomRadioGroup";
 import { Box, Paper, Switch, Typography } from "@mui/material";
+import { Company, InfobipConfig, Tag, TwilioCredentials } from "@prisma/client";
+import { ChangeEvent, useEffect, useState } from "react";
 import ActiveTemplate from "./ActiveTemplate";
+import CustomRadioGroup from "./CustomRadioGroup";
+import MultiSelect from "./MultiSelect";
+import Selector from "./Selector";
+import { Conditions, invoiceTimeDelays, PipelineType } from "./constants";
 
+import { useCreateTagAutomationRule } from "@/hooks/tag-automation/useCreateTagAutomationRule";
 import { useCharacterLimit } from "@/hooks/useCharecterLimit";
 import {
   handleFileSelection,
   uploadAllAttachments,
 } from "@/utils/handleFileAttachment";
-import { useCreateTagAutomationRule } from "@/hooks/tag-automation/useCreateTagAutomationRule";
 
 import { useFindOneTagAutomationRule } from "@/hooks/tag-automation/useFindOneTagAutomationRule";
 import { useUpdateTagAutomationRule } from "@/hooks/tag-automation/useUpdateTagAutomationRule";
 
+import { AppointmentTemplateVariable } from "@/components/Lists/NewTemplate";
+import { errorToast } from "@/lib/toast";
 import {
   convertSecondsToTime,
   convertTimeToSeconds,
 } from "@/utils/timeConvertToSeconds";
-import { errorToast } from "@/lib/toast";
 import { Spin } from "antd";
-import { AppointmentTemplateVariable } from "@/components/Lists/NewTemplate";
-import { getConditionHelp, GuideCard, TipBox } from "./TagautomationHelper";
-import TooltipLabel from "./ToolTipLabel";
 import InfoCard from "./InfoCard";
+import { getConditionHelp, TipBox } from "./TagautomationHelper";
 import { TEMPLATE_VARIABLES } from "./TemplateVariable";
+import TooltipLabel from "./ToolTipLabel";
 // import { CircleQuestionMark } from 'lucide-react';
 type RuleFormProps = {
   mode: "create" | "edit" | undefined;
@@ -302,6 +297,10 @@ const TagRuleForm = ({
     title: s.title || s.name,
   }));
 
+  console.log("stages ==>", stages);
+
+  console.log("stageOptions ==>", stageOptions);
+
   // Handle form field changes
   const handleChange = (field: keyof Rule, value: any) => {
     setFormData((prev) => {
@@ -309,6 +308,7 @@ const TagRuleForm = ({
 
       // Normalize targetColumnId / columnIds value depending on the field source
       if (field === "targetColumnId") {
+        console.log("targe column ==>", formData.targetColumnId);
         // If the incoming value is an array (from MultiSelect), use it directly
         if (Array.isArray(value)) {
           newState.targetColumnId = value;
@@ -350,6 +350,7 @@ const TagRuleForm = ({
 
       // If pipelineType changed, reset selected tags so selections don't leak between pipelines
       if (field === "pipelineType" && prev.pipelineType !== value) {
+        console.log("target columg id==>", formData.targetColumnId);
         newState.tagIds = [];
         // also reset any pipeline-specific selections
         newState.targetColumnId = null;
@@ -717,7 +718,7 @@ const TagRuleForm = ({
             error={error.timeDelay}
           />
 
-          {formData.condition_type === "pipeline" && (
+          {/* {formData.condition_type === "pipeline" && (
             <Selector
               name="targetColumnId"
               label="Action"
@@ -732,11 +733,29 @@ const TagRuleForm = ({
               placeholder="Select a action"
               error={error.targetColumnId}
             />
-          )}
+          )} */}
 
+          {formData.condition_type === "pipeline" && (
+            <Selector
+              key={`action-selector-${formData.pipelineType}`}
+              name="targetColumnId"
+              label="Action"
+              options={stageOptions}
+              value={
+                typeof formData.targetColumnId === "number"
+                  ? formData.targetColumnId
+                  : undefined
+              }
+              onChange={(value) => handleChange("targetColumnId", value)}
+              required
+              placeholder="Select an action"
+              error={error.targetColumnId}
+            />
+          )}
           {formData.condition_type === "post_tag" && (
             <div>
               <MultiSelect
+                key={`stage-multiselect-${formData.pipelineType}`}
                 // For post-tag condition we need to pick stages (columns) from the pipeline
                 options={stageOptions}
                 value={formData.columnIds || []}
