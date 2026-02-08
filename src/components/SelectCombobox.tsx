@@ -1,15 +1,6 @@
+"use client";
+
 import { cn } from "@/lib/cn";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@radix-ui/react-dropdown-menu";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/Tooltip";
 import React, {
   ChangeEvent,
   useCallback,
@@ -17,9 +8,25 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { ChevronDown, Search, X } from "lucide-react";
+import {
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+  ComboboxTrigger,
+  ComboboxValue,
+} from "@/components/ui/combobox";
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/Tooltip";
 
-interface SelectorProps<T> {
+interface SelectComboboxProps<T> {
   label: (item: T | null) => string;
   items: T[];
   border?: boolean;
@@ -32,7 +39,7 @@ interface SelectorProps<T> {
   selectedItem?: T | null | undefined;
   setSelectedItem?: React.Dispatch<React.SetStateAction<T | null>>;
   clickabled?: boolean;
-  disabledDropdown?: boolean;
+  disabled?: boolean;
   className?: string;
   hasNextPage?: boolean;
   fetchNextPage?: () => void;
@@ -40,7 +47,7 @@ interface SelectorProps<T> {
   useInfiniteScroll?: boolean;
 }
 
-export default function Selector<T>({
+export default function SelectCombobox<T>({
   label,
   items,
   border,
@@ -53,13 +60,13 @@ export default function Selector<T>({
   selectedItem,
   setSelectedItem,
   clickabled = true,
-  disabledDropdown = false,
+  disabled = false,
   className,
   hasNextPage = false,
   fetchNextPage,
   isFetchingNextPage = false,
   useInfiniteScroll = false,
-}: SelectorProps<T>): JSX.Element {
+}: SelectComboboxProps<T>): JSX.Element {
   const [searchTerm, setSearchTerm] = useState("");
   const [localOpen, setLocalOpen] = useState(false);
   const [isOpen, setIsOpen] = openState || [localOpen, setLocalOpen];
@@ -71,16 +78,11 @@ export default function Selector<T>({
   useEffect(() => {
     setFilteredItems(items);
   }, [items]);
+
   useEffect(() => {
     setSelected(selectedItem);
   }, [selectedItem]);
 
-  // Update selected item when selectedItem prop changes
-  useEffect(() => {
-    setSelected(selectedItem);
-  }, [selectedItem]);
-
-  // Infinite scroll handler
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     if (!useInfiniteScroll || !hasNextPage || isFetchingNextPage) return;
 
@@ -101,15 +103,15 @@ export default function Selector<T>({
     } else {
       const searchedItems = searchQuery.trim()
         ? items.filter(
-          (item: any) =>
-            item.clientName
-              ?.toLowerCase()
-              .includes(searchQuery.toLowerCase()) ||
-            item.id
-              ?.toString()
-              .toLowerCase()
-              .includes(searchQuery.toLowerCase()),
-        )
+            (item: any) =>
+              item.clientName
+                ?.toLowerCase()
+                .includes(searchQuery.toLowerCase()) ||
+              item.id
+                ?.toString()
+                .toLowerCase()
+                .includes(searchQuery.toLowerCase()),
+          )
         : items;
       setFilteredItems(searchedItems);
     }
@@ -124,144 +126,128 @@ export default function Selector<T>({
     setFilteredItems(items);
   }
 
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    if (!open) {
+      setSearchTerm("");
+      setFilteredItems(items);
+    }
+  };
+
   return (
-    <DropdownMenu open={isOpen} onOpenChange={setIsOpen} modal={isOpen}>
+    <Combobox
+      items={filteredItems}
+      value={selected ?? undefined}
+      onValueChange={(item) => {
+        if (item) {
+          handleSelectItem(item);
+        }
+      }}
+      open={isOpen}
+      onOpenChange={handleOpenChange}
+      disabled={disabled}
+    >
       <div
         className={cn("w-full max-w-sm transition-all duration-300", className)}
       >
-        <DropdownMenuTrigger
-          onPointerDown={(e) => e.preventDefault()}
-          onClick={(e) => {
-            e.stopPropagation();
-            setIsOpen(!isOpen);
-          }}
-          disabled={disabledDropdown}
-          className={cn(
-            "group flex h-9 mt-1 w-[99%] items-center justify-between rounded-lg px-4 transition-all duration-300 outline-none",
-            "bg-white/80 dark:bg-slate-900/50 backdrop-blur-sm shadow-sm hover:shadow-md",
-            "ring-1 ring-slate-200 dark:ring-slate-800",
-            isOpen
-              ? "ring-2 ring-[#6571FF]/60 border-transparent"
-              : "hover:ring-slate-300",
-            disabledDropdown && "opacity-50 cursor-not-allowed",
-          )}
-        >
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="text-sm font-medium text-slate-600 dark:text-slate-300 truncate pr-2">
-                  {selected ? label(selected) : label(null)}
-                </span>
-              </TooltipTrigger>
-              {selected && label(selected).length > 25 && (
-                <TooltipContent className="bg-slate-900 text-white border-none shadow-xl">
-                  <p>{label(selected)}</p>
-                </TooltipContent>
-              )}
-            </Tooltip>
-          </TooltipProvider>
-
-          {!disabledDropdown && (
-            <ChevronDown
-              size={18}
+        <ComboboxTrigger
+          render={
+            <Button
+              variant="outline"
               className={cn(
-                "text-slate-400 transition-transform duration-300",
-                isOpen && "rotate-180 text-[#6571FF]",
+                "group flex h-9 mt-1 w-[99%] items-center justify-between rounded-lg px-4 transition-all duration-300 outline-none",
+                "bg-white/80 dark:bg-slate-900/50 backdrop-blur-sm shadow-sm hover:shadow-md",
+                "ring-1 ring-slate-200 dark:ring-slate-800",
+                isOpen
+                  ? "ring-2 ring-[#6571FF]/60 border-transparent"
+                  : "hover:ring-slate-300",
+                disabled && "opacity-50 cursor-not-allowed",
               )}
-            />
-          )}
-        </DropdownMenuTrigger>
-
-        <DropdownMenuContent
-          align="start"
-          sideOffset={8}
+            >
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="text-sm font-medium text-slate-600 dark:text-slate-300 truncate pr-2">
+                      <ComboboxValue placeholder={label(null)} />
+                    </span>
+                  </TooltipTrigger>
+                  {selected && label(selected).length > 25 && (
+                    <TooltipContent className="bg-slate-900 text-white border-none shadow-xl">
+                      <p>{label(selected)}</p>
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
+            </Button>
+          }
+        />
+        <ComboboxContent
           className={cn(
             "z-50 w-[var(--radix-popper-anchor-width)] min-w-[280px] overflow-hidden rounded-xl",
             "border border-slate-200/60 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl shadow-2xl animate-in fade-in zoom-in-95 duration-200",
           )}
         >
-          {/* Modern Search Area */}
           <div className="relative p-2 border-b border-slate-100 dark:border-slate-800">
-            <Search
-              size={14}
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-            />
-            <input
-              type="text"
+            <ComboboxInput
               placeholder="Search items..."
               className="w-full rounded-md bg-slate-50 dark:bg-slate-800/50 py-1.5 pl-8 pr-8 text-sm outline-none ring-1 ring-transparent focus:ring-[#6571FF]/30 focus:bg-white transition-all"
               onChange={handleSearchChange}
               value={searchTerm}
               autoFocus
+              showTrigger={false}
             />
           </div>
-
-          {/* Display list of items */}
-          <div
+          <ComboboxEmpty>No items found.</ComboboxEmpty>
+          <ComboboxList
             ref={scrollContainerRef}
             onScroll={handleScroll}
             className="mb-5 flex max-h-40 flex-col overflow-y-auto thin-scrollbar"
           >
-            {filteredItems?.map((item, index) => {
-              // Use a unique key that combines the item's id if available, otherwise fall back to index
+            {(item) => {
               const key = (item as any)?.id
                 ? `item-${(item as any).id}`
-                : `index-${index}`;
-
+                : `item-${JSON.stringify(item)}`;
               if (clickabled) {
                 return (
-                  <button
-                    onClick={() => {
-                      handleSelectItem(item);
-                    }}
-                    type="button"
+                  <ComboboxItem
                     key={key}
+                    value={item}
                     className={cn(
                       "w-full p-1 px-2 text-left hover:bg-gray-100",
                       border &&
-                      "relative border-b border-slate-200 dark:border-slate-800 px-2 py-1.5 rounded-xl",
+                        "relative border-b border-slate-200 dark:border-slate-800 px-2 py-1.5 rounded-xl",
                     )}
                   >
                     {displayList(item)}
-                  </button>
+                  </ComboboxItem>
                 );
               } else {
                 return (
                   <div
                     key={key}
                     className={cn(
-                      "w-full p-1 px-2 text-left hover:bg-gray-100",
+                      "w-full p-1 px-2 text-left",
                       border &&
-                      "relative border-b border-slate-200 dark:border-slate-800 px-2 py-1.5 rounded-xl",
+                        "relative border-b border-slate-200 dark:border-slate-800 px-2 py-1.5 rounded-xl",
                     )}
                   >
                     {displayList(item)}
                   </div>
                 );
               }
-            })}
-
-            {/* Loading indicator for infinite scroll */}
-            {useInfiniteScroll && isFetchingNextPage && (
-              <div className="flex justify-center py-2">
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600"></div>
-              </div>
-            )}
-
-            {isFetchingNextPage && (
-              <div className="flex justify-center py-3">
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-200 border-t-[#6571FF]" />
-              </div>
-            )}
-          </div>
-
-          {/* New Button / Action Footer */}
+            }}
+          </ComboboxList>
+          {useInfiniteScroll && isFetchingNextPage && (
+            <div className="flex justify-center py-2">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600"></div>
+            </div>
+          )}
           <div className="bg-slate-50/50 dark:bg-slate-800/30 p-2 border-t border-slate-100 dark:border-slate-800">
             {newButton}
             {footer && <div className="mt-1">{footer}</div>}
           </div>
-        </DropdownMenuContent>
+        </ComboboxContent>
       </div>
-    </DropdownMenu>
+    </Combobox>
   );
 }

@@ -597,7 +597,7 @@ export default function AppointmentModalBody({
       startTime !== originalValues.startTime ||
       endTime !== originalValues.endTime ||
       JSON.stringify(assignedUsers) !==
-        JSON.stringify(originalValues.assignedUsers) ||
+      JSON.stringify(originalValues.assignedUsers) ||
       client?.id !== originalValues.client?.id ||
       vehicle?.id !== originalValues.vehicle?.id ||
       draft !== originalValues.draft ||
@@ -605,7 +605,7 @@ export default function AppointmentModalBody({
       confirmationTemplate?.id !== originalValues.confirmationTemplate?.id ||
       reminderTemplate?.id !== originalValues.reminderTemplate?.id ||
       confirmationTemplateStatus !==
-        originalValues.confirmationTemplateStatus ||
+      originalValues.confirmationTemplateStatus ||
       reminderTemplateStatus !== originalValues.reminderTemplateStatus ||
       JSON.stringify(times) !== JSON.stringify(originalValues.times)
     ) {
@@ -856,9 +856,9 @@ export default function AppointmentModalBody({
         </div>
       </DialogHeader>
 
-      <div className="-mx-6 h-full grid gap-px overflow-y-scroll border-solid sm:grid-cols-2 md:border-y md:bg-border">
-        <div className="h-full sm:h-full overflow-y-auto thin-scrollbar">
-          <div className="space-y-4 bg-background p-6 pb-20">
+      <div className="-mx-6 h-full grid gap-px overflow-y-scroll border-solid sm:grid-cols-2 md:border-y ">
+        <div className="h-full sm:h-full overflow-y-auto thin-scrollbar bg-white">
+          <div className="space-y-4 bg-background p-6">
             <FormError />
 
             <AppointmentTitleSelectAndAdd
@@ -1033,7 +1033,6 @@ export default function AppointmentModalBody({
                 setOpenDropdown={setClientOpenDropdown}
                 setIsAppointmentModalOpen={setIsAppointmentModalOpen}
               />
-
               <SelectAppointmentVehicle
                 vehicleId={vehicleId}
                 fromLead={fromLead}
@@ -1044,18 +1043,22 @@ export default function AppointmentModalBody({
                 setOpenDropdown={setVehicleOpenDropdown}
                 setIsAppointmentModalOpen={setIsAppointmentModalOpen}
               />
-
               <div className="w-full">
                 <DropdownMenu.Root open={draftOpen} onOpenChange={setDraftOpen}>
                   <DropdownMenu.Trigger asChild>
                     <button
                       type="button"
+                      onPointerDown={(e) => e.preventDefault()}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDraftOpen(!draftOpen);
+                      }}
                       className={cn(
                         "flex h-11 w-full items-center justify-between rounded-xl px-4 py-2 text-sm transition-all",
                         "border border-slate-200 bg-white shadow-sm hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900",
                         "focus:outline-none focus:ring-2 focus:ring-[#6571FF]/40",
                         draftOpen &&
-                          "ring-2 ring-[#6571FF]/40 border-[#6571FF]",
+                        "ring-2 ring-[#6571FF]/40 border-[#6571FF]",
                       )}
                     >
                       <div className="flex flex-col items-start overflow-hidden text-left">
@@ -1145,7 +1148,7 @@ export default function AppointmentModalBody({
                             "flex w-full items-center justify-center gap-2 rounded-lg bg-[#6571FF] py-2.5 text-sm font-semibold text-white transition-opacity",
                             "hover:opacity-90 active:scale-[0.98]",
                             (!client || !vehicle) &&
-                              "cursor-not-allowed opacity-60",
+                            "cursor-not-allowed opacity-60",
                           )}
                         >
                           <Plus size={16} />
@@ -1164,8 +1167,8 @@ export default function AppointmentModalBody({
                 placeholder="Notes"
                 className={cn(
                   "h-20 w-full rounded-md border border-slate-300 outline-none bg-background px-2 py-0.5 leading-6 transition-all duration-300 thin-scrollbar",
-                  "bg-white/80 backdrop-blur-sm dark:bg-slate-900/50",
-                  "text-slate-600 dark:text-slate-300 placeholder:text-slate-400",
+                  "bg-white/80 backdrop-blur-sm",
+                  "text-slate-600 placeholder:text-slate-400",
                   "focus:border-[#6571FF]/60 focus:ring-2 focus:ring-[#6571FF]/40",
                   "disabled:opacity-50 disabled:cursor-not-allowed",
                 )}
@@ -1180,11 +1183,11 @@ export default function AppointmentModalBody({
             </div>
           </div>
 
-          <div className="relative sm:hidden row-span-2 h-full overflow-y-auto thin-scrollbar divide-y bg-background">
+          <div className="relative sm:hidden row-span-2 h-full thin-scrollbar divide-y bg-background">
             {tab === Tab.Schedule ? (
               <div
                 ref={containerRef}
-                className="absolute inset-0 divide-y overflow-y-auto"
+                className="absolute inset-0 divide-y overflow-y-auto h-full"
               >
                 <ScheduleTab
                   rows={rows}
@@ -1222,7 +1225,7 @@ export default function AppointmentModalBody({
           </div>
         </div>
 
-        <div className="hidden sm:block relative row-span-2 h-full overflow-y-auto thin-scrollbar divide-y bg-background">
+        <div className="hidden sm:block relative row-span-2 h-full overflow-y-auto thin-scrollbar divide-y bg-background border-l">
           {tab === Tab.Schedule ? (
             <div
               ref={containerRef}
@@ -1299,7 +1302,7 @@ export default function AppointmentModalBody({
               <button
                 type="button"
                 className="
-                rounded-xl mt-2 sm:mt-0 px-5 py-2.5 text-sm font-medium text-slate-500 
+                rounded-xl px-5 py-2.5 text-sm font-medium text-slate-500 
                 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
                 transition-colors border
                 "
@@ -1310,13 +1313,12 @@ export default function AppointmentModalBody({
             </DialogClose>
             <button
               type="button"
-              className={`rounded-xl px-6 py-2.5 text-sm font-medium text-white shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40
+              className={`rounded-xl px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40
                 hover:-translate-y-0.5 hover:scale-[1.02]
                 active:translate-y-0 active:scale-100
-                transition-all duration-200 ${
-                  formChanged && !isSubmitting
-                    ? "bg-gradient-to-r from-[#6571FF] to-[#5a66ee] cursor-pointer"
-                    : "cursor-not-allowed bg-gray-400"
+                transition-all duration-200 ${formChanged && !isSubmitting
+                  ? "bg-gradient-to-r from-[#6571FF] to-[#5a66ee] cursor-pointer"
+                  : "cursor-not-allowed bg-gray-400"
                 }`}
               onClick={handleSubmit}
               disabled={
