@@ -3,6 +3,7 @@ import SearchSection from "./_components/SearchSection";
 import OrderSelect from "./_components/OrderSelect";
 import { ColumnProvider } from "@/context/sales-pipeline.context";
 import { getSalePipelineColumns } from "@/actions/pipelines/getSalePipelineColumns";
+import ResetButton from "./_components/ResetButton";
 
 type TProps = {
   searchParams: {
@@ -20,11 +21,13 @@ export default async function SalesPipelinePage({ searchParams }: TProps) {
     searchParams?.orderBy,
   );
 
+
   return (
     <div className="space-y-8">
       <div className="mb-4 px-2 flex items-center gap-2">
         <SearchSection searchValue={searchParams.searchTerm} />
         <OrderSelect />
+        {(searchParams.searchTerm || searchParams.orderBy) && <ResetButton searchParams={searchParams} />}
       </div>
       <ColumnProvider
         initialColumns={pipelineColumns}

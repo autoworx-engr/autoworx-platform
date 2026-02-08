@@ -26,7 +26,7 @@ export default function OrderSelect() {
 
   return (
     <Select onValueChange={onValueChange} defaultValue={currentOrder}>
-      <SelectTrigger className="bg-white rounded-xl justify-start">
+      <SelectTrigger className="bg-white h-11 hover:border-slate-200 hover:bg-slate-50/30 rounded-xl border-2 border-slate-100 justify-start outline-none focus:border-[#6571FF]/40 focus:bg-white focus:ring-4 focus:ring-[#6571FF]/10">
         {/* <SelectValue className="flex gap-1 flex-row"> */}
         <Filter />{" "}
         {currentOrder === "asc"
