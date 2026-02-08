@@ -4,6 +4,8 @@ import { NextResponse } from "next/server";
 import { twiml } from "twilio";
 import { v4 as uuidv4 } from "uuid";
 
+type DialAttributes = Parameters<twiml.VoiceResponse["dial"]>[0];
+
 /**
  * @swagger
  * /api/twilio/receive:
@@ -106,12 +108,18 @@ export async function POST(request: Request) {
     });
 
     const voiceResponse = new twiml.VoiceResponse();
+    const recordingOptions: Partial<DialAttributes> = entitlements.callRecording
+      ? {
+          record: "record-from-answer" as const,
+          recordingStatusCallback: `${process.env.NEXT_PUBLIC_APP_URL}/api/twilio/call-recording?callId=${callId}`,
+          recordingStatusCallbackMethod: "POST",
+        }
+      : {};
+
     voiceResponse.dial(
       {
         callerId: twilioCredentials.phoneNumber,
-        record: "record-from-answer",
-        recordingStatusCallback: `${process.env.NEXT_PUBLIC_APP_URL}/api/twilio/call-recording?callId=${callId}`,
-        recordingStatusCallbackMethod: "POST",
+        ...recordingOptions,
       },
       to,
     );

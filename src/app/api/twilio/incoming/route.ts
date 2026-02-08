@@ -5,6 +5,8 @@ import { twiml } from "twilio";
 import { v4 as uuidv4 } from "uuid";
 import { sendPushNotification } from "@/actions/notification/sendPushNotification";
 
+type DialAttributes = Parameters<twiml.VoiceResponse["dial"]>[0];
+
 /**
  * @swagger
  * /api/twilio/incoming:
@@ -194,6 +196,14 @@ export async function POST(request: Request) {
     const voiceResponse = new twiml.VoiceResponse();
     console.log("🚀 ~ POST ~ voiceResponse:", voiceResponse);
 
+    const recordingOptions: Partial<DialAttributes> = entitlements.callRecording
+      ? {
+          record: "record-from-answer" as const,
+          recordingStatusCallback: `${process.env.NEXT_PUBLIC_APP_URL}/api/twilio/call-recording?callId=${callId}`,
+          recordingStatusCallbackMethod: "POST",
+        }
+      : {};
+
     // Check if call forwarding is enabled
     if (callForwardingNumber) {
       console.log(`📞 [Incoming] Forwarding call to: ${callForwardingNumber}`);
@@ -201,24 +211,20 @@ export async function POST(request: Request) {
       // Forward the call to the specified number
       voiceResponse.dial(
         {
-          record: "record-from-answer",
-          recordingStatusCallback: `${process.env.NEXT_PUBLIC_APP_URL}/api/twilio/call-recording?callId=${callId}`,
-          recordingStatusCallbackMethod: "POST",
           timeout: 30,
           answerOnBridge: true,
           action: `${process.env.NEXT_PUBLIC_APP_URL}/api/twilio/call-status`,
+          ...recordingOptions,
         },
         callForwardingNumber,
       );
     } else {
       // Dial to the client identity (the browser device) - original behavior
       const dial = voiceResponse.dial({
-        record: "record-from-answer",
-        recordingStatusCallback: `${process.env.NEXT_PUBLIC_APP_URL}/api/twilio/call-recording?callId=${callId}`,
-        recordingStatusCallbackMethod: "POST",
         timeout: 60, // Give 60 seconds for the call to be answered
         answerOnBridge: true, // Only answer when the call is bridged (connected)
         action: `${process.env.NEXT_PUBLIC_APP_URL}/api/twilio/call-status`,
+        ...recordingOptions,
       });
 
       // Connect to the user's device
