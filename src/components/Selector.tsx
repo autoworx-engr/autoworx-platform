@@ -101,15 +101,15 @@ export default function Selector<T>({
     } else {
       const searchedItems = searchQuery.trim()
         ? items.filter(
-            (item: any) =>
-              item.clientName
-                ?.toLowerCase()
-                .includes(searchQuery.toLowerCase()) ||
-              item.id
-                ?.toString()
-                .toLowerCase()
-                .includes(searchQuery.toLowerCase()),
-          )
+          (item: any) =>
+            item.clientName
+              ?.toLowerCase()
+              .includes(searchQuery.toLowerCase()) ||
+            item.id
+              ?.toString()
+              .toLowerCase()
+              .includes(searchQuery.toLowerCase()),
+        )
         : items;
       setFilteredItems(searchedItems);
     }
@@ -125,7 +125,7 @@ export default function Selector<T>({
   }
 
   return (
-    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen} modal={isOpen}>
       <div
         className={cn("w-full max-w-sm transition-all duration-300", className)}
       >
@@ -219,7 +219,7 @@ export default function Selector<T>({
                     className={cn(
                       "w-full p-1 px-2 text-left hover:bg-gray-100",
                       border &&
-                        "relative border-b border-slate-200 dark:border-slate-800 px-2 py-1.5 rounded-xl",
+                      "relative border-b border-slate-200 dark:border-slate-800 px-2 py-1.5 rounded-xl",
                     )}
                   >
                     {displayList(item)}
@@ -232,7 +232,7 @@ export default function Selector<T>({
                     className={cn(
                       "w-full p-1 px-2 text-left hover:bg-gray-100",
                       border &&
-                        "relative border-b border-slate-200 dark:border-slate-800 px-2 py-1.5 rounded-xl",
+                      "relative border-b border-slate-200 dark:border-slate-800 px-2 py-1.5 rounded-xl",
                     )}
                   >
                     {displayList(item)}

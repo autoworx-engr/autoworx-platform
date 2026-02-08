@@ -113,40 +113,41 @@ export default function AssignUsers({
       </button>
 
       {/* Assigned Users List */}
-      <div className="space-y-2 mb-4">
+      <div className="no-visible-scrollbar my-3 flex max-h-44 w-full flex-wrap items-center gap-2 overflow-y-auto p-1">
         {assignedUsers.map((user, index) => {
           const fullName = `${user.firstName} ${user.lastName}`;
           return (
             <div
               key={`${user.id}-${index}`}
-              className="group flex items-center justify-between gap-x-4 rounded-xl bg-white py-1.5 px-2 ring-1 ring-slate-200 transition-all duration-300 hover:shadow-md hover:ring-[#6571FF]/30 active:scale-[0.99] animate-in fade-in slide-in-from-left-2"
+              className="group flex items-center gap-x-2 rounded-full bg-slate-100/80 px-3 py-1.5 ring-1 ring-slate-200/60 transition-all duration-300 hover:bg-white hover:ring-[#6571FF]/30 hover:shadow-sm animate-in fade-in zoom-in-95"
             >
-              <div className="flex items-center gap-x-3">
-                <div className="relative">
-                  <Avatar
-                    photo={user.image}
-                    width={36}
-                    height={36}
-                    alt={fullName}
-                    className="rounded-full ring-2 ring-white shadow-sm"
-                  />
-                  <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-emerald-500" />
-                </div>
-                <p className="text-sm font-semibold text-slate-600 group-hover:text-slate-900 transition-colors">
-                  {fullName}
-                </p>
-              </div>
+              <Avatar
+                photo={user.image}
+                width={22}
+                height={22}
+                alt={fullName}
+                className="rounded-full ring-1 ring-white shadow-sm"
+              />
+              <span className="text-sm font-medium text-slate-600 group-hover:text-slate-900 transition-colors">
+                {fullName}
+              </span>
 
               <button
                 type="button"
                 onClick={() => doRemoveAssignedUser(user)}
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-all hover:bg-rose-50 hover:text-rose-500"
+                className="flex h-5 w-5 items-center justify-center rounded-full text-slate-400 transition-all duration-200 hover:bg-rose-100 hover:text-rose-600"
               >
-                <X size={16} strokeWidth={2.5} />
+                <X className="h-3.5 w-3.5" strokeWidth={2.5} />
               </button>
             </div>
           );
         })}
+
+        {assignedUsers.length === 0 && (
+          <p className="ml-1 text-xs italic text-slate-400">
+            {employeeType === "Sales" ? "No sales person assigned yet." : "No Technician assigned yet."}
+          </p>
+        )}
       </div>
 
       {/* Search & Add New Surface */}

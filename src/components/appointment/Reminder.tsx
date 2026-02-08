@@ -185,7 +185,7 @@ export function Reminder({
 
   if (!client) {
     return (
-      <div className="flex min-h-[400px] w-full flex-col items-center justify-center gap-4 rounded-3xl bg-slate-50/50 p-8 text-center ring-1 ring-inset ring-slate-100 shadow-inner">
+      <div className="flex h-full min-h-[400px] w-full flex-col items-center justify-center gap-4 rounded-3xl bg-slate-50/50 p-8 text-center ring-1 ring-inset ring-slate-100 shadow-inner">
         {/* Elevated Icon Conzzzzztainer */}
         <div className="relative flex h-24 w-24 items-center justify-center rounded-full bg-white shadow-xl shadow-slate-200/50 ring-1 ring-slate-100">
           <UserRoundX
