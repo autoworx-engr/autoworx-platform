@@ -67,6 +67,7 @@ export async function POST(request: Request) {
             id: true,
             name: true,
             smsGateway: true,
+            missedCallTextBackEnabled: true,
           },
         },
       },
@@ -109,7 +110,11 @@ export async function POST(request: Request) {
         const message = `You have a missed call from ${companyName}. We'll try to reach you again soon or feel free to call us back.`;
 
         const entitlements = await getCompanyEntitlements(call.company?.id!);
-        if (!entitlements.canUseSms || !entitlements.missedCallTextBack) {
+        if (
+          !entitlements.canUseSms ||
+          !entitlements.missedCallTextBack ||
+          !call.company?.missedCallTextBackEnabled
+        ) {
           console.warn(
             "Missed call text-back disabled by plan or setting for company:",
             call.company?.id,
@@ -152,39 +157,6 @@ export async function POST(request: Request) {
         }
 
         console.log("Sending SMS via gateway:", call.company?.smsGateway);
-
-        if (process.env.NODE_ENV === "production") {
-          if (call.company?.smsGateway === "TWILIO") {
-            const response = await sendTwilioMessage({
-              companyId: call.company?.id,
-              clientId: call.client.id,
-              message: message,
-              attachments: [],
-            });
-
-            if (!response.success) {
-              throw new Error(`SMS sending failed`);
-            }
-            console.log("✅ [Call-Status] Missed call SMS sent via Twilio");
-          } else if (call.company?.smsGateway === "INFOBIP") {
-            const response = await sendInfobipMessage({
-              companyId: call.company?.id,
-              clientId: call.client.id,
-              message: message,
-              attachments: [],
-            });
-
-            if (!response.success) {
-              throw new Error(`SMS sending failed`);
-            }
-            console.log("✅ [Call-Status] Missed call SMS sent via Infobip");
-          } else {
-            console.warn(
-              "⚠️ [Call-Status] No SMS gateway configured for company:",
-              call.company?.id,
-            );
-          }
-        }
       } catch (error) {
         console.error(
           "❌ [Call-Status] Failed to send missed call SMS:",

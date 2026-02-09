@@ -6,10 +6,12 @@ import { useEffect, useState } from "react";
 
 interface MissedCallTextBackSettingsProps {
   initialEnabled?: boolean | null;
+  isAllowed?: boolean;
 }
 
 export default function MissedCallTextBackSettings({
   initialEnabled,
+  isAllowed = true,
 }: MissedCallTextBackSettingsProps) {
   const [isEnabled, setIsEnabled] = useState(!!initialEnabled);
   const [isLoading, setIsLoading] = useState(false);
@@ -21,6 +23,11 @@ export default function MissedCallTextBackSettings({
   const handleToggle = async () => {
     try {
       setIsLoading(true);
+      if (!isAllowed) {
+        errorToast("Your plan does not include missed call text back.");
+        return;
+      }
+
       const result = await updateMissedCallTextBackEnabled(!isEnabled);
 
       if (result.type === "success") {
@@ -55,7 +62,7 @@ export default function MissedCallTextBackSettings({
 
         <button
           onClick={handleToggle}
-          disabled={isLoading}
+          disabled={isLoading || !isAllowed}
           className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
             isEnabled ? "bg-blue-600" : "bg-gray-200"
           }`}
@@ -69,6 +76,11 @@ export default function MissedCallTextBackSettings({
           />
         </button>
       </div>
+      {!isAllowed && (
+        <p className="mt-3 text-xs text-gray-500">
+          Upgrade your plan to enable missed call text back.
+        </p>
+      )}
     </div>
   );
 }
