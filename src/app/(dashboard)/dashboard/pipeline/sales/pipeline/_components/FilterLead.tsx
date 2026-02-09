@@ -29,14 +29,17 @@ export default function FilterLead({ searchParams }: { searchParams: any }) {
   return (
     <div className="flex gap-2">
       <Select onValueChange={onValueChange} value={currentOrder || ""}>
-        <SelectTrigger showIcon={false} className="bg-white h-11 hover:border-slate-200 hover:bg-slate-50/30 rounded-xl border-2 border-slate-100 justify-start outline-none focus:border-[#6571FF]/40 focus:bg-white focus:ring-4 focus:ring-[#6571FF]/10">
+        <SelectTrigger
+          showIcon={false}
+          className="bg-white h-11 hover:border-slate-200 hover:bg-slate-50/30 rounded-xl border-2 border-slate-100 justify-start outline-none focus:border-[#6571FF]/40 focus:bg-white focus:ring-4 focus:ring-[#6571FF]/10"
+        >
           {/* <SelectValue className="flex gap-1 flex-row"> */}
           <Filter />{" "}
           {currentOrder === "asc"
             ? "Oldest"
             : currentOrder === "desc"
               ? "Newest"
-              : "Sort by"}
+              : "Sort"}
         </SelectTrigger>
         <SelectContent position="popper">
           <SelectGroup>
