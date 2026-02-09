@@ -148,7 +148,7 @@ export default function AddUsersInGroupModal({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button className="relative rounded-xl bg-gradient-to-r from-[#00b8b0] to-[#0098da] px-3 py-1.5 transition-all duration-300 ease-in-out hover:scale-[1.05] hover:shadow-lg hover:shadow-teal-500/50">
+        <button className="relative rounded-xl bg-[#006D77] px-3 pt-1 pb-1.5 transition-all duration-300 ease-in-out hover:scale-[1.05] hover:shadow-lg hover:shadow-teal-500/50">
           <span className="text-sm font-medium text-white">Add Users</span>
           <CirclePlus className="ml-2 inline-block size-5 text-white" />
         </button>
@@ -254,7 +254,7 @@ export default function AddUsersInGroupModal({
                   setOpenUserList((prev) => !prev);
                   getFindUsers();
                 }}
-                className="absolute right-1 top-[32px] size-6 cursor-pointer text-slate-600 transition-transform duration-300 ease-in-out hover:scale-110 dark:text-slate-400"
+                className="absolute right-1 top-9 size-6 cursor-pointer text-slate-500 transition-transform duration-300 ease-in-out hover:scale-110 dark:text-slate-400"
               />
 
             </div>
