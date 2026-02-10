@@ -1,5 +1,6 @@
 "use client";
 import updateFirstContactTimeClient from "@/actions/communication/client/updateFirstContactTimeClient";
+import { getEntitlements } from "@/actions/platform-billing/entitlements";
 import { getCompany } from "@/actions/settings/getCompany";
 import { useServerGet } from "@/hooks/useServerGet";
 import { errorToast } from "@/lib/toast";
@@ -52,6 +53,7 @@ export default function SendSms({
     useClientCommunicationStore();
 
   const { data } = useServerGet(getCompany);
+  const { data: entitlements } = useServerGet(getEntitlements, companyId);
   const currentUser = useGetCurrentUser();
   const [files, setFiles] = useState<File[]>([]);
   const [messageInput, setMessageInput] = useState("");
@@ -158,6 +160,7 @@ export default function SendSms({
           companyId={companyId}
           draft={messageInput} // <-- pass the textarea value here
           onPick={(text) => setMessageInput(text)} // or append if you prefer
+          isAllowed={entitlements?.success && entitlements.data?.aiSmartReplies}
         />
       </div>
 

@@ -12,6 +12,7 @@ type Props = {
   onPick: (text: string) => void;
   draft?: string;
   context?: "sms" | "email";
+  isAllowed?: boolean;
 };
 
 export type Permission = {
@@ -47,28 +48,34 @@ const suggestionVariants = {
   },
 };
 
-
 export default function SmartReplyBar({
   clientId,
   companyId,
   onPick,
   draft,
   context = "sms",
+  isAllowed = true,
 }: Props) {
   const [loading, setLoading] = React.useState<null | "suggest" | "enhance">(
-    null
+    null,
   );
   const [items, setItems] = React.useState<{ text: string }[]>([]);
   const [error, setError] = React.useState<string | null>(null);
   const [isOpen, setIsOpen] = React.useState(false);
   const [isClosing, setIsClosing] = React.useState(false);
+  const [canShow, setCanShow] = React.useState(false);
   const { data, isFetching } = useGetCompanyPermissions(companyId);
   // if feature is not enabled, don't show the smart reply bar
   const permission = data?.data?.find(
-    (perm: Permission) => perm?.permission_name === "aiSmartReplies"
+    (perm: Permission) => perm?.permission_name === "aiSmartReplies",
   );
+  console.log("🚀 ~ SmartReplyBar ~ permission:", permission);
 
-  if (!permission?.enabled) {
+  React.useEffect(() => {
+    setCanShow(!!isAllowed && !!permission?.enabled);
+  }, [isAllowed, permission?.enabled]);
+
+  if (!canShow) {
     return null;
   }
 
@@ -95,8 +102,8 @@ export default function SmartReplyBar({
     // Normal array handling
     return Array.isArray(res)
       ? res
-        .filter((x: any) => x?.text)
-        .map((x: any) => ({ text: String(x.text) }))
+          .filter((x: any) => x?.text)
+          .map((x: any) => ({ text: String(x.text) }))
       : [];
   };
 
@@ -180,7 +187,9 @@ export default function SmartReplyBar({
             className="flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-60"
           >
             <MessageSquare className="h-4 w-4" />
-            {loading === "suggest" ? "Generating…" : "Generate AI Smart Replies"}
+            {loading === "suggest"
+              ? "Generating…"
+              : "Generate AI Smart Replies"}
           </button>
 
           <button
@@ -194,16 +203,18 @@ export default function SmartReplyBar({
             {loading === "enhance" ? "Enhancing…" : "Enhance draft"}
           </button>
         </div>
-        {
-          items.length > 0 &&
+        {items.length > 0 && (
           <button
             type="button"
             onClick={handleToggleSuggestions}
-            className={` bg-white rounded-full p-1 transition-transform duration-300 ${isOpen ? '' : 'rotate-180'}`}
+            className={` bg-white rounded-full p-1 transition-transform duration-300 ${isOpen ? "" : "rotate-180"}`}
           >
-            <ArrowDown strokeWidth={2.5} className="mx-auto h-5 w-5 text-slate-500" />
+            <ArrowDown
+              strokeWidth={2.5}
+              className="mx-auto h-5 w-5 text-slate-500"
+            />
           </button>
-        }
+        )}
       </div>
 
       {error && <span className="text-xs text-red-500">{error}</span>}
