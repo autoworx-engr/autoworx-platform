@@ -2109,6 +2109,33 @@ model User {
   @@index([companyId], name: "fk_users_company")
 }
 
+// 2. The 2FA Token Model
+model TwoFactorToken {
+  id          String   @id @default(cuid())
+  
+  // Relational Fields
+  userId      String   @unique // @unique ensures only ONE active token exists per user at a time
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // The Code
+  tokenHash   String   // STORE THE HASH, NOT THE PLAIN CODE (e.g. bcrypt)
+  
+  // Session Context
+  // Helps validate that the code is being used for the specific login attempt that requested it.
+  sessionId   String?  // Could be a temporary JWT ID or session cookie ID
+  
+  // Security & Lifecycle
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  
+  // Brute Force Protection
+  attemptCount Int      @default(0) // Tracks failed verification attempts
+  lastAttemptAt DateTime?        // Optional: For adding a "cooldown" between guesses
+
+  @@index([userId])     // Fast lookup by user
+  @@map("two_factor_tokens")
+}
+
 model PasswordResetToken {
   id        String   @id @default(uuid())
   token     String   @unique
