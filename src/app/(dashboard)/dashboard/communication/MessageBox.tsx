@@ -29,6 +29,7 @@ import InvoiceEstimateModal from "./collaboration/InvoiceEstimateModal";
 import AddUsersInGroupModal from "./internal/AddUsersInGroupModal";
 import { Message as TMessage } from "./internal/UsersArea";
 import Message from "./Message";
+import { successToast } from "@/lib/toast";
 
 type TSection = "collaboration" | "internal";
 
@@ -217,7 +218,7 @@ export default function MessageBox({
         const userName = removedUser
           ? `${removedUser.firstName} ${removedUser.lastName}`
           : "User";
-        toast.success(`${userName} removed from group successfully!`);
+        successToast(`${userName} removed from group successfully!`)
       }
     }
   };
@@ -346,8 +347,17 @@ export default function MessageBox({
                           setIsGroupNameEdited(false);
                           if (groupName !== group?.name && groupName.trim()) {
                             setGroupName(groupName.trim());
-                            group?.id &&
-                              (await renameGroup(groupName, group.id));
+                            if (group?.id) {
+                              const response = await renameGroup(
+                                groupName.trim(),
+                                group.id
+                              );
+                              if (response?.status === 200) {
+                                successToast(response?.message ||
+                                    "Group renamed successfully.")
+
+                              }
+                            }
                           }
                         }}
                       />
