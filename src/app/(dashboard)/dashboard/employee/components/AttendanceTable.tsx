@@ -7,12 +7,8 @@ import DateRange from "@/app/(dashboard)/dashboard/payments/components/PaymentDa
 import AttendanceTableSkeleton from "@/components/ui/AttendanceTableSkeleton";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { useServerGet } from "@/hooks/useServerGet";
-import {
-  convertDuration,
-  convertMinutesToHours,
-  getTotalBreaksValue,
-} from "@/lib/convertDurations";
-import { decimalHoursToHoursMinutes } from "@/lib/decimalHoursToHoursMinutes";
+import { convertDuration, getTotalBreaksValue } from "@/lib/convertDurations";
+import { decimalHoursToHHMM } from "@/lib/decimalHoursToHHMM";
 import { Info, Pencil, Save, X } from "lucide-react";
 import moment from "moment-timezone";
 import { useParams } from "next/navigation";
