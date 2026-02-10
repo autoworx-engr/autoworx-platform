@@ -17,6 +17,7 @@ import React, { useEffect, useRef, useState } from "react";
 
 type TProps = {
   users: User[];
+  existingGroups: Array<Group & { users: User[] }>;
   setSideBarGroupLists: React.Dispatch<
     React.SetStateAction<Array<Group & { users: User[] }>>
   >;
@@ -30,6 +31,7 @@ type TContactListUser = {
 
 export default function CreateGroupModal({
   users,
+  existingGroups,
   setSideBarGroupLists,
   addChatItem,
 }: TProps) {
@@ -140,8 +142,16 @@ export default function CreateGroupModal({
   };
 
   const handleCreateGroup = async () => {
-    if (groupName.trim() === "") {
+    const trimmedName = groupName.trim();
+    if (trimmedName === "") {
       setError("Group name is required.");
+      return;
+    }
+    const hasDuplicateName = existingGroups.some(
+      (group) => group.name?.trim().toLowerCase() === trimmedName.toLowerCase()
+    );
+    if (hasDuplicateName) {
+      setError("Group name already exists.");
       return;
     }
 
@@ -152,20 +162,25 @@ export default function CreateGroupModal({
           id: user.id,
         }));
         const response = await createGroup({
-          name: groupName,
+          name: trimmedName,
           users: [{ id: session?.user.id }, ...usersInGroup],
         });
         if (response.status === 200) {
+          if (!response.data) {
+            setError("Failed to create group.");
+            return;
+          }
+          const createdGroup = response.data;
           setOpen(false);
           setError("");
           setGroupName("");
           setContactList([]);
           setSideBarGroupLists((prevGroups) => {
             const isExistInGroup = prevGroups.find(
-              (g) => g.id === response.data.id
+              (g) => g.id === createdGroup.id
             );
             if (!isExistInGroup) {
-              return [...prevGroups, response.data];
+              return [...prevGroups, createdGroup];
             } else {
               return prevGroups;
             }
@@ -174,10 +189,12 @@ export default function CreateGroupModal({
           // Automatically open the newly created group in message box
           // If there are already 4 message boxes open, this will replace the last one (4th position)
           if (addChatItem) {
-            addChatItem(response.data, "group");
+            addChatItem(createdGroup, "group");
           }
+        } else if (response.status === 409) {
+          setError(response.message || "Group name already exists.");
         } else {
-          setError("Failed to create group.");
+          setError(response.message || "Failed to create group.");
         }
       } catch (error) {
         setError("Failed to create group.");
