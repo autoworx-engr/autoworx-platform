@@ -131,13 +131,15 @@ export async function GET(req: NextRequest) {
     }
 
     // Get company info
-    const company = await db.companyInfo.findUnique({
+    const company = await db.company.findUnique({
+      where: { id: companyId },
+    });
+    const companyInfo = await db.companyInfo.findUnique({
       where: { companyId },
-      select: { companyId: true, overallFaqs: true },
     });
 
     // Check if company exists
-    if (!company) {
+    if (!companyInfo) {
       return NextResponse.json(
         { success: false, message: "Company not found" },
         { status: 404 },
@@ -172,19 +174,34 @@ export async function GET(req: NextRequest) {
         }),
       ]);
 
-    const faqs = company.overallFaqs || [];
+    const faqs = companyInfo.overallFaqs || [];
+
+    const {
+      // id: companyInfoId,
+      overallFaqs,
+      pricing,
+      services,
+      ...companyInfoRest
+    } = companyInfo;
+
+    const formattedCompany = {
+      ...company,
+      // companyInfoId,
+      ...companyInfoRest,
+    };
 
     return NextResponse.json({
       success: true,
       message: "AI training data retrieved successfully",
       data: {
         company,
+        companyInfo: companyInfoRest,
         playbooks,
-        examples,
-        documents,
+        conversationAttachments: examples,
+        knowledgeBaseDocument: documents,
         personality,
         sms,
-        faqs,
+        overallFaqs: faqs,
       },
     });
   } catch (error) {
