@@ -233,12 +233,16 @@ function sumInvoiceTotals(
 //   };
 // }
 
-export async function getSalesReportData(timezone: string) {
-  const currentuser = await getUser();
+export async function getSalesReportData(
+  timezone: string,
+  startDate?: string,
+  endDate?: string,
+) {
+  const currentUser = await getUser();
   const companyId = await getCompanyId();
 
   const employee = await db.user.findUnique({
-    where: { id: currentuser.id, companyId },
+    where: { id: currentUser.id, companyId },
     select: { id: true, commission: true },
   });
 
@@ -253,7 +257,6 @@ export async function getSalesReportData(timezone: string) {
     twoMonthsAgoEnd,
   } = getDateRanges(timezone);
 
-  // একবারে সব leads fetch করি সব client এবং invoice সহ
   const allLeads = await db.lead.findMany({
     where: { assignedSalesUserId: employee.id },
     include: {
@@ -267,7 +270,6 @@ export async function getSalesReportData(timezone: string) {
     },
   });
 
-  // Fallback clients একবারে fetch করি
   const leadsWithoutClients = allLeads.filter(
     (lead) => lead.Client.length === 0 && lead.clientId,
   );
@@ -289,7 +291,6 @@ export async function getSalesReportData(timezone: string) {
         })
       : [];
 
-  // Fallback clients map করি lead এর সাথে
   const clientMap = new Map(fallbackClients.map((c) => [c.id, c]));
 
   for (const lead of leadsWithoutClients) {
@@ -299,7 +300,84 @@ export async function getSalesReportData(timezone: string) {
     }
   }
 
-  // এবার filter করি date range অনুযায়ী (memory তে) - null check সহ
+  // If custom date range is provided, use it; otherwise use predefined ranges
+  if (startDate && endDate) {
+    const customStart = new Date(startDate);
+    const customEnd = new Date(endDate);
+
+    // length of the custom range in milliseconds
+    const rangeMs = customEnd.getTime() - customStart.getTime();
+
+    // previous range: immediately before custom range, same length
+    const previousEnd = new Date(customStart.getTime() - 1);
+    const previousStart = new Date(previousEnd.getTime() - rangeMs);
+
+    // two-periods-ago range: immediately before previous range
+    const twoAgoEnd = new Date(previousStart.getTime() - 1);
+    const twoAgoStart = new Date(twoAgoEnd.getTime() - rangeMs);
+
+    const customRangeLeads = allLeads.map((lead) => ({
+      ...lead,
+      Client: lead.Client.map((client) => ({
+        ...client,
+        Invoice: client.Invoice.filter(
+          (inv) =>
+            inv.convertedAt !== null &&
+            inv.convertedAt >= customStart &&
+            inv.convertedAt <= customEnd,
+        ),
+      })),
+    }));
+
+    const previousRangeLeads = allLeads.map((lead) => ({
+      ...lead,
+      Client: lead.Client.map((client) => ({
+        ...client,
+        Invoice: client.Invoice.filter(
+          (inv) =>
+            inv.convertedAt !== null &&
+            inv.convertedAt >= previousStart &&
+            inv.convertedAt <= previousEnd,
+        ),
+      })),
+    }));
+
+    const twoAgoRangeLeads = allLeads.map((lead) => ({
+      ...lead,
+      Client: lead.Client.map((client) => ({
+        ...client,
+        Invoice: client.Invoice.filter(
+          (inv) =>
+            inv.convertedAt !== null &&
+            inv.convertedAt >= twoAgoStart &&
+            inv.convertedAt <= twoAgoEnd,
+        ),
+      })),
+    }));
+
+    const customTotal = sumInvoiceTotals(customRangeLeads);
+    const customCommission = (customTotal * Number(employee.commission)) / 100;
+
+    const prevTotal = sumInvoiceTotals(previousRangeLeads);
+    const prevCommission = (prevTotal * Number(employee.commission)) / 100;
+
+    const prev2Total = sumInvoiceTotals(twoAgoRangeLeads);
+    const prev2Commission = (prev2Total * Number(employee.commission)) / 100;
+
+    const growthRateCurrent = growthRate(customCommission, prevCommission);
+    const growthRatePrevious = growthRate(prevCommission, prev2Commission);
+
+    return {
+      employeeId: employee.id,
+      currentCommission: customCommission,
+      previousCommission: prevCommission,
+      twoMonthsAgoCommission: prev2Commission,
+      growthRateCurrent,
+      growthRatePrevious,
+      allCommission: customCommission,
+    };
+  }
+
   const currentMonthLeads = allLeads.map((lead) => ({
     ...lead,
     Client: lead.Client.map((client) => ({

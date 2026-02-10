@@ -75,7 +75,13 @@ export default async function getClients({
 
     const clients = await db.client.findMany({
       where: whereConditions,
-      include: {
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        mobile: true,
+        createdAt: true,
         tag: {
           where: {
             type: "CLIENT",

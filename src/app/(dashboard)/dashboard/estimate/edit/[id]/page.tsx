@@ -314,14 +314,20 @@ export default async function Page({
             <CreateTab />
           </TabsContent>
 
-          <TabsContent value="attachment">
+          <TabsContent value="attachment"
+            className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto thin-scrollbar p-2"
+          >
             <AttachmentTab />
           </TabsContent>
 
-          <TabsContent value="inspections">
+          <TabsContent value="inspections"
+            className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto thin-scrollbar p-2"
+          >
             <EstimateInspectionsTab />
           </TabsContent>
-          <TabsContent value="payments">
+          <TabsContent value="payments"
+            className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto thin-scrollbar p-2"
+          >
             <PaymentTab
               clientId={
                 searchParams.clientId
