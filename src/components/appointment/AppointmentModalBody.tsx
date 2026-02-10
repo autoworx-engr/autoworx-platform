@@ -803,7 +803,7 @@ export default function AppointmentModalBody({
 
   return (
     <DialogContent
-      className="grid max-w-5xl grid-rows-[auto,1fr,auto] sm:max-w-[60vw]"
+      className="grid max-w-5xl grid-rows-[auto,1fr,auto] sm:max-w-[80vw] lg:max-w-6xl"
       form
     >
       {/* Heading */}
@@ -856,7 +856,7 @@ export default function AppointmentModalBody({
         </div>
       </DialogHeader>
 
-      <div className="-mx-6 h-full grid gap-px overflow-y-scroll border-solid sm:grid-cols-2 md:border-y ">
+      <div className="-mx-6 h-full grid gap-px border-solid lg:grid-cols-2 md:border-y ">
         <div className="h-full sm:h-full overflow-y-auto thin-scrollbar bg-white">
           <div className="space-y-4 bg-background p-6">
             <FormError />
@@ -1183,7 +1183,7 @@ export default function AppointmentModalBody({
             </div>
           </div>
 
-          <div className="relative sm:hidden row-span-2 h-full thin-scrollbar divide-y bg-background">
+          <div className="relative lg:hidden row-span-2 h-full thin-scrollbar divide-y bg-background">
             {tab === Tab.Schedule ? (
               <div
                 ref={containerRef}
@@ -1225,11 +1225,11 @@ export default function AppointmentModalBody({
           </div>
         </div>
 
-        <div className="hidden sm:block relative row-span-2 h-full overflow-y-auto thin-scrollbar divide-y bg-background border-l">
+        <div className="hidden lg:block relative row-span-2 h-full overflow-y-auto thin-scrollbar divide-y bg-background border-l">
           {tab === Tab.Schedule ? (
             <div
               ref={containerRef}
-              className="absolute inset-0 divide-y overflow-y-auto"
+              className="absolute inset-0 divide-y overflow-y-auto thin-scrollbar"
             >
               <ScheduleTab
                 rows={rows}
