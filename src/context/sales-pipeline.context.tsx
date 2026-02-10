@@ -14,7 +14,7 @@ import {
 
 const ColumnStateContext = createContext<ColumnWithLeads[]>([]);
 const ColumnDispatchContext = createContext<Dispatch<TColumnAction<any>>>(
-  () => {}
+  () => {},
 );
 const CompanyUserContext = createContext<User[] | null>(null);
 
@@ -36,9 +36,9 @@ export function ColumnProvider({
   const [state, dispatch] = useReducer(
     leadReducer as (
       state: ColumnWithLeads[],
-      action: TColumnAction<unknown>
+      action: TColumnAction<unknown>,
     ) => ColumnWithLeads[],
-    initialColumns
+    initialColumns,
   );
 
   // Use a ref to track the last searchTerm to prevent unnecessary dispatches

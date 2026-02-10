@@ -8,6 +8,7 @@ import { getServerSession } from "next-auth";
 import Calculation from "../../components/Calculation";
 import FilterHeader from "./FilterHeader";
 import WorkforceDisplay from "./WorkforceDisplay";
+import { getEmployeePayout } from "@/actions/dashboard/data/getAdminInfo";
 
 // Props type
 type TProps = {
@@ -38,6 +39,7 @@ export default async function WorkforceReportPage({ searchParams }: TProps) {
   const session = await getServerSession(authOptions);
   const page = searchParams.page ? parseInt(searchParams.page, 10) : 1;
   const take = searchParams.take ? parseInt(searchParams.take, 10) : 50;
+
   // Date range filter logic
   const hasDateRange: boolean = !!(
     searchParams.startDate && searchParams.endDate
@@ -86,19 +88,19 @@ export default async function WorkforceReportPage({ searchParams }: TProps) {
     // Filter by date range if specified
     const matchesDateRange = hasDateRange
       ? employee.Technician.some((tech) => {
-        const techDate = tech.dateClosed ? moment.utc(tech.dateClosed) : null;
-        return (
-          techDate &&
-          techDate.isBetween(convertedStart, convertedEnd, null, "[]")
-        );
-      })
+          const techDate = tech.dateClosed ? moment.utc(tech.dateClosed) : null;
+          return (
+            techDate &&
+            techDate.isBetween(convertedStart, convertedEnd, null, "[]")
+          );
+        })
       : true;
 
     // Filter by search query if specified
     const matchesSearch = searchParams?.search
       ? normalizeSearch(`${employee.firstName} ${employee.lastName}`)?.includes(
-        normalizeSearch(searchParams?.search || "")
-      )
+          normalizeSearch(searchParams?.search || ""),
+        )
       : true;
 
     // console.log({
@@ -113,22 +115,27 @@ export default async function WorkforceReportPage({ searchParams }: TProps) {
   });
 
   // Calculate Current Month Payout
-  const totalPayoutThisMonth = allEmployees.reduce((acc, employee) => {
-    const technicianPayout = employee.Technician.reduce((sum, tech) => {
-      const techDate = tech.dateClosed ? moment(tech.dateClosed).utc() : null;
+  // const totalPayoutThisMonth = allEmployees.reduce((acc, employee) => {
+  //   const technicianPayout = employee.Technician.reduce((sum, tech) => {
+  //     const techDate = tech.dateClosed ? moment(tech.dateClosed).utc() : null;
 
-      if (
-        tech.status === "Complete" &&
-        techDate !== null &&
-        techDate.isSameOrAfter(convertedStart?.format()) &&
-        techDate.isSameOrBefore(convertedEnd?.format())
-      ) {
-        return sum + Number(tech?.amount || 0);
-      }
-      return sum;
-    }, 0);
-    return acc + technicianPayout;
-  }, 0);
+  //     if (
+  //       tech.status === "Complete" &&
+  //       techDate !== null &&
+  //       techDate.isSameOrAfter(convertedStart?.format()) &&
+  //       techDate.isSameOrBefore(convertedEnd?.format())
+  //     ) {
+  //       return sum + Number(tech?.amount || 0);
+  //     }
+  //     return sum;
+  //   }, 0);
+  //   return acc + technicianPayout;
+  // }, 0);
+
+  const employeePayout = await getEmployeePayout(timezone);
+
+  // Data Extraction and Formatting
+  const currentMonthTotal = employeePayout?.currentMonthTotal || 0;
 
   // Calculate Overall Technician Payout (till date)
   const overallTechnicianPayout = allEmployees.reduce((acc, employee) => {
@@ -213,7 +220,8 @@ export default async function WorkforceReportPage({ searchParams }: TProps) {
         {/* Current Month Payout */}
         <Calculation
           content="Current Month Payout"
-          amount={totalPayoutThisMonth}
+          // amount={totalPayoutThisMonth}
+          amount={currentMonthTotal}
         />
 
         {/* Overall Technician Payout */}

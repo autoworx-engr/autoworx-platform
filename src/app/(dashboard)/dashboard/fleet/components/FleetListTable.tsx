@@ -37,10 +37,10 @@ const FleetListTable = ({ filteredFleets }: { filteredFleets: any }) => {
   return (
     <>
       {/* Desktop Table */}
-      <div className="hidden lg:block overflow-hidden rounded-xl p-2 bg-white dark:bg-slate-900 ring-1 ring-slate-200 dark:ring-slate-800 shadow-sm">
-        <div className="md:overflow-x-auto">
-          <table className="w-full">
-            <thead className="">
+      <div className="hidden lg:block rounded-xl bg-white dark:bg-slate-900 ring-1 ring-slate-200 dark:ring-slate-800 shadow-sm overflow-hidden p-2">
+        <div className="max-h-[60vh] overflow-y-auto overflow-x-auto custom-scrollbar">
+          <table className="w-full border-separate border-spacing-0">
+            <thead className="sticky top-0 bg-background">
               <tr className="h-10 border-b">
                 <th className="border-b px-4 py-2 text-left">Fleet ID</th>
                 <th className="border-b px-4 py-2 text-left">Fleet Name</th>

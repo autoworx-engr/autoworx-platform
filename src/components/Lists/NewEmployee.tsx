@@ -1,5 +1,8 @@
 "use client";
 
+import { addEmployee } from "@/actions/employee/add";
+import { getCompany } from "@/actions/settings/getCompany";
+import SelectEmployeeType from "@/app/(dashboard)/dashboard/employee/SelectEmployeeType";
 import {
   Dialog,
   DialogClose,
@@ -8,20 +11,17 @@ import {
   DialogTrigger,
 } from "@/components/Dialog";
 import FormError from "@/components/FormError";
-import { SlimInput } from "@/components/SlimInput";
-import React, { useState, useRef } from "react";
-import SelectEmployeeType from "@/app/(dashboard)/dashboard/employee/SelectEmployeeType";
-import { useServerGet } from "@/hooks/useServerGet";
-import { getCompany } from "@/actions/settings/getCompany";
-import { useFormErrorStore } from "@/stores/form-error";
-import { addEmployee } from "@/actions/employee/add";
-import { EmployeeType, User, SalaryType } from "@prisma/client";
-import { errorToast } from "@/lib/toast";
 import Password from "@/components/Password";
+import { SlimInput } from "@/components/SlimInput";
 import SlimSalaryInput from "@/components/employee/SlimSalaryInput";
-import { CircleUserRound as UserIcon } from "lucide-react";
-import PhoneInput from "../PhoneInput";
+import { useServerGet } from "@/hooks/useServerGet";
 import { cn } from "@/lib/cn";
+import { errorToast } from "@/lib/toast";
+import { useFormErrorStore } from "@/stores/form-error";
+import { EmployeeType, SalaryType, User } from "@prisma/client";
+import { CircleUserRound as UserIcon } from "lucide-react";
+import React, { useRef, useState } from "react";
+import PhoneInput from "../PhoneInput";
 
 export default function AddNewEmployee({
   onSuccess,
@@ -41,7 +41,7 @@ export default function AddNewEmployee({
   const phoneDataRef = useRef({
     mobile: "",
     country: "",
-    countryIsoCode: ""
+    countryIsoCode: "",
   });
   const [salaryData, setSalaryData] = useState<{
     salaryType: SalaryType;
@@ -66,7 +66,8 @@ export default function AddNewEmployee({
     //   "[name='mobileNumber']"
     // )?.value;
 
-    const mobileNumber = country && mobile ? `${country}${mobile}` : mobile || ""
+    const mobileNumber =
+      country && mobile ? `${country}${mobile}` : mobile || "";
     const address =
       document.querySelector<HTMLInputElement>("[name='address']")?.value;
     const city =
@@ -130,13 +131,12 @@ export default function AddNewEmployee({
     //   return;
     // }
 
-
     if (!mobile || mobile.length < 10) {
       showError({
         field: "mobile",
         message: "Please enter a valid phone number (at least 10 digits).",
-      })
-      return
+      });
+      return;
     }
     // Validate passwords
     if (!password?.trim()) {
@@ -257,7 +257,6 @@ export default function AddNewEmployee({
     setOpen(false);
   };
 
-
   return (
     <div className="">
       <Dialog
@@ -271,7 +270,8 @@ export default function AddNewEmployee({
           {button ? (
             button
           ) : (
-            <button className="
+            <button
+              className="
                 flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white
                 bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
                 shadow-[0_4px_14px_0_rgba(101,113,255,0.39)]
@@ -279,7 +279,8 @@ export default function AddNewEmployee({
                 hover:-translate-y-0.5
                 active:translate-y-0 active:scale-100
                 transition-all duration-300 ease-in-out
-            ">
+            "
+            >
               <span>+</span> Add New Employee
             </button>
           )}
@@ -290,7 +291,9 @@ export default function AddNewEmployee({
               <h1 className="text-2xl font-bold tracking-tight text-slate-600 dark:text-slate-100">
                 Add Employee
               </h1>
-              <p className="text-sm text-slate-500 mt-1">Enter details for the new team member</p>
+              <p className="text-sm text-slate-500 mt-1">
+                Enter details for the new team member
+              </p>
             </div>
 
             {profilePic ? (
@@ -331,7 +334,9 @@ export default function AddNewEmployee({
                   }}
                 />
                 <div className="flex flex-col items-end">
-                  <span className="text-sm font-semibold text-slate-600 dark:text-slate-300 group-hover:text-[#6571FF] transition-colors">Upload Photo</span>
+                  <span className="text-sm font-semibold text-slate-600 dark:text-slate-300 group-hover:text-[#6571FF] transition-colors">
+                    Upload Photo
+                  </span>
                 </div>
                 <div className="p-1 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-400 group-hover:text-[#6571FF] group-hover:bg-white transition-colors">
                   <UserIcon size={32} strokeWidth={2} />
@@ -406,24 +411,27 @@ export default function AddNewEmployee({
               <PhoneInput
                 label="Mobile"
                 placeholder="1234567890"
-                required={false}
+                required
                 // value={mobile}
                 onChange={(phone, code, isoCode) => {
                   phoneDataRef.current = {
                     mobile: phone,
                     country: code,
-                    countryIsoCode: isoCode || ""
+                    countryIsoCode: isoCode || "",
                   };
-                  clearError()
+                  clearError();
                 }}
               />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="mb-1">
-                <label htmlFor="password" className={cn(
-                  "flex items-center gap-1 text-base font-medium text-slate-700 dark:text-slate-200 transition-colors duration-300",
-                )}>
+                <label
+                  htmlFor="password"
+                  className={cn(
+                    "flex items-center gap-1 text-base font-medium text-slate-700 dark:text-slate-200 transition-colors duration-300"
+                  )}
+                >
                   Password <span className="text-[#E9405F]">*</span>
                 </label>
                 <Password
@@ -437,7 +445,7 @@ export default function AddNewEmployee({
                 <label
                   htmlFor="confirmPassword"
                   className={cn(
-                    "flex items-center gap-1 text-base font-medium text-slate-700 dark:text-slate-200 transition-colors duration-300",
+                    "flex items-center gap-1 text-base font-medium text-slate-700 dark:text-slate-200 transition-colors duration-300"
                   )}
                 >
                   Confirm Password <span className="text-[#E9405F]">*</span>
@@ -482,7 +490,11 @@ export default function AddNewEmployee({
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <SlimInput name="companyName" placeholder="Enter company name" defaultValue={companyName?.name} />
+              <SlimInput
+                name="companyName"
+                placeholder="Enter company name"
+                defaultValue={companyName?.name}
+              />
               <SlimInput
                 name="commission"
                 label="Commission %"

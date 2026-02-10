@@ -1,3 +1,6 @@
+import { createGroup } from "@/actions/communication/internal/creategroup";
+import { searchUsers } from "@/actions/communication/internal/searchUser";
+import Avatar from "@/components/Avatar";
 import {
   Dialog,
   DialogClose,
@@ -6,14 +9,11 @@ import {
   DialogTrigger,
 } from "@/components/Dialog";
 import { SlimInput } from "@/components/SlimInput";
-import React, { useEffect, useRef, useState } from "react";
-import { Group, User } from "@prisma/client";
-import { createGroup } from "@/actions/communication/internal/creategroup";
-import { useSession } from "next-auth/react";
-import Avatar from "@/components/Avatar";
 import { useDebounce } from "@/hooks/useDebounce";
-import { searchUsers } from "@/actions/communication/internal/searchUser";
+import { Group, User } from "@prisma/client";
 import { ChevronDown, ChevronUp, CircleX, Search, Users } from "lucide-react";
+import { useSession } from "next-auth/react";
+import React, { useEffect, useRef, useState } from "react";
 
 type TProps = {
   users: User[];
@@ -126,7 +126,6 @@ export default function CreateGroupModal({
 
     setError(null);
     setContactList((prev) => [...prev, modifyUser]);
-    setOpenUserList(false);
   };
 
   const handleDeleteFromContactList = (user: TContactListUser) => {
@@ -207,7 +206,7 @@ export default function CreateGroupModal({
           </p>
         )}
         {/* Title */}
-        <h2 className="mb-5 text-2xl font-bold text-slate-800 dark:text-white">
+        <h2 className="text-2xl font-bold text-slate-800 dark:text-white">
           Create Group
         </h2>
         <div className="grid grid-cols-1">
@@ -220,19 +219,46 @@ export default function CreateGroupModal({
                 setError(null);
               }
             }}
-            label="Group name"
+            label={
+              <>
+                Group name <span className="text-red-500">*</span>{" "}
+              </>
+            }
             name="groupName"
             type="text"
             className="w-full text-slate-600 dark:text-white"
             placeholder="Add a group name..."
           />
         </div>
+
+        {/* added user in group list (Pill-style tags) */}
+        <div className="flex max-h-[250px] flex-wrap gap-3 overflow-y-auto rounded-lg p-2">
+          {contactList.map((groupUser) => (
+            <div
+              key={groupUser.id}
+              className="group flex items-center justify-between space-x-1 rounded-full bg-[#6571FF] px-3 py-1 text-white shadow-sm transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:scale-[1.02] hover:bg-[#5a67e8] hover:shadow-indigo-500/50"
+            >
+              <p className="text-sm font-medium">{groupUser.name}</p>
+              {/* Delete icon with micro-interaction */}
+              <CircleX
+                onClick={() => handleDeleteFromContactList(groupUser)}
+                className="size-4 cursor-pointer text-white/80 transition-colors duration-300 ease-in-out group-hover:text-white"
+              />
+            </div>
+          ))}
+          {contactList.length === 0 && (
+            <p className="text-sm italic text-slate-500 dark:text-slate-400">
+              Click above to add users to the group.
+            </p>
+          )}
+        </div>
+
         {/* Contact List Selector / User List */}
         <div>
           {openUserList ? (
             <>
               {/* Header for open user list */}
-              <div className="mb-1 mt-4 px-2 font-medium text-slate-800 dark:text-white">
+              <div className="mb-1 px-2 font-medium text-slate-800 dark:text-white">
                 Select Contacts
               </div>
               {/* User search and list container (Glassmorphism card effect) */}
@@ -254,7 +280,7 @@ export default function CreateGroupModal({
                   <Search className="absolute left-2 top-1/2 size-5 -translate-y-1/2 text-slate-600 dark:text-slate-400" />
                 </div>
                 {/* user list */}
-                <div className="flex flex-col items-start space-y-2 overflow-y-auto p-1">
+                <div className="max-h-60 flex flex-col items-start space-y-2 overflow-y-auto thin-scrollbar p-1">
                   {groupUsers.length > 0 ? (
                     groupUsers.map((user) => (
                       <div
@@ -285,10 +311,14 @@ export default function CreateGroupModal({
               </div>
             </>
           ) : (
-            <div className="relative mt-4">
+            <div className="relative">
               {/* Contact List closed state - uses SlimInput for consistent form look */}
               <SlimInput
-                label="Contact List"
+                label={
+                  <>
+                    Contact List <span className="text-red-500">*</span>
+                  </>
+                }
                 name="ContactList"
                 type="text"
                 readOnly
@@ -308,34 +338,17 @@ export default function CreateGroupModal({
                 }}
                 className="absolute right-1 top-[32px] size-6 cursor-pointer text-slate-600 transition-transform duration-300 ease-in-out hover:scale-110 dark:text-slate-400"
               />
-              {/* added user in group list (Pill-style tags) */}
-              <div className="mt-3 flex max-h-[250px] flex-wrap gap-3 overflow-y-auto rounded-lg p-2">
-                {contactList.map((groupUser) => (
-                  <div
-                    key={groupUser.id}
-                    className="group flex items-center justify-between space-x-1 rounded-full bg-[#6571FF] px-3 py-1 text-white shadow-lg transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:scale-[1.02] hover:bg-[#5a67e8] hover:shadow-indigo-500/50"
-                  >
-                    <p className="text-sm font-medium">{groupUser.name}</p>
-                    {/* Delete icon with micro-interaction */}
-                    <CircleX
-                      onClick={() => handleDeleteFromContactList(groupUser)}
-                      className="size-4 cursor-pointer text-white/80 transition-colors duration-300 ease-in-out group-hover:text-white"
-                    />
-                  </div>
-                ))}
-                {contactList.length === 0 && (
-                  <p className="text-sm italic text-slate-500 dark:text-slate-400">
-                    Click above to add users to the group.
-                  </p>
-                )}
-              </div>
             </div>
           )}
         </div>
         {/* Footer with action buttons */}
-        <DialogFooter className="flex-row-reverse gap-x-3 sm:gap-x-0">
+        <DialogFooter className="gap-x-3">
           {/* Cancel Button: Secondary action, simple design */}
-          <DialogClose className="rounded-xl border-2 border-slate-300 p-2 text-slate-700 transition-colors duration-300 ease-in-out hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-700">
+          <DialogClose className="
+                rounded-xl mt-2 sm:mt-0 px-5 py-2.5 text-sm font-medium text-slate-500 
+                hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
+                transition-colors border
+              ">
             Cancel
           </DialogClose>
           {/* Create Group Button: Special action color with loading state and shimmer effect on hover */}
@@ -344,10 +357,9 @@ export default function CreateGroupModal({
             disabled={isLoading}
             className={`
               relative flex items-center justify-center gap-2 rounded-xl border border-[#6571FF] px-5 py-2 text-white transition-all duration-300 ease-in-out overflow-hidden
-              ${
-                isLoading
-                  ? "cursor-not-allowed bg-slate-400 border-slate-400"
-                  : "bg-[#6571FF] hover:bg-[#5a67e8] hover:shadow-lg hover:shadow-indigo-500/50"
+              ${isLoading
+                ? "cursor-not-allowed bg-slate-400 border-slate-400"
+                : "bg-[#6571FF] hover:bg-[#5a67e8] hover:shadow-lg hover:shadow-indigo-500/50"
               }
             `}
           >
@@ -357,7 +369,7 @@ export default function CreateGroupModal({
             {isLoading ? "Creating..." : "Create Group"}
             {/* Shimmer effect for non-loading state */}
             {!isLoading && (
-              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent opacity-0 transition-opacity duration-300 hover:opacity-100 animate-shimmer"></span>
+              <span className="absolute inset-0 bg-gradient-to-r from-transparent to-transparent opacity-0 transition-opacity duration-300 hover:opacity-100 animate-shimmer"></span>
             )}
           </button>
         </DialogFooter>

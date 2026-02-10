@@ -96,11 +96,13 @@ export default function LeadAssign({ lead, salesUser }: TProps) {
           </div>
         </Tooltip>
       ) : (
-        <CirclePlus
-          size={22}
-          className="mt-1 cursor-pointer"
-          onClick={() => setIsSalesSelectorOpen((prev) => !prev)}
-        />
+        <Tooltip title="Assign sales user" placement="right">
+          <CirclePlus
+            size={22}
+            className="mt-1 cursor-pointer"
+            onClick={() => setIsSalesSelectorOpen((prev) => !prev)}
+          />
+        </Tooltip>
       )}
       {isSalesSelectorOpen && (
         <div ref={salesSelectorRef} className="absolute right-0 top-6 z-10">

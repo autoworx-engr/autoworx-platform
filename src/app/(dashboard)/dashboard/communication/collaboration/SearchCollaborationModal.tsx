@@ -61,10 +61,10 @@ export default function SearchCollaborationModal({
 
   async function handleConnectCompany(companyId: number) {
     try {
-      const result = await connectWithCompany(
-        companyId,
-        "/communication/collaboration" // path revalidated
-      );
+      const result = await connectWithCompany({
+        targetCompanyId: companyId,
+        revalidatePathName: "/communication/collaboration",
+      });
       // @ts-ignore
       setCompanyAdmins((prevAdmin) => {
         return prevAdmin.map((admin) => {

@@ -103,10 +103,10 @@ export default async function Page({
     // @ts-ignore
     item.labor = item.labor
       ? {
-          ...item.labor,
-          // @ts-ignore
-          tags: item.labor?.tags?.map((tag) => tag.tag),
-        }
+        ...item.labor,
+        // @ts-ignore
+        tags: item.labor?.tags?.map((tag) => tag.tag),
+      }
       : null;
 
     //
@@ -284,9 +284,9 @@ export default async function Page({
 
         <Tabs
           defaultValue="create"
-          className="col-start-1 flex min-h-[40vh] lg:min-h-[69vh] flex-col overflow-clip -ml-4"
+          className="col-start-1 flex min-h-[40vh] lg:min-h-[69vh] flex-col overflow-clip flex-1"
         >
-          <TabsList className="grid grid-cols-4 md:inline-flex">
+          <TabsList className="grid grid-cols-4 md:inline-flex -ml-4 rounded-bl-none p-0">
             <TabsTrigger value="payments" className="order-4 pl-12 md:order-1">
               Payments
             </TabsTrigger>
@@ -307,18 +307,27 @@ export default async function Page({
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="create">
+          <TabsContent
+            value="create"
+            className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto thin-scrollbar p-2"
+          >
             <CreateTab />
           </TabsContent>
 
-          <TabsContent value="attachment">
+          <TabsContent value="attachment"
+            className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto thin-scrollbar p-2"
+          >
             <AttachmentTab />
           </TabsContent>
 
-          <TabsContent value="inspections">
+          <TabsContent value="inspections"
+            className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto thin-scrollbar p-2"
+          >
             <EstimateInspectionsTab />
           </TabsContent>
-          <TabsContent value="payments">
+          <TabsContent value="payments"
+            className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto thin-scrollbar p-2"
+          >
             <PaymentTab
               clientId={
                 searchParams.clientId
@@ -330,7 +339,7 @@ export default async function Page({
         </Tabs>
       </div>
 
-      <div className="flex-grow w-full xl:max-w-[32%] app-shadow grid grid-rows-[1fr,auto,auto] divide-y rounded-md">
+      <div className="flex-grow w-full xl:max-w-[32%] app-shadow grid grid-rows-[1fr,auto,auto] divide-y rounded-md bg-slate-50 xl:max-h-[calc(100vh-5rem)] overflow-y-auto thin-scrollbar">
         <div>
           <ConvertButton
             type={invoice.type}

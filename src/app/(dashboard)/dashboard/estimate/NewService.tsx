@@ -1,10 +1,4 @@
 "use client";
-import SelectCategory from "@/components/Lists/SelectCategory";
-import { useEstimateCreateStore } from "@/stores/estimate-create";
-import { useEstimatePopupStore } from "@/stores/estimate-popup";
-import { useListsStore } from "@/stores/lists";
-import { Category } from "@prisma/client";
-import { useEffect, useState } from "react";
 import newService from "@/actions/estimate/service/newService";
 import {
   Dialog,
@@ -15,8 +9,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/Dialog";
-import { useFormErrorStore } from "@/stores/form-error";
+import SelectCategory from "@/components/Lists/SelectCategory";
 import { errorToast, successToast } from "@/lib/toast";
+import { useEstimateCreateStore } from "@/stores/estimate-create";
+import { useEstimatePopupStore } from "@/stores/estimate-popup";
+import { useFormErrorStore } from "@/stores/form-error";
+import { useListsStore } from "@/stores/lists";
+import { Category } from "@prisma/client";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
 export default function NewService({
@@ -48,7 +48,7 @@ export default function NewService({
       if (data?.service && data.edit) {
         setName(data.service.name);
         setCategory(
-          categories.find((cat) => cat.id === data.service.categoryId),
+          categories.find((cat) => cat.id === data.service.categoryId)
         );
         setDescription(data.service.description);
       } else {
@@ -333,6 +333,7 @@ export default function NewService({
                 setCategoryOpen={setCategoryOpen}
                 required={true}
                 onBlur={() => validateCategory(category)}
+                allowEdit={true}
               />
               {categoryError && (
                 <p className="flex items-center gap-1 text-xs text-red-600">
@@ -370,7 +371,7 @@ export default function NewService({
 
                   if (value.length > maxDescriptionLength) {
                     toast.error(
-                      "Description must be less than 1500 characters",
+                      "Description must be less than 1500 characters"
                     );
                     return false;
                   }

@@ -17,34 +17,124 @@ const pump = promisify(pipeline);
  * /api/infobip/email/send:
  *   post:
  *     summary: Send email via Infobip
+ *     description: >
+ *       Sends an email to a client using Infobip Email API.
+ *       Supports file attachments and email threading.
  *     tags: [Infobip]
  *     security:
  *       - bearerAuth: []
+ *
  *     requestBody:
  *       required: true
  *       content:
  *         multipart/form-data:
  *           schema:
  *             type: object
+ *             required:
+ *               - recipient
+ *               - currentUser
  *             properties:
  *               recipient:
  *                 type: string
+ *                 description: Client ID (recipient)
+ *                 example: "3460"
+ *
+ *               currentUser:
+ *                 type: integer
+ *                 description: Current logged-in user ID
+ *                 example: 12
+ *
  *               text:
  *                 type: string
+ *                 description: Email body text
+ *                 example: Hello, this is a test email
+ *
  *               files:
- *                 type: string
- *                 format: binary
+ *                 type: array
+ *                 description: Email attachments (multiple allowed)
+ *                 items:
+ *                   type: string
+ *                   format: binary
+ *
  *     responses:
  *       200:
  *         description: Email sent successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: number
+ *                       example: 101
+ *                     subject:
+ *                       type: string
+ *                       example: Autoworx
+ *                     text:
+ *                       type: string
+ *                       example: Hello, this is a test email
+ *                     emailBy:
+ *                       type: string
+ *                       example: Company
+ *                     messageId:
+ *                       type: string
+ *                       example: "INF-EMAIL-123456"
+ *                     createdAt:
+ *                       type: string
+ *                       format: date-time
+ *
  *       400:
- *         description: Recipient not provided
+ *         description: Bad request (missing recipient or invalid data)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: Recipient not provided
+ *
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: Unauthorized
+ *
  *       500:
  *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: Infobip send failed
  */
+
 // Helper: Web Stream -> Node Readable
 function webStreamToNodeStream(
-  webStream: ReadableStream<Uint8Array>
+  webStream: ReadableStream<Uint8Array>,
 ): Readable {
   const reader = webStream.getReader();
   return new Readable({
@@ -63,8 +153,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const files = formData.getAll("files") as File[];
     const recipient = formData.get("recipient") as string | null;
     const text = (formData.get("text") as string | null) ?? "";
+    const userId = (formData.get("currentUser") as string | null) ?? "";
     const session = await getServerSession(authOptions);
-    const currentUser = session?.user;
+    const currentUser = userId || session?.user?.id;
     if (!recipient) throw new Error("Recipient not provided");
 
     // Get client + lead context
@@ -99,7 +190,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     // Prefer reply-to as the company email (or set your own routing address)
     form.append(
       "replyTo",
-      `${company?.id}@ib79097.${process.env.INFOBIP_DOMAIN}`
+      `${company?.id}@ib79097.${process.env.INFOBIP_DOMAIN}`,
     );
 
     // Add custom headers as JSON via "headers" (Infobip v3)
@@ -160,7 +251,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const json: any = await sendRes.json();
     if (!sendRes.ok) {
       throw new Error(
-        `Infobip send failed (${sendRes.status}): ${JSON.stringify(json)}`
+        `Infobip send failed (${sendRes.status}): ${JSON.stringify(json)}`,
       );
     }
 
@@ -179,7 +270,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           companyId: company.id,
           clientId: parseInt(recipient),
           messageId, // store Infobip's messageId
-          userId: Number(currentUser?.id) || null,
+          userId: Number(currentUser) || null,
         },
       });
 
@@ -191,7 +282,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         fd2.append("file", file as any);
         const uploadRes = await fetch(
           `${process.env.NEXT_PUBLIC_APP_URL}/api/upload`,
-          { method: "POST", body: fd2 }
+          { method: "POST", body: fd2 },
         );
         if (!uploadRes.ok) {
           console.error("Failed to upload photos");
@@ -262,7 +353,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
       { success: false, error: message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -50,7 +50,9 @@ export default function Header({
 
   return (
     <div
-      className={`mt-5 flex justify-between items-center flex-col-reverse gap-4 lg:gap-0 lg:flex-row`}
+      // className={`mt-5 flex justify-between items-center flex-col-reverse gap-4 lg:gap-0 lg:flex-row`}
+
+      className="mt-5 flex  gap-4 lg:flex-row lg:items-center flex-col-reverse lg:justify-between"
     >
       <div className="min-w-full lg:min-w-[500px] flex flex-col gap-x-4 rounded-2xl bg-white p-2.5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] ring-1 ring-slate-100 md:flex-row md:items-center">
         {/* Search Container */}
