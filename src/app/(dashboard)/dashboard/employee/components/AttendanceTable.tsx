@@ -282,7 +282,11 @@ const Dashboard = () => {
     },
     {
       label: "Total Hours",
-      value: `${(Number(attendanceInfo?.totalHoursWorked) || 0).toFixed(2)} Hours`,
+      value: (() => {
+        const total = Number(attendanceInfo?.totalHoursWorked) || 0;
+        return decimalHoursToHHMM(total);
+      })(),
+
       percentage: (() => {
         const rate = attendanceInfo?.growthRateTotalHoursWorked?.rate;
         if (rate === null || rate === undefined || isNaN(Number(rate))) {
