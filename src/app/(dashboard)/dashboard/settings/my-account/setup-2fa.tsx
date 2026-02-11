@@ -1,48 +1,30 @@
 "use client";
 
+import { sendEmailVerificationMail } from "@/actions/settings/my-account/sendEmailVerificationMail";
+import {
+  disabled2fa,
+  enabled2fa,
+} from "@/actions/settings/my-account/toggle2fa";
+import { getUserById } from "@/actions/user/getUserById";
 import { Switch } from "@/components/Switch";
+import { errorToast, successToast } from "@/lib/toast";
 import {
   CheckCircle,
+  Loader2,
   Mail,
   ShieldCheck,
   Smartphone,
   XCircle,
 } from "lucide-react";
-import { useState } from "react";
-import toast from "react-hot-toast";
+import { useSession } from "next-auth/react";
+import { useEffect, useState } from "react";
 
-// --- 1. Business Logic (Pure Function) ---
-/**
- * Determines the outcome of a user attempting to enable 2FA.
- * Returns an object: { success: boolean, message: string }
- */
 interface User {
-  id: string;
-  email: string;
-  emailVerified: boolean;
-  twoFactorEnabled: boolean;
+  id?: number;
+  email?: string;
+  emailVerified?: boolean;
+  twoFactorEnabled?: boolean;
 }
-
-interface Outcome {
-  success: boolean;
-  message: string;
-}
-
-const attemptEnable2FA = (user: User): Outcome => {
-  if (!user.emailVerified) {
-    return { success: false, message: "Please verify your email first." };
-  }
-  if (user.twoFactorEnabled) {
-    return {
-      success: false,
-      message: "Two-factor authentication is already enabled.",
-    };
-  }
-  return {
-    success: true,
-    message: "Two-step verification enabled successfully.",
-  };
-};
 
 // header component
 function Header() {
@@ -61,37 +43,89 @@ function Header() {
 
 // content component
 function Content() {
-  // Simulated User State
-  const [user, setUser] = useState<User>({
-    id: "u_123",
-    email: "alex@example.com",
-    emailVerified: false,
-    twoFactorEnabled: false,
-  });
+  const session = useSession();
+  const userId = parseInt(session.data?.user?.id || "");
 
-  const handle2FAToggle = () => {
-    if (user.twoFactorEnabled) {
+  // Simulated User State
+  const [user, setUser] = useState<User | null>(null);
+
+  const [loading, setLoading] = useState(false);
+
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        setError("");
+        setLoading(true);
+        const { data, type } = (await getUserById(userId)) || {};
+
+        if (type === "fail") {
+          errorToast("Failed to fetch user");
+          return;
+        }
+
+        const transformedUser = {
+          id: data?.id,
+          email: data?.email,
+          emailVerified: data?.emailVerified,
+          twoFactorEnabled: data?.twoFactorEnabled,
+        };
+        setUser(transformedUser);
+      } catch (err) {
+        console.log(err);
+        setError("User data fetching failed");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUser();
+  }, [userId]);
+
+  const handle2FAToggle = async () => {
+    if (user?.twoFactorEnabled) {
       // Logic to disable
+      const { type, message } = await disabled2fa();
+      if (type === "fail") {
+        errorToast(message);
+        return;
+      }
       setUser(prev => ({ ...prev, twoFactorEnabled: false }));
-      toast.success("Two-step verification disabled.");
-      console.log("Output: 2FA Disabled");
+      successToast(message);
     } else {
       // Logic to enable
-      const outcome = attemptEnable2FA(user);
-      if (outcome.success) {
-        setUser(prev => ({ ...prev, twoFactorEnabled: true }));
-        toast.success(outcome.message);
-        console.log("Output:", outcome.message);
-      } else {
-        toast.error(outcome.message);
-        console.log("Output:", outcome.message);
+      const outcome = await enabled2fa();
+      if (outcome.type === "fail") {
+        errorToast(outcome.message);
+        return;
       }
+      setUser(prev => ({ ...prev, twoFactorEnabled: true }));
+      successToast(outcome.message);
     }
   };
 
-  const handleSendVerificationEmail = () => {
-    toast.success(`Verification link sent to ${user.email}`);
+  const handleSendVerificationEmail = async () => {
+    const { type, message } = await sendEmailVerificationMail();
+    if (type === "fail") {
+      errorToast(message);
+      return;
+    }
+    successToast(message);
   };
+
+  if (loading && !error) {
+    return (
+      <div className="flex items-center justify-center min-h-[200px] ">
+        <Loader2 className="w-8 h-8 animate-spin" />
+      </div>
+    );
+  } else if (!loading && error) {
+    return (
+      <div className="flex items-center justify-center min-h-[200px] ">
+        <p className="text-red-500">{error}</p>
+      </div>
+    );
+  }
   return (
     <div className="divide-y divide-slate-100">
       {/* Email Section */}
@@ -107,12 +141,12 @@ function Content() {
                 <Mail className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-slate-900 font-medium">{user.email}</p>
+                <p className="text-slate-900 font-medium">{user?.email}</p>
                 <p className="text-slate-400 text-xs">Primary Email</p>
               </div>
             </div>
 
-            {user.emailVerified ? (
+            {user?.emailVerified ? (
               <div className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full border border-emerald-100">
                 <CheckCircle className="w-3.5 h-3.5" />
                 Verified
@@ -125,7 +159,7 @@ function Content() {
             )}
           </div>
 
-          {!user.emailVerified && (
+          {!user?.emailVerified && (
             <div className="pl-12">
               <button
                 onClick={handleSendVerificationEmail}
@@ -155,19 +189,19 @@ function Content() {
               </h3>
               <div className="flex items-center gap-2 mt-0.5">
                 <span
-                  className={`w-2 h-2 rounded-full ${user.twoFactorEnabled ? "bg-emerald-500" : "bg-slate-300"}`}
+                  className={`w-2 h-2 rounded-full ${user?.twoFactorEnabled ? "bg-emerald-500" : "bg-slate-300"}`}
                 ></span>
                 <p
-                  className={`text-xs font-medium ${user.twoFactorEnabled ? "text-emerald-600" : "text-slate-400"}`}
+                  className={`text-xs font-medium ${user?.twoFactorEnabled ? "text-emerald-600" : "text-slate-400"}`}
                 >
-                  {user.twoFactorEnabled ? "Active" : "Inactive"}
+                  {user?.twoFactorEnabled ? "Active" : "Inactive"}
                 </p>
               </div>
             </div>
           </div>
 
           <Switch
-            checked={user.twoFactorEnabled}
+            checked={user?.twoFactorEnabled ?? false}
             setChecked={handle2FAToggle}
           />
         </div>
