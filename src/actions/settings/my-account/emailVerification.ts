@@ -8,11 +8,12 @@ export async function emailVerification(token: string) {
   try {
     const { payload } = await jwtVerifyToken(token);
     const userId = Number(payload?.userId);
+    const email = payload.email as string;
     if (!userId) {
       return { type: "fail", message: "User not found" };
     }
     const user = await db.user.findUnique({
-      where: { id: userId },
+      where: { id: userId, email },
     });
     if (!user) {
       return { type: "fail", message: "User not found" };
@@ -21,7 +22,7 @@ export async function emailVerification(token: string) {
       return { type: "fail", message: "Email is already verified" };
     }
     await db.user.update({
-      where: { id: userId },
+      where: { id: userId, email },
       data: { emailVerified: true },
     });
     return { type: "success", message: "Email verified successfully" };

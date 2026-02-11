@@ -22,9 +22,13 @@ export async function sendEmailVerificationMail() {
     if (user.emailVerified) {
       return { type: "fail", message: "Email is already verified" };
     }
-    const token = jwt.sign({ userId }, process.env.ACCESS_SECRET || "", {
-      expiresIn: "1h",
-    });
+    const token = jwt.sign(
+      { userId, email: user.email },
+      process.env.ACCESS_SECRET || "",
+      {
+        expiresIn: "1h",
+      },
+    );
     const url = `${process.env.NEXT_PUBLIC_APP_URL}/verify-email?token=${token}`;
     await sendVerificationMail({
       to: user.email,
