@@ -108,7 +108,10 @@ export default function InventoryDisplay({
       0
     );
 
-    const averageCost = Math.round(totalPurchasePrice / totalPurchaseQuantity);
+    const averageCost =
+      totalPurchaseQuantity > 0
+        ?totalPurchasePrice / totalPurchaseQuantity
+        : 0;
 
     const ReturnAndInvestment =
       averageSales > averageCost
