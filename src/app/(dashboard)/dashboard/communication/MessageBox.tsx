@@ -29,6 +29,7 @@ import InvoiceEstimateModal from "./collaboration/InvoiceEstimateModal";
 import AddUsersInGroupModal from "./internal/AddUsersInGroupModal";
 import { Message as TMessage } from "./internal/UsersArea";
 import Message from "./Message";
+import { successToast } from "@/lib/toast";
 
 type TSection = "collaboration" | "internal";
 
@@ -41,6 +42,7 @@ export default function MessageBox({
   fromGroup,
   group,
   setGroupsList,
+  existingGroups,
   section,
 }: {
   user?: User; // TODO: type this
@@ -51,6 +53,7 @@ export default function MessageBox({
   setMessages: React.Dispatch<React.SetStateAction<any[]>>;
   fromGroup?: boolean;
   group?: Group & { users: User[] };
+  existingGroups?: Array<Group & { users: User[] }>;
   section: TSection;
 }) {
   const { data: session } = useSession();
@@ -217,7 +220,7 @@ export default function MessageBox({
         const userName = removedUser
           ? `${removedUser.firstName} ${removedUser.lastName}`
           : "User";
-        toast.success(`${userName} removed from group successfully!`);
+        successToast(`${userName} removed from group successfully!`)
       }
     }
   };
@@ -343,11 +346,40 @@ export default function MessageBox({
                       <CircleCheckBig
                         className="ml-3 size-6 cursor-pointer"
                         onClick={async () => {
+                          const trimmedName = groupName.trim();
+                          const currentName = group?.name?.trim() || "";
+                          if (!trimmedName) return;
+                          if (trimmedName === currentName) {
+                            toast.error("Group name must be different.");
+                            return;
+                          }
+                          const hasDuplicateName =
+                            existingGroups?.some(
+                              (existingGroup) =>
+                                existingGroup.id !== group?.id &&
+                                existingGroup.name
+                                  ?.trim()
+                                  .toLowerCase() === trimmedName.toLowerCase()
+                            ) ?? false;
+                          if (hasDuplicateName) {
+                            toast.error("Group name already exists.");
+                            return;
+                          }
                           setIsGroupNameEdited(false);
-                          if (groupName !== group?.name && groupName.trim()) {
-                            setGroupName(groupName.trim());
-                            group?.id &&
-                              (await renameGroup(groupName, group.id));
+                          if (groupName !== group?.name) {
+                            setGroupName(trimmedName);
+                            if (group?.id) {
+                              const response = await renameGroup(
+                                trimmedName,
+                                group.id
+                              );
+                              if (response?.status === 200) {
+                                successToast(
+                                  response?.message ||
+                                    "Group renamed successfully."
+                                );
+                              }
+                            }
                           }
                         }}
                       />

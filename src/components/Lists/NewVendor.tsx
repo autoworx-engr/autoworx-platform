@@ -242,7 +242,7 @@ export default function NewVendor({
           <PhoneInput
             label="Phone"
             placeholder="1234567890"
-            required={false}
+            required={true}
             // value={mobile}
             onChange={(phone, code, isoCode) => {
               phoneDataRef.current = {

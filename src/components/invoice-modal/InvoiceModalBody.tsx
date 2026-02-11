@@ -596,7 +596,7 @@ export default function InvoiceModalBody({
                         placement="top"
                         trigger="click"
                       >
-                        <span className="inline-flex cursor-pointer items-center rounded bg-[#6571FF] px-2 py-0.5 text-xs text-white">
+                        <span className="inline-flex cursor-pointer items-center rounded px-1 py-0.5 text-xs border border-slate-200">
                           Note
                         </span>
                       </Tooltip>

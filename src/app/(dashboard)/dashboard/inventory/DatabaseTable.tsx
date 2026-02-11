@@ -4,6 +4,7 @@ import { cn } from "@/lib/cn";
 import { useInventoryDatabaseSearchStore } from "@/stores/inventoryDatabaseSearchStore"; // Import Zustand store
 import { Pagination } from "antd"; // Importing the Pagination component from Ant Design
 import AddNewProduct from "./AddNewProduct";
+import { Search } from "lucide-react";
 
 export interface DatabaseData {
   id: string;
@@ -55,34 +56,42 @@ export default function DatabaseTable({
 
           {/* Database List */}
           <tbody className="w-full">
-            {data.map((item, index) => (
-              <tr
-                key={item.id}
-                className={cn("py-3", index % 2 === 0 ? evenColor : oddColor)}
-              >
-                <td className="w-16 px-4 py-2 text-left">
-                  <p className="block h-full">{item.id}</p>
-                </td>
-                <td className="px-4 py-2 text-left">
-                  <p className="block h-full w-full truncate">
-                    {item.productName}
-                  </p>
-                </td>
-                <td className="px-4 py-2 text-left">
-                  <p className="block h-full w-full truncate">
-                    {item.category}
-                  </p>
-                </td>
-                <td className="px-4 py-2 text-left">
-                  <p className="block h-full w-full">{item.unit}</p>
-                </td>
-                <td className="px-4 py-2 text-center">
-                  <p className="block h-full w-fit">
-                    <AddNewProduct product={item} isDatabase={true} />
-                  </p>
+            {data.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="p-20 text-center">
+                  No data found
                 </td>
               </tr>
-            ))}
+            ) : (
+              data.map((item, index) => (
+                <tr
+                  key={item.id}
+                  className={cn("py-3", index % 2 === 0 ? evenColor : oddColor)}
+                >
+                  <td className="w-16 px-4 py-2 text-left">
+                    <p className="block h-full">{item.id}</p>
+                  </td>
+                  <td className="px-4 py-2 text-left">
+                    <p className="block h-full w-full truncate">
+                      {item.productName}
+                    </p>
+                  </td>
+                  <td className="px-4 py-2 text-left">
+                    <p className="block h-full w-full truncate">
+                      {item.category}
+                    </p>
+                  </td>
+                  <td className="px-4 py-2 text-left">
+                    <p className="block h-full w-full">{item.unit}</p>
+                  </td>
+                  <td className="px-4 py-2 text-center">
+                    <p className="block h-full w-fit">
+                      <AddNewProduct product={item} isDatabase={true} />
+                    </p>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
@@ -152,7 +161,7 @@ export default function DatabaseTable({
       </div>
 
       <div className="mt-4 flex justify-end">
-        <Pagination
+        {data.length > 0 && <Pagination
           className="custom-pagination"
           current={page}
           pageSize={limit}
@@ -160,7 +169,7 @@ export default function DatabaseTable({
           onChange={handlePageChange}
           showSizeChanger
           onShowSizeChange={handlePageChange}
-        />
+        />}
       </div>
     </div>
   );
