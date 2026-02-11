@@ -28,6 +28,12 @@ export default function DatabaseFilterHeader({ categories = [] }: TProps) {
     setPage(1);
   };
 
+  const handleClearCategory = () => {
+    setSelectedCategory(undefined);
+    setCategoryName("");
+    setPage(1);
+  };
+
   useEffect(() => {
     setSelectedCategory(categoryName);
   }, [categoryName]);
@@ -45,6 +51,9 @@ export default function DatabaseFilterHeader({ categories = [] }: TProps) {
             changesValue={selectedCategory || "All Categories"}
             defaultValue="All Categories"
             buttonClassName="md:w-[200px]"
+            showClearButton
+            clearLabel="Clear filter"
+            onClear={handleClearCategory}
           />
         </div>
       </div>

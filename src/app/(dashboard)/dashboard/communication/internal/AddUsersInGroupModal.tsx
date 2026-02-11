@@ -104,7 +104,6 @@ export default function AddUsersInGroupModal({
 
     setError(null);
     setContactList((prev) => [...prev, modifyUser]);
-    setOpenUserList(false);
   };
 
   const handleDeleteFromContactList = (user: TContactListUser) => {
