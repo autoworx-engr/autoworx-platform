@@ -6,6 +6,8 @@ import { FEATURE_PERMISSIONS_MAP } from "@/lib/routePermissionsMap";
 import { useCompanyFeaturePermissionStore } from "@/stores/companyFeaturePermissionStore";
 import { isIosPwa } from "@/utils/isIosPwa";
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
+import { getEntitlements } from "@/actions/platform-billing/entitlements";
+import { useServerGet } from "@/hooks/useServerGet";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -25,11 +27,11 @@ type TProps = {
     link?: string | null;
     path: string;
     subnav?:
-    | {
-      title: string;
-      link: string;
-    }[]
-    | null;
+      | {
+          title: string;
+          link: string;
+        }[]
+      | null;
   }[];
   permissions: PermissionsResult | null;
 };
@@ -40,6 +42,12 @@ export default function MobileNav({ navList, permissions }: TProps) {
   const [openNav, setOpenNav] = useState(false);
   const currentUser = useGetCurrentUser();
   const { companyFeaturePermission } = useCompanyFeaturePermissionStore();
+  const companyId = currentUser?.companyId;
+  const hasCompanyId = typeof companyId === "number";
+  const { data: entitlements } = useServerGet(
+    getEntitlements,
+    hasCompanyId ? companyId : 0,
+  );
 
   // Helper: Check if company feature permission allows access to this route
   function canAccessCompanyFeatureRoute(route: string): boolean {
@@ -51,57 +59,57 @@ export default function MobileNav({ navList, permissions }: TProps) {
     if (Array.isArray(featureKey)) {
       return featureKey.some((key) =>
         companyFeaturePermission.some(
-          (perm) => perm.permission_name === key && perm.enabled
-        )
+          (perm) => perm.permission_name === key && perm.enabled,
+        ),
       );
     }
     return companyFeaturePermission.some(
-      (perm) => perm.permission_name === featureKey && perm.enabled
+      (perm) => perm.permission_name === featureKey && perm.enabled,
     );
   }
 
-  // First filter by permissions, then by company feature permission
-  const [filteredNavList, setFilteredNavList] = useState(() => {
-    // Permission-based filtering
-    let permissionFiltered = filterNavList(navList, permissions);
-    // Company feature permission filtering
+  function canAccessPlanRoute(route: string): boolean {
+    const routeWithoutQuery = route.split("?")[0];
+    if (routeWithoutQuery !== "/dashboard/visualization") return true;
+    if (!hasCompanyId) return true;
+    if (!entitlements?.success) return false;
+    return !!entitlements.data?.carWrapVisualizer;
+  }
+
+  const buildFilteredNavList = (list: TProps["navList"]) => {
+    const permissionFiltered = filterNavList(list, permissions);
+
     return permissionFiltered
-      .filter((item) => !item.link || canAccessCompanyFeatureRoute(item.link))
+      .filter(
+        (item) =>
+          !item.link ||
+          (canAccessCompanyFeatureRoute(item.link) &&
+            canAccessPlanRoute(item.link)),
+      )
       .map((item) => {
-        if (item.subnav) {
-          const filteredSubnav = item.subnav.filter((sub) =>
-            canAccessCompanyFeatureRoute(sub.link)
-          );
-          return {
-            ...item,
-            subnav: filteredSubnav.length > 0 ? filteredSubnav : null,
-          };
-        }
-        return item;
+        if (!item.subnav) return item;
+
+        const filteredSubnav = item.subnav.filter(
+          (sub) =>
+            canAccessCompanyFeatureRoute(sub.link) &&
+            canAccessPlanRoute(sub.link),
+        );
+
+        return {
+          ...item,
+          subnav: filteredSubnav.length > 0 ? filteredSubnav : null,
+        };
       });
-  });
+  };
+
+  // First filter by permissions, then by company feature permission
+  const [filteredNavList, setFilteredNavList] = useState(() =>
+    buildFilteredNavList(navList),
+  );
 
   useEffect(() => {
-    // Permission-based filtering
-    let permissionFiltered = filterNavList(navList, permissions);
-    // Company feature permission filtering
-    setFilteredNavList(
-      permissionFiltered
-        .filter((item) => !item.link || canAccessCompanyFeatureRoute(item.link))
-        .map((item) => {
-          if (item.subnav) {
-            const filteredSubnav = item.subnav.filter((sub) =>
-              canAccessCompanyFeatureRoute(sub.link)
-            );
-            return {
-              ...item,
-              subnav: filteredSubnav.length > 0 ? filteredSubnav : null,
-            };
-          }
-          return item;
-        })
-    );
-  }, [companyFeaturePermission, navList, permissions]);
+    setFilteredNavList(buildFilteredNavList(navList));
+  }, [companyFeaturePermission, entitlements, navList, permissions]);
   useEffect(() => {
     if (openNav) {
       document.body.style.overflow = "hidden";
@@ -168,7 +176,7 @@ export default function MobileNav({ navList, permissions }: TProps) {
       <div
         className={cn(
           "w-0 bg-[#0C1427] duration-300",
-          openNav && "fixed inset-0 w-full overflow-scroll duration-300"
+          openNav && "fixed inset-0 w-full overflow-scroll duration-300",
         )}
         style={{
           zIndex: 999,
