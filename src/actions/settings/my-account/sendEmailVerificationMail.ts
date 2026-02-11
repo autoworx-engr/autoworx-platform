@@ -1,9 +1,10 @@
+"use server";
+import { sendVerificationMail } from "@/actions/estimate/invoice/sendInfobipEmail";
 import { authOptions } from "@/authOptions";
-import { db } from "@/lib/db";
-import { sendEmail } from "@/lib/email";
-import { getServerSession } from "next-auth";
-import jwt from "jsonwebtoken";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
+import { db } from "@/lib/db";
+import jwt from "jsonwebtoken";
+import { getServerSession } from "next-auth";
 
 export async function sendEmailVerificationMail() {
   try {
@@ -25,7 +26,7 @@ export async function sendEmailVerificationMail() {
       expiresIn: "1h",
     });
     const url = `${process.env.NEXT_PUBLIC_APP_URL}/verify-email?token=${token}`;
-    await sendEmail({
+    await sendVerificationMail({
       to: user.email,
       subject: "Verify your email",
       text: `
