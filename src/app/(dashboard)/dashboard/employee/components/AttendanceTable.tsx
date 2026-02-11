@@ -12,6 +12,7 @@ import {
   convertMinutesToHours,
   getTotalBreaksValue,
 } from "@/lib/convertDurations";
+import { decimalHoursToHoursMinutes } from "@/lib/decimalHoursToHoursMinutes";
 import { Info, Pencil, Save, X } from "lucide-react";
 import moment from "moment-timezone";
 import { useParams } from "next/navigation";
@@ -281,8 +282,7 @@ const Dashboard = () => {
     },
     {
       label: "Total Hours",
-      value: `${convertMinutesToHours(isNaN(Number(attendanceInfo?.totalHoursWorked)) ? 0 : Number(attendanceInfo?.totalHoursWorked))} Hours`,
-      //  percentage: attendanceInfo?.growthRateTotalHoursWorked?.rate || "0%",
+      value: `${(Number(attendanceInfo?.totalHoursWorked) || 0).toFixed(2)} Hours`,
       percentage: (() => {
         const rate = attendanceInfo?.growthRateTotalHoursWorked?.rate;
         if (rate === null || rate === undefined || isNaN(Number(rate))) {
