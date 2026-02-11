@@ -268,7 +268,7 @@ export default function EditVendor({
           <PhoneInput
             label="Phone"
             placeholder="1234567890"
-            required={false}
+            required={true}
             defaultValue={vendor.phone!}
             // value={phoneNumber}
             defaultIsoCode={vendor.countryCode!}

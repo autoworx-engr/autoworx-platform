@@ -20,6 +20,8 @@ import {
   Search,
 } from "lucide-react";
 
+import { successToast } from "@/lib/toast";
+
 type TProps = {
   users: User[];
   groupId: number | undefined;
@@ -137,6 +139,8 @@ export default function AddUsersInGroupModal({
               return g;
             })
           );
+
+        successToast("Users added to the group successfully!")
       } else {
         setError("Failed to create group.");
       }
