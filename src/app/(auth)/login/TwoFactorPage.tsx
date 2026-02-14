@@ -22,6 +22,7 @@ import { checkLoginWithTwoFactor } from "./actions/checkLoginWithTwoFactor";
 import { getSession, signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { resendTwoFactorCode } from "@/actions/two-factor/resendTwoFactorCode";
+import { successToast } from "@/lib/toast";
 
 /**
  * Functional 2FA Verification Component (TypeScript)
@@ -168,6 +169,7 @@ const TwoFactorVerification: React.FC = () => {
         setCooldown(59);
         setOtp(["", "", "", "", "", ""]);
         inputRefs.current[0]?.focus();
+        successToast("Code resent successfully!");
       } else {
         setError(res.message);
       }
