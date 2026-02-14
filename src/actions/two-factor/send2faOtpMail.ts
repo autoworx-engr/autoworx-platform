@@ -8,6 +8,8 @@ import {
   hashOTP,
 } from "@/utils/otp";
 import { sendOTPEmail } from "./send2faMail";
+import { cookies } from "next/headers";
+import { TWO_FACTOR_CONFIG } from "@/types/two-factor";
 
 type TSend2faOtp = {
   userId: number;
@@ -61,23 +63,30 @@ export default async function send2faOtpMail({ userId, email }: TSend2faOtp) {
       where: { userId: user.id },
     });
 
-    // Create new 2FA token
-    await db.twoFactorToken.create({
-      data: {
+    // 3. Save to Database
+    await db.twoFactorToken.upsert({
+      where: { userId: user.id },
+      update: {
+        tokenHash,
+        sessionId, // <--- Saving it here
+        attemptCount: 0, // Reset attempts on new code
+        expiresAt,
+      },
+      create: {
         userId: user.id,
         tokenHash,
         sessionId,
         expiresAt,
-        attemptCount: 0,
       },
     });
 
-    console.log({
-      userId: user.id,
-      tokenHash,
-      sessionId,
-      expiresAt,
-      attemptCount: 0,
+    // 4. Set the Session ID in a HTTP-Only Cookie
+    // Attackers can't read this via JS
+    cookies().set("2fa_session", sessionId, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: TWO_FACTOR_CONFIG.expiryMinutes * 60,
     });
 
     // Send OTP via email

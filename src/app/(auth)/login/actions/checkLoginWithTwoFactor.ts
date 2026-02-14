@@ -3,6 +3,7 @@
 import send2faOtpMail from "@/actions/two-factor/send2faOtpMail";
 import { db } from "@/lib/db";
 import bcrypt from "bcryptjs";
+import { cookies } from "next/headers";
 
 type TValues = {
   email: string;
@@ -43,12 +44,41 @@ export async function checkLoginWithTwoFactor(values: TValues): Promise<{
         return { type: "fail", message: "Invalid code!" };
       }
 
+      const sessionCookie = cookies().get("2fa_session")?.value;
+
+      if (
+        twoFactorToken.sessionId &&
+        twoFactorToken.sessionId !== sessionCookie
+      ) {
+        return {
+          type: "fail",
+          message: "Invalid session. Please login again.",
+        };
+      }
+
+      if (twoFactorToken.attemptCount >= 3) {
+        await db.twoFactorToken.delete({
+          where: { id: twoFactorToken.id },
+        });
+        return {
+          type: "fail",
+          message: "Too many failed attempts. Please request a new code.",
+        };
+      }
+
       const isValidCode = await bcrypt.compare(
         code,
         twoFactorToken?.tokenHash || "",
       );
 
       if (!isValidCode) {
+        await db.twoFactorToken.update({
+          where: { id: twoFactorToken.id },
+          data: {
+            attemptCount: { increment: 1 },
+            lastAttemptAt: new Date(),
+          },
+        });
         return { type: "fail", message: "Invalid code!" };
       }
 
@@ -59,6 +89,9 @@ export async function checkLoginWithTwoFactor(values: TValues): Promise<{
 
       // Valid Code! Create Confirmation to allow NextAuth login
       await db.twoFactorToken.delete({ where: { id: twoFactorToken.id } });
+
+      // 2. Clear the temp cookie
+      cookies().delete("2fa_session");
 
       const existingConfirmation = await db.twoFactorConfirmation.findUnique({
         where: { userId: existingUser.id },
