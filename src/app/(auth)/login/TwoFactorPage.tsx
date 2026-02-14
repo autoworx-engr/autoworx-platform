@@ -21,6 +21,7 @@ import { TWO_FACTOR_CONFIG } from "@/types/two-factor";
 import { checkLoginWithTwoFactor } from "./actions/checkLoginWithTwoFactor";
 import { getSession, signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { resendTwoFactorCode } from "@/actions/two-factor/resendTwoFactorCode";
 
 /**
  * Functional 2FA Verification Component (TypeScript)
@@ -158,6 +159,23 @@ const TwoFactorVerification: React.FC = () => {
     }
   };
 
+  // resend
+  const handleResendRefactorCode = async (): Promise<void> => {
+    setError("");
+    try {
+      const res = await resendTwoFactorCode(email);
+      if (res.type === "success") {
+        setCooldown(59);
+        setOtp(["", "", "", "", "", ""]);
+        inputRefs.current[0]?.focus();
+      } else {
+        setError(res.message);
+      }
+    } catch (err) {
+      setError("Something went wrong. Please try again.");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#F3F4F6] flex font-sans text-slate-900">
       <div className="flex-1 lg:ml-20 flex items-center justify-center p-4">
@@ -241,11 +259,7 @@ const TwoFactorVerification: React.FC = () => {
                     </span>
                   ) : (
                     <button
-                      onClick={() => {
-                        setCooldown(59);
-                        setOtp(["", "", "", "", "", ""]);
-                        inputRefs.current[0]?.focus();
-                      }}
+                      onClick={handleResendRefactorCode}
                       className="text-blue-600 font-semibold text-sm hover:text-blue-700 hover:underline"
                     >
                       Resend Code
