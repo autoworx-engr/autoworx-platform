@@ -1,19 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import {
-  getCompletedJobs,
-  getConversionRateWithGrowth,
-  getConvertedLeadsPerMonth,
-  getEmployeePayout,
-  getExpectedRevenue,
-  getInventory,
-  getOngoingJobs,
-  getRevenue,
-  getTotalJobs,
-  getTotalLeadsPerMonth,
-} from "@/actions/dashboard/data/getAdminInfo";
 import moment from "moment-timezone";
 import { Task } from "@prisma/client";
+import { getSalaryPayouts } from "@/actions/dashboard/data/getSalaryPayouts";
+import {
+  getCurrentProjects,
+  getMonthlyPayout,
+  getPerformance,
+} from "@/actions/dashboard/data/getTechnicianInfo";
 
 /**
  * @swagger
@@ -234,83 +228,6 @@ export async function GET(req: NextRequest) {
     const timezone =
       company?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-    //sales pipeline
-    const totalLeadsPerMonthPromise = getTotalLeadsPerMonth(timezone);
-    const leadsConvertedDataPromise = getConvertedLeadsPerMonth(timezone);
-    const conversionRateDataPromise = getConversionRateWithGrowth(timezone);
-
-    const [totalLeadsPerMonth, leadsConvertedData, conversionRateData] =
-      await Promise.all([
-        totalLeadsPerMonthPromise,
-        leadsConvertedDataPromise,
-        conversionRateDataPromise,
-      ]);
-
-    const currentTotalLeads = totalLeadsPerMonth?.current ?? 0;
-
-    const currentConversionRate = conversionRateData.currentConversionRate;
-    const conversionRateGrowth = conversionRateData.conversionRateGrowth;
-
-    //shop pipeline
-    const completedJobsPromise = getCompletedJobs(timezone);
-    const totalJobsPromise = getTotalJobs();
-    const ongoingJobsPromise = getOngoingJobs();
-
-    const [completedJobsData, totalJobsData, ongoingJobsData] =
-      await Promise.all([
-        completedJobsPromise,
-        totalJobsPromise,
-        ongoingJobsPromise,
-      ]);
-
-    // Clean data extraction and formatting
-    const totalJobs = totalJobsData?.jobs || 0;
-    const ongoingJobs = ongoingJobsData?.ongoingJobs || 0;
-    const completedJobs = completedJobsData?.completedJobs || 0;
-    const completedJobsGrowthRate = parseFloat(
-      (completedJobsData?.growth?.rate ?? 0).toFixed(2),
-    );
-    const isCompletedJobsPositive =
-      completedJobsData?.growth?.isPositive ?? false;
-
-    //revenue
-    const revenue = await getRevenue(timezone);
-    const expectedRevenue = await getExpectedRevenue();
-
-    //inventory
-    const inventory = await getInventory(timezone);
-
-    // Clean data extraction and parsing
-    const totalValue = inventory?.totalValue || 0;
-    const currentMonthTotal = inventory?.currentMonthTotal || 0;
-    const inventoryGrowthRate = parseFloat(
-      (inventory?.growth?.rate ?? 0).toFixed(2),
-    );
-    const isInventoryPositive = inventory?.growth?.isPositive ?? false;
-
-    //employee box
-    const employeePayout = await getEmployeePayout(timezone);
-
-    // Data Extraction and Formatting
-    const currentMonthTotalPayout = employeePayout?.currentMonthTotal || 0;
-
-    // Payout is a cost, so a higher rate/growth is typically seen as 'Negative' financially.
-    // We'll calculate the rate cleanly and determine if the growth is positive or negative for the indicator.
-    const payoutGrowthRate = parseFloat(
-      (employeePayout?.growth?.rate ?? 0).toFixed(2),
-    );
-
-    // For Payout, growth (isPositive = true) indicates a higher cost, which is usually negative for a dashboard.
-    // We flip the indicator color if the rate is positive (cost increased).
-    const isPayoutGrowthPositive = employeePayout?.growth?.isPositive ?? false;
-
-    // IMPORTANT: For the performance indicator, we often show positive financial flow (Revenue Up) as Green.
-    // For costs (Payout), we often show cost increase (isPositive=true) as Red.
-    // However, we'll keep the `isPositive` prop as the raw data indicator, and rely on the viewer to understand context.
-    // If you wanted to FLIP the color indicator: `!isPayoutGrowthPositive`
-
-    //appointment box
-
     const fetchWithAppointment = {
       include: {
         appointmentUsers: {
@@ -417,24 +334,77 @@ export async function GET(req: NextRequest) {
       },
     });
 
+    // monthly payout
+    const monthlyPayout = await getMonthlyPayout(timezone, user?.id);
+    const salaryPayouts = await getSalaryPayouts(timezone, userId, companyId);
+
+    // Check if user has valid salary information
+    const hasValidSalaryInfo =
+      salaryPayouts && !salaryPayouts.error && salaryPayouts.salaryInfo;
+
+    // Calculate totals
+    const jobPayout = monthlyPayout?.totalPayout || 0;
+    const salaryPayout = hasValidSalaryInfo
+      ? salaryPayouts.currentPeriodPayout || 0
+      : 0;
+    const totalPayout = jobPayout + salaryPayout;
+
+    // * Performance
+    // 1. Total Jobs
+    const performance = await getPerformance(timezone, userId);
+    const totalJobsCount = performance?.totalJobs?.count || 0;
+    const totalJobsGrowthRate = parseFloat(
+      (performance?.totalJobs?.growth?.rate ?? 0).toFixed(2),
+    );
+    const isTotalJobsPositive =
+      performance?.totalJobs?.growth?.isPositive ?? false;
+
+    // 2. On-time Completion Rate
+    const onTimeRate =
+      parseFloat((performance?.onTimeCompletionRate?.rate ?? 0).toFixed(2)) ||
+      0;
+    const onTimeGrowthRate =
+      parseFloat(
+        (performance?.onTimeCompletionRate?.growth?.rate ?? 0).toFixed(2),
+      ) || 0;
+    const isOnTimePositive =
+      performance?.onTimeCompletionRate?.growth?.isPositive ?? false;
+
+    const redoJobsRate = parseFloat(
+      (performance?.redoJobs?.count ?? 0).toFixed(2),
+    );
+
+    const isRedoGrowthPositive =
+      performance?.redoJobs?.growth?.isPositive ?? false;
+    const redoGrowthRate = parseFloat(
+      (performance?.redoJobs?.growth?.rate ?? 0).toFixed(2),
+    );
+
+    const isPerformancePositiveForRedo = !isRedoGrowthPositive;
+
+    //* projects
+    const projects = await getCurrentProjects(userId, companyId);
+
     const data = {
-      currentTotalLeads,
-      currentConversionRate,
-      conversionRateGrowth,
-      totalJobs,
-      ongoingJobs,
-      completedJobs,
-      completedJobsGrowthRate,
-      isCompletedJobsPositive,
-      revenue,
-      expectedRevenue,
-      totalValue,
-      currentMonthTotal,
-      inventoryGrowthRate,
-      isInventoryPositive,
-      currentMonthTotalPayout,
-      payoutGrowthRate,
-      isPayoutGrowthPositive,
+      projects,
+      performance: {
+        totalJobsCount,
+        isTotalJobsPositive,
+        totalJobsGrowthRate,
+        onTimeRate,
+        isOnTimePositive,
+        onTimeGrowthRate,
+        redoJobsRate,
+        isPerformancePositiveForRedo,
+        redoGrowthRate,
+      },
+      monthlyPayout: {
+        ...monthlyPayout,
+        totalPayout,
+        jobPayout,
+        salaryPayout,
+        salaryPayouts,
+      },
       appointments,
       taskData: {
         data: tasks,

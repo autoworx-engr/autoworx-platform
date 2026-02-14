@@ -437,7 +437,7 @@ export async function GET(req: NextRequest) {
       isPayoutGrowthPositive,
       appointments,
       taskData: {
-        data: tasks,
+        tasks,
         totalTask: totalTasks,
       },
     };
