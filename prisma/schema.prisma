@@ -2108,13 +2108,14 @@ model User {
   inventoryAutomationTeamMembers InventoryAutomationTeamMember[]
   salaryHistory                  SalaryHistory[]
   shortLinks                     ShortLink[] // Links created by this user
+  twoFactorConfirmation          TwoFactorConfirmation?
 
   @@index([companyId], name: "fk_users_company")
 }
 
 // 2. The 2FA Token Model
 model TwoFactorToken {
-  id String @id @default(cuid())
+  id Int @id @default(autoincrement())
 
   // Relational Fields
   userId Int  @unique // @unique ensures only ONE active token exists per user at a time
@@ -2137,6 +2138,18 @@ model TwoFactorToken {
 
   @@index([userId]) // Fast lookup by user
   @@map("two_factor_tokens")
+}
+
+// 2. Add the TwoFactorConfirmation model
+model TwoFactorConfirmation {
+  id Int @id @default(autoincrement())
+
+  // Relation to User
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Ensure 1 user = 1 confirmation at a time
+  @@unique([userId])
 }
 
 model PasswordResetToken {
