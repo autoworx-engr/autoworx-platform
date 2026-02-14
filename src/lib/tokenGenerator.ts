@@ -8,7 +8,7 @@ const REFRESH_SECRET = process.env.REFRESH_SECRET;
 type TPayload = Partial<User>;
 
 export function generateAccessToken(user: TPayload) {
-  console.log("user", user);
+
   return jwt.sign(
     {
       id: user.id,
