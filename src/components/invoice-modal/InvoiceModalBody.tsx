@@ -906,7 +906,7 @@ export default function InvoiceModalBody({
 
           <div className="flex justify-end items-center">
             {showSignaturePad && !sigImageURL && !invoice?.signatureImage && (
-              <div className="flex justify-end items-center gap-4">
+              <div className="flex flex-col lg:flex-row justify-end items-end gap-4">
                 <SignatureCanvas
                   ref={sigCanvas}
                   penColor="black"
@@ -918,7 +918,7 @@ export default function InvoiceModalBody({
                   }}
                 />
 
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-row justify-end lg:flex-col lg:items-center gap-3">
                   <button
                     onClick={() => {
                       if (!sigCanvas.current || sigCanvas.current.isEmpty()) {
@@ -954,7 +954,7 @@ export default function InvoiceModalBody({
                       setSigImageURL(null);
                     }}
                     className="
-                    rounded-xl mt-2 sm:mt-0 px-5 py-2.5 text-sm font-medium text-slate-500 
+                    rounded-xl lg:mt-2 sm:mt-0 px-5 py-2.5 text-sm font-medium text-slate-500 
                     hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
                     transition-colors border
                     "
