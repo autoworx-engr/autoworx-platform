@@ -131,8 +131,9 @@ export default function FilterBySelection({
           </div>
           <div className="pt-1 border-t border-transparent bottom-0 sticky bg-white/60 dark:bg-slate-900/60 backdrop-blur-md">
             <button
+              disabled={!selectedItem}
               onClick={handleClear}
-              className="w-full text-left px-3 py-2 text-sm text-white bg-[#de5967] rounded-lg"
+              className={cn("w-full text-left px-3 py-2 text-sm text-white bg-[#de5967] rounded-lg", !selectedItem && "opacity-50 cursor-not-allowed")}
             >
               Clear
             </button>
