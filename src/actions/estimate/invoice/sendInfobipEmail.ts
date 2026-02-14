@@ -10,7 +10,7 @@ const INFOBIP_BASE_URL = process.env.INFOBIP_BASE_URL;
 
 const INFOBIP_API_KEY = process.env.INFOBIP_API_KEY!;
 
-interface InfobipEmailRequest {
+export interface InfobipEmailRequest {
   from: string;
   to: string;
   subject: string;
@@ -44,7 +44,7 @@ interface InfobipEmailResponse {
   }>;
 }
 
-async function sendInfobipEmailAPI(
+export async function sendInfobipEmailAPI(
   emailData: InfobipEmailRequest,
 ): Promise<InfobipEmailResponse> {
   try {
@@ -408,58 +408,6 @@ export async function sendInfobipEmailWithAttachments({
     return {
       success: false,
       message: error.message || "Failed to send email with attachments",
-    };
-  }
-}
-
-export async function sendVerificationMail({
-  to,
-  subject,
-  text,
-}: {
-  to: string;
-  subject: string;
-  text: string;
-}) {
-  try {
-    const session = await getServerSession(authOptions);
-    const companyId = Number(session?.user?.companyId);
-    // Fetch company ID and email credentials
-    const company = await db.company.findFirst({
-      where: { id: companyId },
-    });
-
-    if (!company) throw new Error("No company found");
-    // if (!company?.email) throw new Error("No Company Email Found");
-
-    // Prepare email content with unsubscribe link
-    const emailText = `${text}`;
-
-    const emailHtml = emailText.replace(/\n/g, "<br>");
-
-    // Prepare Infobip email request
-    const infobipEmailData: InfobipEmailRequest = {
-      from: `${company.name} <mail@${process.env.INFOBIP_DOMAIN}>`,
-      to: to,
-      subject: subject,
-      text: emailText,
-      html: emailHtml,
-      trackClicks: true,
-      trackOpens: true,
-    };
-
-    // Send the email via Infobip API
-    await sendInfobipEmailAPI(infobipEmailData);
-
-    return {
-      success: true,
-      message: "Verification Mail Sent Successfully",
-    };
-  } catch (error: any) {
-    console.error("Infobip email error:", error);
-    return {
-      success: false,
-      message: error.message || "Failed to send email",
     };
   }
 }

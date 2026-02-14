@@ -1,5 +1,9 @@
 "use server";
-import { sendVerificationMail } from "@/actions/estimate/invoice/sendInfobipEmail";
+import {
+  sendMail,
+  sendVerificationMail,
+} from "@/actions/two-factor/send2faMail";
+import { getEmailVerificationTemplate } from "@/actions/two-factor/template";
 import { authOptions } from "@/authOptions";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { db } from "@/lib/db";
@@ -30,19 +34,7 @@ export async function sendEmailVerificationMail() {
       },
     );
     const url = `${process.env.NEXT_PUBLIC_APP_URL}/verify-email?token=${token}`;
-    await sendVerificationMail({
-      to: user.email,
-      subject: "Verify your email",
-      text: `
-        <div style="font-family: Arial, sans-serif; padding: 20px;">
-          <h2>Verify Your Email Address</h2>
-          <p>Thank you for registering with our service. Please click the link below to verify your email address:</p>
-          <a href="${url}" style="display: inline-block; padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px;">Verify Email</a>
-          <p>This link will expire in 1 hour.</p>
-          <p>If you did not create this account, please ignore this email.</p>
-        </div>
-      `,
-    });
+    await sendVerificationMail(user.email, url);
     return { type: "success", message: "Verification email sent successfully" };
   } catch (error) {
     const formattedError = errorHandler(error);
