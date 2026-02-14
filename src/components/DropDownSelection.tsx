@@ -24,6 +24,9 @@ type TProps = {
   buttonClassName?: string;
   children?: React.ReactNode;
   dropdownIcon?: React.ReactNode;
+  showClearButton?: boolean;
+  clearLabel?: string;
+  onClear?: () => void;
 };
 
 export function DropdownSelection({
@@ -36,9 +39,19 @@ export function DropdownSelection({
   buttonClassName,
   children,
   dropdownIcon,
+  showClearButton = false,
+  clearLabel = "Clear",
+  onClear,
 }: TProps) {
+  const [isOpen, setIsOpen] = React.useState(false);
+
+  const handleClear = () => {
+    onClear?.();
+    setIsOpen(false);
+  };
+
   return (
-    <DropdownMenu>
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
         {children ? (
           children
@@ -136,6 +149,18 @@ export function DropdownSelection({
             </DropdownMenuRadioItem>
           )}
         </DropdownMenuRadioGroup>
+        {showClearButton && onClear && (
+          <div className="sticky bottom-0 mt-2 rounded-2xl bg-white/80 pt-2 backdrop-blur-md dark:bg-slate-900/70">
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-700 dark:text-slate-200 dark:hover:text-white"
+              onClick={handleClear}
+            >
+              {clearLabel}
+            </Button>
+          </div>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
