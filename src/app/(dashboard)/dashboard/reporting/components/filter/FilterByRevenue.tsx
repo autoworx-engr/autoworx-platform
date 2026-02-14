@@ -119,8 +119,9 @@ export default function FilterByRevenue({
           ))}
           <div className="pt-1 border-t border-transparent">
             <button
+              disabled={!selectedItem}
               onClick={handleClear}
-              className="w-full text-left px-3 py-2 text-sm text-white bg-[#de5967] rounded-lg"
+              className={cn("w-full text-left px-3 py-2 text-sm text-white bg-[#de5967] rounded-lg", !selectedItem && "opacity-50 cursor-not-allowed")}
             >
               Clear
             </button>
