@@ -7,6 +7,7 @@ interface LoginStore {
   setShowTwoFactor: (showTwoFactor: boolean) => void;
   setEmail: (email: string) => void;
   setPassword: (password: string) => void;
+  clearStore: () => void;
 }
 
 export const useLoginStore = create<LoginStore>(set => ({
@@ -16,4 +17,5 @@ export const useLoginStore = create<LoginStore>(set => ({
   setShowTwoFactor: showTwoFactor => set({ showTwoFactor }),
   setEmail: email => set({ email }),
   setPassword: password => set({ password }),
+  clearStore: () => set({ showTwoFactor: false, email: "", password: "" }),
 }));

@@ -14,7 +14,7 @@ type TSend2faOtp = {
   email: string;
 };
 
-export default async function Send2faOtp({ userId, email }: TSend2faOtp) {
+export default async function send2faOtpMail({ userId, email }: TSend2faOtp) {
   try {
     // Validate input
     if (!userId || !email) {
@@ -70,6 +70,14 @@ export default async function Send2faOtp({ userId, email }: TSend2faOtp) {
         expiresAt,
         attemptCount: 0,
       },
+    });
+
+    console.log({
+      userId: user.id,
+      tokenHash,
+      sessionId,
+      expiresAt,
+      attemptCount: 0,
     });
 
     // Send OTP via email

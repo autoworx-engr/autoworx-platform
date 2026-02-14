@@ -1,10 +1,7 @@
-import { authOptions } from "@/authOptions";
-import { getServerSession } from "next-auth";
 import {
   InfobipEmailRequest,
   sendInfobipEmailAPI,
 } from "../estimate/invoice/sendInfobipEmail";
-import { db } from "@/lib/db";
 import { getEmailVerificationTemplate, getOTPEmailTemplate } from "./template";
 
 type TSendMailProps = {
@@ -16,19 +13,9 @@ type TSendMailProps = {
 
 export async function sendMail({ to, subject, text, html }: TSendMailProps) {
   try {
-    const session = await getServerSession(authOptions);
-    const companyId = Number(session?.user?.companyId);
-    // Fetch company ID and email credentials
-    const company = await db.company.findFirst({
-      where: { id: companyId },
-    });
-
-    if (!company) throw new Error("No company found");
-    // if (!company?.email) throw new Error("No Company Email Found");
-
     // Prepare Infobip email request
     const infobipEmailData: InfobipEmailRequest = {
-      from: `${company.name} <mail@${process.env.INFOBIP_DOMAIN}>`,
+      from: `AutoWorx <mail@${process.env.INFOBIP_DOMAIN}>`,
       to: to,
       subject: subject,
       text: text,

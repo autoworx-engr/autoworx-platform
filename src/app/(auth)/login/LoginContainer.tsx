@@ -1,11 +1,11 @@
 "use client";
 
+import { useLoginStore } from "@/stores/LoginStore";
 import LoginPage from "./LoginPage";
 import TwoFactorVerification from "./TwoFactorPage";
-import { useState } from "react";
 
 export default function LoginContainer() {
-  const [showTwoFactor, setShowTwoFactor] = useState(false);
+  const { showTwoFactor } = useLoginStore();
 
   return <>{showTwoFactor ? <TwoFactorVerification /> : <LoginPage />}</>;
 }

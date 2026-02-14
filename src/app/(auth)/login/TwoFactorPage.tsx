@@ -7,6 +7,7 @@ import React, {
   ChangeEvent,
   KeyboardEvent,
   ClipboardEvent,
+  useTransition,
 } from "react";
 import {
   ShieldCheck,
@@ -15,17 +16,26 @@ import {
   ArrowLeft,
   CheckCircle2,
 } from "lucide-react";
+import { useLoginStore } from "@/stores/LoginStore";
+import { TWO_FACTOR_CONFIG } from "@/types/two-factor";
+import { checkLoginWithTwoFactor } from "./actions/checkLoginWithTwoFactor";
+import { getSession, signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 /**
  * Functional 2FA Verification Component (TypeScript)
  */
 const TwoFactorVerification: React.FC = () => {
+  const { email, password, clearStore } = useLoginStore();
+  const [pending, startTransition] = useTransition();
   // State Types
   const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
   const [activeIdx, setActiveIdx] = useState<number>(0);
   const [isError, setIsError] = useState<boolean>(false);
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
   const [cooldown, setCooldown] = useState<number>(59);
+
+  const router = useRouter();
 
   // Ref for an array of HTMLInputElement
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -104,16 +114,36 @@ const TwoFactorVerification: React.FC = () => {
   };
 
   // Mock Verification
-  const handleVerify = (): void => {
+  const handleVerify = async (): Promise<void> => {
     const code = otp.join("");
-    if (code.length < 6) {
+    if (code.length < TWO_FACTOR_CONFIG.codeLength) {
       setIsError(true);
       return;
     }
 
-    if (code === "123456") {
+    const res = await checkLoginWithTwoFactor({
+      email,
+      password,
+      code,
+    });
+
+    if (res.type === "success" && res.nextLogin) {
+      await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+      const session = await getSession();
+      const isSuperAdmin = session?.user?.isSuperAdmin;
+      if (isSuperAdmin) {
+        router.push("/awx-dashboard");
+      } else {
+        router.push("/dashboard");
+      }
       setIsSuccess(true);
       setIsError(false);
+      router.refresh();
+      clearStore();
     } else {
       setIsError(true);
       setOtp(["", "", "", "", "", ""]);
@@ -181,13 +211,14 @@ const TwoFactorVerification: React.FC = () => {
                 {isError && (
                   <div className="flex items-center gap-2 text-red-600 text-sm font-medium mb-6 bg-red-50 p-3 rounded-lg border border-red-100">
                     <AlertCircle size={16} />
-                    <span>Invalid code. Try entering 123456.</span>
+                    <span>Invalid code</span>
                   </div>
                 )}
 
                 <button
-                  onClick={handleVerify}
-                  className="w-full bg-[#4F46E5] hover:bg-[#4338ca] text-white font-medium py-3.5 rounded-lg shadow-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                  onClick={() => startTransition(() => handleVerify())}
+                  className="w-full disabled:bg-slate-200 bg-[#4F46E5] hover:bg-[#4338ca] text-white font-medium py-3.5 rounded-lg shadow-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                  disabled={pending}
                 >
                   Verify Identity
                 </button>
@@ -221,7 +252,12 @@ const TwoFactorVerification: React.FC = () => {
 
           <div className="bg-slate-50 px-8 py-4 border-t border-slate-100 flex justify-between items-center text-xs text-slate-500">
             <span>Secure connection</span>
-            <button className="flex items-center gap-1 hover:text-slate-800 transition-colors">
+            <button
+              onClick={() => {
+                clearStore();
+              }}
+              className="flex items-center gap-1 hover:text-slate-800 transition-colors"
+            >
               <ArrowLeft size={12} />
               Back to Login
             </button>
