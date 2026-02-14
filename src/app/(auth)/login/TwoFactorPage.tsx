@@ -31,7 +31,7 @@ const TwoFactorVerification: React.FC = () => {
   // State Types
   const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
   const [activeIdx, setActiveIdx] = useState<number>(0);
-  const [isError, setIsError] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
   const [cooldown, setCooldown] = useState<number>(59);
 
@@ -39,6 +39,13 @@ const TwoFactorVerification: React.FC = () => {
 
   // Ref for an array of HTMLInputElement
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  // when unmount the page the login state are reset automatic
+  useEffect(() => {
+    return () => {
+      clearStore();
+    };
+  }, []);
 
   // Timer Logic
   useEffect(() => {
@@ -65,7 +72,7 @@ const TwoFactorVerification: React.FC = () => {
     // Take the last character entered to ensure single digit
     newOtp[index] = value.substring(value.length - 1);
     setOtp(newOtp);
-    setIsError(false);
+    setError("");
 
     // Auto Advance Focus
     if (value && index < 5) {
@@ -117,7 +124,7 @@ const TwoFactorVerification: React.FC = () => {
   const handleVerify = async (): Promise<void> => {
     const code = otp.join("");
     if (code.length < TWO_FACTOR_CONFIG.codeLength) {
-      setIsError(true);
+      setError("Code is too short");
       return;
     }
 
@@ -141,11 +148,10 @@ const TwoFactorVerification: React.FC = () => {
         router.push("/dashboard");
       }
       setIsSuccess(true);
-      setIsError(false);
+      setError("");
       router.refresh();
-      clearStore();
     } else {
-      setIsError(true);
+      setError(res.message);
       setOtp(["", "", "", "", "", ""]);
       inputRefs.current[0]?.focus();
       setActiveIdx(0);
@@ -197,7 +203,7 @@ const TwoFactorVerification: React.FC = () => {
                                 w-12 h-14 sm:w-14 sm:h-16 text-center text-xl font-semibold rounded-lg border 
                                 outline-none transition-all duration-200
                                 ${
-                                  isError
+                                  error
                                     ? "border-red-300 bg-red-50 text-red-600 focus:border-red-500 focus:ring-4 focus:ring-red-100"
                                     : activeIdx === idx
                                       ? "border-blue-500 ring-4 ring-blue-50/50 z-10"
@@ -208,10 +214,10 @@ const TwoFactorVerification: React.FC = () => {
                   ))}
                 </div>
 
-                {isError && (
+                {error && (
                   <div className="flex items-center gap-2 text-red-600 text-sm font-medium mb-6 bg-red-50 p-3 rounded-lg border border-red-100">
                     <AlertCircle size={16} />
-                    <span>Invalid code</span>
+                    <span>{error}</span>
                   </div>
                 )}
 
