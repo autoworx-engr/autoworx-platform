@@ -29,7 +29,7 @@ interface User {
 // header component
 function Header() {
   return (
-    <div className="bg-slate-900 p-6 text-white">
+    <div className="p-6 text-black border-b border-slate-200">
       <div className="flex items-center gap-3 mb-2">
         <ShieldCheck className="w-8 h-8 text-emerald-400" />
         <h1 className="text-xl font-bold">Account Settings</h1>
