@@ -70,7 +70,7 @@ export default function FilterBySelection({
         className={cn(
           "w-full flex items-center justify-center gap-x-2 text-base lg:gap-x-2",
           "rounded-xl px-3 py-2 transition-transform duration-500 ease-out transform hover:scale-[1.02]",
-          "bg-white/60 dark:bg-slate-900/40 backdrop-blur-sm",
+          "bg-white dark:bg-slate-900",
           "ring-1 ring-slate-900/5 dark:ring-slate-700/20 hover:ring-[#6470fd]/50 hover:shadow-sm",
           activeModal[modalName as keyof TFilterModalState]
             ? "ring-2 ring-[#6470fd] shadow-[0_20px_40px_-12px_rgba(100,112,253,0.10)]"
