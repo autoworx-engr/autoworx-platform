@@ -16,7 +16,7 @@ import { useMediaQuery } from "react-responsive";
 
 export function CreateTab() {
   const { items, removeMaterial } = useEstimateCreateStore();
-  const { open, close } = useEstimatePopupStore();
+  const { open, close, type: popupType } = useEstimatePopupStore();
 
   const isMax640 = useMediaQuery({ query: "(max-width: 640px)" });
 
@@ -444,18 +444,20 @@ export function CreateTab() {
           </table>
         )}
       </div>
-      <div className="flex py-3 md:gap-52 md:bg-slate-50/80 md:backdrop-blur-sm border-t border-slate-100 px-4 md:px-6">
-        <button
-          type="button"
-          className="sticky bottom-4 z-10 flex w-full items-center justify-center gap-2 rounded-xl bg-white p-3 text-sm font-semibold tracking-wide text-[#6571FF] shadow-lg shadow-[#6571FF]/10 ring-1 ring-[#6571FF]/20 transition-all hover:bg-[#6571FF] hover:text-white active:scale-95 md:static md:w-auto md:bg-transparent md:p-2 md:shadow-none md:ring-0 md:hover:bg-[#6571FF]/10 md:hover:text-[#6571FF]"
-          onClick={addService}
-        >
-          <CirclePlus size={20} strokeWidth={2.5} />
-          <span className="uppercase tracking-wider text-[11px] md:text-sm md:capitalize md:tracking-normal">
-            Add Service
-          </span>
-        </button>
-      </div>
+      {!(isMax640 && popupType) && (
+        <div className="flex py-3 md:gap-52 md:bg-slate-50/80 md:backdrop-blur-sm border-t border-slate-100 px-4 md:px-6">
+          <button
+            type="button"
+            className="sticky bottom-4 z-10 flex w-full items-center justify-center gap-2 rounded-xl bg-white p-3 text-sm font-semibold tracking-wide text-[#6571FF] shadow-lg shadow-[#6571FF]/10 ring-1 ring-[#6571FF]/20 transition-all hover:bg-[#6571FF] hover:text-white active:scale-95 md:static md:w-auto md:bg-transparent md:p-2 md:shadow-none md:ring-0 md:hover:bg-[#6571FF]/10 md:hover:text-[#6571FF]"
+            onClick={addService}
+          >
+            <CirclePlus size={20} strokeWidth={2.5} />
+            <span className="uppercase tracking-wider text-[11px] md:text-sm md:capitalize md:tracking-normal">
+              Add Service
+            </span>
+          </button>
+        </div>
+      )}
     </>
   );
 }

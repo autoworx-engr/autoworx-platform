@@ -19,6 +19,7 @@ import {
 } from "@/actions/pipelines/leadTag";
 import getUser from "@/lib/getUser";
 import { ChevronDown, ChevronUp, Palette, Search, X } from "lucide-react";
+import { cn } from "@/lib/cn";
 
 type SelectedColor = { textColor: string; bgColor: string } | null;
 
@@ -80,8 +81,8 @@ export function SalesTagSelector({
   const filteredTags = useMemo(() => {
     return search
       ? tags.filter((tag) =>
-          tag.name.toLowerCase().includes(search.toLowerCase())
-        )
+        tag.name.toLowerCase().includes(search.toLowerCase())
+      )
       : tags;
   }, [search, tags]);
 
@@ -107,32 +108,33 @@ export function SalesTagSelector({
           ref={dropdownRef}
           side="bottom"
           align="start"
-          sideOffset={-10}
-          className="w-[70%] space-y-1 p-0"
+          sideOffset={8}
+          className="z-50 w-full max-w-[300px] overflow-hidden rounded-2xl border border-slate-200 bg-white p-0 shadow-2xl ring-1 ring-black/5"
         >
-          {/* Search Box */}
-          <div className="relative m-2">
+          {/* Search Header */}
+          <div className="relative border-b border-slate-100 bg-slate-50/50 p-2">
             <Search
-              size={18}
-              className="absolute left-2 top-1/2 -translate-y-1/2 text-[#797979]"
+              size={16}
+              className="absolute left-4 top-1/2 -translate-y-1/2 transform text-slate-400"
             />
             <input
               type="text"
-              placeholder="Search sales tags"
-              className="w-full rounded-md border-2 border-slate-400 p-1 pl-6 pr-10"
+              placeholder="Search sales tags..."
+              className="h-9 w-full rounded-lg bg-white pl-9 pr-10 text-sm font-medium ring-1 ring-slate-200 focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30"
               value={search}
+              onKeyDown={(e) => e.stopPropagation()}
               onChange={(e) => setSearch(e.target.value)}
             />
-            <button onClick={() => setOpen?.(false)}>
-              <ChevronUp
-                size={16}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-[#797979]"
-              />
+            <button
+              onClick={() => setOpen?.(false)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+            >
+              <ChevronUp size={16} />
             </button>
           </div>
 
           {/* Tag List */}
-          <div className="thin-scrollbar max-h-28 space-y-1 overflow-y-auto">
+          <div className="thin-scrollbar my-1 max-h-[200px] overflow-y-auto px-2">
             {filteredTags
               .filter(
                 (el) => !leadTags.map((tag) => tag.tag.name).includes(el.name)
@@ -140,7 +142,7 @@ export function SalesTagSelector({
               .map((tagItem) => (
                 <div
                   key={tagItem.id}
-                  className="mx-4 flex cursor-pointer items-center justify-between rounded-full px-4"
+                  className="mb-1 flex cursor-pointer items-center justify-between rounded-lg px-3 py-1.5 text-sm font-medium transition-opacity hover:opacity-80"
                   style={{
                     backgroundColor: tagItem.bgColor,
                     color: tagItem.textColor,
@@ -158,53 +160,63 @@ export function SalesTagSelector({
                   <button
                     disabled={disable}
                     onClick={() => handleDeleteTag(tagItem.id)}
-                    className={`text-lg text-[#66738C] disabled:cursor-not-allowed disabled:text-[#66738C] ${isRestrictedUser ? "hidden" : ""}`}
+                    className={cn(
+                      "ml-1.5 transition-transform hover:scale-110",
+                      isRestrictedUser ? "hidden" : ""
+                    )}
                   >
-                    <X size={18} strokeWidth={3} />
+                    <div className="rounded-full bg-white/20 p-0.5 hover:bg-white/40">
+                      <X size={16} strokeWidth={2.5} />
+                    </div>
                   </button>
                 </div>
               ))}
           </div>
 
-          {/* Quick Add */}
           <FormError />
-          <QuickAddSalesTagForm
-            onSuccess={(newTag) => {
-              setTags((prev) => [...prev, newTag]);
-              setValue?.(newTag);
-              setOpen?.(false);
-            }}
-            setColorPickerVisible={setColorPickerVisible}
-            selectedColor={selectedColor}
-          />
 
-          {/* Color Picker */}
-          {colorPickerVisible && (
-            <div className="grid grid-cols-4 gap-2 p-2">
-              {INVOICE_COLORS.map((color, idx) => (
-                <button
-                  key={idx}
-                  onClick={() =>
-                    setSelectedColor({
-                      textColor: color.textColor,
-                      bgColor: color.bgColor,
-                    })
-                  }
-                  className="rounded-md p-2"
-                  style={{
-                    backgroundColor: color.bgColor,
-                    color: color.textColor,
-                    border:
+          {/* Quick Add Footer */}
+          <div className="border-t border-slate-100 bg-slate-50/50 p-3">
+            <QuickAddSalesTagForm
+              onSuccess={(newTag) => {
+                setTags((prev) => [...prev, newTag]);
+                setValue?.(newTag);
+                setOpen?.(false);
+              }}
+              setColorPickerVisible={setColorPickerVisible}
+              selectedColor={selectedColor}
+            />
+
+            {/* Color Picker */}
+            {colorPickerVisible && (
+              <div className="mt-3 grid grid-cols-5 gap-2 rounded-xl bg-white p-2 shadow-inner ring-1 ring-slate-200">
+                {INVOICE_COLORS.map((color, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() =>
+                      setSelectedColor({
+                        textColor: color.textColor,
+                        bgColor: color.bgColor,
+                      })
+                    }
+                    style={{
+                      backgroundColor: color.bgColor,
+                      color: color.textColor,
+                    }}
+                    className={cn(
+                      "flex h-8 items-center justify-center rounded-lg text-xs font-bold transition-all hover:scale-105",
                       selectedColor?.textColor === color.textColor
-                        ? `1px solid ${color.textColor}`
-                        : "none",
-                  }}
-                >
-                  Aa
-                </button>
-              ))}
-            </div>
-          )}
+                        ? "ring-2 ring-[#6571FF] ring-offset-1"
+                        : "ring-1 ring-transparent"
+                    )}
+                  >
+                    Aa
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </DropdownMenuContent>
       </DropdownMenu>
     </>
@@ -239,28 +251,32 @@ function QuickAddSalesTagForm({
   };
 
   return (
-    <form ref={formRef} className="flex w-[200px] gap-2 p-2">
-      <input
-        name="name"
-        type="text"
-        required
-        placeholder="Sales tag name"
-        className="w-[80%] flex-1 rounded-sm border border-solid border-black p-1"
-      />
+    <form ref={formRef} className="flex items-center gap-2">
+      <div className="relative flex-1">
+        <input
+          name="name"
+          type="text"
+          required
+          placeholder="New tag name..."
+          className="h-10 w-full rounded-lg bg-white px-2 text-sm font-medium ring-1 ring-inset ring-slate-200 transition-all focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30 placeholder:text-slate-400"
+          onKeyDown={(e) => e.stopPropagation()}
+        />
+      </div>
+
       <button
         type="button"
-        className="rounded bg-[#6470FF] p-2 text-white"
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600 transition-colors hover:bg-slate-200 hover:text-slate-900"
         onClick={() => setColorPickerVisible((prev) => !prev)}
+        title="Choose Color"
       >
-        <Palette size={18} />
+        <Palette size={18} strokeWidth={2.5} />
       </button>
+
       <Submit
-        className="rounded bg-slate-500 p-1 text-xs leading-3 text-white"
+        className="h-10 shrink-0 rounded-lg bg-[#6571FF] px-3 text-[11px] font-bold uppercase tracking-wider text-white shadow-sm shadow-[#6571FF]/30 transition-all hover:bg-[#525ceb] active:scale-95"
         formAction={handleSubmit}
       >
-        Quick
-        <br />
-        Add
+        Quick Add
       </Submit>
     </form>
   );
