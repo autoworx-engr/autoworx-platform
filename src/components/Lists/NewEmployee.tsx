@@ -297,7 +297,7 @@ export default function AddNewEmployee({
             </div>
 
             {profilePic ? (
-              // eslint-disable-next-line @next/next/no-img-element
+               
               <div className="relative group">
                 <img
                   src={URL.createObjectURL(profilePic)}
