@@ -101,15 +101,15 @@ export default function Selector<T>({
     } else {
       const searchedItems = searchQuery.trim()
         ? items.filter(
-            (item: any) =>
-              item.clientName
-                ?.toLowerCase()
-                .includes(searchQuery.toLowerCase()) ||
-              item.id
-                ?.toString()
-                .toLowerCase()
-                .includes(searchQuery.toLowerCase()),
-          )
+          (item: any) =>
+            item.clientName
+              ?.toLowerCase()
+              .includes(searchQuery.toLowerCase()) ||
+            item.id
+              ?.toString()
+              .toLowerCase()
+              .includes(searchQuery.toLowerCase()),
+        )
         : items;
       setFilteredItems(searchedItems);
     }
@@ -125,11 +125,16 @@ export default function Selector<T>({
   }
 
   return (
-    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen} modal={isOpen}>
       <div
         className={cn("w-full max-w-sm transition-all duration-300", className)}
       >
         <DropdownMenuTrigger
+          onPointerDown={(e) => e.preventDefault()}
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsOpen(!isOpen);
+          }}
           disabled={disabledDropdown}
           className={cn(
             "group flex h-9 mt-1 w-[99%] items-center justify-between rounded-lg px-4 transition-all duration-300 outline-none",
@@ -197,44 +202,48 @@ export default function Selector<T>({
             onScroll={handleScroll}
             className="mb-5 flex max-h-40 flex-col overflow-y-auto thin-scrollbar"
           >
-            {filteredItems?.map((item, index) => {
-              // Use a unique key that combines the item's id if available, otherwise fall back to index
-              const key = (item as any)?.id
-                ? `item-${(item as any).id}`
-                : `index-${index}`;
+            {
+              filteredItems?.length === 0 ? (
+                <div className="text-sm text-center text-slate-500 p-2">No results found</div>
+              ) :
+                filteredItems?.map((item, index) => {
+                  // Use a unique key that combines the item's id if available, otherwise fall back to index
+                  const key = (item as any)?.id
+                    ? `item-${(item as any).id}`
+                    : `index-${index}`;
 
-              if (clickabled) {
-                return (
-                  <button
-                    onClick={() => {
-                      handleSelectItem(item);
-                    }}
-                    type="button"
-                    key={key}
-                    className={cn(
-                      "w-full p-1 px-2 text-left hover:bg-gray-100",
-                      border &&
-                        "relative border-b border-slate-200 dark:border-slate-800 px-2 py-1.5 rounded-xl",
-                    )}
-                  >
-                    {displayList(item)}
-                  </button>
-                );
-              } else {
-                return (
-                  <div
-                    key={key}
-                    className={cn(
-                      "w-full p-1 px-2 text-left hover:bg-gray-100",
-                      border &&
-                        "relative border-b border-slate-200 dark:border-slate-800 px-2 py-1.5 rounded-xl",
-                    )}
-                  >
-                    {displayList(item)}
-                  </div>
-                );
-              }
-            })}
+                  if (clickabled) {
+                    return (
+                      <button
+                        onClick={() => {
+                          handleSelectItem(item);
+                        }}
+                        type="button"
+                        key={key}
+                        className={cn(
+                          "w-full p-1 px-2 text-left hover:bg-gray-100",
+                          border &&
+                          "relative border-b border-slate-200 dark:border-slate-800 px-2 py-1.5 rounded-xl",
+                        )}
+                      >
+                        {displayList(item)}
+                      </button>
+                    );
+                  } else {
+                    return (
+                      <div
+                        key={key}
+                        className={cn(
+                          "w-full p-1 px-2 text-left hover:bg-gray-100",
+                          border &&
+                          "relative border-b border-slate-200 dark:border-slate-800 px-2 py-1.5 rounded-xl",
+                        )}
+                      >
+                        {displayList(item)}
+                      </div>
+                    );
+                  }
+                })}
 
             {/* Loading indicator for infinite scroll */}
             {useInfiniteScroll && isFetchingNextPage && (

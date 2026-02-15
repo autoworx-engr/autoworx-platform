@@ -10,6 +10,7 @@ import {
 import { LeadWithSalesUser } from "@/types/invoiceLead";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
+import { useSearchParams } from "next/navigation";
 
 type TProps = {
   columnTitle: string;
@@ -43,6 +44,7 @@ export default function LeadInfinityScroll({
   // const [screenWidth, setScreenWidth] = useState<number>(
   //   typeof window !== "undefined" ? window.innerWidth : 1200
   // );
+  const orderBy = useSearchParams().get("orderBy") as "asc" | "desc" | undefined;
 
   const leadsLength = leads?.length ?? 0;
 
@@ -54,6 +56,7 @@ export default function LeadInfinityScroll({
           take: defaultTakeLeads,
           skip: leadsLength,
           searchTerm: searchTerm || undefined,
+          orderBy: orderBy,
         });
         if (getNextLeads?.length < defaultTakeLeads) {
           setHasMore(false);
@@ -121,7 +124,7 @@ export default function LeadInfinityScroll({
     });
   }, [columnIndex, screenWidth]);
 
-   useEffect(() => {
+  useEffect(() => {
     const ulElement = scrollRef.current;
     if (!ulElement || (screenWidth !== undefined && screenWidth < 768)) return;
 

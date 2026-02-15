@@ -5,6 +5,7 @@ import { DialogContent } from "@/components/Dialog";
 
 import { Company } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import PhoneInput from "@/components/PhoneInput";
@@ -19,6 +20,7 @@ import Selector from "../../settings/automation/components/Selector";
 
 const AddLeads = ({ onClose }: { onClose?: () => void }) => {
   const queryClient = useQueryClient();
+  const router = useRouter();
   const [phoneNumber, setPhoneNumber] = useState("");
   const [countryCode, setCountryCode] = useState("");
   const [isoCode, setIsoCode] = useState("");
@@ -62,7 +64,7 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
   });
 
   const handleServiceChange = (
-    value: string | { id: string | number; title: string }
+    value: string | { id: string | number; title: string },
   ) => {
     if (typeof value === "object") {
       // Store the full object separately
@@ -187,7 +189,7 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
             opportunity_source: opportunitySource,
             source: formData.source,
           }),
-        }
+        },
       );
 
       if (response.ok) {
@@ -204,6 +206,7 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
           queryKey: [salesPipelineKeyStr.salesPipelineCount],
         });
 
+        router.refresh();
         onClose?.();
 
         // Reset form fields except source and token

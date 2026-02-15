@@ -252,6 +252,7 @@ export async function getAttendanceInfo(
   // Get current monthly attendance information using company timezone
   const startOfMonth = moment().startOf("month");
   const endOfMonth = moment().endOf("month");
+
   const attInfoMonth = await getAttendanceInfoForRange(
     startOfMonth,
     endOfMonth,
@@ -307,7 +308,8 @@ export async function getAttendanceInfo(
         day.hours !== "ABSENT" &&
         day.hours !== "WEEKEND" &&
         day.hours !== "LEAVE" &&
-        day.hours !== "-",
+        day.hours !== "-" &&
+        day.hours !== "NOT_JOINED",
     )
     .reduce((total, day) => {
       const effectiveHours =
@@ -315,13 +317,15 @@ export async function getAttendanceInfo(
       return total + effectiveHours;
     }, 0)
     .toFixed(2);
+
   const previousTotalHoursWorked = attInfoPrevMonth
     .filter(
       (day) =>
         day.hours !== "ABSENT" &&
         day.hours !== "WEEKEND" &&
         day.hours !== "LEAVE" &&
-        day.hours !== "-",
+        day.hours !== "-" &&
+        day.hours !== "NOT_JOINED",
     )
     .reduce((total, day) => {
       const effectiveHours =
@@ -336,16 +340,17 @@ export async function getAttendanceInfo(
       day.hours !== "ABSENT" &&
       day.hours !== "WEEKEND" &&
       day.hours !== "LEAVE" &&
-      day.hours !== "-",
+      day.hours !== "-" &&
+      day.hours !== "NOT_JOINED",
   ).length;
   const previousTotalDaysWorked = attInfoPrevMonth.filter(
     (day) =>
       day.hours !== "ABSENT" &&
       day.hours !== "WEEKEND" &&
       day.hours !== "LEAVE" &&
-      day.hours !== "-",
+      day.hours !== "-" &&
+      day.hours !== "NOT_JOINED",
   ).length;
-
   // Calculate growth rates
   const calculateGrowthRate = (
     current: number,
@@ -372,6 +377,7 @@ export async function getAttendanceInfo(
     parseFloat(totalHoursWorked),
     parseFloat(previousTotalHoursWorked),
   );
+
   const growthRateTotalDaysWorked = calculateGrowthRate(
     totalDaysWorked,
     previousTotalDaysWorked,

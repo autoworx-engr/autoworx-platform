@@ -2572,6 +2572,7 @@ enum PlatformFeatureType {
   TEXT
 }
 // Ai sales agent configuration for a company
+//TODO: Ai sales agent configuration for a company
 model CompanyInfo {
   id                  String   @id @default(uuid())
   createdAt           DateTime @default(now()) @map("created_at")
@@ -2590,7 +2591,7 @@ model CompanyInfo {
   // Personal & AI Configuration
   personalName         String?  @map("personal_name")
   personalType         String?  @map("personal_type")
-  systemPrompt        String?  @map("system_prompt")
+  systemPrompt        String?  @db.Text @map("system_prompt")
   openingMessage      String?  @map("opening_message")
   conversationStyle   Json?    @map("conversation_style")
   personality         Json?
