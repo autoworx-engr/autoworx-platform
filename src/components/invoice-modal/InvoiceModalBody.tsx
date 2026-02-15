@@ -935,21 +935,47 @@ export default function InvoiceModalBody({
             </div>
           </div>
 
-          <div className="flex justify-end items-center">
+          <div className="flex justify-end items-center mt-6">
             {showSignaturePad && !sigImageURL && !invoice?.signatureImage && (
-              <div className="flex flex-col lg:flex-row justify-end items-end gap-4">
-                <SignatureCanvas
-                  ref={sigCanvas}
-                  penColor="black"
-                  backgroundColor="#f9fafb"
-                  canvasProps={{
-                    width: 300,
-                    height: 100,
-                    className: "border border-gray-400 rounded-md",
-                  }}
-                />
+              <div className="flex flex-col items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/50">
+                <div className="w-full flex justify-between items-center mb-1">
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    Sign Below
+                  </span>
+                  <button
+                    onClick={() => {
+                      setShowSignaturePad(false);
+                    }}
+                    className="text-xs font-medium text-slate-400 hover:text-red-500 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
 
-                <div className="flex flex-row justify-end lg:flex-col lg:items-center gap-3">
+                <div className="overflow-hidden rounded-xl border border-slate-300 bg-white shadow-inner dark:border-slate-700 dark:bg-slate-950">
+                  <SignatureCanvas
+                    ref={sigCanvas}
+                    penColor="black"
+                    backgroundColor="transparent"
+                    canvasProps={{
+                      width: 320,
+                      height: 160,
+                    }}
+                  />
+                </div>
+
+                <div className="flex w-full items-center justify-between gap-3">
+                  <button
+                    onClick={() => {
+                      sigCanvas.current.clear();
+                      // setShowSignaturePad(false);
+                      setSigImageURL(null);
+                    }}
+                    className="flex-1 rounded-xl border border-slate-200 bg-white py-2 text-sm font-semibold text-slate-600 shadow-sm transition-all hover:bg-slate-50 hover:text-slate-900 active:scale-95 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                  >
+                    Clear
+                  </button>
+
                   <button
                     onClick={() => {
                       if (!sigCanvas.current || sigCanvas.current.isEmpty()) {
@@ -966,31 +992,9 @@ export default function InvoiceModalBody({
                       setShowAuthorizedName(false);
                       setShowSignaturePad(false);
                     }}
-                    className="
-                    rounded-xl px-6 py-2.5 text-sm font-medium text-white
-                    bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
-                    shadow-lg shadow-indigo-500/30
-                    hover:shadow-xl hover:shadow-indigo-500/40
-                    hover:-translate-y-0.5 hover:scale-[1.02]
-                    active:translate-y-0 active:scale-100
-                    transition-all duration-200
-                    "
+                    className="flex-[2] rounded-xl bg-gradient-to-r from-[#6571FF] to-[#5a66ee] py-2 text-sm font-semibold text-white shadow-md shadow-indigo-500/20 transition-all hover:shadow-lg hover:shadow-indigo-500/30 active:scale-95"
                   >
                     Save
-                  </button>
-                  <button
-                    onClick={() => {
-                      sigCanvas.current.clear();
-                      setShowSignaturePad(false);
-                      setSigImageURL(null);
-                    }}
-                    className="
-                    rounded-xl lg:mt-2 sm:mt-0 px-5 py-2.5 text-sm font-medium text-slate-500 
-                    hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
-                    transition-colors border
-                    "
-                  >
-                    Clear
                   </button>
                 </div>
               </div>
