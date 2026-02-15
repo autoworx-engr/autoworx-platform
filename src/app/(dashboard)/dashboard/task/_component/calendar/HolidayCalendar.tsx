@@ -106,7 +106,7 @@ export default function HolidayCalendar() {
             value={holidaysFormatted}
             onChange={handleHolidayChanges}
             onMonthChange={handleMonthChange}
-            plugins={[<DatePanel key="datepanel" />]}
+            plugins={[<DatePanel className="sm:w-36" />]}
             className="w-full bg-white"
             showOtherDays
           />

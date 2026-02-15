@@ -3,8 +3,15 @@ import { startOfMonth, endOfMonth } from "date-fns";
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 
-export const getSalespersonLeads = async (salespersonId: string) => {
-  const companyId = await getCompanyId();
+export const getSalespersonLeads = async (
+  salespersonId: string,
+  currentCompanyId?: number,
+) => {
+  let companyId = currentCompanyId;
+
+  if (!companyId) {
+    companyId = await getCompanyId();
+  }
   try {
     const convertedColumn = await db.column.findFirst({
       where: {
@@ -19,8 +26,12 @@ export const getSalespersonLeads = async (salespersonId: string) => {
 
     const startOfCurrentMonth = startOfMonth(new Date());
     const endOfCurrentMonth = endOfMonth(new Date());
-    const startOfPreviousMonth = startOfMonth(new Date(new Date().setMonth(new Date().getMonth() - 1)));
-    const endOfPreviousMonth = endOfMonth(new Date(new Date().setMonth(new Date().getMonth() - 1)));
+    const startOfPreviousMonth = startOfMonth(
+      new Date(new Date().setMonth(new Date().getMonth() - 1)),
+    );
+    const endOfPreviousMonth = endOfMonth(
+      new Date(new Date().setMonth(new Date().getMonth() - 1)),
+    );
 
     const currentTotalLeads = await db.lead.count({
       where: {
