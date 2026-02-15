@@ -192,9 +192,9 @@ export default function PaymentDisplay({
                         className={cn(
                           `border-b px-2 py-1 text-left capitalize`,
                           paymentStatus === "due" &&
-                          "bg-[#de5967] text-white rounded-md",
+                            "bg-[#de5967] text-white rounded-md",
                           paymentStatus === "paid" &&
-                          "bg-[#3c8f89] text-white rounded-md"
+                            "bg-[#3c8f89] text-white rounded-md"
                         )}
                       >
                         {paymentStatus}
