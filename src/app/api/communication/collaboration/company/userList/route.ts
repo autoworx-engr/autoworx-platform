@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 /**
  * @swagger
- * /api/communication/collaboration/company/userList:
+ * /api/communication/collaboration/company/userlist:
  *   get:
  *     summary: Retrieve collaborating companies and their users
  *     description: Fetches a paginated list of companies that have an active collaboration status with the authenticated user's company.
