@@ -47,14 +47,22 @@ export default function CategoryItems({ category }: TProps) {
 
 
   return (
-    <div className="w-full overflow-auto border p-2 sm:w-full">
-      <table className="w-full border-separate border-spacing-0 sm:border-spacing-2">
+    <div className="w-full overflow-auto px-5 py-3">
+      <table className="w-full border-separate border-spacing-0">
         <thead>
           <tr>
             <td></td>
-            <td className="text-sm font-semibold">Email</td>
-            <td className="text-sm font-semibold">Push</td>
-          {category === "PAYMENT" && (<td className="text-sm font-semibold">Text</td>)}  
+            <td className="pb-2 text-center text-xs font-semibold uppercase tracking-wider text-gray-500">
+              Email
+            </td>
+            <td className="pb-2 text-center text-xs font-semibold uppercase tracking-wider text-gray-500">
+              Push
+            </td>
+            {category === "PAYMENT" && (
+              <td className="pb-2 text-center text-xs font-semibold uppercase tracking-wider text-gray-500">
+                Text
+              </td>
+            )}
           </tr>
         </thead>
         <tbody>{content}</tbody>
