@@ -158,8 +158,8 @@ export default function VehicleParts({
   // Search filtering
   const filteredParts = searchTerm
     ? parts.filter((part) =>
-        part.label.toLowerCase().includes(searchTerm.toLowerCase())
-      )
+      part.label.toLowerCase().includes(searchTerm.toLowerCase())
+    )
     : parts;
 
   const visibleParts = filteredParts.filter(
@@ -191,7 +191,7 @@ export default function VehicleParts({
           )}
         </div>
       </div>
-      <div className="thin-scrollbar mt-3 grid max-h-[120px] grid-cols-3 gap-2 overflow-y-auto px-2">
+      <div className="thin-scrollbar mt-3 grid max-h-[120px] grid-cols-3 gap-2 overflow-y-auto p-2">
         {visibleParts?.length > 0 ? (
           visibleParts?.map((part) => (
             <div key={part.id} className="relative">
