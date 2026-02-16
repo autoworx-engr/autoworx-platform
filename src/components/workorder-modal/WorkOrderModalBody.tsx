@@ -98,11 +98,11 @@ export default function WorkOrderModalBody({
       ? Object.values(techniciansPerItem).flat()
       : [];
 
-    allTechnicians.forEach((t) => {
+    allTechnicians.forEach(t => {
       const technicianName = t.name || "Unknown Technician";
 
       if (t.images && t.images.length > 0) {
-        t.images.forEach((image) => {
+        t.images.forEach(image => {
           finalPhotosArray.push({
             id: image.id,
             photo: image.fileUrl,
@@ -127,7 +127,7 @@ export default function WorkOrderModalBody({
         <div
           className={cn(
             "flex aspect-square items-center justify-center text-center font-bold text-white",
-            company?.image ? "w-32 md:w-44" : "w-32 bg-gray-500"
+            company?.image ? "w-32 md:w-44" : "w-32 bg-gray-500",
           )}
         >
           {company?.image ? (

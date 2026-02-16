@@ -1,6 +1,6 @@
 "use client";
 import { useServerGet } from "@/hooks/useServerGet";
-/* eslint-disable @next/next/no-img-element */
+ 
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { getStripeAccount } from "./stripe";

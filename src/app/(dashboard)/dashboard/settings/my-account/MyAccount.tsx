@@ -10,6 +10,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRef, useState, useTransition } from "react";
 import { ChangePassword } from "./changePassword";
+import Setup2FA from "@/app/(dashboard)/dashboard/settings/my-account/setup-2fa";
 
 const MyAccount = ({ user }: { user: User }) => {
   const [profilePic, setProfilePic] = useState<File | null>(null);
@@ -30,7 +31,7 @@ const MyAccount = ({ user }: { user: User }) => {
   const handlePhoneChange = (num: string, code: string, isoCode: string) => {
     const fullPhoneNumber = `${code}${num}`;
 
-    setUserInfo((prev) => ({
+    setUserInfo(prev => ({
       ...prev,
       phone: fullPhoneNumber,
       countryCode: isoCode || "",
@@ -140,7 +141,7 @@ const MyAccount = ({ user }: { user: User }) => {
       errorToast(
         result.errorSource && result.errorSource.length > 0
           ? result.errorSource[0].message
-          : result.message
+          : result.message,
       );
     }
   };
@@ -158,7 +159,7 @@ const MyAccount = ({ user }: { user: User }) => {
               type="file"
               hidden
               accept="image/*"
-              onChange={(e) => {
+              onChange={e => {
                 const file = e.target.files?.[0];
                 if (file) {
                   setProfilePic(file);
@@ -207,7 +208,7 @@ const MyAccount = ({ user }: { user: User }) => {
                   name="firstName"
                   value={userInfo?.firstName}
                   required={true}
-                  onChange={(e) => {
+                  onChange={e => {
                     setUserInfo({
                       ...userInfo,
                       [e.target.name]: e.target.value,
@@ -217,7 +218,7 @@ const MyAccount = ({ user }: { user: User }) => {
                 <SlimInput
                   name="lastName"
                   value={userInfo?.lastName || ""}
-                  onChange={(e) => {
+                  onChange={e => {
                     setUserInfo({
                       ...userInfo,
                       [e.target.name]: e.target.value,
@@ -231,7 +232,7 @@ const MyAccount = ({ user }: { user: User }) => {
                   name="email"
                   value={userInfo?.email}
                   required={true}
-                  onChange={(e) => {
+                  onChange={e => {
                     setUserInfo({
                       ...userInfo,
                       [e.target.name]: e.target.value,
@@ -255,7 +256,7 @@ const MyAccount = ({ user }: { user: User }) => {
                 <SlimInput
                   name="address"
                   value={userInfo?.address || ""}
-                  onChange={(e) => {
+                  onChange={e => {
                     setUserInfo({
                       ...userInfo,
                       [e.target.name]: e.target.value,
@@ -267,7 +268,7 @@ const MyAccount = ({ user }: { user: User }) => {
                 <SlimInput
                   name="city"
                   value={userInfo?.city || ""}
-                  onChange={(e) => {
+                  onChange={e => {
                     setUserInfo({
                       ...userInfo,
                       [e.target.name]: e.target.value,
@@ -277,7 +278,7 @@ const MyAccount = ({ user }: { user: User }) => {
                 <SlimInput
                   name="state"
                   value={userInfo?.state || ""}
-                  onChange={(e) => {
+                  onChange={e => {
                     setUserInfo({
                       ...userInfo,
                       [e.target.name]: e.target.value,
@@ -303,82 +304,86 @@ const MyAccount = ({ user }: { user: User }) => {
           </div>
         </div>
         {/* new password */}
-        <div className="#w-1/2">
-          <ChangePassword />
-          <>
-            {/* employee leave request */}
-            {/* except Admin, everyone can create leave request */}
-            {user.employeeType !== "Admin" && (
-              <div className="#w-1/2">
-                <h3 className="my-4 text-lg font-bold">Leave Requests</h3>
+        <div className="flex flex-col gap-y-4">
+          <div className="#w-1/2">
+            <ChangePassword />
+            <>
+              {/* employee leave request */}
+              {/* except Admin, everyone can create leave request */}
+              {user.employeeType !== "Admin" && (
+                <div className="#w-1/2">
+                  <h3 className="my-4 text-lg font-bold">Leave Requests</h3>
 
-                <div className="space-y-4 rounded-md p-8 shadow-md">
-                  <div className="">
-                    <SlimInput
-                      name="title"
-                      value={leaveRequest.title}
-                      onChange={(e) =>
-                        setLeaveRequest({
-                          ...leaveRequest,
-                          title: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-x-8">
-                    <SlimInput
-                      name="startDate"
-                      value={leaveRequest.startDate}
-                      onChange={(e) =>
-                        setLeaveRequest({
-                          ...leaveRequest,
-                          startDate: e.target.value,
-                        })
-                      }
-                      type="date"
-                    />
-                    <SlimInput
-                      name="endDate"
-                      value={leaveRequest.endDate}
-                      onChange={(e) =>
-                        setLeaveRequest({
-                          ...leaveRequest,
-                          endDate: e.target.value,
-                        })
-                      }
-                      type="date"
-                    />
-                  </div>
+                  <div className="space-y-4 rounded-md p-8 shadow-md">
+                    <div className="">
+                      <SlimInput
+                        name="title"
+                        value={leaveRequest.title}
+                        onChange={e =>
+                          setLeaveRequest({
+                            ...leaveRequest,
+                            title: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-8">
+                      <SlimInput
+                        name="startDate"
+                        value={leaveRequest.startDate}
+                        onChange={e =>
+                          setLeaveRequest({
+                            ...leaveRequest,
+                            startDate: e.target.value,
+                          })
+                        }
+                        type="date"
+                      />
+                      <SlimInput
+                        name="endDate"
+                        value={leaveRequest.endDate}
+                        onChange={e =>
+                          setLeaveRequest({
+                            ...leaveRequest,
+                            endDate: e.target.value,
+                          })
+                        }
+                        type="date"
+                      />
+                    </div>
 
-                  <SlimTextarea
-                    name="description"
-                    label="Description"
-                    value={leaveRequest.description}
-                    onChange={(e) =>
-                      setLeaveRequest({
-                        ...leaveRequest,
-                        description: e.target.value,
-                      })
-                    }
-                  />
-                  <div className="mt-4 flex items-center justify-end gap-x-4">
-                    <Link
-                      href="/dashboard/settings/my-account/leave-requests"
-                      className="rounded-md border border-gray-300 bg-background px-4 py-1 text-[#6571FF]"
-                    >
-                      View All Request
-                    </Link>
-                    <button
-                      onClick={handleSubmitLeaveRequest}
-                      className="rounded-md bg-[#6571FF] px-4 py-1 text-white"
-                    >
-                      Submit Request
-                    </button>
+                    <SlimTextarea
+                      name="description"
+                      label="Description"
+                      value={leaveRequest.description}
+                      onChange={e =>
+                        setLeaveRequest({
+                          ...leaveRequest,
+                          description: e.target.value,
+                        })
+                      }
+                    />
+                    <div className="mt-4 flex items-center justify-end gap-x-4">
+                      <Link
+                        href="/dashboard/settings/my-account/leave-requests"
+                        className="rounded-md border border-gray-300 bg-background px-4 py-1 text-[#6571FF]"
+                      >
+                        View All Request
+                      </Link>
+                      <button
+                        onClick={handleSubmitLeaveRequest}
+                        className="rounded-md bg-[#6571FF] px-4 py-1 text-white"
+                      >
+                        Submit Request
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-          </>
+              )}
+            </>
+          </div>
+          {/* 2fa section */}
+          <Setup2FA />
         </div>
       </div>
     </div>
