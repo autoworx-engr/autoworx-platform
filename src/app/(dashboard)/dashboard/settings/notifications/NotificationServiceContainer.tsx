@@ -33,22 +33,34 @@ const NotificationServiceContainer = ({
     setOpenService(closeService);
   };
 
+  const isOpen = openService?.[category as NotificationSection];
+
   return (
-    <div className="flex-1">
+    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-shadow duration-200 hover:shadow-md">
       <div
-        className="flex w-full cursor-pointer items-center justify-between border p-8 font-semibold"
+        className="flex w-full cursor-pointer items-center justify-between px-5 py-4 transition-colors duration-150 hover:bg-gray-50"
         onClick={handleServiceToggle}
       >
-        <span className="capitalize">
+        <span className="text-sm font-semibold capitalize text-gray-800">
           {title === "work force" ? "Job Tracking" : title}
         </span>
-        <button>
-          <ChevronDown size={20} />
-        </button>
+        <div
+          className={`flex h-7 w-7 items-center justify-center rounded-full bg-gray-100 transition-transform duration-300 ${isOpen ? "rotate-180" : "rotate-0"
+            }`}
+        >
+          <ChevronDown size={16} className="text-gray-500" />
+        </div>
       </div>
-      {openService?.[category as NotificationSection] && (
-        <CategoryItems category={category} />
-      )}
+      <div
+        className={`grid transition-all duration-300 ease-in-out ${isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+          }`}
+      >
+        <div className="overflow-hidden">
+          <div className="border-t border-gray-100">
+            <CategoryItems category={category} />
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
