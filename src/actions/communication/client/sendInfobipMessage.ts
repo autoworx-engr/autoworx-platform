@@ -8,6 +8,7 @@ import { normalizeUSPhoneNumber } from "@/lib/normalizeUSPhoneNumber";
 import { revalidatePath } from "next/cache";
 import { updateNewSMSChatTrack } from "./chat-track";
 import { getInfobipConfig, getInfobipConfigById } from "./createInfobipConfig";
+import { sendSMSToAgent } from "@/service/ai-agent/api";
 
 type TInfobipConfig = {
   companyId?: number;
@@ -54,7 +55,7 @@ export async function sendInfobipMessage({
     } catch (error) {
       console.error(
         "sendInfobipMessage: getUser failed, continuing without user context",
-        error
+        error,
       );
     }
     const client = await db.client.findFirst({
@@ -90,7 +91,7 @@ export async function sendInfobipMessage({
     if (infobipConfig.phoneNumber && to && clientId) {
       // Normalize phone numbers for MMS compatibility
       const normalizedSender = normalizeUSPhoneNumber(
-        infobipConfig.phoneNumber
+        infobipConfig.phoneNumber,
       );
       const normalizedRecipient = normalizeUSPhoneNumber(to);
 
@@ -127,7 +128,7 @@ export async function sendInfobipMessage({
       // Helper function to fetch content type from URL
       const getContentTypeFromUrl = async (
         url: string,
-        fileName: string
+        fileName: string,
       ): Promise<string> => {
         try {
           // First try to get from file extension
@@ -162,7 +163,7 @@ export async function sendInfobipMessage({
           attachments.map(async (file) => {
             const contentType = await getContentTypeFromUrl(
               file.url,
-              file.name
+              file.name,
             );
             const contentId = `${file.name.replace(/[^a-zA-Z0-9]/g, "_")}_${Date.now()}`;
 
@@ -172,7 +173,7 @@ export async function sendInfobipMessage({
               contentType: contentType,
               contentUrl: file.url,
             };
-          })
+          }),
         );
 
         // Send MMS with direct links using v2 API format
@@ -249,7 +250,7 @@ export async function sendInfobipMessage({
 
       const infobipResult = await infobipResponse.json();
 
-      let dbMessage = await db.clientSMS.create({
+      const dbMessage = await db.clientSMS.create({
         data: {
           from: infobipConfig.phoneNumber,
           to,
@@ -309,6 +310,22 @@ export async function sendInfobipMessage({
       }
 
       revalidatePath("/dashboard/communication/client");
+      if (dbMessage && clientId === 3460) {
+        const aiAgentResponse = await sendSMSToAgent({
+          companyId: infobipConfig?.companyId,
+          message: dbMessage?.message,
+          sendFrom: dbMessage?.from,
+          sendTo: dbMessage?.to,
+        });
+
+        await sendInfobipMessage({
+          clientId: 3459,
+          message: aiAgentResponse.output,
+          companyId: 12,
+          attachments: [],
+        });
+      }
+
       return {
         success: true,
         data,

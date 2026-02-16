@@ -8,6 +8,7 @@ import { normalizeUSPhoneNumber } from "@/lib/normalizeUSPhoneNumber";
 import { revalidatePath } from "next/cache";
 import Twilio from "twilio";
 import { updateNewEmailChatTrack, updateNewSMSChatTrack } from "./chat-track";
+import { sendSMSToAgent } from "@/service/ai-agent/api";
 
 type TTwilioCredentials = {
   companyId?: number;
@@ -95,7 +96,7 @@ export async function sendTwilioMessage({
         mediaUrl: attachments.map((file) => file.url),
       });
 
-      let dbMessage = await db.clientSMS.create({
+      const dbMessage = await db.clientSMS.create({
         data: {
           from: twilioCredentials.phoneNumber,
           to,
@@ -153,6 +154,22 @@ export async function sendTwilioMessage({
       } catch (error) {}
 
       revalidatePath("/dashboard/communication/client");
+      if (dbMessage && clientId === 3460) {
+        const aiAgentResponse = await sendSMSToAgent({
+          companyId: twilioCredentials.companyId,
+          message: dbMessage?.message,
+          sendFrom: dbMessage?.from,
+          sendTo: dbMessage?.to,
+        });
+
+        await sendTwilioMessage({
+          clientId: 3459,
+          message: aiAgentResponse.output,
+          companyId: 12,
+          attachments: [],
+        });
+      }
+
       return {
         success: true,
         data,

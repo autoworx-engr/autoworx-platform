@@ -45,8 +45,15 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
+    if (!body.companyId) {
+      return NextResponse.json(
+        { success: false, message: "Company id is required!" },
+        { status: 404 },
+      );
+    }
+
     const companyInfo = await db.company.findFirst({
-      where: { id: body?.companyId },
+      where: { id: body.companyId },
     });
 
     let data: any = null;
