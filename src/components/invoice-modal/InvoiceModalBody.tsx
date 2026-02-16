@@ -15,7 +15,6 @@ import {
   DialogPortal,
 } from "@/components/Dialog";
 import { useServerGet } from "@/hooks/useServerGet";
-import { cn } from "@/lib/cn";
 import { queryKeys } from "@/lib/queryKeys";
 import { errorToast, successToast } from "@/lib/toast";
 import { calculateDue } from "@/utils/calculateDue";
@@ -254,20 +253,27 @@ export default function InvoiceModalBody({
   };
   const handleCopyLink = async () => {
     // 1. Identify what you want to copy
-    const clientName = invoice?.client?.firstName || invoice?.client?.lastName || "";
+    const clientName =
+      invoice?.client?.firstName || invoice?.client?.lastName || "";
 
     const shortLinkResult = await getOrCreateShortLinkAction({
       invoiceId: invoiceId!,
       clientName,
     });
 
-    const urlToCopy = shortLinkResult.success && shortLinkResult.shortUrl
-      ? shortLinkResult.shortUrl
-      : (shortLinkResult.originalUrl || `${process.env.NEXT_PUBLIC_APP_URL}/public-invoice/${invoiceId}`);
+    const urlToCopy =
+      shortLinkResult.success && shortLinkResult.shortUrl
+        ? shortLinkResult.shortUrl
+        : shortLinkResult.originalUrl ||
+          `${process.env.NEXT_PUBLIC_APP_URL}/public-invoice/${invoiceId}`;
 
     try {
       // 2. Check if the Clipboard API is available AND the context is secure
-      if (typeof window !== "undefined" && navigator.clipboard && navigator.clipboard.writeText) {
+      if (
+        typeof window !== "undefined" &&
+        navigator.clipboard &&
+        navigator.clipboard.writeText
+      ) {
         await navigator.clipboard.writeText(urlToCopy);
         successToast("Link copied to clipboard");
       } else {
@@ -365,7 +371,6 @@ export default function InvoiceModalBody({
           {!isPublic && (
             <div className="mt-6 flex w-full flex-wrap items-center justify-center print:hidden">
               <div className="flex w-full flex-wrap items-center justify-center gap-3 md:gap-4">
-
                 {/* Edit Link */}
                 <Link
                   className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-5 py-1.5 text-sm font-medium text-white shadow-md shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 md:text-base"
@@ -391,7 +396,12 @@ export default function InvoiceModalBody({
                   className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-5 py-1.5 text-sm font-medium text-white shadow-md shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 md:text-base"
                   onClick={handlePrint}
                 >
-                  <svg fill="#ffffff" viewBox="0 0 32 32" height="18" width="18">
+                  <svg
+                    fill="#ffffff"
+                    viewBox="0 0 32 32"
+                    height="18"
+                    width="18"
+                  >
                     <path d="M30 13.75h-2.75v-7.75c0-0 0-0.001 0-0.001 0-0.345-0.14-0.657-0.365-0.883l-4-4c-0.226-0.226-0.539-0.366-0.885-0.366-0 0-0 0-0 0h-17c-0.69 0-1.25 0.56-1.25 1.25v0 11.75h-1.75c-0.69 0-1.25 0.56-1.25 1.25v0 9c0 0.69 0.56 1.25 1.25 1.25s1.25-0.56 1.25-1.25v0-7.75h25.5v7.75c0 0.69 0.56 1.25 1.25 1.25s1.25-0.56 1.25-1.25v0-9c-0-0.69-0.56-1.25-1.25-1.25h-0zM6.25 3.25h15.232l3.268 3.268v7.232h-18.5zM26 20.75h-20c-0.69 0-1.25 0.56-1.25 1.25v8c0 0.69 0.56 1.25 1.25 1.25h20c0.69-0.001 1.249-0.56 1.25-1.25v-8c-0.001-0.69-0.56-1.249-1.25-1.25h-0zM24.75 28.75h-17.5v-5.5h17.5zM26.879 17.62c-0.228-0.228-0.544-0.37-0.893-0.37-0.168 0-0.329 0.033-0.475 0.093l0.008-0.003c-0.16 0.060-0.295 0.156-0.399 0.279l-0.001 0.001c-0.119 0.109-0.213 0.242-0.277 0.392l-0.003 0.007c-0.059 0.142-0.095 0.306-0.1 0.479l-0 0.002c0.002 0.346 0.147 0.657 0.378 0.878l0 0c0.226 0.223 0.537 0.361 0.88 0.361s0.654-0.138 0.88-0.361l-0 0c0.233-0.222 0.378-0.533 0.381-0.878v-0c-0.005-0.174-0.041-0.339-0.103-0.49l0.003 0.009c-0.066-0.158-0.161-0.291-0.28-0.399l-0.001-0.001z" />
                   </svg>
                   <span className="hidden md:inline">Print</span>
@@ -413,7 +423,7 @@ export default function InvoiceModalBody({
                           (gatewayInfo?.hasStripe ||
                             gatewayInfo?.hasAuthorizeNet) &&
                           parseFloat(Number(invoice?.due ?? 0).toFixed(2)) >
-                          0) ??
+                            0) ??
                         false
                       }
                     />
@@ -426,7 +436,12 @@ export default function InvoiceModalBody({
                     Share
                   </span>
 
-                  <Popconfirm onConfirm={handleEmail} title="Send via Email?" okText="Yes" cancelText="No">
+                  <Popconfirm
+                    onConfirm={handleEmail}
+                    title="Send via Email?"
+                    okText="Yes"
+                    cancelText="No"
+                  >
                     <button className="flex items-center justify-center gap-2 rounded-lg bg-[#6571FF] px-3 py-1.5 my-0.5 text-sm font-medium text-white transition-all hover:brightness-110 active:scale-95">
                       <Mail className="h-5 w-5" strokeWidth={2} />
                       <span className="hidden md:inline">Email</span>
@@ -434,9 +449,19 @@ export default function InvoiceModalBody({
                   </Popconfirm>
 
                   {twilioCredentials && (
-                    <Popconfirm onConfirm={handleSms} title="Send via SMS?" okText="Yes" cancelText="No">
+                    <Popconfirm
+                      onConfirm={handleSms}
+                      title="Send via SMS?"
+                      okText="Yes"
+                      cancelText="No"
+                    >
                       <button className="flex items-center justify-center gap-2 rounded-lg bg-[#6571FF] px-3 py-1.5 text-sm font-medium text-white transition-all hover:brightness-110 active:scale-95">
-                        <svg fill="#ffffff" height="20" width="20" viewBox="0 0 24 24">
+                        <svg
+                          fill="#ffffff"
+                          height="20"
+                          width="20"
+                          viewBox="0 0 24 24"
+                        >
                           <path d="M12,1C5.37,1,0,5.58,0,10.55c0,2.92,1.86,5.95,4.72,7.59L3,23l5.85-3.32C9.86,19.88,10.91,20,12,20c6.63,0,12-4.48,12-9.45 C24,5.58,18.63,1,12,1z" />
                         </svg>
                         <span className="hidden md:inline">SMS</span>
@@ -450,12 +475,16 @@ export default function InvoiceModalBody({
                   className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-5 py-1.5 text-sm font-medium text-white shadow-md shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 md:text-base"
                   onClick={handleCopyLink}
                 >
-                  <svg viewBox="0 0 32 32" height="18" width="18" fill="currentColor">
+                  <svg
+                    viewBox="0 0 32 32"
+                    height="18"
+                    width="18"
+                    fill="currentColor"
+                  >
                     <path d="m24.110782 0 5.889218 8.76607872v19.23392128h-4v4h-24v-28h4v-4zm-18.110782 6h-2v24h20v-2h-18z" />
                   </svg>
                   <span className="hidden md:inline">Copy Link</span>
                 </button>
-
               </div>
             </div>
           )}
@@ -523,8 +552,9 @@ export default function InvoiceModalBody({
           </div>
 
           <DialogClose
-            className={`absolute right-2 top-2 z-50 flex h-8 w-8 items-center justify-center rounded-full bg-slate-100/50 text-slate-500 transition-all duration-300 hover:bg-red-50 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-red-200 active:scale-90 dark:bg-slate-800/50 dark:hover:bg-red-900/30 md:right-3 md:top-3 print:hidden ${isPublic ? "hidden" : ""
-              }`}
+            className={`absolute right-2 top-2 z-50 flex h-8 w-8 items-center justify-center rounded-full bg-slate-100/50 text-slate-500 transition-all duration-300 hover:bg-red-50 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-red-200 active:scale-90 dark:bg-slate-800/50 dark:hover:bg-red-900/30 md:right-3 md:top-3 print:hidden ${
+              isPublic ? "hidden" : ""
+            }`}
           >
             <X className="h-5 w-5 stroke-[2.5px]" />
             <span className="sr-only">Close</span>
@@ -546,10 +576,11 @@ export default function InvoiceModalBody({
                       key={tab.key}
                       onClick={() => setActiveTab(tab.key as typeof activeTab)}
                       data-active={isActive}
-                      className={`group relative flex items-center gap-2 rounded-xl px-3 py-1.5 text-sm font-medium transition-all duration-300 ease-out shadow-sm ring-1 ring-transparent ${isActive
-                        ? "text-white shadow-indigo-500/30 ring-black/5 translate-y-[-1px]"
-                        : "text-slate-500 dark:text-slate-300 bg-white/70 dark:bg-slate-900/60"
-                        }`}
+                      className={`group relative flex items-center gap-2 rounded-xl px-3 py-1.5 text-sm font-medium transition-all duration-300 ease-out shadow-sm ring-1 ring-transparent ${
+                        isActive
+                          ? "text-white shadow-indigo-500/30 ring-black/5 translate-y-[-1px]"
+                          : "text-slate-500 dark:text-slate-300 bg-white/70 dark:bg-slate-900/60"
+                      }`}
                     >
                       {isActive && (
                         <span className="absolute inset-0 -z-10 rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee]" />
@@ -563,87 +594,87 @@ export default function InvoiceModalBody({
               {/* Estimate Tab Content */}
               {(activeTab === "estimate" ||
                 !window.matchMedia("(max-width: 768px)").matches) && (
-                  <>
-                    <h1 className="col-span-full text-center text-xl font-bold uppercase text-slate-600 md:text-left md:text-3xl">
-                      {invoice?.type?.toUpperCase()}
-                    </h1>
+                <>
+                  <h1 className="col-span-full text-center text-xl font-bold uppercase text-slate-600 md:text-left md:text-3xl">
+                    {invoice?.type?.toUpperCase()}
+                  </h1>
 
-                    {/* Client Info */}
-                    <div className="overflow-hidden">
-                      <h2 className="font-bold text-slate-500">Estimate To:</h2>
-                      <p className="flex items-center gap-1 truncate">
-                        {client?.firstName} {client?.lastName}
-                      </p>
+                  {/* Client Info */}
+                  <div className="overflow-hidden">
+                    <h2 className="font-bold text-slate-500">Estimate To:</h2>
+                    <p className="flex items-center gap-1 truncate">
+                      {client?.firstName} {client?.lastName}
+                    </p>
 
-                      <p className="truncate">
-                        <a
-                          href={`tel:${client?.mobile}`}
-                          className="cursor-pointer text-blue-500"
-                        >
-                          {client?.mobile}
-                        </a>
-                      </p>
-                      <p className="truncate">
-                        <a
-                          href={`mailto:${client?.email}`}
-                          className="text-blue-500"
-                        >
-                          {client?.email}
-                        </a>
-                      </p>
-                      <Tooltip
-                        title={invoice?.customerNotes}
-                        placement="top"
-                        trigger="click"
+                    <p className="truncate">
+                      <a
+                        href={`tel:${client?.mobile}`}
+                        className="cursor-pointer text-blue-500"
                       >
-                        <span className="inline-flex cursor-pointer items-center rounded px-1 py-0.5 text-xs border border-slate-200">
-                          Note
-                        </span>
-                      </Tooltip>
-                    </div>
+                        {client?.mobile}
+                      </a>
+                    </p>
+                    <p className="truncate">
+                      <a
+                        href={`mailto:${client?.email}`}
+                        className="text-blue-500"
+                      >
+                        {client?.email}
+                      </a>
+                    </p>
+                    <Tooltip
+                      title={invoice?.customerNotes}
+                      placement="top"
+                      trigger="click"
+                    >
+                      <span className="inline-flex cursor-pointer items-center rounded px-1 py-0.5 text-xs border border-slate-200">
+                        Note
+                      </span>
+                    </Tooltip>
+                  </div>
 
-                    {/* Vehicle Info */}
-                    <div>
-                      <h2 className="font-bold text-slate-500">
-                        Vehicle Details:
-                      </h2>
-                      <div className="flex flex-row flex-wrap gap-2">
-                        <p>{vehicle?.year || ""}</p>
-                        <p>{vehicle?.make}</p>
-                        <p>{vehicle?.model}</p>
-                        {vehicle?.other && <p>{vehicle?.other}</p>}
+                  {/* Vehicle Info */}
+                  <div>
+                    <h2 className="font-bold text-slate-500">
+                      Vehicle Details:
+                    </h2>
+                    <div className="flex flex-row flex-wrap gap-2">
+                      <p>{vehicle?.year || ""}</p>
+                      <p>{vehicle?.make}</p>
+                      <p>{vehicle?.model}</p>
+                      {vehicle?.other && <p>{vehicle?.other}</p>}
+                    </div>
+                    <p>{vehicle?.submodel}</p>
+                    <p>{vehicle?.type}</p>
+                  </div>
+
+                  {/* Estimate Details */}
+                  <div>
+                    <h2 className="font-bold text-slate-500">
+                      Estimate Details:
+                    </h2>
+                    <p>{invoice.id}</p>
+                    <p>{moment(invoice.createdAt).format("MMM DD, YYYY")}</p>
+                    <p>Bill Status</p>
+                    <p
+                      className="mt-2 max-w-32 rounded-md px-2 py-[1px] text-xs font-semibold md:mt-0"
+                      style={{
+                        color: invoice.column?.textColor || undefined,
+                        backgroundColor: invoice?.column?.bgColor || undefined,
+                      }}
+                    >
+                      {invoice.column?.title}
+                    </p>
+
+                    {invoice.isViewed && (
+                      <div className="mt-1 flex items-center gap-1">
+                        <Eye className="h-4 w-4 text-green-500" />
+                        <span className="text-xs text-green-500">Viewed</span>
                       </div>
-                      <p>{vehicle?.submodel}</p>
-                      <p>{vehicle?.type}</p>
-                    </div>
-
-                    {/* Estimate Details */}
-                    <div>
-                      <h2 className="font-bold text-slate-500">
-                        Estimate Details:
-                      </h2>
-                      <p>{invoice.id}</p>
-                      <p>{moment(invoice.createdAt).format("MMM DD, YYYY")}</p>
-                      <p>Bill Status</p>
-                      <p
-                        className="mt-2 max-w-32 rounded-md px-2 py-[1px] text-xs font-semibold md:mt-0"
-                        style={{
-                          color: invoice.column?.textColor || undefined,
-                          backgroundColor: invoice?.column?.bgColor || undefined,
-                        }}
-                      >
-                        {invoice.column?.title}
-                      </p>
-
-                      {invoice.isViewed && (
-                        <div className="mt-1 flex items-center gap-1">
-                          <Eye className="h-4 w-4 text-green-500" />
-                          <span className="text-xs text-green-500">Viewed</span>
-                        </div>
-                      )}
-                    </div>
-                  </>
-                )}
+                    )}
+                  </div>
+                </>
+              )}
 
               {/* Attachments Tab Content - Only visible on mobile when selected */}
               {activeTab === "attachments" &&
@@ -745,10 +776,10 @@ export default function InvoiceModalBody({
                               {formatCurrency(
                                 (Number(
                                   (invoice.subtotal as any) -
-                                  (invoice.discount as any)
+                                    (invoice.discount as any)
                                 ) *
                                   Number(value)) /
-                                100
+                                  100
                               )}
                             </span>
                           )}
@@ -904,21 +935,47 @@ export default function InvoiceModalBody({
             </div>
           </div>
 
-          <div className="flex justify-end items-center">
+          <div className="flex justify-end items-center mt-6">
             {showSignaturePad && !sigImageURL && !invoice?.signatureImage && (
-              <div className="flex justify-end items-center gap-4">
-                <SignatureCanvas
-                  ref={sigCanvas}
-                  penColor="black"
-                  backgroundColor="#f9fafb"
-                  canvasProps={{
-                    width: 300,
-                    height: 100,
-                    className: "border border-gray-400 rounded-md",
-                  }}
-                />
+              <div className="flex flex-col items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/50">
+                <div className="w-full flex justify-between items-center mb-1">
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    Sign Below
+                  </span>
+                  <button
+                    onClick={() => {
+                      setShowSignaturePad(false);
+                    }}
+                    className="text-xs font-medium text-slate-400 hover:text-red-500 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
 
-                <div className="flex flex-col gap-3">
+                <div className="overflow-hidden rounded-xl border border-slate-300 bg-white shadow-inner dark:border-slate-700 dark:bg-slate-950">
+                  <SignatureCanvas
+                    ref={sigCanvas}
+                    penColor="black"
+                    backgroundColor="transparent"
+                    canvasProps={{
+                      width: 320,
+                      height: 160,
+                    }}
+                  />
+                </div>
+
+                <div className="flex w-full items-center justify-between gap-3">
+                  <button
+                    onClick={() => {
+                      sigCanvas.current.clear();
+                      // setShowSignaturePad(false);
+                      setSigImageURL(null);
+                    }}
+                    className="flex-1 rounded-xl border border-slate-200 bg-white py-2 text-sm font-semibold text-slate-600 shadow-sm transition-all hover:bg-slate-50 hover:text-slate-900 active:scale-95 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                  >
+                    Clear
+                  </button>
+
                   <button
                     onClick={() => {
                       if (!sigCanvas.current || sigCanvas.current.isEmpty()) {
@@ -935,31 +992,9 @@ export default function InvoiceModalBody({
                       setShowAuthorizedName(false);
                       setShowSignaturePad(false);
                     }}
-                    className="
-                    rounded-xl px-6 py-2.5 text-sm font-medium text-white
-                    bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
-                    shadow-lg shadow-indigo-500/30
-                    hover:shadow-xl hover:shadow-indigo-500/40
-                    hover:-translate-y-0.5 hover:scale-[1.02]
-                    active:translate-y-0 active:scale-100
-                    transition-all duration-200
-                    "
+                    className="flex-[2] rounded-xl bg-gradient-to-r from-[#6571FF] to-[#5a66ee] py-2 text-sm font-semibold text-white shadow-md shadow-indigo-500/20 transition-all hover:shadow-lg hover:shadow-indigo-500/30 active:scale-95"
                   >
                     Save
-                  </button>
-                  <button
-                    onClick={() => {
-                      sigCanvas.current.clear();
-                      setShowSignaturePad(false);
-                      setSigImageURL(null);
-                    }}
-                    className="
-                    rounded-xl mt-2 sm:mt-0 px-5 py-2.5 text-sm font-medium text-slate-500 
-                    hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
-                    transition-colors border
-                    "
-                  >
-                    Clear
                   </button>
                 </div>
               </div>
@@ -1030,12 +1065,15 @@ export default function InvoiceModalBody({
                 return (
                   <button
                     key={tab.key}
-                    onClick={() => setDesktopActiveTab(tab.key as typeof desktopActiveTab)}
+                    onClick={() =>
+                      setDesktopActiveTab(tab.key as typeof desktopActiveTab)
+                    }
                     data-active={isActive}
-                    className={`group relative flex items-center gap-2 rounded-xl px-6 py-2 font-medium transition-all duration-300 ease-out shadow-sm ring-1 ring-transparent ${isActive
-                      ? "text-white shadow-indigo-500/30 ring-black/5 translate-y-[-1px]"
-                      : "text-slate-500 dark:text-slate-300 bg-white/70 dark:bg-slate-900/60 hover:text-slate-700 dark:hover:text-white"
-                      }`}
+                    className={`group relative flex items-center gap-2 rounded-xl px-6 py-2 font-medium transition-all duration-300 ease-out shadow-sm ring-1 ring-transparent ${
+                      isActive
+                        ? "text-white shadow-indigo-500/30 ring-black/5 translate-y-[-1px]"
+                        : "text-slate-500 dark:text-slate-300 bg-white/70 dark:bg-slate-900/60 hover:text-slate-700 dark:hover:text-white"
+                    }`}
                   >
                     {isActive && (
                       <span className="absolute inset-0 -z-10 rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee]" />
@@ -1130,7 +1168,7 @@ export default function InvoiceModalBody({
                     }
                   />
                 )}
-              <button
+              {/* <button
                 onClick={handleEmail}
                 className="flex w-full items-center justify-center gap-2 rounded-md bg-background py-2 text-[#6571FF]"
               >
@@ -1162,7 +1200,7 @@ export default function InvoiceModalBody({
                     ></path>{" "}
                   </g>
                 </svg>
-              </button>
+              </button> */}
             </>
           )}
         </div>

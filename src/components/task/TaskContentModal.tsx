@@ -404,7 +404,7 @@ export default function TaskContentModal({
           <div id="timer-parent" className="mb-4 flex flex-col">
             {/* <label htmlFor="time">Time</label> */}
             <div className="flex items-center space-x-2">
-              <div className="flex w-full flex-col lg:flex-row lg:space-x-2">
+              <div className="flex w-full flex-col space-y-2 lg:flex-row lg:space-x-2 lg:space-y-0">
                 <SlimInput
                   name="date"
                   label="Date"
@@ -415,7 +415,7 @@ export default function TaskContentModal({
                   required
                   onChange={(event) => setDate(event.currentTarget.value)}
                 />
-                <div className="flex items-end gap-2">
+                <div className="flex items-end gap-2 mt-2 lg:mt-0">
                   {/* Start Time */}
                   <label className="flex flex-col items-start">
                     <span className="mb-2 font-medium text-slate-600">
