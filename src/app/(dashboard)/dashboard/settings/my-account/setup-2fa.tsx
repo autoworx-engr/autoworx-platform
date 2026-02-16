@@ -134,25 +134,41 @@ function Content() {
           Contact Information
         </h2>
 
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="bg-slate-100 p-2 rounded-lg text-slate-600">
+        <div className="flex flex-col items-start gap-3 min-w-0">
+          <div className="flex items-center justify-between gap-2 min-w-0">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <div className="bg-slate-100 p-2 rounded-lg text-slate-600 shrink-0">
                 <Mail className="w-5 h-5" />
               </div>
-              <div>
-                <p className="text-slate-900 font-medium">{user?.email}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-slate-900 font-medium text-sm truncate">{user?.email}</p>
                 <p className="text-slate-400 text-xs">Primary Email</p>
               </div>
             </div>
 
+            <div className="hidden lg:block">
+              {user?.emailVerified ? (
+                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full border border-emerald-100 shrink-0 whitespace-nowrap">
+                  <CheckCircle className="w-3.5 h-3.5" />
+                  Verified
+                </div>
+              ) : (
+                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-red-50 text-red-700 text-xs font-bold rounded-full border border-red-100 shrink-0 whitespace-nowrap">
+                  <XCircle className="w-3.5 h-3.5" />
+                  Not Verified
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="lg:hidden pl-12">
             {user?.emailVerified ? (
-              <div className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full border border-emerald-100">
+              <div className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full border border-emerald-100 shrink-0 whitespace-nowrap">
                 <CheckCircle className="w-3.5 h-3.5" />
                 Verified
               </div>
             ) : (
-              <div className="flex items-center gap-1.5 px-2.5 py-1 bg-red-50 text-red-700 text-xs font-bold rounded-full border border-red-100">
+              <div className="flex items-center gap-1.5 px-2.5 py-1 bg-red-50 text-red-700 text-xs font-bold rounded-full border border-red-100 shrink-0 whitespace-nowrap">
                 <XCircle className="w-3.5 h-3.5" />
                 Not Verified
               </div>
@@ -178,9 +194,9 @@ function Content() {
           Security
         </h2>
 
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="bg-blue-50 p-2 rounded-lg text-blue-600">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <div className="bg-blue-50 p-2 rounded-lg text-blue-600 shrink-0">
               <Smartphone className="w-5 h-5" />
             </div>
             <div>
@@ -217,7 +233,7 @@ function Content() {
 
 export default function Setup2FA() {
   return (
-    <div className="w-full bg-white rounded-xl shadow-xl overflow-hidden border border-slate-200 mt-8">
+    <div className="w-full max-w-full bg-white rounded-xl shadow-xl overflow-hidden border border-slate-200 mt-8">
       {/* Header */}
       <Header />
 

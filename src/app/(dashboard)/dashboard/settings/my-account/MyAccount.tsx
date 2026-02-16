@@ -52,17 +52,17 @@ const MyAccount = ({ user }: { user: User }) => {
 
   const isUserInfoChanged =
     JSON.stringify(userInfo) !==
-      JSON.stringify({
-        firstName: user?.firstName || "",
-        lastName: user?.lastName || "",
-        email: user?.email || "",
-        image: user?.image || "",
-        phone: user?.phone || "",
-        address: user?.address || "",
-        city: user?.city || "",
-        state: user?.state || "",
-        zip: user?.zip || "",
-      }) || !!profilePic;
+    JSON.stringify({
+      firstName: user?.firstName || "",
+      lastName: user?.lastName || "",
+      email: user?.email || "",
+      image: user?.image || "",
+      phone: user?.phone || "",
+      address: user?.address || "",
+      city: user?.city || "",
+      state: user?.state || "",
+      zip: user?.zip || "",
+    }) || !!profilePic;
 
   const [pending, startTransition] = useTransition();
 
@@ -148,11 +148,11 @@ const MyAccount = ({ user }: { user: User }) => {
 
   return (
     <div className="mt-3 pl-1">
-      <div className="grid gap-x-8 md:grid-cols-1 lg:grid-cols-2">
+      <div className="grid gap-x-8 md:grid-cols-1 lg:grid-cols-2 overflow-hidden">
         {/* account detail */}
         <div className="#w-1/2">
           <h3 className="my-4 text-lg font-bold">Account Details</h3>
-          <div className="space-y-8 rounded-md p-8 shadow-md">
+          <div className="space-y-8 rounded-md p-4 shadow-md">
             {/* profile picture */}
             <input
               ref={profilePicRef}
@@ -304,7 +304,7 @@ const MyAccount = ({ user }: { user: User }) => {
           </div>
         </div>
         {/* new password */}
-        <div className="flex flex-col gap-y-4">
+        <div className="flex flex-col gap-y-4 min-w-0 overflow-hidden">
           <div className="#w-1/2">
             <ChangePassword />
             <>
