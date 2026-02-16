@@ -10,17 +10,18 @@ import {
 import { AppointmentCreateOrEdit } from "@/components/appointment/AppointmentCreateOrEdit";
 import { errorToast, successToast } from "@/lib/toast";
 import { updateTagAutomationTrigger } from "@/service/tag-automation-trigger/api";
+import { usePipelineFilterStore } from "@/stores/PipelineFilterStore";
 import { Column, Employee, ShopPipelineData } from "@/types/invoiceLead";
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
+import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
+import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { Tag, User } from "@prisma/client";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { SetStateAction, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { SetStateAction, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
+import DroppableColumn from "./DroppableColumn";
 import PipelineLoadingSkeleton from "./PipelineLoadingSkeleton";
 import SearchScroll from "./SearchScroll";
-import DroppableColumn from "./DroppableColumn";
-import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
-import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
 
 interface PipelinesProps {
   pipelinesTitle: string;
@@ -58,6 +59,9 @@ export default function PipelinesCopy({
   const currentUser = useGetCurrentUser();
   console.log("Current User:", currentUser);
 
+  // Get search term from store
+  const searchTerm = usePipelineFilterStore((state) => state.searchTerm);
+
   function updateWidth() {
     setScreenWidth(window.innerWidth);
   }
@@ -69,7 +73,6 @@ export default function PipelinesCopy({
   }, []);
 
   useEffect(() => {
-    // setIsLoading(true);
     setPipelineData(shopPipelineDataProp);
     // Reset refs when data changes
     columnRefs.current = new Array(shopPipelineDataProp.length).fill(null);
@@ -78,7 +81,6 @@ export default function PipelinesCopy({
   }, [shopPipelineDataProp]);
 
   useEffect(() => {
-    // setIsLoading(true);
     const fetchCompanyUsers = async () => {
       const fetchedCompanyUsers = await getEmployees({
         excludeCurrentUser: true,
@@ -89,6 +91,31 @@ export default function PipelinesCopy({
     };
     fetchCompanyUsers();
   }, [router]);
+
+  // Filter pipeline data based on search term
+  const filteredPipelineData = useMemo(() => {
+    if (!searchTerm || searchTerm.trim() === "") {
+      return pipelineData;
+    }
+
+    const lowerSearchTerm = searchTerm.toLowerCase();
+
+    return pipelineData.map((column) => ({
+      ...column,
+      leads: column.leads.filter((lead) => {
+        // Search by client name
+        const nameMatch = (lead.name || "")
+          .toLowerCase()
+          .includes(lowerSearchTerm);
+
+        // Search by vehicle information
+        const vehicleMatch =
+          lead.vehicle && lead.vehicle.toLowerCase().includes(lowerSearchTerm);
+
+        return nameMatch || vehicleMatch;
+      }),
+    }));
+  }, [pipelineData, searchTerm]);
 
   const [selectedEmployees, setSelectedEmployees] = useState<{
     [key: string]: Employee | null;
@@ -155,8 +182,6 @@ export default function PipelinesCopy({
     }
   };
 
-  // ... Rest of your existing code ...
-
   const handleDropdownToggle = (categoryIndex: number, leadIndex: number) => {
     if (
       openDropdownIndex?.category === categoryIndex &&
@@ -169,7 +194,6 @@ export default function PipelinesCopy({
 
     console.log(categoryIndex, leadIndex);
   };
-
 
   const createEmployeeSelectHandler =
     (categoryIndex: number, leadIndex: number) =>
@@ -223,6 +247,7 @@ export default function PipelinesCopy({
       [key]: !prevState[key],
     }));
   };
+
   //for tag handling
   const handleTagSelect = async (
     categoryIndex: number,
@@ -242,15 +267,6 @@ export default function PipelinesCopy({
           });
           setPipelineData(updatedPipelineData);
 
-          // // Optionally update the leadTags state (if needed)
-          // setLeadTags((prevState) => {
-          //   const existingTags = prevState[key] || [];
-          //   return {
-          //     ...prevState,
-          //     [key]: [...existingTags, selectedTag],
-          //   };
-          // });
-
           updateTagAutomationTrigger({
             columnId: result?.invoice?.columnId!,
             companyId: result?.invoice?.companyId,
@@ -264,6 +280,7 @@ export default function PipelinesCopy({
       }
     }
   };
+
   // Handle tag removal
   const handleTagRemove = async (
     categoryIndex: number,
@@ -285,14 +302,6 @@ export default function PipelinesCopy({
             (tag) => tag.tag.id !== tagToRemove.id
           );
         setPipelineData(updatedPipelineData);
-        // setLeadTags((prevState) => {
-        //   const existingTags =
-        //     prevState[key] || pipelineData[categoryIndex].leads[leadIndex].tags;
-        //   return {
-        //     ...prevState,
-        //     [key]: existingTags.filter((tag) => tag.id !== tagToRemove.id),
-        //   };
-        // });
       }
     } catch (error) {
       console.error("Error removing tag:", error);
@@ -300,7 +309,6 @@ export default function PipelinesCopy({
   };
 
   //service
-
   const handleServiceDropdownToggle = (
     categoryIndex: number,
     leadIndex: number
@@ -399,7 +407,6 @@ export default function PipelinesCopy({
     }
   };
 
-  
   useEffect(() => {
     return monitorForElements({
       onDrop({ source, location }) {
@@ -492,12 +499,13 @@ export default function PipelinesCopy({
       element: scrollContainer,
     });
   }, [screenWidth]);
+
   return (
     <>
       {/* Add the search component at the top */}
       <div className="mb-4 px-2">
         <SearchScroll
-          pipelineData={pipelineData}
+          pipelineData={filteredPipelineData}
           onSearchResult={handleSearchResult}
         />
       </div>
@@ -510,7 +518,7 @@ export default function PipelinesCopy({
             ref={dragDropContextRef}
             className="thin-scrollbar flex touch-pan-x snap-x snap-mandatory flex-nowrap justify-between gap-2 overflow-x-auto"
           >
-            {pipelineData.map((item, categoryIndex) => (
+            {filteredPipelineData.map((item, categoryIndex) => (
               <DroppableColumn
                 key={categoryIndex}
                 columnRefs={columnRefs}

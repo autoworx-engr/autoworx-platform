@@ -331,8 +331,10 @@ export async function getEmployeePayout(timezone: string) {
   const companyId = await getCompanyId();
 
   // Use unified payout calculations that include both work-based and salary earnings
-  const currentMonthPayoutTotal = await calculateCompanyUnifiedCurrentMonthEarnings(companyId);
-  const previousMonthPayoutTotal = await calculateCompanyUnifiedPreviousMonthEarnings(companyId);
+  const currentMonthPayoutTotal =
+    await calculateCompanyUnifiedCurrentMonthEarnings(companyId);
+  const previousMonthPayoutTotal =
+    await calculateCompanyUnifiedPreviousMonthEarnings(companyId);
 
   return {
     currentMonthTotal: currentMonthPayoutTotal,
@@ -386,8 +388,16 @@ export const getTotalLeadsPerMonth = async (
   }
 };
 
-export async function getConvertedLeadsPerMonth(timezone: string) {
-  const companyId = await getCompanyId();
+export async function getConvertedLeadsPerMonth(
+  timezone: string,
+  currentCompanyId?: number,
+) {
+  let companyId = currentCompanyId;
+
+  if (!companyId) {
+    companyId = await getCompanyId();
+  }
+
   const {
     currentMonthStart,
     currentMonthEnd,

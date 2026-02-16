@@ -1,4 +1,5 @@
 "use client";
+import { usePipelineFilterStore } from "@/stores/PipelineFilterStore";
 import { format } from "date-fns";
 import { Calendar } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
@@ -21,10 +22,10 @@ const DateRange = ({
     },
   });
   const ref = useRef<HTMLDivElement>(null);
-
+  const { dateRange } = usePipelineFilterStore();
+  const isRangeSelected = dateRange[0] !== null && dateRange[1] !== null;
   const [showPicker, setShowPicker] = useState(false);
   const [tempRange, setTempRange] = useState(state.selection);
-  const [isRangeSelected, setIsRangeSelected] = useState(false);
 
   useEffect(() => {
     document.addEventListener("mousedown", handleClickOutside);
@@ -41,10 +42,18 @@ const DateRange = ({
     setShowPicker(!showPicker);
   };
 
+  useEffect(() => {
+    if (!isRangeSelected) {
+      setTempRange({
+        startDate: new Date(),
+        endDate: new Date(),
+        key: "selection",
+      });
+    }
+  }, [isRangeSelected]);
   const handleOk = () => {
     setState({ selection: tempRange });
     setShowPicker(false);
-    setIsRangeSelected(true);
     onOk(tempRange.startDate, tempRange.endDate);
   };
 
@@ -64,7 +73,6 @@ const DateRange = ({
         key: "selection",
       },
     });
-    setIsRangeSelected(false);
     setTempRange({
       startDate: new Date(),
       endDate: new Date(),
