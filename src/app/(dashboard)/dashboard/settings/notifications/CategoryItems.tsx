@@ -52,14 +52,14 @@ export default function CategoryItems({ category }: TProps) {
         <thead>
           <tr>
             <td></td>
-            <td className="pb-2 text-center text-xs font-semibold uppercase tracking-wider text-gray-400">
+            <td className="pb-2 text-center text-xs font-semibold uppercase tracking-wider text-gray-500">
               Email
             </td>
-            <td className="pb-2 text-center text-xs font-semibold uppercase tracking-wider text-gray-400">
+            <td className="pb-2 text-center text-xs font-semibold uppercase tracking-wider text-gray-500">
               Push
             </td>
             {category === "PAYMENT" && (
-              <td className="pb-2 text-center text-xs font-semibold uppercase tracking-wider text-gray-400">
+              <td className="pb-2 text-center text-xs font-semibold uppercase tracking-wider text-gray-500">
                 Text
               </td>
             )}

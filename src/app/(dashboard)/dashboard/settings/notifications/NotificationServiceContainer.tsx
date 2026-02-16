@@ -41,7 +41,7 @@ const NotificationServiceContainer = ({
         className="flex w-full cursor-pointer items-center justify-between px-5 py-4 transition-colors duration-150 hover:bg-gray-50"
         onClick={handleServiceToggle}
       >
-        <span className="text-sm font-semibold capitalize text-gray-800">
+        <span className="font-semibold capitalize text-gray-600">
           {title === "work force" ? "Job Tracking" : title}
         </span>
         <div

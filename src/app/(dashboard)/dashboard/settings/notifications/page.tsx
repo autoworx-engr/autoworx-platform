@@ -22,9 +22,9 @@ const NotificationSettingPage = async () => {
   return (
     <div className="flex w-full flex-col">
       <NotificationPermissionAlert />
-      <div className="h-full w-full overflow-y-auto px-8 py-4">
+      <div className="h-full w-full overflow-y-auto md:px-8 py-4">
         <div className="mb-6">
-          <h3 className="text-xl font-bold text-gray-900">
+          <h3 className="text-xl font-bold text-gray-600">
             Overall Notification Settings
           </h3>
           <p className="mt-1 text-sm text-gray-500">

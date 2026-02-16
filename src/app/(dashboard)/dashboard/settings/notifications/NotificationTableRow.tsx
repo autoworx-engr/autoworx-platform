@@ -53,7 +53,7 @@ export default function NotificationTableRow({
 
   return (
     <tr className="group transition-colors duration-150 hover:bg-gray-50/50">
-      <td className="py-2.5 pr-4 text-sm capitalize text-gray-600">
+      <td className="py-2.5 pr-4 font-medium capitalize text-gray-500">
         {settingTitle}
       </td>
       {setting && (
