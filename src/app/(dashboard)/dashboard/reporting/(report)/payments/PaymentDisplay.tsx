@@ -137,7 +137,6 @@ export default function PaymentDisplay({
 
                 const hasRefund = refundedAmount > 0;
 
-                console.log("Payment:", payment);
                 return (
                   <tr
                     key={payment.id}

@@ -9,7 +9,7 @@ type TTaskListPopupProps = {
 export default function TaskListPopup({ tasks, onTaskClick }: TTaskListPopupProps) {
   return (
     <div
-      className="absolute -left-20 z-[9999] mt-1 hidden h-[90px] max-h-[110px] w-[200px] transform overflow-y-auto rounded-lg border border-[#66738C] bg-background p-2 group-hover:block"
+      className="absolute -left-20 z-[10] mt-1 hidden h-[90px] max-h-[110px] w-[200px] transform overflow-y-auto rounded-lg border border-[#66738C] bg-background p-2 group-hover:block"
       style={{ top: "-6rem" }}
     >
       {tasks.map((task) => (
