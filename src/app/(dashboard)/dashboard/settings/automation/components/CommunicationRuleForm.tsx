@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, ChangeEvent } from "react";
+import React, { useState, useEffect, ChangeEvent, useMemo } from "react";
 import Selector from "./Selector";
 import { Box, Paper, Typography, Switch } from "@mui/material";
 import MultiSelect from "./MultiSelect";
@@ -68,6 +68,7 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
   twilio,
 }) => {
   // const [loading, setLoading] = useState(false);
+  const [initialFormData, setInitialFormData] = useState<Rule | null>(null);
   const [formData, setFormData] = useState<Rule>({
     companyId: null,
     title: "",
@@ -114,7 +115,7 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
     const loadData = async () => {
       if (isEdit && id) {
         const timeDelay = parseSecondsToTimeDelay(data?.data?.timeDelay);
-        setFormData({
+        const initialData: Rule = {
           companyId: data?.data.companyId,
           title: data?.data.title,
           stages: data?.data?.stages?.map((stage: any) => stage.columnId),
@@ -132,11 +133,13 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
             data?.data.targetColumnId == 0
               ? null
               : data?.data.targetColumnId?.toString() || null,
-        });
+        };
+        setFormData(initialData);
+        setInitialFormData(initialData);
         setActiveTemplate(data?.data.templateType);
         // setLoading(false);
       } else {
-        setFormData({
+        const initialData: Rule = {
           companyId: null,
           title: "",
           stages: [],
@@ -151,7 +154,9 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
           attachments: [],
           createdBy: null,
           targetColumnId: null,
-        });
+        };
+        setFormData(initialData);
+        setInitialFormData(initialData);
       }
     };
     loadData();
@@ -186,6 +191,11 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
       });
     }
   };
+
+  const isFormUnchanged = useMemo(() => {
+    if (!initialFormData) return false;
+    return JSON.stringify(formData) === JSON.stringify(initialFormData);
+  }, [formData, initialFormData]);
 
   // Handle template toggle
   const handleTemplateToggle = (template: "SMS" | "EMAIL") => {
@@ -469,7 +479,7 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
                         {formData.stages
                           .map((id) => stages.find((s) => s.id === id)?.title)
                           .join(", ")}{" "}
-                        {}
+                        { }
                         will move to "
                         {
                           stages.find(
@@ -626,13 +636,18 @@ const CommunicationRuleForm: React.FC<RuleFormProps> = ({
                   <button
                     type="submit"
                     disabled={
-                      isCreatePending || isUpdatePending || isLimitExceeded
+                      isCreatePending ||
+                      isUpdatePending ||
+                      isLimitExceeded ||
+                      isFormUnchanged
                     }
-                    className={`rounded-md px-4 py-2 text-sm font-medium text-white ${
-                      isUpdatePending || isCreatePending || isLimitExceeded
+                    className={`rounded-md px-4 py-2 text-sm font-medium text-white ${isUpdatePending ||
+                        isCreatePending ||
+                        isLimitExceeded ||
+                        isFormUnchanged
                         ? "cursor-not-allowed bg-indigo-300"
                         : "bg-indigo-500 hover:bg-indigo-600"
-                    }`}
+                      }`}
                   >
                     {isUpdatePending || isCreatePending
                       ? isEdit && id

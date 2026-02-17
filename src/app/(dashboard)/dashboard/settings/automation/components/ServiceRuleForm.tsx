@@ -2,7 +2,7 @@
 import { SlimInput } from "@/components/SlimInput";
 import { Box, Paper, Switch, Typography } from "@mui/material";
 import { ArrowRight } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import ActiveTemplate from "./ActiveTemplate";
 import { timeDelays } from "./constants";
 import MultiSelect from "./MultiSelect";
@@ -81,6 +81,7 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
   twilio,
 }) => {
   // const [loading, setLoading] = useState(false);
+  const [initialFormData, setInitialFormData] = useState<Rule | null>(null);
   const [formData, setFormData] = useState<Rule>({
     title: "",
     selectedServiceIds: [],
@@ -129,7 +130,7 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
   useEffect(() => {
     if (isEdit && id) {
       const timeDelay = parseSecondsToTimeDelay(data?.data?.timeDelay);
-      setFormData({
+      const initialData: Rule = {
         companyId: data?.data.companyId,
         title: data?.data.title,
         selectedServiceIds: data?.data.serviceMaintenanceStage?.map(
@@ -147,11 +148,13 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
         emailBody: data?.data.emailBody || "",
         smsBody: data?.data.smsBody || "",
         createdBy: data?.data.createdBy,
-      });
+      };
+      setFormData(initialData);
+      setInitialFormData(initialData);
       setActiveTemplate(data?.data.templateType);
       // setLoading(false);
     } else {
-      setFormData({
+      const initialData: Rule = {
         title: "",
         selectedServiceIds: [],
         conditionColumnId: null,
@@ -164,9 +167,16 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
         smsBody: "",
         createdBy: null,
         companyId: null,
-      });
+      };
+      setFormData(initialData);
+      setInitialFormData(initialData);
     }
   }, [isEdit, id, data, mode]);
+
+  const isFormUnchanged = useMemo(() => {
+    if (!initialFormData) return false;
+    return JSON.stringify(formData) === JSON.stringify(initialFormData);
+  }, [formData, initialFormData]);
 
   useEffect(() => {
     fetchStages("shop");
@@ -614,13 +624,20 @@ const ServiceRuleForm: React.FC<RuleFormProps> = ({
             {/* Save & Cancel Buttons */}
             <div className="flex justify-end pt-4">
               <button
-                disabled={isUpdatePending || isCreatePending || isLimitExceeded}
+                disabled={
+                  isUpdatePending ||
+                  isCreatePending ||
+                  isLimitExceeded ||
+                  isFormUnchanged
+                }
                 type="submit"
-                className={`rounded-md px-4 py-2 text-sm font-medium text-white ${
-                  isUpdatePending || isCreatePending || isLimitExceeded
+                className={`rounded-md px-4 py-2 text-sm font-medium text-white ${isUpdatePending ||
+                    isCreatePending ||
+                    isLimitExceeded ||
+                    isFormUnchanged
                     ? "cursor-not-allowed bg-indigo-300"
                     : "bg-indigo-500 hover:bg-indigo-600"
-                }`}
+                  }`}
               >
                 {isUpdatePending || isCreatePending
                   ? isEdit && id
