@@ -404,7 +404,7 @@ export default function TaskContentModal({
           <div id="timer-parent" className="mb-4 flex flex-col">
             {/* <label htmlFor="time">Time</label> */}
             <div className="flex items-center space-x-2">
-              <div className="flex w-full flex-col space-y-2 lg:flex-row lg:space-x-2 lg:space-y-0">
+              <div className="flex w-full flex-col space-y-4 lg:flex-row lg:space-x-2 lg:space-y-0">
                 <SlimInput
                   name="date"
                   label="Date"

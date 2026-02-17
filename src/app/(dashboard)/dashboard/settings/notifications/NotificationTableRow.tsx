@@ -52,39 +52,51 @@ export default function NotificationTableRow({
   });
 
   return (
-    <tr className="">
-      <td className="capitalize">{settingTitle}</td>
+    <tr className="group transition-colors duration-150 hover:bg-gray-50/50">
+      <td className="py-2.5 pr-4 font-medium capitalize text-gray-500">
+        {settingTitle}
+      </td>
       {setting && (
-        <td>
-          <MySwitch
-            checked={setting["email_enabled"] as boolean}
-            onChecked={(value) => mutate({ switchKey: "email_enabled", value })}
-          />
+        <td className="py-2.5 text-center">
+          <div className="flex justify-center">
+            <MySwitch
+              checked={setting["email_enabled"] as boolean}
+              onChecked={(value) =>
+                mutate({ switchKey: "email_enabled", value })
+              }
+            />
+          </div>
         </td>
       )}
 
       {setting && (
-        <td>
-          <MySwitch
-            checked={setting["push_enabled"] as boolean}
-            onChecked={(value) => mutate({ switchKey: "push_enabled", value })}
-          />
+        <td className="py-2.5 text-center">
+          <div className="flex justify-center">
+            <MySwitch
+              checked={setting["push_enabled"] as boolean}
+              onChecked={(value) =>
+                mutate({ switchKey: "push_enabled", value })
+              }
+            />
+          </div>
         </td>
       )}
 
       {setting && isPayment && (
-        <td>
-          <MySwitch
-            checked={setting["text_enabled"] as boolean}
-            onChecked={async (value) => {
-              let twilioCredentials = await isSmsAvailable();
-              if (!twilioCredentials && value) {
-                errorToast("SMS gateway not available");
-                return;
-              }
-              mutate({ switchKey: "text_enabled", value });
-            }}
-          />
+        <td className="py-2.5 text-center">
+          <div className="flex justify-center">
+            <MySwitch
+              checked={setting["text_enabled"] as boolean}
+              onChecked={async (value) => {
+                let twilioCredentials = await isSmsAvailable();
+                if (!twilioCredentials && value) {
+                  errorToast("SMS gateway not available");
+                  return;
+                }
+                mutate({ switchKey: "text_enabled", value });
+              }}
+            />
+          </div>
         </td>
       )}
     </tr>
