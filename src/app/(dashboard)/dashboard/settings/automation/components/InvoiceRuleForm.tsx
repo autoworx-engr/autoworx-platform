@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Selector from "./Selector";
 import { Box, Paper, Typography, Switch } from "@mui/material";
 import { SlimInput } from "@/components/SlimInput";
@@ -81,6 +81,11 @@ const InvoiceRuleForm: React.FC<RuleFormProps> = ({
 
   // const [loading, setLoading] = useState(false);
   // Default empty rule
+  // const [loading, setLoading] = useState(false);
+  const [initialFormData, setInitialFormData] = useState<Rule | null>(
+    initialData || null
+  );
+  // Default empty rule
   const [formData, setFormData] = useState<Rule>(
     initialData || {
       createdBy: userEmail,
@@ -127,7 +132,7 @@ const InvoiceRuleForm: React.FC<RuleFormProps> = ({
         const timeDelay =
           data?.data?.timeDelay !== "Instant" &&
           parseSecondsToTimeDelay(data?.data?.timeDelay);
-        setFormData({
+        const payload: Rule = {
           companyId: data?.data.companyId,
           title: data?.data.title,
           type: data?.data.type,
@@ -142,7 +147,9 @@ const InvoiceRuleForm: React.FC<RuleFormProps> = ({
           smsBody: data?.data.smsBody,
           attachments: data?.data.attachments,
           createdBy: data?.data.createdBy,
-        });
+        };
+        setFormData(payload);
+        setInitialFormData(payload);
 
         setActiveTemplate(
           data?.data.communicationType === "BOTH"
@@ -151,7 +158,7 @@ const InvoiceRuleForm: React.FC<RuleFormProps> = ({
         );
         // setLoading(false);
       } else {
-        setFormData({
+        const payload: Rule = {
           companyId: null,
           title: "",
           type: null,
@@ -163,7 +170,9 @@ const InvoiceRuleForm: React.FC<RuleFormProps> = ({
           smsBody: "",
           attachments: [],
           createdBy: null,
-        });
+        };
+        setFormData(payload);
+        setInitialFormData(payload);
       }
     };
     loadData();
@@ -173,8 +182,14 @@ const InvoiceRuleForm: React.FC<RuleFormProps> = ({
   useEffect(() => {
     if (initialData) {
       setFormData(initialData);
+      setInitialFormData(initialData);
     }
   }, [initialData]);
+
+  const isFormUnchanged = useMemo(() => {
+    if (!initialFormData) return false;
+    return JSON.stringify(formData) === JSON.stringify(initialFormData);
+  }, [formData, initialFormData]);
 
   // Handle input changes
   const handleChange = (field: keyof Rule, value: any) => {
@@ -359,7 +374,7 @@ const InvoiceRuleForm: React.FC<RuleFormProps> = ({
           createdBy: null,
         });
       }
-    } catch (error) {}
+    } catch (error) { }
   };
 
   const handleTemplateChange = (name: string, value: any) => {
@@ -605,12 +620,19 @@ const InvoiceRuleForm: React.FC<RuleFormProps> = ({
             <div className="flex justify-end pt-4">
               <button
                 type="submit"
-                disabled={isCreatePending || isUpdatePending || isLimitExceeded}
-                className={`rounded-md px-4 py-2 text-sm font-medium text-white ${
-                  isUpdatePending || isCreatePending || isLimitExceeded
+                disabled={
+                  isCreatePending ||
+                  isUpdatePending ||
+                  isLimitExceeded ||
+                  isFormUnchanged
+                }
+                className={`rounded-md px-4 py-2 text-sm font-medium text-white ${isUpdatePending ||
+                    isCreatePending ||
+                    isLimitExceeded ||
+                    isFormUnchanged
                     ? "cursor-not-allowed bg-indigo-300"
                     : "bg-indigo-500 hover:bg-indigo-600"
-                }`}
+                  }`}
               >
                 {isUpdatePending || isCreatePending
                   ? isEdit && id

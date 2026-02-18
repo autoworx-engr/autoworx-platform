@@ -7,7 +7,7 @@ import { usePipelineStagesStore } from "@/stores/pipelineStagesStore";
 import { TAttachments } from "@/types/automation";
 import { Box, Paper, Switch, Typography } from "@mui/material";
 import { Company, InfobipConfig, Tag, TwilioCredentials } from "@prisma/client";
-import { ChangeEvent, useEffect, useState } from "react";
+import { ChangeEvent, useEffect, useMemo, useState } from "react";
 import ActiveTemplate from "./ActiveTemplate";
 import CustomRadioGroup from "./CustomRadioGroup";
 import MultiSelect from "./MultiSelect";
@@ -76,6 +76,7 @@ const TagRuleForm = ({
   company,
   twilio,
 }: RuleFormProps) => {
+  const [initialFormData, setInitialFormData] = useState<Rule | null>(null);
   const [formData, setFormData] = useState<Rule>({
     companyId: companyId,
     title: "",
@@ -110,6 +111,11 @@ const TagRuleForm = ({
   const helpContent = getConditionHelp(formData.condition_type);
   const [showGuide, setShowGuide] = useState(true);
   const [error, setError] = useState<Record<string, string>>({});
+
+  const isFormUnchanged = useMemo(() => {
+    if (!initialFormData) return false;
+    return JSON.stringify(formData) === JSON.stringify(initialFormData);
+  }, [formData, initialFormData]);
   const {
     stages,
     fetchStages,
@@ -160,7 +166,7 @@ const TagRuleForm = ({
           payload.tagAutomationCommunication || {};
         const tagAutomationPipeline = payload.tagAutomationPipeline || {};
         const tagAutomationPostTag = payload.PostTagAutomationColumn || {};
-        setFormData({
+        const initialData: Rule = {
           companyId: payload.companyId ?? companyId,
           title: payload.title ?? "",
           pipelineType: pipelineTypeValue,
@@ -172,7 +178,7 @@ const TagRuleForm = ({
           condition_type: payload.condition_type ?? payload.conditionType ?? "",
           targetColumnId:
             tagAutomationPipeline !== undefined &&
-            tagAutomationPipeline !== null
+              tagAutomationPipeline !== null
               ? Number(tagAutomationPipeline?.targetColumnId)
               : null,
           columnIds:
@@ -187,7 +193,9 @@ const TagRuleForm = ({
           smsBody: tagAutomationCommunication?.smsBody ?? "",
           attachments: tagAutomationCommunication?.attachments ?? [],
           ruleType: payload.ruleType ?? "",
-        });
+        };
+        setFormData(initialData);
+        setInitialFormData(initialData);
 
         setActiveTemplate(
           tagAutomationCommunication?.communicationType === "BOTH"
@@ -195,7 +203,7 @@ const TagRuleForm = ({
             : tagAutomationCommunication?.communicationType
         );
       } else {
-        setFormData({
+        const initialData: Rule = {
           companyId: companyId,
           title: "",
           pipelineType: "",
@@ -214,7 +222,9 @@ const TagRuleForm = ({
           smsBody: "",
           attachments: [],
           ruleType: "",
-        });
+        };
+        setFormData(initialData);
+        setInitialFormData(initialData);
       }
     };
 
@@ -929,12 +939,19 @@ const TagRuleForm = ({
           <div className="flex justify-end pt-4">
             <button
               type="submit"
-              disabled={isCreatePending || isUpdatePending || isLimitExceeded}
-              className={`rounded-md px-4 py-2 text-sm font-medium text-white ${
-                isUpdatePending || isCreatePending || isLimitExceeded
-                  ? "cursor-not-allowed bg-indigo-300"
-                  : "bg-indigo-500 hover:bg-indigo-600"
-              }`}
+              disabled={
+                isCreatePending ||
+                isUpdatePending ||
+                isLimitExceeded ||
+                isFormUnchanged
+              }
+              className={`rounded-md px-4 py-2 text-sm font-medium text-white ${isUpdatePending ||
+                isCreatePending ||
+                isLimitExceeded ||
+                isFormUnchanged
+                ? "cursor-not-allowed bg-indigo-300"
+                : "bg-indigo-500 hover:bg-indigo-600"
+                }`}
             >
               {isUpdatePending || isCreatePending
                 ? isEdit && id
