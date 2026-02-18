@@ -666,7 +666,7 @@ export default function InvoiceModalBody({
                       {invoice.column?.title}
                     </p>
 
-                    {invoice.isViewed && (
+                    {invoice.isViewed && !isPublic && (
                       <div className="mt-1 flex items-center gap-1">
                         <Eye className="h-4 w-4 text-green-500" />
                         <span className="text-xs text-green-500">Viewed</span>
