@@ -22,8 +22,8 @@ export const getSalePipelineColumns = async (
     columns.map(async (column) => {
       const leadsPromise = getLeads({
         searchTerm: searchTerm,
-        columnId: column.id,
         orderBy: orderBy,
+        columnId: column.id,
         // For initial load, fetch only 10 leads per column for faster perceived performance
         ...(initialLoad && { take: defaultTake, skip: defaultSkip }),
         // For subsequent loads, fetch all leads (no pagination)
@@ -56,11 +56,13 @@ export const getColumnRemainingLeads = async (
   columnId: number,
   searchTerm?: string,
   skip: number = defaultTake,
+  orderBy?: "asc" | "desc",
 ) => {
   const leads = await getLeads({
     searchTerm: searchTerm,
     columnId: columnId,
     skip: skip,
+    orderBy: orderBy,
     // No take limit to fetch all remaining leads
   });
 
