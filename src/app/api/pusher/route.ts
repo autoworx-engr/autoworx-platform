@@ -48,6 +48,7 @@ const pusher = getPusherInstance();
  *               type:
  *                 type: string
  *                 description: The type of message being sent.
+ *                 example: USER,GROUP
  *               section:
  *                 type: string
  *                 enum: [INTERNAL, COLLABORATION]
