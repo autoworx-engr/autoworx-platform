@@ -128,8 +128,9 @@ export default function DownloadInvoice({
                     e.stopPropagation();
                   }
                 }}
-                className={cn(loading ? "cursor-not-allowed" : "cursor-pointer",
-                  "flex items-center gap-2"
+                className={cn(
+                  loading ? "cursor-not-allowed" : "cursor-pointer",
+                  "flex items-center gap-2",
                 )}
               >
                 {/* {loading ? "Download PDF..." : "Download PDF"} */}
@@ -139,7 +140,11 @@ export default function DownloadInvoice({
           }}
         </PDFDownloadLink>
       )}
-      {isClient && !isPdfReady && <span>Download PDF</span>}
+      {isClient && !isPdfReady && (
+        <span className="flex items-center gap-2">
+          <Download className="h-5 w-5" strokeWidth={2} /> PDF
+        </span>
+      )}
     </div>
   );
 }

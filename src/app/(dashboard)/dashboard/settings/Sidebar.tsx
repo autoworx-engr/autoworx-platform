@@ -201,7 +201,7 @@ const Sidebar = (props: Props) => {
     );
   };
 
-  const SidebarContent = () => (
+  const SidebarContent = (
     <div className="p-5 space-y-8">
       {/* Account Settings Section */}
       <div className="space-y-4">
@@ -253,9 +253,9 @@ const Sidebar = (props: Props) => {
         ref={sidebarRef}
         className={cn(
           // Base styles for mobile sidebar
-          `fixed left-0 top-0 z-40 h-full w-64 transform transition-transform duration-300 lg:hidden`,
+          `fixed left-0 top-0 z-40 h-[calc(100vh-64px)] w-64 transform transition-transform duration-300 lg:hidden`,
           // Glassmorphism effect: uses backdrop-filter
-          `bg-white/70 backdrop-blur-xl border border-white/50 shadow-2xl`,
+          `bg-white backdrop-blur-xl border border-slate-100 shadow-2xl overflow-y-auto`,
           {
             "translate-x-0": isSidebarOpen,
             "-translate-x-full": !isSidebarOpen,
@@ -271,7 +271,7 @@ const Sidebar = (props: Props) => {
             <X size={20} />
           </button>
         </div>
-        <SidebarContent />
+        {SidebarContent}
       </div>
 
       {/* Desktop Sidebar (Sticky) - Added Glassmorphism here */}
@@ -279,10 +279,10 @@ const Sidebar = (props: Props) => {
         className={cn(
           "hidden lg:block sticky top-8 min-h-[70vh] w-full rounded-2xl p-0 shadow-lg border",
           // Glassmorphism effect for desktop
-          "bg-white/70 backdrop-blur-xl border-white/50",
+          "bg-white backdrop-blur-xl border-slate-100",
         )}
       >
-        <SidebarContent />
+        {SidebarContent}
       </div>
     </div>
   );

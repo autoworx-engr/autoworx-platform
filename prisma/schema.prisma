@@ -675,9 +675,12 @@ model Company {
   invoiceTemplates                 InvoiceTemplate[]
   callForwardingNumber             String?                            @map("call_forwarding_number")
   googleReviewLink                 String?                            @map("google_review_link") @db.VarChar(500)
+  <<<<<<< HEAD
   servicePlaybooks                 ServicePlaybook[]
   conversationExamples             ConversationExample[]
   knowledgeBaseDocuments           KnowledgeBaseDocument[]
+  =======
+  >>>>>>> be3ac2be52395ebc565b34e722214ab856522981
 }
 
 enum SmsGateway {
@@ -2061,6 +2064,8 @@ model User {
   firstName                      String
   lastName                       String?
   email                          String                          @unique
+  emailVerified                  Boolean                         @default(false) @map("email_verified")
+  twoFactorEnabled               Boolean                         @default(false) @map("two_factor_enabled")
   emailVerifiedAt                DateTime?                       @map("email_verified_at")
   image                          String                          @default("/images/default.png")
   password                       String
@@ -2082,6 +2087,7 @@ model User {
   createdAt                      DateTime                        @default(now()) @map("created_at")
   updatedAt                      DateTime                        @default(now()) @updatedAt @map("updated_at")
   company                        Company                         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  twoFactorToken                 TwoFactorToken?
   groups                         Group[]                         @relation("UserGroups")
   tasks                          Task[]
   taskUsers                      TaskUser[]
@@ -2109,8 +2115,48 @@ model User {
   inventoryAutomationTeamMembers InventoryAutomationTeamMember[]
   salaryHistory                  SalaryHistory[]
   shortLinks                     ShortLink[] // Links created by this user
+  twoFactorConfirmation          TwoFactorConfirmation?
 
   @@index([companyId], name: "fk_users_company")
+}
+
+// 2. The 2FA Token Model
+model TwoFactorToken {
+  id Int @id @default(autoincrement())
+
+  // Relational Fields
+  userId Int  @unique // @unique ensures only ONE active token exists per user at a time
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // The Code
+  tokenHash String // STORE THE HASH, NOT THE PLAIN CODE (e.g. bcrypt)
+
+  // Session Context
+  // Helps validate that the code is being used for the specific login attempt that requested it.
+  sessionId String? // Could be a temporary JWT ID or session cookie ID
+
+  // Security & Lifecycle
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  // Brute Force Protection
+  attemptCount  Int       @default(0) // Tracks failed verification attempts
+  lastAttemptAt DateTime? // Optional: For adding a "cooldown" between guesses
+
+  @@index([userId]) // Fast lookup by user
+  @@map("two_factor_tokens")
+}
+
+// 2. Add the TwoFactorConfirmation model
+model TwoFactorConfirmation {
+  id Int @id @default(autoincrement())
+
+  // Relation to User
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Ensure 1 user = 1 confirmation at a time
+  @@unique([userId])
 }
 
 model PasswordResetToken {
@@ -2461,7 +2507,7 @@ model CompanyInfo {
   // Operations
   services    Json?
   pricing     Json?
-  overallFaqs Json? @map("overall_faqs")
+  overallFaqs Json?          @map("overall_faqs")
 
   // Settings
 
@@ -2469,11 +2515,11 @@ model CompanyInfo {
 }
 
 model SMSDelay {
-  id Int @id @default(autoincrement())
-  companyId    Int         @unique @map("company_id")
-  company      CompanyInfo @relation(fields: [companyId], references: [companyId], onDelete: Cascade)
-  smsResponseDelayMin Int @default(0) @map("sms_response_delay_min")
-  smsResponseDelayMax Int @default(0) @map("sms_response_delay_max")
+  id                  Int         @id @default(autoincrement())
+  companyId           Int         @unique @map("company_id")
+  company             CompanyInfo @relation(fields: [companyId], references: [companyId], onDelete: Cascade)
+  smsResponseDelayMin Int         @default(0) @map("sms_response_delay_min")
+  smsResponseDelayMax Int         @default(0) @map("sms_response_delay_max")
 
   @@map("sms_delay")
 }
