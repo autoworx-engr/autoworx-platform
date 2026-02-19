@@ -14,11 +14,13 @@ type TProps = {
 
 export default async function SalesPipelinePage({ searchParams }: TProps) {
   const columnType = "sales";
+  const orderBy = searchParams.orderBy;
+
   const pipelineColumns = await getSalePipelineColumns(
     columnType,
     searchParams?.searchTerm,
     true, // Initial load - fetch only limited leads per column for fast loading
-    searchParams?.orderBy,
+    orderBy,
   );
 
 
@@ -32,6 +34,7 @@ export default async function SalesPipelinePage({ searchParams }: TProps) {
         initialColumns={pipelineColumns}
         companyUsers={[]}
         searchTerm={searchParams.searchTerm}
+        orderBy={orderBy}
       >
         <SalesPipelineSection />
       </ColumnProvider>

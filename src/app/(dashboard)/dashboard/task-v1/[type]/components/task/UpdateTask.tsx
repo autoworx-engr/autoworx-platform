@@ -43,7 +43,7 @@ export default function UpdateTask() {
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description);
   const [assignedUsers, setAssignedUsers] = useState<number[]>(
-    task?.assignedUsers?.map((user) => user.id) || []
+    task?.assignedUsers?.map((user) => user.id) || [],
   );
   const { clearError, showError } = useFormErrorStore();
   const [priority, setPriority] = useState<Priority>(task.priority);
@@ -51,7 +51,7 @@ export default function UpdateTask() {
   const [startTime, setStartTime] = useState<string>(task.startTime || "");
   const [endTime, setEndTime] = useState<string>(task.endTime || "");
   const [date, setDate] = useState<string>(
-    moment.utc(task.date).format("YYYY-MM-DD")
+    moment.utc(task.date).format("YYYY-MM-DD"),
   );
 
   // Add state for minimum date and time validation
@@ -64,7 +64,7 @@ export default function UpdateTask() {
 
   const handleTimeChange = (
     e: React.ChangeEvent<HTMLInputElement>,
-    type: "start" | "end"
+    type: "start" | "end",
   ) => {
     let timeValue = e.target.value;
 
@@ -141,6 +141,7 @@ export default function UpdateTask() {
           //   ? new Date(date).toISOString()
           //   : new Date().toISOString(),
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          createdBy: "user",
         },
       });
       if (res.type === "globalError") {
@@ -228,7 +229,7 @@ export default function UpdateTask() {
                         onChange={(value) =>
                           handleTimeChange(
                             { target: { value } } as any,
-                            "start"
+                            "start",
                           )
                         }
                         style={{ width: "100%", height: 34 }}
