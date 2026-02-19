@@ -627,6 +627,7 @@ export async function updateInvoice(
             invoiceId: data.id,
             timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
             clientId: data.clientId,
+            createdBy: "user",
           });
 
           if (response.type === "success") {
