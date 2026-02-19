@@ -297,7 +297,6 @@ export default function AddNewEmployee({
             </div>
 
             {profilePic ? (
-               
               <div className="relative group">
                 <img
                   src={URL.createObjectURL(profilePic)}
@@ -477,7 +476,9 @@ export default function AddNewEmployee({
                 required={false}
                 onChange={(e: any) => {
                   const value = e.target.value;
-                  if (value && !/^\d*$/.test(value)) {
+                  value && !/^\d*$/.test(value);
+                  // (value === "" || /^\d+$/.test(value
+                  if (value === "" || /^\d+$/.test(value)) {
                     showError({
                       field: "zip",
                       message: "Zip code should contain only numbers.",
