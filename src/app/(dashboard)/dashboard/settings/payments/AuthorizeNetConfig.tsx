@@ -85,131 +85,135 @@ export default function AuthorizeNetConfig({
   };
 
   return (
-    <div className="payment-integration-card rounded-lg border bg-background p-6 shadow-lg">
-      <div className="mb-4 flex items-center justify-center">
-        <img src="/icons/Logo2.png" alt="Autoworx" className="h-12 w-12" />
-        <span className="mx-4 text-2xl">↔️</span>
-        <img
-          src="/icons/authorizenet.png"
-          alt="Authorize.Net"
-          className="#h-12 w-24"
-        />
+    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+      <div className="border-b border-gray-100 px-6 py-4">
+        <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-500">
+          Authorize.Net Integration
+        </h3>
       </div>
-
-      <p className="my-2 text-center text-xl font-medium">
-        Connect Autoworx to Authorize.Net
-      </p>
-      <p className="mb-4 text-center text-gray-500">
-        Accept credit card payments securely through Authorize.Net
-      </p>
-
-      {isConfigured && !showForm ? (
-        <div className="space-y-4">
-          <div className="flex items-center justify-center rounded-lg bg-gray-100 p-4">
-            <div className="flex items-center font-medium text-green-600">
-              <CircleCheckBig className="mr-2 h-5 w-5" />
-              Authorize.Net Connected
-            </div>
-          </div>
-
-          <div className="flex justify-center space-x-4">
-            <Button
-              onClick={() => setShowForm(true)}
-              className="bg-[#6571ff] text-white hover:bg-blue-700"
-            >
-              Update Credentials
-            </Button>
-            <Button
-              onClick={handleRemove}
-              variant="outline"
-              className="border-red-500 text-red-500 hover:bg-red-50"
-              disabled={isLoading}
-            >
-              Remove
-            </Button>
-          </div>
+      <div className="flex flex-col items-center px-6 py-8">
+        <div className="mb-5 flex items-center gap-3">
+          <img src="/icons/Logo2.png" alt="Autoworx" className="h-10 w-10" />
+          <span className="mx-4 text-2xl">↔️</span>
+          <img src="/icons/authorizenet.png" alt="Authorize.Net" className="w-28" />
         </div>
-      ) : (
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="apiLoginId">API Login ID</Label>
-            <Input
-              id="apiLoginId"
-              type="text"
-              placeholder="Enter your API Login ID"
-              value={apiLoginId}
-              onChange={(e) => setApiLoginId(e.target.value)}
-              disabled={isLoading}
-            />
-          </div>
+        <p className="mb-1 text-lg font-semibold text-gray-700 text-center">
+          Connect Autoworx to Authorize.Net
+        </p>
+        <p className="mb-6 max-w-md text-center text-sm text-gray-500">
+          Accept credit card payments securely through Authorize.Net
+        </p>
 
-          <div className="space-y-2">
-            <Label htmlFor="transactionKey">Transaction Key</Label>
-            <Input
-              id="transactionKey"
-              type="password"
-              placeholder="Enter your Transaction Key"
-              value={transactionKey}
-              onChange={(e) => setTransactionKey(e.target.value)}
-              disabled={isLoading}
-            />
-          </div>
-
-          <div className="rounded-lg bg-blue-50 p-3 text-sm text-blue-700">
-            <p className="font-medium">What you need from Authorize.Net:</p>
-            <ol className="ml-4 mt-2 list-decimal space-y-1">
-              <li>Log in to your Authorize.Net account</li>
-              <li>
-                Go to{" "}
-                <span className="font-semibold">
-                  Account → Settings → API Credentials &amp; Keys
-                </span>
-              </li>
-              <li>
-                Copy your <span className="font-semibold">API Login ID </span>
-                and generate a new
-                <span className="font-semibold"> Transaction Key</span>
-              </li>
-              <li>
-                Generate a <span className="font-semibold">Signature Key</span>,
-                which is required for webhooks
-              </li>
-            </ol>
-          </div>
-
-          <div className="flex justify-center space-x-4">
-            <Button
-              onClick={handleSave}
-              disabled={isLoading || !apiLoginId || !transactionKey}
-              className="bg-[#6571ff] text-white hover:bg-blue-700"
-            >
-              {isLoading ? "Saving..." : "Save Credentials"}
-            </Button>
-            {isConfigured && (
+        {isConfigured && !showForm ? (
+          <div className="flex w-full max-w-md flex-col items-center gap-4">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-3 py-1.5 text-xs font-semibold text-green-700">
+              <CircleCheckBig className="h-3.5 w-3.5" />
+              Authorize.Net Connected
+            </span>
+            <div className="flex items-center gap-3">
               <Button
-                onClick={() => {
-                  setShowForm(false);
-                  setApiLoginId("");
-                  setTransactionKey("");
-                }}
+                onClick={() => setShowForm(true)}
+                className="rounded-lg bg-[#6571ff] px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-[#5561ef] hover:shadow-md"
+              >
+                Update Credentials
+              </Button>
+              <Button
+                onClick={handleRemove}
                 variant="outline"
+                className="rounded-lg border-red-200 px-5 py-2.5 text-sm font-medium text-red-500 transition-colors hover:border-red-300 hover:bg-red-50"
                 disabled={isLoading}
               >
-                Cancel
+                Remove
               </Button>
-            )}
+            </div>
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="w-full max-w-md space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="apiLoginId" className="text-sm font-medium text-gray-700">
+                API Login ID
+              </Label>
+              <Input
+                id="apiLoginId"
+                type="text"
+                placeholder="Enter your API Login ID"
+                value={apiLoginId}
+                onChange={(e) => setApiLoginId(e.target.value)}
+                disabled={isLoading}
+                className="rounded-lg border-gray-200 transition-colors focus:border-[#6571ff] focus:ring-[#6571ff]/20"
+              />
+            </div>
 
-      {!isConfigured && !showForm && (
-        <div className="flex items-center justify-center rounded-lg bg-gray-100 p-4">
-          <div className="flex items-center font-medium text-yellow-600">
-            <CircleAlert className="mr-2 h-5 w-5" />
-            Not Configured
+            <div className="space-y-1.5">
+              <Label htmlFor="transactionKey" className="text-sm font-medium text-gray-700">
+                Transaction Key
+              </Label>
+              <Input
+                id="transactionKey"
+                type="password"
+                placeholder="Enter your Transaction Key"
+                value={transactionKey}
+                onChange={(e) => setTransactionKey(e.target.value)}
+                disabled={isLoading}
+                className="rounded-lg border-gray-200 transition-colors focus:border-[#6571ff] focus:ring-[#6571ff]/20"
+              />
+            </div>
+
+            <div className="rounded-lg border border-blue-100 bg-blue-50/50 p-4 text-sm text-blue-700">
+              <p className="font-semibold">Setup Instructions</p>
+              <ol className="ml-4 mt-2 list-decimal space-y-1 text-blue-600">
+                <li>Log in to your Authorize.Net account</li>
+                <li>
+                  Go to{" "}
+                  <span className="font-semibold">
+                    Account → Settings → API Credentials &amp; Keys
+                  </span>
+                </li>
+                <li>
+                  Copy your <span className="font-semibold">API Login ID</span>{" "}
+                  and generate a new{" "}
+                  <span className="font-semibold">Transaction Key</span>
+                </li>
+                <li>
+                  Generate a <span className="font-semibold">Signature Key</span>{" "}
+                  for webhooks
+                </li>
+              </ol>
+            </div>
+
+            <div className="flex justify-center gap-3 pt-2">
+              <Button
+                onClick={handleSave}
+                disabled={isLoading || !apiLoginId || !transactionKey}
+                className="rounded-lg bg-[#6571ff] px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-[#5561ef] hover:shadow-md disabled:opacity-50"
+              >
+                {isLoading ? "Saving..." : "Save Credentials"}
+              </Button>
+              {isConfigured && (
+                <Button
+                  onClick={() => {
+                    setShowForm(false);
+                    setApiLoginId("");
+                    setTransactionKey("");
+                  }}
+                  variant="outline"
+                  disabled={isLoading}
+                  className="rounded-lg px-5 py-2.5 text-sm"
+                >
+                  Cancel
+                </Button>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {!isConfigured && !showForm && (
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-yellow-50 px-3 py-1.5 text-xs font-semibold text-yellow-700">
+            <CircleAlert className="h-3.5 w-3.5" />
+            Not Configured
+          </span>
+        )}
+      </div>
     </div>
   );
 }

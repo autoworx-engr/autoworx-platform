@@ -220,29 +220,29 @@ export default function CreateAndEditLabor({
         // For technicians, only allow updating status, keep other fields from the original technician
         const updatedPayload = isTechnician
           ? {
-              date: new Date(technician.date || new Date()),
-              due: new Date(technician.due || new Date()),
-              amount: Number(technician.amount) || 0,
-              note: technician.note || "",
-              technicianNote: technicianNote || "",
-              userId: technician.userId,
-              status,
-              priority: technician.priority || "Low",
-              invoiceId,
-              serviceId,
-            }
+            date: new Date(technician.date || new Date()),
+            due: new Date(technician.due || new Date()),
+            amount: Number(technician.amount) || 0,
+            note: technician.note || "",
+            technicianNote: technicianNote || "",
+            userId: technician.userId,
+            status,
+            priority: technician.priority || "Low",
+            invoiceId,
+            serviceId,
+          }
           : {
-              date: new Date(inputValues.date),
-              due: new Date(inputValues.due),
-              amount: Number(inputValues.amount),
-              note: inputValues.note,
-              technicianNote: technicianNote,
-              userId: employee?.id,
-              status,
-              priority,
-              invoiceId,
-              serviceId,
-            };
+            date: new Date(inputValues.date),
+            due: new Date(inputValues.due),
+            amount: Number(inputValues.amount),
+            note: inputValues.note,
+            technicianNote: technicianNote,
+            userId: employee?.id,
+            status,
+            priority,
+            invoiceId,
+            serviceId,
+          };
 
         const response = await updateTechnician(
           technician.id,
@@ -266,11 +266,11 @@ export default function CreateAndEditLabor({
             prev.map((tech) =>
               tech.id === technician.id
                 ? {
-                    ...response.data,
-                    images: newImages,
-                    hasPermission: tech.hasPermission,
-                    vehicleParts: selectedVehicleParts as Parts[],
-                  }
+                  ...response.data,
+                  images: newImages,
+                  hasPermission: tech.hasPermission,
+                  vehicleParts: selectedVehicleParts as Parts[],
+                }
                 : tech
             )
           );
@@ -372,7 +372,7 @@ export default function CreateAndEditLabor({
   useEffect(() => {
     return () => {
       // Reset the pending state when the component unmounts
-      startTransition(() => {});
+      startTransition(() => { });
     };
   }, []);
 
@@ -420,23 +420,23 @@ export default function CreateAndEditLabor({
           </DialogTrigger>
         )
       )}
-      <DialogContent className="overflow-y-auto">
-        <h2 className="text-xl font-bold">
+      <DialogContent className="overflow-y-auto space-y-5">
+        <h2 className="text-xl font-semibold text-slate-800">
           {technician ? "Edit Technician" : "Assign Technician"}
         </h2>
         {error && (
-          <div className="mb-4 flex items-center justify-between rounded-md bg-red-700 px-4 py-1 text-white">
+          <div className="mb-4 flex items-center justify-between rounded-lg bg-red-50 border border-red-200 px-4 py-2.5 text-red-700">
             <p>{error}</p>
             <button type="button" onClick={() => setError("")}>
               <X size={20} strokeWidth={3} />
             </button>
           </div>
         )}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-3">
           {" "}
           {/* Assigned by */}
           <div>
-            <label className="mb-1 px-2 text-sm font-medium md:text-base">
+            <label className="mb-1 px-1 text-sm font-medium text-slate-600">
               Assign To
             </label>
             <div
@@ -497,7 +497,7 @@ export default function CreateAndEditLabor({
             readOnly={isTechnician}
           />{" "}
           <div>
-            <label className="mb-1 px-2 text-sm font-medium md:text-base">
+            <label className="mb-1 px-1 text-sm font-medium text-slate-600">
               Priority
             </label>
             <div
@@ -511,22 +511,23 @@ export default function CreateAndEditLabor({
                 selectedItem={priority}
                 //@ts-ignore
                 setSelectedItem={setPriority}
+                showSearch={false}
+                border={true}
               />
             </div>
           </div>
           <div>
             <label
               htmlFor="status"
-              className="mb-1 px-2 text-sm font-medium md:text-base"
+              className="mb-1 px-1 text-sm font-medium text-slate-600"
             >
               Status
             </label>
-            {/* TODO: use better UI */}
             <DropdownSelection
               dropDownValues={["Pending", "In Progress", "Complete", "Cancel"]}
               onValueChange={(value) => setStatus(value as any)}
               changesValue={status}
-              buttonClassName="h-10 cursor-pointer rounded-md border-2 border-slate-400 p-2 outline-none w-full py-2"
+              buttonClassName="h-10 cursor-pointer rounded-md border border-slate-300 px-3 py-2 outline-none w-full text-sm font-medium text-slate-700 hover:border-slate-400 transition-colors"
             />
           </div>
         </div>{" "}
@@ -534,7 +535,7 @@ export default function CreateAndEditLabor({
           <div>
             <label
               htmlFor="note"
-              className="mb-1 px-2 text-sm font-medium md:text-base"
+              className="mb-1 px-1 text-sm font-medium text-slate-600"
             >
               New Note
             </label>
@@ -542,43 +543,44 @@ export default function CreateAndEditLabor({
               onChange={handleChange}
               value={inputValues.note}
               name="note"
-              className="h-32 w-full resize-none rounded-md border-2 border-slate-400 p-2 outline-none"
+              className="h-32 w-full resize-none rounded-md border border-slate-300 p-3 text-sm outline-none focus:border-[#6571FF]/60 focus:ring-2 focus:ring-[#6571FF]/20 transition-all placeholder:text-slate-400"
               readOnly={isTechnician}
+              placeholder="Add a note..."
             />
           </div>
         )}
         {technician && (
           <div>
             <div className="flex justify-between">
-              <p className="text-left text-lg font-bold">Work Note</p>
+              <p className="text-left text-sm font-semibold text-slate-700">Work Note</p>
             </div>
-            <div className="flex justify-between bg-blue-100 p-3">
-              <div className="w-3/5 space-y-2">
-                <p>Date: {formattedDate}</p>
-                <p>{technician?.note || "No notes"}</p>
+            <div className="rounded-lg bg-slate-50 border border-slate-200 p-3">
+              <div className="space-y-1.5">
+                <p className="text-xs text-slate-500">{formattedDate}</p>
+                <p className="text-sm text-slate-700">{technician?.note || "No notes"}</p>
               </div>
             </div>
           </div>
         )}
         {isTechnician ||
-        (isAdminOrManger &&
-          ((technicianNote && technicianNote.length > 0) ||
-            formData.attachments.length > 0)) ? (
-          <div className="space-y-4 mb-6 pb-4 border-b border-slate-200">
-            <h3 className="text-left text-lg font-bold">
+          (isAdminOrManger &&
+            ((technicianNote && technicianNote.length > 0) ||
+              formData.attachments.length > 0)) ? (
+          <div className="space-y-4 mb-4 pb-4 border-b border-slate-100">
+            <h3 className="text-left text-sm font-semibold text-slate-700">
               Technician Work Details
             </h3>
 
             {/* Technician Note Input */}
             <div className="space-y-2">
-              <label className="block text-base font-medium text-slate-600">
+              <label className="block text-sm font-medium text-slate-600">
                 Technician Work Note
               </label>
               {isTechnician ? (
                 <textarea
                   value={technicianNote}
                   onChange={(e) => setTechnicianNote(e.target.value)}
-                  className="h-32 w-full resize-none rounded-md border-2 border-slate-400 p-2 outline-none"
+                  className="h-32 w-full resize-none rounded-md border border-slate-300 p-3 text-sm outline-none focus:border-[#6571FF]/60 focus:ring-2 focus:ring-[#6571FF]/20 transition-all placeholder:text-slate-400"
                   placeholder="Add work details, observations, and findings..."
                 />
               ) : isAdminOrManger &&
@@ -599,10 +601,10 @@ export default function CreateAndEditLabor({
 
             {/* Photo Attachments Section */}
             <div className="space-y-2">
-              <label className="block text-base font-medium text-slate-600">
+              <label className="block text-sm font-medium text-slate-600">
                 Photo Attachments
               </label>
-              <div className="rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 p-4">
+              <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50/50 p-4">
                 <div className="flex flex-col gap-3">
                   {/* Upload Button */}
                   {isTechnician && (
@@ -610,7 +612,7 @@ export default function CreateAndEditLabor({
                       <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        className="flex items-center justify-center gap-2 rounded-lg border-2 border-[#6571FF] bg-blue-50 text-[#6571FF] hover:bg-blue-100 cursor-pointer py-2.5 px-3 text-sm font-medium transition-all"
+                        className="flex items-center justify-center gap-2 rounded-md border border-[#6571FF] bg-[#6571FF]/5 text-[#6571FF] hover:bg-[#6571FF]/10 cursor-pointer py-2 px-3 text-sm font-medium transition-colors"
                       >
                         <ImageIcon size={16} />
                         <span>
@@ -649,7 +651,7 @@ export default function CreateAndEditLabor({
                                 { src: att.fileUrl || "/placeholder.svg" },
                               ])
                             }
-                            className="h-20 w-20 rounded-md border border-slate-200 object-cover shadow-sm transition-transform group-hover:scale-105 cursor-pointer"
+                            className="h-20 w-20 rounded-lg border border-slate-200 object-cover shadow-sm transition-all group-hover:shadow-md cursor-pointer"
                           />
                           <button
                             type="button"
@@ -695,14 +697,14 @@ export default function CreateAndEditLabor({
         />
         <DialogFooter>
           <DialogClose
-            className="mt-2 rounded-lg border-2 border-slate-400 p-2 text-sm md:mt-0 md:text-base"
+            className="mt-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors md:mt-0"
             onClick={handleCancel}
           >
             Cancel
           </DialogClose>
           <button
             disabled={loading || pending} // Disable button when loading
-            className="flex items-center justify-center rounded-lg border bg-[#6571FF] px-5 py-2 text-sm text-white disabled:bg-gray-400 md:text-base"
+            className="flex items-center justify-center rounded-lg bg-[#6571FF] px-5 py-2 text-sm font-medium text-white hover:bg-[#5A63E6] disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors"
             onClick={() => startTransition(handleSubmit)}
           >
             {loading || pending ? (

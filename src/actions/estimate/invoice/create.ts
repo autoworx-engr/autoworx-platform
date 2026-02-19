@@ -203,7 +203,7 @@ export async function createInvoice({
       const totalCost = items.reduce((acc, item) => {
         const materialCostPrice = item.materials.reduce(
           (acc, cur) => acc + Number(cur?.cost) * Number(cur?.quantity),
-          0
+          0,
         );
         const laborCostPrice =
           Number(item.labor?.charge) * Number(item.labor?.hours);
@@ -283,7 +283,7 @@ export async function createInvoice({
                 notes: inspection.notes,
               },
             });
-          })
+          }),
         );
       }
       // Check if inventory product quantities are available when status is not "Pending"
@@ -316,11 +316,11 @@ export async function createInvoice({
               product.quantity > Number(findInventoryProduct?.quantity || 0)
             ) {
               throw new Error(
-                `The quantity "${product.name}" is not enough in the inventory`
+                `The quantity "${product.name}" is not enough in the inventory`,
               );
             }
             return null;
-          })
+          }),
         );
       }
 
@@ -333,7 +333,7 @@ export async function createInvoice({
               photo: photo.photo ?? "",
             },
           });
-        })
+        }),
       );
 
       // Step 8: Process invoice items (services, materials, labor, tags)
@@ -370,7 +370,7 @@ export async function createInvoice({
                     tagId: tag.id,
                   },
                 });
-              })
+              }),
             );
 
             laborId = newLabor.id;
@@ -424,10 +424,10 @@ export async function createInvoice({
                       tagId: tag.id,
                     },
                   });
-                })
+                }),
               );
               return null;
-            })
+            }),
           );
 
           // Process tags
@@ -439,9 +439,9 @@ export async function createInvoice({
                   tagId: tag.id,
                 },
               });
-            })
+            }),
           );
-        })
+        }),
       );
 
       await db.invoice.update({
@@ -490,8 +490,9 @@ export async function createInvoice({
           invoiceId: invoice.id,
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
           clientId,
+          createdBy: "user",
         });
-      })
+      }),
     );
 
     // send notification for invoice creation

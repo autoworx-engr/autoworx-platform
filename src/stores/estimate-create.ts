@@ -88,6 +88,9 @@ interface EstimateCreateStore {
     itemIndex: number;
     materialIndex: number;
   }) => void;
+
+  isDirty: boolean;
+  setDirty: (dirty: boolean) => void;
 }
 
 export const useEstimateCreateStore = create<EstimateCreateStore>((set) => ({
@@ -121,52 +124,52 @@ export const useEstimateCreateStore = create<EstimateCreateStore>((set) => ({
     notes: "",
   })),
   damageNotes: "",
-
+isDirty: false,
   setInvoiceId: (invoiceId: string) => set({ invoiceId }),
   setType: (type: string) => set({ type }),
-  setSubtotal: (subtotal: number) => set({ subtotal }),
-  setDiscount: (discount: number) => set({ discount }),
-  setTax: (tax: number) => set({ tax }),
-  setServiceFee: (serviceFee: number) => set({ serviceFee }),
-  setGrandTotal: (grandTotal: number) => set({ grandTotal }),
-  setDue: (due: number) => set({ due }),
-  setDeposit: (deposit: number) => set({ deposit }),
-  setTotalPayment: (totalPayment: number) => set({ totalPayment }),
-  setInternalNotes: (internalNotes: string) => set({ internalNotes }),
+  setSubtotal: (subtotal: number) => set({ subtotal, isDirty:true }),
+  setDiscount: (discount: number) => set({ discount, isDirty:true }),
+  setTax: (tax: number) => set({ tax, isDirty:true }),
+  setServiceFee: (serviceFee: number) => set({ serviceFee, isDirty:true }),
+  setGrandTotal: (grandTotal: number) => set({ grandTotal, isDirty:true }),
+  setDue: (due: number) => set({ due, isDirty:true }),
+  setDeposit: (deposit: number) => set({ deposit, isDirty:true }),
+  setTotalPayment: (totalPayment: number) => set({ totalPayment, isDirty:true }),
+  setInternalNotes: (internalNotes: string) => set({ internalNotes, isDirty:true }),
   setTerms: (terms: string) => set({ terms }),
-  setPolicy: (policy: string) => set({ policy }),
-  setCustomerNotes: (customerNotes: string) => set({ customerNotes }),
-  setCustomerComments: (customerComments: string) => set({ customerComments }),
-  setCoupon: (coupon: Coupon) => set({ coupon }),
+  setPolicy: (policy: string) => set({ policy  }),
+  setCustomerNotes: (customerNotes: string) => set({ customerNotes,isDirty:true }),
+  setCustomerComments: (customerComments: string) => set({ customerComments, isDirty:true }),
+  setCoupon: (coupon: Coupon) => set({ coupon , isDirty:true}),
   setTitle: (title: string) => {
-    set({ title });
+    set({ title, isDirty:true });
   },
   setTemplate: (template: InvoiceTemplate) => {
-    set({ template });
+    set({ template, isDirty:true });
   },
-  setPhotos: (photos: { id?: number; photo?: string }[]) => set({ photos }),
+  setPhotos: (photos: { id?: number; photo?: string }[]) => set({ photos, isDirty:true }),
   addPhoto: (photo: string) =>
-    set((x: any) => ({ photos: [...x.photos, photo] })),
+    set((x: any) => ({ photos: [...x.photos, photo] , isDirty:true})),
   removePhoto: (photo: string) =>
-    set((x: any) => ({ photos: x.photos.filter((p: string) => p !== photo) })),
+    set((x: any) => ({ photos: x.photos.filter((p: string) => p !== photo), isDirty:true })),
 
   setTasks: (tasks: { id: undefined | number; task: string }[]) =>
-    set({ tasks }),
-  addTask: (task: Task) => set((x: any) => ({ tasks: [...x.tasks, task] })),
+    set({ tasks, isDirty:true}),
+  addTask: (task: Task) => set((x: any) => ({ tasks: [...x.tasks, task], isDirty:true })),
   removeTask: (taskId: number) =>
-    set((x: any) => ({ tasks: x.tasks.filter((t: Task) => t.id !== taskId) })),
+    set((x: any) => ({ tasks: x.tasks.filter((t: Task) => t.id !== taskId), isDirty:true })),
 
   setCurrentSelectedCategoryId: (categoryId: number) =>
     set({ currentSelectedCategoryId: categoryId }),
 
-  setInspections: (inspections: InspectionType[]) => set({ inspections }),
+  setInspections: (inspections: InspectionType[]) => set({ inspections, isDirty:true }),
   updateInspection: (index: number, inspection: InspectionType) =>
     set((state) => {
       const updatedInspections = [...state.inspections];
       updatedInspections[index] = inspection;
-      return { inspections: updatedInspections };
+      return { inspections: updatedInspections, isDirty:true};
     }),
-  setDamageNotes: (damageNotes: string) => set({ damageNotes }),
+  setDamageNotes: (damageNotes: string) => set({ damageNotes, isDirty:true }),
   reset: () =>
     set({
       invoiceId: "",
@@ -197,7 +200,9 @@ export const useEstimateCreateStore = create<EstimateCreateStore>((set) => ({
         notes: "",
       })),
       damageNotes: "",
+      isDirty: false,
     }),
+    setDirty: (dirty: boolean) => set({ isDirty: dirty }),
   removeMaterial({ itemIndex, materialIndex }) {
     set((state) => {
       const items = state.items.map((item, index) => {
@@ -218,7 +223,7 @@ export const useEstimateCreateStore = create<EstimateCreateStore>((set) => ({
         return item;
       });
 
-      return { items };
+      return { items, isDirty: false, };
     });
   },
 }));

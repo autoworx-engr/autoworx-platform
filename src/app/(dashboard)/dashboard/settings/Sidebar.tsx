@@ -6,9 +6,9 @@ import { FEATURE_PERMISSIONS_MAP } from "@/lib/routePermissionsMap";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { 
-  Menu, X, User, Bell, Briefcase, Users, CreditCard, 
-  DollarSign, FileText, Globe, Zap, Settings, Shield, LayoutDashboard, Send 
+import {
+  Menu, X, User, Bell, Briefcase, Users, CreditCard,
+  DollarSign, FileText, Globe, Zap, Settings, Shield, LayoutDashboard, Send
 } from "lucide-react"; // প্রয়োজনীয় আইকন আমদানি করা হলো
 
 type Props = {};
@@ -135,7 +135,7 @@ const Sidebar = (props: Props) => {
     (setting) =>
       canAccessCompanyFeatureRoute(setting.link) && canAccessBusinessSettings()
   );
-  
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const sidebarRef = useRef<HTMLDivElement | null>(null);
   const toggleSidebar = () => {
@@ -176,7 +176,7 @@ const Sidebar = (props: Props) => {
 
   const SidebarContent = () => (
     <div className="p-5 space-y-8">
-      
+
       {/* Account Settings Section */}
       <div className="space-y-4">
         <h3 className="mb-4 text-xs font-bold uppercase tracking-widest text-gray-500">
@@ -227,9 +227,9 @@ const Sidebar = (props: Props) => {
         ref={sidebarRef}
         className={cn(
           // Base styles for mobile sidebar
-          `fixed left-0 top-0 z-40 h-full w-64 transform transition-transform duration-300 lg:hidden`,
+          `fixed left-0 top-0 z-40 h-[calc(100vh-64px)] w-64 transform transition-transform duration-300 lg:hidden`,
           // Glassmorphism effect: uses backdrop-filter
-          `bg-white/70 backdrop-blur-xl border border-white/50 shadow-2xl`, 
+          `bg-white backdrop-blur-xl border border-slate-100 shadow-2xl overflow-y-auto`,
           {
             "translate-x-0": isSidebarOpen,
             "-translate-x-full": !isSidebarOpen,
@@ -238,19 +238,19 @@ const Sidebar = (props: Props) => {
         style={{ top: '64px' }}
       >
         <div className="p-4 flex items-end justify-end">
-             <button className="text-gray-500 hover:text-gray-700" onClick={toggleSidebar}>
-                 <X size={20} />
-             </button>
+          <button className="text-gray-500 hover:text-gray-700" onClick={toggleSidebar}>
+            <X size={20} />
+          </button>
         </div>
         <SidebarContent />
       </div>
 
       {/* Desktop Sidebar (Sticky) - Added Glassmorphism here */}
-      <div 
+      <div
         className={cn(
           "hidden lg:block sticky top-8 min-h-[70vh] w-full rounded-2xl p-0 shadow-lg border",
           // Glassmorphism effect for desktop
-          "bg-white/70 backdrop-blur-xl border-white/50", 
+          "bg-white backdrop-blur-xl border-slate-100",
         )}
       >
         <SidebarContent />
