@@ -50,6 +50,34 @@ const DEFAULT_ENTITLEMENTS: Entitlements = {
   awxSalesAgent: false,
 };
 
+const LEGACY_ENTITLEMENTS: Entitlements = {
+  canUseVoice: true,
+  canUseSms: true,
+  callRecording: true,
+  missedCallTextBack: true,
+  maxAutomationRules: -1,
+  automationModules: [
+    "pipeline",
+    "communication",
+    "invoice",
+    "inventory",
+    "tag",
+    "service",
+    "marketing",
+  ],
+  automationLimitPipeline: -1,
+  automationLimitCommunication: -1,
+  automationLimitInvoice: -1,
+  automationLimitInventory: -1,
+  automationLimitTag: -1,
+  automationLimitService: -1,
+  automationLimitMarketing: -1,
+  websiteIncluded: true,
+  carWrapVisualizer: true,
+  aiSmartReplies: true,
+  awxSalesAgent: true,
+};
+
 /**
  * Resolves the current entitlements for a company.
  * Caches results (TODO: Redis/Memory cache) to avoid DB hits on every request.
@@ -57,6 +85,15 @@ const DEFAULT_ENTITLEMENTS: Entitlements = {
 export async function getCompanyEntitlements(
   companyId: number,
 ): Promise<Entitlements> {
+  const company = await db.company.findUnique({
+    where: { id: companyId },
+    select: { enforcePlatformPlan: true },
+  });
+
+  if (company && !company.enforcePlatformPlan) {
+    return LEGACY_ENTITLEMENTS;
+  }
+
   const subscription = await db.platformSubscription.findUnique({
     where: { companyId },
     include: {

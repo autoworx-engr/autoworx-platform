@@ -5,6 +5,7 @@ import CompanyReportSection from "../../components/CompanyReportSection";
 import FeaturePermission from "../../components/FeaturePermission";
 import { ConfigureCommunicationHub } from "./ConfigureCommunicationHub";
 import { CompanyCustomPlanDialog } from "./CompanyCustomPlanDialog";
+import { PlatformPlanToggle } from "./PlatformPlanToggle";
 import { ArrowLeft, Upload } from "lucide-react";
 import moment from "moment";
 import { CannedUploadModal } from "@/app/(dashboard)/dashboard/estimate/canned/CannedUploadModal";
@@ -277,6 +278,10 @@ const Page = async (props: propsType) => {
                   companyId={Number(id)}
                   currentPlanId={subscription?.planId ?? null}
                   plans={plans}
+                />
+                <PlatformPlanToggle
+                  companyId={Number(id)}
+                  initialEnabled={!!company?.enforcePlatformPlan}
                 />
                 <button
                   className="rounded-xl px-4 py-2.5 text-sm font-semibold text-white

@@ -675,6 +675,7 @@ model Company {
   invoiceTemplates                 InvoiceTemplate[]
   callForwardingNumber             String?                            @map("call_forwarding_number")
   missedCallTextBackEnabled        Boolean                            @default(true) @map("missed_call_text_back_enabled")
+  enforcePlatformPlan              Boolean                            @default(false) @map("enforce_platform_plan")
   googleReviewLink     String? @map("google_review_link") @db.VarChar(500)
   billingCustomer      PlatformBillingCustomer?
   platformSubscription PlatformSubscription?
