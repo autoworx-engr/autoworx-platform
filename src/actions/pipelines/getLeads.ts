@@ -43,6 +43,7 @@ export const getLeads = async ({
   const companyId = await getCompanyId();
   const companyTimezone = await getCompanyTimezone();
   const timezone = companyTimezone?.timezone;
+  console.log("orderBy from getLeads", orderBy);
 
   try {
     const query: Prisma.LeadWhereInput = {
@@ -71,7 +72,7 @@ export const getLeads = async ({
       take,
       skip,
       orderBy: {
-        createdAt: orderBy || "desc",
+        createdAt: orderBy,
       },
       include: {
         salesUser: {
