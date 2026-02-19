@@ -36,18 +36,21 @@ export const PermissionItemComponent = ({
       >
         <div className="flex flex-1 items-center pr-4">
           {!hasChildren && level > 0 && <div className="mr-2 w-6" />}
-          <span className="text-sm text-[#66738C]">{item.title}</span>
-          {hasChildren && (
+
+          {hasChildren ? (
             <button
               onClick={() => toggleExpanded(item.title)}
-              className="mr-2 rounded p-1 hover:bg-gray-100"
+              className="flex mr-2 items-center gap-1 rounded p-1 "
             >
+              <span className="text-sm text-[#66738C]">{item.title}</span>
               {isExpanded ? (
                 <ChevronDown className="h-4 w-4 text-[#66738C]" />
               ) : (
                 <ChevronRight className="h-4 w-4 text-[#66738C]" />
               )}
             </button>
+          ) : (
+            <span className="text-sm text-[#66738C]">{item.title}</span>
           )}
         </div>
         <Switch
