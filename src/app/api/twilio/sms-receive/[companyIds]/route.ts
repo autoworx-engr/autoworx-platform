@@ -6,6 +6,7 @@ import { sendClientMessageNotification } from "@/lib/notification/communication-
 import sendClientMailOrSMSNotify from "@/lib/pusher/client-conversation-notify";
 import receiveTwiloMessage from "@/lib/pusher/receiveTwiloMessage";
 import { getPusherInstance } from "@/lib/pusher/server";
+import { sendSMSToAgent } from "@/service/ai-agent/api";
 import { NextRequest } from "next/server";
 
 const pusher = getPusherInstance();
@@ -44,7 +45,7 @@ const pusher = getPusherInstance();
  */
 export async function POST(
   req: NextRequest,
-  context: { params: Promise<{ companyIds: string }> }
+  context: { params: Promise<{ companyIds: string }> },
 ) {
   try {
     const { params } = context;
@@ -62,7 +63,7 @@ export async function POST(
       body = Object.fromEntries(new URLSearchParams(formData).entries());
     } else {
       throw new Error(
-        "Unsupported content type: Twilio webhook expects form-encoded data"
+        "Unsupported content type: Twilio webhook expects form-encoded data",
       );
     }
 
@@ -93,7 +94,7 @@ export async function POST(
       const file = await fetchTwilioMedia(
         url,
         credential?.apiKeySid || "",
-        credential?.apiKeySecret || ""
+        credential?.apiKeySecret || "",
       );
       formData.append("file", file);
     }
@@ -174,6 +175,41 @@ export async function POST(
           attachments: attachments,
         });
 
+        //sales agent
+        if (dbMessage && client.id === 3460) {
+          try {
+            const aiAgentResponse = await sendSMSToAgent({
+              companyId: client.companyId,
+              message: dbMessage?.message,
+              sendFrom: dbMessage?.from,
+              sendTo: dbMessage?.to,
+            });
+
+            if (aiAgentResponse) {
+              await db.clientSMS.update({
+                where: {
+                  id: dbMessage.id,
+                },
+                data: {
+                  isSalesAgent: true,
+                },
+              });
+            }
+
+            // await sendTwilioMessage({
+            //   clientId: 3459,
+            //   message: aiAgentResponse.output,
+            //   companyId: 12,
+            //   attachments: [],
+            // });
+          } catch (err) {
+            console.error(
+              "sendInfobipMessage: sales agent receive sms failed",
+              err,
+            );
+          }
+        }
+
         // pusher trigger to send message to company admin real time
 
         receiveTwiloMessage({ ...dbMessage, attachments });
@@ -221,16 +257,17 @@ export async function POST(
         });
       }
     }
+
     // Send a success response
     return Response.json(
       { message: "Webhook subscription successful", data: body },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error: any) {
     console.error("Subscription error:", error);
     return Response.json(
       { message: "Webhook subscription failed", error: error?.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -238,7 +275,7 @@ export async function POST(
 async function fetchTwilioMedia(
   url: string,
   apiKeySid: string,
-  apiKeySecret: string
+  apiKeySecret: string,
 ) {
   const response = await fetch(url, {
     headers: {

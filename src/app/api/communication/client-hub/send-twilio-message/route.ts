@@ -64,6 +64,8 @@ export async function POST(req: NextRequest) {
         clientId: body.clientId,
         message: body.message,
         attachments: body.attachments ?? [],
+        isSalesAgent: body.isSalesAgent,
+        userId: body.userId,
       });
     } else {
       data = await sendInfobipMessage({
@@ -71,6 +73,8 @@ export async function POST(req: NextRequest) {
         clientId: body.clientId,
         message: body.message,
         attachments: body.attachments ?? [],
+        isSalesAgent: body.isSalesAgent,
+        userId: body.userId,
       });
     }
 
