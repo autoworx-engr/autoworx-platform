@@ -176,6 +176,7 @@ export async function sendTwilioMessage({
             message: dbMessage?.message,
             sendFrom: dbMessage?.from,
             sendTo: dbMessage?.to,
+            clientId: 3459,
           });
 
           if (aiAgentResponse) {

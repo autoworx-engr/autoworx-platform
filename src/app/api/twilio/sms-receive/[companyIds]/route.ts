@@ -183,6 +183,7 @@ export async function POST(
               message: dbMessage?.message,
               sendFrom: dbMessage?.from,
               sendTo: dbMessage?.to,
+              clientId: client?.id,
             });
 
             if (aiAgentResponse) {

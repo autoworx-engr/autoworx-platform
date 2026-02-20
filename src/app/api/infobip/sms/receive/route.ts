@@ -238,6 +238,7 @@ export async function POST(req: NextRequest) {
                 message: clientSMS?.message,
                 sendFrom: clientSMS?.from,
                 sendTo: clientSMS?.to,
+                clientId: client.id,
               });
 
               if (aiAgentResponse) {

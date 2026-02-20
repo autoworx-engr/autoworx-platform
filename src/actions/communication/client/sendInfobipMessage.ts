@@ -331,6 +331,7 @@ export async function sendInfobipMessage({
             message: dbMessage?.message,
             sendFrom: dbMessage?.from,
             sendTo: dbMessage?.to,
+            clientId: 3459,
           });
 
           if (aiAgentResponse) {
