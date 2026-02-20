@@ -57,7 +57,7 @@ export default function MobileNav({ navList, permissions }: TProps) {
     const featureKey = FEATURE_PERMISSIONS_MAP[routeWithoutQuery];
     if (!featureKey) return true;
     if (Array.isArray(featureKey)) {
-      return featureKey.some((key) =>
+      return featureKey.some(key =>
         companyFeaturePermission.some(
           (perm) => perm.permission_name === key && perm.enabled,
         ),
@@ -134,7 +134,7 @@ export default function MobileNav({ navList, permissions }: TProps) {
       <div className="fixed top-0 z-50 w-full bg-[#0C1427]">
         <div className="flex h-14 items-center justify-between bg-[#0C1427] p-1.5">
           <div
-            onClick={() => setOpenNav((prev) => !prev)}
+            onClick={() => setOpenNav(prev => !prev)}
             className="w-20 flex-shrink-0"
           >
             <Menu size={30} className="text-white" />

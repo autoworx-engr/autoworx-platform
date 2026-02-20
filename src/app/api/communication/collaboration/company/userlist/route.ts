@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 /**
  * @swagger
- * /api/communication/collaboration/company/userList:
+ * /api/communication/collaboration/company/userlist:
  *   get:
  *     summary: Retrieve collaborating companies and their users
  *     description: Fetches a paginated list of companies that have an active collaboration status with the authenticated user's company.
@@ -61,6 +61,8 @@ export const GET = async (request: NextRequest) => {
         "Company ID is required to fetch collaboration companies.",
       );
     }
+
+    console.log("userCompanyId", userCompanyId);
 
     // Fetch connected companies with pagination
     const connectedCompanies = await db.companyJoin.findMany({

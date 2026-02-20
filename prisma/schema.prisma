@@ -11,31 +11,32 @@ datasource db {
 
 // Appointment for a company.
 model Appointment {
-  id                              Int               @id @default(autoincrement())
-  userId                          Int               @map("user_id")
-  title                           String            @db.VarChar(100)
+  id                              Int                             @id @default(autoincrement())
+  userId                          Int                             @map("user_id")
+  title                           String                          @db.VarChar(100)
   date                            DateTime?
-  startTime                       String?           @map("start_time")
-  endTime                         String?           @map("end_time")
-  companyId                       Int               @map("company_id")
-  clientId                        Int?              @map("customer_id")
-  vehicleId                       Int?              @map("vehicle_id")
-  draftEstimate                   String?           @map("draft_estimate")
+  startTime                       String?                         @map("start_time")
+  endTime                         String?                         @map("end_time")
+  companyId                       Int                             @map("company_id")
+  clientId                        Int?                            @map("customer_id")
+  vehicleId                       Int?                            @map("vehicle_id")
+  draftEstimate                   String?                         @map("draft_estimate")
   notes                           String?
-  confirmationEmailTemplateId     Int?              @map("confirmation_email_template_id")
-  confirmationEmailTemplateStatus Boolean           @default(false) @map("confirmation_email_template_status")
-  reminderEmailTemplateId         Int?              @map("reminder_email_template_id")
-  reminderEmailTemplateStatus     Boolean           @default(false) @map("reminder_email_template_status")
+  confirmationEmailTemplateId     Int?                            @map("confirmation_email_template_id")
+  confirmationEmailTemplateStatus Boolean                         @default(false) @map("confirmation_email_template_status")
+  reminderEmailTemplateId         Int?                            @map("reminder_email_template_id")
+  reminderEmailTemplateStatus     Boolean                         @default(false) @map("reminder_email_template_status")
   times                           Json? // { time: string; date: string }
-  createdAt                       DateTime          @default(now()) @map("created_at")
-  updatedAt                       DateTime          @default(now()) @updatedAt @map("updated_at")
-  user                            User              @relation(fields: [userId], references: [id])
-  company                         Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdAt                       DateTime                        @default(now()) @map("created_at")
+  updatedAt                       DateTime                        @default(now()) @updatedAt @map("updated_at")
+  user                            User                            @relation(fields: [userId], references: [id])
+  company                         Company                         @relation(fields: [companyId], references: [id], onDelete: Cascade)
   appointmentUsers                AppointmentUser[]
-  client                          Client?           @relation(fields: [clientId], references: [id])
-  vehicle                         Vehicle?          @relation(fields: [vehicleId], references: [id])
+  client                          Client?                         @relation(fields: [clientId], references: [id])
+  vehicle                         Vehicle?                        @relation(fields: [vehicleId], references: [id])
   googleEventId                   String?
   timezone                        String?
+  createdBy                       TaskAndAppointmentCreatedByEnum @default(user)
 
   @@index([userId], name: "fk_tasks_user")
   @@index([companyId], name: "fk_tasks_company")
@@ -680,6 +681,10 @@ model Company {
   billingCustomer      PlatformBillingCustomer?
   platformSubscription PlatformSubscription?
   platformPlans        PlatformPlan[]
+
+  conversationExamples             ConversationExample[]
+  knowledgeBaseDocuments           KnowledgeBaseDocument[]
+  servicePlaybooks                 ServicePlaybook[]
 }
 
 enum SmsGateway {
@@ -984,6 +989,7 @@ model Category {
   labors            Labor[]
   inventoryProducts InventoryProduct[]
   company           Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  servicePlaybooks  ServicePlaybook[]
 }
 
 // Status of a invoice.
@@ -1757,32 +1763,32 @@ model Notification {
 // If payment type is other, then it can have a payment method.
 // If payment type is card, then it can have a card type.
 model Payment {
-  id              Int             @id @default(autoincrement())
-  date            DateTime?
-  notes           String?
-  amount          Decimal? // Original payment amount
-  dueAfterPayment Decimal?        @map("due_after_payment") @db.Decimal(8, 2) // Due amount remaining after this payment
-  refundedAmount  Decimal?        @default(0) @map("refunded_amount")
-  refundMethod    PaymentType?    @map("refund_method")
-  refundReason    String?         @map("refund_reason")
-  type            PaymentType
-  card            CardPayment?
-  check           CheckPayment?
-  cash            CashPayment?
-  other           OtherPayment?
-  deposit         DepositPayment?
-  invoiceId       String?         @map("invoice_id")
-  companyId       Int             @map("company_id")
-  refundCreatedAt DateTime?       @map("refund_created_at")
-  refundUpdatedAt DateTime?       @map("refund_updated_at")
-  createdAt       DateTime        @default(now()) @map("created_at")
-  updatedAt       DateTime        @default(now()) @updatedAt @map("updated_at")
-  invoice              Invoice?             @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  Company              Company?             @relation(fields: [companyId], references: [id])
-  gateway              PaymentGateway       @default(STRIPE)
-  stripePayment        StripePayment?
-  authorizeNetPayment  AuthorizeNetPayment?
-  Refund               Refund[]
+  id                  Int                  @id @default(autoincrement())
+  date                DateTime?
+  notes               String?
+  amount              Decimal? // Original payment amount
+  dueAfterPayment     Decimal?             @map("due_after_payment") @db.Decimal(8, 2) // Due amount remaining after this payment
+  refundedAmount      Decimal?             @default(0) @map("refunded_amount")
+  refundMethod        PaymentType?         @map("refund_method")
+  refundReason        String?              @map("refund_reason")
+  type                PaymentType
+  card                CardPayment?
+  check               CheckPayment?
+  cash                CashPayment?
+  other               OtherPayment?
+  deposit             DepositPayment?
+  invoiceId           String?              @map("invoice_id")
+  companyId           Int                  @map("company_id")
+  refundCreatedAt     DateTime?            @map("refund_created_at")
+  refundUpdatedAt     DateTime?            @map("refund_updated_at")
+  createdAt           DateTime             @default(now()) @map("created_at")
+  updatedAt           DateTime             @default(now()) @updatedAt @map("updated_at")
+  invoice             Invoice?             @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  Company             Company?             @relation(fields: [companyId], references: [id])
+  gateway             PaymentGateway       @default(STRIPE)
+  stripePayment       StripePayment?
+  authorizeNetPayment AuthorizeNetPayment?
+  Refund              Refund[]
 
   @@index([companyId])
   @@index([invoiceId])
@@ -1987,29 +1993,30 @@ enum SalaryType {
 
 // Task for a company.
 model Task {
-  id                Int              @id @default(autoincrement())
-  title             String           @db.VarChar(100)
+  id                Int                              @id @default(autoincrement())
+  title             String                           @db.VarChar(100)
   description       String?
   date              DateTime?
-  startTime         String?          @map("start_time")
-  endTime           String?          @map("end_time")
+  startTime         String?                          @map("start_time")
+  endTime           String?                          @map("end_time")
   priority          Priority
   taskUser          TaskUser[]
-  createdAt         DateTime         @default(now()) @map("created_at")
-  updatedAt         DateTime         @default(now()) @updatedAt @map("updated_at")
-  userId            Int              @map("user_id")
-  companyId         Int              @map("company_id")
-  invoiceId         String?          @map("invoice_id")
-  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  company           Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  Invoice           Invoice?         @relation(fields: [invoiceId], references: [id])
-  clientId          Int?             @map("client_id")
-  client            Client?          @relation(fields: [clientId], references: [id])
+  createdAt         DateTime                         @default(now()) @map("created_at")
+  updatedAt         DateTime                         @default(now()) @updatedAt @map("updated_at")
+  userId            Int                              @map("user_id")
+  companyId         Int                              @map("company_id")
+  invoiceId         String?                          @map("invoice_id")
+  user              User                             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company           Company                          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  Invoice           Invoice?                         @relation(fields: [invoiceId], references: [id])
+  clientId          Int?                             @map("client_id")
+  client            Client?                          @relation(fields: [clientId], references: [id])
   googleEventId     String?
-  leadId            Int?             @map("lead_id")
-  lead              Lead?            @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  invoiceTemplate   InvoiceTemplate? @relation(fields: [invoiceTemplateId], references: [id])
+  leadId            Int?                             @map("lead_id")
+  lead              Lead?                            @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  invoiceTemplate   InvoiceTemplate?                 @relation(fields: [invoiceTemplateId], references: [id])
   invoiceTemplateId String?
+  createdBy         TaskAndAppointmentCreatedByEnum? @default(user)
 
   @@index([userId])
   @@index([companyId])
@@ -2017,6 +2024,12 @@ model Task {
 
 // Assigned user for a task.
 // One task can have multiple users.
+
+enum TaskAndAppointmentCreatedByEnum {
+  user
+  sales_agent
+}
+
 model TaskUser {
   id        Int      @id @default(autoincrement())
   taskId    Int      @map("task_id")
@@ -2062,6 +2075,8 @@ model User {
   firstName                      String
   lastName                       String?
   email                          String                          @unique
+  emailVerified                  Boolean                         @default(false) @map("email_verified")
+  twoFactorEnabled               Boolean                         @default(false) @map("two_factor_enabled")
   emailVerifiedAt                DateTime?                       @map("email_verified_at")
   image                          String                          @default("/images/default.png")
   password                       String
@@ -2083,6 +2098,7 @@ model User {
   createdAt                      DateTime                        @default(now()) @map("created_at")
   updatedAt                      DateTime                        @default(now()) @updatedAt @map("updated_at")
   company                        Company                         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  twoFactorToken                 TwoFactorToken?
   groups                         Group[]                         @relation("UserGroups")
   tasks                          Task[]
   taskUsers                      TaskUser[]
@@ -2110,8 +2126,48 @@ model User {
   inventoryAutomationTeamMembers InventoryAutomationTeamMember[]
   salaryHistory                  SalaryHistory[]
   shortLinks                     ShortLink[] // Links created by this user
+  twoFactorConfirmation          TwoFactorConfirmation?
 
   @@index([companyId], name: "fk_users_company")
+}
+
+// 2. The 2FA Token Model
+model TwoFactorToken {
+  id Int @id @default(autoincrement())
+
+  // Relational Fields
+  userId Int  @unique // @unique ensures only ONE active token exists per user at a time
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // The Code
+  tokenHash String // STORE THE HASH, NOT THE PLAIN CODE (e.g. bcrypt)
+
+  // Session Context
+  // Helps validate that the code is being used for the specific login attempt that requested it.
+  sessionId String? // Could be a temporary JWT ID or session cookie ID
+
+  // Security & Lifecycle
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  // Brute Force Protection
+  attemptCount  Int       @default(0) // Tracks failed verification attempts
+  lastAttemptAt DateTime? // Optional: For adding a "cooldown" between guesses
+
+  @@index([userId]) // Fast lookup by user
+  @@map("two_factor_tokens")
+}
+
+// 2. Add the TwoFactorConfirmation model
+model TwoFactorConfirmation {
+  id Int @id @default(autoincrement())
+
+  // Relation to User
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Ensure 1 user = 1 confirmation at a time
+  @@unique([userId])
 }
 
 model PasswordResetToken {
@@ -2575,92 +2631,169 @@ enum PlatformFeatureType {
 // Ai sales agent configuration for a company
 //TODO: Ai sales agent configuration for a company
 model CompanyInfo {
-  id                  String   @id @default(uuid())
-  createdAt           DateTime @default(now()) @map("created_at")
-  updatedAt           DateTime @updatedAt @map("updated_at")
+  id        Int      @id @default(autoincrement())
+  companyId Int      @unique @map("company_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Basic Info
-  shopName            String   @map("shop_name")
-  about               String?
-  address             String?
-  email               String?
-  phone               String?
-  websiteUrl          String?  @map("website_url")
-  hours               String?
-  policies            String?
+  shopName   String  @map("shop_name")
+  about      String?
+  address    String?
+  email      String?
+  phone      String?
+  websiteUrl String? @map("website_url")
+  hours      String?
+  policies   String?
 
   // Personal & AI Configuration
-  personalName         String?  @map("personal_name")
-  personalType         String?  @map("personal_type")
-  systemPrompt        String?  @db.Text @map("system_prompt")
-  openingMessage      String?  @map("opening_message")
-  conversationStyle   Json?    @map("conversation_style")
-  personality         Json?
-
+  // personalName      String? @map("personal_name")
+  // personalType      String? @map("personal_type")
+  // systemPrompt      String? @map("system_prompt") @db.Text
+  // openingMessage    String? @map("opening_message")
+  // conversationStyle Json?   @map("conversation_style")
+  personality AiPersonality?
+  smsDelay    SMSDelay?
   // Operations
-  services            Json?
-  pricing             Json?
-  overallFaqs         Json?    @map("overall_faqs")
+  services    Json?
+  pricing     Json?
+  overallFaqs Json?          @map("overall_faqs")
 
   // Settings
-  smsResponseDelayMin Int      @map("sms_response_delay_min")
-  smsResponseDelayMax Int      @map("sms_response_delay_max")
 
   @@map("company_info")
 }
 
-model ConversationExample {
-  id            String   @id @default(uuid())
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+model SMSDelay {
+  id                  Int         @id @default(autoincrement())
+  companyId           Int         @unique @map("company_id")
+  company             CompanyInfo @relation(fields: [companyId], references: [companyId], onDelete: Cascade)
+  smsResponseDelayMin Int         @default(0) @map("sms_response_delay_min")
+  smsResponseDelayMax Int         @default(0) @map("sms_response_delay_max")
 
+  @@map("sms_delay")
+}
+
+model AiPersonality {
+  id           Int         @id @default(autoincrement())
+  companyId    Int         @unique @map("company_id")
+  company      CompanyInfo @relation(fields: [companyId], references: [companyId], onDelete: Cascade)
+  personalType String?     @map("personal_type")
+
+  warmth        Int     @default(5)
+  humor         Int     @default(5)
+  energy        Int     @default(5)
+  assistantName String? @map("assistant_name")
+
+  useContractions   Boolean @default(true)
+  useCasualLanguage Boolean @default(true)
+  matchCustomerTone Boolean @default(true)
+  useEmojis         Boolean @default(true)
+
+  openingMessage String? @db.Text
+  systemPrompt   String? @db.Text
+
+  @@map("ai_personalities")
+}
+
+model ConversationExample {
+  id            Int      @id @default(autoincrement())
+  companyId     Int      @map("company_id")
   imageUrl      String   @map("image_url")
   extractedText String?  @map("extracted_text")
   notes         String?
+  company       Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
 
   @@map("conversation_examples")
 }
 
 model KnowledgeBaseDocument {
-  id          String   @id @default(uuid())
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-
-  title       String
-  category    String
-  content     String
-  status      String
-
-  // File Metadata
-  fileName    String?  @map("file_name")
-  fileType    String?  @map("file_type")
-  fileUrl     String?  @map("file_url")
+  id        Int      @id @default(autoincrement())
+  title     String
+  category  String
+  content   String
+  status    String
+  companyId Int      @map("company_id")
+  fileName  String?  @map("file_name")
+  fileType  String?  @map("file_type")
+  fileUrl   String?  @map("file_url")
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("knowledge_base_documents")
 }
 
 model ServicePlaybook {
-  id              String   @id @default(uuid())
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
-
-  serviceName     String   @map("service_name")
-  category        String
-  isActive        Boolean  @default(true) @map("is_active")
-
-  // Details
+  id              Int           @id @default(autoincrement())
+  serviceName     String        @map("service_name")
+  categoryId      Int?          @map("category_id")
+  companyId       Int           @map("company_id")
+  isActive        Boolean       @default(true) @map("is_active")
   overview        String?
-  timeEstimate    String?  @map("time_estimate")
-  schedulingNotes String?  @map("scheduling_notes")
-  warrantyPolicy  String?  @map("warranty_policy")
-
-  // AI Instructions (Json fields based on types)
-  intakeQuestions Json     @map("intake_questions")
-  pricingRules    Json     @map("pricing_rules")
-  upsells         Json
-  faqs            Json
-  doSay           Json     @map("do_say")
-  dontSay         Json     @map("dont_say")
+  timeEstimate    String?       @map("time_estimate")
+  schedulingNotes String?       @map("scheduling_notes")
+  warrantyPolicy  String?       @map("warranty_policy")
+  // Relations
+  pricingRules    PricingRule[]
+  faqs            FAQ[]
+  // intakeQuestions IntakeQuestion[]
+  // upsells         Upsell[]
+  // AI Behavior (keep JSON – flexible)
+  doSay           Json          @map("do_say")
+  dontSay         Json          @map("dont_say")
+  category        Category?     @relation(fields: [categoryId], references: [id])
+  company         Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
 
   @@map("service_playbooks")
 }
+
+model PricingRule {
+  id          Int             @id @default(autoincrement())
+  playbookId  Int
+  description String
+  minPrice    Float
+  maxPrice    Float
+  playbook    ServicePlaybook @relation(fields: [playbookId], references: [id], onDelete: Cascade)
+
+  @@map("pricing_rules")
+}
+
+model FAQ {
+  id         Int             @id @default(autoincrement())
+  playbookId Int
+  question   String
+  answer     String
+  playbook   ServicePlaybook @relation(fields: [playbookId], references: [id], onDelete: Cascade)
+
+  @@map("faqs")
+}
+
+// model IntakeQuestion {
+//   id          String   @id @default(uuid())
+//   playbookId String
+//   question    String
+//   type        String   // text, select, boolean
+//   required    Boolean  @default(false)
+//   options     Json?
+
+//   playbook    ServicePlaybook @relation(fields: [playbookId], references: [id], onDelete: Cascade)
+
+//   @@map("intake_questions")
+// }
+
+// model Upsell {
+//   id          String   @id @default(uuid())
+//   playbookId String
+//   title       String
+//   description String?
+//   price       Float?
+
+//   playbook    ServicePlaybook @relation(fields: [playbookId], references: [id], onDelete: Cascade)
+
+//   @@map("upsells")
+// }
