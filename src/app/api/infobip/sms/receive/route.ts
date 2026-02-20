@@ -7,6 +7,8 @@ import receiveTwiloMessage from "@/lib/pusher/receiveTwiloMessage";
 import { getPusherInstance } from "@/lib/pusher/server";
 import { NextRequest, NextResponse } from "next/server";
 import { sendSMSToAgent } from "@/service/ai-agent/api";
+import { sendTwilioMessage } from "@/actions/communication/client/sendTwilioMessage";
+import { sendInfobipMessage } from "@/actions/communication/client/sendInfobipMessage";
 
 const pusher = getPusherInstance();
 
@@ -231,7 +233,7 @@ export async function POST(req: NextRequest) {
           }
 
           //sales agent
-          if (clientSMS && client.id === 3460) {
+          if (clientSMS && client.id === 3460 && client.companyId === 4) {
             try {
               const aiAgentResponse = await sendSMSToAgent({
                 companyId: client.companyId,
@@ -241,7 +243,7 @@ export async function POST(req: NextRequest) {
                 clientId: client.id,
               });
 
-              if (aiAgentResponse) {
+              if (aiAgentResponse?.status === "success") {
                 await db.clientSMS.update({
                   where: {
                     id: clientSMS.id,
@@ -251,13 +253,22 @@ export async function POST(req: NextRequest) {
                   },
                 });
               }
-
-              // await sendTwilioMessage({
-              //   clientId: 3459,
-              //   message: aiAgentResponse.output,
-              //   companyId: 12,
-              //   attachments: [],
-              // });
+              if (aiAgentResponse?.output) {
+                await db.clientSMS.update({
+                  where: {
+                    id: clientSMS.id,
+                  },
+                  data: {
+                    isSalesAgent: true,
+                  },
+                });
+                await sendInfobipMessage({
+                  clientId: 3459,
+                  message: aiAgentResponse.output,
+                  companyId: 12,
+                  attachments: [],
+                });
+              }
             } catch (err) {
               console.error(
                 "sendInfobipMessage: sales agent receive sms failed",

@@ -169,7 +169,7 @@ export async function sendTwilioMessage({
 
       revalidatePath("/dashboard/communication/client");
 
-      if (dbMessage && clientId === 3460) {
+      if (dbMessage && clientId === 3460 && twilioCredentials.companyId === 4) {
         try {
           const aiAgentResponse = await sendSMSToAgent({
             companyId: twilioCredentials.companyId,
@@ -178,8 +178,8 @@ export async function sendTwilioMessage({
             sendTo: dbMessage?.to,
             clientId: 3459,
           });
-
-          if (aiAgentResponse) {
+          console.log("aiAgentResponse", aiAgentResponse);
+          if (aiAgentResponse?.status === "success") {
             await db.clientSMS.update({
               where: {
                 id: dbMessage.id,
@@ -188,14 +188,14 @@ export async function sendTwilioMessage({
                 isSalesAgent: true,
               },
             });
+          } else {
+            await sendTwilioMessage({
+              clientId: 3459,
+              message: aiAgentResponse.output,
+              companyId: 12,
+              attachments: [],
+            });
           }
-
-          // await sendTwilioMessage({
-          //   clientId: 3459,
-          //   message: aiAgentResponse.output,
-          //   companyId: 12,
-          //   attachments: [],
-          // });
         } catch (err) {
           console.error(
             "sendInfobipMessage: sales agent receive sms failed",

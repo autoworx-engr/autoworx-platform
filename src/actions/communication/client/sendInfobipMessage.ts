@@ -324,7 +324,7 @@ export async function sendInfobipMessage({
       }
 
       revalidatePath("/dashboard/communication/client");
-      if (dbMessage && clientId === 3460) {
+      if (dbMessage && clientId === 3460 && infobipConfig?.companyId === 4) {
         try {
           const aiAgentResponse = await sendSMSToAgent({
             companyId: infobipConfig?.companyId,
@@ -333,8 +333,8 @@ export async function sendInfobipMessage({
             sendTo: dbMessage?.to,
             clientId: 3459,
           });
-
-          if (aiAgentResponse) {
+          console.log("aiAgentResponse", aiAgentResponse);
+          if (aiAgentResponse?.status === "success") {
             await db.clientSMS.update({
               where: {
                 id: dbMessage.id,
@@ -343,14 +343,14 @@ export async function sendInfobipMessage({
                 isSalesAgent: true,
               },
             });
+          } else {
+            await sendInfobipMessage({
+              clientId: 3459,
+              message: aiAgentResponse.output,
+              companyId: 12,
+              attachments: [],
+            });
           }
-
-          // await sendInfobipMessage({
-          //   clientId: 3459,
-          //   message: aiAgentResponse.output,
-          //   companyId: 12,
-          //   attachments: [],
-          // });
         } catch (err) {
           console.error(
             "sendInfobipMessage: sales agent receive sms failed",

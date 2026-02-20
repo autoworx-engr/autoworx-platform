@@ -1,6 +1,7 @@
 // import { updateCommunicationAutomationTrigger } from "@/actions/automation/communication/triggerCommunicationAutomation";
 import { updatePipelineAutomationTriggerWithToken } from "@/actions/automation/pipeline/triggerPipelineAutomation";
 import { updateNewSMSChatTrack } from "@/actions/communication/client/chat-track";
+import { sendTwilioMessage } from "@/actions/communication/client/sendTwilioMessage";
 import { db } from "@/lib/db";
 import { sendClientMessageNotification } from "@/lib/notification/communication-notify";
 import sendClientMailOrSMSNotify from "@/lib/pusher/client-conversation-notify";
@@ -176,7 +177,7 @@ export async function POST(
         });
 
         //sales agent
-        if (dbMessage && client.id === 3460) {
+        if (dbMessage && client.id === 3460 && client.companyId === 4) {
           try {
             const aiAgentResponse = await sendSMSToAgent({
               companyId: client.companyId,
@@ -186,7 +187,7 @@ export async function POST(
               clientId: client?.id,
             });
 
-            if (aiAgentResponse) {
+            if (aiAgentResponse?.status === "success") {
               await db.clientSMS.update({
                 where: {
                   id: dbMessage.id,
@@ -197,12 +198,22 @@ export async function POST(
               });
             }
 
-            // await sendTwilioMessage({
-            //   clientId: 3459,
-            //   message: aiAgentResponse.output,
-            //   companyId: 12,
-            //   attachments: [],
-            // });
+            if (aiAgentResponse?.output) {
+              await db.clientSMS.update({
+                where: {
+                  id: dbMessage.id,
+                },
+                data: {
+                  isSalesAgent: true,
+                },
+              });
+              await sendTwilioMessage({
+                clientId: 3459,
+                message: aiAgentResponse.output,
+                companyId: 12,
+                attachments: [],
+              });
+            }
           } catch (err) {
             console.error(
               "sendInfobipMessage: sales agent receive sms failed",
