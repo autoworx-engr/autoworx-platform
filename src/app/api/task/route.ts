@@ -210,7 +210,7 @@ export async function POST(req: NextRequest) {
         date: date ? new Date(date) : null,
         startTime: startTime ?? null,
         endTime: endTime ?? null,
-        priority: priorityEnum,
+        priority: priorityEnum ?? "Low",
         userId: Number(session.user.id),
         companyId: session.user.companyId,
         invoiceId: invoiceId ?? null,
