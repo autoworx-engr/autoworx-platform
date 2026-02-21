@@ -250,7 +250,7 @@ export async function sendInfobipMessageSalesAgent({
           isRead: true,
           clientId,
           companyId: infobipConfig.companyId,
-          isSalesAgent,
+          isSalesAgent: Boolean(isSalesAgent),
         },
       });
 

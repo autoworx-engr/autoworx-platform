@@ -98,7 +98,7 @@ export async function sendTwilioMessageSalesAgent({
           isRead: true,
           clientId,
           companyId: twilioCredentials.companyId,
-          isSalesAgent,
+          isSalesAgent: Boolean(isSalesAgent),
         },
       });
 
