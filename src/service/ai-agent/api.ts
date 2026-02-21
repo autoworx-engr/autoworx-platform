@@ -16,7 +16,7 @@ export const sendSMSToAgent = async function (payload: TSendSMSToAIAgent) {
       `${process.env.NEXT_PUBLIC_SALES_AGENT_API_BASE_URL}/webhook/a7db912a-d7ef-42c7-bc2f-89cb49ac39b9`,
       payload,
     );
-
+    console.log("sendSMSToAgent response", response);
     return response.data;
   } catch (error) {
     const err = errorHandler(error);
