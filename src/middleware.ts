@@ -15,6 +15,7 @@ const PUBLIC_API_ROUTES = [
   "/api/auth/callback/credentials",
   "/api/auth/csrf",
   "/api/communication/client-hub/send-twilio-message",
+  "/api/ai-train-company",
   // Webhook endpoints
   "/api/stripe/invoice-pay-hook",
   "/api/twilio/token",
