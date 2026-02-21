@@ -180,11 +180,11 @@ export async function POST(
         if (dbMessage && client.id === 3460 && client.companyId === 4) {
           try {
             const aiAgentResponse = await sendSMSToAgent({
-              companyId: client.companyId,
+              company_id: client.companyId,
               message: dbMessage?.message,
-              sendFrom: dbMessage?.from,
-              sendTo: dbMessage?.to,
-              clientId: client?.id,
+              send_from: dbMessage?.from,
+              send_to: dbMessage?.to,
+              client_id: client?.id,
             });
 
             if (aiAgentResponse?.status === "success") {

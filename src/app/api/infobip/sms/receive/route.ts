@@ -236,11 +236,11 @@ export async function POST(req: NextRequest) {
           if (clientSMS && client.id === 3460 && client.companyId === 4) {
             try {
               const aiAgentResponse = await sendSMSToAgent({
-                companyId: client.companyId,
+                company_id: client.companyId,
                 message: clientSMS?.message,
-                sendFrom: clientSMS?.from,
-                sendTo: clientSMS?.to,
-                clientId: client.id,
+                send_from: clientSMS?.from,
+                send_to: clientSMS?.to,
+                client_id: client.id,
               });
 
               if (aiAgentResponse?.status === "success") {

@@ -3,13 +3,14 @@ import axios from "axios";
 
 type TSendSMSToAIAgent = {
   message: string;
-  sendFrom: string;
-  sendTo: string;
-  companyId: number;
-  clientId: number;
+  send_from: string;
+  send_to: string;
+  company_id: number;
+  client_id: number;
 };
 
 export const sendSMSToAgent = async function (payload: TSendSMSToAIAgent) {
+  console.log("payload", payload);
   try {
     const response = await axios.post(
       `${process.env.NEXT_PUBLIC_SALES_AGENT_API_BASE_URL}/webhook/a7db912a-d7ef-42c7-bc2f-89cb49ac39b9`,

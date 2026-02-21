@@ -1,9 +1,5 @@
 import { useState } from "react";
-import {
-  ServicePlaybook,
-  PricingRule,
-  FAQ,
-} from "@/types/ai-settings";
+import { ServicePlaybook, PricingRule, FAQ } from "@/types/ai-settings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -49,11 +45,20 @@ export function PlaybookEditor({
       is_active: true,
     },
   );
-
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [newDoSay, setNewDoSay] = useState("");
   const [newDontSay, setNewDontSay] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(
-    playbook?.categoryData || (playbook?.categoryId ? { id: Number(playbook.categoryId), name: "", companyId: 0, createdAt: new Date(), updatedAt: new Date() } : null)
+    playbook?.categoryData ||
+      (playbook?.categoryId
+        ? {
+            id: Number(playbook.categoryId),
+            name: "",
+            companyId: 0,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          }
+        : null),
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -75,7 +80,8 @@ export function PlaybookEditor({
     // Pricing rules validation
     formData.pricing_rules?.forEach((rule, index) => {
       if (!rule.description || !rule.description.trim()) {
-        newErrors[`pricing_rule_${index}_description`] = "Description is required";
+        newErrors[`pricing_rule_${index}_description`] =
+          "Description is required";
       }
       const minPrice = rule.price_range?.min || 0;
       const maxPrice = rule.price_range?.max || 0;
@@ -86,7 +92,8 @@ export function PlaybookEditor({
         newErrors[`pricing_rule_${index}_max`] = "Max price cannot be negative";
       }
       if (minPrice > maxPrice) {
-        newErrors[`pricing_rule_${index}_range`] = "Min price cannot be greater than max price";
+        newErrors[`pricing_rule_${index}_range`] =
+          "Min price cannot be greater than max price";
       }
     });
 
@@ -99,26 +106,31 @@ export function PlaybookEditor({
         newErrors[`faq_${index}_answer`] = "Answer is required";
       }
       if (faq.question && faq.question.length > 500) {
-        newErrors[`faq_${index}_question`] = "Question must be less than 500 characters";
+        newErrors[`faq_${index}_question`] =
+          "Question must be less than 500 characters";
       }
       if (faq.answer && faq.answer.length > 2000) {
-        newErrors[`faq_${index}_answer`] = "Answer must be less than 2000 characters";
+        newErrors[`faq_${index}_answer`] =
+          "Answer must be less than 2000 characters";
       }
     });
 
     // Time estimate validation
     if (formData.time_estimate && formData.time_estimate.length > 100) {
-      newErrors.time_estimate = "Time estimate must be less than 100 characters";
+      newErrors.time_estimate =
+        "Time estimate must be less than 100 characters";
     }
 
     // Warranty policy validation
     if (formData.warranty_policy && formData.warranty_policy.length > 500) {
-      newErrors.warranty_policy = "Warranty policy must be less than 500 characters";
+      newErrors.warranty_policy =
+        "Warranty policy must be less than 500 characters";
     }
 
     // Scheduling notes validation
     if (formData.scheduling_notes && formData.scheduling_notes.length > 1000) {
-      newErrors.scheduling_notes = "Scheduling notes must be less than 1000 characters";
+      newErrors.scheduling_notes =
+        "Scheduling notes must be less than 1000 characters";
     }
 
     setErrors(newErrors);
@@ -267,7 +279,10 @@ export function PlaybookEditor({
                     id="service_name"
                     value={formData.service_name}
                     onChange={(e) => {
-                      setFormData({ ...formData, service_name: e.target.value });
+                      setFormData({
+                        ...formData,
+                        service_name: e.target.value,
+                      });
                       if (errors.service_name) {
                         setErrors({ ...errors, service_name: "" });
                       }
@@ -291,7 +306,8 @@ export function PlaybookEditor({
                     }}
                     labelPosition="top"
                     required={false}
-                    
+                    categoryOpen={isCategoryOpen}
+                    setCategoryOpen={setIsCategoryOpen}
                   />
                 </div>
               </div>
@@ -308,7 +324,10 @@ export function PlaybookEditor({
                     }
                   }}
                   placeholder="Describe what this service includes and its main benefits..."
-                  className={cn("min-h-[120px]", errors.overview && "border-destructive")}
+                  className={cn(
+                    "min-h-[120px]",
+                    errors.overview && "border-destructive",
+                  )}
                 />
                 {errors.overview && (
                   <p className="text-sm text-destructive flex items-center gap-1">
@@ -389,11 +408,17 @@ export function PlaybookEditor({
                               description: e.target.value,
                             });
                             if (errors[`pricing_rule_${index}_description`]) {
-                              setErrors({ ...errors, [`pricing_rule_${index}_description`]: "" });
+                              setErrors({
+                                ...errors,
+                                [`pricing_rule_${index}_description`]: "",
+                              });
                             }
                           }}
                           placeholder="e.g., Standard sedan"
-                          className={cn(errors[`pricing_rule_${index}_description`] && "border-destructive")}
+                          className={cn(
+                            errors[`pricing_rule_${index}_description`] &&
+                              "border-destructive",
+                          )}
                         />
                         {errors[`pricing_rule_${index}_description`] && (
                           <p className="text-sm text-destructive flex items-center gap-1">
@@ -416,14 +441,18 @@ export function PlaybookEditor({
                                 min: Number(e.target.value),
                               },
                             });
-                            const errorKeys = [`pricing_rule_${index}_min`, `pricing_rule_${index}_range`];
+                            const errorKeys = [
+                              `pricing_rule_${index}_min`,
+                              `pricing_rule_${index}_range`,
+                            ];
                             const newErrors = { ...errors };
                             errorKeys.forEach((key) => delete newErrors[key]);
                             setErrors(newErrors);
                           }}
                           className={cn(
-                            (errors[`pricing_rule_${index}_min`] || errors[`pricing_rule_${index}_range`]) &&
-                              "border-destructive"
+                            (errors[`pricing_rule_${index}_min`] ||
+                              errors[`pricing_rule_${index}_range`]) &&
+                              "border-destructive",
                           )}
                         />
                         {errors[`pricing_rule_${index}_min`] && (
@@ -453,14 +482,18 @@ export function PlaybookEditor({
                                 max: Number(e.target.value),
                               },
                             });
-                            const errorKeys = [`pricing_rule_${index}_max`, `pricing_rule_${index}_range`];
+                            const errorKeys = [
+                              `pricing_rule_${index}_max`,
+                              `pricing_rule_${index}_range`,
+                            ];
                             const newErrors = { ...errors };
                             errorKeys.forEach((key) => delete newErrors[key]);
                             setErrors(newErrors);
                           }}
                           className={cn(
-                            (errors[`pricing_rule_${index}_max`] || errors[`pricing_rule_${index}_range`]) &&
-                              "border-destructive"
+                            (errors[`pricing_rule_${index}_max`] ||
+                              errors[`pricing_rule_${index}_range`]) &&
+                              "border-destructive",
                           )}
                         />
                         {errors[`pricing_rule_${index}_max`] && (
@@ -517,20 +550,25 @@ export function PlaybookEditor({
                     </Button>
                     <div className="space-y-4">
                       <div className="space-y-2">
-                     
                         <Label>
-                        Question <span className="text-destructive">*</span>
-                  </Label>
+                          Question <span className="text-destructive">*</span>
+                        </Label>
                         <Input
                           value={faq.question}
                           onChange={(e) => {
                             updateFAQ(index, { question: e.target.value });
                             if (errors[`faq_${index}_question`]) {
-                              setErrors({ ...errors, [`faq_${index}_question`]: "" });
+                              setErrors({
+                                ...errors,
+                                [`faq_${index}_question`]: "",
+                              });
                             }
                           }}
                           placeholder="What question might customers ask?"
-                          className={cn(errors[`faq_${index}_question`] && "border-destructive")}
+                          className={cn(
+                            errors[`faq_${index}_question`] &&
+                              "border-destructive",
+                          )}
                         />
                         {errors[`faq_${index}_question`] && (
                           <p className="text-sm text-destructive flex items-center gap-1">
@@ -545,20 +583,25 @@ export function PlaybookEditor({
                         )}
                       </div>
                       <div className="space-y-2">
-                    
                         <Label>
-                        Answer <span className="text-destructive">*</span>
-                  </Label>
+                          Answer <span className="text-destructive">*</span>
+                        </Label>
                         <Textarea
                           value={faq.answer}
                           onChange={(e) => {
                             updateFAQ(index, { answer: e.target.value });
                             if (errors[`faq_${index}_answer`]) {
-                              setErrors({ ...errors, [`faq_${index}_answer`]: "" });
+                              setErrors({
+                                ...errors,
+                                [`faq_${index}_answer`]: "",
+                              });
                             }
                           }}
                           placeholder="How should the AI respond?"
-                          className={cn(errors[`faq_${index}_answer`] && "border-destructive")}
+                          className={cn(
+                            errors[`faq_${index}_answer`] &&
+                              "border-destructive",
+                          )}
                         />
                         {errors[`faq_${index}_answer`] && (
                           <p className="text-sm text-destructive flex items-center gap-1">
@@ -720,7 +763,9 @@ export function PlaybookEditor({
                       }
                     }}
                     placeholder="e.g., 3-year warranty on materials"
-                    className={cn(errors.warranty_policy && "border-destructive")}
+                    className={cn(
+                      errors.warranty_policy && "border-destructive",
+                    )}
                     maxLength={500}
                   />
                   {errors.warranty_policy && (
@@ -747,7 +792,9 @@ export function PlaybookEditor({
                     }
                   }}
                   placeholder="Any special scheduling requirements or recommendations..."
-                  className={cn(errors.scheduling_notes && "border-destructive")}
+                  className={cn(
+                    errors.scheduling_notes && "border-destructive",
+                  )}
                 />
                 {errors.scheduling_notes && (
                   <p className="text-sm text-destructive flex items-center gap-1">
