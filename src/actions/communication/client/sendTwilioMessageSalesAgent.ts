@@ -32,19 +32,17 @@ export async function getTwilioCredentialsById(companyId: number) {
   });
 }
 
-export async function sendTwilioMessage({
+export async function sendTwilioMessageSalesAgent({
   companyId,
   message,
   clientId,
   attachments,
   isSalesAgent = false,
-  userId,
 }: {
   companyId?: number;
   message: string;
   clientId: number;
   attachments: { url: string; name: string }[];
-  userId?: number;
   isSalesAgent?: boolean;
 }) {
   try {
@@ -66,24 +64,6 @@ export async function sendTwilioMessage({
         accountSid: twilioCredentials.accountSid,
       },
     );
-
-    let user: Awaited<ReturnType<typeof getUser>> | null = null;
-    // try {
-    //   user = await getUser();
-    // } catch (error) {
-    //   console.log(
-    //     "sendTwilioMessage: getUser failed, continuing without user context",
-    //     error,
-    //   );
-    // }
-
-    if (userId) {
-      user = await db.user.findFirst({
-        where: { id: userId },
-      });
-    } else {
-      user = await getUser();
-    }
 
     const client = await db.client.findFirst({
       where: {
@@ -115,7 +95,6 @@ export async function sendTwilioMessage({
           to,
           message: message ?? "",
           sentBy: "Company",
-          userId: user?.id,
           isRead: true,
           clientId,
           companyId: twilioCredentials.companyId,
@@ -168,41 +147,6 @@ export async function sendTwilioMessage({
       } catch (error) {}
 
       revalidatePath("/dashboard/communication/client");
-
-      if (dbMessage && clientId === 3460 && twilioCredentials.companyId === 4) {
-        try {
-          const aiAgentResponse = await sendSMSToAgent({
-            company_id: 12,
-            message: dbMessage?.message,
-            send_from: dbMessage?.from,
-            send_to: dbMessage?.to,
-            client_id: 3459,
-          });
-          console.log("aiAgentResponse", aiAgentResponse);
-          if (aiAgentResponse?.status === "success") {
-            await db.clientSMS.update({
-              where: {
-                id: dbMessage.id,
-              },
-              data: {
-                isSalesAgent: true,
-              },
-            });
-          } else {
-            await sendTwilioMessage({
-              clientId: 3459,
-              message: aiAgentResponse.output,
-              companyId: 12,
-              attachments: [],
-            });
-          }
-        } catch (err) {
-          console.error(
-            "sendInfobipMessage: sales agent receive sms failed",
-            err,
-          );
-        }
-      }
 
       return {
         success: true,
