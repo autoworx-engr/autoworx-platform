@@ -3,12 +3,10 @@
 import { updatePipelineAutomationTrigger } from "@/actions/automation/pipeline/triggerPipelineAutomation";
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
-import getUser from "@/lib/getUser";
 import { normalizeUSPhoneNumber } from "@/lib/normalizeUSPhoneNumber";
 import { revalidatePath } from "next/cache";
 import { updateNewSMSChatTrack } from "./chat-track";
-import { getInfobipConfig, getInfobipConfigById } from "./createInfobipConfig";
-import { sendSMSToAgent } from "@/service/ai-agent/api";
+import { getInfobipConfigById } from "./createInfobipConfig";
 
 type TInfobipConfig = {
   companyId?: number;
@@ -26,20 +24,18 @@ export async function getInfobipCredentials({
   return { success: true, data: infobipConfig };
 }
 
-export async function sendInfobipMessage({
+export async function sendInfobipMessageSalesAgent({
   companyId,
   message,
   clientId,
   attachments,
   isSalesAgent = false,
-  userId,
 }: {
   companyId?: number;
   message: string;
   clientId: number;
   attachments: { url: string; name: string }[];
   isSalesAgent?: boolean;
-  userId?: number;
 }) {
   try {
     let infobipConfig = companyId
@@ -51,24 +47,6 @@ export async function sendInfobipMessage({
         success: false,
         error: "Infobip configuration not found",
       };
-    }
-
-    let user: Awaited<ReturnType<typeof getUser>> | null = null;
-    // try {
-    //   user = await getUser();
-    // } catch (error) {
-    //   console.error(
-    //     "sendInfobipMessage: getUser failed, continuing without user context",
-    //     error,
-    //   );
-    // }
-
-    if (userId) {
-      user = await db.user.findFirst({
-        where: { id: userId },
-      });
-    } else {
-      user = await getUser();
     }
 
     const client = await db.client.findFirst({
@@ -269,7 +247,6 @@ export async function sendInfobipMessage({
           to,
           message: message ?? "",
           sentBy: "Company",
-          userId: user?.id,
           isRead: true,
           clientId,
           companyId: infobipConfig.companyId,
@@ -324,40 +301,6 @@ export async function sendInfobipMessage({
       }
 
       revalidatePath("/dashboard/communication/client");
-      if (dbMessage && clientId === 3460 && infobipConfig?.companyId === 4) {
-        try {
-          const aiAgentResponse = await sendSMSToAgent({
-            company_id: 12,
-            message: dbMessage?.message,
-            send_from: dbMessage?.from,
-            send_to: dbMessage?.to,
-            client_id: 3459,
-          });
-          console.log("aiAgentResponse", aiAgentResponse);
-          if (aiAgentResponse?.status === "success") {
-            await db.clientSMS.update({
-              where: {
-                id: dbMessage.id,
-              },
-              data: {
-                isSalesAgent: true,
-              },
-            });
-          } else {
-            await sendInfobipMessage({
-              clientId: 3459,
-              message: aiAgentResponse.output,
-              companyId: 12,
-              attachments: [],
-            });
-          }
-        } catch (err) {
-          console.error(
-            "sendInfobipMessage: sales agent receive sms failed",
-            err,
-          );
-        }
-      }
 
       return {
         success: true,
