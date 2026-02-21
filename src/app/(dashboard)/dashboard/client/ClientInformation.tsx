@@ -11,13 +11,15 @@ export default function ClientInformation({
   client: Client & { tag: Tag | null; source: Source | null };
 }) {
 
-  const DataField = ({ label, value }: { label: string; value: string }) => (
+ 
+  const DataField = ({ label, value, fallback }: { label: string; value: string; fallback?: string }) => (
     <div className="flex items-start py-2">
       <label className="block w-24 shrink-0 text-sm font-medium text-slate-500 lg:w-28">
         {label}
       </label>
       <div className="flex-1 text-sm font-semibold text-slate-600 leading-relaxed">
-        {value || <span className="text-slate-400 italic">N/A</span>}
+      
+         {value || fallback || "N/A"}
       </div>
     </div>
   );
@@ -74,6 +76,7 @@ export default function ClientInformation({
             <DataField
               label="Address"
               value={client.address || ""}
+               fallback="No Address Listed"
             />
           </div>
         </div>

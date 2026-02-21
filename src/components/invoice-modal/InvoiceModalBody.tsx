@@ -365,12 +365,12 @@ export default function InvoiceModalBody({
       >
         <div
           ref={printComponentRef}
-          className="#shadow-lg no-visible-scrollbar relative grid h-full w-full shrink grow-0 flex-col items-center justify-center gap-4 overflow-y-auto rounded-md border bg-background p-6 md:h-[90vh] md:w-[740px] md:flex-row"
+          className="#shadow-lg no-visible-scrollbar relative grid h-full w-full shrink grow-0 flex-col items-center justify-center gap-4 overflow-y-auto rounded-md border bg-background p-6 md:h-[90vh] md:w-[780px] md:flex-row"
         >
           {/* Action Buttons */}
           {!isPublic && (
             <div className="mt-6 flex w-full flex-wrap items-center justify-center print:hidden">
-              <div className="flex w-full flex-wrap items-center justify-center gap-3 md:gap-4">
+              <div className="flex w-full flex-wrap items-center justify-center gap-3">
                 {/* Edit Link */}
                 <Link
                   className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-5 py-1.5 text-sm font-medium text-white shadow-md shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 md:text-base"
@@ -767,7 +767,7 @@ export default function InvoiceModalBody({
                         <span className="min-w-0 flex-1 overflow-x-clip text-ellipsis whitespace-nowrap px-2 font-bold uppercase text-[#6571FF]">
                           {key}
                         </span>
-                        <div className="basis-30 shrink-0 rounded bg-[#6571FF] px-2 text-white">
+                        <div className="shrink-0 w-[7rem] rounded bg-[#6571FF] px-2 text-white">
                           {Number(value)}%
                           {Number(value) !== 0 && (
                             <span>
@@ -791,7 +791,7 @@ export default function InvoiceModalBody({
                       <span className="min-w-0 flex-1 overflow-x-clip text-ellipsis whitespace-nowrap px-2 font-bold uppercase text-[#6571FF]">
                         {key}
                       </span>
-                      <div className="shrink-0 basis-20 rounded bg-gradient-to-br from-[#6571FF] from-60% to-[#4A55E2] px-2 text-white">
+                      <div className="shrink-0 w-[7rem] rounded bg-gradient-to-br from-[#6571FF] from-60% to-[#4A55E2] px-2 text-white">
                         {formatCurrency(parseFloat("" + value))}
                       </div>
                     </div>

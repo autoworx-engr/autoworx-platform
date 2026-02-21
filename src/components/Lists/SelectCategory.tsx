@@ -138,7 +138,7 @@ export default function SelectCategory({
                     "w-full rounded-lg bg-slate-50 px-3 py-2 text-sm font-medium outline-none transition-all",
                     "ring-1 ring-inset ring-slate-200 placeholder:text-slate-400",
                     "focus:bg-white focus:ring-2 focus:ring-[#6571FF]/40",
-                    error && "ring-red-200 focus:ring-red-400"
+                    error && "ring-red-200 focus:ring-red-400",
                   )}
                 />
               </div>
@@ -151,7 +151,7 @@ export default function SelectCategory({
                   "rounded-lg px-4 text-xs font-bold uppercase tracking-wider text-white transition-all active:scale-95",
                   categoryInput && !error
                     ? "bg-[#6571FF] shadow-lg shadow-[#6571FF]/20 hover:bg-[#525ee5]"
-                    : "bg-slate-300 cursor-not-allowed"
+                    : "bg-slate-300 cursor-not-allowed",
                 )}
               >
                 Quick Add
@@ -188,7 +188,7 @@ export default function SelectCategory({
         )}
         onSearch={(search: string) =>
           categories.filter((cat) =>
-            cat.name.toLowerCase().includes(search.toLowerCase())
+            cat.name.toLowerCase().includes(search.toLowerCase()),
           )
         }
         openState={[

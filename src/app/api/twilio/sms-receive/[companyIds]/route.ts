@@ -1,11 +1,13 @@
 // import { updateCommunicationAutomationTrigger } from "@/actions/automation/communication/triggerCommunicationAutomation";
 import { updatePipelineAutomationTriggerWithToken } from "@/actions/automation/pipeline/triggerPipelineAutomation";
 import { updateNewSMSChatTrack } from "@/actions/communication/client/chat-track";
+import { sendTwilioMessage } from "@/actions/communication/client/sendTwilioMessage";
 import { db } from "@/lib/db";
 import { sendClientMessageNotification } from "@/lib/notification/communication-notify";
 import sendClientMailOrSMSNotify from "@/lib/pusher/client-conversation-notify";
 import receiveTwiloMessage from "@/lib/pusher/receiveTwiloMessage";
 import { getPusherInstance } from "@/lib/pusher/server";
+import { sendSMSToAgent } from "@/service/ai-agent/api";
 import { NextRequest } from "next/server";
 
 const pusher = getPusherInstance();
@@ -44,7 +46,7 @@ const pusher = getPusherInstance();
  */
 export async function POST(
   req: NextRequest,
-  context: { params: Promise<{ companyIds: string }> }
+  context: { params: Promise<{ companyIds: string }> },
 ) {
   try {
     const { params } = context;
@@ -62,7 +64,7 @@ export async function POST(
       body = Object.fromEntries(new URLSearchParams(formData).entries());
     } else {
       throw new Error(
-        "Unsupported content type: Twilio webhook expects form-encoded data"
+        "Unsupported content type: Twilio webhook expects form-encoded data",
       );
     }
 
@@ -93,7 +95,7 @@ export async function POST(
       const file = await fetchTwilioMedia(
         url,
         credential?.apiKeySid || "",
-        credential?.apiKeySecret || ""
+        credential?.apiKeySecret || "",
       );
       formData.append("file", file);
     }
@@ -174,6 +176,52 @@ export async function POST(
           attachments: attachments,
         });
 
+        //sales agent
+        if (dbMessage && client.id === 3460 && client.companyId === 4) {
+          try {
+            const aiAgentResponse = await sendSMSToAgent({
+              company_id: client.companyId,
+              message: dbMessage?.message,
+              send_from: dbMessage?.from,
+              send_to: dbMessage?.to,
+              client_id: client?.id,
+            });
+
+            if (aiAgentResponse?.status === "success") {
+              await db.clientSMS.update({
+                where: {
+                  id: dbMessage.id,
+                },
+                data: {
+                  isSalesAgent: true,
+                },
+              });
+            }
+
+            if (aiAgentResponse?.output) {
+              await db.clientSMS.update({
+                where: {
+                  id: dbMessage.id,
+                },
+                data: {
+                  isSalesAgent: true,
+                },
+              });
+              await sendTwilioMessage({
+                clientId: 3459,
+                message: aiAgentResponse.output,
+                companyId: 12,
+                attachments: [],
+              });
+            }
+          } catch (err) {
+            console.error(
+              "sendTwilioMessage: sales agent receive sms failed",
+              err,
+            );
+          }
+        }
+
         // pusher trigger to send message to company admin real time
 
         receiveTwiloMessage({ ...dbMessage, attachments });
@@ -221,16 +269,17 @@ export async function POST(
         });
       }
     }
+
     // Send a success response
     return Response.json(
       { message: "Webhook subscription successful", data: body },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error: any) {
     console.error("Subscription error:", error);
     return Response.json(
       { message: "Webhook subscription failed", error: error?.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -238,7 +287,7 @@ export async function POST(
 async function fetchTwilioMedia(
   url: string,
   apiKeySid: string,
-  apiKeySecret: string
+  apiKeySecret: string,
 ) {
   const response = await fetch(url, {
     headers: {

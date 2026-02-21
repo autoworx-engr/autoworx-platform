@@ -83,10 +83,10 @@ const Dashboard = () => {
   // Initialize date range when timezone is loaded
   useEffect(() => {
     if (timezone && (!startDate || !endDate)) {
-      const weekStart = moment.tz(timezone).startOf("week");
-      const weekEnd = moment.tz(timezone).endOf("week");
-      setStartDate(weekStart.format("YYYY-MM-DD"));
-      setEndDate(weekEnd.format("YYYY-MM-DD"));
+      const monthStart = moment.tz(timezone).startOf("month");
+      const monthEnd = moment.tz(timezone).endOf("month");
+      setStartDate(monthStart.format("YYYY-MM-DD"));
+      setEndDate(monthEnd.format("YYYY-MM-DD"));
     }
   }, [timezone, startDate, endDate]);
 
@@ -339,16 +339,16 @@ const Dashboard = () => {
               } else if (end && typeof end.toString === "function") {
                 endDateObj = new Date(end.toString());
               } else {
-                endDateObj = moment.tz(timezone).endOf("week").toDate();
+                endDateObj = moment.tz(timezone).endOf("month").toDate();
               }
 
               // Validate the parsed dates
               if (isNaN(startDateObj.getTime())) {
-                startDateObj = moment.tz(timezone).startOf("week").toDate();
+                startDateObj = moment.tz(timezone).startOf("month").toDate();
               }
 
               if (isNaN(endDateObj.getTime())) {
-                endDateObj = moment.tz(timezone).endOf("week").toDate();
+                endDateObj = moment.tz(timezone).endOf("month").toDate();
               }
 
               // Convert the dates to proper format for server
@@ -371,13 +371,13 @@ const Dashboard = () => {
               setEndDate(formattedEndDate);
             }}
             onCancel={() => {
-              // Reset to current week
+              // Reset to current month
               if (timezone) {
-                const currentWeekStart = moment.tz(timezone).startOf("week");
-                const currentWeekEnd = moment.tz(timezone).endOf("week");
+                const currentMonthStart = moment.tz(timezone).startOf("month");
+                const currentMonthEnd = moment.tz(timezone).endOf("month");
 
-                setStartDate(currentWeekStart.format("YYYY-MM-DD"));
-                setEndDate(currentWeekEnd.format("YYYY-MM-DD"));
+                setStartDate(currentMonthStart.format("YYYY-MM-DD"));
+                setEndDate(currentMonthEnd.format("YYYY-MM-DD"));
               }
             }}
           />
