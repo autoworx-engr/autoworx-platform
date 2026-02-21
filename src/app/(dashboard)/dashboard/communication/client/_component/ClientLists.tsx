@@ -14,13 +14,58 @@ const defaultTakeData = 20;
 
 export default async function ClientLists({ searchParams }: TProps) {
   const companyId = await getCompanyId();
-
-  const clients = await getClients({
+  const AI_SALES_AGENT = {
+    id: 0,
+    firstName: "Sales",
+    lastName: "Agent",
+    mobile: "",
+    countryCode: "US",
+    email: "",
+    address: null,
+    city: null,
+    state: null,
+    zip: null,
+    isFleet: false,
+    photo: "/images/default.png",
+    fromRequest: false,
+    fromRequestedCompanyId: null,
+    sourceId: null,
+    converted: false,
+    companyId,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    customerCompany: null,
+    tagId: null,
+    notes: "Temporary AI Sales Agent",
+    leadId: null,
+    firstContactTime: null,
+    lastMailgunEmailReadId: null,
+    isStarred: true,
+    isAiAgent: true, // custom flag (important for logic)
+    conversationsTrack: {
+      id: 0,
+      clientId: 0,
+      emailIsRead: true,
+      smsIsRead: true,
+      emailIsUnReadCount: 0,
+      smsUnReadCount: 0,
+      emailLastMessage: "Hi! I'm your AI Sales Agent. How can I help you?",
+      smsLastMessage: "",
+      lastMessageBy: "Agent",
+      lastEmailBy: "Agent",
+      sendAt: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  };
+  const clientsFromApi = await getClients({
     companyId,
     search: searchParams?.search,
     filter: searchParams?.filter,
     take: defaultTakeData,
   });
+
+  const clients = [...clientsFromApi];
 
   return (
     <div
