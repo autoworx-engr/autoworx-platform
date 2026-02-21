@@ -198,7 +198,7 @@ export async function sendTwilioMessage({
           }
         } catch (err) {
           console.error(
-            "sendInfobipMessage: sales agent receive sms failed",
+            "sendTwilioMessage: sales agent receive sms failed",
             err,
           );
         }
