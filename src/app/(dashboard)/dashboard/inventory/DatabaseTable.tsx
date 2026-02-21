@@ -40,8 +40,6 @@ export default function DatabaseTable({
     }
   }, [data]);
 
-  console.log("DatabaseTable data:", data);
-
   return (
     <div className="pb-2">
       {/* Desktop View */}
