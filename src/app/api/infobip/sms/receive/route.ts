@@ -231,26 +231,26 @@ export async function POST(req: NextRequest) {
           }
 
           //sales agent
-          if (clientSMS && client.id === 3460 && client.companyId === 4) {
-            const aiAgentResponse = await sendSMSToAgent({
-              company_id: client.companyId,
-              message: clientSMS?.message,
-              send_from: clientSMS?.from,
-              send_to: clientSMS?.to,
-              client_id: client.id,
-            });
+          // if (clientSMS && client.id === 3460 && client.companyId === 4) {
+          //   const aiAgentResponse = await sendSMSToAgent({
+          //     company_id: client.companyId,
+          //     message: clientSMS?.message,
+          //     send_from: clientSMS?.from,
+          //     send_to: clientSMS?.to,
+          //     client_id: client.id,
+          //   });
 
-            if (aiAgentResponse?.status === "success") {
-              await db.clientSMS.update({
-                where: {
-                  id: clientSMS.id,
-                },
-                data: {
-                  isSalesAgent: true,
-                },
-              });
-            }
-          }
+          //   if (aiAgentResponse?.status === "success") {
+          //     await db.clientSMS.update({
+          //       where: {
+          //         id: clientSMS.id,
+          //       },
+          //       data: {
+          //         isSalesAgent: true,
+          //       },
+          //     });
+          //   }
+          // }
 
           // Count unread messages
           const totalUnReadMessages = await db.clientSMS.count({

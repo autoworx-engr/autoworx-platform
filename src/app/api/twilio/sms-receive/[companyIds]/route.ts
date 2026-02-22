@@ -176,26 +176,26 @@ export async function POST(
         });
 
         //sales agent
-        if (dbMessage && client.id === 3460 && client.companyId === 4) {
-          const aiAgentResponse = await sendSMSToAgent({
-            company_id: client.companyId,
-            message: dbMessage?.message,
-            send_from: dbMessage?.from,
-            send_to: dbMessage?.to,
-            client_id: client?.id,
-          });
+        // if (dbMessage && client.id === 3460 && client.companyId === 4) {
+        //   const aiAgentResponse = await sendSMSToAgent({
+        //     company_id: client.companyId,
+        //     message: dbMessage?.message,
+        //     send_from: dbMessage?.from,
+        //     send_to: dbMessage?.to,
+        //     client_id: client?.id,
+        //   });
 
-          if (aiAgentResponse?.status === "success") {
-            await db.clientSMS.update({
-              where: {
-                id: dbMessage.id,
-              },
-              data: {
-                isSalesAgent: true,
-              },
-            });
-          }
-        }
+        //   if (aiAgentResponse?.status === "success") {
+        //     await db.clientSMS.update({
+        //       where: {
+        //         id: dbMessage.id,
+        //       },
+        //       data: {
+        //         isSalesAgent: true,
+        //       },
+        //     });
+        //   }
+        // }
 
         // pusher trigger to send message to company admin real time
 
