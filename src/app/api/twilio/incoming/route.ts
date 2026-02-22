@@ -51,7 +51,7 @@ export async function POST(request: Request) {
       console.error("❌ [Incoming] Missing From or To");
       return NextResponse.json(
         { error: "Missing 'From' or 'To' parameters." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -70,14 +70,16 @@ export async function POST(request: Request) {
       },
       select: {
         id: true,
+        name: true,
         callForwardingNumber: true,
+        callWhisperEnabled: true,
       },
     });
 
     if (!twilioCredentials || !company) {
       return NextResponse.json(
         { error: "Twilio credentials or company not found" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -166,14 +168,14 @@ export async function POST(request: Request) {
         }).catch((error) => {
           console.error(
             `Failed to send push notification to user ${user.id}:`,
-            error
+            error,
           );
-        })
+        }),
       );
 
       await Promise.allSettled(notificationPromises);
       console.log(
-        `📱 Push notifications sent to ${companyUsers.length} user(s)`
+        `📱 Push notifications sent to ${companyUsers.length} user(s)`,
       );
     } catch (notificationError) {
       console.error("Error sending push notifications:", notificationError);
@@ -183,6 +185,15 @@ export async function POST(request: Request) {
     // Generate TwiML to dial the user's browser/device
     const voiceResponse = new twiml.VoiceResponse();
     console.log("🚀 ~ POST ~ voiceResponse:", voiceResponse);
+
+    // Inform the caller that the call may be recorded (only if whisper is enabled)
+    if (company.callWhisperEnabled) {
+      const companyName = company.name ?? "this company";
+      voiceResponse.say(
+        { voice: "Polly.Joanna", language: "en-US" },
+        `Thanks for calling ${companyName}. This call may be recorded for quality and training purposes.`,
+      );
+    }
 
     // Check if call forwarding is enabled
     if (callForwardingNumber) {
@@ -198,7 +209,7 @@ export async function POST(request: Request) {
           answerOnBridge: true,
           action: `${process.env.NEXT_PUBLIC_APP_URL}/api/twilio/call-status`,
         },
-        callForwardingNumber
+        callForwardingNumber,
       );
     } else {
       // Dial to the client identity (the browser device) - original behavior
