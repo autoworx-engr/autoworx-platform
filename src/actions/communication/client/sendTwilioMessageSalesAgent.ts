@@ -3,34 +3,14 @@
 import { updatePipelineAutomationTrigger } from "@/actions/automation/pipeline/triggerPipelineAutomation";
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
-import getUser from "@/lib/getUser";
 import { normalizeUSPhoneNumber } from "@/lib/normalizeUSPhoneNumber";
 import { revalidatePath } from "next/cache";
 import Twilio from "twilio";
-import { updateNewEmailChatTrack, updateNewSMSChatTrack } from "./chat-track";
-import { sendSMSToAgent } from "@/service/ai-agent/api";
-
-type TTwilioCredentials = {
-  companyId?: number;
-};
-
-export async function getTwilioCredentials({
-  companyId,
-}: TTwilioCredentials = {}) {
-  let cId = companyId ?? (await getCompanyId());
-  return await db.twilioCredentials.findFirst({
-    where: {
-      companyId: cId,
-    },
-  });
-}
-export async function getTwilioCredentialsById(companyId: number) {
-  return await db.twilioCredentials.findFirst({
-    where: {
-      companyId,
-    },
-  });
-}
+import { updateNewSMSChatTrack } from "./chat-track";
+import {
+  getTwilioCredentials,
+  getTwilioCredentialsById,
+} from "./sendTwilioMessage";
 
 export async function sendTwilioMessageSalesAgent({
   companyId,
