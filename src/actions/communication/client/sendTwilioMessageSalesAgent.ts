@@ -7,28 +7,10 @@ import { normalizeUSPhoneNumber } from "@/lib/normalizeUSPhoneNumber";
 import { revalidatePath } from "next/cache";
 import Twilio from "twilio";
 import { updateNewSMSChatTrack } from "./chat-track";
-
-type TTwilioCredentials = {
-  companyId?: number;
-};
-
-export async function getTwilioCredentials({
-  companyId,
-}: TTwilioCredentials = {}) {
-  let cId = companyId ?? (await getCompanyId());
-  return await db.twilioCredentials.findFirst({
-    where: {
-      companyId: cId,
-    },
-  });
-}
-export async function getTwilioCredentialsById(companyId: number) {
-  return await db.twilioCredentials.findFirst({
-    where: {
-      companyId,
-    },
-  });
-}
+import {
+  getTwilioCredentials,
+  getTwilioCredentialsById,
+} from "./sendTwilioMessage";
 
 export async function sendTwilioMessageSalesAgent({
   companyId,
