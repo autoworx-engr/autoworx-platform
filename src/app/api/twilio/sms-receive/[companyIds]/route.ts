@@ -196,23 +196,6 @@ export async function POST(
               },
             });
           }
-
-          if (aiAgentResponse?.output) {
-            await db.clientSMS.update({
-              where: {
-                id: dbMessage.id,
-              },
-              data: {
-                isSalesAgent: true,
-              },
-            });
-            await sendTwilioMessage({
-              clientId: 3459,
-              message: aiAgentResponse.output,
-              companyId: 12,
-              attachments: [],
-            });
-          }
         }
 
         // pusher trigger to send message to company admin real time

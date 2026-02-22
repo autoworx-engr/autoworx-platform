@@ -3,12 +3,10 @@
 import { updatePipelineAutomationTrigger } from "@/actions/automation/pipeline/triggerPipelineAutomation";
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
-import getUser from "@/lib/getUser";
 import { normalizeUSPhoneNumber } from "@/lib/normalizeUSPhoneNumber";
 import { revalidatePath } from "next/cache";
 import Twilio from "twilio";
-import { updateNewEmailChatTrack, updateNewSMSChatTrack } from "./chat-track";
-import { sendSMSToAgent } from "@/service/ai-agent/api";
+import { updateNewSMSChatTrack } from "./chat-track";
 
 type TTwilioCredentials = {
   companyId?: number;

@@ -252,22 +252,6 @@ export async function POST(req: NextRequest) {
                 },
               });
             }
-            if (aiAgentResponse?.output) {
-              await db.clientSMS.update({
-                where: {
-                  id: clientSMS.id,
-                },
-                data: {
-                  isSalesAgent: true,
-                },
-              });
-              await sendInfobipMessage({
-                clientId: 3459,
-                message: aiAgentResponse.output,
-                companyId: 12,
-                attachments: [],
-              });
-            }
           }
 
           // Count unread messages
