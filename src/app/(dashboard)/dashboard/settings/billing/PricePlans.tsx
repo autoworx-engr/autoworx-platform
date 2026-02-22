@@ -53,7 +53,7 @@ export function PricePlans({
             </p>
             <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold px-3 py-1">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-              1‑month free trial on all plans
+              Free trial included on eligible plans
             </p>
           </div>
           <button
@@ -69,6 +69,13 @@ export function PricePlans({
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {sortedPlans.map((plan) => {
               const isCurrent = plan.id === currentPlanId;
+              const intervalLabel =
+                String(plan.interval || "MONTHLY").toUpperCase() === "YEARLY"
+                  ? "/yr"
+                  : "/mo";
+              const trialLabel = plan.trialLengthDays
+                ? `${plan.trialLengthDays}-month free trial included`
+                : null;
 
               return (
                 <div
@@ -106,12 +113,14 @@ export function PricePlans({
                           ${plan.price}
                         </span>
                         <span className="text-slate-600 dark:text-slate-400 font-medium">
-                          /mo
+                          {intervalLabel}
                         </span>
                       </div>
-                      <p className="mt-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-                        1‑month free trial included
-                      </p>
+                      {trialLabel && (
+                        <p className="mt-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                          {trialLabel}
+                        </p>
+                      )}
                     </div>
 
                     <button

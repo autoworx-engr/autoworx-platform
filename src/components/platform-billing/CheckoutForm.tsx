@@ -18,6 +18,7 @@ type CheckoutPlan = {
   id: string;
   name: string;
   price: number;
+  interval?: "MONTHLY" | "YEARLY";
 };
 
 interface CheckoutFormProps {
@@ -150,7 +151,7 @@ export function CheckoutForm({
               <p className="text-2xl font-black text-[#6571FF] tracking-tighter">
                 ${plan.price}
                 <span className="text-xs text-slate-400 font-medium lowercase">
-                  /mo
+                  {plan.interval === "YEARLY" ? "/yr" : "/mo"}
                 </span>
               </p>
             </div>

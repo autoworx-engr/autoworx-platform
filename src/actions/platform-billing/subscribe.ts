@@ -170,11 +170,13 @@ export async function subscribeToPlatformPlan({
       arbStartDate.setMonth(arbStartDate.getMonth() + trialMonths);
     }
 
+    const intervalMonths = plan.interval === "YEARLY" ? 12 : 1;
+
     const arb = await createPlatformARBSubscription({
       customerProfileId,
       customerPaymentProfileId,
       amount: Number(plan.price),
-      intervalMonths: 1,
+      intervalMonths,
       startDate: arbStartDate,
       planName: plan.name,
     });
@@ -186,7 +188,7 @@ export async function subscribeToPlatformPlan({
 
     const nextPeriodEnd = new Date(trialStart);
     if (trialMonths === 0) {
-      nextPeriodEnd.setMonth(nextPeriodEnd.getMonth() + 1);
+      nextPeriodEnd.setMonth(nextPeriodEnd.getMonth() + intervalMonths);
     }
 
     const subscription = await db.platformSubscription.upsert({

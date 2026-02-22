@@ -166,7 +166,7 @@ export const PlatformPlanManager = ({ initialPlans }: Props) => {
             <div className="relative z-10 mt-5 rounded-2xl border border-slate-200/60 bg-slate-50/70 p-4 text-sm text-slate-700">
               <div className="flex items-baseline justify-between">
                 <div className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
-                  Monthly
+                  {plan.interval === "YEARLY" ? "Yearly" : "Monthly"}
                 </div>
                 <div className="text-2xl font-black text-slate-900">
                   ${plan.price}
