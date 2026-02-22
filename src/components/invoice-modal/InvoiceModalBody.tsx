@@ -642,7 +642,15 @@ export default function InvoiceModalBody({
                 !window.matchMedia("(max-width: 768px)").matches) && (
                 <>
                   <h1 className="col-span-full text-center text-xl font-bold uppercase text-slate-600 md:text-left md:text-3xl">
-                    {invoice?.type?.toUpperCase()}
+                    {parseFloat(
+                      calculateDue(
+                        Number(invoice.grandTotal),
+                        Number(invoice.totalPayment),
+                        Number(invoice.deposit),
+                      ).toFixed(2),
+                    ) === 0
+                      ? "RECEIPT"
+                      : invoice?.type?.toUpperCase()}
                   </h1>
 
                   {/* Client Info */}
