@@ -11,6 +11,14 @@ import Input from "@/components/Input";
 import { Button } from "@/components/ui/button";
 import { PlatformFeatureType, PlatformPlanInterval } from "@prisma/client";
 import { PlatformPlanWithMeta } from "./PlatformPlanManager";
+import {
+  DollarSign,
+  Info,
+  Layers,
+  Loader2,
+  Save,
+  ShieldCheck,
+} from "lucide-react";
 
 const featureTypes = [
   PlatformFeatureType.BOOLEAN,
@@ -218,46 +226,42 @@ export const PlanEditorDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] max-w-3xl overflow-y-auto rounded-[2rem] border-none bg-white/95 p-0 shadow-2xl ring-1 ring-slate-900/10">
-        <div className="flex items-center justify-between border-b border-slate-200/60 px-8 py-6">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-slate-900">
-              {isEdit ? "Edit Plan" : "Create Plan"}
-            </DialogTitle>
-            <p className="text-xs font-medium text-slate-500">
-              Keep plan pricing and entitlements aligned with billing.
-            </p>
-          </DialogHeader>
-          <span className="rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-bold text-emerald-600">
-            Billing Sync
-          </span>
+      <DialogContent className="max-h-[85vh] max-w-2xl overflow-hidden rounded-[2.5rem] border-none bg-white/90 dark:bg-slate-950/90 p-0 shadow-2xl backdrop-blur-2xl ring-1 ring-slate-900/5 dark:ring-white/10">
+        <div className="flex items-center justify-between border-b border-slate-200/50 dark:border-slate-800/50 px-8 py-6">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600 dark:bg-slate-900 dark:text-slate-400">
+              <Layers size={20} />
+            </div>
+            <div>
+              <DialogTitle className="text-lg font-bold text-slate-900 dark:text-white">
+                {isEdit ? "Plan Configuration" : "New Plan Configuration"}
+              </DialogTitle>
+              <p className="text-xs font-medium text-slate-500 tracking-tight">
+                {isEdit
+                  ? "Manage pricing and entitlements for this plan."
+                  : "Define pricing and entitlements for a new plan."}
+              </p>
+            </div>
+          </div>
+          <div className="hidden items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-bold text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 sm:flex">
+            <ShieldCheck size={12} /> Live Sync
+          </div>
         </div>
 
-        <div className="space-y-6 px-8 py-6">
-          <div className="grid gap-4 md:grid-cols-2">
+        <div className="max-h-[65vh] space-y-8 overflow-y-auto p-8 custom-scrollbar">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-slate-500">
+              <label className="ml-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">
                 Plan Name
               </label>
               <Input
                 value={name}
                 onChange={(e: any) => setName(e.target.value)}
-                className="border border-slate-200 focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                className="h-11 rounded-xl border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-[#6571FF] dark:ring-slate-800 px-4"
               />
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-slate-500">
-                Price (USD)
-              </label>
-              <Input
-                type="number"
-                value={price}
-                onChange={(e: any) => setPrice(e.target.value)}
-                className="border border-slate-200 focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-slate-500">
+              <label className="ml-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">
                 Interval
               </label>
               <select
@@ -265,7 +269,7 @@ export const PlanEditorDialog = ({
                 onChange={(e) =>
                   setInterval(e.target.value as PlatformPlanInterval)
                 }
-                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200"
+                className="w-full appearance-none rounded-xl border-none bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700 outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-[#6571FF] dark:bg-slate-900 dark:text-slate-200 dark:ring-slate-800"
               >
                 {Object.values(PlatformPlanInterval).map((option) => (
                   <option key={option} value={option}>
@@ -274,8 +278,26 @@ export const PlanEditorDialog = ({
                 ))}
               </select>
             </div>
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-slate-500">
+
+            <div className="md:col-span-2 space-y-2">
+              <label className="ml-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                Price (USD)
+              </label>
+              <div className="relative">
+                <div className="absolute left-4 top-3 text-slate-400">
+                  <DollarSign size={18} />
+                </div>
+                <Input
+                  type="number"
+                  value={price}
+                  onChange={(e: any) => setPrice(e.target.value)}
+                  className="h-11 rounded-xl border-none pl-10 font-bold text-[#00b8b0] ring-1 ring-slate-200 focus:ring-2 focus:ring-emerald-500 dark:ring-slate-800"
+                />
+              </div>
+            </div>
+
+            <div className="md:col-span-2 space-y-2">
+              <label className="ml-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">
                 Trial Months
               </label>
               <Input
@@ -283,123 +305,157 @@ export const PlanEditorDialog = ({
                 min={0}
                 value={trialLengthDays}
                 onChange={(e: any) => setTrialLengthDays(e.target.value)}
-                className="border border-slate-200 focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                className="h-11 rounded-xl border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-[#6571FF] dark:ring-slate-800 px-4"
               />
             </div>
+
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-slate-500">
+              <label className="ml-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">
                 Display Order
               </label>
               <Input
                 type="number"
                 value={displayOrder}
                 onChange={(e: any) => setDisplayOrder(e.target.value)}
-                className="border border-slate-200 focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                className="h-11 rounded-xl border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-[#6571FF] dark:ring-slate-800 px-4"
               />
             </div>
-            <label className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600">
-              <input
-                id="plan-active"
-                type="checkbox"
-                checked={isActive}
-                onChange={(e) => setIsActive(e.target.checked)}
-              />
-              Active
-            </label>
+
+            <div className="space-y-2">
+              <label className="ml-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                Plan Status
+              </label>
+              <div className="flex h-11 rounded-xl bg-slate-200 p-1 dark:bg-slate-800">
+                {[true, false].map((val) => (
+                  <button
+                    key={val ? "active" : "inactive"}
+                    onClick={() => setIsActive(val)}
+                    className={`flex-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${
+                      isActive === val
+                        ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white"
+                        : "text-slate-500"
+                    }`}
+                  >
+                    {val ? "Active" : "Inactive"}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-semibold text-slate-500">
+            <label className="ml-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">
               Description
             </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 p-3 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200"
+              className="w-full rounded-xl border-none bg-slate-100 p-3 text-sm text-slate-700 outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-[#6571FF] dark:bg-slate-900 dark:text-slate-200 dark:ring-slate-800"
               rows={3}
             />
           </div>
 
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-slate-600">Features</h3>
-              <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
-                Catalog-driven
+          <div className="space-y-4">
+            <div className="flex items-center justify-between px-1">
+              <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                <Info size={12} /> Entitlement Overrides
+              </h4>
+              <span className="rounded-lg bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500 dark:bg-slate-800">
+                {features.length} features
               </span>
             </div>
-            <div className="space-y-3">
+
+            <div className="max-h-72 overflow-y-auto rounded-[1.5rem] border border-slate-200/60 bg-slate-50/50 p-2 dark:border-slate-800/60 dark:bg-slate-900/40 custom-scrollbar overflow-x-hidden">
               {features.length === 0 && (
-                <p className="text-xs text-slate-400">
+                <p className="px-3 py-4 text-xs text-slate-400">
                   No features yet. Add one to configure entitlements.
                 </p>
               )}
               {features.map((feature, index) => (
                 <div
                   key={`${feature.key}-${index}`}
-                  className="grid gap-2 rounded-2xl border border-slate-200 bg-slate-50/80 p-4 md:grid-cols-4"
+                  className="group flex items-center justify-between gap-4 rounded-xl px-4 py-3 transition-colors hover:bg-white dark:hover:bg-slate-800/50"
                 >
-                  <div className="flex items-center rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
-                    {formatFeatureName(feature.key)}
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-bold text-slate-700 dark:text-slate-200">
+                      {formatFeatureName(feature.key)}
+                    </p>
+                    <p className="text-[10px] font-medium uppercase text-slate-400 tracking-tighter">
+                      {feature.type}
+                    </p>
                   </div>
-                  <div className="flex items-center rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
-                    {feature.type}
+
+                  <div className="w-40 flex-shrink-0 space-y-1">
+                    {feature.type === PlatformFeatureType.BOOLEAN ? (
+                      <div className="flex h-9 rounded-lg bg-slate-200 p-1 dark:bg-slate-800">
+                        {["true", "false"].map((val) => (
+                          <button
+                            key={val}
+                            onClick={() => updateFeature(index, { value: val })}
+                            className={`flex-1 rounded-md text-[10px] font-black transition-all ${
+                              feature.value === val
+                                ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white"
+                                : "text-slate-500"
+                            }`}
+                          >
+                            {val === "true" ? "ENABLED" : "DISABLED"}
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <Input
+                        placeholder="value"
+                        value={feature.value}
+                        onChange={(e: any) =>
+                          updateFeature(index, { value: e.target.value })
+                        }
+                        className="px-4 w-full h-9 rounded-lg border-none text-right font-mono text-[11px] font-bold text-[#6571FF] ring-1 ring-slate-200 focus:ring-2 focus:ring-[#6571FF] dark:ring-slate-700"
+                      />
+                    )}
+                    {feature.key &&
+                    !catalogFeatures.some(
+                      (catalogFeature) => catalogFeature.key === feature.key,
+                    ) ? (
+                      <button
+                        onClick={() => removeFeature(index)}
+                        className="text-[10px] font-bold text-rose-500 hover:text-rose-600"
+                      >
+                        Remove
+                      </button>
+                    ) : (
+                      <span className="text-[10px] font-semibold text-slate-400">
+                        Default
+                      </span>
+                    )}
                   </div>
-                  {feature.type === PlatformFeatureType.BOOLEAN ? (
-                    <select
-                      value={feature.value}
-                      onChange={(e) =>
-                        updateFeature(index, { value: e.target.value })
-                      }
-                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200"
-                    >
-                      <option value="true">true</option>
-                      <option value="false">false</option>
-                    </select>
-                  ) : (
-                    <Input
-                      placeholder="value"
-                      value={feature.value}
-                      onChange={(e: any) =>
-                        updateFeature(index, { value: e.target.value })
-                      }
-                      className="border border-slate-200 focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
-                    />
-                  )}
-                  {feature.key &&
-                  !catalogFeatures.some(
-                    (catalogFeature) => catalogFeature.key === feature.key,
-                  ) ? (
-                    <Button
-                      variant="ghost"
-                      className="text-red-500"
-                      onClick={() => removeFeature(index)}
-                    >
-                      Remove
-                    </Button>
-                  ) : (
-                    <span className="text-[11px] font-semibold text-slate-400">
-                      Default
-                    </span>
-                  )}
                 </div>
               ))}
             </div>
           </div>
 
           {error && <p className="text-sm text-red-500">{error}</p>}
+        </div>
 
-          <div className="flex items-center justify-end gap-2 border-t border-slate-200/60 pt-4">
-            <Button variant="ghost" onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSubmit}
-              disabled={isSaving || !canSave}
-              className="rounded-xl bg-gradient-to-r from-[#00b8b0] to-[#0098da] text-white"
-            >
-              {isSaving ? "Saving..." : isEdit ? "Save Changes" : "Create Plan"}
-            </Button>
-          </div>
+        <div className="flex items-center justify-end gap-3 border-t border-slate-200/50 bg-slate-50/50 px-8 py-6 dark:border-slate-800/50 dark:bg-slate-900/50">
+          <button
+            onClick={() => onOpenChange(false)}
+            className="text-xs font-bold text-slate-500 transition-colors hover:text-slate-800 dark:hover:text-slate-300"
+          >
+            Discard Changes
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={isSaving || !canSave}
+            className="group relative flex items-center gap-2 overflow-hidden rounded-xl bg-slate-900 px-6 py-2.5 text-xs font-bold text-white transition-all hover:bg-slate-800 disabled:opacity-60 dark:bg-white dark:text-slate-900"
+          >
+            {isSaving ? (
+              <Loader2 size={14} className="animate-spin" />
+            ) : (
+              <Save size={14} />
+            )}
+            {isSaving ? "Syncing..." : isEdit ? "Save Changes" : "Create Plan"}
+            <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-1000 group-hover:translate-x-full" />
+          </button>
         </div>
       </DialogContent>
     </Dialog>
