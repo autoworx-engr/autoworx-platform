@@ -178,47 +178,40 @@ export async function POST(
 
         //sales agent
         if (dbMessage && client.id === 3460 && client.companyId === 4) {
-          try {
-            const aiAgentResponse = await sendSMSToAgent({
-              company_id: client.companyId,
-              message: dbMessage?.message,
-              send_from: dbMessage?.from,
-              send_to: dbMessage?.to,
-              client_id: client?.id,
+          const aiAgentResponse = await sendSMSToAgent({
+            company_id: client.companyId,
+            message: dbMessage?.message,
+            send_from: dbMessage?.from,
+            send_to: dbMessage?.to,
+            client_id: client?.id,
+          });
+
+          if (aiAgentResponse?.status === "success") {
+            await db.clientSMS.update({
+              where: {
+                id: dbMessage.id,
+              },
+              data: {
+                isSalesAgent: true,
+              },
             });
+          }
 
-            if (aiAgentResponse?.status === "success") {
-              await db.clientSMS.update({
-                where: {
-                  id: dbMessage.id,
-                },
-                data: {
-                  isSalesAgent: true,
-                },
-              });
-            }
-
-            if (aiAgentResponse?.output) {
-              await db.clientSMS.update({
-                where: {
-                  id: dbMessage.id,
-                },
-                data: {
-                  isSalesAgent: true,
-                },
-              });
-              await sendTwilioMessage({
-                clientId: 3459,
-                message: aiAgentResponse.output,
-                companyId: 12,
-                attachments: [],
-              });
-            }
-          } catch (err) {
-            console.error(
-              "sendTwilioMessage: sales agent receive sms failed",
-              err,
-            );
+          if (aiAgentResponse?.output) {
+            await db.clientSMS.update({
+              where: {
+                id: dbMessage.id,
+              },
+              data: {
+                isSalesAgent: true,
+              },
+            });
+            await sendTwilioMessage({
+              clientId: 3459,
+              message: aiAgentResponse.output,
+              companyId: 12,
+              attachments: [],
+            });
           }
         }
 
