@@ -158,8 +158,12 @@ export async function subscribeToPlatformPlan({
       }
     }
 
-    // 2. Create ARB Subscription (Starting after 1-month free trial)
-    const trialMonths = billingCustomer?.trialConsumedAt ? 0 : 1;
+    // 2. Create ARB Subscription (Starting after free trial)
+    const baseTrialMonths =
+      plan.trialLengthDays && plan.trialLengthDays > 0
+        ? plan.trialLengthDays
+        : 1;
+    const trialMonths = billingCustomer?.trialConsumedAt ? 0 : baseTrialMonths;
     const trialStart = new Date();
     const arbStartDate = new Date(trialStart);
     if (trialMonths > 0) {

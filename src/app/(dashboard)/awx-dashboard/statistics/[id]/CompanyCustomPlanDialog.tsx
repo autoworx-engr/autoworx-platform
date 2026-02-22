@@ -56,6 +56,7 @@ export function CompanyCustomPlanDialog({
 
   const [price, setPrice] = useState<string>("");
   const [label, setLabel] = useState<string>("Custom Plan");
+  const [trialMonths, setTrialMonths] = useState<string>("1");
   const [features, setFeatures] = useState<EditableFeature[]>([]);
 
   useEffect(() => {
@@ -65,6 +66,7 @@ export function CompanyCustomPlanDialog({
     const plan = plans.find((p) => p.id === initialPlanId) || plans[0];
     setPrice(String(plan.price));
     setLabel(`${plan.name} (Custom)`);
+    setTrialMonths(String(plan.trialLengthDays ?? 1));
     setFeatures(
       plan.features.map((f) => ({
         key: f.featureKey,
@@ -80,6 +82,7 @@ export function CompanyCustomPlanDialog({
     if (plan) {
       setPrice(String(plan.price));
       setLabel(`${plan.name} (Custom)`);
+      setTrialMonths(String(plan.trialLengthDays ?? 1));
       setFeatures(
         plan.features.map((f) => ({
           key: f.featureKey,
@@ -109,6 +112,7 @@ export function CompanyCustomPlanDialog({
             companyId,
             label,
             price: Number(price),
+            trialLengthDays: Number(trialMonths),
             basePlanId: selectedPlanId,
             features: features.map((f) => ({
               key: f.key,
@@ -207,6 +211,20 @@ export function CompanyCustomPlanDialog({
                   className="h-11 rounded-xl border-none pl-10 font-bold text-[#00b8b0] ring-1 ring-slate-200 focus:ring-2 focus:ring-emerald-500 dark:ring-slate-800"
                 />
               </div>
+            </div>
+
+            <div className="md:col-span-2 space-y-2">
+              <label className="ml-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                Free Trial (Months)
+              </label>
+              <Input
+                name="trialMonths"
+                type="number"
+                min={0}
+                value={trialMonths}
+                onChange={(e: any) => setTrialMonths(e.target.value)}
+                className="h-11 rounded-xl border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-[#6571FF] dark:ring-slate-800 px-4"
+              />
             </div>
           </div>
 
