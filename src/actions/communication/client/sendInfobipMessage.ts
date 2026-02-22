@@ -332,7 +332,12 @@ export async function sendInfobipMessage({
           send_to: dbMessage?.to,
           client_id: 3459,
         });
-        console.log("aiAgentResponse", aiAgentResponse);
+        console.log(
+          "aiAgentResponse",
+          aiAgentResponse,
+          client,
+          infobipConfig.companyId,
+        );
         if (aiAgentResponse?.status === "success") {
           await db.clientSMS.update({
             where: {
@@ -341,13 +346,6 @@ export async function sendInfobipMessage({
             data: {
               isSalesAgent: true,
             },
-          });
-        } else {
-          await sendInfobipMessage({
-            clientId: 3459,
-            message: aiAgentResponse.output,
-            companyId: 12,
-            attachments: [],
           });
         }
       }

@@ -234,46 +234,23 @@ export async function POST(req: NextRequest) {
 
           //sales agent
           if (clientSMS && client.id === 3460 && client.companyId === 4) {
-            try {
-              const aiAgentResponse = await sendSMSToAgent({
-                company_id: client.companyId,
-                message: clientSMS?.message,
-                send_from: clientSMS?.from,
-                send_to: clientSMS?.to,
-                client_id: client.id,
-              });
+            const aiAgentResponse = await sendSMSToAgent({
+              company_id: client.companyId,
+              message: clientSMS?.message,
+              send_from: clientSMS?.from,
+              send_to: clientSMS?.to,
+              client_id: client.id,
+            });
 
-              if (aiAgentResponse?.status === "success") {
-                await db.clientSMS.update({
-                  where: {
-                    id: clientSMS.id,
-                  },
-                  data: {
-                    isSalesAgent: true,
-                  },
-                });
-              }
-              if (aiAgentResponse?.output) {
-                await db.clientSMS.update({
-                  where: {
-                    id: clientSMS.id,
-                  },
-                  data: {
-                    isSalesAgent: true,
-                  },
-                });
-                await sendInfobipMessage({
-                  clientId: 3459,
-                  message: aiAgentResponse.output,
-                  companyId: 12,
-                  attachments: [],
-                });
-              }
-            } catch (err) {
-              console.error(
-                "sendInfobipMessage: sales agent receive sms failed",
-                err,
-              );
+            if (aiAgentResponse?.status === "success") {
+              await db.clientSMS.update({
+                where: {
+                  id: clientSMS.id,
+                },
+                data: {
+                  isSalesAgent: true,
+                },
+              });
             }
           }
 
