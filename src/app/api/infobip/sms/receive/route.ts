@@ -7,8 +7,6 @@ import receiveTwiloMessage from "@/lib/pusher/receiveTwiloMessage";
 import { getPusherInstance } from "@/lib/pusher/server";
 import { NextRequest, NextResponse } from "next/server";
 import { sendSMSToAgent } from "@/service/ai-agent/api";
-import { sendTwilioMessage } from "@/actions/communication/client/sendTwilioMessage";
-import { sendInfobipMessage } from "@/actions/communication/client/sendInfobipMessage";
 
 const pusher = getPusherInstance();
 
