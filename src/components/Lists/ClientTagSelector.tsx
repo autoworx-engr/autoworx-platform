@@ -111,7 +111,7 @@ export function ClientTagSelector({
         }}
       >
         <DropdownMenuTrigger
-          className={`flex h-10 items-center gap-x-8 rounded-md border border-slate-300 bg-white px-3 py-2 ${customStyles}`}
+          className={`flex w-full justify-between h-10 items-center gap-x-8 rounded-md border border-slate-300 bg-white px-3 py-2 ${customStyles}`}
           style={{
             backgroundColor: tag?.bgColor,
             color: tag?.textColor,
@@ -273,7 +273,7 @@ function QuickAddClientTagForm({
   };
 
   return (
-    <form ref={formRef} className="flex w-[200px] gap-2 p-2">
+    <form ref={formRef} className="flex w-full gap-2 p-2">
       <input
         name="name"
         type="text"
@@ -289,7 +289,7 @@ function QuickAddClientTagForm({
         <Palette size={18} />
       </button>
       <Submit
-        className="rounded bg-slate-500 p-1 text-xs leading-3 text-white"
+        className="rounded bg-[#6571FF] p-1 text-xs leading-3 text-white"
         formAction={handleSubmit}
       >
         Quick

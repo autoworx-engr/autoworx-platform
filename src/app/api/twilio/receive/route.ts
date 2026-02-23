@@ -39,7 +39,7 @@ export async function POST(request: Request) {
     if (!to || !from) {
       return NextResponse.json(
         { error: "Both 'To' and 'From' parameters are required." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -47,7 +47,7 @@ export async function POST(request: Request) {
     if (to === from) {
       return NextResponse.json(
         { error: "Cannot call the same Twilio number." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -63,7 +63,7 @@ export async function POST(request: Request) {
     if (!twilioCredentials) {
       return NextResponse.json(
         { error: "Twilio credentials not found" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -94,14 +94,23 @@ export async function POST(request: Request) {
     });
 
     const voiceResponse = new twiml.VoiceResponse();
-    voiceResponse.dial(
+    const dial = voiceResponse.dial({
+      callerId: twilioCredentials.phoneNumber,
+      record: "record-from-answer",
+      recordingStatusCallback: `${process.env.NEXT_PUBLIC_APP_URL}/api/twilio/call-recording?callId=${callId}`,
+      recordingStatusCallbackMethod: "POST",
+      // Required for whisper: caller keeps hearing ringing while the whisper
+      // message plays to the callee; call is only bridged after whisper finishes.
+      answerOnBridge: true,
+    });
+    // Whisper URL notifies the called party (client) that the call is being recorded
+    // before bridging them to the agent. companyId lets the whisper endpoint look up
+    // the company name and check if whisper is enabled.
+    dial.number(
       {
-        callerId: twilioCredentials.phoneNumber,
-        record: "record-from-answer",
-        recordingStatusCallback: `${process.env.NEXT_PUBLIC_APP_URL}/api/twilio/call-recording?callId=${callId}`,
-        recordingStatusCallbackMethod: "POST",
+        url: `${process.env.NEXT_PUBLIC_APP_URL}/api/twilio/whisper?companyId=${twilioCredentials.companyId}`,
       },
-      to
+      to,
     );
 
     return new Response(voiceResponse.toString(), {
