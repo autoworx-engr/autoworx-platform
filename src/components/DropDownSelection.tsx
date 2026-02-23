@@ -150,11 +150,11 @@ export function DropdownSelection({
           )}
         </DropdownMenuRadioGroup>
         {showClearButton && onClear && (
-          <div className="sticky bottom-0 mt-2 rounded-2xl bg-white/80 pt-2 backdrop-blur-md dark:bg-slate-900/70">
+          <div className="sticky bottom-0 mt-2 rounded-2xl backdrop-blur-md dark:bg-slate-900/70">
             <Button
               type="button"
               variant="outline"
-              className="w-full rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-700 dark:text-slate-200 dark:hover:text-white"
+              className="w-full rounded-lg text-sm font-semibold text-white hover:text-white bg-rose-500 hover:bg-rose-600 dark:text-slate-200 dark:hover:text-white"
               onClick={handleClear}
             >
               {clearLabel}
