@@ -326,11 +326,12 @@ export async function sendInfobipMessage({
       revalidatePath("/dashboard/communication/client");
       if (dbMessage && clientId === 3460 && infobipConfig?.companyId === 4) {
         const aiAgentResponse = await sendSMSToAgent({
-          company_id: 12,
+          company_id: clientId,
           message: dbMessage?.message,
           send_from: dbMessage?.from,
           send_to: dbMessage?.to,
-          client_id: 3459,
+          client_id: infobipConfig?.companyId,
+          user_id: user?.id,
         });
         console.log(
           "aiAgentResponse",
@@ -338,16 +339,6 @@ export async function sendInfobipMessage({
           client,
           infobipConfig.companyId,
         );
-        if (aiAgentResponse?.status === "success") {
-          await db.clientSMS.update({
-            where: {
-              id: dbMessage.id,
-            },
-            data: {
-              isSalesAgent: true,
-            },
-          });
-        }
       }
 
       return {

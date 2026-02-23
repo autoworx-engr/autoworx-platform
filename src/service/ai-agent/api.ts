@@ -7,6 +7,7 @@ type TSendSMSToAIAgent = {
   send_to: string;
   company_id: number;
   client_id: number;
+  user_id?: number;
 };
 
 export const sendSMSToAgent = async function (payload: TSendSMSToAIAgent) {
