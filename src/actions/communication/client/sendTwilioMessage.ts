@@ -176,6 +176,7 @@ export async function sendTwilioMessage({
           send_from: dbMessage?.from,
           send_to: dbMessage?.to,
           client_id: clientId,
+          user_id: user?.id,
         });
         console.log(
           "aiAgentResponse",
@@ -183,16 +184,6 @@ export async function sendTwilioMessage({
           clientId,
           twilioCredentials?.companyId,
         );
-        if (aiAgentResponse?.status === "success") {
-          await db.clientSMS.update({
-            where: {
-              id: dbMessage.id,
-            },
-            data: {
-              isSalesAgent: true,
-            },
-          });
-        }
       }
 
       return {

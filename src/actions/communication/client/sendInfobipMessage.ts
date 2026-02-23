@@ -331,6 +331,7 @@ export async function sendInfobipMessage({
           send_from: dbMessage?.from,
           send_to: dbMessage?.to,
           client_id: infobipConfig?.companyId,
+          user_id: user?.id,
         });
         console.log(
           "aiAgentResponse",
@@ -338,16 +339,6 @@ export async function sendInfobipMessage({
           client,
           infobipConfig.companyId,
         );
-        if (aiAgentResponse?.status === "success") {
-          await db.clientSMS.update({
-            where: {
-              id: dbMessage.id,
-            },
-            data: {
-              isSalesAgent: true,
-            },
-          });
-        }
       }
 
       return {
