@@ -152,10 +152,11 @@ async function handleSubscriptionPayment(payload: any) {
       });
 
       // 3. Update subscription period
-      // If the subscription is successful, we bump the period end by 1 month
+      // Bump by the correct interval based on the plan (1 month or 12 months for yearly)
       const currentEnd = subscription.currentPeriodEnd || new Date();
       const nextPeriodEnd = new Date(currentEnd);
-      nextPeriodEnd.setMonth(nextPeriodEnd.getMonth() + 1);
+      const intervalMonths = subscription.plan.interval === "YEARLY" ? 12 : 1;
+      nextPeriodEnd.setMonth(nextPeriodEnd.getMonth() + intervalMonths);
 
       await tx.platformSubscription.update({
         where: { id: subscription.id },
