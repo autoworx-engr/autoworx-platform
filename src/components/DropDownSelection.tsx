@@ -62,7 +62,7 @@ export function DropdownSelection({
               "flex items-center justify-center gap-x-1 text-xs lg:gap-x-2 lg:text-base",
               "rounded-xl px-3 py-2 transition-transform duration-500 ease-out transform hover:scale-[1.02]",
               // base appearance
-              "bg-white/60 dark:bg-slate-900/40 backdrop-blur-sm",
+              "bg-white dark:bg-slate-900/40",
               // default ring + hover
               "ring-1 ring-slate-900/5 dark:ring-slate-700/20 hover:ring-[#6470fd]/50 hover:shadow-sm",
               // when menu is open (radix sets aria-expanded)
@@ -94,7 +94,7 @@ export function DropdownSelection({
       <DropdownMenuContent
         className={cn(
           "w-56 max-h-80 overflow-y-auto thin-scrollbar",
-          "rounded-2xl p-2 backdrop-blur-md bg-white/60 dark:bg-slate-900/50",
+          "rounded-2xl p-2 m-2 backdrop-blur-md bg-white dark:bg-slate-900/50",
           "ring-1 ring-slate-900/5 dark:ring-slate-700/20 shadow-lg border-transparent",
           "transition-all duration-200",
           contentClassName
