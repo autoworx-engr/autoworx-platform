@@ -31,6 +31,7 @@ const PUBLIC_API_ROUTES = [
   "/api/twilio/call-status",
   "/api/twilio/incoming",
   "/api/twilio/receive",
+  "/api/twilio/whisper",
   "/api/twilio/token",
   "/api/invoice/track-view",
   "/api/upload",
