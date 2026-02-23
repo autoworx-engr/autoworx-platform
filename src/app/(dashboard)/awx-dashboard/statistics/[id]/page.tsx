@@ -4,7 +4,7 @@ import Link from "next/link";
 import CompanyReportSection from "../../components/CompanyReportSection";
 import FeaturePermission from "../../components/FeaturePermission";
 import { ConfigureCommunicationHub } from "./ConfigureCommunicationHub";
-import { CompanyCustomPlanDialog } from "./CompanyCustomPlanDialog";
+import { CompanyPlanEditor } from "./CompanyPlanEditor";
 import { PlatformPlanToggle } from "./PlatformPlanToggle";
 import { ArrowLeft, Upload } from "lucide-react";
 import moment from "moment";
@@ -46,12 +46,6 @@ const Page = async (props: propsType) => {
         include: { features: true },
       },
     },
-  });
-
-  const plans = await db.platformPlan.findMany({
-    where: { isActive: true },
-    orderBy: { displayOrder: "asc" },
-    include: { features: true },
   });
 
   let sales = 0,
@@ -274,10 +268,8 @@ const Page = async (props: propsType) => {
               </div>
 
               <div className="mt-4 flex items-center gap-x-4 pt-2">
-                <CompanyCustomPlanDialog
+                <CompanyPlanEditor
                   companyId={Number(id)}
-                  currentPlanId={subscription?.planId ?? null}
-                  plans={plans}
                 />
                 <PlatformPlanToggle
                   companyId={Number(id)}

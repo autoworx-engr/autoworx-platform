@@ -125,8 +125,8 @@ export const PlanEditorDialog = ({
         if (!isActive) return;
         setCatalogFeatures(data?.features || []);
         setCatalogLoaded(true);
-      } catch (err) {
-        console.error("Failed to load feature catalog", err);
+      } catch {
+        // feature catalog load failed silently
       }
     };
 
@@ -255,6 +255,7 @@ export const PlanEditorDialog = ({
                 Plan Name
               </label>
               <Input
+                name="plan-name"
                 value={name}
                 onChange={(e: any) => setName(e.target.value)}
                 className="h-11 rounded-xl border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-[#6571FF] dark:ring-slate-800 px-4"
@@ -288,6 +289,7 @@ export const PlanEditorDialog = ({
                   <DollarSign size={18} />
                 </div>
                 <Input
+                  name="plan-price"
                   type="number"
                   value={price}
                   onChange={(e: any) => setPrice(e.target.value)}
@@ -301,8 +303,9 @@ export const PlanEditorDialog = ({
                 Trial Months
               </label>
               <Input
+                name="plan-trial"
                 type="number"
-                min={0}
+                min="0"
                 value={trialLengthDays}
                 onChange={(e: any) => setTrialLengthDays(e.target.value)}
                 className="h-11 rounded-xl border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-[#6571FF] dark:ring-slate-800 px-4"
@@ -314,6 +317,7 @@ export const PlanEditorDialog = ({
                 Display Order
               </label>
               <Input
+                name="plan-display-order"
                 type="number"
                 value={displayOrder}
                 onChange={(e: any) => setDisplayOrder(e.target.value)}
@@ -404,6 +408,7 @@ export const PlanEditorDialog = ({
                       </div>
                     ) : (
                       <Input
+                        name={`feature-value-${index}`}
                         placeholder="value"
                         value={feature.value}
                         onChange={(e: any) =>
