@@ -17,6 +17,7 @@ const eslintConfig = defineConfig([
       "no-console": "warn", // Shows a warning for console.log
       "@next/next/no-img-element": "off", // Example: allow <img> instead of <Image />,
       "react-hooks/set-state-in-effect": "off",
+      "react/no-unescaped-entities": "off",
     },
   },
 ]);
