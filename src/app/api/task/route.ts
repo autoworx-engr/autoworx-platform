@@ -148,18 +148,6 @@ import createGoogleCalendarEvent from "@/actions/task/google-calendar/createGoog
  */
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Unauthorized",
-        },
-        { status: 401 },
-      );
-    }
-
     const body = await req.json();
 
     const {
@@ -211,8 +199,8 @@ export async function POST(req: NextRequest) {
         startTime: startTime ?? null,
         endTime: endTime ?? null,
         priority: priorityEnum ?? "Low",
-        userId: Number(session.user.id),
-        companyId: session.user.companyId,
+        userId: userId,
+        companyId: companyId,
         invoiceId: invoiceId ?? null,
         invoiceTemplateId: invoiceTemplateId ?? null,
         clientId: clientId ?? null,
