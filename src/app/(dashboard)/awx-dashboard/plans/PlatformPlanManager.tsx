@@ -169,7 +169,7 @@ export const PlatformPlanManager = ({ initialPlans }: Props) => {
                   {plan.interval === "YEARLY" ? "Yearly" : "Monthly"}
                 </div>
                 <div className="text-2xl font-black text-slate-900">
-                  ${plan.price}
+                  ${Number(plan.price)}
                 </div>
               </div>
               <div className="mt-3 grid grid-cols-2 gap-2 text-[11px] font-semibold text-slate-500">
