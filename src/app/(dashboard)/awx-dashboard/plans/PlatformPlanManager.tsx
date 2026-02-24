@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { PlanEditorDialog } from "./PlanEditorDialog";
 import { ArrowLeft, Plus } from "lucide-react";
 
-export type PlatformPlanWithMeta = PlatformPlan & {
+export type PlatformPlanWithMeta = Omit<PlatformPlan, "price"> & {
+  price: number;
   features: PlanFeature[];
   _count: { subscriptions: number };
 };

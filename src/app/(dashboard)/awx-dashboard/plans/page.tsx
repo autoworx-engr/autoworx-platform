@@ -17,7 +17,7 @@ const page = async () => {
       price: Number(plan.price),
     }));
 
-  return <PlatformPlanManager initialPlans={plansData} />;
+   return <PlatformPlanManager initialPlans={plansData} />;
 };
 
 export default page;

@@ -220,7 +220,7 @@ export function CompanyCustomPlanDialog({
               <Input
                 name="trialMonths"
                 type="number"
-                min={0}
+                min="0"
                 value={trialMonths}
                 onChange={(e: any) => setTrialMonths(e.target.value)}
                 className="h-11 rounded-xl border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-[#6571FF] dark:ring-slate-800 px-4"
