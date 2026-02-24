@@ -581,8 +581,8 @@ const PDFInvoiceItems = ({
           <Text>{formatCurrency(serviceTotal)}</Text>
         </View>
 
-        <View style={styles.laborItem}>
-          <Text>{item.service.description}</Text>
+        <View>
+          <Text>{item.service?.description || item.serviceDesc}</Text>
         </View>
 
         <View style={styles.serviceDetails}>
@@ -610,6 +610,10 @@ const PDFInvoiceItems = ({
           <Text>{item.labor ? item.labor.name : "Labor"}</Text>
           <Text>{formatCurrency(laborCost)}</Text>
         </View>
+        <View style={styles.laborItem}>
+          <Text>{item.labor?.notes}</Text>
+        </View>
+
         <View style={styles.laborItem}>
           <Text>Discount</Text>
           <Text>{formatCurrency(totalDiscount)}</Text>
