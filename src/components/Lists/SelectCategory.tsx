@@ -170,20 +170,24 @@ export default function SelectCategory({
             <p className="text-sm font-medium text-slate-700 group-hover:text-[#6571FF] transition-colors">
               {category.name}
             </p>
-            <Popconfirm
-              title="Delete Category"
-              description="Are you sure you want to remove this?"
-              okText="Delete"
-              cancelText="Cancel"
-              onConfirm={() => handleDeleteCategory(category?.id)}
-            >
-              <div
-                className="rounded-lg p-1.5 hover:bg-red-50 text-slate-300 hover:text-red-500 transition-all"
-                onClick={(e) => e.stopPropagation()}
+            
+            <div onClick={(e) => e.stopPropagation()}>
+              <Popconfirm
+                title="Delete Category"
+                description="Are you sure you want to remove this?"
+                okText="Delete"
+                cancelText="Cancel"
+                onConfirm={() => handleDeleteCategory(category?.id)}
+                onPopupClick={(e) => e.stopPropagation()}
               >
-                <X size={16} strokeWidth={2.5} />
-              </div>
-            </Popconfirm>
+                <div
+                  className="rounded-lg p-1.5 hover:bg-red-50 text-slate-300 hover:text-red-500 transition-all cursor-pointer"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <X size={16} strokeWidth={2.5} />
+                </div>
+              </Popconfirm>
+            </div>
           </div>
         )}
         onSearch={(search: string) =>
