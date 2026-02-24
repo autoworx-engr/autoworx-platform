@@ -53,14 +53,6 @@ export default function SearchFilter({ searchParams }: TSearchFilterProps) {
   };
 
   const handleClearCategory = () => {
-    setFilter({ search: "", category: "" });
-    const searchParam = new URLSearchParams(params);
-    searchParam.delete("search");
-    searchParam.delete("category");
-    router.push(`${pathname}?${searchParam.toString()}`);
-  };
-
-  const handleClearCategory = () => {
     setFilter({ category: "" });
     const searchParam = new URLSearchParams(params);
     if (searchParam.has("category")) {
