@@ -1,4 +1,7 @@
 "use client";
+import { getInspections } from "@/actions/estimate/invoice/getInspections";
+import { calculateDue } from "@/utils/calculateDue";
+import { formatCurrency } from "@/utils/formatCurrency";
 import {
   Client,
   Column,
@@ -10,7 +13,6 @@ import {
   Labor,
   Material,
   Service,
-  Status,
   User,
   Vehicle,
 } from "@prisma/client";
@@ -18,19 +20,13 @@ import {
   Document,
   Font,
   Image,
-  Link,
   Page,
-  PDFViewer,
   StyleSheet,
   Text,
   View,
 } from "@react-pdf/renderer";
 import moment from "moment";
-import React, { useEffect, useState } from "react";
-import { InvoiceItems } from "./InvoiceItems";
-import { formatCurrency } from "@/utils/formatCurrency";
-import { getInspections } from "@/actions/estimate/invoice/getInspections";
-import { calculateDue } from "@/utils/calculateDue";
+import { useEffect, useState } from "react";
 // Register Poppins Regular
 Font.register({
   family: "Poppins",
@@ -401,6 +397,7 @@ const PDFComponent = function PDF({
                 <Text style={styles.fontSize10}>{vehicle?.submodel}</Text>
               )}
               <Text style={styles.fontSize10}>{vehicle?.type}</Text>
+              <Text style={styles.fontSize10}>{vehicle?.vin}</Text>
             </View>
             <View style={styles.section}>
               <Text style={[styles.boldText, { marginBottom: 2 }]}>
@@ -522,8 +519,10 @@ const PDFComponent = function PDF({
           )} */}
         </View>
 
-        <Text style={{ textAlign: "center", marginTop: "auto" }}>
-          Thank you for shopping with Autoworx
+        <Text
+          style={{ textAlign: "center", marginTop: "auto", fontSize: "12px" }}
+        >
+          Thank you for shopping with {invoice.company.name}
         </Text>
       </Page>
     </Document>
@@ -578,7 +577,12 @@ const PDFInvoiceItems = ({
       >
         <View style={styles.header}>
           <Text>{item.service.name}</Text>
+
           <Text>{formatCurrency(serviceTotal)}</Text>
+        </View>
+
+        <View style={styles.laborItem}>
+          <Text>{item.service.description}</Text>
         </View>
 
         <View style={styles.serviceDetails}>
@@ -588,6 +592,7 @@ const PDFInvoiceItems = ({
             return (
               <View key={index} style={styles.materialItem}>
                 <Text>{material.name}</Text>
+
                 <Text>
                   {formatCurrency(
                     material.sell
