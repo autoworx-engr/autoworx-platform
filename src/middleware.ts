@@ -14,6 +14,9 @@ const PUBLIC_API_ROUTES = [
   "/api/auth/signin",
   "/api/auth/callback/credentials",
   "/api/auth/csrf",
+  "/api/sales-agent",
+  "/api/task",
+  "/api/ai-train-company",
   // Webhook endpoints
   "/api/stripe/invoice-pay-hook",
   "/api/twilio/token",
@@ -28,6 +31,7 @@ const PUBLIC_API_ROUTES = [
   "/api/twilio/call-status",
   "/api/twilio/incoming",
   "/api/twilio/receive",
+  "/api/twilio/whisper",
   "/api/twilio/token",
   "/api/platform/webhook",
   "/api/invoice/track-view",

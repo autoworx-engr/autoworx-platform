@@ -7,6 +7,7 @@ import sendClientMailOrSMSNotify from "@/lib/pusher/client-conversation-notify";
 import receiveTwiloMessage from "@/lib/pusher/receiveTwiloMessage";
 import { getPusherInstance } from "@/lib/pusher/server";
 import { NextRequest, NextResponse } from "next/server";
+import { sendSMSToAgent } from "@/service/ai-agent/api";
 
 const pusher = getPusherInstance();
 
@@ -236,6 +237,28 @@ export async function POST(req: NextRequest) {
               processedAttachments.push(attachment);
             }
           }
+
+          //sales agent
+          // if (clientSMS && client.id === 3460 && client.companyId === 4) {
+          //   const aiAgentResponse = await sendSMSToAgent({
+          //     company_id: client.companyId,
+          //     message: clientSMS?.message,
+          //     send_from: clientSMS?.from,
+          //     send_to: clientSMS?.to,
+          //     client_id: client.id,
+          //   });
+
+          //   if (aiAgentResponse?.status === "success") {
+          //     await db.clientSMS.update({
+          //       where: {
+          //         id: clientSMS.id,
+          //       },
+          //       data: {
+          //         isSalesAgent: true,
+          //       },
+          //     });
+          //   }
+          // }
 
           // Count unread messages
           const totalUnReadMessages = await db.clientSMS.count({

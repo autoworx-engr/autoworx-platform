@@ -89,19 +89,39 @@ export async function getAttendanceInfo(
   const now = moment(); // Current date and time in company timezone
   const standardWorkingHours = 8; // Standard working hours per day
 
-  const startDate = moment.tz(startDateParam, companyTimezone).toDate();
+  
+  let rangeStart: Moment;
+  let rangeEnd: Moment;
 
-  const endDate = moment.tz(endDateParam, companyTimezone).toDate();
+  if (startDateParam && endDateParam) {
+    rangeStart = moment.tz(startDateParam, companyTimezone);
+    rangeEnd = moment.tz(endDateParam, companyTimezone);
+  } else {
+    // Default to current month
+    rangeStart = moment.tz(companyTimezone).startOf("month");
+    rangeEnd = moment.tz(companyTimezone).endOf("month");
+  }
 
+  
+  const rangeLength = rangeEnd.diff(rangeStart, "days") + 1;
+  const prevRangeStart = rangeStart.clone().subtract(rangeLength, "days");
+  const prevRangeEnd = rangeEnd.clone().subtract(rangeLength, "days");
+
+ 
   const holidays = await db.holiday.findMany({
     where: {
       companyId: company?.id,
       date: {
-        gte: startDate,
-        lte: endDate,
+        gte: prevRangeStart.toDate(),
+        lte: rangeEnd.toDate(),
       },
     },
   });
+
+
+  const holidaySet = new Set(
+    holidays.map((h) => moment(h.date).format("YYYY-MM-DD")),
+  );
 
   // Helper function to get attendance info for a given date range
   const getAttendanceInfoForRange = (
@@ -125,15 +145,6 @@ export async function getAttendanceInfo(
     // ---------- APPROVED LEAVES ----------
     const approvedLeaves = user.LeaveRequest.filter(
       (leave) => leave.status === "Approved",
-    );
-
-    // ---------- HOLIDAYS ----------
-    const startRange = moment().subtract(1, "month").startOf("month").toDate();
-
-    const endRange = moment().endOf("month").toDate();
-
-    const holidayMap = new Set(
-      holidays.map((h) => moment(h.date).format("YYYY-MM-DD")),
     );
 
     for (
@@ -166,7 +177,7 @@ export async function getAttendanceInfo(
       }
 
       // HOLIDAY
-      if (holidayMap.has(dayKey)) {
+      if (holidaySet.has(dayKey)) {
         records.push(createAttendanceRecord(date, "HOLIDAY"));
         continue;
       }
@@ -206,7 +217,7 @@ export async function getAttendanceInfo(
 
         records.push({
           id: clock.id,
-          date: date.clone().toDate(), // ✅ keeps same day in system timezone
+          date: date.clone().toDate(),
           clockedIn: clock.clockIn,
           clockedOut: clock.clockOut ?? "N/A",
           hours: workedHours,
@@ -234,83 +245,40 @@ export async function getAttendanceInfo(
     totalBreaks: status,
   });
 
-  // Use provided dates if available, otherwise use default (current week)
-  let startOfWeek: Moment = moment().startOf("week");
-  let endOfWeek: Moment = moment().endOf("week");
+  // --- Fetch attendance data for current and previous range ---
+  const attInfo = getAttendanceInfoForRange(rangeStart, rangeEnd);
+  const attInfoPrev = getAttendanceInfoForRange(prevRangeStart, prevRangeEnd);
 
-  if (startDateParam && endDateParam) {
-    startOfWeek = moment.tz(startDateParam, companyTimezone); // Moment, time = 00:00
-    endOfWeek = moment.tz(endDateParam, companyTimezone);
-  } else {
-    // Use current week in company timezone
-    startOfWeek = moment().startOf("week");
-    endOfWeek = moment().endOf("week");
-  }
 
-  const attInfo = await getAttendanceInfoForRange(startOfWeek, endOfWeek);
+  const isWorkedDay = (day: AttendanceRecord) =>
+    day.hours !== "ABSENT" &&
+    day.hours !== "WEEKEND" &&
+    day.hours !== "LEAVE" &&
+    day.hours !== "HOLIDAY" &&
+    day.hours !== "-" &&
+    day.hours !== "NOT_JOINED";
 
-  // Get current monthly attendance information using company timezone
-  const startOfMonth = moment().startOf("month");
-  const endOfMonth = moment().endOf("month");
+  const isWorkedExtraHours = (day: AttendanceRecord) =>
+    day.extraHours !== "ABSENT" &&
+    day.extraHours !== "WEEKEND" &&
+    day.extraHours !== "LEAVE" &&
+    day.extraHours !== "HOLIDAY" &&
+    day.extraHours !== "-";
 
-  const attInfoMonth = await getAttendanceInfoForRange(
-    startOfMonth,
-    endOfMonth,
-  );
-
-  // Get previous monthly attendance information using company timezone
-  const startOfPrevMonth = moment().subtract(1, "month").startOf("month");
-  const endOfPrevMonth = moment().subtract(1, "month").endOf("month");
-  const attInfoPrevMonth = await getAttendanceInfoForRange(
-    startOfPrevMonth,
-    endOfPrevMonth,
-  );
-
-  // Calculate the number of days absent after the user's join date
-  const absentDays = attInfoMonth.filter(
+  
+  const absentDays = attInfo.filter(
     (day) =>
       day.clockedIn === "ABSENT" &&
       moment(day.date).isSameOrAfter(moment(user.joinDate), "day"),
   ).length;
 
-  const previousAbsentDays = attInfoPrevMonth.filter(
-    (day) =>
-      day.clockedIn === "ABSENT" &&
-      moment(day.date).isSameOrAfter(moment(user.joinDate), "day"),
-  ).length;
-
-  // Calculate the total extra hours for the month
-  const totalExtraHours = attInfoMonth
-    .filter(
-      (day) =>
-        day.extraHours !== "ABSENT" &&
-        day.extraHours !== "WEEKEND" &&
-        day.extraHours !== "LEAVE" &&
-        day.extraHours !== "-",
-    )
-    .reduce((total, day) => total + parseFloat(day.extraHours), 0)
-    .toFixed(2);
-  const previousTotalExtraHours = attInfoPrevMonth
-    .filter(
-      (day) =>
-        day.extraHours !== "ABSENT" &&
-        day.extraHours !== "WEEKEND" &&
-        day.extraHours !== "LEAVE" &&
-        day.extraHours !== "-",
-    )
+  const totalExtraHours = attInfo
+    .filter(isWorkedExtraHours)
     .reduce((total, day) => total + parseFloat(day.extraHours), 0)
     .toFixed(2);
 
-  // Calculate the total hours worked for the month
-  const totalHoursWorked = attInfoMonth
-    .filter(
-      (day) =>
-        day.hours !== "ABSENT" &&
-        day.hours !== "WEEKEND" &&
-        day.hours !== "LEAVE" &&
-        day.hours !== "-" &&
-        day.hours !== "NOT_JOINED",
-    )
+  const totalHoursWorked = attInfo
+    .filter(isWorkedDay)
     .reduce((total, day) => {
       const effectiveHours =
         parseFloat(day.hours) - parseFloat(day.totalBreaks);
@@ -318,15 +286,22 @@ export async function getAttendanceInfo(
     }, 0)
     .toFixed(2);
 
-  const previousTotalHoursWorked = attInfoPrevMonth
-    .filter(
-      (day) =>
-        day.hours !== "ABSENT" &&
-        day.hours !== "WEEKEND" &&
-        day.hours !== "LEAVE" &&
-        day.hours !== "-" &&
-        day.hours !== "NOT_JOINED",
-    )
+  const totalDaysWorked = attInfo.filter(isWorkedDay).length;
+
+  
+  const previousAbsentDays = attInfoPrev.filter(
+    (day) =>
+      day.clockedIn === "ABSENT" &&
+      moment(day.date).isSameOrAfter(moment(user.joinDate), "day"),
+  ).length;
+
+  const previousTotalExtraHours = attInfoPrev
+    .filter(isWorkedExtraHours)
+    .reduce((total, day) => total + parseFloat(day.extraHours), 0)
+    .toFixed(2);
+
+  const previousTotalHoursWorked = attInfoPrev
+    .filter(isWorkedDay)
     .reduce((total, day) => {
       const effectiveHours =
         parseFloat(day.hours) - parseFloat(day.totalBreaks);
@@ -334,24 +309,9 @@ export async function getAttendanceInfo(
     }, 0)
     .toFixed(2);
 
-  // Calculate the total days worked for the month
-  const totalDaysWorked = attInfoMonth.filter(
-    (day) =>
-      day.hours !== "ABSENT" &&
-      day.hours !== "WEEKEND" &&
-      day.hours !== "LEAVE" &&
-      day.hours !== "-" &&
-      day.hours !== "NOT_JOINED",
-  ).length;
-  const previousTotalDaysWorked = attInfoPrevMonth.filter(
-    (day) =>
-      day.hours !== "ABSENT" &&
-      day.hours !== "WEEKEND" &&
-      day.hours !== "LEAVE" &&
-      day.hours !== "-" &&
-      day.hours !== "NOT_JOINED",
-  ).length;
-  // Calculate growth rates
+  const previousTotalDaysWorked = attInfoPrev.filter(isWorkedDay).length;
+
+ 
   const calculateGrowthRate = (
     current: number,
     previous: number,
@@ -364,7 +324,6 @@ export async function getAttendanceInfo(
     };
   };
 
-  // Update the growth rate calculations
   const growthRateAbsentDays = calculateGrowthRate(
     absentDays,
     previousAbsentDays,
@@ -377,21 +336,20 @@ export async function getAttendanceInfo(
     parseFloat(totalHoursWorked),
     parseFloat(previousTotalHoursWorked),
   );
-
   const growthRateTotalDaysWorked = calculateGrowthRate(
     totalDaysWorked,
     previousTotalDaysWorked,
   );
 
-  // Calculate total tardiness for the current month
+  
   const totalTardiness = (
     user.Technician.reduce((total, technician) => {
       if (technician.dateClosed && technician.due) {
         const dateClosed = moment(technician.dateClosed);
         const due = moment(technician.due);
         if (
-          dateClosed.isSameOrAfter(startOfMonth) &&
-          dateClosed.isSameOrBefore(endOfMonth)
+          dateClosed.isSameOrAfter(rangeStart) &&
+          dateClosed.isSameOrBefore(rangeEnd)
         ) {
           const tardiness = dateClosed.diff(due, "minutes");
           return total + tardiness;
@@ -401,15 +359,14 @@ export async function getAttendanceInfo(
     }, 0) / 60
   ).toFixed(2);
 
-  // Calculate total tardiness for the previous month
   const previousTotalTardiness = (
     user.Technician.reduce((total, technician) => {
       if (technician.dateClosed && technician.due) {
         const dateClosed = moment(technician.dateClosed);
         const due = moment(technician.due);
         if (
-          dateClosed.isSameOrAfter(startOfPrevMonth) &&
-          dateClosed.isSameOrBefore(endOfPrevMonth)
+          dateClosed.isSameOrAfter(prevRangeStart) &&
+          dateClosed.isSameOrBefore(prevRangeEnd)
         ) {
           const tardiness = dateClosed.diff(due, "minutes");
           return total + tardiness;
@@ -419,29 +376,25 @@ export async function getAttendanceInfo(
     }, 0) / 60
   ).toFixed(2);
 
-  // Calculate growth rate for tardiness
   const growthRateTotalTardiness = calculateGrowthRate(
     parseFloat(totalTardiness),
     parseFloat(previousTotalTardiness),
   );
 
-  // Calculate total hours absent for the current month
-  const totalHoursAbsent = attInfoMonth
+  
+  const totalHoursAbsent = attInfo
     .filter((day) => day.clockedIn === "ABSENT")
-    .reduce((total, day) => total + standardWorkingHours, 0);
+    .reduce((total) => total + standardWorkingHours, 0);
 
-  // Calculate total hours absent for the previous month
-  const previousTotalHoursAbsent = attInfoPrevMonth
+  const previousTotalHoursAbsent = attInfoPrev
     .filter((day) => day.clockedIn === "ABSENT")
-    .reduce((total, day) => total + standardWorkingHours, 0);
+    .reduce((total) => total + standardWorkingHours, 0);
 
-  // Calculate "No Show" rate for the current month
   const noShowRate =
     parseFloat(totalHoursWorked) > 0
       ? ((totalHoursAbsent / parseFloat(totalHoursWorked)) * 100).toFixed(2)
       : "0.00";
 
-  // Calculate "No Show" rate for the previous month
   const previousNoShowRate =
     parseFloat(previousTotalHoursWorked) > 0
       ? (
@@ -450,7 +403,6 @@ export async function getAttendanceInfo(
         ).toFixed(2)
       : "0.00";
 
-  // Calculate growth rate for "No Show" rate
   const growthRateNoShowRate = calculateGrowthRate(
     parseFloat(noShowRate),
     parseFloat(previousNoShowRate),

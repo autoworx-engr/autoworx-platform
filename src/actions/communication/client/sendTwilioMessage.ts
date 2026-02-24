@@ -9,6 +9,7 @@ import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-servi
 import { revalidatePath } from "next/cache";
 import Twilio from "twilio";
 import { updateNewEmailChatTrack, updateNewSMSChatTrack } from "./chat-track";
+import { sendSMSToAgent } from "@/service/ai-agent/api";
 
 type TTwilioCredentials = {
   companyId?: number;
@@ -37,11 +38,15 @@ export async function sendTwilioMessage({
   message,
   clientId,
   attachments,
+  isSalesAgent = false,
+  userId,
 }: {
   companyId?: number;
   message: string;
   clientId: number;
   attachments: { url: string; name: string }[];
+  userId?: number;
+  isSalesAgent?: boolean;
 }) {
   try {
     const resolvedCompanyId = companyId ?? (await getCompanyId());
@@ -73,14 +78,23 @@ export async function sendTwilioMessage({
     );
 
     let user: Awaited<ReturnType<typeof getUser>> | null = null;
-    try {
+    // try {
+    //   user = await getUser();
+    // } catch (error) {
+    //   console.log(
+    //     "sendTwilioMessage: getUser failed, continuing without user context",
+    //     error,
+    //   );
+    // }
+
+    if (userId) {
+      user = await db.user.findFirst({
+        where: { id: userId },
+      });
+    } else {
       user = await getUser();
-    } catch (error) {
-      console.log(
-        "sendTwilioMessage: getUser failed, continuing without user context",
-        error,
-      );
     }
+
     const client = await db.client.findFirst({
       where: {
         id: clientId,
@@ -105,7 +119,7 @@ export async function sendTwilioMessage({
         mediaUrl: attachments.map((file) => file.url),
       });
 
-      let dbMessage = await db.clientSMS.create({
+      const dbMessage = await db.clientSMS.create({
         data: {
           from: twilioCredentials.phoneNumber,
           to,
@@ -115,6 +129,7 @@ export async function sendTwilioMessage({
           isRead: true,
           clientId,
           companyId: twilioCredentials.companyId,
+          isSalesAgent,
         },
       });
 
@@ -163,6 +178,24 @@ export async function sendTwilioMessage({
       } catch (error) {}
 
       revalidatePath("/dashboard/communication/client");
+
+      if (dbMessage && clientId === 3460 && twilioCredentials.companyId === 4) {
+        const aiAgentResponse = await sendSMSToAgent({
+          company_id: twilioCredentials.companyId,
+          message: dbMessage?.message,
+          send_from: dbMessage?.from,
+          send_to: dbMessage?.to,
+          client_id: clientId,
+          user_id: user?.id,
+        });
+        console.log(
+          "aiAgentResponse",
+          aiAgentResponse,
+          clientId,
+          twilioCredentials?.companyId,
+        );
+      }
+
       return {
         success: true,
         data,

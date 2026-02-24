@@ -57,7 +57,7 @@ export async function getSalaryPayouts(
         },
       },
     });
-
+    console.log("user", user);
     if (!user) {
       return {
         currentPeriodPayout: 0,
@@ -99,9 +99,15 @@ export async function getSalaryPayouts(
 
     // For non-hourly salary types, use the calculation functions from salaryPayout.ts
     if (currentSalary.salaryType !== "HOURLY") {
-      const currentMonthPayout = await calculateSalaryCurrentMonthEarnings();
-      const previousMonthPayout = await calculateSalaryPreviousMonthEarnings();
-      const totalPayout = await calculateSalaryTotalEarnings();
+      const currentMonthPayout = await calculateSalaryCurrentMonthEarnings(
+        userId,
+        companyId,
+      );
+      const previousMonthPayout = await calculateSalaryPreviousMonthEarnings(
+        userId,
+        companyId,
+      );
+      const totalPayout = await calculateSalaryTotalEarnings(userId, companyId);
 
       return {
         currentPeriodPayout: currentMonthPayout,

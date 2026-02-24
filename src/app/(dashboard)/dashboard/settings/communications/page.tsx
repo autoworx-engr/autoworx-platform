@@ -1,6 +1,7 @@
 import { getCompany } from "@/actions/settings/getCompany";
 import BookingGenerate from "@/components/BookingGenerate";
 import CallForwardingSettings from "@/components/CallForwardingSettings";
+import CallWhisperSettings from "@/components/CallWhisperSettings";
 import GoogleReviewSettings from "@/components/GoogleReviewSettings";
 import MissedCallTextBackSettings from "@/components/MissedCallTextBackSettings";
 import { TermsAndPolicyEditor } from "@/components/TermsAndPolicyEditor";
@@ -27,6 +28,9 @@ export default async function CommunicationPage() {
         <MissedCallTextBackSettings
           initialEnabled={company?.missedCallTextBackEnabled}
           isAllowed={entitlements.canUseSms && entitlements.missedCallTextBack}
+        />
+        <CallWhisperSettings
+          initialEnabled={company?.callWhisperEnabled ?? true}
         />
         <div className="mt-4">
           <TermsAndPolicyEditor />

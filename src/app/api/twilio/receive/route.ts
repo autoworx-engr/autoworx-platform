@@ -116,10 +116,19 @@ export async function POST(request: Request) {
         }
       : {};
 
-    voiceResponse.dial(
+    const dial = voiceResponse.dial({
+      callerId: twilioCredentials.phoneNumber,
+      ...recordingOptions,
+      // Required for whisper: caller keeps hearing ringing while the whisper
+      // message plays to the callee; call is only bridged after whisper finishes.
+      answerOnBridge: true,
+    });
+    // Whisper URL notifies the called party (client) that the call is being recorded
+    // before bridging them to the agent. companyId lets the whisper endpoint look up
+    // the company name and check if whisper is enabled.
+    dial.number(
       {
-        callerId: twilioCredentials.phoneNumber,
-        ...recordingOptions,
+        url: `${process.env.NEXT_PUBLIC_APP_URL}/api/twilio/whisper?companyId=${twilioCredentials.companyId}`,
       },
       to,
     );

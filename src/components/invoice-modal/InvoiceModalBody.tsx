@@ -40,7 +40,18 @@ import {
 } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
 import { Popconfirm, Tooltip } from "antd";
-import { Eye, Mail, MessageCircleMore, SquarePen, X } from "lucide-react";
+import {
+  ChevronDown,
+  Copy,
+  Eye,
+  FileDown,
+  Mail,
+  MessageCircle,
+  MessageCircleMore,
+  Printer,
+  SquarePen,
+  X,
+} from "lucide-react";
 import moment from "moment";
 import dynamic from "next/dynamic";
 import Image from "next/image";
@@ -120,6 +131,9 @@ export default function InvoiceModalBody({
   const [isSuccessMsgShown, setIsSuccessMsgShown] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
   const [refundAmount, setRefundAmount] = useState<number>(0);
+  const [openGroup, setOpenGroup] = useState<"export" | "share" | null>(null);
+  const isExportOpen = openGroup === "export";
+  const isShareOpen = openGroup === "share";
 
   // Detect if we're coming from an intercepted route
   const fromInterceptedRoute =
@@ -181,7 +195,6 @@ export default function InvoiceModalBody({
   const companyId = data?.invoice?.companyId;
   const { data: stripeAccountData } = useServerGet(getStripeAccount, companyId);
   const { data: gatewayInfo } = useServerGet(getPaymentGatewayInfo, companyId);
-  console.log("🚀 ~ InvoiceModalBody ~ gatewayInfo:", gatewayInfo);
 
   useEffect(() => {
     if (isSuccess && !isSuccessMsgShown) {
@@ -365,12 +378,13 @@ export default function InvoiceModalBody({
       >
         <div
           ref={printComponentRef}
-          className="#shadow-lg no-visible-scrollbar relative grid h-full w-full shrink grow-0 flex-col items-center justify-center gap-4 overflow-y-auto rounded-md border bg-background p-6 md:h-[90vh] md:w-[740px] md:flex-row"
+          className="#shadow-lg no-visible-scrollbar relative grid h-full w-full shrink grow-0 flex-col items-center justify-center gap-4 overflow-y-auto rounded-md border bg-background p-6 md:h-[90vh] md:w-[780px] md:flex-row"
         >
           {/* Action Buttons */}
           {!isPublic && (
-            <div className="mt-6 flex w-full flex-wrap items-center justify-center print:hidden">
-              <div className="flex w-full flex-wrap items-center justify-center gap-3 md:gap-4">
+            <div className="mt-6 flex w-full flex-col items-center gap-3 print:hidden">
+              {/* Row 1 — main actions */}
+              <div className="flex flex-wrap items-center justify-center gap-3">
                 {/* Edit Link */}
                 <Link
                   className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-5 py-1.5 text-sm font-medium text-white shadow-md shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 md:text-base"
@@ -391,100 +405,131 @@ export default function InvoiceModalBody({
                   </span>
                 </Link>
 
-                {/* Print Button */}
-                <button
-                  className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-5 py-1.5 text-sm font-medium text-white shadow-md shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 md:text-base"
-                  onClick={handlePrint}
-                >
-                  <svg
-                    fill="#ffffff"
-                    viewBox="0 0 32 32"
-                    height="18"
-                    width="18"
+                {/* Export Group — Print/PDF */}
+                <div className="flex items-center gap-0 rounded-2xl border border-slate-200 bg-white/80 px-1 py-1 shadow-sm dark:border-slate-700 dark:bg-slate-900/60">
+                  <button
+                    className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95"
+                    onClick={() =>
+                      setOpenGroup((p) => (p === "export" ? null : "export"))
+                    }
                   >
-                    <path d="M30 13.75h-2.75v-7.75c0-0 0-0.001 0-0.001 0-0.345-0.14-0.657-0.365-0.883l-4-4c-0.226-0.226-0.539-0.366-0.885-0.366-0 0-0 0-0 0h-17c-0.69 0-1.25 0.56-1.25 1.25v0 11.75h-1.75c-0.69 0-1.25 0.56-1.25 1.25v0 9c0 0.69 0.56 1.25 1.25 1.25s1.25-0.56 1.25-1.25v0-7.75h25.5v7.75c0 0.69 0.56 1.25 1.25 1.25s1.25-0.56 1.25-1.25v0-9c-0-0.69-0.56-1.25-1.25-1.25h-0zM6.25 3.25h15.232l3.268 3.268v7.232h-18.5zM26 20.75h-20c-0.69 0-1.25 0.56-1.25 1.25v8c0 0.69 0.56 1.25 1.25 1.25h20c0.69-0.001 1.249-0.56 1.25-1.25v-8c-0.001-0.69-0.56-1.249-1.25-1.25h-0zM24.75 28.75h-17.5v-5.5h17.5zM26.879 17.62c-0.228-0.228-0.544-0.37-0.893-0.37-0.168 0-0.329 0.033-0.475 0.093l0.008-0.003c-0.16 0.060-0.295 0.156-0.399 0.279l-0.001 0.001c-0.119 0.109-0.213 0.242-0.277 0.392l-0.003 0.007c-0.059 0.142-0.095 0.306-0.1 0.479l-0 0.002c0.002 0.346 0.147 0.657 0.378 0.878l0 0c0.226 0.223 0.537 0.361 0.88 0.361s0.654-0.138 0.88-0.361l-0 0c0.233-0.222 0.378-0.533 0.381-0.878v-0c-0.005-0.174-0.041-0.339-0.103-0.49l0.003 0.009c-0.066-0.158-0.161-0.291-0.28-0.399l-0.001-0.001z" />
-                  </svg>
-                  <span className="hidden md:inline">Print</span>
-                </button>
-
-                {/* Download PDF Component Wrapper */}
-                <button className="flex items-center justify-center rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-5 py-1.5 text-sm font-medium text-white shadow-md shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 md:text-base">
-                  {client && (
-                    <DownloadPDF
-                      id={invoice.id}
-                      invoice={invoice}
-                      client={client}
-                      vehicle={vehicle}
-                      companyDetails={company}
-                      authorizedName={authorizedName}
-                      signImageUrl={signImage ?? undefined}
-                      isStripe={
-                        (gatewayInfo?.success &&
-                          (gatewayInfo?.hasStripe ||
-                            gatewayInfo?.hasAuthorizeNet) &&
-                          parseFloat(Number(invoice?.due ?? 0).toFixed(2)) >
-                            0) ??
-                        false
-                      }
+                    <FileDown className="h-4 w-4" />
+                    <span className="hidden md:inline">Export</span>
+                    <ChevronDown
+                      className={`h-3.5 w-3.5 transition-transform duration-300 ease-in-out ${
+                        isExportOpen ? "rotate-180" : ""
+                      }`}
                     />
-                  )}
-                </button>
+                  </button>
 
-                {/* Share Section Wrapper */}
-                <div className="flex items-center gap-x-2 rounded-xl border border-slate-200 bg-slate-50/50 pl-4 pr-0.5 dark:border-slate-700 dark:bg-slate-800/50">
-                  <span className="text-[11px] font-black uppercase tracking-wider text-slate-500 md:text-xs">
-                    Share
-                  </span>
-
-                  <Popconfirm
-                    onConfirm={handleEmail}
-                    title="Send via Email?"
-                    okText="Yes"
-                    cancelText="No"
+                  {/* Animated expand */}
+                  <div
+                    className={`grid transition-all duration-300 ease-in-out ${
+                      isExportOpen
+                        ? "grid-cols-[1fr] opacity-100"
+                        : "grid-cols-[0fr] opacity-0"
+                    }`}
                   >
-                    <button className="flex items-center justify-center gap-2 rounded-lg bg-[#6571FF] px-3 py-1.5 my-0.5 text-sm font-medium text-white transition-all hover:brightness-110 active:scale-95">
-                      <Mail className="h-5 w-5" strokeWidth={2} />
-                      <span className="hidden md:inline">Email</span>
-                    </button>
-                  </Popconfirm>
-
-                  {twilioCredentials && (
-                    <Popconfirm
-                      onConfirm={handleSms}
-                      title="Send via SMS?"
-                      okText="Yes"
-                      cancelText="No"
-                    >
-                      <button className="flex items-center justify-center gap-2 rounded-lg bg-[#6571FF] px-3 py-1.5 text-sm font-medium text-white transition-all hover:brightness-110 active:scale-95">
-                        <svg
-                          fill="#ffffff"
-                          height="20"
-                          width="20"
-                          viewBox="0 0 24 24"
+                    <div className="overflow-hidden">
+                      <div className="flex items-center gap-1 pl-1">
+                        <button
+                          className="flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95"
+                          onClick={handlePrint}
                         >
-                          <path d="M12,1C5.37,1,0,5.58,0,10.55c0,2.92,1.86,5.95,4.72,7.59L3,23l5.85-3.32C9.86,19.88,10.91,20,12,20c6.63,0,12-4.48,12-9.45 C24,5.58,18.63,1,12,1z" />
-                        </svg>
-                        <span className="hidden md:inline">SMS</span>
-                      </button>
-                    </Popconfirm>
-                  )}
+                          <Printer className="h-4 w-4" />
+                          <span className="hidden md:inline">Print</span>
+                        </button>
+
+                        {client && (
+                          <button className="flex items-center justify-center whitespace-nowrap rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95">
+                            <DownloadPDF
+                              id={invoice.id}
+                              invoice={invoice}
+                              client={client}
+                              vehicle={vehicle}
+                              companyDetails={company}
+                              authorizedName={authorizedName}
+                              signImageUrl={signImage ?? undefined}
+                              isStripe={
+                                (gatewayInfo?.success &&
+                                  (gatewayInfo?.hasStripe ||
+                                    gatewayInfo?.hasAuthorizeNet) &&
+                                  parseFloat(
+                                    Number(invoice?.due ?? 0).toFixed(2)
+                                  ) > 0) ??
+                                false
+                              }
+                            />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Copy Link Button */}
-                <button
-                  className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-5 py-1.5 text-sm font-medium text-white shadow-md shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 md:text-base"
-                  onClick={handleCopyLink}
-                >
-                  <svg
-                    viewBox="0 0 32 32"
-                    height="18"
-                    width="18"
-                    fill="currentColor"
+                {/* Share Group — Email/SMS */}
+                <div className="flex items-center gap-0 rounded-2xl border border-slate-200 bg-white/80 px-3 py-1 shadow-sm dark:border-slate-700 dark:bg-slate-900/60">
+                  <button
+                    className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-slate-500 transition-colors hover:text-[#6571FF] dark:text-slate-400 md:text-xs"
+                    onClick={() =>
+                      setOpenGroup((p) => (p === "share" ? null : "share"))
+                    }
                   >
-                    <path d="m24.110782 0 5.889218 8.76607872v19.23392128h-4v4h-24v-28h4v-4zm-18.110782 6h-2v24h20v-2h-18z" />
-                  </svg>
-                  <span className="hidden md:inline">Copy Link</span>
-                </button>
+                    Share
+                    <ChevronDown
+                      className={`h-3.5 w-3.5 transition-transform duration-300 ease-in-out ${
+                        isShareOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+
+                  <div
+                    className={`grid transition-all duration-300 ease-in-out ${
+                      isShareOpen
+                        ? "grid-cols-[1fr] opacity-100"
+                        : "grid-cols-[0fr] opacity-0"
+                    }`}
+                  >
+                    <div className="overflow-hidden">
+                      <div className="flex items-center gap-1 pl-2">
+                        <Popconfirm
+                          onConfirm={handleEmail}
+                          title="Send via Email?"
+                          okText="Yes"
+                          cancelText="No"
+                        >
+                          <button className="flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95">
+                            <Mail className="h-4 w-4" />
+                            <span className="hidden md:inline">Email</span>
+                          </button>
+                        </Popconfirm>
+
+                        {twilioCredentials && (
+                          <Popconfirm
+                            onConfirm={handleSms}
+                            title="Send via SMS?"
+                            okText="Yes"
+                            cancelText="No"
+                          >
+                            <button className="flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95">
+                              <MessageCircle className="h-4 w-4" />
+                              <span className="hidden md:inline">SMS</span>
+                            </button>
+                          </Popconfirm>
+                        )}
+
+                        {/* Copy Link Button */}
+                        <button
+                          className="flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95"
+                          onClick={handleCopyLink}
+                        >
+                          <Copy className="h-4 w-4" />
+                          <span className="hidden md:inline">Copy Link</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -596,7 +641,15 @@ export default function InvoiceModalBody({
                 !window.matchMedia("(max-width: 768px)").matches) && (
                 <>
                   <h1 className="col-span-full text-center text-xl font-bold uppercase text-slate-600 md:text-left md:text-3xl">
-                    {invoice?.type?.toUpperCase()}
+                    {parseFloat(
+                      calculateDue(
+                        Number(invoice.grandTotal),
+                        Number(invoice.totalPayment),
+                        Number(invoice.deposit)
+                      ).toFixed(2)
+                    ) === 0
+                      ? "RECEIPT"
+                      : invoice?.type?.toUpperCase()}
                   </h1>
 
                   {/* Client Info */}
@@ -646,6 +699,7 @@ export default function InvoiceModalBody({
                     </div>
                     <p>{vehicle?.submodel}</p>
                     <p>{vehicle?.type}</p>
+                    <p>{vehicle?.vin}</p>
                   </div>
 
                   {/* Estimate Details */}
@@ -767,7 +821,7 @@ export default function InvoiceModalBody({
                         <span className="min-w-0 flex-1 overflow-x-clip text-ellipsis whitespace-nowrap px-2 font-bold uppercase text-[#6571FF]">
                           {key}
                         </span>
-                        <div className="basis-30 shrink-0 rounded bg-[#6571FF] px-2 text-white">
+                        <div className="shrink-0 w-[7rem] rounded bg-[#6571FF] px-2 text-white">
                           {Number(value)}%
                           {Number(value) !== 0 && (
                             <span>
@@ -791,7 +845,7 @@ export default function InvoiceModalBody({
                       <span className="min-w-0 flex-1 overflow-x-clip text-ellipsis whitespace-nowrap px-2 font-bold uppercase text-[#6571FF]">
                         {key}
                       </span>
-                      <div className="shrink-0 basis-20 rounded bg-gradient-to-br from-[#6571FF] from-60% to-[#4A55E2] px-2 text-white">
+                      <div className="shrink-0 w-[7rem] rounded bg-gradient-to-br from-[#6571FF] from-60% to-[#4A55E2] px-2 text-white">
                         {formatCurrency(parseFloat("" + value))}
                       </div>
                     </div>

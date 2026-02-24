@@ -682,9 +682,11 @@ model Company {
   platformSubscription PlatformSubscription?
   platformPlans        PlatformPlan[]
 
+  callWhisperEnabled               Boolean                            @default(true) @map("call_whisper_enabled")
+
+  servicePlaybooks                 ServicePlaybook[]
   conversationExamples             ConversationExample[]
   knowledgeBaseDocuments           KnowledgeBaseDocument[]
-  servicePlaybooks                 ServicePlaybook[]
 }
 
 enum SmsGateway {
@@ -2361,12 +2363,12 @@ model ClientSMS {
   clientId    Int                    @map("client_id")
   attachments ClientSmsAttachments[]
 
-  client  Client  @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  user    User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  client       Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  user         User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company      Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  isSalesAgent Boolean? @default(false)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
 }
 
 model ClientCall {

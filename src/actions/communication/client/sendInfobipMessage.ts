@@ -9,6 +9,7 @@ import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-servi
 import { revalidatePath } from "next/cache";
 import { updateNewSMSChatTrack } from "./chat-track";
 import { getInfobipConfig, getInfobipConfigById } from "./createInfobipConfig";
+import { sendSMSToAgent } from "@/service/ai-agent/api";
 
 type TInfobipConfig = {
   companyId?: number;
@@ -31,11 +32,15 @@ export async function sendInfobipMessage({
   message,
   clientId,
   attachments,
+  isSalesAgent = false,
+  userId,
 }: {
   companyId?: number;
   message: string;
   clientId: number;
   attachments: { url: string; name: string }[];
+  isSalesAgent?: boolean;
+  userId?: number;
 }) {
   try {
     const resolvedCompanyId = companyId ?? (await getCompanyId());
@@ -59,14 +64,23 @@ export async function sendInfobipMessage({
     }
 
     let user: Awaited<ReturnType<typeof getUser>> | null = null;
-    try {
+    // try {
+    //   user = await getUser();
+    // } catch (error) {
+    //   console.error(
+    //     "sendInfobipMessage: getUser failed, continuing without user context",
+    //     error,
+    //   );
+    // }
+
+    if (userId) {
+      user = await db.user.findFirst({
+        where: { id: userId },
+      });
+    } else {
       user = await getUser();
-    } catch (error) {
-      console.error(
-        "sendInfobipMessage: getUser failed, continuing without user context",
-        error,
-      );
     }
+
     const client = await db.client.findFirst({
       where: {
         id: clientId,
@@ -259,7 +273,7 @@ export async function sendInfobipMessage({
 
       const infobipResult = await infobipResponse.json();
 
-      let dbMessage = await db.clientSMS.create({
+      const dbMessage = await db.clientSMS.create({
         data: {
           from: infobipConfig.phoneNumber,
           to,
@@ -269,6 +283,7 @@ export async function sendInfobipMessage({
           isRead: true,
           clientId,
           companyId: infobipConfig.companyId,
+          isSalesAgent,
         },
       });
 
@@ -319,6 +334,23 @@ export async function sendInfobipMessage({
       }
 
       revalidatePath("/dashboard/communication/client");
+      if (dbMessage && clientId === 3460 && infobipConfig?.companyId === 4) {
+        const aiAgentResponse = await sendSMSToAgent({
+          company_id: clientId,
+          message: dbMessage?.message,
+          send_from: dbMessage?.from,
+          send_to: dbMessage?.to,
+          client_id: infobipConfig?.companyId,
+          user_id: user?.id,
+        });
+        console.log(
+          "aiAgentResponse",
+          aiAgentResponse,
+          client,
+          infobipConfig.companyId,
+        );
+      }
+
       return {
         success: true,
         data,

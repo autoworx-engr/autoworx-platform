@@ -62,7 +62,7 @@ export function DropdownSelection({
               "flex items-center justify-center gap-x-1 text-xs lg:gap-x-2 lg:text-base",
               "rounded-xl px-3 py-2 transition-transform duration-500 ease-out transform hover:scale-[1.02]",
               // base appearance
-              "bg-white/60 dark:bg-slate-900/40 backdrop-blur-sm",
+              "bg-white dark:bg-slate-900/40",
               // default ring + hover
               "ring-1 ring-slate-900/5 dark:ring-slate-700/20 hover:ring-[#6470fd]/50 hover:shadow-sm",
               // when menu is open (radix sets aria-expanded)
@@ -94,7 +94,7 @@ export function DropdownSelection({
       <DropdownMenuContent
         className={cn(
           "w-56 max-h-80 overflow-y-auto thin-scrollbar",
-          "rounded-2xl p-2 backdrop-blur-md bg-white/60 dark:bg-slate-900/50",
+          "rounded-2xl p-2 m-2 backdrop-blur-md bg-white dark:bg-slate-900/50",
           "ring-1 ring-slate-900/5 dark:ring-slate-700/20 shadow-lg border-transparent",
           "transition-all duration-200",
           contentClassName
@@ -150,11 +150,11 @@ export function DropdownSelection({
           )}
         </DropdownMenuRadioGroup>
         {showClearButton && onClear && (
-          <div className="sticky bottom-0 mt-2 rounded-2xl bg-white/80 pt-2 backdrop-blur-md dark:bg-slate-900/70">
+          <div className="sticky bottom-0 mt-2 rounded-2xl backdrop-blur-md dark:bg-slate-900/70">
             <Button
               type="button"
               variant="outline"
-              className="w-full rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-700 dark:text-slate-200 dark:hover:text-white"
+              className="w-full rounded-lg text-sm font-semibold text-white hover:text-white bg-rose-500 hover:bg-rose-600 dark:text-slate-200 dark:hover:text-white"
               onClick={handleClear}
             >
               {clearLabel}

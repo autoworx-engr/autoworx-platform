@@ -73,7 +73,9 @@ export async function POST(request: Request) {
       },
       select: {
         id: true,
+        name: true,
         callForwardingNumber: true,
+        callWhisperEnabled: true,
       },
     });
 
@@ -203,6 +205,14 @@ export async function POST(request: Request) {
           recordingStatusCallbackMethod: "POST",
         }
       : {};
+    // Inform the caller that the call may be recorded (only if whisper is enabled)
+    if (company.callWhisperEnabled) {
+      const companyName = company.name ?? "this company";
+      voiceResponse.say(
+        { voice: "Polly.Joanna", language: "en-US" },
+        `Thanks for calling ${companyName}. This call may be recorded for quality and training purposes.`,
+      );
+    }
 
     // Check if call forwarding is enabled
     if (callForwardingNumber) {
