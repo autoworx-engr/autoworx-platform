@@ -116,7 +116,13 @@ export default function CannedFilterBySelection({
           ))}
           <button
             onClick={handleClear}
-            className="sticky -bottom-2 z-50 border rounded-md border-gray-200 bg-white py-2 mt-1 text-sm font-medium text-red-500 hover:text-red-700 transition-colors"
+            disabled={!selectedItem}
+            className={cn(
+              "sticky -bottom-2 z-50 border rounded-md border-gray-200 bg-white py-2 mt-1 text-sm font-medium transition-colors",
+              !selectedItem
+                ? "text-gray-300 cursor-not-allowed bg-gray-50 hover:text-gray-300 hover:bg-gray-50"
+                : "text-red-500 hover:text-red-700"
+            )}
           >
             Clear Filter
           </button>
