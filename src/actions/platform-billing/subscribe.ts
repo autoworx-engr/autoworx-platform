@@ -162,7 +162,7 @@ export async function subscribeToPlatformPlan({
     const baseTrialMonths =
       plan.trialLengthDays && plan.trialLengthDays > 0
         ? plan.trialLengthDays
-        : 1;
+        : 0;
     const trialMonths = billingCustomer?.trialConsumedAt ? 0 : baseTrialMonths;
     const trialStart = new Date();
     const arbStartDate = new Date(trialStart);
