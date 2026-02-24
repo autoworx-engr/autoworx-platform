@@ -148,7 +148,7 @@ export default function InvoiceModalBody({
         data.invoice.Refund?.reduce(
           (total: number, refund: Refund) =>
             total + (Number(refund.amount) || 0),
-          0,
+          0
         ) || 0;
 
       setRefundAmount(refundAmount);
@@ -195,7 +195,6 @@ export default function InvoiceModalBody({
   const companyId = data?.invoice?.companyId;
   const { data: stripeAccountData } = useServerGet(getStripeAccount, companyId);
   const { data: gatewayInfo } = useServerGet(getPaymentGatewayInfo, companyId);
-  console.log("🚀 ~ InvoiceModalBody ~ gatewayInfo:", gatewayInfo);
 
   useEffect(() => {
     if (isSuccess && !isSuccessMsgShown) {
@@ -321,7 +320,7 @@ export default function InvoiceModalBody({
     try {
       const file = getFileFromCanvas(
         sigCanvas.current.getCanvas(),
-        `signature-${invoiceId}.png`,
+        `signature-${invoiceId}.png`
       );
 
       const formData = new FormData();
@@ -346,7 +345,7 @@ export default function InvoiceModalBody({
         invoice.id,
         authorizedNameInput,
         data[0],
-        invoice.type,
+        invoice.type
       );
 
       if (response?.type === "success") {
@@ -456,7 +455,7 @@ export default function InvoiceModalBody({
                                   (gatewayInfo?.hasStripe ||
                                     gatewayInfo?.hasAuthorizeNet) &&
                                   parseFloat(
-                                    Number(invoice?.due ?? 0).toFixed(2),
+                                    Number(invoice?.due ?? 0).toFixed(2)
                                   ) > 0) ??
                                 false
                               }
@@ -646,8 +645,8 @@ export default function InvoiceModalBody({
                       calculateDue(
                         Number(invoice.grandTotal),
                         Number(invoice.totalPayment),
-                        Number(invoice.deposit),
-                      ).toFixed(2),
+                        Number(invoice.deposit)
+                      ).toFixed(2)
                     ) === 0
                       ? "RECEIPT"
                       : invoice?.type?.toUpperCase()}
@@ -700,6 +699,7 @@ export default function InvoiceModalBody({
                     </div>
                     <p>{vehicle?.submodel}</p>
                     <p>{vehicle?.type}</p>
+                    <p>{vehicle?.vin}</p>
                   </div>
 
                   {/* Estimate Details */}
@@ -741,10 +741,10 @@ export default function InvoiceModalBody({
                       <div className="grid w-full grid-cols-3 gap-4 px-2 sm:px-4 [@media(max-width:374px)]:grid-cols-2">
                         {invoice.photos.map((x, index) => {
                           const allImageUrls = invoice.photos.map(
-                            (photo) => photo.photo,
+                            (photo) => photo.photo
                           );
                           const urlsParam = encodeURIComponent(
-                            JSON.stringify(allImageUrls),
+                            JSON.stringify(allImageUrls)
                           );
                           return (
                             <Link
@@ -808,7 +808,7 @@ export default function InvoiceModalBody({
                     calculateDue(
                       Number(invoice.grandTotal),
                       Number(invoice.totalPayment),
-                      Number(invoice.deposit),
+                      Number(invoice.deposit)
                     ),
                   ],
                   ["Refunded", refundAmount],
@@ -830,10 +830,10 @@ export default function InvoiceModalBody({
                               {formatCurrency(
                                 (Number(
                                   (invoice.subtotal as any) -
-                                    (invoice.discount as any),
+                                    (invoice.discount as any)
                                 ) *
                                   Number(value)) /
-                                  100,
+                                  100
                               )}
                             </span>
                           )}
@@ -1034,7 +1034,7 @@ export default function InvoiceModalBody({
                     onClick={() => {
                       if (!sigCanvas.current || sigCanvas.current.isEmpty()) {
                         errorToast(
-                          "Please provide your signature before saving.",
+                          "Please provide your signature before saving."
                         );
                         return;
                       }
@@ -1091,7 +1091,7 @@ export default function InvoiceModalBody({
                     invoiceId={invoice.id}
                     companyId={invoice.companyId}
                     due={parseFloat(
-                      Number(invoice?.due ?? 0).toFixed(2),
+                      Number(invoice?.due ?? 0).toFixed(2)
                     ).toString()}
                     open={isStripeDialogOpen}
                     setOpen={setIsStripeDialogOpen}
@@ -1147,10 +1147,10 @@ export default function InvoiceModalBody({
                 <div className="flex grid-cols-1 gap-4 overflow-x-auto md:grid">
                   {invoice.photos.map((x, index) => {
                     const allImageUrls = invoice.photos.map(
-                      (photo) => photo.photo,
+                      (photo) => photo.photo
                     );
                     const urlsParam = encodeURIComponent(
-                      JSON.stringify(allImageUrls),
+                      JSON.stringify(allImageUrls)
                     );
                     return (
                       <Link
@@ -1203,7 +1203,7 @@ export default function InvoiceModalBody({
                     invoiceId={invoice.id}
                     onWorkOrderCreated={async () => {
                       const updatedInvoice = await getIsWorkorderCreated(
-                        invoice.id,
+                        invoice.id
                       );
                       setInvoice((prevInvoice) => {
                         if (!prevInvoice) return prevInvoice;
