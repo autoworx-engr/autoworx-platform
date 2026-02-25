@@ -168,21 +168,21 @@ export async function POST(req: NextRequest) {
     } = body;
 
     // Manual validation based on Prisma schema
-    if (!title || !priority) {
+    if (!title) {
       return NextResponse.json(
         {
           success: false,
-          message: "title, priority and assignedUsers are required",
+          message: "title are required",
         },
         { status: 400 },
       );
     }
 
-    if (!userId || !companyId) {
+    if (!companyId) {
       return NextResponse.json(
         {
           success: false,
-          message: "userId and companyId are required",
+          message: "CompanyId are required",
         },
         { status: 400 },
       );
@@ -198,14 +198,15 @@ export async function POST(req: NextRequest) {
         date: date ? new Date(date) : null,
         startTime: startTime ?? null,
         endTime: endTime ?? null,
-        priority: priorityEnum ?? "Low",
+        priority: priorityEnum ?? "High",
         userId: userId,
         companyId: companyId,
         invoiceId: invoiceId ?? null,
         invoiceTemplateId: invoiceTemplateId ?? null,
         clientId: clientId ?? null,
         leadId: leadId ?? null,
-        createdBy: (createdBy as TaskAndAppointmentCreatedByEnum) ?? "user",
+        createdBy:
+          (createdBy as TaskAndAppointmentCreatedByEnum) ?? "sales_agent",
       },
     });
 
