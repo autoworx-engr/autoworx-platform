@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
         title,
         iconType: "message",
         description,
-        type: "CLIENT_ABUSE_ALERT",
+        type: "CLIENT_MESSAGE_ALERT",
         redirectUrl,
       });
     }
