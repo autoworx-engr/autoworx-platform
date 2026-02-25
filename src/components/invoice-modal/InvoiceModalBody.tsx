@@ -719,6 +719,16 @@ export default function InvoiceModalBody({
                     >
                       {invoice.column?.title}
                     </p>
+
+                    <p>
+                      {parseFloat(
+                        calculateDue(
+                          Number(invoice.grandTotal),
+                          Number(invoice.totalPayment),
+                          Number(invoice.deposit)
+                        ).toFixed(2)
+                      ) === 0 && <span>Payment Status</span>}
+                    </p>
                     <p className="pt-1">
                       {parseFloat(
                         calculateDue(
