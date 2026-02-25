@@ -69,7 +69,7 @@ const PipelineRuleForm = ({
 
   const [showGuide, setShowGuide] = useState(true);
   const [showDelayField, setShowDelayField] = useState(
-    formData.conditionType === "Time Delay"
+    formData.conditionType === "Time Delay",
   );
   const {
     stages,
@@ -82,13 +82,13 @@ const PipelineRuleForm = ({
   const { mutate: updateRule, isPending: isUpdatePending } =
     useUpdatePipelineAutomationRule();
   const { data, isLoading, isFetching } = useFindOnePipelineAutomationRule(
-    Number(id)
+    Number(id),
   );
   const [error, setError] = useState<Record<string, string>>({});
 
   useEffect(() => {
     fetchStages("sales");
-  }, []);
+  }, [fetchStages]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -122,7 +122,7 @@ const PipelineRuleForm = ({
       }
     };
     loadData();
-  }, [isEdit, id, data, mode]);
+  }, [isEdit, id, data, mode, companyId]);
 
   useEffect(() => {
     setShowDelayField(formData?.conditionType === "TIME_DELAY");
@@ -220,7 +220,7 @@ const PipelineRuleForm = ({
   };
 
   const rule = allPipelineRules?.data?.find(
-    (r: any) => r?.conditionType === formData?.conditionType
+    (r: any) => r?.conditionType === formData?.conditionType,
   );
   const ruleColumnIds = (
     rule?.stages?.map((s: any) => s?.columnId) || []
@@ -230,19 +230,19 @@ const PipelineRuleForm = ({
     (stage) =>
       !ruleColumnIds?.includes(stage?.id) &&
       !formData?.stageIds?.includes(stage?.id) &&
-      formData.targetColumnId !== stage.id
+      formData.targetColumnId !== stage.id,
   );
 
   try {
     const selectedTargetId =
       formData?.targetColumnId !== null &&
-        formData?.targetColumnId !== undefined
+      formData?.targetColumnId !== undefined
         ? Number(formData.targetColumnId)
         : null;
 
     if (selectedTargetId && stages && Array.isArray(stages)) {
       const alreadyPresent = actionOptions?.some(
-        (s) => s.id === selectedTargetId
+        (s) => s.id === selectedTargetId,
       );
       if (!alreadyPresent) {
         const selectedStage = stages.find((s) => s.id === selectedTargetId);
@@ -258,7 +258,7 @@ const PipelineRuleForm = ({
   const conditionHelpContent = getPipelineConditionHelp(formData.conditionType);
 
   const selectedActionStage = stages?.find(
-    (s) => s.id === Number(formData.targetColumnId)
+    (s) => s.id === Number(formData.targetColumnId),
   );
   if (
     stagesLoading ||
@@ -411,7 +411,7 @@ const PipelineRuleForm = ({
                   {formData.stageIds
                     .map((id) => stages.find((s) => s.id === id)?.title)
                     .join(", ")}{" "}
-                  { }
+                  {}
                   will move to "{selectedActionStage?.title}" when the condition
                   is met.
                 </span>
@@ -423,10 +423,11 @@ const PipelineRuleForm = ({
             <button
               type="submit"
               disabled={isUpdatePending || isCreatePending || isFormUnchanged}
-              className={`rounded-md px-4 py-2 text-sm font-medium text-white ${isUpdatePending || isCreatePending || isFormUnchanged
+              className={`rounded-md px-4 py-2 text-sm font-medium text-white ${
+                isUpdatePending || isCreatePending || isFormUnchanged
                   ? "cursor-not-allowed bg-indigo-300"
                   : "bg-indigo-500 hover:bg-indigo-600"
-                }`}
+              }`}
             >
               {isUpdatePending || isCreatePending
                 ? isEdit && id

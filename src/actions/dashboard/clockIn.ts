@@ -32,7 +32,7 @@ export async function clockIn({ timezone }: { timezone: string }) {
           clockIn: clockedIn?.clockIn,
           timezone,
         }),
-      }
+      },
     );
 
     revalidatePath("/");
@@ -65,7 +65,7 @@ export async function getLastClockInOutForUser({
 
   if (lastClockInOut) {
     const clockInDay = moment(lastClockInOut.clockIn).tz(
-      lastClockInOut?.timezone || moment.tz.guess()
+      lastClockInOut?.timezone || moment.tz.guess(),
     );
 
     const now = moment.tz(timezone);
