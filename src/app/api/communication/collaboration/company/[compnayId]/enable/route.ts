@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 /**
  * @swagger
- * /api/company/{companyId}/collaboration:
+ * /api/communication/collaboration/company/{companyId}/enable:
  *   patch:
  *     summary: Update company collaboration status
  *     tags: [Company]
