@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 /**
  * @swagger
- * /notifications/client-abuse:
+ * /api/notifications/client-abuse:
  *   post:
  *     summary: Send abusive client message notification to admins, managers and sales agents
  *     tags:
@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
         title,
         iconType: "message",
         description,
-        type: "CLIENT_ABUSE_ALERT",
+        type: "CLIENT_MESSAGE_ALERT",
         redirectUrl,
       });
     }
