@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 /**
  * @swagger
- * /notifications/client-abuse:
+ * /api/notifications/client-abuse:
  *   post:
  *     summary: Send abusive client message notification to admins, managers and sales agents
  *     tags:
