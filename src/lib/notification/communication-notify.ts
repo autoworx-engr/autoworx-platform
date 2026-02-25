@@ -136,7 +136,6 @@ export const sendInternalMessageNotification = async ({
   }
 };
 
-
 type TCollaborationMessageNotification = {
   companyName?: string;
   toUserId: number;
