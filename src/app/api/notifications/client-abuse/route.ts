@@ -1,6 +1,7 @@
 import { sendUserNotifications } from "@/actions/notification/sendUserNotification";
 import { getUsersByRole } from "@/actions/user/getUserByRole";
 import { db } from "@/lib/db";
+import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -99,8 +100,10 @@ export async function POST(req: NextRequest) {
     const redirectUrl = `/dashboard/communication/client/${clientId}`;
 
     // Dynamic title & description based on client info + abusive message
-    const title = `Abusive Message Alert - ${client.firstName + client.lastName}`;
-    const description = `Client (${client.firstName + client.lastName} - ${client.mobile}) sent an abusive message: "${message}"`;
+    const clientName =
+      `${client.firstName || ""} ${client.lastName || ""}`.trim();
+    const title = `Client Needs Human Assistance`;
+    const description = `Client (${clientName} - ${client.mobile}) needs human support. Last message: "${message}"`;
 
     // Send notification to all relevant users
     for (const user of users) {
@@ -117,6 +120,8 @@ export async function POST(req: NextRequest) {
         redirectUrl,
       });
     }
+
+    revalidatePath("/dashboard");
 
     return NextResponse.json(
       {
