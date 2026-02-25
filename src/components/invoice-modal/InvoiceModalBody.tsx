@@ -719,6 +719,19 @@ export default function InvoiceModalBody({
                     >
                       {invoice.column?.title}
                     </p>
+                    <p className="pt-1">
+                      {parseFloat(
+                        calculateDue(
+                          Number(invoice.grandTotal),
+                          Number(invoice.totalPayment),
+                          Number(invoice.deposit)
+                        ).toFixed(2)
+                      ) === 0 && (
+                        <span className="text-green-500 bg-green-200 rounded-md  px-4 py-[1px] text-xs font-semibold md:mt-1">
+                          PAID
+                        </span>
+                      )}
+                    </p>
 
                     {invoice.isViewed && !isPublic && (
                       <div className="mt-1 flex items-center gap-1">

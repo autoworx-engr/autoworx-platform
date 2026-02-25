@@ -397,6 +397,7 @@ const PDFComponent = function PDF({
                 <Text style={styles.fontSize10}>{vehicle?.submodel}</Text>
               )}
               <Text style={styles.fontSize10}>{vehicle?.type}</Text>
+              <Text>Vin Number</Text>
               <Text style={styles.fontSize10}>{vehicle?.vin}</Text>
             </View>
             <View style={styles.section}>
