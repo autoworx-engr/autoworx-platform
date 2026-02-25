@@ -32,7 +32,7 @@ export default function SearchFilter({ searchParams }: TSearchFilterProps) {
 
   const handleSearchChange = useDebounce((value: string) => {
     const searchParam = new URLSearchParams(params);
-    console.log({ value });
+    // console.log({ value });
     searchParam.set("search", value);
     if (value === "" && searchParam.has("search")) {
       searchParam.delete("search");
@@ -53,10 +53,11 @@ export default function SearchFilter({ searchParams }: TSearchFilterProps) {
   };
 
   const handleClearCategory = () => {
-    setFilter({ search: "", category: "" });
+    setFilter({ category: "" });
     const searchParam = new URLSearchParams(params);
-    searchParam.delete("search");
-    searchParam.delete("category");
+    if (searchParam.has("category")) {
+      searchParam.delete("category");
+    }
     router.push(`${pathname}?${searchParam.toString()}`);
   };
 
