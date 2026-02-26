@@ -178,7 +178,7 @@ export async function POST(
 
         //sales agent
         if (dbMessage && body.to === "+14702560094") {
-          const aiAgentResponse = await sendSMSToAgent({
+          await sendSMSToAgent({
             company_id: client.companyId,
             message: dbMessage?.message,
             send_from: dbMessage?.from,

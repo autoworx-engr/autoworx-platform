@@ -233,7 +233,7 @@ export async function POST(req: NextRequest) {
 
           //sales agent
           if (clientSMS && clientSMS?.to === "+12039008770") {
-            const aiAgentResponse = await sendSMSToAgent({
+            await sendSMSToAgent({
               company_id: client.companyId,
               message: clientSMS?.message,
               send_from: clientSMS?.from,
