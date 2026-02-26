@@ -397,7 +397,12 @@ const PDFComponent = function PDF({
                 <Text style={styles.fontSize10}>{vehicle?.submodel}</Text>
               )}
               <Text style={styles.fontSize10}>{vehicle?.type}</Text>
-              <Text style={styles.fontSize10}>{vehicle?.vin}</Text>
+              {vehicle?.vin && (
+                <>
+                  <Text>Vin Number</Text>
+                  <Text style={styles.fontSize10}>{vehicle?.vin}</Text>
+                </>
+              )}
             </View>
             <View style={styles.section}>
               <Text style={[styles.boldText, { marginBottom: 2 }]}>
@@ -409,6 +414,22 @@ const PDFComponent = function PDF({
               </Text>
               <Text>Bill Status</Text>
               <Text style={styles.fontSize10}>{invoice.column?.title}</Text>
+              {parseFloat(
+                calculateDue(
+                  Number(invoice.grandTotal),
+                  Number(invoice.totalPayment),
+                  Number(invoice.deposit)
+                ).toFixed(2)
+              ) === 0 && <Text>Payment Status</Text>}
+              <Text>
+                {parseFloat(
+                  calculateDue(
+                    Number(invoice.grandTotal),
+                    Number(invoice.totalPayment),
+                    Number(invoice.deposit)
+                  ).toFixed(2)
+                ) === 0 && "PAID"}
+              </Text>
             </View>
             <View style={styles.totalContainer}>
               {[
@@ -581,8 +602,8 @@ const PDFInvoiceItems = ({
           <Text>{formatCurrency(serviceTotal)}</Text>
         </View>
 
-        <View style={styles.laborItem}>
-          <Text>{item.service.description}</Text>
+        <View>
+          <Text>{item.service?.description || item.serviceDesc}</Text>
         </View>
 
         <View style={styles.serviceDetails}>
@@ -610,6 +631,10 @@ const PDFInvoiceItems = ({
           <Text>{item.labor ? item.labor.name : "Labor"}</Text>
           <Text>{formatCurrency(laborCost)}</Text>
         </View>
+        <View style={styles.laborItem}>
+          <Text>{item.labor?.notes}</Text>
+        </View>
+
         <View style={styles.laborItem}>
           <Text>Discount</Text>
           <Text>{formatCurrency(totalDiscount)}</Text>
