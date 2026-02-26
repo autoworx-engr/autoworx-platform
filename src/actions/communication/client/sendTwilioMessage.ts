@@ -169,22 +169,22 @@ export async function sendTwilioMessage({
 
       revalidatePath("/dashboard/communication/client");
 
-      if (dbMessage && clientId === 3460 && twilioCredentials.companyId === 4) {
-        const aiAgentResponse = await sendSMSToAgent({
-          company_id: twilioCredentials.companyId,
-          message: dbMessage?.message,
-          send_from: dbMessage?.from,
-          send_to: dbMessage?.to,
-          client_id: clientId,
-          user_id: user?.id,
-        });
-        console.log(
-          "aiAgentResponse",
-          aiAgentResponse,
-          clientId,
-          twilioCredentials?.companyId,
-        );
-      }
+      // if (dbMessage && clientId === 3460 && twilioCredentials.companyId === 4) {
+      //   const aiAgentResponse = await sendSMSToAgent({
+      //     company_id: twilioCredentials.companyId,
+      //     message: dbMessage?.message,
+      //     send_from: dbMessage?.from,
+      //     send_to: dbMessage?.to,
+      //     client_id: clientId,
+      //     user_id: user?.id,
+      //   });
+      //   console.log(
+      //     "aiAgentResponse",
+      //     aiAgentResponse,
+      //     clientId,
+      //     twilioCredentials?.companyId,
+      //   );
+      // }
 
       return {
         success: true,
