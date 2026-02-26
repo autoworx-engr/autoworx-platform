@@ -8,6 +8,7 @@ import sendClientMailOrSMSNotify from "@/lib/pusher/client-conversation-notify";
 import receiveTwiloMessage from "@/lib/pusher/receiveTwiloMessage";
 import { getPusherInstance } from "@/lib/pusher/server";
 import { sendSMSToAgent } from "@/service/ai-agent/api";
+import { revalidatePath } from "next/cache";
 import { NextRequest } from "next/server";
 
 const pusher = getPusherInstance();
@@ -182,26 +183,15 @@ export async function POST(
         });
 
         //sales agent
-        // if (dbMessage && client.id === 3460 && client.companyId === 4) {
-        //   const aiAgentResponse = await sendSMSToAgent({
-        //     company_id: client.companyId,
-        //     message: dbMessage?.message,
-        //     send_from: dbMessage?.from,
-        //     send_to: dbMessage?.to,
-        //     client_id: client?.id,
-        //   });
-
-        //   if (aiAgentResponse?.status === "success") {
-        //     await db.clientSMS.update({
-        //       where: {
-        //         id: dbMessage.id,
-        //       },
-        //       data: {
-        //         isSalesAgent: true,
-        //       },
-        //     });
-        //   }
-        // }
+        if (dbMessage && body.to === "+14702560094") {
+          await sendSMSToAgent({
+            company_id: client.companyId,
+            message: dbMessage?.message,
+            send_from: dbMessage?.from,
+            send_to: dbMessage?.to,
+            client_id: client?.id,
+          });
+        }
 
         // pusher trigger to send message to company admin real time
 
@@ -250,7 +240,7 @@ export async function POST(
         });
       }
     }
-
+    revalidatePath("/dashboard/communication/client");
     // Send a success response
     return Response.json(
       { message: "Webhook subscription successful", data: body },
