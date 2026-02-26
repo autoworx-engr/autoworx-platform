@@ -169,8 +169,10 @@ export async function sendTwilioMessage({
 
       revalidatePath("/dashboard/communication/client");
 
+      console.log("Sales agent receive", dbMessage);
       if (dbMessage && dbMessage.to === "+14702560094") {
-        await sendSMSToAgent({
+        console.log("Sales agent receive", dbMessage);
+        const salesAgentResponse = await sendSMSToAgent({
           company_id: twilioCredentials.companyId,
           message: dbMessage?.message,
           send_from: dbMessage?.from,
@@ -178,6 +180,8 @@ export async function sendTwilioMessage({
           client_id: clientId,
           user_id: user?.id,
         });
+
+        console.log("salesAgentResponse", salesAgentResponse);
       }
 
       return {
