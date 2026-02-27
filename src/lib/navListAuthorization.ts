@@ -37,17 +37,26 @@ type NavItem = {
 
 export function filterNavList(
   navList: NavItem[],
-  permissions: PermissionsResult | null
+  permissions: PermissionsResult | null,
 ): NavItem[] {
   return navList
     .filter((item) => {
       // Role-based filtering
       if (permissions?.role === "Technician") {
         if (
-          ["Invoices", "Payments", "Directory", "Inventory"].includes(
-            item.title
-          )
+          [
+            "Invoices",
+            "Payments",
+            "Directory",
+            "Inventory",
+            "Visualization",
+          ].includes(item.title)
         ) {
+          return false;
+        }
+      }
+      if (permissions?.role === "Sales") {
+        if (["Visualization"].includes(item.title)) {
           return false;
         }
       }
@@ -58,7 +67,7 @@ export function filterNavList(
 
         const check = <K extends keyof BasePermission>(
           companyKey: K,
-          userKey?: K
+          userKey?: K,
         ) => {
           if (!cp[companyKey]) return false;
           if (!up || userKey === undefined) return true;
@@ -72,7 +81,7 @@ export function filterNavList(
               check("communicationHubInternal", "communicationHubInternal") ||
               check(
                 "communicationHubCollaboration",
-                "communicationHubCollaboration"
+                "communicationHubCollaboration",
               )
             );
 
@@ -109,7 +118,7 @@ export function filterNavList(
               check("workforceManagement", "workforceManagement") ||
               check(
                 "workforceManagementViewOnly",
-                "workforceManagementViewOnly"
+                "workforceManagementViewOnly",
               )
             );
 
@@ -127,7 +136,7 @@ export function filterNavList(
             ...item,
             subnav:
               item.subnav?.filter(
-                (subnavItem) => subnavItem.title === "Internal"
+                (subnavItem) => subnavItem.title === "Internal",
               ) || null,
           };
         }
@@ -136,8 +145,14 @@ export function filterNavList(
             ...item,
             subnav:
               item.subnav?.filter(
-                (subnavItem) => subnavItem.title === "Shop Pipeline"
+                (subnavItem) => subnavItem.title === "Shop Pipeline",
               ) || null,
+          };
+        }
+        if (item.title === "Analytics and Reporting") {
+          return {
+            ...item,
+            link: "/dashboard/reporting/technicianreporting",
           };
         }
       }
@@ -147,7 +162,7 @@ export function filterNavList(
             ...item,
             subnav:
               item.subnav?.filter(
-                (subnavItem) => subnavItem.title === "Sales Pipeline"
+                (subnavItem) => subnavItem.title === "Sales Pipeline",
               ) || null,
           };
         }
@@ -156,7 +171,7 @@ export function filterNavList(
             ...item,
             subnav:
               item.subnav?.filter(
-                (subnavItem) => subnavItem.title === "Inventory List"
+                (subnavItem) => subnavItem.title === "Inventory List",
               ) || null,
           };
         }
@@ -165,8 +180,14 @@ export function filterNavList(
             ...item,
             subnav:
               item.subnav?.filter(
-                (subnavItem) => subnavItem.title === "Client"
+                (subnavItem) => subnavItem.title === "Client",
               ) || null,
+          };
+        }
+        if (item.title === "Analytics and Reporting") {
+          return {
+            ...item,
+            link: "dashboard/reporting/salesreporting",
           };
         }
       }
@@ -176,7 +197,7 @@ export function filterNavList(
             ...item,
             subnav:
               item.subnav?.filter(
-                (subnavItem) => subnavItem.title !== "Employee"
+                (subnavItem) => subnavItem.title !== "Employee",
               ) || null,
           };
         }
@@ -185,7 +206,7 @@ export function filterNavList(
             ...item,
             subnav:
               item.subnav?.filter(
-                (subnavItem) => subnavItem.title === "Vendor List"
+                (subnavItem) => subnavItem.title === "Vendor List",
               ) || null,
           };
         }
@@ -203,7 +224,7 @@ export function filterNavList(
 
               const check = <K extends keyof BasePermission>(
                 companyKey: K,
-                userKey?: K
+                userKey?: K,
               ) => {
                 if (!cp[companyKey]) return false;
                 if (!up || userKey === undefined) return true;
@@ -214,19 +235,19 @@ export function filterNavList(
                 case "Client":
                   return check(
                     "communicationHubClients",
-                    "communicationHubClients"
+                    "communicationHubClients",
                   );
 
                 case "Internal":
                   return check(
                     "communicationHubInternal",
-                    "communicationHubInternal"
+                    "communicationHubInternal",
                   );
 
                 case "Collaboration":
                   return check(
                     "communicationHubCollaboration",
-                    "communicationHubCollaboration"
+                    "communicationHubCollaboration",
                   );
 
                 case "Shop Pipeline":
