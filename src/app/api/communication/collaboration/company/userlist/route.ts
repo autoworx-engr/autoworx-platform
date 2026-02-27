@@ -99,6 +99,15 @@ export const GET = async (request: NextRequest) => {
     }
 
     // Fetch connected companies with pagination
+    const companyDefaultSelect = {
+      id: true,
+      name: true,
+      image: true,
+      email: true,
+      phone: true,
+      isCollaborators: true,
+      timezone: true,
+    };
     const connectedCompanies = await db.companyJoin.findMany({
       where: {
         OR: [
@@ -121,7 +130,8 @@ export const GET = async (request: NextRequest) => {
       },
       include: {
         companyOne: {
-          include: {
+          select: {
+            ...companyDefaultSelect,
             users: {
               where: {
                 employeeType: {
@@ -143,7 +153,8 @@ export const GET = async (request: NextRequest) => {
           },
         },
         companyTwo: {
-          include: {
+          select: {
+            ...companyDefaultSelect,
             users: {
               where: {
                 employeeType: {
