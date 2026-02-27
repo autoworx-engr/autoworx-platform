@@ -53,6 +53,10 @@ export async function sendInfobipMessage({
       };
     }
 
+    const company = await db.company.findUnique({
+      where: { id: infobipConfig?.companyId },
+    });
+
     let user: Awaited<ReturnType<typeof getUser>> | null = null;
     // try {
     //   user = await getUser();
@@ -324,15 +328,17 @@ export async function sendInfobipMessage({
       }
 
       revalidatePath("/dashboard/communication/client");
-      if (dbMessage && dbMessage.to === "+12039008770") {
-        await sendSMSToAgent({
-          company_id: clientId,
-          message: dbMessage?.message,
-          send_from: dbMessage?.from,
-          send_to: dbMessage?.to,
-          client_id: infobipConfig?.companyId,
-          user_id: user?.id,
-        });
+      if (company?.isSalesAgent && client?.isSalesAgent) {
+        if (dbMessage && dbMessage.to === infobipConfig.phoneNumber) {
+          await sendSMSToAgent({
+            company_id: clientId,
+            message: dbMessage?.message,
+            send_from: dbMessage?.from,
+            send_to: dbMessage?.to,
+            client_id: infobipConfig?.companyId,
+            user_id: user?.id,
+          });
+        }
       }
 
       return {
