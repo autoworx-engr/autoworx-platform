@@ -202,16 +202,22 @@ export function PricePlans({
                                   </p>
                                   {feature.type !== "BOOLEAN" && isEnabled && (
                                     <div className="flex flex-wrap gap-1.5 mt-1.5">
-                                      {feature.value
-                                        .split(",")
-                                        .map((item: string, idx: number) => (
-                                          <span
-                                            key={idx}
-                                            className="text-[10px] font-semibold text-[#00b8b0] bg-[#00b8b0]/10 px-2 py-0.5 rounded-md uppercase"
-                                          >
-                                            {item.trim()}
-                                          </span>
-                                        ))}
+                                      {feature.value.trim() === "-1" ? (
+                                        <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400 px-2 py-0.5 rounded-md uppercase">
+                                          Unlimited
+                                        </span>
+                                      ) : (
+                                        feature.value
+                                          .split(",")
+                                          .map((item: string, idx: number) => (
+                                            <span
+                                              key={idx}
+                                              className="text-[10px] font-semibold text-[#00b8b0] bg-[#00b8b0]/10 px-2 py-0.5 rounded-md uppercase"
+                                            >
+                                              {item.trim()}
+                                            </span>
+                                          ))
+                                      )}
                                     </div>
                                   )}
                                 </div>

@@ -268,14 +268,12 @@ const Page = async (props: propsType) => {
               </div>
 
               <div className="mt-4 flex items-center gap-x-4 pt-2">
-                <CompanyPlanEditor
-                  companyId={Number(id)}
-                />
+                <CompanyPlanEditor companyId={Number(id)} />
                 <PlatformPlanToggle
                   companyId={Number(id)}
                   initialEnabled={!!company?.enforcePlatformPlan}
                 />
-                <button
+                {/* <button
                   className="rounded-xl px-4 py-2.5 text-sm font-semibold text-white
                 bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
                 shadow-[0_4px_14px_0_rgba(101,113,255,0.39)]
@@ -288,7 +286,7 @@ const Page = async (props: propsType) => {
                 </button>
                 <button className="rounded-xl border border-slate-400 dark:border-slate-500 bg-white dark:bg-slate-700 px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 transition-all duration-300 hover:bg-slate-50 dark:hover:bg-slate-600">
                   Cancel
-                </button>
+                </button> */}
               </div>
             </div>
             <div className="flex flex-col md:flex-row justify-between">
