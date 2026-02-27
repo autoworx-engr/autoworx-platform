@@ -503,6 +503,7 @@ model Client {
   lastMailgunEmailReadId Int?
   isStarred              Boolean?                 @default(false)
   fleet                  Fleet?
+  isSalesAgent           Boolean                  @default(true)
 
   @@index([companyId], name: "fk_customers_company")
   @@map("Client")
@@ -598,6 +599,7 @@ model Company {
   googleEmail                      String?                            @map("google_email")
   googleRefreshToken               String?                            @map("google_refresh_token")
   googleCalendarToken              String?                            @map("google_calendar_token")
+  isSalesAgent                     Boolean                            @default(true)
   createdAt                        DateTime                           @default(now()) @map("created_at")
   updatedAt                        DateTime                           @default(now()) @updatedAt @map("updated_at")
   companyLatitude                  Float?
