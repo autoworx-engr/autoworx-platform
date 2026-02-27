@@ -11,21 +11,27 @@ export async function POST(req: NextRequest) {
   try {
     const signature = req.headers.get("x-anet-signature");
     console.log("🚀 ~ POST ~ signature:", signature);
-    console.log("🚀 ~ POST ~ signature process.env.NODE_ENV:", process.env.NODE_ENV);
-    console.log("🚀 ~ POST ~ signature process.env.PLATFORM_AUTHNET_SIGNATURE_KEY", process.env.PLATFORM_AUTHNET_SIGNATURE_KEY);
+    console.log(
+      "🚀 ~ POST ~ signature process.env.NODE_ENV:",
+      process.env.NODE_ENV,
+    );
+    console.log(
+      "🚀 ~ POST ~ signature process.env.PLATFORM_AUTHNET_SIGNATURE_KEY",
+      process.env.PLATFORM_AUTHNET_SIGNATURE_KEY,
+    );
     const bodyText = await req.text();
 
     // In production, webhooks must be verified. In non-production
     // environments we allow missing signature or key to simplify
     // local testing.
-    // const shouldVerify =
-    //   process.env.NODE_ENV === "production" &&
-    //   !!process.env.PLATFORM_AUTHNET_SIGNATURE_KEY;
+    const shouldVerify =
+      process.env.NODE_ENV === "production" &&
+      !!process.env.PLATFORM_AUTHNET_SIGNATURE_KEY;
 
-    // if (shouldVerify && !verifySignature(bodyText, signature)) {
-    //   console.warn("❌ Invalid Authorize.Net platform webhook signature");
-    //   return new NextResponse("Invalid signature", { status: 401 });
-    // }
+    if (shouldVerify && !verifySignature(bodyText, signature)) {
+      console.warn("❌ Invalid Authorize.Net platform webhook signature");
+      return new NextResponse("Invalid signature", { status: 401 });
+    }
 
     const event = JSON.parse(bodyText);
     console.log("🚀 ~ Authorize.net POST ~ event2:", event);
@@ -217,9 +223,12 @@ async function handleSubscriptionSuspended(payload: any) {
  */
 function verifySignature(body: string, signature: string | null): boolean {
   if (!signature) return false;
-  const key = process.env.PLATFORM_AUTHNET_SIGNATURE_KEY || "";
+  const hexKey = process.env.PLATFORM_AUTHNET_SIGNATURE_KEY || "";
+  // Authorize.Net provides the signature key as a hex string.
+  // It must be decoded to raw bytes before use as the HMAC key.
+  const keyBytes = Buffer.from(hexKey, "hex");
   const hash = crypto
-    .createHmac("sha512", key)
+    .createHmac("sha512", keyBytes)
     .update(body)
     .digest("hex")
     .toUpperCase();
