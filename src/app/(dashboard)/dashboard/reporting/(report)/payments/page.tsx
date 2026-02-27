@@ -220,11 +220,7 @@ export default async function PaymentReportPage({ searchParams }: TProps) {
   return (
     <div className="space-y-5">
       {/* filter section */}
-      <FilterHeader
-        filterMultipleSliders={filterMultipleSliders}
-        searchParams={searchParams}
-      />
-      <div className="my-7 grid grid-cols-1 md:grid-cols-2 gap-4 xl:grid-cols-5">
+      <div className="mb-4 mt-1.5 grid grid-cols-1 md:grid-cols-2 gap-4 xl:grid-cols-5">
         <Calculation content="AVERAGE VALUE" amount={averageValue} />
         <Calculation content="OUTSTANDING PAYMENT" amount={totalDue} />
         <Calculation content="TOTAL PAYMENT" amount={totalAmount} />
@@ -238,6 +234,10 @@ export default async function PaymentReportPage({ searchParams }: TProps) {
         />
         <Calculation content="REFUND RATE" amount={refundRate} isRate={true} />
       </div>
+      <FilterHeader
+        filterMultipleSliders={filterMultipleSliders}
+        searchParams={searchParams}
+      />
       {/* Replace the existing table and mobile card sections with: */}
       <PaymentDisplay
         paymentInfo={filteredPayments}

@@ -423,7 +423,11 @@ export default function NewCustomer({
                 value={clientInfo.zip}
                 required={false}
                 onChange={(e) => {
-                  setClientInfo((prev) => ({ ...prev, zip: e.target.value }));
+                  const value = e.target.value;
+                  if (value === "" || /^\d+$/.test(value)) {
+                    setClientInfo((prev) => ({ ...prev, zip: value }));
+                  }
+                  // setClientInfo((prev) => ({ ...prev, zip: e.target.value }));
                 }}
               />
             </div>

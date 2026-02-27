@@ -1,4 +1,3 @@
-import InspectionsTab from "@/app/(dashboard)/dashboard/estimate/create/tabs/InspectionsTab";
 import {
   Tabs,
   TabsContent,
@@ -10,6 +9,7 @@ import { SyncLists } from "@/components/SyncLists";
 import Title from "@/components/Title";
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
+import { Save } from "lucide-react";
 import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";
 import { BillSummary } from "../../create/BillSummary";
@@ -19,9 +19,8 @@ import Header from "../../create/Header";
 import SyncEstimate from "../../create/SyncEstimate";
 import { AttachmentTab } from "../../create/tabs/AttachmentTab";
 import { CreateTab } from "../../create/tabs/CreateTab";
-import PaymentTab from "../../create/tabs/PaymentTab";
-import { Save } from "lucide-react";
 import EstimateInspectionsTab from "../../create/tabs/EstimateInspectionsTab";
+import PaymentTab from "../../create/tabs/PaymentTab";
 import DynamicTemplateLoader from "../../DynamicTemplateLoader";
 
 export default async function Page({
@@ -103,10 +102,10 @@ export default async function Page({
     // @ts-ignore
     item.labor = item.labor
       ? {
-        ...item.labor,
-        // @ts-ignore
-        tags: item.labor?.tags?.map((tag) => tag.tag),
-      }
+          ...item.labor,
+          // @ts-ignore
+          tags: item.labor?.tags?.map((tag) => tag.tag),
+        }
       : null;
 
     //
@@ -241,11 +240,12 @@ export default async function Page({
       notes: true,
     },
   });
+  const pageType = invoice?.type === "Invoice" ? "Invoice" : "Estimate";
 
   return (
     <div className="gap-3 space-y-4 overflow-clip py-2 md:-my-2 md:min-h-[93vh] xl:flex xl:space-y-0">
       <div className="w-full xl:min-w-[68%] flex flex-col gap-4">
-        <Title>Estimate</Title>
+        <Title>{pageType}</Title>
 
         <SyncLists
           customers={customers}
@@ -314,18 +314,21 @@ export default async function Page({
             <CreateTab />
           </TabsContent>
 
-          <TabsContent value="attachment"
+          <TabsContent
+            value="attachment"
             className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto thin-scrollbar p-2"
           >
             <AttachmentTab />
           </TabsContent>
 
-          <TabsContent value="inspections"
+          <TabsContent
+            value="inspections"
             className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto thin-scrollbar p-2"
           >
             <EstimateInspectionsTab />
           </TabsContent>
-          <TabsContent value="payments"
+          <TabsContent
+            value="payments"
             className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto thin-scrollbar p-2"
           >
             <PaymentTab
@@ -344,6 +347,7 @@ export default async function Page({
           <ConvertButton
             type={invoice.type}
             text={`Update ${invoice.type}`}
+            // text={`Update ${pageType}`
             icon={<Save size={18} />}
             className="border-none bg-[#6571FF] px-8 text-white"
           />

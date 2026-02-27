@@ -88,7 +88,7 @@ export default function NewTask({
 
   const handleTimeChange = (
     e: React.ChangeEvent<HTMLInputElement>,
-    type: "start" | "end"
+    type: "start" | "end",
   ) => {
     let timeValue = e.target.value;
 
@@ -151,7 +151,7 @@ export default function NewTask({
 
     if (date && (!startTime || !endTime)) {
       return errorToast(
-        "Start time and End time are required when a date is selected!"
+        "Start time and End time are required when a date is selected!",
       );
     }
 
@@ -170,6 +170,7 @@ export default function NewTask({
       clientId,
       date: date ? new Date(date).toISOString() : undefined,
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      createdBy: "user",
     });
 
     // revalidated communications client task
@@ -292,7 +293,7 @@ export default function NewTask({
                         onChange={(value) =>
                           handleTimeChange(
                             { target: { value } } as any,
-                            "start"
+                            "start",
                           )
                         }
                         style={{ width: "100%", height: 34 }}

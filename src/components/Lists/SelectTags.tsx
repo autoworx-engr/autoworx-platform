@@ -62,7 +62,7 @@ export function SelectTags({
   }, [dropdownsOpen]);
 
   return (
-    <div className="flex flex-col max-w-sm">
+    <div className="flex flex-col max-w-sm sm:max-w-full">
       <input
         type="hidden"
         name={name}
@@ -131,7 +131,7 @@ export function SelectTags({
               }, 50);
             }
           }}
-          className="flex min-h-11 min-w-[150px] w-full items-center justify-between rounded-lg shadow-sm shadow-black/20 bg-gray-100/40 px-4 ring-1 ring-inset ring-slate-200 transition-all hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30"
+          className="flex min-h-11 min-w-[150px] w-full items-center justify-between rounded-[10px] px-4 ring-1 ring-inset ring-slate-200 transition-all hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30"
         >
           <p className="text-sm font-medium text-slate-400">Tags</p>
           <ChevronDown size={18} className="text-slate-400" />
@@ -142,7 +142,7 @@ export function SelectTags({
             side="bottom"
             align="start"
             sideOffset={8}
-            className="z-50 w-full min-w-[240px] overflow-hidden rounded-2xl border border-slate-200 bg-white p-0 shadow-2xl ring-1 ring-black/5"
+            className="z-50 w-full min-w-[240px] max-w-xs overflow-hidden rounded-2xl border border-slate-200 bg-white p-0 shadow-2xl ring-1 ring-black/5"
           >
             <DropdownMenuGroup>
               {/* Search Header */}

@@ -6,14 +6,27 @@ import { FEATURE_PERMISSIONS_MAP } from "@/lib/routePermissionsMap";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { 
-  Menu, X, User, Bell, Briefcase, Users, CreditCard, 
-  DollarSign, FileText, Globe, Zap, Settings, Shield, LayoutDashboard, Send 
-} from "lucide-react"; // প্রয়োজনীয় আইকন আমদানি করা হলো
+import {
+  Menu,
+  X,
+  User,
+  Bell,
+  Briefcase,
+  Users,
+  CreditCard,
+  DollarSign,
+  FileText,
+  Globe,
+  Zap,
+  Settings,
+  Shield,
+  LayoutDashboard,
+  Send,
+  Brain,
+} from "lucide-react";
 
 type Props = {};
 
-// আইকন সহ আপডেট করা সেটিংস তালিকা
 const accountSettings = [
   {
     link: "/dashboard/settings/my-account",
@@ -72,8 +85,12 @@ const businessSettings = [
     label: "Automation",
     icon: Zap,
   },
+  {
+    link: "/dashboard/settings/ai-train",
+    label: "AI Train",
+    icon: Brain,
+  },
 ];
-
 
 const Sidebar = (props: Props) => {
   const path = usePathname();
@@ -90,12 +107,12 @@ const Sidebar = (props: Props) => {
     if (Array.isArray(featureKey)) {
       return featureKey.some((key) =>
         companyFeaturePermission.some(
-          (perm) => perm.permission_name === key && perm.enabled
-        )
+          (perm) => perm.permission_name === key && perm.enabled,
+        ),
       );
     }
     return companyFeaturePermission.some(
-      (perm) => perm.permission_name === featureKey && perm.enabled
+      (perm) => perm.permission_name === featureKey && perm.enabled,
     );
   }
 
@@ -110,7 +127,7 @@ const Sidebar = (props: Props) => {
       // Check company permission first
       //@ts-ignore
       const hasCompanyPermission = Boolean(
-        permissions.companyPermissions?.businessSettings
+        permissions.companyPermissions?.businessSettings,
       );
       if (!hasCompanyPermission) return false;
 
@@ -129,13 +146,13 @@ const Sidebar = (props: Props) => {
   }
 
   const filteredAccountSettings = accountSettings.filter((setting) =>
-    canAccessCompanyFeatureRoute(setting.link)
+    canAccessCompanyFeatureRoute(setting.link),
   );
   const filteredBusinessSettings = businessSettings.filter(
     (setting) =>
-      canAccessCompanyFeatureRoute(setting.link) && canAccessBusinessSettings()
+      canAccessCompanyFeatureRoute(setting.link) && canAccessBusinessSettings(),
   );
-  
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const sidebarRef = useRef<HTMLDivElement | null>(null);
   const toggleSidebar = () => {
@@ -157,26 +174,35 @@ const Sidebar = (props: Props) => {
     };
   }, []);
 
-  const NavLink = ({ setting }: { setting: (typeof accountSettings)[0] & { icon: React.ElementType } }) => (
-    <Link
-      className={cn(
-        "flex items-center gap-3 rounded-xl px-4 py-2.5 transition-all duration-200 text-base", // Updated padding and alignment
-        path === setting.link
-          ? "bg-[#6571FF] text-white font-medium shadow-md shadow-[#6571FF]/30" // Active link style
-          : "text-gray-600 hover:bg-gray-100 hover:text-[#6571FF]" // Inactive link style
-      )}
-      key={setting.link}
-      href={setting.link}
-      onClick={() => setIsSidebarOpen(false)} // Close sidebar on click (for mobile)
-    >
-      <setting.icon size={20} className={cn({ 'text-white': path === setting.link })} />
-      <span>{setting.label}</span>
-    </Link>
-  );
+  const NavLink = ({
+    setting,
+  }: {
+    setting: (typeof accountSettings)[0] & { icon: React.ElementType };
+  }) => {
+    const isActive =
+      path === setting.link ||
+      (path === "/dashboard/settings/ai-train/ai-settings" &&
+        setting.link === "/dashboard/settings/ai-train");
+    return (
+      <Link
+        className={cn(
+          "flex items-center gap-3 rounded-xl px-4 py-2.5 transition-all duration-200 text-base",
+          isActive
+            ? "bg-[#6571FF] text-white font-medium shadow-md shadow-[#6571FF]/30" // Active link style
+            : "text-gray-600 hover:bg-gray-100 hover:text-[#6571FF]", // Inactive link style
+        )}
+        key={setting.link}
+        href={setting.link}
+        onClick={() => setIsSidebarOpen(false)} // Close sidebar on click (for mobile)
+      >
+        <setting.icon size={20} className={cn({ "text-white": isActive })} />
+        <span>{setting.label}</span>
+      </Link>
+    );
+  };
 
-  const SidebarContent = () => (
+  const SidebarContent = (
     <div className="p-5 space-y-8">
-      
       {/* Account Settings Section */}
       <div className="space-y-4">
         <h3 className="mb-4 text-xs font-bold uppercase tracking-widest text-gray-500">
@@ -227,33 +253,36 @@ const Sidebar = (props: Props) => {
         ref={sidebarRef}
         className={cn(
           // Base styles for mobile sidebar
-          `fixed left-0 top-0 z-40 h-full w-64 transform transition-transform duration-300 lg:hidden`,
+          `fixed left-0 top-0 z-40 h-[calc(100vh-64px)] w-64 transform transition-transform duration-300 lg:hidden`,
           // Glassmorphism effect: uses backdrop-filter
-          `bg-white/70 backdrop-blur-xl border border-white/50 shadow-2xl`, 
+          `bg-white backdrop-blur-xl border border-slate-100 shadow-2xl overflow-y-auto`,
           {
             "translate-x-0": isSidebarOpen,
             "-translate-x-full": !isSidebarOpen,
-          }
+          },
         )}
-        style={{ top: '64px' }}
+        style={{ top: "64px" }}
       >
         <div className="p-4 flex items-end justify-end">
-             <button className="text-gray-500 hover:text-gray-700" onClick={toggleSidebar}>
-                 <X size={20} />
-             </button>
+          <button
+            className="text-gray-500 hover:text-gray-700"
+            onClick={toggleSidebar}
+          >
+            <X size={20} />
+          </button>
         </div>
-        <SidebarContent />
+        {SidebarContent}
       </div>
 
       {/* Desktop Sidebar (Sticky) - Added Glassmorphism here */}
-      <div 
+      <div
         className={cn(
           "hidden lg:block sticky top-8 min-h-[70vh] w-full rounded-2xl p-0 shadow-lg border",
           // Glassmorphism effect for desktop
-          "bg-white/70 backdrop-blur-xl border-white/50", 
+          "bg-white backdrop-blur-xl border-slate-100",
         )}
       >
-        <SidebarContent />
+        {SidebarContent}
       </div>
     </div>
   );

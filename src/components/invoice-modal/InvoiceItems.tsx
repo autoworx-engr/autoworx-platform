@@ -100,8 +100,8 @@ export function InvoiceItems({ items, isPrinting = false }: InvoiceItemsProps) {
               </div>
             </div>
 
-            <div className="mt-2 text-[#6571FF]">
-              <div className="flex justify-between">
+            <div className="mt-2 ">
+              <div className="flex justify-between text-[#6571FF]">
                 <p>{item.labor ? item.labor.name : "Labor"}</p>
                 <p>
                   {formatCurrency(
@@ -112,6 +112,7 @@ export function InvoiceItems({ items, isPrinting = false }: InvoiceItemsProps) {
                   )}
                 </p>
               </div>
+              <p>{item.labor?.notes}</p>
             </div>
             <div>
               <div className="flex justify-between text-[#6571FF]">

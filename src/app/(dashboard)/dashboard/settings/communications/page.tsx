@@ -1,6 +1,7 @@
 import { getCompany } from "@/actions/settings/getCompany";
 import BookingGenerate from "@/components/BookingGenerate";
 import CallForwardingSettings from "@/components/CallForwardingSettings";
+import CallWhisperSettings from "@/components/CallWhisperSettings";
 import GoogleReviewSettings from "@/components/GoogleReviewSettings";
 import { TermsAndPolicyEditor } from "@/components/TermsAndPolicyEditor";
 import { getCompanyId } from "@/lib/companyId";
@@ -21,6 +22,9 @@ export default async function CommunicationPage() {
       {/* Sidebar */}
       <div className="space-y-4 lg:mt-8">
         <CallForwardingSettings initialNumber={company?.callForwardingNumber} />
+        <CallWhisperSettings
+          initialEnabled={company?.callWhisperEnabled ?? true}
+        />
         <div className="mt-4">
           <TermsAndPolicyEditor />
         </div>

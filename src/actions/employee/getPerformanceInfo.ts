@@ -101,7 +101,9 @@ export async function getPerformanceInfo(id: number) {
     );
   }, 0);
 
-  const returnWorkRate = (totalRedoWork / totalCompletedJobs) * 100;
+  const returnWorkRate = totalCompletedJobs > 0 
+    ? (totalRedoWork / totalCompletedJobs) * 100 
+    : 0;
 
   // Get the total number of completed jobs (for previous month)
   const totalCompletedJobsPreviousMonth = user.Technician.filter(

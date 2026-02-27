@@ -3,8 +3,8 @@
 import { padId } from "@/lib/padId";
 import { Calendar, Mail, MessageCircle, Phone } from "lucide-react";
 import moment from "moment";
-import Image from "next/image";
 import Link from "next/link";
+import Avatar from "@/components/Avatar";
 
 const ResponsiveEmployeeCard = ({
   data,
@@ -26,7 +26,7 @@ const ResponsiveEmployeeCard = ({
   //     ? moment(data.createdAt).format("MM/DD/YYYY")
   //     : moment(data.joinDate).format("MM/DD/YYYY");
 
-  const joinDate = moment(data?.joinDate).format("MM/DD/YYYY");
+  const joinDate = moment(data?.joinDate ? data.joinDate : data.createdAt).format("MM/DD/YYYY");
 
   const url =
     data.isFleet == true && isFleet == true
@@ -53,15 +53,12 @@ const ResponsiveEmployeeCard = ({
             <div className="flex items-start space-x-3 flex-1 min-w-0">
               {/* Avatar */}
 
-              <div
-                className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center text-white font-semibold text-base sm:text-lg flex-shrink-0`}
-              >
-                <Image
-                  src={clientImage}
-                  alt={clientName}
+              <div className="flex-shrink-0">
+                <Avatar
+                  photo={clientImage}
                   width={56}
                   height={56}
-                  className="rounded-xl"
+                  className="w-12 h-12 sm:w-14 sm:h-14"
                 />
               </div>
 

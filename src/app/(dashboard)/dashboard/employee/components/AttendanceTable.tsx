@@ -7,11 +7,8 @@ import DateRange from "@/app/(dashboard)/dashboard/payments/components/PaymentDa
 import AttendanceTableSkeleton from "@/components/ui/AttendanceTableSkeleton";
 import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 import { useServerGet } from "@/hooks/useServerGet";
-import {
-  convertDuration,
-  convertMinutesToHours,
-  getTotalBreaksValue,
-} from "@/lib/convertDurations";
+import { convertDuration, getTotalBreaksValue } from "@/lib/convertDurations";
+import { decimalHoursToHHMM } from "@/lib/decimalHoursToHHMM";
 import { Info, Pencil, Save, X } from "lucide-react";
 import moment from "moment-timezone";
 import { useParams } from "next/navigation";
@@ -281,8 +278,11 @@ const Dashboard = () => {
     },
     {
       label: "Total Hours",
-      value: `${convertMinutesToHours(isNaN(Number(attendanceInfo?.totalHoursWorked)) ? 0 : Number(attendanceInfo?.totalHoursWorked))} Hours`,
-      //  percentage: attendanceInfo?.growthRateTotalHoursWorked?.rate || "0%",
+      value: (() => {
+        const total = Number(attendanceInfo?.totalHoursWorked) || 0;
+        return decimalHoursToHHMM(total);
+      })(),
+
       percentage: (() => {
         const rate = attendanceInfo?.growthRateTotalHoursWorked?.rate;
         if (rate === null || rate === undefined || isNaN(Number(rate))) {

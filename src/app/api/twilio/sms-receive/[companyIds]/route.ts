@@ -6,6 +6,8 @@ import { sendClientMessageNotification } from "@/lib/notification/communication-
 import sendClientMailOrSMSNotify from "@/lib/pusher/client-conversation-notify";
 import receiveTwiloMessage from "@/lib/pusher/receiveTwiloMessage";
 import { getPusherInstance } from "@/lib/pusher/server";
+import { sendSMSToAgent } from "@/service/ai-agent/api";
+import { revalidatePath } from "next/cache";
 import { NextRequest } from "next/server";
 
 const pusher = getPusherInstance();
@@ -44,7 +46,7 @@ const pusher = getPusherInstance();
  */
 export async function POST(
   req: NextRequest,
-  context: { params: Promise<{ companyIds: string }> }
+  context: { params: Promise<{ companyIds: string }> },
 ) {
   try {
     const { params } = context;
@@ -62,7 +64,7 @@ export async function POST(
       body = Object.fromEntries(new URLSearchParams(formData).entries());
     } else {
       throw new Error(
-        "Unsupported content type: Twilio webhook expects form-encoded data"
+        "Unsupported content type: Twilio webhook expects form-encoded data",
       );
     }
 
@@ -87,13 +89,17 @@ export async function POST(
       },
     });
 
+    const company = await db.company.findUnique({
+      where: { id: credential?.companyId },
+    });
+
     const formData = new FormData();
 
     for (const url of mediaUrls) {
       const file = await fetchTwilioMedia(
         url,
         credential?.apiKeySid || "",
-        credential?.apiKeySecret || ""
+        credential?.apiKeySecret || "",
       );
       formData.append("file", file);
     }
@@ -120,6 +126,7 @@ export async function POST(
           lastName: true,
           companyId: true,
           Lead: true,
+          isSalesAgent: true,
         },
       });
 
@@ -137,6 +144,7 @@ export async function POST(
             lastName: true,
             companyId: true,
             Lead: true,
+            isSalesAgent: true,
           },
         });
       }
@@ -173,6 +181,18 @@ export async function POST(
           lastMessageBy: "Client",
           attachments: attachments,
         });
+
+        //sales agent
+        if (company?.isSalesAgent && client?.isSalesAgent)
+          if (dbMessage && body.to === credential?.phoneNumber) {
+            await sendSMSToAgent({
+              company_id: client.companyId,
+              message: dbMessage?.message,
+              send_from: dbMessage?.from,
+              send_to: dbMessage?.to,
+              client_id: client?.id,
+            });
+          }
 
         // pusher trigger to send message to company admin real time
 
@@ -221,16 +241,17 @@ export async function POST(
         });
       }
     }
+    revalidatePath("/dashboard/communication/client");
     // Send a success response
     return Response.json(
       { message: "Webhook subscription successful", data: body },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error: any) {
     console.error("Subscription error:", error);
     return Response.json(
       { message: "Webhook subscription failed", error: error?.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -238,7 +259,7 @@ export async function POST(
 async function fetchTwilioMedia(
   url: string,
   apiKeySid: string,
-  apiKeySecret: string
+  apiKeySecret: string,
 ) {
   const response = await fetch(url, {
     headers: {

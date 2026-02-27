@@ -239,7 +239,7 @@ export default function NewLabor({
       </DialogTrigger>
 
       <DialogContent
-        className="max-h-[94vh] max-w-md grid-rows-[auto,1fr,auto] overflow-hidden"
+        className="max-h-[94vh] max-w-md grid-rows-[auto,1fr,auto]"
         form
       >
         <DialogHeader className="border-b border-slate-200 pb-2">

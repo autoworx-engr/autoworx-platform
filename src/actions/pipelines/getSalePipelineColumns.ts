@@ -10,6 +10,7 @@ export const getSalePipelineColumns = async (
   type: string,
   searchTerm?: string,
   initialLoad: boolean = true,
+  orderBy?: "asc" | "desc",
 ) => {
   const companyId = await getCompanyId();
   let columns = await db.column.findMany({
@@ -21,6 +22,7 @@ export const getSalePipelineColumns = async (
     columns.map(async (column) => {
       const leadsPromise = getLeads({
         searchTerm: searchTerm,
+        orderBy: orderBy,
         columnId: column.id,
         // For initial load, fetch only 10 leads per column for faster perceived performance
         ...(initialLoad && { take: defaultTake, skip: defaultSkip }),
@@ -28,7 +30,11 @@ export const getSalePipelineColumns = async (
       });
 
       // Get total count with same search criteria for accurate pagination
-      const totalLeadsPromise = getLeadsCountByColumnId(column.id, companyId, searchTerm);
+      const totalLeadsPromise = getLeadsCountByColumnId(
+        column.id,
+        companyId,
+        searchTerm,
+      );
       const [leads, totalLeads] = await Promise.all([
         leadsPromise,
         totalLeadsPromise,
@@ -50,11 +56,13 @@ export const getColumnRemainingLeads = async (
   columnId: number,
   searchTerm?: string,
   skip: number = defaultTake,
+  orderBy?: "asc" | "desc",
 ) => {
   const leads = await getLeads({
     searchTerm: searchTerm,
     columnId: columnId,
     skip: skip,
+    orderBy: orderBy,
     // No take limit to fetch all remaining leads
   });
 

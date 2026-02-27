@@ -6,6 +6,8 @@ import sendClientMailOrSMSNotify from "@/lib/pusher/client-conversation-notify";
 import receiveTwiloMessage from "@/lib/pusher/receiveTwiloMessage";
 import { getPusherInstance } from "@/lib/pusher/server";
 import { NextRequest, NextResponse } from "next/server";
+import { sendSMSToAgent } from "@/service/ai-agent/api";
+import { revalidatePath } from "next/cache";
 
 const pusher = getPusherInstance();
 
@@ -44,7 +46,7 @@ export async function POST(req: NextRequest) {
       console.log("No results in webhook payload");
       return NextResponse.json(
         { error: "No results in webhook payload" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -65,7 +67,7 @@ export async function POST(req: NextRequest) {
       } = messageData;
 
       console.log(
-        `Processing message: from=${from}, to=${to}, text="${message || cleanText}"`
+        `Processing message: from=${from}, to=${to}, text="${message || cleanText}"`,
       );
 
       if (!from || !to) {
@@ -87,7 +89,7 @@ export async function POST(req: NextRequest) {
         twilioMediaUrls.push(...foundUrls);
         console.log(
           `Found ${twilioMediaUrls.length} Twilio media URLs:`,
-          twilioMediaUrls
+          twilioMediaUrls,
         );
       }
 
@@ -102,7 +104,7 @@ export async function POST(req: NextRequest) {
       });
 
       console.log(
-        `Found ${infobipConfigs.length} Infobip configs for phone number ${to}`
+        `Found ${infobipConfigs.length} Infobip configs for phone number ${to}`,
       );
 
       if (infobipConfigs.length === 0) {
@@ -113,7 +115,9 @@ export async function POST(req: NextRequest) {
       // Process for each matching company
       for (const infobipConfig of infobipConfigs) {
         console.log(`Processing for company ${infobipConfig.companyId}`);
-
+        const company = await db.company.findUnique({
+          where: { id: infobipConfig?.companyId },
+        });
         // Find client by the "from" phone number (client's phone)
         let client = await db.client.findFirst({
           where: {
@@ -156,7 +160,7 @@ export async function POST(req: NextRequest) {
 
           if (mediaMessages && mediaMessages.length > 0) {
             console.log(
-              `Processing ${mediaMessages.length} Infobip media attachments`
+              `Processing ${mediaMessages.length} Infobip media attachments`,
             );
 
             const formData = new FormData();
@@ -166,13 +170,13 @@ export async function POST(req: NextRequest) {
               try {
                 const file = await fetchInfobipMedia(
                   mediaItem.url,
-                  mediaItem.contentType
+                  mediaItem.contentType,
                 );
                 formData.append("file", file);
               } catch (error) {
                 console.error(
                   `Failed to fetch media from ${mediaItem.url}:`,
-                  error
+                  error,
                 );
               }
             }
@@ -185,7 +189,7 @@ export async function POST(req: NextRequest) {
                   {
                     method: "POST",
                     body: formData,
-                  }
+                  },
                 );
 
                 const uploadResult = await res.json();
@@ -204,7 +208,7 @@ export async function POST(req: NextRequest) {
                 }
 
                 console.log(
-                  `Successfully uploaded and stored ${uploadedUrls.length} media files`
+                  `Successfully uploaded and stored ${uploadedUrls.length} media files`,
                 );
               } catch (error) {
                 console.error("Failed to upload media files:", error);
@@ -215,7 +219,7 @@ export async function POST(req: NextRequest) {
           // Process Twilio media URLs as attachments (cross-platform support)
           if (twilioMediaUrls.length > 0) {
             console.log(
-              `Processing ${twilioMediaUrls.length} Twilio media URLs as attachments`
+              `Processing ${twilioMediaUrls.length} Twilio media URLs as attachments`,
             );
             for (let i = 0; i < twilioMediaUrls.length; i++) {
               const attachment = await db.clientSmsAttachments.create({
@@ -226,6 +230,19 @@ export async function POST(req: NextRequest) {
                 },
               });
               processedAttachments.push(attachment);
+            }
+          }
+
+          //sales agent
+          if (company?.isSalesAgent && client?.isSalesAgent) {
+            if (clientSMS && clientSMS?.to === infobipConfig.phoneNumber) {
+              await sendSMSToAgent({
+                company_id: client.companyId,
+                message: clientSMS?.message,
+                send_from: clientSMS?.from,
+                send_to: clientSMS?.to,
+                client_id: client.id,
+              });
             }
           }
 
@@ -274,7 +291,7 @@ export async function POST(req: NextRequest) {
           } catch (pusherError) {
             console.error(
               "Pusher sendClientMailOrSMSNotify error:",
-              pusherError
+              pusherError,
             );
             // Continue processing even if pusher fails
           }
@@ -308,24 +325,24 @@ export async function POST(req: NextRequest) {
           console.log(`Successfully processed message for client ${client.id}`);
         } else {
           console.log(
-            `No client found for phone number ${from} in company ${infobipConfig.companyId}`
+            `No client found for phone number ${from} in company ${infobipConfig.companyId}`,
           );
         }
       }
     }
-
+    revalidatePath("/dashboard/communication/client");
     return NextResponse.json(
       {
         message: "Webhook processed successfully",
         processedCount: results.length,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error: any) {
     console.error("Infobip webhook error:", error);
     return NextResponse.json(
       { message: "Webhook processing failed", error: error?.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -351,6 +368,6 @@ async function fetchInfobipMedia(url: string, contentType: string) {
 export async function GET() {
   return NextResponse.json(
     { message: "Infobip SMS receive webhook is active" },
-    { status: 200 }
+    { status: 200 },
   );
 }

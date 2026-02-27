@@ -50,6 +50,7 @@ export default function NewVehicle({
   const { showError, clearError } = useFormErrorStore();
   const [selectedColor, setSelectedColor] = useState<VehicleColor | null>(null);
   const [engineSize, setEngineSize] = useState<string>("");
+  const [vinCode, setVinCOde] = useState<string>("");
   const [formData, setFormData] = useState({
     vehicleYear: null,
     vehicleMake: null,
@@ -74,6 +75,8 @@ export default function NewVehicle({
       });
       setIsOtherPopulated(false);
       setSelectedColor(null);
+      setEngineSize("");
+      setVinCOde("");
     }
   }, [open]);
 
@@ -85,21 +88,21 @@ export default function NewVehicle({
   const vehicleOptions =
     makes?.data && makes.data.length > 0
       ? makes?.data?.map((vehicle: any) => ({
-        title: vehicle.name ?? "Unknown",
-        id: vehicle.name,
-      }))
+          title: vehicle.name ?? "Unknown",
+          id: vehicle.name,
+        }))
       : [];
 
   const vehicleModelOptions =
     models?.data && models.data.length > 0
       ? models?.data?.map((vehicle: any) => ({
-        title: vehicle.name ?? "Unknown",
-        id: vehicle.name,
-      }))
+          title: vehicle.name ?? "Unknown",
+          id: vehicle.name,
+        }))
       : [];
 
   const handleInputChange = (name: string, value: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
@@ -154,7 +157,7 @@ export default function NewVehicle({
         other,
         clientId,
       },
-      pathname
+      pathname,
     );
 
     if (res?.type === "globalError") {
@@ -199,7 +202,9 @@ export default function NewVehicle({
             <h1 className="text-2xl font-bold tracking-tight text-slate-600 dark:text-slate-100">
               Add Vehicle
             </h1>
-            <p className="text-sm text-slate-500 mt-1">Enter vehicle details for the client</p>
+            <p className="text-sm text-slate-500 mt-1">
+              Enter vehicle details for the client
+            </p>
           </div>
         </div>
 
@@ -270,14 +275,19 @@ export default function NewVehicle({
               name="engineSize"
               required={false}
               value={engineSize}
-              onChange={e => setEngineSize(e.target.value)}
+              onChange={(e) => setEngineSize(e.target.value)}
             />
             <SlimInput name="license" required={false} label="License Plate" />
             <div className="flex items-end gap-2">
-              <SlimInput name="vin" required={false} />
+              <SlimInput
+                name="vin"
+                required={false}
+                value={vinCode}
+                onChange={(e) => setVinCOde(e.target.value)}
+              />
 
               <VINInputCamera
-                onVehicleInfo={value => {
+                onVehicleInfo={(value) => {
                   const { make, model, year, specs } = value?.data?.data || {};
                   const { displacement_cc } = specs || {};
                   setFormData({
@@ -287,6 +297,7 @@ export default function NewVehicle({
                     other: "",
                   });
                   setEngineSize(displacement_cc || "");
+                  setVinCOde(value?.vin || "");
                 }}
               />
             </div>
@@ -294,12 +305,13 @@ export default function NewVehicle({
               name="other"
               label="Other (Vehicle not listed or non-vehicle job? Enter details here)"
               required={false}
-              rootClassName={`col-span-full ${!!formData.vehicleYear &&
+              rootClassName={`col-span-full ${
+                !!formData.vehicleYear &&
                 !!formData.vehicleMake &&
                 !!formData.vehicleModel &&
                 "cursor-not-allowed bg-gray-100 opacity-50"
-                }`}
-              onChange={e => {
+              }`}
+              onChange={(e) => {
                 let value = e.target.value;
                 setIsOtherPopulated(value?.length > 0);
               }}

@@ -1,7 +1,7 @@
 "use server";
 import { db } from "@/lib/db";
 import getUser from "@/lib/getUser";
-import { Attachment, Group, User as PrismaUser } from "@prisma/client";
+import { Attachment, Group, User as PrismaUser, User } from "@prisma/client";
 
 export interface FullMessage {
   id: number;
@@ -17,10 +17,11 @@ export interface FullMessage {
 }
 
 export const fetchRecentMessages = async (
-  take?: number
+  take?: number,
+  currentUser?: User,
 ): Promise<FullMessage[]> => {
   try {
-    const user = await getUser();
+    const user = currentUser || (await getUser());
 
     const messages = await db.message.findMany({
       where: {

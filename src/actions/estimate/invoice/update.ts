@@ -71,7 +71,7 @@ interface UpdateEstimateInput {
 export async function updateInvoice(
   data: UpdateEstimateInput,
   fromPayment: boolean = false,
-  retryCount: number = 0
+  retryCount: number = 0,
 ): Promise<ServerAction | TErrorHandler> {
   const MAX_RETRIES = 2;
   try {
@@ -187,7 +187,7 @@ export async function updateInvoice(
               });
             }
             return photo;
-          })
+          }),
         );
 
         // delete photos which are removed
@@ -231,7 +231,7 @@ export async function updateInvoice(
                   notes: inspection.notes,
                 },
               });
-            })
+            }),
           );
         }
 
@@ -329,7 +329,7 @@ export async function updateInvoice(
                     if (!material || !material.name) return;
                     if (Number(material?.quantity || 0) <= 0) {
                       throw new Error(
-                        "Material quantity should be greater than 0"
+                        "Material quantity should be greater than 0",
                       );
                     }
                     if (hasMaterialInInvoice) {
@@ -372,7 +372,7 @@ export async function updateInvoice(
                       });
                       return newMaterial;
                     }
-                  })
+                  }),
                 );
               }
 
@@ -454,7 +454,7 @@ export async function updateInvoice(
                     if (!material || !material.name) return;
                     if (Number(material?.quantity || 0) <= 0) {
                       throw new Error(
-                        "Material quantity should be greater than 0"
+                        "Material quantity should be greater than 0",
                       );
                     }
                     await txDb.material.create({
@@ -473,7 +473,7 @@ export async function updateInvoice(
                         productId: material.productId,
                       },
                     });
-                  })
+                  }),
                 ));
 
               const tags = item.tags;
@@ -490,7 +490,7 @@ export async function updateInvoice(
               await Promise.all(tagsCreatePromise);
               return newInvoiceItem;
             }
-          })
+          }),
         );
 
         // delete removed items
@@ -536,13 +536,13 @@ export async function updateInvoice(
             completedAt,
             deliveredAt,
             damageNotes: data.damageNotes,
-            authorizedName: null, 
-            signatureImage: null,
+            authorizedName: fromPayment ? undefined : null,
+            signatureImage: fromPayment ? undefined : null,
             serviceIndex: JSON.stringify(
               updatedInvoiceItem
                 .map((item) => item?.id)
                 .filter(Boolean)
-                .sort((a, b) => a - b)
+                .sort((a, b) => a - b),
             ),
           },
           include: {
@@ -611,7 +611,7 @@ export async function updateInvoice(
         maxWait: 20000, // 20 seconds
         timeout: 20000, // 20 seconds
         isolationLevel: "Serializable", // Ensure data consistency
-      }
+      },
     );
 
     // task create or update this section
@@ -627,6 +627,7 @@ export async function updateInvoice(
             invoiceId: data.id,
             timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
             clientId: data.clientId,
+            createdBy: "user",
           });
 
           if (response.type === "success") {
@@ -644,7 +645,7 @@ export async function updateInvoice(
             },
           });
         }
-      })
+      }),
     );
 
     // delete tasks which are removed from the invoice
@@ -673,7 +674,7 @@ export async function updateInvoice(
             }
           : null;
         return item;
-      }
+      },
     );
 
     revalidatePath("/dashboard/estimate");
@@ -700,12 +701,12 @@ export async function updateInvoice(
           retryCount < MAX_RETRIES
         ) {
           console.log(
-            `Retrying invoice update due to timeout. Attempt ${retryCount + 1}/${MAX_RETRIES}`
+            `Retrying invoice update due to timeout. Attempt ${retryCount + 1}/${MAX_RETRIES}`,
           );
 
           // Wait before retry (exponential backoff)
           await new Promise((resolve) =>
-            setTimeout(resolve, Math.pow(2, retryCount) * 1000)
+            setTimeout(resolve, Math.pow(2, retryCount) * 1000),
           );
 
           return updateInvoice(data, fromPayment, retryCount + 1);
