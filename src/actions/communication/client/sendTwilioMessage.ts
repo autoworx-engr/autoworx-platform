@@ -29,6 +29,9 @@ export async function getTwilioCredentialsById(companyId: number) {
     where: {
       companyId,
     },
+    include: {
+      Company: true,
+    },
   });
 }
 
@@ -66,6 +69,10 @@ export async function sendTwilioMessage({
         accountSid: twilioCredentials.accountSid,
       },
     );
+
+    const company = await db.company.findUnique({
+      where: { id: twilioCredentials?.companyId },
+    });
 
     let user: Awaited<ReturnType<typeof getUser>> | null = null;
     // try {
@@ -169,19 +176,20 @@ export async function sendTwilioMessage({
 
       revalidatePath("/dashboard/communication/client");
 
-      console.log("Sales agent receive", dbMessage);
-      if (dbMessage && dbMessage.to === "+14702560094") {
-        console.log("Sales agent receive", dbMessage);
-        const salesAgentResponse = await sendSMSToAgent({
-          company_id: twilioCredentials.companyId,
-          message: dbMessage?.message,
-          send_from: dbMessage?.from,
-          send_to: dbMessage?.to,
-          client_id: clientId,
-          user_id: user?.id,
-        });
+      if (company?.isSalesAgent && client?.isSalesAgent) {
+        if (dbMessage && dbMessage.to === "+14702560094") {
+          console.log("Sales agent receive", dbMessage);
+          const salesAgentResponse = await sendSMSToAgent({
+            company_id: twilioCredentials.companyId,
+            message: dbMessage?.message,
+            send_from: dbMessage?.from,
+            send_to: dbMessage?.to,
+            client_id: clientId,
+            user_id: user?.id,
+          });
 
-        console.log("salesAgentResponse", salesAgentResponse);
+          console.log("salesAgentResponse", salesAgentResponse);
+        }
       }
 
       return {
