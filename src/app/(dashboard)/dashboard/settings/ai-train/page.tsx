@@ -1,6 +1,12 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { CheckCircle, Phone, Settings } from "lucide-react";
 import Link from "next/link";
 import React from "react";
@@ -56,7 +62,36 @@ export default async function AiTrainOverview() {
             Quick Setup
           </h2>
           <div className="grid gap-4 sm:grid-cols-2">
-            {/* Existing Cards */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Train Your AI</CardTitle>
+                <CardDescription>
+                  Add your company info, services, pricing, and personality to
+                  make the AI sound like your team.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Link href="/dashboard/settings/ai-train/ai-settings">
+                  <Button className="w-full">Go to AI Settings</Button>
+                </Link>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Twilio Integration</CardTitle>
+                <CardDescription>
+                  Your SMS agent is connected to Twilio and ready to receive
+                  messages.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                  Twilio webhook configured
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </section>
       </div>
