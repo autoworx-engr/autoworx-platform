@@ -62,8 +62,6 @@ export const GET = async (request: NextRequest) => {
       );
     }
 
-    console.log("userCompanyId", userCompanyId);
-
     // Fetch connected companies with pagination
     const connectedCompanies = await db.companyJoin.findMany({
       where: {
