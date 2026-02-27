@@ -197,7 +197,6 @@ export default function Selector<T>({
                 className="w-full rounded-md bg-slate-50 py-1.5 pl-8 pr-3 text-sm outline-none border border-transparent focus:border-[#6571FF]/40 focus:bg-white placeholder:text-slate-400 transition-colors duration-150"
                 onChange={handleSearchChange}
                 value={searchTerm}
-                autoFocus
               />
             </div>
           )}
