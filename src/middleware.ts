@@ -18,6 +18,7 @@ const PUBLIC_API_ROUTES = [
   "/api/task",
   "/api/ai-train-company",
   "/api/notifications/client-abuse",
+  "/api/admin/client/[id]/sales-agent",
   // Webhook endpoints
   "/api/stripe/invoice-pay-hook",
   "/api/twilio/token",
