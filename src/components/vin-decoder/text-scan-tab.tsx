@@ -1,20 +1,18 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { CameraIcon, ScanLine } from "lucide-react";
-import { useRef, useState } from "react";
-import { createWorker } from "tesseract.js";
+import { errorToast } from "@/lib/toast";
+import { extractVin, findVin } from "@/utils/findVin";
+import { ScanLine } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 type TTextScanTabProps = {
   onDetectedValue?: (vin: string) => void;
 };
 
-const vinRegex = /[A-HJ-NPR-Z0-9]{17}/g; // basic VIN pattern
-
 export default function TextScanTab({ onDetectedValue }: TTextScanTabProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const [vin, setVin] = useState("");
   const [loading, setLoading] = useState(false);
   const [isCameraActive, setIsCameraActive] = useState(false);
 
@@ -37,6 +35,12 @@ export default function TextScanTab({ onDetectedValue }: TTextScanTabProps) {
     }
   };
 
+  useEffect(() => {
+    return () => {
+      stopCamera();
+    };
+  }, []);
+
   const onCaptureFrame = async () => {
     if (!videoRef.current || !canvasRef.current) return;
     setLoading(true);
@@ -51,21 +55,59 @@ export default function TextScanTab({ onDetectedValue }: TTextScanTabProps) {
     // capture frame
     ctx?.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    const worker = await createWorker("eng");
-    const { data } = await worker.recognize(canvas);
-    await worker.terminate();
+    canvas.toBlob(
+      async blob => {
+        if (blob) {
+          const file = new File([blob], "captured-vin.jpg", {
+            type: "image/jpeg",
+          });
+          await onCaptureImage(file);
+        }
+        setLoading(false);
+      },
+      "image/jpeg",
+      0.9,
+    );
+  };
 
-    const text = data.text.toUpperCase();
-    console.log("OCR text:", text);
+  const onCaptureImage = async (file: File) => {
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const uploadRes = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      if (!uploadRes.ok) {
+        errorToast("Failed to upload photos");
+      }
 
-    const matches = text.match(vinRegex);
-    console.log(matches);
+      const json = await uploadRes.json();
+      const imageUrl = json?.data?.[0];
 
-    if (matches && matches.length) {
-      const vin = matches[0];
-      onDetectedValue && onDetectedValue(vin);
+      const url = "https://agent.autoworx.tech/webhook/image-extract";
+
+      const data = {
+        s3_url: imageUrl,
+      };
+
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+      const result = await res.json();
+      const getVinCode = extractVin(result);
+      if (!getVinCode) {
+        errorToast("Failed to extract VIN");
+        return;
+      }
+      onDetectedValue && onDetectedValue(getVinCode);
+    } catch (err) {
+      errorToast("Failed to capture image");
     }
-    setLoading(false);
   };
   return (
     <div className="space-y-4">
