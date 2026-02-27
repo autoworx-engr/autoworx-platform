@@ -1,7 +1,7 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { errorToast } from "@/lib/toast";
-import { extractVin, findVin } from "@/utils/findVin";
+import { extractVin } from "@/utils/findVin"; // Assuming you kept extractVin here
 import { ScanLine } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
@@ -15,6 +15,9 @@ export default function TextScanTab({ onDetectedValue }: TTextScanTabProps) {
   const streamRef = useRef<MediaStream | null>(null);
   const [loading, setLoading] = useState(false);
   const [isCameraActive, setIsCameraActive] = useState(false);
+
+  // NEW: State to control the camera flash effect
+  const [isFlashing, setIsFlashing] = useState(false);
 
   const onStartCamera = async () => {
     setIsCameraActive(true);
@@ -43,6 +46,11 @@ export default function TextScanTab({ onDetectedValue }: TTextScanTabProps) {
 
   const onCaptureFrame = async () => {
     if (!videoRef.current || !canvasRef.current) return;
+
+    // NEW: Trigger the visual flash effect instantly
+    setIsFlashing(true);
+    setTimeout(() => setIsFlashing(false), 150); // Flash duration of 150ms
+
     setLoading(true);
 
     const video = videoRef.current;
@@ -109,6 +117,7 @@ export default function TextScanTab({ onDetectedValue }: TTextScanTabProps) {
       errorToast("Failed to capture image");
     }
   };
+
   return (
     <div className="space-y-4">
       {!isCameraActive ? (
@@ -144,9 +153,15 @@ export default function TextScanTab({ onDetectedValue }: TTextScanTabProps) {
               // playsInline
               className="h-64 w-full object-cover"
             />
+
+            {/* NEW: White flash overlay that appears briefly on capture */}
+            {isFlashing && (
+              <div className="absolute inset-0 bg-white z-20 transition-opacity duration-75" />
+            )}
+
             {/* Barcode scanning frame overlay */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="h-32 w-48 border-2 border-blue-500 opacity-75" />
+            <div className="absolute inset-0 z-10 flex items-center justify-center">
+              <div className="h-32 w-48 border-2 border-blue-500 opacity-75 shadow-[0_0_0_9999px_rgba(0,0,0,0.5)]" />
             </div>
           </div>
           <canvas ref={canvasRef} className="hidden" width="640" height="480" />
@@ -154,16 +169,17 @@ export default function TextScanTab({ onDetectedValue }: TTextScanTabProps) {
             <Button
               type="button"
               onClick={onCaptureFrame}
-              className="flex-1 bg-green-600 text-white hover:bg-green-700"
+              className="flex-1 bg-green-600 text-white hover:bg-green-700 relative overflow-hidden"
               disabled={loading}
             >
-              {loading ? "Loading..." : "Capture"}
+              {loading ? "Scanning..." : "Capture"}
             </Button>
             <Button
               type="button"
               onClick={stopCamera}
               variant="outline"
               className="flex-1 border-blue-600 text-blue-300 hover:bg-blue-700 bg-transparent"
+              disabled={loading}
             >
               Close Camera
             </Button>
