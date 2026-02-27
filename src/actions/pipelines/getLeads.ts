@@ -9,13 +9,11 @@ import { updatePipelineAutomationTrigger } from "../automation/pipeline/triggerP
 import { getCompanyTimezone } from "../settings/getCompanyTimezone";
 import { updateCommunicationAutomationTrigger } from "../automation/communication/triggerCommunicationAutomation";
 import { updateTagAutomationTrigger } from "../automation/tag/triggerTagAutomation";
-import { revalidatePath } from "next/cache";
 
 import { actionTypes } from "@/constants/lead.constant";
 
 type TGetLeads = {
   columnId?: number;
-  orderBy?: "asc" | "desc";
   searchTerm?: string;
   take?: number;
   skip?: number;
@@ -35,7 +33,6 @@ type TGetLeadsWithCount = {
 
 export const getLeads = async ({
   columnId,
-  orderBy,
   take,
   skip,
   searchTerm = "",
@@ -43,7 +40,6 @@ export const getLeads = async ({
   const companyId = await getCompanyId();
   const companyTimezone = await getCompanyTimezone();
   const timezone = companyTimezone?.timezone;
-  console.log("orderBy from getLeads", orderBy);
 
   try {
     const query: Prisma.LeadWhereInput = {
@@ -65,14 +61,13 @@ export const getLeads = async ({
       .format("YYYY-MM-DDTHH:mm:ss");
 
     const now = moment().tz(timezone ?? "");
-    // console.log({ orderBy });
 
     const leadsData = await db.lead.findMany({
       where: query,
       take,
       skip,
       orderBy: {
-        createdAt: orderBy,
+        createdAt: "desc",
       },
       include: {
         salesUser: {
@@ -136,7 +131,7 @@ export const getLeads = async ({
       leadsData.map(async (lead) => {
         let client = lead.Client.find(
           (client: any) =>
-            client.companyId === companyId && client.leadId === lead.id,
+            client.companyId === companyId && client.leadId === lead.id
         );
 
         if (!client && lead.clientId) {
@@ -182,7 +177,7 @@ export const getLeads = async ({
             const end = moment.tz(
               `${moment(appointment.date).format("YYYY-MM-DD")}T${appointment.endTime}`,
               "YYYY-MM-DDTHH:mm",
-              timezone ?? "",
+              timezone ?? ""
             );
 
             // Show appointment only if endTime is same or after now
@@ -226,7 +221,7 @@ export const getLeads = async ({
           column,
           totalMessage: isShowConversationIndicator ? 1 : 0,
         };
-      }),
+      })
     );
 
     return leadsDataWithClient;
@@ -362,7 +357,7 @@ export const getLeadsWithCount = async ({
       leadsData.map(async (lead) => {
         let client = lead.Client.find(
           (client: any) =>
-            client.companyId === companyId && client.leadId === lead.id,
+            client.companyId === companyId && client.leadId === lead.id
         );
         if (!client && lead.clientId) {
           client = (await db.client.findFirst({
@@ -431,7 +426,7 @@ export const getLeadsWithCount = async ({
           : {
               id: Math.random(),
               title: "Unqualified",
-              type: "sales" as const,
+              type: "sales",
               order: 0,
               textColor: null,
               bgColor: null,
@@ -451,7 +446,7 @@ export const getLeadsWithCount = async ({
           column,
           totalMessage: isShowConversationIndicator ? 1 : 0,
         };
-      }),
+      })
     );
 
     return { leads: await leadsDataWithClient, totalCount };
@@ -592,7 +587,7 @@ export const getLeadsWithCountOptimized = async ({
     const leadsDataWithClient: LeadWithSalesUser[] = leadsData.map((lead) => {
       let client = lead.Client.find(
         (client: any) =>
-          client.companyId === companyId && client.leadId === lead.id,
+          client.companyId === companyId && client.leadId === lead.id
       );
 
       const appointments = client?.appointments.filter((appointment: any) => {
@@ -600,7 +595,7 @@ export const getLeadsWithCountOptimized = async ({
           const end = moment.tz(
             `${moment(appointment.date).format("YYYY-MM-DD")}T${appointment.endTime}`,
             "YYYY-MM-DDTHH:mm",
-            timezone ?? "",
+            timezone ?? ""
           );
           return end.isSameOrAfter(now);
         }
@@ -671,7 +666,6 @@ export async function updateLeadColumn(leadId: number, newColumnId: number) {
         column: true,
       },
     });
-    revalidatePath("/dashboard/pipeline/sales/pipeline");
 
     if (updatedLead.column?.title === "Converted") {
       sendLeadStageChangeOrCloseNotification({
@@ -731,6 +725,8 @@ export async function updateLeadColumn(leadId: number, newColumnId: number) {
     //   });
     // }
 
+    // revalidatePath("/dashboard/pipeline/sales/lead");
+    // revalidatePath("/dashboard/pipeline/sales/pipeline");
     return updatedLead;
   } catch (error) {
     console.error("Error updating lead column:", error);
@@ -742,7 +738,7 @@ export async function updateLeadColumn(leadId: number, newColumnId: number) {
 export async function getLeadsCountByColumnId(
   columnId: number,
   companyId: number,
-  searchTerm?: string,
+  searchTerm?: string
 ) {
   try {
     const totalLeadCount = await db.lead.count({

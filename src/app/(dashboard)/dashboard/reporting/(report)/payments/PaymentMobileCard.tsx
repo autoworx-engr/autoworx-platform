@@ -67,7 +67,7 @@ export default function PaymentMobileCard({
 
       <div className="mb-4 text-sm text-[#66738C]">
         {payment.invoice?.vehicle?.year || ""} -{" "}
-        {payment.invoice?.vehicle?.make} - {payment.invoice?.vehicle?.model}
+        {payment.invoice?.vehicle?.make} - {payment.invoice?.vehicle?.model} $
         {payment.invoice?.vehicle?.other
           ? " - " + payment.invoice?.vehicle?.other
           : ""}

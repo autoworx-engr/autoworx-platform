@@ -41,8 +41,6 @@ export function SlimInput({
   // Generate a unique ID if not provided, for accessibility
   const inputId = props.id ?? props.name;
 
-  const isEmptyDate = props.type === "date" && !props.value;
-
   return (
     <div className={cn("group flex flex-col gap-1.5", rootClassName)}>
       <label
@@ -65,19 +63,12 @@ export function SlimInput({
             slimInputClassName,
             // Error state styling overrides
             error && "border-rose-400 focus:border-rose-500 focus:ring-rose-500/10 text-rose-600",
-            // Hide native date text when empty so placeholder overlay is visible
-            isEmptyDate && "text-transparent",
             className
           )}
           {...props}
         />
 
-        {/* Placeholder overlay for empty date inputs (PWA/mobile compatibility) */}
-        {isEmptyDate && (
-          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-base font-medium">
-            mm/dd/yyyy
-          </span>
-        )}
+        {/* Optional: Add an indicator or icon here in the future using absolute positioning */}
       </div>
 
       {/* Error Message with subtle slide-in animation logic */}

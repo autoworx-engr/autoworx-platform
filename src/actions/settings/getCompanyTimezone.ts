@@ -14,9 +14,9 @@ const getCompanyById = cache(async (companyId: number) => {
   });
 });
 
-export async function getCompanyTimezone(currentCompanyId?: number) {
+export async function getCompanyTimezone() {
   const session = await getServerSession(authOptions);
-  const companyId = currentCompanyId || session?.user.companyId;
+  const companyId = session?.user.companyId;
 
   if (!session || !companyId) {
     return { timezone: moment.tz.guess() };

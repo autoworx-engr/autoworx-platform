@@ -6,8 +6,6 @@ import GoogleProvider from "next-auth/providers/google";
 import { db } from "./lib/db";
 import { env } from "next-runtime-env";
 import nextAxios from "./helpers/next-axios";
-import { getUserByEmail } from "./actions/user/getUserById";
-import { getTwoFactorConfirmationByUserId } from "./app/(auth)/login/actions/getTwoFactorConfirmationByUserId";
 
 declare module "next-auth" {
   interface Session {
@@ -50,7 +48,7 @@ const refreshAccessToken = async (token: JWT) => {
         body: JSON.stringify({
           refreshAccessToken: token.refreshToken,
         }),
-      },
+      }
     );
 
     if (!response.ok) {
@@ -66,7 +64,7 @@ const refreshAccessToken = async (token: JWT) => {
 
     const verifyToken = jwt.verify(
       accessToken,
-      process.env.ACCESS_SECRET || "",
+      process.env.ACCESS_SECRET || ""
     ) as jwt.JwtPayload;
 
     const accessTokenExpires = (verifyToken?.exp ?? 0) * 1000;
@@ -104,24 +102,7 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       authorize: async credentials => {
-        console.log("credentials", credentials);
         if (!credentials?.email || !credentials?.password) return null;
-        const { data: existingUser } = await getUserByEmail(credentials.email);
-        // 2FA CHECK
-        if (existingUser?.twoFactorEnabled) {
-          const twoFactorConfirmation = await getTwoFactorConfirmationByUserId(
-            existingUser.id,
-          );
-
-          if (!twoFactorConfirmation) {
-            return null; // REJECT: 2FA not completed
-          }
-
-          // CONSUME THE CONFIRMATION (One-time use)
-          await db.twoFactorConfirmation.delete({
-            where: { id: twoFactorConfirmation.id },
-          });
-        }
         const response = await nextAxios.post("/auth/login", {
           email: credentials.email,
           password: credentials.password,
@@ -140,7 +121,7 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         const verifyToken = jwt.verify(
           user.accessToken,
-          process.env.ACCESS_SECRET || "",
+          process.env.ACCESS_SECRET || ""
         ) as jwt.JwtPayload;
 
         const accessTokenExpires = (verifyToken?.exp ?? 0) * 1000;

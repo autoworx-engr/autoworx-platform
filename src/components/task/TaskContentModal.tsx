@@ -59,8 +59,7 @@ export default function TaskContentModal({
   onTaskUpdated,
   onTaskDeleted,
 }: NewTaskProps) {
-  const { data: companyUsers = [], isLoading: isCompanyUsersLoading } =
-    useCompanyUsersQuery();
+  const { data: companyUsers = [], isLoading: isCompanyUsersLoading } = useCompanyUsersQuery();
   const {
     data: taskData,
     isError,
@@ -94,13 +93,13 @@ export default function TaskContentModal({
 
     if (taskData && fromEdit) {
       const assignUsers = taskData?.taskUser?.map(
-        (taskUserData) => taskUserData.user.id,
+        (taskUserData) => taskUserData.user.id
       );
       setTitle(taskData?.title || "");
       setDescription(taskData?.description || "");
       setAssignedUsers(assignUsers);
       setDate(
-        taskData.date ? moment.utc(taskData.date).format("YYYY-MM-DD") : "",
+        taskData.date ? moment.utc(taskData.date).format("YYYY-MM-DD") : ""
       );
       setStartTime(taskData?.startTime || "");
       setEndTime(taskData?.endTime || "");
@@ -147,7 +146,7 @@ export default function TaskContentModal({
 
   const handleTimeChange = (
     e: React.ChangeEvent<HTMLInputElement>,
-    type: "start" | "end",
+    type: "start" | "end"
   ) => {
     let timeValue = e.target.value;
 
@@ -243,7 +242,6 @@ export default function TaskContentModal({
               ? new Date(date).toISOString()
               : undefined,
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          createdBy: "user",
         },
       });
       if (res.type === "success") {
@@ -266,7 +264,6 @@ export default function TaskContentModal({
         date:
           date && date.trim() !== "" ? new Date(date).toISOString() : undefined,
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        createdBy: "user",
       });
       if (res.type === "success") {
         onTaskCreated && onTaskCreated(res.data as Task);
@@ -375,10 +372,7 @@ export default function TaskContentModal({
             <input
               type="text"
               name="title"
-              className={cn(
-                "mt-2 rounded-md border-2 border-gray-500 p-1",
-                slimInputClassName,
-              )}
+              className={cn("mt-2 rounded-md border-2 border-gray-500 p-1", slimInputClassName)}
               value={title}
               onChange={(e) => {
                 const value = e.target.value;
@@ -397,16 +391,11 @@ export default function TaskContentModal({
           </div>
 
           <div className="mb-4 flex flex-col">
-            <label htmlFor="description" className="font-medium text-slate-600">
-              Description
-            </label>
+            <label htmlFor="description" className="font-medium text-slate-600">Description</label>
 
             <textarea
               name="description"
-              className={cn(
-                "mt-2 rounded-md border-2 border-gray-500 p-1",
-                slimInputClassName,
-              )}
+              className={cn("mt-2 rounded-md border-2 border-gray-500 p-1", slimInputClassName)}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
@@ -415,7 +404,7 @@ export default function TaskContentModal({
           <div id="timer-parent" className="mb-4 flex flex-col">
             {/* <label htmlFor="time">Time</label> */}
             <div className="flex items-center space-x-2">
-              <div className="flex w-full flex-col space-y-4 lg:flex-row lg:space-x-2 lg:space-y-0">
+              <div className="flex w-full flex-col lg:flex-row lg:space-x-2">
                 <SlimInput
                   name="date"
                   label="Date"
@@ -426,7 +415,7 @@ export default function TaskContentModal({
                   required
                   onChange={(event) => setDate(event.currentTarget.value)}
                 />
-                <div className="flex items-end gap-2 mt-2 lg:mt-0">
+                <div className="flex items-end gap-2">
                   {/* Start Time */}
                   <label className="flex flex-col items-start">
                     <span className="mb-2 font-medium text-slate-600">
@@ -457,10 +446,7 @@ export default function TaskContentModal({
                       <Select
                         value={startTime}
                         onChange={(value) =>
-                          handleTimeChange(
-                            { target: { value } } as any,
-                            "start",
-                          )
+                          handleTimeChange({ target: { value } } as any, "start")
                         }
                         // Remove inline styles to rely on Tailwind's precision
                         style={{ width: "100%" }}
@@ -625,24 +611,9 @@ export default function TaskContentModal({
             <label className="font-medium text-slate-600">Priority Level</label>
             <div className="flex items-center gap-3">
               {[
-                {
-                  id: "Low",
-                  color: "bg-[#6571FF]",
-                  shadow: "shadow-[#6571FF]/40",
-                  ring: "ring-[#6571FF]",
-                },
-                {
-                  id: "Medium",
-                  color: "bg-[#25AADD]",
-                  shadow: "shadow-[#25AADD]/40",
-                  ring: "ring-[#25AADD]",
-                },
-                {
-                  id: "High",
-                  color: "bg-[#006D77]",
-                  shadow: "shadow-[#006D77]/40",
-                  ring: "ring-[#006D77]",
-                },
+                { id: "Low", color: "bg-[#6571FF]", shadow: "shadow-[#6571FF]/40", ring: "ring-[#6571FF]" },
+                { id: "Medium", color: "bg-[#25AADD]", shadow: "shadow-[#25AADD]/40", ring: "ring-[#25AADD]" },
+                { id: "High", color: "bg-[#006D77]", shadow: "shadow-[#006D77]/40", ring: "ring-[#006D77]" },
               ].map((item) => {
                 const isActive = priority === item.id;
                 return (
@@ -653,19 +624,15 @@ export default function TaskContentModal({
                     className={`
                       relative flex w-full items-center justify-center gap-2 rounded-lg py-2.5 px-4
                       text-sm font-semibold transition-all duration-300 ease-out
-                      ${
-                        isActive
-                          ? `${item.color} text-white shadow-lg ${item.shadow} scale-[1.03]`
-                          : "bg-slate-50 text-slate-500 ring-1 ring-slate-200 hover:bg-white hover:ring-slate-300 hover:-translate-y-0.5"
+                      ${isActive
+                        ? `${item.color} text-white shadow-lg ${item.shadow} scale-[1.03]`
+                        : "bg-slate-50 text-slate-500 ring-1 ring-slate-200 hover:bg-white hover:ring-slate-300 hover:-translate-y-0.5"
                       }
           `}
                   >
                     {item.id}
                     {isActive && (
-                      <Check
-                        className="h-4 w-4 animate-in zoom-in duration-300"
-                        strokeWidth={3}
-                      />
+                      <Check className="h-4 w-4 animate-in zoom-in duration-300" strokeWidth={3} />
                     )}
 
                     {/* Subtle shine overlay for the active button */}
@@ -681,7 +648,7 @@ export default function TaskContentModal({
           <div
             className={cn(
               "flex justify-between gap-10 md:gap-0",
-              !fromEdit && "justify-end",
+              !fromEdit && "justify-end"
             )}
           >
             {fromEdit && taskId && (
@@ -709,8 +676,7 @@ export default function TaskContentModal({
                 rounded-xl mt-2 sm:mt-0 px-5 py-2.5 text-sm font-medium text-slate-500 
                 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
                 transition-colors border
-              "
-                >
+              ">
                   Cancel
                 </button>
               </DialogClose>

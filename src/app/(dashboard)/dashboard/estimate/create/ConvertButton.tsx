@@ -25,7 +25,6 @@ export default function ConvertButton({
   const resetEstimateCreate = useEstimateCreateStore((state) => state.reset);
 
   const resetLists = useListsStore((state) => state.reset);
-  const isDirty = useEstimateCreateStore((state) => state.isDirty);
 
   async function handleSubmit() {
     const res = await createInvoice();
@@ -54,7 +53,6 @@ export default function ConvertButton({
           className
         )}
         formAction={handleSubmit}
-        disabled={!isDirty}
       >
         {icon && <span className="shrink-0 opacity-90">{icon}</span>}
         <span>{text}</span>

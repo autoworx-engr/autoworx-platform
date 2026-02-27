@@ -4,7 +4,7 @@ import moment from "moment";
 import { getServerSession } from "next-auth";
 import PaymentBarChartContainer from "./chart/PaymentBarChartContainer";
 
-const paymentMethods = ["CARD", "CHEQUE", "CASH", "OTHER", "DEPOSIT","REFUND"];
+const paymentMethods = ["CARD", "CHECK", "CASH", "OTHER"];
 
 type AnalyticsProps = {
   startDate?: string;
@@ -61,7 +61,6 @@ export default async function Analytics({
     select: {
       amount: true,
       type: true,
-      refundedAmount: true,
     },
   });
 
@@ -71,7 +70,7 @@ export default async function Analytics({
   );
 
   const totalPayments = payments.reduce(
-    (acc, payment) => acc + Number(payment.amount) - Number(payment.refundedAmount || 0),
+    (acc, payment) => acc + Number(payment.amount),
     0
   );
 
@@ -80,12 +79,8 @@ export default async function Analytics({
   const paymentData = paymentMethods.map((method) => {
     return payments.reduce(
       (acc, cur) => {
-        if (method === "CHEQUE" && cur.type === "CHECK") {
-          acc.payment += Number(cur.amount) - Number(cur.refundedAmount || 0);
-        } else if (method === "REFUND") {
-          acc.payment += Number(cur.refundedAmount || 0);
-        } else if (cur.type === method) {
-          acc.payment += Number(cur.amount) - Number(cur.refundedAmount || 0);
+        if (cur.type === method) {
+          acc.payment += Number(cur.amount);
         }
         return acc;
       },

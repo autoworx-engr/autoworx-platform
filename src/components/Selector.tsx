@@ -17,7 +17,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { Check, ChevronDown, Search, X } from "lucide-react";
+import { ChevronDown, Search, X } from "lucide-react";
 
 interface SelectorProps<T> {
   label: (item: T | null) => string;
@@ -38,7 +38,6 @@ interface SelectorProps<T> {
   fetchNextPage?: () => void;
   isFetchingNextPage?: boolean;
   useInfiniteScroll?: boolean;
-  showSearch?: boolean;
 }
 
 export default function Selector<T>({
@@ -60,7 +59,6 @@ export default function Selector<T>({
   fetchNextPage,
   isFetchingNextPage = false,
   useInfiniteScroll = false,
-  showSearch = true,
 }: SelectorProps<T>): JSX.Element {
   const [searchTerm, setSearchTerm] = useState("");
   const [localOpen, setLocalOpen] = useState(false);
@@ -81,6 +79,8 @@ export default function Selector<T>({
   useEffect(() => {
     setSelected(selectedItem);
   }, [selectedItem]);
+
+
 
   // Infinite scroll handler
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -110,7 +110,7 @@ export default function Selector<T>({
             item.id
               ?.toString()
               .toLowerCase()
-              .includes(searchQuery.toLowerCase()),
+              .includes(searchQuery.toLowerCase())
         )
         : items;
       setFilteredItems(searchedItems);
@@ -123,20 +123,15 @@ export default function Selector<T>({
     if (onSelect) onSelect(item);
     setIsOpen(false);
     setSearchTerm("");
-    setFilteredItems(items);
+    setFilteredItems(items)
   }
 
   return (
-    <DropdownMenu open={isOpen} onOpenChange={setIsOpen} modal={isOpen}>
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <div
         className={cn("w-full max-w-sm transition-all duration-300", className)}
       >
         <DropdownMenuTrigger
-          onPointerDown={(e) => e.preventDefault()}
-          onClick={(e) => {
-            e.stopPropagation();
-            setIsOpen(!isOpen);
-          }}
           disabled={disabledDropdown}
           className={cn(
             "group flex h-9 mt-1 w-[99%] items-center justify-between rounded-lg px-4 transition-all duration-300 outline-none",
@@ -145,7 +140,7 @@ export default function Selector<T>({
             isOpen
               ? "ring-2 ring-[#6571FF]/60 border-transparent"
               : "hover:ring-slate-300",
-            disabledDropdown && "opacity-50 cursor-not-allowed",
+            disabledDropdown && "opacity-50 cursor-not-allowed"
           )}
         >
           <TooltipProvider>
@@ -168,7 +163,7 @@ export default function Selector<T>({
               size={18}
               className={cn(
                 "text-slate-400 transition-transform duration-300",
-                isOpen && "rotate-180 text-[#6571FF]",
+                isOpen && "rotate-180 text-[#6571FF]"
               )}
             />
           )}
@@ -176,108 +171,89 @@ export default function Selector<T>({
 
         <DropdownMenuContent
           align="start"
-          sideOffset={4}
+          sideOffset={8}
           className={cn(
-            "z-50 w-[var(--radix-popper-anchor-width)] min-w-[220px] overflow-hidden rounded-lg",
-            "border border-slate-200 bg-white shadow-lg",
-            "animate-in fade-in-0 zoom-in-95 duration-150",
+            "z-50 w-[var(--radix-popper-anchor-width)] min-w-[280px] overflow-hidden rounded-xl",
+            "border border-slate-200/60 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl shadow-2xl animate-in fade-in zoom-in-95 duration-200"
           )}
         >
-          {/* Search Area */}
-          {showSearch && (
-            <div className="relative px-2 py-2 border-b border-slate-100">
-              <Search
-                size={14}
-                strokeWidth={2.5}
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-              />
-              <input
-                type="text"
-                placeholder="Search..."
-                className="w-full rounded-md bg-slate-50 py-1.5 pl-8 pr-3 text-sm outline-none border border-transparent focus:border-[#6571FF]/40 focus:bg-white placeholder:text-slate-400 transition-colors duration-150"
-                onChange={handleSearchChange}
-                value={searchTerm}
-                autoFocus
-              />
-            </div>
-          )}
+          {/* Modern Search Area */}
+          <div className="relative p-2 border-b border-slate-100 dark:border-slate-800">
+            <Search
+              size={14}
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+            />
+            <input
+              type="text"
+              placeholder="Search items..."
+              className="w-full rounded-md bg-slate-50 dark:bg-slate-800/50 py-1.5 pl-8 pr-8 text-sm outline-none ring-1 ring-transparent focus:ring-[#6571FF]/30 focus:bg-white transition-all"
+              onChange={handleSearchChange}
+              value={searchTerm}
+              autoFocus
+            />
+          </div>
 
-          {/* Items list */}
+          {/* Display list of items */}
           <div
             ref={scrollContainerRef}
             onScroll={handleScroll}
-            className="flex max-h-48 flex-col overflow-y-auto py-1 thin-scrollbar"
+            className="mb-5 flex max-h-40 flex-col overflow-y-auto thin-scrollbar"
           >
-            {filteredItems?.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-6 px-4">
-                <Search size={18} className="text-slate-300 mb-1.5" />
-                <p className="text-sm text-slate-400">No results found</p>
-              </div>
-            ) : (
-              filteredItems?.map((item, index) => {
-                const key = (item as any)?.id
-                  ? `item-${(item as any).id}`
-                  : `index-${index}`;
+            {filteredItems?.map((item, index) => {
+              // Use a unique key that combines the item's id if available, otherwise fall back to index
+              const key = (item as any)?.id
+                ? `item-${(item as any).id}`
+                : `index-${index}`;
 
-                const isSelected =
-                  selected != null &&
-                  ((item as any)?.id && (selected as any)?.id
-                    ? (item as any).id === (selected as any).id
-                    : item === selected);
-
-                if (clickabled) {
-                  return (
-                    <button
-                      onClick={() => handleSelectItem(item)}
-                      type="button"
-                      key={key}
-                      className={cn(
-                        "flex w-full items-center gap-2 px-2.5 py-2 text-left text-sm transition-colors duration-100",
-                        "hover:bg-[#6571FF]/5 active:bg-[#6571FF]/10",
-                        isSelected && "bg-[#6571FF]/10",
-                        border &&
-                        "border-b border-slate-100 rounded-md last:border-b-0",
-                      )}
-                    >
-                      <div className="flex-1 min-w-0">{displayList(item)}</div>
-                      {isSelected && (
-                        <Check
-                          size={14}
-                          strokeWidth={3}
-                          className="shrink-0 text-[#6571FF]"
-                        />
-                      )}
-                    </button>
-                  );
-                } else {
-                  return (
-                    <div
-                      key={key}
-                      className={cn(
-                        "flex w-full items-center gap-2 px-2.5 py-2 text-left text-sm",
-                        "hover:bg-[#6571FF]/5",
-                        border &&
-                        "border-b border-slate-100 last:border-b-0",
-                      )}
-                    >
-                      <div className="flex-1 min-w-0">{displayList(item)}</div>
-                    </div>
-                  );
-                }
-              })
-            )}
+              if (clickabled) {
+                return (
+                  <button
+                    onClick={() => {
+                      handleSelectItem(item);
+                    }}
+                    type="button"
+                    key={key}
+                    className={cn(
+                      "w-full p-1 px-2 text-left hover:bg-gray-100",
+                      border &&
+                      "relative border-b border-slate-200 dark:border-slate-800 px-2 py-1.5 rounded-xl"
+                    )}
+                  >
+                    {displayList(item)}
+                  </button>
+                );
+              } else {
+                return (
+                  <div
+                    key={key}
+                    className={cn(
+                      "w-full p-1 px-2 text-left hover:bg-gray-100",
+                      border &&
+                      "relative border-b border-slate-200 dark:border-slate-800 px-2 py-1.5 rounded-xl"
+                    )}
+                  >
+                    {displayList(item)}
+                  </div>
+                );
+              }
+            })}
 
             {/* Loading indicator for infinite scroll */}
+            {useInfiniteScroll && isFetchingNextPage && (
+              <div className="flex justify-center py-2">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600"></div>
+              </div>
+            )}
+
             {isFetchingNextPage && (
-              <div className="flex items-center justify-center gap-2 py-3">
-                <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-200 border-t-[#6571FF]" />
-                <span className="text-xs text-slate-400">Loading...</span>
+              <div className="flex justify-center py-3">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-200 border-t-[#6571FF]" />
               </div>
             )}
           </div>
 
-          {/* Footer / Action area */}
-          <div className="border-t border-slate-100 p-1.5">
+          {/* New Button / Action Footer */}
+          <div className="bg-slate-50/50 dark:bg-slate-800/30 p-2 border-t border-slate-100 dark:border-slate-800">
             {newButton}
             {footer && <div className="mt-1">{footer}</div>}
           </div>

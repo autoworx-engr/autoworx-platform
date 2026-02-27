@@ -1,7 +1,4 @@
 "use client";
-import { getInspections } from "@/actions/estimate/invoice/getInspections";
-import { calculateDue } from "@/utils/calculateDue";
-import { formatCurrency } from "@/utils/formatCurrency";
 import {
   Client,
   Column,
@@ -13,6 +10,7 @@ import {
   Labor,
   Material,
   Service,
+  Status,
   User,
   Vehicle,
 } from "@prisma/client";
@@ -20,13 +18,19 @@ import {
   Document,
   Font,
   Image,
+  Link,
   Page,
+  PDFViewer,
   StyleSheet,
   Text,
   View,
 } from "@react-pdf/renderer";
 import moment from "moment";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import { InvoiceItems } from "./InvoiceItems";
+import { formatCurrency } from "@/utils/formatCurrency";
+import { getInspections } from "@/actions/estimate/invoice/getInspections";
+import { calculateDue } from "@/utils/calculateDue";
 // Register Poppins Regular
 Font.register({
   family: "Poppins",
@@ -397,12 +401,6 @@ const PDFComponent = function PDF({
                 <Text style={styles.fontSize10}>{vehicle?.submodel}</Text>
               )}
               <Text style={styles.fontSize10}>{vehicle?.type}</Text>
-              {vehicle?.vin && (
-                <>
-                  <Text>Vin Number</Text>
-                  <Text style={styles.fontSize10}>{vehicle?.vin}</Text>
-                </>
-              )}
             </View>
             <View style={styles.section}>
               <Text style={[styles.boldText, { marginBottom: 2 }]}>
@@ -414,22 +412,6 @@ const PDFComponent = function PDF({
               </Text>
               <Text>Bill Status</Text>
               <Text style={styles.fontSize10}>{invoice.column?.title}</Text>
-              {parseFloat(
-                calculateDue(
-                  Number(invoice.grandTotal),
-                  Number(invoice.totalPayment),
-                  Number(invoice.deposit)
-                ).toFixed(2)
-              ) === 0 && <Text>Payment Status</Text>}
-              <Text>
-                {parseFloat(
-                  calculateDue(
-                    Number(invoice.grandTotal),
-                    Number(invoice.totalPayment),
-                    Number(invoice.deposit)
-                  ).toFixed(2)
-                ) === 0 && "PAID"}
-              </Text>
             </View>
             <View style={styles.totalContainer}>
               {[
@@ -540,10 +522,8 @@ const PDFComponent = function PDF({
           )} */}
         </View>
 
-        <Text
-          style={{ textAlign: "center", marginTop: "auto", fontSize: "12px" }}
-        >
-          Thank you for shopping with {invoice.company.name}
+        <Text style={{ textAlign: "center", marginTop: "auto" }}>
+          Thank you for shopping with Autoworx
         </Text>
       </Page>
     </Document>
@@ -598,12 +578,7 @@ const PDFInvoiceItems = ({
       >
         <View style={styles.header}>
           <Text>{item.service.name}</Text>
-
           <Text>{formatCurrency(serviceTotal)}</Text>
-        </View>
-
-        <View>
-          <Text>{item.service?.description || item.serviceDesc}</Text>
         </View>
 
         <View style={styles.serviceDetails}>
@@ -613,7 +588,6 @@ const PDFInvoiceItems = ({
             return (
               <View key={index} style={styles.materialItem}>
                 <Text>{material.name}</Text>
-
                 <Text>
                   {formatCurrency(
                     material.sell
@@ -631,10 +605,6 @@ const PDFInvoiceItems = ({
           <Text>{item.labor ? item.labor.name : "Labor"}</Text>
           <Text>{formatCurrency(laborCost)}</Text>
         </View>
-        <View style={styles.laborItem}>
-          <Text>{item.labor?.notes}</Text>
-        </View>
-
         <View style={styles.laborItem}>
           <Text>Discount</Text>
           <Text>{formatCurrency(totalDiscount)}</Text>

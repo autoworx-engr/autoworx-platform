@@ -426,14 +426,14 @@ export default function MaterialCreate() {
   }, [categoryOpen, vendorOpen, tagsOpen]);
 
   return (
-    <div className="flex flex-col gap-1 p-1.5 sm:p-5 bg-white rounded-sm">
+    <div className="flex flex-col gap-1 p-5 bg-white rounded-sm">
       <h3 className="mb-2 text-xl font-bold tracking-tight text-slate-500">
         {data.edit ? "Edit Materials/Parts" : "Materials/Parts Information"}
       </h3>
 
       {/* Name Input */}
       <div className="flex items-center gap-3">
-        <label htmlFor="name" className="min-w-20 max-w-24 sm:min-w-0 sm:max-w-24 text-sm font-semibold tracking-wider text-slate-500">
+        <label htmlFor="name" className="w-24 text-sm font-semibold tracking-wider text-slate-500">
           Material / Parts Name
         </label>
         <input
@@ -441,7 +441,7 @@ export default function MaterialCreate() {
           id="name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="h-10 w-full sm:flex-1 rounded-[10px] bg-white px-4 text-sm font-medium ring-1 ring-inset ring-slate-200 transition-all focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30"
+          className="h-10 flex-1 rounded-xl bg-white px-4 text-sm font-medium ring-1 ring-inset ring-slate-200 transition-all focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30"
           placeholder="e.g. Brake Pads"
         />
       </div>
@@ -503,7 +503,7 @@ export default function MaterialCreate() {
       </div>
 
       {/* Tags Selector */}
-      <div className="flex items-center gap-3 py-0.5">
+      <div className="flex items-center gap-3">
         <label className="w-24 text-sm font-semibold tracking-wider text-slate-500">
           Tags
         </label>
@@ -516,29 +516,6 @@ export default function MaterialCreate() {
         </div>
       </div>
 
-      {/* Pricing & Quantity Grid */}
-      {[
-        { id: "qt", label: "Quantity", val: quantity, set: setQuantity, placeholder: "0", type: "number" },
-        { id: "price", label: "Cost Price", val: cost, set: setCost, placeholder: "0.00", type: "number", disabled: data.edit },
-        { id: "sell", label: "Sell Price", val: sell, set: setSell, placeholder: "0.00", type: "number" },
-        { id: "discount", label: "Discount", val: discount, set: setDiscount, placeholder: "0", type: "number" }
-      ].map((field) => (
-        <div key={field.id} className="flex items-center gap-3 mb-0.5">
-          <label htmlFor={field.id} className="w-24 text-sm font-semibold text-slate-500">
-            {field.label}
-          </label>
-          <input
-            type={field.type}
-            id={field.id}
-            value={field.val ?? ""}
-            disabled={field.disabled}
-            onChange={(e) => field.set(e.target.value === "" ? undefined : parseFloat(e.target.value))}
-            className="w-full flex-1 rounded-[10px] border border-slate-300/80 px-3 py-1.5 text-base font-medium leading-6 outline-none transition-all duration-300"
-            placeholder={field.placeholder}
-          />
-        </div>
-      ))}
-
       {/* Notes Textarea */}
       <div className="flex items-start gap-3">
         <label htmlFor="notes" className="mt-2 w-24 text-sm font-semibold tracking-wider text-slate-500">
@@ -548,14 +525,37 @@ export default function MaterialCreate() {
           id="notes"
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          className="h-24 flex-1 rounded-xl bg-white border border-slate-100 p-3 text-sm font-medium ring-1 ring-inset ring-slate-200 transition-all focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30 resize-none"
+          className="h-24 flex-1 rounded-xl bg-white p-3 text-sm font-medium ring-1 ring-inset ring-slate-200 transition-all focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30 resize-none"
           placeholder="Additional details..."
         />
       </div>
 
+      {/* Pricing & Quantity Grid */}
+      {[
+        { id: "qt", label: "Quantity", val: quantity, set: setQuantity, placeholder: "0", type: "number" },
+        { id: "price", label: "Cost Price", val: cost, set: setCost, placeholder: "0.00", type: "number", disabled: data.edit },
+        { id: "sell", label: "Sell Price", val: sell, set: setSell, placeholder: "0.00", type: "number" },
+        { id: "discount", label: "Discount", val: discount, set: setDiscount, placeholder: "0", type: "number" }
+      ].map((field) => (
+        <div key={field.id} className="flex items-center gap-3">
+          <label htmlFor={field.id} className="w-36 text-sm font-semibold text-slate-500">
+            {field.label}
+          </label>
+          <input
+            type={field.type}
+            id={field.id}
+            value={field.val ?? ""}
+            disabled={field.disabled}
+            onChange={(e) => field.set(e.target.value === "" ? undefined : parseFloat(e.target.value))}
+            className={cn(slimInputClassName, "")}
+            placeholder={field.placeholder}
+          />
+        </div>
+      ))}
+
       {/* Inventory Checkbox */}
       {!data.edit && (
-        <div className="ml-[6.7rem] flex items-center">
+        <div className="ml-36 flex items-center">
           <label className="group flex cursor-pointer items-center gap-3">
             <div className="relative flex items-center mt-1">
               <input
@@ -598,7 +598,7 @@ export default function MaterialCreate() {
       )}
 
       {/* Form Actions */}
-      <div className="mt-4 flex items-center justify-end gap-3">
+      <div className="mt-4 flex items-center justify-end gap-3 border-t border-slate-100 pt-6">
         <Close />
         <button
           className="rounded-xl bg-[#6571FF] px-10 py-2.5 text-sm font-bold text-white shadow-lg shadow-[#6571FF]/30 transition-all hover:bg-[#525ceb] active:scale-95"

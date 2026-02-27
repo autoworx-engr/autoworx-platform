@@ -41,7 +41,7 @@ export default function NewFleet({
   const [tagOpenDropdown, setTagOpenDropdown] = useState(false);
   const [tag, setTag] = useState<Tag | undefined>(fleet?.tag!);
   const [profilePic, setProfilePic] = useState<File | null | string>(
-    fleet ? fleet.photo : null,
+    fleet ? fleet.photo : null
   );
 
   const { showError, clearError } = useFormErrorStore();
@@ -54,7 +54,7 @@ export default function NewFleet({
       setMobile(fleet?.mobile!);
       setProfilePic(fleet ? fleet.photo : null);
       setPreferredPaymentTerm(
-        fleet ? fleet?.fleet!.preferredPaymentTerm : null,
+        fleet ? fleet?.fleet!.preferredPaymentTerm : null
       );
     }
   }, [isEdit, fleet, open]);
@@ -194,7 +194,7 @@ export default function NewFleet({
   return (
     <Dialog
       open={open}
-      onOpenChange={isOpen => {
+      onOpenChange={(isOpen) => {
         if (!isOpen) handleClose();
         setOpen(isOpen);
       }}
@@ -208,7 +208,7 @@ export default function NewFleet({
       </DialogTrigger>
       <DialogContent
         className="max-h-full max-w-xl grid-rows-[auto,1fr,auto]"
-        // form
+      // form
       >
         <div className="mt-8 flex items-center justify-between px-2 md:px-4">
           <div>
@@ -223,6 +223,7 @@ export default function NewFleet({
           {profilePic ? (
             <div className="relative group">
               <div className="relative h-16 w-16 rounded-full overflow-hidden ring-4 ring-white dark:ring-slate-800 shadow-md transition-transform group-hover:scale-105">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={
                     typeof profilePic === "string"
@@ -245,7 +246,7 @@ export default function NewFleet({
                 id="profilePicture"
                 hidden
                 accept="image/*"
-                onChange={e => {
+                onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) {
                     setProfilePic(file);
@@ -271,7 +272,7 @@ export default function NewFleet({
                 id="profilePicture"
                 hidden
                 accept="image/*"
-                onChange={e => {
+                onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) {
                     setProfilePic(file);
@@ -299,7 +300,7 @@ export default function NewFleet({
               label="Fleet Name"
               required
               defaultValue={fleet?.fleet?.fleetName!}
-              onChange={e => {
+              onChange={(e) => {
                 const value = e.target.value;
 
                 // Validate on input change
@@ -327,7 +328,7 @@ export default function NewFleet({
               label="Email Address"
               required
               defaultValue={fleet?.email!}
-              onChange={e => {
+              onChange={(e) => {
                 const value = e.target.value;
 
                 // Validate on input change
@@ -386,7 +387,7 @@ export default function NewFleet({
                 label="Payment Term"
                 items={paymentTerms}
                 value={preferredPaymentTerm}
-                onChange={value => setPreferredPaymentTerm(value)}
+                onChange={(value) => setPreferredPaymentTerm(value)}
               />
             </div>
 

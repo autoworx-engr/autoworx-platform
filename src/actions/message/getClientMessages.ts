@@ -2,7 +2,7 @@
 
 import { db } from "@/lib/db";
 import getUser from "@/lib/getUser";
-import { Client, MailgunEmail, User } from "@prisma/client";
+import { Client, MailgunEmail } from "@prisma/client";
 
 type TClient = Client & {
   MailgunEmail: (MailgunEmail & { client: Client })[];
@@ -30,12 +30,8 @@ const sortClientsByLatestEmail = (clients: TClient[]) => {
   });
 };
 
-export async function getClientMessages(
-  page: number = 1,
-  search: string = "",
-  currentUser?: User,
-) {
-  const user = currentUser || (await getUser());
+export async function getClientMessages(page: number = 1, search: string = "") {
+  const user = await getUser();
   const limit = 20;
   const skip = (page - 1) * limit;
 
@@ -72,6 +68,7 @@ export async function getClientMessages(
     messages: paginatedClients,
     total: sortedClients.length,
     // hasMore: skip + paginatedClients.length < sortedClients.length,
-    hasMore: skip + limit < sortedClients.length,
+    hasMore: (skip + limit) < sortedClients.length,
+    
   };
 }

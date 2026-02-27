@@ -113,7 +113,7 @@ export function TermsAndPolicyEditor() {
                 onValueChange={setActiveTab}
                 className="w-full"
               >
-                <TabsList className="grid grid-cols-2 md:inline-flex -ml-[14px] rounded-bl-none">
+                <TabsList className="grid grid-cols-4 md:inline-flex -ml-[14px] rounded-bl-none">
                   <TabsTrigger
                     value="terms"
                     className="text-sm md:text-base truncate"

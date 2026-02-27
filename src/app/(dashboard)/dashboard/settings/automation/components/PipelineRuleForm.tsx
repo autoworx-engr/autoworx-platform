@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Selector from "./Selector";
 import MultiSelect from "./MultiSelect";
 import { SlimInput } from "@/components/SlimInput";
@@ -56,7 +56,6 @@ const PipelineRuleForm = ({
     isLoading: pipelineIsLoading,
     isFetching: pipelineIsFetching,
   } = useAllPipelineAutomationRules(companyId);
-  const [initialFormData, setInitialFormData] = useState<Rule | null>(null);
   const [formData, setFormData] = useState<Rule>({
     title: "",
     stageIds: [],
@@ -94,7 +93,7 @@ const PipelineRuleForm = ({
     const loadData = async () => {
       if (isEdit && id) {
         const timeDelay = parseSecondsToTimeDelay(data?.data?.timeDelay);
-        const payload: Rule = {
+        setFormData({
           id: data?.data?.id,
           companyId: data?.data?.companyId,
           conditionType: data?.data?.conditionType,
@@ -103,12 +102,10 @@ const PipelineRuleForm = ({
           title: data?.data?.title,
           timeDelay: timeDelay,
           // createdBy: data?.data?.createdBy,
-        };
-        setFormData(payload);
-        setInitialFormData(payload);
+        });
         // setLoading(false);
       } else {
-        const payload: Rule = {
+        setFormData({
           title: "",
           stageIds: [],
           conditionType: "",
@@ -116,9 +113,7 @@ const PipelineRuleForm = ({
           targetColumnId: null,
           companyId: companyId,
           // createdBy: null,
-        };
-        setFormData(payload);
-        setInitialFormData(payload);
+        });
       }
     };
     loadData();
@@ -145,11 +140,6 @@ const PipelineRuleForm = ({
       });
     }
   };
-
-  const isFormUnchanged = useMemo(() => {
-    if (!initialFormData) return false;
-    return JSON.stringify(formData) === JSON.stringify(initialFormData);
-  }, [formData, initialFormData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -236,7 +226,7 @@ const PipelineRuleForm = ({
   try {
     const selectedTargetId =
       formData?.targetColumnId !== null &&
-        formData?.targetColumnId !== undefined
+      formData?.targetColumnId !== undefined
         ? Number(formData.targetColumnId)
         : null;
 
@@ -411,7 +401,7 @@ const PipelineRuleForm = ({
                   {formData.stageIds
                     .map((id) => stages.find((s) => s.id === id)?.title)
                     .join(", ")}{" "}
-                  { }
+                  {}
                   will move to "{selectedActionStage?.title}" when the condition
                   is met.
                 </span>
@@ -422,11 +412,12 @@ const PipelineRuleForm = ({
           <div className="flex justify-end pt-4">
             <button
               type="submit"
-              disabled={isUpdatePending || isCreatePending || isFormUnchanged}
-              className={`rounded-md px-4 py-2 text-sm font-medium text-white ${isUpdatePending || isCreatePending || isFormUnchanged
+              disabled={isUpdatePending || isCreatePending}
+              className={`rounded-md px-4 py-2 text-sm font-medium text-white ${
+                isUpdatePending || isCreatePending
                   ? "cursor-not-allowed bg-indigo-300"
                   : "bg-indigo-500 hover:bg-indigo-600"
-                }`}
+              }`}
             >
               {isUpdatePending || isCreatePending
                 ? isEdit && id

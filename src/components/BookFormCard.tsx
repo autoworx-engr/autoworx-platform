@@ -103,12 +103,12 @@ export default function BookingFormCard({ bookingForm }: BookingFormCardProps) {
           {/* Stack/Quantity Dropdown */}
           <select
             value={stack}
-            onChange={(e) => handleStackChange(parseInt(e.target.value))}
+            onChange={e => handleStackChange(parseInt(e.target.value))}
             className="rounded-md border border-gray-300 bg-white px-2 py-2 text-sm font-medium text-gray-700 transition-colors duration-200 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
             aria-label="Select stack quantity"
             title="Select quantity for stack"
           >
-            {[1, 2, 3, 4, 5, 6].map((num) => (
+            {[1, 2, 3, 4, 5, 6].map(num => (
               <option key={num} value={num}>
                 Stack: {num}
               </option>

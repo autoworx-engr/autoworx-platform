@@ -8,14 +8,13 @@ const REFRESH_SECRET = process.env.REFRESH_SECRET;
 type TPayload = Partial<User>;
 
 export function generateAccessToken(user: TPayload) {
-
   return jwt.sign(
     {
       id: user.id,
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
-      companyId: user.companyId,
+      companyId: user.id,
       role: user.role,
       isSuperAdmin: user.isSuperAdmin,
       employeeType: user.employeeType,
@@ -33,7 +32,7 @@ export function generateRefreshToken(user: TPayload) {
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
-      companyId: user.companyId,
+      companyId: user.id,
       role: user.role,
       isSuperAdmin: user.isSuperAdmin,
       employeeType: user.employeeType,

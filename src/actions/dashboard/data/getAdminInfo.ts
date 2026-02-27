@@ -46,11 +46,8 @@ export async function getAdminInfo(timezone: string) {
 /**
  * Get total jobs for the current and previous months.
  */
-export async function getTotalJobs(currentCompanyId?: number) {
-  let companyId = currentCompanyId;
-  if (!companyId) {
-    companyId = await getCompanyId();
-  }
+export async function getTotalJobs() {
+  const companyId = await getCompanyId();
 
   // get all work orders that are pending
   const totalJobs = await db.invoice.count({
@@ -72,11 +69,8 @@ export async function getTotalJobs(currentCompanyId?: number) {
 /**
  * Get ongoing jobs for the current month.
  */
-export async function getOngoingJobs(currentCompanyId?: number) {
-  let companyId = currentCompanyId;
-  if (!companyId) {
-    companyId = await getCompanyId();
-  }
+export async function getOngoingJobs() {
+  const companyId = await getCompanyId();
 
   const ongoingJobsCount = await db.invoice.count({
     where: {
@@ -99,14 +93,8 @@ export async function getOngoingJobs(currentCompanyId?: number) {
 /**
  * Get completed jobs for the current and previous months.
  */
-export async function getCompletedJobs(
-  timezone: string,
-  currentCompanyId?: number,
-) {
-  let companyId = currentCompanyId;
-  if (!companyId) {
-    companyId = await getCompanyId();
-  }
+export async function getCompletedJobs(timezone: string) {
+  const companyId = await getCompanyId();
   const {
     currentMonthStart,
     currentMonthEnd,
@@ -178,11 +166,8 @@ export async function getCompletedJobs(
 /**
  * Get revenue for the current and previous months.
  */
-export async function getRevenue(timezone: string, currentCompanyId?: number) {
-  let companyId = currentCompanyId;
-  if (!companyId) {
-    companyId = await getCompanyId();
-  }
+export async function getRevenue(timezone: string) {
+  const companyId = await getCompanyId();
   const {
     currentMonthStart,
     currentMonthEnd,
@@ -236,11 +221,8 @@ export async function getRevenue(timezone: string, currentCompanyId?: number) {
 /**
  * Get expected revenue for the current and previous months.
  */
-export async function getExpectedRevenue(currentCompanyId?: number) {
-  let companyId = currentCompanyId;
-  if (!companyId) {
-    companyId = await getCompanyId();
-  }
+export async function getExpectedRevenue() {
+  const companyId = await getCompanyId();
 
   const pendingInvoices = await db.invoice.findMany({
     where: {
@@ -276,14 +258,8 @@ export async function getExpectedRevenue(currentCompanyId?: number) {
 /**
  * Get inventory information including total value, current month total, and growth rate.
  */
-export async function getInventory(
-  timezone: string,
-  currentCompanyId?: number,
-) {
-  let companyId = currentCompanyId;
-  if (!companyId) {
-    companyId = await getCompanyId();
-  }
+export async function getInventory(timezone: string) {
+  const companyId = await getCompanyId();
   const {
     currentMonthStart,
     currentMonthEnd,
@@ -351,20 +327,12 @@ export async function getInventory(
   };
 }
 
-export async function getEmployeePayout(
-  timezone: string,
-  currentCompanyId?: number,
-) {
-  let companyId = currentCompanyId;
-  if (!companyId) {
-    companyId = await getCompanyId();
-  }
+export async function getEmployeePayout(timezone: string) {
+  const companyId = await getCompanyId();
 
   // Use unified payout calculations that include both work-based and salary earnings
-  const currentMonthPayoutTotal =
-    await calculateCompanyUnifiedCurrentMonthEarnings(companyId!);
-  const previousMonthPayoutTotal =
-    await calculateCompanyUnifiedPreviousMonthEarnings(companyId!);
+  const currentMonthPayoutTotal = await calculateCompanyUnifiedCurrentMonthEarnings(companyId);
+  const previousMonthPayoutTotal = await calculateCompanyUnifiedPreviousMonthEarnings(companyId);
 
   return {
     currentMonthTotal: currentMonthPayoutTotal,
@@ -376,16 +344,11 @@ export async function getEmployeePayout(
 
 export const getTotalLeadsPerMonth = async (
   timezone: string,
-  currentCompanyId?: number,
 ): Promise<{
   current: number;
   previous: number;
 }> => {
-  let companyId = currentCompanyId;
-  if (!companyId) {
-    companyId = await getCompanyId();
-  }
-
+  const companyId = await getCompanyId();
   const {
     currentMonthStart,
     currentMonthEnd,
@@ -423,16 +386,8 @@ export const getTotalLeadsPerMonth = async (
   }
 };
 
-export async function getConvertedLeadsPerMonth(
-  timezone: string,
-  currentCompanyId?: number,
-) {
-  let companyId = currentCompanyId;
-
-  if (!companyId) {
-    companyId = await getCompanyId();
-  }
-
+export async function getConvertedLeadsPerMonth(timezone: string) {
+  const companyId = await getCompanyId();
   const {
     currentMonthStart,
     currentMonthEnd,
@@ -489,14 +444,8 @@ export async function getConvertedLeadsPerMonth(
   }
 }
 
-export async function getConversionRateWithGrowth(
-  timezone: string,
-  currentCompanyId?: number,
-) {
-  let companyId = currentCompanyId;
-  if (!companyId) {
-    companyId = await getCompanyId();
-  }
+export async function getConversionRateWithGrowth(timezone: string) {
+  const companyId = await getCompanyId();
   const {
     currentMonthStart,
     currentMonthEnd,
@@ -532,7 +481,7 @@ export async function getConversionRateWithGrowth(
 
     // Total leads created in the current month
     const { current: currentTotalLeads, previous: previousTotalLeads } =
-      await getTotalLeadsPerMonth(timezone, companyId);
+      await getTotalLeadsPerMonth(timezone);
 
     // Leads created and converted in the previous month
     const previousCreatedAndConvertedLeads = await db.lead.count({

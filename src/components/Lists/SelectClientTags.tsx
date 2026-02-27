@@ -276,7 +276,7 @@ function QuickAddForm({
   }
 
   return (
-    <form ref={formRef} className="flex w-full gap-2 p-2">
+    <form ref={formRef} className="flex w-[200px] gap-2 p-2">
       <input
         name="name"
         type="text"
@@ -293,7 +293,7 @@ function QuickAddForm({
       </button>
 
       <Submit
-        className="rounded bg-[#6571FF] p-1 text-xs leading-3 text-white"
+        className="rounded bg-slate-500 p-1 text-xs leading-3 text-white"
         formAction={handleSubmit}
       >
         Quick

@@ -116,7 +116,7 @@ export default function ReplenishProductForm({
               type="date"
               label="Date"
               defaultValue={todayInCompanyTz}
-              // required={true}
+              required={true}
             />
             <div className="space-y-1">
               <label className="font-medium text-slate-600">

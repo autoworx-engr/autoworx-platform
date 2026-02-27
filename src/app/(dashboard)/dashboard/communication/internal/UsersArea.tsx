@@ -70,7 +70,6 @@ export default function UsersArea({
               group={chat.data}
               setGroupsList={setGroupsList}
               totalMessageBox={totalMessageBoxLength}
-              existingGroups={groupsList}
             />
           );
         }
@@ -100,7 +99,6 @@ export default function UsersArea({
           group={group}
           setGroupsList={setGroupsList}
           totalMessageBox={totalMessageBoxLength}
-          existingGroups={groupsList}
         />
       );
     });

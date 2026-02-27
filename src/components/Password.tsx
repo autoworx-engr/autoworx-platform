@@ -26,7 +26,7 @@ export default function Input({
   const { error } = useFormErrorStore();
 
   const pathname = usePathname();
-  const isLoginPage = pathname === "/login" || pathname === "/register";
+  const isLoginPage = pathname === "/login";
 
   return (
     <div className="relative mt-1">

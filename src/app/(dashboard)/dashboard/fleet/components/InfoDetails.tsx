@@ -23,11 +23,7 @@ const InfoDetails = ({
         {label}
       </label>
       <div className="flex-1 text-sm font-semibold text-slate-600 leading-relaxed">
-        {value || (
-          <span className="text-slate-600 ">
-            {label === "Address" ? "No Address Listed" : "N/A"}
-          </span>
-        )}
+        {value || <span className="text-slate-400 italic">N/A</span>}
       </div>
     </div>
   );

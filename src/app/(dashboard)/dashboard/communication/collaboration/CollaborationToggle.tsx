@@ -29,7 +29,7 @@ export default function CollaborationToggle({
       setLoading(true);
       const newValue = !isCollaborators;
 
-      await fetch(`/api/communication/collaboration/company/${companyId}/enable`, {
+      await fetch(`/api/company/${companyId}/collaboration`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

@@ -29,13 +29,13 @@ export function SelectAppointmentClient({
   const state = useState(value);
   const [client, setClient] = setValue ? [value, setValue] : state;
   const { data: clientList = [] } = useClientListQuery();
-  const newAddedCustomer = useListsStore((x) => x.newAddedCustomer);
+  const newAddedCustomer = useListsStore(x => x.newAddedCustomer);
   const queryClient = useQueryClient();
   const pathname = usePathname();
 
   useEffect(() => {
     if (clientId && clientList.length > 0) {
-      const matchedClient = clientList.find((c) => c.id === clientId);
+      const matchedClient = clientList.find(c => c.id === clientId);
       if (matchedClient) {
         setClient(matchedClient);
       } else {
@@ -52,7 +52,7 @@ export function SelectAppointmentClient({
         [queryKeys.clientList],
         (oldData: Client[] | undefined) => {
           return oldData ? [...oldData, newAddedCustomer] : [newAddedCustomer];
-        },
+        }
       );
     }
   }, [newAddedCustomer]);
@@ -104,10 +104,10 @@ export function SelectAppointmentClient({
         )}
         items={clientList}
         onSearch={(search: string) =>
-          clientList.filter((client) =>
+          clientList.filter(client =>
             `${client.firstName} ${client.lastName}`
               .toLowerCase()
-              .includes(search.toLowerCase()),
+              .includes(search.toLowerCase())
           )
         }
         openState={[

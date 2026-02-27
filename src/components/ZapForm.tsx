@@ -123,11 +123,13 @@ const ZapForm = ({ company }: ZapFormProps) => {
     const { name, value } = e.target;
 
     setFormData({
-      ...formData,
-      [name]: value,
-    });
+    ...formData,
+    [name]: value,
+  });
+  
+  
+  clearFieldError(name);
 
-    clearFieldError(name);
   };
 
   const clearFieldError = (field: string) => {
@@ -139,34 +141,36 @@ const ZapForm = ({ company }: ZapFormProps) => {
   };
 
   const handleServiceChange = (
-    value: { id: string | number; title: string }[],
+    value: { id: string | number; title: string }[]
   ) => {
     setFormData((prev) => ({ ...prev, multiServices: value }));
   };
 
-  const handlePhoneChange = (num: string, code: string, isoCode: string) => {
-    const fullPhoneNumber = `${code}${num}`;
+  const handlePhoneChange = (num: string, code: string, isoCode:string) => {
+ 
+  const fullPhoneNumber = `${code}${num}`; 
 
-    setFormData((prev) => ({
-      ...prev,
-      phone: fullPhoneNumber,
-      countryCode: isoCode,
-    }));
+ 
+  setFormData((prev) => ({
+    ...prev,
+    phone: fullPhoneNumber,
+    countryCode: isoCode,
+  }));
 
-    clearFieldError("phone");
-  };
+  clearFieldError("phone");
+}
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
     setFormStatus({ message: "", type: null });
-    if (!formData.phone || formData.phone.length < 10) {
-      setFieldErrors({
-        ...fieldErrors,
-        phone: "Please enter a valid phone number",
-      });
-      return;
-    }
+if (!formData.phone || formData.phone.length < 10) {
+    setFieldErrors({
+      ...fieldErrors,
+      phone: "Please enter a valid phone number",
+    });
+    return;
+  }
     try {
       const serviceTitle =
         formData.multiServices && formData.multiServices.length > 0
@@ -203,7 +207,6 @@ const ZapForm = ({ company }: ZapFormProps) => {
           multiServices: formData?.multiServices,
         }),
       });
-      console.log({ response });
 
       if (response.ok) {
         setFormStatus({
@@ -317,6 +320,8 @@ const ZapForm = ({ company }: ZapFormProps) => {
             )}
           </div>
 
+         
+
           {/* Form Title */}
 
           <p className="mt-1 text-center font-semibold text-white text-opacity-90">
@@ -362,15 +367,14 @@ const ZapForm = ({ company }: ZapFormProps) => {
               />
             </div>
             <div className="space-y-2">
-              <PhoneInput
-                label="Phone Number"
-                // value={formData.phone}
-                onChange={(num, code, isoCode) =>
-                  handlePhoneChange(num, code, isoCode)
-                }
-                required
-                error={fieldErrors.phone}
-              />
+             
+               <PhoneInput
+    label="Phone Number"
+    // value={formData.phone} 
+    onChange={(num, code, isoCode) => handlePhoneChange(num, code, isoCode)} 
+    required
+    error={fieldErrors.phone} 
+  />
             </div>{" "}
             <div className="space-y-2">
               {formData.token ? (
@@ -392,6 +396,7 @@ const ZapForm = ({ company }: ZapFormProps) => {
                 Vehicle Information*
               </h3>
             </div>
+          
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
               <Selector
                 name="vehicle_year"

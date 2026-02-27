@@ -16,7 +16,7 @@ import { useMediaQuery } from "react-responsive";
 
 export function CreateTab() {
   const { items, removeMaterial } = useEstimateCreateStore();
-  const { open, close, type: popupType } = useEstimatePopupStore();
+  const { open, close } = useEstimatePopupStore();
 
   const isMax640 = useMediaQuery({ query: "(max-width: 640px)" });
 
@@ -87,15 +87,15 @@ export function CreateTab() {
             </thead>
             <tbody>
               {items.map((item, i) => (
-                <tr key={item.id} className="align-bottom">
+                <tr key={`item-${i}`} className="align-bottom">
                   {["service", "materials", "labor", "tags"].map(
                     (itemKey, j) => {
                       switch (itemKey) {
                         case "service":
                           return (
-                            <td key={`service-${item.id}`}>
+                            <td key={itemKey + i}>
                               <ItemSelector
-                                key={`service-${item.id}`}
+                                key={itemKey + i}
                                 type="SERVICE"
                                 label="Service"
                                 item={item}
@@ -160,15 +160,15 @@ export function CreateTab() {
                           );
                         case "materials":
                           return item.materials.length >= 0 ? (
-                            <td className="relative" key={`materials-${item.id}`}>
+                            <td className="relative" key={`materials-${j}`}>
                               {item.materials.length > 0 &&
                                 item.materials.map((material, j) => (
                                   <div
                                     className={cn("mt-2.5", j === 0 && "mt-0")}
-                                    key={`material-${item.id}-${j}`}
+                                    key={`material-${j}`}
                                   >
                                     <ItemSelector
-                                      key={`material-${item.id}-${j}`}
+                                      key={`material-${j}`}
                                       type="MATERIAL"
                                       label="Materials/Parts"
                                       item={item}
@@ -254,10 +254,10 @@ export function CreateTab() {
                               {item.materials.length == 0 && (
                                 <div
                                   className={cn("mt-2.5", j === 0 && "mt-0")}
-                                  key={`material-${item.id}-${j}`}
+                                  key={`material-${j}`}
                                 >
                                   <ItemSelector
-                                    key={`material-${item.id}-${j}`}
+                                    key={`material-${j}`}
                                     type="MATERIAL"
                                     label="Materials/Parts"
                                     item={item}
@@ -334,7 +334,7 @@ export function CreateTab() {
                           );
                         case "labor":
                           return (
-                            <td key={`labor-${item.id}`}>
+                            <td key={`labor-${j}`}>
                               <ItemSelector
                                 type="LABOR"
                                 label="Labor"
@@ -402,7 +402,7 @@ export function CreateTab() {
                           );
                         case "tags":
                           return (
-                            <td key={`tags-${item.id}`}>
+                            <td key={`tags-${j}`}>
                               <SelectTags
                                 type="TAG"
                                 value={item.tags}
@@ -431,7 +431,7 @@ export function CreateTab() {
                       className="flex items-center justify-center rounded-lg p-1.5 text-slate-400 transition-all hover:bg-rose-50 hover:text-rose-600 active:scale-90"
                       onClick={() => {
                         useEstimateCreateStore.setState((x) => ({
-                          items: x.items.filter((row) => row.id !== item.id),
+                          items: items.toSpliced(i, 1),
                         }));
                       }}
                     >
@@ -444,20 +444,18 @@ export function CreateTab() {
           </table>
         )}
       </div>
-      {!(isMax640 && popupType) && (
-        <div className="flex py-3 md:gap-52 md:bg-slate-50/80 md:backdrop-blur-sm border-t border-slate-100 px-4 md:px-6">
-          <button
-            type="button"
-            className="sticky bottom-4 z-10 flex w-full items-center justify-center gap-2 rounded-xl bg-white p-3 text-sm font-semibold tracking-wide text-[#6571FF] shadow-lg shadow-[#6571FF]/10 ring-1 ring-[#6571FF]/20 transition-all hover:bg-[#6571FF] hover:text-white active:scale-95 md:static md:w-auto md:bg-transparent md:p-2 md:shadow-none md:ring-0 md:hover:bg-[#6571FF]/10 md:hover:text-[#6571FF]"
-            onClick={addService}
-          >
-            <CirclePlus size={20} strokeWidth={2.5} />
-            <span className="uppercase tracking-wider text-[11px] md:text-sm md:capitalize md:tracking-normal">
-              Add Service
-            </span>
-          </button>
-        </div>
-      )}
+      <div className="flex py-3 md:gap-52 md:bg-slate-50/80 md:backdrop-blur-sm border-t border-slate-100 px-4 md:px-6">
+        <button
+          type="button"
+          className="sticky bottom-4 z-10 flex w-full items-center justify-center gap-2 rounded-xl bg-white p-3 text-sm font-semibold tracking-wide text-[#6571FF] shadow-lg shadow-[#6571FF]/10 ring-1 ring-[#6571FF]/20 transition-all hover:bg-[#6571FF] hover:text-white active:scale-95 md:static md:w-auto md:bg-transparent md:p-2 md:shadow-none md:ring-0 md:hover:bg-[#6571FF]/10 md:hover:text-[#6571FF]"
+          onClick={addService}
+        >
+          <CirclePlus size={20} strokeWidth={2.5} />
+          <span className="uppercase tracking-wider text-[11px] md:text-sm md:capitalize md:tracking-normal">
+            Add Service
+          </span>
+        </button>
+      </div>
     </>
   );
 }

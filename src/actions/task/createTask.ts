@@ -28,11 +28,10 @@ export interface TaskType {
   clientId?: number | null;
   date?: string;
   timezone?: string;
-  createdBy?: "user" | "sales_agent";
 }
 
 export async function createTask(
-  task: TCreateTaskValidationSchema,
+  task: TCreateTaskValidationSchema
 ): Promise<ServerAction | TErrorHandler> {
   try {
     // Validate task data
@@ -57,7 +56,6 @@ export async function createTask(
       clientId: task.clientId,
       leadId: task.leadId ?? null,
       date: task?.date || undefined,
-      createdBy: task?.createdBy,
     };
 
     let newTask = await db.task.create({

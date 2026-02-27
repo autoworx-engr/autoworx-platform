@@ -26,30 +26,18 @@ export default function NotificationContainer({ sections }: TProps) {
     initialOpenServiceState(sections),
   );
 
+  console.log({ openService });
   return (
-    <div className="flex w-full flex-col items-start gap-6 sm:flex-row">
-      <div className="flex w-full flex-1 flex-col gap-4">
-        {sections.slice(0, 4).map((category) => (
-          <NotificationServiceContainer
-            key={category}
-            category={category}
-            title={getNotificationTitle(category)}
-            openService={openService}
-            setOpenService={setOpenService}
-          />
-        ))}
-      </div>
-      <div className="flex w-full flex-1 flex-col gap-4">
-        {sections.slice(4, 8).map((category) => (
-          <NotificationServiceContainer
-            key={category}
-            category={category}
-            title={getNotificationTitle(category)}
-            openService={openService}
-            setOpenService={setOpenService}
-          />
-        ))}
-      </div>
+    <div className="grid-col-1 grid w-full gap-8 sm:grid-cols-2">
+      {sections.map((category) => (
+        <NotificationServiceContainer
+          key={category}
+          category={category}
+          title={getNotificationTitle(category)}
+          openService={openService}
+          setOpenService={setOpenService}
+        />
+      ))}
     </div>
   );
 }

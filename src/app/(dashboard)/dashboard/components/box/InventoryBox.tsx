@@ -49,7 +49,7 @@ export default async function InventoryBox({ className }: TInventoryBoxProps) {
       {/* Title and Link */}
       <BoxTitle
         title="Inventory"
-        redirectLink="/dashboard/reporting/inventory?view=inventory"
+        redirectLink="/dashboard/reporting/inventory"
         className="mb-4 md:mb-6" // Consistent spacing
       />
 

@@ -15,7 +15,6 @@ import DeleteEmployee from "../DeleteEmployee";
 import EditEmployee from "../EditEmployee";
 import { EmployeeTableSkeleton } from "./EmployeeTableSkeleton";
 import { useSession } from "next-auth/react";
-import { useCompanyTimezone } from "@/hooks/useCompanyTimezone";
 
 const defaultPageSize = 20;
 type UserWithSalaryHistory = (User & { salaryHistory: SalaryHistory[] })[];
@@ -34,8 +33,6 @@ const EmployeeTable = ({
   const [showPagination, setShowPagination] = useState(false);
   const sessionUser = useSession();
   const currentUser = sessionUser.data?.user;
-  const timezone = useCompanyTimezone();
-
   const { data, isLoading, isError } = useEmployeeQuery({
     currentPage,
     pageSize,
@@ -47,6 +44,8 @@ const EmployeeTable = ({
     type: type as any,
     enabled: filteredEmployees?.length === 0,
   });
+
+  console.log("Employee Table - Fetched Data:", data);
 
   let employees = filteredEmployees;
   let totalEmployeeCount = totalEmployees;
@@ -143,7 +142,7 @@ const EmployeeTable = ({
                   // Delete permission logic
                   const canDelete =
                     isAdmin || (isManager && !isTargetAdmin && !isSelf);
-
+                 
                   return (
                     <tr
                       key={index}
@@ -209,9 +208,7 @@ const EmployeeTable = ({
                           href={`/dashboard/employee/${employee.id}?view=details`}
                         >
                           {employee.joinDate
-                            ? moment
-                                .tz(employee.joinDate, timezone)
-                                .format("MM/DD/YYYY")
+                            ? moment(employee.joinDate).format("MM/DD/YYYY")
                             : "N/A"}
                         </Link>
                       </td>
@@ -224,7 +221,7 @@ const EmployeeTable = ({
                         </Link>
                       </td>
                       <td className="border-b border-l bg-background px-4 py-2 text-center">
-                        <div className="flex items-center justify-start gap-2 flex-shrink-0">
+                        <div className="flex items-center justify-center gap-2">
                           {canEdit && <EditEmployee employee={employee} />}
                           {canDelete && <DeleteEmployee employee={employee} />}
                         </div>

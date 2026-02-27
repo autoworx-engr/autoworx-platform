@@ -11,7 +11,7 @@ import { useEffect } from "react";
 
 export async function fetchImageAsFile(
   url: string,
-  filename: string,
+  filename: string
 ): Promise<File> {
   const response = await fetch(url);
   const blob = await response.blob();
@@ -36,15 +36,7 @@ export default function SyncEstimate({
   inspections: InspectionType[];
 }) {
   const { invoiceId } = useEstimateCreateStore();
-  const setDirty = useEstimateCreateStore((state) => state.setDirty);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDirty(false);
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [setDirty]);
   useEffect(() => {
     // async function fetchPhotos() {
     //   const photoFiles = await Promise.all(
@@ -68,7 +60,7 @@ export default function SyncEstimate({
       subtotal: parseFloat(
         invoice
           ? invoice?.subtotal?.toString() || "0"
-          : template?.subtotal?.toString() || "0",
+          : template?.subtotal?.toString() || "0"
       ),
       type: invoice && invoice.type,
       photos: photos.map((photo) => ({
@@ -78,29 +70,29 @@ export default function SyncEstimate({
       discount: parseFloat(
         invoice
           ? invoice?.discount?.toString() || "0"
-          : template?.discount?.toString() || "0",
+          : template?.discount?.toString() || "0"
       ),
       tax: parseFloat(
         invoice
           ? invoice?.tax?.toString() || "0"
-          : template?.tax?.toString() || "0",
+          : template?.tax?.toString() || "0"
       ),
       serviceFee: parseFloat(
         invoice
           ? invoice?.serviceFee?.toString() || "0"
-          : template?.serviceFee?.toString() || "0",
+          : template?.serviceFee?.toString() || "0"
       ),
       deposit: parseFloat((invoice && invoice.deposit?.toString()) || "0"),
       grandTotal: parseFloat(
         invoice
           ? invoice.grandTotal?.toString() || "0"
-          : template?.grandTotal?.toString() || "0",
+          : template?.grandTotal?.toString() || "0"
       ),
       due: invoice
         ? Number(invoice?.due ?? 0)
         : Math.max(
             Number(template?.grandTotal ?? 0) - (Number(0) + Number(0)),
-            0,
+            0
           ),
       internalNotes: invoice
         ? invoice.internalNotes || ""
@@ -118,7 +110,7 @@ export default function SyncEstimate({
       currentSelectedCategoryId: null,
       payment,
       totalPayment: parseFloat(
-        (invoice && invoice.totalPayment?.toString()) || "0",
+        (invoice && invoice.totalPayment?.toString()) || "0"
       ),
       damageNotes:
         (invoice ? invoice.damageNotes : template?.damageNotes) || "",

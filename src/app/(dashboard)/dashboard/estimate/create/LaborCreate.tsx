@@ -205,7 +205,7 @@ export default function LaborCreate() {
           id="name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="h-10 flex-1 appearance-none rounded-xl bg-white px-4 text-sm font-medium border border-slate-200 transition-all focus:outline-none focus:border-[#6571FF]/30 focus:ring-2 focus:ring-[#6571FF]/30"
+          className="h-10 flex-1 rounded-xl bg-white px-4 text-sm font-medium ring-1 ring-inset ring-slate-200 transition-all focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30"
           placeholder="e.g. Oil Change"
         />
       </div>
@@ -250,7 +250,7 @@ export default function LaborCreate() {
           id="notes"
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          className="h-24 flex-1 appearance-none rounded-xl bg-white p-3 text-sm font-medium border border-slate-200 transition-all focus:outline-none focus:border-[#6571FF]/30 focus:ring-2 focus:ring-[#6571FF]/30 resize-none"
+          className="h-24 flex-1 rounded-xl bg-white p-3 text-sm font-medium ring-1 ring-inset ring-slate-200 transition-all focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30 resize-none"
           placeholder="Additional details..."
         />
       </div>
@@ -278,7 +278,7 @@ export default function LaborCreate() {
               setHours(value);
             }
           }}
-          className="h-10 flex-1 appearance-none rounded-xl bg-white px-4 text-sm font-medium border border-slate-200 transition-all focus:outline-none focus:border-[#6571FF]/30 focus:ring-2 focus:ring-[#6571FF]/30"
+          className="h-10 flex-1 rounded-xl bg-white px-4 text-sm font-medium ring-1 ring-inset ring-slate-200 transition-all focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30"
           placeholder="0"
         />
       </div>
@@ -306,7 +306,7 @@ export default function LaborCreate() {
               setCharge(value);
             }
           }}
-          className="h-10 flex-1 appearance-none rounded-xl bg-white px-4 text-sm font-medium border border-slate-200 transition-all focus:outline-none focus:border-[#6571FF]/30 focus:ring-2 focus:ring-[#6571FF]/30"
+          className="h-10 flex-1 rounded-xl bg-white px-4 text-sm font-medium ring-1 ring-inset ring-slate-200 transition-all focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30"
           placeholder="0.00"
         />
       </div>
@@ -334,7 +334,7 @@ export default function LaborCreate() {
               setDiscount(value);
             }
           }}
-          className="h-10 flex-1 appearance-none rounded-xl bg-white px-4 text-sm font-medium border border-slate-200 transition-all focus:outline-none focus:border-[#6571FF]/30 focus:ring-2 focus:ring-[#6571FF]/30"
+          className="h-10 flex-1 rounded-xl bg-white px-4 text-sm font-medium ring-1 ring-inset ring-slate-200 transition-all focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30"
           placeholder="0"
         />
       </div>

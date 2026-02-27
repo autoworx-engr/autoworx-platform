@@ -17,7 +17,6 @@ import { createDraftEstimate } from "@/actions/estimate/invoice/createDraft";
 import { createLeadDraftEstimate } from "@/actions/pipelines/createLeadDraftEstimate";
 import { Calendar, CalendarCheck } from "lucide-react";
 import { updateInvoiceAutomationTrigger } from "@/service/invoice-automation-trigger/api";
-import { useRouter } from "next/navigation";
 
 type TProps = {
   lead: LeadWithSalesUser;
@@ -34,109 +33,8 @@ export default function LeadActions({ lead }: TProps) {
   const [pending, startTransition] = useTransition();
 
   const dispatch = useColumnDispatch();
-  const router = useRouter();
+
   const [invoiceId, setInvoiceId] = useState<string | null>(null);
-
-  // const handleCreateDraftEstimate = async ({
-  //   columnId,
-  //   leadId,
-  //   clientId,
-  //   vehicleId,
-  // }: TCreateDraftEstimateParams) => {
-  //   try {
-  //     const draftEstimateId = customAlphabet("1234567890", 10)();
-  //     const res = await createLeadDraftEstimate({
-  //       id: draftEstimateId,
-  //       leadId,
-  //       clientId: clientId!,
-  //       vehicleId: vehicleId,
-  //       type: "Estimate",
-  //     });
-
-  //     if (res.type === "success") {
-  //       successToast(res?.message || "Draft estimate created");
-  //       //updating the pipelien data with the draft estimate flag
-  //       dispatch({
-  //         type: actionTypes.CREATE_INVOICE,
-  //         payload: {
-  //           columnId: columnId,
-  //           leadId: leadId,
-  //           isInvoiceCreated: true,
-  //         },
-  //       });
-  //       console.log("res", res);
-  //       // Trigger pipeline automation
-  //       const response = await updatePipelineAutomationTrigger({
-  //         condition: "ESTIMATE_CREATED",
-  //         companyId: res?.data.companyId,
-  //         leadId,
-  //         columnId,
-  //       });
-
-  //       if (response.statusCode === 200) {
-  //         dispatch({
-  //           type: actionTypes.AUTOMATION_TRIGGER,
-  //           payload: {
-  //             updatedLead: response.data,
-  //             previousColumnId: columnId,
-  //           },
-  //         });
-  //       }
-
-  //       // Invoice automation
-  //       await updateInvoiceAutomationTrigger({
-  //         companyId: res?.data.companyId,
-  //         invoiceId: res?.data?.id,
-  //         columnId: columnId!,
-  //         type: res?.data?.type,
-  //       });
-  //       router.push(
-  //         `/dashboard/estimate/edit/${res?.data.id}?clientId=${res?.data.clientId}`,
-  //       );
-  //     } else if (res.type === "error") {
-  //       setInvoiceId(res.data.id);
-  //     } else if (res.type === "globalError") {
-  //       errorToast(
-  //         res?.errorSource && res?.errorSource.length > 0
-  //           ? res?.errorSource[0].message
-  //           : res.message,
-  //       );
-  //     }
-  //   } catch (err) {
-  //     console.error("Error creating draft estimate:", err);
-  //     errorHandler(err);
-  //     errorToast("Failed to create draft estimate. Please try again.");
-  //   }
-  // };
-
-  const triggerAutomations = async ({
-    companyId,
-    leadId,
-    columnId,
-    invoiceId,
-    type,
-  }: {
-    companyId: number;
-    leadId: number;
-    columnId: number;
-    invoiceId: string;
-    type: "Estimate" | "Invoice";
-  }) => {
-    return Promise.allSettled([
-      updatePipelineAutomationTrigger({
-        condition: "ESTIMATE_CREATED",
-        companyId,
-        leadId,
-        columnId,
-      }),
-      updateInvoiceAutomationTrigger({
-        companyId,
-        invoiceId,
-        columnId,
-        type,
-      }),
-    ]);
-  };
 
   const handleCreateDraftEstimate = async ({
     columnId,
@@ -145,81 +43,63 @@ export default function LeadActions({ lead }: TProps) {
     vehicleId,
   }: TCreateDraftEstimateParams) => {
     try {
-      // Basic validation
-      if (!clientId || !leadId || !columnId) {
-        errorToast("Missing required data to create estimate");
-        return;
-      }
-
       const draftEstimateId = customAlphabet("1234567890", 10)();
-
       const res = await createLeadDraftEstimate({
         id: draftEstimateId,
         leadId,
-        clientId,
-        vehicleId,
+        clientId: clientId!,
+        vehicleId: vehicleId,
         type: "Estimate",
       });
 
-      // Handle API error responses first (early return)
-      if (res.type === "globalError") {
-        errorToast(
-          res?.errorSource?.[0]?.message ||
-            res.message ||
-            "Something went wrong",
-        );
-        return;
-      }
+      if (res.type === "success") {
+        successToast(res?.message || "Draft estimate created");
+        //updating the pipelien data with the draft estimate flag
+        dispatch({
+          type: actionTypes.CREATE_INVOICE,
+          payload: {
+            columnId: columnId,
+            leadId: leadId,
+            isInvoiceCreated: true,
+          },
+        });
 
-      if (res.type === "error") {
-        setInvoiceId(res.data.id);
-        return;
-      }
-
-      if (res.type !== "success") {
-        errorToast("Unexpected response while creating estimate");
-        return;
-      }
-
-      const { companyId, id, clientId: resClientId, type } = res.data;
-
-      successToast(res.message || "Draft estimate created");
-
-      // Update pipeline state
-      dispatch({
-        type: actionTypes.CREATE_INVOICE,
-        payload: {
-          columnId,
+        // Trigger pipeline automation
+        const response = await updatePipelineAutomationTrigger({
+          condition: "ESTIMATE_CREATED",
+          companyId: res?.data.companyId,
           leadId,
-          isInvoiceCreated: true,
-        },
-      });
+          columnId,
+        });
 
-      // Run automations in parallel (faster)
-      await triggerAutomations({
-        columnId,
-        companyId,
-        invoiceId: id,
-        leadId,
-        type,
-      }).then(([pipelineResult]) => {
-        if (
-          pipelineResult.status === "fulfilled" &&
-          pipelineResult.value?.statusCode === 200
-        ) {
+        if (response.statusCode === 200) {
           dispatch({
             type: actionTypes.AUTOMATION_TRIGGER,
             payload: {
-              updatedLead: pipelineResult.value.data,
+              updatedLead: response.data,
               previousColumnId: columnId,
             },
           });
         }
-      });
 
-      // Navigate at the end
-      router.push(`/dashboard/estimate/edit/${id}?clientId=${resClientId}`);
+        // Invoice automation
+        await updateInvoiceAutomationTrigger({
+          companyId: res?.data.companyId,
+          invoiceId: res?.data?.id,
+          columnId: columnId!,
+          type: res?.data?.type,
+        });
+      } else if (res.type === "error") {
+        setInvoiceId(res.data.id);
+      } else if (res.type === "globalError") {
+        errorToast(
+          res?.errorSource && res?.errorSource.length > 0
+            ? res?.errorSource[0].message
+            : res.message
+        );
+      }
     } catch (err) {
+      console.error("Error creating draft estimate:", err);
       errorHandler(err);
       errorToast("Failed to create draft estimate. Please try again.");
     }
@@ -230,7 +110,7 @@ export default function LeadActions({ lead }: TProps) {
     leadInfo: {
       leadId: number;
       columnId: number;
-    },
+    }
   ) => {
     try {
       dispatch({
@@ -295,7 +175,7 @@ export default function LeadActions({ lead }: TProps) {
                     leadId: lead.id,
                     clientId: lead.client?.id,
                     vehicleId: lead?.vehicleId,
-                  }),
+                  })
                 );
               }
             }}

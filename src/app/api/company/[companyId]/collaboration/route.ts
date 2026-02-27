@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 /**
  * @swagger
- * /api/communication/collaboration/company/{companyId}/enable:
+ * /api/company/{companyId}/collaboration:
  *   patch:
  *     summary: Update company collaboration status
  *     tags: [Company]
@@ -35,7 +35,7 @@ import { NextRequest, NextResponse } from "next/server";
  */
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { companyId: string } },
+  { params }: { params: { companyId: string } }
 ) {
   try {
     const companyId = Number(params.companyId);
@@ -43,7 +43,7 @@ export async function PATCH(
     if (isNaN(companyId)) {
       return NextResponse.json(
         { message: "Invalid company ID" },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -53,7 +53,7 @@ export async function PATCH(
     if (typeof isCollaborators !== "boolean") {
       return NextResponse.json(
         { message: "isCollaborators must be boolean" },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -75,14 +75,14 @@ export async function PATCH(
         message: "Collaboration status updated",
         data: company,
       },
-      { status: 200 },
+      { status: 200 }
     );
   } catch (error) {
     console.error("PATCH /company/[id]/collaboration error:", error);
 
     return NextResponse.json(
       { message: "Internal server error" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

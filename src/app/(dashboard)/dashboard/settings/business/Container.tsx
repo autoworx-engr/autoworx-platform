@@ -6,7 +6,7 @@ export default async function Container() {
   const company = await getCompany();
 
   return (
-    <div className="bg-white px-2">
+   <div className="rounded-xl p-6 shadow-xl bg-white border border-gray-100">
       <BusinessForm company={JSON.parse(JSON.stringify(company))} />
     </div>
   );

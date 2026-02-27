@@ -25,11 +25,11 @@ type TProps = {
     link?: string | null;
     path: string;
     subnav?:
-      | {
-          title: string;
-          link: string;
-        }[]
-      | null;
+    | {
+      title: string;
+      link: string;
+    }[]
+    | null;
   }[];
   permissions: PermissionsResult | null;
 };
@@ -49,14 +49,14 @@ export default function MobileNav({ navList, permissions }: TProps) {
     const featureKey = FEATURE_PERMISSIONS_MAP[routeWithoutQuery];
     if (!featureKey) return true;
     if (Array.isArray(featureKey)) {
-      return featureKey.some(key =>
+      return featureKey.some((key) =>
         companyFeaturePermission.some(
-          perm => perm.permission_name === key && perm.enabled,
-        ),
+          (perm) => perm.permission_name === key && perm.enabled
+        )
       );
     }
     return companyFeaturePermission.some(
-      perm => perm.permission_name === featureKey && perm.enabled,
+      (perm) => perm.permission_name === featureKey && perm.enabled
     );
   }
 
@@ -66,11 +66,11 @@ export default function MobileNav({ navList, permissions }: TProps) {
     let permissionFiltered = filterNavList(navList, permissions);
     // Company feature permission filtering
     return permissionFiltered
-      .filter(item => !item.link || canAccessCompanyFeatureRoute(item.link))
-      .map(item => {
+      .filter((item) => !item.link || canAccessCompanyFeatureRoute(item.link))
+      .map((item) => {
         if (item.subnav) {
-          const filteredSubnav = item.subnav.filter(sub =>
-            canAccessCompanyFeatureRoute(sub.link),
+          const filteredSubnav = item.subnav.filter((sub) =>
+            canAccessCompanyFeatureRoute(sub.link)
           );
           return {
             ...item,
@@ -87,11 +87,11 @@ export default function MobileNav({ navList, permissions }: TProps) {
     // Company feature permission filtering
     setFilteredNavList(
       permissionFiltered
-        .filter(item => !item.link || canAccessCompanyFeatureRoute(item.link))
-        .map(item => {
+        .filter((item) => !item.link || canAccessCompanyFeatureRoute(item.link))
+        .map((item) => {
           if (item.subnav) {
-            const filteredSubnav = item.subnav.filter(sub =>
-              canAccessCompanyFeatureRoute(sub.link),
+            const filteredSubnav = item.subnav.filter((sub) =>
+              canAccessCompanyFeatureRoute(sub.link)
             );
             return {
               ...item,
@@ -99,7 +99,7 @@ export default function MobileNav({ navList, permissions }: TProps) {
             };
           }
           return item;
-        }),
+        })
     );
   }, [companyFeaturePermission, navList, permissions]);
   useEffect(() => {
@@ -126,7 +126,7 @@ export default function MobileNav({ navList, permissions }: TProps) {
       <div className="fixed top-0 z-50 w-full bg-[#0C1427]">
         <div className="flex h-14 items-center justify-between bg-[#0C1427] p-1.5">
           <div
-            onClick={() => setOpenNav(prev => !prev)}
+            onClick={() => setOpenNav((prev) => !prev)}
             className="w-20 flex-shrink-0"
           >
             <Menu size={30} className="text-white" />
@@ -168,7 +168,7 @@ export default function MobileNav({ navList, permissions }: TProps) {
       <div
         className={cn(
           "w-0 bg-[#0C1427] duration-300",
-          openNav && "fixed inset-0 w-full overflow-scroll duration-300",
+          openNav && "fixed inset-0 w-full overflow-scroll duration-300"
         )}
         style={{
           zIndex: 999,

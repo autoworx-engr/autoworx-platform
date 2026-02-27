@@ -110,7 +110,7 @@ export default function SelectClientSource<T>({
           onClick={() => setIsOpen(true)}
           className={cn(
             "flex h-auto w-full items-center justify-between rounded-md border border-slate-300 bg-white px-4 py-1.5",
-            isOpen && "invisible",
+            isOpen && "invisible"
           )}
         >
           {/* Display selected item or label */}
@@ -158,7 +158,7 @@ export default function SelectClientSource<T>({
                     className={cn(
                       "w-full px-3 py-2 text-left text-slate-700 hover:bg-slate-100",
                       border &&
-                        "relative left-1/2 my-1 w-[95%] -translate-x-1/2 rounded-md border border-slate-300",
+                      "relative left-1/2 my-1 w-[95%] -translate-x-1/2 rounded-md border border-slate-300"
                     )}
                   >
                     {displayList(item)}
@@ -171,7 +171,7 @@ export default function SelectClientSource<T>({
                     className={cn(
                       "w-full px-3 py-2 text-left text-slate-700 hover:bg-slate-100",
                       border &&
-                        "relative left-1/2 my-1 w-[95%] -translate-x-1/2 rounded-md border border-slate-300",
+                      "relative left-1/2 my-1 w-[95%] -translate-x-1/2 rounded-md border border-slate-300"
                     )}
                   >
                     {displayList(item)}
@@ -182,9 +182,7 @@ export default function SelectClientSource<T>({
           </div>
 
           {/* New button */}
-          <div className="border-t border-slate-300 bg-slate-50 p-2">
-            {newButton}
-          </div>
+          <div className="border-t border-slate-300 bg-slate-50 p-2">{newButton}</div>
         </DropdownMenuContent>
       </div>
     </DropdownMenu>

@@ -271,7 +271,7 @@ export function Filter({ startDate, endDate, status }: TFilterProps) {
             Clear Filters
           </DialogClose>
           <Submit
-            className="w-fit flex h-10 items-center gap-2 rounded-xl bg-[#6571FF] px-8 text-sm font-semibold text-white shadow-lg shadow-[#6571FF]/25 transition-all active:scale-95"
+            className="mx-auto flex h-10 items-center gap-2 rounded-xl bg-[#6571FF] px-8 text-sm font-semibold text-white shadow-lg shadow-[#6571FF]/25 transition-all active:scale-95"
             formAction={handleFilter}
           >
             <Funnel size={16} />

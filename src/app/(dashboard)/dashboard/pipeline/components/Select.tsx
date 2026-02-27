@@ -62,7 +62,7 @@ const SelectComponent = ({
   );
 };
 
- 
+// eslint-disable-next-line react/display-name
 const SelectItem = React.forwardRef(
   ({ children, className, ...props }: any, forwardedRef) => {
     return (

@@ -33,7 +33,7 @@ const Dashboard = async () => {
         {/* Column 4 */}
         <div className="md:col-span-2 lg:col-span-1 lg:max-h-[90vh]">
           <div className="flex flex-col md:flex-row lg:flex-col h-full gap-2 xl:gap-4">
-            <div className="flex-1 min-h-[30rem] sm:min-h-0 max-h-[30rem] lg:max-h-[90vh]">
+            <div className="flex-1 min-h-0 max-h-[30rem] lg:max-h-[90vh]">
               <TaskListBox />
             </div>
             <div className="flex-1 min-h-0 max-h-[30rem] lg:max-h-[90vh]">

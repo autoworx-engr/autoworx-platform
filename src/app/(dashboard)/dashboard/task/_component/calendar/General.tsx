@@ -182,25 +182,13 @@ export default function General({
             <DialogClose asChild>
               <button
                 type="button"
-                className="
-                rounded-xl mt-2 sm:mt-0 px-5 py-2.5 text-sm font-medium text-slate-500 
-                hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
-                transition-colors border
-              "
+                className="rounded-md border-2 border-slate-400 p-1"
               >
                 Cancel
               </button>
             </DialogClose>
             <Submit
-              className="
-                rounded-xl px-6 py-2.5 text-sm font-medium text-white
-                bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
-                shadow-lg shadow-indigo-500/30
-                hover:shadow-xl hover:shadow-indigo-500/40
-                hover:-translate-y-0.5 hover:scale-[1.02]
-                active:translate-y-0 active:scale-100
-                transition-all duration-200
-              "
+              className="mb-2 rounded-md bg-[#6571FF] p-1 px-5 text-white md:mb-0"
               formAction={handleSave}
             >
               Save

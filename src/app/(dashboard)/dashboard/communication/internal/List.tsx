@@ -690,7 +690,6 @@ export default function List({
         </h2>
         <CreateGroupModal
           users={users}
-          existingGroups={sideBarGroupsLists}
           setSideBarGroupLists={setSideBarGroupLists}
           addChatItem={addChatItem}
         />

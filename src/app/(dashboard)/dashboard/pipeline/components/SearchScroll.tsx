@@ -156,7 +156,7 @@ export default function SearchScroll({
   return (
     <div className="flex flex-col gap-2 rounded-lg border border-slate-100 bg-background p-2 shadow-sm sm:flex-row sm:items-center sm:justify-between mx-2">
       {/* Search input */}
-      <div className="relative group flex flex-1 h-10 max-w-lg items-center rounded-md sm:w-auto">
+      <div className="relative group flex flex-1 h-10 max-w-lg items-center rounded-md sm:w-auto ml-2">
         <Search
           size={18}
           className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-[#6571FF]"

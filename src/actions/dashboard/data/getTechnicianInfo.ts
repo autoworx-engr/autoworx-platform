@@ -39,21 +39,8 @@ export interface CurrentProject {
   dueDate: Date | null;
   startDate: Date | null;
 }
-export async function getCurrentProjects(
-  currentUserId?: number,
-  currentCompanyId?: number,
-) {
-  let userId = currentUserId;
-  let companyId = currentCompanyId;
-
-  if (!userId) {
-    const data = await getEssentials();
-    userId = data?.userId;
-  }
-  if (!companyId) {
-    const data = await getEssentials();
-    companyId = data?.companyId;
-  }
+export async function getCurrentProjects() {
+  const { companyId, userId } = await getEssentials();
 
   // Get all invoices where the technician is the current user and the status is "In Progress"
   const invoices = await db.invoice.findMany({
@@ -83,9 +70,9 @@ export async function getCurrentProjects(
   });
 
   // Map invoices to projects where the technician is the current user
-  const projects = invoices.map((invoice) => {
+  const projects = invoices.map(invoice => {
     const technicians = invoice.technician.filter(
-      (technician) => technician.userId === userId,
+      technician => technician.userId === userId,
     );
 
     const totalPayout = technicians.reduce(
@@ -115,7 +102,7 @@ export async function getCurrentProjects(
 
     return {
       id: invoice.id,
-      services: technicians.map((technician) => ({
+      services: technicians.map(technician => ({
         name: technician.service?.name,
         due: technician.due,
         startDate: technician.date,
@@ -133,14 +120,8 @@ export async function getCurrentProjects(
 /**
  * Get performance metrics for the technician.
  */
-export async function getPerformance(timezone: string, currentUserId?: number) {
-  let userId = currentUserId;
-
-  if (!userId) {
-    const data = await getEssentials();
-    userId = data?.userId;
-  }
-
+export async function getPerformance(timezone: string) {
+  const { userId } = await getEssentials();
   const {
     currentMonthStart,
     currentMonthEnd,
@@ -160,7 +141,7 @@ export async function getPerformance(timezone: string, currentUserId?: number) {
 
   // Calculate on-time completion rate for the current month
   const onTimeJobs = currentMonthJobs.filter(
-    (job) => job.status === "Completed" && job.dateClosed! <= job.due!,
+    job => job.status === "Completed" && job.dateClosed! <= job.due!,
   );
   const onTimeCompletionRate = onTimeJobs.length / currentMonthJobs.length;
 
@@ -177,7 +158,7 @@ export async function getPerformance(timezone: string, currentUserId?: number) {
 
   // Calculate on-time completion rate for the previous month
   const previousOnTimeJobs = previousMonthJobs.filter(
-    (job) => job.status === "Completed" && job.dateClosed! <= job.due!,
+    job => job.status === "Completed" && job.dateClosed! <= job.due!,
   );
   const previousOnTimeCompletionRate =
     previousOnTimeJobs.length / previousMonthJobs.length;
@@ -224,17 +205,8 @@ export async function getPerformance(timezone: string, currentUserId?: number) {
 /**
  * Get monthly payout for the technician.
  */
-export async function getMonthlyPayout(
-  timezone: string,
-  currentUserId?: number,
-) {
-  let userId = currentUserId;
-
-  if (!userId) {
-    const data = await getEssentials();
-    userId = data?.userId;
-  }
-
+export async function getMonthlyPayout(timezone: string) {
+  const { userId } = await getEssentials();
   const {
     currentMonthStart,
     currentMonthEnd,

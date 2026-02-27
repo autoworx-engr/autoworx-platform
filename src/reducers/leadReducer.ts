@@ -16,13 +16,11 @@ export function leadReducer<T>(
         case actionTypes.MORE_LEADS: {
             const { columnId, leads } = action.payload as {
                 columnId: number;
-                leads: any[];
+                leads: T[];
             };
             return state.map(column => {
                 if (column.id === columnId) {
-                    const existingLeadIds = new Set(column.leads.map((lead) => lead.id));
-                    const newLeads = leads.filter((lead) => !existingLeadIds.has(lead.id));
-                    const updatedLeads = [...column.leads, ...newLeads];
+                    const updatedLeads = [...column.leads, ...leads];
                     return {
                         ...column,
                         leads: updatedLeads,

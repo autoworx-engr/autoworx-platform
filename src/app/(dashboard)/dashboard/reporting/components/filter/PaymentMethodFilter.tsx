@@ -95,8 +95,8 @@ export default function PaymentMethodFilter({
       <button
         onClick={() => toggleModal(modalName)}
         className={`flex h-10 items-center justify-center rounded-xl px-4 text-sm font-medium transition-all duration-300 min-w-[120px] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#6571ff] active:shadow-lg ${selectedMethod !== "All"
-          ? "bg-[#6571ff] text-white shadow-[#6571ff]/50"
-          : "bg-white ring-1 ring-slate-200 text-slate-500 hover:bg-slate-50"
+            ? "bg-[#6571ff] text-white shadow-[#6571ff]/50"
+            : "bg-white ring-1 ring-slate-200 text-slate-500 hover:bg-slate-50"
           }`}
       >
         {selectedMethod === "All" ? "Filter" : selectedMethod}
@@ -106,7 +106,7 @@ export default function PaymentMethodFilter({
         <div className="absolute right-0 z-40 mt-2 origin-top-right md:left-auto">
           <div
             ref={modalRef}
-            className="mt-2 w-72 rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl shadow-slate-200/50 lg:w-[400px]"
+            className="mt-2 w-72 rounded-2xl border border-slate-200 bg-white/90 backdrop-blur-xl p-5 shadow-2xl shadow-slate-200/50 lg:w-[400px]"
           >
             <div className="mb-4">
               <h3 className="mb-2 text-sm font-semibold text-slate-700">Payment Method</h3>
@@ -116,8 +116,8 @@ export default function PaymentMethodFilter({
                     key={method}
                     onClick={() => handleMethodSelect(method)}
                     className={`flex items-center justify-center rounded-lg border px-3 py-1 text-base font-medium transition-all duration-200 hover:scale-105 ${selectedMethod === method
-                      ? "bg-[#6571ff] text-white border-transparent shadow-md"
-                      : "border-slate-200 text-slate-700 hover:bg-slate-50"
+                        ? "bg-[#6571ff] text-white border-transparent shadow-md"
+                        : "border-slate-200 text-slate-700 hover:bg-slate-50"
                       }`}
                   >
                     {method}

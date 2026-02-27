@@ -1,16 +1,14 @@
 "use server";
 import { updatePipelineAutomationTrigger } from "@/actions/automation/pipeline/triggerPipelineAutomation";
 import { updateNewEmailChatTrack } from "@/actions/communication/client/chat-track";
-import { authOptions } from "@/authOptions";
 import { db } from "@/lib/db";
-import { getServerSession } from "next-auth";
 
 // Infobip Email API configuration
 const INFOBIP_BASE_URL = process.env.INFOBIP_BASE_URL;
 
 const INFOBIP_API_KEY = process.env.INFOBIP_API_KEY!;
 
-export interface InfobipEmailRequest {
+interface InfobipEmailRequest {
   from: string;
   to: string;
   subject: string;
@@ -44,8 +42,8 @@ interface InfobipEmailResponse {
   }>;
 }
 
-export async function sendInfobipEmailAPI(
-  emailData: InfobipEmailRequest,
+async function sendInfobipEmailAPI(
+  emailData: InfobipEmailRequest
 ): Promise<InfobipEmailResponse> {
   try {
     // Create FormData instead of JSON
@@ -80,7 +78,7 @@ export async function sendInfobipEmailAPI(
         formData.append(`attachmentName[${index}]`, attachment.name);
         formData.append(
           `attachmentContentType[${index}]`,
-          attachment.contentType,
+          attachment.contentType
         );
       });
     }
@@ -174,7 +172,7 @@ export async function sendInfobipEmail({
     if (message.status.groupId !== 1) {
       // Group 1 is typically "PENDING" or "ACCEPTED"
       throw new Error(
-        `Email failed: ${message.status.name} - ${message.status.description}`,
+        `Email failed: ${message.status.name} - ${message.status.description}`
       );
     }
 
@@ -281,7 +279,7 @@ export async function sendInfobipEmailWithAttachments({
     form.append("html", text.replace(/\n/g, "<br>"));
     form.append(
       "replyTo",
-      `${company?.id}@ib79097.${process.env.INFOBIP_DOMAIN}`,
+      `${company?.id}@ib79097.${process.env.INFOBIP_DOMAIN}`
     );
 
     // Add custom headers for threading
@@ -341,7 +339,7 @@ export async function sendInfobipEmailWithAttachments({
     const json: any = await sendRes.json();
     if (!sendRes.ok) {
       throw new Error(
-        `Infobip send failed (${sendRes.status}): ${JSON.stringify(json)}`,
+        `Infobip send failed (${sendRes.status}): ${JSON.stringify(json)}`
       );
     }
 

@@ -18,20 +18,18 @@ const NotificationSettingPage = async () => {
     new Set(notificationSections.map((section) => section.section)),
   );
 
-
+  
   return (
     <div className="flex w-full flex-col">
       <NotificationPermissionAlert />
-      <div className="h-full w-full overflow-y-auto md:px-8 py-4">
-        <div className="mb-6">
-          <h3 className="text-xl font-bold text-gray-600">
-            Overall Notification Settings
-          </h3>
-          <p className="mt-1 text-sm text-gray-500">
-            Toggle between email, push and silenced notifications for the
-            following
-          </p>
-        </div>
+      <div className="h-full w-full overflow-y-auto p-8">
+        <h3 className="my-4 text-lg font-bold">
+          Overall Notification Settings
+        </h3>
+        <h3 className="my-4 text-lg italic">
+          Toggle between email, push and silenced notifications for the
+          following
+        </h3>
         <NotificationContainer sections={uniqueSections} />
       </div>
     </div>

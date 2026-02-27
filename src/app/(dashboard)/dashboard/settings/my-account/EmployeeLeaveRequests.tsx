@@ -1,4 +1,4 @@
- 
+/* eslint-disable @next/next/no-img-element */
 import { deleteLeaveRequest } from "@/actions/settings/my-account/leave-requests/deleteLeaveRequest";
 import { cn } from "@/lib/cn";
 import { errorToast, successToast } from "@/lib/toast";

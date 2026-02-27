@@ -15,11 +15,6 @@ import { NextRequest, NextResponse } from "next/server";
  *       - Collaboration
  *     parameters:
  *       - in: query
- *         name: search
- *         schema:
- *           type: string
- *         description: Search by company name, user first name, last name, or email.
- *       - in: query
  *         name: page
  *         schema:
  *           type: integer
@@ -45,40 +40,8 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const pageNum = parseInt(searchParams.get("page") || "1");
     const limitNum = parseInt(searchParams.get("limit") || "20");
-    const search = searchParams.get("search") || "";
     const skip = (pageNum - 1) * limitNum;
     const authHeader = request.headers.get("authorization") ?? "";
-
-    const companySearchCondition: any = search
-      ? {
-          OR: [
-            { name: { contains: search, mode: "insensitive" } },
-            {
-              users: {
-                some: {
-                  employeeType: "Admin",
-                  OR: [
-                    { firstName: { contains: search, mode: "insensitive" } },
-                    { lastName: { contains: search, mode: "insensitive" } },
-                    { email: { contains: search, mode: "insensitive" } },
-                  ],
-                },
-              },
-            },
-          ],
-        }
-      : {};
-
-    const userSearchCondition: any = search
-      ? {
-          OR: [
-            { firstName: { contains: search, mode: "insensitive" } },
-            { lastName: { contains: search, mode: "insensitive" } },
-            { email: { contains: search, mode: "insensitive" } },
-            { company: { name: { contains: search, mode: "insensitive" } } },
-          ],
-        }
-      : {};
     const accessToken = authHeader.startsWith("Bearer")
       ? authHeader.split(" ")[1]
       : authHeader;
@@ -98,16 +61,12 @@ export async function GET(request: NextRequest) {
       where: {
         NOT: { id: userCompanyId },
         isCollaborators: true,
-        ...companySearchCondition,
       },
       select: {
         id: true,
         name: true,
         users: {
-          where: {
-            employeeType: "Admin",
-            ...userSearchCondition,
-          },
+          where: { employeeType: "Admin" },
           select: {
             id: true,
             firstName: true,
@@ -166,7 +125,6 @@ export async function GET(request: NextRequest) {
       where: {
         NOT: { id: userCompanyId },
         isCollaborators: true,
-        ...companySearchCondition,
       },
     });
 

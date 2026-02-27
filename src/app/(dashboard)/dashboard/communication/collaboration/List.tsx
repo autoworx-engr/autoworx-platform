@@ -144,7 +144,7 @@ export default function List({
                           className={cn(
                             "#min-h-[61px] flex w-full items-center gap-2 rounded-md bg-[#F2F2F2] p-1 hover:bg-gray-300",
                             isSelectedUser &&
-                            "bg-gradient-to-r from-[#006D77] to-[#008c99] hover:bg-stone-400 border border-white"
+                              "bg-gradient-to-r from-[#006D77] to-[#008c99] hover:bg-stone-400 border border-white"
                           )}
                           onClick={() => {
                             // add this user to the list (if not already in it)

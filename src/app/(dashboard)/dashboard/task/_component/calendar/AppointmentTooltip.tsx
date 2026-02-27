@@ -1,10 +1,10 @@
 import { Appointment, Client, User } from "@prisma/client";
 import {
+  MessageCircleMore,
+  SquarePen,
   Clock,
   Mail,
-  MessageCircleMore,
   Phone,
-  SquarePen,
   User as UserIcon,
   Users,
   X,
@@ -104,18 +104,16 @@ export default function AppointmentTooltip({
         </h3>
         {/* Chat Link */}
         <div className="flex gap-2">
-          {event.clientId && (
-            <Link
-              href={`/dashboard/communication/client/${event.clientId}?chat=true`}
-              className="rounded-full bg-[#6571FF] p-2 text-white"
-              title="Open Chat"
-            >
-              <MessageCircleMore
-                strokeWidth={2.5}
-                className="h-4 w-4 cursor-pointer mx-auto"
-              />
-            </Link>
-          )}
+          <Link
+            href={`/dashboard/communication/client/${event.clientId}?chat=true`}
+            className="rounded-full bg-[#6571FF] p-2 text-white"
+            title="Open Chat"
+          >
+            <MessageCircleMore
+              strokeWidth={2.5}
+              className="h-4 w-4 cursor-pointer mx-auto"
+            />
+          </Link>
           <button
             type="button"
             className="rounded-full bg-[#6571FF] p-2 text-white"

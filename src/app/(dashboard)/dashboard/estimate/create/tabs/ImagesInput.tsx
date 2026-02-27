@@ -100,7 +100,7 @@ export function ImagesInput({ photos, setPhotos }: ImagesInputProps) {
             key={i}
           >
             {
-               
+              // eslint-disable-next-line @next/next/no-img-element
               <Image
                 src={photo.photo ?? ""}
                 fill

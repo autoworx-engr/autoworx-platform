@@ -5,11 +5,10 @@ import { InvoiceType } from "@prisma/client";
 import { sendInvoiceDeliveredNotification } from "@/lib/notification/invoice-notify";
 import { updateInvoiceAutomationTrigger } from "@/service/invoice-automation-trigger/api";
 import { updateTagAutomationTrigger } from "@/actions/automation/tag/triggerTagAutomation";
-import { revalidatePath } from "next/cache";
 
 export async function updateInvoiceStatus(
   invoiceId: string,
-  newStatusId: number,
+  newStatusId: number
 ) {
   let type: InvoiceType | undefined;
   let typeChanted = false;
@@ -52,7 +51,7 @@ export async function updateInvoiceStatus(
       }
     } else {
       throw new Error(
-        "Column not found to create invoice conversions at pipeline stage",
+        "Column not found to create invoice conversions at pipeline stage"
       );
     }
     try {
@@ -74,7 +73,7 @@ export async function updateInvoiceStatus(
           },
         },
       });
-      revalidatePath("/dashboard/pipeline/shop/pipeline");
+
       if (column?.title === "Delivered") {
         // send notification when invoice is delivered
         sendInvoiceDeliveredNotification({

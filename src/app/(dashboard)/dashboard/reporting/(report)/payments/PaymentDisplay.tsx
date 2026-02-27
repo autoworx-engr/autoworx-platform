@@ -1,7 +1,7 @@
 "use client";
 import { cn } from "@/lib/cn";
 import { formatCurrency } from "@/utils/formatCurrency";
-import { Payment, Prisma } from "@prisma/client";
+import { Payment, Prisma, Refund } from "@prisma/client";
 import { Pagination } from "antd"; // Importing the Pagination component from Ant Design
 import { ArrowDown, Search } from "lucide-react";
 import moment from "moment-timezone";
@@ -133,10 +133,14 @@ export default function PaymentDisplay({
                 const paymentStatus =
                   Number(payment.invoice?.due) <= 0 ? "paid" : "due";
 
-                const refundedAmount = Number(payment.refundedAmount) || 0;
+                const refundedAmount =
+                  payment?.invoice?.Refund?.reduce(
+                    (acc: number, refund: Refund) =>
+                      acc + Number(refund.amount || 0),
+                    0
+                  ) || 0;
 
                 const hasRefund = refundedAmount > 0;
-
                 return (
                   <tr
                     key={payment.id}

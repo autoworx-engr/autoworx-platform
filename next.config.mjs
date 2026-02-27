@@ -25,11 +25,6 @@ const nextConfig = {
   //     },
   //   ];
   // },
-  eslint: {
-    // Warning: This allows production builds to successfully complete even if
-    // your project has ESLint errors.
-    ignoreDuringBuilds: true,
-  },
   images: {
     remotePatterns: [
       {
@@ -39,7 +34,7 @@ const nextConfig = {
     ],
   },
   reactStrictMode: false,
-  productionBrowserSourceMaps: process.env.NODE_ENV === "development",
+  productionBrowserSourceMaps: process.env.NODE_ENV === "development"
 };
 
 export default nextConfig;

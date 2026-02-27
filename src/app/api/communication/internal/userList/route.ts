@@ -119,7 +119,6 @@ export const GET = async (request: NextRequest) => {
         });
         return {
           ...restUser,
-          id,
           chatTrack: userChatTrack,
         };
       }),

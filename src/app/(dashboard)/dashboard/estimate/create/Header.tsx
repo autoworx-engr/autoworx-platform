@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 
 import { SelectClient } from "@/components/Lists/SelectClient";
@@ -113,9 +112,9 @@ export default function Header({
   ]);
 
   return (
-    <div className="col-start-1 flex flex-wrap items-center gap-3 rounded-md">
-      <div className="rounded-lg bg-stone-200/80 px-3 py-1 font-mono font-semibold text-slate-600/70">
-        {invoiceId || template?.id}
+    <div className="app-shadow col-start-1 flex flex-wrap items-center gap-3 rounded-md p-3">
+      <div className="mr-auto flex gap-1">
+        <p>{invoiceId || template?.id}</p>
       </div>
 
       {!isTemplate && (
@@ -126,10 +125,9 @@ export default function Header({
         {isTemplate ? (
           <SlimInput
             name="title"
-            className="py-[5px] mx-0.5 rounded-lg"
+            className="py-2"
             required
             value={title}
-            placeholder="Enter a title"
             onChange={(e) => setTitle(e.target.value)}
           />
         ) : (

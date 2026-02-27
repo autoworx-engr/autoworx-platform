@@ -1,7 +1,7 @@
 import { SetStateAction, useEffect, useRef, useState } from "react";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
-import { Employee, ShopPipelineData } from "@/types/invoiceLead";
+import { Employee,  ShopPipelineData } from "@/types/invoiceLead";
 import { Tag, User } from "@prisma/client";
 import DraggableLead from "./DraggableLead";
 type DroppableColumnProps = {
@@ -154,8 +154,8 @@ const DroppableColumn = ({
 
       <ul
         ref={ulRef}
-        className="thin-scrollbar mt-1 flex max-h-[65vh] min-h-[65vh] flex-col gap-1 overflow-y-auto p-1"
-        style={{ maxHeight: "65vh" }}
+        className="thin-scrollbar mt-1 flex max-h-[70vh] min-h-[70vh] flex-col gap-1 overflow-y-auto p-1"
+        style={{ maxHeight: "70vh" }}
       >
         {item.leads.map((lead, leadIndex) => {
           const key = `${categoryIndex}-${leadIndex}`;

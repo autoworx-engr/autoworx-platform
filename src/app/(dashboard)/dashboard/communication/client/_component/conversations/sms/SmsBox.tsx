@@ -20,7 +20,7 @@ export default function SmsBox({ clientId }: { clientId: number }) {
   // flatten pages (oldest -> newest assumed in each page)
   const rawMessages = useMemo(
     () => data?.pages?.flatMap((p) => p.data) ?? [],
-    [data],
+    [data]
   );
 
   // we want UI in chronological order top->bottom but newest at the bottom:
@@ -218,6 +218,7 @@ export default function SmsBox({ clientId }: { clientId: number }) {
         {/* messages */}
         <div className="flex flex-col gap-2">
           {messages.map((message: any, idx: number) => {
+            console.log("Rendering SMS message:", message);
             const created = new Date(message.createdAt);
             const dateStr = created.toDateString();
             const showChip = dateStr !== lastDateStr;
@@ -231,7 +232,7 @@ export default function SmsBox({ clientId }: { clientId: number }) {
                       className={cn(
                         "inline-flex items-center rounded-full px-3 py-1 text-[11px] font-medium",
                         "bg-zinc-100 text-zinc-600 ring-1 ring-zinc-200",
-                        "dark:bg-zinc-800/70 dark:text-zinc-300 dark:ring-white/10",
+                        "dark:bg-zinc-800/70 dark:text-zinc-300 dark:ring-white/10"
                       )}
                     >
                       {formatDateChip(created)}
@@ -262,7 +263,7 @@ export default function SmsBox({ clientId }: { clientId: number }) {
             "absolute bottom-3 right-3 z-10 inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium",
             "bg-white/90 text-zinc-700 shadow-md ring-1 ring-zinc-200 backdrop-blur",
             "hover:bg-white dark:bg-zinc-900/80 dark:text-zinc-200 dark:ring-white/10",
-            "transition-all duration-200 hover:scale-105",
+            "transition-all duration-200 hover:scale-105"
           )}
           aria-label="Jump to latest"
           title="Jump to latest"

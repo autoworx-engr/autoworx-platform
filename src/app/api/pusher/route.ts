@@ -1,5 +1,4 @@
 import { authOptions } from "@/authOptions";
-import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { db } from "@/lib/db";
 import {
   sendInternalMessageNotification,
@@ -49,7 +48,6 @@ const pusher = getPusherInstance();
  *               type:
  *                 type: string
  *                 description: The type of message being sent.
- *                 example: USER,GROUP
  *               section:
  *                 type: string
  *                 enum: [INTERNAL, COLLABORATION]
@@ -323,17 +321,12 @@ export async function POST(req: Request) {
         chatTrack: userChatTrack,
       }),
     );
-  } catch (e) {
-    const formattedError = errorHandler(e);
+  } catch (e: any) {
     console.error(e);
     return new Response(
-      JSON.stringify({
-        message: formattedError?.message,
-        success: false,
-        errorDetails: formattedError,
-      }),
+      JSON.stringify({ message: "Failed to send message", success: false }),
       {
-        status: formattedError?.statusCode || 500,
+        status: 500,
       },
     );
   }
