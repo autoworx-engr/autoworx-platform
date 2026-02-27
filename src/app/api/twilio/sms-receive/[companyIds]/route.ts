@@ -90,6 +90,10 @@ export async function POST(
       },
     });
 
+    const company = await db.company.findUnique({
+      where: { id: credential?.companyId },
+    });
+
     const formData = new FormData();
 
     for (const url of mediaUrls) {
@@ -128,6 +132,7 @@ export async function POST(
           lastName: true,
           companyId: true,
           Lead: true,
+          isSalesAgent: true,
         },
       });
 
@@ -145,6 +150,7 @@ export async function POST(
             lastName: true,
             companyId: true,
             Lead: true,
+            isSalesAgent: true,
           },
         });
       }
@@ -183,15 +189,16 @@ export async function POST(
         });
 
         //sales agent
-        if (dbMessage && body.to === "+14702560094") {
-          await sendSMSToAgent({
-            company_id: client.companyId,
-            message: dbMessage?.message,
-            send_from: dbMessage?.from,
-            send_to: dbMessage?.to,
-            client_id: client?.id,
-          });
-        }
+        if (company?.isSalesAgent && client?.isSalesAgent)
+          if (dbMessage && body.to === credential?.phoneNumber) {
+            await sendSMSToAgent({
+              company_id: client.companyId,
+              message: dbMessage?.message,
+              send_from: dbMessage?.from,
+              send_to: dbMessage?.to,
+              client_id: client?.id,
+            });
+          }
 
         // pusher trigger to send message to company admin real time
 

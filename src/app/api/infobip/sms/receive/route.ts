@@ -123,7 +123,9 @@ export async function POST(req: NextRequest) {
         }
 
         console.log(`Processing for company ${infobipConfig.companyId}`);
-
+        const company = await db.company.findUnique({
+          where: { id: infobipConfig?.companyId },
+        });
         // Find client by the "from" phone number (client's phone)
         let client = await db.client.findFirst({
           where: {
@@ -240,14 +242,16 @@ export async function POST(req: NextRequest) {
           }
 
           //sales agent
-          if (clientSMS && clientSMS?.to === "+12039008770") {
-            await sendSMSToAgent({
-              company_id: client.companyId,
-              message: clientSMS?.message,
-              send_from: clientSMS?.from,
-              send_to: clientSMS?.to,
-              client_id: client.id,
-            });
+          if (company?.isSalesAgent && client?.isSalesAgent) {
+            if (clientSMS && clientSMS?.to === infobipConfig.phoneNumber) {
+              await sendSMSToAgent({
+                company_id: client.companyId,
+                message: clientSMS?.message,
+                send_from: clientSMS?.from,
+                send_to: clientSMS?.to,
+                client_id: client.id,
+              });
+            }
           }
 
           // Count unread messages
