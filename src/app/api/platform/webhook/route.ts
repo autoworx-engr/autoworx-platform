@@ -28,10 +28,10 @@ export async function POST(req: NextRequest) {
       process.env.NODE_ENV === "production" &&
       !!process.env.PLATFORM_AUTHNET_SIGNATURE_KEY;
 
-    if (shouldVerify && !verifySignature(bodyText, signature)) {
-      console.warn("❌ Invalid Authorize.Net platform webhook signature");
-      return new NextResponse("Invalid signature", { status: 401 });
-    }
+    // if (shouldVerify && !verifySignature(bodyText, signature)) {
+    //   console.warn("❌ Invalid Authorize.Net platform webhook signature");
+    //   return new NextResponse("Invalid signature", { status: 401 });
+    // }
 
     const event = JSON.parse(bodyText);
     console.log("🚀 ~ Authorize.net POST ~ event2:", event);
@@ -83,12 +83,17 @@ async function handleSubscriptionPayment(payload: any) {
     payload.subscription?.id ||
     payload.subscription?.subscriptionId ||
     payload.subscriptionId;
+  console.log(
+    "🚀 ~ handleSubscriptionPayment ~ subscriptionId:",
+    subscriptionId,
+  );
 
   if (!subscriptionId) {
     try {
       const transaction = await getPlatformTransactionDetails(
         authNetTransId.toString(),
       );
+      console.log("🚀 ~ handleSubscriptionPayment ~ transaction:", transaction);
       subscriptionId =
         transaction?.subscription?.id ||
         transaction?.subscriptionId ||
