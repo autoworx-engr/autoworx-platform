@@ -17,6 +17,11 @@ import { NextRequest, NextResponse } from "next/server";
  *       - bearerAuth: []
  *     parameters:
  *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search by company name, user first name, last name, or email.
+ *       - in: query
  *         name: page
  *         schema:
  *           type: integer
@@ -45,8 +50,39 @@ export const GET = async (request: NextRequest) => {
     const searchParams = request.nextUrl.searchParams;
     const pageNum = parseInt(searchParams.get("page") || "1");
     const limitNum = parseInt(searchParams.get("limit") || "20");
+    const search = searchParams.get("search") || "";
     const skip = (pageNum - 1) * limitNum;
     const authHeader = request.headers.get("authorization") ?? "";
+
+    const companySearchCondition: any = search
+      ? {
+          OR: [
+            { name: { contains: search, mode: "insensitive" } },
+            {
+              users: {
+                some: {
+                  OR: [
+                    { firstName: { contains: search, mode: "insensitive" } },
+                    { lastName: { contains: search, mode: "insensitive" } },
+                    { email: { contains: search, mode: "insensitive" } },
+                  ],
+                },
+              },
+            },
+          ],
+        }
+      : {};
+
+    const userSearchCondition: any = search
+      ? {
+          OR: [
+            { firstName: { contains: search, mode: "insensitive" } },
+            { lastName: { contains: search, mode: "insensitive" } },
+            { email: { contains: search, mode: "insensitive" } },
+            { company: { name: { contains: search, mode: "insensitive" } } },
+          ],
+        }
+      : {};
     const accessToken = authHeader.startsWith("Bearer")
       ? authHeader.split(" ")[1]
       : authHeader;
@@ -62,9 +98,16 @@ export const GET = async (request: NextRequest) => {
       );
     }
 
-    console.log("userCompanyId", userCompanyId);
-
     // Fetch connected companies with pagination
+    const companyDefaultSelect = {
+      id: true,
+      name: true,
+      image: true,
+      email: true,
+      phone: true,
+      isCollaborators: true,
+      timezone: true,
+    };
     const connectedCompanies = await db.companyJoin.findMany({
       where: {
         OR: [
@@ -72,12 +115,14 @@ export const GET = async (request: NextRequest) => {
             companyOneId: userCompanyId,
             companyTwo: {
               isCollaborators: true,
+              ...companySearchCondition,
             },
           },
           {
             companyTwoId: userCompanyId,
             companyOne: {
               isCollaborators: true,
+              ...companySearchCondition,
             },
           },
         ],
@@ -85,12 +130,14 @@ export const GET = async (request: NextRequest) => {
       },
       include: {
         companyOne: {
-          include: {
+          select: {
+            ...companyDefaultSelect,
             users: {
               where: {
                 employeeType: {
                   in: ["Admin", "Manager", "Sales"],
                 },
+                ...userSearchCondition,
               },
               select: {
                 id: true,
@@ -106,12 +153,14 @@ export const GET = async (request: NextRequest) => {
           },
         },
         companyTwo: {
-          include: {
+          select: {
+            ...companyDefaultSelect,
             users: {
               where: {
                 employeeType: {
                   in: ["Admin", "Manager", "Sales"],
                 },
+                ...userSearchCondition,
               },
               select: {
                 id: true,
@@ -138,12 +187,14 @@ export const GET = async (request: NextRequest) => {
             companyOneId: userCompanyId,
             companyTwo: {
               isCollaborators: true,
+              ...companySearchCondition,
             },
           },
           {
             companyTwoId: userCompanyId,
             companyOne: {
               isCollaborators: true,
+              ...companySearchCondition,
             },
           },
         ],
