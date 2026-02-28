@@ -99,7 +99,7 @@ export default function MessageBox({
 
       if (multiAttachmentFile && multiAttachmentFile?.length > 0) {
         const formData = new FormData();
-        multiAttachmentFile.forEach((photo) => {
+        multiAttachmentFile.forEach(photo => {
           formData.append("file", photo);
         });
         const uploadRes = await fetch("/api/upload", {
@@ -117,6 +117,7 @@ export default function MessageBox({
       }
 
       const requestBody = {
+        sessionUserId: session?.user?.id,
         to: fromGroup ? group?.id : receiverUser?.id,
         type: fromGroup ? sendType.Group : sendType.User,
         message,
@@ -154,7 +155,7 @@ export default function MessageBox({
           attachment: json.attachments,
           createdAt: new Date(),
         };
-        setMessages((messages) => [...messages, newMessage]);
+        setMessages(messages => [...messages, newMessage]);
         setMessage("");
         setMultiAttachmentFile(null);
         setLastMessage(json.chatTrack);
@@ -169,7 +170,7 @@ export default function MessageBox({
 
   const handleGroupClose = () => {
     setGroupsList &&
-      setGroupsList((groupList) => groupList.filter((g) => g.id !== group?.id));
+      setGroupsList(groupList => groupList.filter(g => g.id !== group?.id));
   };
 
   const handleUserClose = async () => {
@@ -179,8 +180,8 @@ export default function MessageBox({
         setLastMessage(res.data);
       }
       setUsersList &&
-        setUsersList((usersList) =>
-          usersList.filter((u) => u.id !== receiverUser?.id),
+        setUsersList(usersList =>
+          usersList.filter(u => u.id !== receiverUser?.id),
         );
     } catch (err) {
       const formattedError = errorHandler(err);
@@ -203,8 +204,8 @@ export default function MessageBox({
         handleGroupClose();
       } else {
         setGroupsList &&
-          setGroupsList((groupList) =>
-            groupList.map((g) => {
+          setGroupsList(groupList =>
+            groupList.map(g => {
               if (g.id === group?.id) {
                 return {
                   ...g,
@@ -214,7 +215,7 @@ export default function MessageBox({
               return g;
             }),
           );
-        const removedUser = group?.users.find((user) => user.id === userId);
+        const removedUser = group?.users.find(user => user.id === userId);
         const userName = removedUser
           ? `${removedUser.firstName} ${removedUser.lastName}`
           : "User";
@@ -224,7 +225,7 @@ export default function MessageBox({
   };
 
   const handleAttachment = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files!).map((file) => file);
+    const files = Array.from(event.target.files!).map(file => file);
     setShowAttachment(false);
     setMultiAttachmentFile(files);
   };
@@ -250,8 +251,8 @@ export default function MessageBox({
 
   const handleRemoveAttachment = (fileName: string) => {
     setMultiAttachmentFile(
-      (multiFiles) =>
-        multiFiles && multiFiles?.filter((file) => file?.name !== fileName),
+      multiFiles =>
+        multiFiles && multiFiles?.filter(file => file?.name !== fileName),
     );
   };
   return (
@@ -304,7 +305,7 @@ export default function MessageBox({
                     <input
                       type="text"
                       value={groupName}
-                      onChange={(e) => setGroupName(e.target.value)}
+                      onChange={e => setGroupName(e.target.value)}
                       className="text-black rounded-md px-2 py-1 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-white"
                       autoFocus
                     ></input>
@@ -340,7 +341,7 @@ export default function MessageBox({
                           }
                           const hasDuplicateName =
                             existingGroups?.some(
-                              (existingGroup) =>
+                              existingGroup =>
                                 existingGroup.id !== group?.id &&
                                 existingGroup.name?.trim().toLowerCase() ===
                                   trimmedName.toLowerCase(),
@@ -504,7 +505,7 @@ export default function MessageBox({
                 gridTemplateColumns: "repeat(auto-fill, minmax(90px, 1fr))",
               }}
             >
-              {multiAttachmentFile?.map((attachmentFile) => (
+              {multiAttachmentFile?.map(attachmentFile => (
                 <div
                   key={attachmentFile.name}
                   className="group relative flex flex-col items-center rounded-lg border border-gray-200 bg-gray-50 p-2 shadow-sm transition-all hover:shadow-md hover:border-gray-300 min-w-0"
@@ -564,7 +565,7 @@ export default function MessageBox({
           "relative flex items-center gap-2 bg-[#D9D9D9] p-2",
           totalMessageBox > 2 ? "h-[60px] min-h-[60px]" : "h-[8%] min-h-[50px]",
         )}
-        onSubmit={(e) => startTransition(() => handleSendMessage(e))}
+        onSubmit={e => startTransition(() => handleSendMessage(e))}
       >
         {/* attachment or estimate dropdown */}
         {showAttachment && (
@@ -610,7 +611,7 @@ export default function MessageBox({
           placeholder="Send Message..."
           className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#006D77] focus:border-transparent"
           value={message}
-          onChange={(e) => setMessage(e.target.value)}
+          onChange={e => setMessage(e.target.value)}
         />
         <button disabled={pending} className="" type="submit">
           {/* <Image src="/icons/Send.svg" width={20} height={20} alt="send" /> */}
