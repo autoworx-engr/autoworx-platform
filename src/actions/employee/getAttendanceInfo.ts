@@ -249,6 +249,12 @@ export async function getAttendanceInfo(
 
   const attInfo = await getAttendanceInfoForRange(startOfWeek, endOfWeek);
 
+
+  const rangeDurationDays = endOfWeek.diff(startOfWeek, "days");
+  const prevPeriodEnd = startOfWeek.clone().subtract(1, "day");
+  const prevPeriodStart = prevPeriodEnd.clone().subtract(rangeDurationDays, "days");
+  const attInfoPrevPeriod = await getAttendanceInfoForRange(prevPeriodStart, prevPeriodEnd);
+
   // Get current monthly attendance information using company timezone
   const startOfMonth = moment().startOf("month");
   const endOfMonth = moment().endOf("month");
@@ -318,7 +324,8 @@ export async function getAttendanceInfo(
     }, 0)
     .toFixed(2);
 
-  const previousTotalHoursWorked = attInfoPrevMonth
+  
+  const previousTotalHoursWorked = attInfoPrevPeriod
     .filter(
       (day) =>
         day.hours !== "ABSENT" &&
@@ -343,7 +350,7 @@ export async function getAttendanceInfo(
       day.hours !== "-" &&
       day.hours !== "NOT_JOINED",
   ).length;
-  const previousTotalDaysWorked = attInfoPrevMonth.filter(
+  const previousTotalDaysWorked = attInfoPrevPeriod.filter(
     (day) =>
       day.hours !== "ABSENT" &&
       day.hours !== "WEEKEND" &&
