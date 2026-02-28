@@ -381,7 +381,7 @@ const PDFComponent = function PDF({
                 Number(invoice.deposit),
               ).toFixed(2),
             ) === 0
-              ? "RECEIPT"
+              ? "RECEIPT"  //When due  0 then show this text
               : invoice.type.toUpperCase()}
           </Text>
           <View style={[styles.mainSection, { marginTop: 20 }]}>
