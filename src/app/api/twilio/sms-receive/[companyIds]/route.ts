@@ -182,9 +182,13 @@ export async function POST(
           attachments: attachments,
         });
 
+        const currentClient = await db.client.findUnique({
+          where: { id: client?.id },
+        });
+
         //sales agent
         const isCompanySalesAgent = company?.isSalesAgent === true;
-        const isClientSalesAgent = client?.isSalesAgent === true;
+        const isClientSalesAgent = currentClient?.isSalesAgent === true;
         console.log("DEBUG BEFORE IF:", {
           isCompanySalesAgent,
           isClientSalesAgent,
