@@ -234,6 +234,7 @@ export async function POST(req: NextRequest) {
           }
 
           //sales agent
+
           if (company?.isSalesAgent && client?.isSalesAgent) {
             if (clientSMS && clientSMS?.to === infobipConfig.phoneNumber) {
               await sendSMSToAgent({
