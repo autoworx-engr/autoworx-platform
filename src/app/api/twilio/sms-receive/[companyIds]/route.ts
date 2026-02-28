@@ -89,10 +89,6 @@ export async function POST(
       },
     });
 
-    const company = await db.company.findUnique({
-      where: { id: credential?.companyId },
-    });
-
     const formData = new FormData();
 
     for (const url of mediaUrls) {
@@ -113,6 +109,10 @@ export async function POST(
     const images = imgs?.data ?? [];
 
     for (const companyId of companyIds) {
+      const company = await db.company.findUnique({
+        where: { id: companyId },
+      });
+
       let client = await db.client.findFirst({
         where: {
           mobile: {
@@ -173,7 +173,7 @@ export async function POST(
           });
           attachments.push(atc);
         }
-        console.log();
+
         // update client sms conversation track
         const clientConversationTrack = await updateNewSMSChatTrack({
           clientId: client.id,
@@ -183,23 +183,21 @@ export async function POST(
         });
 
         //sales agent
-        console.log("dbMessage.to:", dbMessage.to);
-        console.log("credential phone:", credential?.phoneNumber);
-        console.log("equal?", dbMessage.to === credential?.phoneNumber);
+        const isCompanySalesAgent = company?.isSalesAgent === true;
+        const isClientSalesAgent = client?.isSalesAgent === true;
         console.log("DEBUG BEFORE IF:", {
-          companyIsSalesAgent: company?.isSalesAgent,
-          clientIsSalesAgent: client?.isSalesAgent,
+          isCompanySalesAgent,
+          isClientSalesAgent,
           to: dbMessage?.to,
           credentialPhone: credential?.phoneNumber,
         });
-        if (company && company.isSalesAgent && client.isSalesAgent) {
+        if (isCompanySalesAgent && isClientSalesAgent) {
           console.log("ENTERED SALES AGENT BLOCK", {
-            company: company?.isSalesAgent,
-            client: client?.isSalesAgent,
+            isCompanySalesAgent,
+            isClientSalesAgent,
           });
 
           if (dbMessage && dbMessage.to === credential?.phoneNumber) {
-            console.log("sales agent message sending2..");
             const res = await sendSMSToAgent({
               company_id: client.companyId,
               message: dbMessage?.message,
