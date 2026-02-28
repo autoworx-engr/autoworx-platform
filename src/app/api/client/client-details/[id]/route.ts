@@ -190,7 +190,7 @@ export async function PATCH(
       where: { id: clientId },
       data: validatedData,
     });
-
+    console.log("updatedClient", updatedClient);
     return NextResponse.json({
       success: true,
       message: "Client updated successfully",

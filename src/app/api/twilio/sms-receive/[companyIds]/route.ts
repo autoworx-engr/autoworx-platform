@@ -7,6 +7,7 @@ import sendClientMailOrSMSNotify from "@/lib/pusher/client-conversation-notify";
 import receiveTwiloMessage from "@/lib/pusher/receiveTwiloMessage";
 import { getPusherInstance } from "@/lib/pusher/server";
 import { sendSMSToAgent } from "@/service/ai-agent/api";
+import { allCompanyFeaturePermissions } from "@/service/feature-permissions/api";
 import { revalidatePath } from "next/cache";
 import { NextRequest } from "next/server";
 
@@ -186,16 +187,25 @@ export async function POST(
           where: { id: client?.id },
         });
 
+        const permissions = await allCompanyFeaturePermissions(companyId);
+
+        const salesAgentPermission = permissions?.data?.find(
+          (item: any) => item.permission_name === "sales-agent",
+        );
+
+        const isSalesAgentEnabled = salesAgentPermission?.enabled === true;
+
         //sales agent
         const isCompanySalesAgent = company?.isSalesAgent === true;
         const isClientSalesAgent = currentClient?.isSalesAgent === true;
         console.log("DEBUG BEFORE IF:", {
           isCompanySalesAgent,
           isClientSalesAgent,
+          isSalesAgentEnabled,
           to: dbMessage?.to,
           credentialPhone: credential?.phoneNumber,
         });
-        if (isCompanySalesAgent && isClientSalesAgent) {
+        if (isCompanySalesAgent && isClientSalesAgent && isSalesAgentEnabled) {
           console.log("ENTERED SALES AGENT BLOCK", {
             isCompanySalesAgent,
             isClientSalesAgent,
