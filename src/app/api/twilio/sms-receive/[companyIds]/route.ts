@@ -183,10 +183,11 @@ export async function POST(
         });
 
         //sales agent
-        console.log("body.to:", body.to);
+        console.log("dbMessage.to:", dbMessage.to);
         console.log("credential phone:", credential?.phoneNumber);
-        console.log("equal?", body.to === credential?.phoneNumber);
-
+        console.log("equal?", dbMessage.to === credential?.phoneNumber);
+        console.log("company", company);
+        console.log("client", client);
         if (company?.isSalesAgent && client?.isSalesAgent) {
           console.log("sales agent message sending..");
           if (dbMessage && dbMessage.to === credential?.phoneNumber) {
@@ -203,7 +204,6 @@ export async function POST(
           }
         }
 
-        console.log("dbMessage", dbMessage);
         // pusher trigger to send message to company admin real time
 
         receiveTwiloMessage({ ...dbMessage, attachments });
