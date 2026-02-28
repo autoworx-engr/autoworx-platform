@@ -173,7 +173,7 @@ export async function POST(
           });
           attachments.push(atc);
         }
-
+        console.log();
         // update client sms conversation track
         const clientConversationTrack = await updateNewSMSChatTrack({
           clientId: client.id,
@@ -183,17 +183,23 @@ export async function POST(
         });
 
         //sales agent
-        if (company?.isSalesAgent && client?.isSalesAgent)
-          if (dbMessage && body.to === credential?.phoneNumber) {
-            await sendSMSToAgent({
-              company_id: client.companyId,
-              message: dbMessage?.message,
-              send_from: dbMessage?.from,
-              send_to: dbMessage?.to,
-              client_id: client?.id,
-            });
-          }
+        console.log("message sent to", credential?.phoneNumber);
 
+        if (company?.isSalesAgent && client?.isSalesAgent)
+          console.log("sales agent message sending..");
+        if (dbMessage && body.to === credential?.phoneNumber) {
+          console.log("sales agent message sending2..");
+          const res = await sendSMSToAgent({
+            company_id: client.companyId,
+            message: dbMessage?.message,
+            send_from: dbMessage?.from,
+            send_to: dbMessage?.to,
+            client_id: client?.id,
+          });
+
+          console.log("sales agent res", res);
+        }
+        console.log("dbMessage", dbMessage);
         // pusher trigger to send message to company admin real time
 
         receiveTwiloMessage({ ...dbMessage, attachments });
