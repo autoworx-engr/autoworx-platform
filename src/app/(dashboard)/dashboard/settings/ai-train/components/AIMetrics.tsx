@@ -43,7 +43,7 @@ export default function AIMetrics() {
             variant="success"
           />
           <StatsCard
-            title="Appointments Booked"
+            title="Task Created"
             value={stats.appointmentsBooked}
             icon={<Calendar className="h-5 w-5" />}
             subtitle="Confirmed bookings via SMS"
