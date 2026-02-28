@@ -189,7 +189,7 @@ export async function POST(
 
         if (company?.isSalesAgent && client?.isSalesAgent) {
           console.log("sales agent message sending..");
-          if (dbMessage && body.to === credential?.phoneNumber) {
+          if (dbMessage && dbMessage.to === credential?.phoneNumber) {
             console.log("sales agent message sending2..");
             const res = await sendSMSToAgent({
               company_id: client.companyId,
