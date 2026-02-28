@@ -301,8 +301,8 @@ export async function getAttendanceInfo(
     .reduce((total, day) => total + parseFloat(day.extraHours), 0)
     .toFixed(2);
 
-  // Calculate the total hours worked for the month
-  const totalHoursWorked = attInfoMonth
+
+  const totalHoursWorked = attInfo
     .filter(
       (day) =>
         day.hours !== "ABSENT" &&
@@ -334,8 +334,8 @@ export async function getAttendanceInfo(
     }, 0)
     .toFixed(2);
 
-  // Calculate the total days worked for the month
-  const totalDaysWorked = attInfoMonth.filter(
+
+  const totalDaysWorked = attInfo.filter(
     (day) =>
       day.hours !== "ABSENT" &&
       day.hours !== "WEEKEND" &&
