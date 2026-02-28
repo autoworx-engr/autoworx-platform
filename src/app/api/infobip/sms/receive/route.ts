@@ -115,9 +115,7 @@ export async function POST(req: NextRequest) {
       // Process for each matching company
       for (const infobipConfig of infobipConfigs) {
         console.log(`Processing for company ${infobipConfig.companyId}`);
-        const company = await db.company.findUnique({
-          where: { id: infobipConfig?.companyId },
-        });
+
         // Find client by the "from" phone number (client's phone)
         let client = await db.client.findFirst({
           where: {
@@ -234,8 +232,13 @@ export async function POST(req: NextRequest) {
           }
 
           //sales agent
+          const company = await db.company.findUnique({
+            where: { id: infobipConfig?.companyId },
+          });
 
-          if (company && company.isSalesAgent && client.isSalesAgent) {
+          const isCompanySalesAgent = company?.isSalesAgent === true;
+          const isClientSalesAgent = client?.isSalesAgent === true;
+          if (isCompanySalesAgent && isClientSalesAgent) {
             if (clientSMS && clientSMS?.to === infobipConfig.phoneNumber) {
               await sendSMSToAgent({
                 company_id: client.companyId,
