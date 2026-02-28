@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import Image from "next/image";
 import BackBtn from "../conversations/BackBtn";
 import EditClientModalTrigger from "./EditClientModalTrigger";
+import ClientSalesAgentToggle from "./ClientSalesAgentToggle";
 
 type TProps = { client?: Client | null; vehicles?: Partial<Vehicle>[] };
 
@@ -45,19 +46,30 @@ export default async function ClientHeading({ client, vehicles = [] }: TProps) {
       className={cn(
         "h-[40%] rounded-t-2xl text-white text-xs 2xl:text-base",
         // richer depth: gradient + subtle ring
-        "bg-gradient-to-r from-[#006D77] to-[#0a8a95] ring-1 ring-white/10 pb-4"
+        "bg-gradient-to-r from-[#006D77] to-[#0a8a95] ring-1 ring-white/10 pb-4",
       )}
     >
       {/* Header */}
-      <div className="flex items-center gap-2 px-2 pt-4 xl:pt-2">
-        <div className="block xl:hidden">
-          <BackBtn />
+      <div className="flex items-center justify-between px-2 pt-4 xl:pt-2">
+        {/* Left side */}
+        <div className="flex items-center gap-2">
+          <div className="block xl:hidden">
+            <BackBtn />
+          </div>
+
+          <h2 className="px-1 text-sm font-semibold tracking-tight xl:p-3 xl:text-base">
+            Client Data
+          </h2>
+
+          {/* Edit modal trigger */}
+          <EditClientModalTrigger client={client} />
         </div>
-        <h2 className="px-1 text-sm font-semibold tracking-tight xl:p-3 xl:text-base">
-          Client Data
-        </h2>
-        {/* Edit modal trigger */}
-        <EditClientModalTrigger client={client} />
+
+        {/* Right side */}
+        <ClientSalesAgentToggle
+          clientId={client.id}
+          initialValue={client.isSalesAgent ?? false}
+        />
       </div>
 
       {/* Body */}
@@ -82,7 +94,7 @@ export default async function ClientHeading({ client, vehicles = [] }: TProps) {
               className={cn(
                 "h-20 w-20 rounded-full object-cover",
                 "ring-2 ring-white/70 shadow-sm",
-                "2xl:h-[110px] 2xl:w-[110px]"
+                "2xl:h-[110px] 2xl:w-[110px]",
               )}
             />
 
@@ -139,7 +151,7 @@ export default async function ClientHeading({ client, vehicles = [] }: TProps) {
           className={cn(
             "custom-scrollbar max-h-[220px] w-full flex-1 overflow-y-auto rounded-xl",
             // readable frosted card on teal
-            "bg-white/10 p-3 backdrop-blur-md shadow-[inset_0_0_0_1px_rgba(255,255,255,0.2)]"
+            "bg-white/10 p-3 backdrop-blur-md shadow-[inset_0_0_0_1px_rgba(255,255,255,0.2)]",
           )}
         >
           <VehicleDetails
