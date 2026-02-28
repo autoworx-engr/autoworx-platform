@@ -538,6 +538,7 @@ export async function updateInvoice(
             damageNotes: data.damageNotes,
             authorizedName: fromPayment ? undefined : null,
             signatureImage: fromPayment ? undefined : null,
+            isViewed: false,
             serviceIndex: JSON.stringify(
               updatedInvoiceItem
                 .map((item) => item?.id)

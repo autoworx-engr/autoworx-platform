@@ -10,9 +10,11 @@ import "react-date-range/dist/theme/default.css"; // theme css file
 const DateRange = ({
   onOk,
   onCancel,
+  dateRange: dateRangeProp,
 }: {
   onOk: (start: Date, end: Date) => void;
   onCancel: () => void;
+  dateRange?: [Date | null, Date | null];
 }) => {
   const [state, setState] = useState({
     selection: {
@@ -22,7 +24,8 @@ const DateRange = ({
     },
   });
   const ref = useRef<HTMLDivElement>(null);
-  const { dateRange } = usePipelineFilterStore();
+  const pipelineStore = usePipelineFilterStore();
+  const dateRange = dateRangeProp || pipelineStore.dateRange;
   const isRangeSelected = dateRange[0] !== null && dateRange[1] !== null;
   const [showPicker, setShowPicker] = useState(false);
   const [tempRange, setTempRange] = useState(state.selection);

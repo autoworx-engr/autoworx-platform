@@ -89,8 +89,6 @@ interface EstimateCreateStore {
     materialIndex: number;
   }) => void;
 
-  isDirty: boolean;
-  setDirty: (dirty: boolean) => void;
 }
 
 export const useEstimateCreateStore = create<EstimateCreateStore>((set) => ({
@@ -124,52 +122,52 @@ export const useEstimateCreateStore = create<EstimateCreateStore>((set) => ({
     notes: "",
   })),
   damageNotes: "",
-isDirty: false,
+
   setInvoiceId: (invoiceId: string) => set({ invoiceId }),
   setType: (type: string) => set({ type }),
-  setSubtotal: (subtotal: number) => set({ subtotal, isDirty:true }),
-  setDiscount: (discount: number) => set({ discount, isDirty:true }),
-  setTax: (tax: number) => set({ tax, isDirty:true }),
-  setServiceFee: (serviceFee: number) => set({ serviceFee, isDirty:true }),
-  setGrandTotal: (grandTotal: number) => set({ grandTotal, isDirty:true }),
-  setDue: (due: number) => set({ due, isDirty:true }),
-  setDeposit: (deposit: number) => set({ deposit, isDirty:true }),
-  setTotalPayment: (totalPayment: number) => set({ totalPayment, isDirty:true }),
-  setInternalNotes: (internalNotes: string) => set({ internalNotes, isDirty:true }),
+  setSubtotal: (subtotal: number) => set({ subtotal, }),
+  setDiscount: (discount: number) => set({ discount, }),
+  setTax: (tax: number) => set({ tax, }),
+  setServiceFee: (serviceFee: number) => set({ serviceFee, }),
+  setGrandTotal: (grandTotal: number) => set({ grandTotal, }),
+  setDue: (due: number) => set({ due, }),
+  setDeposit: (deposit: number) => set({ deposit, }),
+  setTotalPayment: (totalPayment: number) => set({ totalPayment, }),
+  setInternalNotes: (internalNotes: string) => set({ internalNotes, }),
   setTerms: (terms: string) => set({ terms }),
   setPolicy: (policy: string) => set({ policy  }),
-  setCustomerNotes: (customerNotes: string) => set({ customerNotes,isDirty:true }),
-  setCustomerComments: (customerComments: string) => set({ customerComments, isDirty:true }),
-  setCoupon: (coupon: Coupon) => set({ coupon , isDirty:true}),
+  setCustomerNotes: (customerNotes: string) => set({ customerNotes }),
+  setCustomerComments: (customerComments: string) => set({ customerComments, }),
+  setCoupon: (coupon: Coupon) => set({ coupon ,}),
   setTitle: (title: string) => {
-    set({ title, isDirty:true });
+    set({ title, });
   },
   setTemplate: (template: InvoiceTemplate) => {
-    set({ template, isDirty:true });
+    set({ template, });
   },
-  setPhotos: (photos: { id?: number; photo?: string }[]) => set({ photos, isDirty:true }),
+  setPhotos: (photos: { id?: number; photo?: string }[]) => set({ photos, }),
   addPhoto: (photo: string) =>
-    set((x: any) => ({ photos: [...x.photos, photo] , isDirty:true})),
+    set((x: any) => ({ photos: [...x.photos, photo] ,})),
   removePhoto: (photo: string) =>
-    set((x: any) => ({ photos: x.photos.filter((p: string) => p !== photo), isDirty:true })),
+    set((x: any) => ({ photos: x.photos.filter((p: string) => p !== photo), })),
 
   setTasks: (tasks: { id: undefined | number; task: string }[]) =>
-    set({ tasks, isDirty:true}),
-  addTask: (task: Task) => set((x: any) => ({ tasks: [...x.tasks, task], isDirty:true })),
+    set({ tasks,}),
+  addTask: (task: Task) => set((x: any) => ({ tasks: [...x.tasks, task], })),
   removeTask: (taskId: number) =>
-    set((x: any) => ({ tasks: x.tasks.filter((t: Task) => t.id !== taskId), isDirty:true })),
+    set((x: any) => ({ tasks: x.tasks.filter((t: Task) => t.id !== taskId), })),
 
   setCurrentSelectedCategoryId: (categoryId: number) =>
     set({ currentSelectedCategoryId: categoryId }),
 
-  setInspections: (inspections: InspectionType[]) => set({ inspections, isDirty:true }),
+  setInspections: (inspections: InspectionType[]) => set({ inspections, }),
   updateInspection: (index: number, inspection: InspectionType) =>
     set((state) => {
       const updatedInspections = [...state.inspections];
       updatedInspections[index] = inspection;
-      return { inspections: updatedInspections, isDirty:true};
+      return { inspections: updatedInspections,};
     }),
-  setDamageNotes: (damageNotes: string) => set({ damageNotes, isDirty:true }),
+  setDamageNotes: (damageNotes: string) => set({ damageNotes, }),
   reset: () =>
     set({
       invoiceId: "",
@@ -200,9 +198,9 @@ isDirty: false,
         notes: "",
       })),
       damageNotes: "",
-      isDirty: false,
+    
     }),
-    setDirty: (dirty: boolean) => set({ isDirty: dirty }),
+  
   removeMaterial({ itemIndex, materialIndex }) {
     set((state) => {
       const items = state.items.map((item, index) => {
@@ -223,7 +221,7 @@ isDirty: false,
         return item;
       });
 
-      return { items, isDirty: false, };
+      return { items };
     });
   },
 }));
