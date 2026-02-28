@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -126,6 +127,7 @@ export async function PATCH(
       });
     }
 
+    revalidatePath("/dashboard/settings/ai-train");
     return NextResponse.json({
       message: "Client sales agent permission updated successfully",
     });

@@ -8,6 +8,7 @@ import { getPusherInstance } from "@/lib/pusher/server";
 import { NextRequest, NextResponse } from "next/server";
 import { sendSMSToAgent } from "@/service/ai-agent/api";
 import { revalidatePath } from "next/cache";
+import { allCompanyFeaturePermissions } from "@/service/feature-permissions/api";
 
 const pusher = getPusherInstance();
 
@@ -236,9 +237,23 @@ export async function POST(req: NextRequest) {
             where: { id: infobipConfig?.companyId },
           });
 
+          const permissions = await allCompanyFeaturePermissions(
+            infobipConfig?.companyId,
+          );
+
+          const salesAgentPermission = permissions?.data?.find(
+            (item: any) => item.permission_name === "sales-agent",
+          );
+
+          const isSalesAgentEnabled = salesAgentPermission?.enabled === true;
+
           const isCompanySalesAgent = company?.isSalesAgent === true;
           const isClientSalesAgent = client?.isSalesAgent === true;
-          if (isCompanySalesAgent && isClientSalesAgent) {
+          if (
+            isCompanySalesAgent &&
+            isClientSalesAgent &&
+            isSalesAgentEnabled
+          ) {
             if (clientSMS && clientSMS?.to === infobipConfig.phoneNumber) {
               await sendSMSToAgent({
                 company_id: client.companyId,
