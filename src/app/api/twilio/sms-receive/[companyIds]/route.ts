@@ -186,10 +186,18 @@ export async function POST(
         console.log("dbMessage.to:", dbMessage.to);
         console.log("credential phone:", credential?.phoneNumber);
         console.log("equal?", dbMessage.to === credential?.phoneNumber);
-        console.log("company", company);
-        console.log("client", client);
-        if (company?.isSalesAgent && client?.isSalesAgent) {
-          console.log("sales agent message sending..");
+        console.log("DEBUG BEFORE IF:", {
+          companyIsSalesAgent: company?.isSalesAgent,
+          clientIsSalesAgent: client?.isSalesAgent,
+          to: dbMessage?.to,
+          credentialPhone: credential?.phoneNumber,
+        });
+        if (company && company.isSalesAgent && client.isSalesAgent) {
+          console.log("ENTERED SALES AGENT BLOCK", {
+            company: company?.isSalesAgent,
+            client: client?.isSalesAgent,
+          });
+
           if (dbMessage && dbMessage.to === credential?.phoneNumber) {
             console.log("sales agent message sending2..");
             const res = await sendSMSToAgent({
