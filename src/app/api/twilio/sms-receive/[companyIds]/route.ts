@@ -183,22 +183,26 @@ export async function POST(
         });
 
         //sales agent
-        console.log("message sent to", credential?.phoneNumber);
+        console.log("body.to:", body.to);
+        console.log("credential phone:", credential?.phoneNumber);
+        console.log("equal?", body.to === credential?.phoneNumber);
 
-        if (company?.isSalesAgent && client?.isSalesAgent)
+        if (company?.isSalesAgent && client?.isSalesAgent) {
           console.log("sales agent message sending..");
-        if (dbMessage && body.to === credential?.phoneNumber) {
-          console.log("sales agent message sending2..");
-          const res = await sendSMSToAgent({
-            company_id: client.companyId,
-            message: dbMessage?.message,
-            send_from: dbMessage?.from,
-            send_to: dbMessage?.to,
-            client_id: client?.id,
-          });
+          if (dbMessage && body.to === credential?.phoneNumber) {
+            console.log("sales agent message sending2..");
+            const res = await sendSMSToAgent({
+              company_id: client.companyId,
+              message: dbMessage?.message,
+              send_from: dbMessage?.from,
+              send_to: dbMessage?.to,
+              client_id: client?.id,
+            });
 
-          console.log("sales agent res", res);
+            console.log("sales agent res", res);
+          }
         }
+
         console.log("dbMessage", dbMessage);
         // pusher trigger to send message to company admin real time
 
