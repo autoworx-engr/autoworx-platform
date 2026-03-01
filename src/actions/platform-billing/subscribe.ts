@@ -7,6 +7,7 @@ import {
   createPlatformPaymentProfile,
   cancelPlatformARBSubscription,
   getCustomerProfile,
+  chargePlatformCustomerProfile,
 } from "@/lib/platform-billing/authorize-net";
 import { PlatformSubscriptionStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
@@ -158,19 +159,27 @@ export async function subscribeToPlatformPlan({
       }
     }
 
-    // 2. Create ARB Subscription (Starting after free trial)
+    // 2. Create ARB Subscription
+    // If no trial: charge immediately now via one-time CIM transaction, then
+    // start ARB from next interval so there is no double-charge.
+    // If trial: ARB starts at trial end date; no immediate charge.
     const baseTrialMonths =
       plan.trialLengthDays && plan.trialLengthDays > 0
         ? plan.trialLengthDays
         : 0;
     const trialMonths = billingCustomer?.trialConsumedAt ? 0 : baseTrialMonths;
     const trialStart = new Date();
+    const intervalMonths = plan.interval === "YEARLY" ? 12 : 1;
+
+    // arbStartDate = when ARB fires its FIRST recurring charge
     const arbStartDate = new Date(trialStart);
     if (trialMonths > 0) {
+      // Trial: ARB starts after trial ends
       arbStartDate.setMonth(arbStartDate.getMonth() + trialMonths);
+    } else {
+      // No trial: charge immediately below, ARB starts at next period
+      arbStartDate.setMonth(arbStartDate.getMonth() + intervalMonths);
     }
-
-    const intervalMonths = plan.interval === "YEARLY" ? 12 : 1;
 
     const arb = await createPlatformARBSubscription({
       customerProfileId,
@@ -181,15 +190,26 @@ export async function subscribeToPlatformPlan({
       planName: plan.name,
     });
 
-    // 3. No immediate charge. Trial lasts until arbStartDate.
+    // 2.5 Immediate first charge (no-trial flow only)
+    // This gives instant confirmation, and the webhook for this transaction
+    // is a plain authcapture (not tied to an ARB subscription ID), so we
+    // record the invoice/payment here directly instead of relying on webhook.
+    let firstChargeTransId: string | null = null;
+    if (trialMonths === 0) {
+      const charge = await chargePlatformCustomerProfile({
+        customerProfileId,
+        customerPaymentProfileId,
+        amount: Number(plan.price),
+        description: `${plan.name} — first billing period`,
+      });
+      firstChargeTransId = charge.transactionId;
+    }
 
     // 3. Update DB
     if (!billingCustomer) throw new Error("Billing customer record not found");
 
     const nextPeriodEnd = new Date(trialStart);
-    if (trialMonths === 0) {
-      nextPeriodEnd.setMonth(nextPeriodEnd.getMonth() + intervalMonths);
-    }
+    nextPeriodEnd.setMonth(nextPeriodEnd.getMonth() + intervalMonths);
 
     const subscription = await db.platformSubscription.upsert({
       where: { companyId },
@@ -218,10 +238,36 @@ export async function subscribeToPlatformPlan({
         billingAnchor: arbStartDate,
       },
     });
+
     if (trialMonths > 0 && !billingCustomer.trialConsumedAt) {
       await db.platformBillingCustomer.update({
         where: { id: billingCustomer.id },
         data: { trialConsumedAt: trialStart },
+      });
+    }
+
+    // 3.5 Record first charge invoice/payment in DB immediately
+    // (not via webhook — the immediate CIM charge has no ARB subscription
+    // reference so the webhook would skip it)
+    if (firstChargeTransId) {
+      await db.$transaction(async (tx) => {
+        const invoice = await tx.platformInvoice.create({
+          data: {
+            billingCustomerId: billingCustomer!.id,
+            subscriptionId: subscription.id,
+            amount: plan.price,
+            status: "PAID",
+            authNetTransId: firstChargeTransId!,
+          },
+        });
+        await tx.platformPayment.create({
+          data: {
+            platformInvoiceId: invoice.id,
+            amount: plan.price,
+            status: "SUCCESS",
+            authNetTransId: firstChargeTransId!,
+          },
+        });
       });
     }
     // 4. Create initial subscription item

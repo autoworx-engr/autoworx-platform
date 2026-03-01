@@ -136,7 +136,9 @@ export default function Page() {
                     <p>
                       Activated on:{" "}
                       <span className="font-semibold text-gray-800">
-                        {moment(subscription.createdAt).format("Do MMMM YYYY")}
+                        {moment(subscription.currentPeriodStart).format(
+                          "Do MMMM YYYY",
+                        )}
                       </span>
                     </p>
                     <p>
