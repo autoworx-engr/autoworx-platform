@@ -7,6 +7,7 @@ import Image from "next/image";
 import BackBtn from "../conversations/BackBtn";
 import EditClientModalTrigger from "./EditClientModalTrigger";
 import ClientSalesAgentToggle from "./ClientSalesAgentToggle";
+import ClientPermissionWrapper from "./ClientPermissionWrapper";
 
 type TProps = { client?: Client | null; vehicles?: Partial<Vehicle>[] };
 
@@ -66,7 +67,8 @@ export default async function ClientHeading({ client, vehicles = [] }: TProps) {
         </div>
 
         {/* Right side */}
-        <ClientSalesAgentToggle
+        <ClientPermissionWrapper
+          companyId={client?.companyId}
           clientId={client.id}
           initialValue={client.isSalesAgent ?? false}
         />
