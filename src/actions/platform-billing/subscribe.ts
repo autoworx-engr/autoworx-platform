@@ -107,37 +107,38 @@ export async function subscribeToPlatformPlan({
           const card = currentPP.getPayment
             ? currentPP.getPayment().getCreditCard()
             : currentPP.payment?.creditCard;
-          if (!card) return;
 
-          // Ensure only the latest method is marked as default
-          await db.platformPaymentMethod.updateMany({
-            where: { billingCustomerId: billingCustomer.id },
-            data: { isDefault: false },
-          });
-          await db.platformPaymentMethod.upsert({
-            where: { authNetPaymentProfileId: customerPaymentProfileId },
-            update: {
-              cardType: card.getCardType ? card.getCardType() : card.cardType,
-              last4: card.getCardNumber
-                ? card.getCardNumber().slice(-4)
-                : card.cardNumber?.slice(-4),
-              expiry: card.getExpirationDate
-                ? card.getExpirationDate()
-                : card.expirationDate,
-            },
-            create: {
-              billingCustomerId: billingCustomer.id,
-              authNetPaymentProfileId: customerPaymentProfileId,
-              cardType: card.getCardType ? card.getCardType() : card.cardType,
-              last4: card.getCardNumber
-                ? card.getCardNumber().slice(-4)
-                : card.cardNumber?.slice(-4),
-              expiry: card.getExpirationDate
-                ? card.getExpirationDate()
-                : card.expirationDate,
-              isDefault: true,
-            },
-          });
+          if (card) {
+            // Ensure only the latest method is marked as default
+            await db.platformPaymentMethod.updateMany({
+              where: { billingCustomerId: billingCustomer.id },
+              data: { isDefault: false },
+            });
+            await db.platformPaymentMethod.upsert({
+              where: { authNetPaymentProfileId: customerPaymentProfileId },
+              update: {
+                cardType: card.getCardType ? card.getCardType() : card.cardType,
+                last4: card.getCardNumber
+                  ? card.getCardNumber().slice(-4)
+                  : card.cardNumber?.slice(-4),
+                expiry: card.getExpirationDate
+                  ? card.getExpirationDate()
+                  : card.expirationDate,
+              },
+              create: {
+                billingCustomerId: billingCustomer.id,
+                authNetPaymentProfileId: customerPaymentProfileId,
+                cardType: card.getCardType ? card.getCardType() : card.cardType,
+                last4: card.getCardNumber
+                  ? card.getCardNumber().slice(-4)
+                  : card.cardNumber?.slice(-4),
+                expiry: card.getExpirationDate
+                  ? card.getExpirationDate()
+                  : card.expirationDate,
+                isDefault: true,
+              },
+            });
+          } // end if (card)
         }
       } catch (err) {
         console.error("Failed to sync payment method details:", err);
@@ -196,13 +197,30 @@ export async function subscribeToPlatformPlan({
     // record the invoice/payment here directly instead of relying on webhook.
     let firstChargeTransId: string | null = null;
     if (trialMonths === 0) {
-      const charge = await chargePlatformCustomerProfile({
-        customerProfileId,
-        customerPaymentProfileId,
-        amount: Number(plan.price),
-        description: `${plan.name} — first billing period`,
-      });
-      firstChargeTransId = charge.transactionId;
+      try {
+        const charge = await chargePlatformCustomerProfile({
+          customerProfileId,
+          customerPaymentProfileId,
+          amount: Number(plan.price),
+          description: `${plan.name} — first billing period`,
+        });
+        firstChargeTransId = charge.transactionId;
+      } catch (chargeErr: any) {
+        // First charge failed — cancel the ARB we just created so the customer
+        // is not charged in the next billing cycle with no subscription record.
+        try {
+          await cancelPlatformARBSubscription(arb.subscriptionId);
+        } catch {
+          // best-effort: log but don't mask the original charge error
+          console.error(
+            "Failed to cancel orphaned ARB after charge failure:",
+            arb.subscriptionId,
+          );
+        }
+        throw new Error(
+          chargeErr.message || "Payment failed. Your card was not charged.",
+        );
+      }
     }
 
     // 3. Update DB
@@ -270,7 +288,10 @@ export async function subscribeToPlatformPlan({
         });
       });
     }
-    // 4. Create initial subscription item
+    // 4. Upsert subscription item (replace old items to avoid duplicates on re-subscribe)
+    await db.platformSubscriptionItem.deleteMany({
+      where: { subscriptionId: subscription.id },
+    });
     await db.platformSubscriptionItem.create({
       data: {
         subscriptionId: subscription.id,

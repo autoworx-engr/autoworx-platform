@@ -87,35 +87,32 @@ export async function getCompanyEntitlements(
 ): Promise<Entitlements> {
   if (!companyId) return DEFAULT_ENTITLEMENTS;
 
-  const company = await db.company.findUnique({
-    where: { id: companyId },
-    select: { enforcePlatformPlan: true },
-  });
+  // Run both queries in parallel to avoid sequential round-trips
+  const [company, subscription] = await Promise.all([
+    db.company.findUnique({
+      where: { id: companyId },
+      select: { enforcePlatformPlan: true },
+    }),
+    db.platformSubscription.findUnique({
+      where: { companyId },
+      include: { plan: { include: { features: true } } },
+    }),
+  ]);
 
   if (company && !company.enforcePlatformPlan) {
     return LEGACY_ENTITLEMENTS;
   }
 
-  const subscription = await db.platformSubscription.findUnique({
-    where: { companyId },
-    include: {
-      plan: {
-        include: {
-          features: true,
-        },
-      },
-    },
-  });
-
   if (
     !subscription ||
+    !subscription.plan ||
     subscription.status === PlatformSubscriptionStatus.CANCELED ||
     subscription.status === PlatformSubscriptionStatus.UNPAID
   ) {
     return DEFAULT_ENTITLEMENTS;
   }
 
-  const features = (subscription as any).plan.features as {
+  const features = subscription.plan.features as {
     featureKey: string;
     value: string;
     type: PlatformFeatureType;
