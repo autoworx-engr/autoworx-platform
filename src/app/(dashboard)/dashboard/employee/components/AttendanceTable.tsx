@@ -283,13 +283,7 @@ const Dashboard = () => {
         return decimalHoursToHHMM(total);
       })(),
 
-      percentage: (() => {
-        const rate = attendanceInfo?.growthRateTotalHoursWorked?.rate;
-        if (rate === null || rate === undefined || isNaN(Number(rate))) {
-          return "0%";
-        }
-        return rate;
-      })(),
+      percentage: attendanceInfo?.growthRateTotalHoursWorked?.rate || "0%",
       isPositive:
         attendanceInfo?.growthRateTotalHoursWorked?.isPositive || false,
     },
