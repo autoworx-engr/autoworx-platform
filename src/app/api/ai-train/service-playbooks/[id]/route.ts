@@ -177,9 +177,12 @@ export async function PATCH(
   try {
     const body = await req.json();
 
-    await db.pricingRule.deleteMany({
-      where: { playbookId: Number(params.id) },
-    });
+
+    if (body.pricingRules !== undefined) {
+      await db.pricingRule.deleteMany({
+        where: { playbookId: Number(params.id) },
+      });
+    }
 
     await db.fAQ.deleteMany({
       where: { playbookId: Number(params.id) },
@@ -197,7 +200,9 @@ export async function PATCH(
         isActive: body.isActive,
         doSay: body.doSay ?? [],
         dontSay: body.dontSay ?? [],
-        pricingRules: { create: body.pricingRules ?? [] },
+        ...(body.pricingRules !== undefined && {
+          pricingRules: { create: body.pricingRules },
+        }),
         faqs: { create: body.faqs ?? [] },
       },
     });

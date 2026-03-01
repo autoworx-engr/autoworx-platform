@@ -116,7 +116,7 @@ const DateRange = ({
       </button>
 
       {showPicker && (
-        <div className="absolute left-0 top-full mt-2 z-10 w-[400px] lg:w-[600px] rounded-2xl border border-slate-100 bg-white p-5 shadow-[0_20px_40px_-12px_rgba(0,0,0,0.15)] ring-1 ring-slate-900/5 animate-in fade-in zoom-in-95 dark:bg-slate-900 dark:border-slate-800 dark:ring-white/10">
+        <div className="absolute left-0 top-full mt-2 z-50 w-[400px] lg:w-[600px] rounded-2xl border border-slate-100 bg-white p-5 shadow-[0_20px_40px_-12px_rgba(0,0,0,0.15)] ring-1 ring-slate-900/5 animate-in fade-in zoom-in-95 dark:bg-slate-900 dark:border-slate-800 dark:ring-white/10">
           <DateRangePicker
             inputRanges={[]}
             ranges={[tempRange]}
