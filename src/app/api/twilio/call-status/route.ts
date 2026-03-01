@@ -109,7 +109,14 @@ export async function POST(request: Request) {
         const companyName = call.company?.name || "our business";
         const message = `You have a missed call from ${companyName}. We'll try to reach you again soon or feel free to call us back.`;
 
-        const entitlements = await getCompanyEntitlements(call.company?.id!);
+        if (!call.company?.id) {
+          console.warn(
+            "[Call-Status] Skipping missed call text-back: no company on call record",
+          );
+          return NextResponse.json({ success: true });
+        }
+
+        const entitlements = await getCompanyEntitlements(call.company.id);
         if (
           !entitlements.canUseSms ||
           !entitlements.missedCallTextBack ||

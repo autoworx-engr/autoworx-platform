@@ -85,6 +85,8 @@ const LEGACY_ENTITLEMENTS: Entitlements = {
 export async function getCompanyEntitlements(
   companyId: number,
 ): Promise<Entitlements> {
+  if (!companyId) return DEFAULT_ENTITLEMENTS;
+
   const company = await db.company.findUnique({
     where: { id: companyId },
     select: { enforcePlatformPlan: true },
