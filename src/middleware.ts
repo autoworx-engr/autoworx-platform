@@ -37,12 +37,14 @@ const PUBLIC_API_ROUTES = [
   "/api/platform/webhook",
   "/api/invoice/track-view",
   "/api/upload",
+  "/api/communication/client-hub/send-twilio-message",
 ];
 
 const PUBLIC_DYNAMIC_API_ROUTES = [
   "/api/infobip/sms/receive/:companyIds",
   "/api/twilio/sms-receive/:companyIds",
   "/api/twilio/call-recording/:recordingSid",
+  "/api/admin/client/:id/sales-agent",
 ];
 
 const isDynamicPublicApiRoute = (pathname: string) => {

@@ -6,30 +6,70 @@ import { db } from "@/lib/db";
  * /api/client/client-details/{id}/appointments:
  *   get:
  *     summary: Get client's appointments (paginated)
- *     tags: [Clients]
- *       parameters:
+ *     description: Retrieve paginated appointment list for a specific client.
+ *     tags:
+ *       - Clients
+ *     parameters:
  *       - in: path
  *         name: id
  *         required: true
+ *         description: Client ID
  *         schema:
  *           type: integer
- *         description: Client ID
+ *           example: 15
  *       - in: query
  *         name: page
+ *         required: false
+ *         description: Page number
  *         schema:
  *           type: integer
  *           example: 1
- *         description: Page number
  *       - in: query
  *         name: limit
+ *         required: false
+ *         description: Number of items per page
  *         schema:
  *           type: integer
  *           example: 10
- *         description: Number of items per page
  *     responses:
  *       200:
- *         description: Client tasks fetched successfully
+ *         description: Client appointments fetched successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     page:
+ *                       type: integer
+ *                       example: 1
+ *                     limit:
+ *                       type: integer
+ *                       example: 10
+ *                     total:
+ *                       type: integer
+ *                       example: 25
+ *                     totalPages:
+ *                       type: integer
+ *                       example: 3
+ *                     hasMore:
+ *                       type: boolean
+ *                       example: true
+ *       400:
+ *         description: Invalid client ID
+ *       500:
+ *         description: Failed to fetch client appointments
  */
+
 export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } },

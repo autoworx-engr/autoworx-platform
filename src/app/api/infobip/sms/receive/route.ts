@@ -9,6 +9,7 @@ import { getPusherInstance } from "@/lib/pusher/server";
 import { NextRequest, NextResponse } from "next/server";
 import { sendSMSToAgent } from "@/service/ai-agent/api";
 import { revalidatePath } from "next/cache";
+import { allCompanyFeaturePermissions } from "@/service/feature-permissions/api";
 
 const pusher = getPusherInstance();
 
@@ -123,9 +124,7 @@ export async function POST(req: NextRequest) {
         }
 
         console.log(`Processing for company ${infobipConfig.companyId}`);
-        const company = await db.company.findUnique({
-          where: { id: infobipConfig?.companyId },
-        });
+
         // Find client by the "from" phone number (client's phone)
         let client = await db.client.findFirst({
           where: {
@@ -242,7 +241,27 @@ export async function POST(req: NextRequest) {
           }
 
           //sales agent
-          if (company?.isSalesAgent && client?.isSalesAgent) {
+          const company = await db.company.findUnique({
+            where: { id: infobipConfig?.companyId },
+          });
+
+          const permissions = await allCompanyFeaturePermissions(
+            infobipConfig?.companyId,
+          );
+
+          const salesAgentPermission = permissions?.data?.find(
+            (item: any) => item.permission_name === "sales-agent",
+          );
+
+          const isSalesAgentEnabled = salesAgentPermission?.enabled === true;
+
+          const isCompanySalesAgent = company?.isSalesAgent === true;
+          const isClientSalesAgent = client?.isSalesAgent === true;
+          if (
+            isCompanySalesAgent &&
+            isClientSalesAgent &&
+            isSalesAgentEnabled
+          ) {
             if (clientSMS && clientSMS?.to === infobipConfig.phoneNumber) {
               await sendSMSToAgent({
                 company_id: client.companyId,

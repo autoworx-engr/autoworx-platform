@@ -8,6 +8,7 @@ import sendClientMailOrSMSNotify from "@/lib/pusher/client-conversation-notify";
 import receiveTwiloMessage from "@/lib/pusher/receiveTwiloMessage";
 import { getPusherInstance } from "@/lib/pusher/server";
 import { sendSMSToAgent } from "@/service/ai-agent/api";
+import { allCompanyFeaturePermissions } from "@/service/feature-permissions/api";
 import { revalidatePath } from "next/cache";
 import { NextRequest } from "next/server";
 
@@ -90,10 +91,6 @@ export async function POST(
       },
     });
 
-    const company = await db.company.findUnique({
-      where: { id: credential?.companyId },
-    });
-
     const formData = new FormData();
 
     for (const url of mediaUrls) {
@@ -118,6 +115,9 @@ export async function POST(
       if (!entitlements.canUseSms) {
         continue;
       }
+      const company = await db.company.findUnique({
+        where: { id: companyId },
+      });
 
       let client = await db.client.findFirst({
         where: {
@@ -188,17 +188,46 @@ export async function POST(
           attachments: attachments,
         });
 
+        const currentClient = await db.client.findUnique({
+          where: { id: client?.id },
+        });
+
+        const permissions = await allCompanyFeaturePermissions(companyId);
+
+        const salesAgentPermission = permissions?.data?.find(
+          (item: any) => item.permission_name === "sales-agent",
+        );
+
+        const isSalesAgentEnabled = salesAgentPermission?.enabled === true;
+
         //sales agent
-        if (company?.isSalesAgent && client?.isSalesAgent)
-          if (dbMessage && body.to === credential?.phoneNumber) {
-            await sendSMSToAgent({
+        const isCompanySalesAgent = company?.isSalesAgent === true;
+        const isClientSalesAgent = currentClient?.isSalesAgent === true;
+        console.log("DEBUG BEFORE IF:", {
+          isCompanySalesAgent,
+          isClientSalesAgent,
+          isSalesAgentEnabled,
+          to: dbMessage?.to,
+          credentialPhone: credential?.phoneNumber,
+        });
+        if (isCompanySalesAgent && isClientSalesAgent && isSalesAgentEnabled) {
+          console.log("ENTERED SALES AGENT BLOCK", {
+            isCompanySalesAgent,
+            isClientSalesAgent,
+          });
+
+          if (dbMessage && dbMessage.to === credential?.phoneNumber) {
+            const res = await sendSMSToAgent({
               company_id: client.companyId,
               message: dbMessage?.message,
               send_from: dbMessage?.from,
               send_to: dbMessage?.to,
               client_id: client?.id,
             });
+
+            console.log("sales agent res", res);
           }
+        }
 
         // pusher trigger to send message to company admin real time
 

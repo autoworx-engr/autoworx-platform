@@ -107,6 +107,11 @@ export const staticPermissions = [
     permission_name: "visualization",
     status: false,
   },
+  {
+    title: "AI Sales Agent",
+    permission_name: "sales-agent",
+    status: false,
+  },
 ];
 
 export const CHILD_PERMISSIONS = [
