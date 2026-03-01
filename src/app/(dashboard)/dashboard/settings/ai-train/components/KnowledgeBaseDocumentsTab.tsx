@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { Popconfirm } from "antd";
 import {
   Card,
   CardContent,
@@ -272,14 +273,20 @@ export function KnowledgeBaseDocumentsTab() {
                       {doc.content}
                     </p>
                   </div>
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleDeleteDocument(doc.id)}
-                    className="text-muted-foreground hover:text-destructive"
-                    disabled={deleteDocument.isPending}
+                  <Popconfirm
+                    title="Are you sure you want to delete this document?"
+                    onConfirm={() => handleDeleteDocument(doc.id)}
+                    okText="Yes"
+                    cancelText="No"
                   >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                    <Button
+                      variant="ghost"
+                      className="text-muted-foreground hover:text-destructive"
+                      disabled={deleteDocument.isPending}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </Popconfirm>
                 </div>
               ))}
             </div>
