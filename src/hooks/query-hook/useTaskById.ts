@@ -1,6 +1,6 @@
 import getTaskById from "@/actions/task/getTaskById";
 import { taskQueryKey } from "@/app/(dashboard)/dashboard/task/_constant";
-import { Task, User } from "@prisma/client";
+import { Client, Task, User } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
 
 export default function useTaskById(
@@ -24,10 +24,12 @@ export default function useTaskById(
               },
             },
           },
+          client: true,
         },
       }) as Promise<
         Task & {
           taskUser: { id: number; user: User }[];
+          client: Client;
         }
       >;
     },
