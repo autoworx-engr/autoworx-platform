@@ -40,10 +40,12 @@ export default function SendMail({
   companyId: number;
   setConversations: React.Dispatch<
     React.SetStateAction<
-      (MailgunEmail & { attachments: MailgunEmailAttachment[], user?: {
+      (MailgunEmail & {
+        attachments: MailgunEmailAttachment[], user?: {
           firstName: string;
           lastName: string | null;
-        } | null; })[] | undefined
+        } | null;
+      })[] | undefined
     >
   >;
 }) {
