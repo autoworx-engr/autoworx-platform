@@ -61,6 +61,7 @@ export async function sendTwilioMessage({
       };
     }
 
+    console.log("companyId", companyId);
     let twilioCredentials = companyId
       ? await getTwilioCredentialsById(companyId)
       : await getTwilioCredentials();
@@ -83,7 +84,7 @@ export async function sendTwilioMessage({
     const company = await db.company.findUnique({
       where: { id: twilioCredentials?.companyId },
     });
-
+    console.log("userId", userId);
     let user: Awaited<ReturnType<typeof getUser>> | null = null;
     // try {
     //   user = await getUser();
@@ -98,8 +99,11 @@ export async function sendTwilioMessage({
       user = await db.user.findFirst({
         where: { id: userId },
       });
+      console.log("userId", userId);
     } else {
+      console.log("user 23");
       user = await getUser();
+      console.log("userId", userId);
     }
 
     const client = await db.client.findFirst({

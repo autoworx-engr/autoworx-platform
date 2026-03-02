@@ -203,19 +203,8 @@ export async function POST(
         //sales agent
         const isCompanySalesAgent = company?.isSalesAgent === true;
         const isClientSalesAgent = currentClient?.isSalesAgent === true;
-        console.log("DEBUG BEFORE IF:", {
-          isCompanySalesAgent,
-          isClientSalesAgent,
-          isSalesAgentEnabled,
-          to: dbMessage?.to,
-          credentialPhone: credential?.phoneNumber,
-        });
-        if (isCompanySalesAgent && isClientSalesAgent && isSalesAgentEnabled) {
-          console.log("ENTERED SALES AGENT BLOCK", {
-            isCompanySalesAgent,
-            isClientSalesAgent,
-          });
 
+        if (isCompanySalesAgent && isClientSalesAgent && isSalesAgentEnabled) {
           if (dbMessage && dbMessage.to === credential?.phoneNumber) {
             const res = await sendSMSToAgent({
               company_id: client.companyId,
@@ -224,8 +213,6 @@ export async function POST(
               send_to: dbMessage?.to,
               client_id: client?.id,
             });
-
-            console.log("sales agent res", res);
           }
         }
 
