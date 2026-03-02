@@ -15,7 +15,6 @@ export type Entitlements = {
   canUseSms: boolean;
   callRecording: boolean;
   missedCallTextBack: boolean;
-  maxAutomationRules: number;
   automationModules: string[];
   automationLimitPipeline: number;
   automationLimitCommunication: number;
@@ -35,7 +34,6 @@ const DEFAULT_ENTITLEMENTS: Entitlements = {
   canUseSms: false,
   callRecording: false,
   missedCallTextBack: false,
-  maxAutomationRules: 0,
   automationModules: [],
   automationLimitPipeline: 0,
   automationLimitCommunication: 0,
@@ -55,7 +53,6 @@ const LEGACY_ENTITLEMENTS: Entitlements = {
   canUseSms: true,
   callRecording: true,
   missedCallTextBack: true,
-  maxAutomationRules: -1,
   automationModules: [
     "pipeline",
     "communication",
@@ -153,13 +150,24 @@ export async function hasFeature(
 }
 
 /**
- * Check if the company can add another automation rule
+ * Check if the company can add another automation rule for a specific module
  */
 export async function canAddAutomationRule(
   companyId: number,
   currentCount: number,
+  moduleKey:
+    | "pipeline"
+    | "communication"
+    | "invoice"
+    | "inventory"
+    | "tag"
+    | "service"
+    | "marketing",
 ): Promise<boolean> {
   const ents = await getCompanyEntitlements(companyId);
-  if (ents.maxAutomationRules === -1) return true; // Unlimited
-  return currentCount < ents.maxAutomationRules;
+  const { getAutomationLimitForModule } =
+    await import("@/lib/platform-billing/automation-limits");
+  const limit = getAutomationLimitForModule(ents, moduleKey);
+  if (limit === -1) return true; // Unlimited
+  return currentCount < limit;
 }
