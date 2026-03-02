@@ -53,6 +53,10 @@ export async function sendInfobipMessage({
       };
     }
 
+    const company = await db.company.findUnique({
+      where: { id: infobipConfig?.companyId },
+    });
+
     let user: Awaited<ReturnType<typeof getUser>> | null = null;
     // try {
     //   user = await getUser();
@@ -324,22 +328,18 @@ export async function sendInfobipMessage({
       }
 
       revalidatePath("/dashboard/communication/client");
-      if (dbMessage && clientId === 3460 && infobipConfig?.companyId === 4) {
-        const aiAgentResponse = await sendSMSToAgent({
-          company_id: clientId,
-          message: dbMessage?.message,
-          send_from: dbMessage?.from,
-          send_to: dbMessage?.to,
-          client_id: infobipConfig?.companyId,
-          user_id: user?.id,
-        });
-        console.log(
-          "aiAgentResponse",
-          aiAgentResponse,
-          client,
-          infobipConfig.companyId,
-        );
-      }
+      // if (company?.isSalesAgent && client?.isSalesAgent) {
+      //   if (dbMessage && dbMessage.to === infobipConfig.phoneNumber) {
+      //     await sendSMSToAgent({
+      //       company_id: clientId,
+      //       message: dbMessage?.message,
+      //       send_from: dbMessage?.from,
+      //       send_to: dbMessage?.to,
+      //       client_id: infobipConfig?.companyId,
+      //       user_id: user?.id,
+      //     });
+      //   }
+      // }
 
       return {
         success: true,

@@ -16,9 +16,7 @@ export default function SmsMessage({
     attachments: ClientSmsAttachments[];
   };
 }) {
-  const isIncoming = message?.isSalesAgent
-    ? message.isSalesAgent
-    : message.sentBy !== "Company";
+  const isIncoming = message.sentBy !== "Company";
   const text = (message.message ?? "").trim();
 
   const senderName =

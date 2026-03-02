@@ -7,6 +7,8 @@ import sendClientMailOrSMSNotify from "@/lib/pusher/client-conversation-notify";
 import receiveTwiloMessage from "@/lib/pusher/receiveTwiloMessage";
 import { getPusherInstance } from "@/lib/pusher/server";
 import { sendSMSToAgent } from "@/service/ai-agent/api";
+import { allCompanyFeaturePermissions } from "@/service/feature-permissions/api";
+import { revalidatePath } from "next/cache";
 import { NextRequest } from "next/server";
 
 const pusher = getPusherInstance();
@@ -108,6 +110,10 @@ export async function POST(
     const images = imgs?.data ?? [];
 
     for (const companyId of companyIds) {
+      const company = await db.company.findUnique({
+        where: { id: companyId },
+      });
+
       let client = await db.client.findFirst({
         where: {
           mobile: {
@@ -121,6 +127,7 @@ export async function POST(
           lastName: true,
           companyId: true,
           Lead: true,
+          isSalesAgent: true,
         },
       });
 
@@ -138,6 +145,7 @@ export async function POST(
             lastName: true,
             companyId: true,
             Lead: true,
+            isSalesAgent: true,
           },
         });
       }
@@ -175,27 +183,33 @@ export async function POST(
           attachments: attachments,
         });
 
-        //sales agent
-        // if (dbMessage && client.id === 3460 && client.companyId === 4) {
-        //   const aiAgentResponse = await sendSMSToAgent({
-        //     company_id: client.companyId,
-        //     message: dbMessage?.message,
-        //     send_from: dbMessage?.from,
-        //     send_to: dbMessage?.to,
-        //     client_id: client?.id,
-        //   });
+        const currentClient = await db.client.findUnique({
+          where: { id: client?.id },
+        });
 
-        //   if (aiAgentResponse?.status === "success") {
-        //     await db.clientSMS.update({
-        //       where: {
-        //         id: dbMessage.id,
-        //       },
-        //       data: {
-        //         isSalesAgent: true,
-        //       },
-        //     });
-        //   }
-        // }
+        const permissions = await allCompanyFeaturePermissions(companyId);
+
+        const salesAgentPermission = permissions?.data?.find(
+          (item: any) => item.permission_name === "sales-agent",
+        );
+
+        const isSalesAgentEnabled = salesAgentPermission?.enabled === true;
+
+        //sales agent
+        const isCompanySalesAgent = company?.isSalesAgent === true;
+        const isClientSalesAgent = currentClient?.isSalesAgent === true;
+
+        if (isCompanySalesAgent && isClientSalesAgent && isSalesAgentEnabled) {
+          if (dbMessage && dbMessage.to === credential?.phoneNumber) {
+            const res = await sendSMSToAgent({
+              company_id: client.companyId,
+              message: dbMessage?.message,
+              send_from: dbMessage?.from,
+              send_to: dbMessage?.to,
+              client_id: client?.id,
+            });
+          }
+        }
 
         // pusher trigger to send message to company admin real time
 
@@ -244,7 +258,7 @@ export async function POST(
         });
       }
     }
-
+    revalidatePath("/dashboard/communication/client");
     // Send a success response
     return Response.json(
       { message: "Webhook subscription successful", data: body },

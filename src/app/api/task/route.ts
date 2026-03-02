@@ -7,6 +7,7 @@ import { sendNewTaskAssignNotification } from "@/lib/notification/task-and-appoi
 import { Priority, TaskAndAppointmentCreatedByEnum } from "@prisma/client";
 import { getGoogleCalendarToken } from "@/actions/calendar-settings/getGoogleCalendarAuth";
 import createGoogleCalendarEvent from "@/actions/task/google-calendar/createGoogleCalendarEvent";
+import { revalidatePath } from "next/cache";
 
 /**
  * @swagger
@@ -262,7 +263,7 @@ export async function POST(req: NextRequest) {
     } catch (calendarError) {
       console.error("Calendar Sync Error:", calendarError);
     }
-
+    revalidatePath("/dashboard/task/day");
     return NextResponse.json(
       {
         success: true,

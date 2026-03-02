@@ -13,19 +13,17 @@ export default function FilterComp({ pipelineType }: Props) {
 
   return (
     <div className="mt-5 flex w-full items-center justify-between">
-      <div className="flex w-full max-w-4xl rounded-lg border border-gray-300 bg-background p-2">
-        <div className="flex w-full items-center gap-4">
-          <SearchTerms />
-          <div className="hidden items-center gap-4 lg:flex">
-            <div className="m-2 px-4">
-              <DateRange
-                onOk={(start, end) => setFilter({ dateRange: [start, end] })}
-                onCancel={() => setFilter({ dateRange: [null, null] })}
-              />
-            </div>
-            <div className="relative">
-              <Dropdown pipelineType={pipelineType} />
-            </div>
+      <div className="flex w-full max-w-4xl flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-white p-2 shadow-sm">
+        <SearchTerms />
+        <div className="flex flex-1 flex-wrap items-center gap-3 min-w-fit">
+          <div className="flex-1 min-w-[200px]">
+            <DateRange
+              onOk={(start, end) => setFilter({ dateRange: [start, end] })}
+              onCancel={() => setFilter({ dateRange: [null, null] })}
+            />
+          </div>
+          <div className="relative">
+            <Dropdown pipelineType={pipelineType} />
           </div>
         </div>
       </div>
