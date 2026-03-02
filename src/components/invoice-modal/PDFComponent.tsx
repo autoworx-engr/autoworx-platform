@@ -251,6 +251,8 @@ const styles = StyleSheet.create({
   },
   serviceDetails: {
     // marginTop: 5,
+    color: "#66738C",
+    marginLeft: 5,
   },
   mainMaterial: {
     color: "#6571FF",
@@ -266,8 +268,10 @@ const styles = StyleSheet.create({
     display: "flex",
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 5,
     marginLeft: 5,
+  },
+  laborDescription: {
+    color: "#66738C",
   },
   inspectionContainer: {
     borderWidth: 1,
@@ -311,7 +315,7 @@ const PDFComponent = function PDF({
   signImageUrl,
 }: PDFComponentProps) {
   const [damageNotes, setDamageNotes] = useState<string>(
-    "There is no damage notes",
+    "There is no damage notes"
   );
   const [inspectionData, setInspectionData] = useState<InvoiceInspection[]>([]);
 
@@ -373,17 +377,7 @@ const PDFComponent = function PDF({
         </View>
 
         <View style={[styles.section, { marginBottom: 20, marginTop: 20 }]}>
-          <Text style={[styles.boldText, { fontSize: 20 }]}>
-            {parseFloat(
-              calculateDue(
-                Number(invoice.grandTotal),
-                Number(invoice.totalPayment),
-                Number(invoice.deposit),
-              ).toFixed(2),
-            ) === 0
-              ? "RECEIPT"  //When due  0 then show this text
-              : invoice.type.toUpperCase()}
-          </Text>
+          <Text style={[styles.boldText, { fontSize: 20 }]}>Estimate</Text>
           <View style={[styles.mainSection, { marginTop: 20 }]}>
             <View style={{}}>
               <Text style={[styles.boldText, { marginBottom: 2 }]}>
@@ -428,16 +422,16 @@ const PDFComponent = function PDF({
                 calculateDue(
                   Number(invoice.grandTotal),
                   Number(invoice.totalPayment),
-                  Number(invoice.deposit),
-                ).toFixed(2),
+                  Number(invoice.deposit)
+                ).toFixed(2)
               ) === 0 && <Text>Payment Status</Text>}
               <Text>
                 {parseFloat(
                   calculateDue(
                     Number(invoice.grandTotal),
                     Number(invoice.totalPayment),
-                    Number(invoice.deposit),
-                  ).toFixed(2),
+                    Number(invoice.deposit)
+                  ).toFixed(2)
                 ) === 0 && "PAID"}
               </Text>
             </View>
@@ -455,7 +449,7 @@ const PDFComponent = function PDF({
                   calculateDue(
                     Number(invoice.grandTotal),
                     Number(invoice.totalPayment),
-                    Number(invoice.deposit),
+                    Number(invoice.deposit)
                   ),
                 ],
               ].map(([field, value], ind) => (
@@ -606,14 +600,16 @@ const PDFInvoiceItems = ({
           ...styles.mainMaterial,
         }}
       >
-        <View style={styles.header}>
+        <View style={styles.laborItem}>
           <Text>{item.service.name}</Text>
 
           <Text>{formatCurrency(serviceTotal)}</Text>
         </View>
 
         <View>
-          <Text>{item.service?.description || item.serviceDesc}</Text>
+          <Text style={styles.serviceDetails}>
+            {item.service?.description || item.serviceDesc}
+          </Text>
         </View>
 
         <View style={styles.serviceDetails}>
@@ -629,7 +625,7 @@ const PDFInvoiceItems = ({
                     material.sell
                       ? parseFloat(material.sell.toString()) *
                           Number(material.quantity ?? 0)
-                      : 0,
+                      : 0
                   )}
                 </Text>
               </View>
@@ -642,7 +638,7 @@ const PDFInvoiceItems = ({
           <Text>{formatCurrency(laborCost)}</Text>
         </View>
         <View style={styles.laborItem}>
-          <Text>{item.labor?.notes}</Text>
+          <Text style={styles.laborDescription}>{item.labor?.notes}</Text>
         </View>
 
         <View style={styles.laborItem}>
