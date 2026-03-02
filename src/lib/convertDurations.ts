@@ -4,7 +4,8 @@ export function convertDuration(durationInMinutes: number): string {
   const duration = moment.duration(durationInMinutes, "hours");
   const hours = Math.floor(duration.asHours());
   const minutes = duration.minutes();
-  return `${hours} hrs ${minutes} mins`;
+  const seconds = duration.seconds();
+  return `${hours ? hours + " hrs" : ""} ${minutes ?  minutes + " mins" : ""} ${seconds ? seconds + " secs" : ""}`;
 }
 
 export const convertMinutesToHours = (minutes: number): string => {
