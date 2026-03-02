@@ -378,7 +378,7 @@ export default function InvoiceModalBody({
       >
         <div
           ref={printComponentRef}
-          className="#shadow-lg no-visible-scrollbar relative grid h-full w-full shrink grow-0 flex-col items-center justify-center gap-4 overflow-y-auto rounded-md border bg-background p-6 md:h-[90vh] md:w-[780px] md:flex-row"
+          className="#shadow-lg no-visible-scrollbar relative grid h-full w-full shrink grow-0 flex-col items-center justify-center gap-4 overflow-y-auto rounded-md border bg-background p-6 md:h-[90vh] md:w-[780px] md:flex-row print:block print:h-auto print:w-full print:border-none print:p-0 print:shadow-none"
         >
           {/* Action Buttons */}
           {!isPublic && (
@@ -699,6 +699,7 @@ export default function InvoiceModalBody({
                     </div>
                     <p>{vehicle?.submodel}</p>
                     <p>{vehicle?.type}</p>
+                    <p>Vin Number</p>
                     <p>{vehicle?.vin}</p>
                   </div>
 

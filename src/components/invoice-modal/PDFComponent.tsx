@@ -416,6 +416,9 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: colors.text,
   },
+  laborDescription: {
+    color: "#66738C",
+  },
   authorizedBadge: {
     marginTop: 4,
     fontSize: 9,
@@ -468,7 +471,7 @@ const PDFComponent = function PDF({
   signImageUrl,
 }: PDFComponentProps) {
   const [damageNotes, setDamageNotes] = useState<string>(
-    "There is no damage notes",
+    "There is no damage notes"
   );
   const [inspectionData, setInspectionData] = useState<InvoiceInspection[]>([]);
 

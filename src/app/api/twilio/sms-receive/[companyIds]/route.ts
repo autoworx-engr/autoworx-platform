@@ -9,7 +9,7 @@ import { getPusherInstance } from "@/lib/pusher/server";
 import { sendSMSToAgent } from "@/service/ai-agent/api";
 import { allCompanyFeaturePermissions } from "@/service/feature-permissions/api";
 import { revalidatePath } from "next/cache";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 const pusher = getPusherInstance();
 
@@ -201,13 +201,20 @@ export async function POST(
 
         if (isCompanySalesAgent && isClientSalesAgent && isSalesAgentEnabled) {
           if (dbMessage && dbMessage.to === credential?.phoneNumber) {
-            const res = await sendSMSToAgent({
-              company_id: client.companyId,
-              message: dbMessage?.message,
-              send_from: dbMessage?.from,
-              send_to: dbMessage?.to,
-              client_id: client?.id,
-            });
+            try {
+              await sendSMSToAgent({
+                company_id: client.companyId,
+                message: dbMessage?.message,
+                send_from: dbMessage?.from,
+                send_to: dbMessage?.to,
+                client_id: client?.id,
+              });
+            } catch (error) {
+              return Response.json(
+                { message: `Sales agent error: ${error}` },
+                { status: 200 },
+              );
+            }
           }
         }
 
