@@ -161,7 +161,7 @@ export async function getAttendanceInfo(
         dayName === calendarSettings.weekend1.toLowerCase() ||
         dayName === calendarSettings.weekend2.toLowerCase()
       ) {
-        records.push(createAttendanceRecord(date, "WEEKEND"));
+        records.push(createAttendanceRecord(date,  "WEEKEND"));
         continue;
       }
 
