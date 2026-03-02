@@ -22,6 +22,7 @@ export default function InventoryList({
   searchParams,
   totalProducts,
   totalSupplies,
+  isLoading,
 }: {
   products: any;
   supplies: any;
@@ -30,6 +31,7 @@ export default function InventoryList({
   isFullWidth?: boolean;
   databaseContent: any[];
   totalDatabaseItems: number;
+  isLoading?: boolean;
   categories: any[];
   onPageChange: (page: number) => void;
   onLimitChange: (limit: number) => void;
@@ -151,6 +153,7 @@ export default function InventoryList({
               <DatabaseTable
                 totalItems={totalDatabaseItems}
                 data={databaseContent}
+                isLoading={isLoading}
               />
             </div>
           </div>

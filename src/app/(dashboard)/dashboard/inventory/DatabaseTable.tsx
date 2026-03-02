@@ -4,7 +4,6 @@ import CarLoading from "@/components/common/CarLoading";
 import { cn } from "@/lib/cn";
 import { useInventoryDatabaseSearchStore } from "@/stores/inventoryDatabaseSearchStore"; // Import Zustand store
 import { Pagination } from "antd"; // Importing the Pagination component from Ant Design
-import { useEffect, useState } from "react";
 import AddNewProduct from "./AddNewProduct";
 
 export interface DatabaseData {
@@ -20,11 +19,12 @@ const oddColor = "bg-[#F8FAFF]";
 export default function DatabaseTable({
   data,
   totalItems,
+  isLoading = true,
 }: {
   data: DatabaseData[];
   totalItems?: number;
+  isLoading?: boolean;
 }) {
-  const [isLoading, setIsLoading] = useState(true);
   const { page, limit, setPage, setLimit } = useInventoryDatabaseSearchStore(); // Access Zustand store
 
   const handlePageChange = (newPage: number, newPageSize?: number) => {
@@ -34,23 +34,11 @@ export default function DatabaseTable({
     }
   };
 
-  useEffect(() => {
-    if (data) {
-      setIsLoading(false);
-    }
-  }, [data]);
-
   return (
     <div className="pb-2">
       {/* Desktop View */}
-      <div
-        // className="hidden overflow-hidden overflow-x-auto rounded-md bg-background md:block"
-        className="hidden rounded-md border border-slate-200 bg-background md:block"
-      >
-        <table
-          // className="w-full md:table-fixed"
-          className="w-full border-separate border-spacing-0 md:table-fixed"
-        >
+      <div className="hidden rounded-md border border-slate-200 bg-background md:block">
+        <table className="w-full border-separate border-spacing-0 md:table-fixed">
           {/* Database Header */}
           <thead className="sticky top-0  bg-background">
             <tr className="h-10">
@@ -61,51 +49,41 @@ export default function DatabaseTable({
               <th className="px-4 py-2 text-left"></th>
             </tr>
           </thead>
-
-          {/* Database List */}
-          <tbody className="w-full">
+          <tbody>
             {isLoading ? (
-              <CarLoading />
+              <tr>
+                <td colSpan={5}>
+                  <CarLoading />
+                </td>
+              </tr>
+            ) : data.length > 0 ? (
+              data.map((item, index) => (
+                <tr
+                  key={item.id}
+                  className={cn("py-3", index % 2 === 0 ? evenColor : oddColor)}
+                >
+                  <td className="w-16 px-4 py-2 text-left">{item.id}</td>
+                  <td className="px-4 py-2 text-left truncate">
+                    {item.productName}
+                  </td>
+                  <td className="px-4 py-2 text-left truncate">
+                    {item.category}
+                  </td>
+                  <td className="px-4 py-2 text-left">{item.unit}</td>
+                  <td className="px-4 py-2 text-center">
+                    <AddNewProduct product={item} isDatabase={true} />
+                  </td>
+                </tr>
+              ))
             ) : (
-              <>
-                {data.map((item, index) => (
-                  <tr
-                    key={item.id}
-                    className={cn(
-                      "py-3",
-                      index % 2 === 0 ? evenColor : oddColor
-                    )}
-                  >
-                    <td className="w-16 px-4 py-2 text-left">
-                      <p className="block h-full">{item.id}</p>
-                    </td>
-                    <td className="px-4 py-2 text-left">
-                      <p className="block h-full w-full truncate">
-                        {item.productName}
-                      </p>
-                    </td>
-                    <td className="px-4 py-2 text-left">
-                      <p className="block h-full w-full truncate">
-                        {item.category}
-                      </p>
-                    </td>
-                    <td className="px-4 py-2 text-left">
-                      <p className="block h-full w-full">{item.unit}</p>
-                    </td>
-                    <td className="px-4 py-2 text-center">
-                      <p className="block h-full w-fit">
-                        <AddNewProduct product={item} isDatabase={true} />
-                      </p>
-                    </td>
-                  </tr>
-                ))}
-              </>
+              <tr>
+                <td colSpan={5}>
+                  <p className="p-20 text-center text-slate-500 font-medium">
+                    No data found
+                  </p>
+                </td>
+              </tr>
             )}
-            <p>
-              {data.length === 0 && !isLoading && (
-                <p className="p-20 text-center">No data found</p>
-              )}
-            </p>
           </tbody>
         </table>
       </div>
@@ -116,79 +94,72 @@ export default function DatabaseTable({
         {/* Added some horizontal padding for mobile */}
         {isLoading ? (
           <CarLoading />
-        ) : (
-          <>
-            {data.map((item, index) => (
-              <div
-                key={item.id}
-                // Sleek Card Styling for mobile: Rounded, subtle ring, soft shadow, glassmorphism-like background
-                className={cn(
-                  "rounded-xl ring-1 ring-slate-200/60 p-4 shadow-md",
-                  "backdrop-blur-sm transition-all duration-300 ease-in-out", // Glassmorphism and subtle animation
-                  index % 2 === 0
-                    ? `bg-slate-50/70 ${evenColor}`
-                    : `bg-white/70 ${oddColor}`, // Translucent backgrounds
-                  "active:scale-[0.98] active:shadow-lg" // Subtle active state for touch
-                )}
-              >
-                <div className="flex flex-col gap-3">
-                  {/* Product name and ID row */}
-                  <div className="flex justify-between items-center pb-2 border-b border-slate-200/50">
-                    {" "}
-                    {/* Subtle divider */}
-                    <div>
-                      <div className="text-xs font-medium text-slate-500">
-                        Name
-                      </div>
-                      <div className="text-base font-semibold text-slate-800 truncate max-w-[220px]">
-                        {" "}
-                        {/* Truncate long names */}
-                        {item.productName}
-                      </div>
-                    </div>
-                    {/* Highlighted ID with subtle background and accent color */}
-                    <div className="bg-slate-100/80 px-3 py-1 rounded-full ring-1 ring-slate-200">
-                      <div className="text-sm font-bold text-[#6571FF]">
-                        {" "}
-                        {/* Accent color for ID */}#{item.id}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Category */}
+        ) : data.length > 0 ? (
+          data.map((item, index) => (
+            <div
+              key={item.id}
+              // Sleek Card Styling for mobile: Rounded, subtle ring, soft shadow, glassmorphism-like background
+              className={cn(
+                "rounded-xl ring-1 ring-slate-200/60 p-4 shadow-md",
+                "backdrop-blur-sm transition-all duration-300 ease-in-out", // Glassmorphism and subtle animation
+                index % 2 === 0
+                  ? `bg-slate-50/70 ${evenColor}`
+                  : `bg-white/70 ${oddColor}`, // Translucent backgrounds
+                "active:scale-[0.98] active:shadow-lg" // Subtle active state for touch
+              )}
+            >
+              <div className="flex flex-col gap-3">
+                {/* Product name and ID row */}
+                <div className="flex justify-between items-center pb-2 border-b border-slate-200/50">
+                  {" "}
+                  {/* Subtle divider */}
                   <div>
                     <div className="text-xs font-medium text-slate-500">
-                      Category
+                      Name
                     </div>
-                    <div className="text-sm text-slate-700">
-                      {item.category}
+                    <div className="text-base font-semibold text-slate-800 truncate max-w-[220px]">
+                      {" "}
+                      {/* Truncate long names */}
+                      {item.productName}
                     </div>
                   </div>
-
-                  {/* Unit */}
-                  <div>
-                    <div className="text-xs font-medium text-slate-500">
-                      Unit
+                  {/* Highlighted ID with subtle background and accent color */}
+                  <div className="bg-slate-100/80 px-3 py-1 rounded-full ring-1 ring-slate-200">
+                    <div className="text-sm font-bold text-[#6571FF]">
+                      {" "}
+                      {/* Accent color for ID */}#{item.id}
                     </div>
-                    <div className="text-sm text-slate-700">{item.unit}</div>
                   </div>
                 </div>
 
-                {/* Action Button Section */}
-                <div className="mt-4 pt-4 border-t border-slate-200/50 w-full">
-                  {" "}
-                  {/* Refined divider */}
-                  <AddNewProduct product={item} isDatabase={true} />
+                {/* Category */}
+                <div>
+                  <div className="text-xs font-medium text-slate-500">
+                    Category
+                  </div>
+                  <div className="text-sm text-slate-700">{item.category}</div>
+                </div>
+
+                {/* Unit */}
+                <div>
+                  <div className="text-xs font-medium text-slate-500">Unit</div>
+                  <div className="text-sm text-slate-700">{item.unit}</div>
                 </div>
               </div>
-            ))}
-          </>
+
+              {/* Action Button Section */}
+              <div className="mt-4 pt-4 border-t border-slate-200/50 w-full">
+                {" "}
+                {/* Refined divider */}
+                <AddNewProduct product={item} isDatabase={true} />
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="p-20 text-center text-slate-500 font-medium">
+            No data found
+          </div>
         )}
-        <p>
-          {data.length === 0 && !isLoading && (
-            <p className="p-20 text-center">No data found</p>
-          )}
-        </p>
       </div>
 
       <div className="mt-4 flex justify-end">
