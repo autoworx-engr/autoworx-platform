@@ -68,7 +68,7 @@ export default function TaskContentModal({
   } = useTaskById(taskId!, {
     enabled: fromEdit && !!taskId,
   });
-
+  console.log("taskData", taskData);
   const queryClient = useQueryClient();
   const timezone = useCompanyTimezone();
   const [title, setTitle] = useState("");
@@ -355,7 +355,10 @@ export default function TaskContentModal({
 
   return (
     <DialogContent
-      className={cn(isLoading ? "block" : "flex flex-col", "min-h-[500px]")}
+      className={cn(
+        isLoading ? "block" : "flex flex-col",
+        "min-h-[500px] overflow-y-auto",
+      )}
     >
       <DialogHeader>
         <DialogTitle>{fromEdit ? "Update Task" : "Add Task"}</DialogTitle>
@@ -573,6 +576,42 @@ export default function TaskContentModal({
               </div>
             </div>
           </div>
+
+          {taskData?.client && taskData?.createdBy === "sales_agent" && (
+            <div className="mb-4 flex flex-col">
+              <label className="font-medium text-slate-600">
+                Client Information
+              </label>
+
+              <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-2">
+                {/* Client Name (Read Only) */}
+                <div className="flex flex-col">
+                  <span className="text-xs text-slate-500">Client Name</span>
+                  <span className="text-sm font-medium text-slate-700">
+                    {(() => {
+                      const firstName = taskData.client.firstName ?? "";
+                      const lastName = taskData.client.lastName ?? "";
+                      const mobile = taskData.client.mobile ?? "";
+
+                      if (!firstName || firstName === mobile) {
+                        return "N/A";
+                      }
+
+                      return `${firstName} ${lastName}`.trim();
+                    })()}
+                  </span>
+                </div>
+
+                {/* Client Mobile (Read Only) */}
+                <div className="flex flex-col">
+                  <span className="text-xs text-slate-500">Mobile</span>
+                  <span className="text-sm font-medium text-slate-700">
+                    {taskData.client.mobile || "N/A"}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* custom radio. show user name and image (column)*/}
           {/* TODO: */}

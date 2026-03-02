@@ -200,10 +200,10 @@ export function PlaybooksTab({
           />
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm">
+          {/* <Button variant="outline" size="sm">
             <Filter className="mr-2 h-4 w-4" />
             Filter
-          </Button>
+          </Button> */}
           <Button onClick={handleCreatePlaybook}>
             <Plus className="mr-2 h-4 w-4" />
             Create Playbook

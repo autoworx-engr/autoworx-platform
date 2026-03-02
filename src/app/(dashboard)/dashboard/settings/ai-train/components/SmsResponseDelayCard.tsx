@@ -78,7 +78,7 @@ const SmsResponseDelayCard = () => {
                         min={0}
                         max={300}
                         value={minDelay}
-                       onChange={e => setMinDelay(Math.max(0, parseInt(e.target.value) || 0))}
+                       onChange={e => { const v = Math.max(0, parseInt(e.target.value) || 0); e.target.value = String(v); setMinDelay(v); }}
             //   disabled={isLoading || saveSmsDelay.isPending}
                       />
                       <p className="text-xs text-muted-foreground">
@@ -93,7 +93,7 @@ const SmsResponseDelayCard = () => {
                         min={0}
                         max={600}
                         value={maxDelay}
-                       onChange={e => setMaxDelay(Math.max(0, parseInt(e.target.value) || 0))}
+                       onChange={e => { const v = Math.max(0, parseInt(e.target.value) || 0); e.target.value = String(v); setMaxDelay(v); }}
             //   disabled={isLoading || saveSmsDelay.isPending}
                       />
                       <p className="text-xs text-muted-foreground">
