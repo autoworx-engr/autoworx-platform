@@ -190,8 +190,9 @@ export default function Page() {
                 )}
               </div>
               <p className="mt-4 text-xs font-normal italic leading-4 text-gray-500 pt-2">
-                If you want a package customized according to your preferences,
-                contact us here
+                If you want a package customized according to your preferences,{" "}
+                <br />
+                contact us here at <i>admin@autoworx.tech</i>
               </p>
             </div>
             {/* Icon section */}
@@ -204,39 +205,6 @@ export default function Page() {
                 className="h-32 w-32 sm:h-40 sm:w-40 lg:h-48 lg:w-48 opacity-80"
               />
             </div>
-          </div>
-        </div>
-
-        {/* Payment Methods Section */}
-        <div className="w-full">
-          <h2 className="mb-4 flex items-center text-2xl font-bold ">
-            <CreditCard className="w-6 h-6 mr-2 text-[#6571FF]" />
-            Payment Methods
-          </h2>
-          <div className="flex flex-wrap justify-start gap-4">
-            {/* Payment method cards */}
-            {subscription?.billingCustomer?.paymentMethods?.length > 0 ? (
-              subscription.billingCustomer.paymentMethods.map((pm: any) => (
-                <div
-                  key={pm.id}
-                  className="flex flex-col h-32 w-full justify-center rounded-lg border border-gray-300 bg-white p-4 shadow-sm hover:shadow-md transition sm:w-48"
-                >
-                  <p className="text-sm font-bold text-gray-400 uppercase">
-                    {pm.cardType || "Card"}
-                  </p>
-                  <p className="mt-auto text-xl font-bold text-gray-700">
-                    •••• {pm.last4}
-                  </p>
-                  <p className="text-xs text-gray-500">Exp: {pm.expiry}</p>
-                </div>
-              ))
-            ) : (
-              <div className="flex h-24 w-full items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50 sm:h-32 sm:w-40">
-                <p className="text-sm font-medium text-gray-400">
-                  No cards saved
-                </p>
-              </div>
-            )}
           </div>
         </div>
 
@@ -328,3 +296,36 @@ export default function Page() {
     </div>
   );
 }
+
+// {
+//   /* Payment Methods Section */
+// }
+// <div className="w-full">
+//   <h2 className="mb-4 flex items-center text-2xl font-bold ">
+//     <CreditCard className="w-6 h-6 mr-2 text-[#6571FF]" />
+//     Payment Methods
+//   </h2>
+//   <div className="flex flex-wrap justify-start gap-4">
+//     {/* Payment method cards */}
+//     {subscription?.billingCustomer?.paymentMethods?.length > 0 ? (
+//       subscription.billingCustomer.paymentMethods.map((pm: any) => (
+//         <div
+//           key={pm.id}
+//           className="flex flex-col h-32 w-full justify-center rounded-lg border border-gray-300 bg-white p-4 shadow-sm hover:shadow-md transition sm:w-48"
+//         >
+//           <p className="text-sm font-bold text-gray-400 uppercase">
+//             {pm.cardType || "Card"}
+//           </p>
+//           <p className="mt-auto text-xl font-bold text-gray-700">
+//             •••• {pm.last4}
+//           </p>
+//           <p className="text-xs text-gray-500">Exp: {pm.expiry}</p>
+//         </div>
+//       ))
+//     ) : (
+//       <div className="flex h-24 w-full items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50 sm:h-32 sm:w-40">
+//         <p className="text-sm font-medium text-gray-400">No cards saved</p>
+//       </div>
+//     )}
+//   </div>
+// </div>;
