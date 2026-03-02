@@ -92,15 +92,19 @@ const PipelineRuleForm = ({
 
   useEffect(() => {
     const loadData = async () => {
-      if (isEdit && id) {
-        const timeDelay = parseSecondsToTimeDelay(data?.data?.timeDelay);
+      if (isEdit && id && data?.data) {
+        const condType = data?.data?.conditionType || "";
+        const timeDelay = condType === "TIME_DELAY" 
+          ? parseSecondsToTimeDelay(data?.data?.timeDelay)
+          : null;
+          
         const payload: Rule = {
           id: data?.data?.id,
           companyId: data?.data?.companyId,
-          conditionType: data?.data?.conditionType,
-          stageIds: data?.data?.stages?.map((stage: any) => stage.columnId),
-          targetColumnId: data?.data?.targetColumnId.toString(),
-          title: data?.data?.title,
+          conditionType: condType,
+          stageIds: data?.data?.stages?.map((stage: any) => stage.columnId) || [],
+          targetColumnId: data?.data?.targetColumnId?.toString() || null,
+          title: data?.data?.title || "",
           timeDelay: timeDelay,
           // createdBy: data?.data?.createdBy,
         };
