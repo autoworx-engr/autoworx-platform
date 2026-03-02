@@ -58,7 +58,7 @@ const AutomationSidebar = ({
 
   const hasPermission = (permissionName: string) => {
     const permission = companyFeaturePermission.find(
-      (p) => p.permission_name === permissionName
+      (p) => p.permission_name === permissionName,
     );
     return permission?.enabled === true;
   };
@@ -101,7 +101,7 @@ const AutomationSidebar = ({
                   "flex w-full flex-col items-center justify-center text-nowrap rounded-sm border border-gray-200 bg-white px-14 py-4 font-medium capitalize transition-colors",
                   isActive
                     ? "border-blue-500 text-blue-600"
-                    : "hover:bg-gray-50"
+                    : "hover:bg-gray-50",
                   // isLoading && "cursor-not-allowed opacity-50 ",
                 )}
               >
@@ -114,11 +114,11 @@ const AutomationSidebar = ({
         })}
       </div>
 
-      <PremiumModal
+      {/* <PremiumModal
         open={showPremiumModal}
         onClose={() => setShowPremiumModal(false)}
         featureName={`${pendingFeature} automation`}
-      />
+      /> */}
     </div>
   );
 };
