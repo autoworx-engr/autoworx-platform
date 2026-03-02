@@ -539,7 +539,7 @@ const PDFComponent = function PDF({
       if (pct === 0) return "0%";
       const amount = formatCurrency(
         (Number((invoice.subtotal as any) - (invoice.discount as any)) * pct) /
-          100,
+        100,
       );
       return `${pct}% (${amount})`;
     }
@@ -797,14 +797,14 @@ const PDFInvoiceItems = ({
         acc +
         (material && material.sell
           ? parseFloat(material.sell.toString()) *
-            Number(material.quantity ?? 0)
+          Number(material.quantity ?? 0)
           : 0)
       );
     }, 0);
 
     const laborCost = item.labor?.charge
       ? parseFloat(item.labor?.charge.toString()) *
-        (Number(item.labor.hours) || 0)
+      (Number(item.labor.hours) || 0)
       : 0;
     const totalDiscount =
       item.materials.reduce((acc, material) => {
@@ -821,13 +821,13 @@ const PDFInvoiceItems = ({
     return (
       <View key={item.id} style={styles.itemCard}>
         <View style={styles.itemHeader}>
-          <Text style={styles.itemName}>{item.service.name}</Text>
+          <Text style={styles.itemName}>Service - {item.service.name}</Text>
           <Text style={styles.itemPrice}>{formatCurrency(serviceTotal)}</Text>
         </View>
 
         {(item.service?.description || item.serviceDesc) && (
           <Text style={styles.itemDesc}>
-            {item.service?.description || item.serviceDesc}
+            Description - {item.service?.description || item.serviceDesc}
           </Text>
         )}
 
@@ -837,11 +837,11 @@ const PDFInvoiceItems = ({
               if (!material) return null;
               const lineTotal = material.sell
                 ? parseFloat(material.sell.toString()) *
-                  Number(material.quantity ?? 0)
+                Number(material.quantity ?? 0)
                 : 0;
               return (
                 <View key={index} style={styles.lineItem}>
-                  <Text style={styles.lineItemText}>{material.name}</Text>
+                  <Text style={styles.lineItemText}>Material - {material.name}</Text>
                   <Text style={styles.lineItemText}>
                     {formatCurrency(lineTotal)}
                   </Text>
@@ -854,7 +854,7 @@ const PDFInvoiceItems = ({
         {laborCost > 0 && (
           <View style={styles.lineItem}>
             <Text style={styles.lineItemText}>
-              {item.labor ? item.labor.name : "Labor"}
+              Labor - {item.labor ? item.labor.name : "Labor"}
             </Text>
             <Text style={styles.lineItemText}>
               {formatCurrency(laborCost)}
@@ -863,7 +863,7 @@ const PDFInvoiceItems = ({
         )}
         {item.labor?.notes && (
           <Text style={[styles.inspectionNote, { marginTop: 2 }]}>
-            {item.labor.notes}
+            Description - {item.labor.notes}
           </Text>
         )}
         {totalDiscount > 0 && (
