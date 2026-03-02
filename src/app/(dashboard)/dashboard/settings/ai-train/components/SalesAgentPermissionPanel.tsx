@@ -87,7 +87,7 @@ export default function SalesAgentPermissionPanel({ companyId }: Props) {
           />
 
           {/* Client List */}
-          <div className="max-h-96 overflow-y-auto space-y-2 pr-1">
+          <div className="max-h-96 overflow-y-auto overflow-x-hidden space-y-2 pr-1">
             {clientsLoading ? (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />

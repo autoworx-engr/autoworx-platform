@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
+import toast from "react-hot-toast";
 
 export const useCompanySalesAgent = (companyId: number) => {
   return useQuery({
@@ -41,10 +42,11 @@ export const useToggleCompanySalesAgent = () => {
         `/api/admin/company/${companyId}/sales-agent`,
         { isSalesAgent },
       );
-      console.log("data", data);
+
       return data;
     },
     onSuccess: (_, variables) => {
+      toast.success("Company sales Agent permission updated");
       queryClient.invalidateQueries({
         queryKey: ["company-sales-agent", variables.companyId],
       });
@@ -72,9 +74,17 @@ export const useToggleClientSalesAgent = () => {
       );
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["clients"] });
-      queryClient.invalidateQueries({ queryKey: ["company-sales-agent"] });
+    onSuccess: (_, variables) => {
+      toast.success("Client sales Agent permission updated");
+      queryClient.invalidateQueries({
+        queryKey: ["clients", variables?.clientId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["company-sales-agent", variables?.clientId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["company-clients"],
+      });
     },
   });
 };
