@@ -43,6 +43,7 @@ export function useVoiceDevice() {
 
 export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
   const { data: session } = useSession();
+  const companyId = session?.user?.companyId ?? null;
   const [device, setDevice] = useState<Device | any | null>(null);
   const [incomingCall, setIncomingCall] = useState<Call | any | null>(null);
   const [currentConnection, setCurrentConnection] = useState<Call | any | null>(
@@ -53,7 +54,6 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
   const [callDuration, setCallDuration] = useState(0);
   const [timer, setTimer] = useState<NodeJS.Timeout | null>(null);
   const [provider, setProvider] = useState<VoiceProvider>("TWILIO");
-  const [companyId, setCompanyId] = useState<number | null>(null);
   const [infobipPhoneNumber, setInfobipPhoneNumber] = useState<string | null>(
     null,
   );
@@ -66,14 +66,6 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
     return `device-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   });
   const [wakeLock, setWakeLock] = useState<any>(null);
-
-  // Get companyId from session
-  useEffect(() => {
-    if (session?.user?.companyId) {
-      console.log("🏢 [VoiceDevice] Company ID set:", session.user.companyId);
-      setCompanyId(session.user.companyId);
-    }
-  }, [session]);
 
   // Subscribe to Pusher events for call state changes
   useEffect(() => {
@@ -328,7 +320,8 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
         );
       }
     },
-    [session],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [session, companyId],
   );
 
   // Setup Twilio Device
