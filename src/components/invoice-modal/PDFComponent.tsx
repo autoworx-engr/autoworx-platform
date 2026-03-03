@@ -251,6 +251,8 @@ const styles = StyleSheet.create({
   },
   serviceDetails: {
     // marginTop: 5,
+    color: "#66738C",
+    marginLeft: 5,
   },
   mainMaterial: {
     color: "#6571FF",
@@ -266,8 +268,10 @@ const styles = StyleSheet.create({
     display: "flex",
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 5,
     marginLeft: 5,
+  },
+  laborDescription: {
+    color: "#66738C",
   },
   inspectionContainer: {
     borderWidth: 1,
@@ -596,14 +600,16 @@ const PDFInvoiceItems = ({
           ...styles.mainMaterial,
         }}
       >
-        <View style={styles.header}>
+        <View style={styles.laborItem}>
           <Text>{item.service.name}</Text>
 
           <Text>{formatCurrency(serviceTotal)}</Text>
         </View>
 
         <View>
-          <Text>{item.service?.description || item.serviceDesc}</Text>
+          <Text style={styles.serviceDetails}>
+            {item.service?.description || item.serviceDesc}
+          </Text>
         </View>
 
         <View style={styles.serviceDetails}>
@@ -632,7 +638,7 @@ const PDFInvoiceItems = ({
           <Text>{formatCurrency(laborCost)}</Text>
         </View>
         <View style={styles.laborItem}>
-          <Text>{item.labor?.notes}</Text>
+          <Text style={styles.laborDescription}>{item.labor?.notes}</Text>
         </View>
 
         <View style={styles.laborItem}>

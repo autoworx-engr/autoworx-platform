@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -84,7 +85,7 @@ export async function PATCH(
   try {
     const clientId = Number(params.id);
     const { isSalesAgent } = await req.json();
-
+    console.log("body", isSalesAgent);
     const client = await db.client.findUnique({
       where: { id: clientId },
     });
@@ -126,6 +127,8 @@ export async function PATCH(
       });
     }
 
+    revalidatePath("/dashboard/settings/ai-train");
+    revalidatePath("/dashboard/communication/client");
     return NextResponse.json({
       message: "Client sales agent permission updated successfully",
     });

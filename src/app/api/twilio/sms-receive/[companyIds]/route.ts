@@ -7,8 +7,9 @@ import sendClientMailOrSMSNotify from "@/lib/pusher/client-conversation-notify";
 import receiveTwiloMessage from "@/lib/pusher/receiveTwiloMessage";
 import { getPusherInstance } from "@/lib/pusher/server";
 import { sendSMSToAgent } from "@/service/ai-agent/api";
+import { allCompanyFeaturePermissions } from "@/service/feature-permissions/api";
 import { revalidatePath } from "next/cache";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 const pusher = getPusherInstance();
 
@@ -89,10 +90,6 @@ export async function POST(
       },
     });
 
-    const company = await db.company.findUnique({
-      where: { id: credential?.companyId },
-    });
-
     const formData = new FormData();
 
     for (const url of mediaUrls) {
@@ -113,6 +110,10 @@ export async function POST(
     const images = imgs?.data ?? [];
 
     for (const companyId of companyIds) {
+      const company = await db.company.findUnique({
+        where: { id: companyId },
+      });
+
       let client = await db.client.findFirst({
         where: {
           mobile: {
@@ -173,7 +174,7 @@ export async function POST(
           });
           attachments.push(atc);
         }
-        console.log();
+
         // update client sms conversation track
         const clientConversationTrack = await updateNewSMSChatTrack({
           clientId: client.id,
@@ -182,28 +183,41 @@ export async function POST(
           attachments: attachments,
         });
 
+        const currentClient = await db.client.findUnique({
+          where: { id: client?.id },
+        });
+
+        const permissions = await allCompanyFeaturePermissions(companyId);
+
+        const salesAgentPermission = permissions?.data?.find(
+          (item: any) => item.permission_name === "sales-agent",
+        );
+
+        const isSalesAgentEnabled = salesAgentPermission?.enabled === true;
+
         //sales agent
-        console.log("body.to:", body.to);
-        console.log("credential phone:", credential?.phoneNumber);
-        console.log("equal?", body.to === credential?.phoneNumber);
+        const isCompanySalesAgent = company?.isSalesAgent === true;
+        const isClientSalesAgent = currentClient?.isSalesAgent === true;
 
-        if (company?.isSalesAgent && client?.isSalesAgent) {
-          console.log("sales agent message sending..");
+        if (isCompanySalesAgent && isClientSalesAgent && isSalesAgentEnabled) {
           if (dbMessage && dbMessage.to === credential?.phoneNumber) {
-            console.log("sales agent message sending2..");
-            const res = await sendSMSToAgent({
-              company_id: client.companyId,
-              message: dbMessage?.message,
-              send_from: dbMessage?.from,
-              send_to: dbMessage?.to,
-              client_id: client?.id,
-            });
-
-            console.log("sales agent res", res);
+            try {
+              await sendSMSToAgent({
+                company_id: client.companyId,
+                message: dbMessage?.message,
+                send_from: dbMessage?.from,
+                send_to: dbMessage?.to,
+                client_id: client?.id,
+              });
+            } catch (error) {
+              return Response.json(
+                { message: `Sales agent error: ${error}` },
+                { status: 200 },
+              );
+            }
           }
         }
 
-        console.log("dbMessage", dbMessage);
         // pusher trigger to send message to company admin real time
 
         receiveTwiloMessage({ ...dbMessage, attachments });

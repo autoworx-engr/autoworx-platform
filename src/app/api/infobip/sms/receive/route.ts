@@ -8,6 +8,7 @@ import { getPusherInstance } from "@/lib/pusher/server";
 import { NextRequest, NextResponse } from "next/server";
 import { sendSMSToAgent } from "@/service/ai-agent/api";
 import { revalidatePath } from "next/cache";
+import { allCompanyFeaturePermissions } from "@/service/feature-permissions/api";
 
 const pusher = getPusherInstance();
 
@@ -115,9 +116,7 @@ export async function POST(req: NextRequest) {
       // Process for each matching company
       for (const infobipConfig of infobipConfigs) {
         console.log(`Processing for company ${infobipConfig.companyId}`);
-        const company = await db.company.findUnique({
-          where: { id: infobipConfig?.companyId },
-        });
+
         // Find client by the "from" phone number (client's phone)
         let client = await db.client.findFirst({
           where: {
@@ -234,16 +233,42 @@ export async function POST(req: NextRequest) {
           }
 
           //sales agent
+          const company = await db.company.findUnique({
+            where: { id: infobipConfig?.companyId },
+          });
 
-          if (company?.isSalesAgent && client?.isSalesAgent) {
+          const permissions = await allCompanyFeaturePermissions(
+            infobipConfig?.companyId,
+          );
+
+          const salesAgentPermission = permissions?.data?.find(
+            (item: any) => item.permission_name === "sales-agent",
+          );
+
+          const isSalesAgentEnabled = salesAgentPermission?.enabled === true;
+
+          const isCompanySalesAgent = company?.isSalesAgent === true;
+          const isClientSalesAgent = client?.isSalesAgent === true;
+          if (
+            isCompanySalesAgent &&
+            isClientSalesAgent &&
+            isSalesAgentEnabled
+          ) {
             if (clientSMS && clientSMS?.to === infobipConfig.phoneNumber) {
-              await sendSMSToAgent({
-                company_id: client.companyId,
-                message: clientSMS?.message,
-                send_from: clientSMS?.from,
-                send_to: clientSMS?.to,
-                client_id: client.id,
-              });
+              try {
+                await sendSMSToAgent({
+                  company_id: client.companyId,
+                  message: clientSMS?.message,
+                  send_from: clientSMS?.from,
+                  send_to: clientSMS?.to,
+                  client_id: client.id,
+                });
+              } catch (error) {
+                return Response.json(
+                  { message: `Sales agent error: ${error}` },
+                  { status: 200 },
+                );
+              }
             }
           }
 

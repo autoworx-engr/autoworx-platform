@@ -54,7 +54,7 @@ export default async function AiTrainOverview() {
         </Card>
 
         {/* Metrics */}
-        <AIMetrics />
+        <AIMetrics companyId={companyId} />
 
         {/* Quick Setup */}
         <section>

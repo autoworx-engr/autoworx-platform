@@ -328,18 +328,18 @@ export async function sendInfobipMessage({
       }
 
       revalidatePath("/dashboard/communication/client");
-      if (company?.isSalesAgent && client?.isSalesAgent) {
-        if (dbMessage && dbMessage.to === infobipConfig.phoneNumber) {
-          await sendSMSToAgent({
-            company_id: clientId,
-            message: dbMessage?.message,
-            send_from: dbMessage?.from,
-            send_to: dbMessage?.to,
-            client_id: infobipConfig?.companyId,
-            user_id: user?.id,
-          });
-        }
-      }
+      // if (company?.isSalesAgent && client?.isSalesAgent) {
+      //   if (dbMessage && dbMessage.to === infobipConfig.phoneNumber) {
+      //     await sendSMSToAgent({
+      //       company_id: clientId,
+      //       message: dbMessage?.message,
+      //       send_from: dbMessage?.from,
+      //       send_to: dbMessage?.to,
+      //       client_id: infobipConfig?.companyId,
+      //       user_id: user?.id,
+      //     });
+      //   }
+      // }
 
       return {
         success: true,
