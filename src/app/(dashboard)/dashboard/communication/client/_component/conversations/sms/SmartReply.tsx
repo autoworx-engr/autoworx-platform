@@ -69,7 +69,6 @@ export default function SmartReplyBar({
   const permission = data?.data?.find(
     (perm: Permission) => perm?.permission_name === "aiSmartReplies",
   );
-  console.log("🚀 ~ SmartReplyBar ~ permission:", permission);
 
   React.useEffect(() => {
     setCanShow(!!isAllowed && !!permission?.enabled);
@@ -80,10 +79,6 @@ export default function SmartReplyBar({
   }
 
   const normalize = (res: unknown) => {
-    // Debug: Check what we're actually receiving
-    console.log("[SmartReply] Received response:", res);
-    console.log("[SmartReply] Response type:", typeof res);
-
     // If it's a string, try to parse it as JSON
     if (typeof res === "string") {
       try {
