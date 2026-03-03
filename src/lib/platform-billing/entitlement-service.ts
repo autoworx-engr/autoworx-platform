@@ -9,6 +9,11 @@ import {
   normalizeFeatureKey,
   parseFeatureValue,
 } from "@/lib/platform-billing/entitlements";
+import { getAutomationLimitForModule } from "@/lib/platform-billing/automation-limits";
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
 export type Entitlements = {
   canUseVoice: boolean;
@@ -28,6 +33,19 @@ export type Entitlements = {
   aiSmartReplies: boolean;
   awxSalesAgent: boolean;
 };
+
+export type AutomationModuleKey =
+  | "pipeline"
+  | "communication"
+  | "invoice"
+  | "inventory"
+  | "tag"
+  | "service"
+  | "marketing";
+
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
 
 const DEFAULT_ENTITLEMENTS: Entitlements = {
   canUseVoice: false,
@@ -76,8 +94,46 @@ const LEGACY_ENTITLEMENTS: Entitlements = {
 };
 
 /**
+ * Maps CompanyPermissionModule.permission_name → the Entitlements key it overrides.
+ * Admin toggling a permission ON/OFF takes precedence over the plan value.
+ * To add a new override, just add an entry here — no other code changes needed.
+ */
+const FEATURE_PERMISSION_OVERRIDES: Record<string, keyof Entitlements> = {
+  callingAccess: "canUseVoice",
+  "sales-agent": "awxSalesAgent",
+};
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Applies admin feature-permission overrides on top of plan-derived entitlements.
+ *  enabled = true  → grant the feature regardless of plan
+ *  enabled = false → block the feature regardless of plan
+ *  no record       → plan value is used as-is
+ */
+function applyFeaturePermissionOverrides(
+  entitlements: Entitlements,
+  permissions: { permission_name: string; enabled: boolean }[],
+): Entitlements {
+  const result = { ...entitlements };
+  for (const perm of permissions) {
+    const key = FEATURE_PERMISSION_OVERRIDES[perm.permission_name];
+    if (key) {
+      (result as Record<string, unknown>)[key] = perm.enabled;
+    }
+  }
+  return result;
+}
+
+// ---------------------------------------------------------------------------
+// Public API
+// ---------------------------------------------------------------------------
+
+/**
  * Resolves the current entitlements for a company.
- * Caches results (TODO: Redis/Memory cache) to avoid DB hits on every request.
+ * TODO: Add Redis/memory cache to avoid DB hits on every request.
  */
 export async function getCompanyEntitlements(
   companyId: number,
@@ -85,8 +141,9 @@ export async function getCompanyEntitlements(
   const id = Number(companyId);
   if (!id) return DEFAULT_ENTITLEMENTS;
 
-  // Run all queries in parallel to avoid sequential round-trips
-  const [company, subscription, callingPerm] = await Promise.all([
+  const permissionNames = Object.keys(FEATURE_PERMISSION_OVERRIDES);
+
+  const [company, subscription, featurePerms] = await Promise.all([
     db.company.findUnique({
       where: { id },
       select: { enforcePlatformPlan: true },
@@ -95,24 +152,14 @@ export async function getCompanyEntitlements(
       where: { companyId: id },
       include: { plan: { include: { features: true } } },
     }),
-    db.companyPermissionModule.findFirst({
-      where: { companyId: id, permission_name: "callingAccess" },
-      select: { enabled: true },
+    db.companyPermissionModule.findMany({
+      where: { companyId: id, permission_name: { in: permissionNames } },
+      select: { permission_name: true, enabled: true },
     }),
   ]);
 
-  // Feature permission overrides plan for voice:
-  //   enabled = true  → always grant canUseVoice
-  //   enabled = false → always block canUseVoice
-  //   no record       → let the plan decide
-  const withCallingGate = (ents: Entitlements): Entitlements => {
-    if (callingPerm?.enabled === true) return { ...ents, canUseVoice: true };
-    if (callingPerm?.enabled === false) return { ...ents, canUseVoice: false };
-    return ents;
-  };
-
   if (company && !company.enforcePlatformPlan) {
-    return withCallingGate(LEGACY_ENTITLEMENTS);
+    return applyFeaturePermissionOverrides(LEGACY_ENTITLEMENTS, featurePerms);
   }
 
   if (
@@ -121,38 +168,33 @@ export async function getCompanyEntitlements(
     subscription.status === PlatformSubscriptionStatus.CANCELED ||
     subscription.status === PlatformSubscriptionStatus.UNPAID
   ) {
-    return withCallingGate(DEFAULT_ENTITLEMENTS);
+    return applyFeaturePermissionOverrides(DEFAULT_ENTITLEMENTS, featurePerms);
   }
 
-  const features = subscription.plan.features as {
-    featureKey: string;
-    value: string;
-    type: PlatformFeatureType;
-  }[];
+  // Build entitlements from plan features
   const entitlements: Entitlements = { ...DEFAULT_ENTITLEMENTS };
 
-  features.forEach((f: any) => {
+  for (const f of subscription.plan.features) {
     const key = normalizeFeatureKey(f.featureKey);
 
-    // Special handling: automationModules is stored as comma-separated TEXT
     if (f.type === PlatformFeatureType.TEXT && key === "automationModules") {
       entitlements.automationModules = f.value
         .split(",")
-        .map((s: string) => s.trim())
+        .map((s) => s.trim())
         .filter(Boolean);
-      return;
+      continue;
     }
 
-    const parsed = parseFeatureValue(f.type, f.value);
-    (entitlements as any)[key] = parsed;
-  });
+    (entitlements as Record<string, unknown>)[key] = parseFeatureValue(
+      f.type,
+      f.value,
+    );
+  }
 
-  return withCallingGate(entitlements);
+  return applyFeaturePermissionOverrides(entitlements, featurePerms);
 }
 
-/**
- * Fast check for a specific feature
- */
+/** Returns true if the company has a specific entitlement. */
 export async function hasFeature(
   companyId: number,
   feature: keyof Entitlements,
@@ -164,25 +206,13 @@ export async function hasFeature(
   return false;
 }
 
-/**
- * Check if the company can add another automation rule for a specific module
- */
+/** Returns true if the company can create another automation rule for the given module. */
 export async function canAddAutomationRule(
   companyId: number,
   currentCount: number,
-  moduleKey:
-    | "pipeline"
-    | "communication"
-    | "invoice"
-    | "inventory"
-    | "tag"
-    | "service"
-    | "marketing",
+  moduleKey: AutomationModuleKey,
 ): Promise<boolean> {
   const ents = await getCompanyEntitlements(companyId);
-  const { getAutomationLimitForModule } =
-    await import("@/lib/platform-billing/automation-limits");
   const limit = getAutomationLimitForModule(ents, moduleKey);
-  if (limit === -1) return true; // Unlimited
-  return currentCount < limit;
+  return limit === -1 || currentCount < limit;
 }
