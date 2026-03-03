@@ -16,6 +16,9 @@ interface AttendanceRecord {
   hours: string;
   extraHours: string;
   totalBreaks: string;
+  workedMinutes: number;
+  extraMinutes: number;
+  breakMinutes: number;
 }
 
 interface AttendanceInfo {
@@ -199,10 +202,11 @@ export async function getAttendanceInfo(
           : 0;
 
         const workedHours = (workedMinutes / 60).toFixed(2);
-        const extraHours =
-          workedMinutes / 60 > standardWorkingHours
-            ? (workedMinutes / 60 - standardWorkingHours).toFixed(2)
-            : "0";
+        const extraMinutes =
+          workedMinutes > standardWorkingHours * 60
+            ? workedMinutes - standardWorkingHours * 60
+            : 0;
+        const extraHours = (extraMinutes / 60).toFixed(2);
 
         records.push({
           id: clock.id,
@@ -212,6 +216,9 @@ export async function getAttendanceInfo(
           hours: workedHours,
           extraHours,
           totalBreaks: (breakMinutes / 60).toFixed(2),
+          workedMinutes,
+          extraMinutes,
+          breakMinutes,
         });
       } else {
         records.push(createAttendanceRecord(date, "ABSENT"));
@@ -232,6 +239,9 @@ export async function getAttendanceInfo(
     hours: status,
     extraHours: status,
     totalBreaks: status,
+    workedMinutes: 0,
+    extraMinutes: 0,
+    breakMinutes: 0,
   });
 
   // Use provided dates if available, otherwise use default (current week)
@@ -286,60 +296,27 @@ export async function getAttendanceInfo(
   ).length;
 
   // Calculate the total extra hours for the month
-  const totalExtraHours = attInfoMonth
-    .filter(
-      (day) =>
-        day.extraHours !== "ABSENT" &&
-        day.extraHours !== "WEEKEND" &&
-        day.extraHours !== "LEAVE" &&
-        day.extraHours !== "-",
-    )
-    .reduce((total, day) => total + parseFloat(day.extraHours), 0)
-    .toFixed(2);
-  const previousTotalExtraHours = attInfoPrevMonth
-    .filter(
-      (day) =>
-        day.extraHours !== "ABSENT" &&
-        day.extraHours !== "WEEKEND" &&
-        day.extraHours !== "LEAVE" &&
-        day.extraHours !== "-",
-    )
-    .reduce((total, day) => total + parseFloat(day.extraHours), 0)
-    .toFixed(2);
+  const totalExtraHours = (
+    attInfoMonth.reduce((total, day) => total + day.extraMinutes, 0) / 60
+  ).toFixed(2);
+  const previousTotalExtraHours = (
+    attInfoPrevMonth.reduce((total, day) => total + day.extraMinutes, 0) / 60
+  ).toFixed(2);
 
 
-  const totalHoursWorked = attInfo
-    .filter(
-      (day) =>
-        day.hours !== "ABSENT" &&
-        day.hours !== "WEEKEND" &&
-        day.hours !== "LEAVE" &&
-        day.hours !== "-" &&
-        day.hours !== "NOT_JOINED",
-    )
-    .reduce((total, day) => {
-      const effectiveHours =
-        parseFloat(day.hours) - parseFloat(day.totalBreaks);
-      return total + effectiveHours;
-    }, 0)
-    .toFixed(2);
+  const totalHoursWorked = (
+    attInfo.reduce(
+      (total, day) => total + (day.workedMinutes - day.breakMinutes),
+      0,
+    ) / 60
+  ).toFixed(2);
 
-  
-  const previousTotalHoursWorked = attInfoPrevPeriod
-    .filter(
-      (day) =>
-        day.hours !== "ABSENT" &&
-        day.hours !== "WEEKEND" &&
-        day.hours !== "LEAVE" &&
-        day.hours !== "-" &&
-        day.hours !== "NOT_JOINED",
-    )
-    .reduce((total, day) => {
-      const effectiveHours =
-        parseFloat(day.hours) - parseFloat(day.totalBreaks);
-      return total + effectiveHours;
-    }, 0)
-    .toFixed(2);
+  const previousTotalHoursWorked = (
+    attInfoPrevPeriod.reduce(
+      (total, day) => total + (day.workedMinutes - day.breakMinutes),
+      0,
+    ) / 60
+  ).toFixed(2);
 
 
   const totalDaysWorked = attInfo.filter(
