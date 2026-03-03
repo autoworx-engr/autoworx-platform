@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Trash2, Save, X, GripVertical, AlertCircle } from "lucide-react";
+import { Popconfirm } from "antd";
 import { cn } from "@/lib/utils";
 import SelectCategory from "@/components/Lists/SelectCategory";
 import { Category } from "@prisma/client";
@@ -564,13 +565,21 @@ export function PlaybookEditor({
                     key={faq.id}
                     className="group relative rounded-lg border border-border p-4 hover:border-primary/30"
                   >
-                    <Button
-                      variant="ghost"
-                      onClick={() => removeFAQ(index)}
-                      className="absolute right-2 top-2 opacity-0 group-hover:opacity-100"
+                    <Popconfirm
+                      title="Delete FAQ"
+                      description="Are you sure you want to delete this FAQ?"
+                      onConfirm={() => removeFAQ(index)}
+                      okText="Yes"
+                      cancelText="No"
+                      okButtonProps={{ danger: true }}
                     >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
+                      <Button
+                        variant="ghost"
+                        className="absolute right-2 top-2 opacity-0 group-hover:opacity-100"
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </Popconfirm>
                     <div className="space-y-4">
                       <div className="space-y-2">
                         <Label>
