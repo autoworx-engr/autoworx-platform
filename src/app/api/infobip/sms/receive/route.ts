@@ -263,13 +263,20 @@ export async function POST(req: NextRequest) {
             isSalesAgentEnabled
           ) {
             if (clientSMS && clientSMS?.to === infobipConfig.phoneNumber) {
-              await sendSMSToAgent({
-                company_id: client.companyId,
-                message: clientSMS?.message,
-                send_from: clientSMS?.from,
-                send_to: clientSMS?.to,
-                client_id: client.id,
-              });
+              try {
+                await sendSMSToAgent({
+                  company_id: client.companyId,
+                  message: clientSMS?.message,
+                  send_from: clientSMS?.from,
+                  send_to: clientSMS?.to,
+                  client_id: client.id,
+                });
+              } catch (error) {
+                return Response.json(
+                  { message: `Sales agent error: ${error}` },
+                  { status: 200 },
+                );
+              }
             }
           }
 
