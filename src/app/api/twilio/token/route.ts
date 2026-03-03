@@ -33,7 +33,8 @@ import twilio from "twilio";
  *         description: Server error
  */
 export async function POST(request: NextRequest) {
-  const { identity, companyId, platform } = await request.json();
+  const { identity, companyId: rawCompanyId, platform } = await request.json();
+  const companyId = Number(rawCompanyId);
 
   const entitlements = await getCompanyEntitlements(companyId);
   if (!entitlements.canUseVoice) {

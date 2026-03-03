@@ -34,7 +34,8 @@ import { NextRequest, NextResponse } from "next/server";
  *         description: Server error
  */
 export async function POST(request: NextRequest) {
-  const { identity, companyId } = await request.json();
+  const { identity, companyId: rawCompanyId } = await request.json();
+  const companyId = Number(rawCompanyId);
 
   const entitlements = await getCompanyEntitlements(companyId);
   if (!entitlements.canUseVoice) {

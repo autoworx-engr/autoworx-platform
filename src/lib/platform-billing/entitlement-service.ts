@@ -82,22 +82,37 @@ const LEGACY_ENTITLEMENTS: Entitlements = {
 export async function getCompanyEntitlements(
   companyId: number,
 ): Promise<Entitlements> {
-  if (!companyId) return DEFAULT_ENTITLEMENTS;
+  const id = Number(companyId);
+  if (!id) return DEFAULT_ENTITLEMENTS;
 
-  // Run both queries in parallel to avoid sequential round-trips
-  const [company, subscription] = await Promise.all([
+  // Run all queries in parallel to avoid sequential round-trips
+  const [company, subscription, callingPerm] = await Promise.all([
     db.company.findUnique({
-      where: { id: companyId },
+      where: { id },
       select: { enforcePlatformPlan: true },
     }),
     db.platformSubscription.findUnique({
-      where: { companyId },
+      where: { companyId: id },
       include: { plan: { include: { features: true } } },
+    }),
+    db.companyPermissionModule.findFirst({
+      where: { companyId: id, permission_name: "callingAccess" },
+      select: { enabled: true },
     }),
   ]);
 
+  // Feature permission overrides plan for voice:
+  //   enabled = true  → always grant canUseVoice
+  //   enabled = false → always block canUseVoice
+  //   no record       → let the plan decide
+  const withCallingGate = (ents: Entitlements): Entitlements => {
+    if (callingPerm?.enabled === true) return { ...ents, canUseVoice: true };
+    if (callingPerm?.enabled === false) return { ...ents, canUseVoice: false };
+    return ents;
+  };
+
   if (company && !company.enforcePlatformPlan) {
-    return LEGACY_ENTITLEMENTS;
+    return withCallingGate(LEGACY_ENTITLEMENTS);
   }
 
   if (
@@ -106,7 +121,7 @@ export async function getCompanyEntitlements(
     subscription.status === PlatformSubscriptionStatus.CANCELED ||
     subscription.status === PlatformSubscriptionStatus.UNPAID
   ) {
-    return DEFAULT_ENTITLEMENTS;
+    return withCallingGate(DEFAULT_ENTITLEMENTS);
   }
 
   const features = subscription.plan.features as {
@@ -132,7 +147,7 @@ export async function getCompanyEntitlements(
     (entitlements as any)[key] = parsed;
   });
 
-  return entitlements;
+  return withCallingGate(entitlements);
 }
 
 /**
