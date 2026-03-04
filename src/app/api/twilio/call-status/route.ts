@@ -112,7 +112,7 @@ export async function POST(request: Request) {
           : "Unknown Caller";
 
         const companyName = call.company?.name || "our business";
-        const message = `You have a missed call from ${companyName}. We'll try to reach you again soon or feel free to call us back.`;
+        const message = `Sorry we missed your call! Feel free to text this number with what you need in the meantime and we’ll get back to you as soon as possible. - ${companyName}`;
 
         console.log("Sending SMS via gateway:", call.company?.smsGateway);
 
