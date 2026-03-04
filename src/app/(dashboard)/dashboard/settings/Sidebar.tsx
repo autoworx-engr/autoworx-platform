@@ -25,7 +25,9 @@ import {
   Brain,
 } from "lucide-react";
 
-type Props = {};
+type Props = {
+  isLegacy?: boolean;
+};
 
 const accountSettings = [
   {
@@ -92,7 +94,7 @@ const businessSettings = [
   },
 ];
 
-const Sidebar = (props: Props) => {
+const Sidebar = ({ isLegacy = false }: Props) => {
   const path = usePathname();
   const { permissions } = usePermissionStore();
   const { companyFeaturePermission } = useCompanyFeaturePermissionStore();
@@ -150,7 +152,9 @@ const Sidebar = (props: Props) => {
   );
   const filteredBusinessSettings = businessSettings.filter(
     (setting) =>
-      canAccessCompanyFeatureRoute(setting.link) && canAccessBusinessSettings(),
+      canAccessCompanyFeatureRoute(setting.link) &&
+      canAccessBusinessSettings() &&
+      !(isLegacy && setting.link === "/dashboard/settings/billing"),
   );
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
