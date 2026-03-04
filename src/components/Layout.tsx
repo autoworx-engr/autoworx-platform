@@ -137,6 +137,12 @@ const navbarList = [
     link: "/dashboard/visualization",
     path: "/dashboard/visualization",
   },
+  {
+    title: "Virtualization",
+    icon: "/icons/navbar/visualization.svg",
+    link: "/dashboard/virtualization",
+    path: "/dashboard/virtualization",
+  },
 ];
 
 const mobileNav = [
