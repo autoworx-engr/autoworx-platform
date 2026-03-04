@@ -5,5 +5,5 @@ export const decimalHoursToHHMM = (decimalHours: number): string => {
   const paddedHours = String(hours).padStart(2, "0");
   const paddedMinutes = String(minutes).padStart(2, "0");
 
-  return `${paddedHours}:${paddedMinutes} hours`;
+  return `${hours}h${minutes}m`;
 };

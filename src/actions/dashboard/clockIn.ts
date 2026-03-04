@@ -46,7 +46,6 @@ export async function clockIn({ timezone }: { timezone: string }) {
 
     return { success: true, message: "Clocked In", data: clockedIn };
   } catch (error) {
-    console.error("Error clocking in:", error);
     return { success: false };
   }
 }
