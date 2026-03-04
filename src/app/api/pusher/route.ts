@@ -99,6 +99,11 @@ export async function POST(req: Request) {
   } = body;
   try {
     const userId = parseInt(sessionUserId);
+
+    if (!userId) {
+      throw new Error("Missing Session User ID");
+    }
+
     if (!to || (!message && !attachmentFiles && !requestEstimate)) {
       throw new Error("Missing some argument for message");
     }

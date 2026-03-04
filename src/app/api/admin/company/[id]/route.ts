@@ -120,6 +120,7 @@ export async function GET(
         businessType: true,
         industry: true,
         website: true,
+        isCollaborators: true,
         createdAt: true,
         updatedAt: true,
       },
