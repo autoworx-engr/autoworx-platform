@@ -80,18 +80,21 @@ const LEGACY_ENTITLEMENTS: Entitlements = {
     "service",
     "marketing",
   ],
-  automationLimitPipeline: -1,
-  automationLimitCommunication: -1,
-  automationLimitInvoice: -1,
-  automationLimitInventory: -1,
-  automationLimitTag: -1,
-  automationLimitService: -1,
-  automationLimitMarketing: -1,
+  automationLimitPipeline: 3,
+  automationLimitCommunication: 3,
+  automationLimitInvoice: 3,
+  automationLimitInventory: 3,
+  automationLimitTag: 3,
+  automationLimitService: 3,
+  automationLimitMarketing: 3,
   websiteIncluded: true,
   carWrapVisualizer: true,
   aiSmartReplies: true,
   awxSalesAgent: true,
 };
+
+/** Companies that always get unlimited automation rules regardless of plan. */
+const UNLIMITED_AUTOMATION_COMPANY_IDS = new Set([4, 14]);
 
 /**
  * Maps CompanyPermissionModule.permission_name → the Entitlements key it overrides.
@@ -113,6 +116,19 @@ const FEATURE_PERMISSION_OVERRIDES: Record<string, keyof Entitlements> = {
  *  enabled = false → block the feature regardless of plan
  *  no record       → plan value is used as-is
  */
+function withUnlimitedAutomation(entitlements: Entitlements): Entitlements {
+  return {
+    ...entitlements,
+    automationLimitPipeline: -1,
+    automationLimitCommunication: -1,
+    automationLimitInvoice: -1,
+    automationLimitInventory: -1,
+    automationLimitTag: -1,
+    automationLimitService: -1,
+    automationLimitMarketing: -1,
+  };
+}
+
 function applyFeaturePermissionOverrides(
   entitlements: Entitlements,
   permissions: { permission_name: string; enabled: boolean }[],
@@ -141,6 +157,8 @@ export async function getCompanyEntitlements(
   const id = Number(companyId);
   if (!id) return DEFAULT_ENTITLEMENTS;
 
+  const isUnlimitedCompany = UNLIMITED_AUTOMATION_COMPANY_IDS.has(id);
+
   const permissionNames = Object.keys(FEATURE_PERMISSION_OVERRIDES);
 
   const [company, subscription, featurePerms] = await Promise.all([
@@ -159,7 +177,11 @@ export async function getCompanyEntitlements(
   ]);
 
   if (company && !company.enforcePlatformPlan) {
-    return applyFeaturePermissionOverrides(LEGACY_ENTITLEMENTS, featurePerms);
+    const legacy = applyFeaturePermissionOverrides(
+      LEGACY_ENTITLEMENTS,
+      featurePerms,
+    );
+    return isUnlimitedCompany ? withUnlimitedAutomation(legacy) : legacy;
   }
 
   if (
@@ -168,7 +190,11 @@ export async function getCompanyEntitlements(
     subscription.status === PlatformSubscriptionStatus.CANCELED ||
     subscription.status === PlatformSubscriptionStatus.UNPAID
   ) {
-    return applyFeaturePermissionOverrides(DEFAULT_ENTITLEMENTS, featurePerms);
+    const defaults = applyFeaturePermissionOverrides(
+      DEFAULT_ENTITLEMENTS,
+      featurePerms,
+    );
+    return isUnlimitedCompany ? withUnlimitedAutomation(defaults) : defaults;
   }
 
   // Build entitlements from plan features
@@ -191,7 +217,8 @@ export async function getCompanyEntitlements(
     );
   }
 
-  return applyFeaturePermissionOverrides(entitlements, featurePerms);
+  const resolved = applyFeaturePermissionOverrides(entitlements, featurePerms);
+  return isUnlimitedCompany ? withUnlimitedAutomation(resolved) : resolved;
 }
 
 /** Returns true if the company has a specific entitlement. */
