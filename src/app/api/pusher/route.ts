@@ -121,7 +121,7 @@ export async function POST(req: Request) {
       // If there are attachments but no text message, generate descriptive text
       if (attachmentFiles && attachmentFiles.length > 0) {
         const imageCount = attachmentFiles.filter(
-          file => file.fileType && file.fileType.startsWith("image/"),
+          (file) => file.fileType && file.fileType.startsWith("image/"),
         ).length;
         const otherFileCount = attachmentFiles.length - imageCount;
 

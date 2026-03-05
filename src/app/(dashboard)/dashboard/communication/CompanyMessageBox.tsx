@@ -56,13 +56,29 @@ export default function CompanyMessageBox({
 
   // 🔹 Load messages
   useEffect(() => {
+    console.log("company id", company?.id);
+    console.log("currentCompanyId", currentCompanyId);
+    if (!company?.id || !currentCompanyId) return;
+
     async function fetchMessages() {
-      const res = await fetch(`/api/company-messages/${company.id}`);
-      const data = await res.json();
-      setMessages(data);
+      try {
+        const res = await fetch(
+          `/api/communication/collaboration/messages/v2-messages?companyA=${currentCompanyId}&companyB=${company.id}&viewerCompanyId=${currentCompanyId}`,
+        );
+
+        const data = await res.json();
+        console.log("data", data);
+        if (data.success) {
+          console.log("data", data);
+          setMessages(data.messages);
+        }
+      } catch (error) {
+        console.error("Failed to fetch messages", error);
+      }
     }
+
     fetchMessages();
-  }, [company.id]);
+  }, [company?.id, currentCompanyId]);
 
   // 🔹 Auto scroll
   useEffect(() => {
@@ -71,46 +87,56 @@ export default function CompanyMessageBox({
     }
   }, [messages]);
 
-  // 🔹 Real-time listener
   useEffect(() => {
-    const channel = pusher.subscribe(`company-${company.id}`);
+    if (!currentCompanyId) return;
 
-    channel.bind("message", (data: TMessage) => {
-      setMessages((prev) => [...prev, data]);
+    const channel = pusher.subscribe(`company-${currentCompanyId}`);
+
+    channel.bind("message", (data: any) => {
+      // Only add if it's related to current open chat
+      if (
+        (data.fromCompanyId === company.id &&
+          data.toCompanyId === currentCompanyId) ||
+        (data.fromCompanyId === currentCompanyId &&
+          data.toCompanyId === company.id)
+      ) {
+        setMessages((prev) => [...prev, data]);
+      }
     });
 
     return () => {
-      channel.unbind("message");
-      pusher.unsubscribe(`company-${company.id}`);
+      channel.unbind_all();
+      pusher.unsubscribe(`company-${currentCompanyId}`);
     };
-  }, [company.id]);
+  }, [company.id, currentCompanyId]);
 
-  // 🔹 Send message
   async function handleSendMessage(e: React.FormEvent) {
     e.preventDefault();
-    if (!message.trim()) return;
+    if (!message.trim() || !currentCompanyId || !company?.id) return;
 
-    const requestBody = {
-      senderUserId: session?.user?.id,
-      senderUserName: session?.user?.name,
-      senderUserImage: session?.user?.image,
-      senderCompanyId: currentCompanyId,
-      receiverCompanyId: company.id,
-      message,
-    };
+    const trimmedMessage = message.trim();
+    setMessage(""); // instant clear
 
-    const res = await fetch("/api/company-message", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(requestBody),
-    });
+    try {
+      const res = await fetch("/api/pusher/collaboration", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fromCompanyId: currentCompanyId,
+          toCompanyId: company.id,
+          senderUserId: session?.user?.id,
+          message: trimmedMessage,
+          section: "collaboration",
+        }),
+      });
 
-    const json = await res.json();
+      const data = await res.json();
 
-    if (json.success) {
-      setMessage("");
+      if (!data.success) {
+        console.error("Failed to send", data);
+      }
+    } catch (err) {
+      console.error("Send error:", err);
     }
   }
 
@@ -119,8 +145,6 @@ export default function CompanyMessageBox({
     setShowAttachment(false);
     setMultiAttachmentFile(files);
   };
-
-  let lastDate = "";
 
   return (
     <div className="flex h-[83vh] flex-col rounded-lg border bg-white">
@@ -145,40 +169,53 @@ export default function CompanyMessageBox({
 
       {/* 🔹 Messages */}
       <div ref={messageBoxRef} className="flex-1 overflow-y-auto p-4 space-y-3">
-        {messages.map((msg, index) => {
+        {messages.map((msg: any, index: number) => {
           const messageDate = format(new Date(msg.createdAt), "PPP");
 
-          const showDateSeparator = messageDate !== lastDate;
-          lastDate = messageDate;
+          const previousMessage = messages[index - 1];
+          const previousDate = previousMessage
+            ? format(new Date(previousMessage.createdAt), "PPP")
+            : null;
 
-          const isOwn = msg.senderCompanyId === currentCompanyId;
+          const showDateSeparator = messageDate !== previousDate;
+
+          const isOwn = msg.isOwnMessage;
 
           return (
-            <div key={index}>
+            <div key={msg.id || index} className="mb-4">
               {showDateSeparator && (
-                <div className="text-center text-xs text-gray-400 my-2">
+                <div className="text-center text-xs text-gray-400 my-4">
                   {messageDate}
                 </div>
               )}
 
               <div
                 className={cn(
-                  "max-w-[70%] rounded-lg p-3 text-sm shadow",
-                  isOwn
-                    ? "ml-auto bg-[#006D77] text-white"
-                    : "bg-gray-100 text-gray-800",
+                  "flex flex-col mb-4",
+                  isOwn ? "items-end" : "items-start",
                 )}
               >
-                <p>{msg.message}</p>
-
-                {/* 🔹 Sender Name */}
-                <p
+                <div
                   className={cn(
-                    "mt-1 text-[11px]",
-                    isOwn ? "text-gray-200" : "text-gray-500",
+                    "max-w-[75%] rounded-2xl px-4 py-2 text-sm shadow-sm break-words",
+                    isOwn
+                      ? "bg-[#006D77] text-white rounded-br-sm"
+                      : "bg-gray-100 text-gray-800 rounded-bl-sm",
                   )}
                 >
-                  {msg.senderUserName}
+                  {msg.message}
+                </div>
+
+                <p
+                  className={cn(
+                    "text-[11px] mt-1 px-1",
+                    isOwn
+                      ? "text-gray-400 text-right"
+                      : "text-gray-500 text-left",
+                  )}
+                >
+                  {format(new Date(msg.createdAt), "p")} ·{" "}
+                  {msg.senderUser?.firstName} {msg.senderUser?.lastName}
                 </p>
               </div>
             </div>
