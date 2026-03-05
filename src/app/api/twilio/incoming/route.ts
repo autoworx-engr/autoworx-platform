@@ -238,10 +238,15 @@ export async function POST(request: Request) {
       });
 
       // Connect to the user's device
-      // IMPORTANT: The identity here must match what was used when creating the token
-      // If you have multiple users, you need to determine which device to ring
-      // For now, using the Twilio phone number as the identity
-      const clientIdentity = twilioCredentials.phoneNumber;
+      // IMPORTANT: The identity here must match what was used when creating the token.
+      // Twilio Client identity cannot contain '+' or other special chars — normalize it.
+      const clientIdentity = twilioCredentials.phoneNumber.replace(
+        /[^a-zA-Z0-9_\-.~]/g,
+        "",
+      );
+      console.log(
+        `📞 [Incoming] Dialing client identity: "${clientIdentity}" (raw: "${twilioCredentials.phoneNumber}")`,
+      );
 
       // Pass client information as parameters
       const callerName =

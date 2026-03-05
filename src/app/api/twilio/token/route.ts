@@ -33,8 +33,14 @@ import twilio from "twilio";
  *         description: Server error
  */
 export async function POST(request: NextRequest) {
-  const { identity, companyId: rawCompanyId, platform } = await request.json();
+  const {
+    identity: rawIdentity,
+    companyId: rawCompanyId,
+    platform,
+  } = await request.json();
   const companyId = Number(rawCompanyId);
+  // Twilio Client identity cannot contain '+' or other special chars — normalize.
+  const identity = (rawIdentity as string).replace(/[^a-zA-Z0-9_\-.~]/g, "");
 
   const entitlements = await getCompanyEntitlements(companyId);
   if (!entitlements.canUseVoice) {
