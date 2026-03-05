@@ -682,6 +682,7 @@ model Company {
   servicePlaybooks                 ServicePlaybook[]
   conversationExamples             ConversationExample[]
   knowledgeBaseDocuments           KnowledgeBaseDocument[]
+  companySMSs                      CompanySMS[]
 }
 
 enum SmsGateway {
@@ -2125,6 +2126,7 @@ model User {
   salaryHistory                  SalaryHistory[]
   shortLinks                     ShortLink[] // Links created by this user
   twoFactorConfirmation          TwoFactorConfirmation?
+  companySMSs                    CompanySMS[]
 
   @@index([companyId], name: "fk_users_company")
 }
@@ -2367,6 +2369,23 @@ model ClientSMS {
   updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
 }
 
+model CompanySMS {
+  id                    Int                     @id @default(autoincrement())
+  message               String                  @db.Text
+  from                  String
+  to                    String
+  sentBy                ClientSMSSentBy
+  isRead                Boolean                 @default(false) @map("is_read")
+  userId                Int?                    @map("user_id")
+  companyId             Int                     @map("company_id")
+  user                  User?                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company               Company                 @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  isSalesAgent          Boolean?                @default(false)
+  createdAt             DateTime                @default(now()) @map("created_at")
+  updatedAt             DateTime                @default(now()) @updatedAt @map("updated_at")
+  companySmsAttachments CompanySmsAttachments[]
+}
+
 model ClientCall {
   id            Int             @id @default(autoincrement())
   callSid       String          @unique // Twilio's unique call ID
@@ -2393,15 +2412,23 @@ model ClientCall {
 }
 
 model ClientSmsAttachments {
-  id   Int    @id @default(autoincrement())
-  name String
-  url  String
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
-
+  id          Int       @id @default(autoincrement())
+  name        String
+  url         String
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at")
   clientSMSId Int       @map("client_sms_id")
   clientSMS   ClientSMS @relation(fields: [clientSMSId], references: [id], onDelete: Cascade)
+}
+
+model CompanySmsAttachments {
+  id           Int        @id @default(autoincrement())
+  name         String
+  url          String
+  companySMSId Int        @map("company_sms_id")
+  companySMS   CompanySMS @relation(fields: [companySMSId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @default(now()) @updatedAt @map("updated_at")
 }
 
 enum ClientSMSSentBy {

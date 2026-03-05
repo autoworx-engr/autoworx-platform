@@ -12,49 +12,48 @@ import { useState } from "react";
 import List from "./List";
 import UsersArea from "./UsersArea";
 import { useUnreadCollaborationMessages } from "./hooks/useUnreadCollaborationMessages";
+import CompanyArea from "./CompanyArea";
 
 export default function Collaboration({
   companyWithAdmin,
   companies,
   currentUser,
   messages,
-  isCollaborators,
 }: {
   companyWithAdmin: Partial<User>[];
   companies: (Company & { users: User[] })[];
   currentUser: Session["user"];
   messages: (DbMessage & { attachment: Attachment[] | null })[];
-  isCollaborators: boolean | null | undefined;
 }) {
-  const [selectedUsersList, setSelectedUsersList] = useState<User[]>([]);
+  // const [selectedUsersList, setSelectedUsersList] = useState<User[]>([]);
+  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [companyAdmins, setCompanyAdmins] = useState(companyWithAdmin);
 
   // Use the hook to get real-time unread message counts
-  const unreadCounts = useUnreadCollaborationMessages(
-    parseInt(currentUser?.id)
-  );
+  const unreadCounts = [
+    {
+      count: 0,
+      companyId: 1,
+    },
+  ];
+  // const unreadCounts = useUnreadCollaborationMessages(
+  //   parseInt(currentUser?.id),
+  // );
 
   return (
     <div className="flex gap-5 sm:mt-5">
       <List
-        className={cn(selectedUsersList.length === 0 ? "block" : "hidden")}
-        selectedUsersList={selectedUsersList}
-        companyAdmins={companyAdmins}
-        setCompanyAdmins={setCompanyAdmins}
         companies={companies}
-        setSelectedUsersList={setSelectedUsersList}
+        selectedCompany={selectedCompany}
+        setSelectedCompany={setSelectedCompany}
         unreadCounts={unreadCounts}
-        currentUserId={parseInt(currentUser?.id)}
-        companyId={currentUser?.companyId}
-        isCollaborators={isCollaborators}
       />
-      <UsersArea
-        className={cn(selectedUsersList.length === 0 ? "hidden" : "grid")}
-        previousMessages={messages}
+
+      <CompanyArea
+        selectedCompany={selectedCompany}
         currentUser={currentUser}
-        totalMessageBoxLength={selectedUsersList.length}
-        selectedUsersList={selectedUsersList}
-        setSelectedUsersList={setSelectedUsersList}
+        previousMessages={messages}
+        // companies={companies}
       />
     </div>
   );

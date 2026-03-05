@@ -81,7 +81,7 @@ export default async function CollaborationPage() {
           try {
             const permissions = await getUserPermissions(
               user.id,
-              user.employeeType
+              user.employeeType,
             );
 
             // Check communicationHubCollaboration permission
@@ -93,7 +93,7 @@ export default async function CollaborationPage() {
             console.error(`  ERROR for user ${user.firstName}:`, error);
             return null;
           }
-        })
+        }),
       );
 
       const filtered = filteredUsers.filter((user) => user !== null);
@@ -102,12 +102,12 @@ export default async function CollaborationPage() {
         ...company,
         users: filtered,
       };
-    })
+    }),
   );
 
   // Remove companies that have no users with collaboration permission
   const finalCompanies = filteredOppositeCompanies.filter(
-    (company) => company.users.length > 0
+    (company) => company.users.length > 0,
   );
 
   const messages = await db.message.findMany({
@@ -158,7 +158,7 @@ export default async function CollaborationPage() {
           try {
             const permissions = await getUserPermissions(
               user.id,
-              user.employeeType
+              user.employeeType,
             );
 
             // Check communicationHubCollaboration permission
@@ -170,21 +170,21 @@ export default async function CollaborationPage() {
                   ...user,
                   companyName: company.name,
                   isConnected: finalCompanies.some(
-                    (c) => c.id === user.companyId
+                    (c) => c.id === user.companyId,
                   ),
                 }
               : null;
           } catch (error) {
             console.error(
               `    ERROR checking permissions for admin ${user.id}:`,
-              error
+              error,
             );
             return null;
           }
-        })
+        }),
       );
       return filteredAdmins.filter((user) => user !== null);
-    }
+    },
   );
 
   const filteredCompanyWithAdmin = (
@@ -201,7 +201,6 @@ export default async function CollaborationPage() {
         companies={finalCompanies}
         currentUser={session?.user}
         messages={messages}
-        isCollaborators={company?.isCollaborators}
       />
     </div>
   );
