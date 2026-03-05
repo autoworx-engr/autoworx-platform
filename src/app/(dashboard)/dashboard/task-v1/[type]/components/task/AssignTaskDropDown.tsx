@@ -148,14 +148,24 @@ export default function AssignTaskDropDown({
                 >
                   <CircleX size={30} className="text-red-300" />
                 </button>
-                {userForAssign
-                  .filter((user) => {
-                    const fullName = user.firstName + " " + user.lastName;
+                {(() => {
+                  const filtered = userForAssign.filter((user) => {
+                    const fullName =
+                      (user.firstName || "") + " " + (user.lastName || "");
                     return fullName
                       .toLowerCase()
                       .includes(searchTerm.toLowerCase());
-                  })
-                  .map((user) => (
+                  });
+
+                  if (filtered.length === 0) {
+                    return (
+                      <div className="py-6 text-center text-zinc-500">
+                        Result not found
+                      </div>
+                    );
+                  }
+
+                  return filtered.map((user) => (
                     <label
                       htmlFor={user?.id!.toString()}
                       key={user.id}
@@ -172,7 +182,8 @@ export default function AssignTaskDropDown({
                         {user.firstName} {user.lastName}
                       </span>
                     </label>
-                  ))}
+                  ));
+                })()}
               </div>
             )}
           </div>
