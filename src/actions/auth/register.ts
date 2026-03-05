@@ -33,7 +33,7 @@ const ACCESS_CODE = env("ACCESS_CODE");
 
 const insertDefaultColumns = async (columnId: number, type: string) => {
   const columnsFortypes = defaultColumnWithColor.filter(
-    (column) => column.type === type
+    (column) => column.type === type,
   );
 
   const columnsWithCompany = columnsFortypes.map((column) => ({
@@ -219,8 +219,8 @@ export async function register({
             permission_name: perm.permission_name,
             enabled: perm.status,
           },
-        })
-      )
+        }),
+      ),
     );
 
     const createdUser = await db.user.create({
@@ -273,7 +273,7 @@ export async function register({
     uploadNotificationSettings(
       createdUser.id,
       createdUser.employeeType,
-      newCompany.id
+      newCompany.id,
     );
 
     // Create default columns
@@ -289,7 +289,7 @@ export async function register({
     await db.companyEmailTemplate.create({
       data: {
         subject: `Estimate for services requested at <BUSINESS_NAME>`,
-        message: `Hey <CLIENT>, your estimate for <VEHICLE> is ready. If everything looks good, please approve it so we can move forward. Thanks!– <BUSINESS_NAME>`,
+        message: `Hey <CLIENT>, your invoice for <VEHICLE> is ready. If everything looks good, please approve it so we can move forward. Thanks!– <BUSINESS_NAME>`,
         companyId: newCompany.id,
       },
     });

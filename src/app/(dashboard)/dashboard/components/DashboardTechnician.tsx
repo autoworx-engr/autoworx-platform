@@ -1,13 +1,12 @@
 import { getLastClockInOutForUser } from "@/actions/dashboard/clockIn";
+import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
 import AppointmentListBox from "./box/AppointmentListBox";
 import AttendanceButtonsBox from "./box/AttendanceButtonsBox";
 import CurrentProjectsBox from "./box/CurrentProjectsBox";
 import MonthlyPayoutBox from "./box/MonthlyPayoutBox";
 import PerformanceBoxForTechnician from "./box/PerformanceBoxForTechnician";
-import TaskListBox from "./box/TaskListBox";
 import RecentMessagesBox from "./box/RecentMessagesBox";
-import { getCompanyTimezone } from "@/actions/settings/getCompanyTimezone";
-import { cn } from "@/lib/cn"; // Assuming you have cn utility
+import TaskListBox from "./box/TaskListBox";
 
 export default async function DashboardTechnician() {
   const companyTimezone = await getCompanyTimezone();
