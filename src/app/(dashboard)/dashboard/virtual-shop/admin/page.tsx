@@ -9,12 +9,16 @@ import {
   CalendarDays,
   Percent,
   Gift,
+  Calendar,
+  FileText,
 } from "lucide-react";
 import ServicesTab from "../components/ServicesTab";
 import DepositsTab from "../components/DepositsTab";
 import SchedulingTab from "../components/SchedulingTab";
 import FinancialTab from "../components/FinancialTab";
 import GiftCardsTab from "../components/GiftCardsTab";
+import CalendarTab from "../components/CalendarTab";
+import EstimatesTab from "../components/EstimatesTab";
 
 const TABS = [
   { value: "services", label: "Services", icon: Settings },
@@ -22,6 +26,8 @@ const TABS = [
   { value: "scheduling", label: "Scheduling", icon: CalendarDays },
   { value: "financial", label: "Financial", icon: Percent },
   { value: "gift-cards", label: "Gift Cards", icon: Gift },
+  { value: "calendar", label: "Calendar", icon: Calendar },
+  { value: "estimates", label: "Estimates", icon: FileText },
 ] as const;
 
 type TabValue = (typeof TABS)[number]["value"];
@@ -98,6 +104,12 @@ export default function VirtualShopAdminPage() {
         </TabsContent>
         <TabsContent value="gift-cards">
           <GiftCardsTab />
+        </TabsContent>
+        <TabsContent value="calendar">
+          <CalendarTab />
+        </TabsContent>
+        <TabsContent value="estimates">
+          <EstimatesTab />
         </TabsContent>
       </Tabs>
     </div>
