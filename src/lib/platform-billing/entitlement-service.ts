@@ -98,7 +98,14 @@ const UNLIMITED_AUTOMATION_COMPANY_IDS = new Set([4, 14]);
 
 /**
  * Maps CompanyPermissionModule.permission_name → the Entitlements key it overrides.
- * Admin toggling a permission ON/OFF takes precedence over the plan value.
+ *
+ * Override behaviour depends on the calling mode:
+ *  - "override"  (legacy companies): perm fully replaces the entitlement value in
+ *    either direction — OFF blocks even if the legacy baseline would grant it.
+ *  - "additive"  (plan-enforced companies): perm can only GRANT additional access;
+ *    it cannot revoke a feature the subscribed plan already includes.
+ *    Formula: result[key] = planValue || perm.enabled
+ *
  * To add a new override, just add an entry here — no other code changes needed.
  */
 const FEATURE_PERMISSION_OVERRIDES: Record<string, keyof Entitlements> = {
@@ -110,12 +117,6 @@ const FEATURE_PERMISSION_OVERRIDES: Record<string, keyof Entitlements> = {
 // Helpers
 // ---------------------------------------------------------------------------
 
-/**
- * Applies admin feature-permission overrides on top of plan-derived entitlements.
- *  enabled = true  → grant the feature regardless of plan
- *  enabled = false → block the feature regardless of plan
- *  no record       → plan value is used as-is
- */
 function withUnlimitedAutomation(entitlements: Entitlements): Entitlements {
   return {
     ...entitlements,
@@ -129,18 +130,27 @@ function withUnlimitedAutomation(entitlements: Entitlements): Entitlements {
   };
 }
 
+/**
+ * Applies feature-permission overrides onto a base entitlements object.
+ *
+ * isLegacy = true  → perm fully replaces the value (legacy companies: admin has full control).
+ * isLegacy = false → perm can only GRANT; it cannot revoke what the plan already includes.
+ *                    Formula: result = currentValue || perm.enabled
+ */
 function applyFeaturePermissionOverrides(
   entitlements: Entitlements,
   permissions: { permission_name: string; enabled: boolean }[],
+  isLegacy: boolean,
 ): Entitlements {
-  const result = { ...entitlements };
+  const result = { ...entitlements } as Record<string, unknown>;
   for (const perm of permissions) {
     const key = FEATURE_PERMISSION_OVERRIDES[perm.permission_name];
-    if (key) {
-      (result as Record<string, unknown>)[key] = perm.enabled;
-    }
+    if (!key) continue;
+    result[key] = isLegacy
+      ? perm.enabled
+      : (result[key] as boolean) || perm.enabled;
   }
-  return result;
+  return result as Entitlements;
 }
 
 // ---------------------------------------------------------------------------
@@ -157,10 +167,6 @@ export async function getCompanyEntitlements(
   const id = Number(companyId);
   if (!id) return DEFAULT_ENTITLEMENTS;
 
-  const isUnlimitedCompany = UNLIMITED_AUTOMATION_COMPANY_IDS.has(id);
-
-  const permissionNames = Object.keys(FEATURE_PERMISSION_OVERRIDES);
-
   const [company, subscription, featurePerms] = await Promise.all([
     db.company.findUnique({
       where: { id },
@@ -171,54 +177,49 @@ export async function getCompanyEntitlements(
       include: { plan: { include: { features: true } } },
     }),
     db.companyPermissionModule.findMany({
-      where: { companyId: id, permission_name: { in: permissionNames } },
+      where: {
+        companyId: id,
+        permission_name: { in: Object.keys(FEATURE_PERMISSION_OVERRIDES) },
+      },
       select: { permission_name: true, enabled: true },
     }),
   ]);
 
-  if (company && !company.enforcePlatformPlan) {
-    const legacy = applyFeaturePermissionOverrides(
-      LEGACY_ENTITLEMENTS,
-      featurePerms,
-    );
-    return isUnlimitedCompany ? withUnlimitedAutomation(legacy) : legacy;
-  }
+  const isLegacy = company ? !company.enforcePlatformPlan : false;
 
-  if (
+  // Resolve base entitlements from plan (or defaults/legacy)
+  let base: Entitlements;
+  if (isLegacy) {
+    base = { ...LEGACY_ENTITLEMENTS };
+  } else if (
     !subscription ||
     !subscription.plan ||
     subscription.status === PlatformSubscriptionStatus.CANCELED ||
     subscription.status === PlatformSubscriptionStatus.UNPAID
   ) {
-    const defaults = applyFeaturePermissionOverrides(
-      DEFAULT_ENTITLEMENTS,
-      featurePerms,
-    );
-    return isUnlimitedCompany ? withUnlimitedAutomation(defaults) : defaults;
-  }
-
-  // Build entitlements from plan features
-  const entitlements: Entitlements = { ...DEFAULT_ENTITLEMENTS };
-
-  for (const f of subscription.plan.features) {
-    const key = normalizeFeatureKey(f.featureKey);
-
-    if (f.type === PlatformFeatureType.TEXT && key === "automationModules") {
-      entitlements.automationModules = f.value
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean);
-      continue;
+    base = { ...DEFAULT_ENTITLEMENTS };
+  } else {
+    base = { ...DEFAULT_ENTITLEMENTS };
+    for (const f of subscription.plan.features) {
+      const key = normalizeFeatureKey(f.featureKey);
+      if (f.type === PlatformFeatureType.TEXT && key === "automationModules") {
+        base.automationModules = f.value
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
+      } else {
+        (base as Record<string, unknown>)[key] = parseFeatureValue(
+          f.type,
+          f.value,
+        );
+      }
     }
-
-    (entitlements as Record<string, unknown>)[key] = parseFeatureValue(
-      f.type,
-      f.value,
-    );
   }
 
-  const resolved = applyFeaturePermissionOverrides(entitlements, featurePerms);
-  return isUnlimitedCompany ? withUnlimitedAutomation(resolved) : resolved;
+  const result = applyFeaturePermissionOverrides(base, featurePerms, isLegacy);
+  return UNLIMITED_AUTOMATION_COMPANY_IDS.has(id)
+    ? withUnlimitedAutomation(result)
+    : result;
 }
 
 /** Returns true if the company has a specific entitlement. */
