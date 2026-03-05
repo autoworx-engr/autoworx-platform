@@ -1,7 +1,6 @@
 "use client";
 
 import { getSmartReplies } from "@/actions/communication/ai-reply/smart-reply";
-import { useGetCompanyPermissions } from "@/hooks/feature-permissions/useGetCompanyPersmissions";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowDown, MessageSquare, Wand2 } from "lucide-react";
 import * as React from "react";
@@ -13,16 +12,6 @@ type Props = {
   draft?: string;
   context?: "sms" | "email";
   isAllowed?: boolean;
-};
-
-export type Permission = {
-  id: number;
-  companyId: number;
-  permission_name: string;
-  title: string;
-  enabled: boolean;
-  createdAt?: string;
-  updatedAt?: string;
 };
 
 const suggestionVariants = {
@@ -63,18 +52,8 @@ export default function SmartReplyBar({
   const [error, setError] = React.useState<string | null>(null);
   const [isOpen, setIsOpen] = React.useState(false);
   const [isClosing, setIsClosing] = React.useState(false);
-  const [canShow, setCanShow] = React.useState(false);
-  const { data, isFetching } = useGetCompanyPermissions(companyId);
-  // if feature is not enabled, don't show the smart reply bar
-  const permission = data?.data?.find(
-    (perm: Permission) => perm?.permission_name === "aiSmartReplies",
-  );
 
-  React.useEffect(() => {
-    setCanShow(!!isAllowed && !!permission?.enabled);
-  }, [isAllowed, permission?.enabled]);
-
-  if (!canShow) {
+  if (!isAllowed) {
     return null;
   }
 
