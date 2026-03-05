@@ -203,21 +203,21 @@ function EstimateCard({ estimate }: { estimate: Estimate }) {
   return (
     <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden">
       {/* Header */}
-      <div className="flex items-start justify-between px-5 pt-4 pb-3 gap-4">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#6571FF] to-[#5a66ee] flex items-center justify-center shadow-sm flex-shrink-0">
-            <User size={18} className="text-white" />
+      <div className="flex items-start justify-between px-4 sm:px-5 pt-3 sm:pt-4 pb-2 sm:pb-3 gap-2 sm:gap-4">
+        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-[#6571FF] to-[#5a66ee] flex items-center justify-center shadow-sm flex-shrink-0">
+            <User size={16} className="text-white" />
           </div>
           <div className="min-w-0">
             <p className="font-semibold text-slate-800 dark:text-slate-100 text-sm leading-tight truncate">{estimate.clientName}</p>
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-0.5 mt-1 text-xs text-slate-500 dark:text-slate-400">
+            <div className="flex flex-wrap items-center gap-x-2.5 sm:gap-x-4 gap-y-1 mt-1 text-xs text-slate-500 dark:text-slate-400">
               <span className="flex items-center gap-1">
                 <CalendarDays size={11} />
                 {estimate.date} at {estimate.time}
               </span>
-              <span className="flex items-center gap-1">
-                <Car size={11} />
-                {estimate.vehicle}
+              <span className="flex items-center gap-1 min-w-0">
+                <Car size={11} className="flex-shrink-0" />
+                <span className="truncate max-w-[120px] sm:max-w-none">{estimate.vehicle}</span>
               </span>
               <span className="flex items-center gap-1">
                 <Clock size={11} />
@@ -246,11 +246,11 @@ function EstimateCard({ estimate }: { estimate: Estimate }) {
       {expanded && (
         <>
           {/* Services table */}
-          <div className="px-5 py-3 border-t border-slate-100 dark:border-slate-800">
+          <div className="px-4 sm:px-5 py-3 border-t border-slate-100 dark:border-slate-800">
             <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2.5">Services</p>
             <div className="space-y-2">
               {estimate.services.map((svc, i) => (
-                <div key={i} className="flex items-center justify-between gap-3">
+                <div key={i} className="flex items-center justify-between gap-2 sm:gap-3">
                   <div className="flex items-baseline gap-2 min-w-0">
                     <span className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate">{svc.name}</span>
                     <span className="text-xs text-slate-400 dark:text-slate-500 whitespace-nowrap">({svc.vehicleType})</span>
@@ -274,7 +274,7 @@ function EstimateCard({ estimate }: { estimate: Estimate }) {
           </div>
 
           {/* Totals */}
-          <div className="px-5 py-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/30 space-y-1.5">
+          <div className="px-4 sm:px-5 py-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/30 space-y-1.5">
             <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400">
               <span>Subtotal</span>
               <span className="font-medium text-slate-700 dark:text-slate-300">${subtotal.toLocaleString()}</span>
@@ -291,7 +291,7 @@ function EstimateCard({ estimate }: { estimate: Estimate }) {
 
           {/* Note */}
           {estimate.note && (
-            <div className="px-5 py-2.5 border-t border-dashed border-slate-200 dark:border-slate-700 bg-amber-50/50 dark:bg-amber-900/10">
+            <div className="px-4 sm:px-5 py-2.5 border-t border-dashed border-slate-200 dark:border-slate-700 bg-amber-50/50 dark:bg-amber-900/10">
               <p className="text-xs text-slate-500 dark:text-slate-400 italic">Note: &ldquo;{estimate.note}&rdquo;</p>
             </div>
           )}
@@ -331,18 +331,18 @@ export default function EstimatesTab() {
   return (
     <div className="flex flex-col gap-5">
       {/* Page header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
+      <div className="flex items-start sm:items-center justify-between flex-wrap gap-3">
+        <div className="min-w-0">
           <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">All Estimates</h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             {filtered.length} appointment{filtered.length !== 1 ? "s" : ""}
             {filterStatus !== "all" && ` · ${filterStatus}`}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/60 shadow-sm">
             <Receipt size={14} className="text-[#6571FF]" />
-            <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+            <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap">
               Total: <span className="text-[#6571FF]">${totalRevenue.toLocaleString()}</span>
             </span>
           </div>
@@ -383,7 +383,7 @@ export default function EstimatesTab() {
 
       {/* Search + filter row */}
       <div className="flex items-center gap-2">
-        <div className="relative flex-1 max-w-sm">
+        <div className="relative flex-1 sm:max-w-sm">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
