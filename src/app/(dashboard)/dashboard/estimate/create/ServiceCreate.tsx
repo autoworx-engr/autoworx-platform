@@ -19,7 +19,7 @@ export default function ServiceCreate() {
   const { categories } = useListsStore();
 
   const [name, setName] = useState("");
-  const [category, setCategory] = useState<Category | undefined>();
+  const [category, setCategory] = useState<Category | null | undefined>();
   const [description, setDescription] = useState("");
   const [categoryOpen, setCategoryOpen] = useState(false);
 

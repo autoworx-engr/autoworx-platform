@@ -25,7 +25,7 @@ export type SelectorWithAddProps = {
   allowClear?: boolean;
   allowAddNew?: boolean;
   addNewLabel?: string;
-  onAddNew?: (newItem: string, category?: Category) => void;
+  onAddNew?: (newItem: string, category?: Category | null) => void;
   addNewPlaceholder?: string;
   selectCategory?: boolean;
 };
@@ -69,7 +69,7 @@ export function SelectorWithAdd({
   const searchInputRef = useRef<HTMLInputElement>(null);
   const addNewInputRef = useRef<HTMLInputElement>(null);
 
-  const [category, setCategory] = useState<Category | undefined>(undefined);
+  const [category, setCategory] = useState<Category | null | undefined>(undefined);
 
   const [categoryOpen, setCategoryOpen] = useState(false);
   useEffect(() => {
@@ -197,7 +197,7 @@ export function SelectorWithAdd({
     setCategoryOpen(false);
   };
 
-  const handleCategoryChange = (newCategory: Category | undefined) => {
+  const handleCategoryChange = (newCategory: Category | null | undefined) => {
     setCategory(newCategory);
   };
   const selectedLabel = normalizedOptions?.find(

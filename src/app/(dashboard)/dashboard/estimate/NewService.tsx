@@ -35,7 +35,7 @@ export default function NewService({
   const [name, setName] = useState("");
   const [nameError, setNameError] = useState("");
   const [nameTouched, setNameTouched] = useState(false);
-  const [category, setCategory] = useState<Category | undefined>();
+  const [category, setCategory] = useState<Category | null | undefined>();
   const [categoryError, setCategoryError] = useState("");
   const [description, setDescription] = useState("");
   const [categoryOpen, setCategoryOpen] = useState(false);
@@ -83,7 +83,7 @@ export default function NewService({
     }
   };
 
-  const validateCategory = (category: Category | undefined) => {
+  const validateCategory = (category: Category | null | undefined) => {
     if (!category) {
       setCategoryError("Category is required");
       showError({
