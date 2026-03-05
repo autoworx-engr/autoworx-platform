@@ -188,7 +188,7 @@ export async function GET(req: NextRequest) {
       skip: skip,
       take: take,
       orderBy: {
-        createdAt: "asc",
+        createdAt: "desc",
       },
     });
 
