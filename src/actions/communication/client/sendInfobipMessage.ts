@@ -34,6 +34,7 @@ export async function sendInfobipMessage({
   attachments,
   isSalesAgent = false,
   userId,
+  systemCall = false,
 }: {
   companyId?: number;
   message: string;
@@ -41,6 +42,8 @@ export async function sendInfobipMessage({
   attachments: { url: string; name: string }[];
   isSalesAgent?: boolean;
   userId?: number;
+  /** Pass true when calling from a webhook/system context with no user session. */
+  systemCall?: boolean;
 }) {
   try {
     const resolvedCompanyId = companyId ?? (await getCompanyId());
@@ -81,7 +84,7 @@ export async function sendInfobipMessage({
       user = await db.user.findFirst({
         where: { id: userId },
       });
-    } else {
+    } else if (!systemCall) {
       user = await getUser();
     }
 

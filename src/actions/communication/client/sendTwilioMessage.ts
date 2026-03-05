@@ -43,6 +43,7 @@ export async function sendTwilioMessage({
   attachments,
   isSalesAgent = false,
   userId,
+  systemCall = false,
 }: {
   companyId?: number;
   message: string;
@@ -50,6 +51,8 @@ export async function sendTwilioMessage({
   attachments: { url: string; name: string }[];
   userId?: number;
   isSalesAgent?: boolean;
+  /** Pass true when calling from a webhook/system context with no user session. */
+  systemCall?: boolean;
 }) {
   try {
     const resolvedCompanyId = companyId ?? (await getCompanyId());
@@ -99,11 +102,8 @@ export async function sendTwilioMessage({
       user = await db.user.findFirst({
         where: { id: userId },
       });
-      console.log("userId", userId);
-    } else {
-      console.log("user 23");
+    } else if (!systemCall) {
       user = await getUser();
-      console.log("userId", userId);
     }
 
     const client = await db.client.findFirst({
