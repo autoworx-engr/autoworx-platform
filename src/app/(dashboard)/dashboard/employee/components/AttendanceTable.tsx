@@ -302,6 +302,10 @@ const Dashboard = () => {
       <div className="relative flex h-auto w-full flex-col gap-8 rounded border bg-background p-1 lg:p-6">
         <div className="left-3 top-3 w-fit">
           <DateRange
+            dateRange={[
+              startDate ? new Date(startDate) : null,
+              endDate ? new Date(endDate) : null,
+            ]}
             onOk={(start: any, end: any) => {
               let startDateObj: Date;
               let endDateObj: Date;
