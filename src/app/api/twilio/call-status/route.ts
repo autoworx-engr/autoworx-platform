@@ -97,10 +97,8 @@ export async function POST(request: Request) {
     // DialCallStatus can be: completed, answered, busy, no-answer, failed, canceled
     // We want to send SMS for: no-answer, busy, failed, canceled
     const missedStatuses = ["no-answer", "busy", "failed", "canceled"];
-    console.log("🚀 ~ POST ~ missedStatuses:", missedStatuses);
     const isMissedCall =
       dialCallStatus && missedStatuses.includes(dialCallStatus);
-    console.log("🚀 ~ POST ~ isMissedCall:", isMissedCall);
 
     if (isMissedCall && call.client) {
       // Check company toggle and plan entitlement before sending
@@ -123,7 +121,6 @@ export async function POST(request: Request) {
             const companyName = call.company?.name || "our business";
             const message = `You have a missed call from ${companyName}. We'll try to reach you again soon or feel free to call us back.`;
 
-            console.log("Sending SMS via gateway:", call.company?.smsGateway);
 
             if (call.company?.smsGateway === "TWILIO") {
               const response = await sendTwilioMessage({

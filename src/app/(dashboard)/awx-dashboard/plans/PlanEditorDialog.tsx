@@ -417,7 +417,7 @@ export const PlanEditorDialog = ({
                         className="px-4 w-full h-9 rounded-lg border-none text-right font-mono text-[11px] font-bold text-[#6571FF] ring-1 ring-slate-200 focus:ring-2 focus:ring-[#6571FF] dark:ring-slate-700"
                       />
                     )}
-                    {feature.key &&
+                    {/* {feature.key &&
                     !catalogFeatures.some(
                       (catalogFeature) => catalogFeature.key === feature.key,
                     ) ? (
@@ -431,7 +431,7 @@ export const PlanEditorDialog = ({
                       <span className="text-[10px] font-semibold text-slate-400">
                         Default
                       </span>
-                    )}
+                    )} */}
                   </div>
                 </div>
               ))}
