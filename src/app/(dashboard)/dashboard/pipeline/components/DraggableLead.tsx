@@ -1,5 +1,5 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { SetStateAction, useEffect, useRef, useState } from "react";
+import { SetStateAction, useEffect, useRef, useState, useMemo } from "react";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import {
   draggable,
@@ -32,7 +32,7 @@ type DraggableLeadProps = {
   leadRefs: React.MutableRefObject<Map<string, HTMLLIElement>>;
   handleColumnDropdownToggle: (
     categoryIndex: number,
-    leadIndex: number
+    leadIndex: number,
   ) => void;
   pipelineType: string;
   isDropdownOpen?: boolean;
@@ -40,14 +40,14 @@ type DraggableLeadProps = {
   selectedEmployee: Employee | null; // from parent component
   createEmployeeSelectHandler: (
     categoryIndex: number,
-    leadIndex: number
+    leadIndex: number,
   ) => (value: SetStateAction<Employee | null>) => void;
   companyUsers: User[];
   setOpenDropdownIndex: (
     value: SetStateAction<{
       category: number;
       index: number;
-    } | null>
+    } | null>,
   ) => void;
 
   showColumnSelect: { [key: string]: boolean };
@@ -55,40 +55,41 @@ type DraggableLeadProps = {
   handleColumnChange: (
     categoryIndex: number,
     leadIndex: number,
-    newColumnId: string
+    newColumnId: string,
   ) => Promise<void>;
   setShowColumnSelect: (
     value: SetStateAction<{
       [key: string]: boolean;
-    }>
+    }>,
   ) => void;
   setColumnDropdownOpen: (
     value: SetStateAction<{
       [key: string]: boolean;
-    }>
+    }>,
   ) => void;
   columnDropdownOpen: { [key: string]: boolean };
   handleTagRemove: (
     categoryIndex: number,
     leadIndex: number,
-    tagToRemove: Tag
+    tagToRemove: Tag,
   ) => Promise<void>;
   handleTagDropdownToggle: (categoryIndex: number, leadIndex: number) => void;
   isTagDropdownOpen: boolean; // from parent component
   handleTagSelect: (
     categoryIndex: number,
     leadIndex: number,
-    selectedTag: Tag | undefined
+    selectedTag: Tag | undefined,
   ) => Promise<void>;
   isServiceDropdownOpen: boolean; // from parent component
   handleServiceDropdownToggle: (
     categoryIndex: number,
-    leadIndex: number
+    leadIndex: number,
   ) => void;
   isTechnician: boolean | undefined;
   setSelectedClientId: (value: SetStateAction<number | null>) => void;
   setSelectedVehicleId: (value: SetStateAction<number | null>) => void;
   setIsAppointmentModalOpen: (value: SetStateAction<boolean>) => void;
+  searchTerm?: string;
 };
 const DraggableLead = ({
   screenWidth,
@@ -120,6 +121,7 @@ const DraggableLead = ({
   setSelectedClientId,
   setSelectedVehicleId,
   setIsAppointmentModalOpen,
+  searchTerm,
 }: DraggableLeadProps) => {
   const leadRef = useRef<HTMLLIElement | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -159,7 +161,7 @@ const DraggableLead = ({
         onDragEnter: () => setIsDropTarget(true),
         onDragLeave: () => setIsDropTarget(false),
         onDrop: () => setIsDropTarget(false),
-      })
+      }),
     );
   }, [categoryIndex, leadIndex, screenWidth, lead.invoiceId]);
   const key = `${categoryIndex}-${leadIndex}`;
@@ -172,13 +174,25 @@ const DraggableLead = ({
     }
     return "";
   };
+
+  const isSearchMatch = useMemo(() => {
+    if (!searchTerm) return false;
+    const lowerSearchTerm = searchTerm.toLowerCase();
+    const nameMatch = (lead.name || "").toLowerCase().includes(lowerSearchTerm);
+    const vehicleMatch =
+      lead.vehicle && lead.vehicle.toLowerCase().includes(lowerSearchTerm);
+    return nameMatch || vehicleMatch;
+  }, [searchTerm, lead]);
+
   return (
     <li
       ref={(el) => {
         leadRef.current = el;
         if (el) leadRefs.current.set(key, el);
       }}
-      className={`max-w-auto relative mx-1 my-1 h-fit animate-none rounded-xl border bg-background p-1 duration-300 hover:bg-slate-100 cursor-grab active:cursor-grabbing  ${isDropTarget ? "ring-2 ring-blue-500 bg-blue-50" : ""}`}
+      className={`max-w-auto relative mx-1 my-1 h-fit animate-none rounded-xl border p-1 duration-300 hover:bg-slate-100 cursor-grab active:cursor-grabbing  ${
+        isDropTarget ? "ring-2 ring-blue-500 bg-blue-50" : ""
+      } ${isSearchMatch ? "bg-yellow-100 border-yellow-300" : "bg-background"}`}
       style={{
         opacity: isDragging ? 0.5 : 1,
       }}
@@ -224,7 +238,7 @@ const DraggableLead = ({
                     value={selectedEmployee}
                     setValue={createEmployeeSelectHandler(
                       categoryIndex,
-                      leadIndex
+                      leadIndex,
                     )}
                     openDropdown={true}
                     setOpenDropdown={() => setOpenDropdownIndex(null)}
@@ -298,7 +312,7 @@ const DraggableLead = ({
         <div className="-left-100 absolute top-12 z-20">
           <EmployeeTagSelector
             employeeTags={pipelineData[categoryIndex].leads[leadIndex].tags.map(
-              (invoiceTag) => invoiceTag.tag
+              (invoiceTag) => invoiceTag.tag,
             )}
             setValue={(selectedTag) =>
               handleTagSelect(categoryIndex, leadIndex, selectedTag)
