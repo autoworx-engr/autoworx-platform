@@ -1,69 +1,54 @@
 import { getToken } from "next-auth/jwt";
-import { NextRequest, NextResponse, URLPattern } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { PUBLIC_API_ROUTES, PUBLIC_ROUTES } from "./constants/public-route";
 import { jwtVerifyToken } from "./lib/jwtVerify";
+import { isDynamicPublicApiRoute } from "./utils/isDynamicPublicApiRoute";
+import { rootDomain } from "./lib/subdomains";
 
-const PUBLIC_ROUTES = ["/login", "/register", "/forgot-password", "/"];
+function extractSubdomain(request: NextRequest): string | null {
+  const url = request.url;
+  const host = request.headers.get("host") || "";
+  const hostname = host.split(":")[0];
 
-const PUBLIC_API_ROUTES = [
-  "/api/auth/login",
-  "/api/auth/register",
-  "/api/auth/forgot-password",
-  "/api/auth/reset-password",
-  "/api/auth/refresh-token",
-  "/api/auth/providers",
-  "/api/auth/signin",
-  "/api/auth/callback/credentials",
-  "/api/auth/csrf",
-  "/api/sales-agent",
-  "/api/task",
-  "/api/ai-train-company",
-  "/api/notifications/client-abuse",
-  // Webhook endpoints
-  "/api/stripe/invoice-pay-hook",
-  "/api/twilio/token",
-  "/api/twilio/register-voip",
-  "/api/infobip",
-  "/api/lead-generate",
-  "/api/authorize-net/webhook",
-  "/api/infobip/mms/receive",
-  "/api/infobip/email/receive",
-  "/api/twilio/call-recording",
-  "/api/twilio/call-state",
-  "/api/twilio/call-status",
-  "/api/twilio/incoming",
-  "/api/twilio/receive",
-  "/api/twilio/whisper",
-  "/api/twilio/token",
-  "/api/platform/webhook",
-  "/api/invoice/track-view",
-  "/api/upload",
-  "/api/communication/client-hub/send-twilio-message",
-];
+  // Local development environment
+  if (url.includes("localhost") || url.includes("127.0.0.1")) {
+    // Try to extract subdomain from the full URL
+    const fullUrlMatch = url.match(/http:\/\/([^.]+)\.localhost/);
+    if (fullUrlMatch && fullUrlMatch[1]) {
+      return fullUrlMatch[1];
+    }
 
-const PUBLIC_DYNAMIC_API_ROUTES = [
-  "/api/infobip/sms/receive/:companyIds",
-  "/api/twilio/sms-receive/:companyIds",
-  "/api/twilio/call-recording/:recordingSid",
-  "/api/admin/client/:id/sales-agent",
-];
+    // Fallback to host header approach
+    if (hostname.includes(".localhost")) {
+      return hostname.split(".")[0];
+    }
 
-const isDynamicPublicApiRoute = (pathname: string) => {
-  const isPublic = PUBLIC_DYNAMIC_API_ROUTES.some((route) => {
-    const pattern = new URLPattern({ pathname: route });
-    return pattern.test({ pathname: pathname });
-  });
-  return isPublic;
-};
+    return null;
+  }
+
+  // Production environment
+  const rootDomainFormatted = rootDomain.split(":")[0];
+
+  // Handle preview deployment URLs (tenant---branch-name.vercel.app)
+  if (hostname.includes("---") && hostname.endsWith(".vercel.app")) {
+    const parts = hostname.split("---");
+    return parts.length > 0 ? parts[0] : null;
+  }
+
+  // Regular subdomain detection
+  const isSubdomain =
+    hostname !== rootDomainFormatted &&
+    hostname !== `www.${rootDomainFormatted}` &&
+    hostname.endsWith(`.${rootDomainFormatted}`);
+
+  return isSubdomain ? hostname.replace(`.${rootDomainFormatted}`, "") : null;
+}
 
 export async function middleware(request: NextRequest) {
   const token = await getToken({ req: request });
   const { pathname } = request.nextUrl;
 
   const authHeader = request.headers.get("authorization");
-  // console.log({
-  //   isDynamicPublicApiRoute: isDynamicPublicApiRoute(pathname),
-  //   publicApiRoute: PUBLIC_API_ROUTES.includes(pathname),
-  // });
   const isExternalApiRequest =
     !token &&
     pathname.startsWith("/api/") &&
@@ -71,9 +56,25 @@ export async function middleware(request: NextRequest) {
       isDynamicPublicApiRoute(pathname) || PUBLIC_API_ROUTES.includes(pathname)
     );
 
-  // console.log("Middleware - isExternalApiRequest:", isExternalApiRequest);
-  // console.log("Middleware - Authorization Header:", authHeader);
-  // console.log("Middleware - Request Pathname:", pathname);
+  const subdomain = extractSubdomain(request);
+
+  if (subdomain) {
+    // Block access to admin page from subdomains
+    if (pathname.startsWith("/dashboard")) {
+      return NextResponse.redirect(new URL("/", request.url));
+    }
+
+    // Skip API routes so they can be handled by the main app API handlers
+    if (!pathname.startsWith("/api/")) {
+      // Rewrite all other paths to the subdomain folder
+      return NextResponse.rewrite(
+        new URL(
+          `/subdomain/${subdomain}${pathname === "/" ? "" : pathname}`,
+          request.url,
+        ),
+      );
+    }
+  }
 
   // check api access token
   if (!authHeader && isExternalApiRequest) {
@@ -111,5 +112,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: "/((?!_next/static|_next/image|favicon.ico).*)",
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };

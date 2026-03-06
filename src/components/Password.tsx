@@ -2,9 +2,9 @@
 
 import { useFormErrorStore } from "@/stores/form-error";
 import { Eye, EyeOff } from "lucide-react";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { slimInputClassName } from "./SlimInput";
-import { usePathname } from "next/navigation";
 
 export default function Input({
   name,
@@ -50,9 +50,9 @@ export default function Input({
         {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
       </button>
 
-      {error && error.field === name && (
+      {/* {error && error.field === name && (
         <p className="text-red-500">{error.message}</p>
-      )}
+      )} */}
     </div>
   );
 }
