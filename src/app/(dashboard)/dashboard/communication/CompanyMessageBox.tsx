@@ -56,8 +56,6 @@ export default function CompanyMessageBox({
 
   // 🔹 Load messages
   useEffect(() => {
-    console.log("company id", company?.id);
-    console.log("currentCompanyId", currentCompanyId);
     if (!company?.id || !currentCompanyId) return;
 
     async function fetchMessages() {
@@ -67,9 +65,8 @@ export default function CompanyMessageBox({
         );
 
         const data = await res.json();
-        console.log("data", data);
+
         if (data.success) {
-          console.log("data", data);
           setMessages(data.messages);
         }
       } catch (error) {
@@ -95,11 +92,12 @@ export default function CompanyMessageBox({
     channel.bind("message", (data: any) => {
       // Only add if it's related to current open chat
       if (
-        (data.fromCompanyId === company.id &&
-          data.toCompanyId === currentCompanyId) ||
+        (data.fromCompanyId === currentCompanyId &&
+          data.toCompanyId === company.id) ||
         (data.fromCompanyId === currentCompanyId &&
           data.toCompanyId === company.id)
       ) {
+        console.log("data", data);
         setMessages((prev) => [...prev, data]);
       }
     });
@@ -144,6 +142,13 @@ export default function CompanyMessageBox({
     const files = Array.from(event.target.files!).map((file) => file);
     setShowAttachment(false);
     setMultiAttachmentFile(files);
+  };
+
+  const handleRemoveAttachment = (fileName: string) => {
+    setMultiAttachmentFile(
+      (multiFiles) =>
+        multiFiles && multiFiles?.filter((file) => file?.name !== fileName),
+    );
   };
 
   return (
@@ -260,7 +265,7 @@ export default function CompanyMessageBox({
                 >
                   {/* Remove single attachment */}
                   <button
-                    // onClick={() => handleRemoveAttachment(attachmentFile.name)}
+                    onClick={() => handleRemoveAttachment(attachmentFile.name)}
                     className="absolute -right-1 -top-1 opacity-0 group-hover:opacity-100 rounded-full bg-white p-1 text-gray-700 shadow-md hover:text-red-500 hover:shadow-lg transition-all z-10 border border-gray-200"
                     aria-label={`Remove ${attachmentFile.name}`}
                   >
@@ -308,13 +313,13 @@ export default function CompanyMessageBox({
       )}
       <form
         onSubmit={(e) => startTransition(() => handleSendMessage(e))}
-        className="flex items-center gap-2 border-t bg-gray-100 p-3"
+        className="flex relative items-center gap-2 border-t bg-gray-100 p-3"
       >
         {/* attachment or estimate dropdown */}
         {showAttachment && (
           <div
             className={cn(
-              "absolute -top-[55px] space-y-1",
+              "absolute z-50 -top-[55px] space-y-1",
               isEstimateAttachmentShow ? "-top-[55px]" : "-top-[27px]",
             )}
           >

@@ -104,7 +104,7 @@ export async function POST(req: Request) {
       });
     }
 
-    const payload = {
+    const payloadFrom = {
       fromCompanyId,
       toCompanyId,
       senderUserId,
@@ -112,12 +112,23 @@ export async function POST(req: Request) {
       attachment: attachments,
       requestEstimateId,
       createdAt: createdMessage.createdAt,
+      isOwnMessage: fromCompanyId === createdMessage?.fromCompanyId,
+    };
+    const payloadTo = {
+      fromCompanyId,
+      toCompanyId,
+      senderUserId,
+      message,
+      attachment: attachments,
+      requestEstimateId,
+      createdAt: createdMessage.createdAt,
+      isOwnMessage: false,
     };
 
     // Send to receiver company channel
-    await pusher.trigger(`company-${toCompanyId}`, "message", payload);
+    await pusher.trigger(`company-${fromCompanyId}`, "message", payloadFrom);
+    await pusher.trigger(`company-${toCompanyId}`, "message", payloadTo);
 
-    // Update chat list for both companies
     await pusher.trigger(
       `company-track-${fromCompanyId}`,
       "chat-track",
