@@ -19,11 +19,13 @@ export default function Collaboration({
   companies,
   currentUser,
   messages,
+  isCollaborators,
 }: {
   companyWithAdmin: Partial<User>[];
   companies: (Company & { users: User[] })[];
   currentUser: Session["user"];
   messages: (DbMessage & { attachment: Attachment[] | null })[];
+  isCollaborators: boolean | null | undefined;
 }) {
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [companyAdmins, setCompanyAdmins] = useState(companyWithAdmin);

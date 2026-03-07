@@ -201,6 +201,7 @@ export default async function CollaborationPage() {
         companies={finalCompanies}
         currentUser={session?.user}
         messages={messages}
+        isCollaborators={company?.isCollaborators}
       />
     </div>
   );
