@@ -4,6 +4,7 @@ import { Session } from "next-auth";
 import CollaborationEmptyBox from "./CollaborationEmptyBox";
 import CompanyMessageBox from "../CompanyMessageBox";
 import CompanyProfileCard from "./CompanyProfileCard";
+import { useSession } from "next-auth/react";
 
 export default function CompanyArea({
   selectedCompany,
@@ -16,6 +17,9 @@ export default function CompanyArea({
   previousMessages: (Message & { attachment: Attachment[] | null })[];
   setSelectedCompany?: React.Dispatch<React.SetStateAction<Company | null>>;
 }) {
+  const { data: session } = useSession();
+  const currentCompanyId = session?.user?.companyId;
+
   return (
     <div
       className={` w-full ${!setSelectedCompany ? "grid md:h-[83vh] md:grid-cols-[1fr_350px] gap-4" : "h-full"}`}
@@ -37,7 +41,11 @@ export default function CompanyArea({
         </div>
       )}
       {selectedCompany && !setSelectedCompany && (
-        <CompanyProfileCard company={selectedCompany} />
+        <CompanyProfileCard
+          companyId={selectedCompany?.id}
+          currentCompanyId={currentCompanyId!}
+          userId={Number(currentUser?.id!)}
+        />
       )}
     </div>
   );

@@ -541,7 +541,11 @@ export default function CompanyMessageBox({
               <ArrowLeft size={20} className="cursor-pointer" />
             </button>
 
-            <CompanyProfileCard company={company} />
+            <CompanyProfileCard
+              companyId={company?.id}
+              currentCompanyId={currentCompanyId!}
+              userId={Number(session?.user?.id!)}
+            />
           </div>
         </div>
       )}

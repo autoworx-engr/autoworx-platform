@@ -582,6 +582,8 @@ model Company {
   industry                         String?
   website                          String?
   address                          String?
+  about                            String?
+  teamSize                         TeamSize?                          @default(MEDIUM)
   city                             String?
   state                            String?
   zip                              String?
@@ -682,6 +684,30 @@ model Company {
   servicePlaybooks                 ServicePlaybook[]
   conversationExamples             ConversationExample[]
   knowledgeBaseDocuments           KnowledgeBaseDocument[]
+  reviews                          Reviews[]
+}
+
+model Reviews {
+  id            Int      @id @default(autoincrement())
+  rate          Int
+  message       String
+  companyId     Int
+  sendUserId    Int
+  sendCompanyId Int
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at")
+
+  company Company @relation(fields: [companyId], references: [id])
+  user    User    @relation(fields: [sendUserId], references: [id])
+
+  @@index([companyId])
+  @@index([sendUserId])
+}
+
+enum TeamSize {
+  SMALL
+  MEDIUM
+  LARGE
 }
 
 enum SmsGateway {
@@ -2161,6 +2187,7 @@ model User {
   shortLinks                     ShortLink[] // Links created by this user
   twoFactorConfirmation          TwoFactorConfirmation?
   collaborationMessages          CollaborationMessage[]
+  reviews                        Reviews[]
 
   @@index([companyId], name: "fk_users_company")
 }

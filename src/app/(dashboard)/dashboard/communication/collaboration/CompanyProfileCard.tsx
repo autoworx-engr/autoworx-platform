@@ -4,10 +4,28 @@ import Image from "next/image";
 import { MapPin, Users, Briefcase } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useState } from "react";
+import { useCompanyDetails } from "@/hooks/communication/collaboration/useCompanyDetails ";
 
-export default function CompanyProfileCard({ company }: { company?: any }) {
+type TProfileCard = {
+  companyId: number;
+  currentCompanyId: number;
+  userId: number;
+};
+
+export default function CompanyProfileCard({
+  companyId,
+  currentCompanyId,
+  userId,
+}: TProfileCard) {
   const [activeTab, setActiveTab] = useState<"reviews" | "write">("reviews");
-
+  const {
+    data: details,
+    isLoading,
+    isFetching,
+    isError,
+    error,
+  } = useCompanyDetails({ companyId, userId, currentCompanyId });
+  console.log("details", details);
   /* ---------------- STATIC DEFAULT DATA ---------------- */
 
   const defaultCompany = {
