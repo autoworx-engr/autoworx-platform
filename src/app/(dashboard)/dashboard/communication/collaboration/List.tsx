@@ -7,12 +7,15 @@ import CollaborationToggle from "./CollaborationToggle";
 type TProps = {
   companies: (Company & { users: User[] })[];
   selectedCompany: Company | null;
+  companyAdmins: Partial<User>[];
+  setCompanyAdmins: React.Dispatch<React.SetStateAction<Partial<User>[]>>;
   setSelectedCompany: React.Dispatch<React.SetStateAction<Company | null>>;
   unreadCounts: {
     count: number;
     companyId: number;
   }[];
   isCollaborators: boolean | null | undefined;
+  companyId: number;
 };
 
 export default function List({
@@ -21,6 +24,9 @@ export default function List({
   setSelectedCompany,
   unreadCounts,
   isCollaborators,
+  companyAdmins,
+  setCompanyAdmins,
+  companyId,
 }: TProps) {
   const [searchTerm, setSearchTerm] = useState("");
 

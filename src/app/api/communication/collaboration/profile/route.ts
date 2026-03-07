@@ -1,7 +1,6 @@
+import { getUserPermissions } from "@/actions/settings/teamManagement";
+import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
 
 /**
  * @swagger
@@ -46,7 +45,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const company = await prisma.company.findUnique({
+    const company = await db.company.findUnique({
       where: { id: companyId },
       select: {
         id: true,
@@ -55,7 +54,7 @@ export async function GET(req: NextRequest) {
         about: true,
         teamSize: true,
         industry: true,
-        address: true,
+        city: true,
       },
     });
 
@@ -66,7 +65,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const reviews = await prisma.reviews.findMany({
+    const reviews = await db.reviews.findMany({
       where: { companyId },
       select: {
         id: true,
@@ -87,6 +86,95 @@ export async function GET(req: NextRequest) {
 
     const alreadyReviewed = !!userReview;
 
+    const connectedCompanies = await db.companyJoin.findMany({
+      where: {
+        OR: [
+          {
+            companyOneId: companyId,
+            companyTwo: {
+              isCollaborators: true,
+            },
+          },
+          {
+            companyTwoId: companyId,
+            companyOne: {
+              isCollaborators: true,
+            },
+          },
+        ],
+        status: "ACCEPTED",
+      },
+      include: {
+        companyOne: {
+          include: {
+            users: {
+              where: {
+                employeeType: {
+                  in: ["Admin", "Manager", "Sales"],
+                },
+              },
+            },
+          },
+        },
+        companyTwo: {
+          include: {
+            users: {
+              where: {
+                employeeType: {
+                  in: ["Admin", "Manager", "Sales"],
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const oppositeCompanies = connectedCompanies.map((join) => {
+      if (join.companyOneId === companyId) {
+        return join.companyTwo;
+      } else {
+        return join.companyOne;
+      }
+    });
+    // Filter users in oppositeCompanies based on their collaboration permissions
+    const filteredOppositeCompanies = await Promise.all(
+      oppositeCompanies.map(async (company) => {
+        // Filter users who have collaboration permission
+        const filteredUsers = await Promise.all(
+          company.users.map(async (user) => {
+            try {
+              const permissions = await getUserPermissions(
+                user.id,
+                user.employeeType,
+              );
+
+              // Check communicationHubCollaboration permission
+              const hasCollaboration =
+                permissions?.communicationHubCollaboration === true;
+
+              return hasCollaboration ? user : null;
+            } catch (error) {
+              console.error(`  ERROR for user ${user.firstName}:`, error);
+              return null;
+            }
+          }),
+        );
+
+        const filtered = filteredUsers.filter((user) => user !== null);
+
+        return {
+          ...company,
+          users: filtered,
+        };
+      }),
+    );
+
+    // Remove companies that have no users with collaboration permission
+    const finalCompanies = filteredOppositeCompanies.filter(
+      (company) => company.users.length > 0,
+    );
+
     const response = {
       id: company.id,
       name: company.name,
@@ -94,15 +182,13 @@ export async function GET(req: NextRequest) {
       about: company.about,
       teamSize: company.teamSize,
       industry: company.industry,
-      address: company.address,
-
+      address: company.city,
       avgRate: Number(avgRate.toFixed(1)),
       totalReviews,
-
       userReview: userReview || null,
       alreadyReviewed,
-
-      totalCollaboration: 12, // static
+      totalCollaboration: finalCompanies?.length,
+      //! Todo
       totalJobsDone: 45, // static
     };
 

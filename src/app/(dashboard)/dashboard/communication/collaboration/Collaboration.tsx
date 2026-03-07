@@ -48,6 +48,9 @@ export default function Collaboration({
             setSelectedCompany={setSelectedCompany}
             unreadCounts={unreadCounts}
             isCollaborators={isCollaborators}
+            companyAdmins={companyAdmins}
+            setCompanyAdmins={setCompanyAdmins}
+            companyId={currentUser?.companyId}
           />
         </div>
 
@@ -69,6 +72,9 @@ export default function Collaboration({
           setSelectedCompany={setSelectedCompany}
           unreadCounts={unreadCounts}
           isCollaborators={isCollaborators}
+          companyAdmins={companyAdmins}
+          setCompanyAdmins={setCompanyAdmins}
+          companyId={currentUser?.companyId}
         />
 
         <CompanyArea
