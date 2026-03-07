@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { getPusherInstance } from "@/lib/pusher/server";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { revalidatePath } from "next/cache";
+import { sendCollaborationMessageNotification } from "@/lib/notification/communication-notify";
 
 const pusher = getPusherInstance();
 
@@ -149,6 +150,12 @@ export async function POST(req: Request) {
       "chat-track",
       chatTrack,
     );
+
+    if (toCompanyId) {
+      sendCollaborationMessageNotification({
+        companyId: toCompanyId,
+      });
+    }
 
     revalidatePath("/dashboard/communication/collaboration");
 

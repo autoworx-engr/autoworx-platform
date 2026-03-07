@@ -314,14 +314,15 @@ export async function POST(req: Request) {
 
       const company = await db.company.findUnique({
         where: { id: receiver?.companyId },
-        select: { name: true },
+        select: { name: true, id: true },
       });
       // send collaboration message notification
       // Send a notification to the user about the new message
-      sendCollaborationMessageNotification({
-        toUserId: to,
-        companyName: company?.name || "",
-      });
+      if (company) {
+        sendCollaborationMessageNotification({
+          companyId: company?.id,
+        });
+      }
     }
     revalidatePath("/dashboard/communication/internal");
     revalidatePath("/dashboard/communication/collaboration");
