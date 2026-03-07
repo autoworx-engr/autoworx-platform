@@ -250,6 +250,51 @@ export async function createPlatformPaymentProfile(
 }
 
 /**
+ * Validate a Customer Payment Profile (confirms it is usable for transactions)
+ * Returns true on success, throws on failure.
+ */
+export async function validateCustomerPaymentProfile(
+  customerProfileId: string,
+  customerPaymentProfileId: string,
+): Promise<void> {
+  const merchantAuthenticationType = getPlatformAuthNetCredentials();
+
+  const validateRequest =
+    new ApiContracts.ValidateCustomerPaymentProfileRequest();
+  validateRequest.setMerchantAuthentication(merchantAuthenticationType);
+  validateRequest.setCustomerProfileId(customerProfileId);
+  validateRequest.setCustomerPaymentProfileId(customerPaymentProfileId);
+  validateRequest.setValidationMode(ApiContracts.ValidationModeEnum.TESTMODE);
+
+  return new Promise<void>((resolve, reject) => {
+    const ctrl = new ApiControllers.ValidateCustomerPaymentProfileController(
+      validateRequest.getJSON(),
+    );
+    ctrl.setEnvironment(getEnvironment());
+
+    ctrl.execute(() => {
+      const apiResponse = ctrl.getResponse();
+      const response = new ApiContracts.ValidateCustomerPaymentProfileResponse(
+        apiResponse,
+      );
+
+      if (
+        response != null &&
+        response.getMessages().getResultCode() ===
+          ApiContracts.MessageTypeEnum.OK
+      ) {
+        resolve();
+      } else {
+        const error = response?.getMessages().getMessage()[0];
+        reject(
+          new Error(error?.getText() || "Payment profile validation failed"),
+        );
+      }
+    });
+  });
+}
+
+/**
  * 2. Create ARB Subscription
  */
 export async function createPlatformARBSubscription({

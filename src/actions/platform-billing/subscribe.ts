@@ -8,6 +8,7 @@ import {
   cancelPlatformARBSubscription,
   getCustomerProfile,
   chargePlatformCustomerProfile,
+  validateCustomerPaymentProfile,
 } from "@/lib/platform-billing/authorize-net";
 import { PlatformSubscriptionStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
@@ -182,55 +183,34 @@ export async function subscribeToPlatformPlan({
       arbStartDate.setMonth(arbStartDate.getMonth() + intervalMonths);
     }
 
-    const arbArgs = {
+    // Validate the payment profile is fully indexed and usable before
+    // handing it to ARB. Auth.Net can return E00040 on ARB if a freshly
+    // created nonce-based profile hasn't propagated yet. Validating here
+    // forces that check upfront with a clear, actionable error — and
+    // ensures we never silently charge a different card than intended.
+    try {
+      await validateCustomerPaymentProfile(
+        customerProfileId,
+        customerPaymentProfileId!,
+      );
+    } catch (validErr: any) {
+      console.error(
+        `Payment profile validation failed for profile ${customerPaymentProfileId}:`,
+        validErr.message,
+      );
+      throw new Error(
+        "Your payment method could not be verified. Please re-enter your card details and try again.",
+      );
+    }
+
+    const arb = await createPlatformARBSubscription({
       customerProfileId,
       customerPaymentProfileId: customerPaymentProfileId!,
       amount: Number(plan.price),
       intervalMonths,
       startDate: arbStartDate,
       planName: plan.name,
-    };
-
-    let arb: { subscriptionId: string };
-    try {
-      arb = await createPlatformARBSubscription(arbArgs);
-    } catch (arbErr: any) {
-      // E00040 – "The record cannot be found": a freshly-created nonce-based
-      // payment profile is sometimes not immediately usable for ARB.
-      // Fall back to the first existing payment profile for this customer.
-      if (
-        arbErr.message?.toLowerCase().includes("record cannot be found") &&
-        customerProfileId
-      ) {
-        console.warn(
-          "ARB E00040: new payment profile not usable for ARB, falling back to existing profile...",
-        );
-        const fallbackProf = await getCustomerProfile(customerProfileId);
-        const fallbackPPs =
-          typeof fallbackProf.getPaymentProfiles === "function"
-            ? fallbackProf.getPaymentProfiles()
-            : fallbackProf.paymentProfiles || [];
-        if (fallbackPPs?.length > 0) {
-          const fallbackPPId =
-            typeof fallbackPPs[0].getCustomerPaymentProfileId === "function"
-              ? fallbackPPs[0].getCustomerPaymentProfileId()
-              : fallbackPPs[0].customerPaymentProfileId ||
-                fallbackPPs[0].paymentProfileId;
-          console.log(
-            `ARB recovery: retrying with existing payment profile ${fallbackPPId}`,
-          );
-          customerPaymentProfileId = fallbackPPId;
-          arb = await createPlatformARBSubscription({
-            ...arbArgs,
-            customerPaymentProfileId: fallbackPPId,
-          });
-        } else {
-          throw arbErr;
-        }
-      } else {
-        throw arbErr;
-      }
-    }
+    });
 
     // 2.5 Immediate first charge (no-trial flow only)
     // This gives instant confirmation, and the webhook for this transaction
