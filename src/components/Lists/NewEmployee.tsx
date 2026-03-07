@@ -160,11 +160,11 @@ export default function AddNewEmployee({
     }
 
     // Validate optional fields if provided
-    if (zip && !/^\d*$/.test(zip)) {
-      showError({
-        field: "zip",
-        message: "Zip code should contain only numbers.",
-      });
+    if (zip === "" && !/^\d*$/.test(zip)) {
+      // showError({
+      //   field: "zip",
+      //   message: "Zip code should contain only numbers.",
+      // });
       return;
     }
 
@@ -474,18 +474,19 @@ export default function AddNewEmployee({
                 name="zip"
                 placeholder="zip code"
                 required={false}
+                type="number"
                 onChange={(e: any) => {
                   const value = e.target.value;
-                  value && !/^\d*$/.test(value);
+                  // value && !/^\d*$/.test(value);
                   // (value === "" || /^\d+$/.test(value
-                  if (value === "" || /^\d+$/.test(value)) {
-                    showError({
-                      field: "zip",
-                      message: "Zip code should contain only numbers.",
-                    });
-                  } else {
-                    clearError();
-                  }
+                  // if (value === "" || /^\d+$/.test(value)) {
+                  //   showError({
+                  //     field: "zip",
+                  //     message: "Zip code should contain only numbers.",
+                  //   });
+                  // } else {
+                  //   clearError();
+                  // }
                 }}
               />
             </div>
