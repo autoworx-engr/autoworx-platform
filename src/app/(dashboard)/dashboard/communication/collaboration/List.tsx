@@ -1,16 +1,18 @@
 import React, { useState } from "react";
 import Image from "next/image";
-import { Company } from "@prisma/client";
+import { Company, User } from "@prisma/client";
 import { cn } from "@/lib/cn";
+import CollaborationToggle from "./CollaborationToggle";
 
 type TProps = {
-  companies: Company[];
+  companies: (Company & { users: User[] })[];
   selectedCompany: Company | null;
   setSelectedCompany: React.Dispatch<React.SetStateAction<Company | null>>;
   unreadCounts: {
     count: number;
     companyId: number;
   }[];
+  isCollaborators: boolean | null | undefined;
 };
 
 export default function List({
@@ -18,6 +20,7 @@ export default function List({
   selectedCompany,
   setSelectedCompany,
   unreadCounts,
+  isCollaborators,
 }: TProps) {
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -28,6 +31,14 @@ export default function List({
 
   return (
     <div className="app-shadow h-screen w-full overflow-y-auto rounded-lg bg-background p-3 sm:block sm:h-[83vh] sm:w-[23%]">
+      <CollaborationToggle
+        companyId={companyId}
+        initialValue={isCollaborators ?? false}
+        companies={companies}
+        setCompanyAdmins={setCompanyAdmins}
+        companyAdmins={companyAdmins}
+      />
+
       {/* Search */}
       <input
         type="text"
