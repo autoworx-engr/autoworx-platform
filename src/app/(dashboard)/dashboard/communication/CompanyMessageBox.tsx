@@ -3,7 +3,13 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useSession } from "next-auth/react";
 import { format } from "date-fns";
-import { ArrowLeft, CircleX, MoreVertical, SendHorizontal } from "lucide-react";
+import {
+  ArrowLeft,
+  CircleX,
+  CloudDownload,
+  MoreVertical,
+  SendHorizontal,
+} from "lucide-react";
 import Image from "next/image";
 import { pusher } from "@/lib/pusher/client";
 import { cn } from "@/lib/cn";
@@ -110,20 +116,52 @@ export default function CompanyMessageBox({
 
   async function handleSendMessage(e: React.FormEvent) {
     e.preventDefault();
-    if (!message.trim() || !currentCompanyId || !company?.id) return;
+    if (!currentCompanyId || !company?.id) return;
 
     const trimmedMessage = message.trim();
-    setMessage(""); // instant clear
+    setMessage("");
 
     try {
+      let uploadedFiles = null;
+
+      // 🔹 Upload attachments first
+      if (multiAttachmentFile && multiAttachmentFile.length > 0) {
+        const formData = new FormData();
+
+        multiAttachmentFile.forEach((file) => {
+          formData.append("file", file);
+        });
+
+        const uploadRes = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        const uploadData = await uploadRes.json();
+
+        uploadedFiles = uploadData.data?.map((url: string, index: number) => {
+          const file = multiAttachmentFile[index];
+
+          return {
+            fileName: file.name,
+            fileType: file.type,
+            fileUrl: url,
+            fileSize: file.size,
+          };
+        });
+      }
+
       const res = await fetch("/api/pusher/collaboration", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           fromCompanyId: currentCompanyId,
           toCompanyId: company.id,
           senderUserId: session?.user?.id,
-          message: trimmedMessage,
+          message: trimmedMessage || null,
+          attachmentFiles: uploadedFiles,
           section: "collaboration",
         }),
       });
@@ -132,6 +170,10 @@ export default function CompanyMessageBox({
 
       if (!data.success) {
         console.error("Failed to send", data);
+      }
+      if (data.success) {
+        setMessage("");
+        setMultiAttachmentFile(null);
       }
     } catch (err) {
       console.error("Send error:", err);
@@ -149,6 +191,19 @@ export default function CompanyMessageBox({
       (multiFiles) =>
         multiFiles && multiFiles?.filter((file) => file?.name !== fileName),
     );
+  };
+
+  const handleDownload = async (fileUrl: string | null) => {
+    // const response = await fetch(fileUrl as string);
+    // const responseBlob = await response.blob();
+    // const blobURL = URL.createObjectURL(responseBlob);
+    // const link = document.createElement("a");
+    // link.href = blobURL;
+    // link.setAttribute("download", fileUrl?.split("/").pop()!);
+    // document.body.appendChild(link);
+    // link.click();
+    // link.remove();
+    fileUrl && window.open(fileUrl, "_blank", "noopener,noreferrer");
   };
 
   return (
@@ -196,31 +251,85 @@ export default function CompanyMessageBox({
 
               <div
                 className={cn(
-                  "flex flex-col mb-4",
+                  "flex flex-col space-y-2",
                   isOwn ? "items-end" : "items-start",
                 )}
               >
-                <div
-                  className={cn(
-                    "max-w-[75%] rounded-2xl px-4 py-2 text-sm shadow-sm break-words",
-                    isOwn
-                      ? "bg-[#006D77] text-white rounded-br-sm"
-                      : "bg-gray-100 text-gray-800 rounded-bl-sm",
-                  )}
-                >
-                  {msg.message}
-                </div>
+                {/* Attachments */}
+                {msg?.attachments &&
+                  msg?.attachments.length > 0 &&
+                  msg?.attachments.map((attachment: any) => (
+                    <div
+                      key={attachment.fileUrl}
+                      className={cn(
+                        "flex items-center gap-2",
+                        isOwn ? "flex-row-reverse" : "flex-row",
+                      )}
+                    >
+                      {attachment.fileType?.includes("image") ? (
+                        <Image
+                          src={attachment.fileUrl}
+                          alt=""
+                          width={200}
+                          height={200}
+                          className="rounded-md border cursor-pointer"
+                        />
+                      ) : (
+                        <div className="rounded-md bg-[#006D77] px-4 py-2 text-white">
+                          <p className="text-sm">{attachment.fileName}</p>
+                          <p className="text-xs">
+                            {(attachment.fileSize / (1024 * 1024)).toFixed(2)}{" "}
+                            MB
+                          </p>
+                        </div>
+                      )}
 
+                      <button
+                        onClick={() => handleDownload(attachment.fileUrl)}
+                      >
+                        <CloudDownload
+                          size={22}
+                          className="cursor-pointer text-gray-400"
+                        />
+                      </button>
+                    </div>
+                  ))}
+
+                {/* Request Estimate */}
+                {msg.requestEstimateId && (
+                  <div className="w-72 rounded-md bg-[#006D77] p-2">
+                    <InvoiceEstimateModal
+                      setShowAttachment={setShowAttachment}
+                      setMessages={setMessages}
+                      receiverCompany={company!}
+                    />
+                  </div>
+                )}
+
+                {/* Message Bubble */}
+                {msg.message && (
+                  <div
+                    className={cn(
+                      "max-w-[75%] rounded-2xl px-4 py-2 text-sm shadow-sm break-words",
+                      isOwn
+                        ? "bg-[#006D77] text-white rounded-br-sm"
+                        : "bg-gray-100 text-gray-800 rounded-bl-sm",
+                    )}
+                  >
+                    {msg.message}
+                  </div>
+                )}
+
+                {/* Timestamp */}
                 <p
                   className={cn(
-                    "text-[11px] mt-1 px-1",
+                    "text-[11px] mt-1",
                     isOwn
                       ? "text-gray-400 text-right"
                       : "text-gray-500 text-left",
                   )}
                 >
-                  {format(new Date(msg.createdAt), "p")} ·{" "}
-                  {msg.senderUser?.firstName} {msg.senderUser?.lastName}
+                  {format(new Date(msg.createdAt), "p")} · {msg.senderUserName}
                 </p>
               </div>
             </div>

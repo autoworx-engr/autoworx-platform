@@ -52,11 +52,8 @@ export async function GET(req: Request) {
       attachments: msg.attachment,
       requestEstimateId: msg.requestEstimateId,
       senderUser: msg.senderUser,
-
       fromCompanyId: msg.fromCompanyId,
       toCompanyId: msg.toCompanyId,
-
-      // 🔥 IMPORTANT FLAG FOR UI
       isOwnMessage: msg.fromCompanyId === viewerCompanyId,
     }));
 
