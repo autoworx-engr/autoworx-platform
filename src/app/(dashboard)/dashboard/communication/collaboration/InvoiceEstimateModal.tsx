@@ -23,12 +23,14 @@ type TProps = {
     id: number;
     name: string;
   };
+  currentCompanyId: number;
   setMessages: React.Dispatch<React.SetStateAction<any[]>>;
   setShowAttachment: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 export default function InvoiceEstimateModal({
   receiverCompany,
+  currentCompanyId,
   setMessages,
   setShowAttachment,
 }: TProps) {
@@ -55,6 +57,7 @@ export default function InvoiceEstimateModal({
   };
 
   const handleEstimateSubmit = async () => {
+    console.log("request estimate");
     try {
       setError("");
 
@@ -79,20 +82,22 @@ export default function InvoiceEstimateModal({
       const senderCompanyId = (
         authUser as Session & { user: { companyId: number } }
       )?.user?.companyId;
+      const senderUserId = (
+        authUser as Session & { user: { companyId: number } }
+      )?.user?.id;
 
-      // const { status, data } = await requestEstimate(formDataForPhoto, {
-      //   ...estimateInfo,
-      //   year: parseInt(estimateInfo.year),
-      //   receiverCompanyId: receiverCompany.id,
-      //   senderCompanyId,
-      //   receiverId
-      // });
+      const { status, data } = await requestEstimate(formDataForPhoto, {
+        ...estimateInfo,
+        year: parseInt(estimateInfo.year),
+        receiverCompanyId: receiverCompany.id,
+        senderCompanyId,
+      });
 
-      // if (status !== 200) {
-      //   throw new Error("Failed to request estimate");
-      // }
+      if (status !== 200) {
+        throw new Error("Failed to request estimate");
+      }
 
-      // const { requestEstimateFromDB } = data;
+      const { requestEstimateFromDB } = data;
 
       setOpen(false);
       setEstimateInfo({
@@ -106,26 +111,28 @@ export default function InvoiceEstimateModal({
 
       /* ---------------- REALTIME SEND ---------------- */
 
-      // const pusherResponse = await fetch(`/api/pusher`, {
-      //   method: "POST",
-      //   headers: {
-      //     "Content-Type": "application/json",
-      //   },
-      //   body: JSON.stringify({
-      //     sessionUserId: authUser?.user?.id,
-      //     toCompanyId: receiverCompany.id,
-      //     type: sendType.Company,
-      //     message: "",
-      //     attachmentFile: null,
-      //     requestEstimate: requestEstimateFromDB,
-      //   }),
-      // });
+      const pusherResponse = await fetch("/api/pusher/collaboration", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fromCompanyId: senderCompanyId,
+          senderUserId: senderUserId,
+          message: null,
+          attachmentFiles: null,
+          section: "collaboration",
+          toCompanyId: receiverCompany.id,
+          attachmentFile: null,
+          requestEstimateId: requestEstimateFromDB?.id,
+        }),
+      });
 
-      // const messageData = await pusherResponse.json();
+      const messageData = await pusherResponse.json();
 
-      // if (!pusherResponse.ok || !messageData.success) {
-      //   throw new Error("Message wasn't sent");
-      // }
+      if (!pusherResponse.ok || !messageData.success) {
+        throw new Error("Message wasn't sent");
+      }
 
       /* ---------------- LOCAL STATE UPDATE ---------------- */
 

@@ -9,25 +9,36 @@ export default function CompanyArea({
   selectedCompany,
   currentUser,
   previousMessages,
+  setSelectedCompany,
 }: {
   selectedCompany: Company | null;
   currentUser: Session["user"];
   previousMessages: (Message & { attachment: Attachment[] | null })[];
+  setSelectedCompany?: React.Dispatch<React.SetStateAction<Company | null>>;
 }) {
   return (
-    <div className="grid w-full md:h-[83vh] md:grid-cols-[1fr_380px] gap-4">
+    <div
+      className={` w-full ${!setSelectedCompany ? "grid md:h-[83vh] md:grid-cols-[1fr_350px] gap-4" : "h-full"}`}
+    >
       {selectedCompany ? (
         <div>
           <CompanyMessageBox
             company={selectedCompany}
             currentUser={currentUser}
             previousMessages={previousMessages}
+            {...(setSelectedCompany && {
+              onBack: () => setSelectedCompany(null),
+            })}
           />
         </div>
       ) : (
-        <CollaborationEmptyBox />
+        <div className="col-span-2">
+          <CollaborationEmptyBox />
+        </div>
       )}
-      {selectedCompany && <CompanyProfileCard company={selectedCompany} />}
+      {selectedCompany && !setSelectedCompany && (
+        <CompanyProfileCard company={selectedCompany} />
+      )}
     </div>
   );
 }

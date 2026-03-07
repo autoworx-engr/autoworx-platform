@@ -37,6 +37,7 @@ export async function GET(req: Request) {
             image: true,
           },
         },
+        requestEstimate: true,
       },
       orderBy: {
         createdAt: "asc",
@@ -50,7 +51,7 @@ export async function GET(req: Request) {
       message: msg.message,
       createdAt: msg.createdAt,
       attachments: msg.attachment,
-      requestEstimateId: msg.requestEstimateId,
+      requestEstimate: msg?.requestEstimate,
       senderUser: msg.senderUser,
       fromCompanyId: msg.fromCompanyId,
       toCompanyId: msg.toCompanyId,

@@ -25,36 +25,54 @@ export default function Collaboration({
   currentUser: Session["user"];
   messages: (DbMessage & { attachment: Attachment[] | null })[];
 }) {
-  // const [selectedUsersList, setSelectedUsersList] = useState<User[]>([]);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [companyAdmins, setCompanyAdmins] = useState(companyWithAdmin);
 
-  // Use the hook to get real-time unread message counts
   const unreadCounts = [
     {
       count: 0,
       companyId: 1,
     },
   ];
-  // const unreadCounts = useUnreadCollaborationMessages(
-  //   parseInt(currentUser?.id),
-  // );
 
   return (
-    <div className="flex gap-5 sm:mt-5">
-      <List
-        companies={companies}
-        selectedCompany={selectedCompany}
-        setSelectedCompany={setSelectedCompany}
-        unreadCounts={unreadCounts}
-      />
+    <>
+      {/* ✅ Small device */}
+      <div className="md:hidden sm:mt-5">
+        <div className={selectedCompany ? "hidden" : "block"}>
+          <List
+            companies={companies}
+            selectedCompany={selectedCompany}
+            setSelectedCompany={setSelectedCompany}
+            unreadCounts={unreadCounts}
+          />
+        </div>
 
-      <CompanyArea
-        selectedCompany={selectedCompany}
-        currentUser={currentUser}
-        previousMessages={messages}
-        // companies={companies}
-      />
-    </div>
+        <div className={selectedCompany ? "block" : "hidden"}>
+          <CompanyArea
+            selectedCompany={selectedCompany}
+            currentUser={currentUser}
+            previousMessages={messages}
+            setSelectedCompany={setSelectedCompany}
+          />
+        </div>
+      </div>
+
+      {/* ✅ Medium & Large device — existing code */}
+      <div className="hidden md:flex gap-5 sm:mt-5">
+        <List
+          companies={companies}
+          selectedCompany={selectedCompany}
+          setSelectedCompany={setSelectedCompany}
+          unreadCounts={unreadCounts}
+        />
+
+        <CompanyArea
+          selectedCompany={selectedCompany}
+          currentUser={currentUser}
+          previousMessages={messages}
+        />
+      </div>
+    </>
   );
 }

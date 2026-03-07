@@ -1485,23 +1485,22 @@ model TemplatePhoto {
 
 model RequestEstimate {
   id                    Int                    @id @default(autoincrement())
-  senderId              Int                    @map("sender_id")
+  senderId              Int?                    @map("sender_id")
   senderCompanyId       Int                    @map("sender_company_id")
-  receiverId            Int                    @map("receiver_id")
+  receiverId            Int?                    @map("receiver_id")
   receiverCompanyId     Int                    @map("receiver_company_id")
   vehicleId             Int                    @unique @map("vehicle_id")
   serviceId             Int                    @unique @map("service_id")
   invoiceId             String                 @map("invoice_id")
   createdAt             DateTime               @default(now()) @map("created_at")
   updatedAt             DateTime               @default(now()) @updatedAt @map("updated_at")
-  sender                User                   @relation("Sender", fields: [senderId], references: [id], onDelete: Cascade)
-  receiver              User                   @relation("Receiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  sender                User?                   @relation("Sender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver              User?                   @relation("Receiver", fields: [receiverId], references: [id], onDelete: Cascade)
   senderCompany         Company                @relation("SenderCompany", fields: [senderCompanyId], references: [id], onDelete: Cascade)
   receiverCompany       Company                @relation("ReceiverCompany", fields: [receiverCompanyId], references: [id], onDelete: Cascade)
   invoice               Invoice?
   vehicle               Vehicle?               @relation("Vehicle", fields: [vehicleId], references: [id], onDelete: Cascade)
   service               Service?               @relation("Service", fields: [serviceId], references: [id], onDelete: Cascade)
-  message               Message?               @relation("Message")
   collaborationMessages CollaborationMessage[]
 }
 
@@ -1590,7 +1589,6 @@ model Message {
   updatedAt         DateTime         @default(now()) @updatedAt @map("updated_at")
   group             Group?           @relation(fields: [groupId], references: [id])
   attachment        Attachment[]
-  requestEstimate   RequestEstimate? @relation("Message", fields: [requestEstimateId], references: [id])
   chatTrack         ChatTrack?
   userId            Int?
 

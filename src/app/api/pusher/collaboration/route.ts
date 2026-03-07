@@ -35,6 +35,11 @@ export async function POST(req: Request) {
         section: "collaboration",
         requestEstimateId: requestEstimateId || null,
       },
+      include: {
+        requestEstimate: true,
+        senderUser: true,
+        attachment: true,
+      },
     });
 
     let attachments = null;
@@ -109,8 +114,10 @@ export async function POST(req: Request) {
       toCompanyId,
       senderUserId,
       message,
-      attachment: attachments,
+      attachment: createdMessage?.attachment,
       requestEstimateId,
+      requestEstimate: createdMessage?.requestEstimate,
+      senderUser: createdMessage.senderUser,
       createdAt: createdMessage.createdAt,
       isOwnMessage: fromCompanyId === createdMessage?.fromCompanyId,
     };
@@ -119,8 +126,10 @@ export async function POST(req: Request) {
       toCompanyId,
       senderUserId,
       message,
-      attachment: attachments,
+      attachment: createdMessage?.attachment,
       requestEstimateId,
+      requestEstimate: createdMessage?.requestEstimate,
+      senderUser: createdMessage.senderUser,
       createdAt: createdMessage.createdAt,
       isOwnMessage: false,
     };

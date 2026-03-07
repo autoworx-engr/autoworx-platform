@@ -16,6 +16,8 @@ import { cn } from "@/lib/cn";
 import { usePathname } from "next/navigation";
 import InvoiceEstimateModal from "./collaboration/InvoiceEstimateModal";
 import CompanyProfileCard from "./collaboration/CompanyProfileCard";
+import Link from "next/link";
+import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
 
 type TMessage = {
   id?: number;
@@ -41,7 +43,7 @@ export default function CompanyMessageBox({
   currentUser: any;
   previousMessages: any;
   isMobile?: boolean;
-  onBack?: any;
+  onBack?: () => void;
 }) {
   const [showProfile, setShowProfile] = useState(false);
   const { data: session } = useSession();
@@ -119,6 +121,7 @@ export default function CompanyMessageBox({
     if (!currentCompanyId || !company?.id) return;
 
     const trimmedMessage = message.trim();
+    if (!trimmedMessage && !multiAttachmentFile) return;
     setMessage("");
 
     try {
@@ -207,12 +210,16 @@ export default function CompanyMessageBox({
   };
 
   return (
-    <div className="flex h-[83vh] flex-col rounded-lg border bg-white">
+    <div
+      className={`flex ${onBack ? "h-full" : "h-[83vh]"} flex-col rounded-lg border bg-white`}
+    >
       {/* 🔹 Header */}
-      <div className="flex items-center justify-between bg-[#006D77] p-3 text-white">
+      <div
+        className={`flex items-center justify-between bg-[#006D77] p-3 text-white ${onBack && "sticky top-0 right-0 left-0"}`}
+      >
         {/* Left Side */}
         <div className="flex items-center gap-2">
-          {isMobile && (
+          {onBack && (
             <ArrowLeft size={20} className="cursor-pointer" onClick={onBack} />
           )}
 
@@ -220,11 +227,13 @@ export default function CompanyMessageBox({
         </div>
 
         {/* Three Dot */}
-        <MoreVertical
-          size={20}
-          className="cursor-pointer"
-          onClick={() => setShowProfile(true)}
-        />
+        {onBack && (
+          <MoreVertical
+            size={20}
+            className="cursor-pointer"
+            onClick={() => setShowProfile(true)}
+          />
+        )}
       </div>
 
       {/* 🔹 Messages */}
@@ -296,14 +305,59 @@ export default function CompanyMessageBox({
                   ))}
 
                 {/* Request Estimate */}
-                {msg.requestEstimateId && (
-                  <div className="w-72 rounded-md bg-[#006D77] p-2">
-                    <InvoiceEstimateModal
-                      setShowAttachment={setShowAttachment}
-                      setMessages={setMessages}
-                      receiverCompany={company!}
-                    />
-                  </div>
+                {msg?.requestEstimate && (
+                  <>
+                    {msg?.isOwnMessage ? (
+                      <InvoiceModal
+                        invoiceId={msg?.requestEstimate?.invoiceId}
+                        buttonChild={
+                          <button className="w-96 rounded-md bg-[#006D77] p-1">
+                            <div className="flex items-center justify-center gap-x-2 rounded-md border border-white p-5">
+                              <Image
+                                src="/icons/navbar/Invoices.svg"
+                                alt="estimate icon"
+                                width={20}
+                                height={20}
+                              />
+                              <p className="font-semibold text-white">
+                                Requested an Estimate
+                              </p>
+                            </div>
+                          </button>
+                        }
+                      />
+                    ) : (
+                      <Link
+                        href={`/dashboard/estimate/edit/${msg?.requestEstimate.invoiceId}`}
+                        className={cn(
+                          "w-96 rounded-md bg-[#006D77] p-1",
+                          !msg?.isOwnMessage && "bg-[#D9D9D9]",
+                        )}
+                      >
+                        <div
+                          className={cn(
+                            "flex items-center justify-center gap-x-2 rounded-md border border-white p-5",
+                            !msg?.isOwnMessage && "border-[#006D77]",
+                          )}
+                        >
+                          <Image
+                            src="/icons/navbar/Invoices.svg"
+                            alt="estimate icon"
+                            width={20}
+                            height={20}
+                          />
+                          <p
+                            className={cn(
+                              "font-semibold text-white",
+                              !msg?.isOwnMessage && "text-[#006D77]",
+                            )}
+                          >
+                            Requested an Estimate
+                          </p>
+                        </div>
+                      </Link>
+                    )}
+                  </>
                 )}
 
                 {/* Message Bubble */}
@@ -329,7 +383,8 @@ export default function CompanyMessageBox({
                       : "text-gray-500 text-left",
                   )}
                 >
-                  {format(new Date(msg.createdAt), "p")} · {msg.senderUserName}
+                  {format(new Date(msg?.createdAt), "p")} ·
+                  {msg?.senderUser?.firstName + " " + msg?.senderUser?.lastName}
                 </p>
               </div>
             </div>
@@ -422,7 +477,7 @@ export default function CompanyMessageBox({
       )}
       <form
         onSubmit={(e) => startTransition(() => handleSendMessage(e))}
-        className="flex relative items-center gap-2 border-t bg-gray-100 p-3"
+        className={`flex relative items-center gap-2 border-t bg-gray-100 p-3 ${onBack && "sticky bottom-0 right-0 left-0"}`}
       >
         {/* attachment or estimate dropdown */}
         {showAttachment && (
@@ -438,11 +493,12 @@ export default function CompanyMessageBox({
             >
               Attach Document/Media
             </p>
-            {isEstimateAttachmentShow && (
+            {isEstimateAttachmentShow && currentCompanyId && (
               <InvoiceEstimateModal
                 setShowAttachment={setShowAttachment}
                 setMessages={setMessages}
                 receiverCompany={company!}
+                currentCompanyId={currentCompanyId}
               />
             )}
           </div>
@@ -477,12 +533,12 @@ export default function CompanyMessageBox({
 
       {showProfile && (
         <div className="fixed inset-0 z-50 bg-black/40 flex justify-end md:hidden">
-          <div className="w-[85%] bg-white h-full p-4 overflow-y-auto">
+          <div className="w-full bg-white h-full p-4 overflow-y-auto">
             <button
               onClick={() => setShowProfile(false)}
               className="mb-3 text-sm text-gray-500"
             >
-              Close
+              <ArrowLeft size={20} className="cursor-pointer" />
             </button>
 
             <CompanyProfileCard company={company} />
