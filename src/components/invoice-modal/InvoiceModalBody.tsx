@@ -378,7 +378,7 @@ export default function InvoiceModalBody({
       >
         <div
           ref={printComponentRef}
-          className="#shadow-lg no-visible-scrollbar relative grid h-full w-full shrink grow-0 flex-col items-center justify-center gap-4 overflow-y-auto rounded-md border bg-background p-6 md:h-[90vh] md:w-[780px] md:flex-row print:block print:h-auto print:w-full print:border-none print:p-0 print:shadow-none"
+          className="#shadow-lg no-visible-scrollbar relative grid h-full w-full shrink grow-0 flex-col items-center justify-center gap-4 overflow-y-auto rounded-md border bg-background p-6 md:h-[95vh] md:w-[800px] md:flex-row print:block print:h-auto print:w-full print:border-none print:p-0 print:shadow-none"
         >
           {/* Action Buttons */}
           {!isPublic && (
@@ -845,7 +845,7 @@ export default function InvoiceModalBody({
                         <span className="min-w-0 flex-1 overflow-x-clip text-ellipsis whitespace-nowrap px-2 font-bold uppercase text-[#6571FF]">
                           {key}
                         </span>
-                        <div className="shrink-0 w-[7rem] rounded bg-[#6571FF] px-2 text-white">
+                        <div className="shrink-0 w-[10rem] rounded bg-[#6571FF] px-2 text-white">
                           {Number(value)}%
                           {Number(value) !== 0 && (
                             <span>
@@ -869,7 +869,7 @@ export default function InvoiceModalBody({
                       <span className="min-w-0 flex-1 overflow-x-clip text-ellipsis whitespace-nowrap px-2 font-bold uppercase text-[#6571FF]">
                         {key}
                       </span>
-                      <div className="shrink-0 w-[7rem] rounded bg-gradient-to-br from-[#6571FF] from-60% to-[#4A55E2] px-2 text-white">
+                      <div className="shrink-0 w-[10rem] rounded bg-gradient-to-br from-[#6571FF] from-60% to-[#4A55E2] px-2 text-white">
                         {formatCurrency(parseFloat("" + value))}
                       </div>
                     </div>
@@ -1131,7 +1131,7 @@ export default function InvoiceModalBody({
           <p className="font-semibold">Powered by Autoworx.</p>
         </div>
 
-        <div className="flex w-full flex-col gap-1 space-y-1 md:flex md:h-[90vh] md:w-[394px] md:shrink md:grow-0 md:gap-4 md:space-y-0 md:overflow-y-auto print:hidden">
+        <div className="flex w-full flex-col gap-1 space-y-1 md:flex md:h-[95vh] md:w-[394px] md:shrink md:grow-0 md:gap-4 md:space-y-0 md:overflow-y-auto print:hidden">
           <div className="#shadow-lg hidden h-[calc(100%-50px)] flex-1 overflow-y-auto rounded-md border bg-background p-3 md:p-6 md:block">
             {/* Desktop tabs are here */}
             <div className="hidden w-fit mx-auto md:mb-4 md:flex md:justify-center md:gap-2 border border-gray-200 rounded-2xl p-1 bg-white/70 dark:bg-slate-900/60">

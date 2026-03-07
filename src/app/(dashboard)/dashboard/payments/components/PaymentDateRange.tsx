@@ -9,14 +9,16 @@ import "react-date-range/dist/theme/default.css"; // theme css file
 const PaymentDateRange = ({
   onOk,
   onCancel,
+  dateRange: dateRangeProp,
 }: {
   onOk: (start: Date, end: Date) => void;
   onCancel: () => void;
+  dateRange?: [Date | null, Date | null];
 }) => {
   const [state, setState] = useState({
     selection: {
-      startDate: new Date(),
-      endDate: new Date(),
+      startDate: dateRangeProp?.[0] || new Date(),
+      endDate: dateRangeProp?.[1] || new Date(),
       key: "selection",
     },
   });
@@ -24,7 +26,31 @@ const PaymentDateRange = ({
 
   const [showPicker, setShowPicker] = useState(false);
   const [tempRange, setTempRange] = useState(state.selection);
-  const [isRangeSelected, setIsRangeSelected] = useState(false);
+  const isRangeSelected =
+    dateRangeProp?.[0] !== undefined &&
+    dateRangeProp?.[0] !== null &&
+    dateRangeProp?.[1] !== undefined &&
+    dateRangeProp?.[1] !== null;
+
+  useEffect(() => {
+    if (isRangeSelected) {
+      const newSelection = {
+        startDate: dateRangeProp![0]!,
+        endDate: dateRangeProp![1]!,
+        key: "selection",
+      };
+      setState({ selection: newSelection });
+      setTempRange(newSelection);
+    } else {
+      const resetSelection = {
+        startDate: new Date(),
+        endDate: new Date(),
+        key: "selection",
+      };
+      setState({ selection: resetSelection });
+      setTempRange(resetSelection);
+    }
+  }, [dateRangeProp?.[0], dateRangeProp?.[1], isRangeSelected]);
 
   useEffect(() => {
     document.addEventListener("mousedown", handleClickOutside);
@@ -44,7 +70,6 @@ const PaymentDateRange = ({
   const handleOk = () => {
     setState({ selection: tempRange });
     setShowPicker(false);
-    setIsRangeSelected(true);
     onOk(tempRange.startDate, tempRange.endDate);
   };
 
@@ -64,7 +89,6 @@ const PaymentDateRange = ({
         key: "selection",
       },
     });
-    setIsRangeSelected(false);
     setTempRange({
       startDate: new Date(),
       endDate: new Date(),

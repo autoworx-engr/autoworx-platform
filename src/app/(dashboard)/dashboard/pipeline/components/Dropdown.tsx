@@ -8,7 +8,7 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { ChevronDown } from "lucide-react";
 import { useEffect, useState } from "react";
 import Select from "./Select";
-import { cn } from "@/lib/cn";
+
 interface DropdownProps {
   pipelineType: string;
 }
@@ -17,8 +17,7 @@ const DropdownMenuDemo = ({ pipelineType }: DropdownProps) => {
   const [columnStatus, setColumnStatus] = useState<
     { id: number; title: string; type: string }[]
   >([]);
-  const { setFilter, status, service, dateRange, resetStatus } =
-    usePipelineFilterStore();
+  const { setFilter, status, service, dateRange } = usePipelineFilterStore();
   useEffect(() => {
     const fetchShopColumns = async () => {
       const columns = await getColumnsByType(pipelineType);
@@ -88,19 +87,6 @@ const DropdownMenuDemo = ({ pipelineType }: DropdownProps) => {
               }
               value={service}
             />
-            <button
-              onClick={() => {
-                resetStatus();
-              }}
-              className={cn(
-                "group mt-4 flex w-full items-center justify-center gap-2 rounded-lg py-2 transition-all duration-200 ",
-                "hover:bg-red-50", // Soft background shift
-                " text-slate-500 hover:text-red-500", // Typography style
-                "active:scale-95 border border-slate-200 hover:border-red-100" // Tactile feedback
-              )}
-            >
-              Clear All Filters
-            </button>
           </div>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
