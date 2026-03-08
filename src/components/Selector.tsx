@@ -127,7 +127,7 @@ export default function Selector<T>({
   }
 
   return (
-    <DropdownMenu open={isOpen} onOpenChange={setIsOpen} modal={isOpen}>
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <div
         className={cn("w-full max-w-sm transition-all duration-300", className)}
       >
