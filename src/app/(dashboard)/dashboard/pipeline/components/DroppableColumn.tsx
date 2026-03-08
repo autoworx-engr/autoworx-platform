@@ -73,6 +73,7 @@ type DroppableColumnProps = {
   setSelectedClientId: (value: SetStateAction<number | null>) => void;
   setSelectedVehicleId: (value: SetStateAction<number | null>) => void;
   setIsAppointmentModalOpen: (value: SetStateAction<boolean>) => void;
+  searchTerm?: string;
 };
 const DroppableColumn = ({
   columnRefs,
@@ -105,6 +106,7 @@ const DroppableColumn = ({
   setSelectedClientId,
   setSelectedVehicleId,
   setIsAppointmentModalOpen,
+  searchTerm,
 }: DroppableColumnProps) => {
   const columnRef = useRef<HTMLDivElement | null>(null);
   const ulRef = useRef<HTMLUListElement | null>(null);
@@ -196,6 +198,7 @@ const DroppableColumn = ({
               setSelectedClientId={setSelectedClientId}
               setSelectedVehicleId={setSelectedVehicleId}
               setIsAppointmentModalOpen={setIsAppointmentModalOpen}
+              searchTerm={searchTerm}
             />
           );
         })}

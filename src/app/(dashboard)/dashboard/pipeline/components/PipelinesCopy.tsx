@@ -43,7 +43,7 @@ export default function PipelinesCopy({
   const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
   console.log("selectedClientId==>", selectedClientId);
   const [selectedVehicleId, setSelectedVehicleId] = useState<number | null>(
-    null
+    null,
   );
   const [pipelineData, setPipelineData] =
     useState<ShopPipelineData[]>(shopPipelineDataProp);
@@ -61,6 +61,9 @@ export default function PipelinesCopy({
 
   // Get search term from store
   const searchTerm = usePipelineFilterStore((state) => state.searchTerm);
+  const [selectedSearchColumnId, setSelectedSearchColumnId] = useState<
+    number | null
+  >(null);
 
   function updateWidth() {
     setScreenWidth(window.innerWidth);
@@ -94,28 +97,55 @@ export default function PipelinesCopy({
 
   // Filter pipeline data based on search term
   const filteredPipelineData = useMemo(() => {
-    if (!searchTerm || searchTerm.trim() === "") {
-      return pipelineData;
+    let result = pipelineData;
+
+    // First, if a specific column is selected in search filter,
+    // we can either filter the whole columns array, or just clear leads from other columns.
+    // Making other columns empty is usually better for a Kanban to maintain structure.
+
+    if (searchTerm && searchTerm.trim() !== "") {
+      const lowerSearchTerm = searchTerm.toLowerCase();
+
+      result = result.map((column) => {
+        // If a column filter is active and it's not THIS column, return empty leads
+        if (
+          selectedSearchColumnId !== null &&
+          column.id !== selectedSearchColumnId
+        ) {
+          return { ...column, leads: [] };
+        }
+
+        return {
+          ...column,
+          leads: column.leads.filter((lead) => {
+            // Search by client name
+            const nameMatch = (lead.name || "")
+              .toLowerCase()
+              .includes(lowerSearchTerm);
+
+            // Search by vehicle information
+            const vehicleMatch =
+              lead.vehicle &&
+              lead.vehicle.toLowerCase().includes(lowerSearchTerm);
+
+            return nameMatch || vehicleMatch;
+          }),
+        };
+      });
+    } else {
+      // If no search term but a column is selected
+      if (selectedSearchColumnId !== null) {
+        result = result.map((column) => {
+          if (column.id !== selectedSearchColumnId) {
+            return { ...column, leads: [] };
+          }
+          return column;
+        });
+      }
     }
 
-    const lowerSearchTerm = searchTerm.toLowerCase();
-
-    return pipelineData.map((column) => ({
-      ...column,
-      leads: column.leads.filter((lead) => {
-        // Search by client name
-        const nameMatch = (lead.name || "")
-          .toLowerCase()
-          .includes(lowerSearchTerm);
-
-        // Search by vehicle information
-        const vehicleMatch =
-          lead.vehicle && lead.vehicle.toLowerCase().includes(lowerSearchTerm);
-
-        return nameMatch || vehicleMatch;
-      }),
-    }));
-  }, [pipelineData, searchTerm]);
+    return result;
+  }, [pipelineData, searchTerm, selectedSearchColumnId]);
 
   const [selectedEmployees, setSelectedEmployees] = useState<{
     [key: string]: Employee | null;
@@ -146,7 +176,7 @@ export default function PipelinesCopy({
   }>({});
 
   const handleSearchResult = (
-    result: { columnIndex: number; leadIndex: number } | null
+    result: { columnIndex: number; leadIndex: number } | null,
   ) => {
     if (!result) return;
 
@@ -173,9 +203,19 @@ export default function PipelinesCopy({
           });
 
           // Highlight the found item temporarily
-          leadElement.classList.add("bg-yellow-100");
+          leadElement.classList.add(
+            "bg-yellow-200",
+            "border-yellow-300",
+            "scale-[1.02]",
+            "transition-transform",
+          );
           setTimeout(() => {
-            leadElement.classList.remove("bg-yellow-100");
+            leadElement.classList.remove(
+              "bg-yellow-200",
+              "border-yellow-300",
+              "scale-[1.02]",
+              "transition-transform",
+            );
           }, 2000);
         }
       }, 300);
@@ -239,7 +279,7 @@ export default function PipelinesCopy({
 
   const handleTagDropdownToggle = (
     categoryIndex: number,
-    leadIndex: number
+    leadIndex: number,
   ) => {
     const key = `${categoryIndex}-${leadIndex}`;
     setTagDropdownStates((prevState) => ({
@@ -252,7 +292,7 @@ export default function PipelinesCopy({
   const handleTagSelect = async (
     categoryIndex: number,
     leadIndex: number,
-    selectedTag: Tag | undefined
+    selectedTag: Tag | undefined,
   ) => {
     if (selectedTag) {
       const key = `${categoryIndex}-${leadIndex}`;
@@ -285,7 +325,7 @@ export default function PipelinesCopy({
   const handleTagRemove = async (
     categoryIndex: number,
     leadIndex: number,
-    tagToRemove: Tag
+    tagToRemove: Tag,
   ) => {
     const key = `${categoryIndex}-${leadIndex}`;
     const invoiceId = pipelineData[categoryIndex].leads[leadIndex].invoiceId;
@@ -299,7 +339,7 @@ export default function PipelinesCopy({
         const updatedPipelineData = [...pipelineData];
         updatedPipelineData[categoryIndex].leads[leadIndex].tags =
           updatedPipelineData[categoryIndex].leads[leadIndex].tags.filter(
-            (tag) => tag.tag.id !== tagToRemove.id
+            (tag) => tag.tag.id !== tagToRemove.id,
           );
         setPipelineData(updatedPipelineData);
       }
@@ -311,7 +351,7 @@ export default function PipelinesCopy({
   //service
   const handleServiceDropdownToggle = (
     categoryIndex: number,
-    leadIndex: number
+    leadIndex: number,
   ) => {
     const key = `${categoryIndex}-${leadIndex}`;
     setOpenServiceDropdown((prevState) => ({
@@ -322,7 +362,7 @@ export default function PipelinesCopy({
 
   const handleColumnDropdownToggle = (
     categoryIndex: number,
-    leadIndex: number
+    leadIndex: number,
   ) => {
     const key = `${categoryIndex}-${leadIndex}`;
     setShowColumnSelect((prevState) => ({
@@ -338,7 +378,7 @@ export default function PipelinesCopy({
   const handleColumnChange = async (
     categoryIndex: number,
     leadIndex: number,
-    newColumnId: string
+    newColumnId: string,
   ) => {
     const key = `${categoryIndex}-${leadIndex}`;
     const lead = pipelineData[categoryIndex].leads[leadIndex];
@@ -358,7 +398,7 @@ export default function PipelinesCopy({
         const completed = lead?.services?.incomplete?.length === 0;
         if (!completed && lead?.technicians?.length > 0) {
           toast.error(
-            "All services must be completed by Technicians before moving to delivered."
+            "All services must be completed by Technicians before moving to delivered.",
           );
           return;
         }
@@ -447,17 +487,17 @@ export default function PipelinesCopy({
             if ((!completed && removed?.technicians?.length > 0) || hasDue) {
               if (hasDue)
                 toast.error(
-                  "Please clear due balance before moving to delivered."
+                  "Please clear due balance before moving to delivered.",
                 );
               else
                 toast.error(
-                  "All services must be completed before moving to delivered."
+                  "All services must be completed before moving to delivered.",
                 );
               return prevData;
             }
 
             updateTechnicianStatustoComplete(removed.invoiceId).catch(
-              console.error
+              console.error,
             );
           }
 
@@ -479,7 +519,7 @@ export default function PipelinesCopy({
                 .then((res) =>
                   res.type === "success"
                     ? successToast("Job moved successfully")
-                    : errorToast("Update failed")
+                    : errorToast("Update failed"),
                 )
                 .catch(() => errorToast("Failed to update status"));
             }
@@ -505,8 +545,9 @@ export default function PipelinesCopy({
       {/* Add the search component at the top */}
       <div className="mb-4 px-2">
         <SearchScroll
-          pipelineData={filteredPipelineData}
+          pipelineData={pipelineData} // Pass the original pipelineData so the Select filter still has all columns
           onSearchResult={handleSearchResult}
+          onColumnChange={(colId) => setSelectedSearchColumnId(colId)}
         />
       </div>
 
@@ -549,6 +590,7 @@ export default function PipelinesCopy({
                 setSelectedClientId={setSelectedClientId}
                 setSelectedVehicleId={setSelectedVehicleId}
                 setIsAppointmentModalOpen={setIsAppointmentModalOpen}
+                searchTerm={searchTerm}
               />
             ))}
           </div>
