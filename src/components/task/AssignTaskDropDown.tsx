@@ -166,6 +166,7 @@ export default function AssignTaskDropDown({
           selectedItem={selectedUser}
           setSelectedItem={setSelectedUser}
           onSelect={handleAssignUser}
+          usePortal
         />
       </div>
     </div>
