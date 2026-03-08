@@ -597,7 +597,7 @@ export default function AppointmentModalBody({
       startTime !== originalValues.startTime ||
       endTime !== originalValues.endTime ||
       JSON.stringify(assignedUsers) !==
-        JSON.stringify(originalValues.assignedUsers) ||
+      JSON.stringify(originalValues.assignedUsers) ||
       client?.id !== originalValues.client?.id ||
       vehicle?.id !== originalValues.vehicle?.id ||
       draft !== originalValues.draft ||
@@ -605,7 +605,7 @@ export default function AppointmentModalBody({
       confirmationTemplate?.id !== originalValues.confirmationTemplate?.id ||
       reminderTemplate?.id !== originalValues.reminderTemplate?.id ||
       confirmationTemplateStatus !==
-        originalValues.confirmationTemplateStatus ||
+      originalValues.confirmationTemplateStatus ||
       reminderTemplateStatus !== originalValues.reminderTemplateStatus ||
       JSON.stringify(times) !== JSON.stringify(originalValues.times)
     ) {
@@ -811,7 +811,7 @@ export default function AppointmentModalBody({
         <DialogTitle>{fromEdit ? "Edit" : "New"} Appointment</DialogTitle>
 
         {/* Options */}
-        <div className="flex items-center justify-self-center rounded-full bg-slate-100 p-1.5 shadow-inner ring-1 ring-slate-200/50">
+        <div className="hidden lg:flex items-center justify-self-center rounded-full bg-slate-100 p-1.5 shadow-inner ring-1 ring-slate-200/50">
           <button
             type="button"
             className={cn(
@@ -856,7 +856,7 @@ export default function AppointmentModalBody({
         </div>
       </DialogHeader>
 
-      <div className="-mx-6 max-h-[70vh] h-full lg:grid gap-px border-solid lg:grid-cols-2 md:border-y ">
+      <div className="-mx-6 max-h-[66vh] lg:max-h-fit h-full lg:grid gap-px border-solid lg:grid-cols-2 md:border-y ">
         <div className="h-full sm:h-full overflow-y-auto thin-scrollbar ">
           <div className="space-y-4 p-6">
             <FormError />
@@ -1058,7 +1058,7 @@ export default function AppointmentModalBody({
                         "border border-slate-200 bg-white shadow-sm hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900",
                         "focus:outline-none focus:ring-2 focus:ring-[#6571FF]/40",
                         draftOpen &&
-                          "ring-2 ring-[#6571FF]/40 border-[#6571FF]",
+                        "ring-2 ring-[#6571FF]/40 border-[#6571FF]",
                       )}
                     >
                       <div className="flex flex-col items-start overflow-hidden text-left">
@@ -1148,7 +1148,7 @@ export default function AppointmentModalBody({
                             "flex w-full items-center justify-center gap-2 rounded-lg bg-[#6571FF] py-2.5 text-sm font-semibold text-white transition-opacity",
                             "hover:opacity-90 active:scale-[0.98]",
                             (!client || !vehicle) &&
-                              "cursor-not-allowed opacity-60",
+                            "cursor-not-allowed opacity-60",
                           )}
                         >
                           <Plus size={16} />
@@ -1183,7 +1183,54 @@ export default function AppointmentModalBody({
             </div>
           </div>
 
-          <div className="relative lg:hidden row-span-2 h-fit thin-scrollbar divide-y bg-background">
+          {/* Options */}
+          <div className="sticky top-0 z-40 bg-white w-full pb-2">
+            <div className="flex lg:hidden items-center justify-self-center rounded-full bg-slate-100 p-1.5 shadow-inner ring-1 ring-slate-200/50 ">
+              <button
+                type="button"
+                className={cn(
+                  "flex items-center justify-center rounded-full px-6 py-2 text-sm font-bold transition-all duration-300 ease-out",
+                  tab === Tab.Schedule
+                    ? "bg-white text-slate-600 shadow-sm ring-1 ring-slate-200"
+                    : "text-slate-400 hover:text-slate-600 hover:bg-slate-200/50",
+                )}
+                onClick={() => setTab(Tab.Schedule)}
+              >
+                <Calendar
+                  className={cn(
+                    "mr-2 transition-colors",
+                    tab === Tab.Schedule ? "text-slate-600" : "text-slate-400",
+                  )}
+                  size={18}
+                  strokeWidth={2.5}
+                />
+                Schedule
+              </button>
+
+              <button
+                type="button"
+                className={cn(
+                  "flex items-center justify-center rounded-full px-6 py-2 text-sm font-bold transition-all duration-300 ease-out",
+                  tab === Tab.Reminder
+                    ? "bg-white text-slate-600 shadow-sm ring-1 ring-slate-200"
+                    : "text-slate-400 hover:text-slate-600 hover:bg-slate-200/50",
+                )}
+                onClick={() => setTab(Tab.Reminder)}
+              >
+                <Bell
+                  className={cn(
+                    "mr-2 transition-colors",
+                    tab === Tab.Reminder ? "text-slate-600" : "text-slate-400",
+                  )}
+                  size={18}
+                  strokeWidth={2.5}
+                />
+                Reminder
+              </button>
+            </div>
+          </div>
+
+          <div className="relative md:hidden h-full row-span-2 thin-scrollbar divide-y bg-background">
             {tab === Tab.Schedule ? (
               <div
                 ref={containerRef}
@@ -1199,28 +1246,26 @@ export default function AppointmentModalBody({
                 />
               </div>
             ) : tab === Tab.Reminder ? (
-              <>
-                <Reminder
-                  client={client}
-                  vehicle={vehicle}
-                  startTime={startTime!}
-                  date={date!}
-                  times={times}
-                  setTimes={setTimes}
-                  confirmationTemplate={confirmationTemplate}
-                  setConfirmationTemplate={setConfirmationTemplate}
-                  reminderTemplate={reminderTemplate}
-                  setReminderTemplate={setReminderTemplate}
-                  confirmationTemplateStatus={confirmationTemplateStatus}
-                  setConfirmationTemplateStatus={setConfirmationTemplateStatus}
-                  reminderTemplateStatus={reminderTemplateStatus}
-                  setReminderTemplateStatus={setReminderTemplateStatus}
-                  openConfirmation={openConfirmation}
-                  openReminder={openReminder}
-                  setOpenReminder={setOpenReminder}
-                  setOpenConfirmation={setOpenConfirmation}
-                />
-              </>
+              <Reminder
+                client={client}
+                vehicle={vehicle}
+                startTime={startTime!}
+                date={date!}
+                times={times}
+                setTimes={setTimes}
+                confirmationTemplate={confirmationTemplate}
+                setConfirmationTemplate={setConfirmationTemplate}
+                reminderTemplate={reminderTemplate}
+                setReminderTemplate={setReminderTemplate}
+                confirmationTemplateStatus={confirmationTemplateStatus}
+                setConfirmationTemplateStatus={setConfirmationTemplateStatus}
+                reminderTemplateStatus={reminderTemplateStatus}
+                setReminderTemplateStatus={setReminderTemplateStatus}
+                openConfirmation={openConfirmation}
+                openReminder={openReminder}
+                setOpenReminder={setOpenReminder}
+                setOpenConfirmation={setOpenConfirmation}
+              />
             ) : null}
           </div>
         </div>
@@ -1316,10 +1361,9 @@ export default function AppointmentModalBody({
               className={`rounded-xl px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40
                 hover:-translate-y-0.5 hover:scale-[1.02]
                 active:translate-y-0 active:scale-100
-                transition-all duration-200 ${
-                  formChanged && !isSubmitting
-                    ? "bg-gradient-to-r from-[#6571FF] to-[#5a66ee] cursor-pointer"
-                    : "cursor-not-allowed bg-gray-400"
+                transition-all duration-200 ${formChanged && !isSubmitting
+                  ? "bg-gradient-to-r from-[#6571FF] to-[#5a66ee] cursor-pointer"
+                  : "cursor-not-allowed bg-gray-400"
                 }`}
               onClick={handleSubmit}
               disabled={
