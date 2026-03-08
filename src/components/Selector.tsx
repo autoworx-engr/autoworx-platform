@@ -2,6 +2,7 @@ import { cn } from "@/lib/cn";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuPortal,
   DropdownMenuTrigger,
 } from "@radix-ui/react-dropdown-menu";
 import {
@@ -174,113 +175,115 @@ export default function Selector<T>({
           )}
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent
-          align="start"
-          sideOffset={4}
-          className={cn(
-            "z-50 w-[var(--radix-popper-anchor-width)] min-w-[220px] overflow-hidden rounded-lg",
-            "border border-slate-200 bg-white shadow-lg",
-            "animate-in fade-in-0 zoom-in-95 duration-150",
-          )}
-        >
-          {/* Search Area */}
-          {showSearch && (
-            <div className="relative px-2 py-2 border-b border-slate-100">
-              <Search
-                size={14}
-                strokeWidth={2.5}
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-              />
-              <input
-                type="text"
-                placeholder="Search..."
-                className="w-full rounded-md bg-slate-50 py-1.5 pl-8 pr-3 text-sm outline-none border border-transparent focus:border-[#6571FF]/40 focus:bg-white placeholder:text-slate-400 transition-colors duration-150"
-                onChange={handleSearchChange}
-                value={searchTerm}
-              />
-            </div>
-          )}
-
-          {/* Items list */}
-          <div
-            ref={scrollContainerRef}
-            onScroll={handleScroll}
-            className="flex max-h-48 flex-col overflow-y-auto py-1 thin-scrollbar"
+        <DropdownMenuPortal>
+          <DropdownMenuContent
+            align="start"
+            sideOffset={4}
+            className={cn(
+              "z-50 w-[var(--radix-popper-anchor-width)] min-w-[220px] overflow-hidden rounded-lg",
+              "border border-slate-200 bg-white shadow-lg",
+              "animate-in fade-in-0 zoom-in-95 duration-150",
+            )}
           >
-            {filteredItems?.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-6 px-4">
-                <Search size={18} className="text-slate-300 mb-1.5" />
-                <p className="text-sm text-slate-400">No results found</p>
-              </div>
-            ) : (
-              filteredItems?.map((item, index) => {
-                const key = (item as any)?.id
-                  ? `item-${(item as any).id}`
-                  : `index-${index}`;
-
-                const isSelected =
-                  selected != null &&
-                  ((item as any)?.id && (selected as any)?.id
-                    ? (item as any).id === (selected as any).id
-                    : item === selected);
-
-                if (clickabled) {
-                  return (
-                    <button
-                      onClick={() => handleSelectItem(item)}
-                      type="button"
-                      key={key}
-                      className={cn(
-                        "flex w-full items-center gap-2 px-2.5 py-2 text-left text-sm transition-colors duration-100",
-                        "hover:bg-[#6571FF]/5 active:bg-[#6571FF]/10",
-                        isSelected && "bg-[#6571FF]/10",
-                        border &&
-                        "border-b border-slate-100 rounded-md last:border-b-0",
-                      )}
-                    >
-                      <div className="flex-1 min-w-0">{displayList(item)}</div>
-                      {isSelected && (
-                        <Check
-                          size={14}
-                          strokeWidth={3}
-                          className="shrink-0 text-[#6571FF]"
-                        />
-                      )}
-                    </button>
-                  );
-                } else {
-                  return (
-                    <div
-                      key={key}
-                      className={cn(
-                        "flex w-full items-center gap-2 px-2.5 py-2 text-left text-sm",
-                        "hover:bg-[#6571FF]/5",
-                        border &&
-                        "border-b border-slate-100 last:border-b-0",
-                      )}
-                    >
-                      <div className="flex-1 min-w-0">{displayList(item)}</div>
-                    </div>
-                  );
-                }
-              })
-            )}
-
-            {/* Loading indicator for infinite scroll */}
-            {isFetchingNextPage && (
-              <div className="flex items-center justify-center gap-2 py-3">
-                <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-200 border-t-[#6571FF]" />
-                <span className="text-xs text-slate-400">Loading...</span>
+            {/* Search Area */}
+            {showSearch && (
+              <div className="relative px-2 py-2 border-b border-slate-100">
+                <Search
+                  size={14}
+                  strokeWidth={2.5}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                />
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  className="w-full rounded-md bg-slate-50 py-1.5 pl-8 pr-3 text-sm outline-none border border-transparent focus:border-[#6571FF]/40 focus:bg-white placeholder:text-slate-400 transition-colors duration-150"
+                  onChange={handleSearchChange}
+                  value={searchTerm}
+                />
               </div>
             )}
-          </div>
 
-          {/* Footer / Action area */}
-          <div className="border-t border-slate-100 p-1.5">
-            {newButton}
-            {footer && <div className="mt-1">{footer}</div>}
-          </div>
-        </DropdownMenuContent>
+            {/* Items list */}
+            <div
+              ref={scrollContainerRef}
+              onScroll={handleScroll}
+              className="flex max-h-48 flex-col overflow-y-auto py-1 thin-scrollbar"
+            >
+              {filteredItems?.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-6 px-4">
+                  <Search size={18} className="text-slate-300 mb-1.5" />
+                  <p className="text-sm text-slate-400">No results found</p>
+                </div>
+              ) : (
+                filteredItems?.map((item, index) => {
+                  const key = (item as any)?.id
+                    ? `item-${(item as any).id}`
+                    : `index-${index}`;
+
+                  const isSelected =
+                    selected != null &&
+                    ((item as any)?.id && (selected as any)?.id
+                      ? (item as any).id === (selected as any).id
+                      : item === selected);
+
+                  if (clickabled) {
+                    return (
+                      <button
+                        onClick={() => handleSelectItem(item)}
+                        type="button"
+                        key={key}
+                        className={cn(
+                          "flex w-full items-center gap-2 px-2.5 py-2 text-left text-sm transition-colors duration-100",
+                          "hover:bg-[#6571FF]/5 active:bg-[#6571FF]/10",
+                          isSelected && "bg-[#6571FF]/10",
+                          border &&
+                          "border-b border-slate-100 rounded-md last:border-b-0",
+                        )}
+                      >
+                        <div className="flex-1 min-w-0">{displayList(item)}</div>
+                        {isSelected && (
+                          <Check
+                            size={14}
+                            strokeWidth={3}
+                            className="shrink-0 text-[#6571FF]"
+                          />
+                        )}
+                      </button>
+                    );
+                  } else {
+                    return (
+                      <div
+                        key={key}
+                        className={cn(
+                          "flex w-full items-center gap-2 px-2.5 py-2 text-left text-sm",
+                          "hover:bg-[#6571FF]/5",
+                          border &&
+                          "border-b border-slate-100 last:border-b-0",
+                        )}
+                      >
+                        <div className="flex-1 min-w-0">{displayList(item)}</div>
+                      </div>
+                    );
+                  }
+                })
+              )}
+
+              {/* Loading indicator for infinite scroll */}
+              {isFetchingNextPage && (
+                <div className="flex items-center justify-center gap-2 py-3">
+                  <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-200 border-t-[#6571FF]" />
+                  <span className="text-xs text-slate-400">Loading...</span>
+                </div>
+              )}
+            </div>
+
+            {/* Footer / Action area */}
+            <div className="border-t border-slate-100 p-1.5">
+              {newButton}
+              {footer && <div className="mt-1">{footer}</div>}
+            </div>
+          </DropdownMenuContent>
+        </DropdownMenuPortal>
       </div>
     </DropdownMenu>
   );
