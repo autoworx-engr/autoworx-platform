@@ -103,15 +103,15 @@ export default function Selector<T>({
     } else {
       const searchedItems = searchQuery.trim()
         ? items.filter(
-            (item: any) =>
-              item.clientName
-                ?.toLowerCase()
-                .includes(searchQuery.toLowerCase()) ||
-              item.id
-                ?.toString()
-                .toLowerCase()
-                .includes(searchQuery.toLowerCase()),
-          )
+          (item: any) =>
+            item.clientName
+              ?.toLowerCase()
+              .includes(searchQuery.toLowerCase()) ||
+            item.id
+              ?.toString()
+              .toLowerCase()
+              .includes(searchQuery.toLowerCase()),
+        )
         : items;
       setFilteredItems(searchedItems);
     }
@@ -127,7 +127,7 @@ export default function Selector<T>({
   }
 
   return (
-    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen} modal={isOpen}>
       <div
         className={cn("w-full max-w-sm transition-all duration-300", className)}
       >
@@ -235,7 +235,7 @@ export default function Selector<T>({
                         "hover:bg-[#6571FF]/5 active:bg-[#6571FF]/10",
                         isSelected && "bg-[#6571FF]/10",
                         border &&
-                          "border-b border-slate-100 rounded-md last:border-b-0",
+                        "border-b border-slate-100 rounded-md last:border-b-0",
                       )}
                     >
                       <div className="flex-1 min-w-0">{displayList(item)}</div>
