@@ -255,8 +255,7 @@ export default function Selector<T>({
                       className={cn(
                         "flex w-full items-center gap-2 px-2.5 py-2 text-left text-sm",
                         "hover:bg-[#6571FF]/5",
-                        border &&
-                        "border-b border-slate-100 last:border-b-0",
+                        border && "border-b border-slate-100 last:border-b-0",
                       )}
                     >
                       <div className="flex-1 min-w-0">{displayList(item)}</div>
