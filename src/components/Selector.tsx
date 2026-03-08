@@ -76,9 +76,9 @@ export default function Selector<T>({
   useEffect(() => {
     setFilteredItems(items);
   }, [items]);
-  useEffect(() => {
-    setSelected(selectedItem);
-  }, [selectedItem]);
+  // useEffect(() => {
+  //   setSelected(selectedItem);
+  // }, [selectedItem]);
 
   // Update selected item when selectedItem prop changes
   useEffect(() => {
@@ -106,15 +106,15 @@ export default function Selector<T>({
     } else {
       const searchedItems = searchQuery.trim()
         ? items.filter(
-          (item: any) =>
-            item.clientName
-              ?.toLowerCase()
-              .includes(searchQuery.toLowerCase()) ||
-            item.id
-              ?.toString()
-              .toLowerCase()
-              .includes(searchQuery.toLowerCase()),
-        )
+            (item: any) =>
+              item.clientName
+                ?.toLowerCase()
+                .includes(searchQuery.toLowerCase()) ||
+              item.id
+                ?.toString()
+                .toLowerCase()
+                .includes(searchQuery.toLowerCase()),
+          )
         : items;
       setFilteredItems(searchedItems);
     }
@@ -167,7 +167,7 @@ export default function Selector<T>({
               : `index-${index}`;
 
             const isSelected =
-              selected != null &&
+              selected !== null &&
               ((item as any)?.id && (selected as any)?.id
                 ? (item as any).id === (selected as any).id
                 : item === selected);
@@ -183,7 +183,7 @@ export default function Selector<T>({
                     "hover:bg-[#6571FF]/5 active:bg-[#6571FF]/10",
                     isSelected && "bg-[#6571FF]/10",
                     border &&
-                    "border-b border-slate-100 rounded-md last:border-b-0",
+                      "border-b border-slate-100 rounded-md last:border-b-0",
                   )}
                 >
                   <div className="flex-1 min-w-0">{displayList(item)}</div>
@@ -243,6 +243,7 @@ export default function Selector<T>({
       >
         <DropdownMenuTrigger
           onPointerDown={(e) => e.preventDefault()}
+          onFocus={(e) => e.preventDefault()}
           onClick={(e) => {
             e.stopPropagation();
             setIsOpen(!isOpen);
