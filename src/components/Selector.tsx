@@ -103,15 +103,15 @@ export default function Selector<T>({
     } else {
       const searchedItems = searchQuery.trim()
         ? items.filter(
-          (item: any) =>
-            item.clientName
-              ?.toLowerCase()
-              .includes(searchQuery.toLowerCase()) ||
-            item.id
-              ?.toString()
-              .toLowerCase()
-              .includes(searchQuery.toLowerCase()),
-        )
+            (item: any) =>
+              item.clientName
+                ?.toLowerCase()
+                .includes(searchQuery.toLowerCase()) ||
+              item.id
+                ?.toString()
+                .toLowerCase()
+                .includes(searchQuery.toLowerCase()),
+          )
         : items;
       setFilteredItems(searchedItems);
     }
@@ -235,7 +235,7 @@ export default function Selector<T>({
                         "hover:bg-[#6571FF]/5 active:bg-[#6571FF]/10",
                         isSelected && "bg-[#6571FF]/10",
                         border &&
-                        "border-b border-slate-100 rounded-md last:border-b-0",
+                          "border-b border-slate-100 rounded-md last:border-b-0",
                       )}
                     >
                       <div className="flex-1 min-w-0">{displayList(item)}</div>
@@ -255,8 +255,7 @@ export default function Selector<T>({
                       className={cn(
                         "flex w-full items-center gap-2 px-2.5 py-2 text-left text-sm",
                         "hover:bg-[#6571FF]/5",
-                        border &&
-                        "border-b border-slate-100 last:border-b-0",
+                        border && "border-b border-slate-100 last:border-b-0",
                       )}
                     >
                       <div className="flex-1 min-w-0">{displayList(item)}</div>
