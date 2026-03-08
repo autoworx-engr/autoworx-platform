@@ -597,7 +597,7 @@ export default function AppointmentModalBody({
       startTime !== originalValues.startTime ||
       endTime !== originalValues.endTime ||
       JSON.stringify(assignedUsers) !==
-      JSON.stringify(originalValues.assignedUsers) ||
+        JSON.stringify(originalValues.assignedUsers) ||
       client?.id !== originalValues.client?.id ||
       vehicle?.id !== originalValues.vehicle?.id ||
       draft !== originalValues.draft ||
@@ -605,7 +605,7 @@ export default function AppointmentModalBody({
       confirmationTemplate?.id !== originalValues.confirmationTemplate?.id ||
       reminderTemplate?.id !== originalValues.reminderTemplate?.id ||
       confirmationTemplateStatus !==
-      originalValues.confirmationTemplateStatus ||
+        originalValues.confirmationTemplateStatus ||
       reminderTemplateStatus !== originalValues.reminderTemplateStatus ||
       JSON.stringify(times) !== JSON.stringify(originalValues.times)
     ) {
@@ -856,9 +856,9 @@ export default function AppointmentModalBody({
         </div>
       </DialogHeader>
 
-      <div className="-mx-6 h-full grid gap-px border-solid lg:grid-cols-2 md:border-y ">
-        <div className="h-full sm:h-full overflow-y-auto thin-scrollbar bg-white">
-          <div className="space-y-4 bg-background p-6">
+      <div className="-mx-6 max-h-[70vh] h-full lg:grid gap-px border-solid lg:grid-cols-2 md:border-y ">
+        <div className="h-full sm:h-full overflow-y-auto thin-scrollbar ">
+          <div className="space-y-4 p-6">
             <FormError />
 
             <AppointmentTitleSelectAndAdd
@@ -1022,7 +1022,7 @@ export default function AppointmentModalBody({
             />
           </div>
 
-          <div className="row-start-2 space-y-4 bg-background p-6 pb-20">
+          <div className="row-start-2 space-y-4 p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <SelectAppointmentClient
                 clientId={clientId}
@@ -1058,7 +1058,7 @@ export default function AppointmentModalBody({
                         "border border-slate-200 bg-white shadow-sm hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900",
                         "focus:outline-none focus:ring-2 focus:ring-[#6571FF]/40",
                         draftOpen &&
-                        "ring-2 ring-[#6571FF]/40 border-[#6571FF]",
+                          "ring-2 ring-[#6571FF]/40 border-[#6571FF]",
                       )}
                     >
                       <div className="flex flex-col items-start overflow-hidden text-left">
@@ -1148,7 +1148,7 @@ export default function AppointmentModalBody({
                             "flex w-full items-center justify-center gap-2 rounded-lg bg-[#6571FF] py-2.5 text-sm font-semibold text-white transition-opacity",
                             "hover:opacity-90 active:scale-[0.98]",
                             (!client || !vehicle) &&
-                            "cursor-not-allowed opacity-60",
+                              "cursor-not-allowed opacity-60",
                           )}
                         >
                           <Plus size={16} />
@@ -1183,7 +1183,7 @@ export default function AppointmentModalBody({
             </div>
           </div>
 
-          <div className="relative lg:hidden row-span-2 h-full thin-scrollbar divide-y bg-background">
+          <div className="relative lg:hidden row-span-2 h-fit thin-scrollbar divide-y bg-background">
             {tab === Tab.Schedule ? (
               <div
                 ref={containerRef}
@@ -1225,7 +1225,7 @@ export default function AppointmentModalBody({
           </div>
         </div>
 
-        <div className="hidden lg:block relative row-span-2 h-full overflow-y-auto thin-scrollbar divide-y bg-background border-l">
+        <div className="hidden lg:block relative row-span-2 overflow-y-auto thin-scrollbar divide-y bg-background border-l">
           {tab === Tab.Schedule ? (
             <div
               ref={containerRef}
@@ -1316,9 +1316,10 @@ export default function AppointmentModalBody({
               className={`rounded-xl px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40
                 hover:-translate-y-0.5 hover:scale-[1.02]
                 active:translate-y-0 active:scale-100
-                transition-all duration-200 ${formChanged && !isSubmitting
-                  ? "bg-gradient-to-r from-[#6571FF] to-[#5a66ee] cursor-pointer"
-                  : "cursor-not-allowed bg-gray-400"
+                transition-all duration-200 ${
+                  formChanged && !isSubmitting
+                    ? "bg-gradient-to-r from-[#6571FF] to-[#5a66ee] cursor-pointer"
+                    : "cursor-not-allowed bg-gray-400"
                 }`}
               onClick={handleSubmit}
               disabled={
