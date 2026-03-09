@@ -1,4 +1,3 @@
-
 "use client";
 
 import { editClient } from "@/actions/client/edit";
@@ -62,6 +61,7 @@ export default function EditClientModalBody({
   const [newProfilePic, setNewProfilePic] = useState<File | null>(null);
   const [clientSources, setClientSources] = useState<Source[]>([]);
   const { showError, clearError } = useFormErrorStore();
+  const [zip, setZip] = useState(client.zip ?? "");
 
   // Initialize ref with existing client data so submit works without touching the field
   const phoneDataRef = useRef({
@@ -79,6 +79,7 @@ export default function EditClientModalBody({
     setProfilePic(
       clientData.photo !== DEFAULT_IMAGE_URL ? clientData.photo : null
     );
+    setZip(clientData.zip ?? "");
     // Sync phone ref with fresh data
     phoneDataRef.current = {
       phoneNumber: clientData.mobile ?? "",
@@ -120,7 +121,6 @@ export default function EditClientModalBody({
     const address = document.querySelector<HTMLInputElement>("#address")?.value;
     const city = document.querySelector<HTMLInputElement>("#city")?.value;
     const state = document.querySelector<HTMLInputElement>("#state")?.value;
-    const zip = document.querySelector<HTMLInputElement>("#zip")?.value;
 
     if (!firstName?.trim()) {
       showError({ field: "firstName", message: "First name is required." });
@@ -131,6 +131,15 @@ export default function EditClientModalBody({
       showError({
         field: "mobile",
         message: "Please enter a valid phone number (at least 10 digits).",
+      });
+      return;
+    }
+
+    // Final guard: ensure no non-digit slipped through
+    if (zip && !/^\d+$/.test(zip)) {
+      showError({
+        field: "zip",
+        message: "Zip code must contain digits only.",
       });
       return;
     }
@@ -362,10 +371,23 @@ export default function EditClientModalBody({
             required={false}
             defaultValue={resolvedClient?.state!}
           />
+          {/* Controlled zip — blocks non-digit input */}
           <SlimInput
             name="zip"
             required={false}
-            defaultValue={resolvedClient?.zip!}
+            value={zip}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (value === "" || /^\d+$/.test(value)) {
+                setZip(value);
+                clearError();
+              } else {
+                showError({
+                  field: "zip",
+                  message: "Zip code must contain digits only.",
+                });
+              }
+            }}
           />
         </div>
 

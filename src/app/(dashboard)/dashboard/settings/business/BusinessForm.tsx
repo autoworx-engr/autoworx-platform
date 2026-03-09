@@ -1,16 +1,16 @@
 "use client";
 import { updateCompany } from "@/actions/settings/updateCompany";
+import PhoneInput from "@/components/PhoneInput";
 import { SlimInput } from "@/components/SlimInput";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
+import { queryKeys } from "@/lib/queryKeys";
 import { errorToast, successToast } from "@/lib/toast";
 import { Company } from "@prisma/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { Briefcase, Mail, MapPin, Save } from "lucide-react";
 import React, { useState, useTransition } from "react";
 import ProfilePicture from "./ProfilePicture";
 import Timezone from "./Timezone";
-import { queryKeys } from "@/lib/queryKeys";
-import { useQueryClient } from "@tanstack/react-query";
-import { Briefcase, Mail, MapPin, Save } from "lucide-react";
-import PhoneInput from "@/components/PhoneInput";
 
 type TProps = {
   company: Company | null;
@@ -102,11 +102,11 @@ export default function BusinessForm({ company }: TProps) {
     return "";
   };
 
- const validateBusinessPhone = (value: string) => {
+  const validateBusinessPhone = (value: string) => {
     if (!value.trim()) {
       return "Business phone number is required.";
     }
-    if (!/^\+?\d+$/.test(value)) { 
+    if (!/^\+?\d+$/.test(value)) {
       return "Business phone number must only contain digits (optional + prefix).";
     }
     return "";
@@ -144,11 +144,9 @@ export default function BusinessForm({ company }: TProps) {
     return "";
   };
 
-  const handlePhoneChange = (num: string, code: string, isoCode:string) => {
-
+  const handlePhoneChange = (num: string, code: string, isoCode: string) => {
     const fullPhoneNumber = `${code}${num}`;
 
-   
     setBusinessSettings((prev) => ({
       ...prev,
       businessPhone: fullPhoneNumber,
@@ -191,6 +189,18 @@ export default function BusinessForm({ company }: TProps) {
   // Live validation handler
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+
+    // block non-digit characters entirely
+    if (name === "zip") {
+      if (value !== "" && !/^\d+$/.test(value)) {
+        setValidationErrors((prev) => ({
+          ...prev,
+          zip: "Zip code must contain digits only.",
+        }));
+        // Don't update state with invalid characters
+        return;
+      }
+    }
 
     // Update business settings
     setBusinessSettings((prev) => ({ ...prev, [name]: value }));
@@ -406,17 +416,15 @@ export default function BusinessForm({ company }: TProps) {
             Contact & Digital Presence
           </h4>
           <div className="grid md:grid-cols-2 grid-cols-1 gap-x-8 gap-y-4">
-           
             <PhoneInput
-    label="Business Phone"
-    defaultValue={company?.phone || ""}
-     defaultIsoCode={company?.countryCode!}
-    // value={businessSettings.businessPhone} 
-    onChange={handlePhoneChange} 
-    required={true}
-    error={validationErrors.businessPhone}
-     
-  />
+              label="Business Phone"
+              defaultValue={company?.phone || ""}
+              defaultIsoCode={company?.countryCode!}
+              // value={businessSettings.businessPhone}
+              onChange={handlePhoneChange}
+              required={true}
+              error={validationErrors.businessPhone}
+            />
             <SlimInput
               required={true}
               value={businessSettings.businessEmail}
