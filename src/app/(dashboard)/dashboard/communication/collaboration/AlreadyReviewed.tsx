@@ -4,12 +4,16 @@ type TAlreadyReviewed = {
   rate: number;
   message: string;
   date?: string;
+  sendUserId: number;
+  currentUserId: number;
 };
 
 export default function AlreadyReviewed({
   rate,
   message,
   date,
+  sendUserId,
+  currentUserId,
 }: TAlreadyReviewed) {
   return (
     <div className="border rounded-md p-4 bg-gray-50 space-y-2">

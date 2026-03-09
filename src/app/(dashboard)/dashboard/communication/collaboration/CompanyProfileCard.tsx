@@ -224,6 +224,8 @@ export default function CompanyProfileCard({
               message={details?.userReview?.message}
               rate={details?.userReview?.rate}
               date={details?.userReview?.createdAt}
+              currentUserId={userId}
+              sendUserId={details?.userReview?.sendUserId}
             />
           ) : (
             <form className="space-y-3" onSubmit={handleSubmit}>

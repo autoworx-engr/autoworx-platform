@@ -72,6 +72,7 @@ export async function GET(req: NextRequest) {
         rate: true,
         message: true,
         sendUserId: true,
+        sendCompanyId: true,
       },
     });
 
@@ -82,7 +83,9 @@ export async function GET(req: NextRequest) {
         ? reviews.reduce((sum, r) => sum + r.rate, 0) / totalReviews
         : 0;
 
-    const userReview = reviews.find((r) => r.sendUserId === userId);
+    const userReview = reviews.find(
+      (r) => r.sendCompanyId === currentCompanyId,
+    );
 
     const alreadyReviewed = !!userReview;
 
