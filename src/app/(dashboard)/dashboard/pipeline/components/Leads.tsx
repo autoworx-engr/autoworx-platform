@@ -98,7 +98,7 @@ const Leads = ({ salesColumn }: TProps) => {
       source: null,
     });
     setSearch("");
-    setDateRange([null, null]);
+    // setDateRange([null, null]);
     setCurrentPage(1);
     // Clear the processed filters cache when clearing filters
     processedFiltersRef.current.clear();
@@ -438,6 +438,7 @@ const Leads = ({ salesColumn }: TProps) => {
             <div className="hidden items-center gap-4 lg:flex">
               <div className="m-2 px-4">
                 <DateRange
+                  dateRange={dateRange}
                   onOk={(start, end) => setDateRange([start, end])}
                   onCancel={() => setDateRange([null, null])}
                 />

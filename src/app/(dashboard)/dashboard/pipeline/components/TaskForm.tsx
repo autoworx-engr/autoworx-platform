@@ -105,7 +105,8 @@ export default function TaskForm({
     setIsEditModalOpen(true);
   };
 
-  const isShowTaskCount = totalTasksCount > 0;
+  const currentTaskCount = Math.max(totalTasksCount, tasks.length);
+  const isShowTaskCount = currentTaskCount > 0;
 
   const triggerButton = (
     <div className="relative cursor-pointer">
@@ -120,7 +121,7 @@ export default function TaskForm({
       </div>
       {isShowTaskCount && (
         <span className="absolute -top-2 left-2 rounded-full bg-red-500 px-1 py-0.5 text-[10px] text-white leading-none min-w-[16px] text-center">
-          {totalTasksCount}
+          {currentTaskCount}
         </span>
       )}
     </div>
