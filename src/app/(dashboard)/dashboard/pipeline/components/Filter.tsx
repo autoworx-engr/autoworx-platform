@@ -14,20 +14,6 @@ interface Props {
 export default function FilterComp({ pipelineType }: Props) {
   const { setFilter, resetStatus, searchTerm, dateRange, status, service } =
     usePipelineFilterStore();
-  const { search, setFilter: setEstimateFilter } = useEstimateFilterStore();
-
-  const hasActiveFilters = !!(
-    search ||
-    searchTerm ||
-    (dateRange[0] && dateRange[1]) ||
-    status ||
-    service
-  );
-
-  const handleClearFilters = () => {
-    resetStatus();
-    setEstimateFilter({ search: "" });
-  };
 
   return (
     <div className="mt-5 flex w-full items-center justify-between">
@@ -43,19 +29,6 @@ export default function FilterComp({ pipelineType }: Props) {
           <div className="relative">
             <Dropdown pipelineType={pipelineType} />
           </div>
-          {hasActiveFilters && (
-            <button
-              onClick={handleClearFilters}
-              className={cn(
-                "group flex items-center justify-center gap-2 rounded-lg px-4 py-2 transition-all duration-200 whitespace-nowrap",
-                hasActiveFilters
-                  ? "hover:bg-red-50 text-slate-500 hover:text-red-500 active:scale-95 border border-slate-200 hover:border-red-100"
-                  : "opacity-50 cursor-not-allowed text-slate-400 border border-slate-200",
-              )}
-            >
-              Clear All Filters
-            </button>
-          )}
         </div>
       </div>
     </div>
