@@ -21,7 +21,6 @@ import TooltipLabel from "./ToolTipLabel";
 import InfoCard from "./InfoCard";
 import {
   getInventoryActionHelp,
-  getInventoryConditionHelp,
 } from "./InventoryAutomationHelper";
 import { TipBox } from "./TagautomationHelper";
 
