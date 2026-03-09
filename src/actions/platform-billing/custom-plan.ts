@@ -70,7 +70,8 @@ export async function createCustomPlatformPlan(
   const nameParts: string[] = [];
   nameParts.push(label || "Custom Plan");
   if (companyId) {
-    nameParts.push(`(Company ${companyId})`);
+    nameParts.push(`(For You)`);
+    // nameParts.push(`(Company ${companyId})`);
   }
   const planName = nameParts.join(" ");
 
