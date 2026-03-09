@@ -17,6 +17,7 @@ import { useAllInvoiceAutomationRules } from "@/hooks/invoice-automation/useAllI
 import { useAllInventoryAutomationRules } from "../../../../../../hooks/inventory-automation/useAllInventoryAutomationRules";
 import { Inbox } from "lucide-react";
 import { useAllTagAutomationRules } from "@/hooks/tag-automation/useAllTagAutomationRules";
+import { useAllReportingAutomationRules } from "@/hooks/reporting-automation/useAllReportingAutomationRules";
 const CommunicationRuleForm = dynamic(() => import("./CommunicationRuleForm"));
 const PipelineRuleForm = dynamic(() => import("./PipelineRuleForm"));
 const InventoryRuleForm = dynamic(() => import("./InventoryRulesForm"));
@@ -98,6 +99,12 @@ export default function AllCards({
     isFetching: tagAutomationIsFetching,
   } = useAllTagAutomationRules(companyId, type === "tag");
 
+
+    const {
+    data: allReportingAutomation,
+    isLoading: reportingAutomationIsLoading,
+    isFetching: reportingAutomationIsFetching,
+  } = useAllReportingAutomationRules(companyId, type === "reporting");
   const mode = isEdit ? "edit" : "create";
 
   // Get current loading state based on automation type
@@ -117,6 +124,8 @@ export default function AllCards({
         return inventoryAutomationIsLoading || inventoryAutomationIsFetching;
       case "tag":
         return tagAutomationIsLoading || tagAutomationIsFetching;
+        case "reporting": 
+        return reportingAutomationIsLoading || reportingAutomationIsFetching
       default:
         return false;
     }
@@ -151,8 +160,8 @@ export default function AllCards({
               : type === "inventory"
                 ? allInventoryAutomation?.data
                 : type === "tag"
-                  ? allTagAutomation?.data
-                  : campaigns;
+                  ? allTagAutomation?.data 
+                  : type === "reporting" ?allReportingAutomation?.data : campaigns;
 
   const allowedCompany = [4, 14, 1, 49];
   useEffect(() => {

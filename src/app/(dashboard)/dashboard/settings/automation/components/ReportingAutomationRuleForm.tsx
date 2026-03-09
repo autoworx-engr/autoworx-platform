@@ -23,6 +23,9 @@ import {
   getInventoryActionHelp,
 } from "./InventoryAutomationHelper";
 import { TipBox } from "./TagautomationHelper";
+import { useCreateReportingAutomationRule } from "@/hooks/reporting-automation/useCreateInventoryAutomationRule";
+import { useUpdateReportingAutomationRule } from "@/hooks/reporting-automation/useUpdateInventoryAutomationRule";
+import { useFindOneReportingAutomationRule } from "@/hooks/reporting-automation/useFindOneInventoryAutomationRule";
 
 type RuleFormProps = {
   initialData?: Rule;
@@ -72,10 +75,10 @@ const ReportingAutomationRuleForm: React.FC<RuleFormProps> = ({
   );
 
   const { mutate: createRule, isPending: isCreatePending } =
-    useCreateInventoryAutomationRule();
+    useCreateReportingAutomationRule();
   const { mutate: updateRule, isPending: isUpdatePending } =
-    useUpdateInventoryAutomationRule();
-  const { data, isLoading, isFetching } = useFindOneInventoryAutomationRule(
+    useUpdateReportingAutomationRule();
+  const { data, isLoading, isFetching } = useFindOneReportingAutomationRule(
     Number(id)
   );
   const [error, setError] = useState<Record<string, string>>({});
