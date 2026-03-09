@@ -77,6 +77,7 @@ export default function EmployeeFilter() {
           <div className="hidden items-center gap-x-4 lg:flex">
             <div className="transition-transform hover:scale-[1.01]">
               <DateRange
+                dateRange={dateRange}
                 onOk={(start: any, end: any) =>
                   setFilter({ dateRange: [start, end] })
                 }
