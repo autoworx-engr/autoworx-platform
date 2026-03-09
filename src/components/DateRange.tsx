@@ -16,19 +16,40 @@ const DateRange = ({
   onCancel: () => void;
   dateRange?: [Date | null, Date | null];
 }) => {
+  const pipelineStore = usePipelineFilterStore();
+  const currentRange = dateRangeProp || pipelineStore.dateRange;
+  const isRangeSelected = currentRange[0] !== null && currentRange[1] !== null;
+
   const [state, setState] = useState({
     selection: {
-      startDate: new Date(),
-      endDate: new Date(),
+      startDate: currentRange[0] || new Date(),
+      endDate: currentRange[1] || new Date(),
       key: "selection",
     },
   });
   const ref = useRef<HTMLDivElement>(null);
-  const pipelineStore = usePipelineFilterStore();
-  const dateRange = dateRangeProp || pipelineStore.dateRange;
-  const isRangeSelected = dateRange[0] !== null && dateRange[1] !== null;
   const [showPicker, setShowPicker] = useState(false);
   const [tempRange, setTempRange] = useState(state.selection);
+
+  useEffect(() => {
+    if (isRangeSelected) {
+      const newSelection = {
+        startDate: currentRange[0]!,
+        endDate: currentRange[1]!,
+        key: "selection",
+      };
+      setState({ selection: newSelection });
+      setTempRange(newSelection);
+    } else {
+      const resetSelection = {
+        startDate: new Date(),
+        endDate: new Date(),
+        key: "selection",
+      };
+      setState({ selection: resetSelection });
+      setTempRange(resetSelection);
+    }
+  }, [currentRange[0], currentRange[1], isRangeSelected]);
 
   useEffect(() => {
     document.addEventListener("mousedown", handleClickOutside);
