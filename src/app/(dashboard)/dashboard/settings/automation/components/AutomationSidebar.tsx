@@ -42,6 +42,12 @@ const items = [
     path: "tag",
     permissionName: companyPermissionModule.TAG_AUTOMATION,
   },
+  {
+    name: "reporting",
+    path: "reporting",
+    // permissionName: companyPermissionModule.REPORTING_AUTOMATION,
+    permissionName: companyPermissionModule.TAG_AUTOMATION,
+  },
 ];
 
 const AutomationSidebar = ({

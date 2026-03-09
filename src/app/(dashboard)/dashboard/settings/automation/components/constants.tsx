@@ -148,6 +148,11 @@ export const InventoryActions = [
   { id: "SMS", title: "Send Re-order List by SMS" },
   { id: "BOTH", title: "Send Re-order List by Both" },
 ];
+export const ReportingActions = [
+  { id: "EMAIL", title: "Send Report by Email" },
+  { id: "SMS", title: "Send Report by SMS" },
+  { id: "BOTH", title: "Send Report by Both" },
+];
 
 
 export const PipelineType = [

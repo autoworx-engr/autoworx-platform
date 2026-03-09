@@ -24,7 +24,7 @@ const CampaignForm = dynamic(() => import("./CampaignForm"));
 const ServiceRuleForm = dynamic(() => import("./ServiceRuleForm"));
 const InvoiceRuleForm = dynamic(() => import("./InvoiceRuleForm"));
 const TagRuleForm = dynamic(() => import("./TagRuleForm"));
-
+const ReportingAutomationRuleForm = dynamic (()=>import ("./ReportingAutomationRuleForm"));
 // Form component map
 const formComponents: Record<string, React.ComponentType<any>> = {
   pipeline: PipelineRuleForm,
@@ -34,6 +34,7 @@ const formComponents: Record<string, React.ComponentType<any>> = {
   invoice: InvoiceRuleForm,
   inventory: InventoryRuleForm,
   tag: TagRuleForm,
+  reporting: ReportingAutomationRuleForm
 };
 
 export default function AllCards({
