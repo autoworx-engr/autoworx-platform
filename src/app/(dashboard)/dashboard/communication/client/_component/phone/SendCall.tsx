@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import CallStatus from "./CallStatus";
 import { useRouter } from "next/navigation";
 import { useVoiceDevice } from "@/context/VoiceDeviceContext";
+import UpgradePlanBanner from "@/components/UpgradePlanBanner";
 
 type TProps = {
   client?: Client | null;
@@ -144,8 +145,12 @@ export default function SendCall({
   return (
     <>
       {!canUseVoice && (
-        <div className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-semibold text-amber-700">
-          Voice calling isn’t enabled for your plan.
+        <div className="mb-3">
+          <UpgradePlanBanner
+            title="Voice calling is not included in your plan"
+            description="Upgrade to make and receive calls directly from the platform."
+            ctaLabel="Upgrade Plan"
+          />
         </div>
       )}
       <div className="mt-auto flex w-full gap-3">

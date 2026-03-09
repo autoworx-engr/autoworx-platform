@@ -16,6 +16,7 @@ import { toast } from "react-hot-toast";
 import { PlatformSubscriptionStatus } from "@prisma/client";
 import { cancelSubscription } from "@/actions/platform-billing/cancel";
 import { AlertCircle } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 
 const paymentHistory = [
   { amount: "$100", method: "Credit Card", date: "2024-08-01" },
@@ -37,6 +38,7 @@ const planColors: { [key: string]: string } = {
 
 export default function Page() {
   const { data: session } = useSession();
+  const searchParams = useSearchParams();
   const [plansOpen, setPlansOpen] = useState(false);
   const [selectedPlanForCheckout, setSelectedPlanForCheckout] =
     useState<any>(null);
@@ -45,6 +47,13 @@ export default function Page() {
   const [loading, setLoading] = useState(true);
   const [isCancelling, setIsCancelling] = useState(false);
   const timezone = useCompanyTimezone();
+
+  // Auto-open the plans modal when redirected from an upgrade prompt
+  useEffect(() => {
+    if (!loading && searchParams.get("showPlans") === "true") {
+      setPlansOpen(true);
+    }
+  }, [loading, searchParams]);
 
   useEffect(() => {
     async function init() {

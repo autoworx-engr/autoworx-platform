@@ -3,6 +3,7 @@
 import { updateMissedCallTextBackEnabled } from "@/actions/settings/updateMissedCallTextBackEnabled";
 import { errorToast, successToast } from "@/lib/toast";
 import { useEffect, useState } from "react";
+import UpgradePlanBanner from "@/components/UpgradePlanBanner";
 
 interface MissedCallTextBackSettingsProps {
   initialEnabled?: boolean | null;
@@ -77,9 +78,13 @@ export default function MissedCallTextBackSettings({
         </button>
       </div>
       {!isAllowed && (
-        <p className="mt-3 text-xs text-gray-500">
-          Upgrade your plan to enable missed call text back.
-        </p>
+        <div className="mt-4">
+          <UpgradePlanBanner
+            title="Missed Call Text Back is not available on your plan"
+            description="Automatically follow up with clients who missed a call. Upgrade to unlock this feature."
+            ctaLabel="Upgrade Plan"
+          />
+        </div>
       )}
     </div>
   );
