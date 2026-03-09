@@ -72,7 +72,7 @@ export default function CompanyProfileCard({
         <div className="relative">
           <div className="flex items-center justify-center w-[150px] h-[150px] rounded-full overflow-hidden">
             <Image
-              src={details?.image}
+              src={details?.image ?? "/icons/business.png"}
               alt={details?.name}
               width={200}
               height={200}
@@ -108,7 +108,7 @@ export default function CompanyProfileCard({
           </div>
 
           <span className="text-gray-600">
-            {rating.toFixed(1)} ({details?.totalReviews})
+            {rating.toFixed(1)} ({details?.totalReviews ?? 0})
           </span>
         </div>
       </div>
@@ -126,7 +126,7 @@ export default function CompanyProfileCard({
         <div className="rounded-lg bg-gray-100 p-3 text-center">
           <Briefcase className="mx-auto mb-1 text-gray-500" size={16} />
           <p className="text-xs text-gray-500">Jobs Done</p>
-          <p className="font-semibold">{details?.totalJobsDone}</p>
+          <p className="font-semibold">{details?.totalJobsDone ?? 0}</p>
         </div>
       </div>
 
@@ -159,7 +159,9 @@ export default function CompanyProfileCard({
           </p>
           <p className="text-xs text-gray-500">Jobs completed together</p>
         </div>
-        <p className="font-bold text-teal-700">{details?.totalCollaboration}</p>
+        <p className="font-bold text-teal-700">
+          {details?.totalCollaboration ?? 0}
+        </p>
       </div>
 
       {/* Tabs */}
@@ -196,9 +198,13 @@ export default function CompanyProfileCard({
           {reviewData?.data?.map((review: any) => (
             <div key={review.id} className="border-b pb-2">
               <div className="flex items-center justify-between">
-                <p className="font-medium">
-                  {review?.user?.firstName + " " + review?.user?.lastName}
-                </p>
+                {review?.sendCompanyId === currentCompanyId ? (
+                  <p className="font-medium">You</p>
+                ) : (
+                  <p className="font-medium">
+                    {review?.user?.firstName + " " + review?.user?.lastName}
+                  </p>
+                )}
                 <div className="flex items-center gap-1">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <Star

@@ -178,6 +178,14 @@ export async function GET(req: NextRequest) {
       (company) => company.users.length > 0,
     );
 
+    // completed jobs
+    const completedJobs = await db.technician.count({
+      where: {
+        companyId,
+        status: "Complete",
+      },
+    });
+
     const response = {
       id: company.id,
       name: company.name,
@@ -191,8 +199,7 @@ export async function GET(req: NextRequest) {
       userReview: userReview || null,
       alreadyReviewed,
       totalCollaboration: finalCompanies?.length,
-      //! Todo
-      totalJobsDone: 45, // static
+      totalJobsDone: completedJobs,
     };
 
     return NextResponse.json(response);
