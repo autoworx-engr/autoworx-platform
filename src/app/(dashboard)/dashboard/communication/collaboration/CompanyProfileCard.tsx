@@ -131,25 +131,30 @@ export default function CompanyProfileCard({
       </div>
 
       {/* About */}
-      <div>
-        <h4 className="font-semibold mb-1">About</h4>
-        <p className="text-sm text-gray-600">{details?.about}</p>
-      </div>
+      {details?.about && (
+        <div>
+          <h4 className="font-semibold mb-1">About</h4>
+          <p className="text-sm text-gray-600">{details?.about}</p>
+        </div>
+      )}
 
       {/* Specializations */}
-      <div>
-        <h4 className="font-semibold mb-2">Specializations</h4>
-        <div className="flex flex-wrap gap-2">
-          {details?.industry?.split(",")?.map((spec: string, i: number) => (
-            <span
-              key={i}
-              className="rounded-full bg-teal-100 text-teal-700 px-3 py-1 text-xs font-medium"
-            >
-              {spec}
-            </span>
-          ))}
+
+      {details?.industry?.length > 0 && (
+        <div>
+          <h4 className="font-semibold mb-2">Specializations</h4>
+          <div className="flex flex-wrap gap-2">
+            {details?.industry?.split(",")?.map((spec: string, i: number) => (
+              <span
+                key={i}
+                className="rounded-full bg-teal-100 text-teal-700 px-3 py-1 text-xs font-medium"
+              >
+                {spec}
+              </span>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Collaboration Box */}
       <div className="rounded-lg bg-teal-50 border p-3 flex justify-between items-center">
