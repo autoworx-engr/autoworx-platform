@@ -19,7 +19,7 @@ const ResponsiveEmployeeCard = ({
   const clientName = (data.firstName ?? "") + " " + (data.lastName ?? "");
   const clientEmail = data.email;
   const clientPhone = data.phone || data.mobile;
-  const clientImage = data.image || data.photo || "/default-avatar.png";
+  const clientImage = data.image || data.photo || "/images/default.png";
   const role = data.role;
   // const joinDate =
   //   data.role === "admin"

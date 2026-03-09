@@ -81,6 +81,7 @@ export default async function getClients({
         lastName: true,
         email: true,
         mobile: true,
+        photo: true,
         createdAt: true,
         tag: {
           where: {
