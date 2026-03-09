@@ -34,9 +34,9 @@ const catalogFeatures = [
   },
   { key: "awx_sales_agent", type: PlatformFeatureType.BOOLEAN, value: "false" },
   {
-    key: "max_automation_rules",
-    type: PlatformFeatureType.NUMERIC,
-    value: "0",
+    key: "unlimited_automation_rules",
+    type: PlatformFeatureType.BOOLEAN,
+    value: "false",
   },
   {
     key: "automation_modules",

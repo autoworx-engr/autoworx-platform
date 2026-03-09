@@ -17,7 +17,7 @@ async function main() {
       features: [
         { key: "can_use_sms", value: "true", type: "BOOLEAN" },
         { key: "can_use_voice", value: "false", type: "BOOLEAN" },
-        { key: "max_automation_rules", value: "1", type: "NUMERIC" },
+        { key: "unlimited_automation_rules", value: "false", type: "BOOLEAN" },
         {
           key: "automation_modules",
           value: "pipeline,calendar,communication,invoice,inventory,tag",
@@ -42,7 +42,7 @@ async function main() {
         { key: "can_use_voice", value: "true", type: "BOOLEAN" },
         { key: "call_recording", value: "true", type: "BOOLEAN" },
         { key: "missed_call_text_back", value: "true", type: "BOOLEAN" },
-        { key: "max_automation_rules", value: "1", type: "NUMERIC" },
+        { key: "unlimited_automation_rules", value: "false", type: "BOOLEAN" },
         {
           key: "automation_modules",
           value: "pipeline,calendar,communication,invoice,inventory,tag",
@@ -70,7 +70,7 @@ async function main() {
         { key: "website_included", value: "true", type: "BOOLEAN" },
         { key: "car_wrap_visualizer", value: "true", type: "BOOLEAN" },
         { key: "ai_smart_replies", value: "true", type: "BOOLEAN" },
-        { key: "max_automation_rules", value: "3", type: "NUMERIC" },
+        { key: "unlimited_automation_rules", value: "false", type: "BOOLEAN" },
         {
           key: "automation_modules",
           value:
@@ -97,7 +97,7 @@ async function main() {
         { key: "website_included", value: "true", type: "BOOLEAN" },
         { key: "car_wrap_visualizer", value: "true", type: "BOOLEAN" },
         { key: "awx_sales_agent", value: "true", type: "BOOLEAN" },
-        { key: "max_automation_rules", value: "-1", type: "NUMERIC" },
+        { key: "unlimited_automation_rules", value: "true", type: "BOOLEAN" },
         {
           key: "automation_modules",
           value:
