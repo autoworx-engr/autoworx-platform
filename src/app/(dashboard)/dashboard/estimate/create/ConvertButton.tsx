@@ -25,7 +25,6 @@ export default function ConvertButton({
   const resetEstimateCreate = useEstimateCreateStore((state) => state.reset);
 
   const resetLists = useListsStore((state) => state.reset);
-  const isDirty = useEstimateCreateStore((state) => state.isDirty);
 
   async function handleSubmit() {
     const res = await createInvoice();
@@ -39,7 +38,7 @@ export default function ConvertButton({
       resetLists();
     } else if (res.type === "globalError") {
       errorToast(
-        res.errorSource?.length ? res.errorSource[0].message : res.message
+        res.errorSource?.length ? res.errorSource[0].message : res.message,
       );
       return;
     }
@@ -50,11 +49,11 @@ export default function ConvertButton({
       <Submit
         className={cn(
           "flex w-full items-center justify-center gap-2 text-nowrap rounded-lg px-4 py-2 text-center text-sm font-semibold tracking-wide transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:grayscale-[0.5]",
-          !className?.includes('bg-') && "bg-slate-800 text-white shadow-lg shadow-slate-200 ring-1 ring-slate-900/5 hover:bg-slate-900",
-          className
+          !className?.includes("bg-") &&
+            "bg-slate-800 text-white shadow-lg shadow-slate-200 ring-1 ring-slate-900/5 hover:bg-slate-900",
+          className,
         )}
         formAction={handleSubmit}
-        disabled={!isDirty}
       >
         {icon && <span className="shrink-0 opacity-90">{icon}</span>}
         <span>{text}</span>

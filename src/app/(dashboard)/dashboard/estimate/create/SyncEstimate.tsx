@@ -36,15 +36,6 @@ export default function SyncEstimate({
   inspections: InspectionType[];
 }) {
   const { invoiceId } = useEstimateCreateStore();
-  const setDirty = useEstimateCreateStore((state) => state.setDirty);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDirty(false);
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [setDirty]);
   useEffect(() => {
     // async function fetchPhotos() {
     //   const photoFiles = await Promise.all(

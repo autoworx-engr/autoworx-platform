@@ -58,7 +58,7 @@ export default function SalesInfoTable({
     if (service) {
       filtered = filtered.filter((row: any) => {
         const serviceName: string[] = row.invoice?.invoiceItems?.map(
-          (item: any) => item?.service?.name
+          (item: any) => item?.service?.name,
         );
         return !!serviceName.find((s) => s === service);
       });
@@ -68,7 +68,7 @@ export default function SalesInfoTable({
     if (category) {
       filtered = filtered.filter((row: any) => {
         const categoryName: string[] = row.invoice?.invoiceItems?.map(
-          (item: any) => item?.service?.category?.name
+          (item: any) => item?.service?.category?.name,
         );
         return !!categoryName.find((cate) => cate === category);
       });
@@ -104,7 +104,7 @@ export default function SalesInfoTable({
               />
               <p>{info.column?.title}</p>
             </div>
-          ))
+          )),
         )}
       </div>
 
@@ -122,49 +122,61 @@ export default function SalesInfoTable({
             </tr>
           </thead>
           <tbody>
-            {filteredInfo.map((row, index) =>
-              row.Client[0].Invoice.map((invoice) => (
-                <tr
-                  key={invoice.id}
-                  className={index % 2 === 0 ? "bg-background" : "bg-blue-100"}
-                >
-                  <td className="border-b px-4 py-2 text-left">
-                    <InvoiceModal
-                      invoiceId={invoice.id}
-                      buttonChild={<button>{invoice.id}</button>}
-                      buttonChildClassName="text-blue-500 hover:underline"
-                    />
-                  </td>
-                  <td className="border-b px-4 py-2 text-left">
-                    {row.Client[0].firstName} {row.Client[0].lastName}
-                  </td>
-                  <td className="border-b px-4 py-2 text-left">
-                    {invoice.vehicle?.make} {invoice.vehicle?.model}{" "}
-                    {invoice.vehicle?.other}
-                  </td>
-                  <td className="border-b px-4 py-2 text-left">
-                    {moment.utc(Number(row.assignedDate)).format("DD.MM.YYYY")}
-                  </td>
-                  <td className="border-b px-4 py-2 text-left">
-                    {row.columnChangedAt
-                      ? moment
-                          .utc(Number(row.columnChangedAt))
-                          .format("DD.MM.YYYY")
-                      : "-"}
-                  </td>
-                  <td className="backdrop border-b px-4 py-2 text-left">
-                    $
-                    {(Number(invoice.grandTotal) *
-                      Number(employee.commission)) /
-                      100}
-                  </td>
-                  <td className="border-b py-2 text-center">
-                    <p className="rounded-full px-2 py-0.5">
-                      {invoice.column?.title}
-                    </p>
-                  </td>
-                </tr>
-              ))
+            {filteredInfo.length > 0 ? (
+              filteredInfo.map((row, index) =>
+                row.Client[0].Invoice.map((invoice) => (
+                  <tr
+                    key={invoice.id}
+                    className={
+                      index % 2 === 0 ? "bg-background" : "bg-blue-100"
+                    }
+                  >
+                    <td className="border-b px-4 py-2 text-left">
+                      <InvoiceModal
+                        invoiceId={invoice.id}
+                        buttonChild={<button>{invoice.id}</button>}
+                        buttonChildClassName="text-blue-500 hover:underline"
+                      />
+                    </td>
+                    <td className="border-b px-4 py-2 text-left">
+                      {row.Client[0].firstName} {row.Client[0].lastName}
+                    </td>
+                    <td className="border-b px-4 py-2 text-left">
+                      {invoice.vehicle?.make} {invoice.vehicle?.model}{" "}
+                      {invoice.vehicle?.other}
+                    </td>
+                    <td className="border-b px-4 py-2 text-left">
+                      {moment
+                        .utc(Number(row.assignedDate))
+                        .format("DD.MM.YYYY")}
+                    </td>
+                    <td className="border-b px-4 py-2 text-left">
+                      {row.columnChangedAt
+                        ? moment
+                            .utc(Number(row.columnChangedAt))
+                            .format("DD.MM.YYYY")
+                        : "-"}
+                    </td>
+                    <td className="backdrop border-b px-4 py-2 text-left">
+                      $
+                      {(Number(invoice.grandTotal) *
+                        Number(employee.commission)) /
+                        100}
+                    </td>
+                    <td className="border-b py-2 text-center">
+                      <p className="rounded-full px-2 py-0.5">
+                        {invoice.column?.title}
+                      </p>
+                    </td>
+                  </tr>
+                )),
+              )
+            ) : (
+              <tr>
+                <td colSpan={8} className="border-b px-4 py-2 text-center">
+                  No records found.
+                </td>
+              </tr>
             )}
           </tbody>
         </table>

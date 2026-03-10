@@ -1,14 +1,12 @@
-import { authOptions } from "@/authOptions";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { db } from "@/lib/db";
 import {
-  sendInternalMessageNotification,
   sendCollaborationMessageNotification,
+  sendInternalMessageNotification,
 } from "@/lib/notification/communication-notify";
 import { getPusherInstance } from "@/lib/pusher/server";
 import { sendType } from "@/types/Chat";
 import { MessageSection } from "@prisma/client";
-import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
 
 type TMessageDate = {
@@ -43,6 +41,9 @@ const pusher = getPusherInstance();
  *               to:
  *                 type: integer
  *                 description: Recipient user ID or group ID.
+ *               sessionUserId:
+ *                 type: integer
+ *                 description: Sender user ID.
  *               message:
  *                 type: string
  *                 description: Text content of the message.
@@ -87,11 +88,22 @@ const pusher = getPusherInstance();
 
 export async function POST(req: Request) {
   const body = await req.json();
-  const { to, message, type, section, attachmentFiles, requestEstimate } = body;
+  const {
+    to,
+    message,
+    type,
+    section,
+    attachmentFiles,
+    requestEstimate,
+    sessionUserId,
+  } = body;
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) throw new Error("Unauthorized");
-    const userId = parseInt(session.user.id);
+    const userId = parseInt(sessionUserId);
+
+    if (!userId) {
+      throw new Error("Missing Session User ID");
+    }
+
     if (!to || (!message && !attachmentFiles && !requestEstimate)) {
       throw new Error("Missing some argument for message");
     }

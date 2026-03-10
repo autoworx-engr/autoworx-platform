@@ -19,7 +19,7 @@ const ResponsiveEmployeeCard = ({
   const clientName = (data.firstName ?? "") + " " + (data.lastName ?? "");
   const clientEmail = data.email;
   const clientPhone = data.phone || data.mobile;
-  const clientImage = data.image || data.photo || "/default-avatar.png";
+  const clientImage = data.image || data.photo || "/images/default.png";
   const role = data.role;
   // const joinDate =
   //   data.role === "admin"
@@ -70,11 +70,11 @@ const ResponsiveEmployeeCard = ({
                     : clientName}
                 </h3>
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2">
-                  {role && (
+                  {(data.employeeType || role) && (
                     <span
                       className={`px-2 py-0.5 text-xs font-medium rounded-full whitespace-nowrap bg-[#6571FF]/10 text-[#6571FF]`}
                     >
-                      {role}
+                      {data.employeeType || role}
                     </span>
                   )}
                   <span className="text-xs sm:text-sm text-gray-400 hidden xs:inline">

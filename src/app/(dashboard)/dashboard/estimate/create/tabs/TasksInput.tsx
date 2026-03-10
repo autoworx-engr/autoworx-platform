@@ -6,14 +6,26 @@ import { CirclePlus, X } from "lucide-react";
 import { create } from "mutative";
 
 interface TasksInputProps {
-    tasks: { id: undefined | number; task: string }[];
+  tasks: { id: undefined | number; task: string }[];
 }
-export function TasksInput({tasks}:TasksInputProps) {
+export function TasksInput({ tasks }: TasksInputProps) {
   // const tasks = useEstimateCreateStore((x) => x.tasks);
 
   return (
     <div className="rounded border border-solid border-slate-500">
       <div className="aspect-[2/1] space-y-2 overflow-y-auto p-4">
+        <button
+          type="button"
+          onClick={() => {
+            useEstimateCreateStore.setState(({ tasks }) => ({
+              tasks: [...tasks, { id: undefined, task: "" }],
+            }));
+          }}
+          className="flex items-center gap-1 text-[#6571FF]"
+        >
+          <CirclePlus size={20} />
+          Task
+        </button>
         {tasks.map((task, i) => (
           <label key={i} className="relative block">
             <input
@@ -25,7 +37,7 @@ export function TasksInput({tasks}:TasksInputProps) {
                       id: task.id,
                       task: event.currentTarget.value,
                     };
-                  })
+                  }),
                 )
               }
               className="block w-full rounded border border-solid border-slate-500 px-2 py-1"
@@ -47,18 +59,6 @@ export function TasksInput({tasks}:TasksInputProps) {
             </button>
           </label>
         ))}
-        <button
-          type="button"
-          onClick={() => {
-            useEstimateCreateStore.setState(({ tasks }) => ({
-              tasks: [...tasks, { id: undefined, task: "" }],
-            }));
-          }}
-          className="flex items-center gap-1 text-[#6571FF]"
-        >
-          <CirclePlus size={20} />
-          Task
-        </button>
       </div>
     </div>
   );

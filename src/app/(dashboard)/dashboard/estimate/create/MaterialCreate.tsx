@@ -90,7 +90,7 @@ export default function MaterialCreate() {
       const costValue = parseFloat(data.material.cost);
       setCost(costValue === 0 ? undefined : costValue);
       const sellValue = parseFloat(
-        data.material.sell === 0 ? undefined : data.material.sell
+        data.material.sell === 0 ? undefined : data.material.sell,
       );
       setSell(sellValue);
       const discountValue = parseFloat(data.material.discount);
@@ -111,13 +111,13 @@ export default function MaterialCreate() {
                   notes: data.material.notes,
                   quantity: quantityValue || 0,
                   cost: Number(
-                    costValue === 0 ? undefined : costValue || 0
+                    costValue === 0 ? undefined : costValue || 0,
                   ) as any,
                   sell: Number(
-                    sellValue === 0 ? undefined : sellValue || 0
+                    sellValue === 0 ? undefined : sellValue || 0,
                   ) as any,
                   discount: Number(
-                    discountValue === 0 ? undefined : discountValue || 0
+                    discountValue === 0 ? undefined : discountValue || 0,
                   ) as any,
                   addToInventory: data.material.addToInventory,
                 };
@@ -151,7 +151,7 @@ export default function MaterialCreate() {
   useEffect(() => {
     if (currentSelectedCategoryId) {
       setCategory(
-        categories.find((cat) => cat.id === currentSelectedCategoryId)!
+        categories.find((cat) => cat.id === currentSelectedCategoryId)!,
       );
     }
   }, [currentSelectedCategoryId]);
@@ -277,7 +277,7 @@ export default function MaterialCreate() {
           close();
         } else if (res.type === "globalError") {
           errorToast(
-            res.errorSource?.length ? res.errorSource[0].message : res.message
+            res.errorSource?.length ? res.errorSource[0].message : res.message,
           );
         } else {
           errorToast(res.message!);
@@ -287,7 +287,7 @@ export default function MaterialCreate() {
         errorToast(
           formattedError.errorSource?.length
             ? formattedError.errorSource[0].message
-            : formattedError.message
+            : formattedError.message,
         );
       }
     } else {
@@ -433,7 +433,10 @@ export default function MaterialCreate() {
 
       {/* Name Input */}
       <div className="flex items-center gap-3">
-        <label htmlFor="name" className="min-w-20 max-w-24 sm:min-w-0 sm:max-w-24 text-sm font-semibold tracking-wider text-slate-500">
+        <label
+          htmlFor="name"
+          className="min-w-20 max-w-24 sm:min-w-0 sm:max-w-24 text-sm font-semibold tracking-wider text-slate-500"
+        >
           Material / Parts Name
         </label>
         <input
@@ -476,7 +479,10 @@ export default function MaterialCreate() {
             newButton={
               <NewVendor
                 button={
-                  <button type="button" className="flex items-center gap-1 text-xs font-semibold text-[#6571FF] hover:underline">
+                  <button
+                    type="button"
+                    className="flex items-center gap-1 text-xs font-semibold text-[#6571FF] hover:underline"
+                  >
                     <Plus size={12} /> New Vendor
                   </button>
                 }
@@ -488,11 +494,17 @@ export default function MaterialCreate() {
               />
             }
             items={vendors}
-            onSearch={(search: string) => vendors.filter((vendor =>
-              (vendor.companyName || vendor.name || "").toLowerCase().includes(search.toLowerCase())
-            ))}
+            onSearch={(search: string) =>
+              vendors.filter((vendor) =>
+                (vendor.companyName || vendor.name || "")
+                  .toLowerCase()
+                  .includes(search.toLowerCase()),
+              )
+            }
             displayList={(vendor: Vendor) => (
-              <p className="text-sm font-medium">{vendor?.companyName || vendor.name}</p>
+              <p className="text-sm font-medium">
+                {vendor?.companyName || vendor.name}
+              </p>
             )}
             openState={[vendorOpen, setVendorOpen]}
             selectedItem={vendor}
@@ -518,13 +530,45 @@ export default function MaterialCreate() {
 
       {/* Pricing & Quantity Grid */}
       {[
-        { id: "qt", label: "Quantity", val: quantity, set: setQuantity, placeholder: "0", type: "number" },
-        { id: "price", label: "Cost Price", val: cost, set: setCost, placeholder: "0.00", type: "number", disabled: data.edit },
-        { id: "sell", label: "Sell Price", val: sell, set: setSell, placeholder: "0.00", type: "number" },
-        { id: "discount", label: "Discount", val: discount, set: setDiscount, placeholder: "0", type: "number" }
+        {
+          id: "qt",
+          label: "Quantity",
+          val: quantity,
+          set: setQuantity,
+          placeholder: "0",
+          type: "number",
+        },
+        {
+          id: "price",
+          label: "Cost Price",
+          val: cost,
+          set: setCost,
+          placeholder: "0.00",
+          type: "number",
+          disabled: data.edit,
+        },
+        {
+          id: "sell",
+          label: "Sell Price",
+          val: sell,
+          set: setSell,
+          placeholder: "0.00",
+          type: "number",
+        },
+        {
+          id: "discount",
+          label: "Discount",
+          val: discount,
+          set: setDiscount,
+          placeholder: "0",
+          type: "number",
+        },
       ].map((field) => (
         <div key={field.id} className="flex items-center gap-3 mb-0.5">
-          <label htmlFor={field.id} className="w-24 text-sm font-semibold text-slate-500">
+          <label
+            htmlFor={field.id}
+            className="w-24 text-sm font-semibold text-slate-500"
+          >
             {field.label}
           </label>
           <input
@@ -532,7 +576,18 @@ export default function MaterialCreate() {
             id={field.id}
             value={field.val ?? ""}
             disabled={field.disabled}
-            onChange={(e) => field.set(e.target.value === "" ? undefined : parseFloat(e.target.value))}
+            min="0"
+            onChange={(e) => {
+              if (e.target.value === "") {
+                field.set(undefined);
+              } else {
+                const parsed = parseFloat(e.target.value);
+                field.set(parsed < 0 ? 0 : parsed);
+              }
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "-" || e.key === "e") e.preventDefault();
+            }}
             className="w-full flex-1 rounded-[10px] border border-slate-300/80 px-3 py-1.5 text-base font-medium leading-6 outline-none transition-all duration-300"
             placeholder={field.placeholder}
           />
@@ -541,7 +596,10 @@ export default function MaterialCreate() {
 
       {/* Notes Textarea */}
       <div className="flex items-start gap-3">
-        <label htmlFor="notes" className="mt-2 w-24 text-sm font-semibold tracking-wider text-slate-500">
+        <label
+          htmlFor="notes"
+          className="mt-2 w-24 text-sm font-semibold tracking-wider text-slate-500"
+        >
           Notes
         </label>
         <textarea
@@ -564,12 +622,14 @@ export default function MaterialCreate() {
                 onChange={(e) => setAddToInventory(e.target.checked)}
                 className="peer sr-only"
               />
-              <div className={cn(
-                "flex h-6 w-6 items-center justify-center rounded-lg border-2 transition-all duration-200",
-                "border-slate-200 bg-white shadow-sm",
-                "peer-checked:border-[#6571FF] peer-checked:bg-[#6571FF] peer-checked:shadow-md peer-checked:shadow-[#6571FF]/20",
-                "group-hover:border-[#6571FF]/50 peer-focus:ring-2 peer-focus:ring-[#6571FF]/20"
-              )}>
+              <div
+                className={cn(
+                  "flex h-6 w-6 items-center justify-center rounded-lg border-2 transition-all duration-200",
+                  "border-slate-200 bg-white shadow-sm",
+                  "peer-checked:border-[#6571FF] peer-checked:bg-[#6571FF] peer-checked:shadow-md peer-checked:shadow-[#6571FF]/20",
+                  "group-hover:border-[#6571FF]/50 peer-focus:ring-2 peer-focus:ring-[#6571FF]/20",
+                )}
+              >
                 <svg
                   viewBox="0 0 24 24"
                   fill="none"
@@ -579,7 +639,7 @@ export default function MaterialCreate() {
                   strokeLinejoin="round"
                   className={cn(
                     "h-3.5 w-3.5 transition-transform duration-200",
-                    addToInventory ? "scale-100" : "scale-0"
+                    addToInventory ? "scale-100" : "scale-0",
                   )}
                 >
                   <polyline points="20 6 9 17 4 12" />
@@ -587,10 +647,12 @@ export default function MaterialCreate() {
               </div>
             </div>
 
-            <span className={cn(
-              "text-sm font-semibold transition-colors",
-              addToInventory ? "text-slate-800" : "text-slate-600"
-            )}>
+            <span
+              className={cn(
+                "text-sm font-semibold transition-colors",
+                addToInventory ? "text-slate-800" : "text-slate-600",
+              )}
+            >
               Add to Inventory
             </span>
           </label>

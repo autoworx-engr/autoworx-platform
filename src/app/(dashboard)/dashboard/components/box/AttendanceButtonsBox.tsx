@@ -74,7 +74,7 @@ export default function AttendanceButtonsBox({
         lastClockInOut?.ClockBreak[lastClockInOut?.ClockBreak?.length - 1].id
       );
     },
-    [lastClockInOut]
+    [lastClockInOut],
   );
 
   // Check if technician is currently on break
@@ -128,10 +128,13 @@ export default function AttendanceButtonsBox({
       <div className="w-full">
         <button
           onClick={async () => {
+            console.log("Clock-In Button Clicked");
             if (!lastClockInOut || lastClockInOut?.clockOut) {
+              console.log("Attempting to Clock In...");
               const res = await clockIn({
                 timezone: companyTimezone,
               });
+              console.log("Clock-In Response:", res);
               if (res.success) {
                 successToast("Clocked In Successfully");
               }
@@ -163,7 +166,7 @@ export default function AttendanceButtonsBox({
               <span className="text-xs font-light mt-1 block opacity-80">
                 {formatDateToCustomString(
                   new Date(lastClockInOut!.clockIn!),
-                  companyTimezone
+                  companyTimezone,
                 )}
               </span>
             </>
@@ -243,9 +246,9 @@ export default function AttendanceButtonsBox({
                 new Date(
                   lastClockInOut!.ClockBreak[
                     lastClockInOut!.ClockBreak.length - 1
-                  ].breakStart
+                  ].breakStart,
                 ),
-                companyTimezone
+                companyTimezone,
               )}
             </span>
           </button>

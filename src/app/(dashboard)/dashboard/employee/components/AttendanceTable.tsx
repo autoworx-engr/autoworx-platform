@@ -283,13 +283,7 @@ const Dashboard = () => {
         return decimalHoursToHHMM(total);
       })(),
 
-      percentage: (() => {
-        const rate = attendanceInfo?.growthRateTotalHoursWorked?.rate;
-        if (rate === null || rate === undefined || isNaN(Number(rate))) {
-          return "0%";
-        }
-        return rate;
-      })(),
+      percentage: attendanceInfo?.growthRateTotalHoursWorked?.rate || "0%",
       isPositive:
         attendanceInfo?.growthRateTotalHoursWorked?.isPositive || false,
     },
@@ -308,6 +302,10 @@ const Dashboard = () => {
       <div className="relative flex h-auto w-full flex-col gap-8 rounded border bg-background p-1 lg:p-6">
         <div className="left-3 top-3 w-fit">
           <DateRange
+            dateRange={[
+              startDate ? new Date(startDate) : null,
+              endDate ? new Date(endDate) : null,
+            ]}
             onOk={(start: any, end: any) => {
               let startDateObj: Date;
               let endDateObj: Date;

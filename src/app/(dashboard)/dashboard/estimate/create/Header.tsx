@@ -69,15 +69,20 @@ export default function Header({
   useEffect(() => {
     if (client) {
       const params = new URLSearchParams(searchParams?.toString());
+      const existingClientId = params.get("clientId");
+      if (existingClientId === client.id.toString()) return;
       params.set("clientId", client.id.toString());
-      router.push(`${pathname}?${params.toString()}`);
+      router.replace(`${pathname}?${params.toString()}`);
     }
   }, []);
+
   useEffect(() => {
     if (template) {
       const params = new URLSearchParams(searchParams?.toString());
+      const existingTemplateId = params.get("templateId");
+      if (existingTemplateId === template.id) return;
       params.set("templateId", template?.id);
-      router.push(`${pathname}?${params.toString()}`);
+      router.replace(`${pathname}?${params.toString()}`);
     }
   }, [template]);
 

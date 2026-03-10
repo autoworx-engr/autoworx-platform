@@ -57,7 +57,7 @@ export default function InvoiceEstimateModal({
       const formDataForPhoto = new FormData();
       if (photos.length > 0) {
         const compressedPhotos = await Promise.all(
-          photos.map((photo) =>
+          photos.map(photo =>
             imageCompression(photo, {
               maxSizeMB: 1, // max size in MB
               maxWidthOrHeight: 1920, // limit resolution
@@ -65,7 +65,7 @@ export default function InvoiceEstimateModal({
             }),
           ),
         );
-        compressedPhotos.forEach((compressedFile) => {
+        compressedPhotos.forEach(compressedFile => {
           formDataForPhoto.append("file", compressedFile);
         });
       }
@@ -100,6 +100,7 @@ export default function InvoiceEstimateModal({
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
+            sessionUserId: authUser?.user?.id,
             to: receiverUser.id,
             type: sendType.User,
             message: "",
@@ -120,7 +121,7 @@ export default function InvoiceEstimateModal({
           createdAt: new Date(),
         };
 
-        setMessages((messages) => [...messages, newMessage]);
+        setMessages(messages => [...messages, newMessage]);
         setPhotos([]);
         setError("");
         setShowAttachment(false);
@@ -143,7 +144,7 @@ export default function InvoiceEstimateModal({
       </DialogTrigger>
       <DialogContent
         form
-        onSubmit={(e) => startTransaction(handleEstimateSubmit)}
+        onSubmit={e => startTransaction(handleEstimateSubmit)}
         className="max-h-[500px] w-[96%] overflow-y-auto md:max-h-max"
       >
         {error && <p className="text-center text-sm text-red-400">{error}</p>}

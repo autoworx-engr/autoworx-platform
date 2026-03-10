@@ -58,7 +58,7 @@ export default function Pipelines({
   const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
   console.log("selectedClientId==>", selectedClientId);
   const [selectedVehicleId, setSelectedVehicleId] = useState<number | null>(
-    null
+    null,
   );
   const [pipelineData, setPipelineData] =
     useState<ShopPipelineData[]>(shopPipelineDataProp);
@@ -133,9 +133,8 @@ export default function Pipelines({
     [key: string]: boolean;
   }>({});
 
-  
   const handleSearchResult = (
-    result: { columnIndex: number; leadIndex: number } | null
+    result: { columnIndex: number; leadIndex: number } | null,
   ) => {
     if (!result) return;
 
@@ -162,9 +161,19 @@ export default function Pipelines({
           });
 
           // Highlight the found item temporarily
-          leadElement.classList.add("bg-yellow-100");
+          leadElement.classList.add(
+            "ring-2",
+            "ring-yellow-300",
+            "scale-[1.02]",
+            "transition-transform",
+          );
           setTimeout(() => {
-            leadElement.classList.remove("bg-yellow-100");
+            leadElement.classList.remove(
+              "ring-2",
+              "ring-yellow-300",
+              "scale-[1.02]",
+              "transition-transform",
+            );
           }, 2000);
         }
       }, 300);
@@ -239,7 +248,7 @@ export default function Pipelines({
 
   const handleTagDropdownToggle = (
     categoryIndex: number,
-    leadIndex: number
+    leadIndex: number,
   ) => {
     const key = `${categoryIndex}-${leadIndex}`;
     setTagDropdownStates((prevState) => ({
@@ -251,7 +260,7 @@ export default function Pipelines({
   const handleTagSelect = async (
     categoryIndex: number,
     leadIndex: number,
-    selectedTag: Tag | undefined
+    selectedTag: Tag | undefined,
   ) => {
     if (selectedTag) {
       const key = `${categoryIndex}-${leadIndex}`;
@@ -292,7 +301,7 @@ export default function Pipelines({
   const handleTagRemove = async (
     categoryIndex: number,
     leadIndex: number,
-    tagToRemove: Tag
+    tagToRemove: Tag,
   ) => {
     const key = `${categoryIndex}-${leadIndex}`;
     const invoiceId = pipelineData[categoryIndex].leads[leadIndex].invoiceId;
@@ -306,7 +315,7 @@ export default function Pipelines({
         const updatedPipelineData = [...pipelineData];
         updatedPipelineData[categoryIndex].leads[leadIndex].tags =
           updatedPipelineData[categoryIndex].leads[leadIndex].tags.filter(
-            (tag) => tag.tag.id !== tagToRemove.id
+            (tag) => tag.tag.id !== tagToRemove.id,
           );
         setPipelineData(updatedPipelineData);
         // setLeadTags((prevState) => {
@@ -327,7 +336,7 @@ export default function Pipelines({
 
   const handleServiceDropdownToggle = (
     categoryIndex: number,
-    leadIndex: number
+    leadIndex: number,
   ) => {
     const key = `${categoryIndex}-${leadIndex}`;
     setOpenServiceDropdown((prevState) => ({
@@ -338,7 +347,7 @@ export default function Pipelines({
 
   const handleColumnDropdownToggle = (
     categoryIndex: number,
-    leadIndex: number
+    leadIndex: number,
   ) => {
     const key = `${categoryIndex}-${leadIndex}`;
     setShowColumnSelect((prevState) => ({
@@ -354,7 +363,7 @@ export default function Pipelines({
   const handleColumnChange = async (
     categoryIndex: number,
     leadIndex: number,
-    newColumnId: string
+    newColumnId: string,
   ) => {
     const key = `${categoryIndex}-${leadIndex}`;
     const lead = pipelineData[categoryIndex].leads[leadIndex];
@@ -374,7 +383,7 @@ export default function Pipelines({
         const completed = lead?.services?.incomplete?.length === 0;
         if (!completed && lead?.technicians?.length > 0) {
           toast.error(
-            "All services must be completed by Technicians before moving to delivered."
+            "All services must be completed by Technicians before moving to delivered.",
           );
           return;
         }
@@ -474,7 +483,7 @@ export default function Pipelines({
 
       if (!completed && removed?.technicians?.length > 0) {
         toast.error(
-          "All services must be completed by Technicians before moving to delivered."
+          "All services must be completed by Technicians before moving to delivered.",
         );
         // Revert the item back to its original position
         sourceItems.splice(source.index, 0, removed);
@@ -493,7 +502,7 @@ export default function Pipelines({
       // Update technician status to 'Complete' in the backend
       try {
         const response = await updateTechnicianStatustoComplete(
-          removed.invoiceId
+          removed.invoiceId,
         );
       } catch (error) {
         console.error("Error updating technician status:", error);
@@ -532,7 +541,6 @@ export default function Pipelines({
       console.error("newStatusId is null");
     }
   };
-  
 
   return (
     <>
@@ -592,7 +600,6 @@ export default function Pipelines({
                             openServiceDropdown[key] || false;
                           const selectedEmployee = lead.assignedTo;
 
-                          
                           return (
                             <Draggable
                               key={lead.invoiceId}
@@ -622,7 +629,7 @@ export default function Pipelines({
                                         onClick={() =>
                                           handleColumnDropdownToggle(
                                             categoryIndex,
-                                            leadIndex
+                                            leadIndex,
                                           )
                                         }
                                         className="cursor-pointer text-xl mr-2 hover:text-blue-600 transition-colors md:hidden"
@@ -643,14 +650,14 @@ export default function Pipelines({
                                               onClick={() =>
                                                 handleDropdownToggle(
                                                   categoryIndex,
-                                                  leadIndex
+                                                  leadIndex,
                                                 )
                                               }
                                             >
                                               {selectedEmployee ? (
                                                 <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-gray-600 bg-background text-xs text-black">
                                                   {getInitials(
-                                                    selectedEmployee
+                                                    selectedEmployee,
                                                   )}
                                                 </div>
                                               ) : (
@@ -666,7 +673,7 @@ export default function Pipelines({
                                                 value={selectedEmployee}
                                                 setValue={createEmployeeSelectHandler(
                                                   categoryIndex,
-                                                  leadIndex
+                                                  leadIndex,
                                                 )}
                                                 openDropdown={true}
                                                 setOpenDropdown={() =>
@@ -687,7 +694,7 @@ export default function Pipelines({
                                     <ShopColumnDropdown
                                       options={pipelineData
                                         .filter(
-                                          (col, idx) => idx !== categoryIndex
+                                          (col, idx) => idx !== categoryIndex,
                                         )
                                         .map((col, idx) => ({
                                           id: col.id,
@@ -700,7 +707,7 @@ export default function Pipelines({
                                         handleColumnChange(
                                           categoryIndex,
                                           leadIndex,
-                                          columnId
+                                          columnId,
                                         )
                                       }
                                       onClose={() => {
@@ -742,7 +749,7 @@ export default function Pipelines({
                                             handleTagRemove(
                                               categoryIndex,
                                               leadIndex,
-                                              invoiceTag.tag
+                                              invoiceTag.tag,
                                             )
                                           }
                                         >
@@ -755,7 +762,7 @@ export default function Pipelines({
                                       onClick={() =>
                                         handleTagDropdownToggle(
                                           categoryIndex,
-                                          leadIndex
+                                          leadIndex,
                                         )
                                       }
                                       className="inline-flex h-[20px] items-center justify-center rounded bg-[#6571FF] px-1 py-1 text-xs font-semibold text-white"
@@ -769,20 +776,20 @@ export default function Pipelines({
                                         employeeTags={pipelineData[
                                           categoryIndex
                                         ].leads[leadIndex].tags.map(
-                                          (invoiceTag) => invoiceTag.tag
+                                          (invoiceTag) => invoiceTag.tag,
                                         )}
                                         setValue={(selectedTag) =>
                                           handleTagSelect(
                                             categoryIndex,
                                             leadIndex,
-                                            selectedTag
+                                            selectedTag,
                                           )
                                         }
                                         open={isTagDropdownOpen}
                                         setOpen={() =>
                                           handleTagDropdownToggle(
                                             categoryIndex,
-                                            leadIndex
+                                            leadIndex,
                                           )
                                         }
                                         tagType="GENERAL"
@@ -812,7 +819,7 @@ export default function Pipelines({
                                     handleServiceDropdownToggle={() =>
                                       handleServiceDropdownToggle(
                                         categoryIndex,
-                                        leadIndex
+                                        leadIndex,
                                       )
                                     }
                                     type={pipelineType}
@@ -862,14 +869,14 @@ export default function Pipelines({
                                           if (!searchParams) return;
                                           if (lead?.clientId) {
                                             const params = new URLSearchParams(
-                                              searchParams.toString()
+                                              searchParams.toString(),
                                             );
                                             params.set(
                                               "clientId",
-                                              lead?.clientId?.toString()
+                                              lead?.clientId?.toString(),
                                             );
                                             router.push(
-                                              `${pathname}?${params.toString()}`
+                                              `${pathname}?${params.toString()}`,
                                             );
 
                                             setSelectedClientId(lead?.clientId);
@@ -877,7 +884,7 @@ export default function Pipelines({
 
                                           if (lead?.vehicleId) {
                                             setSelectedVehicleId(
-                                              lead?.vehicleId
+                                              lead?.vehicleId,
                                             );
                                           }
                                           setIsAppointmentModalOpen(true);

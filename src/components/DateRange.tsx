@@ -10,22 +10,46 @@ import "react-date-range/dist/theme/default.css"; // theme css file
 const DateRange = ({
   onOk,
   onCancel,
+  dateRange: dateRangeProp,
 }: {
   onOk: (start: Date, end: Date) => void;
   onCancel: () => void;
+  dateRange?: [Date | null, Date | null];
 }) => {
+  const pipelineStore = usePipelineFilterStore();
+  const currentRange = dateRangeProp || pipelineStore.dateRange;
+  const isRangeSelected = currentRange[0] !== null && currentRange[1] !== null;
+
   const [state, setState] = useState({
     selection: {
-      startDate: new Date(),
-      endDate: new Date(),
+      startDate: currentRange[0] || new Date(),
+      endDate: currentRange[1] || new Date(),
       key: "selection",
     },
   });
   const ref = useRef<HTMLDivElement>(null);
-  const { dateRange } = usePipelineFilterStore();
-  const isRangeSelected = dateRange[0] !== null && dateRange[1] !== null;
   const [showPicker, setShowPicker] = useState(false);
   const [tempRange, setTempRange] = useState(state.selection);
+
+  useEffect(() => {
+    if (isRangeSelected) {
+      const newSelection = {
+        startDate: currentRange[0]!,
+        endDate: currentRange[1]!,
+        key: "selection",
+      };
+      setState({ selection: newSelection });
+      setTempRange(newSelection);
+    } else {
+      const resetSelection = {
+        startDate: new Date(),
+        endDate: new Date(),
+        key: "selection",
+      };
+      setState({ selection: resetSelection });
+      setTempRange(resetSelection);
+    }
+  }, [currentRange[0], currentRange[1], isRangeSelected]);
 
   useEffect(() => {
     document.addEventListener("mousedown", handleClickOutside);
@@ -113,7 +137,7 @@ const DateRange = ({
       </button>
 
       {showPicker && (
-        <div className="absolute left-0 top-full mt-2 z-10 w-[400px] lg:w-[600px] rounded-2xl border border-slate-100 bg-white p-5 shadow-[0_20px_40px_-12px_rgba(0,0,0,0.15)] ring-1 ring-slate-900/5 animate-in fade-in zoom-in-95 dark:bg-slate-900 dark:border-slate-800 dark:ring-white/10">
+        <div className="absolute left-0 top-full mt-2 z-50 w-[400px] lg:w-[600px] rounded-2xl border border-slate-100 bg-white p-5 shadow-[0_20px_40px_-12px_rgba(0,0,0,0.15)] ring-1 ring-slate-900/5 animate-in fade-in zoom-in-95 dark:bg-slate-900 dark:border-slate-800 dark:ring-white/10">
           <DateRangePicker
             inputRanges={[]}
             ranges={[tempRange]}

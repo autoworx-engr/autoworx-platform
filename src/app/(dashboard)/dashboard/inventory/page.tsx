@@ -1,15 +1,15 @@
+import { authOptions } from "@/authOptions";
 import { SyncLists } from "@/components/SyncLists";
 import Title from "@/components/Title";
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import getUser from "@/lib/getUser";
-import AddNewProduct from "./AddNewProduct";
-import Sidebar from "./Sidebar";
-import ClientInventoryList from "./ClientInventoryList";
-import { cache } from "react";
 import { InventoryProductType } from "@prisma/client";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/authOptions";
+import { cache } from "react";
+import AddNewProduct from "./AddNewProduct";
+import ClientInventoryList from "./ClientInventoryList";
+import Sidebar from "./Sidebar";
 
 async function getCategories() {
   const session = await getServerSession(authOptions);
@@ -135,7 +135,7 @@ export default async function Page({
   });
 
   const inventoryCategories = (await getCategories()) ?? [];
-  console.log("inventoryCategories", inventoryCategories);
+  // console.log("inventoryCategories", inventoryCategories);
   const categories = await db.category.findMany({ where: { companyId } });
   const vendors = await db.vendor.findMany({ where: { companyId } });
 

@@ -1,7 +1,7 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { errorToast } from "@/lib/toast";
-import { extractVin } from "@/utils/findVin"; // Assuming you kept extractVin here
+import { extractVin } from "@/utils/findVin";
 import { ScanLine } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 

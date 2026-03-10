@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import SelectCategory from "@/components/Lists/SelectCategory";
 import { Category } from "@prisma/client";
 import toast from "react-hot-toast";
+import { Popconfirm } from "antd";
 
 interface PlaybookEditorProps {
   playbook?: ServicePlaybook;
@@ -61,8 +62,9 @@ export function PlaybookEditor({
         : null),
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [activeTab, setActiveTab] = useState("basic");
 
-  const validateForm = (): boolean => {
+  const validateForm = (): Record<string, string> => {
     const newErrors: Record<string, string> = {};
 
     // Service name validation
@@ -134,11 +136,29 @@ export function PlaybookEditor({
     }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return newErrors;
+  };
+
+  const getTabForError = (errorKey: string): string => {
+    if (errorKey === "service_name" || errorKey === "overview") return "basic";
+    if (errorKey.startsWith("pricing_rule_")) return "pricing";
+    if (errorKey.startsWith("faq_")) return "faqs";
+    if (
+      errorKey === "time_estimate" ||
+      errorKey === "warranty_policy" ||
+      errorKey === "scheduling_notes"
+    )
+      return "details";
+    return "basic";
   };
 
   const handleSave = () => {
-    if (!validateForm()) {
+    const newErrors = validateForm();
+
+    if (Object.keys(newErrors).length > 0) {
+      const firstKey = Object.keys(newErrors)[0];
+      setActiveTab(getTabForError(firstKey));
+      toast.error(newErrors[firstKey]);
       return;
     }
 
@@ -251,7 +271,11 @@ export function PlaybookEditor({
         </div>
       </div>
 
-      <Tabs defaultValue="basic" className="space-y-6">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="space-y-6"
+      >
         <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="basic">Basic Info</TabsTrigger>
           <TabsTrigger value="pricing">Pricing</TabsTrigger>
@@ -541,13 +565,21 @@ export function PlaybookEditor({
                     key={faq.id}
                     className="group relative rounded-lg border border-border p-4 hover:border-primary/30"
                   >
-                    <Button
-                      variant="ghost"
-                      onClick={() => removeFAQ(index)}
-                      className="absolute right-2 top-2 opacity-0 group-hover:opacity-100"
+                    <Popconfirm
+                      title="Delete FAQ"
+                      description="Are you sure you want to delete this FAQ?"
+                      onConfirm={() => removeFAQ(index)}
+                      okText="Yes"
+                      cancelText="No"
+                      okButtonProps={{ danger: true }}
                     >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
+                      <Button
+                        variant="ghost"
+                        className="absolute right-2 top-2 opacity-0 group-hover:opacity-100"
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </Popconfirm>
                     <div className="space-y-4">
                       <div className="space-y-2">
                         <Label>
@@ -653,7 +685,7 @@ export function PlaybookEditor({
                       key={index}
                       className="group flex items-center gap-2 rounded-lg border border-success/20 bg-success/5 px-3 py-2"
                     >
-                      <GripVertical className="h-4 w-4 text-muted-foreground" />
+                      {/* <GripVertical className="h-4 w-4 text-muted-foreground" /> */}
                       <span className="flex-1 text-sm">{item}</span>
                       <Button
                         variant="ghost"
@@ -695,7 +727,7 @@ export function PlaybookEditor({
                       key={index}
                       className="group flex items-center gap-2 rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2"
                     >
-                      <GripVertical className="h-4 w-4 text-muted-foreground" />
+                      {/* <GripVertical className="h-4 w-4 text-muted-foreground" /> */}
                       <span className="flex-1 text-sm">{item}</span>
                       <Button
                         variant="ghost"

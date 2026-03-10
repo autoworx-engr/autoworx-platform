@@ -251,7 +251,7 @@ export function BillSummary({
                     }`
                     : data
                 }
-                className="w-[130px] rounded-lg bg-gray-500 px-3 py-1 text-right text-sm font-bold text-white ring-1 ring-inset ring-slate-100 focus:outline-none"
+                className="w-[200px] rounded-lg bg-gray-500 px-3 py-1 text-right text-sm font-bold text-white ring-1 ring-inset ring-slate-100 focus:outline-none"
               />
             </div>
           );
