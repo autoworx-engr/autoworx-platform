@@ -699,8 +699,12 @@ export default function InvoiceModalBody({
                     </div>
                     <p>{vehicle?.submodel}</p>
                     <p>{vehicle?.type}</p>
-                    <p>Vin Number</p>
-                    <p>{vehicle?.vin}</p>
+                    {vehicle?.vin && (
+                      <>
+                        <p>Vin Number</p>
+                        <p>{vehicle?.vin}</p>
+                      </>
+                    )}
                   </div>
 
                   {/* Estimate Details */}
