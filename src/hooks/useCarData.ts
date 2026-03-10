@@ -44,7 +44,7 @@ export const useCarVinDecoder = ({
 export const useGetModelsByYearAndMake = (
   year: string,
   make: string,
-  enabled = true
+  enabled = true,
 ) => {
   return useQuery({
     queryKey: ["car-models", year, make],
