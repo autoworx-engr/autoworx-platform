@@ -790,7 +790,7 @@ const PDFComponent = function PDF({
             color: colors.textLight,
           }}
         >
-          Thank you for your business · Powered by Autoworx
+          Thank you for your business · Powered by {companyDetails?.name}
         </Text>
       </Page>
     </Document>
@@ -871,7 +871,7 @@ const PDFInvoiceItems = ({
           </View>
         )}
 
-        {laborCost > 0 && (
+        {item.labor && (
           <View style={styles.lineItem}>
             <Text style={styles.lineItemText}>
               Labor - {item.labor ? item.labor.name : "Labor"}

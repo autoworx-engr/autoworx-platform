@@ -14,7 +14,6 @@ import { requestEstimate } from "@/actions/communication/collaboration/requestEs
 import { useSession } from "next-auth/react";
 import { Session } from "next-auth";
 import toast from "react-hot-toast";
-import { sendType } from "@/types/Chat";
 import { RotatingLines } from "react-loader-spinner";
 import imageCompression from "browser-image-compression";
 
