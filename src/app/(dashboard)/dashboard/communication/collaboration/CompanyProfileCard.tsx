@@ -221,7 +221,7 @@ export default function CompanyProfileCard({
             activeTab === "reviews" && "bg-white shadow",
           )}
         >
-          Reviews ({details?.totalReviews})
+          Reviews ({reviewData?.data?.reviews?.length || 0})
         </button>
 
         <button
