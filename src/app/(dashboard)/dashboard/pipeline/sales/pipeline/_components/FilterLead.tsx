@@ -19,9 +19,9 @@ export default function FilterLead({ searchParams }: { searchParams: any }) {
 
   const onValueChange = (value: string) => {
     const params = new URLSearchParams();
-    if (searchParams.searchTerm) {
-      params.set("searchTerm", searchParams.searchTerm);
-    }
+    // if (searchParams.searchTerm) {
+    //   params.set("searchTerm", searchParams.searchTerm);
+    // }
     params.set("orderBy", value);
     router.push(`${pathname}?${params.toString()}`);
   };
@@ -48,7 +48,7 @@ export default function FilterLead({ searchParams }: { searchParams: any }) {
           </SelectGroup>
         </SelectContent>
       </Select>
-      {(searchParams.searchTerm || searchParams.orderBy) && <ResetButton />}
+      {( searchParams.orderBy) && <ResetButton />}
     </div>
   );
 }

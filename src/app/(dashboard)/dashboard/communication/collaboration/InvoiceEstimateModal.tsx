@@ -8,7 +8,7 @@ import {
 import { SlimInput } from "@/components/SlimInput";
 import { useState, useTransition } from "react";
 import InvoiceEstimateAttachment from "./InvoiceEstimateAttachment";
-import { requestEstimate } from "@/actions/communication/collaboration/requestEstimate";
+
 import { User } from "@prisma/client";
 import { useSession } from "next-auth/react";
 import { Session } from "next-auth";
@@ -53,82 +53,97 @@ export default function InvoiceEstimateModal({
   const handleEstimateSubmit = async () => {
     try {
       setError("");
-      // upload photos
-      const formDataForPhoto = new FormData();
+
+      const formData = new FormData();
+
+      // Append photo files (compressed)
       if (photos.length > 0) {
         const compressedPhotos = await Promise.all(
           photos.map(photo =>
             imageCompression(photo, {
-              maxSizeMB: 1, // max size in MB
-              maxWidthOrHeight: 1920, // limit resolution
+              maxSizeMB: 1,
+              maxWidthOrHeight: 1920,
               useWebWorker: true,
             }),
           ),
         );
         compressedPhotos.forEach(compressedFile => {
-          formDataForPhoto.append("file", compressedFile);
+          formData.append("file", compressedFile);
         });
       }
 
-      const {
-        status,
-        data: { requestEstimateFromDB },
-      } = await requestEstimate(formDataForPhoto, {
-        ...estimateInfo,
-        year: parseInt(estimateInfo.year),
-        receiverId: receiverUser.id,
-        receiverCompanyId: receiverUser.companyId,
-        senderId: parseInt(authUser?.user?.id!),
-        senderCompanyId: (authUser as Session & { user: { companyId: number } })
-          ?.user?.companyId,
+      // Append estimate fields
+      formData.append("model", estimateInfo.model);
+      formData.append("make", estimateInfo.make);
+      formData.append("year", estimateInfo.year);
+      formData.append("serviceRequest", estimateInfo.serviceRequest);
+      formData.append("dueDate", estimateInfo.dueDate);
+      formData.append("notes", estimateInfo.notes);
+      formData.append("receiverId", String(receiverUser.id));
+      formData.append("receiverCompanyId", String(receiverUser.companyId));
+      formData.append("senderId", authUser?.user?.id!);
+      formData.append(
+        "senderCompanyId",
+        String(
+          (authUser as Session & { user: { companyId: number } })?.user
+            ?.companyId,
+        ),
+      );
+
+      const res = await fetch(
+        "/api/communication/collaboration/request-estimate",
+        { method: "POST", body: formData },
+      );
+
+      const json = await res.json();
+
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || "Failed to request estimate");
+      }
+
+      const requestEstimateFromDB = json.data.requestEstimate;
+
+      setOpen(false);
+      setEstimateInfo({
+        model: "",
+        year: "",
+        make: "",
+        serviceRequest: "",
+        dueDate: "",
+        notes: "",
       });
-      if (status === 200) {
-        setOpen(false);
-        setEstimateInfo({
-          model: "",
-          year: "",
-          make: "",
-          serviceRequest: "",
-          dueDate: "",
-          notes: "",
-        });
 
-        // send request estimate message realtime
-        const pusherResponse = await fetch(`/api/pusher`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            sessionUserId: authUser?.user?.id,
-            to: receiverUser.id,
-            type: sendType.User,
-            message: "",
-            attachmentFile: null,
-            requestEstimate: requestEstimateFromDB,
-          }),
-        });
-        const messageData = await pusherResponse.json();
-        if (!pusherResponse.ok || !messageData.success) {
-          throw new Error(`message wasn't sended`);
-        }
-
-        const newMessage: TMessage = {
+      // Send request estimate message in realtime
+      const pusherResponse = await fetch(`/api/pusher`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionUserId: authUser?.user?.id,
+          to: receiverUser.id,
+          type: sendType.User,
           message: "",
-          sender: "USER",
-          attachment: null,
+          attachmentFile: null,
           requestEstimate: requestEstimateFromDB,
-          createdAt: new Date(),
-        };
-
-        setMessages(messages => [...messages, newMessage]);
-        setPhotos([]);
-        setError("");
-        setShowAttachment(false);
-        toast.success("Estimate requested successfully");
-      } else {
-        throw new Error("Failed to request estimate");
+        }),
+      });
+      const messageData = await pusherResponse.json();
+      if (!pusherResponse.ok || !messageData.success) {
+        throw new Error(`message wasn't sent`);
       }
+
+      const newMessage: TMessage = {
+        message: "",
+        sender: "USER",
+        attachment: null,
+        requestEstimate: requestEstimateFromDB,
+        createdAt: new Date(),
+      };
+
+      setMessages(messages => [...messages, newMessage]);
+      setPhotos([]);
+      setError("");
+      setShowAttachment(false);
+      toast.success("Estimate requested successfully");
     } catch (err: any) {
       toast.error("Failed to request estimate");
       setError(err.message);
