@@ -581,13 +581,14 @@ export default function MessageBox({
             >
               Attach Document/Media
             </p>
-            {isEstimateAttachmentShow && (
+            {/* {isEstimateAttachmentShow && (
               <InvoiceEstimateModal
                 setShowAttachment={setShowAttachment}
                 setMessages={setMessages}
-                receiverUser={receiverUser!}
+                receiverCompany={receiverUser?.company!}
+                currentCompanyId={currentCompanyId}
               />
-            )}
+            )} */}
           </div>
         )}
         <Image
