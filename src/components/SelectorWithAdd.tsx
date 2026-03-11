@@ -98,11 +98,11 @@ export function SelectorWithAdd({
   }, []);
 
   // Focus search input when dropdown opens
-  useEffect(() => {
-    if (isOpen && isSearch && searchInputRef.current && !isAddingNew) {
-      searchInputRef.current.focus();
-    }
-  }, [isOpen, isSearch, isAddingNew]);
+  // useEffect(() => {
+  //   if (isOpen && isSearch && searchInputRef.current && !isAddingNew) {
+  //     searchInputRef.current.focus();
+  //   }
+  // }, [isOpen, isSearch, isAddingNew]);
 
   // Focus add new input when adding new item
   useEffect(() => {
@@ -271,6 +271,7 @@ export function SelectorWithAdd({
                     onChange={handleSearchChange}
                     onKeyDown={handleSearchKeyDown}
                     onClick={(e) => e.stopPropagation()}
+                    
                   />
                 </div>
               </div>
