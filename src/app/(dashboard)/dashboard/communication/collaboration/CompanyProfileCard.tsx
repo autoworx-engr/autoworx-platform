@@ -258,20 +258,6 @@ export default function CompanyProfileCard({
                         {review?.user?.firstName + " " + review?.user?.lastName}
                       </p>
                     )}
-
-                    <div className="flex items-center gap-1 mt-1">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Star
-                          key={star}
-                          size={16}
-                          className={
-                            star <= Math.round(review?.rate)
-                              ? "fill-yellow-500 text-yellow-500"
-                              : "text-gray-300"
-                          }
-                        />
-                      ))}
-                    </div>
                   </div>
 
                   {/* Actions */}
@@ -354,7 +340,22 @@ export default function CompanyProfileCard({
                     </div>
                   </form>
                 ) : (
-                  <p className="text-gray-700">{review.message}</p>
+                  <div>
+                    <div className="flex items-center gap-1 mt-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star
+                          key={star}
+                          size={16}
+                          className={
+                            star <= Math.round(review?.rate)
+                              ? "fill-yellow-500 text-yellow-500"
+                              : "text-gray-300"
+                          }
+                        />
+                      ))}
+                    </div>
+                    <p className="text-gray-700">{review.message}</p>
+                  </div>
                 )}
               </div>
             );
