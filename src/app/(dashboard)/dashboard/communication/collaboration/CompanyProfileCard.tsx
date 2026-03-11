@@ -247,31 +247,67 @@ export default function CompanyProfileCard({
             const isOwnReview = review.sendCompanyId === currentCompanyId;
 
             return (
-              <div key={review.id} className="border-b pb-3 space-y-1">
-                <div className="flex items-center justify-between">
-                  {isOwnReview ? (
-                    <p className="font-medium">You</p>
-                  ) : (
-                    <p className="font-medium">
-                      {review?.user?.firstName + " " + review?.user?.lastName}
-                    </p>
-                  )}
+              <div key={review.id} className="border-b pb-3 space-y-2">
+                {/* Header */}
+                <div className="flex items-start justify-between">
+                  <div>
+                    {isOwnReview ? (
+                      <p className="font-medium">You</p>
+                    ) : (
+                      <p className="font-medium">
+                        {review?.user?.firstName + " " + review?.user?.lastName}
+                      </p>
+                    )}
 
-                  <div className="flex items-center gap-1">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <Star
-                        key={star}
-                        size={16}
-                        className={
-                          star <= Math.round(review?.rate)
-                            ? "fill-yellow-500 text-yellow-500"
-                            : "text-gray-300"
-                        }
-                      />
-                    ))}
+                    <div className="flex items-center gap-1 mt-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star
+                          key={star}
+                          size={16}
+                          className={
+                            star <= Math.round(review?.rate)
+                              ? "fill-yellow-500 text-yellow-500"
+                              : "text-gray-300"
+                          }
+                        />
+                      ))}
+                    </div>
                   </div>
+
+                  {/* Actions */}
+                  {isOwnReview && editingReview?.id !== review.id && (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          setEditingReview(review);
+                          setEditRating(review.rate);
+                        }}
+                        className="flex items-center gap-1 px-2 py-1 text-xs rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100"
+                      >
+                        <Pencil size={14} />
+                        Edit
+                      </button>
+
+                      <Popconfirm
+                        title="Delete the review"
+                        description="Are you sure to delete this review?"
+                        okText="Yes"
+                        cancelText="No"
+                        onConfirm={() => handleDeleteReview(review.id)}
+                      >
+                        <button
+                          className="flex items-center gap-1 px-2 py-1 text-xs rounded-md border border-red-300 text-red-500 hover:bg-red-50"
+                          disabled={deleteIsPending}
+                        >
+                          <Trash2 size={14} />
+                          Delete
+                        </button>
+                      </Popconfirm>
+                    </div>
+                  )}
                 </div>
 
+                {/* Edit Mode */}
                 {editingReview?.id === review.id ? (
                   <form onSubmit={handleUpdateReview} className="space-y-2">
                     <div className="flex gap-1">
@@ -299,7 +335,7 @@ export default function CompanyProfileCard({
                       className="w-full border rounded-md p-2 text-sm"
                     />
 
-                    <div className="flex gap-3">
+                    <div className="flex gap-2">
                       <button
                         type="submit"
                         disabled={updatePending}
@@ -311,7 +347,6 @@ export default function CompanyProfileCard({
                       <button
                         type="button"
                         onClick={() => setEditingReview(null)}
-                        disabled={updatePending}
                         className="text-gray-500 text-xs"
                       >
                         Cancel
@@ -319,41 +354,7 @@ export default function CompanyProfileCard({
                     </div>
                   </form>
                 ) : (
-                  <>
-                    <p>{review.message}</p>
-
-                    {isOwnReview && (
-                      <div className="flex gap-3 text-xs text-gray-500 mt-1">
-                        <button
-                          onClick={() => {
-                            setEditingReview(review);
-                            setEditRating(review.rate);
-                          }}
-                          className="flex items-center gap-1 px-3 py-1 text-xs rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100"
-                        >
-                          <Pencil size={14} />
-                          Edit
-                        </button>
-
-                        <Popconfirm
-                          title="Delete the review"
-                          description="Are you sure to delete this review?"
-                          okText="Yes"
-                          cancelText="No"
-                          onConfirm={() => handleDeleteReview(review.id)}
-                        >
-                          <button
-                            className="flex items-center gap-1 px-3 py-1 text-xs rounded-md border border-red-300 text-red-500 hover:bg-red-50"
-                            aria-label="Delete"
-                            disabled={deleteIsPending}
-                          >
-                            <Trash2 size={14} />
-                            Delete
-                          </button>
-                        </Popconfirm>
-                      </div>
-                    )}
-                  </>
+                  <p className="text-gray-700">{review.message}</p>
                 )}
               </div>
             );

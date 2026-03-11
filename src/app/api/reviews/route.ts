@@ -75,10 +75,18 @@ export async function GET(req: NextRequest) {
 
     const alreadyReviewed = !!userReview;
 
+    let sortedReviews = reviews;
+
+    if (userReview) {
+      const otherReviews = reviews.filter((r) => r.id !== userReview.id);
+
+      sortedReviews = [userReview, ...otherReviews];
+    }
+
     return NextResponse.json({
       success: true,
       data: {
-        reviews,
+        reviews: sortedReviews,
         userReview: userReview || null,
         alreadyReviewed,
       },
