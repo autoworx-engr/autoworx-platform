@@ -83,23 +83,18 @@ export default async function Page({
   // End Data fetching logic
 
   return (
-    <div className="h-full">
+    <div className="h-full px-4 sm:px-6 lg:px-8"> {/* Added padding for better page spacing */}
 
       {/* 1. Header & Back Button */}
-      <div className="flex items-center gap-4 mb-6 mt-4">
-        <Link 
-          href={`/dashboard/inventory/vendor?vendorId=${id}`} 
-          className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-all duration-200 group"
-        >
+      <Title className={`flex items-center gap-2 ${BASE_TEXT_COLOR} text-xl lg:text-2xl font-bold mb-4 mt-2`}>
+        <Link href={`/dashboard/inventory/vendor?vendorId=${id}`} className="flex items-center">
           <ArrowLeft
-            size={24}
-            className="text-slate-600 dark:text-white group-hover:-translate-x-1 transition-transform"
+            size={20}
+            className="text-slate-600 dark:text-white rounded-full p-1 hover:bg-slate-100 dark:hover:bg-slate-700/50 active:scale-[0.95] transition-all"
           />
         </Link>
-        <Title className={`m-0 ${BASE_TEXT_COLOR} text-2xl lg:text-3xl font-extrabold`}>
-          Purchase History for {vendor?.name}
-        </Title>
-      </div>
+        Purchase History for {vendor?.name}
+      </Title>
 
       <div className="mt-2 flex h-full flex-col-reverse gap-8 lg:flex-row">
 
