@@ -1,10 +1,10 @@
 import { reviewService } from "@/service/reviews/api";
 import { useQuery } from "@tanstack/react-query";
 
-export const useReviews = (companyId: number) => {
+export const useReviews = (companyId: number, currentCompanyId: number) => {
   return useQuery({
     queryKey: ["reviews", companyId],
-    queryFn: () => reviewService.getReviews(companyId),
+    queryFn: () => reviewService.getReviews(companyId, currentCompanyId),
     enabled: !!companyId,
   });
 };

@@ -1,4 +1,5 @@
 import { Star } from "lucide-react";
+import moment from "moment";
 
 type TAlreadyReviewed = {
   rate: number;
@@ -17,17 +18,27 @@ export default function AlreadyReviewed({
 }: TAlreadyReviewed) {
   return (
     <div className="border rounded-md p-4 bg-gray-50 space-y-2">
-      <div className="flex items-center gap-1">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <Star
-            key={star}
-            size={16}
-            className={
-              star <= rate ? "fill-yellow-500 text-yellow-500" : "text-gray-300"
-            }
-          />
-        ))}
-        {date && <span className="text-xs text-gray-400 ml-2">{date}</span>}
+      <div className="flex items-center gap-1 justify-between">
+        <div className="flex items-center gap-1">
+          {[1, 2, 3, 4, 5].map((star) => (
+            <Star
+              key={star}
+              size={16}
+              className={
+                star <= rate
+                  ? "fill-yellow-500 text-yellow-500"
+                  : "text-gray-300"
+              }
+            />
+          ))}
+        </div>
+        <div>
+          {date && (
+            <span className="text-xs text-gray-400 ml-2">
+              {moment(date).format("DD-MM-YYYY")}
+            </span>
+          )}
+        </div>
       </div>
 
       <p className="text-sm text-gray-700">{message}</p>

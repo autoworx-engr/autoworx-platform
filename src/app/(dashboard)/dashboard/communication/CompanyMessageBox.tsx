@@ -105,7 +105,6 @@ export default function CompanyMessageBox({
         (data.fromCompanyId === currentCompanyId &&
           data.toCompanyId === company.id)
       ) {
-        console.log("data", data);
         setMessages((prev) => [...prev, data]);
       }
     });
@@ -172,14 +171,14 @@ export default function CompanyMessageBox({
       const data = await res.json();
 
       if (!data.success) {
-        console.error("Failed to send", data);
+        // console.error("Failed to send", data);
       }
       if (data.success) {
         setMessage("");
         setMultiAttachmentFile(null);
       }
     } catch (err) {
-      console.error("Send error:", err);
+      // console.error("Send error:", err);
     }
   }
 
@@ -325,6 +324,7 @@ export default function CompanyMessageBox({
                             </div>
                           </button>
                         }
+                        isShowEdit={false}
                       />
                     ) : (
                       <Link

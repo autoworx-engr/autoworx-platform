@@ -88,9 +88,11 @@ type InvoiceData = Invoice & {
 export default function InvoiceModalBody({
   invoiceId,
   isPublic = false,
+  isShowEdit = true,
 }: {
   invoiceId?: string;
   isPublic?: boolean;
+  isShowEdit?: boolean;
 }) {
   const searchParams = useSearchParams();
 
@@ -100,8 +102,6 @@ export default function InvoiceModalBody({
     queryFn: () => getInvoiceModalData(invoiceId!),
     enabled: !!invoiceId,
   });
-
-  // console.log({ isError, error, data });
 
   const [twilioCredentials, setTwilioCredentials] = useState<
     TwilioCredentials | InfobipConfig | null
@@ -386,13 +386,15 @@ export default function InvoiceModalBody({
               {/* Row 1 — main actions */}
               <div className="flex flex-wrap items-center justify-center gap-3">
                 {/* Edit Link */}
-                <Link
-                  className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-5 py-1.5 text-sm font-medium text-white shadow-md shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 md:text-base"
-                  href={`/dashboard/estimate/edit/${invoice.id}?clientId=${invoice.clientId}`}
-                >
-                  <SquarePen className="h-4 w-4" />
-                  <span className="hidden md:inline">Edit</span>
-                </Link>
+                {isShowEdit && (
+                  <Link
+                    className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-5 py-1.5 text-sm font-medium text-white shadow-md shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 md:text-base"
+                    href={`/dashboard/estimate/edit/${invoice.id}?clientId=${invoice.clientId}`}
+                  >
+                    <SquarePen className="h-4 w-4" />
+                    <span className="hidden md:inline">Edit</span>
+                  </Link>
+                )}
 
                 {/* Communications Link */}
                 <Link

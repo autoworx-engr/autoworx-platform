@@ -1,20 +1,18 @@
 import { reviewService } from "@/service/reviews/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-export const useCreateReview = (companyId: number) => {
+export const useUpdateReview = (companyId: number) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: reviewService.createReview,
-
+    mutationFn: reviewService.updateReview,
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["reviews", companyId],
       });
-
-      // queryClient.invalidateQueries({
-      //   queryKey: ["company-details", companyId],
-      // });
+      //   queryClient.invalidateQueries({
+      //     queryKey: ["company-details", companyId],
+      //   });
     },
   });
 };

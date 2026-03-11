@@ -3,10 +3,10 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: { Id: string } },
 ) {
   try {
-    const id = Number(params.id);
+    const id = Number(params.Id);
     const body = await req.json();
 
     const { rate, message } = body;
@@ -33,10 +33,10 @@ export async function PATCH(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: { Id: string } },
 ) {
   try {
-    const id = Number(params.id);
+    const id = Number(params.Id);
 
     await db.reviews.delete({
       where: { id },

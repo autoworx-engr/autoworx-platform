@@ -11,6 +11,9 @@ export const useDeleteReview = (companyId: number) => {
       queryClient.invalidateQueries({
         queryKey: ["reviews", companyId],
       });
+      // queryClient.invalidateQueries({
+      //   queryKey: ["company-details", companyId],
+      // });
     },
   });
 };

@@ -1,6 +1,8 @@
 export const reviewService = {
-  getReviews: async (companyId: number) => {
-    const res = await fetch(`/api/reviews?companyId=${companyId}`);
+  getReviews: async (companyId: number, currentCompanyId: number) => {
+    const res = await fetch(
+      `/api/reviews?companyId=${companyId}&currentCompanyId=${currentCompanyId}`,
+    );
 
     if (!res.ok) throw new Error("Failed to fetch reviews");
 
@@ -26,7 +28,9 @@ export const reviewService = {
 
     if (!res.ok) throw new Error("Failed to update review");
 
-    return await res.json();
+    const resdata = await res.json();
+    console.log("resdata", resdata);
+    return resdata;
   },
 
   deleteReview: async (id: number) => {

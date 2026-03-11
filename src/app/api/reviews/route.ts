@@ -48,6 +48,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
 
     const companyId = Number(searchParams.get("companyId"));
+    const currentCompanyId = Number(searchParams.get("currentCompanyId"));
 
     const reviews = await db.reviews.findMany({
       where: {
@@ -68,9 +69,19 @@ export async function GET(req: NextRequest) {
       },
     });
 
+    const userReview = reviews.find(
+      (r) => r.sendCompanyId === currentCompanyId,
+    );
+
+    const alreadyReviewed = !!userReview;
+
     return NextResponse.json({
       success: true,
-      data: reviews,
+      data: {
+        reviews,
+        userReview: userReview || null,
+        alreadyReviewed,
+      },
     });
   } catch (error) {
     return NextResponse.json(

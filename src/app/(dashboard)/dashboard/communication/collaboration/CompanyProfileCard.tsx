@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { MapPin, Users, Briefcase, Star } from "lucide-react";
+import { MapPin, Users, Briefcase, Star, Trash2, Pencil } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useState } from "react";
 import { useCompanyDetails } from "@/hooks/communication/collaboration/useCompanyDetails ";
@@ -12,6 +12,9 @@ import ReviewSkeleton from "./ReviewSkeleton";
 import NoReviewsFound from "./NoReviewsFound";
 import toast from "react-hot-toast";
 import AlreadyReviewed from "./AlreadyReviewed";
+import { useDeleteReview } from "../../../../../hooks/reviews/useDeleteReview";
+import { useUpdateReview } from "@/hooks/reviews/useUpdateReview";
+import { Popconfirm, Spin } from "antd";
 
 type TProfileCard = {
   companyId: number;
@@ -26,18 +29,30 @@ export default function CompanyProfileCard({
 }: TProfileCard) {
   const [activeTab, setActiveTab] = useState<"reviews" | "write">("reviews");
   const [ratingInput, setRatingInput] = useState(5);
+  const [editingReview, setEditingReview] = useState<any>(null);
+  const [editRating, setEditRating] = useState(5);
   const {
     data: details,
     isLoading,
     isFetching,
   } = useCompanyDetails({ companyId, userId, currentCompanyId });
 
-  const { data: reviewData, isLoading: reviewsLoading } = useReviews(companyId);
+  const { data: reviewData, isLoading: reviewsLoading } = useReviews(
+    companyId,
+    currentCompanyId,
+  );
   const {
     mutate: createReview,
     isPending,
     isSuccess,
   } = useCreateReview(companyId);
+
+  const { mutate: deleteReview, isPending: deleteIsPending } =
+    useDeleteReview(companyId);
+
+  const { mutate: updateReview, isPending: updatePending } =
+    useUpdateReview(companyId);
+
   if (isLoading || isFetching) {
     return <CompanyProfileCardSkeleton />;
   }
@@ -60,6 +75,34 @@ export default function CompanyProfileCard({
       toast.success("Write review successfully!");
       setActiveTab("reviews");
     }
+  };
+
+  const handleDeleteReview = (id: number) => {
+    deleteReview(id, {
+      onSuccess: () => toast.success("Review deleted"),
+    });
+  };
+
+  const handleUpdateReview = (e: any) => {
+    e.preventDefault();
+
+    const form = new FormData(e.target);
+
+    updateReview(
+      {
+        id: editingReview.id,
+        data: {
+          rate: editRating,
+          message: form.get("message"),
+        },
+      },
+      {
+        onSuccess: () => {
+          toast.success("Review updated");
+          setEditingReview(null);
+        },
+      },
+    );
   };
 
   return (
@@ -196,47 +239,135 @@ export default function CompanyProfileCard({
         <div className="space-y-3 text-sm text-gray-600">
           {reviewsLoading && <ReviewSkeleton />}
 
-          {!reviewsLoading && reviewData?.data?.length === 0 && (
+          {!reviewsLoading && reviewData?.data?.reviews?.length === 0 && (
             <NoReviewsFound />
           )}
 
-          {reviewData?.data?.map((review: any) => (
-            <div key={review.id} className="border-b pb-2">
-              <div className="flex items-center justify-between">
-                {review?.sendCompanyId === currentCompanyId ? (
-                  <p className="font-medium">You</p>
-                ) : (
-                  <p className="font-medium">
-                    {review?.user?.firstName + " " + review?.user?.lastName}
-                  </p>
-                )}
-                <div className="flex items-center gap-1">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Star
-                      key={star}
-                      size={16}
-                      className={
-                        star <= Math.round(review?.rate)
-                          ? "fill-yellow-500 text-yellow-500"
-                          : "text-gray-300"
-                      }
-                    />
-                  ))}
+          {reviewData?.data?.reviews?.map((review: any) => {
+            const isOwnReview = review.sendCompanyId === currentCompanyId;
+
+            return (
+              <div key={review.id} className="border-b pb-3 space-y-1">
+                <div className="flex items-center justify-between">
+                  {isOwnReview ? (
+                    <p className="font-medium">You</p>
+                  ) : (
+                    <p className="font-medium">
+                      {review?.user?.firstName + " " + review?.user?.lastName}
+                    </p>
+                  )}
+
+                  <div className="flex items-center gap-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        size={16}
+                        className={
+                          star <= Math.round(review?.rate)
+                            ? "fill-yellow-500 text-yellow-500"
+                            : "text-gray-300"
+                        }
+                      />
+                    ))}
+                  </div>
                 </div>
+
+                {editingReview?.id === review.id ? (
+                  <form onSubmit={handleUpdateReview} className="space-y-2">
+                    <div className="flex gap-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          type="button"
+                          onClick={() => setEditRating(star)}
+                        >
+                          <Star
+                            size={18}
+                            className={
+                              star <= editRating
+                                ? "fill-yellow-500 text-yellow-500"
+                                : "text-gray-300"
+                            }
+                          />
+                        </button>
+                      ))}
+                    </div>
+
+                    <textarea
+                      name="message"
+                      defaultValue={review.message}
+                      className="w-full border rounded-md p-2 text-sm"
+                    />
+
+                    <div className="flex gap-3">
+                      <button
+                        type="submit"
+                        disabled={updatePending}
+                        className="bg-[#006D77] text-white px-3 py-1 rounded text-xs"
+                      >
+                        {updatePending ? <Spin /> : "Update"}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setEditingReview(null)}
+                        disabled={updatePending}
+                        className="text-gray-500 text-xs"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <>
+                    <p>{review.message}</p>
+
+                    {isOwnReview && (
+                      <div className="flex gap-3 text-xs text-gray-500 mt-1">
+                        <button
+                          onClick={() => {
+                            setEditingReview(review);
+                            setEditRating(review.rate);
+                          }}
+                          className="flex items-center gap-1 px-3 py-1 text-xs rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100"
+                        >
+                          <Pencil size={14} />
+                          Edit
+                        </button>
+
+                        <Popconfirm
+                          title="Delete the review"
+                          description="Are you sure to delete this review?"
+                          okText="Yes"
+                          cancelText="No"
+                          onConfirm={() => handleDeleteReview(review.id)}
+                        >
+                          <button
+                            className="flex items-center gap-1 px-3 py-1 text-xs rounded-md border border-red-300 text-red-500 hover:bg-red-50"
+                            aria-label="Delete"
+                            disabled={deleteIsPending}
+                          >
+                            <Trash2 size={14} />
+                            Delete
+                          </button>
+                        </Popconfirm>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
-              <p>{review.message}</p>
-            </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
         <>
-          {details?.alreadyReviewed ? (
+          {reviewData?.data?.alreadyReviewed ? (
             <AlreadyReviewed
-              message={details?.userReview?.message}
-              rate={details?.userReview?.rate}
-              date={details?.userReview?.createdAt}
+              message={reviewData?.data?.userReview?.message}
+              rate={reviewData?.data?.userReview?.rate}
+              date={reviewData?.data?.userReview?.createdAt}
               currentUserId={userId}
-              sendUserId={details?.userReview?.sendUserId}
+              sendUserId={reviewData?.data?.userReview?.sendUserId}
             />
           ) : (
             <form className="space-y-3" onSubmit={handleSubmit}>

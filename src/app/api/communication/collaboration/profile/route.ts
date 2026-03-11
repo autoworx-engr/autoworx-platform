@@ -16,14 +16,6 @@ import { NextRequest, NextResponse } from "next/server";
  *         required: true
  *         schema:
  *           type: integer
- *       - in: query
- *         name: userId
- *         required: true
- *         schema:
- *           type: integer
- *       - in: query
- *         name: currentCompanyId
- *         required: false
  *         schema:
  *           type: integer
  *     responses:
@@ -35,8 +27,6 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
 
     const companyId = Number(searchParams.get("companyId"));
-    const userId = Number(searchParams.get("userId"));
-    const currentCompanyId = Number(searchParams.get("currentCompanyId"));
 
     if (!companyId) {
       return NextResponse.json(
@@ -82,12 +72,6 @@ export async function GET(req: NextRequest) {
       totalReviews > 0
         ? reviews.reduce((sum, r) => sum + r.rate, 0) / totalReviews
         : 0;
-
-    const userReview = reviews.find(
-      (r) => r.sendCompanyId === currentCompanyId,
-    );
-
-    const alreadyReviewed = !!userReview;
 
     const connectedCompanies = await db.companyJoin.findMany({
       where: {
@@ -196,8 +180,6 @@ export async function GET(req: NextRequest) {
       address: company.city,
       avgRate: Number(avgRate.toFixed(1)),
       totalReviews,
-      userReview: userReview || null,
-      alreadyReviewed,
       totalCollaboration: finalCompanies?.length,
       totalJobsDone: completedJobs,
     };
