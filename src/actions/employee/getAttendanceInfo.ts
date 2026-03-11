@@ -265,42 +265,25 @@ export async function getAttendanceInfo(
   const prevPeriodStart = prevPeriodEnd.clone().subtract(rangeDurationDays, "days");
   const attInfoPrevPeriod = await getAttendanceInfoForRange(prevPeriodStart, prevPeriodEnd);
 
-  // Get current monthly attendance information using company timezone
-  const startOfMonth = moment().startOf("month");
-  const endOfMonth = moment().endOf("month");
-
-  const attInfoMonth = await getAttendanceInfoForRange(
-    startOfMonth,
-    endOfMonth,
-  );
-
-  // Get previous monthly attendance information using company timezone
-  const startOfPrevMonth = moment().subtract(1, "month").startOf("month");
-  const endOfPrevMonth = moment().subtract(1, "month").endOf("month");
-  const attInfoPrevMonth = await getAttendanceInfoForRange(
-    startOfPrevMonth,
-    endOfPrevMonth,
-  );
-
   // Calculate the number of days absent after the user's join date
-  const absentDays = attInfoMonth.filter(
+  const absentDays = attInfo.filter(
     (day) =>
       day.clockedIn === "ABSENT" &&
       moment(day.date).isSameOrAfter(moment(user.joinDate), "day"),
   ).length;
 
-  const previousAbsentDays = attInfoPrevMonth.filter(
+  const previousAbsentDays = attInfoPrevPeriod.filter(
     (day) =>
       day.clockedIn === "ABSENT" &&
       moment(day.date).isSameOrAfter(moment(user.joinDate), "day"),
   ).length;
 
-  // Calculate the total extra hours for the month
+  // Calculate the total extra hours for the selected period
   const totalExtraHours = (
-    attInfoMonth.reduce((total, day) => total + day.extraMinutes, 0) / 60
+    attInfo.reduce((total, day) => total + day.extraMinutes, 0) / 60
   ).toFixed(2);
   const previousTotalExtraHours = (
-    attInfoPrevMonth.reduce((total, day) => total + day.extraMinutes, 0) / 60
+    attInfoPrevPeriod.reduce((total, day) => total + day.extraMinutes, 0) / 60
   ).toFixed(2);
 
 
@@ -367,15 +350,15 @@ export async function getAttendanceInfo(
     previousTotalDaysWorked,
   );
 
-  // Calculate total tardiness for the current month
+  // Calculate total tardiness for the selected period
   const totalTardiness = (
     user.Technician.reduce((total, technician) => {
       if (technician.dateClosed && technician.due) {
         const dateClosed = moment(technician.dateClosed);
         const due = moment(technician.due);
         if (
-          dateClosed.isSameOrAfter(startOfMonth) &&
-          dateClosed.isSameOrBefore(endOfMonth)
+          dateClosed.isSameOrAfter(startOfWeek) &&
+          dateClosed.isSameOrBefore(endOfWeek)
         ) {
           const tardiness = dateClosed.diff(due, "minutes");
           return total + tardiness;
@@ -385,15 +368,15 @@ export async function getAttendanceInfo(
     }, 0) / 60
   ).toFixed(2);
 
-  // Calculate total tardiness for the previous month
+  // Calculate total tardiness for the previous period
   const previousTotalTardiness = (
     user.Technician.reduce((total, technician) => {
       if (technician.dateClosed && technician.due) {
         const dateClosed = moment(technician.dateClosed);
         const due = moment(technician.due);
         if (
-          dateClosed.isSameOrAfter(startOfPrevMonth) &&
-          dateClosed.isSameOrBefore(endOfPrevMonth)
+          dateClosed.isSameOrAfter(prevPeriodStart) &&
+          dateClosed.isSameOrBefore(prevPeriodEnd)
         ) {
           const tardiness = dateClosed.diff(due, "minutes");
           return total + tardiness;
@@ -409,13 +392,13 @@ export async function getAttendanceInfo(
     parseFloat(previousTotalTardiness),
   );
 
-  // Calculate total hours absent for the current month
-  const totalHoursAbsent = attInfoMonth
+  // Calculate total hours absent for the selected period
+  const totalHoursAbsent = attInfo
     .filter((day) => day.clockedIn === "ABSENT")
     .reduce((total, day) => total + standardWorkingHours, 0);
 
-  // Calculate total hours absent for the previous month
-  const previousTotalHoursAbsent = attInfoPrevMonth
+  // Calculate total hours absent for the previous period
+  const previousTotalHoursAbsent = attInfoPrevPeriod
     .filter((day) => day.clockedIn === "ABSENT")
     .reduce((total, day) => total + standardWorkingHours, 0);
 
