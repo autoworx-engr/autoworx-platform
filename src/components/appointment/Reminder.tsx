@@ -296,7 +296,7 @@ export function Reminder({
               template.subject.toLowerCase().includes(search.toLowerCase()),
             )
           }
-          openState={[openConfirmation, setOpenConfirmation]}
+          // openState={[openConfirmation, setOpenConfirmation]}
         />
       </div>
       <div className="mx-auto w-[350px] space-y-4 p-2 md:w-full">
@@ -379,7 +379,7 @@ export function Reminder({
               template.subject.toLowerCase().includes(search.toLowerCase()),
             )
           }
-          openState={[openReminder, setOpenReminder]}
+          // openState={[openReminder, setOpenReminder]}
         />
       </div>
 
