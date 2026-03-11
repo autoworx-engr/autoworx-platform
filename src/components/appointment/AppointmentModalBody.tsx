@@ -184,7 +184,7 @@ export default function AppointmentModalBody({
             .filter(Boolean)
             .join(" ") || (estimate as any)?.vehicle?.other;
 
-        console.log(estimate);
+        // console.log(estimate);
 
         return {
           id: String(estimate.id),
