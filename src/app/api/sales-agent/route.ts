@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
     }
 
     const companyInfo = await db.company.findFirst({
-      where: { id: body.companyId },
+      where: { id: Number(body.companyId) },
     });
 
     let data: any = null;
@@ -61,18 +61,18 @@ export async function POST(req: NextRequest) {
     if (companyInfo?.smsGateway === "TWILIO") {
       data = await sendTwilioMessageSalesAgent({
         companyId: body.companyId,
-        clientId: body.clientId,
+        clientId: Number(body.clientId),
         message: body.message,
         attachments: body.attachments ?? [],
-        isSalesAgent: body.isSalesAgent,
+        isSalesAgent: Boolean(body.isSalesAgent),
       });
     } else {
       data = await sendInfobipMessageSalesAgent({
         companyId: body.companyId,
-        clientId: body.clientId,
+        clientId: Number(body.clientId),
         message: body.message,
         attachments: body.attachments ?? [],
-        isSalesAgent: body.isSalesAgent,
+        isSalesAgent: Boolean(body.isSalesAgent),
       });
     }
 

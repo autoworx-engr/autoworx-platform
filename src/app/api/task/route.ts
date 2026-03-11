@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/authOptions";
 import { db } from "@/lib/db";
-import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { sendNewTaskAssignNotification } from "@/lib/notification/task-and-appointment-notify";
 import { Priority, TaskAndAppointmentCreatedByEnum } from "@prisma/client";
 import { getGoogleCalendarToken } from "@/actions/calendar-settings/getGoogleCalendarAuth";
@@ -301,6 +298,42 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       { success: false, message: error.message },
       { status: 400 },
+    );
+  }
+}
+
+/**
+ * @swagger
+ * /api/task:
+ *   get:
+ *     summary: Get all tasks
+ *     tags:
+ *       - Task
+ *     responses:
+ *       200:
+ *         description: List of tasks
+ */
+export async function GET() {
+  try {
+    const tasks = await db.task.findMany({
+      include: {
+        taskUser: true,
+        client: true,
+        lead: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      data: tasks,
+    });
+  } catch (error: any) {
+    return NextResponse.json(
+      { success: false, message: error.message },
+      { status: 500 },
     );
   }
 }
