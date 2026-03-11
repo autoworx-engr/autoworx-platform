@@ -104,7 +104,7 @@ const EditFleetStatementModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="flex max-h-[80vh] w-[95vw] max-w-4xl flex-col overflow-hidden sm:w-full [&>button]:hidden">
+      <DialogContent onOpenAutoFocus={(e)=>e.preventDefault()} className="flex max-h-[80vh] w-[95vw] max-w-4xl flex-col overflow-hidden sm:w-full [&>button]:hidden">
         <DialogHeader>
           <DialogTitle>
             <FleetSubHeading text="Edit Fleet Statement" />

@@ -206,7 +206,8 @@ export default function NewFleet({
           <button className="text-xs text-[#6571FF]">+ Add New Fleet</button>
         )}
       </DialogTrigger>
-      <DialogContent
+      <DialogContent 
+       onOpenAutoFocus={(e)=>e.preventDefault()}
         className="max-h-full max-w-xl grid-rows-[auto,1fr,auto]"
         // form
       >
