@@ -39,7 +39,7 @@ const ServiceSelectAndAdd = ({
   }, [services]);
   // Optimize handleAddNew with useCallback to prevent re-renders
   const handleAddNew = useCallback(
-    async (newItem: string, category?: Category) => {
+    async (newItem: string, category?: Category | null) => {
       if (!category?.id) {
         errorToast('Service Category is required!');
         return;

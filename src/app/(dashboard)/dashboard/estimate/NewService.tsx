@@ -35,7 +35,7 @@ export default function NewService({
   const [name, setName] = useState("");
   const [nameError, setNameError] = useState("");
   const [nameTouched, setNameTouched] = useState(false);
-  const [category, setCategory] = useState<Category | undefined>();
+  const [category, setCategory] = useState<Category | null>(null);
   const [categoryError, setCategoryError] = useState("");
   const [description, setDescription] = useState("");
   const [categoryOpen, setCategoryOpen] = useState(false);
@@ -48,7 +48,7 @@ export default function NewService({
       if (data?.service && data.edit) {
         setName(data.service.name);
         setCategory(
-          categories.find((cat) => cat.id === data.service.categoryId)
+          categories.find((cat) => cat.id === data.service.categoryId) || null
         );
         setDescription(data.service.description);
       } else {
@@ -60,7 +60,7 @@ export default function NewService({
   // Reset form function
   const resetForm = () => {
     setName("");
-    setCategory(undefined);
+    setCategory(null);
     setDescription("");
     setNameError("");
     setCategoryError("");
@@ -83,7 +83,7 @@ export default function NewService({
     }
   };
 
-  const validateCategory = (category: Category | undefined) => {
+  const validateCategory = (category: Category | null | undefined) => {
     if (!category) {
       setCategoryError("Category is required");
       showError({

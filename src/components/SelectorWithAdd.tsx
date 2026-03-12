@@ -25,7 +25,7 @@ export type SelectorWithAddProps = {
   allowClear?: boolean;
   allowAddNew?: boolean;
   addNewLabel?: string;
-  onAddNew?: (newItem: string, category?: Category) => void;
+  onAddNew?: (newItem: string, category?: Category | null) => void;
   addNewPlaceholder?: string;
   selectCategory?: boolean;
 };
@@ -69,7 +69,7 @@ export function SelectorWithAdd({
   const searchInputRef = useRef<HTMLInputElement>(null);
   const addNewInputRef = useRef<HTMLInputElement>(null);
 
-  const [category, setCategory] = useState<Category | undefined>(undefined);
+  const [category, setCategory] = useState<Category | null>(null);
 
   const [categoryOpen, setCategoryOpen] = useState(false);
   useEffect(() => {
@@ -135,7 +135,7 @@ export function SelectorWithAdd({
     setSearchTerm("");
     setIsAddingNew(false);
     setNewItemValue("");
-    setCategory(undefined);
+    setCategory(null);
     setCategoryOpen(false);
     if (onChange) {
       const selectedOption = normalizedOptions.find(
@@ -171,7 +171,7 @@ export function SelectorWithAdd({
     if (newItemValue.trim() && onAddNew) {
       onAddNew(newItemValue.trim(), category);
       setNewItemValue("");
-      setCategory(undefined);
+      setCategory(null);
       setIsAddingNew(false);
       setIsOpen(false);
       setCategoryOpen(false);
@@ -185,7 +185,7 @@ export function SelectorWithAdd({
     } else if (e.key === "Escape") {
       setIsAddingNew(false);
       setNewItemValue("");
-      setCategory(undefined);
+      setCategory(null);
       setCategoryOpen(false);
     }
   };
@@ -193,11 +193,11 @@ export function SelectorWithAdd({
   const handleAddNewCancel = () => {
     setIsAddingNew(false);
     setNewItemValue("");
-    setCategory(undefined);
+    setCategory(null);
     setCategoryOpen(false);
   };
 
-  const handleCategoryChange = (newCategory: Category | undefined) => {
+  const handleCategoryChange = (newCategory: Category | null) => {
     setCategory(newCategory);
   };
   const selectedLabel = normalizedOptions?.find(
