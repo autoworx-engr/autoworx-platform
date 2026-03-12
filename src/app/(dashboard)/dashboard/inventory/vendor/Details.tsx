@@ -27,10 +27,10 @@ export default function Details({ vendor }: { vendor: Vendor | undefined }) {
           {/* Action Button */}
           <div className="mt-auto relative">
             <div
-              className="absolute -top-1 -right-1 z-10 cursor-pointer rounded-full bg-slate-100 dark:bg-slate-700 p-0.5 border border-slate-200 dark:border-slate-600 transition-all duration-200 dark:hover:bg-slate-600 lg:hidden"
+              className="absolute -top-1 -right-1 z-10 cursor-pointer rounded-full bg-slate-100 dark:bg-slate-700 p-0.5 border border-slate-200 dark:border-slate-600 transition-all duration-200 dark:hover:bg-slate-600"
               onClick={() => {
                 setActive(false);
-                router.back();
+                router.push("/dashboard/inventory/vendor");
               }}
             >
               <X size={16} className="text-slate-600 dark:text-slate-300" />
