@@ -52,6 +52,30 @@ export default function SearchCollaborationModal({
     }
   }, [open]);
 
+  async function handleSubmit(event?: React.ChangeEvent<HTMLInputElement>) {
+    // event && event.preventDefault();
+    try {
+      const inputValue = event?.target?.value || "";
+      const response = await searchCompanyQuery(inputValue?.trim());
+      if (response.success) {
+        const updateCompanyAdmins = response.data
+          .map((company) => {
+            return company.users.map((user) => {
+              return {
+                ...user,
+                companyName: company.name,
+                isConnected: companies.some((c) => c.id === user.companyId),
+              };
+            });
+          })
+          .flat();
+        setCompanyAdmins(updateCompanyAdmins);
+      }
+    } catch (err: any) {
+      errorToast(err.message);
+    }
+  }
+
   useEffect(() => {
     if (inputRef?.current) {
       inputRef.current.focus();
@@ -86,30 +110,6 @@ export default function SearchCollaborationModal({
     }
   }
 
-  async function handleSubmit(event?: React.ChangeEvent<HTMLInputElement>) {
-    // event && event.preventDefault();
-    try {
-      const inputValue = event?.target?.value || "";
-      const response = await searchCompanyQuery(inputValue?.trim());
-      if (response.success) {
-        const updateCompanyAdmins = response.data
-          .map((company) => {
-            return company.users.map((user) => {
-              return {
-                ...user,
-                companyName: company.name,
-                isConnected: companies.some((c) => c.id === user.companyId),
-              };
-            });
-          })
-          .flat();
-        setCompanyAdmins(updateCompanyAdmins);
-      }
-    } catch (err: any) {
-      errorToast(err.message);
-    }
-  }
-
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -120,11 +120,15 @@ export default function SearchCollaborationModal({
       </DialogTrigger>
       <DialogContent className="min-w-lg max-w-fit">
         {error && <p className="text-center text-sm text-red-400">{error}</p>}
-        <h2 className="mb-4 text-xl font-bold text-slate-600">Search for Collaborators</h2>
+        <h2 className="mb-4 text-xl font-bold text-slate-600">
+          Search for Collaborators
+        </h2>
         <div className="min-w-96">
           {openUserList ? (
             <>
-              <div className="mb-1.5 px-1 text-sm font-semibold text-slate-600">Enter Company Name</div>
+              <div className="mb-1.5 px-1 text-sm font-semibold text-slate-600">
+                Enter Company Name
+              </div>
               <div className="h-fit w-full space-y-3 rounded-xl border border-slate-200 bg-slate-50/50 p-4">
                 {/* Search box */}
                 <SearchBox

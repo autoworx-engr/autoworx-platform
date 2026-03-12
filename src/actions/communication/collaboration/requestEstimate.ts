@@ -12,16 +12,14 @@ type TEstimateData = {
   serviceRequest: string;
   dueDate: string;
   notes: string;
-  receiverId: number;
   receiverCompanyId: number;
-  senderId: number;
   senderCompanyId: number;
   messageText?: string;
 };
 
 export const requestEstimate = async (
   formDataForPhoto: FormData,
-  requestEstimateData: TEstimateData
+  requestEstimateData: TEstimateData,
 ) => {
   try {
     // const isAlreadyExistsEstimate = await db.client.findFirst({
@@ -34,7 +32,7 @@ export const requestEstimate = async (
     //   throw new Error("Estimate for this client already exists");
     // }
 
-    const { requestEstimateFromDB } = await db.$transaction(async prisma => {
+    const { requestEstimateFromDB } = await db.$transaction(async (prisma) => {
       const origin = headers().get("origin");
 
       const receiverCompanyDataFormDB = await prisma.company.findUnique({
@@ -116,7 +114,6 @@ export const requestEstimate = async (
       const estimateInfo = {
         id: customAlphabet("1234567890", 10)(),
         vehicleId: vehicle.id,
-        userId: requestEstimateData.receiverId,
         companyId: requestEstimateData.receiverCompanyId,
         internalNotes: requestEstimateData.notes,
         type: InvoiceType.Estimate,
@@ -149,9 +146,7 @@ export const requestEstimate = async (
 
       const requestedEstimateInfo = {
         invoiceId: estimate.id,
-        senderId: requestEstimateData.senderId,
         senderCompanyId: requestEstimateData.senderCompanyId,
-        receiverId: requestEstimateData.receiverId,
         receiverCompanyId: requestEstimateData.receiverCompanyId,
         serviceId: service.id,
         vehicleId: vehicle.id,
@@ -189,14 +184,14 @@ export const requestEstimate = async (
       photoPaths.push(...data);
 
       await Promise.all(
-        photoPaths.map(photoPath =>
+        photoPaths.map((photoPath) =>
           prisma.invoicePhoto.create({
             data: {
               invoiceId: estimate?.id,
               photo: photoPath,
             },
-          })
-        )
+          }),
+        ),
       );
 
       return { requestEstimateFromDB };
