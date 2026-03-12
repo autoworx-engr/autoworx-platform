@@ -821,8 +821,7 @@ const PDFInvoiceItems = ({
     }, 0);
 
     const laborCost = item.labor?.charge
-      ? parseFloat(item.labor?.charge.toString()) *
-        (Number(item.labor.hours) || 0)
+      ? parseFloat(item.labor?.charge.toString()) * Number(item.labor?.hours)
       : 0;
     const totalDiscount =
       item.materials.reduce((acc, material) => {
@@ -871,14 +870,12 @@ const PDFInvoiceItems = ({
           </View>
         )}
 
-        {item.labor && (
-          <View style={styles.lineItem}>
-            <Text style={styles.lineItemText}>
-              Labor - {item.labor ? item.labor.name : "Labor"}
-            </Text>
-            <Text style={styles.lineItemText}>{formatCurrency(laborCost)}</Text>
-          </View>
-        )}
+        <View style={styles.lineItem}>
+          <Text style={styles.lineItemText}>
+            Labor {item.labor ? `-` + item.labor.name : ""}
+          </Text>
+          <Text style={styles.lineItemText}>{formatCurrency(laborCost)}</Text>
+        </View>
         {item.labor?.notes && (
           <Text style={[styles.inspectionNote, { marginTop: 2 }]}>
             Description - {item.labor.notes}

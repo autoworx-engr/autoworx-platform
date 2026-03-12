@@ -62,16 +62,30 @@ export default function DatabaseTable({
                   key={item.id}
                   className={cn("py-3", index % 2 === 0 ? evenColor : oddColor)}
                 >
-                  <td className="w-16 px-4 py-2 text-left">{item.id}</td>
-                  <td className="px-4 py-2 text-left truncate">
-                    {item.productName}
+                  <td className="w-16 px-4 py-2 text-left">
+                    <p className="block h-full">{item.id}</p>
                   </td>
-                  <td className="px-4 py-2 text-left truncate">
-                    {item.category}
+
+                  <td className="px-4 py-2 text-left">
+                    <p className="block h-full w-full truncate">
+                      {item.productName}
+                    </p>
                   </td>
-                  <td className="px-4 py-2 text-left">{item.unit}</td>
+
+                  <td className="px-4 py-2 text-left">
+                    <p className="block h-full w-full truncate">
+                      {item.category}
+                    </p>
+                  </td>
+
+                  <td className="px-4 py-2 text-left">
+                    <p className="block h-full w-full">{item.unit}</p>
+                  </td>
+
                   <td className="px-4 py-2 text-center">
-                    <AddNewProduct product={item} isDatabase={true} />
+                    <p className="block h-full w-fit">
+                      <AddNewProduct product={item} isDatabase={true} />
+                    </p>
                   </td>
                 </tr>
               ))

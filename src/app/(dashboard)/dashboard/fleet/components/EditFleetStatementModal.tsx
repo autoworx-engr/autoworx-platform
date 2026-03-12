@@ -98,9 +98,11 @@ const EditFleetStatementModal = ({
     onClose();
   };
 
-  const isAllSelected = selectedItems.length === allInvoices.length;
+  // ✅ Fixed: use `invoices.length` instead of `allInvoices.length`
+  const isAllSelected =
+    selectedItems.length === invoices.length && invoices.length > 0;
   const isIndeterminate =
-    selectedItems.length > 0 && selectedItems.length < allInvoices.length;
+    selectedItems.length > 0 && selectedItems.length < invoices.length;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -203,7 +205,6 @@ const EditFleetStatementModal = ({
             <button
               className="rounded-xl bg-gradient-to-r from-[#6571FF] to-[#5a66ee] px-6 py-2.5 text-sm font-medium text-white shadow-lg shadow-indigo-500/30 transition-all duration-200 hover:-translate-y-0.5 hover:scale-[1.02] hover:shadow-xl hover:shadow-indigo-500/40 active:translate-y-0 active:scale-100 disabled:cursor-not-allowed disabled:opacity-50"
               onClick={handleUpdate}
-              // disabled={selectedItems.length === 0 || loading}
               disabled={loading}
             >
               {loading ? "Updating..." : "Update"}

@@ -1,16 +1,16 @@
 "use client";
 import { updateCompany } from "@/actions/settings/updateCompany";
+import PhoneInput from "@/components/PhoneInput";
 import { SlimInput } from "@/components/SlimInput";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
+import { queryKeys } from "@/lib/queryKeys";
 import { errorToast, successToast } from "@/lib/toast";
 import { Company } from "@prisma/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { Briefcase, Mail, MapPin, Save } from "lucide-react";
 import React, { useState, useTransition } from "react";
 import ProfilePicture from "./ProfilePicture";
 import Timezone from "./Timezone";
-import { queryKeys } from "@/lib/queryKeys";
-import { useQueryClient } from "@tanstack/react-query";
-import { Briefcase, Mail, MapPin, Save } from "lucide-react";
-import PhoneInput from "@/components/PhoneInput";
 import { SlimTextarea } from "@/components/SlimTextarea";
 
 type TProps = {
@@ -192,6 +192,18 @@ export default function BusinessForm({ company }: TProps) {
   // Live validation handler
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+
+    // block non-digit characters entirely
+    if (name === "zip") {
+      if (value !== "" && !/^\d+$/.test(value)) {
+        setValidationErrors((prev) => ({
+          ...prev,
+          zip: "Zip code must contain digits only.",
+        }));
+        // Don't update state with invalid characters
+        return;
+      }
+    }
 
     // Update business settings
     setBusinessSettings((prev) => ({ ...prev, [name]: value }));

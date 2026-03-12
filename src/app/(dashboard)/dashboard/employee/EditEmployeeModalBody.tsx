@@ -42,6 +42,8 @@ export default function EditClientModalBody({
   const { data: companyName } = useServerGet(getCompany);
   const [openChangePassword, setOpenChangePassword] = useState(false);
   const { showError, clearError } = useFormErrorStore();
+  // Controlled zip state — blocks non-digit input
+  const [zip, setZip] = useState(employee.zip ?? "");
 
   const phoneDataRef = useRef({
     phoneNumber: "",
@@ -59,7 +61,9 @@ export default function EditClientModalBody({
 
   useEffect(() => {
     setProfilePic(employee.image !== DEFAULT_IMAGE_URL ? employee.image : null);
-  }, [employee.image]);
+    // Sync zip if employee prop changes (e.g. modal reused for different employee)
+    setZip(employee.zip ?? "");
+  }, [employee.image, employee.zip]);
 
   useEffect(() => {
     if (newProfilePic) {
@@ -73,6 +77,8 @@ export default function EditClientModalBody({
   const { phoneNumber, countryCode, isoCode } = phoneDataRef.current;
   async function handleSubmit(data: FormData) {
     const fullPhone = `${countryCode}${phoneNumber}`;
+    // Inject controlled zip into FormData since the input is controlled
+    data.set("zip", zip);
     data.set("mobileNumber", fullPhone);
     let photo;
     const firstName = data.get("firstName") as string;
@@ -82,7 +88,7 @@ export default function EditClientModalBody({
     const address = data.get("address") as string;
     const city = data.get("city") as string;
     const state = data.get("state") as string;
-    const zip = data.get("zip") as string;
+    // const zip = data.get("zip") as string;
     const commission = data.get("commission") as string;
     const date = data.get("date") as string;
     const type = data.get("type") as string;
@@ -115,12 +121,11 @@ export default function EditClientModalBody({
       });
       return;
     }
-
-    // Validate optional fields if provided
-    if (zip && !/^\d*$/.test(zip)) {
+    // Validate zip — digits only
+    if (zip && !/^\d+$/.test(zip)) {
       showError({
         field: "zip",
-        message: "Zip code should contain only numbers.",
+        message: "Zip code must contain digits only.",
       });
       return;
     }
@@ -427,19 +432,21 @@ export default function EditClientModalBody({
             defaultValue={employee.state!}
             required={false}
           />
+
           <SlimInput
             name="zip"
-            defaultValue={employee.zip!}
             required={false}
+            value={zip}
             onChange={(e) => {
               const value = e.target.value;
-              if (value && !/^\d*$/.test(value)) {
+              if (value === "" || /^\d+$/.test(value)) {
+                setZip(value);
+                clearError();
+              } else {
                 showError({
                   field: "zip",
-                  message: "Zip code should contain only numbers.",
+                  message: "Zip code must contain digits only.",
                 });
-              } else {
-                clearError();
               }
             }}
           />
