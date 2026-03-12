@@ -185,31 +185,6 @@ export async function POST(req: NextRequest) {
         { status: 400 },
       );
     }
-    if (!clientId) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "ClientId are required",
-        },
-        { status: 400 },
-      );
-    }
-
-    const client = await db.client.findUnique({
-      where: {
-        id: clientId,
-      },
-    });
-
-    if (!client) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "ClientId are required",
-        },
-        { status: 400 },
-      );
-    }
 
     const priorityEnum = priority as Priority;
 
