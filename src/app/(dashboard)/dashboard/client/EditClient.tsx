@@ -3,7 +3,7 @@
 import { Dialog, DialogTrigger } from "@/components/Dialog";
 import { useFormErrorStore } from "@/stores/form-error";
 import { Client, Source, Tag } from "@prisma/client";
-import { Edit, Settings, SquarePen } from "lucide-react";
+import { Edit, SquarePen } from "lucide-react";
 import { useState } from "react";
 import EditClientModalBody from "./EditClientModalBody";
 
@@ -21,8 +21,8 @@ export default function EditCustomer({
   const { clearError } = useFormErrorStore();
 
   const handleClose = () => {
-    clearError(); // ✅ Reset form errors when closing
-    // setProfilePic(null); // ✅ Reset profile picture
+    clearError(); //
+    // setProfilePic(null);
     setOpen(false);
   };
 

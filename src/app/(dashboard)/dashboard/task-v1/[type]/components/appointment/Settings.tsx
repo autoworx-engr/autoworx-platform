@@ -162,7 +162,7 @@ export default function Settings({
                     id="day-start"
                     name="day-start"
                     defaultValue={settings ? settings.dayStart : "10:00"}
-                    className="w-full rounded-md border-2 border-slate-400 p-1 sm:w-auto"
+                    className="w-full min-h-[36px] appearance-none rounded-md border-2 border-slate-400 bg-transparent p-1 sm:w-auto"
                     onChange={(e) => setDayStart(e.target.value)}
                   />
                 </div>
@@ -176,7 +176,7 @@ export default function Settings({
                     id="day-end"
                     name="day-end"
                     defaultValue={settings ? settings.dayEnd : "18:00"}
-                    className="w-full rounded-md border-2 border-slate-400 p-1 sm:w-auto"
+                    className="w-full min-h-[36px] appearance-none rounded-md border-2 border-slate-400 bg-transparent p-1 sm:w-auto"
                     onChange={(e) => setDayEnd(e.target.value)}
                   />
                 </div>

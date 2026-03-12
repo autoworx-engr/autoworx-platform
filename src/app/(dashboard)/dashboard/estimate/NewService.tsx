@@ -251,6 +251,7 @@ export default function NewService({
 
       <DialogContent
         className="max-h-[94vh] max-w-md grid-rows-[auto,1fr,auto]"
+        onOpenAutoFocus={(e) => e.preventDefault()}
         form
       >
         <DialogHeader className="border-b border-slate-200 pb-4">
@@ -284,11 +285,10 @@ export default function NewService({
                   }
                 }}
                 onBlur={() => setNameTouched(true)}
-                className={`w-full px-4 py-2.5 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder:text-slate-400 ${
-                  nameError
-                    ? "border-red-500 focus:ring-red-500"
-                    : "border-slate-300"
-                }`}
+                className={`w-full px-4 py-2.5 text-sm border rounded-lg outline-none transition-all placeholder:text-slate-400 ${nameError
+                    ? "border-red-500 focus:border-red-600"
+                    : "border-slate-300 focus:border-blue-500"
+                  }`}
                 aria-invalid={nameError ? "true" : "false"}
                 aria-describedby={nameError ? "name-error" : undefined}
               />
@@ -378,18 +378,17 @@ export default function NewService({
                   setDescription(value);
                 }}
                 rows={5}
-                className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder:text-slate-400 resize-none"
+                className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-lg outline-none transition-all placeholder:text-slate-400 focus:border-blue-500"
               />
               <div className="flex items-center justify-between">
                 <p className="text-xs text-slate-500">
                   Provide a detailed description of what this service includes
                 </p>
                 <span
-                  className={`text-xs ${
-                    descriptionLength > maxDescriptionLength * 0.9
-                      ? "text-red-600 font-medium"
-                      : "text-slate-500"
-                  }`}
+                  className={`text-xs ${descriptionLength > maxDescriptionLength * 0.9
+                    ? "text-red-600 font-medium"
+                    : "text-slate-500"
+                    }`}
                 >
                   {descriptionLength}/{maxDescriptionLength}
                 </span>

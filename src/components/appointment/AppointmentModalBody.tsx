@@ -184,7 +184,7 @@ export default function AppointmentModalBody({
             .filter(Boolean)
             .join(" ") || (estimate as any)?.vehicle?.other;
 
-        console.log(estimate);
+        // console.log(estimate);
 
         return {
           id: String(estimate.id),
@@ -803,6 +803,7 @@ export default function AppointmentModalBody({
 
   return (
     <DialogContent
+     onOpenAutoFocus={(e)=>e.preventDefault()}
       className="grid max-w-5xl grid-rows-[auto,1fr,auto] sm:max-w-[80vw] lg:max-w-6xl"
       form
     >
