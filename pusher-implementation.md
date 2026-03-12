@@ -110,14 +110,15 @@ Handles real-time updates for unread messages count on lead cards or pipeline vi
 
 Handles real-time messaging between users from different companies that have established collaboration relationships.
 
-| Channel           | Event                          | Payload                                                          | Description                                                                                                               |
-| ----------------- | ------------------------------ | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `user-{senderId}` | `message`                      | `{ to, from, message, attachment, requestEstimate }`             | **Collaboration Messages**: The receiver subscribes to the _sender's_ channel to receive collaboration messages.         |
-| `track-{userId}`  | `chat-track`                   | `ChatTrack` Object (includes `section: "collaboration"`)         | Updates the chat list sidebar with the latest collaboration message snippet, timestamp, and unread status.                |
-| `track-{userId}`  | `chat-track-read`              | `{ senderId, userId, section: "collaboration" }`                 | Marks a collaboration conversation as read in real-time.                                                                  |
-| `track-{userId}`  | `collaboration-unread-updated` | Unread count data                                                | Refreshes unread collaboration message counts in the sidebar navigation.                                                  |
+| Channel           | Event                          | Payload                                                  | Description                                                                                                      |
+| ----------------- | ------------------------------ | -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `user-{senderId}` | `message`                      | `{ to, from, message, attachment, requestEstimate }`     | **Collaboration Messages**: The receiver subscribes to the _sender's_ channel to receive collaboration messages. |
+| `track-{userId}`  | `chat-track`                   | `ChatTrack` Object (includes `section: "collaboration"`) | Updates the chat list sidebar with the latest collaboration message snippet, timestamp, and unread status.       |
+| `track-{userId}`  | `chat-track-read`              | `{ senderId, userId, section: "collaboration" }`         | Marks a collaboration conversation as read in real-time.                                                         |
+| `track-{userId}`  | `collaboration-unread-updated` | Unread count data                                        | Refreshes unread collaboration message counts in the sidebar navigation.                                         |
 
 **Key Implementation Details:**
+
 - Collaboration messages use `section: "collaboration"` to distinguish from internal company messages
 - Similar to internal messaging, uses the direct messaging pattern where receiver subscribes to sender's channel
 - Trigger Location: [`src/app/api/pusher/route.ts`](src/app/api/pusher/route.ts) (when `section === "collaboration"`)
