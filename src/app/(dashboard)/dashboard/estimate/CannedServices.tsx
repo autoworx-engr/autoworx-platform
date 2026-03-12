@@ -65,7 +65,7 @@ export default function CannedServices({
 
       const matchesSearch = serviceSearch
         ? row.name.toLowerCase().includes(serviceSearch.toLowerCase()) ||
-          categoryName.includes(serviceSearch.toLowerCase())
+        categoryName.includes(serviceSearch.toLowerCase())
         : true;
 
       const matchesCategory = selectedCategory
@@ -342,7 +342,7 @@ const ServiceComponent = ({
                     <SquarePen className="w-5 h-5" />
                   </button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent onOpenAutoFocus={(e) => e.preventDefault()}>
                   <DialogHeader>
                     <DialogTitle>Edit Canned Service</DialogTitle>
                   </DialogHeader>
@@ -497,7 +497,10 @@ const ServiceComponent = ({
               <SquarePen className="w-5 h-5" />
             </button>
           </DialogTrigger>
-          <DialogContent className="max-w-md">
+          <DialogContent
+            className="max-w-md"
+            onOpenAutoFocus={(e) => e.preventDefault()}
+          >
             <DialogHeader className="px-2.5">
               <DialogTitle>Edit Canned Service</DialogTitle>
             </DialogHeader>
