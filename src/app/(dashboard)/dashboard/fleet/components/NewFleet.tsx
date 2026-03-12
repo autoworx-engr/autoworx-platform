@@ -10,17 +10,16 @@ import {
 } from "@/components/Dialog";
 import FormError from "@/components/FormError";
 import { SelectClientTags } from "@/components/Lists/SelectClientTags";
+import PhoneInput from "@/components/PhoneInput";
 import { SlimInput } from "@/components/SlimInput";
+import { successToast } from "@/lib/toast";
 import { useFormErrorStore } from "@/stores/form-error";
 import { useListsStore } from "@/stores/lists";
 import { Client, Fleet, Tag } from "@prisma/client";
+import { CircleUserRound, SquarePen } from "lucide-react";
 import { useEffect, useState, useTransition } from "react";
 import { RotatingLines } from "react-loader-spinner";
 import SelectComponent from "./Select";
-import Image from "next/image";
-import { successToast } from "@/lib/toast";
-import { CircleUserRound, SquarePen } from "lucide-react";
-import PhoneInput from "@/components/PhoneInput";
 
 export default function NewFleet({
   fleet,
@@ -41,21 +40,23 @@ export default function NewFleet({
   const [tagOpenDropdown, setTagOpenDropdown] = useState(false);
   const [tag, setTag] = useState<Tag | undefined>(fleet?.tag!);
   const [profilePic, setProfilePic] = useState<File | null | string>(
-    fleet ? fleet.photo : null,
+    fleet ? fleet.photo : null
   );
 
   const { showError, clearError } = useFormErrorStore();
   const [mobile, setMobile] = useState("+1");
   const [countryCode, setCountryCode] = useState("");
   const [countryIsoCode, setCountryIsoCode] = useState("");
+  const [zip, setZip] = useState(fleet?.zip ?? "");
 
   useEffect(() => {
     if (isEdit && fleet && open) {
       setMobile(fleet?.mobile!);
       setProfilePic(fleet ? fleet.photo : null);
       setPreferredPaymentTerm(
-        fleet ? fleet?.fleet!.preferredPaymentTerm : null,
+        fleet ? fleet?.fleet!.preferredPaymentTerm : null
       );
+      setZip(fleet?.zip ?? "");
     }
   }, [isEdit, fleet, open]);
 
@@ -73,7 +74,6 @@ export default function NewFleet({
     const address = document.querySelector<HTMLInputElement>("#address")?.value;
     const city = document.querySelector<HTMLInputElement>("#city")?.value;
     const state = document.querySelector<HTMLInputElement>("#state")?.value;
-    const zip = document.querySelector<HTMLInputElement>("#zip")?.value;
 
     if (!fleetName?.trim()) {
       showError({
@@ -100,6 +100,15 @@ export default function NewFleet({
       showError({
         field: "mobile",
         message: "Mobile is required.",
+      });
+      return;
+    }
+
+    // Validate zip code — digits only
+    if (zip && !/^\d+$/.test(zip)) {
+      showError({
+        field: "zip",
+        message: "Zip code must contain digits only.",
       });
       return;
     }
@@ -194,7 +203,7 @@ export default function NewFleet({
   return (
     <Dialog
       open={open}
-      onOpenChange={isOpen => {
+      onOpenChange={(isOpen) => {
         if (!isOpen) handleClose();
         setOpen(isOpen);
       }}
@@ -245,7 +254,7 @@ export default function NewFleet({
                 id="profilePicture"
                 hidden
                 accept="image/*"
-                onChange={e => {
+                onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) {
                     setProfilePic(file);
@@ -271,7 +280,7 @@ export default function NewFleet({
                 id="profilePicture"
                 hidden
                 accept="image/*"
-                onChange={e => {
+                onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) {
                     setProfilePic(file);
@@ -299,7 +308,7 @@ export default function NewFleet({
               label="Fleet Name"
               required
               defaultValue={fleet?.fleet?.fleetName!}
-              onChange={e => {
+              onChange={(e) => {
                 const value = e.target.value;
 
                 // Validate on input change
@@ -327,7 +336,7 @@ export default function NewFleet({
               label="Email Address"
               required
               defaultValue={fleet?.email!}
-              onChange={e => {
+              onChange={(e) => {
                 const value = e.target.value;
 
                 // Validate on input change
@@ -377,7 +386,24 @@ export default function NewFleet({
               required={false}
               defaultValue={fleet?.state!}
             />
-            <SlimInput name="zip" required={false} defaultValue={fleet?.zip!} />
+            {/* Controlled zip input with digits-only validation */}
+            <SlimInput
+              name="zip"
+              required={false}
+              value={zip}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === "" || /^\d+$/.test(value)) {
+                  setZip(value);
+                  clearError();
+                } else {
+                  showError({
+                    field: "zip",
+                    message: "Zip code must contain digits only.",
+                  });
+                }
+              }}
+            />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -386,7 +412,7 @@ export default function NewFleet({
                 label="Payment Term"
                 items={paymentTerms}
                 value={preferredPaymentTerm}
-                onChange={value => setPreferredPaymentTerm(value)}
+                onChange={(value) => setPreferredPaymentTerm(value)}
               />
             </div>
 

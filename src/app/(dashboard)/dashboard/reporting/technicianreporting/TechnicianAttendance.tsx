@@ -33,9 +33,9 @@ const TechnicianAttendance = ({ currentUserId }: { currentUserId: string }) => {
     Number(currentUserId),
     startDate || undefined,
     endDate || undefined,
-    refetch,
+    refetch
   );
-  console.log("🚀 ~ TechnicianAttendance ~ attendanceInfo:", attendanceInfo);
+  // console.log("🚀 ~ TechnicianAttendance ~ attendanceInfo:", attendanceInfo);
 
   return (
     <div className="my-4 box-border flex flex-col lg:w-full z-10">
@@ -154,9 +154,8 @@ const TechnicianAttendance = ({ currentUserId }: { currentUserId: string }) => {
                         const effectiveHours = isNaN(Number(data.hours))
                           ? data.hours
                           : convertDuration(
-                            Number(data.hours) - Number(data.totalBreaks),
-                          );
-
+                              Number(data.hours) - Number(data.totalBreaks)
+                            );
                         const totalBreaks = isNaN(Number(data.totalBreaks))
                           ? data.totalBreaks
                           : convertDuration(Number(data.totalBreaks));
@@ -177,17 +176,17 @@ const TechnicianAttendance = ({ currentUserId }: { currentUserId: string }) => {
                               {typeof data.clockedIn === "string"
                                 ? data.clockedIn
                                 : moment
-                                  .utc(data.clockedIn)
-                                  .tz(timezone)
-                                  .format("hh:mm:ss A")}
+                                    .utc(data.clockedIn)
+                                    .tz(timezone)
+                                    .format("hh:mm:ss A")}
                             </td>
                             <td className="px-2 py-2 sm:px-4">
                               {typeof data?.clockedOut === "string"
                                 ? data?.clockedOut
                                 : moment
-                                  .utc(data?.clockedOut)
-                                  .tz(timezone)
-                                  .format("hh:mm:ss A")}
+                                    .utc(data?.clockedOut)
+                                    .tz(timezone)
+                                    .format("hh:mm:ss A")}
                             </td>
                             <td className="hidden justify-center px-2 py-2 sm:px-4 lg:flex">
                               {/* {data.totalBreaks } */}
