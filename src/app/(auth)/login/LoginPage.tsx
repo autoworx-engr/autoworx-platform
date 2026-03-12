@@ -1,9 +1,9 @@
 import FormError from "@/components/FormError";
-import Password from "@/components/Password";
-import SubmitButton from "./SubmitButton";
-import Link from "next/link";
 import Input from "@/components/Input";
+import Password from "@/components/Password";
 import Image from "next/image";
+import Link from "next/link";
+import SubmitButton from "./SubmitButton";
 export default function LoginPage() {
   return (
     <form className="relative w-full max-w-md overflow-hidden rounded-2xl border border-white/30 bg-white/80 p-8 shadow-2xl backdrop-blur-2xl dark:bg-slate-900/90 dark:border-slate-700/50 z-10">
@@ -67,7 +67,7 @@ export default function LoginPage() {
               href="/forgot-password"
               className="text-xs font-semibold text-[#6571FF] transition-colors hover:text-[#5059d4]"
             >
-              Forgot?
+              Forgot Password?
             </Link>
           </div>
           <Password

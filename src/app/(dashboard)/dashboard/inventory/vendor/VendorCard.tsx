@@ -29,8 +29,13 @@ const VendorCard = ({
   const { isActive, setActive } = VendorListStore();
 
   useEffect(() => {
+    setActive(!!vendorId);
+  }, [vendorId, setActive]);
+
+  useEffect(() => {
     setMounted(true);
   }, []);
+
 
   if (!mounted) {
     return null;
