@@ -37,7 +37,11 @@ export async function GET(req: Request) {
             image: true,
           },
         },
-        requestEstimate: true,
+        requestEstimate: {
+          include: {
+            invoice: true,
+          },
+        },
       },
       orderBy: {
         createdAt: "asc",

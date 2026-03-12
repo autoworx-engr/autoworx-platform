@@ -381,7 +381,7 @@ export default function InvoiceModalBody({
           className="#shadow-lg no-visible-scrollbar relative grid h-full w-full shrink grow-0 flex-col items-center justify-center gap-4 overflow-y-auto rounded-md border bg-background p-6 md:h-[95vh] md:w-[800px] md:flex-row print:block print:h-auto print:w-full print:border-none print:p-0 print:shadow-none"
         >
           {/* Action Buttons */}
-          {!isPublic && (
+          {!isPublic && isShowEdit && (
             <div className="mt-6 flex w-full flex-col items-center gap-3 print:hidden">
               {/* Row 1 — main actions */}
               <div className="flex flex-wrap items-center justify-center gap-3">
