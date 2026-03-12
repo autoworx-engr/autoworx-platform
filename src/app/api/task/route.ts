@@ -195,22 +195,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const client = await db.client.findUnique({
-      where: {
-        id: clientId,
-      },
-    });
-
-    if (!client) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "ClientId are required",
-        },
-        { status: 400 },
-      );
-    }
-
     const priorityEnum = priority as Priority;
 
     // Create Task (matches your Prisma model)

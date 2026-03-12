@@ -60,7 +60,7 @@ export async function GET(
 /**
  * @swagger
  * /api/task/{id}:
- *   put:
+ *   patch:
  *     summary: Update task
  *     tags:
  *       - Task
