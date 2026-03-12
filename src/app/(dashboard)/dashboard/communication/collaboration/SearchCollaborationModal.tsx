@@ -118,7 +118,7 @@ export default function SearchCollaborationModal({
           Search for Collaborators
         </button>
       </DialogTrigger>
-      <DialogContent className="min-w-lg max-w-fit">
+      <DialogContent onOpenAutoFocus={(e)=>e.preventDefault()} className="min-w-lg max-w-fit">
         {error && <p className="text-center text-sm text-red-400">{error}</p>}
         <h2 className="mb-4 text-xl font-bold text-slate-600">
           Search for Collaborators
