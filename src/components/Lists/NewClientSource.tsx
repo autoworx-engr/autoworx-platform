@@ -51,6 +51,7 @@ export default function NewClientSource({
 
       <DialogContent
         className="max-h-full max-w-xl grid-rows-[auto,1fr,auto]"
+        onOpenAutoFocus={(e) => e.preventDefault()}
         form
       >
         <DialogHeader>

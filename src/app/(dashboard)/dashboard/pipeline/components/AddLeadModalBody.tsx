@@ -270,6 +270,7 @@ const AddLeads = ({ onClose }: { onClose?: () => void }) => {
   return (
     <DialogContent
       className="max-h-full flex flex-col"
+      onOpenAutoFocus={(e) => e.preventDefault()}
       onCloseAutoFocus={() => setFormStatus({ message: "", type: null })}
     >
       {/* Header */}
