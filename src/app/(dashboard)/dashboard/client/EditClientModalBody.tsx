@@ -207,10 +207,7 @@ export default function EditClientModalBody({
   }, []);
 
   return (
-    <DialogContent
-      className="max-h-full max-w-2xl grid-rows-[auto,1fr,auto]"
-      onOpenAutoFocus={(e) => e.preventDefault()}
-    >
+    <DialogContent className="max-h-full max-w-2xl grid-rows-[auto,1fr,auto]">
       <div className="mt-8 flex items-center justify-between px-2">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-600 dark:text-slate-100">

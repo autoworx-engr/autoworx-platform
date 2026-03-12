@@ -804,7 +804,6 @@ export default function AppointmentModalBody({
   return (
     <DialogContent
       className="grid max-w-5xl grid-rows-[auto,1fr,auto] sm:max-w-[80vw] lg:max-w-6xl"
-      onOpenAutoFocus={(e) => e.preventDefault()}
       form
     >
       {/* Heading */}

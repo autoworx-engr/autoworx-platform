@@ -261,10 +261,7 @@ export default function NewCustomer({
             </button>
           )}
         </DialogTrigger>
-        <DialogContent
-          className="max-h-full max-w-2xl grid-rows-[auto,1fr,auto]"
-          onOpenAutoFocus={(e) => e.preventDefault()}
-        >
+        <DialogContent className="max-h-full max-w-2xl grid-rows-[auto,1fr,auto]">
           <div className="mt-8 flex items-center justify-between">
             <div className="px-2">
               <h1 className="text-2xl font-bold tracking-tight text-slate-600 dark:text-slate-100">
@@ -573,7 +570,6 @@ export default function NewCustomer({
       >
         <DialogContent
           className="max-w-md"
-          onOpenAutoFocus={(e) => e.preventDefault()}
           onInteractOutside={(e) => {
             // Prevent closing when clicking outside
             e.preventDefault();
