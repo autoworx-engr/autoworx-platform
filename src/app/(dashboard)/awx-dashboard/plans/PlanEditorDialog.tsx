@@ -59,12 +59,12 @@ export const PlanEditorDialog = ({
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [price, setPrice] = useState("0");
+  const [price, setPrice] = useState("");
   const [interval, setInterval] = useState<PlatformPlanInterval>(
     PlatformPlanInterval.MONTHLY,
   );
-  const [trialLengthDays, setTrialLengthDays] = useState("0");
-  const [displayOrder, setDisplayOrder] = useState("0");
+  const [trialLengthDays, setTrialLengthDays] = useState("");
+  const [displayOrder, setDisplayOrder] = useState("");
   const [isActive, setIsActive] = useState(true);
   const [features, setFeatures] = useState<FeatureDraft[]>([]);
   const [catalogFeatures, setCatalogFeatures] = useState<FeatureDraft[]>([]);
@@ -81,10 +81,10 @@ export const PlanEditorDialog = ({
     if (!plan) {
       setName("");
       setDescription("");
-      setPrice("0");
+      setPrice("");
       setInterval(PlatformPlanInterval.MONTHLY);
-      setTrialLengthDays("0");
-      setDisplayOrder("0");
+      setTrialLengthDays("");
+      setDisplayOrder("");
       setIsActive(true);
       setError(null);
       setFeaturesDirty(false);
@@ -296,6 +296,7 @@ export const PlanEditorDialog = ({
                 <Input
                   name="plan-price"
                   type="number"
+                  placeholder="0"
                   value={price}
                   onChange={(e: any) => setPrice(e.target.value)}
                   className={`${controlClassName} font-semibold text-[#6571FF]`}
@@ -310,6 +311,7 @@ export const PlanEditorDialog = ({
                   name="plan-trial"
                   type="number"
                   min="0"
+                  placeholder="0"
                   value={trialLengthDays}
                   onChange={(e: any) => setTrialLengthDays(e.target.value)}
                   className={controlClassName}
@@ -323,6 +325,7 @@ export const PlanEditorDialog = ({
                 <Input
                   name="plan-display-order"
                   type="number"
+                  placeholder="0"
                   value={displayOrder}
                   onChange={(e: any) => setDisplayOrder(e.target.value)}
                   className={controlClassName}
@@ -453,8 +456,17 @@ export const PlanEditorDialog = ({
                     ) : (
                       <Input
                         name={`feature-value-${index}`}
-                        placeholder="value"
-                        value={feature.value}
+                        placeholder={
+                          feature.type === PlatformFeatureType.NUMERIC
+                            ? "0"
+                            : "value"
+                        }
+                        value={
+                          feature.type === PlatformFeatureType.NUMERIC &&
+                          feature.value === "0"
+                            ? ""
+                            : feature.value
+                        }
                         onChange={(e: any) =>
                           updateFeature(index, { value: e.target.value })
                         }
