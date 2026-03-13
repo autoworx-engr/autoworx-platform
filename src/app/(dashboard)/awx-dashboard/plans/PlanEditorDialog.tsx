@@ -13,6 +13,16 @@ const formatFeatureName = (key: string) =>
     .toLowerCase()
     .replace(/\b\w/g, (char) => char.toUpperCase());
 
+const AUTOMATION_MODULE_OPTIONS = [
+  "pipeline",
+  "communication",
+  "invoice",
+  "inventory",
+  "tag",
+  "service",
+  "marketing",
+];
+
 type FeatureDraft = {
   key: string;
   type: PlatformFeatureType;
@@ -165,6 +175,26 @@ export const PlanEditorDialog = ({
       return next;
     });
     setFeaturesDirty(true);
+  };
+
+  const toggleAutomationModule = (index: number, moduleName: string) => {
+    const current = features[index]?.value || "";
+    const selected = current
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+
+    const nextSet = new Set(selected);
+    if (nextSet.has(moduleName)) {
+      nextSet.delete(moduleName);
+    } else {
+      nextSet.add(moduleName);
+    }
+
+    const nextValue = AUTOMATION_MODULE_OPTIONS.filter((m) =>
+      nextSet.has(m),
+    ).join(",");
+    updateFeature(index, { value: nextValue });
   };
 
   const handleSubmit = async () => {
@@ -369,7 +399,11 @@ export const PlanEditorDialog = ({
                     <p className="text-[11px] text-slate-500">{feature.type}</p>
                   </div>
 
-                  <div className="w-40 flex-shrink-0 space-y-1">
+                  <div
+                    className={`${
+                      feature.key === "automation_modules" ? "w-72" : "w-40"
+                    } flex-shrink-0 space-y-1`}
+                  >
                     {feature.type === PlatformFeatureType.BOOLEAN ? (
                       <div className="flex h-9 rounded-md border border-slate-300 bg-white p-1">
                         {["true", "false"].map((val) => (
@@ -385,6 +419,36 @@ export const PlanEditorDialog = ({
                             {val === "true" ? "ENABLED" : "DISABLED"}
                           </button>
                         ))}
+                      </div>
+                    ) : feature.key === "automation_modules" ? (
+                      <div className="grid grid-cols-2 gap-1.5">
+                        {AUTOMATION_MODULE_OPTIONS.map((moduleName) => {
+                          const selectedModules = (feature.value || "")
+                            .split(",")
+                            .map((item) => item.trim())
+                            .filter(Boolean);
+                          const isSelected =
+                            selectedModules.includes(moduleName);
+
+                          return (
+                            <button
+                              key={moduleName}
+                              type="button"
+                              onClick={() =>
+                                toggleAutomationModule(index, moduleName)
+                              }
+                              className={`rounded-md border px-2 py-1 text-[10px] font-semibold capitalize transition ${
+                                isSelected
+                                  ? "border-[#6571FF] bg-[#6571FF] text-white"
+                                  : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
+                              }`}
+                            >
+                              <span className="whitespace-nowrap">
+                                {moduleName}
+                              </span>
+                            </button>
+                          );
+                        })}
                       </div>
                     ) : (
                       <Input
