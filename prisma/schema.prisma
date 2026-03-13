@@ -687,7 +687,7 @@ model Company {
   reviews                          Reviews[]
 
   // Virtual Shop & Gift Card Relations
-  shop                 Shop?
+  shops                Shop[]
   giftCardSetting      GiftCardSetting?
   giftCardTemplates    GiftCardTemplate[]
   giftCardPromos       GiftCardPromo[]
@@ -2731,7 +2731,7 @@ model FAQ {
 
 model Shop {
   id          Int      @id @default(autoincrement())
-  companyId   Int      @unique @map("company_id")
+  companyId   Int      @map("company_id")
   slug        String   @unique // This is your SUBDOMAIN (e.g., 'autoworx' in 'autoworx.yourdomain.com')
   storeName   String   @map("store_name")
   description String?  @db.Text
