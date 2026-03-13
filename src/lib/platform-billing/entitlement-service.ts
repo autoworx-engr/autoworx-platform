@@ -126,9 +126,9 @@ function buildEntitlementsFromFeaturePermissions(
   const enabledAutomationModules = new Set<AutomationModuleKey>();
 
   for (const perm of permissions) {
-    const module = AUTOMATION_PERMISSION_TO_MODULE[perm.permission_name];
-    if (module) {
-      if (perm.enabled) enabledAutomationModules.add(module);
+    const moduleKey = AUTOMATION_PERMISSION_TO_MODULE[perm.permission_name];
+    if (moduleKey) {
+      if (perm.enabled) enabledAutomationModules.add(moduleKey);
       continue;
     }
 
@@ -138,11 +138,11 @@ function buildEntitlementsFromFeaturePermissions(
   }
 
   result.automationModules = Array.from(enabledAutomationModules);
-  for (const module of Object.keys(
+  for (const moduleKey of Object.keys(
     AUTOMATION_LIMIT_KEY_BY_MODULE,
   ) as AutomationModuleKey[]) {
-    const limitKey = AUTOMATION_LIMIT_KEY_BY_MODULE[module];
-    result[limitKey] = enabledAutomationModules.has(module) ? -1 : 0;
+    const limitKey = AUTOMATION_LIMIT_KEY_BY_MODULE[moduleKey];
+    result[limitKey] = enabledAutomationModules.has(moduleKey) ? -1 : 0;
   }
 
   return result;
