@@ -685,6 +685,13 @@ model Company {
   conversationExamples             ConversationExample[]
   knowledgeBaseDocuments           KnowledgeBaseDocument[]
   reviews                          Reviews[]
+
+  // Virtual Shop & Gift Card Relations
+  shop                 Shop?
+  giftCardSetting      GiftCardSetting?
+  giftCardTemplates    GiftCardTemplate[]
+  giftCardPromos       GiftCardPromo[]
+  issuedGiftCards      IssuedGiftCard[]
 }
 
 model Reviews {
@@ -1229,6 +1236,7 @@ model Service {
   Lead                    Lead[]
   multipleLeads           Lead[]                    @relation("LeadMultipleServices")
   ServiceMaintenanceStage ServiceMaintenanceStage[]
+  shopServices            ShopService[]
 
   @@index([companyId], name: "fk_services_company")
 }
@@ -2717,3 +2725,276 @@ model FAQ {
 
 //   @@map("upsells")
 // }
+
+
+//TODO: virtual shop model
+
+model Shop {
+  id          Int      @id @default(autoincrement())
+  companyId   Int      @unique @map("company_id")
+  slug        String   @unique // This is your SUBDOMAIN (e.g., 'autoworx' in 'autoworx.yourdomain.com')
+  storeName   String   @map("store_name")
+  description String?  @db.Text
+  logoUrl     String?  @map("logo_url")
+  bannerUrl   String?  @map("banner_url")
+  themeConfig Json?    @map("theme_config") // Store { primaryColor: '#3b82f6', font: 'Inter' }
+  isActive    Boolean  @default(true) @map("is_active")
+  
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  // ... other relations (ShopProduct, ShopService, etc.)
+  shopServices ShopService[]
+  bookingSettings ShopBookingSetting?
+
+  @@map("shops")
+}
+
+
+model ShopService {
+  id          Int      @id @default(autoincrement())
+  shopId      Int      @map("shop_id")
+  serviceId   Int?     @map("service_id") // Optional link to back-office Service
+  
+  // Basic Info
+  title       String   @db.VarChar(255)
+  description String?  @db.Text
+  price       Decimal  @default(0) @db.Decimal(10, 2)
+  duration    Int      @default(30) @map("duration_minutes") // Maps to "Est. Time (min)"
+  
+  // Categorization & Media
+  category    String?  // Can also be categoryId if linking to your Category model
+  imageUrl    String?  @map("image_url") @db.Text
+
+  // Vehicle Type Price Modifiers (+$)
+  // These store the additional cost added to the base price
+  modifierCoupe Decimal @default(0) @db.Decimal(10, 2) @map("modifier_coupe")
+  modifierSedan Decimal @default(0) @db.Decimal(10, 2) @map("modifier_sedan")
+  modifierSUV   Decimal @default(0) @db.Decimal(10, 2) @map("modifier_suv")
+  modifierTruck Decimal @default(0) @db.Decimal(10, 2) @map("modifier_truck")
+
+  // Status & Metadata
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  shop        Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  service     Service? @relation(fields: [serviceId], references: [id], onDelete: SetNull) 
+
+  @@index([shopId])
+  @@index([serviceId]) // Added index for faster queries when filtering by service
+  @@map("shop_services")
+}
+
+
+// 1. The Global Shop Booking Settings
+model ShopBookingSetting {
+  id                Int          @id @default(autoincrement())
+  shopId            Int          @unique @map("shop_id")
+
+  // Deposit Settings (from previous step)
+  isDepositEnabled  Boolean      @default(false) @map("is_deposit_enabled")
+  depositType       DepositType? @default(FIXED) @map("deposit_type")
+  depositValue      Decimal?     @db.Decimal(10, 2) @map("deposit_value")
+
+  // Appointment Logic (from the top of your new UI image)
+  isStackingEnabled Boolean      @default(false) @map("is_stacking_enabled")
+  stackingLimit     Int          @default(1) @map("stacking_limit") 
+  slotInterval      Int          @default(30) @map("slot_interval")
+
+  createdAt         DateTime     @default(now()) @map("created_at")
+  updatedAt         DateTime     @updatedAt @map("updated_at")
+
+  // Relations
+  shop              Shop               @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  availabilities    ShopAvailability[] // <-- Links to the 7 days of the week
+
+  @@map("shop_booking_settings")
+}
+
+// 1. Enum for the Deposit Type
+enum DepositType {
+  FIXED
+  PERCENTAGE
+}
+
+// 2. NEW: Day-by-Day Availability (Maps perfectly to your UI grid)
+model ShopAvailability {
+  id                   Int                @id @default(autoincrement())
+  shopBookingSettingId Int                @map("shop_booking_setting_id")
+  
+  dayOfWeek            DayOfWeek          @map("day_of_week") // MONDAY, TUESDAY, etc.
+  
+  // The toggle switch (e.g., Sunday is false)
+  isOpen               Boolean            @default(true) @map("is_open")
+  
+  // The time inputs (Store these in 24-hour format like "08:00" and "16:00" for easier backend math)
+  startTime            String?            @map("start_time") 
+  endTime              String?            @map("end_time")
+
+  // Relation back to the main settings
+  setting              ShopBookingSetting @relation(fields: [shopBookingSettingId], references: [id], onDelete: Cascade)
+
+  // Ensure a shop can only have one configuration per day (e.g., only one "Monday" record per shop)
+  @@unique([shopBookingSettingId, dayOfWeek])
+  @@map("shop_availabilities")
+}
+
+
+// TODO: Gift Card Model
+// Centralized settings: 1-to-1 relation with Company
+model GiftCardSetting {
+  id                  Int      @id @default(autoincrement())
+  companyId           Int      @unique @map("company_id")
+  
+  // Amount Configuration
+  allowCustomAmount   Boolean  @default(true) @map("allow_custom_amount")
+  minCustomAmount     Decimal? @db.Decimal(10, 2) @map("min_custom_amount")
+  maxCustomAmount     Decimal? @db.Decimal(10, 2) @map("max_custom_amount")
+  presetAmounts       Json?    @map("preset_amounts") // e.g., [25, 50, 100, 200]
+  
+  // Delivery Configuration
+  allowEmailDelivery  Boolean  @default(true) @map("allow_email_delivery")
+  allowSmsDelivery    Boolean  @default(false) @map("allow_sms_delivery")
+  defaultDelivery     DeliveryMethod @default(EMAIL) @map("default_delivery")
+  allowScheduledSend  Boolean  @default(true) @map("allow_scheduled_send")
+  
+  // Policies & Expiry
+  defaultExpiryDays   Int?     @map("default_expiry_days") // Null means never expires
+  termsAndConditions  String?  @db.Text @map("terms_and_conditions")
+  privacyPolicy       String?  @db.Text @map("privacy_policy")
+
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  company             Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("gift_card_settings")
+}
+
+// 1-to-Many: A company can have multiple visual designs
+model GiftCardTemplate {
+  id          Int      @id @default(autoincrement())
+  companyId   Int      @map("company_id")
+  name        String
+  imageUrl    String   @map("image_url")
+  isActive    Boolean  @default(true) @map("is_active")
+  isDefault   Boolean  @default(false) @map("is_default")
+  
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  issuedCards IssuedGiftCard[]
+
+  @@index([companyId])
+  @@map("gift_card_templates")
+}
+
+// Promos specifically for buying gift cards
+model GiftCardPromo {
+  id          Int      @id @default(autoincrement())
+  companyId   Int      @map("company_id")
+  code        String
+  type        DiscountType
+  value       Decimal  @db.Decimal(10, 2)
+  
+  startDate   DateTime @default(now()) @map("start_date")
+  expireDate  DateTime? @map("expire_date")
+  usageLimit  Int?     @map("usage_limit")
+  timesUsed   Int      @default(0) @map("times_used")
+  isActive    Boolean  @default(true) @map("is_active")
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, code])
+  @@map("gift_card_promos")
+}
+
+// Enums
+enum DeliveryMethod {
+  EMAIL
+  SMS
+  BOTH
+}
+
+// TODO: Gift card Transition history model
+model IssuedGiftCard {
+  id              String   @id @default(cuid())
+  companyId       Int      @map("company_id")
+  code            String   @unique // Secure alphanumeric code
+  
+  // Balances
+  initialBalance  Decimal  @db.Decimal(10, 2) @map("initial_balance")
+  currentBalance  Decimal  @db.Decimal(10, 2) @map("current_balance")
+  
+  // Purchaser Snapshot
+  purchaserName   String   @map("purchaser_name")
+  purchaserEmail  String   @map("purchaser_email")
+
+  // --- NEW: Missing fields from PRD Step 5 ---
+  recipientName   String   @map("recipient_name")
+  recipientEmail  String?  @map("recipient_email")
+  recipientPhone  String?  @map("recipient_phone")
+  message         String?  @db.Text
+  
+  templateId      Int      @map("template_id")
+  deliveryMethod  DeliveryMethod @default(EMAIL) @map("delivery_method")
+  scheduledSendAt DateTime? @map("scheduled_send_at")
+  deliveredAt     DateTime? @map("delivered_at")
+  expiresAt       DateTime? @map("expires_at")
+  // -------------------------------------------
+  
+  status          GiftCardStatus @default(ACTIVE)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  company         Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  template        GiftCardTemplate @relation(fields: [templateId], references: [id])
+  transactions    GiftCardTransaction[]
+
+  @@index([companyId])
+  @@index([code])
+  @@map("issued_gift_cards")
+}
+
+model GiftCardTransaction {
+  id              String   @id @default(cuid())
+  giftCardId      String   @map("gift_card_id")
+  
+  // The Financial Math
+  type            TransactionType
+  amount          Decimal  @db.Decimal(10, 2) // Positive for reloads, Negative for redemptions
+  balanceAfter    Decimal  @db.Decimal(10, 2) @map("balance_after")
+  
+  // Traceability
+  referenceId     String?  @map("reference_id") // Can store an Invoice ID, Order ID, or Stripe Payment ID
+  notes           String?  @db.Text
+  
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  giftCard        IssuedGiftCard @relation(fields: [giftCardId], references: [id], onDelete: Cascade)
+
+  @@index([giftCardId])
+  @@map("gift_card_transactions")
+}
+
+enum GiftCardStatus {
+  ACTIVE
+  DEPLETED // Balance is 0, but can be reloaded
+  EXPIRED
+  FROZEN   // Suspended for fraud/issues
+}
+
+enum TransactionType {
+  ISSUE       // Initial card creation
+  REDEMPTION  // Used to pay for a service
+  RELOAD      // Purchaser added more money
+  REFUND      // Service was cancelled, money returned to card
+}
