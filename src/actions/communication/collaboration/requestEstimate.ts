@@ -63,6 +63,7 @@ export const requestEstimate = async (
         fromRequestedCompanyId: requestEstimateData.senderCompanyId,
         email: senderCompanyDataFormDB?.email,
         mobile: senderCompanyDataFormDB?.phone,
+        isSalesAgent: true,
       };
 
       // if the client already exist

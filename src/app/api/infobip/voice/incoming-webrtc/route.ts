@@ -89,6 +89,7 @@ export async function POST(request: NextRequest) {
           lastName: "Caller",
           mobile: from,
           companyId: infobipConfig.companyId,
+          isSalesAgent: true,
         },
       });
     }

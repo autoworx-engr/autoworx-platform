@@ -143,6 +143,7 @@ export async function POST(
             lastName: " ",
             mobile: from,
             companyId: infobipConfig.companyId,
+            isSalesAgent: true,
           },
           include: {
             Lead: {

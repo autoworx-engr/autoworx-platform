@@ -407,6 +407,7 @@ export default function BusinessForm({ company }: TProps) {
                   about: e.target.value,
                 })
               }
+              tooltipText="This information will be shown on your Collaboration Profile."
             />
             <SlimInput
               required={true}
@@ -423,6 +424,7 @@ export default function BusinessForm({ company }: TProps) {
               label="Team Size"
               name="teamSize"
               error={validationErrors.teamSize}
+              tooltipText="Your team size will be displayed on your Collaboration Profile."
             />
 
             <SlimInput
@@ -432,6 +434,7 @@ export default function BusinessForm({ company }: TProps) {
               label="Industry/Specialization (Optional)"
               name="industrySpecialization"
               error={validationErrors.industrySpecialization}
+              tooltipText="This will appear on your Collaboration Profile. Example: Dry Install PPF, Wet Install PPF, Vinyl Wrap, Ceramic Coating."
             />
           </div>
         </div>
