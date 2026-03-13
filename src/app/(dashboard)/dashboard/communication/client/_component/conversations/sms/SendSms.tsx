@@ -15,6 +15,7 @@ import useSmsSendMutation from "../../../_hooks/useSmsSendMutation";
 import AttachmentInput from "../AttachmentInput";
 import SmartReplyBar from "./SmartReply";
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
+import UpgradePlanBanner from "@/components/UpgradePlanBanner";
 
 // Helper function to format attachment message
 const formatAttachmentMessage = (files: File[]) => {
@@ -140,8 +141,12 @@ export default function SendSms({
   return (
     <>
       {!canUseSms && (
-        <div className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-semibold text-amber-700">
-          SMS isn’t enabled for your plan.
+        <div className="mb-3">
+          <UpgradePlanBanner
+            title="SMS is not available on your plan"
+            description="Upgrade to enable SMS conversations with clients from this screen."
+            ctaLabel="Upgrade Plan"
+          />
         </div>
       )}
       <AttachmentInput
