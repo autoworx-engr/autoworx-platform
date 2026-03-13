@@ -4,24 +4,93 @@ import { NextRequest, NextResponse } from "next/server";
 
 /**
  * @swagger
- * /api/communication/collaboration/profile/:
+ * /api/communication/collaboration/profile:
  *   get:
- *     summary: Get company profile details
- *     description: Fetch company profile with review statistics
+ *     summary: Get company collaboration profile
+ *     description: Returns company profile information, review rating, and completed jobs.
  *     tags:
- *       - Company
+ *       - Collaboration
  *     parameters:
  *       - in: query
  *         name: companyId
  *         required: true
+ *         description: ID of the company
  *         schema:
  *           type: integer
- *         schema:
- *           type: integer
+ *           example: 12
  *     responses:
  *       200:
- *         description: Company details fetched successfully
+ *         description: Company profile fetched successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                   example: 12
+ *                 name:
+ *                   type: string
+ *                   example: ABC Construction
+ *                 image:
+ *                   type: string
+ *                   example: https://cdn.domain.com/company/logo.png
+ *                 about:
+ *                   type: string
+ *                   example: We specialize in residential and commercial construction.
+ *                 teamSize:
+ *                   type: integer
+ *                   example: 25
+ *                 industry:
+ *                   type: string
+ *                   example: Construction
+ *                 address:
+ *                   type: string
+ *                   example: New York
+ *                 avgRate:
+ *                   type: number
+ *                   example: 4.5
+ *                 totalReviews:
+ *                   type: integer
+ *                   example: 38
+ *                 totalCollaboration:
+ *                   type: integer
+ *                   example: 7
+ *                 totalJobsDone:
+ *                   type: integer
+ *                   example: 124
+ *       400:
+ *         description: Missing companyId
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: companyId is required
+ *       404:
+ *         description: Company not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Company not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Something went wrong
  */
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
