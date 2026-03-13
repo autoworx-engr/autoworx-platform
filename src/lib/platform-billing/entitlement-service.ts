@@ -43,6 +43,15 @@ export type AutomationModuleKey =
   | "service"
   | "marketing";
 
+type AutomationLimitKey =
+  | "automationLimitPipeline"
+  | "automationLimitCommunication"
+  | "automationLimitInvoice"
+  | "automationLimitInventory"
+  | "automationLimitTag"
+  | "automationLimitService"
+  | "automationLimitMarketing";
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -66,91 +75,111 @@ const DEFAULT_ENTITLEMENTS: Entitlements = {
   awxSalesAgent: false,
 };
 
-const LEGACY_ENTITLEMENTS: Entitlements = {
-  canUseVoice: true,
-  canUseSms: true,
-  callRecording: true,
-  missedCallTextBack: true,
-  automationModules: [
-    "pipeline",
-    "communication",
-    "invoice",
-    "inventory",
-    "tag",
-    "service",
-    "marketing",
-  ],
-  automationLimitPipeline: 3,
-  automationLimitCommunication: 3,
-  automationLimitInvoice: 3,
-  automationLimitInventory: 3,
-  automationLimitTag: 3,
-  automationLimitService: 3,
-  automationLimitMarketing: 3,
-  websiteIncluded: true,
-  carWrapVisualizer: true,
-  aiSmartReplies: true,
-  awxSalesAgent: true,
+const AUTOMATION_LIMIT_KEY_BY_MODULE: Record<
+  AutomationModuleKey,
+  AutomationLimitKey
+> = {
+  pipeline: "automationLimitPipeline",
+  communication: "automationLimitCommunication",
+  invoice: "automationLimitInvoice",
+  inventory: "automationLimitInventory",
+  tag: "automationLimitTag",
+  service: "automationLimitService",
+  marketing: "automationLimitMarketing",
 };
-
-/** Companies that always get unlimited automation rules regardless of plan. */
-const UNLIMITED_AUTOMATION_COMPANY_IDS = new Set([4, 14]);
 
 /**
  * Maps CompanyPermissionModule.permission_name → the Entitlements key it overrides.
  *
- * Override behaviour depends on the calling mode:
- *  - "override"  (legacy companies): perm fully replaces the entitlement value in
- *    either direction — OFF blocks even if the legacy baseline would grant it.
- *  - "additive"  (plan-enforced companies): perm can only GRANT additional access;
- *    it cannot revoke a feature the subscribed plan already includes.
- *    Formula: result[key] = planValue || perm.enabled
- *
  * To add a new override, just add an entry here — no other code changes needed.
  */
 const FEATURE_PERMISSION_OVERRIDES: Record<string, keyof Entitlements> = {
+  communication: "canUseSms",
   callingAccess: "canUseVoice",
+  aiSmartReplies: "aiSmartReplies",
+  visualization: "carWrapVisualizer",
   "sales-agent": "awxSalesAgent",
+};
+
+const AUTOMATION_PERMISSION_TO_MODULE: Record<string, AutomationModuleKey> = {
+  pipelineAutomation: "pipeline",
+  communicationAutomation: "communication",
+  invoiceAutomation: "invoice",
+  inventoryAutomation: "inventory",
+  tagAutomation: "tag",
+  serviceAutomation: "service",
+  marketingAutomation: "marketing",
 };
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-function withUnlimitedAutomation(entitlements: Entitlements): Entitlements {
-  return {
-    ...entitlements,
-    automationLimitPipeline: -1,
-    automationLimitCommunication: -1,
-    automationLimitInvoice: -1,
-    automationLimitInventory: -1,
-    automationLimitTag: -1,
-    automationLimitService: -1,
-    automationLimitMarketing: -1,
-  };
-}
-
 /**
- * Applies feature-permission overrides onto a base entitlements object.
- *
- * isLegacy = true  → perm fully replaces the value (legacy companies: admin has full control).
- * isLegacy = false → perm can only GRANT; it cannot revoke what the plan already includes.
- *                    Formula: result = currentValue || perm.enabled
+ * Builds entitlements from company feature-permission toggles only.
+ * This is used for legacy-mode companies (enforcePlatformPlan = false).
  */
-function applyFeaturePermissionOverrides(
-  entitlements: Entitlements,
+function buildEntitlementsFromFeaturePermissions(
   permissions: { permission_name: string; enabled: boolean }[],
-  isLegacy: boolean,
 ): Entitlements {
-  const result = { ...entitlements } as Record<string, unknown>;
+  const result: Entitlements = { ...DEFAULT_ENTITLEMENTS };
+  const enabledAutomationModules = new Set<AutomationModuleKey>();
+
   for (const perm of permissions) {
+    const module = AUTOMATION_PERMISSION_TO_MODULE[perm.permission_name];
+    if (module) {
+      if (perm.enabled) enabledAutomationModules.add(module);
+      continue;
+    }
+
     const key = FEATURE_PERMISSION_OVERRIDES[perm.permission_name];
     if (!key) continue;
-    result[key] = isLegacy
-      ? perm.enabled
-      : (result[key] as boolean) || perm.enabled;
+    (result as Record<string, unknown>)[key] = perm.enabled;
   }
-  return result as Entitlements;
+
+  result.automationModules = Array.from(enabledAutomationModules);
+  for (const module of Object.keys(
+    AUTOMATION_LIMIT_KEY_BY_MODULE,
+  ) as AutomationModuleKey[]) {
+    const limitKey = AUTOMATION_LIMIT_KEY_BY_MODULE[module];
+    result[limitKey] = enabledAutomationModules.has(module) ? -1 : 0;
+  }
+
+  return result;
+}
+
+function buildEntitlementsFromPlanFeatures(
+  features: {
+    featureKey: string;
+    type: PlatformFeatureType;
+    value: string;
+  }[],
+): Entitlements {
+  const base: Entitlements = { ...DEFAULT_ENTITLEMENTS };
+
+  for (const feature of features) {
+    const key = normalizeFeatureKey(feature.featureKey);
+
+    if (
+      feature.type === PlatformFeatureType.TEXT &&
+      key === "automationModules"
+    ) {
+      base.automationModules = feature.value
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+      continue;
+    }
+
+    if (key in base) {
+      (base as Record<string, unknown>)[key] = parseFeatureValue(
+        feature.type,
+        feature.value,
+      );
+    }
+  }
+
+  return base;
 }
 
 // ---------------------------------------------------------------------------
@@ -167,59 +196,48 @@ export async function getCompanyEntitlements(
   const id = Number(companyId);
   if (!id) return DEFAULT_ENTITLEMENTS;
 
-  const [company, subscription, featurePerms] = await Promise.all([
-    db.company.findUnique({
-      where: { id },
-      select: { enforcePlatformPlan: true },
-    }),
-    db.platformSubscription.findUnique({
-      where: { companyId: id },
-      include: { plan: { include: { features: true } } },
-    }),
-    db.companyPermissionModule.findMany({
-      where: {
-        companyId: id,
-        permission_name: { in: Object.keys(FEATURE_PERMISSION_OVERRIDES) },
-      },
-      select: { permission_name: true, enabled: true },
-    }),
-  ]);
+  const company = await db.company.findUnique({
+    where: { id },
+    select: { enforcePlatformPlan: true },
+  });
 
   const isLegacy = company ? !company.enforcePlatformPlan : false;
 
-  // Resolve base entitlements from plan (or defaults/legacy)
-  let base: Entitlements;
+  // Legacy mode: use feature-permission toggles only.
   if (isLegacy) {
-    base = { ...LEGACY_ENTITLEMENTS };
-  } else if (
+    const featurePerms = await db.companyPermissionModule.findMany({
+      where: {
+        companyId: id,
+        permission_name: {
+          in: [
+            ...Object.keys(FEATURE_PERMISSION_OVERRIDES),
+            ...Object.keys(AUTOMATION_PERMISSION_TO_MODULE),
+          ],
+        },
+      },
+      select: { permission_name: true, enabled: true },
+    });
+    return buildEntitlementsFromFeaturePermissions(featurePerms);
+  }
+
+  // Platform-plan mode: use subscription plan entitlements only.
+  const subscription = await db.platformSubscription.findUnique({
+    where: { companyId: id },
+    include: { plan: { include: { features: true } } },
+  });
+
+  let base: Entitlements;
+  if (
     !subscription ||
     !subscription.plan ||
     subscription.status === PlatformSubscriptionStatus.CANCELED ||
     subscription.status === PlatformSubscriptionStatus.UNPAID
   ) {
-    base = { ...DEFAULT_ENTITLEMENTS };
-  } else {
-    base = { ...DEFAULT_ENTITLEMENTS };
-    for (const f of subscription.plan.features) {
-      const key = normalizeFeatureKey(f.featureKey);
-      if (f.type === PlatformFeatureType.TEXT && key === "automationModules") {
-        base.automationModules = f.value
-          .split(",")
-          .map((s) => s.trim())
-          .filter(Boolean);
-      } else {
-        (base as Record<string, unknown>)[key] = parseFeatureValue(
-          f.type,
-          f.value,
-        );
-      }
-    }
+    return { ...DEFAULT_ENTITLEMENTS };
   }
 
-  const result = applyFeaturePermissionOverrides(base, featurePerms, isLegacy);
-  return UNLIMITED_AUTOMATION_COMPANY_IDS.has(id)
-    ? withUnlimitedAutomation(result)
-    : result;
+  base = buildEntitlementsFromPlanFeatures(subscription.plan.features);
+  return base;
 }
 
 /** Returns true if the company has a specific entitlement. */
