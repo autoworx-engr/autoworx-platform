@@ -134,6 +134,17 @@ export async function sendTwilioMessage({
         },
       });
 
+      if (client && client?.isSalesAgent) {
+        await db.client.update({
+          where: {
+            id: clientId,
+          },
+          data: {
+            isSalesAgent: false,
+          },
+        });
+      }
+
       const processedAttachments = [];
       for (const file of attachments) {
         let atc = await db.clientSmsAttachments.create({
@@ -179,21 +190,6 @@ export async function sendTwilioMessage({
       } catch (error) {}
 
       revalidatePath("/dashboard/communication/client");
-
-      // if (company?.isSalesAgent && client?.isSalesAgent) {
-      //   if (dbMessage && dbMessage.to === twilioCredentials.phoneNumber) {
-      //     const salesAgentResponse = await sendSMSToAgent({
-      //       company_id: twilioCredentials.companyId,
-      //       message: dbMessage?.message,
-      //       send_from: dbMessage?.from,
-      //       send_to: dbMessage?.to,
-      //       client_id: clientId,
-      //       user_id: user?.id,
-      //     });
-
-      //     console.log("salesAgentResponse", salesAgentResponse);
-      //   }
-      // }
 
       return {
         success: true,

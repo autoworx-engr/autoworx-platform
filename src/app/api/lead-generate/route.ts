@@ -150,6 +150,7 @@ export async function POST(request: NextRequest) {
             mobile: clientPhone,
             companyId: company.id,
             leadId: newLead.id,
+            isSalesAgent: true,
           },
         });
         await db.lead.update({
@@ -317,6 +318,7 @@ export async function POST(request: NextRequest) {
           mobile: clientPhone,
           companyId: company.id,
           leadId: newLead.id,
+          isSalesAgent: true,
         },
       });
       await db.lead.update({
