@@ -351,7 +351,7 @@ export const PlanEditorDialog = ({
               </span>
             </div>
 
-            <div className="max-h-72 overflow-y-auto rounded-lg border border-slate-200 bg-gradient-to-b from-slate-50 to-white p-2 overflow-x-hidden">
+            <div className="rounded-lg border border-slate-200 bg-gradient-to-b from-slate-50 to-white p-2 overflow-x-hidden">
               {features.length === 0 && (
                 <p className="px-3 py-4 text-sm text-slate-500">
                   No features yet. Add one to configure entitlements.
