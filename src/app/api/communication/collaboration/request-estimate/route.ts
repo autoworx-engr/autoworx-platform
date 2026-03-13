@@ -123,14 +123,14 @@ export async function POST(request: NextRequest) {
     // ── Extract photo files ────────────────────────────────────────────────────
     const photoFormData = new FormData();
     const files = formData.getAll("file");
-    files.forEach(file => {
+    files.forEach((file) => {
       if (file instanceof Blob) {
         photoFormData.append("file", file);
       }
     });
 
     // ── Main DB transaction ────────────────────────────────────────────────────
-    const { requestEstimateFromDB } = await db.$transaction(async prisma => {
+    const { requestEstimateFromDB } = await db.$transaction(async (prisma) => {
       const origin = request.nextUrl.origin;
 
       const receiverCompanyDataFromDB = await prisma.company.findUnique({
@@ -166,6 +166,7 @@ export async function POST(request: NextRequest) {
             fromRequestedCompanyId: senderCompanyId,
             email: senderCompanyDataFromDB.email,
             mobile: senderCompanyDataFromDB.phone,
+            isSalesAgent: true,
           },
         });
       }
@@ -265,7 +266,7 @@ export async function POST(request: NextRequest) {
         const photoPaths: string[] = uploadJson.data ?? [];
 
         await Promise.all(
-          photoPaths.map(photoPath =>
+          photoPaths.map((photoPath) =>
             prisma.invoicePhoto.create({
               data: {
                 invoiceId: estimate.id,
