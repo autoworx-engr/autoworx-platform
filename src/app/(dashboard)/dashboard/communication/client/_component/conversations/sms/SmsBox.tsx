@@ -19,7 +19,7 @@ export default function SmsBox({ clientId }: { clientId: number }) {
 
   // flatten pages (oldest -> newest assumed in each page)
   const rawMessages = useMemo(
-    () => data?.pages?.flatMap((p) => p.data) ?? [],
+    () => data?.pages?.flatMap(p => p.data) ?? [],
     [data],
   );
 
@@ -43,8 +43,7 @@ export default function SmsBox({ clientId }: { clientId: number }) {
   const [isReady, setIsReady] = useState(false);
 
   const topInView = useInView(topSentinelRef, {
-    // @ts-ignore
-    root: containerRef.current, // Use container as root for intersection
+    root: containerRef, // Pass the ref object itself to avoid access during render
     amount: 0.1,
     margin: "100px 0px 0px 0px", // Increased margin for earlier triggering
   });
@@ -83,7 +82,7 @@ export default function SmsBox({ clientId }: { clientId: number }) {
 
       setPrevScrollHeight(0);
     }
-  }, [data?.pages?.length]); // Track pages length instead of messages length
+  }, [data?.pages?.length, prevScrollHeight]); // Track pages length instead of messages length
 
   // Only auto-scroll to bottom for initial load or new incoming messages (not infinite scroll)
   useEffect(() => {
@@ -180,10 +179,6 @@ export default function SmsBox({ clientId }: { clientId: number }) {
       </div>
     );
   }
-
-  // render with date separators; sticky chip as you scroll
-  let lastDateStr: string | null = null;
-
   return (
     <div className="relative h-full w-full">
       {/* scrollable area */}
@@ -220,8 +215,13 @@ export default function SmsBox({ clientId }: { clientId: number }) {
           {messages.map((message: any, idx: number) => {
             const created = new Date(message.createdAt);
             const dateStr = created.toDateString();
-            const showChip = dateStr !== lastDateStr;
-            lastDateStr = dateStr;
+
+            // Check previous message to decide whether to show the date chip
+            const prevMessage = idx > 0 ? messages[idx - 1] : null;
+            const prevDateStr = prevMessage
+              ? new Date(prevMessage.createdAt).toDateString()
+              : null;
+            const showChip = dateStr !== prevDateStr;
 
             return (
               <div key={message.id ?? idx} className="w-full">

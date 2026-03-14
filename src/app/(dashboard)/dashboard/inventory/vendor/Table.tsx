@@ -10,6 +10,8 @@ import { useRouter } from "next/navigation";
 import { deleteVendor } from "../../../../../actions/vendor/deleteVendor";
 import { SquarePen, X } from "lucide-react";
 import { useDemoVendorFilterStore } from "@/stores/vendorFilter";
+import VendorListStore from "@/stores/vendorListStore";
+import { useEffect } from "react";
 
 const evenColor = "bg-background";
 const oddColor = "bg-[#F8FAFF]";
@@ -24,6 +26,12 @@ export default function Table({
   const router = useRouter();
   const timezone = useCompanyTimezone();
   const { searchTerm } = useDemoVendorFilterStore();
+  const { setActive } = VendorListStore();
+
+  useEffect(() => {
+    setActive(!!vendorId);
+  }, [vendorId, setActive]);
+
 
   const filterVendor = vendors?.filter((vendor) => {
     const term = searchTerm.toLowerCase();

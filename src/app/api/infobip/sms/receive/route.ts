@@ -134,6 +134,7 @@ export async function POST(req: NextRequest) {
               lastName: " ",
               mobile: from,
               companyId: infobipConfig.companyId,
+              isSalesAgent: true,
             },
           });
         }

@@ -36,28 +36,20 @@ export default function CreateGroupModal({
   addChatItem,
 }: TProps) {
   const [groupUsers, setGroupUsers] = useState(users);
-
   const { data: session }: { data: any } = useSession();
-
   const [open, setOpen] = useState(false);
-
   const [openUserList, setOpenUserList] = useState(false);
-
   const [groupName, setGroupName] = useState("");
-
   const [contactList, setContactList] = useState<Array<TContactListUser>>([]);
-
   const [error, setError] = useState<string | null>(null);
-
   const [isLoading, setIsLoading] = useState(false);
-
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (inputRef?.current) {
-      inputRef.current.focus();
-    }
-  }, [openUserList]);
+  // useEffect(() => {
+  //   if (inputRef?.current) {
+  //     inputRef.current.focus();
+  //   }
+  // }, [openUserList]);
 
   useEffect(() => {
     if (!open) {
@@ -216,7 +208,10 @@ export default function CreateGroupModal({
         </button>
       </DialogTrigger>
       {/* Dialog Content: The main modal body with glassmorphism effect */}
-      <DialogContent className="w-[90vw] max-w-md rounded-2xl bg-background  ">
+      <DialogContent
+        className="w-[90vw] max-w-md rounded-2xl bg-background"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
         {error && (
           <p className="text-center text-sm text-rose-500 dark:text-rose-400">
             {error}
@@ -285,6 +280,7 @@ export default function CreateGroupModal({
                   <input
                     ref={inputRef}
                     onChange={handleSearch}
+                    autoFocus={false}
                     type="text"
                     placeholder="Search users..."
                     className="w-full rounded-lg border border-slate-300/70 bg-white/80 py-1 pl-9 pr-8 leading-6 outline-none transition-colors duration-300 ease-in-out placeholder:text-slate-400 focus:border-[#00b8b0] dark:border-slate-700 dark:bg-slate-700 dark:text-white dark:focus:border-[#0098da]"
@@ -328,7 +324,7 @@ export default function CreateGroupModal({
               </div>
             </>
           ) : (
-            <div className="relative">
+            <div className="relative" >
               {/* Contact List closed state - uses SlimInput for consistent form look */}
               <SlimInput
                 label={
@@ -337,13 +333,15 @@ export default function CreateGroupModal({
                   </>
                 }
                 name="ContactList"
-                type="text"
+                type="button"
+                value="Click to add users..."
                 readOnly
                 onClick={() => {
                   setOpenUserList((prev) => !prev);
                   getFindUsers();
                 }}
-                className="cursor-pointer text-slate-600 dark:text-white"
+                autoFocus={false}
+                className="text-left cursor-pointer text-slate-600 dark:text-white"
                 rootClassName="overflow-hidden"
                 placeholder="Click to add users..."
               />

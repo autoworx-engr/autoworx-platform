@@ -52,7 +52,7 @@ const WorkOrders = () => {
         invoice.vehicle?.make?.toLowerCase().includes(searchLower) ||
         invoice.vehicle?.model?.toLowerCase().includes(searchLower) ||
         invoice.invoiceItems.some((item) =>
-          item.service?.name?.toLowerCase().includes(searchLower)
+          item.service?.name?.toLowerCase().includes(searchLower),
         )
       );
     })();
@@ -83,8 +83,8 @@ const WorkOrders = () => {
     const matchesTechnician = isTechnician
       ? invoice.invoiceItems.some((item) =>
           item.service?.Technician.some(
-            (tech) => tech.userId === Number(currentUserId)
-          )
+            (tech) => tech.userId === Number(currentUserId),
+          ),
         )
       : true;
     const matchesColumnTitle = invoice.column?.title !== "Delivered";
@@ -144,56 +144,68 @@ const WorkOrders = () => {
             </thead>
 
             <tbody>
-              {filteredInvoices?.map((invoice, index) => {
-                const id = invoice.id;
-                const client =
-                  (invoice.client?.firstName ?? "") +
-                  " " +
-                  (invoice.client?.lastName ?? "");
-                const vehicle = `${invoice.vehicle?.year ?? ""} ${invoice.vehicle?.make ?? ""} ${invoice.vehicle?.model ?? ""} ${invoice.vehicle?.other ?? ""}`;
-                const serviceString = invoice.invoiceItems
-                  .map((item) => item.service?.name)
-                  .join(", ");
-                // TODO: this hasn't been tested properly. Need to test it.
-                const timeCreated = moment(invoice.workOrderCreatedAt).format(
-                  "MM/DD/YYYY"
-                );
-                const dueDate = invoice.dueDate
-                  ? moment(invoice.dueDate).format("MM/DD/YYYY")
-                  : null;
+              {filteredInvoices.length > 0 ? (
+                filteredInvoices?.map((invoice, index) => {
+                  const id = invoice.id;
+                  const client =
+                    (invoice.client?.firstName ?? "") +
+                    " " +
+                    (invoice.client?.lastName ?? "");
+                  const vehicle = `${invoice.vehicle?.year ?? ""} ${invoice.vehicle?.make ?? ""} ${invoice.vehicle?.model ?? ""} ${invoice.vehicle?.other ?? ""}`;
+                  const serviceString = invoice.invoiceItems
+                    .map((item) => item.service?.name)
+                    .join(", ");
+                  // TODO: this hasn't been tested properly. Need to test it.
+                  const timeCreated = moment(invoice.workOrderCreatedAt).format(
+                    "MM/DD/YYYY",
+                  );
+                  const dueDate = invoice.dueDate
+                    ? moment(invoice.dueDate).format("MM/DD/YYYY")
+                    : null;
 
-                return (
-                  <tr
-                    key={index}
-                    className={cn(
-                      "rounded-md",
-                      index % 2 === 0 ? "bg-background" : "bg-blue-100"
-                    )}
-                  >
-                    <td className="border-b px-4 py-2 text-left">
-                      <WorkOrderModal
-                        invoiceId={id}
-                        buttonChild={
-                          <button className="text-[#6571FF]">{id}</button>
-                        }
-                      />
-                    </td>
-                    <td className="border-b px-4 py-2 text-left">{client}</td>
-                    <td className="border-b px-4 py-2 text-left">{vehicle}</td>
-                    <td className="border-b px-4 py-2 text-left">
-                      {serviceString}
-                    </td>
-                    <td className="border-b px-4 py-2 text-left">
-                      {timeCreated}
-                    </td>
+                  return (
+                    <tr
+                      key={index}
+                      className={cn(
+                        "rounded-md",
+                        index % 2 === 0 ? "bg-background" : "bg-blue-100",
+                      )}
+                    >
+                      <td className="border-b px-4 py-2 text-left">
+                        <WorkOrderModal
+                          invoiceId={id}
+                          buttonChild={
+                            <button className="text-[#6571FF]">{id}</button>
+                          }
+                        />
+                      </td>
+                      <td className="border-b px-4 py-2 text-left">{client}</td>
+                      <td className="border-b px-4 py-2 text-left">
+                        {vehicle}
+                      </td>
+                      <td className="border-b px-4 py-2 text-left">
+                        {serviceString}
+                      </td>
+                      <td className="border-b px-4 py-2 text-left">
+                        {timeCreated}
+                      </td>
 
-                    <td className="border-b px-4 py-2 text-left">{dueDate}</td>
-                    <td className="border-b px-4 py-2 text-left">
-                      {invoice.column?.title}
-                    </td>
-                  </tr>
-                );
-              })}
+                      <td className="border-b px-4 py-2 text-left">
+                        {dueDate}
+                      </td>
+                      <td className="border-b px-4 py-2 text-left">
+                        {invoice.column?.title}
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan={8} className="text-center py-10">
+                    No work orders found.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         )}

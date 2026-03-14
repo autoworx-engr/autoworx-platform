@@ -1,6 +1,8 @@
 import type { ComponentProps, ReactNode } from "react";
 import { sentenceCase } from "change-case";
 import { cn } from "@/lib/cn";
+import { Tooltip } from "antd";
+import { InfoCircleOutlined } from "@ant-design/icons";
 
 export type SlimInputProps = {
   label?: ReactNode;
@@ -9,6 +11,7 @@ export type SlimInputProps = {
   labelClassName?: string;
   required?: boolean;
   error?: string;
+  tooltipText?: string;
 };
 
 export const slimInputClassName = cn(
@@ -26,7 +29,7 @@ export const slimInputClassName = cn(
   "[&:-webkit-autofill:hover]:shadow-[inset_0_0_0px_1000px_rgb(255_255_255_/_0.8)] dark:[&:-webkit-autofill:hover]:shadow-[inset_0_0_0px_1000px_rgb(15_23_42_/_0.5)]",
   // Preserve styling on autofill focus
   "[&:-webkit-autofill:focus]:[-webkit-text-fill-color:rgb(71_85_105)] dark:[&:-webkit-autofill:focus]:[-webkit-text-fill-color:rgb(203_213_225)]",
-  "[&:-webkit-autofill:focus]:shadow-[inset_0_0_0px_1000px_rgb(255_255_255_/_0.8)] dark:[&:-webkit-autofill:focus]:shadow-[inset_0_0_0px_1000px_rgb(15_23_42_/_0.5)]"
+  "[&:-webkit-autofill:focus]:shadow-[inset_0_0_0px_1000px_rgb(255_255_255_/_0.8)] dark:[&:-webkit-autofill:focus]:shadow-[inset_0_0_0px_1000px_rgb(15_23_42_/_0.5)]",
 );
 
 export function SlimInput({
@@ -36,22 +39,28 @@ export function SlimInput({
   labelClassName,
   required,
   error,
+  tooltipText,
   ...props
 }: SlimInputProps & ComponentProps<"input">) {
   // Generate a unique ID if not provided, for accessibility
   const inputId = props.id ?? props.name;
-
+  const IconComponent = InfoCircleOutlined;
   return (
     <div className={cn("group flex flex-col gap-1.5", rootClassName)}>
       <label
         htmlFor={inputId}
         className={cn(
           "flex items-center gap-1 text-base font-medium text-slate-600 dark:text-slate-200 transition-colors duration-300",
-          labelClassName
+          labelClassName,
         )}
       >
         {label ?? sentenceCase(props.name)}
         {required && <span className="text-rose-500 font-bold">*</span>}
+        {tooltipText && (
+          <Tooltip title={tooltipText} placement="top">
+            <IconComponent className="text-gray-400 hover:text-gray-600 cursor-help text-xs" />
+          </Tooltip>
+        )}
       </label>
 
       <div className="relative">
@@ -62,8 +71,9 @@ export function SlimInput({
           className={cn(
             slimInputClassName,
             // Error state styling overrides
-            error && "border-rose-400 focus:border-rose-500 focus:ring-rose-500/10 text-rose-600",
-            className
+            error &&
+              "border-rose-400 focus:border-rose-500 focus:ring-rose-500/10 text-rose-600",
+            className,
           )}
           {...props}
         />

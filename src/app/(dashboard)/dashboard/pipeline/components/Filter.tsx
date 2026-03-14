@@ -1,15 +1,19 @@
 "use client";
 
 import { usePipelineFilterStore } from "@/stores/PipelineFilterStore";
+import { useEstimateFilterStore } from "@/stores/estimate-filter";
 import DateRange from "../../../../../components/DateRange";
 import Dropdown from "./Dropdown";
 import SearchTerms from "./SearchTerms";
+import { cn } from "@/lib/cn";
+
 interface Props {
   pipelineType: string;
 }
 
 export default function FilterComp({ pipelineType }: Props) {
-  const { setFilter } = usePipelineFilterStore();
+  const { setFilter, resetStatus, searchTerm, dateRange, status, service } =
+    usePipelineFilterStore();
 
   return (
     <div className="mt-5 flex w-full items-center justify-between">
