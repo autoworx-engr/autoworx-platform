@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Trash2, Save, X, GripVertical, AlertCircle } from "lucide-react";
+import { Popconfirm } from "antd";
 import { cn } from "@/lib/utils";
 import SelectCategory from "@/components/Lists/SelectCategory";
 import { Category } from "@prisma/client";

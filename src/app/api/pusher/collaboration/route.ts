@@ -4,6 +4,107 @@ import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { revalidatePath } from "next/cache";
 import { sendCollaborationMessageNotification } from "@/lib/notification/communication-notify";
 
+/**
+ * @swagger
+ * /api/pusher/collaboration:
+ *   post:
+ *     summary: Send collaboration message between companies
+ *     description: Sends a message, attachment, or estimate request between two companies and triggers realtime events.
+ *     tags:
+ *       - Collaboration
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - fromCompanyId
+ *               - toCompanyId
+ *               - senderUserId
+ *             properties:
+ *               fromCompanyId:
+ *                 type: integer
+ *                 example: 1
+ *                 description: Sender company ID
+ *               toCompanyId:
+ *                 type: integer
+ *                 example: 5
+ *                 description: Receiver company ID
+ *               senderUserId:
+ *                 type: integer
+ *                 example: 22
+ *                 description: User ID of sender
+ *               message:
+ *                 type: string
+ *                 example: "Hello, we need a price estimate."
+ *                 description: Text message content
+ *               requestEstimateId:
+ *                 type: integer
+ *                 nullable: true
+ *                 example: 15
+ *                 description: Linked estimate request ID
+ *               attachmentFiles:
+ *                 type: array
+ *                 description: Optional file attachments
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     fileName:
+ *                       type: string
+ *                       example: invoice.pdf
+ *                     fileType:
+ *                       type: string
+ *                       example: application/pdf
+ *                     fileUrl:
+ *                       type: string
+ *                       example: https://cdn.domain.com/files/invoice.pdf
+ *                     fileSize:
+ *                       type: number
+ *                       example: 245678
+ *                       description: File size in bytes
+ *     responses:
+ *       200:
+ *         description: Message sent successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Company message sent
+ *       400:
+ *         description: Missing required fields
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: Missing company IDs
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: Internal server error
+ */
+
 const pusher = getPusherInstance();
 
 export async function POST(req: Request) {
@@ -168,7 +269,6 @@ export async function POST(req: Request) {
     );
   } catch (e) {
     const formattedError = errorHandler(e);
-    console.error("error", e);
     return new Response(
       JSON.stringify({
         success: false,

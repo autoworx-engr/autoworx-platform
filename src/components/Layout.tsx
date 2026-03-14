@@ -137,6 +137,12 @@ const navbarList = [
     link: "/dashboard/visualization",
     path: "/dashboard/visualization",
   },
+  {
+    title: "Virtual Shop",
+    icon: "/icons/navbar/visualization.svg",
+    link: "/dashboard/virtual-shop",
+    path: "/dashboard/virtual-shop",
+  },
 ];
 
 const mobileNav = [
