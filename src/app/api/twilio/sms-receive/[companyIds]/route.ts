@@ -138,6 +138,7 @@ export async function POST(
             lastName: " ",
             mobile: body.From,
             companyId: companyId,
+            isSalesAgent: true,
           },
           select: {
             id: true,

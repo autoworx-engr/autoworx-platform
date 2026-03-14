@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Dialog,
   DialogClose,
@@ -8,32 +10,35 @@ import {
 import { SlimInput } from "@/components/SlimInput";
 import { useState, useTransition } from "react";
 import InvoiceEstimateAttachment from "./InvoiceEstimateAttachment";
-
-import { User } from "@prisma/client";
+import { requestEstimate } from "@/actions/communication/collaboration/requestEstimate";
 import { useSession } from "next-auth/react";
 import { Session } from "next-auth";
 import toast from "react-hot-toast";
-import { Message as TMessage } from "../internal/UsersArea";
-import { sendType } from "@/types/Chat";
 import { RotatingLines } from "react-loader-spinner";
 import imageCompression from "browser-image-compression";
 
 type TProps = {
-  receiverUser: User;
+  receiverCompany: {
+    id: number;
+    name: string;
+  };
+  currentCompanyId: number;
   setMessages: React.Dispatch<React.SetStateAction<any[]>>;
   setShowAttachment: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 export default function InvoiceEstimateModal({
-  receiverUser,
+  receiverCompany,
+  currentCompanyId,
   setMessages,
   setShowAttachment,
 }: TProps) {
-  const [pending, startTransaction] = useTransition();
+  const [pending, startTransition] = useTransition();
   const { data: authUser } = useSession();
   const [open, setOpen] = useState(false);
   const [photos, setPhotos] = useState<File[]>([]);
   const [error, setError] = useState("");
+
   const [estimateInfo, setEstimateInfo] = useState({
     model: "",
     year: "",
@@ -46,20 +51,20 @@ export default function InvoiceEstimateModal({
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
-    const { value, name } = e.target || {};
-    setEstimateInfo({ ...estimateInfo, [name]: value });
+    const { value, name } = e.target;
+    setEstimateInfo((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleEstimateSubmit = async () => {
+    console.log("request estimate");
     try {
       setError("");
 
-      const formData = new FormData();
+      const formDataForPhoto = new FormData();
 
-      // Append photo files (compressed)
       if (photos.length > 0) {
         const compressedPhotos = await Promise.all(
-          photos.map(photo =>
+          photos.map((photo) =>
             imageCompression(photo, {
               maxSizeMB: 1,
               maxWidthOrHeight: 1920,
@@ -67,41 +72,31 @@ export default function InvoiceEstimateModal({
             }),
           ),
         );
-        compressedPhotos.forEach(compressedFile => {
-          formData.append("file", compressedFile);
+
+        compressedPhotos.forEach((file) => {
+          formDataForPhoto.append("file", file);
         });
       }
 
-      // Append estimate fields
-      formData.append("model", estimateInfo.model);
-      formData.append("make", estimateInfo.make);
-      formData.append("year", estimateInfo.year);
-      formData.append("serviceRequest", estimateInfo.serviceRequest);
-      formData.append("dueDate", estimateInfo.dueDate);
-      formData.append("notes", estimateInfo.notes);
-      formData.append("receiverId", String(receiverUser.id));
-      formData.append("receiverCompanyId", String(receiverUser.companyId));
-      formData.append("senderId", authUser?.user?.id!);
-      formData.append(
-        "senderCompanyId",
-        String(
-          (authUser as Session & { user: { companyId: number } })?.user
-            ?.companyId,
-        ),
-      );
+      const senderCompanyId = (
+        authUser as Session & { user: { companyId: number } }
+      )?.user?.companyId;
+      const senderUserId = (
+        authUser as Session & { user: { companyId: number } }
+      )?.user?.id;
 
-      const res = await fetch(
-        "/api/communication/collaboration/request-estimate",
-        { method: "POST", body: formData },
-      );
+      const { status, data } = await requestEstimate(formDataForPhoto, {
+        ...estimateInfo,
+        year: parseInt(estimateInfo.year),
+        receiverCompanyId: receiverCompany.id,
+        senderCompanyId,
+      });
 
-      const json = await res.json();
-
-      if (!res.ok || !json.success) {
-        throw new Error(json.error || "Failed to request estimate");
+      if (status !== 200) {
+        throw new Error("Failed to request estimate");
       }
 
-      const requestEstimateFromDB = json.data.requestEstimate;
+      const { requestEstimateFromDB } = data;
 
       setOpen(false);
       setEstimateInfo({
@@ -113,35 +108,43 @@ export default function InvoiceEstimateModal({
         notes: "",
       });
 
-      // Send request estimate message in realtime
-      const pusherResponse = await fetch(`/api/pusher`, {
+      /* ---------------- REALTIME SEND ---------------- */
+
+      const pusherResponse = await fetch("/api/pusher/collaboration", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
-          sessionUserId: authUser?.user?.id,
-          to: receiverUser.id,
-          type: sendType.User,
-          message: "",
+          fromCompanyId: senderCompanyId,
+          senderUserId: senderUserId,
+          message: null,
+          attachmentFiles: null,
+          section: "collaboration",
+          toCompanyId: receiverCompany.id,
           attachmentFile: null,
-          requestEstimate: requestEstimateFromDB,
+          requestEstimateId: requestEstimateFromDB?.id,
         }),
       });
+
       const messageData = await pusherResponse.json();
+
       if (!pusherResponse.ok || !messageData.success) {
-        throw new Error(`message wasn't sent`);
+        throw new Error("Message wasn't sent");
       }
 
-      const newMessage: TMessage = {
-        message: "",
-        sender: "USER",
-        attachment: null,
-        requestEstimate: requestEstimateFromDB,
-        createdAt: new Date(),
-      };
+      /* ---------------- LOCAL STATE UPDATE ---------------- */
 
-      setMessages(messages => [...messages, newMessage]);
+      // const newMessage: any = {
+      //   message: "",
+      //   sender: "COMPANY",
+      //   attachment: null,
+      //   requestEstimate: requestEstimateFromDB,
+      //   createdAt: new Date(),
+      // };
+
+      // setMessages((prev) => [...prev, newMessage]);
       setPhotos([]);
-      setError("");
       setShowAttachment(false);
       toast.success("Estimate requested successfully");
     } catch (err: any) {
@@ -150,39 +153,46 @@ export default function InvoiceEstimateModal({
       console.error(err);
     }
   };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <p className="cursor-pointer text-nowrap rounded-md border border-[#006D77] bg-background px-2 text-sm text-[#006D77] hover:bg-[#006D77] hover:text-white">
+        <p className="cursor-pointer rounded-md border border-[#006D77] bg-background px-2 text-sm text-[#006D77] hover:bg-[#006D77] hover:text-white">
           Request Estimate
         </p>
       </DialogTrigger>
+
       <DialogContent
         form
-        onSubmit={e => startTransaction(handleEstimateSubmit)}
+        onSubmit={(e) => {
+          e.preventDefault();
+          startTransition(handleEstimateSubmit);
+        }}
         className="max-h-[500px] w-[96%] overflow-y-auto md:max-h-max"
       >
         {error && <p className="text-center text-sm text-red-400">{error}</p>}
+
         <h2 className="mb-5 text-2xl font-bold">Request an Invoice/Estimate</h2>
-        <div className="flex flex-col justify-center space-y-4">
+
+        <div className="space-y-4">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <SlimInput
-              onChange={handleChange}
               label="Year"
               name="year"
               type="number"
+              onChange={handleChange}
             />
             <SlimInput
-              onChange={handleChange}
               label="Make"
               name="make"
               type="text"
+              onChange={handleChange}
             />
             <SlimInput
-              onChange={handleChange}
               label="Model"
               name="model"
               type="text"
+              onChange={handleChange}
             />
             <SlimInput
               label="Service Requested"
@@ -191,40 +201,35 @@ export default function InvoiceEstimateModal({
               onChange={handleChange}
             />
           </div>
-          <div className="grid grid-cols-1 gap-y-2">
-            <SlimInput
+
+          <SlimInput
+            label="Due Date"
+            name="dueDate"
+            type="date"
+            onChange={handleChange}
+          />
+
+          <label>
+            <div className="mb-1 font-medium">Notes</div>
+            <textarea
+              name="notes"
               onChange={handleChange}
-              className="w-2/4"
-              label="Due Date"
-              name="dueDate"
-              type="date"
+              className="h-[93px] w-full resize-none rounded-md border border-gray-400 px-2"
             />
-            <label htmlFor="notes" className={"block"}>
-              <div className="mb-1 px-2 font-medium">Notes</div>
-              <textarea
-                onChange={handleChange}
-                name="notes"
-                id="notes"
-                className="h-[93px] w-full resize-none rounded-md border border-gray-500 px-2 focus:outline-none"
-              />
-            </label>
-          </div>
+          </label>
         </div>
+
         <InvoiceEstimateAttachment photos={photos} setPhotos={setPhotos} />
+
         <DialogFooter>
-          <DialogClose className="rounded-lg border-2 border-slate-400 p-2">
-            Cancel
-          </DialogClose>
+          <DialogClose className="rounded-lg border p-2">Cancel</DialogClose>
+
           <button
             disabled={pending}
             type="submit"
-            className="rounded-lg border bg-[#6571FF] px-5 py-2 text-white disabled:bg-blue-500"
+            className="rounded-lg bg-[#6571FF] px-5 py-2 text-white"
           >
-            {pending ? (
-              <RotatingLines strokeColor="#fff" strokeWidth="5" width="25" />
-            ) : (
-              "Add"
-            )}
+            {pending ? <RotatingLines strokeColor="#fff" width="25" /> : "Add"}
           </button>
         </DialogFooter>
       </DialogContent>

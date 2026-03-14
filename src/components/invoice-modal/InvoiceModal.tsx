@@ -7,10 +7,12 @@ export default function InvoiceModal({
   invoiceId,
   buttonChild,
   buttonChildClassName,
+  isShowEdit = true,
 }: {
   invoiceId: string;
   buttonChild: React.ReactNode;
   buttonChildClassName?: string;
+  isShowEdit?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [dataFetched, setDataFetched] = useState(false);
@@ -29,7 +31,9 @@ export default function InvoiceModal({
         <div className={buttonChildClassName}>{buttonChild}</div>
       </DialogTrigger>
 
-      {(open || dataFetched) && <InvoiceModalBody invoiceId={invoiceId} />}
+      {(open || dataFetched) && (
+        <InvoiceModalBody invoiceId={invoiceId} isShowEdit={isShowEdit} />
+      )}
     </Dialog>
   );
 }

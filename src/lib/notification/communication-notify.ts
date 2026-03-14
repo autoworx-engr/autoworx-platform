@@ -2,6 +2,7 @@ import { sendUserNotifications } from "@/actions/notification/sendUserNotificati
 import { getUsersByRole } from "@/actions/user/getUserByRole";
 import { EmployeeType } from "@prisma/client";
 import getUser from "../getUser";
+import { db } from "../db";
 
 // send Notification for when new client send a email
 type TClientEmailNotification = {
@@ -137,33 +138,47 @@ export const sendInternalMessageNotification = async ({
 };
 
 type TCollaborationMessageNotification = {
-  companyName?: string;
-  toUserId: number;
+  companyId: number;
+  sendRoles?: EmployeeType[];
 };
 // COMMUNICATION NOTIFICATION FOR COLLABORATION MESSAGES
 export const sendCollaborationMessageNotification = async ({
-  toUserId,
-  companyName,
+  companyId,
+  sendRoles = ["Admin", "Manager", "Sales"],
 }: TCollaborationMessageNotification) => {
+  const company = await db.company.findUniqueOrThrow({
+    where: { id: companyId },
+  });
+
   try {
+    const getUsers = await getUsersByRole(companyId, sendRoles, {
+      id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      phone: true,
+    });
+
     const sessionUser = await getUser();
-    const toUser = await getUser(toUserId);
     const redirectUrl = `/dashboard/communication/collaboration`;
     const sessionUserFullName = `${sessionUser.firstName} ${sessionUser.lastName}`;
-    const description = `New collaboration message from ${sessionUserFullName} in ${companyName}. View it in Autoworx`;
+    const description = `New collaboration message from ${sessionUserFullName} in ${company?.name}. View it in Autoworx`;
     const title = "New Collaboration Message";
-    sendUserNotifications({
-      userId: toUserId,
-      userName: `${toUser.firstName} ${toUser.lastName}`,
-      userEmail: toUser.email || "",
-      userPhoneNo: toUser.phone || "",
-      companyId: toUser.companyId,
-      iconType: "message",
-      title,
-      description,
-      type: "COLLABORATION_MESSAGE_ALERT",
-      redirectUrl,
-    });
+
+    for (const user of getUsers) {
+      sendUserNotifications({
+        userId: user?.id,
+        userName: `${user.firstName} ${user.lastName}`,
+        userEmail: user.email || "",
+        userPhoneNo: user.phone || "",
+        companyId: user.companyId,
+        iconType: "message",
+        title,
+        description,
+        type: "COLLABORATION_MESSAGE_ALERT",
+        redirectUrl,
+      });
+    }
   } catch (err) {
     console.error(err);
     throw err;

@@ -4,15 +4,12 @@ import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { db } from "@/lib/db";
 import { ServerAction } from "@/types/action";
 import { TErrorHandler } from "@/types/globalError";
-// import { getNotifications } from "./getNotifications";
-// import { getUserFromSession } from "@/lib/getCurrentUser";
 
 export const markAsAllRead = async function (
   userId: number,
   notificationId?: number[],
 ): Promise<ServerAction | TErrorHandler> {
   try {
-    // const currentUsers = await getUserFromSession();
     // update isUnRead notification to database
     const queryWithNotificationId = notificationId
       ? { in: notificationId }
@@ -26,9 +23,7 @@ export const markAsAllRead = async function (
         isUnRead: false,
       },
     });
-    // const response = await getNotifications({
-    //   userId: parseInt(currentUsers.id),
-    // });
+
     return {
       type: "success",
     };

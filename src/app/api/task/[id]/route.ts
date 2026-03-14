@@ -60,7 +60,7 @@ export async function GET(
 /**
  * @swagger
  * /api/task/{id}:
- *   put:
+ *   patch:
  *     summary: Update task
  *     tags:
  *       - Task
@@ -97,6 +97,7 @@ export async function PATCH(
       priority,
       clientId,
       leadId,
+      assignedUsers,
     } = body;
 
     const updatedTask = await db.task.update({
@@ -111,7 +112,30 @@ export async function PATCH(
         clientId,
         leadId,
       },
+      include: {
+        taskUser: true,
+        client: true,
+        lead: true,
+      },
     });
+
+    if (assignedUsers) {
+      // Remove old users
+      await db.taskUser.deleteMany({
+        where: {
+          taskId: taskId,
+        },
+      });
+
+      // Add new users
+      await db.taskUser.createMany({
+        data: assignedUsers.map((userId: number) => ({
+          taskId: taskId,
+          userId,
+          eventId: null,
+        })),
+      });
+    }
 
     return NextResponse.json({
       success: true,
@@ -120,7 +144,10 @@ export async function PATCH(
     });
   } catch (error: any) {
     return NextResponse.json(
-      { success: false, message: error.message },
+      {
+        success: false,
+        message: error.message,
+      },
       { status: 500 },
     );
   }
