@@ -270,7 +270,7 @@ export async function unreadClientSmsAndEmail(clientId: number) {
 
     if (updatedData?.lastMessageBy === "Client") {
       updatedData = await db.clientConversationTrack.update({
-        where: { clientId },
+        where: { clientId, smsIsRead: true },
         data: {
           smsIsRead: false,
           smsUnReadCount: { increment: 1 }, // or set to specific number
@@ -280,7 +280,7 @@ export async function unreadClientSmsAndEmail(clientId: number) {
 
     if (updatedData?.lastEmailBy === "Client") {
       updatedData = await db.clientConversationTrack.update({
-        where: { clientId },
+        where: { clientId, emailIsRead: true },
         data: {
           emailIsRead: false,
           emailIsUnReadCount: { increment: 1 }, // or set to specific number
