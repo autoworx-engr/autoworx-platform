@@ -29,6 +29,13 @@ type FeatureDraft = {
   value: string;
 };
 
+type FieldErrorKey =
+  | "name"
+  | "price"
+  | "trialLengthDays"
+  | "displayOrder"
+  | "description";
+
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -71,7 +78,13 @@ export const PlanEditorDialog = ({
   const [catalogLoaded, setCatalogLoaded] = useState(false);
   const [featuresDirty, setFeaturesDirty] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<
+    Partial<Record<FieldErrorKey, string>>
+  >({});
+  const [featureErrors, setFeatureErrors] = useState<Record<number, string>>(
+    {},
+  );
 
   const isEdit = Boolean(plan);
 
@@ -86,7 +99,9 @@ export const PlanEditorDialog = ({
       setTrialLengthDays("");
       setDisplayOrder("");
       setIsActive(true);
-      setError(null);
+      setSubmitError(null);
+      setFieldErrors({});
+      setFeatureErrors({});
       setFeaturesDirty(false);
       return;
     }
@@ -98,7 +113,9 @@ export const PlanEditorDialog = ({
     setTrialLengthDays(String(plan.trialLengthDays || 0));
     setDisplayOrder(String(plan.displayOrder || 0));
     setIsActive(plan.isActive);
-    setError(null);
+    setSubmitError(null);
+    setFieldErrors({});
+    setFeatureErrors({});
     setFeaturesDirty(false);
   }, [open, plan]);
 
@@ -165,13 +182,113 @@ export const PlanEditorDialog = ({
   }, [open, plan, catalogLoaded, catalogFeatures, featuresDirty]);
 
   const canSave = useMemo(() => {
-    return name.trim().length > 0 && Number(price) > 0;
-  }, [name, price]);
+    return !isSaving;
+  }, [isSaving]);
+
+  const validateForm = () => {
+    const nextFieldErrors: Partial<Record<FieldErrorKey, string>> = {};
+    const nextFeatureErrors: Record<number, string> = {};
+
+    if (!name.trim()) {
+      nextFieldErrors.name = "Plan name is required.";
+    }
+
+    const parsedPrice = Number(price);
+    if (price === "" || Number.isNaN(parsedPrice) || parsedPrice <= 0) {
+      nextFieldErrors.price = "Price must be greater than 0.";
+    }
+
+    if (description.length > 500) {
+      nextFieldErrors.description =
+        "Description must be 500 characters or less.";
+    }
+
+    if (trialLengthDays !== "") {
+      const parsedTrial = Number(trialLengthDays);
+      if (
+        Number.isNaN(parsedTrial) ||
+        !Number.isInteger(parsedTrial) ||
+        parsedTrial < 0
+      ) {
+        nextFieldErrors.trialLengthDays =
+          "Trial months must be a whole number 0 or greater.";
+      }
+    }
+
+    if (displayOrder !== "") {
+      const parsedDisplayOrder = Number(displayOrder);
+      if (
+        Number.isNaN(parsedDisplayOrder) ||
+        !Number.isInteger(parsedDisplayOrder) ||
+        parsedDisplayOrder < 0
+      ) {
+        nextFieldErrors.displayOrder =
+          "Display order must be a whole number 0 or greater.";
+      }
+    }
+
+    for (let i = 0; i < features.length; i++) {
+      const feature = features[i];
+      const value = feature.value?.trim() ?? "";
+
+      if (!feature.key?.trim()) {
+        nextFeatureErrors[i] = "Feature key is required.";
+        continue;
+      }
+
+      if (feature.type === PlatformFeatureType.BOOLEAN) {
+        if (value !== "true" && value !== "false") {
+          nextFeatureErrors[i] = "Boolean feature must be true or false.";
+        }
+        continue;
+      }
+
+      if (feature.key === "automation_modules") {
+        const modules = value
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean);
+        const hasInvalid = modules.some(
+          (moduleName) => !AUTOMATION_MODULE_OPTIONS.includes(moduleName),
+        );
+        if (hasInvalid) {
+          nextFeatureErrors[i] = "Contains unsupported automation modules.";
+        }
+        continue;
+      }
+
+      if (feature.type === PlatformFeatureType.NUMERIC) {
+        const parsedNumber = Number(value);
+        if (value === "" || Number.isNaN(parsedNumber)) {
+          nextFeatureErrors[i] = "Numeric feature must contain a valid number.";
+        }
+        continue;
+      }
+
+      if (!value) {
+        nextFeatureErrors[i] = "Value is required.";
+      }
+    }
+
+    setFieldErrors(nextFieldErrors);
+    setFeatureErrors(nextFeatureErrors);
+
+    return (
+      Object.keys(nextFieldErrors).length === 0 &&
+      Object.keys(nextFeatureErrors).length === 0
+    );
+  };
 
   const updateFeature = (index: number, patch: Partial<FeatureDraft>) => {
     setFeatures((prev) => {
       const next = [...prev];
       next[index] = { ...next[index], ...patch };
+      return next;
+    });
+    setFeatureErrors((prev) => {
+      if (!prev[index]) return prev;
+      const next = { ...prev };
+      delete next[index];
       return next;
     });
     setFeaturesDirty(true);
@@ -198,21 +315,21 @@ export const PlanEditorDialog = ({
   };
 
   const handleSubmit = async () => {
-    if (!canSave) {
-      setError("Name and price are required.");
+    if (!validateForm()) {
+      setSubmitError("Please fix the highlighted fields before saving.");
       return;
     }
 
     setIsSaving(true);
-    setError(null);
+    setSubmitError(null);
 
     const payload = {
       name: name.trim(),
       description: description.trim() ? description.trim() : null,
       price: Number(price),
       interval,
-      trialLengthDays: Number(trialLengthDays),
-      displayOrder: Number(displayOrder),
+      trialLengthDays: Number(trialLengthDays || 0),
+      displayOrder: Number(displayOrder || 0),
       isActive,
       features: features.map((feature) => ({
         key: feature.key.trim(),
@@ -224,7 +341,7 @@ export const PlanEditorDialog = ({
     const result = await onSave(payload, plan?.id);
 
     if (!result.ok) {
-      setError(result.message || "Save failed.");
+      setSubmitError(result.message || "Save failed.");
       setIsSaving(false);
       return;
     }
@@ -266,9 +383,15 @@ export const PlanEditorDialog = ({
                 <Input
                   name="plan-name"
                   value={name}
-                  onChange={(e: any) => setName(e.target.value)}
-                  className={controlClassName}
+                  onChange={(e: any) => {
+                    setName(e.target.value);
+                    setFieldErrors((prev) => ({ ...prev, name: undefined }));
+                  }}
+                  className={`${controlClassName} ${fieldErrors.name ? "border-red-400 focus:border-red-400 focus:ring-red-200" : ""}`}
                 />
+                {fieldErrors.name && (
+                  <p className="text-xs text-red-600">{fieldErrors.name}</p>
+                )}
               </div>
               <div className="min-w-0 space-y-2">
                 <label className="block text-xs font-semibold text-slate-700">
@@ -298,9 +421,15 @@ export const PlanEditorDialog = ({
                   type="number"
                   placeholder="0"
                   value={price}
-                  onChange={(e: any) => setPrice(e.target.value)}
-                  className={`${controlClassName} font-semibold text-[#6571FF]`}
+                  onChange={(e: any) => {
+                    setPrice(e.target.value);
+                    setFieldErrors((prev) => ({ ...prev, price: undefined }));
+                  }}
+                  className={`${controlClassName} font-semibold text-[#6571FF] ${fieldErrors.price ? "border-red-400 focus:border-red-400 focus:ring-red-200" : ""}`}
                 />
+                {fieldErrors.price && (
+                  <p className="text-xs text-red-600">{fieldErrors.price}</p>
+                )}
               </div>
 
               <div className="min-w-0 space-y-2">
@@ -313,9 +442,20 @@ export const PlanEditorDialog = ({
                   min="0"
                   placeholder="0"
                   value={trialLengthDays}
-                  onChange={(e: any) => setTrialLengthDays(e.target.value)}
-                  className={controlClassName}
+                  onChange={(e: any) => {
+                    setTrialLengthDays(e.target.value);
+                    setFieldErrors((prev) => ({
+                      ...prev,
+                      trialLengthDays: undefined,
+                    }));
+                  }}
+                  className={`${controlClassName} ${fieldErrors.trialLengthDays ? "border-red-400 focus:border-red-400 focus:ring-red-200" : ""}`}
                 />
+                {fieldErrors.trialLengthDays && (
+                  <p className="text-xs text-red-600">
+                    {fieldErrors.trialLengthDays}
+                  </p>
+                )}
               </div>
 
               <div className="min-w-0 space-y-2">
@@ -327,9 +467,20 @@ export const PlanEditorDialog = ({
                   type="number"
                   placeholder="0"
                   value={displayOrder}
-                  onChange={(e: any) => setDisplayOrder(e.target.value)}
-                  className={controlClassName}
+                  onChange={(e: any) => {
+                    setDisplayOrder(e.target.value);
+                    setFieldErrors((prev) => ({
+                      ...prev,
+                      displayOrder: undefined,
+                    }));
+                  }}
+                  className={`${controlClassName} ${fieldErrors.displayOrder ? "border-red-400 focus:border-red-400 focus:ring-red-200" : ""}`}
                 />
+                {fieldErrors.displayOrder && (
+                  <p className="text-xs text-red-600">
+                    {fieldErrors.displayOrder}
+                  </p>
+                )}
               </div>
 
               <div className="min-w-0 space-y-2">
@@ -367,10 +518,25 @@ export const PlanEditorDialog = ({
               </label>
               <textarea
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 bg-white p-3 text-sm text-slate-700 shadow-sm outline-none transition focus:border-[#6571FF] focus:ring-2 focus:ring-[#6571FF]/20"
+                onChange={(e) => {
+                  setDescription(e.target.value);
+                  setFieldErrors((prev) => ({
+                    ...prev,
+                    description: undefined,
+                  }));
+                }}
+                className={`w-full rounded-lg border bg-white p-3 text-sm text-slate-700 shadow-sm outline-none transition focus:ring-2 ${
+                  fieldErrors.description
+                    ? "border-red-400 focus:border-red-400 focus:ring-red-200"
+                    : "border-slate-300 focus:border-[#6571FF] focus:ring-[#6571FF]/20"
+                }`}
                 rows={3}
               />
+              {fieldErrors.description && (
+                <p className="text-xs text-red-600">
+                  {fieldErrors.description}
+                </p>
+              )}
             </div>
           </div>
 
@@ -470,8 +636,17 @@ export const PlanEditorDialog = ({
                         onChange={(e: any) =>
                           updateFeature(index, { value: e.target.value })
                         }
-                        className="w-full h-9 rounded-md border border-slate-300 px-3 text-right text-sm text-[#6571FF] shadow-sm focus:border-[#6571FF] focus:ring-2 focus:ring-[#6571FF]/20"
+                        className={`w-full h-9 rounded-md border px-3 text-right text-sm text-[#6571FF] shadow-sm focus:ring-2 ${
+                          featureErrors[index]
+                            ? "border-red-400 focus:border-red-400 focus:ring-red-200"
+                            : "border-slate-300 focus:border-[#6571FF] focus:ring-[#6571FF]/20"
+                        }`}
                       />
+                    )}
+                    {featureErrors[index] && (
+                      <p className="text-[11px] text-red-600">
+                        {featureErrors[index]}
+                      </p>
                     )}
                     {/* {feature.key &&
                     !catalogFeatures.some(
@@ -494,7 +669,7 @@ export const PlanEditorDialog = ({
             </div>
           </div>
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {submitError && <p className="text-sm text-red-600">{submitError}</p>}
         </div>
 
         <div className="flex items-center justify-end gap-3 border-t border-slate-200 bg-slate-50/70 px-7 py-4">
