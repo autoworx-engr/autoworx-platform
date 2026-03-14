@@ -3,7 +3,7 @@ import { errorHandler } from "@/error-boundary/globalErrorHandler";
 
 /**
  * @swagger
- * /api/communication/collaboration/v2-messages:
+ * /api/communication/collaboration/messages/v2-messages:
  *   get:
  *     summary: Get collaboration messages between two companies
  *     description: Returns all collaboration messages between companyA and companyB, including attachments, sender info, and request estimates. Adds a UI flag `isOwnMessage` based on the viewer company.
