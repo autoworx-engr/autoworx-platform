@@ -28,17 +28,22 @@ export default function PrivateRoute({ children, session }: TProps) {
     if (!companyFeaturePermission || companyFeaturePermission.length === 0)
       return true;
     const routeWithoutQuery = route.split("?")[0];
+
+    // Visualization is gated at page level via entitlements so users can see
+    // the upgrade prompt instead of being hard-redirected to 404.
+    if (routeWithoutQuery === "/dashboard/visualization") return true;
+
     const featureKey = FEATURE_PERMISSIONS_MAP[routeWithoutQuery];
     if (!featureKey) return true;
     if (Array.isArray(featureKey)) {
       return featureKey.some((key) =>
         companyFeaturePermission.some(
-          (perm) => perm.permission_name === key && perm.enabled
-        )
+          (perm) => perm.permission_name === key && perm.enabled,
+        ),
       );
     }
     return companyFeaturePermission.some(
-      (perm) => perm.permission_name === featureKey && perm.enabled
+      (perm) => perm.permission_name === featureKey && perm.enabled,
     );
   }
 

@@ -6,8 +6,6 @@ import { FEATURE_PERMISSIONS_MAP } from "@/lib/routePermissionsMap";
 import { useCompanyFeaturePermissionStore } from "@/stores/companyFeaturePermissionStore";
 import { isIosPwa } from "@/utils/isIosPwa";
 import { useGetCurrentUser } from "@/utils/useGetCurrentUser";
-import { getEntitlements } from "@/actions/platform-billing/entitlements";
-import { useServerGet } from "@/hooks/useServerGet";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -42,22 +40,21 @@ export default function MobileNav({ navList, permissions }: TProps) {
   const [openNav, setOpenNav] = useState(false);
   const currentUser = useGetCurrentUser();
   const { companyFeaturePermission } = useCompanyFeaturePermissionStore();
-  const companyId = currentUser?.companyId;
-  const hasCompanyId = typeof companyId === "number";
-  const { data: entitlements } = useServerGet(
-    getEntitlements,
-    hasCompanyId ? companyId : 0,
-  );
 
   // Helper: Check if company feature permission allows access to this route
   function canAccessCompanyFeatureRoute(route: string): boolean {
     if (!companyFeaturePermission || companyFeaturePermission.length === 0)
       return true;
     const routeWithoutQuery = route.split("?")[0];
+
+    // Visualization visibility is controlled at route/page level (entitlements),
+    // not by company feature-permission filtering in nav.
+    if (routeWithoutQuery === "/dashboard/visualization") return true;
+
     const featureKey = FEATURE_PERMISSIONS_MAP[routeWithoutQuery];
     if (!featureKey) return true;
     if (Array.isArray(featureKey)) {
-      return featureKey.some(key =>
+      return featureKey.some((key) =>
         companyFeaturePermission.some(
           (perm) => perm.permission_name === key && perm.enabled,
         ),
@@ -68,31 +65,16 @@ export default function MobileNav({ navList, permissions }: TProps) {
     );
   }
 
-  function canAccessPlanRoute(route: string): boolean {
-    const routeWithoutQuery = route.split("?")[0];
-    if (routeWithoutQuery !== "/dashboard/visualization") return true;
-    if (!hasCompanyId) return true;
-    if (!entitlements?.success) return false;
-    return !!entitlements.data?.carWrapVisualizer;
-  }
-
   const buildFilteredNavList = (list: TProps["navList"]) => {
     const permissionFiltered = filterNavList(list, permissions);
 
     return permissionFiltered
-      .filter(
-        (item) =>
-          !item.link ||
-          (canAccessCompanyFeatureRoute(item.link) &&
-            canAccessPlanRoute(item.link)),
-      )
+      .filter((item) => !item.link || canAccessCompanyFeatureRoute(item.link))
       .map((item) => {
         if (!item.subnav) return item;
 
-        const filteredSubnav = item.subnav.filter(
-          (sub) =>
-            canAccessCompanyFeatureRoute(sub.link) &&
-            canAccessPlanRoute(sub.link),
+        const filteredSubnav = item.subnav.filter((sub) =>
+          canAccessCompanyFeatureRoute(sub.link),
         );
 
         return {
@@ -109,7 +91,7 @@ export default function MobileNav({ navList, permissions }: TProps) {
 
   useEffect(() => {
     setFilteredNavList(buildFilteredNavList(navList));
-  }, [companyFeaturePermission, entitlements, navList, permissions]);
+  }, [companyFeaturePermission, navList, permissions]);
   useEffect(() => {
     if (openNav) {
       document.body.style.overflow = "hidden";
@@ -134,7 +116,7 @@ export default function MobileNav({ navList, permissions }: TProps) {
       <div className="fixed top-0 z-50 w-full bg-[#0C1427]">
         <div className="flex h-14 items-center justify-between bg-[#0C1427] p-1.5">
           <div
-            onClick={() => setOpenNav(prev => !prev)}
+            onClick={() => setOpenNav((prev) => !prev)}
             className="w-20 flex-shrink-0"
           >
             <Menu size={30} className="text-white" />

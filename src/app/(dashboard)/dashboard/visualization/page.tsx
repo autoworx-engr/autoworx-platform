@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getCompanyId } from "@/lib/companyId";
 import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-service";
+import UpgradePlanBanner from "@/components/UpgradePlanBanner";
 
 export default async function VisualizationPage() {
   const companyId = await getCompanyId();
@@ -9,20 +10,19 @@ export default async function VisualizationPage() {
   if (!entitlements.carWrapVisualizer) {
     return (
       <div className="flex min-h-[70vh] w-full items-center justify-center px-4">
-        <div className="w-full max-w-xl rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm">
+        <div className="w-full max-w-xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <h1 className="text-xl font-semibold text-slate-900">
             Visualization is not available
           </h1>
-          <p className="mt-2 text-sm text-slate-600">
+          <p className="mb-4 mt-2 text-sm text-slate-600">
             Your current access does not include Car Wrap Visualization. Upgrade
             your plan to unlock this feature.
           </p>
-          <Link
-            href="/dashboard/settings/billing?showPlans=true"
-            className="mt-5 inline-flex items-center rounded-lg bg-[#6571FF] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#5563E8]"
-          >
-            View Plans
-          </Link>
+          <UpgradePlanBanner
+            title="Unlock Car Wrap Visualization"
+            description="Upgrade your plan to access the visualization studio and preview custom wraps."
+            ctaLabel="Upgrade Plan"
+          />
         </div>
       </div>
     );

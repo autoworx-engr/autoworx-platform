@@ -15,7 +15,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ReactNode, useEffect, useState } from "react";
-import { getEntitlements } from "@/actions/platform-billing/entitlements";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -69,12 +68,6 @@ export default function SideNavbar({ navList, permissions }: TProps) {
     .slice(0, 3)
     .join("/");
   const companyId = user?.companyId;
-  const hasCompanyId = typeof companyId === "number";
-
-  const { data: entitlements } = useServerGet(
-    getEntitlements,
-    hasCompanyId ? companyId : 0,
-  );
 
   const [clientConversations, setClientConversations] = useState<
     Partial<ClientConversationTrack>[]
@@ -166,6 +159,11 @@ export default function SideNavbar({ navList, permissions }: TProps) {
     if (!companyFeaturePermission || companyFeaturePermission.length === 0)
       return true;
     const routeWithoutQuery = route.split("?")[0];
+
+    // Visualization visibility is controlled at route/page level (entitlements),
+    // not by company feature-permission filtering in nav.
+    if (routeWithoutQuery === "/dashboard/visualization") return true;
+
     const featureKey = FEATURE_PERMISSIONS_MAP[routeWithoutQuery];
     if (!featureKey) return true;
     if (Array.isArray(featureKey)) {
@@ -180,31 +178,16 @@ export default function SideNavbar({ navList, permissions }: TProps) {
     );
   }
 
-  function canAccessPlanRoute(route: string): boolean {
-    const routeWithoutQuery = route.split("?")[0];
-    if (routeWithoutQuery !== "/dashboard/visualization") return true;
-    if (!hasCompanyId) return true;
-    if (!entitlements?.success) return false;
-    return !!entitlements.data?.carWrapVisualizer;
-  }
-
   const buildFilteredNavList = (list: TProps["navList"]) => {
     const permissionFiltered = filterNavList(list, permissions);
 
     return permissionFiltered
-      .filter(
-        (item) =>
-          !item.link ||
-          (canAccessCompanyFeatureRoute(item.link) &&
-            canAccessPlanRoute(item.link)),
-      )
+      .filter((item) => !item.link || canAccessCompanyFeatureRoute(item.link))
       .map((item) => {
         if (!item.subnav) return item;
 
-        const filteredSubnav = item.subnav.filter(
-          (sub) =>
-            canAccessCompanyFeatureRoute(sub.link) &&
-            canAccessPlanRoute(sub.link),
+        const filteredSubnav = item.subnav.filter((sub) =>
+          canAccessCompanyFeatureRoute(sub.link),
         );
 
         return {
@@ -221,7 +204,7 @@ export default function SideNavbar({ navList, permissions }: TProps) {
 
   useEffect(() => {
     setFilteredNavList(buildFilteredNavList(navList));
-  }, [companyFeaturePermission, entitlements, navList, permissions]);
+  }, [companyFeaturePermission, navList, permissions]);
 
   const unReadClientCount = clientConversations?.length || 0;
 
