@@ -127,7 +127,7 @@ export async function PATCH(
       });
     }
 
-    revalidatePath("/dashboard/settings/ai-train");
+    revalidatePath("/dashboard/settings/sales-agent");
     revalidatePath("/dashboard/communication/client");
     return NextResponse.json({
       message: "Client sales agent permission updated successfully",

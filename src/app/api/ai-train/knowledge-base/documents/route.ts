@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 /**
  * @swagger
- * /api/ai-train/knowledge-base-documents:
+ * /api/sales-agent/knowledge-base-documents:
  *   post:
  *     summary: Create a knowledge base document
  *     tags: [Knowledge Base Documents]
@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
 
 /**
  * @swagger
- * /api/ai-train/knowledge-base-documents:
+ * /api/sales-agent/knowledge-base-documents:
  *   get:
  *     summary: Get all knowledge base documents
  *     tags: [Knowledge Base Documents]

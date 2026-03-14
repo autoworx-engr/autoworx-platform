@@ -1,6 +1,6 @@
 /**
  * @swagger
- * /api/ai-train/sms-delay:
+ * /api/sales-agent/sms-delay:
  *   post:
  *     summary: Create or update SMS delay for a company
  *     tags: [SMS Delay]
@@ -55,42 +55,61 @@
  *       500:
  *         description: Server error
  */
-import { db } from '@/lib/db';
-import { NextRequest, NextResponse } from 'next/server';
-
+import { db } from "@/lib/db";
+import { NextRequest, NextResponse } from "next/server";
 
 // Create or update SMSDelay for a company
 export async function POST(req: NextRequest) {
-    try {
-        const { companyId, smsResponseDelayMin, smsResponseDelayMax } = await req.json();
-        if (!companyId || typeof smsResponseDelayMin !== 'number' || typeof smsResponseDelayMax !== 'number') {
-            return NextResponse.json({ error: 'companyId, smsResponseDelayMin, smsResponseDelayMax are required.' }, { status: 400 });
-        }
-        const smsDelay = await db.sMSDelay.upsert({
-            where: { companyId },
-            update: { smsResponseDelayMin, smsResponseDelayMax },
-            create: { companyId, smsResponseDelayMin, smsResponseDelayMax },
-        });
-        return NextResponse.json(smsDelay);
-    } catch (error: any) {
-        return NextResponse.json({ error: error?.message || 'Server error' }, { status: 500 });
+  try {
+    const { companyId, smsResponseDelayMin, smsResponseDelayMax } =
+      await req.json();
+    if (
+      !companyId ||
+      typeof smsResponseDelayMin !== "number" ||
+      typeof smsResponseDelayMax !== "number"
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "companyId, smsResponseDelayMin, smsResponseDelayMax are required.",
+        },
+        { status: 400 },
+      );
     }
+    const smsDelay = await db.sMSDelay.upsert({
+      where: { companyId },
+      update: { smsResponseDelayMin, smsResponseDelayMax },
+      create: { companyId, smsResponseDelayMin, smsResponseDelayMax },
+    });
+    return NextResponse.json(smsDelay);
+  } catch (error: any) {
+    return NextResponse.json(
+      { error: error?.message || "Server error" },
+      { status: 500 },
+    );
+  }
 }
 
 // Get SMSDelay for a company
 export async function GET(req: NextRequest) {
-    try {
-        const { searchParams } = new URL(req.url);
-        const companyId = Number(searchParams.get('companyId'));
-        if (!companyId) {
-            return NextResponse.json({ error: 'companyId is required.' }, { status: 400 });
-        }
-        const smsDelay = await db.sMSDelay.findUnique({ where: { companyId } });
-        if (!smsDelay) {
-            return NextResponse.json({ error: 'Not found.' }, { status: 404 });
-        }
-        return NextResponse.json(smsDelay);
-    } catch (error: any) {
-        return NextResponse.json({ error: error?.message || 'Server error' }, { status: 500 });
+  try {
+    const { searchParams } = new URL(req.url);
+    const companyId = Number(searchParams.get("companyId"));
+    if (!companyId) {
+      return NextResponse.json(
+        { error: "companyId is required." },
+        { status: 400 },
+      );
     }
+    const smsDelay = await db.sMSDelay.findUnique({ where: { companyId } });
+    if (!smsDelay) {
+      return NextResponse.json({ error: "Not found." }, { status: 404 });
+    }
+    return NextResponse.json(smsDelay);
+  } catch (error: any) {
+    return NextResponse.json(
+      { error: error?.message || "Server error" },
+      { status: 500 },
+    );
+  }
 }

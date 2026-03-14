@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 /**
  * @swagger
- * /api/ai-train/service-playbooks:
+ * /api/sales-agent/service-playbooks:
  *   get:
  *     summary: Get all service playbooks by company
  *     tags: [Service Playbooks]
@@ -115,7 +115,7 @@ export async function GET(req: Request) {
 
 /**
  * @swagger
- * /api/ai-train/service-playbooks:
+ * /api/sales-agent/service-playbooks:
  *   post:
  *     summary: Create a new service playbook
  *     tags: [Service Playbooks]
