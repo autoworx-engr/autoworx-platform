@@ -8,11 +8,12 @@ import {
   User,
 } from "@prisma/client";
 import { Session } from "next-auth";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import List from "./List";
 import UsersArea from "./UsersArea";
 import { useUnreadCollaborationMessages } from "./hooks/useUnreadCollaborationMessages";
 import CompanyArea from "./CompanyArea";
+import { useParams, useSearchParams } from "next/navigation";
 
 export default function Collaboration({
   companyWithAdmin,
@@ -27,6 +28,8 @@ export default function Collaboration({
   messages: (DbMessage & { attachment: Attachment[] | null })[];
   isCollaborators: boolean | null | undefined;
 }) {
+  const searchParams = useSearchParams();
+  const companyId = searchParams.get("companyId");
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [companyAdmins, setCompanyAdmins] = useState(companyWithAdmin);
 
@@ -36,6 +39,14 @@ export default function Collaboration({
       companyId: 1,
     },
   ];
+
+  useEffect(() => {
+    if (companyId) {
+      const selected: any = companies.find((c) => c.id === Number(companyId));
+
+      setSelectedCompany(selected);
+    }
+  }, [companyId, companies]);
 
   return (
     <>

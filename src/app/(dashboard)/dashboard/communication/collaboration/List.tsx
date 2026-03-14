@@ -3,6 +3,7 @@ import Image from "next/image";
 import { Company, User } from "@prisma/client";
 import { cn } from "@/lib/cn";
 import CollaborationToggle from "./CollaborationToggle";
+import { useRouter, useSearchParams } from "next/navigation";
 
 type TProps = {
   companies: (Company & { users: User[] })[];
@@ -29,12 +30,21 @@ export default function List({
   companyId,
 }: TProps) {
   const [searchTerm, setSearchTerm] = useState("");
+  const router = useRouter();
 
   const getCompanyUnreadCount = (companyId: number) => {
     const found = unreadCounts.find((u) => u.companyId === companyId);
     return found?.count || 0;
   };
+  const searchParams = useSearchParams();
 
+  const handleSelectCompany = (company: Company & { users: User[] }) => {
+    const params = new URLSearchParams(searchParams);
+
+    params.set("companyId", company.id.toString());
+
+    router.replace(`?${params.toString()}`);
+  };
   return (
     <div className="app-shadow h-screen w-full overflow-y-auto rounded-lg bg-background p-3 sm:block sm:h-[83vh] sm:w-[30%]">
       <CollaborationToggle
@@ -65,7 +75,7 @@ export default function List({
             return (
               <button
                 key={company.id}
-                onClick={() => setSelectedCompany(company)}
+                onClick={() => handleSelectCompany(company)}
                 className={cn(
                   "flex items-center gap-3 rounded-xl p-2 transition",
                   selectedCompany?.id === company.id

@@ -13,7 +13,7 @@ import {
 import Image from "next/image";
 import { pusher } from "@/lib/pusher/client";
 import { cn } from "@/lib/cn";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import InvoiceEstimateModal from "./collaboration/InvoiceEstimateModal";
 import CompanyProfileCard from "./collaboration/CompanyProfileCard";
 import Link from "next/link";
@@ -56,6 +56,8 @@ export default function CompanyMessageBox({
   const [multiAttachmentFile, setMultiAttachmentFile] = useState<File[] | null>(
     null,
   );
+  const searchParams = useSearchParams();
+  const companyId = searchParams.get("companyId");
   const [showAttachment, setShowAttachment] = useState(false);
   const currentCompanyId = session?.user?.companyId;
   const isEstimateAttachmentShow = pathname?.includes(
@@ -64,12 +66,12 @@ export default function CompanyMessageBox({
 
   // 🔹 Load messages
   useEffect(() => {
-    if (!company?.id || !currentCompanyId) return;
+    if (!companyId || !currentCompanyId) return;
 
     async function fetchMessages() {
       try {
         const res = await fetch(
-          `/api/communication/collaboration/messages/v2-messages?companyA=${currentCompanyId}&companyB=${company.id}&viewerCompanyId=${currentCompanyId}`,
+          `/api/communication/collaboration/messages/v2-messages?companyA=${currentCompanyId}&companyB=${companyId}&viewerCompanyId=${currentCompanyId}`,
         );
 
         const data = await res.json();
@@ -78,12 +80,12 @@ export default function CompanyMessageBox({
           setMessages(data.messages);
         }
       } catch (error) {
-        console.error("Failed to fetch messages", error);
+        // console.error("Failed to fetch messages", error);
       }
     }
 
     fetchMessages();
-  }, [company?.id, currentCompanyId]);
+  }, [companyId, currentCompanyId]);
 
   // 🔹 Auto scroll
   useEffect(() => {
@@ -101,9 +103,9 @@ export default function CompanyMessageBox({
       // Only add if it's related to current open chat
       if (
         (data.fromCompanyId === currentCompanyId &&
-          data.toCompanyId === company.id) ||
+          data.toCompanyId === companyId) ||
         (data.fromCompanyId === currentCompanyId &&
-          data.toCompanyId === company.id)
+          data.toCompanyId === companyId)
       ) {
         setMessages((prev) => [...prev, data]);
       }
@@ -113,11 +115,11 @@ export default function CompanyMessageBox({
       channel.unbind_all();
       pusher.unsubscribe(`company-${currentCompanyId}`);
     };
-  }, [company.id, currentCompanyId]);
+  }, [companyId, currentCompanyId]);
 
   async function handleSendMessage(e: React.FormEvent) {
     e.preventDefault();
-    if (!currentCompanyId || !company?.id) return;
+    if (!currentCompanyId || !companyId) return;
 
     const trimmedMessage = message.trim();
     if (!trimmedMessage && !multiAttachmentFile) return;
@@ -160,7 +162,7 @@ export default function CompanyMessageBox({
         },
         body: JSON.stringify({
           fromCompanyId: currentCompanyId,
-          toCompanyId: company.id,
+          toCompanyId: companyId,
           senderUserId: session?.user?.id,
           message: trimmedMessage || null,
           attachmentFiles: uploadedFiles,
