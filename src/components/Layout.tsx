@@ -138,10 +138,10 @@ const navbarList = [
     path: "/dashboard/visualization",
   },
   {
-    title: "Virtualization",
+    title: "Virtual Shop",
     icon: "/icons/navbar/visualization.svg",
-    link: "/dashboard/virtualization",
-    path: "/dashboard/virtualization",
+    link: "/dashboard/virtual-shop",
+    path: "/dashboard/virtual-shop",
   },
 ];
 

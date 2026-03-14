@@ -12,13 +12,13 @@ import {
   Calendar,
   FileText,
 } from "lucide-react";
-import ServicesTab from "../components/ServicesTab";
-import DepositsTab from "../components/DepositsTab";
-import SchedulingTab from "../components/SchedulingTab";
-import FinancialTab from "../components/FinancialTab";
-import GiftCardsTab from "../components/GiftCardsTab";
-import CalendarTab from "../components/CalendarTab";
-import EstimatesTab from "../components/EstimatesTab";
+import ServicesTab from "./components/ServicesTab";
+import DepositsTab from "./components/DepositsTab";
+import SchedulingTab from "./components/SchedulingTab";
+import FinancialTab from "./components/FinancialTab";
+import GiftCardsTab from "./components/GiftCardsTab";
+import CalendarTab from "./components/CalendarTab";
+import EstimatesTab from "./components/EstimatesTab";
 
 const TABS = [
   { value: "services", label: "Services", icon: Settings },

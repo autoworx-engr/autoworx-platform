@@ -1,7 +1,7 @@
 import BookingPage from "./pages/BookingPage";
 
 
-export default async function Virtualization(){
+export default async function VirtualShop(){
     return (
         <div>
            <BookingPage/>
