@@ -68,6 +68,7 @@ export function SelectAppointmentClient({
       <input type="hidden" name={name} value={client?.id ?? ""} />
 
       <Selector
+        className="min-w-full"
         label={(client: Partial<Client> | null) =>
           client ? `${client.firstName} ${client.lastName ?? ""}` : "Client"
         }
