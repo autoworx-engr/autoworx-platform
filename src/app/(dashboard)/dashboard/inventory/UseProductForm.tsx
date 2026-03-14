@@ -125,6 +125,10 @@ export default function UseProductForm({
               name="date"
               type="date"
               label="Date"
+              onFocus={(e) => {
+                // Prevent the default focus behavior to avoid opening the calendar popup
+                e.preventDefault();
+              }}
               defaultValue={todayInCompanyTz}
             />
             <SlimInput name="quantity" label="Quantity" required />
