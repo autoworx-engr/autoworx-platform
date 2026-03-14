@@ -1,8 +1,9 @@
 "use client";
 
 import { getSmartReplies } from "@/actions/communication/ai-reply/smart-reply";
+import UpgradePlanBanner from "@/components/UpgradePlanBanner";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowDown, MessageSquare, Wand2 } from "lucide-react";
+import { ArrowDown, MessageSquare, Sparkles, Wand2, X } from "lucide-react";
 import * as React from "react";
 
 type Props = {
@@ -51,10 +52,36 @@ export default function SmartReplyBar({
   const [items, setItems] = React.useState<{ text: string }[]>([]);
   const [error, setError] = React.useState<string | null>(null);
   const [isOpen, setIsOpen] = React.useState(false);
-  const [isClosing, setIsClosing] = React.useState(false);
+  const [showUpgradeBanner, setShowUpgradeBanner] = React.useState(false);
 
   if (!isAllowed) {
-    return null;
+    return (
+      <div className="flex w-full flex-col items-end gap-2">
+        <button
+          type="button"
+          onClick={() => setShowUpgradeBanner((prev) => !prev)}
+          className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[#6571FF] to-[#8B5CF6] text-white shadow transition hover:opacity-90"
+          aria-label="Show AI Smart Replies upgrade info"
+          title="AI Smart Replies requires an upgrade"
+        >
+          {showUpgradeBanner ? (
+            <X className="h-4 w-4" />
+          ) : (
+            <Sparkles className="h-4 w-4" />
+          )}
+        </button>
+
+        {showUpgradeBanner && (
+          <div className="w-full">
+            <UpgradePlanBanner
+              title="AI Smart Replies is not available on your plan"
+              description="Upgrade to generate and enhance AI-powered reply suggestions in your conversations."
+              ctaLabel="Upgrade Plan"
+            />
+          </div>
+        )}
+      </div>
+    );
   }
 
   const normalize = (res: unknown) => {
