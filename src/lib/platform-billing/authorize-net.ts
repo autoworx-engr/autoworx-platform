@@ -34,6 +34,20 @@ function getEnvironment() {
     : SDKConstants.endpoint.sandbox;
 }
 
+function extractNumericIdFromErrorText(errorText: string): string | null {
+  const matches = errorText.match(/\b(\d{5,})\b/g);
+  if (!matches || matches.length === 0) return null;
+  return matches[matches.length - 1];
+}
+
+function readPaymentProfileId(profile: any): string | undefined {
+  if (!profile) return undefined;
+  if (typeof profile.getCustomerPaymentProfileId === "function") {
+    return profile.getCustomerPaymentProfileId();
+  }
+  return profile.customerPaymentProfileId || profile.paymentProfileId;
+}
+
 /**
  * 1. Create Customer Profile and Payment Profile (CIM)
  * This uses a payment nonce from Accept.js/Accept Hosted
@@ -158,6 +172,7 @@ export async function createPlatformPaymentProfile(
   firstName: string,
   lastName: string,
   opaqueData: { dataDescriptor: string; dataValue: string },
+  attemptedLimitRecovery = false,
 ) {
   const merchantAuthenticationType = getPlatformAuthNetCredentials();
 
@@ -212,11 +227,22 @@ export async function createPlatformPaymentProfile(
 
           console.log(`Authorize.Net Error: [${errorCode}] ${errorText}`);
 
-          // Handle duplicate/limit profile errors where we should
-          // reuse an existing payment profile instead of failing.
-          if (errorCode === "E00039" || errorCode === "E00042") {
+          // Handle duplicate profile by reusing the exact duplicate id from
+          // gateway response when available. This avoids charging a wrong card.
+          if (errorCode === "E00039") {
+            const duplicatePaymentProfileId =
+              extractNumericIdFromErrorText(errorText);
+            if (duplicatePaymentProfileId) {
+              console.log(
+                `Recovered duplicate Payment Profile ID from response: ${duplicatePaymentProfileId}`,
+              );
+              return resolve({
+                customerPaymentProfileId: duplicatePaymentProfileId,
+              });
+            }
+
             console.log(
-              "Detected duplicate or max payment profiles, attempting recovery via existing profiles...",
+              "Duplicate payment profile detected without explicit ID, attempting cautious recovery...",
             );
             try {
               const profile = await getCustomerProfile(customerProfileId);
@@ -224,14 +250,15 @@ export async function createPlatformPaymentProfile(
                 typeof profile.getPaymentProfiles === "function"
                   ? profile.getPaymentProfiles()
                   : profile.paymentProfiles || [];
-              if (pps && pps.length > 0) {
-                const paymentProfileId =
-                  typeof pps[0].getCustomerPaymentProfileId === "function"
-                    ? pps[0].getCustomerPaymentProfileId()
-                    : pps[0].customerPaymentProfileId ||
-                      pps[0].paymentProfileId;
+              if (pps && pps.length === 1) {
+                const paymentProfileId = readPaymentProfileId(pps[0]);
+                if (!paymentProfileId) {
+                  throw new Error(
+                    "Unable to read recovered payment profile identifier",
+                  );
+                }
                 console.log(
-                  `Recovered Payment Profile ID via profile fetch: ${paymentProfileId}`,
+                  `Recovered Payment Profile ID via single-profile fallback: ${paymentProfileId}`,
                 );
                 return resolve({
                   customerPaymentProfileId: paymentProfileId,
@@ -240,6 +267,74 @@ export async function createPlatformPaymentProfile(
             } catch (e) {
               console.error("Payment profile recovery via fetch failed:", e);
             }
+          }
+
+          // Max profiles reached (E00042): try to free one removable old
+          // profile, then retry once with the new card. Never fallback to
+          // charging an arbitrary existing card.
+          if (errorCode === "E00042") {
+            if (!attemptedLimitRecovery) {
+              console.log(
+                "Maximum payment profiles reached, attempting safe profile rotation...",
+              );
+              try {
+                const profile = await getCustomerProfile(customerProfileId);
+                const pps =
+                  typeof profile.getPaymentProfiles === "function"
+                    ? profile.getPaymentProfiles()
+                    : profile.paymentProfiles || [];
+                const existingIds = (pps || [])
+                  .map((p: any) => readPaymentProfileId(p))
+                  .filter(Boolean) as string[];
+
+                let deletedProfileId: string | null = null;
+                for (const existingId of existingIds) {
+                  try {
+                    await deletePlatformCustomerPaymentProfile(
+                      customerProfileId,
+                      existingId,
+                    );
+                    deletedProfileId = existingId;
+                    break;
+                  } catch (deleteErr: any) {
+                    const deleteMessage = deleteErr?.message || "";
+                    // E00105: profile linked to active/suspended subscription.
+                    if (
+                      /E00105/i.test(deleteMessage) ||
+                      /active or suspended subscription/i.test(deleteMessage)
+                    ) {
+                      continue;
+                    }
+                  }
+                }
+
+                if (deletedProfileId) {
+                  console.log(
+                    `Deleted old payment profile ${deletedProfileId}, retrying creation...`,
+                  );
+                  const retried = await createPlatformPaymentProfile(
+                    customerProfileId,
+                    firstName,
+                    lastName,
+                    opaqueData,
+                    true,
+                  );
+                  return resolve(retried);
+                }
+              } catch (rotationErr) {
+                console.error(
+                  "Automatic payment profile rotation failed:",
+                  rotationErr,
+                );
+              }
+            }
+
+            reject(
+              new Error(
+                "Maximum saved payment methods reached and no removable old method was found. Please remove an old card first, then retry.",
+              ),
+            );
+            return;
           }
 
           reject(new Error(errorText || "Failed to create payment profile"));
@@ -479,6 +574,45 @@ export async function getCustomerProfile(customerProfileId: string) {
       } else {
         const error = response?.getMessages().getMessage()[0];
         reject(new Error(error?.getText() || "Failed to get customer profile"));
+      }
+    });
+  });
+}
+
+export async function deletePlatformCustomerPaymentProfile(
+  customerProfileId: string,
+  customerPaymentProfileId: string,
+) {
+  const merchantAuthenticationType = getPlatformAuthNetCredentials();
+
+  const deleteRequest = new ApiContracts.DeleteCustomerPaymentProfileRequest();
+  deleteRequest.setMerchantAuthentication(merchantAuthenticationType);
+  deleteRequest.setCustomerProfileId(customerProfileId);
+  deleteRequest.setCustomerPaymentProfileId(customerPaymentProfileId);
+
+  return new Promise<void>((resolve, reject) => {
+    const ctrl = new ApiControllers.DeleteCustomerPaymentProfileController(
+      deleteRequest.getJSON(),
+    );
+    ctrl.setEnvironment(getEnvironment());
+
+    ctrl.execute(() => {
+      const apiResponse = ctrl.getResponse();
+      const response = new ApiContracts.DeleteCustomerPaymentProfileResponse(
+        apiResponse,
+      );
+
+      if (
+        response != null &&
+        response.getMessages().getResultCode() ===
+          ApiContracts.MessageTypeEnum.OK
+      ) {
+        resolve();
+      } else {
+        const error = response?.getMessages().getMessage()[0];
+        reject(
+          new Error(error?.getText() || "Failed to delete payment profile"),
+        );
       }
     });
   });

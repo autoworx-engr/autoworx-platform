@@ -26,6 +26,15 @@ type SubscribeToPlatformPlanInput = {
   opaqueData: { dataDescriptor: string; dataValue: string };
 };
 
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isAuthNetRecordNotFound(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error || "");
+  return /record cannot be found/i.test(message) || /E00040/i.test(message);
+}
+
 export async function subscribeToPlatformPlan({
   companyId,
   planId,
@@ -74,14 +83,74 @@ export async function subscribeToPlatformPlan({
         create: { companyId, authNetProfileId: customerProfileId, email },
       });
     } else {
-      // Add new payment profile to existing customer
-      const pp = await createPlatformPaymentProfile(
-        customerProfileId,
-        firstName,
-        lastName,
-        opaqueData,
-      );
-      customerPaymentProfileId = pp.customerPaymentProfileId;
+      // Verify existing remote profile still exists before we attach payment
+      // profile data to prevent stale local IDs from causing E00040 later.
+      try {
+        await getCustomerProfile(customerProfileId);
+      } catch (profileErr: any) {
+        if (!isAuthNetRecordNotFound(profileErr)) {
+          throw profileErr;
+        }
+
+        console.warn(
+          `Stored Authorize.Net customer profile ${customerProfileId} is stale. Recreating profile for company ${companyId}.`,
+        );
+
+        const recreated = await createPlatformCustomerProfile(
+          companyId,
+          email,
+          firstName,
+          lastName,
+          opaqueData,
+        );
+        customerProfileId = recreated.customerProfileId;
+        customerPaymentProfileId = recreated.customerPaymentProfileId;
+
+        billingCustomer = await db.platformBillingCustomer.upsert({
+          where: { companyId },
+          update: { authNetProfileId: customerProfileId, email },
+          create: { companyId, authNetProfileId: customerProfileId, email },
+        });
+      }
+
+      if (!customerPaymentProfileId) {
+        // Add new payment profile to existing customer. If profile becomes
+        // stale between existence-check and create call, recreate customer.
+        try {
+          const pp = await createPlatformPaymentProfile(
+            customerProfileId,
+            firstName,
+            lastName,
+            opaqueData,
+          );
+          customerPaymentProfileId = pp.customerPaymentProfileId;
+        } catch (paymentProfileErr: any) {
+          if (!isAuthNetRecordNotFound(paymentProfileErr)) {
+            throw paymentProfileErr;
+          }
+
+          console.warn(
+            `Customer profile ${customerProfileId} became stale during payment profile creation. Recreating and retrying for company ${companyId}.`,
+          );
+
+          const recreated = await createPlatformCustomerProfile(
+            companyId,
+            email,
+            firstName,
+            lastName,
+            opaqueData,
+          );
+
+          customerProfileId = recreated.customerProfileId;
+          customerPaymentProfileId = recreated.customerPaymentProfileId;
+
+          billingCustomer = await db.platformBillingCustomer.upsert({
+            where: { companyId },
+            update: { authNetProfileId: customerProfileId, email },
+            create: { companyId, authNetProfileId: customerProfileId, email },
+          });
+        }
+      }
     }
 
     // 1.5 Sync Payment Method details to DB (best-effort)
@@ -183,34 +252,57 @@ export async function subscribeToPlatformPlan({
       arbStartDate.setMonth(arbStartDate.getMonth() + intervalMonths);
     }
 
-    // Validate the payment profile is fully indexed and usable before
-    // handing it to ARB. Auth.Net can return E00040 on ARB if a freshly
-    // created nonce-based profile hasn't propagated yet. Validating here
-    // forces that check upfront with a clear, actionable error — and
-    // ensures we never silently charge a different card than intended.
-    try {
-      await validateCustomerPaymentProfile(
-        customerProfileId,
-        customerPaymentProfileId!,
-      );
-    } catch (validErr: any) {
-      console.error(
-        `Payment profile validation failed for profile ${customerPaymentProfileId}:`,
-        validErr.message,
-      );
-      throw new Error(
-        "Your payment method could not be verified. Please re-enter your card details and try again.",
-      );
+    // Validate profile + create ARB with bounded retries for transient
+    // propagation windows (fresh payment profile may return E00040 briefly).
+    const retryDelaysMs = [0, 400, 1200, 2500];
+    let arb: { subscriptionId: string } | null = null;
+    let lastRetryableError: any = null;
+
+    for (let i = 0; i < retryDelaysMs.length; i++) {
+      if (retryDelaysMs[i] > 0) {
+        await sleep(retryDelaysMs[i]);
+      }
+
+      try {
+        await validateCustomerPaymentProfile(
+          customerProfileId,
+          customerPaymentProfileId!,
+        );
+
+        arb = await createPlatformARBSubscription({
+          customerProfileId,
+          customerPaymentProfileId: customerPaymentProfileId!,
+          amount: Number(plan.price),
+          intervalMonths,
+          startDate: arbStartDate,
+          planName: plan.name,
+        });
+        break;
+      } catch (err: any) {
+        if (!isAuthNetRecordNotFound(err)) {
+          throw err;
+        }
+
+        lastRetryableError = err;
+        const isLastAttempt = i === retryDelaysMs.length - 1;
+        console.warn(
+          `Transient Authorize.Net profile propagation issue (attempt ${i + 1}/${retryDelaysMs.length}): ${err?.message || err}`,
+        );
+        if (isLastAttempt) {
+          break;
+        }
+      }
     }
 
-    const arb = await createPlatformARBSubscription({
-      customerProfileId,
-      customerPaymentProfileId: customerPaymentProfileId!,
-      amount: Number(plan.price),
-      intervalMonths,
-      startDate: arbStartDate,
-      planName: plan.name,
-    });
+    if (!arb) {
+      console.error(
+        "Failed to create ARB subscription after retries:",
+        lastRetryableError?.message || lastRetryableError,
+      );
+      throw new Error(
+        "Your card details were received, but the payment gateway is still syncing them. Please retry in a few seconds.",
+      );
+    }
 
     // 2.5 Immediate first charge (no-trial flow only)
     // This gives instant confirmation, and the webhook for this transaction

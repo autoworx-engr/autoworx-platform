@@ -11,10 +11,13 @@ export async function POST(req: NextRequest) {
   try {
     const signature = req.headers.get("x-anet-signature");
     const bodyText = await req.text();
+    console.log("🚀 ~ POST ~ bodyText:", bodyText);
 
-    const shouldVerify =
-      process.env.NODE_ENV === "production" &&
-      !!process.env.PLATFORM_AUTHNET_SIGNATURE_KEY;
+    const shouldVerify = !!process.env.PLATFORM_AUTHNET_SIGNATURE_KEY;
+    // const shouldVerify =
+    //   process.env.NODE_ENV === "production" &&
+    //   !!process.env.PLATFORM_AUTHNET_SIGNATURE_KEY;
+    console.log("🚀 ~ POST ~ shouldVerify:", shouldVerify);
 
     if (shouldVerify && !verifySignature(bodyText, signature)) {
       console.warn("❌ Invalid Authorize.Net platform webhook signature");
