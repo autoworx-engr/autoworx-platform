@@ -9,6 +9,7 @@ import { Spin } from "antd";
 import { Session } from "next-auth";
 import { redirect, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Store } from "lucide-react";
 import MobileNav from "./mobile-responsive/MobileNav";
 import PopupState from "./PopupState";
 import PrivateRoute from "./PrivateRoute";
@@ -139,7 +140,7 @@ const navbarList = [
   },
   {
     title: "Virtual Shop",
-    icon: "/icons/navbar/visualization.svg",
+    icon: <Store className="w-5 h-5" />,
     link: "/dashboard/virtual-shop",
     path: "/dashboard/virtual-shop",
   },

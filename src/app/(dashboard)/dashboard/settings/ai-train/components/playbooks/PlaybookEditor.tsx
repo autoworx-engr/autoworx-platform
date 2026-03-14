@@ -19,7 +19,6 @@ import { cn } from "@/lib/utils";
 import SelectCategory from "@/components/Lists/SelectCategory";
 import { Category } from "@prisma/client";
 import toast from "react-hot-toast";
-import { Popconfirm } from "antd";
 
 interface PlaybookEditorProps {
   playbook?: ServicePlaybook;
@@ -303,7 +302,7 @@ export function PlaybookEditor({
                   <Input
                     id="service_name"
                     value={formData.service_name}
-                    onChange={(e) => {
+                    onChange={e => {
                       setFormData({
                         ...formData,
                         service_name: e.target.value,
@@ -326,7 +325,7 @@ export function PlaybookEditor({
                 <div className="space-y-2">
                   <SelectCategory
                     categoryData={selectedCategory}
-                    onCategoryChange={(category) => {
+                    onCategoryChange={category => {
                       setSelectedCategory(category);
                     }}
                     labelPosition="top"
@@ -342,7 +341,7 @@ export function PlaybookEditor({
                 <Textarea
                   id="overview"
                   value={formData.overview}
-                  onChange={(e) => {
+                  onChange={e => {
                     setFormData({ ...formData, overview: e.target.value });
                     if (errors.overview) {
                       setErrors({ ...errors, overview: "" });
@@ -376,7 +375,7 @@ export function PlaybookEditor({
                 </div>
                 <Switch
                   checked={formData.is_active}
-                  onCheckedChange={(checked) =>
+                  onCheckedChange={checked =>
                     setFormData({ ...formData, is_active: checked })
                   }
                 />
@@ -428,7 +427,7 @@ export function PlaybookEditor({
                         <Label>Description</Label>
                         <Input
                           value={rule.description}
-                          onChange={(e) => {
+                          onChange={e => {
                             updatePricingRule(index, {
                               description: e.target.value,
                             });
@@ -459,7 +458,7 @@ export function PlaybookEditor({
                           min="0"
                           step="0.01"
                           value={rule.price_range?.min || ""}
-                          onChange={(e) => {
+                          onChange={e => {
                             updatePricingRule(index, {
                               price_range: {
                                 ...rule.price_range!,
@@ -471,7 +470,7 @@ export function PlaybookEditor({
                               `pricing_rule_${index}_range`,
                             ];
                             const newErrors = { ...errors };
-                            errorKeys.forEach((key) => delete newErrors[key]);
+                            errorKeys.forEach(key => delete newErrors[key]);
                             setErrors(newErrors);
                           }}
                           className={cn(
@@ -500,7 +499,7 @@ export function PlaybookEditor({
                           min="0"
                           step="0.01"
                           value={rule.price_range?.max || ""}
-                          onChange={(e) => {
+                          onChange={e => {
                             updatePricingRule(index, {
                               price_range: {
                                 ...rule.price_range!,
@@ -512,7 +511,7 @@ export function PlaybookEditor({
                               `pricing_rule_${index}_range`,
                             ];
                             const newErrors = { ...errors };
-                            errorKeys.forEach((key) => delete newErrors[key]);
+                            errorKeys.forEach(key => delete newErrors[key]);
                             setErrors(newErrors);
                           }}
                           className={cn(
@@ -588,7 +587,7 @@ export function PlaybookEditor({
                         </Label>
                         <Input
                           value={faq.question}
-                          onChange={(e) => {
+                          onChange={e => {
                             updateFAQ(index, { question: e.target.value });
                             if (errors[`faq_${index}_question`]) {
                               setErrors({
@@ -621,7 +620,7 @@ export function PlaybookEditor({
                         </Label>
                         <Textarea
                           value={faq.answer}
-                          onChange={(e) => {
+                          onChange={e => {
                             updateFAQ(index, { answer: e.target.value });
                             if (errors[`faq_${index}_answer`]) {
                               setErrors({
@@ -672,9 +671,9 @@ export function PlaybookEditor({
                 <div className="flex gap-2">
                   <Input
                     value={newDoSay}
-                    onChange={(e) => setNewDoSay(e.target.value)}
+                    onChange={e => setNewDoSay(e.target.value)}
                     placeholder="Add a guideline..."
-                    onKeyPress={(e) => e.key === "Enter" && addDoSay()}
+                    onKeyPress={e => e.key === "Enter" && addDoSay()}
                   />
                   <Button onClick={addDoSay} size="icon">
                     <Plus className="h-4 w-4" />
@@ -714,9 +713,9 @@ export function PlaybookEditor({
                 <div className="flex gap-2">
                   <Input
                     value={newDontSay}
-                    onChange={(e) => setNewDontSay(e.target.value)}
+                    onChange={e => setNewDontSay(e.target.value)}
                     placeholder="Add a restriction..."
-                    onKeyPress={(e) => e.key === "Enter" && addDontSay()}
+                    onKeyPress={e => e.key === "Enter" && addDontSay()}
                   />
                   <Button onClick={addDontSay} size="icon">
                     <Plus className="h-4 w-4" />
@@ -761,7 +760,7 @@ export function PlaybookEditor({
                   <Input
                     id="time_estimate"
                     value={formData.time_estimate}
-                    onChange={(e) => {
+                    onChange={e => {
                       setFormData({
                         ...formData,
                         time_estimate: e.target.value,
@@ -786,7 +785,7 @@ export function PlaybookEditor({
                   <Input
                     id="warranty"
                     value={formData.warranty_policy}
-                    onChange={(e) => {
+                    onChange={e => {
                       setFormData({
                         ...formData,
                         warranty_policy: e.target.value,
@@ -815,7 +814,7 @@ export function PlaybookEditor({
                 <Textarea
                   id="scheduling"
                   value={formData.scheduling_notes}
-                  onChange={(e) => {
+                  onChange={e => {
                     setFormData({
                       ...formData,
                       scheduling_notes: e.target.value,
