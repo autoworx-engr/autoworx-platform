@@ -12,6 +12,7 @@ import { useState } from "react";
 import List from "./List";
 import UsersArea from "./UsersArea";
 import { useUnreadCollaborationMessages } from "./hooks/useUnreadCollaborationMessages";
+import CompanyArea from "./CompanyArea";
 
 export default function Collaboration({
   companyWithAdmin,
@@ -26,36 +27,62 @@ export default function Collaboration({
   messages: (DbMessage & { attachment: Attachment[] | null })[];
   isCollaborators: boolean | null | undefined;
 }) {
-  const [selectedUsersList, setSelectedUsersList] = useState<User[]>([]);
+  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [companyAdmins, setCompanyAdmins] = useState(companyWithAdmin);
 
-  // Use the hook to get real-time unread message counts
-  const unreadCounts = useUnreadCollaborationMessages(
-    parseInt(currentUser?.id)
-  );
+  const unreadCounts = [
+    {
+      count: 0,
+      companyId: 1,
+    },
+  ];
 
   return (
-    <div className="flex gap-5 sm:mt-5">
-      <List
-        className={cn(selectedUsersList.length === 0 ? "block" : "hidden")}
-        selectedUsersList={selectedUsersList}
-        companyAdmins={companyAdmins}
-        setCompanyAdmins={setCompanyAdmins}
-        companies={companies}
-        setSelectedUsersList={setSelectedUsersList}
-        unreadCounts={unreadCounts}
-        currentUserId={parseInt(currentUser?.id)}
-        companyId={currentUser?.companyId}
-        isCollaborators={isCollaborators}
-      />
-      <UsersArea
-        className={cn(selectedUsersList.length === 0 ? "hidden" : "grid")}
-        previousMessages={messages}
-        currentUser={currentUser}
-        totalMessageBoxLength={selectedUsersList.length}
-        selectedUsersList={selectedUsersList}
-        setSelectedUsersList={setSelectedUsersList}
-      />
-    </div>
+    <>
+      {/* ✅ Small device */}
+      <div className="md:hidden sm:mt-5">
+        <div className={selectedCompany ? "hidden" : "block"}>
+          <List
+            companies={companies}
+            selectedCompany={selectedCompany}
+            setSelectedCompany={setSelectedCompany}
+            unreadCounts={unreadCounts}
+            isCollaborators={isCollaborators}
+            companyAdmins={companyAdmins}
+            setCompanyAdmins={setCompanyAdmins}
+            companyId={currentUser?.companyId}
+          />
+        </div>
+
+        <div className={selectedCompany ? "block" : "hidden"}>
+          <CompanyArea
+            selectedCompany={selectedCompany}
+            currentUser={currentUser}
+            previousMessages={messages}
+            setSelectedCompany={setSelectedCompany}
+          />
+        </div>
+      </div>
+
+      {/* ✅ Medium & Large device — existing code */}
+      <div className="hidden md:flex gap-5 sm:mt-5">
+        <List
+          companies={companies}
+          selectedCompany={selectedCompany}
+          setSelectedCompany={setSelectedCompany}
+          unreadCounts={unreadCounts}
+          isCollaborators={isCollaborators}
+          companyAdmins={companyAdmins}
+          setCompanyAdmins={setCompanyAdmins}
+          companyId={currentUser?.companyId}
+        />
+
+        <CompanyArea
+          selectedCompany={selectedCompany}
+          currentUser={currentUser}
+          previousMessages={messages}
+        />
+      </div>
+    </>
   );
 }

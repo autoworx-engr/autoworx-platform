@@ -11,11 +11,13 @@ interface SearchScrollProps {
     result: { columnIndex: number; leadIndex: number } | null
   ) => void;
   setSearchTerm?: (term: string) => void;
+  onColumnChange?: (columnId: number | null) => void;
 }
 
 export default function SearchScroll({
   pipelineData,
   onSearchResult,
+  onColumnChange,
 }: SearchScrollProps) {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [searchResults, setSearchResults] = useState<
@@ -140,6 +142,8 @@ export default function SearchScroll({
   // Clear column filter
   const handleClearFilter = () => {
     setSelectedColumnId(null);
+    if (onColumnChange) onColumnChange(null);
+    setShowColumnFilter(false);
   };
 
   // Toggle column filter dropdown
@@ -150,6 +154,7 @@ export default function SearchScroll({
   // Select a column to filter by
   const selectColumn = (columnId: number) => {
     setSelectedColumnId(columnId);
+    if (onColumnChange) onColumnChange(columnId);
     setShowColumnFilter(false);
   };
 

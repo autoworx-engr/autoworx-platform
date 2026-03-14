@@ -65,7 +65,7 @@ export default function CannedLabor({
 
       const matchesSearch = laborSearch
         ? laborName.includes(laborSearch.toLowerCase()) ||
-          categoryName.includes(laborSearch.toLowerCase())
+        categoryName.includes(laborSearch.toLowerCase())
         : true;
 
       const matchesCategory = selectedCategory
@@ -348,7 +348,7 @@ const LaborComponent = ({
                     <SquarePen className="w-5 h-5" />
                   </button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent onOpenAutoFocus={(e) => e.preventDefault()}>
                   <DialogHeader>
                     <DialogTitle>Edit Canned Labor</DialogTitle>
                   </DialogHeader>
@@ -364,6 +364,7 @@ const LaborComponent = ({
                           setName(e.target.value);
                           if (nameError) setNameError("");
                         }}
+                        autoFocus={false}
                         className={cn(
                           "w-full rounded-lg border p-2 text-base focus:ring-2 focus:ring-indigo-500 transition-colors",
                           nameError
@@ -484,7 +485,10 @@ const LaborComponent = ({
               <SquarePen className="w-5 h-5" />
             </button>
           </DialogTrigger>
-          <DialogContent className="max-w-md">
+          <DialogContent
+            className="max-w-md"
+            onOpenAutoFocus={(e) => e.preventDefault()}
+          >
             <DialogHeader>
               <DialogTitle>Edit Canned Labor</DialogTitle>
             </DialogHeader>
@@ -500,6 +504,7 @@ const LaborComponent = ({
                     setName(e.target.value);
                     if (nameError) setNameError("");
                   }}
+                  autoFocus={false}
                   className={cn(
                     "w-full rounded-lg border p-2 text-base focus:ring-2 focus:ring-indigo-500 transition-colors",
                     nameError

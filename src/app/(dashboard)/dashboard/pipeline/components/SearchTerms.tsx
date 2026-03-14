@@ -3,7 +3,7 @@ import { useEstimateFilterStore } from "@/stores/estimate-filter";
 import { Search } from "lucide-react";
 
 export default function SearchTerms() {
-  const { setFilter } = useEstimateFilterStore();
+  const { setFilter, search } = useEstimateFilterStore();
 
   return (
     <div className="relative min-w-0 flex-1 group">
@@ -13,6 +13,7 @@ export default function SearchTerms() {
       />
       <input
         type="text"
+        value={search}
         placeholder="Search by Work Order, Client, Vehicle or Service"
         className={cn(
           "w-full h-11 pl-12 pr-4 rounded-xl border-2 border-slate-100 bg-white",

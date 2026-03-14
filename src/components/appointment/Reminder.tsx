@@ -185,7 +185,7 @@ export function Reminder({
 
   if (!client) {
     return (
-      <div className="flex h-full min-h-[400px] w-full flex-col items-center justify-center gap-4 rounded-3xl bg-slate-50/50 p-8 text-center ring-1 ring-inset ring-slate-100 shadow-inner">
+      <div className="flex lg:h-full h-full lg:min-h-[400px] w-full flex-col items-center justify-center gap-4 rounded-3xl bg-slate-50/50 p-8 text-center ring-1 ring-inset ring-slate-100 shadow-inner">
         {/* Elevated Icon Conzzzzztainer */}
         <div className="relative flex h-24 w-24 items-center justify-center rounded-full bg-white shadow-xl shadow-slate-200/50 ring-1 ring-slate-100">
           <UserRoundX
@@ -296,7 +296,7 @@ export function Reminder({
               template.subject.toLowerCase().includes(search.toLowerCase()),
             )
           }
-          openState={[openConfirmation, setOpenConfirmation]}
+          // openState={[openConfirmation, setOpenConfirmation]}
         />
       </div>
       <div className="mx-auto w-[350px] space-y-4 p-2 md:w-full">
@@ -379,7 +379,7 @@ export function Reminder({
               template.subject.toLowerCase().includes(search.toLowerCase()),
             )
           }
-          openState={[openReminder, setOpenReminder]}
+          // openState={[openReminder, setOpenReminder]}
         />
       </div>
 
@@ -392,7 +392,7 @@ export function Reminder({
             </label>
             <input
               type="time"
-              className="w-full h-10 rounded-lg border-none bg-white px-3 text-sm text-slate-600 ring-1 ring-slate-200 transition-all focus:ring-2 focus:ring-[#6571FF]/30 outline-none"
+              className="w-full h-10 min-h-[40px] appearance-none rounded-lg border-none bg-transparent px-3 text-sm text-slate-600 ring-1 ring-slate-200 transition-all focus:ring-2 focus:ring-[#6571FF]/30 outline-none"
               value={time}
               onChange={(e) => setTime(e.target.value)}
             />
@@ -404,7 +404,7 @@ export function Reminder({
             </label>
             <input
               type="date"
-              className="w-full h-10 rounded-lg border-none bg-white px-3 text-sm text-slate-600 ring-1 ring-slate-200 transition-all focus:ring-2 focus:ring-[#6571FF]/30 outline-none"
+              className="w-full h-10 min-h-[40px] appearance-none rounded-lg border-none bg-transparent px-3 text-sm text-slate-600 ring-1 ring-slate-200 transition-all focus:ring-2 focus:ring-[#6571FF]/30 outline-none"
               value={dateInput}
               onChange={(e) => setDateInput(e.target.value)}
               min={minDate}

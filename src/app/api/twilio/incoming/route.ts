@@ -105,6 +105,7 @@ export async function POST(request: Request) {
           lastName: "Caller",
           mobile: from,
           companyId: companyId,
+          isSalesAgent: true,
         },
       });
     }
