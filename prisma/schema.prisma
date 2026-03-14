@@ -1193,6 +1193,7 @@ model InvoiceItem {
   id                Int              @id @default(autoincrement())
   invoiceId         String?          @map("invoice_id")
   invoiceTemplateId String?
+  shopServiceId     Int?             @map("shop_service_id")
   serviceId         Int?             @map("service_id")
   laborId           Int?             @map("labor_id")
   createdAt         DateTime         @default(now()) @map("created_at")
@@ -2762,8 +2763,10 @@ model Shop {
 
 model ShopService {
   id          Int      @id @default(autoincrement())
+  
   shopId      Int      @map("shop_id")
-  serviceId   Int?     @map("service_id") // Optional link to back-office Service
+  shop        Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
   
   // Basic Info
   title       String   @db.VarChar(255)
@@ -2788,12 +2791,10 @@ model ShopService {
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   // Relations
-  shop        Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  service     Service? @relation(fields: [serviceId], references: [id], onDelete: SetNull) 
   shopBookingServices ShopBookingService[]
+  invoiceItems   InvoiceItem[]
 
   @@index([shopId])
-  @@index([serviceId]) // Added index for faster queries when filtering by service
   @@map("shop_services")
 }
 
