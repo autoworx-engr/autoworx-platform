@@ -39,15 +39,28 @@ export interface AppointmentToAdd {
 }
 
 export async function addAppointment(
-  appointment: TCreateAppointmentValidationSchema
+  appointment: TCreateAppointmentValidationSchema,
 ): Promise<ServerAction | TErrorHandler> {
   try {
     await createAppointmentValidationSchema.parseAsync(appointment);
     const session = await getServerSession(authOptions);
-    const companyId = session?.user.companyId;
+    const sessionUserId = session?.user.id;
 
+    let companyId = appointment.forceCompanyId;
+    let userId = appointment.forceUserId ?? sessionUserId;
+
+    if (!userId) {
+      return {
+        type: "error",
+        message: "User not found",
+        field: "user",
+      };
+    }
     if (!companyId) {
-      throw new Error("Company ID is required to create an email template.");
+      companyId = session?.user?.companyId;
+      if (!companyId) {
+        throw new Error("Company ID is required to create an appointment.");
+      }
     }
 
     let client:
@@ -85,7 +98,7 @@ export async function addAppointment(
         vehicleId: appointment.vehicleId,
         draftEstimate: appointment.draftEstimate,
         notes: appointment.notes,
-        userId: parseInt(session.user.id),
+        userId: Number(userId),
         confirmationEmailTemplateId: appointment.confirmationEmailTemplateId,
         confirmationEmailTemplateStatus:
           appointment.confirmationEmailTemplateStatus,
@@ -135,7 +148,7 @@ export async function addAppointment(
 
       if (!pendingColumn) {
         throw new Error(
-          "Pending column not found for draft estimate at new appointment"
+          "Pending column not found for draft estimate at new appointment",
         );
       }
 
@@ -146,7 +159,7 @@ export async function addAppointment(
             type: "Estimate",
             clientId: appointment.clientId,
             vehicleId: appointment.vehicleId,
-            userId: session.user.id as any,
+            userId: Number(userId),
             companyId,
             columnId: pendingColumn.id,
           },
@@ -202,7 +215,7 @@ export async function addAppointment(
     });
 
     const appointmentDate = moment(
-      `${appointment.date}T${appointment.startTime}:00`
+      `${appointment.date}T${appointment.startTime}:00`,
     ).format("dddd, MMMM DD, h:mm A");
 
     if (confirmationEmailTemplate) {
@@ -213,45 +226,45 @@ export async function addAppointment(
       // replace the placeholders: <VEHICLE>, <CLIENT>
       confirmationSubject = confirmationSubject?.replace(
         "<VEHICLE>",
-        `${vehicle?.year ? vehicle?.year : ""} ${vehicle?.make} ${vehicle?.model} ${vehicle?.other}`
+        `${vehicle?.year ? vehicle?.year : ""} ${vehicle?.make} ${vehicle?.model} ${vehicle?.other}`,
       );
       confirmationSubject = confirmationSubject?.replace(
         "<CLIENT>",
-        clientName
+        clientName,
       );
 
       confirmationMessage = confirmationMessage?.replace(
         "<VEHICLE>",
-        `${vehicle?.year ? vehicle?.year : ""} ${vehicle?.make} ${vehicle?.model} ${vehicle?.other}`
+        `${vehicle?.year ? vehicle?.year : ""} ${vehicle?.make} ${vehicle?.model} ${vehicle?.other}`,
       );
       confirmationMessage = confirmationMessage?.replace(
         "<CLIENT>",
-        clientName
+        clientName,
       );
 
       confirmationMessage = confirmationMessage?.replace(
         "<DATE>",
-        appointmentDate
+        appointmentDate,
       );
 
       confirmationMessage = confirmationMessage?.replace(
         "<DATE>",
-        appointmentDate
+        appointmentDate,
       );
 
       confirmationMessage = confirmationMessage?.replace(
         "<BUSINESS_NAME>",
-        company?.name ?? ""
+        company?.name ?? "",
       );
 
       confirmationMessage = confirmationMessage?.replace(
         "<PHONE>",
-        company?.phone ?? ""
+        company?.phone ?? "",
       );
 
       confirmationMessage = confirmationMessage?.replace(
         "<ADDRESS>",
-        company?.address ?? ""
+        company?.address ?? "",
       );
 
       // send the confirmation email
@@ -413,7 +426,7 @@ export async function scheduleRemindersInNest({
           "Content-Type": "application/json",
           // Authorization: `Bearer ${process.env.INTERNAL_API_KEY}`, // optional security
         },
-      }
+      },
     );
   } catch (error) {
     console.log("error from scheduleRemindersInNest", error);

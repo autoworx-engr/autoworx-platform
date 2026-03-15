@@ -2,6 +2,11 @@ import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 import moment from "moment-timezone";
 import { createInvoice } from "@/actions/estimate/invoice/create";
+import { addCustomer } from "@/actions/client/add";
+import { customAlphabet } from "nanoid";
+import { addVehicle } from "@/actions/vehicle/addVehicle";
+import { addAppointment } from "@/actions/appointment/addAppointment";
+import { AppError } from "@/error-boundary/error";
 
 export async function POST(req: Request) {
   try {
@@ -9,7 +14,7 @@ export async function POST(req: Request) {
 
     const {
       slug,
-      shopServiceId,
+      shopServiceIds,
       appointmentDate,
       appointmentStartTime,
       fullName,
@@ -19,14 +24,15 @@ export async function POST(req: Request) {
       model,
       year,
       notes,
+      depositAmount,
     } = body;
 
     // 1. Validate required input
     if (
       !slug ||
-      !shopServiceId ||
-      !Array.isArray(shopServiceId) ||
-      shopServiceId.length === 0 ||
+      !shopServiceIds ||
+      !Array.isArray(shopServiceIds) ||
+      shopServiceIds.length === 0 ||
       !appointmentDate ||
       !appointmentStartTime ||
       !phone ||
@@ -43,14 +49,38 @@ export async function POST(req: Request) {
     const firstName = fullName?.split(" ")[0] || "Guest";
     const lastName = fullName?.split(" ").slice(1).join(" ") || undefined;
 
-    return await db.$transaction(async (tx) => {
+    return await db.$transaction(async tx => {
       // 2. Validate Shop Slug
       const shop = await tx.shop.findUnique({
         where: { slug },
+        include: {
+          company: {
+            select: {
+              terms: true,
+              policy: true,
+              tax: true,
+              serviceFee: true,
+            },
+          },
+        },
       });
 
       if (!shop) {
-        throw new Error("Shop not found with the provided slug.");
+        throw new AppError(404, "Shop not found with the provided slug.");
+      }
+
+      const findCompanyAdminUser = await tx.user.findFirst({
+        where: {
+          companyId: shop?.companyId,
+          employeeType: "Admin",
+        },
+      });
+
+      if (!findCompanyAdminUser) {
+        throw new AppError(
+          404,
+          "Company admin not found for the provided shop.",
+        );
       }
 
       const companyId = shop.companyId;
@@ -64,22 +94,52 @@ export async function POST(req: Request) {
       });
 
       if (!client) {
-        client = await tx.client.create({
-          data: {
-            firstName,
-            lastName,
-            mobile: phone,
-            email,
-            companyId,
-            isSalesAgent: true,
-          },
+        const clientResult = await addCustomer({
+          firstName,
+          lastName,
+          mobile: phone,
+          email,
+          forceCompanyId: companyId,
         });
+
+        if (clientResult.type !== "success" || !clientResult.data) {
+          throw new AppError(
+            400,
+            clientResult.type === "globalError" || clientResult.type === "error"
+              ? clientResult.message
+              : "Failed to create customer via shared action",
+          );
+        }
+        client = clientResult.data;
+
+        if (client) {
+          const column = await tx.column.findFirst({
+            where: {
+              title: "New Leads",
+              companyId: shop.companyId,
+              type: "sales",
+            },
+          });
+          await tx.lead.create({
+            data: {
+              clientName: `${firstName} ${lastName}`,
+              clientEmail: email,
+              clientPhone: phone,
+              companyId: shop.companyId,
+              source: "Virtual Shop",
+              vehicleInfo: `${year} ${make} ${model}`,
+              services: shopServiceIds.map(id => id).join(", "),
+              clientId: client.id,
+              columnId: column?.id,
+            },
+          });
+        }
       }
 
       // 4. Find or Create Vehicle
       let vehicle = await tx.vehicle.findFirst({
         where: {
-          clientId: client.id,
+          clientId: client?.id,
           year: parseInt(year),
           make,
           model,
@@ -88,23 +148,24 @@ export async function POST(req: Request) {
       });
 
       if (!vehicle) {
-        vehicle = await tx.vehicle.create({
-          data: {
-            year: parseInt(year),
-            make,
-            model,
-            clientId: client.id,
-            companyId,
-            submodel: "",
-            type: "",
-            transmission: "",
-            engineSize: "",
-            license: "",
-            vin: "",
-            notes: "",
-            other: "",
-          },
+        const vehicleResponse = await addVehicle({
+          year: parseInt(year),
+          make,
+          model,
+          submodel: "",
+          type: "",
+          transmission: "",
+          engineSize: "",
+          license: "",
+          vin: "",
+          notes: "",
+          other: "",
+          clientId: client?.id!,
+          forceCompanyId: companyId,
         });
+        if (vehicleResponse.type === "success") {
+          vehicle = vehicleResponse.data;
+        }
       }
 
       // 5. Find ShopBookingSetting & check Availability
@@ -114,7 +175,7 @@ export async function POST(req: Request) {
       });
 
       if (!bookingSettings) {
-        throw new Error("Shop booking settings not found.");
+        throw new AppError(404, "Shop booking settings not found.");
       }
 
       const dayOfWeekKey = moment(appointmentDate)
@@ -129,11 +190,12 @@ export async function POST(req: Request) {
         | "SUNDAY";
 
       const availability = bookingSettings.availabilities.find(
-        (a) => a.dayOfWeek === dayOfWeekKey,
+        a => a.dayOfWeek === dayOfWeekKey,
       );
 
       if (!availability || !availability.isOpen) {
-        throw new Error(
+        throw new AppError(
+          400,
           `Shop is not open on ${dayOfWeekKey.toLowerCase()}s.`,
         );
       }
@@ -145,7 +207,8 @@ export async function POST(req: Request) {
         const shopEnd = moment(availability.endTime, "HH:mm");
 
         if (reqTime.isBefore(shopStart) || reqTime.isAfter(shopEnd)) {
-          throw new Error(
+          throw new AppError(
+            400,
             `Appointment time must be between ${availability.startTime} and ${availability.endTime}.`,
           );
         }
@@ -165,14 +228,16 @@ export async function POST(req: Request) {
         bookingSettings.isStackingEnabled &&
         existingAppointmentsCount >= bookingSettings.stackingLimit
       ) {
-        throw new Error(
+        throw new AppError(
+          400,
           `No available slots for ${appointmentDate} at ${appointmentStartTime}. Limit reached.`,
         );
       } else if (
         !bookingSettings.isStackingEnabled &&
         existingAppointmentsCount > 0
       ) {
-        throw new Error(
+        throw new AppError(
+          400,
           `No available slots for ${appointmentDate} at ${appointmentStartTime}. Slot is already booked.`,
         );
       }
@@ -180,65 +245,116 @@ export async function POST(req: Request) {
       // 7. Retrieve Service Invoice Items & Calculate Totals
       const selectedServices = await tx.shopService.findMany({
         where: {
-          id: { in: shopServiceId },
+          id: { in: shopServiceIds },
           shopId: shop.id,
         },
-        // We aren't querying nested invoiceItems anymore because the schema types don't support it directly.
-        // We will just create bare services in the estimate for now, as a snapshot.
-        // If the schema is later updated to link ShopService to InvoiceItem, this could be reinstated.
+        include: {
+          invoiceItems: {
+            include: {
+              service: true,
+              materials: {
+                include: {
+                  tags: {
+                    include: {
+                      tag: true,
+                    },
+                  },
+                },
+              },
+              labor: {
+                include: {
+                  tags: {
+                    include: {
+                      tag: true,
+                    },
+                  },
+                },
+              },
+              tags: {
+                include: {
+                  tag: true,
+                },
+              },
+            },
+          },
+        },
       });
 
       if (selectedServices.length === 0) {
-        throw new Error("No valid services selected for this shop.");
+        throw new AppError(400, "No valid services selected for this shop.");
       }
 
-      let subtotal = 0;
-      let durationMs = 0;
-
-      const itemsForInvoice: any[] = [];
-
-      selectedServices.forEach((srv) => {
-        subtotal += Number(srv.price);
-        durationMs += srv.duration * 60000;
-        
-        itemsForInvoice.push({
-          service: {
-            id: srv.id,
-            description: srv.description || srv.title,
-            name: srv.title,
-            price: Number(srv.price),
-            duration: srv.duration,
-          },
-          materials: [], // Empty for now due to schema limitations on ShopService
-          labor: null,
-          tags: [],
-        });
+      const allInvoiceItems = selectedServices.flatMap(srv => {
+        return srv.invoiceItems;
       });
 
-      const estimateId = `EST-${Date.now()}`;
+      const items = allInvoiceItems.map(({ id, ...item }) => ({
+        ...item,
+        materials: item.materials.map(material => ({
+          ...material,
+          tags: material.tags.map((mt: any) => mt.tag),
+        })),
+        labor: item.labor
+          ? {
+              ...item.labor,
+              tags: item.labor.tags.map((lt: any) => lt.tag),
+            }
+          : null,
+        tags: item.tags.map((it: any) => it.tag),
+      }));
 
+      let subtotal = selectedServices.reduce(
+        (acc, cur) => acc + Number(cur.price),
+        0,
+      );
+
+      const estimateId = customAlphabet("1234567890", 10)();
+
+      const taxRate = bookingSettings.isTaxEnabled
+        ? Number(shop.company.tax)
+        : 0;
+      const serviceFeeRate = bookingSettings.isServiceFeeEnabled
+        ? Number(shop.company.serviceFee)
+        : 0;
+
+      const taxAmount = (subtotal * taxRate) / 100;
+      const serviceFeeAmount = (subtotal * serviceFeeRate) / 100;
+      const grandTotal = subtotal + taxAmount + serviceFeeAmount;
+      const isDepositEnabled = bookingSettings.isDepositEnabled;
+      const requiredDepositAmount = isDepositEnabled
+        ? Number(bookingSettings.depositValue)
+        : 0;
+
+      const depositAmountVal = Number(depositAmount || 0);
+      const isDepositPay = depositAmountVal >= requiredDepositAmount;
+
+      if (isDepositEnabled && !isDepositPay) {
+        throw new AppError(400, "Required Deposit amount is not sufficient.");
+      }
+
+      const dueAmount = grandTotal - depositAmountVal;
       // 8. Create Estimate using the refactored shared action
       const estimateResult = await createInvoice({
         invoiceId: estimateId,
         type: "Estimate",
-        clientId: client.id,
-        vehicleId: vehicle.id,
+        clientId: client?.id,
+        vehicleId: vehicle?.id,
         subtotal,
         discount: 0,
-        tax: 0,
-        serviceFee: 0,
-        deposit: 0,
+        tax: taxAmount,
+        serviceFee: serviceFeeAmount,
+        deposit: depositAmountVal,
         depositNotes: "",
         depositMethod: "",
-        grandTotal: subtotal,
-        due: subtotal,
+        grandTotal,
+        due: dueAmount,
         internalNotes: "",
-        terms: "",
-        policy: "",
+        terms: shop.company.terms || "",
+        policy: shop.company.policy || "",
         customerNotes: notes || "",
         customerComments: "",
         photos: [],
-        items: itemsForInvoice as any[],
+        items,
         tasks: [],
         inspections: [],
         damageNotes: null,
@@ -246,55 +362,71 @@ export async function POST(req: Request) {
       });
 
       if (estimateResult.type !== "success" || !estimateResult.data) {
-        throw new Error(
-           estimateResult.type === "globalError" || estimateResult.type === "error" ? estimateResult.message : "Failed to create estimate via shared action"
+        throw new AppError(
+          400,
+          estimateResult.type === "globalError" ||
+            estimateResult.type === "error"
+            ? estimateResult.message
+            : "Failed to create estimate via shared action",
         );
       }
 
       const estimate = estimateResult.data;
 
       // Mark lead as estimate created if exists
-      if (client.leadId) {
+      if (client?.leadId) {
         await tx.lead.update({
-          where: { id: client.leadId },
+          where: { id: client?.leadId },
           data: { isEstimateCreated: true },
         });
       }
 
       // 9. Create Appointment
+      const slotInterval = bookingSettings.slotInterval;
       const endTime = moment(appointmentStartTime, "HH:mm")
-        .add(durationMs, "milliseconds")
+        .add(slotInterval, "minutes")
         .format("HH:mm");
 
-      const appointment = await tx.appointment.create({
-        data: {
-          title: "Virtual Shop Service Booking",
-          date: new Date(appointmentDate),
-          startTime: appointmentStartTime,
-          endTime,
-          companyId,
-          clientId: client.id,
-          vehicleId: vehicle.id,
-          // user and sales_agent are the only valid enum values. Assuming we map to a default admin/user.
-          userId: 1, // Fallback, needs to be updated based on business logic for guest created appointments
-          notes: notes || null,
-          draftEstimate: estimate.id,
-          // user and sales_agent are the only valid enum values
-          createdBy: "user",
-          timezone: "UTC", // Defaulting, you might obtain from shop.company.timezone
-        },
+      const appointmentResult = await addAppointment({
+        title: `${year} ${make} ${model} - ${fullName}`,
+        date: appointmentDate,
+        startTime: appointmentStartTime,
+        endTime,
+        clientId: client?.id,
+        vehicleId: vehicle?.id,
+        notes: notes || null,
+        draftEstimate: estimate.id,
+        timezone: "UTC", // Defaulting, you might obtain from shop.company.timezone
+        assignedUsers: [], // Empty for guest bookings, unless specific logic is added
+        forceCompanyId: companyId,
+        forceUserId: findCompanyAdminUser?.id,
       });
+
+      if (appointmentResult.type !== "success" || !appointmentResult.data) {
+        throw new AppError(
+          400,
+          appointmentResult.type === "globalError" ||
+            appointmentResult.type === "error"
+            ? appointmentResult.message
+            : "Failed to create appointment via shared action",
+        );
+      }
+
+      const appointment = appointmentResult.data;
 
       // 10. Create ShopBooking History
       const shopBooking = await tx.shopBooking.create({
         data: {
           shopId: shop.id,
-          clientId: client.id,
+          clientId: client?.id,
           appointmentId: appointment.id,
           invoiceId: estimate.id,
           subtotal,
-          total: subtotal,
-          balanceDue: subtotal,
+          tax: taxAmount + serviceFeeAmount,
+          total: grandTotal,
+          depositRequired: requiredDepositAmount,
+          depositPaid: depositAmountVal,
+          balanceDue: dueAmount,
           customerNotes: notes || null,
         },
       });
@@ -321,6 +453,31 @@ export async function POST(req: Request) {
             appointmentId: appointment.id,
             estimateId: estimate.id,
             shopBookingId: shopBooking.id,
+            appointment: {
+              date: appointment.date,
+              startTime: appointment.startTime,
+            },
+            client: {
+              firstName: client?.firstName,
+              lastName: client?.lastName,
+              email: client?.email,
+              mobile: client?.mobile,
+            },
+            vehicle: {
+              year: vehicle?.year,
+              make: vehicle?.make,
+              model: vehicle?.model,
+            },
+            services: selectedServices.map(srv => ({
+              title: srv.title,
+              price: srv.price,
+            })),
+            totals: {
+              subtotal,
+              tax: taxAmount,
+              serviceFee: serviceFeeAmount,
+              grandTotal,
+            },
           },
         },
         { status: 200 },
@@ -329,7 +486,10 @@ export async function POST(req: Request) {
   } catch (error: any) {
     console.error("Error in POST /api/virtual-shop/service-booking:", error);
     return NextResponse.json(
-      { success: false, message: error.message || "Failed to create shop service" },
+      {
+        success: false,
+        message: error.message || "Failed to create shop service",
+      },
       { status: 200 },
     );
   }
