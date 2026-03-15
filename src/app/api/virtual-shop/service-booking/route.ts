@@ -303,10 +303,22 @@ export async function POST(req: Request) {
         tags: item.tags.map((it: any) => it.tag),
       }));
 
-      let subtotal = selectedServices.reduce(
+      const vehicleExtraCost = selectedServices.reduce((acc, srv) => {
+        const modifier =
+          srv.modifierTruck ||
+          srv.modifierSUV ||
+          srv.modifierSedan ||
+          srv.modifierCoupe ||
+          0;
+        return acc + Number(modifier);
+      }, 0);
+
+      let totalServiceCost = selectedServices.reduce(
         (acc, cur) => acc + Number(cur.price),
         0,
       );
+
+      const subtotal = totalServiceCost + vehicleExtraCost;
 
       const estimateId = customAlphabet("1234567890", 10)();
 
