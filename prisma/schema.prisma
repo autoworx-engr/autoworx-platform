@@ -2815,6 +2815,10 @@ model ShopBookingSetting {
   stackingLimit     Int          @default(1) @map("stacking_limit") 
   slotInterval      Int          @default(30) @map("slot_interval")
 
+  // tax enabled
+  isTaxEnabled      Boolean      @default(false) @map("is_tax_enabled")
+  isServiceFeeEnabled Boolean      @default(false) @map("is_service_fee_enabled")
+
   createdAt         DateTime     @default(now()) @map("created_at")
   updatedAt         DateTime     @updatedAt @map("updated_at")
 
