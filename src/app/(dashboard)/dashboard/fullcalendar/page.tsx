@@ -6,12 +6,28 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import listPlugin from "@fullcalendar/list";
 import interactionPlugin from "@fullcalendar/interaction";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/Dialog";
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetFooter,
+} from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
+import {
+  Search,
+  DollarSign,
+  FileText,
+  User,
+  Phone,
+  Edit,
+  CheckCircle,
+  MessageSquare,
+  Clock,
+  X,
+} from "lucide-react";
 import { EventClickArg, EventContentArg } from "@fullcalendar/core";
 
 // Define the shape of our custom event properties
@@ -20,6 +36,8 @@ interface CustomEventProps {
   carModel?: string;
   price?: string;
   description?: string;
+  technicians?: string[];
+  phone?: string;
 }
 
 // Color mapping based on service type
@@ -53,12 +71,12 @@ const SERVICE_COLORS = {
 
 export default function Calendar() {
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   const handleEventClick = (info: EventClickArg) => {
     info.jsEvent.preventDefault();
     setSelectedEvent(info.event);
-    setIsDialogOpen(true);
+    setIsSheetOpen(true);
   };
 
   const renderEventContent = (eventInfo: EventContentArg) => {
@@ -90,6 +108,12 @@ export default function Calendar() {
             color: "#1f2937",
           }}
         >
+          <span
+            className="font-semibold whitespace-nowrap"
+            style={{ color: colors.border }}
+          >
+            {serviceType}
+          </span>
           <span className="text-gray-400">·</span>
           <span className="font-medium truncate">{event.title}</span>
           <span className="text-gray-400">·</span>
@@ -106,6 +130,12 @@ export default function Calendar() {
       >
         <div className="flex items-center gap-1 mb-0.5 flex-wrap">
           <span className="font-bold">{event.title}</span>
+          <span
+            className="text-[10px] font-bold uppercase tracking-wide opacity-90"
+            style={{ color: colors.border }}
+          >
+            {serviceType}
+          </span>
         </div>
         {props.carModel && (
           <div className="text-gray-600 truncate mb-auto">{props.carModel}</div>
@@ -116,6 +146,13 @@ export default function Calendar() {
           </div>
         )}
       </div>
+    );
+  };
+
+  const getServiceColor = (type: string) => {
+    return (
+      SERVICE_COLORS[type as keyof typeof SERVICE_COLORS] ||
+      SERVICE_COLORS["Custom Work"]
     );
   };
 
@@ -163,19 +200,9 @@ export default function Calendar() {
             },
           },
           {
-            title: "Oscar G.",
-            start: "2026-03-09T08:00:00",
-            end: "2026-03-09T13:00:00",
-            extendedProps: {
-              serviceType: "PPF",
-              carModel: "2023 Audi RS5",
-              price: "$2,600",
-            },
-          },
-          {
             title: "John D.",
             start: "2026-03-09T11:30:00",
-            end: "2026-03-09T15:30:00",
+            end: "2026-03-09T13:30:00",
             extendedProps: {
               serviceType: "Tint",
               carModel: "2022 BMW 340i",
@@ -185,8 +212,9 @@ export default function Calendar() {
           {
             title: "Mike R.",
             start: "2026-03-09T14:00:00",
-            end: "2026-03-09T18:00:00",
+            end: "2026-03-09T16:00:00",
             extendedProps: {
+              serviceType: "Detailing",
               carModel: "2020 Porsche 911",
               price: "$500",
             },
@@ -307,6 +335,9 @@ export default function Calendar() {
               serviceType: "Wrap",
               carModel: "2024 Tesla Model 3",
               price: "$2,800",
+              technicians: ["Marcus", "Jake", "Luis"],
+              phone: "(555) 109-1063",
+              description: "Satin white wrap",
             },
           },
           {
@@ -354,45 +385,167 @@ export default function Calendar() {
         ]}
       />
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{selectedEvent?.title}</DialogTitle>
-            <DialogDescription>
-              {selectedEvent?.startStr}
-              {selectedEvent?.endStr && ` - ${selectedEvent?.endStr}`}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4 space-y-2">
-            {selectedEvent?.extendedProps?.carModel && (
-              <p>
-                <span className="font-semibold text-gray-700">Vehicle:</span>{" "}
-                {selectedEvent.extendedProps.carModel}
-              </p>
-            )}
+      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+        <SheetContent side="right" className="">
+          {selectedEvent && (
+            <div className="flex flex-col h-full bg-white">
+              {/* Header */}
+              <div className="flex items-center gap-3 p-4 border-b">
+                <div
+                  className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide"
+                  style={{
+                    backgroundColor: getServiceColor(
+                      selectedEvent.extendedProps?.serviceType,
+                    ).bg,
+                    color: getServiceColor(
+                      selectedEvent.extendedProps?.serviceType,
+                    ).text,
+                  }}
+                >
+                  {selectedEvent.extendedProps?.serviceType}
+                </div>
+              </div>
 
-            {selectedEvent?.extendedProps?.price && (
-              <p>
-                <span className="font-semibold text-gray-700">Price:</span>{" "}
-                {selectedEvent.extendedProps.price}
-              </p>
-            )}
+              {/* Scrollable Content */}
+              <div className="flex-1 overflow-y-auto">
+                <div className="p-6 space-y-6">
+                  {/* Title & Car */}
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">
+                      {selectedEvent.title}
+                    </h2>
+                    <p className="text-lg text-gray-600 font-medium">
+                      {selectedEvent.extendedProps?.carModel}
+                    </p>
+                  </div>
 
-            {selectedEvent?.extendedProps?.description && (
-              <p className="border-t pt-2 mt-2">
-                {selectedEvent.extendedProps.description}
-              </p>
-            )}
+                  {/* Revenue Box */}
+                  <div className="bg-gray-100 rounded-lg p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <DollarSign className="h-5 w-5 text-gray-500" />
+                      <div>
+                        <p className="text-xs font-semibold text-gray-500 uppercase">
+                          Revenue
+                        </p>
+                        <p className="text-xl font-bold text-gray-900">
+                          {selectedEvent.extendedProps?.price}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
 
-            <div className="text-sm text-gray-500 pt-2 border-t mt-2">
-              <p>Start: {selectedEvent?.start?.toLocaleString()}</p>
-              {selectedEvent?.end && (
-                <p>End: {selectedEvent?.end?.toLocaleString()}</p>
-              )}
+                  {/* Create Estimate Button */}
+                  <Button
+                    variant="outline"
+                    className="w-full justify-center text-sm font-medium border-gray-300 hover:bg-gray-50"
+                  >
+                    <FileText className="mr-2 h-5 w-5" />
+                    Create Estimate
+                  </Button>
+
+                  {/* Technicians */}
+                  <div className="space-y-2">
+                    <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                      Technicians
+                    </h3>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {selectedEvent.extendedProps?.technicians?.length > 0 ? (
+                        selectedEvent.extendedProps.technicians.map(
+                          (tech: string, i: number) => (
+                            <div
+                              key={i}
+                              className="flex items-center gap-2 bg-gray-100 px-3 py-1.5 rounded-full"
+                            >
+                              <User className="h-4 w-4 text-gray-500" />
+                              <span className="text-sm font-medium text-gray-700">
+                                {tech}
+                              </span>
+                            </div>
+                          ),
+                        )
+                      ) : (
+                        <p className="text-sm text-gray-400 italic">
+                          No technicians assigned
+                        </p>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-400 italic">
+                      Invoice required to assign technicians
+                    </p>
+                  </div>
+
+                  {/* Time */}
+                  <div className="space-y-1">
+                    <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                      Time
+                    </h3>
+                    <div className="flex items-center gap-2 text-gray-900 text-lg font-medium">
+                      {selectedEvent.start &&
+                        selectedEvent.start.toLocaleTimeString([], {
+                          hour: "numeric",
+                          minute: "2-digit",
+                        })}
+                      {selectedEvent.end && " - "}
+                      {selectedEvent.end &&
+                        selectedEvent.end.toLocaleTimeString([], {
+                          hour: "numeric",
+                          minute: "2-digit",
+                        })}
+                    </div>
+                  </div>
+
+                  {/* Phone */}
+                  <div className="space-y-1">
+                    <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                      Phone
+                    </h3>
+                    <div className="flex items-center gap-2 text-gray-900 text-lg font-medium">
+                      {selectedEvent.extendedProps?.phone || "No phone number"}
+                    </div>
+                  </div>
+
+                  {/* Notes */}
+                  <div className="space-y-1">
+                    <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                      Notes
+                    </h3>
+                    <p className="text-gray-900 text-lg font-normal">
+                      {selectedEvent.extendedProps?.description || "No notes"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="p-4 border-t space-y-3 bg-white">
+                <div className="flex gap-4">
+                  <Button
+                    variant="outline"
+                    className="flex-1 justify-center h-11 border-gray-300 hover:bg-gray-50 font-medium"
+                  >
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="flex-1 justify-center h-11 border-gray-300 hover:bg-gray-50 font-medium"
+                  >
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    Complete
+                  </Button>
+                </div>
+                <Button
+                  variant="outline"
+                  className="w-full justify-center h-11 border-gray-300 hover:bg-gray-50 font-medium"
+                >
+                  <MessageSquare className="mr-2 h-4 w-4" />
+                  Message Customer
+                </Button>
+              </div>
             </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+          )}
+        </SheetContent>
+      </Sheet>
     </>
   );
 }
