@@ -2918,7 +2918,7 @@ model ShopBookingService {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  shopBooking ShopBooking  @relation(fields: [shopBookingId], references: [id], onDelete: Cascade)
+  shopBooking ShopBooking? @relation(fields: [shopBookingId], references: [id], onDelete: Cascade)
   shopService ShopService? @relation(fields: [shopServiceId], references: [id], onDelete: SetNull)
 
   @@index([shopBookingId])
