@@ -85,8 +85,6 @@ export async function GET(request: NextRequest) {
 
     const verifyToken = await jwtVerifyToken(accessToken);
 
-    const verifyToken = await jwtVerifyToken(accessToken);
-
     const userCompanyId = verifyToken?.payload?.companyId;
 
     if (!userCompanyId) {
