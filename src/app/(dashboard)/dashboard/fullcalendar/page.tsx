@@ -1,34 +1,21 @@
 "use client";
-import React, { useState } from "react";
-import FullCalendar from "@fullcalendar/react";
-import dayGridPlugin from "@fullcalendar/daygrid";
-import timeGridPlugin from "@fullcalendar/timegrid";
-import listPlugin from "@fullcalendar/list";
-import interactionPlugin from "@fullcalendar/interaction";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-  SheetFooter,
-} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Input } from "@/components/ui/input";
-import {
-  Search,
-  DollarSign,
-  FileText,
-  User,
-  Phone,
-  Edit,
-  CheckCircle,
-  MessageSquare,
-  Clock,
-  X,
-} from "lucide-react";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { EventClickArg, EventContentArg } from "@fullcalendar/core";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import interactionPlugin from "@fullcalendar/interaction";
+import listPlugin from "@fullcalendar/list";
+import FullCalendar from "@fullcalendar/react";
+import timeGridPlugin from "@fullcalendar/timegrid";
+import {
+  CheckCircle,
+  DollarSign,
+  Edit,
+  FileText,
+  MessageSquare,
+  User,
+} from "lucide-react";
+import { useState } from "react";
 
 // Define the shape of our custom event properties
 interface CustomEventProps {
@@ -180,7 +167,7 @@ export default function Calendar() {
         initialDate="2026-03-09" // Adjusted to show the populated week
         navLinks={true}
         editable={true}
-        dayMaxEvents={true}
+        dayMaxEvents={5}
         eventClick={handleEventClick}
         eventContent={renderEventContent}
         slotMinTime="08:00:00"
@@ -325,6 +312,71 @@ export default function Calendar() {
               serviceType: "Tint",
               carModel: "2022 BMW 340i",
               price: "$450",
+            },
+          },
+          {
+            title: "Daniel F.",
+            start: "2026-03-13T10:30:00",
+            end: "2026-03-13T13:30:00",
+            extendedProps: {
+              serviceType: "Wrap",
+              carModel: "2024 Tesla Model 3",
+              price: "$2,800",
+              technicians: ["Marcus", "Jake", "Luis"],
+              phone: "(555) 109-1063",
+              description: "Satin white wrap",
+            },
+          },
+          {
+            title: "Daniel F.",
+            start: "2026-03-13T10:30:00",
+            end: "2026-03-13T13:30:00",
+            extendedProps: {
+              serviceType: "Wrap",
+              carModel: "2024 Tesla Model 3",
+              price: "$2,800",
+              technicians: ["Marcus", "Jake", "Luis"],
+              phone: "(555) 109-1063",
+              description: "Satin white wrap",
+            },
+          },
+          {
+            title: "Daniel F.",
+            start: "2026-03-13T10:30:00",
+            end: "2026-03-13T13:30:00",
+            extendedProps: {
+              serviceType: "Wrap",
+              carModel: "2024 Tesla Model 3",
+              price: "$2,800",
+              technicians: ["Marcus", "Jake", "Luis"],
+              phone: "(555) 109-1063",
+              description: "Satin white wrap",
+            },
+          },
+          {
+            title: "Daniel F.",
+            start: "2026-03-13T10:30:00",
+            end: "2026-03-13T13:30:00",
+            extendedProps: {
+              serviceType: "Wrap",
+              carModel: "2024 Tesla Model 3",
+              price: "$2,800",
+              technicians: ["Marcus", "Jake", "Luis"],
+              phone: "(555) 109-1063",
+              description: "Satin white wrap",
+            },
+          },
+          {
+            title: "Daniel F.",
+            start: "2026-03-13T10:30:00",
+            end: "2026-03-13T13:30:00",
+            extendedProps: {
+              serviceType: "Wrap",
+              carModel: "2024 Tesla Model 3",
+              price: "$2,800",
+              technicians: ["Marcus", "Jake", "Luis"],
+              phone: "(555) 109-1063",
+              description: "Satin white wrap",
             },
           },
           {
