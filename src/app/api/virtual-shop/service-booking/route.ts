@@ -325,11 +325,14 @@ export async function POST(req: Request) {
         ? Number(bookingSettings.depositValue)
         : 0;
 
-      const isDepositPay = depositAmount >= requiredDepositAmount;
+      const depositAmountVal = Number(depositAmount || 0);
+      const isDepositPay = depositAmountVal >= requiredDepositAmount;
 
       if (isDepositEnabled && !isDepositPay) {
         throw new AppError(400, "Required Deposit amount is not sufficient.");
       }
+
+      const dueAmount = grandTotal - depositAmountVal;
       // 8. Create Estimate using the refactored shared action
       const estimateResult = await createInvoice({
         invoiceId: estimateId,
@@ -340,11 +343,11 @@ export async function POST(req: Request) {
         discount: 0,
         tax: taxAmount,
         serviceFee: serviceFeeAmount,
-        deposit: requiredDepositAmount,
+        deposit: depositAmountVal,
         depositNotes: "",
         depositMethod: "",
         grandTotal,
-        due: grandTotal,
+        due: dueAmount,
         internalNotes: "",
         terms: shop.company.terms || "",
         policy: shop.company.policy || "",
@@ -422,8 +425,8 @@ export async function POST(req: Request) {
           tax: taxAmount + serviceFeeAmount,
           total: grandTotal,
           depositRequired: requiredDepositAmount,
-          depositPaid: depositAmount || 0,
-          balanceDue: grandTotal - (depositAmount || 0),
+          depositPaid: depositAmountVal,
+          balanceDue: dueAmount,
           customerNotes: notes || null,
         },
       });
