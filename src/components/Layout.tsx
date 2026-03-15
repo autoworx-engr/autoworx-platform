@@ -140,7 +140,7 @@ const navbarList = [
   },
   {
     title: "Virtual Shop",
-    icon: <Store className="w-5 h-5" />,
+    icon: <Store className="w-5 h-5" color="#fff" />,
     link: "/dashboard/virtual-shop",
     path: "/dashboard/virtual-shop",
   },
