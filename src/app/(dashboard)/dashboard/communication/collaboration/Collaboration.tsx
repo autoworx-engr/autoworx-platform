@@ -1,19 +1,17 @@
 "use client";
 
-import { cn } from "@/lib/cn";
 import {
   Attachment,
   Company,
-  Message as DbMessage,
+  CollaborationMessage as DbMessage,
   User,
 } from "@prisma/client";
 import { Session } from "next-auth";
 import { useEffect, useState } from "react";
 import List from "./List";
-import UsersArea from "./UsersArea";
 import { useUnreadCollaborationMessages } from "./hooks/useUnreadCollaborationMessages";
 import CompanyArea from "./CompanyArea";
-import { useParams, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 
 export default function Collaboration({
   companyWithAdmin,
