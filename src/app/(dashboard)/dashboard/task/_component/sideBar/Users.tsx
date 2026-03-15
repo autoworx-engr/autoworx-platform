@@ -141,7 +141,7 @@ export default function Users() {
           pageParams: oldData.pageParams,
           pages: updatedPages,
         };
-      }
+      },
     );
   };
 
@@ -149,7 +149,7 @@ export default function Users() {
     <div
       className={cn(
         "md:app-shadow relative mt-5 flex flex-grow flex-col gap-2 overflow-hidden rounded-[12px] md:bg-background",
-        minimized || "p-3"
+        minimized || "p-3",
       )}
     >
       <div>
@@ -172,15 +172,15 @@ export default function Users() {
               e.preventDefault();
               // Extracting value from the form input explicitly
               const form = e.currentTarget;
-              const input = form.elements.namedItem("search") as HTMLInputElement;
+              const input = form.elements.namedItem(
+                "search",
+              ) as HTMLInputElement;
               searchUser(input.value);
             }}
           >
             {/* Search Input Container for Icon and Input */}
             <div className="relative flex-grow">
-              <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500 pointer-events-none transition-colors duration-300"
-              />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500 pointer-events-none transition-colors duration-300" />
               <input
                 type="search"
                 className="
@@ -236,7 +236,8 @@ export default function Users() {
       {!minimized && (
         <NewEmployee
           button={
-            <button className="mt-4 w-full rounded-xl bg-blue-600 py-2 text-[15px] text-white flex items-center justify-center gap-2 px-6 py-2 text-sm font-semibold text-white transition-all duration-300 ease-in-out
+            <button
+              className="mt-4 w-full rounded-xl bg-blue-600 text-[15px] flex items-center justify-center gap-2 px-6 py-2 text-sm font-semibold text-white transition-all duration-300 ease-in-out
 
   // Gradient Background (Blue/Indigo)
   bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
@@ -246,7 +247,8 @@ export default function Users() {
   hover:-translate-y-0.5
   hover:scale-[1.01]
   hover:shadow-lg hover:shadow-[#6571FF]/60
-  dark:shadow-[#6571FF]/40 dark:hover:shadow-[#6571FF]/60">
+  dark:shadow-[#6571FF]/40 dark:hover:shadow-[#6571FF]/60"
+            >
               + Add User
             </button>
           }

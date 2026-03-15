@@ -59,6 +59,21 @@ export default function Calendar() {
           // min-height: 600px;
           width: 100%;
         }
+
+        /* Customize header buttons */
+        .fc-button-primary {
+          background-color: #5a66ee !important;
+          border-color: #5a66ee !important;
+        }
+        .fc-button-primary:hover {
+          background-color: #5a66ee !important;
+          border-color: #5a66ee !important;
+        }
+        .fc-button-primary:not(:disabled).fc-button-active,
+        .fc-button-primary:not(:disabled):active {
+          background-color: #6571ff !important;
+          border-color: #6571ff !important;
+        }
       `}</style>
       <FullCalendar
         plugins={[dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin]}
