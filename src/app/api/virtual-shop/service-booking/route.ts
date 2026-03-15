@@ -24,6 +24,7 @@ export async function POST(req: Request) {
       model,
       year,
       notes,
+      depositAmount,
     } = body;
 
     // 1. Validate required input
@@ -110,6 +111,29 @@ export async function POST(req: Request) {
           );
         }
         client = clientResult.data;
+
+        if (client) {
+          const column = await tx.column.findFirst({
+            where: {
+              title: "New Leads",
+              companyId: shop.companyId,
+              type: "sales",
+            },
+          });
+          await tx.lead.create({
+            data: {
+              clientName: `${firstName} ${lastName}`,
+              clientEmail: email,
+              clientPhone: phone,
+              companyId: shop.companyId,
+              source: "Virtual Shop",
+              vehicleInfo: `${year} ${make} ${model}`,
+              services: shopServiceIds.map(id => id).join(", "),
+              clientId: client.id,
+              columnId: column?.id,
+            },
+          });
+        }
       }
 
       // 4. Find or Create Vehicle
@@ -296,7 +320,16 @@ export async function POST(req: Request) {
       const taxAmount = (subtotal * taxRate) / 100;
       const serviceFeeAmount = (subtotal * serviceFeeRate) / 100;
       const grandTotal = subtotal + taxAmount + serviceFeeAmount;
+      const isDepositEnabled = bookingSettings.isDepositEnabled;
+      const requiredDepositAmount = isDepositEnabled
+        ? Number(bookingSettings.depositValue)
+        : 0;
 
+      const isDepositPay = depositAmount >= requiredDepositAmount;
+
+      if (isDepositEnabled && !isDepositPay) {
+        throw new AppError(400, "Required Deposit amount is not sufficient.");
+      }
       // 8. Create Estimate using the refactored shared action
       const estimateResult = await createInvoice({
         invoiceId: estimateId,
@@ -307,7 +340,7 @@ export async function POST(req: Request) {
         discount: 0,
         tax: taxAmount,
         serviceFee: serviceFeeAmount,
-        deposit: 0,
+        deposit: requiredDepositAmount,
         depositNotes: "",
         depositMethod: "",
         grandTotal,
@@ -414,6 +447,31 @@ export async function POST(req: Request) {
             appointmentId: appointment.id,
             estimateId: estimate.id,
             shopBookingId: shopBooking.id,
+            appointment: {
+              date: appointment.date,
+              startTime: appointment.startTime,
+            },
+            client: {
+              firstName: client?.firstName,
+              lastName: client?.lastName,
+              email: client?.email,
+              mobile: client?.mobile,
+            },
+            vehicle: {
+              year: vehicle?.year,
+              make: vehicle?.make,
+              model: vehicle?.model,
+            },
+            services: selectedServices.map(srv => ({
+              title: srv.title,
+              price: srv.price,
+            })),
+            totals: {
+              subtotal,
+              tax: taxAmount,
+              serviceFee: serviceFeeAmount,
+              grandTotal,
+            },
           },
         },
         { status: 200 },
