@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
     const limitNum = parseInt(searchParams.get("limit") || "20");
     const search = searchParams.get("search") || "";
     const skip = (pageNum - 1) * limitNum;
-    // const authHeader = request.headers.get("authorization") ?? "";
+    const authHeader = request.headers.get("authorization") ?? "";
 
     const companySearchCondition: any = search
       ? {
@@ -79,13 +79,15 @@ export async function GET(request: NextRequest) {
           ],
         }
       : {};
-    // const accessToken = authHeader.startsWith("Bearer")
-    //   ? authHeader.split(" ")[1]
-    //   : authHeader;
+    const accessToken = authHeader.startsWith("Bearer")
+      ? authHeader.split(" ")[1]
+      : authHeader;
 
-    // const verifyToken = await jwtVerifyToken(accessToken);
+    const verifyToken = await jwtVerifyToken(accessToken);
 
-    const userCompanyId = 1;
+    const verifyToken = await jwtVerifyToken(accessToken);
+
+    const userCompanyId = verifyToken?.payload?.companyId;
 
     if (!userCompanyId) {
       throw new AppError(
