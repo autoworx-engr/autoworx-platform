@@ -71,8 +71,12 @@ export default function Calendar() {
         }
         .fc-button-primary:not(:disabled).fc-button-active,
         .fc-button-primary:not(:disabled):active {
-          background-color: #6571ff !important;
-          border-color: #6571ff !important;
+          background-color: #6573ee !important;
+          border-color: #6573ee !important;
+        }
+        /* Remove focus outline/ring */
+        .fc-button:focus {
+          box-shadow: none !important;
         }
       `}</style>
       <FullCalendar
