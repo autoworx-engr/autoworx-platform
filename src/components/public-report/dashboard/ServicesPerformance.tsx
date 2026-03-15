@@ -88,27 +88,32 @@ export const ServicesPerformance = () => {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="p-4 bg-success/5 border border-success/20 rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <TrendingUp className="w-4 h-4 text-success" />
-                <span className="text-xs font-medium text-success uppercase tracking-wider">
+            <div className="p-5 bg-[#f0fdf4] border border-[#bbf7d0] rounded-2xl shadow-sm">
+              <div className="flex items-center gap-2 mb-3">
+                <TrendingUp className="w-4 h-4 text-[#10b981]" />
+                <span className="text-[11px] font-bold text-[#10b981] uppercase tracking-wider">
                   Top Performer
                 </span>
               </div>
-              <p className="font-semibold">{topService.name}</p>
-              <p className="text-lg font-bold text-success">
+              <p className="text-lg font-bold text-[#111827] mb-1">
+                {topService.name}
+              </p>
+              <p className="text-2xl font-bold text-[#10b981]">
                 ${topService.revenue.toLocaleString()}
               </p>
             </div>
-            <div className="p-4 bg-warning/5 border border-warning/20 rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <TrendingDown className="w-4 h-4 text-warning" />
-                <span className="text-xs font-medium text-warning uppercase tracking-wider">
+
+            <div className="p-5 bg-[#fffaf0] border border-[#ffedca] rounded-2xl shadow-sm">
+              <div className="flex items-center gap-2 mb-3">
+                <TrendingDown className="w-4 h-4 text-[#f59e0b]" />
+                <span className="text-[11px] font-bold text-[#f59e0b] uppercase tracking-wider">
                   Needs Attention
                 </span>
               </div>
-              <p className="font-semibold">{lowestService.name}</p>
-              <p className="text-lg font-bold text-warning">
+              <p className="text-lg font-bold text-[#111827] mb-1">
+                {lowestService.name}
+              </p>
+              <p className="text-2xl font-bold text-[#f59e0b]">
                 ${lowestService.revenue.toLocaleString()}
               </p>
             </div>

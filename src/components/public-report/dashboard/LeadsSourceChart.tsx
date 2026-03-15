@@ -8,7 +8,7 @@ import {
 } from "recharts";
 
 const data = [
-  { name: "Website", value: 42, color: "hsl(38, 92%, 50%)" },
+  { name: "Website", value: 42, color: "hsl(200, 92%, 50%)" },
   { name: "Google", value: 28, color: "hsl(222, 47%, 25%)" },
   { name: "Referral", value: 18, color: "hsl(142, 71%, 45%)" },
   { name: "Walk-in", value: 12, color: "hsl(215, 20%, 65%)" },
