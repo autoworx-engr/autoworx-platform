@@ -419,8 +419,11 @@ export async function POST(req: Request) {
           appointmentId: appointment.id,
           invoiceId: estimate.id,
           subtotal,
-          total: subtotal,
-          balanceDue: subtotal,
+          tax: taxAmount + serviceFeeAmount,
+          total: grandTotal,
+          depositRequired: requiredDepositAmount,
+          depositPaid: depositAmount || 0,
+          balanceDue: grandTotal - (depositAmount || 0),
           customerNotes: notes || null,
         },
       });
