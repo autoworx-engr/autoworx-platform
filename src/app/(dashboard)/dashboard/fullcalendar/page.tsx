@@ -107,6 +107,26 @@ export default function Calendar() {
             start: "2026-03-15T11:00:00",
           },
           {
+            title: "Event 3",
+            start: "2026-03-15T11:00:00",
+          },
+          {
+            title: "Event 3",
+            start: "2026-03-15T11:00:00",
+          },
+          {
+            title: "Event 3",
+            start: "2026-03-15T11:00:00",
+          },
+          {
+            title: "Event 3",
+            start: "2026-03-15T11:00:00",
+          },
+          {
+            title: "Event 3",
+            start: "2026-03-15T11:00:00",
+          },
+          {
             title: "Click for Google",
             url: "http://google.com/",
             start: "2026-03-28",
