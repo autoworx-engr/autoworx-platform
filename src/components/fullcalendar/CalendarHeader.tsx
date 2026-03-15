@@ -1,84 +1,90 @@
 "use client";
 
+import FullCalendar from "@fullcalendar/react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import moment from "moment";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { RefObject } from "react";
+
 import { updatePipelineAutomationTrigger } from "@/actions/automation/pipeline/triggerPipelineAutomation";
+import { getCalenderSettings } from "@/actions/task/getCalendarSettings";
 import { AppointmentCreateOrEdit } from "@/components/appointment/AppointmentCreateOrEdit";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { errorHandler } from "@/error-boundary/globalErrorHandler";
+import { useCalendarStore } from "@/stores/calendarStore";
+import { CalendarType } from "@/types/calendar";
+import { Appointment, Lead } from "@prisma/client";
+
+import CalendarSearch from "@/app/(dashboard)/dashboard/task/_component/calendar/CalendarSearch";
+import DateSelector from "@/app/(dashboard)/dashboard/task/_component/calendar/DateSelector";
+import DisplayDate from "@/app/(dashboard)/dashboard/task/_component/calendar/DisplayDate";
+import Settings from "@/app/(dashboard)/dashboard/task/_component/calendar/Settings";
+import {
+  appointmentQueryKey,
+  calenderQueryKey,
+} from "@/app/(dashboard)/dashboard/task/_constant";
+import { useDate } from "@/app/(dashboard)/dashboard/task/_hook/lib/useDate";
+import useMonth from "@/app/(dashboard)/dashboard/task/_hook/lib/useMonth";
+import useWeekStartEndDays from "@/app/(dashboard)/dashboard/task/_hook/lib/useWeekStartEndDays";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "../ui/button";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { errorHandler } from "@/error-boundary/globalErrorHandler";
-import FullCalendar from "@fullcalendar/react";
-import { useQueryClient } from "@tanstack/react-query";
-import { format } from "date-fns";
-import {
-  Calendar as CalendarIcon,
-  ChevronLeft,
-  ChevronRight,
-  Search,
-} from "lucide-react";
-import { useSession } from "next-auth/react";
-import { RefObject } from "react";
-import Settings from "@/app/(dashboard)/dashboard/task/_component/calendar/Settings";
-import { Appointment, Lead } from "@prisma/client";
-import { appointmentQueryKey } from "@/app/(dashboard)/dashboard/task/_constant";
+} from "../ui/select";
+
+const days = ["SUN", "MON", "TUE", "WED", "THUS", "FRI", "SAT"];
 
 const ALLOWED_ROLES_FOR_NEW_APPOINTMENT = ["Admin", "Manager", "Sales"];
 
-
 interface CalendarHeaderProps {
   calendarRef: RefObject<FullCalendar | null>;
-  title: string;
-  view: string;
-  date: Date;
+  type: CalendarType;
 }
 
-export function CalendarHeader({
-  calendarRef,
-  title,
-  view,
-  date,
-}: CalendarHeaderProps) {
+export function CalendarHeader({ calendarRef, type }: CalendarHeaderProps) {
+  const date = useDate();
+  const dateFormat = date.format("YYYY-MM-DD");
+  const month = useMonth();
+  const formattedMonth = month
+    ? moment(month, "YYYY-MM").format("MMMM")
+    : moment().format("MMMM");
+
+  const formattedYear = month
+    ? moment(month, "YYYY-MM").year()
+    : moment().year();
+
+  const { weekStartDate, weekEndDate } = useWeekStartEndDays();
+  const queryClient = useQueryClient();
   const session = useSession();
   const user = session?.data?.user;
-  const queryClient = useQueryClient();
+  const { data: settings } = useQuery({
+    queryKey: [calenderQueryKey.calendarSettings],
+    queryFn: () => {
+      return getCalenderSettings();
+    },
+  });
+  const router = useRouter();
+  const calenderQueryType = type === "day" ? "date" : type;
+  const { setDate, setNavigating, date: currentDate } = useCalendarStore();
 
-  const handleNext = () => {
-    calendarRef.current?.getApi().next();
-  };
+  const currentDayIndex = moment(currentDate).day();
 
-  const handlePrev = () => {
-    calendarRef.current?.getApi().prev();
-  };
-
-  const handleToday = () => {
-    calendarRef.current?.getApi().today();
-  };
-
-  const handleViewChange = (newView: string) => {
-    calendarRef.current?.getApi().changeView(newView);
-  };
-
-  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newDate = e.target.value;
-    if (newDate) {
-      calendarRef.current?.getApi().gotoDate(newDate);
-    }
+  const handleTodayClick = () => {
+    const today = moment().format("YYYY-MM-DD");
+    setDate(today);
+    calendarRef.current?.getApi().today(); // Navigate calendar to today");
+    // calendarRef.current?.getApi().changeView("timeGridDay");
   };
 
   const handleAppointmentCreate = async (
-    newAppointment: Appointment & { lead: Lead | null }
+    newAppointment: Appointment & { lead: Lead | null },
   ) => {
     try {
-      const dateFormat = format(date, "yyyy-MM-dd");
-      const formattedMonth = format(date, "MMMM");
-      const formattedYear = format(date, "yyyy");
-
-      // Invalidate queries for appointments based on the current month and year
       queryClient.invalidateQueries({
         queryKey: [
           appointmentQueryKey.allAppointments,
@@ -86,7 +92,13 @@ export function CalendarHeader({
           formattedYear,
         ],
       });
-      // Invalidate queries for appointments based on the current DATE
+      queryClient.invalidateQueries({
+        queryKey: [
+          appointmentQueryKey.allAppointments,
+          weekStartDate,
+          weekEndDate,
+        ],
+      });
       queryClient.invalidateQueries({
         queryKey: [appointmentQueryKey.allAppointments, dateFormat],
       });
@@ -105,78 +117,79 @@ export function CalendarHeader({
   };
 
   return (
-    <div className="flex flex-col md:flex-row items-center justify-between p-4 bg-background border-b gap-4">
-      {/* Left: Title */}
-      <h2 className="text-xl font-semibold text-foreground truncate">
-        {title}
+    <div className="flex flex-col items-center justify-between md:flex-row p-4 border-b bg-background rounded-t-lg">
+      <h2 className="mb-4 font-medium text-black max-[1300px]:text-[20px] md:ml-2 md:text-base lg:text-[23px]">
+        <DisplayDate type={type} />
       </h2>
 
-      {/* Right: Controls */}
-      <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-        {/* Search */}
-        <div className="relative w-full md:w-64">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search tasks and appointments..."
-            className="pl-9 bg-background"
-          />
+      <div className="flex flex-wrap items-center justify-between gap-1 text-left lg:justify-end xl:gap-3 w-full md:w-auto">
+        {/* Desktop Search */}
+        <div className="mb-2 hidden w-full md:mb-0 lg:block lg:w-64 xl:w-80">
+          <CalendarSearch type={type} />
         </div>
 
-        {/* Date Picker (Simple) */}
-        <div className="flex items-center border rounded-md px-2 py-1 bg-background h-9">
-          <CalendarIcon className="h-4 w-4 mr-2 text-muted-foreground" />
-          <input
-            type="date"
-            className="bg-transparent border-none outline-none text-sm w-32"
-            value={format(date, "yyyy-MM-dd")}
-            onChange={handleDateChange}
-          />
-        </div>
+        {/* Custom Date Selector */}
+        <DateSelector type={type} weekStart={settings?.weekStart} />
 
         {/* Today Button */}
-        <Button
-          variant="outline"
-          onClick={handleToday}
-          className="bg-background"
-        >
+        <Button variant="outline" onClick={handleTodayClick}>
           Today
         </Button>
 
-        {/* Navigation */}
-        <div className="flex items-center gap-1">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={handlePrev}
-            className="bg-background h-9 w-9"
+        {/* Arrow Buttons */}
+
+        <Button
+          variant="outline"
+          size="icon-lg"
+          onClick={() => {
+            calendarRef.current?.getApi().prev();
+          }}
+        >
+          <ChevronLeft size={20} />
+        </Button>
+        <Button
+          variant="outline"
+          size="icon-lg"
+          onClick={() => {
+            calendarRef.current?.getApi().next();
+          }}
+        >
+          <ChevronRight size={20} />
+        </Button>
+
+        <div>
+          <Select
+            value={type}
+            onValueChange={(value) => {
+              calendarRef.current
+                ?.getApi()
+                .changeView(
+                  value === "day"
+                    ? "timeGridDay"
+                    : value === "week"
+                      ? "timeGridWeek"
+                      : value === "month"
+                        ? "dayGridMonth"
+                        : "listWeek",
+                );
+            }}
           >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={handleNext}
-            className="bg-background h-9 w-9"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+            <SelectTrigger className="data-[size=default]:h-10">
+              <SelectValue placeholder="View" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="day">Day</SelectItem>
+              <SelectItem value="week">Week</SelectItem>
+              <SelectItem value="month">Month</SelectItem>
+              <SelectItem value="list">List</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
-        {/* View Select */}
-        <Select value={view} onValueChange={handleViewChange}>
-          <SelectTrigger className="w-[100px] bg-background">
-            <SelectValue placeholder="View" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="timeGridDay">Day</SelectItem>
-            <SelectItem value="timeGridWeek">Week</SelectItem>
-            <SelectItem value="dayGridMonth">Month</SelectItem>
-            <SelectItem value="listWeek">List</SelectItem>
-          </SelectContent>
-        </Select>
-
         {/* New Appointment Button */}
-        {ALLOWED_ROLES_FOR_NEW_APPOINTMENT.includes(user?.employeeType ?? "") && (
+        {ALLOWED_ROLES_FOR_NEW_APPOINTMENT.includes(
+          user?.employeeType ?? "",
+        ) && (
           <AppointmentCreateOrEdit
             onAppointmentCreated={handleAppointmentCreate}
           />
@@ -184,6 +197,25 @@ export function CalendarHeader({
 
         {/* Settings Button */}
         <Settings />
+
+        {/* Mobile Search */}
+        <div className="my-2 block w-full md:mb-0 lg:hidden">
+          <div className="flex items-center justify-around gap-2">
+            {days.map((day, index) => (
+              <p
+                key={day}
+                className={` p-1 rounded-full ${
+                  index === currentDayIndex
+                    ? "bg-blue-500 text-white font-bold"
+                    : ""
+                }`}
+              >
+                {day}
+              </p>
+            ))}
+          </div>
+          <CalendarSearch type={type} />
+        </div>
       </div>
     </div>
   );

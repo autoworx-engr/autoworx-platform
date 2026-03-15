@@ -5,20 +5,29 @@ import interactionPlugin from "@fullcalendar/interaction";
 import listPlugin from "@fullcalendar/list";
 import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { INITIAL_EVENTS } from "./data";
 import { EventContent } from "./EventContent";
 import { EventDetailsSheet } from "./EventDetailsSheet";
 import { CalendarHeader } from "./CalendarHeader";
+import { useCalendarStore } from "@/stores/calendarStore";
+import { CalendarType } from "@/types/calendar";
 
 export default function Calendar() {
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   const calendarRef = useRef<FullCalendar>(null);
-  const [title, setTitle] = useState("");
   const [view, setView] = useState("timeGridWeek");
-  const [date, setDate] = useState(new Date("2026-03-09"));
+
+  // Use calendar store to sync date with header controls
+  const { date, setDate } = useCalendarStore();
+
+  useEffect(() => {
+    if (calendarRef.current && date) {
+      calendarRef.current.getApi().gotoDate(date);
+    }
+  }, [date]);
 
   const handleEventClick = (info: EventClickArg) => {
     info.jsEvent.preventDefault();
@@ -31,13 +40,24 @@ export default function Calendar() {
   };
 
   const handleDatesSet = (arg: any) => {
-    setTitle(arg.view.title);
     setView(arg.view.type);
-    // arg.view.currentStart is the start of the current view (e.g. start of week)
-    // If we want the focused date (like if we clicked a date), FullCalendar internal state has it,
-    // but typically standard props expose start/end of view.
-    // For navigation purposes, updating 'date' state based on view start is fine.
-    setDate(arg.view.currentStart);
+    // Sync store date when calendar navigates (e.g. via prev/next buttons if we used them,
+    // or if we drag/drop to a new date range)
+    // However, since we use custom header buttons that update store directly,
+    // we should be careful avoiding loops.
+    // But setting store date matches the view start.
+    // setDate(arg.view.currentStart.toISOString());
+    // Actually, store date is typically "selected date".
+  };
+
+  // Map FullCalendar view to CalendarType for Header
+  const getCalendarType = (v: string): CalendarType => {
+    const lower = v.toLowerCase();
+    if (lower.includes("list")) return "list";
+    if (lower.includes("month")) return "month";
+    if (lower.includes("week")) return "week";
+    if (lower.includes("day")) return "day";
+    return "week";
   };
 
   return (
@@ -94,12 +114,7 @@ export default function Calendar() {
         }
       `}</style>
 
-      <CalendarHeader
-        calendarRef={calendarRef}
-        title={title}
-        view={view}
-        date={date}
-      />
+      <CalendarHeader calendarRef={calendarRef} type={getCalendarType(view)} />
 
       <div className="flex-1 w-full relative" style={{ minHeight: "600px" }}>
         <FullCalendar
@@ -111,7 +126,6 @@ export default function Calendar() {
             interactionPlugin,
           ]}
           initialView="timeGridWeek"
-          initialDate="2026-03-09"
           headerToolbar={false}
           navLinks={true}
           editable={true}
