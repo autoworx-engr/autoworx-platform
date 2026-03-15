@@ -690,11 +690,11 @@ model Company {
   reviews                          Reviews[]
 
   // Virtual Shop & Gift Card Relations
-  shops                Shop[]
-  giftCardSetting      GiftCardSetting?
-  giftCardTemplates    GiftCardTemplate[]
-  giftCardPromos       GiftCardPromo[]
-  issuedGiftCards      IssuedGiftCard[]
+  shops             Shop[]
+  giftCardSetting   GiftCardSetting?
+  giftCardTemplates GiftCardTemplate[]
+  giftCardPromos    GiftCardPromo[]
+  issuedGiftCards   IssuedGiftCard[]
 }
 
 model Reviews {
@@ -706,12 +706,12 @@ model Reviews {
   sendCompanyId Int
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @default(now()) @updatedAt @map("updated_at")
-  company Company @relation(fields: [companyId], references: [id])
-  user    User    @relation(fields: [sendUserId], references: [id])
+  company       Company  @relation(fields: [companyId], references: [id])
+  user          User     @relation(fields: [sendUserId], references: [id])
 
+  @@unique([sendCompanyId, companyId])
   @@index([companyId])
   @@index([sendUserId])
-  @@unique([sendCompanyId, companyId])
 }
 
 enum TeamSize {
@@ -1206,6 +1206,7 @@ model InvoiceItem {
   tags              ItemTag[]
   technicians       Technician[]
   invoiceTemplate   InvoiceTemplate? @relation(fields: [invoiceTemplateId], references: [id])
+  shopService       ShopService?     @relation(fields: [shopServiceId], references: [id])
 }
 
 enum InvoiceItemMaterialType {
@@ -2734,92 +2735,87 @@ model FAQ {
 //   @@map("upsells")
 // }
 
-
 //TODO: virtual shop model
 
 model Shop {
-  id          Int      @id @default(autoincrement())
-  companyId   Int      @map("company_id")
-  slug        String   @unique // This is your SUBDOMAIN (e.g., 'autoworx' in 'autoworx.yourdomain.com')
-  storeName   String   @map("store_name")
-  description String?  @db.Text
-  logoUrl     String?  @map("logo_url")
-  bannerUrl   String?  @map("banner_url")
-  themeConfig Json?    @map("theme_config") // Store { primaryColor: '#3b82f6', font: 'Inter' }
-  isActive    Boolean  @default(true) @map("is_active")
-  
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-
-  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  shopServices ShopService[]
+  id              Int                 @id @default(autoincrement())
+  companyId       Int                 @map("company_id")
+  slug            String              @unique // This is your SUBDOMAIN (e.g., 'autoworx' in 'autoworx.yourdomain.com')
+  storeName       String              @map("store_name")
+  description     String?             @db.Text
+  logoUrl         String?             @map("logo_url")
+  bannerUrl       String?             @map("banner_url")
+  themeConfig     Json?               @map("theme_config") // Store { primaryColor: '#3b82f6', font: 'Inter' }
+  isActive        Boolean             @default(true) @map("is_active")
+  createdAt       DateTime            @default(now()) @map("created_at")
+  updatedAt       DateTime            @updatedAt @map("updated_at")
+  company         Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  shopServices    ShopService[]
   bookingSettings ShopBookingSetting?
-  shopBookings ShopBooking[]
+  shopBookings    ShopBooking[]
 
   @@map("shops")
 }
 
-
 model ShopService {
-  id          Int      @id @default(autoincrement())
-  
-  shopId      Int      @map("shop_id")
-  shop        Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  id Int @id @default(autoincrement())
 
-  
+  shopId Int  @map("shop_id")
+  shop   Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
   // Basic Info
-  title       String   @db.VarChar(255)
-  description String?  @db.Text
-  price       Decimal  @default(0) @db.Decimal(10, 2)
-  duration    Int      @default(30) @map("duration_minutes") // Maps to "Est. Time (min)"
-  
+  title       String  @db.VarChar(255)
+  description String? @db.Text
+  price       Decimal @default(0) @db.Decimal(10, 2)
+  duration    Int     @default(30) @map("duration_minutes") // Maps to "Est. Time (min)"
+
   // Categorization & Media
-  category    String?  // Can also be categoryId if linking to your Category model
-  imageUrl    String?  @map("image_url") @db.Text
+  category String? // Can also be categoryId if linking to your Category model
+  imageUrl String? @map("image_url") @db.Text
 
   // Vehicle Type Price Modifiers (+$)
   // These store the additional cost added to the base price
-  modifierCoupe Decimal @default(0) @db.Decimal(10, 2) @map("modifier_coupe")
-  modifierSedan Decimal @default(0) @db.Decimal(10, 2) @map("modifier_sedan")
-  modifierSUV   Decimal @default(0) @db.Decimal(10, 2) @map("modifier_suv")
-  modifierTruck Decimal @default(0) @db.Decimal(10, 2) @map("modifier_truck")
+  modifierCoupe Decimal @default(0) @map("modifier_coupe") @db.Decimal(10, 2)
+  modifierSedan Decimal @default(0) @map("modifier_sedan") @db.Decimal(10, 2)
+  modifierSUV   Decimal @default(0) @map("modifier_suv") @db.Decimal(10, 2)
+  modifierTruck Decimal @default(0) @map("modifier_truck") @db.Decimal(10, 2)
 
   // Status & Metadata
-  isActive    Boolean  @default(true) @map("is_active")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
   shopBookingServices ShopBookingService[]
-  invoiceItems   InvoiceItem[]
+  invoiceItems        InvoiceItem[]
+  service             Service?             @relation(fields: [serviceId], references: [id])
+  serviceId           Int?
 
   @@index([shopId])
   @@map("shop_services")
 }
 
-
 // 1. The Global Shop Booking Settings
 model ShopBookingSetting {
-  id                Int          @id @default(autoincrement())
-  shopId            Int          @unique @map("shop_id")
+  id     Int @id @default(autoincrement())
+  shopId Int @unique @map("shop_id")
 
   // Deposit Settings (from previous step)
-  isDepositEnabled  Boolean      @default(false) @map("is_deposit_enabled")
-  depositType       DepositType? @default(FIXED) @map("deposit_type")
-  depositValue      Decimal?     @db.Decimal(10, 2) @map("deposit_value")
+  isDepositEnabled Boolean      @default(false) @map("is_deposit_enabled")
+  depositType      DepositType? @default(FIXED) @map("deposit_type")
+  depositValue     Decimal?     @map("deposit_value") @db.Decimal(10, 2)
 
   // Appointment Logic (from the top of your new UI image)
-  isStackingEnabled Boolean      @default(false) @map("is_stacking_enabled")
-  stackingLimit     Int          @default(1) @map("stacking_limit") 
-  slotInterval      Int          @default(30) @map("slot_interval")
+  isStackingEnabled Boolean @default(false) @map("is_stacking_enabled")
+  stackingLimit     Int     @default(1) @map("stacking_limit")
+  slotInterval      Int     @default(30) @map("slot_interval")
 
-  createdAt         DateTime     @default(now()) @map("created_at")
-  updatedAt         DateTime     @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  shop              Shop               @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  availabilities    ShopAvailability[] // <-- Links to the 7 days of the week
+  shop           Shop               @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  availabilities ShopAvailability[] // <-- Links to the 7 days of the week
 
   @@map("shop_booking_settings")
 }
@@ -2832,20 +2828,20 @@ enum DepositType {
 
 // 2. NEW: Day-by-Day Availability (Maps perfectly to your UI grid)
 model ShopAvailability {
-  id                   Int                @id @default(autoincrement())
-  shopBookingSettingId Int                @map("shop_booking_setting_id")
-  
-  dayOfWeek            DayOfWeek          @map("day_of_week") // MONDAY, TUESDAY, etc.
-  
+  id                   Int @id @default(autoincrement())
+  shopBookingSettingId Int @map("shop_booking_setting_id")
+
+  dayOfWeek DayOfWeek @map("day_of_week") // MONDAY, TUESDAY, etc.
+
   // The toggle switch (e.g., Sunday is false)
-  isOpen               Boolean            @default(true) @map("is_open")
-  
+  isOpen Boolean @default(true) @map("is_open")
+
   // The time inputs (Store these in 24-hour format like "08:00" and "16:00" for easier backend math)
-  startTime            String?            @map("start_time") 
-  endTime              String?            @map("end_time")
+  startTime String? @map("start_time")
+  endTime   String? @map("end_time")
 
   // Relation back to the main settings
-  setting              ShopBookingSetting @relation(fields: [shopBookingSettingId], references: [id], onDelete: Cascade)
+  setting ShopBookingSetting @relation(fields: [shopBookingSettingId], references: [id], onDelete: Cascade)
 
   // Ensure a shop can only have one configuration per day (e.g., only one "Monday" record per shop)
   @@unique([shopBookingSettingId, dayOfWeek])
@@ -2855,46 +2851,46 @@ model ShopAvailability {
 // NEW: Virtual Shop Booking Models
 
 model ShopBooking {
-  id               Int                 @id @default(autoincrement())
-  shopId           Int                 @map("shop_id")
-  clientId         Int?                @map("client_id") // Optional if guest checkout is allowed
+  id       Int  @id @default(autoincrement())
+  shopId   Int  @map("shop_id")
+  clientId Int? @map("client_id") // Optional if guest checkout is allowed
 
   // Vehicle Info
-  vehicleId        Int?                @map("vehicle_id")
-  
-  // Appointment Details
-  appointmentId    Int                 @map("appointment_id")
+  vehicleId Int? @map("vehicle_id")
 
-  invoiceId        Int                @map("invoice_id")
-  invoice          Invoice            @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  
+  // Appointment Details
+  appointmentId Int @map("appointment_id")
+
+  invoiceId Int     @map("invoice_id")
+  invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
   // Financial Details
-  subtotal         Decimal             @default(0) @db.Decimal(10, 2)
-  tax              Decimal             @default(0) @db.Decimal(10, 2)
-  total            Decimal             @default(0) @db.Decimal(10, 2)
-  depositRequired  Decimal             @default(0) @db.Decimal(10, 2) @map("deposit_required")
-  depositPaid      Decimal             @default(0) @db.Decimal(10, 2) @map("deposit_paid")
-  balanceDue       Decimal             @default(0) @db.Decimal(10, 2) @map("balance_due")
-  
+  subtotal        Decimal @default(0) @db.Decimal(10, 2)
+  tax             Decimal @default(0) @db.Decimal(10, 2)
+  total           Decimal @default(0) @db.Decimal(10, 2)
+  depositRequired Decimal @default(0) @map("deposit_required") @db.Decimal(10, 2)
+  depositPaid     Decimal @default(0) @map("deposit_paid") @db.Decimal(10, 2)
+  balanceDue      Decimal @default(0) @map("balance_due") @db.Decimal(10, 2)
+
   // Notes
-  customerNotes    String?             @db.Text @map("customer_notes")
-  internalNotes    String?             @db.Text @map("internal_notes")
+  customerNotes String? @map("customer_notes") @db.Text
+  internalNotes String? @map("internal_notes") @db.Text
 
   // Timestamps
-  createdAt        DateTime            @default(now()) @map("created_at")
-  updatedAt        DateTime            @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  shop             Shop                @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  client           Client?             @relation(fields: [clientId], references: [id], onDelete: SetNull)
-  services         ShopBookingService[]
-  vehicle          Vehicle?            @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
-  appointment      Appointment?        @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  shop        Shop                 @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  client      Client?              @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  services    ShopBookingService[]
+  vehicle     Vehicle?             @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
+  appointment Appointment?         @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
 
   @@index([shopId])
   @@index([clientId])
   @@index([appointmentId])
-  @@index([vehicleId]) 
+  @@index([vehicleId])
   @@map("shop_bookings")
 }
 
@@ -2906,26 +2902,26 @@ enum ModifierType {
 }
 
 model ShopBookingService {
-  id               Int         @id @default(autoincrement())
-  shopBookingId    Int         @map("shop_booking_id")
-  shopServiceId    Int?        @map("shop_service_id") // Optional to allow for custom services or deleted services later
-  
+  id            Int  @id @default(autoincrement())
+  shopBookingId Int? @map("shop_booking_id")
+  shopServiceId Int? @map("shop_service_id") // Optional to allow for custom services or deleted services later
+
   // Snapshot data at time of booking (prices can change, we need historical record)
-  title            String      @db.VarChar(255)
-  price            Decimal     @db.Decimal(10, 2)
-  duration         Int         @map("duration_minutes")
-  
+  title    String  @db.VarChar(255)
+  price    Decimal @db.Decimal(10, 2)
+  duration Int     @map("duration_minutes")
+
   // Vehicle Modifier applied (if any)
-  modifierType     ModifierType?     @map("modifier_type") // e.g., "Sedan", "SUV"
-  modifierPrice    Decimal     @default(0) @db.Decimal(10, 2) @map("modifier_price")
+  modifierType  ModifierType? @map("modifier_type") // e.g., "Sedan", "SUV"
+  modifierPrice Decimal       @default(0) @map("modifier_price") @db.Decimal(10, 2)
 
   // Timestamps
-  createdAt        DateTime    @default(now()) @map("created_at")
-  updatedAt        DateTime    @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  shopBooking      ShopBooking @relation(fields: [shopBookingId], references: [id], onDelete: Cascade)
-  shopService      ShopService? @relation(fields: [shopServiceId], references: [id], onDelete: SetNull)
+  shopBooking ShopBooking  @relation(fields: [shopBookingId], references: [id], onDelete: Cascade)
+  shopService ShopService? @relation(fields: [shopServiceId], references: [id], onDelete: SetNull)
 
   @@index([shopBookingId])
   @@index([shopServiceId])
@@ -2949,47 +2945,47 @@ enum ShopPaymentStatus {
 // TODO: Gift Card Model
 // Centralized settings: 1-to-1 relation with Company
 model GiftCardSetting {
-  id                  Int      @id @default(autoincrement())
-  companyId           Int      @unique @map("company_id")
-  
+  id        Int @id @default(autoincrement())
+  companyId Int @unique @map("company_id")
+
   // Amount Configuration
-  allowCustomAmount   Boolean  @default(true) @map("allow_custom_amount")
-  minCustomAmount     Decimal? @db.Decimal(10, 2) @map("min_custom_amount")
-  maxCustomAmount     Decimal? @db.Decimal(10, 2) @map("max_custom_amount")
-  presetAmounts       Json?    @map("preset_amounts") // e.g., [25, 50, 100, 200]
-  
+  allowCustomAmount Boolean  @default(true) @map("allow_custom_amount")
+  minCustomAmount   Decimal? @map("min_custom_amount") @db.Decimal(10, 2)
+  maxCustomAmount   Decimal? @map("max_custom_amount") @db.Decimal(10, 2)
+  presetAmounts     Json?    @map("preset_amounts") // e.g., [25, 50, 100, 200]
+
   // Delivery Configuration
-  allowEmailDelivery  Boolean  @default(true) @map("allow_email_delivery")
-  allowSmsDelivery    Boolean  @default(false) @map("allow_sms_delivery")
-  defaultDelivery     DeliveryMethod @default(EMAIL) @map("default_delivery")
-  allowScheduledSend  Boolean  @default(true) @map("allow_scheduled_send")
-  
+  allowEmailDelivery Boolean        @default(true) @map("allow_email_delivery")
+  allowSmsDelivery   Boolean        @default(false) @map("allow_sms_delivery")
+  defaultDelivery    DeliveryMethod @default(EMAIL) @map("default_delivery")
+  allowScheduledSend Boolean        @default(true) @map("allow_scheduled_send")
+
   // Policies & Expiry
-  defaultExpiryDays   Int?     @map("default_expiry_days") // Null means never expires
-  termsAndConditions  String?  @db.Text @map("terms_and_conditions")
-  privacyPolicy       String?  @db.Text @map("privacy_policy")
+  defaultExpiryDays  Int?    @map("default_expiry_days") // Null means never expires
+  termsAndConditions String? @map("terms_and_conditions") @db.Text
+  privacyPolicy      String? @map("privacy_policy") @db.Text
 
-  createdAt           DateTime @default(now()) @map("created_at")
-  updatedAt           DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  company             Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   @@map("gift_card_settings")
 }
 
 // 1-to-Many: A company can have multiple visual designs
 model GiftCardTemplate {
-  id          Int      @id @default(autoincrement())
-  companyId   Int      @map("company_id")
-  name        String
-  imageUrl    String   @map("image_url")
-  isActive    Boolean  @default(true) @map("is_active")
-  isDefault   Boolean  @default(false) @map("is_default")
-  
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id        Int     @id @default(autoincrement())
+  companyId Int     @map("company_id")
+  name      String
+  imageUrl  String  @map("image_url")
+  isActive  Boolean @default(true) @map("is_active")
+  isDefault Boolean @default(false) @map("is_default")
 
-  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company     Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
   issuedCards IssuedGiftCard[]
 
   @@index([companyId])
@@ -2998,22 +2994,22 @@ model GiftCardTemplate {
 
 // Promos specifically for buying gift cards
 model GiftCardPromo {
-  id          Int      @id @default(autoincrement())
-  companyId   Int      @map("company_id")
-  code        String
-  type        DiscountType
-  value       Decimal  @db.Decimal(10, 2)
-  
-  startDate   DateTime @default(now()) @map("start_date")
-  expireDate  DateTime? @map("expire_date")
-  usageLimit  Int?     @map("usage_limit")
-  timesUsed   Int      @default(0) @map("times_used")
-  isActive    Boolean  @default(true) @map("is_active")
+  id        Int          @id @default(autoincrement())
+  companyId Int          @map("company_id")
+  code      String
+  type      DiscountType
+  value     Decimal      @db.Decimal(10, 2)
 
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  startDate  DateTime  @default(now()) @map("start_date")
+  expireDate DateTime? @map("expire_date")
+  usageLimit Int?      @map("usage_limit")
+  timesUsed  Int       @default(0) @map("times_used")
+  isActive   Boolean   @default(true) @map("is_active")
 
-  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   @@unique([companyId, code])
   @@map("gift_card_promos")
@@ -3028,39 +3024,39 @@ enum DeliveryMethod {
 
 // TODO: Gift card Transition history model
 model IssuedGiftCard {
-  id              String   @id @default(cuid())
-  companyId       Int      @map("company_id")
-  code            String   @unique // Secure alphanumeric code
-  
+  id        String @id @default(cuid())
+  companyId Int    @map("company_id")
+  code      String @unique // Secure alphanumeric code
+
   // Balances
-  initialBalance  Decimal  @db.Decimal(10, 2) @map("initial_balance")
-  currentBalance  Decimal  @db.Decimal(10, 2) @map("current_balance")
-  
+  initialBalance Decimal @map("initial_balance") @db.Decimal(10, 2)
+  currentBalance Decimal @map("current_balance") @db.Decimal(10, 2)
+
   // Purchaser Snapshot
-  purchaserName   String   @map("purchaser_name")
-  purchaserEmail  String   @map("purchaser_email")
+  purchaserName  String @map("purchaser_name")
+  purchaserEmail String @map("purchaser_email")
 
   // --- NEW: Missing fields from PRD Step 5 ---
-  recipientName   String   @map("recipient_name")
-  recipientEmail  String?  @map("recipient_email")
-  recipientPhone  String?  @map("recipient_phone")
-  message         String?  @db.Text
-  
-  templateId      Int      @map("template_id")
+  recipientName  String  @map("recipient_name")
+  recipientEmail String? @map("recipient_email")
+  recipientPhone String? @map("recipient_phone")
+  message        String? @db.Text
+
+  templateId      Int            @map("template_id")
   deliveryMethod  DeliveryMethod @default(EMAIL) @map("delivery_method")
-  scheduledSendAt DateTime? @map("scheduled_send_at")
-  deliveredAt     DateTime? @map("delivered_at")
-  expiresAt       DateTime? @map("expires_at")
+  scheduledSendAt DateTime?      @map("scheduled_send_at")
+  deliveredAt     DateTime?      @map("delivered_at")
+  expiresAt       DateTime?      @map("expires_at")
   // -------------------------------------------
-  
-  status          GiftCardStatus @default(ACTIVE)
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  status    GiftCardStatus @default(ACTIVE)
+  createdAt DateTime       @default(now()) @map("created_at")
+  updatedAt DateTime       @updatedAt @map("updated_at")
 
   // Relations
-  company         Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  template        GiftCardTemplate @relation(fields: [templateId], references: [id])
-  transactions    GiftCardTransaction[]
+  company      Company               @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  template     GiftCardTemplate      @relation(fields: [templateId], references: [id])
+  transactions GiftCardTransaction[]
 
   @@index([companyId])
   @@index([code])
@@ -3068,21 +3064,21 @@ model IssuedGiftCard {
 }
 
 model GiftCardTransaction {
-  id              String   @id @default(cuid())
-  giftCardId      String   @map("gift_card_id")
-  
-  // The Financial Math
-  type            TransactionType
-  amount          Decimal  @db.Decimal(10, 2) // Positive for reloads, Negative for redemptions
-  balanceAfter    Decimal  @db.Decimal(10, 2) @map("balance_after")
-  
-  // Traceability
-  referenceId     String?  @map("reference_id") // Can store an Invoice ID, Order ID, or Stripe Payment ID
-  notes           String?  @db.Text
-  
-  createdAt       DateTime @default(now()) @map("created_at")
+  id         String @id @default(cuid())
+  giftCardId String @map("gift_card_id")
 
-  giftCard        IssuedGiftCard @relation(fields: [giftCardId], references: [id], onDelete: Cascade)
+  // The Financial Math
+  type         TransactionType
+  amount       Decimal         @db.Decimal(10, 2) // Positive for reloads, Negative for redemptions
+  balanceAfter Decimal         @map("balance_after") @db.Decimal(10, 2)
+
+  // Traceability
+  referenceId String? @map("reference_id") // Can store an Invoice ID, Order ID, or Stripe Payment ID
+  notes       String? @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  giftCard IssuedGiftCard @relation(fields: [giftCardId], references: [id], onDelete: Cascade)
 
   @@index([giftCardId])
   @@map("gift_card_transactions")
@@ -3092,12 +3088,12 @@ enum GiftCardStatus {
   ACTIVE
   DEPLETED // Balance is 0, but can be reloaded
   EXPIRED
-  FROZEN   // Suspended for fraud/issues
+  FROZEN // Suspended for fraud/issues
 }
 
 enum TransactionType {
-  ISSUE       // Initial card creation
-  REDEMPTION  // Used to pay for a service
-  RELOAD      // Purchaser added more money
-  REFUND      // Service was cancelled, money returned to card
+  ISSUE // Initial card creation
+  REDEMPTION // Used to pay for a service
+  RELOAD // Purchaser added more money
+  REFUND // Service was cancelled, money returned to card
 }
