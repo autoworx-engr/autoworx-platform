@@ -5,14 +5,20 @@ import interactionPlugin from "@fullcalendar/interaction";
 import listPlugin from "@fullcalendar/list";
 import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { INITIAL_EVENTS } from "./data";
 import { EventContent } from "./EventContent";
 import { EventDetailsSheet } from "./EventDetailsSheet";
+import { CalendarHeader } from "./CalendarHeader";
 
 export default function Calendar() {
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+
+  const calendarRef = useRef<FullCalendar>(null);
+  const [title, setTitle] = useState("");
+  const [view, setView] = useState("timeGridWeek");
+  const [date, setDate] = useState(new Date("2026-03-09"));
 
   const handleEventClick = (info: EventClickArg) => {
     info.jsEvent.preventDefault();
@@ -24,8 +30,18 @@ export default function Calendar() {
     return <EventContent eventInfo={eventInfo} />;
   };
 
+  const handleDatesSet = (arg: any) => {
+    setTitle(arg.view.title);
+    setView(arg.view.type);
+    // arg.view.currentStart is the start of the current view (e.g. start of week)
+    // If we want the focused date (like if we clicked a date), FullCalendar internal state has it,
+    // but typically standard props expose start/end of view.
+    // For navigation purposes, updating 'date' state based on view start is fine.
+    setDate(arg.view.currentStart);
+  };
+
   return (
-    <div className="w-full h-full calendar-wrapper">
+    <div className="w-full h-full calendar-wrapper flex flex-col bg-white rounded-lg shadow-sm border">
       <style jsx global>{`
         /* Remove default event styling to allow full custom control */
         .fc-event {
@@ -53,13 +69,6 @@ export default function Calendar() {
           padding: 12px 16px !important;
         }
 
-        /* Ensure calendar takes full height of container */
-        .fc {
-          height: 800px;
-          // min-height: 600px;
-          width: 100%;
-        }
-
         /* Customize header buttons */
         .fc-button-primary {
           background-color: #5a66ee !important;
@@ -78,28 +87,47 @@ export default function Calendar() {
         .fc-button:focus {
           box-shadow: none !important;
         }
+
+        /* Hide default header since we use custom one */
+        .fc-header-toolbar {
+          display: none !important;
+        }
       `}</style>
-      <FullCalendar
-        plugins={[dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin]}
-        headerToolbar={{
-          left: "prev,next today",
-          center: "title",
-          right: "dayGridMonth,timeGridWeek,timeGridDay,listWeek",
-        }}
-        initialView="timeGridWeek"
-        initialDate="2026-03-09"
-        navLinks={true}
-        editable={true}
-        dayMaxEvents={5}
-        eventClick={handleEventClick}
-        eventContent={renderEventContent}
-        slotMinTime="08:00:00"
-        slotMaxTime="18:00:00"
-        allDaySlot={false}
-        expandRows={true}
-        slotDuration="01:00:00"
-        events={INITIAL_EVENTS}
+
+      <CalendarHeader
+        calendarRef={calendarRef}
+        title={title}
+        view={view}
+        date={date}
       />
+
+      <div className="flex-1 w-full relative" style={{ minHeight: "600px" }}>
+        <FullCalendar
+          ref={calendarRef}
+          plugins={[
+            dayGridPlugin,
+            timeGridPlugin,
+            listPlugin,
+            interactionPlugin,
+          ]}
+          initialView="timeGridWeek"
+          initialDate="2026-03-09"
+          headerToolbar={false}
+          navLinks={true}
+          editable={true}
+          dayMaxEvents={5}
+          eventClick={handleEventClick}
+          eventContent={renderEventContent}
+          slotMinTime="08:00:00"
+          slotMaxTime="18:00:00"
+          allDaySlot={false}
+          expandRows={true}
+          slotDuration="01:00:00"
+          events={INITIAL_EVENTS}
+          datesSet={handleDatesSet}
+          height="100%"
+        />
+      </div>
 
       <EventDetailsSheet
         isOpen={isSheetOpen}
