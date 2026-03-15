@@ -100,12 +100,11 @@ export default function CompanyMessageBox({
     const channel = pusher.subscribe(`company-${currentCompanyId}`);
 
     channel.bind("message", (data: any) => {
-      // Only add if it's related to current open chat
       if (
         (data.fromCompanyId === currentCompanyId &&
           data.toCompanyId === companyId) ||
-        (data.fromCompanyId === currentCompanyId &&
-          data.toCompanyId === companyId)
+        (data.fromCompanyId === companyId &&
+          data.toCompanyId === currentCompanyId)
       ) {
         setMessages((prev) => [...prev, data]);
       }
