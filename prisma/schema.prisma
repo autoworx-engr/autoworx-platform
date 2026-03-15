@@ -26,8 +26,7 @@ model Appointment {
   confirmationEmailTemplateStatus Boolean                         @default(false) @map("confirmation_email_template_status")
   reminderEmailTemplateId         Int?                            @map("reminder_email_template_id")
   reminderEmailTemplateStatus     Boolean                         @default(false) @map("reminder_email_template_status")
-  shopBookingId                   Int?                            @map("shop_booking_id")
-  shopBooking                     ShopBooking                     @relation(fields: [shopBookingId], references: [id], onDelete: Cascade)
+  shopBooking                     ShopBooking?
   times                           Json? // { time: string; date: string }
   createdAt                       DateTime                        @default(now()) @map("created_at")
   updatedAt                       DateTime                        @default(now()) @updatedAt @map("updated_at")
@@ -1194,6 +1193,7 @@ model InvoiceItem {
   invoiceId         String?          @map("invoice_id")
   invoiceTemplateId String?
   shopServiceId     Int?             @map("shop_service_id")
+  shopService       ShopService?     @relation(fields: [shopServiceId], references: [id])
   serviceId         Int?             @map("service_id")
   laborId           Int?             @map("labor_id")
   createdAt         DateTime         @default(now()) @map("created_at")
@@ -1206,7 +1206,6 @@ model InvoiceItem {
   tags              ItemTag[]
   technicians       Technician[]
   invoiceTemplate   InvoiceTemplate? @relation(fields: [invoiceTemplateId], references: [id])
-  shopService       ShopService?     @relation(fields: [shopServiceId], references: [id])
 }
 
 enum InvoiceItemMaterialType {
@@ -1431,8 +1430,7 @@ model Invoice {
   requestEstimate         RequestEstimate?          @relation(fields: [requestEstimateId], onDelete: SetNull, references: [id])
   assignedTo              User?                     @relation(name: "assignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
   column                  Column?                   @relation(fields: [columnId], references: [id], onDelete: SetNull)
-  shopBooking             ShopBooking?              @relation(fields: [shopBookingId], references: [id], onDelete: SetNull)
-  shopBookingId           Int?                      @map("shop_booking_id")
+  shopBooking             ShopBooking?
   isShopBooking           Boolean                   @default(false) @map("is_shop_booking")
   InvoiceRedo             InvoiceRedo[]
   serviceIndex            Json?
@@ -2764,10 +2762,12 @@ model ShopService {
   shop   Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
 
   // Basic Info
-  title       String  @db.VarChar(255)
-  description String? @db.Text
-  price       Decimal @default(0) @db.Decimal(10, 2)
-  duration    Int     @default(30) @map("duration_minutes") // Maps to "Est. Time (min)"
+  title       String   @db.VarChar(255)
+  description String?  @db.Text
+  serviceId   Int?     @map("service_id")
+  service     Service? @relation(fields: [serviceId], references: [id])
+  price       Decimal  @default(0) @db.Decimal(10, 2)
+  duration    Int      @default(30) @map("duration_minutes") // Maps to "Est. Time (min)"
 
   // Categorization & Media
   category String? // Can also be categoryId if linking to your Category model
@@ -2788,8 +2788,6 @@ model ShopService {
   // Relations
   shopBookingServices ShopBookingService[]
   invoiceItems        InvoiceItem[]
-  service             Service?             @relation(fields: [serviceId], references: [id])
-  serviceId           Int?
 
   @@index([shopId])
   @@map("shop_services")
@@ -2859,9 +2857,9 @@ model ShopBooking {
   vehicleId Int? @map("vehicle_id")
 
   // Appointment Details
-  appointmentId Int @map("appointment_id")
+  appointmentId Int @unique @map("appointment_id")
 
-  invoiceId Int     @map("invoice_id")
+  invoiceId String  @unique @map("invoice_id")
   invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 
   // Financial Details
