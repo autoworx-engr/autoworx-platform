@@ -163,9 +163,19 @@ export default function Calendar() {
             },
           },
           {
+            title: "Oscar G.",
+            start: "2026-03-09T08:00:00",
+            end: "2026-03-09T13:00:00",
+            extendedProps: {
+              serviceType: "PPF",
+              carModel: "2023 Audi RS5",
+              price: "$2,600",
+            },
+          },
+          {
             title: "John D.",
             start: "2026-03-09T11:30:00",
-            end: "2026-03-09T13:30:00",
+            end: "2026-03-09T15:30:00",
             extendedProps: {
               serviceType: "Tint",
               carModel: "2022 BMW 340i",
@@ -175,7 +185,7 @@ export default function Calendar() {
           {
             title: "Mike R.",
             start: "2026-03-09T14:00:00",
-            end: "2026-03-09T16:00:00",
+            end: "2026-03-09T18:00:00",
             extendedProps: {
               carModel: "2020 Porsche 911",
               price: "$500",
