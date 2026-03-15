@@ -216,7 +216,7 @@ export function Reminder({
 
   return (
     <>
-      <div className="mx-auto w-[350px] space-y-4 p-2 md:w-full">
+      <div className="min-w-[350px] mx-4 space-y-4 p-2 md:w-full">
         <div className="flex items-center">
           <h2 className="text-lg font-semibold text-slate-600">Confirmation</h2>
           <Switch
@@ -228,9 +228,9 @@ export function Reminder({
         </div>
 
         <Selector
-          className="max-w-full"
+          className="min-w-full"
           border
-          clickabled={false}
+          clickabled={true}
           label={(template: EmailTemplate | null) =>
             template ? template.subject : "Template"
           }
@@ -250,24 +250,20 @@ export function Reminder({
           )}
           displayList={(template: EmailTemplate) => (
             <div className="group relative flex items-center justify-between">
-              <button
-                className="flex flex-1 items-center gap-3 text-left outline-none"
-                onClick={() => {
-                  setConfirmationTemplate(template);
-                  setOpenConfirmation(false);
-                }}
-                type="button"
-              >
+              <div className="flex items-center gap-3 text-left outline-none">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-slate-200 group-hover:bg-[#6571FF]/10 group-hover:ring-[#6571FF]/20 transition-colors">
                   <FileText className="h-4 w-4 text-slate-400 group-hover:text-[#6571FF]" />
                 </div>
                 <span className="text-sm font-semibold text-slate-600 transition-colors group-hover:text-slate-900">
                   {template.subject}
                 </span>
-              </button>
+              </div>
 
-              <div className="flex items-center gap-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                <div className="flex items-center gap-1.5 rounded-lg bg-slate-100/50 p-1 ring-1 ring-slate-200/50">
+              <div className="flex items-center gap-1 transition-opacity duration-200 group-hover:opacity-100">
+                <div
+                  className="flex items-center gap-1.5 rounded-lg bg-slate-100/50 p-1 ring-1 ring-slate-200/50"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <UpdateTemplate
                     id={template.id}
                     subject={template.subject}
@@ -279,9 +275,10 @@ export function Reminder({
                   <button
                     type="button"
                     className="flex h-7 w-7 items-center justify-center rounded-md transition-all bg-rose-50 text-rose-500"
-                    onClick={() =>
-                      handleDelete({ id: template.id, type: "Confirmation" })
-                    }
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete({ id: template.id, type: "Confirmation" });
+                    }}
                   >
                     <X size={16} strokeWidth={2.5} />
                   </button>
@@ -290,16 +287,19 @@ export function Reminder({
             </div>
           )}
           selectedItem={confirmationTemplate}
-          setSelectedItem={setConfirmationTemplate}
+          onSelect={(template) => {
+            setConfirmationTemplate(template);
+            setOpenConfirmation(false);
+          }}
           onSearch={(search: string) =>
             templates.filter((template) =>
               template.subject.toLowerCase().includes(search.toLowerCase()),
             )
           }
-          // openState={[openConfirmation, setOpenConfirmation]}
+        // openState={[openConfirmation, setOpenConfirmation]}
         />
       </div>
-      <div className="mx-auto w-[350px] space-y-4 p-2 md:w-full">
+      <div className="min-w-[350px] mx-4 space-y-4 p-2 md:w-full">
         <div className="flex items-center">
           <h2 className="text-lg font-semibold text-slate-600">Reminder</h2>
           <Switch
@@ -311,9 +311,9 @@ export function Reminder({
         </div>
 
         <Selector
-          className="max-w-full"
+          className="min-w-full"
           border
-          clickabled={false}
+          clickabled={true}
           label={(template: EmailTemplate | null) =>
             template ? template.subject : "Template"
           }
@@ -333,24 +333,20 @@ export function Reminder({
           )}
           displayList={(template: EmailTemplate) => (
             <div className="group relative flex items-center justify-between">
-              <button
-                className="flex flex-1 items-center gap-3 text-left outline-none"
-                onClick={() => {
-                  setReminderTemplate(template);
-                  setOpenReminder(false);
-                }}
-                type="button"
-              >
+              <div className="flex items-center gap-3 text-left outline-none">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-slate-200 group-hover:bg-[#6571FF]/10 group-hover:ring-[#6571FF]/20 transition-colors">
                   <FileText className="h-4 w-4 text-slate-400 group-hover:text-[#6571FF]" />
                 </div>
                 <span className="text-sm font-semibold text-slate-600 transition-colors group-hover:text-slate-900">
                   {template.subject}
                 </span>
-              </button>
+              </div>
 
-              <div className="flex items-center gap-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                <div className="flex items-center gap-1.5 rounded-lg bg-slate-100/50 p-1 ring-1 ring-slate-200/50">
+              <div className="flex items-center gap-1 transition-opacity duration-200 group-hover:opacity-100">
+                <div
+                  className="flex items-center gap-1.5 rounded-lg bg-slate-100/50 p-1 ring-1 ring-slate-200/50"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <UpdateTemplate
                     id={template.id}
                     subject={template.subject}
@@ -362,9 +358,10 @@ export function Reminder({
                   <button
                     type="button"
                     className="flex h-7 w-7 items-center justify-center rounded-md transition-all bg-rose-50 text-rose-500"
-                    onClick={() =>
-                      handleDelete({ id: template.id, type: "Reminder" })
-                    }
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete({ id: template.id, type: "Reminder" });
+                    }}
                   >
                     <X size={16} strokeWidth={2.5} />
                   </button>
@@ -373,13 +370,16 @@ export function Reminder({
             </div>
           )}
           selectedItem={reminderTemplate}
-          setSelectedItem={setReminderTemplate}
+          onSelect={(template) => {
+            setReminderTemplate(template);
+            setOpenReminder(false);
+          }}
           onSearch={(search: string) =>
             templates.filter((template) =>
               template.subject.toLowerCase().includes(search.toLowerCase()),
             )
           }
-          // openState={[openReminder, setOpenReminder]}
+        // openState={[openReminder, setOpenReminder]}
         />
       </div>
 
