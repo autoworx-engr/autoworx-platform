@@ -25,6 +25,7 @@ export const updateCompany = async (
       },
       data: companyData,
     });
+    console.log("updatedCompany", updatedCompany);
     revalidatePath("/settings/business");
     return { type: "success", data: updatedCompany };
   } catch (err) {

@@ -281,6 +281,17 @@ export async function sendInfobipMessage({
         },
       });
 
+      if (client && client?.isSalesAgent) {
+        await db.client.update({
+          where: {
+            id: clientId,
+          },
+          data: {
+            isSalesAgent: false,
+          },
+        });
+      }
+
       const processedAttachments = [];
       for (const file of attachments) {
         let attachment = await db.clientSmsAttachments.create({

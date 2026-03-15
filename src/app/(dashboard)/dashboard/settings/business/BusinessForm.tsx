@@ -1,16 +1,17 @@
 "use client";
 import { updateCompany } from "@/actions/settings/updateCompany";
+import PhoneInput from "@/components/PhoneInput";
 import { SlimInput } from "@/components/SlimInput";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
+import { queryKeys } from "@/lib/queryKeys";
 import { errorToast, successToast } from "@/lib/toast";
 import { Company } from "@prisma/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { Briefcase, Mail, MapPin, Save } from "lucide-react";
 import React, { useState, useTransition } from "react";
 import ProfilePicture from "./ProfilePicture";
 import Timezone from "./Timezone";
-import { queryKeys } from "@/lib/queryKeys";
-import { useQueryClient } from "@tanstack/react-query";
-import { Briefcase, Mail, MapPin, Save } from "lucide-react";
-import PhoneInput from "@/components/PhoneInput";
+import { SlimTextarea } from "@/components/SlimTextarea";
 
 type TProps = {
   company: Company | null;
@@ -20,7 +21,7 @@ export default function BusinessForm({ company }: TProps) {
   const queryClient = useQueryClient();
   const [imageSrc, setImageSrc] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null | undefined>(
-    company?.image
+    company?.image,
   );
 
   const [error, setError] = useState<string | null>(null);
@@ -39,6 +40,8 @@ export default function BusinessForm({ company }: TProps) {
     businessEmail: company?.email ?? "",
     businessWebsite: company?.website || "",
     companyAddress: company?.address || "",
+    about: company?.about || "",
+    teamSize: company?.teamSize || "MEDIUM",
     city: company?.city || "",
     state: company?.state || "",
     zip: company?.zip || "",
@@ -47,7 +50,7 @@ export default function BusinessForm({ company }: TProps) {
   };
 
   const [businessSettings, setBusinessSettings] = useState(
-    initialBusinessSettings
+    initialBusinessSettings,
   );
 
   // Check if any values have changed from initial state
@@ -102,11 +105,11 @@ export default function BusinessForm({ company }: TProps) {
     return "";
   };
 
- const validateBusinessPhone = (value: string) => {
+  const validateBusinessPhone = (value: string) => {
     if (!value.trim()) {
       return "Business phone number is required.";
     }
-    if (!/^\+?\d+$/.test(value)) { 
+    if (!/^\+?\d+$/.test(value)) {
       return "Business phone number must only contain digits (optional + prefix).";
     }
     return "";
@@ -144,11 +147,9 @@ export default function BusinessForm({ company }: TProps) {
     return "";
   };
 
-  const handlePhoneChange = (num: string, code: string, isoCode:string) => {
-
+  const handlePhoneChange = (num: string, code: string, isoCode: string) => {
     const fullPhoneNumber = `${code}${num}`;
 
-   
     setBusinessSettings((prev) => ({
       ...prev,
       businessPhone: fullPhoneNumber,
@@ -191,6 +192,18 @@ export default function BusinessForm({ company }: TProps) {
   // Live validation handler
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+
+    // block non-digit characters entirely
+    if (name === "zip") {
+      if (value !== "" && !/^\d+$/.test(value)) {
+        setValidationErrors((prev) => ({
+          ...prev,
+          zip: "Zip code must contain digits only.",
+        }));
+        // Don't update state with invalid characters
+        return;
+      }
+    }
 
     // Update business settings
     setBusinessSettings((prev) => ({ ...prev, [name]: value }));
@@ -235,23 +248,23 @@ export default function BusinessForm({ company }: TProps) {
     const newValidationErrors: { [key: string]: string } = {};
 
     newValidationErrors.legalBusinessName = validateLegalBusinessName(
-      businessSettings.legalBusinessName
+      businessSettings.legalBusinessName,
     );
     newValidationErrors.businessRegistrationIDNumber =
       validateBusinessRegistrationID(
-        businessSettings.businessRegistrationIDNumber
+        businessSettings.businessRegistrationIDNumber,
       );
     newValidationErrors.businessType = validateBusinessType(
-      businessSettings.businessType
+      businessSettings.businessType,
     );
     newValidationErrors.businessPhone = validateBusinessPhone(
-      businessSettings.businessPhone
+      businessSettings.businessPhone,
     );
     newValidationErrors.businessEmail = validateBusinessEmail(
-      businessSettings.businessEmail
+      businessSettings.businessEmail,
     );
     newValidationErrors.businessWebsite = validateBusinessWebsite(
-      businessSettings.businessWebsite
+      businessSettings.businessWebsite,
     );
 
     // Set validation errors
@@ -259,7 +272,7 @@ export default function BusinessForm({ company }: TProps) {
 
     // Check if there are any errors
     const hasErrors = Object.values(newValidationErrors).some(
-      (error) => error !== ""
+      (error) => error !== "",
     );
     if (hasErrors) {
       return;
@@ -312,6 +325,8 @@ export default function BusinessForm({ company }: TProps) {
         image,
         timezone: businessSettings.timezone,
         countryCode: businessSettings.countryCode,
+        about: businessSettings.about,
+        teamSize: businessSettings.teamSize,
       };
 
       const response = await updateCompany(company?.id, companyData);
@@ -323,7 +338,7 @@ export default function BusinessForm({ company }: TProps) {
         errorToast(
           response.errorSource && response.errorSource.length > 0
             ? response.errorSource[0].message
-            : response.message
+            : response.message,
         );
       }
     } catch (err) {
@@ -331,7 +346,7 @@ export default function BusinessForm({ company }: TProps) {
       errorToast(
         formattedError.errorSource && formattedError.errorSource.length > 0
           ? formattedError.errorSource[0].message
-          : formattedError.message
+          : formattedError.message,
       );
     }
   };
@@ -380,6 +395,20 @@ export default function BusinessForm({ company }: TProps) {
               name="businessRegistrationIDNumber"
               error={validationErrors.businessRegistrationIDNumber}
             />
+            <SlimTextarea
+              required={false}
+              value={businessSettings.about}
+              // onChange={(e)}
+              label="About"
+              name="about"
+              onChange={(e) =>
+                setBusinessSettings({
+                  ...businessSettings,
+                  about: e.target.value,
+                })
+              }
+              tooltipText="This information will be shown on your Collaboration Profile."
+            />
             <SlimInput
               required={true}
               value={businessSettings.businessType}
@@ -390,11 +419,22 @@ export default function BusinessForm({ company }: TProps) {
             />
             <SlimInput
               required={false}
+              value={businessSettings.teamSize}
+              onChange={handleChange}
+              label="Team Size"
+              name="teamSize"
+              error={validationErrors.teamSize}
+              tooltipText="Your team size will be displayed on your Collaboration Profile."
+            />
+
+            <SlimInput
+              required={false}
               value={businessSettings.industrySpecialization}
               onChange={handleChange}
               label="Industry/Specialization (Optional)"
               name="industrySpecialization"
               error={validationErrors.industrySpecialization}
+              tooltipText="This will appear on your Collaboration Profile. Example: Dry Install PPF, Wet Install PPF, Vinyl Wrap, Ceramic Coating."
             />
           </div>
         </div>
@@ -406,17 +446,15 @@ export default function BusinessForm({ company }: TProps) {
             Contact & Digital Presence
           </h4>
           <div className="grid md:grid-cols-2 grid-cols-1 gap-x-8 gap-y-4">
-           
             <PhoneInput
-    label="Business Phone"
-    defaultValue={company?.phone || ""}
-     defaultIsoCode={company?.countryCode!}
-    // value={businessSettings.businessPhone} 
-    onChange={handlePhoneChange} 
-    required={true}
-    error={validationErrors.businessPhone}
-     
-  />
+              label="Business Phone"
+              defaultValue={company?.phone || ""}
+              defaultIsoCode={company?.countryCode!}
+              // value={businessSettings.businessPhone}
+              onChange={handlePhoneChange}
+              required={true}
+              error={validationErrors.businessPhone}
+            />
             <SlimInput
               required={true}
               value={businessSettings.businessEmail}

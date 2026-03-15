@@ -93,6 +93,7 @@ export function SelectAppointmentVehicle({
 
       <div className="flex items-center gap-2">
         <Selector
+          className="min-w-full"
           disabledDropdown={clientId && !vehicle?.fromRequest ? false : true}
           label={(vehicle: Partial<Vehicle> | null) =>
             vehicle

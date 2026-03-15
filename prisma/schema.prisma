@@ -582,6 +582,8 @@ model Company {
   industry                         String?
   website                          String?
   address                          String?
+  about                            String?
+  teamSize                         TeamSize?                          @default(MEDIUM)
   city                             String?
   state                            String?
   zip                              String?
@@ -682,6 +684,30 @@ model Company {
   servicePlaybooks                 ServicePlaybook[]
   conversationExamples             ConversationExample[]
   knowledgeBaseDocuments           KnowledgeBaseDocument[]
+  reviews                          Reviews[]
+}
+
+model Reviews {
+  id            Int      @id @default(autoincrement())
+  rate          Int
+  message       String
+  companyId     Int
+  sendUserId    Int
+  sendCompanyId Int
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at")
+  company Company @relation(fields: [companyId], references: [id])
+  user    User    @relation(fields: [sendUserId], references: [id])
+
+  @@index([companyId])
+  @@index([sendUserId])
+  @@unique([sendCompanyId, companyId])
+}
+
+enum TeamSize {
+  SMALL
+  MEDIUM
+  LARGE
 }
 
 enum SmsGateway {
@@ -1484,24 +1510,25 @@ model TemplatePhoto {
 }
 
 model RequestEstimate {
-  id                Int      @id @default(autoincrement())
-  senderId          Int      @map("sender_id")
-  senderCompanyId   Int      @map("sender_company_id")
-  receiverId        Int      @map("receiver_id")
-  receiverCompanyId Int      @map("receiver_company_id")
-  vehicleId         Int      @unique @map("vehicle_id")
-  serviceId         Int      @unique @map("service_id")
-  invoiceId         String   @map("invoice_id")
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @default(now()) @updatedAt @map("updated_at")
-  sender            User     @relation("Sender", fields: [senderId], references: [id], onDelete: Cascade)
-  receiver          User     @relation("Receiver", fields: [receiverId], references: [id], onDelete: Cascade)
-  senderCompany     Company  @relation("SenderCompany", fields: [senderCompanyId], references: [id], onDelete: Cascade)
-  receiverCompany   Company  @relation("ReceiverCompany", fields: [receiverCompanyId], references: [id], onDelete: Cascade)
-  invoice           Invoice?
-  vehicle           Vehicle? @relation("Vehicle", fields: [vehicleId], references: [id], onDelete: Cascade)
-  service           Service? @relation("Service", fields: [serviceId], references: [id], onDelete: Cascade)
-  message           Message? @relation("Message")
+  id                    Int                    @id @default(autoincrement())
+  senderId              Int?                   @map("sender_id")
+  senderCompanyId       Int                    @map("sender_company_id")
+  receiverId            Int?                   @map("receiver_id")
+  receiverCompanyId     Int                    @map("receiver_company_id")
+  vehicleId             Int                    @unique @map("vehicle_id")
+  serviceId             Int                    @unique @map("service_id")
+  invoiceId             String                 @map("invoice_id")
+  createdAt             DateTime               @default(now()) @map("created_at")
+  updatedAt             DateTime               @default(now()) @updatedAt @map("updated_at")
+  sender                User?                  @relation("Sender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver              User?                  @relation("Receiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  senderCompany         Company                @relation("SenderCompany", fields: [senderCompanyId], references: [id], onDelete: Cascade)
+  receiverCompany       Company                @relation("ReceiverCompany", fields: [receiverCompanyId], references: [id], onDelete: Cascade)
+  invoice               Invoice?
+  vehicle               Vehicle?               @relation("Vehicle", fields: [vehicleId], references: [id], onDelete: Cascade)
+  service               Service?               @relation("Service", fields: [serviceId], references: [id], onDelete: Cascade)
+  collaborationMessages CollaborationMessage[]
+  message               Message?               @relation("Message")
 }
 
 // Technician of a InvoiceItem.
@@ -1589,12 +1616,44 @@ model Message {
   updatedAt         DateTime         @default(now()) @updatedAt @map("updated_at")
   group             Group?           @relation(fields: [groupId], references: [id])
   attachment        Attachment[]
-  requestEstimate   RequestEstimate? @relation("Message", fields: [requestEstimateId], references: [id])
   chatTrack         ChatTrack?
+  userId            Int?
+  requestEstimate   RequestEstimate? @relation("Message", fields: [requestEstimateId], references: [id])
 
   @@index([to], name: "fk_messages_to")
   @@index([from], name: "fk_messages_from")
   @@index([groupId], name: "fk_messages_group")
+}
+
+model CollaborationMessage {
+  id                 Int               @id @default(autoincrement())
+  fromCompanyId      Int
+  toCompanyId        Int
+  senderUserId       Int
+  message            String?
+  section            String
+  requestEstimateId  Int?
+  createdAt          DateTime          @default(now()) @map("created_at")
+  updatedAt          DateTime          @default(now()) @updatedAt @map("updated_at")
+  attachment         Attachment[]
+  chatTrack          CompanyChatTrack? @relation(fields: [companyChatTrackId], references: [id])
+  requestEstimate    RequestEstimate?  @relation(fields: [requestEstimateId], references: [id])
+  companyChatTrackId Int?
+  senderUser         User              @relation(fields: [senderUserId], references: [id])
+
+  @@index([fromCompanyId], name: "fk_collaboration_messages_to")
+  @@index([toCompanyId], name: "fk_collaboration_messages_from")
+}
+
+model CompanyChatTrack {
+  id                    Int                    @id @default(autoincrement())
+  senderCompanyId       Int
+  receiverCompanyId     Int
+  messageId             Int
+  lastMessage           String
+  isRead                Boolean                @default(false)
+  createdAt             DateTime               @default(now())
+  collaborationMessages CollaborationMessage[]
 }
 
 enum MessageSection {
@@ -1616,17 +1675,19 @@ model ChatTrack {
 }
 
 model Attachment {
-  id                 Int               @id @default(autoincrement())
-  fileName           String // File name (e.g., 'image.png')
-  fileType           String // File type (e.g., 'image/png', 'application/pdf')
-  fileUrl            String // File storage path or URL
-  fileSize           String
-  messageId          Int? // Foreign key to Message model, enforces one-to-one relationship
-  bugReportMessageId Int?
-  message            Message?          @relation(fields: [messageId], references: [id])
-  bugReportMessage   BugReportMessage? @relation(fields: [bugReportMessageId], references: [id])
-  createdAt          DateTime          @default(now())
-  updatedAt          DateTime          @default(now()) @updatedAt @map("updated_at")
+  id                     Int                   @id @default(autoincrement())
+  fileName               String // File name (e.g., 'image.png')
+  fileType               String // File type (e.g., 'image/png', 'application/pdf')
+  fileUrl                String // File storage path or URL
+  fileSize               String
+  messageId              Int? // Foreign key to Message model, enforces one-to-one relationship
+  bugReportMessageId     Int?
+  message                Message?              @relation(fields: [messageId], references: [id])
+  bugReportMessage       BugReportMessage?     @relation(fields: [bugReportMessageId], references: [id])
+  createdAt              DateTime              @default(now())
+  updatedAt              DateTime              @default(now()) @updatedAt @map("updated_at")
+  collaborationMessage   CollaborationMessage? @relation(fields: [collaborationMessageId], references: [id])
+  collaborationMessageId Int?
 }
 
 model Group {
@@ -2125,6 +2186,8 @@ model User {
   salaryHistory                  SalaryHistory[]
   shortLinks                     ShortLink[] // Links created by this user
   twoFactorConfirmation          TwoFactorConfirmation?
+  collaborationMessages          CollaborationMessage[]
+  reviews                        Reviews[]
 
   @@index([companyId], name: "fk_users_company")
 }
@@ -2393,13 +2456,11 @@ model ClientCall {
 }
 
 model ClientSmsAttachments {
-  id   Int    @id @default(autoincrement())
-  name String
-  url  String
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
-
+  id          Int       @id @default(autoincrement())
+  name        String
+  url         String
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at")
   clientSMSId Int       @map("client_sms_id")
   clientSMS   ClientSMS @relation(fields: [clientSMSId], references: [id], onDelete: Cascade)
 }

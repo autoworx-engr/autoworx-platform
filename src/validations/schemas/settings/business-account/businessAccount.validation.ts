@@ -24,7 +24,8 @@ export const updateBusinessAccountValidationSchema = z.object({
   city: z.string().nullable().optional(), // Nullable string for city
   state: z.string().nullable().optional(), // Nullable string for state
   zip: z.string().nullable().optional(), // Optional nullable US ZIP code format
-  image: z.string().nullable().optional(), // Nullable string for image
+  about: z.string().nullable().optional(), // Nullable string for city
+  teamSize: z.enum(["SMALL", "MEDIUM", "LARGE"]).nullable().optional(), // Nullable string for state
 });
 
 export type TUpdateBusinessAccountValidationSchema = z.infer<

@@ -106,6 +106,26 @@ Handles real-time updates for unread messages count on lead cards or pipeline vi
 | -------------------- | -------- | ---------------------------- | ------------------------------------------------------ | -------------------------------------------------------------------------- |
 | `message-{clientId}` | `client` | `{ count, updatedColumnId }` | `src/app/api/twilio/sms-receive/[companyIds]/route.ts` | `src/app/(dashboard)/dashboard/pipeline/components/CommunicationsNoti.tsx` |
 
+### F. Collaboration (Inter-Company Communication)
+
+Handles real-time messaging between users from different companies that have established collaboration relationships.
+
+| Channel           | Event                          | Payload                                                  | Description                                                                                                      |
+| ----------------- | ------------------------------ | -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `user-{senderId}` | `message`                      | `{ to, from, message, attachment, requestEstimate }`     | **Collaboration Messages**: The receiver subscribes to the _sender's_ channel to receive collaboration messages. |
+| `track-{userId}`  | `chat-track`                   | `ChatTrack` Object (includes `section: "collaboration"`) | Updates the chat list sidebar with the latest collaboration message snippet, timestamp, and unread status.       |
+| `track-{userId}`  | `chat-track-read`              | `{ senderId, userId, section: "collaboration" }`         | Marks a collaboration conversation as read in real-time.                                                         |
+| `track-{userId}`  | `collaboration-unread-updated` | Unread count data                                        | Refreshes unread collaboration message counts in the sidebar navigation.                                         |
+
+**Key Implementation Details:**
+
+- Collaboration messages use `section: "collaboration"` to distinguish from internal company messages
+- Similar to internal messaging, uses the direct messaging pattern where receiver subscribes to sender's channel
+- Trigger Location: [`src/app/api/pusher/route.ts`](src/app/api/pusher/route.ts) (when `section === "collaboration"`)
+- Mark as Read Action: [`src/actions/communication/collaboration/updateUnreadMessage.ts`](src/actions/communication/collaboration/updateUnreadMessage.ts)
+- Subscriber Location: [`src/app/(dashboard)/dashboard/communication/collaboration/UserMessageBox.tsx`](<src/app/(dashboard)/dashboard/communication/collaboration/UserMessageBox.tsx>)
+- Sidebar Updates: [`src/components/SideNavbar.tsx`](src/components/SideNavbar.tsx)
+
 ## 4. Key Files
 
 - **Triggers (Server-Side)**:

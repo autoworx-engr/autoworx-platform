@@ -52,9 +52,33 @@ export default function SearchCollaborationModal({
     }
   }, [open]);
 
+  async function handleSubmit(event?: React.ChangeEvent<HTMLInputElement>) {
+    // event && event.preventDefault();
+    try {
+      const inputValue = event?.target?.value || "";
+      const response = await searchCompanyQuery(inputValue?.trim());
+      if (response.success) {
+        const updateCompanyAdmins = response.data
+          .map((company) => {
+            return company.users.map((user) => {
+              return {
+                ...user,
+                companyName: company.name,
+                isConnected: companies.some((c) => c.id === user.companyId),
+              };
+            });
+          })
+          .flat();
+        setCompanyAdmins(updateCompanyAdmins);
+      }
+    } catch (err: any) {
+      errorToast(err.message);
+    }
+  }
+
   useEffect(() => {
     if (inputRef?.current) {
-      inputRef.current.focus();
+      // inputRef.current.focus();
       handleSubmit();
     }
   }, [openUserList]);
@@ -86,30 +110,6 @@ export default function SearchCollaborationModal({
     }
   }
 
-  async function handleSubmit(event?: React.ChangeEvent<HTMLInputElement>) {
-    // event && event.preventDefault();
-    try {
-      const inputValue = event?.target?.value || "";
-      const response = await searchCompanyQuery(inputValue?.trim());
-      if (response.success) {
-        const updateCompanyAdmins = response.data
-          .map((company) => {
-            return company.users.map((user) => {
-              return {
-                ...user,
-                companyName: company.name,
-                isConnected: companies.some((c) => c.id === user.companyId),
-              };
-            });
-          })
-          .flat();
-        setCompanyAdmins(updateCompanyAdmins);
-      }
-    } catch (err: any) {
-      errorToast(err.message);
-    }
-  }
-
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -118,14 +118,21 @@ export default function SearchCollaborationModal({
           Search for Collaborators
         </button>
       </DialogTrigger>
-      <DialogContent className="min-w-lg max-w-fit">
+      <DialogContent
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        className="w-[calc(100vw-2rem)] sm:w-full sm:max-w-lg"
+      >
         {error && <p className="text-center text-sm text-red-400">{error}</p>}
-        <h2 className="mb-4 text-xl font-bold text-slate-600">Search for Collaborators</h2>
-        <div className="min-w-96">
+        <h2 className="mb-4 text-xl font-bold text-slate-600">
+          Search for Collaborators
+        </h2>
+        <div className="w-full sm:min-w-96">
           {openUserList ? (
             <>
-              <div className="mb-1.5 px-1 text-sm font-semibold text-slate-600">Enter Company Name</div>
-              <div className="h-fit w-full space-y-3 rounded-xl border border-slate-200 bg-slate-50/50 p-4">
+              <div className="mb-1.5 px-1 text-sm font-semibold text-slate-600">
+                Enter Company Name
+              </div>
+              <div className="h-fit w-full space-y-3 rounded-xl border border-slate-200 bg-slate-50/50 p-2 sm:p-4">
                 {/* Search box */}
                 <SearchBox
                   onSearch={handleSubmit}
@@ -141,41 +148,41 @@ export default function SearchCollaborationModal({
                     companyAdmins.map((user) => (
                       <div
                         key={user?.id}
-                        className="flex w-full items-center gap-3 rounded-lg border border-slate-100 bg-white p-2.5 transition-colors hover:bg-slate-50"
+                        className="flex w-full flex-wrap items-center gap-2 rounded-lg border border-slate-100 bg-white p-2 transition-colors hover:bg-slate-50 sm:flex-nowrap sm:gap-3 sm:p-2.5"
                       >
                         <Avatar
                           className="flex-shrink-0"
                           photo={user?.image}
-                          width={44}
-                          height={44}
+                          width={40}
+                          height={40}
                         />
                         <div className="flex min-w-0 flex-1 flex-col">
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-wrap items-center gap-1 sm:flex-nowrap sm:gap-2">
                             <p className="truncate text-sm font-semibold text-slate-700">
                               {user?.firstName} {user?.lastName}
                             </p>
-                            <span className="flex-shrink-0 rounded-full bg-teal-50 px-2 py-0.5 text-xs font-semibold text-[#006D77]">
+                            <span className="flex-shrink-0 rounded-full bg-teal-50 px-2 py-0.5 text-[10px] font-semibold text-[#006D77] sm:text-xs">
                               {user?.companyName}
                             </span>
                           </div>
-                          <div className="flex items-center gap-2 text-xs text-slate-400">
+                          <div className="flex flex-col text-[10px] text-slate-400 sm:flex-row sm:items-center sm:gap-2 sm:text-xs">
                             {user?.phone && <span>{user?.phone}</span>}
                             <span className="truncate">{user?.email}</span>
                           </div>
                         </div>
-                        <div className="flex-shrink-0">
+                        <div className="w-full flex-shrink-0 sm:w-auto">
                           {!user?.isConnected ? (
                             <button
                               onClick={() =>
                                 handleConnectCompany(user?.companyId!)
                               }
-                              className="flex items-center gap-1.5 rounded-lg bg-[#006D77] px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-all hover:bg-[#005a63] active:scale-95"
+                              className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-[#006D77] px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-all hover:bg-[#005a63] active:scale-95 sm:w-auto"
                             >
                               <Plus size={14} strokeWidth={2.5} />
                               <span>Invite</span>
                             </button>
                           ) : (
-                            <span className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-500">
+                            <span className="block w-full rounded-lg bg-slate-100 px-3 py-1.5 text-center text-xs font-semibold text-slate-500 sm:inline sm:w-auto sm:text-left">
                               Connected
                             </span>
                           )}

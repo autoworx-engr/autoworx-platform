@@ -115,6 +115,10 @@ export default function ReplenishProductForm({
               name="date"
               type="date"
               label="Date"
+              onFocus={(e) => {
+                // Prevent the default focus behavior to avoid opening the calendar popup
+                e.preventDefault();
+              }}
               defaultValue={todayInCompanyTz}
               // required={true}
             />

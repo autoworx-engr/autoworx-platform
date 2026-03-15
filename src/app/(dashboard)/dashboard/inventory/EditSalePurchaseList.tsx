@@ -231,6 +231,10 @@ export default function EditSalePurchaseList({
               name="date"
               type="date"
               label="Date"
+              onFocus={(e) => {
+                // Prevent the default focus behavior to avoid opening the calendar popup
+                e.preventDefault();
+              }}
               required={true}
               value={formState.date}
               onChange={handleInputChange}
