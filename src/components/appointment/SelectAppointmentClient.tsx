@@ -47,7 +47,7 @@ export function SelectAppointmentClient({
 
   const newAddedCustomer = useListsStore((x) => x.newAddedCustomer);
   const queryClient = useQueryClient();
-    const pathname = usePathname();
+  const pathname = usePathname();
 
   useEffect(() => {
     if (clientId && clientList.length > 0) {
@@ -90,7 +90,7 @@ export function SelectAppointmentClient({
       <input type="hidden" name={name} value={client?.id ?? ""} />
 
       <Selector
-        className="max-w-[300px]"
+        className="min-w-full"
         label={(client: Partial<Client> | null) =>
           client ? `${client.firstName} ${client.lastName ?? ""}` : "Client"
         }
