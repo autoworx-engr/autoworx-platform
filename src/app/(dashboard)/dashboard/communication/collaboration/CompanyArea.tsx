@@ -1,5 +1,4 @@
-import { cn } from "@/lib/cn";
-import { Company, Message, Attachment } from "@prisma/client";
+import { Company, Attachment, CollaborationMessage } from "@prisma/client";
 import { Session } from "next-auth";
 import CollaborationEmptyBox from "./CollaborationEmptyBox";
 import CompanyMessageBox from "../CompanyMessageBox";
@@ -14,7 +13,9 @@ export default function CompanyArea({
 }: {
   selectedCompany: Company | null;
   currentUser: Session["user"];
-  previousMessages: (Message & { attachment: Attachment[] | null })[];
+  previousMessages: (CollaborationMessage & {
+    attachment: Attachment[] | null;
+  })[];
   setSelectedCompany?: React.Dispatch<React.SetStateAction<Company | null>>;
 }) {
   const { data: session } = useSession();

@@ -3,10 +3,9 @@ import { NextResponse } from "next/server";
 import { validateCompanyId } from "../utils";
 import { resourceLimits } from "worker_threads";
 
-
 /**
  * @swagger
- * /api/ai-train/company-knowledge:
+ * /api/sales-agent/company-knowledge:
  *   get:
  *     summary: Get company knowledge records
  *     tags: [Company Knowledge]
@@ -46,31 +45,31 @@ import { resourceLimits } from "worker_threads";
  *         description: Internal server error
  */
 export async function GET(req: Request) {
-    try {
-        const validation = validateCompanyId(req);
-        if (validation instanceof NextResponse) return validation;
-        const { companyId } = validation;
+  try {
+    const validation = validateCompanyId(req);
+    if (validation instanceof NextResponse) return validation;
+    const { companyId } = validation;
 
-        const data = await db.companyInfo.findFirst({
-            where: { companyId: Number(companyId) },
-        })
+    const data = await db.companyInfo.findFirst({
+      where: { companyId: Number(companyId) },
+    });
 
-        return NextResponse.json({
-            success: true,
-            message: "Company Info retrieved successfully",
-            data: data || {}
-        })
-    } catch (error) {
-        return NextResponse.json(
-            { success: false, message: "Internal server error" },
-            { status: 500 },
-        );
-    }
+    return NextResponse.json({
+      success: true,
+      message: "Company Info retrieved successfully",
+      data: data || {},
+    });
+  } catch (error) {
+    return NextResponse.json(
+      { success: false, message: "Internal server error" },
+      { status: 500 },
+    );
+  }
 }
 
 /**
  * @swagger
- * /api/ai-train/company-knowledge:
+ * /api/sales-agent/company-knowledge:
  *   post:
  *     summary: Create company knowledge
  *     tags: [Company Knowledge]
@@ -132,61 +131,62 @@ export async function GET(req: Request) {
  *         description: Internal server error
  */
 export async function POST(req: Request) {
-    try {
-        const body = await req.json()
-        const companyId = Number(body?.companyId)
+  try {
+    const body = await req.json();
+    const companyId = Number(body?.companyId);
 
-        if (!companyId) {
-            return NextResponse.json(
-                { success: false, message: "Company ID is required" },
-                { status: 400 },
-            );
-        }
-
-        const data = {
-            shopName: body.shopName,
-            about: body.about,
-            address: body.address,
-            email: body.email,
-            phone: body.phone,
-            websiteUrl: body.websiteUrl,
-            hours: body.hours,
-            policies: body.policies,
-        }
-        // const companyKnowledge = await db.companyInfo.create({
-        //     data,
-        // })
-
-        const existingInfo = await db.companyInfo.findFirst({
-            where: { companyId }
-        });
-
-        let result;
-        if (existingInfo) {
-            // Update
-            result = await db.companyInfo.update({
-                where: { id: existingInfo.id },
-                data: data,
-            });
-        } else {
-            // Create
-            result = await db.companyInfo.create({
-                data: {
-                    companyId: companyId,
-                    ...data
-                },
-            });
-        }
-        return NextResponse.json({
-            success: true,
-            message: existingInfo ? "Company settings updated" : "Company settings created",
-            data: resourceLimits,
-        });
-
-    } catch (error) {
-        return NextResponse.json(
-            { success: false, message: "Internal server error" },
-            { status: 500 },
-        );
+    if (!companyId) {
+      return NextResponse.json(
+        { success: false, message: "Company ID is required" },
+        { status: 400 },
+      );
     }
+
+    const data = {
+      shopName: body.shopName,
+      about: body.about,
+      address: body.address,
+      email: body.email,
+      phone: body.phone,
+      websiteUrl: body.websiteUrl,
+      hours: body.hours,
+      policies: body.policies,
+    };
+    // const companyKnowledge = await db.companyInfo.create({
+    //     data,
+    // })
+
+    const existingInfo = await db.companyInfo.findFirst({
+      where: { companyId },
+    });
+
+    let result;
+    if (existingInfo) {
+      // Update
+      result = await db.companyInfo.update({
+        where: { id: existingInfo.id },
+        data: data,
+      });
+    } else {
+      // Create
+      result = await db.companyInfo.create({
+        data: {
+          companyId: companyId,
+          ...data,
+        },
+      });
+    }
+    return NextResponse.json({
+      success: true,
+      message: existingInfo
+        ? "Company settings updated"
+        : "Company settings created",
+      data: resourceLimits,
+    });
+  } catch (error) {
+    return NextResponse.json(
+      { success: false, message: "Internal server error" },
+      { status: 500 },
+    );
+  }
 }

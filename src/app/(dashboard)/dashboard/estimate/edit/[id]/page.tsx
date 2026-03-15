@@ -115,17 +115,17 @@ export default async function Page({
 
     const technicians =
       item.service?.Technician?.filter(
-        (tech) => tech.invoiceId === invoice.id
+        (tech) => tech.invoiceId === invoice.id,
       ) || [];
 
     if (technicians.length) {
       if (Array.isArray(technicians) && technicians.length > 0) {
         const statuses = technicians.map((tech) =>
-          tech.status?.toLowerCase().trim()
+          tech.status?.toLowerCase().trim(),
         );
 
         const isServiceComplete = statuses.every(
-          (status) => status === "complete"
+          (status) => status === "complete",
         );
 
         if (isServiceComplete) {
@@ -199,7 +199,7 @@ export default async function Page({
       cost: product.price,
       tags: product.tags.map((tag) => tag.tag),
       productId: product.id,
-    }))
+    })),
   );
 
   labors.forEach((labor) => {
@@ -280,6 +280,7 @@ export default async function Page({
           invoice={invoice}
           isAllServicesCompleted={incompleteServices.length === 0}
           isEdit={true}
+          requestEstimate={invoice?.requestEstimate}
         />
 
         <Tabs

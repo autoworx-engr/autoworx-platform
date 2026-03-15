@@ -25,7 +25,7 @@ import {
   useKnowledgeBaseDocuments,
   useCreateKnowledgeBaseDocument,
   useDeleteKnowledgeBaseDocument,
-} from "@/hooks/ai-train/useKnowledgeBaseDocuments";
+} from "@/hooks/sales-agent/useKnowledgeBaseDocuments";
 import { Badge } from "@/components/ui/badge";
 
 const documentExamples = [

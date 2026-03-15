@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 /**
  * @swagger
- * /api/ai-train/service-playbooks/{id}:
+ * /api/sales-agent/service-playbooks/{id}:
  *   get:
  *     summary: Get service playbook by ID
  *     tags: [Service Playbooks]
@@ -51,7 +51,7 @@ export async function GET(_: Request, { params }: { params: { id: number } }) {
 
 /**
  * @swagger
- * /api/ai-train/service-playbooks/{id}:
+ * /api/sales-agent/service-playbooks/{id}:
  *   patch:
  *     summary: Update a service playbook
  *     tags: [Service Playbooks]
@@ -177,7 +177,6 @@ export async function PATCH(
   try {
     const body = await req.json();
 
-
     if (body.pricingRules !== undefined) {
       await db.pricingRule.deleteMany({
         where: { playbookId: Number(params.id) },
@@ -222,7 +221,7 @@ export async function PATCH(
 
 /**
  * @swagger
- * /api/ai-train/service-playbooks/{id}:
+ * /api/sales-agent/service-playbooks/{id}:
  *   delete:
  *     summary: Delete a service playbook
  *     tags: [Service Playbooks]
