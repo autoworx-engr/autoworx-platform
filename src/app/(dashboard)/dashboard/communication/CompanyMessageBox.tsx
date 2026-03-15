@@ -99,12 +99,32 @@ export default function CompanyMessageBox({
 
     const channel = pusher.subscribe(`company-${currentCompanyId}`);
 
+    // channel.bind("message", (data: any) => {
+    //   console.log("data", data);
+    //   if (
+    //     (data.fromCompanyId === currentCompanyId &&
+    //       data.toCompanyId === companyId) ||
+    //     (data.fromCompanyId === companyId &&
+    //       data.toCompanyId === currentCompanyId)
+    //   ) {
+    //     setMessages((prev) => [...prev, data]);
+    //   }
+    // });
+
     channel.bind("message", (data: any) => {
+      const fromId = Number(data.fromCompanyId);
+      const toId = Number(data.toCompanyId);
+      const currentId = Number(currentCompanyId);
+      const chatId = Number(companyId);
+      console.log({
+        fromId,
+        toId,
+        currentId,
+        chatId,
+      });
       if (
-        (data.fromCompanyId === currentCompanyId &&
-          data.toCompanyId === companyId) ||
-        (data.fromCompanyId === companyId &&
-          data.toCompanyId === currentCompanyId)
+        (fromId === currentId && toId === chatId) ||
+        (fromId === chatId && toId === currentId)
       ) {
         setMessages((prev) => [...prev, data]);
       }
@@ -161,7 +181,7 @@ export default function CompanyMessageBox({
         },
         body: JSON.stringify({
           fromCompanyId: currentCompanyId,
-          toCompanyId: companyId,
+          toCompanyId: Number(companyId),
           senderUserId: session?.user?.id,
           message: trimmedMessage || null,
           attachmentFiles: uploadedFiles,
