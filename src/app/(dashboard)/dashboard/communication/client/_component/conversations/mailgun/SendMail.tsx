@@ -7,7 +7,7 @@ import {
 import { MailgunEmail, MailgunEmailAttachment } from "@prisma/client";
 import { SendHorizontal } from "lucide-react";
 import Image from "next/image";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import AttachmentInput from "../AttachmentInput";
 import SmartReplyBar from "../sms/SmartReply";
 
@@ -66,6 +66,10 @@ export default function SendMail({
     el.style.height = "auto";
     el.style.height = `${el.scrollHeight}px`;
   };
+
+  useEffect(() => {
+    adjustTextareaHeight();
+  }, [messageInput]);
 
   const handleSendMessage = async (
     e:
@@ -126,6 +130,9 @@ export default function SendMail({
       });
       setMessageInput("");
       setFiles([]);
+
+      setTimeout(() => adjustTextareaHeight(), 0);
+
       const currentClient = clientList?.find(
         (client) => client.id === clientId
       );
