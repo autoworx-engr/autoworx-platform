@@ -6,11 +6,11 @@ import {
   useCheckSlug,
   useCreateShop,
 } from "@/hooks/virtual-shop/configure/useVirtualShopConfigure";
-import { TextInput } from "./component/TextInput";
-import { Textarea } from "./component/Textarea";
 import { FileUpload } from "./component/FileUpload";
 import { ColorPicker } from "./component/ColorPicker";
 import { Select } from "./component/Select";
+import { SlimInput } from "@/components/SlimInput";
+import { SlimTextarea } from "@/components/SlimTextarea";
 
 type ThemeConfig = { primaryColor: string; fontFamily?: string };
 type ShopFormData = {
@@ -21,6 +21,8 @@ type ShopFormData = {
   bannerUrl?: string;
   themeConfig?: ThemeConfig;
 };
+
+const domain = new URL(process.env.NEXT_PUBLIC_APP_URL!).hostname;
 
 const fonts = ["Inter", "Roboto", "Playfair Display"];
 
@@ -71,14 +73,16 @@ export default function VirtualShopConfigurePage() {
   const isFormValid = form.storeName && slug && slugAvailable;
 
   return (
-    <div className="max-w-3xl mx-auto p-6 space-y-6">
+    <div className="w-full mx-auto p-6 space-y-6 h-screen overflow-y-auto">
       <h1 className="text-2xl font-bold">Configure Your Virtual Shop</h1>
 
       <div className="p-4 border rounded-md space-y-4">
         <h2 className="font-semibold text-lg">Core Identity</h2>
-        <TextInput
-          label="Store Name *"
+        <SlimInput
           value={form.storeName}
+          name="storeName"
+          placeholder="Type your store name!"
+          required
           onChange={(e) => setForm({ ...form, storeName: e.target.value })}
         />
 
@@ -92,7 +96,7 @@ export default function VirtualShopConfigurePage() {
               value={slug}
               onChange={(e) => debouncedCheck(e.target.value)}
             />
-            <span className="text-gray-500">.yourdomain.com</span>
+            <span className="text-gray-500">.{domain}</span>
           </div>
           {slugAvailable === undefined && (
             <p className="text-sm text-gray-500">Checking availability...</p>
@@ -105,9 +109,11 @@ export default function VirtualShopConfigurePage() {
           )}
         </div>
 
-        <Textarea
+        <SlimTextarea
           label="Description"
           value={form.description}
+          name="description"
+          placeholder="Type your store description!"
           onChange={(e) => setForm({ ...form, description: e.target.value })}
         />
       </div>
@@ -154,11 +160,11 @@ export default function VirtualShopConfigurePage() {
       </div>
 
       <button
-        className={`px-6 py-2 rounded text-white ${isFormValid ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-400 cursor-not-allowed"}`}
+        className={`px-6 py-2 flex items-center justify-center rounded text-white ${isFormValid ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-400 cursor-not-allowed"}`}
         disabled={!isFormValid || createShopMutation.isPending}
         onClick={handleSubmit}
       >
-        {createShopMutation.isPending ? "Saving..." : "Create Shop"}
+        {createShopMutation.isPending ? "Saving..." : "Configure Shop"}
       </button>
     </div>
   );
