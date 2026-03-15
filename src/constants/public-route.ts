@@ -15,6 +15,7 @@ export const PUBLIC_API_ROUTES = [
   "/api/ai-train-company",
   "/api/notifications/client-abuse",
   // Webhook endpoints
+  "/api/pusher/collaboration",
   "/api/stripe/invoice-pay-hook",
   "/api/twilio/token",
   "/api/twilio/register-voip",

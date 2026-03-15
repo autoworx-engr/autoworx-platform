@@ -126,9 +126,9 @@ export async function GET(request: NextRequest) {
     });
 
     const filteredCompanyWithAdminPromises = companyWithAdmin.map(
-      async company => {
+      async (company) => {
         const filteredAdmins = await Promise.all(
-          company.users.map(async user => {
+          company.users.map(async (user) => {
             try {
               const permissions = await getUserPermissions(
                 user.id,
@@ -138,11 +138,33 @@ export async function GET(request: NextRequest) {
               const hasCollaboration =
                 permissions?.communicationHubCollaboration === true;
 
+              // Fetch last collaboration message for this company
+              const lastMessage = await db.collaborationMessage.findFirst({
+                where: {
+                  OR: [
+                    { fromCompanyId: userCompanyId, toCompanyId: company.id },
+                    { fromCompanyId: company.id, toCompanyId: userCompanyId },
+                  ],
+                },
+                orderBy: { createdAt: "desc" },
+              });
+
+              // Count unread messages
+              const unreadCount = await db.companyChatTrack.count({
+                where: {
+                  receiverCompanyId: userCompanyId,
+                  senderCompanyId: company.id,
+                  isRead: false,
+                },
+              });
+
               return hasCollaboration
                 ? {
                     ...user,
                     companyName: company.name,
                     isConnected: company.isCollaborators,
+                    lastMessage,
+                    unreadCount,
                   }
                 : null;
             } catch (error) {
@@ -154,7 +176,7 @@ export async function GET(request: NextRequest) {
             }
           }),
         );
-        return filteredAdmins.filter(user => user !== null);
+        return filteredAdmins.filter((user) => user !== null);
       },
     );
 

@@ -15,6 +15,7 @@ type TEstimateData = {
   receiverCompanyId: number;
   senderCompanyId: number;
   messageText?: string;
+  senderId?: number;
 };
 
 export const requestEstimate = async (
