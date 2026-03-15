@@ -161,7 +161,7 @@ export default function CompanyMessageBox({
         },
         body: JSON.stringify({
           fromCompanyId: currentCompanyId,
-          toCompanyId: companyId,
+          toCompanyId: Number(companyId),
           senderUserId: session?.user?.id,
           message: trimmedMessage || null,
           attachmentFiles: uploadedFiles,
