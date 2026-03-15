@@ -386,7 +386,7 @@ export default function Calendar() {
       />
 
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent side="right" className="">
+        <SheetContent side="right">
           {selectedEvent && (
             <div className="flex flex-col h-full bg-white">
               {/* Header */}
