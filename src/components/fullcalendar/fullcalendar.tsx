@@ -68,7 +68,6 @@ export default function Calendar({ type }: { type: CalendarType }) {
     isLoading: isHolidaysLoading,
     isFetching: isHolidaysFetching,
   } = useGetHolidays(session?.user?.companyId ?? 0);
-  console.log({ dateRange, tasks, appointments });
 
   const loading =
     isCalendarLoading ||
