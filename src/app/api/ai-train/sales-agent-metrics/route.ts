@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 
 /**
  * @swagger
- * /api/sales-agent/sales-agent-metrics:
+ * /api/ai-train/sales-agent-metrics:
  *   get:
  *     summary: Get Sales Agent performance metrics
  *     tags:

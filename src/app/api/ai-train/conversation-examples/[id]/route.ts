@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 /**
  * @swagger
- * /api/sales-agent/conversation-examples/{id}:
+ * /api/ai-train/conversation-examples/{id}:
  *   get:
  *     summary: Get conversation example by ID
  *     tags: [Conversation Examples]
@@ -46,7 +46,7 @@ export async function GET(
 
 /**
  * @swagger
- * /api/sales-agent/conversation-examples/{id}:
+ * /api/ai-train/conversation-examples/{id}:
  *   patch:
  *     summary: Update conversation example
  *     tags: [Conversation Examples]
@@ -109,7 +109,7 @@ export async function PATCH(
 
 /**
  * @swagger
- * /api/sales-agent/conversation-examples/{id}:
+ * /api/ai-train/conversation-examples/{id}:
  *   delete:
  *     summary: Delete conversation example
  *     tags: [Conversation Examples]
