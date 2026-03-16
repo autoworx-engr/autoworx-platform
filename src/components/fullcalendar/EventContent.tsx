@@ -10,8 +10,8 @@ export const EventContent = ({ eventInfo }: { eventInfo: EventContentArg }) => {
 
   // Styles for the container
   const containerStyle: React.CSSProperties = {
-    backgroundColor: colors.bg,
-    border: `1px solid ${colors.border}`,
+    background: `linear-gradient(to bottom, ${colors.gradient.join(", ")})`,
+    border: `1px solid ${colors.borderColor}`,
     color: "#1f2937", // gray-800
     overflow: "hidden",
     borderRadius: "8px",
@@ -29,15 +29,15 @@ export const EventContent = ({ eventInfo }: { eventInfo: EventContentArg }) => {
       <div
         className="flex items-center gap-1 text-xs truncate w-full h-full cursor-pointer overflow-hidden rounded-r-sm pl-1"
         style={{
-          backgroundColor: colors.bg,
-          // border: `1px solid ${colors.border}`,
+          background: `linear-gradient(to bottom, ${colors.gradient.join(", ")})`,
+          // border: `1px solid ${colors.borderColor}`,
           borderRadius: "4px",
           color: "#1f2937",
         }}
       >
         <span
           className="font-bold whitespace-nowrap text-[10px] uppercase"
-          style={{ color: colors.border }}
+          style={{ color: colors.accentColor }}
         >
           {event.title}
         </span>
@@ -64,8 +64,8 @@ export const EventContent = ({ eventInfo }: { eventInfo: EventContentArg }) => {
           <span
             className="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-sm"
             style={{
-              backgroundColor: colors.border + "20", // Add slight transparency to background
-              color: colors.text,
+              background: colors.borderColor + "20", // Add slight transparency to background
+              color: colors.accentColor,
             }}
           >
             {serviceType}

@@ -1,21 +1,27 @@
 "use client";
+import useAppointmentQueryByWeek from "@/app/(dashboard)/dashboard/task/_hook/appointment/query/useAppointmentQueryByWeek";
+import useTaskQueryByWeek from "@/app/(dashboard)/dashboard/task/_hook/task/query/useTaskQueryByWeek";
+import { useCalendarStore } from "@/stores/calendarStore";
+import { CalendarType } from "@/types/calendar";
 import { EventClickArg, EventContentArg } from "@fullcalendar/core";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import listPlugin from "@fullcalendar/list";
 import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
-import { useState, useRef, useEffect } from "react";
-import { INITIAL_EVENTS } from "./data";
+import moment from "moment";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { CalendarHeader } from "./CalendarHeader";
 import { EventContent } from "./EventContent";
 import { EventDetailsSheet } from "./EventDetailsSheet";
-import { CalendarHeader } from "./CalendarHeader";
-import { useCalendarStore } from "@/stores/calendarStore";
-import { CalendarType } from "@/types/calendar";
 
 export default function Calendar({ type }: { type: CalendarType }) {
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [dateRange, setDateRange] = useState({
+    start: moment().startOf("month").format("YYYY-MM-DD"),
+    end: moment().endOf("month").format("YYYY-MM-DD"),
+  });
 
   const calendarRef = useRef<FullCalendar>(null);
   const [view, setView] = useState(
@@ -30,6 +36,62 @@ export default function Calendar({ type }: { type: CalendarType }) {
 
   // Use calendar store to sync date with header controls
   const { date, setDate } = useCalendarStore();
+
+  const { data: tasks = [] } = useTaskQueryByWeek(
+    dateRange.start,
+    dateRange.end,
+  );
+  const { data: appointments = [] } = useAppointmentQueryByWeek(
+    dateRange.start,
+    dateRange.end,
+  );
+
+  const events = useMemo(() => {
+    const dynamicEvents: any[] = [];
+
+    appointments.forEach((apt: any) => {
+      const dateStr = apt.date ? moment(apt.date).format("YYYY-MM-DD") : "";
+      if (!dateStr) return;
+      dynamicEvents.push({
+        id: `apt-${apt.id}`,
+        title:
+          apt.title ||
+          (apt.client
+            ? `${apt.client.firstName} ${apt.client.lastName}`
+            : "Appointment"),
+        start: apt.startTime ? `${dateStr}T${apt.startTime}` : dateStr,
+        end: apt.endTime ? `${dateStr}T${apt.endTime}` : undefined,
+        extendedProps: {
+          type: "appointment",
+          serviceType: "Custom Work",
+          carModel: apt.vehicle
+            ? `${apt.vehicle.make} ${apt.vehicle.model}`
+            : undefined,
+          originalData: apt,
+        },
+      });
+    });
+
+    tasks.forEach((task: any) => {
+      const dateStr = task.date ? moment(task.date).format("YYYY-MM-DD") : "";
+      if (!dateStr) return;
+      dynamicEvents.push({
+        id: `task-${task.id}`,
+        title: task.title || "Task",
+        start: task.startTime ? `${dateStr}T${task.startTime}` : dateStr,
+        end: task.endTime ? `${dateStr}T${task.endTime}` : undefined,
+        extendedProps: {
+          type: "task",
+          serviceType: task.priority || "Task",
+          originalData: task,
+        },
+      });
+    });
+
+    return dynamicEvents;
+  }, [tasks, appointments]);
+
+  console.log("Events for FullCalendar:", events);
 
   useEffect(() => {
     if (calendarRef.current && date) {
@@ -49,13 +111,17 @@ export default function Calendar({ type }: { type: CalendarType }) {
 
   const handleDatesSet = (arg: any) => {
     setView(arg.view.type);
-    // Sync store date when calendar navigates (e.g. via prev/next buttons if we used them,
-    // or if we drag/drop to a new date range)
-    // However, since we use custom header buttons that update store directly,
-    // we should be careful avoiding loops.
-    // But setting store date matches the view start.
-    // setDate(arg.view.currentStart.toISOString());
-    // Actually, store date is typically "selected date".
+
+    // arg.start and arg.end represent the currently visible range in the calendar
+    const startStr = moment(arg.start).format("YYYY-MM-DD");
+    const endStr = moment(arg.end).format("YYYY-MM-DD");
+
+    console.log("Visible date range changed:", {
+      start: startStr,
+      end: endStr,
+    });
+
+    setDateRange({ start: startStr, end: endStr });
   };
 
   // Map FullCalendar view to CalendarType for Header
@@ -140,12 +206,17 @@ export default function Calendar({ type }: { type: CalendarType }) {
           dayMaxEvents={5}
           eventClick={handleEventClick}
           eventContent={renderEventContent}
-          slotMinTime="08:00:00"
-          slotMaxTime="18:00:00"
+          slotMinTime="00:00:00"
+          slotMaxTime="24:00:00"
           allDaySlot={false}
           expandRows={true}
+          slotLabelFormat={{
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true,
+          }}
           slotDuration="00:15:00"
-          events={INITIAL_EVENTS}
+          events={events}
           datesSet={handleDatesSet}
           height="100%"
         />

@@ -1,5 +1,5 @@
 export interface CustomEventProps {
-  serviceType: "Tint" | "Detailing" | "PPF" | "Wrap" | "Custom Work";
+  serviceType: "Low" | "Medium" | "High" | "Appointment" | string;
   carModel?: string;
   price?: string;
   description?: string;
