@@ -9,6 +9,7 @@ import {
 import { CreateTab } from "@/app/(dashboard)/dashboard/estimate/create/tabs/CreateTab";
 import TemplateAttachmentTab from "@/app/(dashboard)/dashboard/estimate/templates/TemplateAttachmentTab";
 import TemplateInspectionTab from "@/app/(dashboard)/dashboard/estimate/templates/TemplateInspectionTab";
+import ServiceInfo from "./ServiceInfo";
 import { SyncLists } from "@/components/SyncLists";
 import Title from "@/components/Title";
 import { SelectStatus } from "@/components/Lists/SelectStatus";
@@ -148,15 +149,15 @@ function ServiceBillSummary() {
     () => [
       ["subtotal", subtotal.toFixed(2)],
       ["discount", discount.toFixed(2)],
-      ["tax", computedTax.toFixed(2)],
-      ["shop supplies", computedServiceFee.toFixed(2)],
+      // ["tax", computedTax.toFixed(2)],
+      // ["shop supplies", computedServiceFee.toFixed(2)],
       ["deposit", deposit.toFixed(2)],
       ["payment", totalPayment.toFixed(2)],
       ["grand total", grandTotal.toFixed(2)],
     ],
     [
-      computedServiceFee,
-      computedTax,
+      // computedServiceFee,
+      // computedTax,
       deposit,
       discount,
       grandTotal,
@@ -228,10 +229,10 @@ function ServiceBillSummary() {
 export default function Page() {
   return (
     <div className="gap-3 space-y-4 overflow-clip py-2 md:-my-2 md:min-h-[93vh] xl:flex xl:space-y-0">
-      <div className="flex w-full flex-col gap-3 xl:min-w-[68%]">
+      <div className="flex w-full flex-col gap-3 xl:min-w-[68%] ">
         <Title>Service</Title>
 
-        <SyncLists
+        {/* <SyncLists
           title={""}
           customers={[]}
           vehicles={[]}
@@ -246,29 +247,36 @@ export default function Page() {
           client={null}
         />
 
-        <ServiceCreateHeader />
+        <ServiceCreateHeader /> */}
 
         <Tabs
           defaultValue="create"
-          className="col-start-1 flex min-h-[40vh] flex-col overflow-clip lg:min-h-[69vh]"
+          className="col-start-1 flex min-h-[40vh] flex-col overflow-clip lg:min-h-[69vh] lg:mt-20"
         >
           <TabsList className="-ml-4 grid grid-cols-4 rounded-bl-none md:inline-flex">
             <TabsTriggerCreate
               value="inspections"
-              className="order-3 md:order-2"
+              className="order-4 md:order-1"
             >
               Inspections
             </TabsTriggerCreate>
             <TabsTriggerCreate
               value="attachment"
-              className="order-2 md:order-3"
+              className="order-3 md:order-2"
             >
               Attachment
             </TabsTriggerCreate>
-            <TabsTriggerCreate value="create" className="order-1 md:order-4">
+            <TabsTriggerCreate value="create" className="order-2 md:order-3">
               Create
             </TabsTriggerCreate>
+            <TabsTriggerCreate value="service-info" className="order-1 md:order-4">
+              Service Info
+            </TabsTriggerCreate>
           </TabsList>
+
+          <TabsContent value="service-info" className="h-full w-full">
+            <ServiceInfo />
+          </TabsContent>
 
           <TabsContent value="create" className="h-full w-full">
             <CreateTab />
