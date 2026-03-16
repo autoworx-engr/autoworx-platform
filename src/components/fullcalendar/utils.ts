@@ -16,7 +16,7 @@ export const SERVICE_COLORS: Record<
   },
   High: {
     gradient: ["#b2f2bb", "#d3f9d8"], // lighter greenish gradient
-    borderColor: "#032e15",
+    borderColor: "rgba(34, 167, 184, 0.45)",
     accentColor: "#22a7b8",
   },
   Appointment: {

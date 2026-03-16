@@ -44,10 +44,18 @@ export const EventContent = ({ eventInfo }: { eventInfo: EventContentArg }) => {
         <span className="font-semibold text-gray-500 text-[10px] uppercase">
           {serviceType}
         </span>
-        <span className="text-gray-400 mx-1">·</span>
-        <span className="font-medium truncate">{props.carModel}</span>
-        <span className="text-gray-400 mx-1">·</span>
-        <span className="font-bold text-gray-900">{props.price}</span>
+        {props.carModel && (
+          <>
+            <span className="text-gray-400 mx-1">·</span>
+            <span className="font-medium truncate">{props.carModel}</span>
+          </>
+        )}
+        {props.price && (
+          <>
+            <span className="text-gray-400 mx-1">·</span>
+            <span className="font-bold text-gray-900">{props.price}</span>
+          </>
+        )}
       </div>
     );
   }

@@ -17,6 +17,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { CalendarHeader } from "./CalendarHeader";
 import { EventContent } from "./EventContent";
 import { EventDetailsSheet } from "./EventDetailsSheet";
+import useGetHolidays from "@/app/(dashboard)/dashboard/task/_hook/appointment/query/useGetHolidays";
+import { useSession } from "next-auth/react";
 
 export default function Calendar({ type }: { type: CalendarType }) {
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
@@ -26,7 +28,7 @@ export default function Calendar({ type }: { type: CalendarType }) {
     start: moment().startOf("month").format("YYYY-MM-DD"),
     end: moment().endOf("month").format("YYYY-MM-DD"),
   });
-
+  const { data: session } = useSession();
   const calendarRef = useRef<FullCalendar>(null);
   const [view, setView] = useState(
     type === "list"
@@ -47,7 +49,7 @@ export default function Calendar({ type }: { type: CalendarType }) {
   });
 
   const firstDay = useMemo(() => {
-    const mappedDay = getWeekStartNumber(settings?.weekStart ?? "Sunday");
+    const mappedDay = getWeekStartNumber(settings?.weekStart ?? "Monday");
     return mappedDay >= 0 ? mappedDay : 0;
   }, [settings?.weekStart]);
 
@@ -61,6 +63,12 @@ export default function Calendar({ type }: { type: CalendarType }) {
     isLoading: isAppointmentsLoading,
     isFetching: isAppointmentsFetching,
   } = useAppointmentQueryByWeek(dateRange.start, dateRange.end);
+  const {
+    data: holidays = [],
+    isLoading: isHolidaysLoading,
+    isFetching: isHolidaysFetching,
+  } = useGetHolidays(session?.user?.companyId ?? 0);
+  console.log({ dateRange, tasks, appointments });
 
   const loading =
     isCalendarLoading ||
@@ -150,7 +158,8 @@ export default function Calendar({ type }: { type: CalendarType }) {
     } else {
       // Week/Day/List => visible range
       startStr = moment(arg.start).format("YYYY-MM-DD");
-      endStr = moment(arg.end).format("YYYY-MM-DD");
+      endStr = moment(arg.end - 1).format("YYYY-MM-DD");
+      // console.log("Visible range for week/day/list:", startStr, endStr);
     }
 
     setDateRange({ start: startStr, end: endStr });
@@ -260,7 +269,7 @@ export default function Calendar({ type }: { type: CalendarType }) {
             <div className="flex items-center gap-3 rounded-md border bg-white px-4 py-2 shadow-sm">
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-slate-700" />
               <span className="text-sm font-medium text-slate-700">
-                Loading calendar...
+                Loading calendar data...
               </span>
             </div>
           </div>

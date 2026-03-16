@@ -35,8 +35,8 @@ export const EventDetailsSheet = ({
             <div
               className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide"
               style={{
-                backgroundColor: getServiceColor(props?.serviceType).bg,
-                color: getServiceColor(props?.serviceType).text,
+                background: `linear-gradient(135deg, ${getServiceColor(props?.serviceType).gradient[0]} 0%, ${getServiceColor(props?.serviceType).gradient[1]} 100%)`,
+                color: getServiceColor(props?.serviceType).accentColor,
               }}
             >
               {props?.serviceType}
