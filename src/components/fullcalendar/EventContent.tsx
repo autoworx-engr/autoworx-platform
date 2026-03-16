@@ -1,12 +1,21 @@
 import { EventContentArg } from "@fullcalendar/core";
 import { CustomEventProps } from "./types";
 import { getServiceColor, SERVICE_COLORS } from "./utils";
+import HolidayDeleteConfirmation from "@/app/(dashboard)/dashboard/task/_component/calendar/HolidayDeleteConfirmation";
+import { EmployeeType } from "@prisma/client";
 
-export const EventContent = ({ eventInfo }: { eventInfo: EventContentArg }) => {
+export const EventContent = ({
+  eventInfo,
+  session,
+}: {
+  eventInfo: EventContentArg;
+  session: any;
+}) => {
   const { event, view } = eventInfo;
   const props = event.extendedProps as CustomEventProps;
   const serviceType = props.serviceType || "Appointment";
   const colors = getServiceColor(serviceType);
+  const isAdmin = session?.user.employeeType === EmployeeType.Admin;
 
   // Styles for the container
   const containerStyle: React.CSSProperties = {
@@ -25,6 +34,31 @@ export const EventContent = ({ eventInfo }: { eventInfo: EventContentArg }) => {
 
   // Month view rendering (Horizontal single line style)
   if (view.type === "dayGridMonth") {
+    if (serviceType === "Holiday")
+      return (
+        <div
+          className="flex items-center justify-between gap-1 text-xs truncate w-full h-full cursor-pointer overflow-hidden rounded-r-sm pl-1"
+          style={{
+            background: `linear-gradient(to bottom, ${colors.gradient.join(", ")})`,
+            // border: `1px solid ${colors.borderColor}`,
+            borderRadius: "4px",
+            color: "#1f2937",
+          }}
+        >
+          <span
+            className="font-bold whitespace-nowrap text-[12px] uppercase"
+            style={{ color: colors.accentColor }}
+          >
+            {event.title}
+          </span>
+          {isAdmin && (
+            <HolidayDeleteConfirmation
+              holidayId={Number(event.id)}
+              isMonthly={true}
+            />
+          )}
+        </div>
+      ); // Hide holidays in month view
     return (
       <div
         className="flex items-center gap-1 text-xs truncate w-full h-full cursor-pointer overflow-hidden rounded-r-sm pl-1"

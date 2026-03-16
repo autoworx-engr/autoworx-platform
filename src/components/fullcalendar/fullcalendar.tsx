@@ -129,7 +129,7 @@ export default function Calendar({ type }: { type: CalendarType }) {
       if (!dateStr) return;
 
       dynamicEvents.push({
-        id: `holiday-${holiday.id}`,
+        id: holiday.id,
         title: "Holiday",
         start: dateStr,
         allDay: true,
@@ -160,8 +160,8 @@ export default function Calendar({ type }: { type: CalendarType }) {
     setIsSheetOpen(true);
   };
 
-  const renderEventContent = (eventInfo: EventContentArg) => {
-    return <EventContent eventInfo={eventInfo} />;
+  const renderEventContent = (eventInfo: EventContentArg, session: any) => {
+    return <EventContent eventInfo={eventInfo} session={session} />;
   };
 
   const handleDatesSet = (arg: any) => {
@@ -270,7 +270,7 @@ export default function Calendar({ type }: { type: CalendarType }) {
           editable={true}
           dayMaxEvents={5}
           eventClick={handleEventClick}
-          eventContent={renderEventContent}
+          eventContent={(eventInfo) => renderEventContent(eventInfo, session)}
           slotMinTime="00:00:00"
           slotMaxTime="24:00:00"
           allDaySlot={false}
