@@ -30,7 +30,7 @@ export const EventContent = ({ eventInfo }: { eventInfo: EventContentArg }) => {
         className="flex items-center gap-1 text-xs truncate w-full h-full cursor-pointer overflow-hidden rounded-r-sm pl-1"
         style={{
           backgroundColor: colors.bg,
-          border: `1px solid ${colors.border}`,
+          // border: `1px solid ${colors.border}`,
           borderRadius: "4px",
           color: "#1f2937",
         }}

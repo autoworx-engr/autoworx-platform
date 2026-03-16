@@ -118,7 +118,7 @@ export function CalendarHeader({ calendarRef, type }: CalendarHeaderProps) {
 
   return (
     <div className="flex flex-col items-center justify-between md:flex-row p-4 border-b bg-background rounded-t-lg">
-      <h2 className="mb-4 font-medium text-black max-[1300px]:text-[20px] md:ml-2 md:text-base lg:text-[23px]">
+      <h2 className="font-medium text-black max-[1300px]:text-[20px] md:ml-2 md:text-base lg:text-[26px]">
         <DisplayDate type={type} />
       </h2>
 
@@ -143,6 +143,10 @@ export function CalendarHeader({ calendarRef, type }: CalendarHeaderProps) {
           size="icon-lg"
           onClick={() => {
             calendarRef.current?.getApi().prev();
+            const newDate = moment(
+              calendarRef.current?.getApi().getDate(),
+            ).format("YYYY-MM-DD");
+            setDate(newDate);
           }}
         >
           <ChevronLeft size={20} />
@@ -152,6 +156,10 @@ export function CalendarHeader({ calendarRef, type }: CalendarHeaderProps) {
           size="icon-lg"
           onClick={() => {
             calendarRef.current?.getApi().next();
+            const newDate = moment(
+              calendarRef.current?.getApi().getDate(),
+            ).format("YYYY-MM-DD");
+            setDate(newDate);
           }}
         >
           <ChevronRight size={20} />
@@ -161,6 +169,7 @@ export function CalendarHeader({ calendarRef, type }: CalendarHeaderProps) {
           <Select
             value={type}
             onValueChange={(value) => {
+              router.push(`/dashboard/task/${value}`);
               calendarRef.current
                 ?.getApi()
                 .changeView(
@@ -170,7 +179,7 @@ export function CalendarHeader({ calendarRef, type }: CalendarHeaderProps) {
                       ? "timeGridWeek"
                       : value === "month"
                         ? "dayGridMonth"
-                        : "listWeek",
+                        : "timeGridWeek",
                 );
             }}
           >
@@ -181,7 +190,7 @@ export function CalendarHeader({ calendarRef, type }: CalendarHeaderProps) {
               <SelectItem value="day">Day</SelectItem>
               <SelectItem value="week">Week</SelectItem>
               <SelectItem value="month">Month</SelectItem>
-              <SelectItem value="list">List</SelectItem>
+              {/* <SelectItem value="list">List</SelectItem> */}
             </SelectContent>
           </Select>
         </div>

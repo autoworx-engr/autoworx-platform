@@ -8,5 +8,5 @@ export default function CalenderPage({
   params: { type: CalendarType };
 }) {
   // return <Calendar type={params.type} />;
-  return <Calendar />;
+  return <Calendar type={params.type} />;
 }

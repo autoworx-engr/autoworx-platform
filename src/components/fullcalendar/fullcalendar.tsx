@@ -13,12 +13,20 @@ import { CalendarHeader } from "./CalendarHeader";
 import { useCalendarStore } from "@/stores/calendarStore";
 import { CalendarType } from "@/types/calendar";
 
-export default function Calendar() {
+export default function Calendar({ type }: { type: CalendarType }) {
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   const calendarRef = useRef<FullCalendar>(null);
-  const [view, setView] = useState("timeGridWeek");
+  const [view, setView] = useState(
+    type === "list"
+      ? "listWeek"
+      : type === "month"
+        ? "dayGridMonth"
+        : type === "week"
+          ? "timeGridWeek"
+          : "timeGridDay",
+  );
 
   // Use calendar store to sync date with header controls
   const { date, setDate } = useCalendarStore();
@@ -75,7 +83,7 @@ export default function Calendar() {
 
         /* Increase time slot height via CSS variable or direct styling */
         .fc-timegrid-slot {
-          height: 3.5em !important; /* Increase from default (~1.5em) */
+          height: 2.5em !important; /* Increase from default (~1.5em) */
         }
 
         /* Fix List View - Ensure it takes full width and looks good */
@@ -125,7 +133,7 @@ export default function Calendar() {
             listPlugin,
             interactionPlugin,
           ]}
-          initialView="timeGridWeek"
+          initialView={view}
           headerToolbar={false}
           navLinks={true}
           editable={true}
@@ -136,7 +144,7 @@ export default function Calendar() {
           slotMaxTime="18:00:00"
           allDaySlot={false}
           expandRows={true}
-          slotDuration="01:00:00"
+          slotDuration="00:15:00"
           events={INITIAL_EVENTS}
           datesSet={handleDatesSet}
           height="100%"
