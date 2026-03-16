@@ -19,6 +19,9 @@ import { EventContent } from "./EventContent";
 import { EventDetailsSheet } from "./EventDetailsSheet";
 import useGetHolidays from "@/app/(dashboard)/dashboard/task/_hook/appointment/query/useGetHolidays";
 import { useSession } from "next-auth/react";
+import styles from "./fullcalendar.module.css";
+import { buildCalendarEvents } from "./calendarEventMapper";
+import useTaskQuery from "@/app/(dashboard)/dashboard/task/_hook/task/query/useTaskQuery";
 
 export default function Calendar({ type }: { type: CalendarType }) {
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
@@ -41,7 +44,7 @@ export default function Calendar({ type }: { type: CalendarType }) {
   );
 
   // Use calendar store to sync date with header controls
-  const { date, setDate } = useCalendarStore();
+  const { date } = useCalendarStore();
 
   const { data: settings, isLoading: isSettingsLoading } = useQuery({
     queryKey: ["calendar-settings", "week-start"],
@@ -57,7 +60,7 @@ export default function Calendar({ type }: { type: CalendarType }) {
     data: tasks = [],
     isLoading: isTasksLoading,
     isFetching: isTasksFetching,
-  } = useTaskQueryByWeek(dateRange.start, dateRange.end);
+  } = useTaskQuery(dateRange.start, dateRange.end);
   const {
     data: appointments = [],
     isLoading: isAppointmentsLoading,
@@ -80,68 +83,11 @@ export default function Calendar({ type }: { type: CalendarType }) {
     isHolidaysFetching;
 
   const events = useMemo(() => {
-    const dynamicEvents: any[] = [];
-
-    appointments.forEach((apt: any) => {
-      const dateStr = apt.date ? moment(apt.date).format("YYYY-MM-DD") : "";
-      if (!dateStr) return;
-      dynamicEvents.push({
-        id: `apt-${apt.id}`,
-        title:
-          apt.title ||
-          (apt.client
-            ? `${apt.client.firstName} ${apt.client.lastName}`
-            : "Appointment"),
-        start: apt.startTime ? `${dateStr}T${apt.startTime}` : dateStr,
-        end: apt.endTime ? `${dateStr}T${apt.endTime}` : undefined,
-        extendedProps: {
-          type: "appointment",
-          serviceType: "Appointment",
-          carModel: apt.vehicle
-            ? `${apt.vehicle.make} ${apt.vehicle.model}`
-            : undefined,
-          originalData: apt,
-        },
-      });
+    return buildCalendarEvents({
+      appointments,
+      tasks,
+      holidays,
     });
-
-    tasks.forEach((task: any) => {
-      const dateStr = task.date ? moment(task.date).format("YYYY-MM-DD") : "";
-      if (!dateStr) return;
-      dynamicEvents.push({
-        id: `task-${task.id}`,
-        title: task.title || "Task",
-        start: task.startTime ? `${dateStr}T${task.startTime}` : dateStr,
-        end: task.endTime ? `${dateStr}T${task.endTime}` : undefined,
-        extendedProps: {
-          type: "task",
-          serviceType: task.priority || "Task",
-          originalData: task,
-        },
-      });
-    });
-
-    holidays.forEach((holiday: any) => {
-      const dateStr = holiday?.date
-        ? moment.utc(holiday.date).format("YYYY-MM-DD")
-        : "";
-      if (!dateStr) return;
-
-      dynamicEvents.push({
-        id: holiday.id,
-        title: "Holiday",
-        start: dateStr,
-        allDay: true,
-        editable: false,
-        extendedProps: {
-          type: "holiday",
-          serviceType: "Holiday",
-          originalData: holiday,
-        },
-      });
-    });
-
-    return dynamicEvents;
   }, [tasks, appointments, holidays]);
 
   useEffect(() => {
@@ -198,62 +144,12 @@ export default function Calendar({ type }: { type: CalendarType }) {
   };
 
   return (
-    <div className="w-full h-full calendar-wrapper flex flex-col bg-white rounded-lg shadow-sm border">
-      <style jsx global>{`
-        /* Remove default event styling to allow full custom control */
-        .fc-event {
-          background: transparent !important;
-          border: none !important;
-          box-shadow: none !important;
-        }
-        .fc-daygrid-event-harness {
-          margin-bottom: 2px;
-        }
-
-        /* Increase time slot height via CSS variable or direct styling */
-        .fc-timegrid-slot {
-          height: 2.5em !important; /* Increase from default (~1.5em) */
-        }
-
-        /* Fix List View - Ensure it takes full width and looks good */
-        .fc-list-table {
-          width: 100% !important;
-          table-layout: fixed; /* prevent collapsing */
-        }
-        .fc-list-day-cushion,
-        .fc-list-event-title,
-        .fc-list-event-time {
-          padding: 12px 16px !important;
-        }
-
-        /* Customize header buttons */
-        .fc-button-primary {
-          background-color: #5a66ee !important;
-          border-color: #5a66ee !important;
-        }
-        .fc-button-primary:hover {
-          background-color: #5a66ee !important;
-          border-color: #5a66ee !important;
-        }
-        .fc-button-primary:not(:disabled).fc-button-active,
-        .fc-button-primary:not(:disabled):active {
-          background-color: #6573ee !important;
-          border-color: #6573ee !important;
-        }
-        /* Remove focus outline/ring */
-        .fc-button:focus {
-          box-shadow: none !important;
-        }
-
-        /* Hide default header since we use custom one */
-        .fc-header-toolbar {
-          display: none !important;
-        }
-      `}</style>
-
+    <div
+      className={`w-full h-full calendar-wrapper flex flex-col bg-white rounded-lg shadow-sm border ${styles.calendarScope}`}
+    >
       <CalendarHeader calendarRef={calendarRef} type={getCalendarType(view)} />
 
-      <div className="flex-1 w-full relative" style={{ minHeight: "600px" }}>
+      <div className={`flex-1 w-full relative ${styles.calendarBody}`}>
         <FullCalendar
           ref={calendarRef}
           plugins={[

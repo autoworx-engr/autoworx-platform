@@ -1,0 +1,58 @@
+.calendarScope :global(.fc-event) {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.calendarScope :global(.fc-daygrid-event-harness) {
+  margin-bottom: 2px;
+}
+
+.calendarScope :global(.fc-timegrid-slot) {
+  height: 2.5em !important;
+}
+
+.calendarScope :global(.fc-list-table) {
+  width: 100% !important;
+  table-layout: fixed;
+}
+
+.calendarScope :global(.fc-list-day-cushion),
+.calendarScope :global(.fc-list-event-title),
+.calendarScope :global(.fc-list-event-time) {
+  padding: 12px 16px !important;
+}
+
+.calendarScope :global(.fc-button-primary) {
+  background-color: #5a66ee !important;
+  border-color: #5a66ee !important;
+}
+
+.calendarScope :global(.fc-button-primary:hover) {
+  background-color: #5a66ee !important;
+  border-color: #5a66ee !important;
+}
+
+.calendarScope :global(.fc-button-primary:not(:disabled).fc-button-active),
+.calendarScope :global(.fc-button-primary:not(:disabled):active) {
+  background-color: #6573ee !important;
+  border-color: #6573ee !important;
+}
+
+.calendarScope :global(.fc-button:focus) {
+  box-shadow: none !important;
+}
+
+.calendarScope :global(.fc-header-toolbar) {
+  display: none !important;
+}
+
+.calendarBody {
+  min-height: 600px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
