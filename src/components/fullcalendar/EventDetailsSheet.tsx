@@ -16,6 +16,7 @@ import {
   Edit,
   Mail,
   MessageSquare,
+  Phone,
   User,
   Zap,
 } from "lucide-react";
@@ -170,7 +171,7 @@ export const EventDetailsSheet = ({
                   </div>
 
                   <div className="flex items-center gap-2  font-medium text-gray-700">
-                    <CheckCircle className="h-5 w-5 text-gray-500" />
+                    <Phone className="h-5 w-5 text-gray-500" />
                     <span>
                       <span className="text-gray-600">Phone:</span>{" "}
                       {appointmentClientPhone}
