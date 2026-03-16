@@ -225,20 +225,6 @@ export function CalendarHeader({ calendarRef, type }: CalendarHeaderProps) {
 
         {/* Mobile Search */}
         <div className="my-2 block w-full md:mb-0 lg:hidden">
-          <div className="flex items-center justify-around gap-2">
-            {days.map((day, index) => (
-              <p
-                key={day}
-                className={` p-1 rounded-full ${
-                  index === currentDayIndex
-                    ? "bg-blue-500 text-white font-bold"
-                    : ""
-                }`}
-              >
-                {day}
-              </p>
-            ))}
-          </div>
           <CalendarSearch type={type} />
         </div>
       </div>

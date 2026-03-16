@@ -22,6 +22,7 @@ import { useSession } from "next-auth/react";
 import styles from "./fullcalendar.module.css";
 import { buildCalendarEvents } from "./calendarEventMapper";
 import useTaskQuery from "@/app/(dashboard)/dashboard/task/_hook/task/query/useTaskQuery";
+import useAppointmentQuery from "@/app/(dashboard)/dashboard/task/_hook/appointment/query/useAppointmentQuery";
 
 export default function Calendar({ type }: { type: CalendarType }) {
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
@@ -65,7 +66,7 @@ export default function Calendar({ type }: { type: CalendarType }) {
     data: appointments = [],
     isLoading: isAppointmentsLoading,
     isFetching: isAppointmentsFetching,
-  } = useAppointmentQueryByWeek(dateRange.start, dateRange.end);
+  } = useAppointmentQuery(dateRange.start, dateRange.end);
   const {
     data: holidays = [],
     isLoading: isHolidaysLoading,
@@ -115,7 +116,6 @@ export default function Calendar({ type }: { type: CalendarType }) {
     let startStr: string;
     let endStr: string;
 
-    // Month filter => only that month data
     if (arg.view.type === "dayGridMonth") {
       startStr = moment(arg.view.currentStart)
         .startOf("month")
@@ -127,7 +127,6 @@ export default function Calendar({ type }: { type: CalendarType }) {
       // Week/Day/List => visible range
       startStr = moment(arg.start).format("YYYY-MM-DD");
       endStr = moment(arg.end - 1).format("YYYY-MM-DD");
-      // console.log("Visible range for week/day/list:", startStr, endStr);
     }
 
     setDateRange({ start: startStr, end: endStr });
