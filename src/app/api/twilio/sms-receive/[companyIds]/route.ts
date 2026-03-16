@@ -199,11 +199,8 @@ export async function POST(
 
         const permissions = await allCompanyFeaturePermissions(companyId);
 
-        const salesAgentPermission = permissions?.data?.find(
-          (item: any) => item.permission_name === "sales-agent",
-        );
-
-        const isSalesAgentEnabled = salesAgentPermission?.enabled === true;
+        const entitlements = await getCompanyEntitlements(client.companyId);
+        const isSalesAgentEnabled = entitlements.awxSalesAgent;
 
         //sales agent
         const isCompanySalesAgent = company?.isSalesAgent === true;

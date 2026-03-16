@@ -253,15 +253,8 @@ export async function POST(req: NextRequest) {
             where: { id: infobipConfig?.companyId },
           });
 
-          const permissions = await allCompanyFeaturePermissions(
-            infobipConfig?.companyId,
-          );
-
-          const salesAgentPermission = permissions?.data?.find(
-            (item: any) => item.permission_name === "sales-agent",
-          );
-
-          const isSalesAgentEnabled = salesAgentPermission?.enabled === true;
+          const entitlements = await getCompanyEntitlements(client.companyId);
+          const isSalesAgentEnabled = entitlements.awxSalesAgent;
 
           const isCompanySalesAgent = company?.isSalesAgent === true;
           const isClientSalesAgent = client?.isSalesAgent === true;

@@ -51,6 +51,11 @@ export default function MobileNav({ navList, permissions }: TProps) {
     // not by company feature-permission filtering in nav.
     if (routeWithoutQuery === "/dashboard/visualization") return true;
 
+    // Sales Agent route is controlled by plan entitlements at page/API level.
+    if (routeWithoutQuery.startsWith("/dashboard/settings/sales-agent")) {
+      return true;
+    }
+
     const featureKey = FEATURE_PERMISSIONS_MAP[routeWithoutQuery];
     if (!featureKey) return true;
     if (Array.isArray(featureKey)) {

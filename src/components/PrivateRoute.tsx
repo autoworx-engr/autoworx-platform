@@ -33,6 +33,11 @@ export default function PrivateRoute({ children, session }: TProps) {
     // the upgrade prompt instead of being hard-redirected to 404.
     if (routeWithoutQuery === "/dashboard/visualization") return true;
 
+    // Sales Agent settings are gated at page/API level via entitlements.
+    if (routeWithoutQuery.startsWith("/dashboard/settings/sales-agent")) {
+      return true;
+    }
+
     const featureKey = FEATURE_PERMISSIONS_MAP[routeWithoutQuery];
     if (!featureKey) return true;
     if (Array.isArray(featureKey)) {
