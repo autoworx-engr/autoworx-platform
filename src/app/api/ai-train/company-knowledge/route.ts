@@ -5,7 +5,7 @@ import { resourceLimits } from "worker_threads";
 
 /**
  * @swagger
- * /api/sales-agent/company-knowledge:
+ * /api/ai-train/company-knowledge:
  *   get:
  *     summary: Get company knowledge records
  *     tags: [Company Knowledge]
@@ -69,7 +69,7 @@ export async function GET(req: Request) {
 
 /**
  * @swagger
- * /api/sales-agent/company-knowledge:
+ * /api/ai-train/company-knowledge:
  *   post:
  *     summary: Create company knowledge
  *     tags: [Company Knowledge]

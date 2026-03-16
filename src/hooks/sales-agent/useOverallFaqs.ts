@@ -4,7 +4,7 @@ import { useCompanyQuery } from "@/hooks/useCompanyQuery";
 import toast from "react-hot-toast";
 
 const fetchOverallFaqs = async (companyId: number) => {
-  const response = await fetch(`/api/sales-agent/faq?companyId=${companyId}`);
+  const response = await fetch(`/api/ai-train/faq?companyId=${companyId}`);
   if (!response.ok) {
     throw new Error("Failed to fetch overall FAQs");
   }
@@ -28,7 +28,7 @@ export function useSaveOverallFaqs() {
   const companyId = company?.id;
   return useMutation({
     mutationFn: async (faqs: any[]) => {
-      const response = await fetch("/api/sales-agent/faq", {
+      const response = await fetch("/api/ai-train/faq", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ companyId, faqs }),
