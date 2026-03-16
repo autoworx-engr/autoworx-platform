@@ -20,7 +20,6 @@ import {
 } from "lucide-react";
 import { Popconfirm } from "antd";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { CustomEventProps } from "./types";
 import { getServiceColor } from "./utils";
@@ -38,7 +37,6 @@ export const EventDetailsSheet = ({
 }: EventDetailsSheetProps) => {
   const queryClient = useQueryClient();
   const router = useRouter();
-  const [isCompleteConfirmOpen, setIsCompleteConfirmOpen] = useState(false);
   if (!selectedEvent) return null;
 
   const props = selectedEvent.extendedProps as CustomEventProps;
@@ -280,23 +278,20 @@ export const EventDetailsSheet = ({
 
               {eventType === "task" ? (
                 <Popconfirm
-                  style={{ zIndex: 10000000 }}
                   title="Complete Task"
                   description="Are you sure you want to mark this task as completed?"
                   okText="Yes"
                   cancelText="No"
-                  open={isCompleteConfirmOpen}
-                  onOpenChange={setIsCompleteConfirmOpen}
-                  onConfirm={() => {
-                    setIsCompleteConfirmOpen(false);
-                    handleTaskComplete();
-                  }}
-                  onCancel={() => setIsCompleteConfirmOpen(false)}
+                  trigger="click"
+                  zIndex={9999}
+                  getPopupContainer={(triggerNode) =>
+                    triggerNode?.parentElement ?? document.body
+                  }
+                  onConfirm={handleTaskComplete}
                 >
                   <Button
                     variant="outline"
                     className="flex-1 justify-center h-11 border-gray-300 hover:bg-gray-50 font-medium"
-                    onClick={() => setIsCompleteConfirmOpen(true)}
                   >
                     <CheckCircle className="mr-2 h-4 w-4" />
                     Complete
