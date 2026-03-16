@@ -112,14 +112,18 @@ export default function Calendar({ type }: { type: CalendarType }) {
   const handleDatesSet = (arg: any) => {
     setView(arg.view.type);
 
-    // arg.start and arg.end represent the currently visible range in the calendar
-    const startStr = moment(arg.start).format("YYYY-MM-DD");
-    const endStr = moment(arg.end).format("YYYY-MM-DD");
+    let startStr: string;
+    let endStr: string;
 
-    console.log("Visible date range changed:", {
-      start: startStr,
-      end: endStr,
-    });
+    // Month filter => only that month data
+    if (arg.view.type === "dayGridMonth") {
+      startStr = moment(arg.view.currentStart).startOf("month").format("YYYY-MM-DD");
+      endStr = moment(arg.view.currentStart).endOf("month").format("YYYY-MM-DD");
+    } else {
+      // Week/Day/List => visible range
+      startStr = moment(arg.start).format("YYYY-MM-DD");
+      endStr = moment(arg.end).format("YYYY-MM-DD");
+    }
 
     setDateRange({ start: startStr, end: endStr });
   };
