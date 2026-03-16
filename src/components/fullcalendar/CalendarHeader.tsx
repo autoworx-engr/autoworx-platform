@@ -70,15 +70,37 @@ export function CalendarHeader({ calendarRef, type }: CalendarHeaderProps) {
   });
   const router = useRouter();
   const calenderQueryType = type === "day" ? "date" : type;
-  const { setDate, setNavigating, date: currentDate } = useCalendarStore();
+  const {
+    setDate,
+    setMonth,
+    setWeek,
+    setNavigating,
+    date: currentDate,
+  } = useCalendarStore();
 
   const currentDayIndex = moment(currentDate).day();
 
   const handleTodayClick = () => {
-    const today = moment().format("YYYY-MM-DD");
-    setDate(today);
+    const today = moment();
+    setDate(today.format("YYYY-MM-DD"));
+    setMonth(today.format("YYYY-MM"));
+    setWeek(today.format("YYYY-[W]WW"));
     calendarRef.current?.getApi().today(); // Navigate calendar to today");
     // calendarRef.current?.getApi().changeView("timeGridDay");
+  };
+
+  const syncDateStore = () => {
+    const api = calendarRef.current?.getApi();
+    if (!api) return;
+
+    const newDateObj = moment(api.getDate());
+    setDate(newDateObj.format("YYYY-MM-DD"));
+
+    if (type === "month") {
+      setMonth(newDateObj.format("YYYY-MM"));
+    } else if (type === "week") {
+      setWeek(newDateObj.format("YYYY-[W]WW"));
+    }
   };
 
   const handleAppointmentCreate = async (
@@ -143,10 +165,7 @@ export function CalendarHeader({ calendarRef, type }: CalendarHeaderProps) {
           size="icon-lg"
           onClick={() => {
             calendarRef.current?.getApi().prev();
-            const newDate = moment(
-              calendarRef.current?.getApi().getDate(),
-            ).format("YYYY-MM-DD");
-            setDate(newDate);
+            syncDateStore();
           }}
         >
           <ChevronLeft size={20} />
@@ -156,10 +175,7 @@ export function CalendarHeader({ calendarRef, type }: CalendarHeaderProps) {
           size="icon-lg"
           onClick={() => {
             calendarRef.current?.getApi().next();
-            const newDate = moment(
-              calendarRef.current?.getApi().getDate(),
-            ).format("YYYY-MM-DD");
-            setDate(newDate);
+            syncDateStore();
           }}
         >
           <ChevronRight size={20} />
