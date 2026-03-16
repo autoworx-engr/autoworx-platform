@@ -34,7 +34,7 @@ export default function ClientInfinityScroll({
   const { filter, searchTerm } = useDemoClientFilterStore();
   const normalizedSearch = searchTerm?.trim();
   const resetClientData = useClientCommunicationStore(
-    (state) => state.resetClientData
+    (state) => state.resetClientData,
   );
   const [hasMore, setHasMore] = useState(true);
   const params = useParams();
@@ -104,7 +104,7 @@ export default function ClientInfinityScroll({
         } catch (err) {
           console.error(
             "📋 ClientInfinityScroll: Error fetching clients:",
-            err
+            err,
           );
           errorToast("Failed to fetch clients");
         }
@@ -163,7 +163,7 @@ export default function ClientInfinityScroll({
       setClients((prev) => {
         const existingIds = new Set(prev.map((client) => client.id));
         const newClients = fetchClients.filter(
-          (client) => !existingIds.has(client.id)
+          (client) => !existingIds.has(client.id),
         );
         return [...prev, ...newClients];
       });
@@ -173,6 +173,13 @@ export default function ClientInfinityScroll({
       errorToast("Failed to fetch clients");
     }
   };
+
+  const sortedClients = clients.sort((a, b) => {
+    const dateA = a.conversationsTrack?.createdAt ?? new Date(0);
+    const dateB = b.conversationsTrack?.createdAt ?? new Date(0);
+
+    return dateB.getTime() - dateA.getTime();
+  });
 
   return (
     <div
@@ -193,7 +200,7 @@ export default function ClientInfinityScroll({
         scrollableTarget="scrollableDiv"
         endMessage={
           <p className="mb-5 text-center">
-            {clients.length === 0 ? (
+            {sortedClients.length === 0 ? (
               <b>Client Not Found</b>
             ) : (
               <b>Yay! You have seen it all</b>
@@ -201,7 +208,7 @@ export default function ClientInfinityScroll({
           </p>
         }
       >
-        {clients?.map((client: Client) => {
+        {sortedClients?.map((client: Client) => {
           const selected = parseInt(clientIdParams as string) === client.id;
           return (
             <ClientItem
