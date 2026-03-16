@@ -314,7 +314,7 @@ export async function GET(req: Request) {
  *                     service:
  *                       type: object
  *                       nullable: true
- *                       example: { "id": 5, "categoryId": 2 }
+ *                       example: { "id": 5, "name": "service name", "categoryId": 1, "description": "anything" }
  *                     labor:
  *                       type: object
  *                       nullable: true
