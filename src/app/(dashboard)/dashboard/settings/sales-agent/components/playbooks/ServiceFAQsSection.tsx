@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/accordion";
 import { BookOpen, CheckCircle } from "lucide-react";
 import { FAQ, ServicePlaybook } from "@/types/ai-settings";
-import { useServicePlaybooks } from "@/hooks/ai-train/useServicePlaybooks";
+import { useServicePlaybooks } from "@/hooks/sales-agent/useServicePlaybooks";
 import { convertToServicePlaybook } from "./utils";
 
 function ServiceFAQsSection({

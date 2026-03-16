@@ -10,6 +10,7 @@ import {
   Column,
   Invoice,
   InvoiceTemplate,
+  RequestEstimate,
   Vehicle,
 } from "@prisma/client";
 import { customAlphabet } from "nanoid";
@@ -29,6 +30,7 @@ export default function Header({
   isAllServicesCompleted,
   isEdit = false,
   selectedTemplate,
+  requestEstimate,
 }: {
   id?: string;
   vehicle?: Vehicle;
@@ -38,6 +40,7 @@ export default function Header({
   isAllServicesCompleted?: boolean;
   isEdit?: boolean;
   selectedTemplate?: InvoiceTemplate | null;
+  requestEstimate?: any;
 }) {
   const {
     invoiceId,
@@ -124,7 +127,10 @@ export default function Header({
       </div>
 
       {!isTemplate && (
-        <CreateEstimateActionsButtons status={status! || selectedStatus} />
+        <CreateEstimateActionsButtons
+          status={status! || selectedStatus}
+          requestEstimate={requestEstimate}
+        />
       )}
 
       <div className="flex basis-full flex-wrap items-end gap-3">

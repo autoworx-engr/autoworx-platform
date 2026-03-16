@@ -16,7 +16,7 @@ import {
   useCreateConversationExample,
   useUpdateConversationExample,
   useDeleteConversationExample,
-} from "@/hooks/ai-train/useConversationExamples";
+} from "@/hooks/sales-agent/useConversationExamples";
 
 export function ConversationExamplesTab() {
   const debounceRef = useRef<NodeJS.Timeout | null>(null);

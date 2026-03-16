@@ -90,6 +90,7 @@ export default function InvoiceEstimateModal({
         year: parseInt(estimateInfo.year),
         receiverCompanyId: receiverCompany.id,
         senderCompanyId,
+        senderId: Number(senderUserId),
       });
 
       if (status !== 200) {
