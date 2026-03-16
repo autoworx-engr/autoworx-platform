@@ -2736,8 +2736,8 @@ model FAQ {
 
 model Shop {
   id              Int                 @id @default(autoincrement())
-  companyId       Int                 @map("company_id")
-  slug            String              @unique // This is your SUBDOMAIN (e.g., 'autoworx' in 'autoworx.yourdomain.com')
+  companyId       Int                 @unique @map("company_id")
+  slug            String              @unique
   storeName       String              @map("store_name")
   description     String?             @db.Text
   logoUrl         String?             @map("logo_url")

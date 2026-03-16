@@ -1,39 +1,61 @@
 import { db } from "@/lib/db";
-import type { NextApiRequest, NextApiResponse } from "next";
+import { NextRequest, NextResponse } from "next/server";
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse,
-) {
+export async function POST(req: NextRequest) {
   try {
-    if (req.method === "POST") {
-      const { storeName, slug, description, logoUrl, bannerUrl, themeConfig } =
-        req.body;
+    const body = await req.json();
 
-      // Check if slug exists
-      const existing = await db.shop.findUnique({ where: { slug } });
-      if (existing)
-        return res.status(400).json({ error: "Slug already exists" });
+    const {
+      storeName,
+      description,
+      logoUrl,
+      bannerUrl,
+      themeConfig,
+      companyId,
+    } = body;
 
-      const shop = await db.shop.create({
-        data: {
-          companyId: 1, // Replace with actual company id from session
-          storeName,
-          slug,
-          description,
-          logoUrl,
-          bannerUrl,
-          themeConfig,
-        },
-      });
+    const slug = storeName
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^a-z0-9-]/g, "");
 
-      return res.status(200).json(shop);
+    if (!storeName || !slug) {
+      return NextResponse.json(
+        { success: false, message: "storeName and slug are required" },
+        { status: 400 },
+      );
     }
 
-    res.setHeader("Allow", ["POST"]);
-    return res.status(405).end(`Method ${req.method} Not Allowed`);
+    // Check if slug already exists
+    const existing = await db.shop.findUnique({ where: { slug } });
+    if (existing) {
+      return NextResponse.json(
+        { success: false, message: "Slug already exists" },
+        { status: 400 },
+      );
+    }
+
+    const shop = await db.shop.create({
+      data: {
+        companyId,
+        storeName,
+        slug,
+        description: description ?? null,
+        logoUrl,
+        bannerUrl,
+        themeConfig: themeConfig ?? null,
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "Shop created successfully",
+      data: shop,
+    });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: "Server error" });
+    return NextResponse.json(
+      { success: false, message: "Server error" },
+      { status: 500 },
+    );
   }
 }

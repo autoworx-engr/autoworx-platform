@@ -1,71 +1,47 @@
-// hooks/useVirtualShop.ts
+import {
+  configureVirtualShop,
+  getShopByCompanyId,
+  ShopData,
+  updateShopConfigure,
+} from "@/service/virtual-shop/api";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import * as shopService from "@/service/virtual-shop/api";
+import toast from "react-hot-toast";
 
-/**
- * Fetch all shops or a single shop by ID
- * @param id Optional shop ID
- */
-export const useGetShops = (id?: number) => {
+export const useGetVirtualShopConfigure = (companyId: number) => {
   return useQuery({
-    queryKey: ["virtual-shop", id ?? "all"],
-    queryFn: () => shopService.getShops(id),
-    enabled: !!id || id === undefined,
-    staleTime: 1000 * 60, // 1 minute cache
+    queryKey: ["virtual-shop", companyId],
+    queryFn: () => getShopByCompanyId(companyId),
+    enabled: !!companyId || companyId === undefined,
+    staleTime: 1000 * 60,
   });
 };
 
-/**
- * Create a new virtual shop
- */
-export const useCreateShop = () => {
+export const useConfigureShop = (companyId: number) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: shopService.createShop,
+    mutationFn: (payload: ShopData) => configureVirtualShop(payload),
+
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["virtual-shop"] });
+      queryClient.invalidateQueries({
+        queryKey: ["virtual-shop", companyId],
+      });
+      toast.success("Virtual shop configured successfully!");
     },
   });
 };
 
-/**
- * Update an existing virtual shop
- */
-export const useUpdateShop = () => {
+export const useUpdateShop = (companyId: number) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: shopService.updateShop,
+    mutationFn: (payload: ShopData) => updateShopConfigure(payload, companyId),
+
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["virtual-shop"] });
+      queryClient.invalidateQueries({
+        queryKey: ["virtual-shop", companyId],
+      });
+      toast.success("Virtual shop configure updated successfully!");
     },
-  });
-};
-
-/**
- * Delete a virtual shop
- */
-export const useDeleteShop = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: shopService.deleteShop,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["virtual-shop"] });
-    },
-  });
-};
-
-/**
- * Check if a slug is available
- * @param slug Shop slug to check
- */
-export const useCheckSlug = (slug: string) => {
-  return useQuery({
-    queryKey: ["virtual-shop-slug", slug],
-    queryFn: () => shopService.checkSlug(slug),
-    enabled: !!slug,
-    staleTime: 1000 * 60, // cache for 1 minute
   });
 };
