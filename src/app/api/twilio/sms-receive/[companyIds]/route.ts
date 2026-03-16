@@ -110,6 +110,8 @@ export async function POST(
     const imgs = await res.json();
     const images = imgs?.data ?? [];
 
+    const normalizedFrom = normalizePhoneNumber(body.From);
+
     for (const companyId of companyIds) {
       const entitlements = await getCompanyEntitlements(companyId);
       if (!entitlements.canUseSms) {
@@ -121,9 +123,11 @@ export async function POST(
 
       let client = await db.client.findFirst({
         where: {
-          mobile: {
-            endsWith: body.From.replace("+", ""),
-          },
+          OR: normalizedFrom.lookupValues.map((lookupValue) => ({
+            mobile: {
+              endsWith: lookupValue,
+            },
+          })),
           companyId: +companyId,
         },
         select: {
@@ -141,7 +145,7 @@ export async function POST(
           data: {
             firstName: body.From,
             lastName: " ",
-            mobile: body.From,
+            mobile: normalizedFrom.storeValue,
             companyId: companyId,
             isSalesAgent: true,
           },
@@ -303,4 +307,23 @@ async function fetchTwilioMedia(
 
   const blob = await response.blob();
   return new File([blob], "twilio-mms.jpg", { type: blob.type });
+}
+
+function normalizePhoneNumber(phone: string) {
+  const digits = (phone || "").replace(/\D/g, "");
+  const last10Digits = digits.length >= 10 ? digits.slice(-10) : digits;
+
+  const lookupValues = Array.from(
+    new Set([digits, last10Digits].filter((value) => value.length > 0)),
+  );
+
+  const storeValue =
+    digits.length === 11 && digits.startsWith("1")
+      ? last10Digits
+      : digits || phone;
+
+  return {
+    lookupValues,
+    storeValue,
+  };
 }
