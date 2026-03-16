@@ -22,6 +22,7 @@ export const configureVirtualShop = async function (payload: ShopData) {
 
     return response.data;
   } catch (error) {
+    console.log("error", error);
     const err = errorHandler(error);
     throw err;
   }

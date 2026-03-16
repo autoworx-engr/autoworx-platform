@@ -3,10 +3,10 @@ import { NextRequest, NextResponse } from "next/server";
 
 /**
  * @swagger
- * /api/shop/company/{companyId}:
+ * /api/virtual-shop/configure/{companyId}:
  *   get:
  *     tags:
- *       - Shop
+ *       - Virtual Shop
  *     summary: Get shops by companyId
  *     description: Retrieve all shops belonging to a specific company with pagination.
  *     parameters:
@@ -136,6 +136,135 @@ export async function GET(
       {
         success: false,
         message: "Failed to fetch shops",
+      },
+      { status: 500 },
+    );
+  }
+}
+
+/**
+ * @swagger
+ * /api/virtual-shop/configure/{companyId}:
+ *   patch:
+ *     tags:
+ *       - Virtual Shop
+ *     summary: Update shop
+ *     description: Update shop configuration by company ID
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: company ID
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               storeName:
+ *                 type: string
+ *                 example: Auto Parts Store
+ *               description:
+ *                 type: string
+ *                 example: Best car parts shop
+ *               logoUrl:
+ *                 type: string
+ *                 example: /logo.png
+ *               bannerUrl:
+ *                 type: string
+ *                 example: /banner.png
+ *               themeConfig:
+ *                 type: object
+ *                 example: { "primaryColor": "#3b82f6", "font": "Inter" }
+ *               isActive:
+ *                 type: boolean
+ *                 example: true
+ *     responses:
+ *       200:
+ *         description: Shop updated successfully
+ *       400:
+ *         description: Invalid shop ID
+ *       404:
+ *         description: Shop not found
+ *       500:
+ *         description: Failed to update shop
+ */
+
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: { companyId: string } },
+) {
+  try {
+    const companyId = Number(params.companyId);
+
+    if (!companyId) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Invalid shopId",
+        },
+        { status: 400 },
+      );
+    }
+
+    const body = await req.json();
+
+    const {
+      storeName,
+      description,
+      logoUrl,
+      bannerUrl,
+      themeConfig,
+      isActive,
+    } = body;
+
+    const existingShop = await db.shop.findUnique({
+      where: { companyId },
+    });
+
+    if (!existingShop) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Shop not found",
+        },
+        { status: 404 },
+      );
+    }
+    const slug = storeName
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^a-z0-9-]/g, "");
+
+    const updatedShop = await db.shop.update({
+      where: { companyId },
+      data: {
+        storeName,
+        slug,
+        description,
+        logoUrl,
+        bannerUrl,
+        themeConfig,
+        isActive,
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "Shop updated successfully",
+      data: updatedShop,
+    });
+  } catch (error) {
+    console.error(error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Failed to update shop",
       },
       { status: 500 },
     );
