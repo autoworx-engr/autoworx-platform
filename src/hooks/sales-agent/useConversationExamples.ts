@@ -21,7 +21,7 @@ const fetchConversationExamples = async (
   companyId: number,
 ): Promise<ConversationExamplesResponse> => {
   const response = await fetch(
-    `/api/ai-train/conversation-examples?companyId=${companyId}`,
+    `/api/sales-agent/conversation-examples?companyId=${companyId}`,
   );
   if (!response.ok) {
     throw new Error("Failed to fetch conversation examples");
@@ -51,7 +51,7 @@ export function useCreateConversationExample() {
       extractedText?: string;
       notes?: string;
     }) => {
-      const response = await fetch("/api/ai-train/conversation-examples", {
+      const response = await fetch("/api/sales-agent/conversation-examples", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -91,7 +91,7 @@ export function useUpdateConversationExample() {
   return useMutation({
     mutationFn: async (data: { id: string; notes: string }) => {
       const response = await fetch(
-        `/api/ai-train/conversation-examples/${data.id}`,
+        `/api/sales-agent/conversation-examples/${data.id}`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -130,7 +130,7 @@ export function useDeleteConversationExample() {
   return useMutation({
     mutationFn: async (id: string) => {
       const response = await fetch(
-        `/api/ai-train/conversation-examples/${id}`,
+        `/api/sales-agent/conversation-examples/${id}`,
         {
           method: "DELETE",
         },

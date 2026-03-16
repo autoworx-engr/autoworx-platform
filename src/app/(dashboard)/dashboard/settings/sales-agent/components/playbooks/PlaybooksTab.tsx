@@ -12,7 +12,7 @@ import {
   useUpdatePlaybook,
   useDeletePlaybook,
   useTogglePlaybook,
-} from "@/hooks/ai-train/useServicePlaybooks";
+} from "@/hooks/sales-agent/useServicePlaybooks";
 import { convertToServicePlaybook } from "./utils";
 import toast from "react-hot-toast";
 

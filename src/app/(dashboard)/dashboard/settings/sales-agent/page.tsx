@@ -44,7 +44,7 @@ export default async function AiTrainOverview() {
                 </p>
               </div>
             </div>
-            <Link href="/dashboard/settings/ai-train/ai-settings">
+            <Link href="/dashboard/settings/sales-agent/ai-settings">
               <Button variant="outline">
                 <Settings className="h-4 w-4 mr-2" />
                 Configure AI
@@ -71,7 +71,7 @@ export default async function AiTrainOverview() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Link href="/dashboard/settings/ai-train/ai-settings">
+                <Link href="/dashboard/settings/sales-agent/ai-settings">
                   <Button className="w-full">Go to AI Settings</Button>
                 </Link>
               </CardContent>
