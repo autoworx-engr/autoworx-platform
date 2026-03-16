@@ -58,7 +58,7 @@ export const EventContent = ({
             />
           )}
         </div>
-      ); // Hide holidays in month view
+      );
     return (
       <div
         className="flex items-center gap-1 text-xs truncate w-full h-full cursor-pointer overflow-hidden rounded-r-sm pl-1"
@@ -106,7 +106,7 @@ export const EventContent = ({
           <span
             className="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-sm"
             style={{
-              background: colors.borderColor + "20", // Add slight transparency to background
+              background: colors.borderColor + "20",
               color: colors.accentColor,
             }}
           >
