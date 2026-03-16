@@ -76,7 +76,9 @@ export default function Calendar({ type }: { type: CalendarType }) {
     isTasksLoading ||
     isTasksFetching ||
     isAppointmentsLoading ||
-    isAppointmentsFetching;
+    isAppointmentsFetching ||
+    isHolidaysLoading ||
+    isHolidaysFetching;
 
   const events = useMemo(() => {
     const dynamicEvents: any[] = [];
@@ -120,10 +122,28 @@ export default function Calendar({ type }: { type: CalendarType }) {
       });
     });
 
-    return dynamicEvents;
-  }, [tasks, appointments]);
+    holidays.forEach((holiday: any) => {
+      const dateStr = holiday?.date
+        ? moment.utc(holiday.date).format("YYYY-MM-DD")
+        : "";
+      if (!dateStr) return;
 
-  console.log("Events for FullCalendar:", events);
+      dynamicEvents.push({
+        id: `holiday-${holiday.id}`,
+        title: "Holiday",
+        start: dateStr,
+        allDay: true,
+        editable: false,
+        extendedProps: {
+          type: "holiday",
+          serviceType: "Holiday",
+          originalData: holiday,
+        },
+      });
+    });
+
+    return dynamicEvents;
+  }, [tasks, appointments, holidays]);
 
   useEffect(() => {
     if (calendarRef.current && date) {
@@ -132,6 +152,9 @@ export default function Calendar({ type }: { type: CalendarType }) {
   }, [date]);
 
   const handleEventClick = (info: EventClickArg) => {
+    if (info.event.extendedProps?.type === "holiday") {
+      return;
+    }
     info.jsEvent.preventDefault();
     setSelectedEvent(info.event);
     setIsSheetOpen(true);

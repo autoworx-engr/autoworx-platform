@@ -24,6 +24,11 @@ export const SERVICE_COLORS: Record<
     borderColor: "rgba(245, 158, 11, 0.45)",
     accentColor: "#f59e0b",
   },
+  Holiday: {
+    gradient: ["#c8f2f6", "#b8eaf0"],
+    borderColor: "rgba(20, 133, 146, 0.45)",
+    accentColor: "#0f7f8d",
+  },
 };
 
 export const getServiceColor = (type: string) => {

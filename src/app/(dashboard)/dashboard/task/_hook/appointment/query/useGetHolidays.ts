@@ -4,7 +4,8 @@ import { calenderQueryKey } from "../../../_constant";
 
 export default function useGetHolidays(companyId: number) {
   return useQuery({
-    queryKey: [calenderQueryKey.holidays],
+    queryKey: [calenderQueryKey.holidays, companyId],
+    enabled: !!companyId,
     queryFn: async () => {
       const holidays = await getHoliday(companyId);
       return holidays;
