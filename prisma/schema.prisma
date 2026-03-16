@@ -1240,7 +1240,6 @@ model Service {
   Lead                    Lead[]
   multipleLeads           Lead[]                    @relation("LeadMultipleServices")
   ServiceMaintenanceStage ServiceMaintenanceStage[]
-  shopServices            ShopService[]
 
   @@index([companyId], name: "fk_services_company")
 }
@@ -2762,16 +2761,14 @@ model ShopService {
   shop   Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
 
   // Basic Info
-  title       String   @db.VarChar(255)
-  description String?  @db.Text
-  serviceId   Int?     @map("service_id")
-  service     Service? @relation(fields: [serviceId], references: [id])
-  price       Decimal  @default(0) @db.Decimal(10, 2)
-  duration    Int      @default(30) @map("duration_minutes") // Maps to "Est. Time (min)"
+  title       String  @db.VarChar(255)
+  description String? @db.Text
+  price       Decimal @default(0) @db.Decimal(10, 2)
+  duration    Int     @default(30) @map("duration_minutes") // Maps to "Est. Time (min)"
 
   // Categorization & Media
-  category String? // Can also be categoryId if linking to your Category model
-  imageUrl String? @map("image_url") @db.Text
+  category String[]
+  imageUrl String?  @map("image_url") @db.Text
 
   // Vehicle Type Price Modifiers (+$)
   // These store the additional cost added to the base price

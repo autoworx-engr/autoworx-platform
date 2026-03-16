@@ -33,7 +33,7 @@ export const createAppointmentValidationSchema = z.object({
     .optional(),
   timezone: z.string().optional(),
   forceCompanyId: z.number().optional(),
-  forceUserId: z.number(),
+  forceUserId: z.number().optional(),
 });
 
 export const updateAppointmentValidationSchema = z.object({
