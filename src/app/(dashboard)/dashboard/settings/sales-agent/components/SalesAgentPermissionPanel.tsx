@@ -5,7 +5,7 @@ import {
   useCompanySalesAgent,
   useToggleClientSalesAgent,
   useToggleCompanySalesAgent,
-} from "@/hooks/ai-train/useSalesAgentPermission";
+} from "@/hooks/sales-agent/useSalesAgentPermission";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";

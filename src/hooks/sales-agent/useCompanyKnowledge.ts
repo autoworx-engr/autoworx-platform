@@ -3,50 +3,53 @@ import { queryKeys } from "@/lib/queryKeys";
 import { useCompanyQuery } from "@/hooks/useCompanyQuery";
 import toast from "react-hot-toast";
 
-const fetchAiPersonality = async (companyId: number) => {
-  const response = await fetch(`/api/ai-train/personality?companyId=${companyId}`);
+const fetchCompanyKnowledge = async (companyId: number) => {
+  const response = await fetch(
+    `/api/sales-agent/company-knowledge?companyId=${companyId}`,
+  );
   if (!response.ok) {
-    throw new Error("Failed to fetch AI personality");
+    throw new Error("Failed to fetch company knowledge");
   }
   const data = await response.json();
   return data.data || null;
 };
 
-export function useAiPersonality() {
+export function useCompanyKnowledge() {
   const { data: company } = useCompanyQuery();
   const companyId = company?.id;
   return useQuery({
-    queryKey: queryKeys.aiPersonality({ companyId }),
-    queryFn: () => fetchAiPersonality(companyId!),
+    queryKey: queryKeys.companyKnowledge({ companyId }),
+    queryFn: () => fetchCompanyKnowledge(companyId!),
     enabled: !!companyId,
   });
 }
 
-export function useSaveAiPersonality() {
+export function useSaveCompanyKnowledge() {
   const queryClient = useQueryClient();
   const { data: company } = useCompanyQuery();
   const companyId = company?.id;
   return useMutation({
     mutationFn: async (payload: any) => {
-      const response = await fetch("/api/ai-train/personality", {
+      // Always use POST for upsert
+      const response = await fetch("/api/sales-agent/company-knowledge", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ companyId, ...payload }),
       });
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || "Failed to save AI personality");
+        throw new Error(error.message || "Failed to save company knowledge");
       }
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: queryKeys.aiPersonality({ companyId }),
+        queryKey: queryKeys.companyKnowledge({ companyId }),
       });
-      toast.success("AI personality saved successfully");
+      toast.success("Company knowledge saved successfully");
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Failed to save AI personality");
+      toast.error(error.message || "Failed to save company knowledge");
     },
   });
 }

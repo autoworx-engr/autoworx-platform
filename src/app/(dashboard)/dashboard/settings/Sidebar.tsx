@@ -22,8 +22,7 @@ import {
   Shield,
   LayoutDashboard,
   Send,
-  Brain,
-  Store,
+  Headset,
 } from "lucide-react";
 
 type Props = {};
@@ -92,9 +91,9 @@ const businessSettings = [
     icon: Zap,
   },
   {
-    link: "/dashboard/settings/ai-train",
-    label: "AI Sales Agent",
-    icon: Brain,
+    link: "/dashboard/settings/sales-agent",
+    label: "Sales Agent",
+    icon: Headset ,
   },
 ];
 
@@ -187,8 +186,8 @@ const Sidebar = (props: Props) => {
   }) => {
     const isActive =
       path === setting.link ||
-      (path === "/dashboard/settings/ai-train/ai-settings" &&
-        setting.link === "/dashboard/settings/ai-train");
+      (path === "/dashboard/settings/sales-agent/ai-settings" &&
+        setting.link === "/dashboard/settings/sales-agent");
     return (
       <Link
         className={cn(

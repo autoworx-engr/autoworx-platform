@@ -25,7 +25,7 @@ const fetchKnowledgeBaseDocuments = async (
   companyId: number,
 ): Promise<KnowledgeBaseDocumentsResponse> => {
   const response = await fetch(
-    `/api/ai-train/knowledge-base/documents?companyId=${companyId}`,
+    `/api/sales-agent/knowledge-base/documents?companyId=${companyId}`,
   );
   if (!response.ok) {
     throw new Error("Failed to fetch knowledge base documents");
@@ -58,20 +58,23 @@ export function useCreateKnowledgeBaseDocument() {
       fileType?: string;
       fileUrl?: string;
     }) => {
-      const response = await fetch("/api/ai-train/knowledge-base/documents", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: data.title,
-          category: data.category,
-          content: data.content,
-          status: "indexed",
-          companyId,
-          fileName: data.fileName,
-          fileType: data.fileType,
-          fileUrl: data.fileUrl,
-        }),
-      });
+      const response = await fetch(
+        "/api/sales-agent/knowledge-base/documents",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: data.title,
+            category: data.category,
+            content: data.content,
+            status: "indexed",
+            companyId,
+            fileName: data.fileName,
+            fileType: data.fileType,
+            fileUrl: data.fileUrl,
+          }),
+        },
+      );
 
       if (!response.ok) {
         const error = await response.json();
@@ -100,7 +103,7 @@ export function useDeleteKnowledgeBaseDocument() {
   return useMutation({
     mutationFn: async (id: string) => {
       const response = await fetch(
-        `/api/ai-train/knowledge-base/documents/${id}`,
+        `/api/sales-agent/knowledge-base/documents/${id}`,
         {
           method: "DELETE",
         },
