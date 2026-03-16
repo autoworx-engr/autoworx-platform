@@ -74,14 +74,19 @@ export async function POST(req: NextRequest) {
         continue;
       }
 
+      const normalizedFrom = normalizePhoneNumber(from);
+      const normalizedTo = normalizePhoneNumber(to);
+
       const messageText = message || cleanText || "";
 
       // Find Infobip configurations that match the "to" phone number
       const infobipConfigs = await db.infobipConfig.findMany({
         where: {
-          phoneNumber: {
-            endsWith: to.replace("+", ""),
-          },
+          OR: normalizedTo.lookupValues.map((lookupValue) => ({
+            phoneNumber: {
+              endsWith: lookupValue,
+            },
+          })),
         },
       });
 
@@ -101,9 +106,11 @@ export async function POST(req: NextRequest) {
         // Find client by the "from" phone number (client's phone)
         let client = await db.client.findFirst({
           where: {
-            mobile: {
-              endsWith: from.replace("+", ""),
-            },
+            OR: normalizedFrom.lookupValues.map((lookupValue) => ({
+              mobile: {
+                endsWith: lookupValue,
+              },
+            })),
             companyId: infobipConfig.companyId,
           },
         });
@@ -113,7 +120,7 @@ export async function POST(req: NextRequest) {
             data: {
               firstName: from,
               lastName: " ",
-              mobile: from,
+              mobile: normalizedFrom.storeValue,
               companyId: infobipConfig.companyId,
               isSalesAgent: true,
             },
@@ -258,4 +265,23 @@ export async function GET() {
     { message: "Infobip MMS receive webhook is active" },
     { status: 200 },
   );
+}
+
+function normalizePhoneNumber(phone: string) {
+  const digits = (phone || "").replace(/\D/g, "");
+  const last10Digits = digits.length >= 10 ? digits.slice(-10) : digits;
+
+  const lookupValues = Array.from(
+    new Set([digits, last10Digits].filter((value) => value.length > 0)),
+  );
+
+  const storeValue =
+    digits.length === 11 && digits.startsWith("1")
+      ? last10Digits
+      : digits || phone;
+
+  return {
+    lookupValues,
+    storeValue,
+  };
 }

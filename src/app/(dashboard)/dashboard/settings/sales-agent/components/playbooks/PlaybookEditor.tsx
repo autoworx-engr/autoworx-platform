@@ -70,9 +70,10 @@ export function PlaybookEditor({
     // Service name validation
     if (!formData.service_name || !formData.service_name.trim()) {
       newErrors.service_name = "Service name is required";
-    } else if (formData.service_name.length > 100) {
-      newErrors.service_name = "Service name must be less than 100 characters";
-    }
+    } 
+    // else if (formData.service_name.length > 100) {
+    //   newErrors.service_name = "Service name must be less than 100 characters";
+    // }
 
     // Overview validation
     if (formData.overview && formData.overview.length > 1000) {
@@ -359,11 +360,11 @@ export function PlaybookEditor({
                     {errors.overview}
                   </p>
                 )}
-                {formData.overview && (
+                {/* {formData.overview && (
                   <p className="text-xs text-muted-foreground text-right">
                     {formData.overview.length}/1000 characters
                   </p>
-                )}
+                )} */}
               </div>
 
               <div className="flex items-center justify-between rounded-lg border border-border p-4">

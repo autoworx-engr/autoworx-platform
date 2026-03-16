@@ -151,8 +151,6 @@ export async function GET(req: Request) {
       throw new Error("Missing required company IDs");
     }
 
-    /* ---------------- FETCH MESSAGES ---------------- */
-
     const messages = await db.collaborationMessage.findMany({
       where: {
         section: "collaboration",
@@ -183,6 +181,28 @@ export async function GET(req: Request) {
       },
       orderBy: {
         createdAt: "asc",
+      },
+    });
+
+    await db.companyChatTrack.updateMany({
+      where: {
+        OR: [
+          {
+            AND: [
+              { senderCompanyId: companyA },
+              { receiverCompanyId: companyB },
+            ],
+          },
+          {
+            AND: [
+              { senderCompanyId: companyB },
+              { receiverCompanyId: companyA },
+            ],
+          },
+        ],
+      },
+      data: {
+        isRead: true,
       },
     });
 
