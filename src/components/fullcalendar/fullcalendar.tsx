@@ -1,6 +1,8 @@
 "use client";
 import useAppointmentQueryByWeek from "@/app/(dashboard)/dashboard/task/_hook/appointment/query/useAppointmentQueryByWeek";
 import useTaskQueryByWeek from "@/app/(dashboard)/dashboard/task/_hook/task/query/useTaskQueryByWeek";
+import { getWeekStartNumber } from "@/app/(dashboard)/dashboard/task/_utils/utils.DateSelector";
+import { getCalenderSettings } from "@/actions/task/getCalendarSettings";
 import { useCalendarStore } from "@/stores/calendarStore";
 import { CalendarType } from "@/types/calendar";
 import { EventClickArg, EventContentArg } from "@fullcalendar/core";
@@ -9,6 +11,7 @@ import interactionPlugin from "@fullcalendar/interaction";
 import listPlugin from "@fullcalendar/list";
 import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
+import { useQuery } from "@tanstack/react-query";
 import moment from "moment";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CalendarHeader } from "./CalendarHeader";
@@ -18,6 +21,7 @@ import { EventDetailsSheet } from "./EventDetailsSheet";
 export default function Calendar({ type }: { type: CalendarType }) {
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [isCalendarLoading, setIsCalendarLoading] = useState(false);
   const [dateRange, setDateRange] = useState({
     start: moment().startOf("month").format("YYYY-MM-DD"),
     end: moment().endOf("month").format("YYYY-MM-DD"),
@@ -37,14 +41,34 @@ export default function Calendar({ type }: { type: CalendarType }) {
   // Use calendar store to sync date with header controls
   const { date, setDate } = useCalendarStore();
 
-  const { data: tasks = [] } = useTaskQueryByWeek(
-    dateRange.start,
-    dateRange.end,
-  );
-  const { data: appointments = [] } = useAppointmentQueryByWeek(
-    dateRange.start,
-    dateRange.end,
-  );
+  const { data: settings, isLoading: isSettingsLoading } = useQuery({
+    queryKey: ["calendar-settings", "week-start"],
+    queryFn: () => getCalenderSettings(),
+  });
+
+  const firstDay = useMemo(() => {
+    const mappedDay = getWeekStartNumber(settings?.weekStart ?? "Sunday");
+    return mappedDay >= 0 ? mappedDay : 0;
+  }, [settings?.weekStart]);
+
+  const {
+    data: tasks = [],
+    isLoading: isTasksLoading,
+    isFetching: isTasksFetching,
+  } = useTaskQueryByWeek(dateRange.start, dateRange.end);
+  const {
+    data: appointments = [],
+    isLoading: isAppointmentsLoading,
+    isFetching: isAppointmentsFetching,
+  } = useAppointmentQueryByWeek(dateRange.start, dateRange.end);
+
+  const loading =
+    isCalendarLoading ||
+    isSettingsLoading ||
+    isTasksLoading ||
+    isTasksFetching ||
+    isAppointmentsLoading ||
+    isAppointmentsFetching;
 
   const events = useMemo(() => {
     const dynamicEvents: any[] = [];
@@ -63,7 +87,7 @@ export default function Calendar({ type }: { type: CalendarType }) {
         end: apt.endTime ? `${dateStr}T${apt.endTime}` : undefined,
         extendedProps: {
           type: "appointment",
-          serviceType: "Custom Work",
+          serviceType: "Appointment",
           carModel: apt.vehicle
             ? `${apt.vehicle.make} ${apt.vehicle.model}`
             : undefined,
@@ -117,8 +141,12 @@ export default function Calendar({ type }: { type: CalendarType }) {
 
     // Month filter => only that month data
     if (arg.view.type === "dayGridMonth") {
-      startStr = moment(arg.view.currentStart).startOf("month").format("YYYY-MM-DD");
-      endStr = moment(arg.view.currentStart).endOf("month").format("YYYY-MM-DD");
+      startStr = moment(arg.view.currentStart)
+        .startOf("month")
+        .format("YYYY-MM-DD");
+      endStr = moment(arg.view.currentStart)
+        .endOf("month")
+        .format("YYYY-MM-DD");
     } else {
       // Week/Day/List => visible range
       startStr = moment(arg.start).format("YYYY-MM-DD");
@@ -205,6 +233,7 @@ export default function Calendar({ type }: { type: CalendarType }) {
           ]}
           initialView={view}
           headerToolbar={false}
+          firstDay={firstDay}
           navLinks={true}
           editable={true}
           dayMaxEvents={5}
@@ -214,6 +243,7 @@ export default function Calendar({ type }: { type: CalendarType }) {
           slotMaxTime="24:00:00"
           allDaySlot={false}
           expandRows={true}
+          loading={setIsCalendarLoading}
           slotLabelFormat={{
             hour: "2-digit",
             minute: "2-digit",
@@ -224,6 +254,17 @@ export default function Calendar({ type }: { type: CalendarType }) {
           datesSet={handleDatesSet}
           height="100%"
         />
+
+        {loading && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/70 backdrop-blur-[1px]">
+            <div className="flex items-center gap-3 rounded-md border bg-white px-4 py-2 shadow-sm">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-slate-700" />
+              <span className="text-sm font-medium text-slate-700">
+                Loading calendar...
+              </span>
+            </div>
+          </div>
+        )}
       </div>
 
       <EventDetailsSheet

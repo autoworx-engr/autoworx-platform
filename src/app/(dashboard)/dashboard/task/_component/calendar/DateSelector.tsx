@@ -96,15 +96,8 @@ function DateSelector({ type, weekStart = 1 }: DateSelectorProps) {
         dow: weekStartNumber,
       },
     });
-    // Parse the year and week number
-    const [year, weekNum] = newWeek.split("-W").map(Number);
-
-    // Calculate the first day of the selected week
-    const firstDayOfWeek = moment()
-      .year(year)
-      .isoWeek(weekNum)
-      .startOf("isoWeeks")
-      .format("YYYY-MM-DD");
+    const { startDate } = getWeekInfoFromWeekStr(newWeek, weekStart);
+    const firstDayOfWeek = startDate;
     setDate(firstDayOfWeek);
 
     setIsOpen(false);

@@ -5,7 +5,7 @@ import { getServiceColor, SERVICE_COLORS } from "./utils";
 export const EventContent = ({ eventInfo }: { eventInfo: EventContentArg }) => {
   const { event, view } = eventInfo;
   const props = event.extendedProps as CustomEventProps;
-  const serviceType = props.serviceType || "Custom Work";
+  const serviceType = props.serviceType || "Appointment";
   const colors = getServiceColor(serviceType);
 
   // Styles for the container
