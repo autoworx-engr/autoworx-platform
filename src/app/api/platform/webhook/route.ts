@@ -10,16 +10,15 @@ import crypto from "crypto";
 export async function POST(req: NextRequest) {
   try {
     const signature = req.headers.get("x-anet-signature");
-    const bodyText = await req.text();
-    console.log("🚀 ~ POST ~ bodyText:", bodyText);
+    const rawBody = Buffer.from(await req.arrayBuffer());
+    const bodyText = rawBody.toString("utf8");
 
     const shouldVerify = !!process.env.PLATFORM_AUTHNET_SIGNATURE_KEY;
     // const shouldVerify =
     //   process.env.NODE_ENV === "production" &&
     //   !!process.env.PLATFORM_AUTHNET_SIGNATURE_KEY;
-    console.log("🚀 ~ POST ~ shouldVerify:", shouldVerify);
 
-    if (shouldVerify && !verifySignature(bodyText, signature)) {
+    if (shouldVerify && !verifySignature(rawBody, signature)) {
       console.warn("❌ Invalid Authorize.Net platform webhook signature");
       return new NextResponse("Invalid signature", { status: 401 });
     }
@@ -209,17 +208,42 @@ async function handleSubscriptionSuspended(payload: any) {
 /**
  * Signature Verification
  */
-function verifySignature(body: string, signature: string | null): boolean {
+function verifySignature(body: Buffer, signature: string | null): boolean {
   if (!signature) return false;
-  const hexKey = process.env.PLATFORM_AUTHNET_SIGNATURE_KEY || "";
-  // Authorize.Net provides the signature key as a hex string.
-  // It must be decoded to raw bytes before use as the HMAC key.
-  const keyBytes = Buffer.from(hexKey, "hex");
-  const hash = crypto
-    .createHmac("sha512", keyBytes)
-    .update(body)
-    .digest("hex")
-    .toUpperCase();
+  const signatureKey = (
+    process.env.PLATFORM_AUTHNET_SIGNATURE_KEY || ""
+  ).trim();
+  if (!signatureKey) return false;
 
-  return `sha512=${hash}` === signature.toUpperCase();
+  const received = signature.trim().replace(/^sha512=/i, "");
+  if (!/^[a-fA-F0-9]{128}$/.test(received)) return false;
+
+  const matches = (computedHex: string, headerHex: string): boolean => {
+    const computedBytes = Buffer.from(computedHex, "hex");
+    const headerBytes = Buffer.from(headerHex, "hex");
+    if (computedBytes.length !== headerBytes.length) return false;
+    return crypto.timingSafeEqual(computedBytes, headerBytes);
+  };
+
+  const utf8KeyHash = crypto
+    .createHmac("sha512", signatureKey)
+    .update(body)
+    .digest("hex");
+
+  if (matches(utf8KeyHash, received)) {
+    return true;
+  }
+
+  if (/^[a-fA-F0-9]{128}$/.test(signatureKey)) {
+    const hexKeyHash = crypto
+      .createHmac("sha512", Buffer.from(signatureKey, "hex"))
+      .update(body)
+      .digest("hex");
+
+    if (matches(hexKeyHash, received)) {
+      return true;
+    }
+  }
+
+  return false;
 }
