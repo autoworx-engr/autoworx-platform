@@ -23,6 +23,7 @@ import {
   LayoutDashboard,
   Send,
   Headset,
+  Store,
 } from "lucide-react";
 
 type Props = {};
@@ -93,7 +94,7 @@ const businessSettings = [
   {
     link: "/dashboard/settings/sales-agent",
     label: "Sales Agent",
-    icon: Headset ,
+    icon: Headset,
   },
 ];
 
