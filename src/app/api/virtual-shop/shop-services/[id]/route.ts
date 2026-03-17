@@ -7,6 +7,166 @@ import { updateShopServiceSchema } from "@/validations/schemas/virtual-shop/shop
 import { Labor, Material, Service, Tag } from "@prisma/client";
 // Use your update schema if you have one, otherwise falling back to the create schema
 
+/**
+ * @swagger
+ * /api/virtual-shop/shop-services/{id}:
+ *   get:
+ *     summary: Retrieve a specific shop service by ID
+ *     description: Fetch a specific shop service including its nested invoice items, labor, materials, and tags based on the provided shop service ID.
+ *     tags:
+ *       - Virtual Shop
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the shop service to retrieve.
+ *     responses:
+ *       200:
+ *         description: Successfully fetched the shop service.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                       example: 1
+ *                     shopId:
+ *                       type: integer
+ *                       example: 1
+ *                     title:
+ *                       type: string
+ *                       example: "Interior Deep Clean"
+ *                     description:
+ *                       type: string
+ *                       example: "Full vacuum, steam cleaning, leather conditioning."
+ *                     price:
+ *                       type: number
+ *                       example: 129
+ *                     duration:
+ *                       type: integer
+ *                       example: 120
+ *                     category:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                       example: ["Detailing"]
+ *                     imageUrl:
+ *                       type: string
+ *                       nullable: true
+ *                       example: "https://example.com/image.jpg"
+ *                     modifierCoupe:
+ *                       type: number
+ *                       example: 0
+ *                     modifierSedan:
+ *                       type: number
+ *                       example: 20
+ *                     modifierSUV:
+ *                       type: number
+ *                       example: 30
+ *                     modifierTruck:
+ *                       type: number
+ *                       example: 40
+ *                     isActive:
+ *                       type: boolean
+ *                       example: true
+ *                     invoiceItems:
+ *                       type: array
+ *                       description: Nested invoice items containing detailed breakdown of the service, labor, and materials.
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: integer
+ *                             example: 101
+ *                           serviceId:
+ *                             type: integer
+ *                             nullable: true
+ *                             example: 5
+ *                           laborId:
+ *                             type: integer
+ *                             nullable: true
+ *                             example: null
+ *                           service:
+ *                             type: object
+ *                             nullable: true
+ *                             example: { "id": 5, "name": "Basic Wash", "categoryId": 2 }
+ *                           materials:
+ *                             type: array
+ *                             items:
+ *                               type: object
+ *                             example: [{ "id": 50, "name": "Premium Wax", "cost": 10, "sell": 15 }]
+ *       400:
+ *         description: Invalid or missing parameter (id).
+ *       404:
+ *         description: Shop service not found.
+ *       500:
+ *         description: Internal server error.
+ */
+export async function GET(
+  req: Request,
+  { params }: { params: { id: string } },
+) {
+  try {
+    const { id } = params;
+
+    if (!id || isNaN(Number(id))) {
+      return NextResponse.json(
+        { success: false, message: "Invalid or missing shop service ID" },
+        { status: 400 },
+      );
+    }
+
+    const shopService = await db.shopService.findUnique({
+      where: {
+        id: parseInt(id, 10),
+      },
+      include: {
+        invoiceItems: {
+          include: {
+            service: true,
+            labor: true,
+            materials: true,
+            tags: true,
+          },
+        },
+      },
+    });
+
+    if (!shopService) {
+      return NextResponse.json(
+        { success: false, message: "Shop service not found" },
+        { status: 404 },
+      );
+    }
+
+    return NextResponse.json(
+      {
+        success: true,
+        data: shopService,
+      },
+      { status: 200 },
+    );
+  } catch (error: any) {
+    console.error("Error fetching shop service by ID:", error);
+    return NextResponse.json(
+      {
+        success: false,
+        message: error.message || "Failed to fetch shop service",
+      },
+      { status: 500 },
+    );
+  }
+}
+
 type TUpdateShopServiceRequest = {
   shopId: string;
   title: string;
@@ -27,6 +187,100 @@ type TUpdateShopServiceRequest = {
   isActive?: boolean;
 };
 
+/**
+ * @swagger
+ * /api/virtual-shop/shop-services/{id}:
+ *   put:
+ *     summary: Update an existing shop service
+ *     description: Modifies a shop service, recalculates totals, rebuilds nested dependencies (like invoice items, labor, and materials), and updates based on the provided values. Requires authentication.
+ *     tags:
+ *       - Virtual Shop
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the shop service to update.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - shopId
+ *               - title
+ *               - items
+ *             properties:
+ *               shopId:
+ *                 type: string
+ *                 description: ID of the underlying shop.
+ *                 example: "1"
+ *               title:
+ *                 type: string
+ *                 description: Title of the shop service.
+ *                 example: "Full Detail Package Updated"
+ *               description:
+ *                 type: string
+ *                 description: Optional description.
+ *                 example: "Updated premium deep cleaning inside and out."
+ *               imageUrl:
+ *                 type: string
+ *                 description: Optional image URL.
+ *                 example: "https://example.com/updated-image.jpg"
+ *               modifierCoupe:
+ *                 type: string
+ *                 description: Price modifier for Coupe.
+ *                 example: "0"
+ *               modifierSedan:
+ *                 type: string
+ *                 description: Price modifier for Sedan.
+ *                 example: "10"
+ *               modifierSUV:
+ *                 type: string
+ *                 description: Price modifier for SUV.
+ *                 example: "20"
+ *               modifierTruck:
+ *                 type: string
+ *                 description: Price modifier for Truck.
+ *                 example: "30"
+ *               isActive:
+ *                 type: boolean
+ *                 description: Toggle service availability.
+ *                 example: true
+ *               items:
+ *                 type: array
+ *                 description: Nested array for rebuilding invoice configurations.
+ *                 items:
+ *                   type: object
+ *     responses:
+ *       200:
+ *         description: Successfully updated shop service.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   description: Updated Shop Service object
+ *       400:
+ *         description: Invalid or missing data.
+ *       401:
+ *         description: Unauthorized.
+ *       403:
+ *         description: Company ID not found.
+ *       404:
+ *         description: Shop service not found or access denied.
+ *       500:
+ *         description: Internal server error.
+ */
 export async function PUT(
   req: Request,
   { params }: { params: { id: string } },
@@ -280,6 +534,49 @@ export async function PUT(
   }
 }
 
+/**
+ * @swagger
+ * /api/virtual-shop/shop-services/{id}:
+ *   delete:
+ *     summary: Delete a shop service
+ *     description: Deletes an existing shop service. Ensures the requesting user belongs to the company running the shop service. Requires authentication.
+ *     tags:
+ *       - Virtual Shop
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the shop service to delete.
+ *     responses:
+ *       200:
+ *         description: Successfully deleted the shop service.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Shop service deleted successfully"
+ *                 data:
+ *                   type: object
+ *                   description: The raw response data for the deleted service.
+ *       400:
+ *         description: Missing required id or bad request.
+ *       401:
+ *         description: Unauthorized.
+ *       403:
+ *         description: Company ID not found in session.
+ *       500:
+ *         description: Internal server error.
+ */
 export async function DELETE(
   req: Request,
   { params }: { params: { id: string } },
