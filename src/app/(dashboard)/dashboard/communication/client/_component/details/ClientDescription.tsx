@@ -210,7 +210,7 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
                     ? task.title.slice(0, 40) + "…"
                     : task.title}
                 </span>
-                <TaskActions usersOfCompany={companyUsers} task={task} />
+                <TaskActions task={task} />
               </div>
             ))
           ) : (

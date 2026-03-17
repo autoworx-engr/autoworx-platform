@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 
 const fetchSmsDelay = async (companyId: number) => {
   const response = await fetch(
-    `/api/sales-agent/sms-delay?companyId=${companyId}`,
+    `/api/ai-train/sms-delay?companyId=${companyId}`,
   );
   if (!response.ok) {
     throw new Error("Failed to fetch SMS delay");
@@ -32,7 +32,7 @@ export function useSaveSmsDelay() {
       smsResponseDelayMin: number;
       smsResponseDelayMax: number;
     }) => {
-      const response = await fetch("/api/sales-agent/sms-delay", {
+      const response = await fetch("/api/ai-train/sms-delay", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ companyId, ...payload }),

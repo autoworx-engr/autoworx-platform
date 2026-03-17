@@ -63,6 +63,11 @@ export const getClients = cache(
                 OR: [{ emailIsRead: false }, { smsIsRead: false }],
               },
             },
+            orderBy: {
+              conversationsTrack: {
+                createdAt: "desc",
+              },
+            },
           });
           const sortedUnreadClients =
             clientSortByUpdatedMessage(allUnreadClients);

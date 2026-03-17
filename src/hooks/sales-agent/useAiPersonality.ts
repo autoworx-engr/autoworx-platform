@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 
 const fetchAiPersonality = async (companyId: number) => {
   const response = await fetch(
-    `/api/sales-agent/personality?companyId=${companyId}`,
+    `/api/ai-train/personality?companyId=${companyId}`,
   );
   if (!response.ok) {
     throw new Error("Failed to fetch AI personality");
@@ -30,7 +30,7 @@ export function useSaveAiPersonality() {
   const companyId = company?.id;
   return useMutation({
     mutationFn: async (payload: any) => {
-      const response = await fetch("/api/sales-agent/personality", {
+      const response = await fetch("/api/ai-train/personality", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ companyId, ...payload }),

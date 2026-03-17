@@ -34,13 +34,13 @@ export default function VehicleDetails({
 
   const relatedInvoices = hasVehicles
     ? invoices.filter((inv) => {
-        const v = inv.vehicle;
-        return (
-          v?.model === vehicle?.model &&
-          v?.make === vehicle?.make &&
-          v?.year === vehicle?.year
-        );
-      })
+      const v = inv.vehicle;
+      return (
+        v?.model === vehicle?.model &&
+        v?.make === vehicle?.make &&
+        v?.year === vehicle?.year
+      );
+    })
     : [];
 
   const services: Service[] =
@@ -111,10 +111,10 @@ export default function VehicleDetails({
         <p className="mb-2 font-semibold">Service Requested :</p>
 
         {hasVehicles ? (
-          <ul className="thin-scrollbar max-h-40 list-inside list-disc overflow-y-auto pr-2">
+          <ul className="">
             {multipleServices &&
               multipleServices?.length > 0 &&
-              multipleServices?.map((s) => <li>{s} (requested)</li>)}
+              multipleServices?.map((s) => <li key={s}>{s} (requested)</li>)}
             {services.length
               ? services.map((s, i) => <li key={`${s.id}-${i}`}>{s.name}</li>)
               : null}
