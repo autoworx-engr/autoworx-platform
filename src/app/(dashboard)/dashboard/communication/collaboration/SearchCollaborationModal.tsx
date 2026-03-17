@@ -18,7 +18,7 @@ type TProps = {
   companyAdmins: Partial<
     User & {
       isConnected: boolean;
-      companyJoinStatus?: string | null;
+      companyStatus?: string | null;
     }
   >[];
   setCompanyAdmins: React.Dispatch<
@@ -26,6 +26,7 @@ type TProps = {
       Partial<
         User & {
           isConnected: boolean;
+          companyStatus?: string | null;
         }
       >[]
     >
@@ -61,10 +62,28 @@ export default function SearchCollaborationModal({
         const updateCompanyAdmins = response.data
           .map((company) => {
             return company.users.map((user) => {
+              const joinAsOne = company.companyJoinsAsOne.find(
+                (j) =>
+                  (j.companyOneId === company.id &&
+                    j.companyTwoId === response?.companyId) ||
+                  (j.companyOneId === response?.companyId &&
+                    j.companyTwoId === company.id),
+              );
+
+              const joinAsTwo = company.companyJoinsAsTwo.find(
+                (j) =>
+                  (j.companyOneId === company.id &&
+                    j.companyTwoId === response?.companyId) ||
+                  (j.companyOneId === response?.companyId &&
+                    j.companyTwoId === company.id),
+              );
+
+              const joinStatus = joinAsOne?.status ?? joinAsTwo?.status ?? null;
               return {
                 ...user,
                 companyName: company.name,
                 isConnected: companies.some((c) => c.id === user.companyId),
+                companyStatus: joinStatus,
               };
             });
           })
@@ -172,13 +191,13 @@ export default function SearchCollaborationModal({
                             </div>
                           </div>
                           <div className="w-full flex-shrink-0 sm:w-auto">
-                            {user?.companyJoinStatus === "ACCEPTED" ? (
+                            {user?.companyStatus === "ACCEPTED" ? (
                               <span className="block w-full rounded-lg bg-slate-100 px-3 py-1.5 text-center text-xs font-semibold text-slate-500 sm:inline sm:w-auto sm:text-left">
                                 Connected
                               </span>
-                            ) : user?.companyJoinStatus ? (
+                            ) : user?.companyStatus ? (
                               <span className="block w-full rounded-lg bg-slate-100 px-3 py-1.5 text-center text-xs font-semibold text-slate-500 sm:inline sm:w-auto sm:text-left">
-                                {user?.companyJoinStatus}
+                                {user?.companyStatus}
                               </span>
                             ) : (
                               <button
