@@ -12,6 +12,10 @@
   height: 2.5em !important;
 }
 
+.calendarScope :global(.fc-timegrid-col-bg .fc-non-business) {
+  background-color: #f1f5f9 !important;
+}
+
 .calendarScope :global(.fc-list-table) {
   width: 100% !important;
   table-layout: fixed;

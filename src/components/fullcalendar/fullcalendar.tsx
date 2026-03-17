@@ -69,6 +69,17 @@ export default function Calendar({ type }: { type: CalendarType }) {
     return mappedDay >= 0 ? mappedDay : 0;
   }, [settings?.weekStart]);
 
+  const businessHours = useMemo(() => {
+    const startTime = settings?.dayStart || "08:00:00";
+    const endTime = settings?.dayEnd || "18:00:00";
+
+    return {
+      daysOfWeek: [0, 1, 2, 3, 4, 5, 6],
+      startTime,
+      endTime,
+    };
+  }, [settings?.dayStart, settings?.dayEnd]);
+
   const {
     data: tasks = [],
     isLoading: isTasksLoading,
@@ -265,6 +276,7 @@ export default function Calendar({ type }: { type: CalendarType }) {
           scrollTime={settings?.dayStart || "08:00:00"}
           allDaySlot={true}
           expandRows={true}
+          businessHours={businessHours}
           loading={setIsCalendarLoading}
           slotLabelFormat={{
             hour: "2-digit",
