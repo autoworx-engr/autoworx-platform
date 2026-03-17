@@ -16,7 +16,7 @@ export default async function CollaborationPage() {
   const userCompanyId = session?.user?.companyId;
 
   const company = await getCompany();
-
+  console.log("company", company);
   if (!userCompanyId) {
     throw new Error("Company ID is required to create an email template.");
   }
@@ -147,12 +147,37 @@ export default async function CollaborationPage() {
           employeeType: true,
         },
       },
+      companyJoinsAsOne: {
+        select: {
+          status: true,
+          companyOneId: true,
+        },
+      },
+      companyJoinsAsTwo: {
+        select: {
+          status: true,
+          companyTwoId: true,
+        },
+      },
     },
   });
 
   // Filter admins based on collaboration permission
   const filteredCompanyWithAdminPromises = companyWithAdmin.map(
     async (company) => {
+      // specific join বের করা
+      const joinAsOne = company.companyJoinsAsOne.find(
+        (j) => j.companyOneId === userCompanyId,
+      );
+
+      const joinAsTwo = company.companyJoinsAsTwo.find(
+        (j) => j.companyTwoId === userCompanyId,
+      );
+      console.log("company.companyJoinsAsOne", company.companyJoinsAsOne);
+      console.log("company.companyJoinsAsTwo", company.companyJoinsAsTwo);
+
+      const joinStatus = joinAsOne?.status || joinAsTwo?.status || null;
+
       const filteredAdmins = await Promise.all(
         company.users.map(async (user) => {
           try {
@@ -172,6 +197,7 @@ export default async function CollaborationPage() {
                   isConnected: finalCompanies.some(
                     (c) => c.id === user.companyId,
                   ),
+                  companyJoinStatus: joinStatus,
                 }
               : null;
           } catch (error) {
@@ -191,6 +217,7 @@ export default async function CollaborationPage() {
     await Promise.all(filteredCompanyWithAdminPromises)
   ).flat();
 
+  console.log("filteredCompanyWithAdmin", filteredCompanyWithAdmin);
   return (
     <div>
       <Title className="hidden sm:block">
