@@ -200,10 +200,6 @@ export default function Calendar({ type }: { type: CalendarType }) {
     }
   };
 
-  const renderEventContent = (eventInfo: EventContentArg, session: any) => {
-    return <EventContent eventInfo={eventInfo} session={session} />;
-  };
-
   const handleDatesSet = (arg: any) => {
     setView(arg.view.type);
 
@@ -235,6 +231,9 @@ export default function Calendar({ type }: { type: CalendarType }) {
     if (lower.includes("day")) return "day";
     return "week";
   };
+  const renderEventContent = (eventInfo: EventContentArg, session: any) => {
+    return <EventContent eventInfo={eventInfo} session={session} />;
+  };
 
   return (
     <div
@@ -263,7 +262,8 @@ export default function Calendar({ type }: { type: CalendarType }) {
           eventContent={(eventInfo) => renderEventContent(eventInfo, session)}
           slotMinTime="00:00:00"
           slotMaxTime="24:00:00"
-          allDaySlot={false}
+          scrollTime={settings?.dayStart || "08:00:00"}
+          allDaySlot={true}
           expandRows={true}
           loading={setIsCalendarLoading}
           slotLabelFormat={{
