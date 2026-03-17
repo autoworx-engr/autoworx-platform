@@ -4,7 +4,7 @@ export const createAppointmentValidationSchema = z.object({
   title: z.string().min(1, "Title is required"),
   date: z
     .string()
-    .refine((date) => {
+    .refine(date => {
       if (!date) return true;
       return !isNaN(Date.parse(date));
     }, "Invalid date format")
@@ -26,12 +26,14 @@ export const createAppointmentValidationSchema = z.object({
       z.object({
         date: z
           .string()
-          .refine((date) => !isNaN(Date.parse(date)), "Invalid date format"),
+          .refine(date => !isNaN(Date.parse(date)), "Invalid date format"),
         time: z.string(),
       }),
     )
     .optional(),
   timezone: z.string().optional(),
+  forceCompanyId: z.number().optional(),
+  forceUserId: z.number().optional(),
 });
 
 export const updateAppointmentValidationSchema = z.object({

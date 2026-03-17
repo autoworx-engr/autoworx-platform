@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 /**
  * @swagger
- * /api/ai-train:
+ * /api/sales-agent:
  *   get:
  *     summary: Get all AI training data for a company
  *     tags: [AI Training]
@@ -55,85 +55,92 @@ import { NextRequest, NextResponse } from "next/server";
  */
 
 export async function GET(req: NextRequest) {
-    try {
-      const { searchParams } = new URL(req.url);
-      const includeParam = searchParams.get("include") || "all";
-  
-      const includes =
-        includeParam === "all"
-          ? ["playbooks", "examples", "documents", "company", "personality", "sms", "faqs"]
-          : includeParam.split(",").map((i) => i.trim());
-  
-      const result: Record<number, any> = {};
-  
-      // 1️⃣ Get all companies
-      const companies = await db.companyInfo.findMany({
-        select: { companyId: true, overallFaqs: true },
-      });
-  
-      for (const company of companies) {
-        const companyId = company.companyId;
-        result[companyId] = {};
-  
-        // Company info
-        if (includes.includes("company")) {
-          result[companyId].company = company;
-        }
-  
-        if (includes.includes("playbooks")) {
-          result[companyId].playbooks = await db.servicePlaybook.findMany({
-            where: { companyId },
-            include: {
-              category: true,
-              pricingRules: true,
-              faqs: true,
-            },
-            orderBy: { createdAt: "desc" },
-          });
-        }
-  
-        if (includes.includes("examples")) {
-          result[companyId].examples = await db.conversationExample.findMany({
-            where: { companyId },
-            orderBy: { createdAt: "desc" },
-          });
-        }
-  
-        if (includes.includes("documents")) {
-          result[companyId].documents = await db.knowledgeBaseDocument.findMany({
-            where: { companyId },
-            orderBy: { createdAt: "desc" },
-          });
-        }
-  
-        if (includes.includes("personality")) {
-          result[companyId].personality = await db.aiPersonality.findUnique({
-            where: { companyId },
-          });
-        }
-  
-        if (includes.includes("sms")) {
-          result[companyId].sms = await db.sMSDelay.findUnique({
-            where: { companyId },
-          });
-        }
-  
-        if (includes.includes("faqs")) {
-          result[companyId].faqs = company.overallFaqs || [];
-        }
+  try {
+    const { searchParams } = new URL(req.url);
+    const includeParam = searchParams.get("include") || "all";
+
+    const includes =
+      includeParam === "all"
+        ? [
+            "playbooks",
+            "examples",
+            "documents",
+            "company",
+            "personality",
+            "sms",
+            "faqs",
+          ]
+        : includeParam.split(",").map((i) => i.trim());
+
+    const result: Record<number, any> = {};
+
+    // 1️⃣ Get all companies
+    const companies = await db.companyInfo.findMany({
+      select: { companyId: true, overallFaqs: true },
+    });
+
+    for (const company of companies) {
+      const companyId = company.companyId;
+      result[companyId] = {};
+
+      // Company info
+      if (includes.includes("company")) {
+        result[companyId].company = company;
       }
-  
-      return NextResponse.json({
-        success: true,
-        message: "All AI training data retrieved successfully",
-        data: result,
-      });
-    } catch (error) {
-      console.error("Error fetching AI training data:", error);
-      return NextResponse.json(
-        { success: false, message: "Internal server error" },
-        { status: 500 },
-      );
+
+      if (includes.includes("playbooks")) {
+        result[companyId].playbooks = await db.servicePlaybook.findMany({
+          where: { companyId },
+          include: {
+            category: true,
+            pricingRules: true,
+            faqs: true,
+          },
+          orderBy: { createdAt: "desc" },
+        });
+      }
+
+      if (includes.includes("examples")) {
+        result[companyId].examples = await db.conversationExample.findMany({
+          where: { companyId },
+          orderBy: { createdAt: "desc" },
+        });
+      }
+
+      if (includes.includes("documents")) {
+        result[companyId].documents = await db.knowledgeBaseDocument.findMany({
+          where: { companyId },
+          orderBy: { createdAt: "desc" },
+        });
+      }
+
+      if (includes.includes("personality")) {
+        result[companyId].personality = await db.aiPersonality.findUnique({
+          where: { companyId },
+        });
+      }
+
+      if (includes.includes("sms")) {
+        result[companyId].sms = await db.sMSDelay.findUnique({
+          where: { companyId },
+        });
+      }
+
+      if (includes.includes("faqs")) {
+        result[companyId].faqs = company.overallFaqs || [];
+      }
     }
+
+    return NextResponse.json({
+      success: true,
+      message: "All AI training data retrieved successfully",
+      data: result,
+    });
+  } catch (error) {
+    console.error("Error fetching AI training data:", error);
+    return NextResponse.json(
+      { success: false, message: "Internal server error" },
+      { status: 500 },
+    );
   }
-  
+}

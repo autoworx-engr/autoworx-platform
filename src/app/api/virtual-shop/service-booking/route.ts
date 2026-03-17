@@ -2,14 +2,550 @@ import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 import moment from "moment-timezone";
 import { createInvoice } from "@/actions/estimate/invoice/create";
+import { addCustomer } from "@/actions/client/add";
+import { customAlphabet } from "nanoid";
+import { addVehicle } from "@/actions/vehicle/addVehicle";
+import { addAppointment } from "@/actions/appointment/addAppointment";
+import { AppError } from "@/error-boundary/error";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/authOptions";
+import { Prisma } from "@prisma/client";
 
+/**
+ * @swagger
+ * /api/virtual-shop/service-bookings:
+ *   get:
+ *     summary: Retrieve a paginated list of service bookings (estimates/appointments)
+ *     description: Fetch service bookings associated with the current user's company, including their corresponding client, vehicle, appointment, invoice, and booked services details. Supports searching by client name and pagination.
+ *     tags:
+ *       - Virtual Service Booking
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: search
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Search keyword to filter bookings by client's first or last name (case-insensitive).
+ *       - in: query
+ *         name: sortOrder
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: desc
+ *         description: Sort order based on creation date.
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number for pagination.
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Limit of items per page.
+ *     responses:
+ *       200:
+ *         description: Successfully fetched shop bookings.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 meta:
+ *                   type: object
+ *                   properties:
+ *                     totalRecords:
+ *                       type: integer
+ *                       example: 25
+ *                     totalPages:
+ *                       type: integer
+ *                       example: 3
+ *                     page:
+ *                       type: integer
+ *                       example: 1
+ *                     limit:
+ *                       type: integer
+ *                       example: 10
+ *                     hasNextPage:
+ *                       type: boolean
+ *                       example: true
+ *                     hasPrevPage:
+ *                       type: boolean
+ *                       example: false
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                         example: 1
+ *                       shopId:
+ *                         type: integer
+ *                         example: 1
+ *                       subtotal:
+ *                         type: number
+ *                         example: 1023.00
+ *                       tax:
+ *                         type: number
+ *                         example: 0.00
+ *                       total:
+ *                         type: number
+ *                         example: 1023.00
+ *                       depositRequired:
+ *                         type: number
+ *                         example: 256.00
+ *                       depositPaid:
+ *                         type: number
+ *                         example: 0.00
+ *                       balanceDue:
+ *                         type: number
+ *                         example: 1023.00
+ *                       client:
+ *                         type: object
+ *                         nullable: true
+ *                         properties:
+ *                           firstName:
+ *                             type: string
+ *                             example: "John"
+ *                           lastName:
+ *                             type: string
+ *                             example: "Doe"
+ *                           email:
+ *                             type: string
+ *                             example: "john@example.com"
+ *                           mobile:
+ *                             type: string
+ *                             example: "+1234567890"
+ *                       vehicle:
+ *                         type: object
+ *                         nullable: true
+ *                         properties:
+ *                           year:
+ *                             type: integer
+ *                             example: 2023
+ *                           make:
+ *                             type: string
+ *                             example: "BMW"
+ *                           model:
+ *                             type: string
+ *                             example: "M3"
+ *                       appointment:
+ *                         type: object
+ *                         nullable: true
+ *                         properties:
+ *                           date:
+ *                             type: string
+ *                             format: date-time
+ *                             example: "2026-02-24T00:00:00.000Z"
+ *                           startTime:
+ *                             type: string
+ *                             example: "09:00"
+ *                           endTime:
+ *                             type: string
+ *                             example: "18:00"
+ *                       invoice:
+ *                         type: object
+ *                         nullable: true
+ *                         properties:
+ *                           id:
+ *                             type: string
+ *                             example: "1234567890"
+ *                           status:
+ *                             type: object
+ *                             nullable: true
+ *                             properties:
+ *                               name:
+ *                                 type: string
+ *                                 example: "confirmed"
+ *                       services:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             title:
+ *                               type: string
+ *                               example: "Full Detail Package"
+ *                             price:
+ *                               type: number
+ *                               example: 349.00
+ *                             modifierType:
+ *                               type: string
+ *                               nullable: true
+ *                               example: "Sedan"
+ *                             duration:
+ *                               type: integer
+ *                               example: 120
+ *       401:
+ *         description: Unauthorized.
+ *       403:
+ *         description: Company ID not found.
+ *       500:
+ *         description: Internal server error.
+ */
+export async function GET(req: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session || !session.user) {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 },
+      );
+    }
+
+    const companyId = session.user.companyId;
+    if (!companyId) {
+      return NextResponse.json(
+        { success: false, message: "Company ID not found" },
+        { status: 403 },
+      );
+    }
+
+    const { searchParams } = new URL(req.url);
+    const search = searchParams.get("search");
+
+    const sortOrder = (
+      searchParams.get("sortOrder") === "asc" ? "asc" : "desc"
+    ) as Prisma.SortOrder;
+
+    const page = parseInt(searchParams.get("page") || "1", 10);
+    const limit = parseInt(searchParams.get("limit") || "10", 10);
+    const skip = (page - 1) * limit;
+
+    const whereClause: Prisma.ShopBookingWhereInput = {
+      shop: {
+        companyId,
+      },
+    };
+
+    if (search) {
+      whereClause.client = {
+        OR: [
+          { firstName: { contains: search, mode: "insensitive" } },
+          { lastName: { contains: search, mode: "insensitive" } },
+        ],
+      };
+    }
+
+    const [totalRecords, shopBookings] = await Promise.all([
+      db.shopBooking.count({ where: whereClause }),
+      db.shopBooking.findMany({
+        where: whereClause,
+        include: {
+          client: {
+            select: {
+              firstName: true,
+              lastName: true,
+              email: true,
+              mobile: true,
+            },
+          },
+          vehicle: {
+            select: {
+              year: true,
+              make: true,
+              model: true,
+            },
+          },
+          appointment: {
+            select: {
+              date: true,
+              startTime: true,
+              endTime: true,
+            },
+          },
+          invoice: {
+            select: {
+              id: true,
+              status: {
+                select: {
+                  name: true,
+                },
+              },
+            },
+          },
+          services: {
+            select: {
+              title: true,
+              price: true,
+              duration: true,
+              modifierType: true,
+              modifierPrice: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: sortOrder,
+        },
+        skip,
+        take: limit,
+      }),
+    ]);
+
+    const totalPages = Math.ceil(totalRecords / limit);
+
+    return NextResponse.json(
+      {
+        success: true,
+        meta: {
+          totalRecords,
+          totalPages,
+          page,
+          limit,
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1,
+        },
+        data: shopBookings.map(sb => ({
+          ...sb,
+          subtotal: Number(sb.subtotal),
+          tax: Number(sb.tax),
+          total: Number(sb.total),
+          depositRequired: Number(sb.depositRequired),
+          depositPaid: Number(sb.depositPaid),
+          balanceDue: Number(sb.balanceDue),
+          services: sb.services.map(srv => ({
+            ...srv,
+            price: Number(srv.price),
+            modifierPrice: Number(srv.modifierPrice),
+          })),
+        })),
+      },
+      { status: 200 },
+    );
+  } catch (error: any) {
+    console.error("Error fetching shop bookings:", error);
+    return NextResponse.json(
+      {
+        success: false,
+        message: error.message || "Failed to fetch shop bookings",
+      },
+      { status: 500 },
+    );
+  }
+}
+
+/**
+ * @swagger
+ * /api/virtual-shop/service-booking:
+ *   post:
+ *     summary: Creates a new service booking via the virtual shop
+ *     description: Handles customer service booking request. Creates or finds a client and vehicle, checks availability and stacking limits, creates an estimate (invoice) with the requested services, books an appointment, and records the shop booking history.
+ *     tags:
+ *       - Virtual Shop Booking
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - slug
+ *               - shopServiceIds
+ *               - appointmentDate
+ *               - appointmentStartTime
+ *               - phone
+ *               - make
+ *               - model
+ *               - year
+ *             properties:
+ *               slug:
+ *                 type: string
+ *                 description: The unique slug for the virtual shop.
+ *                 example: my-auto-shop
+ *               shopServiceIds:
+ *                 type: array
+ *                 description: Array of selected shop service IDs.
+ *                 items:
+ *                   type: integer
+ *                 example: [1, 2, 3]
+ *               appointmentDate:
+ *                 type: string
+ *                 format: date
+ *                 description: Date of the appointment (YYYY-MM-DD).
+ *                 example: "2026-03-25"
+ *               appointmentStartTime:
+ *                 type: string
+ *                 description: Time of the appointment (HH:mm format).
+ *                 example: "10:30"
+ *               fullName:
+ *                 type: string
+ *                 description: Customer full name.
+ *                 example: "John Doe"
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 description: Customer email address.
+ *                 example: "john@example.com"
+ *               phone:
+ *                 type: string
+ *                 description: Customer phone number.
+ *                 example: "+1234567890"
+ *               make:
+ *                 type: string
+ *                 description: Vehicle make.
+ *                 example: "Toyota"
+ *               model:
+ *                 type: string
+ *                 description: Vehicle model.
+ *                 example: "Camry"
+ *               year:
+ *                 type: integer
+ *                 description: Vehicle year.
+ *                 example: 2021
+ *               notes:
+ *                 type: string
+ *                 description: Optional notes provided by the customer.
+ *                 example: "Please call upon arrival"
+ *               depositAmount:
+ *                 type: number
+ *                 description: The amount the customer has paid as a deposit for this booking.
+ *                 example: 50.00
+ *     responses:
+ *       200:
+ *         description: Virtual shop service created successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Virtual shop service created successfully"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     appointmentId:
+ *                       type: integer
+ *                       example: 10
+ *                     estimateId:
+ *                       type: string
+ *                       example: "1234567890"
+ *                     shopBookingId:
+ *                       type: integer
+ *                       example: 5
+ *                     appointment:
+ *                       type: object
+ *                       properties:
+ *                         date:
+ *                           type: string
+ *                           example: "2026-03-25T00:00:00.000Z"
+ *                         startTime:
+ *                           type: string
+ *                           example: "10:30"
+ *                     client:
+ *                       type: object
+ *                       properties:
+ *                         firstName:
+ *                           type: string
+ *                           example: "John"
+ *                         lastName:
+ *                           type: string
+ *                           example: "Doe"
+ *                         email:
+ *                           type: string
+ *                           example: "john@example.com"
+ *                         mobile:
+ *                           type: string
+ *                           example: "+1234567890"
+ *                     vehicle:
+ *                       type: object
+ *                       properties:
+ *                         year:
+ *                           type: integer
+ *                           example: 2021
+ *                         make:
+ *                           type: string
+ *                           example: "Toyota"
+ *                         model:
+ *                           type: string
+ *                           example: "Camry"
+ *                     services:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           title:
+ *                             type: string
+ *                             example: "Oil Change"
+ *                           price:
+ *                             type: number
+ *                             example: 49.99
+ *                     totals:
+ *                       type: object
+ *                       properties:
+ *                         subtotal:
+ *                           type: number
+ *                           example: 49.99
+ *                         tax:
+ *                           type: number
+ *                           example: 4.00
+ *                         serviceFee:
+ *                           type: number
+ *                           example: 1.00
+ *                         grandTotal:
+ *                           type: number
+ *                           example: 54.99
+ *       400:
+ *         description: Bad Request. Missing required fields, invalid booking, or insufficient deposit.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Missing required fields"
+ *       404:
+ *         description: Not Found. Shop not found, etc.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Shop not found with the provided slug."
+ *       500:
+ *         description: Internal Server Error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Internal Server Error"
+ */
 export async function POST(req: Request) {
   try {
     const body = await req.json();
 
     const {
       slug,
-      shopServiceId,
+      shopServiceIds,
       appointmentDate,
       appointmentStartTime,
       fullName,
@@ -19,14 +555,15 @@ export async function POST(req: Request) {
       model,
       year,
       notes,
+      depositAmount,
     } = body;
 
     // 1. Validate required input
     if (
       !slug ||
-      !shopServiceId ||
-      !Array.isArray(shopServiceId) ||
-      shopServiceId.length === 0 ||
+      !shopServiceIds ||
+      !Array.isArray(shopServiceIds) ||
+      shopServiceIds.length === 0 ||
       !appointmentDate ||
       !appointmentStartTime ||
       !phone ||
@@ -43,14 +580,38 @@ export async function POST(req: Request) {
     const firstName = fullName?.split(" ")[0] || "Guest";
     const lastName = fullName?.split(" ").slice(1).join(" ") || undefined;
 
-    return await db.$transaction(async (tx) => {
+    return await db.$transaction(async tx => {
       // 2. Validate Shop Slug
       const shop = await tx.shop.findUnique({
         where: { slug },
+        include: {
+          company: {
+            select: {
+              terms: true,
+              policy: true,
+              tax: true,
+              serviceFee: true,
+            },
+          },
+        },
       });
 
       if (!shop) {
-        throw new Error("Shop not found with the provided slug.");
+        throw new AppError(404, "Shop not found with the provided slug.");
+      }
+
+      const findCompanyAdminUser = await tx.user.findFirst({
+        where: {
+          companyId: shop?.companyId,
+          employeeType: "Admin",
+        },
+      });
+
+      if (!findCompanyAdminUser) {
+        throw new AppError(
+          404,
+          "Company admin not found for the provided shop.",
+        );
       }
 
       const companyId = shop.companyId;
@@ -64,22 +625,52 @@ export async function POST(req: Request) {
       });
 
       if (!client) {
-        client = await tx.client.create({
-          data: {
-            firstName,
-            lastName,
-            mobile: phone,
-            email,
-            companyId,
-            isSalesAgent: true,
-          },
+        const clientResult = await addCustomer({
+          firstName,
+          lastName,
+          mobile: phone,
+          email,
+          forceCompanyId: companyId,
         });
+
+        if (clientResult.type !== "success" || !clientResult.data) {
+          throw new AppError(
+            400,
+            clientResult.type === "globalError" || clientResult.type === "error"
+              ? clientResult.message
+              : "Failed to create customer via shared action",
+          );
+        }
+        client = clientResult.data;
+
+        if (client) {
+          const column = await tx.column.findFirst({
+            where: {
+              title: "New Leads",
+              companyId: shop.companyId,
+              type: "sales",
+            },
+          });
+          await tx.lead.create({
+            data: {
+              clientName: `${firstName} ${lastName}`,
+              clientEmail: email,
+              clientPhone: phone,
+              companyId: shop.companyId,
+              source: "Virtual Shop",
+              vehicleInfo: `${year} ${make} ${model}`,
+              services: shopServiceIds.map(id => id).join(", "),
+              clientId: client.id,
+              columnId: column?.id,
+            },
+          });
+        }
       }
 
       // 4. Find or Create Vehicle
       let vehicle = await tx.vehicle.findFirst({
         where: {
-          clientId: client.id,
+          clientId: client?.id,
           year: parseInt(year),
           make,
           model,
@@ -88,23 +679,24 @@ export async function POST(req: Request) {
       });
 
       if (!vehicle) {
-        vehicle = await tx.vehicle.create({
-          data: {
-            year: parseInt(year),
-            make,
-            model,
-            clientId: client.id,
-            companyId,
-            submodel: "",
-            type: "",
-            transmission: "",
-            engineSize: "",
-            license: "",
-            vin: "",
-            notes: "",
-            other: "",
-          },
+        const vehicleResponse = await addVehicle({
+          year: parseInt(year),
+          make,
+          model,
+          submodel: "",
+          type: "",
+          transmission: "",
+          engineSize: "",
+          license: "",
+          vin: "",
+          notes: "",
+          other: "",
+          clientId: client?.id!,
+          forceCompanyId: companyId,
         });
+        if (vehicleResponse.type === "success") {
+          vehicle = vehicleResponse.data;
+        }
       }
 
       // 5. Find ShopBookingSetting & check Availability
@@ -114,7 +706,7 @@ export async function POST(req: Request) {
       });
 
       if (!bookingSettings) {
-        throw new Error("Shop booking settings not found.");
+        throw new AppError(404, "Shop booking settings not found.");
       }
 
       const dayOfWeekKey = moment(appointmentDate)
@@ -129,11 +721,12 @@ export async function POST(req: Request) {
         | "SUNDAY";
 
       const availability = bookingSettings.availabilities.find(
-        (a) => a.dayOfWeek === dayOfWeekKey,
+        a => a.dayOfWeek === dayOfWeekKey,
       );
 
       if (!availability || !availability.isOpen) {
-        throw new Error(
+        throw new AppError(
+          400,
           `Shop is not open on ${dayOfWeekKey.toLowerCase()}s.`,
         );
       }
@@ -145,7 +738,8 @@ export async function POST(req: Request) {
         const shopEnd = moment(availability.endTime, "HH:mm");
 
         if (reqTime.isBefore(shopStart) || reqTime.isAfter(shopEnd)) {
-          throw new Error(
+          throw new AppError(
+            400,
             `Appointment time must be between ${availability.startTime} and ${availability.endTime}.`,
           );
         }
@@ -165,14 +759,16 @@ export async function POST(req: Request) {
         bookingSettings.isStackingEnabled &&
         existingAppointmentsCount >= bookingSettings.stackingLimit
       ) {
-        throw new Error(
+        throw new AppError(
+          400,
           `No available slots for ${appointmentDate} at ${appointmentStartTime}. Limit reached.`,
         );
       } else if (
         !bookingSettings.isStackingEnabled &&
         existingAppointmentsCount > 0
       ) {
-        throw new Error(
+        throw new AppError(
+          400,
           `No available slots for ${appointmentDate} at ${appointmentStartTime}. Slot is already booked.`,
         );
       }
@@ -180,65 +776,128 @@ export async function POST(req: Request) {
       // 7. Retrieve Service Invoice Items & Calculate Totals
       const selectedServices = await tx.shopService.findMany({
         where: {
-          id: { in: shopServiceId },
+          id: { in: shopServiceIds },
           shopId: shop.id,
         },
-        // We aren't querying nested invoiceItems anymore because the schema types don't support it directly.
-        // We will just create bare services in the estimate for now, as a snapshot.
-        // If the schema is later updated to link ShopService to InvoiceItem, this could be reinstated.
+        include: {
+          invoiceItems: {
+            include: {
+              service: true,
+              materials: {
+                include: {
+                  tags: {
+                    include: {
+                      tag: true,
+                    },
+                  },
+                },
+              },
+              labor: {
+                include: {
+                  tags: {
+                    include: {
+                      tag: true,
+                    },
+                  },
+                },
+              },
+              tags: {
+                include: {
+                  tag: true,
+                },
+              },
+            },
+          },
+        },
       });
 
       if (selectedServices.length === 0) {
-        throw new Error("No valid services selected for this shop.");
+        throw new AppError(400, "No valid services selected for this shop.");
       }
 
-      let subtotal = 0;
-      let durationMs = 0;
-
-      const itemsForInvoice: any[] = [];
-
-      selectedServices.forEach((srv) => {
-        subtotal += Number(srv.price);
-        durationMs += srv.duration * 60000;
-        
-        itemsForInvoice.push({
-          service: {
-            id: srv.id,
-            description: srv.description || srv.title,
-            name: srv.title,
-            price: Number(srv.price),
-            duration: srv.duration,
-          },
-          materials: [], // Empty for now due to schema limitations on ShopService
-          labor: null,
-          tags: [],
-        });
+      const allInvoiceItems = selectedServices.flatMap(srv => {
+        return srv.invoiceItems;
       });
 
-      const estimateId = `EST-${Date.now()}`;
+      const items = allInvoiceItems.map(({ id, ...item }) => ({
+        ...item,
+        materials: item.materials.map(material => ({
+          ...material,
+          tags: material.tags.map((mt: any) => mt.tag),
+        })),
+        labor: item.labor
+          ? {
+              ...item.labor,
+              tags: item.labor.tags.map((lt: any) => lt.tag),
+            }
+          : null,
+        tags: item.tags.map((it: any) => it.tag),
+      }));
 
+      const vehicleExtraCost = selectedServices.reduce((acc, srv) => {
+        const modifier =
+          srv.modifierTruck ||
+          srv.modifierSUV ||
+          srv.modifierSedan ||
+          srv.modifierCoupe ||
+          0;
+        return acc + Number(modifier);
+      }, 0);
+
+      let totalServiceCost = selectedServices.reduce(
+        (acc, cur) => acc + Number(cur.price),
+        0,
+      );
+
+      const subtotal = totalServiceCost + vehicleExtraCost;
+
+      const estimateId = customAlphabet("1234567890", 10)();
+
+      const taxRate = bookingSettings.isTaxEnabled
+        ? Number(shop.company.tax)
+        : 0;
+      const serviceFeeRate = bookingSettings.isServiceFeeEnabled
+        ? Number(shop.company.serviceFee)
+        : 0;
+
+      const taxAmount = (subtotal * taxRate) / 100;
+      const serviceFeeAmount = (subtotal * serviceFeeRate) / 100;
+      const grandTotal = subtotal + taxAmount + serviceFeeAmount;
+      const isDepositEnabled = bookingSettings.isDepositEnabled;
+      const requiredDepositAmount = isDepositEnabled
+        ? Number(bookingSettings.depositValue)
+        : 0;
+
+      const depositAmountVal = Number(depositAmount || 0);
+      const isDepositPay = depositAmountVal >= requiredDepositAmount;
+
+      if (isDepositEnabled && !isDepositPay) {
+        throw new AppError(400, "Required Deposit amount is not sufficient.");
+      }
+
+      const dueAmount = grandTotal - depositAmountVal;
       // 8. Create Estimate using the refactored shared action
       const estimateResult = await createInvoice({
         invoiceId: estimateId,
         type: "Estimate",
-        clientId: client.id,
-        vehicleId: vehicle.id,
+        clientId: client?.id,
+        vehicleId: vehicle?.id,
         subtotal,
         discount: 0,
-        tax: 0,
-        serviceFee: 0,
-        deposit: 0,
+        tax: taxAmount,
+        serviceFee: serviceFeeAmount,
+        deposit: depositAmountVal,
         depositNotes: "",
         depositMethod: "",
-        grandTotal: subtotal,
-        due: subtotal,
+        grandTotal,
+        due: dueAmount,
         internalNotes: "",
-        terms: "",
-        policy: "",
+        terms: shop.company.terms || "",
+        policy: shop.company.policy || "",
         customerNotes: notes || "",
         customerComments: "",
         photos: [],
-        items: itemsForInvoice as any[],
+        items,
         tasks: [],
         inspections: [],
         damageNotes: null,
@@ -246,55 +905,71 @@ export async function POST(req: Request) {
       });
 
       if (estimateResult.type !== "success" || !estimateResult.data) {
-        throw new Error(
-           estimateResult.type === "globalError" || estimateResult.type === "error" ? estimateResult.message : "Failed to create estimate via shared action"
+        throw new AppError(
+          400,
+          estimateResult.type === "globalError" ||
+            estimateResult.type === "error"
+            ? estimateResult.message
+            : "Failed to create estimate via shared action",
         );
       }
 
       const estimate = estimateResult.data;
 
       // Mark lead as estimate created if exists
-      if (client.leadId) {
+      if (client?.leadId) {
         await tx.lead.update({
-          where: { id: client.leadId },
+          where: { id: client?.leadId },
           data: { isEstimateCreated: true },
         });
       }
 
       // 9. Create Appointment
+      const slotInterval = bookingSettings.slotInterval;
       const endTime = moment(appointmentStartTime, "HH:mm")
-        .add(durationMs, "milliseconds")
+        .add(slotInterval, "minutes")
         .format("HH:mm");
 
-      const appointment = await tx.appointment.create({
-        data: {
-          title: "Virtual Shop Service Booking",
-          date: new Date(appointmentDate),
-          startTime: appointmentStartTime,
-          endTime,
-          companyId,
-          clientId: client.id,
-          vehicleId: vehicle.id,
-          // user and sales_agent are the only valid enum values. Assuming we map to a default admin/user.
-          userId: 1, // Fallback, needs to be updated based on business logic for guest created appointments
-          notes: notes || null,
-          draftEstimate: estimate.id,
-          // user and sales_agent are the only valid enum values
-          createdBy: "user",
-          timezone: "UTC", // Defaulting, you might obtain from shop.company.timezone
-        },
+      const appointmentResult = await addAppointment({
+        title: `${year} ${make} ${model} - ${fullName}`,
+        date: appointmentDate,
+        startTime: appointmentStartTime,
+        endTime,
+        clientId: client?.id,
+        vehicleId: vehicle?.id,
+        notes: notes || null,
+        draftEstimate: estimate.id,
+        timezone: "UTC", // Defaulting, you might obtain from shop.company.timezone
+        assignedUsers: [], // Empty for guest bookings, unless specific logic is added
+        forceCompanyId: companyId,
+        forceUserId: findCompanyAdminUser?.id,
       });
+
+      if (appointmentResult.type !== "success" || !appointmentResult.data) {
+        throw new AppError(
+          400,
+          appointmentResult.type === "globalError" ||
+            appointmentResult.type === "error"
+            ? appointmentResult.message
+            : "Failed to create appointment via shared action",
+        );
+      }
+
+      const appointment = appointmentResult.data;
 
       // 10. Create ShopBooking History
       const shopBooking = await tx.shopBooking.create({
         data: {
           shopId: shop.id,
-          clientId: client.id,
+          clientId: client?.id,
           appointmentId: appointment.id,
           invoiceId: estimate.id,
           subtotal,
-          total: subtotal,
-          balanceDue: subtotal,
+          tax: taxAmount + serviceFeeAmount,
+          total: grandTotal,
+          depositRequired: requiredDepositAmount,
+          depositPaid: depositAmountVal,
+          balanceDue: dueAmount,
           customerNotes: notes || null,
         },
       });
@@ -321,6 +996,31 @@ export async function POST(req: Request) {
             appointmentId: appointment.id,
             estimateId: estimate.id,
             shopBookingId: shopBooking.id,
+            appointment: {
+              date: appointment.date,
+              startTime: appointment.startTime,
+            },
+            client: {
+              firstName: client?.firstName,
+              lastName: client?.lastName,
+              email: client?.email,
+              mobile: client?.mobile,
+            },
+            vehicle: {
+              year: vehicle?.year,
+              make: vehicle?.make,
+              model: vehicle?.model,
+            },
+            services: selectedServices.map(srv => ({
+              title: srv.title,
+              price: srv.price,
+            })),
+            totals: {
+              subtotal,
+              tax: taxAmount,
+              serviceFee: serviceFeeAmount,
+              grandTotal,
+            },
           },
         },
         { status: 200 },
@@ -329,7 +1029,10 @@ export async function POST(req: Request) {
   } catch (error: any) {
     console.error("Error in POST /api/virtual-shop/service-booking:", error);
     return NextResponse.json(
-      { success: false, message: error.message || "Failed to create shop service" },
+      {
+        success: false,
+        message: error.message || "Failed to create shop service",
+      },
       { status: 200 },
     );
   }

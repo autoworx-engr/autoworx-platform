@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { Plus, Search } from "lucide-react";
 import ServiceCard, { type Service } from "./ServiceCard";
+import { redirect } from "next/dist/server/api-utils";
+import { useRouter } from "next/navigation";
 
 const MOCK_SERVICES: Service[] = [
   { id: 1, name: "Express Wash & Wax", category: "Maintenance", price: 49, duration: 45, imageUrl: "" },
@@ -17,6 +19,7 @@ const MOCK_SERVICES: Service[] = [
 ];
 
 export default function ServicesTab() {
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [services, setServices] = useState<Service[]>(MOCK_SERVICES);
 
@@ -34,7 +37,7 @@ export default function ServicesTab() {
   };
 
   const handleAddService = () => {
-    // TODO: open add service dialog
+    router.push("/dashboard/virtual-shop/admin/service/create");
   };
 
   return (

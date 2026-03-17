@@ -53,7 +53,7 @@ export const ROUTE_PERMISSIONS_MAP: Record<
   "/dashboard/settings/leadgeneration": "businessSettings",
   "/dashboard/settings/automation": "businessSettings",
   "/dashboard/settings/calendar": "businessSettings",
-  "/dashboard/settings/ai-train": "businessSettings",
+  "/dashboard/settings/sales-agent": "businessSettings",
 };
 
 type CompanyFeaturePermissionKeys =
@@ -78,7 +78,8 @@ type CompanyFeaturePermissionKeys =
   | "serviceEstimator"
   | "automation"
   | "visualization"
-  | "sales-agent";
+  | "sales-agent"
+  | "virtual-shop";
 
 export const FEATURE_PERMISSIONS_MAP: Record<
   string,
@@ -105,7 +106,8 @@ export const FEATURE_PERMISSIONS_MAP: Record<
   "/dashboard/settings": "businessSettings",
   "/dashboard/settings/team-management": "businessSettings",
   "/dashboard/settings/automation": "automation",
-  "/dashboard/settings/ai-train": "sales-agent",
+  "/dashboard/settings/virtual-shop-configure": "virtual-shop",
+  "/dashboard/settings/sales-agent": "sales-agent",
   "/dashboard/settings/payments": "businessSettings",
   "/dashboard/settings/estimates": "businessSettings",
   "/dashboard/settings/communications": "businessSettings",

@@ -52,6 +52,12 @@ const PaymentDateRange = ({
     }
   }, [dateRangeProp?.[0], dateRangeProp?.[1], isRangeSelected]);
 
+  const handleClickOutside = (event: any) => {
+    if (ref.current && !ref.current.contains(event.target)) {
+      setShowPicker(false);
+    }
+  };
+
   useEffect(() => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
@@ -71,12 +77,6 @@ const PaymentDateRange = ({
     setState({ selection: tempRange });
     setShowPicker(false);
     onOk(tempRange.startDate, tempRange.endDate);
-  };
-
-  const handleClickOutside = (event: any) => {
-    if (ref.current && !ref.current.contains(event.target)) {
-      setShowPicker(false);
-    }
   };
 
   const handleCancel = () => {

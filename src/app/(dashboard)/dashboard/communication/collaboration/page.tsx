@@ -110,14 +110,14 @@ export default async function CollaborationPage() {
     (company) => company.users.length > 0,
   );
 
-  const messages = await db.message.findMany({
+  const messages = await db.collaborationMessage.findMany({
     where: {
       OR: [
         {
-          from: parseInt(session?.user?.id),
+          fromCompanyId: parseInt(session?.user?.id),
         },
         {
-          to: parseInt(session?.user?.id),
+          toCompanyId: parseInt(session?.user?.id),
         },
       ],
     },
