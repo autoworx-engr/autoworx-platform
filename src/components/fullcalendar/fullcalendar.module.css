@@ -13,7 +13,11 @@
 }
 
 .calendarScope :global(.fc-timegrid-col-bg .fc-non-business) {
-  background-color: #f1f5f9 !important;
+  background-color: rgba(241, 245, 249, 0.72) !important;
+}
+
+.calendarScope :global(.fc-timegrid-slot-lane).nonBusinessSlot {
+  border-top-color: #d5dbe5 !important;
 }
 
 .calendarScope :global(.fc-list-table) {
@@ -24,7 +28,7 @@
 .calendarScope :global(.fc-list-day-cushion),
 .calendarScope :global(.fc-list-event-title),
 .calendarScope :global(.fc-list-event-time) {
-  padding: 12px 16px !important;
+  padding: 42px 16px !important;
 }
 
 .calendarScope :global(.fc-button-primary) {

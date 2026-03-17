@@ -19,7 +19,7 @@ import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import moment from "moment";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CalendarHeader } from "./CalendarHeader";
 import { EventContent } from "./EventContent";
 import { EventDetailsSheet } from "./EventDetailsSheet";
@@ -59,7 +59,11 @@ export default function Calendar({ type }: { type: CalendarType }) {
   // Use calendar store to sync date with header controls
   const { date } = useCalendarStore();
 
-  const { data: settings, isLoading: isSettingsLoading } = useQuery({
+  const {
+    data: settings,
+    isLoading: isSettingsLoading,
+    isFetching: isSettingsFetching,
+  } = useQuery({
     queryKey: ["calendar-settings", "week-start"],
     queryFn: () => getCalenderSettings(),
   });
@@ -80,6 +84,34 @@ export default function Calendar({ type }: { type: CalendarType }) {
     };
   }, [settings?.dayStart, settings?.dayEnd]);
 
+  const businessMinutes = useMemo(() => {
+    const parseTimeToMinutes = (time: string) => {
+      const [hour = 0, minute = 0] = time.split(":").map(Number);
+      return hour * 60 + minute;
+    };
+
+    return {
+      start: parseTimeToMinutes(settings?.dayStart || "08:00:00"),
+      end: parseTimeToMinutes(settings?.dayEnd || "18:00:00"),
+    };
+  }, [settings?.dayStart, settings?.dayEnd]);
+
+  const nonBusinessSlotClassNames = useCallback(
+    (arg: { date?: Date }) => {
+      if (!arg.date) {
+        return [];
+      }
+
+      const currentMinutes = arg.date.getHours() * 60 + arg.date.getMinutes();
+      const isNonBusinessSlot =
+        currentMinutes < businessMinutes.start ||
+        currentMinutes >= businessMinutes.end;
+
+      return isNonBusinessSlot ? [styles.nonBusinessSlot] : [];
+    },
+    [businessMinutes],
+  );
+
   const {
     data: tasks = [],
     isLoading: isTasksLoading,
@@ -99,6 +131,7 @@ export default function Calendar({ type }: { type: CalendarType }) {
   const loading =
     isCalendarLoading ||
     isSettingsLoading ||
+    isSettingsFetching ||
     isTasksLoading ||
     isTasksFetching ||
     isAppointmentsLoading ||
@@ -277,6 +310,7 @@ export default function Calendar({ type }: { type: CalendarType }) {
           allDaySlot={true}
           expandRows={true}
           businessHours={businessHours}
+          slotLaneClassNames={nonBusinessSlotClassNames}
           loading={setIsCalendarLoading}
           slotLabelFormat={{
             hour: "2-digit",
