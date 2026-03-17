@@ -11,13 +11,9 @@ import CompanyListItem from "./CompanyListItem";
 type TProps = {
   companies: (Company & { users: User[] })[];
   selectedCompany: Company | null;
-  companyAdmins: Partial<User>[];
+  companyAdmins: any;
   setCompanyAdmins: React.Dispatch<React.SetStateAction<Partial<User>[]>>;
   setSelectedCompany: React.Dispatch<React.SetStateAction<Company | null>>;
-  unreadCounts: {
-    count: number;
-    companyId: number;
-  }[];
   isCollaborators: boolean | null | undefined;
   companyId: number;
 };
@@ -26,7 +22,6 @@ export default function List({
   companies,
   selectedCompany,
   setSelectedCompany,
-  unreadCounts,
   isCollaborators,
   companyAdmins,
   setCompanyAdmins,
@@ -35,10 +30,6 @@ export default function List({
   const [searchTerm, setSearchTerm] = useState("");
   const router = useRouter();
 
-  const getCompanyUnreadCount = (companyId: number) => {
-    const found = unreadCounts.find((u) => u.companyId === companyId);
-    return found?.count || 0;
-  };
   const searchParams = useSearchParams();
 
   const handleSelectCompany = (company: Company & { users: User[] }) => {
@@ -48,6 +39,7 @@ export default function List({
 
     router.replace(`?${params.toString()}`);
   };
+
   return (
     <div className="app-shadow h-screen w-full overflow-y-auto rounded-lg bg-background p-3 sm:block sm:h-[83vh] sm:w-[30%]">
       <CollaborationToggle
