@@ -8,6 +8,7 @@ import { Client, Vehicle } from "@prisma/client";
 import dynamic from "next/dynamic";
 import ClientEstimates from "./ClientEstimates";
 import SaveAttachment from "./SaveAttachment";
+import TaskActions from "./TaskActions";
 const AppointmentListClient = dynamic(() => import("./AppointmentListClient"), {
   ssr: false,
 });
