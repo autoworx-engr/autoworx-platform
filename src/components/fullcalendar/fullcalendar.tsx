@@ -74,31 +74,36 @@ export default function Calendar({ type }: { type: CalendarType }) {
   }, [settings?.weekStart]);
 
   const businessHours = useMemo(() => {
-    const startTime = settings?.dayStart || "08:00:00";
-    const endTime = settings?.dayEnd || "18:00:00";
+    if (!settings?.dayStart || !settings?.dayEnd) {
+      return undefined;
+    }
 
     return {
       daysOfWeek: [0, 1, 2, 3, 4, 5, 6],
-      startTime,
-      endTime,
+      startTime: settings.dayStart,
+      endTime: settings.dayEnd,
     };
-  }, [settings?.dayStart, settings?.dayEnd]);
+  }, [settings]);
 
   const businessMinutes = useMemo(() => {
+    if (!settings?.dayStart || !settings?.dayEnd) {
+      return null;
+    }
+
     const parseTimeToMinutes = (time: string) => {
       const [hour = 0, minute = 0] = time.split(":").map(Number);
       return hour * 60 + minute;
     };
 
     return {
-      start: parseTimeToMinutes(settings?.dayStart || "08:00:00"),
-      end: parseTimeToMinutes(settings?.dayEnd || "18:00:00"),
+      start: parseTimeToMinutes(settings.dayStart),
+      end: parseTimeToMinutes(settings.dayEnd),
     };
-  }, [settings?.dayStart, settings?.dayEnd]);
+  }, [settings]);
 
   const nonBusinessSlotClassNames = useCallback(
     (arg: { date?: Date }) => {
-      if (!arg.date) {
+      if (!arg.date || !businessMinutes) {
         return [];
       }
 
@@ -306,7 +311,7 @@ export default function Calendar({ type }: { type: CalendarType }) {
           eventContent={(eventInfo) => renderEventContent(eventInfo, session)}
           slotMinTime="00:00:00"
           slotMaxTime="24:00:00"
-          scrollTime={settings?.dayStart || "08:00:00"}
+          scrollTime={settings?.dayStart}
           allDaySlot={true}
           expandRows={true}
           businessHours={businessHours}
