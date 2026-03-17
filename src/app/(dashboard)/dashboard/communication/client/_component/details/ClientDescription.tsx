@@ -1,15 +1,14 @@
 import { fetchMailsMailgun } from "@/actions/communication/client/fetchMailgunMails";
+import getSms from "@/actions/communication/client/getSms";
 import NewTask from "@/app/(dashboard)/dashboard/task-v1/[type]/components/task/NewTask";
+import { cn } from "@/lib/cn";
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import { Client, Vehicle } from "@prisma/client";
-import ClientEstimates from "./ClientEstimates";
-import TaskActions from "./TaskActions";
-import SaveAttachment from "./SaveAttachment";
 import dynamic from "next/dynamic";
-import getSms from "@/actions/communication/client/getSms";
-import { cn } from "@/lib/cn";
-import Link from "next/link";
+import ClientEstimates from "./ClientEstimates";
+import SaveAttachment from "./SaveAttachment";
+import TaskActions from "./TaskActions";
 const AppointmentListClient = dynamic(() => import("./AppointmentListClient"), {
   ssr: false,
 });
@@ -92,6 +91,11 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
   }));
 
   const conversations = conversationsData.data;
+  
+  const allEmailAttachments =
+    conversations?.flatMap((e) => e.attachments) ?? [];
+  
+  const allSmsAttachments = smsData?.flatMap((s) => s.attachments) ?? [];
 
   return (
     <div className="thin-scrollbar h-[60%] 2xl:h-[60%] overflow-y-auto px-4 space-y-6">
@@ -127,7 +131,11 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
             {conversations && conversations.length > 0 ? (
               conversations.map((email) =>
                 email.attachments.map((attachment) => (
-                  <SaveAttachment key={attachment.id} attachment={attachment} />
+                  <SaveAttachment
+                    key={attachment.id}
+                    attachment={attachment}
+                    allAttachments={allEmailAttachments}
+                  />
                 ))
               )
             ) : (
@@ -153,7 +161,11 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
             {smsData && smsData.length > 0 ? (
               smsData.map((sms) =>
                 sms.attachments.map((attachment) => (
-                  <SaveAttachment key={attachment.id} attachment={attachment} />
+                  <SaveAttachment
+                    key={attachment.id}
+                    attachment={attachment}
+                    allAttachments={allSmsAttachments} 
+                  />
                 ))
               )
             ) : (
@@ -234,3 +246,4 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
     </div>
   );
 }
+
