@@ -3,15 +3,21 @@ import useAppointmentQueryByWeek from "@/app/(dashboard)/dashboard/task/_hook/ap
 import useTaskQueryByWeek from "@/app/(dashboard)/dashboard/task/_hook/task/query/useTaskQueryByWeek";
 import { getWeekStartNumber } from "@/app/(dashboard)/dashboard/task/_utils/utils.DateSelector";
 import { getCalenderSettings } from "@/actions/task/getCalendarSettings";
+import { assignAppointmentDate } from "@/actions/appointment/assignAppointmentDate";
+import { updateTask } from "@/actions/task/dragTask";
 import { useCalendarStore } from "@/stores/calendarStore";
 import { CalendarType } from "@/types/calendar";
-import { EventClickArg, EventContentArg } from "@fullcalendar/core";
+import {
+  EventClickArg,
+  EventContentArg,
+  EventDropArg,
+} from "@fullcalendar/core";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import listPlugin from "@fullcalendar/list";
 import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import moment from "moment";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CalendarHeader } from "./CalendarHeader";
@@ -23,6 +29,11 @@ import styles from "./fullcalendar.module.css";
 import { buildCalendarEvents } from "./calendarEventMapper";
 import useTaskQuery from "@/app/(dashboard)/dashboard/task/_hook/task/query/useTaskQuery";
 import useAppointmentQuery from "@/app/(dashboard)/dashboard/task/_hook/appointment/query/useAppointmentQuery";
+import {
+  appointmentQueryKey,
+  taskQueryKey,
+} from "@/app/(dashboard)/dashboard/task/_constant";
+import { errorToast } from "@/lib/toast";
 
 export default function Calendar({ type }: { type: CalendarType }) {
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
@@ -33,6 +44,7 @@ export default function Calendar({ type }: { type: CalendarType }) {
     end: moment().endOf("month").format("YYYY-MM-DD"),
   });
   const { data: session } = useSession();
+  const queryClient = useQueryClient();
   const calendarRef = useRef<FullCalendar>(null);
   const [view, setView] = useState(
     type === "list"
@@ -106,6 +118,88 @@ export default function Calendar({ type }: { type: CalendarType }) {
     setIsSheetOpen(true);
   };
 
+  const handleEventDateTimeUpdate = async (
+    info: EventDropArg | { event: EventDropArg["event"]; revert: () => void },
+  ) => {
+    const eventType = info.event.extendedProps?.type as
+      | "task"
+      | "appointment"
+      | "holiday"
+      | undefined;
+
+    if (!eventType || eventType === "holiday") {
+      info.revert();
+      return;
+    }
+
+    const eventStart = info.event.start;
+    if (!eventStart) {
+      info.revert();
+      return;
+    }
+
+    const eventEnd =
+      info.event.end ?? moment(eventStart).add(1, "hour").toDate();
+    const updatedDate = moment(eventStart).format("YYYY-MM-DD");
+    const updatedStartTime = moment(eventStart).format("HH:mm");
+    const updatedEndTime = moment(eventEnd).format("HH:mm");
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+    try {
+      if (eventType === "task") {
+        const taskId = Number(String(info.event.id).replace("task-", ""));
+        if (!taskId) {
+          info.revert();
+          return;
+        }
+
+        const result = await updateTask({
+          id: taskId,
+          date: new Date(updatedDate),
+          startTime: updatedStartTime,
+          endTime: updatedEndTime,
+          timezone,
+        });
+
+        if (result.type !== "success") {
+          info.revert();
+          errorToast("Failed to update task date and time.");
+          return;
+        }
+
+        queryClient.invalidateQueries({ queryKey: [taskQueryKey.allTasks] });
+        return;
+      }
+
+      const appointmentId = Number(String(info.event.id).replace("apt-", ""));
+      if (!appointmentId) {
+        info.revert();
+        return;
+      }
+
+      const result = await assignAppointmentDate({
+        id: appointmentId,
+        date: updatedDate,
+        startTime: updatedStartTime,
+        endTime: updatedEndTime,
+        timezone,
+      });
+
+      if (result.type !== "success") {
+        info.revert();
+        errorToast("Failed to update appointment date and time.");
+        return;
+      }
+
+      queryClient.invalidateQueries({
+        queryKey: [appointmentQueryKey.allAppointments],
+      });
+    } catch (error) {
+      info.revert();
+      errorToast("Failed to update event date and time.");
+    }
+  };
+
   const renderEventContent = (eventInfo: EventContentArg, session: any) => {
     return <EventContent eventInfo={eventInfo} session={session} />;
   };
@@ -164,6 +258,8 @@ export default function Calendar({ type }: { type: CalendarType }) {
           editable={true}
           dayMaxEvents={5}
           eventClick={handleEventClick}
+          eventDrop={handleEventDateTimeUpdate}
+          eventResize={handleEventDateTimeUpdate}
           eventContent={(eventInfo) => renderEventContent(eventInfo, session)}
           slotMinTime="00:00:00"
           slotMaxTime="24:00:00"
