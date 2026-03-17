@@ -97,6 +97,31 @@ export const EventContent = ({
     );
   }
 
+  if (serviceType === "Holiday")
+    return (
+      <div
+        className="flex items-center justify-between gap-1 text-xs truncate w-full h-full cursor-pointer overflow-hidden rounded-r-sm pl-1"
+        style={{
+          background: `linear-gradient(to bottom, ${colors.gradient.join(", ")})`,
+          // border: `1px solid ${colors.borderColor}`,
+          borderRadius: "4px",
+          color: "#1f2937",
+        }}
+      >
+        <span
+          className="font-bold whitespace-nowrap text-[12px] uppercase"
+          style={{ color: colors.accentColor }}
+        >
+          {event.title}
+        </span>
+        {isAdmin && (
+          <HolidayDeleteConfirmation
+            holidayId={Number(event.id)}
+            isMonthly={true}
+          />
+        )}
+      </div>
+    );
   // Week and Day view rendering (Vertical block style)
   return (
     <div
