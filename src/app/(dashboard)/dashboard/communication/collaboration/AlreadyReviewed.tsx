@@ -1,4 +1,4 @@
-import { Star } from "lucide-react";
+import { Rating } from "@mui/material";
 import moment from "moment";
 
 type TAlreadyReviewed = {
@@ -19,19 +19,7 @@ export default function AlreadyReviewed({
   return (
     <div className="border rounded-md p-4 bg-gray-50 space-y-2">
       <div className="flex items-center gap-1 justify-between">
-        <div className="flex items-center gap-1">
-          {[1, 2, 3, 4, 5].map((star) => (
-            <Star
-              key={star}
-              size={16}
-              className={
-                star <= rate
-                  ? "fill-yellow-500 text-yellow-500"
-                  : "text-gray-300"
-              }
-            />
-          ))}
-        </div>
+        <Rating name="size-small" defaultValue={rate} size="small" readOnly />
         <div>
           {date && (
             <span className="text-xs text-gray-400 ml-2">
