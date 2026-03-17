@@ -13,12 +13,12 @@ import { Prisma } from "@prisma/client";
 
 /**
  * @swagger
- * /api/virtual-shop/service-bookings:
+ * /api/virtual-shop/service-booking:
  *   get:
  *     summary: Retrieve a paginated list of service bookings (estimates/appointments)
  *     description: Fetch service bookings associated with the current user's company, including their corresponding client, vehicle, appointment, invoice, and booked services details. Supports searching by client name and pagination.
  *     tags:
- *       - Virtual Service Booking
+ *       - Virtual Shop
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -342,7 +342,7 @@ export async function GET(req: Request) {
  *     summary: Creates a new service booking via the virtual shop
  *     description: Handles customer service booking request. Creates or finds a client and vehicle, checks availability and stacking limits, creates an estimate (invoice) with the requested services, books an appointment, and records the shop booking history.
  *     tags:
- *       - Virtual Shop Booking
+ *       - Virtual Shop
  *     requestBody:
  *       required: true
  *       content:
