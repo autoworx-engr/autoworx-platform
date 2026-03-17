@@ -10,6 +10,7 @@ import dynamic from "next/dynamic";
 import getSms from "@/actions/communication/client/getSms";
 import { cn } from "@/lib/cn";
 import Link from "next/link";
+import TaskCreateOrEdit from "@/components/task/TaskCreateOrEdit";
 const AppointmentListClient = dynamic(() => import("./AppointmentListClient"), {
   ssr: false,
 });
@@ -220,8 +221,7 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
           )}
 
           <div className="ml-auto">
-            <NewTask
-              companyUsers={companyUsers}
+            <TaskCreateOrEdit
               isClientTask={true}
               clientId={client.id}
             />
