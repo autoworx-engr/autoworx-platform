@@ -266,8 +266,8 @@ const NetworksPage = ({
                           company={company}
                           rightSlot={
                             <div className="flex gap-2 pt-1">
-                              <Button
-                                className="bg-green-500"
+                              <button
+                                className="w-full disabled:bg-slate-200 bg-green-600 hover:bg-green-700 text-white font-medium py-0.5 px-3 rounded-lg shadow-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                                 onClick={() =>
                                   acceptCompanyJoin(
                                     joinId,
@@ -276,9 +276,9 @@ const NetworksPage = ({
                                 }
                               >
                                 Accept
-                              </Button>
-                              <Button
-                                className="bg-red-500"
+                              </button>
+                              <button
+                                className="w-full disabled:bg-slate-200 bg-red-600 hover:bg-red-700 text-white font-medium py-0.5 px-3 rounded-lg shadow-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                                 onClick={() =>
                                   rejectCompanyJoin(
                                     joinId,
@@ -287,7 +287,7 @@ const NetworksPage = ({
                                 }
                               >
                                 Reject
-                              </Button>
+                              </button>
                             </div>
                           }
                         />
@@ -354,8 +354,8 @@ const NetworksPage = ({
                           company={company}
                           rightSlot={
                             <div className="flex gap-2 pt-1">
-                              <Button
-                                className="bg-green-500"
+                              <button
+                                className="w-full disabled:bg-slate-200 bg-green-600 hover:bg-green-700 text-white font-medium py-0.5 px-3 rounded-lg shadow-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                                 onClick={() =>
                                   acceptCompanyJoin(
                                     joinId,
@@ -364,7 +364,7 @@ const NetworksPage = ({
                                 }
                               >
                                 Accept
-                              </Button>
+                              </button>
                             </div>
                           }
                         />
