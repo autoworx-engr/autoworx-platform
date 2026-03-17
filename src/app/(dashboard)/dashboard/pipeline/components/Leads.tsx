@@ -1,39 +1,23 @@
 "use client";
-import { cn } from "@/lib/cn";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import Link from "next/link";
-import React, {
-  useEffect,
-  useState,
-  useTransition,
-  useCallback,
-  useMemo,
-  useRef,
-} from "react";
+import { createLeadDraftEstimate } from "@/actions/pipelines/createLeadDraftEstimate";
 import {
   getLeadsWithCountOptimized as getLeadsWithCount,
   updateLeadColumn,
 } from "@/actions/pipelines/getLeads";
 import { getCompanyUser } from "@/actions/user/getCompanyUser";
-import { updatePipelineAutomationTrigger } from "@/service/pipeline-automation-trigger/api";
+import { AppointmentCreateOrEdit } from "@/components/appointment/AppointmentCreateOrEdit";
 import DateRange from "@/components/DateRange";
 import ResponsiveSalesPipelineCard from "@/components/mobile-responsive/pipeline/ResponsiveSalesPipelineCard";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
+import { cn } from "@/lib/cn";
 import { errorToast, successToast } from "@/lib/toast";
+import { updatePipelineAutomationTrigger } from "@/service/pipeline-automation-trigger/api";
 import { usePopupStore } from "@/stores/popup";
 import { LeadWithSalesUser } from "@/types/invoiceLead";
 import SessionUserType from "@/types/sessionUserType";
-import { Pagination, Select, Spin } from "antd";
-import moment from "moment";
-import { customAlphabet } from "nanoid";
-import Image from "next/image";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import toast from "react-hot-toast";
-import AppointmentBtn from "./AppointmentBtn";
-import { NewAppointmentPipeline } from "./NewAppointmentPipeline";
-import SelectComponent from "./Select";
-import TaskForm from "./TaskForm";
-import { createLeadDraftEstimate } from "@/actions/pipelines/createLeadDraftEstimate";
+import { Appointment, Column, User } from "@prisma/client";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { Pagination, Select } from "antd";
 import {
   Calendar,
   CalendarCheck,
@@ -41,10 +25,25 @@ import {
   MessageCircleMore,
   Search,
 } from "lucide-react";
-import { LeadsTableSkeleton } from "./LeadsTableSkeleton";
+import moment from "moment";
+import { customAlphabet } from "nanoid";
+import Image from "next/image";
+import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
+import toast from "react-hot-toast";
 import { LeadsMobileSkeleton } from "./LeadsMobileSkeleton";
-import { AppointmentCreateOrEdit } from "@/components/appointment/AppointmentCreateOrEdit";
-import { Appointment, Column, User } from "@prisma/client";
+import { LeadsTableSkeleton } from "./LeadsTableSkeleton";
+import { NewAppointmentPipeline } from "./NewAppointmentPipeline";
+import SelectComponent from "./Select";
+import TaskForm from "./TaskForm";
 
 type TProps = {
   salesColumn: Column[];
@@ -390,7 +389,7 @@ const Leads = ({ salesColumn }: TProps) => {
   const handleUpdateAppointmentInLead = useCallback(
     async (
       appointment: Appointment,
-      { leadId, columnId }: { leadId: number; columnId: number },
+      { leadId, columnId }: { leadId: number; columnId: number }
     ) => {
       setLeads((prevLeads) =>
         prevLeads.map((lead) => {
@@ -406,7 +405,7 @@ const Leads = ({ salesColumn }: TProps) => {
             };
           }
           return lead;
-        }),
+        })
       );
 
       // Trigger pipeline automation
@@ -424,7 +423,7 @@ const Leads = ({ salesColumn }: TProps) => {
         console.error("Automation run failed", err);
       }
     },
-    [leads],
+    [leads]
   );
 
   return (
@@ -491,7 +490,7 @@ const Leads = ({ salesColumn }: TProps) => {
                       >
                         <td className="border-b px-4 py-2 text-left">
                           <Link
-                            href="#"
+                            href={`/dashboard/client/${lead.clientId}`}
                             className="block h-full w-full text-[#6571FF]"
                           >
                             {(currentPage - 1) * pageSize + index + 1}
@@ -621,7 +620,10 @@ const Leads = ({ salesColumn }: TProps) => {
                                   triggerIcon={
                                     <button className="group relative">
                                       {!!appointment ? (
-                                        <CalendarCheck size={18} color="#6571FF" />
+                                        <CalendarCheck
+                                          size={18}
+                                          color="#6571FF"
+                                        />
                                       ) : (
                                         <Calendar size={18} color="#66738C" />
                                       )}
@@ -633,13 +635,17 @@ const Leads = ({ salesColumn }: TProps) => {
                                   }
                                   vehicleId={lead?.client?.vehicle?.id}
                                   clientId={lead?.client?.id}
-                                  onAppointmentCreated={(appointment: Appointment) => {
+                                  onAppointmentCreated={(
+                                    appointment: Appointment
+                                  ) => {
                                     handleUpdateAppointmentInLead(appointment, {
                                       leadId: lead.id,
                                       columnId: lead.columnId!,
                                     });
                                   }}
-                                  onAppointmentUpdated={(appointment: Appointment) => {
+                                  onAppointmentUpdated={(
+                                    appointment: Appointment
+                                  ) => {
                                     handleUpdateAppointmentInLead(appointment, {
                                       leadId: lead.id,
                                       columnId: lead.columnId!,
@@ -761,7 +767,7 @@ const SearchTerms = React.memo(function SearchTerms({
           "text-sm font-medium text-slate-700 placeholder:text-slate-400 outline-none",
           "transition-all duration-300 ease-in-out",
           "hover:border-slate-200 hover:bg-slate-50/30",
-          "focus:border-[#6571FF]/40 focus:bg-white focus:ring-4 focus:ring-[#6571FF]/10",
+          "focus:border-[#6571FF]/40 focus:bg-white focus:ring-4 focus:ring-[#6571FF]/10"
         )}
       />
     </div>
@@ -866,8 +872,8 @@ const DropdownMenuDemo = React.memo(function DropdownMenuDemo({
               value={
                 filter?.assignedTo
                   ? salesPersonItems.find(
-                    (item) => item.value === filter?.assignedTo
-                  )?.value || ""
+                      (item) => item.value === filter?.assignedTo
+                    )?.value || ""
                   : ""
               }
             />
