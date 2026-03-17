@@ -7,10 +7,10 @@ import { NextRequest, NextResponse } from "next/server";
 
 /**
  * @swagger
- * /api/communication/collaboration/company/companylist:
+ * /api/communication/collaboration/company/connected-company-list:
  *   get:
- *     summary: Retrieve a list of collaboration companies
- *     description: Fetches a paginated list of companies that are marked as collaborators, excluding the current user's company.
+ *     summary: Retrieve a list of collaboration connected companies by company
+ *     description: Fetches a paginated list of collaboration connected companies, excluding the current user's company.
  *     tags:
  *       - Collaboration
  *     parameters:
@@ -240,6 +240,7 @@ export async function GET(request: NextRequest) {
       async (company) => {
         const filteredAdmins = await Promise.all(
           company.users.map(async (user) => {
+            // Find the join between YOUR company (userCompanyId = 4) and the current company
             const joinAsOne = company.companyJoinsAsOne.find(
               (j) =>
                 (j.companyOneId === company.id &&
@@ -257,7 +258,6 @@ export async function GET(request: NextRequest) {
             );
 
             const joinStatus = joinAsOne?.status ?? joinAsTwo?.status ?? null;
-
             try {
               const permissions = await getUserPermissions(
                 user.id,
@@ -267,6 +267,26 @@ export async function GET(request: NextRequest) {
               const hasCollaboration =
                 permissions?.communicationHubCollaboration === true;
 
+              // Fetch last collaboration message for this company
+              const lastMessage = await db.collaborationMessage.findFirst({
+                where: {
+                  OR: [
+                    { fromCompanyId: userCompanyId, toCompanyId: company.id },
+                    { fromCompanyId: company.id, toCompanyId: userCompanyId },
+                  ],
+                },
+                orderBy: { createdAt: "desc" },
+              });
+
+              // Count unread messages
+              const unreadCount = await db.companyChatTrack.count({
+                where: {
+                  receiverCompanyId: userCompanyId,
+                  senderCompanyId: company.id,
+                  isRead: false,
+                },
+              });
+
               return hasCollaboration
                 ? {
                     ...user,
@@ -275,6 +295,8 @@ export async function GET(request: NextRequest) {
                       (c) => c.id === user.companyId,
                     ),
                     companyStatus: joinStatus?.toLocaleLowerCase(),
+                    lastMessage,
+                    unreadCount,
                   }
                 : null;
             } catch (error) {
@@ -294,25 +316,24 @@ export async function GET(request: NextRequest) {
       await Promise.all(filteredCompanyWithAdminPromises)
     ).flat();
 
-    const totalRecords = await db.company.count({
-      where: {
-        NOT: { id: userCompanyId },
-        isCollaborators: true,
-        ...companySearchCondition,
-      },
-    });
+    const collaborationConnectedCompanies = filteredCompanyWithAdmin.filter(
+      (c) => c.isConnected === true,
+    );
 
-    const hasNextPage = pageNum * limitNum < totalRecords;
+    const hasNextPage =
+      pageNum * limitNum < collaborationConnectedCompanies?.length;
     const hasPrevPage = pageNum > 1;
-    const totalPages = Math.ceil(totalRecords / limitNum);
+    const totalPages = Math.ceil(
+      collaborationConnectedCompanies?.length ?? 0 / limitNum,
+    );
 
     return NextResponse.json(
       {
         success: true,
-        data: filteredCompanyWithAdmin,
-        message: "Collaboration companies fetched successfully",
+        data: collaborationConnectedCompanies,
+        message: "Collaboration connected companies fetched successfully",
         meta: {
-          totalRecords,
+          totalRecords: collaborationConnectedCompanies.length ?? 0,
           page: pageNum,
           limit: limitNum,
           totalPages,

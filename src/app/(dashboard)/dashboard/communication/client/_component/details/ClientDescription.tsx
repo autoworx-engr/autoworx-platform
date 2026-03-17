@@ -1,6 +1,6 @@
 import { fetchMailsMailgun } from "@/actions/communication/client/fetchMailgunMails";
 import getSms from "@/actions/communication/client/getSms";
-import NewTask from "@/app/(dashboard)/dashboard/task-v1/[type]/components/task/NewTask";
+import TaskCreateOrEdit from "@/components/task/TaskCreateOrEdit";
 import { cn } from "@/lib/cn";
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
@@ -8,7 +8,6 @@ import { Client, Vehicle } from "@prisma/client";
 import dynamic from "next/dynamic";
 import ClientEstimates from "./ClientEstimates";
 import SaveAttachment from "./SaveAttachment";
-import TaskActions from "./TaskActions";
 const AppointmentListClient = dynamic(() => import("./AppointmentListClient"), {
   ssr: false,
 });
@@ -91,10 +90,10 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
   }));
 
   const conversations = conversationsData.data;
-  
+
   const allEmailAttachments =
     conversations?.flatMap((e) => e.attachments) ?? [];
-  
+
   const allSmsAttachments = smsData?.flatMap((s) => s.attachments) ?? [];
 
   return (
@@ -164,7 +163,7 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
                   <SaveAttachment
                     key={attachment.id}
                     attachment={attachment}
-                    allAttachments={allSmsAttachments} 
+                    allAttachments={allSmsAttachments}
                   />
                 ))
               )
@@ -232,11 +231,7 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
           )}
 
           <div className="ml-auto">
-            <NewTask
-              companyUsers={companyUsers}
-              isClientTask={true}
-              clientId={client.id}
-            />
+            <TaskCreateOrEdit isClientTask={true} clientId={client.id} />
           </div>
         </div>
       </section>
@@ -246,4 +241,3 @@ export default async function ClientDescription({ client, vehicles }: TProps) {
     </div>
   );
 }
-
