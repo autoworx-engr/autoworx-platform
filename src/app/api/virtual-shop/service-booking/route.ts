@@ -8,6 +8,210 @@ import { addVehicle } from "@/actions/vehicle/addVehicle";
 import { addAppointment } from "@/actions/appointment/addAppointment";
 import { AppError } from "@/error-boundary/error";
 
+/**
+ * @swagger
+ * /api/virtual-shop/service-booking:
+ *   post:
+ *     summary: Creates a new service booking via the virtual shop
+ *     description: Handles customer service booking request. Creates or finds a client and vehicle, checks availability and stacking limits, creates an estimate (invoice) with the requested services, books an appointment, and records the shop booking history.
+ *     tags:
+ *       - Virtual Shop Booking
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - slug
+ *               - shopServiceIds
+ *               - appointmentDate
+ *               - appointmentStartTime
+ *               - phone
+ *               - make
+ *               - model
+ *               - year
+ *             properties:
+ *               slug:
+ *                 type: string
+ *                 description: The unique slug for the virtual shop.
+ *                 example: my-auto-shop
+ *               shopServiceIds:
+ *                 type: array
+ *                 description: Array of selected shop service IDs.
+ *                 items:
+ *                   type: integer
+ *                 example: [1, 2, 3]
+ *               appointmentDate:
+ *                 type: string
+ *                 format: date
+ *                 description: Date of the appointment (YYYY-MM-DD).
+ *                 example: "2026-03-25"
+ *               appointmentStartTime:
+ *                 type: string
+ *                 description: Time of the appointment (HH:mm format).
+ *                 example: "10:30"
+ *               fullName:
+ *                 type: string
+ *                 description: Customer full name.
+ *                 example: "John Doe"
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 description: Customer email address.
+ *                 example: "john@example.com"
+ *               phone:
+ *                 type: string
+ *                 description: Customer phone number.
+ *                 example: "+1234567890"
+ *               make:
+ *                 type: string
+ *                 description: Vehicle make.
+ *                 example: "Toyota"
+ *               model:
+ *                 type: string
+ *                 description: Vehicle model.
+ *                 example: "Camry"
+ *               year:
+ *                 type: integer
+ *                 description: Vehicle year.
+ *                 example: 2021
+ *               notes:
+ *                 type: string
+ *                 description: Optional notes provided by the customer.
+ *                 example: "Please call upon arrival"
+ *               depositAmount:
+ *                 type: number
+ *                 description: The amount the customer has paid as a deposit for this booking.
+ *                 example: 50.00
+ *     responses:
+ *       200:
+ *         description: Virtual shop service created successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Virtual shop service created successfully"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     appointmentId:
+ *                       type: integer
+ *                       example: 10
+ *                     estimateId:
+ *                       type: string
+ *                       example: "1234567890"
+ *                     shopBookingId:
+ *                       type: integer
+ *                       example: 5
+ *                     appointment:
+ *                       type: object
+ *                       properties:
+ *                         date:
+ *                           type: string
+ *                           example: "2026-03-25T00:00:00.000Z"
+ *                         startTime:
+ *                           type: string
+ *                           example: "10:30"
+ *                     client:
+ *                       type: object
+ *                       properties:
+ *                         firstName:
+ *                           type: string
+ *                           example: "John"
+ *                         lastName:
+ *                           type: string
+ *                           example: "Doe"
+ *                         email:
+ *                           type: string
+ *                           example: "john@example.com"
+ *                         mobile:
+ *                           type: string
+ *                           example: "+1234567890"
+ *                     vehicle:
+ *                       type: object
+ *                       properties:
+ *                         year:
+ *                           type: integer
+ *                           example: 2021
+ *                         make:
+ *                           type: string
+ *                           example: "Toyota"
+ *                         model:
+ *                           type: string
+ *                           example: "Camry"
+ *                     services:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           title:
+ *                             type: string
+ *                             example: "Oil Change"
+ *                           price:
+ *                             type: number
+ *                             example: 49.99
+ *                     totals:
+ *                       type: object
+ *                       properties:
+ *                         subtotal:
+ *                           type: number
+ *                           example: 49.99
+ *                         tax:
+ *                           type: number
+ *                           example: 4.00
+ *                         serviceFee:
+ *                           type: number
+ *                           example: 1.00
+ *                         grandTotal:
+ *                           type: number
+ *                           example: 54.99
+ *       400:
+ *         description: Bad Request. Missing required fields, invalid booking, or insufficient deposit.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Missing required fields"
+ *       404:
+ *         description: Not Found. Shop not found, etc.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Shop not found with the provided slug."
+ *       500:
+ *         description: Internal Server Error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Internal Server Error"
+ */
 export async function POST(req: Request) {
   try {
     const body = await req.json();
