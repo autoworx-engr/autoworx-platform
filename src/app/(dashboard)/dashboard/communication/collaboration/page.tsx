@@ -16,7 +16,6 @@ export default async function CollaborationPage() {
   const userCompanyId = session?.user?.companyId;
 
   const company = await getCompany();
-
   if (!userCompanyId) {
     throw new Error("Company ID is required to create an email template.");
   }
@@ -147,6 +146,32 @@ export default async function CollaborationPage() {
           employeeType: true,
         },
       },
+      companyJoinsAsOne: {
+        where: {
+          OR: [
+            { companyOneId: userCompanyId },
+            { companyTwoId: userCompanyId },
+          ],
+        },
+        select: {
+          status: true,
+          companyOneId: true,
+          companyTwoId: true,
+        },
+      },
+      companyJoinsAsTwo: {
+        where: {
+          OR: [
+            { companyOneId: userCompanyId },
+            { companyTwoId: userCompanyId },
+          ],
+        },
+        select: {
+          status: true,
+          companyOneId: true,
+          companyTwoId: true,
+        },
+      },
     },
   });
 
@@ -155,6 +180,23 @@ export default async function CollaborationPage() {
     async (company) => {
       const filteredAdmins = await Promise.all(
         company.users.map(async (user) => {
+          const joinAsOne = company.companyJoinsAsOne.find(
+            (j) =>
+              (j.companyOneId === company.id &&
+                j.companyTwoId === userCompanyId) ||
+              (j.companyOneId === userCompanyId &&
+                j.companyTwoId === company.id),
+          );
+
+          const joinAsTwo = company.companyJoinsAsTwo.find(
+            (j) =>
+              (j.companyOneId === company.id &&
+                j.companyTwoId === userCompanyId) ||
+              (j.companyOneId === userCompanyId &&
+                j.companyTwoId === company.id),
+          );
+
+          const joinStatus = joinAsOne?.status ?? joinAsTwo?.status ?? null;
           try {
             const permissions = await getUserPermissions(
               user.id,
@@ -172,6 +214,7 @@ export default async function CollaborationPage() {
                   isConnected: finalCompanies.some(
                     (c) => c.id === user.companyId,
                   ),
+                  companyJoinStatus: joinStatus,
                 }
               : null;
           } catch (error) {

@@ -5,7 +5,6 @@ import {
   DialogFooter,
   DialogTrigger,
 } from "@/components/Dialog";
-import { SlimInput } from "@/components/SlimInput";
 import { SetStateAction, useEffect, useRef, useState } from "react";
 import { Company, User } from "@prisma/client";
 import Avatar from "@/components/Avatar";
@@ -19,6 +18,7 @@ type TProps = {
   companyAdmins: Partial<
     User & {
       isConnected: boolean;
+      companyJoinStatus?: string | null;
     }
   >[];
   setCompanyAdmins: React.Dispatch<
@@ -145,50 +145,56 @@ export default function SearchCollaborationModal({
                 <div className="flex h-72 flex-col items-start space-y-2 overflow-y-auto thin-scrollbar p-1">
                   {companyAdmins &&
                     companyAdmins?.length > 0 &&
-                    companyAdmins.map((user) => (
-                      <div
-                        key={user?.id}
-                        className="flex w-full flex-wrap items-center gap-2 rounded-lg border border-slate-100 bg-white p-2 transition-colors hover:bg-slate-50 sm:flex-nowrap sm:gap-3 sm:p-2.5"
-                      >
-                        <Avatar
-                          className="flex-shrink-0"
-                          photo={user?.image}
-                          width={40}
-                          height={40}
-                        />
-                        <div className="flex min-w-0 flex-1 flex-col">
-                          <div className="flex flex-wrap items-center gap-1 sm:flex-nowrap sm:gap-2">
-                            <p className="truncate text-sm font-semibold text-slate-700">
-                              {user?.firstName} {user?.lastName}
-                            </p>
-                            <span className="flex-shrink-0 rounded-full bg-teal-50 px-2 py-0.5 text-[10px] font-semibold text-[#006D77] sm:text-xs">
-                              {user?.companyName}
-                            </span>
+                    companyAdmins.map((user) => {
+                      return (
+                        <div
+                          key={user?.id}
+                          className="flex w-full flex-wrap items-center gap-2 rounded-lg border border-slate-100 bg-white p-2 transition-colors hover:bg-slate-50 sm:flex-nowrap sm:gap-3 sm:p-2.5"
+                        >
+                          <Avatar
+                            className="flex-shrink-0"
+                            photo={user?.image}
+                            width={40}
+                            height={40}
+                          />
+                          <div className="flex min-w-0 flex-1 flex-col">
+                            <div className="flex flex-wrap items-center gap-1 sm:flex-nowrap sm:gap-2">
+                              <p className="truncate text-sm font-semibold text-slate-700">
+                                {user?.firstName} {user?.lastName}
+                              </p>
+                              <span className="flex-shrink-0 rounded-full bg-teal-50 px-2 py-0.5 text-[10px] font-semibold text-[#006D77] sm:text-xs">
+                                {user?.companyName}
+                              </span>
+                            </div>
+                            <div className="flex flex-col text-[10px] text-slate-400 sm:flex-row sm:items-center sm:gap-2 sm:text-xs">
+                              {user?.phone && <span>{user?.phone}</span>}
+                              <span className="truncate">{user?.email}</span>
+                            </div>
                           </div>
-                          <div className="flex flex-col text-[10px] text-slate-400 sm:flex-row sm:items-center sm:gap-2 sm:text-xs">
-                            {user?.phone && <span>{user?.phone}</span>}
-                            <span className="truncate">{user?.email}</span>
+                          <div className="w-full flex-shrink-0 sm:w-auto">
+                            {user?.companyJoinStatus === "ACCEPTED" ? (
+                              <span className="block w-full rounded-lg bg-slate-100 px-3 py-1.5 text-center text-xs font-semibold text-slate-500 sm:inline sm:w-auto sm:text-left">
+                                Connected
+                              </span>
+                            ) : user?.companyJoinStatus ? (
+                              <span className="block w-full rounded-lg bg-slate-100 px-3 py-1.5 text-center text-xs font-semibold text-slate-500 sm:inline sm:w-auto sm:text-left">
+                                {user?.companyJoinStatus}
+                              </span>
+                            ) : (
+                              <button
+                                onClick={() =>
+                                  handleConnectCompany(user?.companyId!)
+                                }
+                                className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-[#006D77] px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-all hover:bg-[#005a63] active:scale-95 sm:w-auto"
+                              >
+                                <Plus size={14} strokeWidth={2.5} />
+                                <span>Invite</span>
+                              </button>
+                            )}
                           </div>
                         </div>
-                        <div className="w-full flex-shrink-0 sm:w-auto">
-                          {!user?.isConnected ? (
-                            <button
-                              onClick={() =>
-                                handleConnectCompany(user?.companyId!)
-                              }
-                              className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-[#006D77] px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-all hover:bg-[#005a63] active:scale-95 sm:w-auto"
-                            >
-                              <Plus size={14} strokeWidth={2.5} />
-                              <span>Invite</span>
-                            </button>
-                          ) : (
-                            <span className="block w-full rounded-lg bg-slate-100 px-3 py-1.5 text-center text-xs font-semibold text-slate-500 sm:inline sm:w-auto sm:text-left">
-                              Connected
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                 </div>
               </div>
             </>
