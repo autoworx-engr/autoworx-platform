@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 /**
  * @swagger
- * /api/sales-agent/service-playbooks/{id}:
+ * /api/ai-train/service-playbooks/{id}:
  *   get:
  *     summary: Get service playbook by ID
  *     tags: [Service Playbooks]
@@ -51,7 +51,7 @@ export async function GET(_: Request, { params }: { params: { id: number } }) {
 
 /**
  * @swagger
- * /api/sales-agent/service-playbooks/{id}:
+ * /api/ai-train/service-playbooks/{id}:
  *   patch:
  *     summary: Update a service playbook
  *     tags: [Service Playbooks]
@@ -221,7 +221,7 @@ export async function PATCH(
 
 /**
  * @swagger
- * /api/sales-agent/service-playbooks/{id}:
+ * /api/ai-train/service-playbooks/{id}:
  *   delete:
  *     summary: Delete a service playbook
  *     tags: [Service Playbooks]
