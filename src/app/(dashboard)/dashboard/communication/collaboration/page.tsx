@@ -16,7 +16,6 @@ export default async function CollaborationPage() {
   const userCompanyId = session?.user?.companyId;
 
   const company = await getCompany();
-  console.log("company", company);
   if (!userCompanyId) {
     throw new Error("Company ID is required to create an email template.");
   }
@@ -148,14 +147,28 @@ export default async function CollaborationPage() {
         },
       },
       companyJoinsAsOne: {
+        where: {
+          OR: [
+            { companyOneId: userCompanyId },
+            { companyTwoId: userCompanyId },
+          ],
+        },
         select: {
           status: true,
           companyOneId: true,
+          companyTwoId: true,
         },
       },
       companyJoinsAsTwo: {
+        where: {
+          OR: [
+            { companyOneId: userCompanyId },
+            { companyTwoId: userCompanyId },
+          ],
+        },
         select: {
           status: true,
+          companyOneId: true,
           companyTwoId: true,
         },
       },
@@ -165,21 +178,25 @@ export default async function CollaborationPage() {
   // Filter admins based on collaboration permission
   const filteredCompanyWithAdminPromises = companyWithAdmin.map(
     async (company) => {
-      // specific join বের করা
-      const joinAsOne = company.companyJoinsAsOne.find(
-        (j) => j.companyOneId === userCompanyId,
-      );
-
-      const joinAsTwo = company.companyJoinsAsTwo.find(
-        (j) => j.companyTwoId === userCompanyId,
-      );
-      console.log("company.companyJoinsAsOne", company.companyJoinsAsOne);
-      console.log("company.companyJoinsAsTwo", company.companyJoinsAsTwo);
-
-      const joinStatus = joinAsOne?.status || joinAsTwo?.status || null;
-
       const filteredAdmins = await Promise.all(
         company.users.map(async (user) => {
+          const joinAsOne = company.companyJoinsAsOne.find(
+            (j) =>
+              (j.companyOneId === company.id &&
+                j.companyTwoId === userCompanyId) ||
+              (j.companyOneId === userCompanyId &&
+                j.companyTwoId === company.id),
+          );
+
+          const joinAsTwo = company.companyJoinsAsTwo.find(
+            (j) =>
+              (j.companyOneId === company.id &&
+                j.companyTwoId === userCompanyId) ||
+              (j.companyOneId === userCompanyId &&
+                j.companyTwoId === company.id),
+          );
+
+          const joinStatus = joinAsOne?.status ?? joinAsTwo?.status ?? null;
           try {
             const permissions = await getUserPermissions(
               user.id,
@@ -217,7 +234,6 @@ export default async function CollaborationPage() {
     await Promise.all(filteredCompanyWithAdminPromises)
   ).flat();
 
-  console.log("filteredCompanyWithAdmin", filteredCompanyWithAdmin);
   return (
     <div>
       <Title className="hidden sm:block">

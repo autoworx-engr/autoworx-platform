@@ -5,7 +5,6 @@ import {
   DialogFooter,
   DialogTrigger,
 } from "@/components/Dialog";
-import { SlimInput } from "@/components/SlimInput";
 import { SetStateAction, useEffect, useRef, useState } from "react";
 import { Company, User } from "@prisma/client";
 import Avatar from "@/components/Avatar";
@@ -19,6 +18,7 @@ type TProps = {
   companyAdmins: Partial<
     User & {
       isConnected: boolean;
+      companyJoinStatus?: string | null;
     }
   >[];
   setCompanyAdmins: React.Dispatch<
@@ -146,7 +146,6 @@ export default function SearchCollaborationModal({
                   {companyAdmins &&
                     companyAdmins?.length > 0 &&
                     companyAdmins.map((user) => {
-                      console.log("user", user);
                       return (
                         <div
                           key={user?.id}
@@ -173,7 +172,15 @@ export default function SearchCollaborationModal({
                             </div>
                           </div>
                           <div className="w-full flex-shrink-0 sm:w-auto">
-                            {!user?.isConnected ? (
+                            {user?.companyJoinStatus === "ACCEPTED" ? (
+                              <span className="block w-full rounded-lg bg-slate-100 px-3 py-1.5 text-center text-xs font-semibold text-slate-500 sm:inline sm:w-auto sm:text-left">
+                                Connected
+                              </span>
+                            ) : user?.companyJoinStatus ? (
+                              <span className="block w-full rounded-lg bg-slate-100 px-3 py-1.5 text-center text-xs font-semibold text-slate-500 sm:inline sm:w-auto sm:text-left">
+                                {user?.companyJoinStatus}
+                              </span>
+                            ) : (
                               <button
                                 onClick={() =>
                                   handleConnectCompany(user?.companyId!)
@@ -183,10 +190,6 @@ export default function SearchCollaborationModal({
                                 <Plus size={14} strokeWidth={2.5} />
                                 <span>Invite</span>
                               </button>
-                            ) : (
-                              <span className="block w-full rounded-lg bg-slate-100 px-3 py-1.5 text-center text-xs font-semibold text-slate-500 sm:inline sm:w-auto sm:text-left">
-                                Connected
-                              </span>
                             )}
                           </div>
                         </div>
