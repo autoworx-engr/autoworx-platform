@@ -68,7 +68,7 @@ export default function TaskContentModal({
   } = useTaskById(taskId!, {
     enabled: fromEdit && !!taskId,
   });
-  console.log("taskData", taskData);
+
   const queryClient = useQueryClient();
   const timezone = useCompanyTimezone();
   const [title, setTitle] = useState("");
