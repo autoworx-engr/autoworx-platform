@@ -115,16 +115,26 @@ export async function POST(req: NextRequest) {
       throw new AppError(400, "Slug already exists");
     }
 
-    const shop = await db.shop.create({
-      data: {
-        companyId,
-        storeName,
-        slug,
-        description: description ?? null,
-        logoUrl,
-        bannerUrl,
-        themeConfig: themeConfig ?? null,
-      },
+    const shop = await db.$transaction(async (tx) => {
+      const newShop = await tx.shop.create({
+        data: {
+          companyId,
+          storeName,
+          slug,
+          description: description ?? null,
+          logoUrl,
+          bannerUrl,
+          themeConfig: themeConfig ?? null,
+        },
+      });
+
+      await tx.shopBookingSetting.create({
+        data: {
+          shopId: newShop.id,
+        },
+      });
+
+      return newShop;
     });
 
     return NextResponse.json({
