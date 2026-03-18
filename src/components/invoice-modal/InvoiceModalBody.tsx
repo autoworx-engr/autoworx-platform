@@ -46,6 +46,7 @@ import {
   Eye,
   FileDown,
   Mail,
+  Calendar,
   MessageCircle,
   MessageCircleMore,
   Printer,
@@ -65,6 +66,7 @@ import WorkOrderModal from "../workorder-modal/WorkOrderModal";
 import { InspectionItems } from "./InspectionItems";
 import { InvoiceItems } from "./InvoiceItems";
 import { PayNow } from "./PayNow";
+import { AppointmentCreateOrEdit } from "../appointment/AppointmentCreateOrEdit";
 
 const DownloadPDF = dynamic(() => import("./DownloadInvoice"), {
   ssr: false,
@@ -116,6 +118,7 @@ export default function InvoiceModalBody({
   const [authorizedNameInput, setAuthorizedNameInput] = useState("");
   const [sigImageURL, setSigImageURL] = useState(null);
   const [showSignaturePad, setShowSignaturePad] = useState(false);
+  const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<
     "estimate" | "attachments" | "inspections"
   >("estimate");
@@ -384,28 +387,31 @@ export default function InvoiceModalBody({
           {!isPublic && isShowEdit && (
             <div className="mt-6 flex w-full flex-col items-center gap-3 print:hidden">
               {/* Row 1 — main actions */}
-              <div className="flex flex-wrap items-center justify-center gap-3">
+              <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3">
                 {/* Edit Link */}
                 {isShowEdit && (
+                  <Tooltip title="Edit">
+
+                  
                   <Link
-                    className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-5 py-1.5 text-sm font-medium text-white shadow-md shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 md:text-base"
+                    className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-4 py-2 text-sm font-medium text-white shadow-md shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 md:text-base"
                     href={`/dashboard/estimate/edit/${invoice.id}?clientId=${invoice.clientId}`}
                   >
-                    <SquarePen className="h-4 w-4" />
-                    <span className="hidden md:inline">Edit</span>
+                    <SquarePen className="h-4 w-4 md:h-5 md:w-5" />
+                    {/* <span className="hidden md:inline">Edit</span> */}
                   </Link>
+                  </Tooltip>
                 )}
 
                 {/* Communications Link */}
-                <Link
-                  href={`/dashboard/communication/client/${invoice.clientId}?chat=true`}
-                  className="group relative flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-5 py-2 text-sm font-medium text-white shadow-md shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 md:text-base"
-                >
-                  <MessageCircleMore className="h-4 w-4 md:h-5 md:w-5" />
-                  <span className="invisible absolute bottom-full left-1/2 mb-3 w-max -translate-x-1/2 transform rounded-lg bg-slate-800 px-3 py-1.5 text-xs text-white opacity-0 shadow-xl transition-all group-hover:visible group-hover:opacity-100">
-                    Communications
-                  </span>
-                </Link>
+                <Tooltip title="Communications" placement="top">
+                  <Link
+                    href={`/dashboard/communication/client/${invoice.clientId}?chat=true`}
+                    className="flex items-center justify-center rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-4 py-2 text-sm font-medium text-white shadow-md shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 md:text-base"
+                  >
+                    <MessageCircleMore className="h-4 w-4 md:h-5 md:w-5" />
+                  </Link>
+                </Tooltip>
 
                 {/* Export Group — Print/PDF */}
                 <div className="flex items-center gap-0 rounded-2xl border border-slate-200 bg-white/80 px-1 py-1 shadow-sm dark:border-slate-700 dark:bg-slate-900/60">
@@ -532,6 +538,31 @@ export default function InvoiceModalBody({
                     </div>
                   </div>
                 </div>
+
+                {/* Create Appointment Button */}
+                <Tooltip title="Create Appointment" placement="top">
+                  <button
+                    type="button"
+                    className="flex items-center justify-center rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-4 py-2 text-sm font-medium text-white shadow-md shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 md:text-base print:hidden"
+                    onClick={() => setIsAppointmentModalOpen(true)}
+                  >
+                    <Calendar className="h-4 w-4 md:h-5 md:w-5" />
+                  </button>
+                </Tooltip>
+
+                <AppointmentCreateOrEdit
+                  clientId={invoice.clientId}
+                  vehicleId={invoice.vehicleId}
+                  draftEstimateId={invoice.id}
+                  isModalOpen={isAppointmentModalOpen}
+                  setIsModalOpen={setIsAppointmentModalOpen}
+                  onAppointmentCreated={(appointment) => {
+                    setIsAppointmentModalOpen(false);
+                  }}
+                  onAppointmentUpdated={(appointment) => {
+                    setIsAppointmentModalOpen(false);
+                  }}
+                />
               </div>
             </div>
           )}

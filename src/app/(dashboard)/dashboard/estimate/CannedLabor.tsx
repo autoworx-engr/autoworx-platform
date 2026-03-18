@@ -65,7 +65,7 @@ export default function CannedLabor({
 
       const matchesSearch = laborSearch
         ? laborName.includes(laborSearch.toLowerCase()) ||
-        categoryName.includes(laborSearch.toLowerCase())
+          categoryName.includes(laborSearch.toLowerCase())
         : true;
 
       const matchesCategory = selectedCategory
@@ -276,6 +276,7 @@ const LaborComponent = ({
   const [charge, setCharge] = useState<string>(
     labor.charge ? Number(labor.charge).toFixed(2) : "0.00"
   );
+  const [notes, setNotes] = useState<string>((labor as any).notes || "");
   const [category, setCategory] = useState<Category | null>(
     labor?.category || null
   );
@@ -309,6 +310,7 @@ const LaborComponent = ({
       name,
       charge: parseFloat(charge) || 0,
       categoryId: category?.id || undefined,
+      notes: notes.trim() || undefined,
     });
 
     if (res.success) {
@@ -321,6 +323,22 @@ const LaborComponent = ({
     }
     setIsPending(false);
   };
+
+  // Reusable Notes field
+  const NotesField = (
+    <div>
+      <label className="mb-2 block text-sm font-medium text-gray-700">
+        Notes
+      </label>
+      <textarea
+        value={notes}
+        onChange={(e) => setNotes(e.target.value)}
+        rows={3}
+        className="w-full rounded-lg border border-gray-300 p-2 text-base focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition-colors resize-none"
+        placeholder="Add any notes about this labor item..."
+      />
+    </div>
+  );
 
   if (view === "card") {
     return (
@@ -404,6 +422,7 @@ const LaborComponent = ({
                         placeholder="$/Hour"
                       />
                     </div>
+                    {NotesField}
                   </div>
                   <DialogFooter>
                     <DialogClose asChild>
@@ -544,6 +563,7 @@ const LaborComponent = ({
                   placeholder="$/Hour"
                 />
               </div>
+              {NotesField}
             </div>
             <DialogFooter>
               <DialogClose asChild>

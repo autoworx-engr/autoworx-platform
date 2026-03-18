@@ -698,7 +698,7 @@ model Company {
 
 model Reviews {
   id            Int      @id @default(autoincrement())
-  rate          Int
+  rate          Decimal  @db.Decimal(2, 1)
   message       String
   companyId     Int
   sendUserId    Int
