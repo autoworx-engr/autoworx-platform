@@ -9,31 +9,31 @@ export const laborCreateValidationSchema = z.object({
     .nonempty("Labor name is required"),
   categoryId: z
     .number({
-      message: "category must be required",
-      invalid_type_error: "category name must be string",
+      required_error: "Category is required",
+      invalid_type_error: "Category ID must be a number",
     })
     .int("Category Id must be integer")
     .nonnegative("Category is required")
     .nullable()
     .optional(),
   notes: z
-    .string({ invalid_type_error: "notes must be string value" })
+    .string({ invalid_type_error: "Notes must be a string value" })
     .nullable()
     .optional(),
   tags: z.array(estimateTagsValidationSchema.optional()).nullable().optional(),
   hours: z
-    .number({ invalid_type_error: "hours must be number" })
-    .nonnegative("Hours must be positive value")
+    .number({ invalid_type_error: "Hours must be a number" })
+    .nonnegative("Hours must be a positive value")
     .optional()
     .default(0),
   charge: z
-    .number({ invalid_type_error: "charge must be string value" })
-    .nonnegative("Charge must be positive value")
+    .number({ invalid_type_error: "Charge must be a number" })
+    .nonnegative("Charge must be a positive value")
     .optional()
     .default(0),
   discount: z
-    .number({ invalid_type_error: "discount must be string value" })
-    .nonnegative("Discount must be positive value")
+    .number({ invalid_type_error: "Discount must be a number" })
+    .nonnegative("Discount must be a positive value")
     .optional()
     .default(0),
   cannedLabor: z.boolean().optional().default(false),
