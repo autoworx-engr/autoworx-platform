@@ -181,10 +181,7 @@ export async function GET(req: Request) {
     const skip = (page - 1) * limit;
 
     if (!shopId) {
-      return NextResponse.json(
-        { success: false, message: "Missing shopId" },
-        { status: 400 },
-      );
+      throw new AppError(400, "Missing shopId");
     }
 
     const whereClause: Prisma.ShopServiceWhereInput = {
@@ -246,6 +243,12 @@ export async function GET(req: Request) {
       { status: 200 },
     );
   } catch (error: any) {
+    if (error instanceof AppError) {
+      return NextResponse.json(
+        { success: false, message: error.message },
+        { status: error.statusCode },
+      );
+    }
     console.error("Error fetching shop services:", error);
     return NextResponse.json(
       {
@@ -462,17 +465,11 @@ export async function POST(req: Request) {
     } = body;
 
     if (!companyId) {
-      return NextResponse.json(
-        { success: false, message: "Company ID not found" },
-        { status: 403 },
-      );
+      throw new AppError(403, "Company ID not found");
     }
 
     if (!shopId || !title) {
-      return NextResponse.json(
-        { success: false, message: "Missing required fields" },
-        { status: 400 },
-      );
+      throw new AppError(400, "Missing required fields");
     }
 
     // 1. Verify the shop belongs to the user's company
@@ -481,10 +478,7 @@ export async function POST(req: Request) {
     });
 
     if (!shop || shop.companyId !== companyId) {
-      return NextResponse.json(
-        { success: false, message: "Shop not found or access denied" },
-        { status: 404 },
-      );
+      throw new AppError(404, "Shop not found or access denied");
     }
 
     // 2. PRE-CALCULATE TOTALS & CATEGORIES (Keeps transaction fast & fixes the category bug)
@@ -492,7 +486,7 @@ export async function POST(req: Request) {
     let totalDuration = 0;
     const categoryIdsToFetch = new Set<number>();
 
-    items?.forEach(item => {
+    items?.forEach((item) => {
       // Gather category IDs
       if (item.service?.categoryId) {
         categoryIdsToFetch.add(item.service.categoryId);
@@ -508,7 +502,7 @@ export async function POST(req: Request) {
       }
 
       // Calculate Materials
-      item.materials?.forEach(mat => {
+      item.materials?.forEach((mat) => {
         if (!mat || !mat.name) return;
         const matQuantity = Number(mat.quantity) || 0;
         const matSell = Number(mat.sell) || 0;
@@ -525,10 +519,10 @@ export async function POST(req: Request) {
       where: { id: { in: Array.from(categoryIdsToFetch) } },
       select: { name: true },
     });
-    const categories = fetchedCategories.map(c => c.name);
+    const categories = fetchedCategories.map((c) => c.name);
 
     // 3. DATABASE TRANSACTION
-    const newShopService = await db.$transaction(async tx => {
+    const newShopService = await db.$transaction(async (tx) => {
       // Because we pre-calculated everything, we can create the final record immediately.
       // No need to update it at the end of the transaction!
       const serviceRecord = await tx.shopService.create({
@@ -550,7 +544,7 @@ export async function POST(req: Request) {
 
       if (items && items.length > 0) {
         await Promise.all(
-          items.map(async item => {
+          items.map(async (item) => {
             let laborId;
 
             if (item.labor) {
@@ -570,7 +564,7 @@ export async function POST(req: Request) {
               // Use createMany instead of a loop for tags
               if (item.labor.tags?.length) {
                 await tx.laborTag.createMany({
-                  data: item.labor.tags.map(tag => ({
+                  data: item.labor.tags.map((tag) => ({
                     laborId: newLabor.id,
                     tagId: tag.id,
                   })),
@@ -588,7 +582,7 @@ export async function POST(req: Request) {
 
             if (item.materials?.length) {
               await Promise.all(
-                item.materials.map(async material => {
+                item.materials.map(async (material) => {
                   if (!material || !material.name) return;
                   const newMat = await tx.material.create({
                     data: {
@@ -609,7 +603,7 @@ export async function POST(req: Request) {
                   // Use createMany instead of a loop for tags
                   if (material.tags?.length) {
                     await tx.materialTag.createMany({
-                      data: material.tags.map(tag => ({
+                      data: material.tags.map((tag) => ({
                         materialId: newMat.id,
                         tagId: tag.id,
                       })),
@@ -622,7 +616,7 @@ export async function POST(req: Request) {
             // Use createMany instead of a loop for item tags
             if (item.tags?.length) {
               await tx.itemTag.createMany({
-                data: item.tags.map(tag => ({
+                data: item.tags.map((tag) => ({
                   itemId: invoiceItem.id,
                   tagId: tag.id,
                 })),
@@ -640,6 +634,12 @@ export async function POST(req: Request) {
       { status: 201 },
     );
   } catch (error: any) {
+    if (error instanceof AppError) {
+      return NextResponse.json(
+        { success: false, message: error.message },
+        { status: error.statusCode },
+      );
+    }
     console.error("Error creating shop service:", error);
     return NextResponse.json(
       { success: false, message: error.message || "Something went wrong" },

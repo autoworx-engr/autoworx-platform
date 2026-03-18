@@ -80,10 +80,7 @@ export async function GET(req: Request) {
     const shopId = searchParams.get("shopId");
 
     if (!shopId) {
-      return NextResponse.json(
-        { success: false, message: "Missing shopId" },
-        { status: 400 },
-      );
+      throw new AppError(400, "Missing shopId");
     }
 
     const settings = await db.shopBookingSetting.findUnique({
@@ -92,22 +89,22 @@ export async function GET(req: Request) {
     });
 
     if (!settings) {
-      return NextResponse.json(
-        { success: false, message: "Settings not found" },
-        { status: 404 },
-      );
+      throw new AppError(404, "Settings not found");
     }
 
     return NextResponse.json(
       { success: true, data: settings },
       { status: 200 },
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching shop booking settings:", error);
-    return NextResponse.json(
-      { success: false, message: "Internal server error" },
-      { status: 500 },
-    );
+    if (error instanceof AppError) {
+      return NextResponse.json(
+        { success: false, message: error.message },
+        { status: error.statusCode },
+      );
+    }
+    throw new AppError(500, "Internal server error");
   }
 }
 
@@ -157,19 +154,13 @@ export async function POST(req: Request) {
     const companyId = verifyToken?.payload?.companyId as number;
 
     if (!companyId) {
-      return NextResponse.json(
-        { success: false, message: "Company ID not found in session" },
-        { status: 403 },
-      );
+      throw new AppError(403, "Company ID not found in session");
     }
 
     const { shopId } = await req.json();
 
     if (!shopId) {
-      return NextResponse.json(
-        { success: false, message: "Missing shopId" },
-        { status: 400 },
-      );
+      throw new AppError(400, "Missing shopId");
     }
 
     const existingSettings = await db.shopBookingSetting.findUnique({
@@ -177,13 +168,7 @@ export async function POST(req: Request) {
     });
 
     if (existingSettings) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Settings already exist. Use PUT to update.",
-        },
-        { status: 400 },
-      );
+      throw new AppError(400, "Settings already exist. Use PUT to update.");
     }
 
     const companySettings = await db.calendarSettings.findUnique({
@@ -200,7 +185,7 @@ export async function POST(req: Request) {
       "FRIDAY",
       "SATURDAY",
       "SUNDAY",
-    ].map(day => ({
+    ].map((day) => ({
       dayOfWeek: day as any,
       isOpen: true,
       startTime: defaultStartTime,
@@ -231,12 +216,15 @@ export async function POST(req: Request) {
       { success: true, data: newSettings },
       { status: 201 },
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error creating shop booking settings:", error);
-    return NextResponse.json(
-      { success: false, message: "Internal server error" },
-      { status: 500 },
-    );
+    if (error instanceof AppError) {
+      return NextResponse.json(
+        { success: false, message: error.message },
+        { status: error.statusCode },
+      );
+    }
+    throw new AppError(500, "Internal server error");
   }
 }
 
@@ -318,10 +306,7 @@ export async function PUT(req: Request) {
     const companyId = verifyToken?.payload?.companyId as number;
 
     if (!companyId) {
-      return NextResponse.json(
-        { success: false, message: "Company ID not found in session" },
-        { status: 403 },
-      );
+      throw new AppError(403, "Company ID not found in session");
     }
 
     const body = await req.json();
@@ -339,10 +324,7 @@ export async function PUT(req: Request) {
     } = body;
 
     if (!shopId) {
-      return NextResponse.json(
-        { success: false, message: "Missing shopId" },
-        { status: 400 },
-      );
+      throw new AppError(400, "Missing shopId");
     }
 
     const updateData: any = {};
@@ -385,11 +367,14 @@ export async function PUT(req: Request) {
       { success: true, data: updatedSettings },
       { status: 200 },
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error updating shop booking settings:", error);
-    return NextResponse.json(
-      { success: false, message: "Internal server error" },
-      { status: 500 },
-    );
+    if (error instanceof AppError) {
+      return NextResponse.json(
+        { success: false, message: error.message },
+        { status: error.statusCode },
+      );
+    }
+    throw new AppError(500, "Internal server error");
   }
 }

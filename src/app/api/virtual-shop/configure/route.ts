@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
+import { AppError } from "@/error-boundary/error";
 
 /**
  * @swagger
@@ -104,19 +105,13 @@ export async function POST(req: NextRequest) {
       .replace(/[^a-z0-9-]/g, "");
 
     if (!storeName || !slug) {
-      return NextResponse.json(
-        { success: false, message: "storeName and slug are required" },
-        { status: 400 },
-      );
+      throw new AppError(400, "storeName and slug are required");
     }
 
     // Check if slug already exists
     const existing = await db.shop.findUnique({ where: { slug } });
     if (existing) {
-      return NextResponse.json(
-        { success: false, message: "Slug already exists" },
-        { status: 400 },
-      );
+      throw new AppError(400, "Slug already exists");
     }
 
     const shop = await db.shop.create({
@@ -136,10 +131,13 @@ export async function POST(req: NextRequest) {
       message: "Shop created successfully",
       data: shop,
     });
-  } catch (error) {
-    return NextResponse.json(
-      { success: false, message: "Server error" },
-      { status: 500 },
-    );
+  } catch (error: any) {
+    if (error instanceof AppError) {
+      return NextResponse.json(
+        { success: false, message: error.message },
+        { status: error.statusCode },
+      );
+    }
+    throw new AppError(500, "Server error");
   }
 }

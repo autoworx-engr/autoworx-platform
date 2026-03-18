@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { AppError } from "@/error-boundary/error";
 import {
   getAvailableSlots,
   getNextAvailableAppointment,
@@ -102,6 +103,12 @@ export async function GET(request: Request) {
     const result = await getAvailableSlots(shopId, dateParam);
     return NextResponse.json(result);
   } catch (error: any) {
+    if (error instanceof AppError) {
+      return NextResponse.json(
+        { success: false, message: error.message },
+        { status: error.statusCode },
+      );
+    }
     return NextResponse.json(
       { success: false, error: error.message || "Internal Server Error" },
       { status: 500 },

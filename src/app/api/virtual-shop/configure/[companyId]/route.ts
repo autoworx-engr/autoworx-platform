@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
+import { AppError } from "@/error-boundary/error";
 
 /**
  * @swagger
@@ -98,13 +99,7 @@ export async function GET(
     const companyId = Number(params.companyId);
 
     if (!companyId) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Invalid companyId",
-        },
-        { status: 400 },
-      );
+      throw new AppError(400, "Invalid companyId");
     }
 
     const { searchParams } = new URL(req.url);
@@ -130,15 +125,15 @@ export async function GET(
       data: shop,
     });
   } catch (error) {
+    if (error instanceof AppError) {
+      return NextResponse.json(
+        { success: false, message: error.message },
+        { status: error.statusCode },
+      );
+    }
     console.error(error);
 
-    return NextResponse.json(
-      {
-        success: false,
-        message: "Failed to fetch shops",
-      },
-      { status: 500 },
-    );
+    throw new AppError(500, "Failed to fetch shops");
   }
 }
 
@@ -202,13 +197,7 @@ export async function PATCH(
     const companyId = Number(params.companyId);
 
     if (!companyId) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Invalid shopId",
-        },
-        { status: 400 },
-      );
+      throw new AppError(400, "Invalid shopId");
     }
 
     const body = await req.json();
@@ -227,13 +216,7 @@ export async function PATCH(
     });
 
     if (!existingShop) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Shop not found",
-        },
-        { status: 404 },
-      );
+      throw new AppError(404, "Shop not found");
     }
     const slug = storeName
       .toLowerCase()
@@ -259,14 +242,14 @@ export async function PATCH(
       data: updatedShop,
     });
   } catch (error) {
+    if (error instanceof AppError) {
+      return NextResponse.json(
+        { success: false, message: error.message },
+        { status: error.statusCode },
+      );
+    }
     console.error(error);
 
-    return NextResponse.json(
-      {
-        success: false,
-        message: "Failed to update shop",
-      },
-      { status: 500 },
-    );
+    throw new AppError(500, "Failed to update shop");
   }
 }

@@ -208,10 +208,7 @@ export async function GET(req: Request) {
     const companyId = verifyToken?.payload?.companyId as number;
 
     if (!companyId) {
-      return NextResponse.json(
-        { success: false, message: "Company ID not found in session" },
-        { status: 403 },
-      );
+      throw new AppError(403, "Company ID not found in session");
     }
 
     const { searchParams } = new URL(req.url);
@@ -308,7 +305,7 @@ export async function GET(req: Request) {
           hasNextPage: page < totalPages,
           hasPrevPage: page > 1,
         },
-        data: shopBookings.map(sb => ({
+        data: shopBookings.map((sb) => ({
           ...sb,
           subtotal: Number(sb.subtotal),
           tax: Number(sb.tax),
@@ -316,7 +313,7 @@ export async function GET(req: Request) {
           depositRequired: Number(sb.depositRequired),
           depositPaid: Number(sb.depositPaid),
           balanceDue: Number(sb.balanceDue),
-          services: sb.services.map(srv => ({
+          services: sb.services.map((srv) => ({
             ...srv,
             price: Number(srv.price),
             modifierPrice: Number(srv.modifierPrice),
@@ -326,6 +323,12 @@ export async function GET(req: Request) {
       { status: 200 },
     );
   } catch (error: any) {
+    if (error instanceof AppError) {
+      return NextResponse.json(
+        { success: false, message: error.message },
+        { status: error.statusCode },
+      );
+    }
     console.error("Error fetching shop bookings:", error);
     return NextResponse.json(
       {
@@ -573,16 +576,13 @@ export async function POST(req: Request) {
       !model ||
       !year
     ) {
-      return NextResponse.json(
-        { success: false, message: "Missing required fields" },
-        { status: 400 },
-      );
+      throw new AppError(400, "Missing required fields");
     }
 
     const firstName = fullName?.split(" ")[0] || "Guest";
     const lastName = fullName?.split(" ").slice(1).join(" ") || undefined;
 
-    return await db.$transaction(async tx => {
+    return await db.$transaction(async (tx) => {
       // 2. Validate Shop Slug
       const shop = await tx.shop.findUnique({
         where: { slug },
@@ -661,7 +661,7 @@ export async function POST(req: Request) {
               companyId: shop.companyId,
               source: "Virtual Shop",
               vehicleInfo: `${year} ${make} ${model}`,
-              services: shopServiceIds.map(id => id).join(", "),
+              services: shopServiceIds.map((id) => id).join(", "),
               clientId: client.id,
               columnId: column?.id,
             },
@@ -723,7 +723,7 @@ export async function POST(req: Request) {
         | "SUNDAY";
 
       const availability = bookingSettings.availabilities.find(
-        a => a.dayOfWeek === dayOfWeekKey,
+        (a) => a.dayOfWeek === dayOfWeekKey,
       );
 
       if (!availability || !availability.isOpen) {
@@ -817,13 +817,13 @@ export async function POST(req: Request) {
         throw new AppError(400, "No valid services selected for this shop.");
       }
 
-      const allInvoiceItems = selectedServices.flatMap(srv => {
+      const allInvoiceItems = selectedServices.flatMap((srv) => {
         return srv.invoiceItems;
       });
 
       const items = allInvoiceItems.map(({ id, ...item }) => ({
         ...item,
-        materials: item.materials.map(material => ({
+        materials: item.materials.map((material) => ({
           ...material,
           tags: material.tags.map((mt: any) => mt.tag),
         })),
@@ -1013,7 +1013,7 @@ export async function POST(req: Request) {
               make: vehicle?.make,
               model: vehicle?.model,
             },
-            services: selectedServices.map(srv => ({
+            services: selectedServices.map((srv) => ({
               title: srv.title,
               price: srv.price,
             })),
@@ -1029,6 +1029,12 @@ export async function POST(req: Request) {
       );
     });
   } catch (error: any) {
+    if (error instanceof AppError) {
+      return NextResponse.json(
+        { success: false, message: error.message },
+        { status: error.statusCode },
+      );
+    }
     console.error("Error in POST /api/virtual-shop/service-booking:", error);
     return NextResponse.json(
       {

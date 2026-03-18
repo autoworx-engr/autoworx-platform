@@ -120,10 +120,7 @@ export async function GET(
     const { id } = params;
 
     if (!id || isNaN(Number(id))) {
-      return NextResponse.json(
-        { success: false, message: "Invalid or missing shop service ID" },
-        { status: 400 },
-      );
+      throw new AppError(400, "Invalid or missing shop service ID");
     }
 
     const shopService = await db.shopService.findUnique({
@@ -143,10 +140,7 @@ export async function GET(
     });
 
     if (!shopService) {
-      return NextResponse.json(
-        { success: false, message: "Shop service not found" },
-        { status: 404 },
-      );
+      throw new AppError(404, "Shop service not found");
     }
 
     return NextResponse.json(
@@ -157,6 +151,12 @@ export async function GET(
       { status: 200 },
     );
   } catch (error: any) {
+    if (error instanceof AppError) {
+      return NextResponse.json(
+        { success: false, message: error.message },
+        { status: error.statusCode },
+      );
+    }
     console.error("Error fetching shop service by ID:", error);
     return NextResponse.json(
       {
@@ -353,10 +353,7 @@ export async function PUT(
   try {
     const serviceId = parseInt(params.id, 10);
     if (isNaN(serviceId)) {
-      return NextResponse.json(
-        { success: false, message: "Invalid Shop Service ID" },
-        { status: 400 },
-      );
+      throw new AppError(400, "Invalid Shop Service ID");
     }
 
     const body = (await req.json()) as TUpdateShopServiceRequest;
@@ -388,10 +385,7 @@ export async function PUT(
     } = body;
 
     if (!companyId) {
-      return NextResponse.json(
-        { success: false, message: "Company ID not found" },
-        { status: 403 },
-      );
+      throw new AppError(403, "Company ID not found");
     }
 
     // 1. Verify Ownership
@@ -401,10 +395,7 @@ export async function PUT(
     });
 
     if (!existingService || existingService.shop.companyId !== companyId) {
-      return NextResponse.json(
-        { success: false, message: "Access denied" },
-        { status: 404 },
-      );
+      throw new AppError(404, "Access denied");
     }
 
     // 2. PRE-CALCULATE TOTALS & CATEGORIES (Keeps transaction fast)
@@ -412,7 +403,7 @@ export async function PUT(
     let totalDuration = 0;
     const categoryIdsToFetch = new Set<number>();
 
-    items?.forEach(item => {
+    items?.forEach((item) => {
       if (item.service?.categoryId) {
         categoryIdsToFetch.add(item.service.categoryId);
       }
@@ -425,7 +416,7 @@ export async function PUT(
         totalDuration += (Number(item.labor.hours) || 0) * 60;
       }
 
-      item.materials?.forEach(mat => {
+      item.materials?.forEach((mat) => {
         if (!mat || !mat.name) return;
         const matQuantity = Number(mat.quantity) || 0;
         const matSell = Number(mat.sell) || 0;
@@ -439,10 +430,10 @@ export async function PUT(
       where: { id: { in: Array.from(categoryIdsToFetch) } },
       select: { name: true },
     });
-    const categories = fetchedCategories.map(c => c.name);
+    const categories = fetchedCategories.map((c) => c.name);
 
     // 3. DATABASE TRANSACTION
-    const updatedShopService = await db.$transaction(async tx => {
+    const updatedShopService = await db.$transaction(async (tx) => {
       // --- BULK CLEANUP PHASE ---
       // Fetch IDs needed for cascading manual deletes
       const oldInvoiceItems = await tx.invoiceItem.findMany({
@@ -450,9 +441,9 @@ export async function PUT(
         select: { id: true, laborId: true },
       });
 
-      const oldInvoiceItemIds = oldInvoiceItems.map(i => i.id);
+      const oldInvoiceItemIds = oldInvoiceItems.map((i) => i.id);
       const oldLaborIds = oldInvoiceItems
-        .map(i => i.laborId)
+        .map((i) => i.laborId)
         .filter(Boolean) as number[]; // Assuming Int
 
       if (oldInvoiceItemIds.length > 0) {
@@ -461,7 +452,7 @@ export async function PUT(
           where: { invoiceItemId: { in: oldInvoiceItemIds } },
           select: { id: true },
         });
-        const oldMaterialIds = oldMaterials.map(m => m.id);
+        const oldMaterialIds = oldMaterials.map((m) => m.id);
 
         if (oldMaterialIds.length > 0) {
           await tx.materialTag.deleteMany({
@@ -490,7 +481,7 @@ export async function PUT(
       // --- REBUILD PHASE ---
       if (items && items.length > 0) {
         await Promise.all(
-          items.map(async item => {
+          items.map(async (item) => {
             let newLaborId;
 
             if (item.labor) {
@@ -509,7 +500,7 @@ export async function PUT(
 
               if (item.labor.tags?.length) {
                 await tx.laborTag.createMany({
-                  data: item.labor.tags.map(tag => ({
+                  data: item.labor.tags.map((tag) => ({
                     laborId: newLabor.id,
                     tagId: tag.id,
                   })),
@@ -527,7 +518,7 @@ export async function PUT(
 
             if (item.materials?.length) {
               await Promise.all(
-                item.materials.map(async material => {
+                item.materials.map(async (material) => {
                   if (!material || !material.name) return;
 
                   const newMat = await tx.material.create({
@@ -548,7 +539,7 @@ export async function PUT(
 
                   if (material.tags?.length) {
                     await tx.materialTag.createMany({
-                      data: material.tags.map(tag => ({
+                      data: material.tags.map((tag) => ({
                         materialId: newMat.id,
                         tagId: tag.id,
                       })),
@@ -560,7 +551,7 @@ export async function PUT(
 
             if (item.tags?.length) {
               await tx.itemTag.createMany({
-                data: item.tags.map(tag => ({
+                data: item.tags.map((tag) => ({
                   itemId: invoiceItem.id,
                   tagId: tag.id,
                 })),
@@ -594,6 +585,12 @@ export async function PUT(
       { status: 200 },
     );
   } catch (error: any) {
+    if (error instanceof AppError) {
+      return NextResponse.json(
+        { success: false, message: error.message },
+        { status: error.statusCode },
+      );
+    }
     console.error("Error updating shop service:", error);
     return NextResponse.json(
       { success: false, message: error.message || "Something went wrong" },
@@ -664,19 +661,13 @@ export async function DELETE(
     const companyId = verifyToken?.payload?.companyId as number;
 
     if (!companyId) {
-      return NextResponse.json(
-        { success: false, message: "Company ID not found in session" },
-        { status: 403 },
-      );
+      throw new AppError(403, "Company ID not found in session");
     }
 
     const id = params.id;
 
     if (!id) {
-      return NextResponse.json(
-        { success: false, message: "Missing required id" },
-        { status: 400 },
-      );
+      throw new AppError(400, "Missing required id");
     }
 
     const deletedShopService = await db.shopService.delete({
@@ -689,6 +680,12 @@ export async function DELETE(
       data: deletedShopService,
     });
   } catch (error: any) {
+    if (error instanceof AppError) {
+      return NextResponse.json(
+        { success: false, message: error.message },
+        { status: error.statusCode },
+      );
+    }
     console.error("Error deleting shop service:", error);
     return NextResponse.json(
       { success: false, message: error.message || "Something went wrong" },
