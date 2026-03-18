@@ -39,7 +39,7 @@ const fetchPlaybooks = async (
   });
 
   const response = await fetch(
-    `/api/sales-agent/service-playbooks?${searchParams.toString()}`,
+    `/api/ai-train/service-playbooks?${searchParams.toString()}`,
   );
   if (!response.ok) {
     throw new Error("Failed to fetch playbooks");
@@ -68,7 +68,7 @@ export function useCreatePlaybook() {
 
   return useMutation({
     mutationFn: async (data: any) => {
-      const response = await fetch("/api/sales-agent/service-playbooks", {
+      const response = await fetch("/api/ai-train/service-playbooks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -103,7 +103,7 @@ export function useUpdatePlaybook() {
 
   return useMutation({
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
-      const response = await fetch(`/api/sales-agent/service-playbooks/${id}`, {
+      const response = await fetch(`/api/ai-train/service-playbooks/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -135,7 +135,7 @@ export function useDeletePlaybook() {
 
   return useMutation({
     mutationFn: async (id: number) => {
-      const response = await fetch(`/api/sales-agent/service-playbooks/${id}`, {
+      const response = await fetch(`/api/ai-train/service-playbooks/${id}`, {
         method: "DELETE",
       });
 
@@ -165,7 +165,7 @@ export function useTogglePlaybook() {
 
   return useMutation({
     mutationFn: async ({ id, isActive }: { id: number; isActive: boolean }) => {
-      const response = await fetch(`/api/sales-agent/service-playbooks/${id}`, {
+      const response = await fetch(`/api/ai-train/service-playbooks/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isActive }),

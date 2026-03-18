@@ -1,6 +1,6 @@
 /**
  * @swagger
- * /api/sales-agent/sms-delay:
+ * /api/ai-train/sms-delay:
  *   post:
  *     summary: Create or update SMS delay for a company
  *     tags: [SMS Delay]

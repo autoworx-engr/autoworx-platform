@@ -4,7 +4,7 @@ import { validateCompanyId } from "../../utils";
 
 /**
  * @swagger
- * /api/sales-agent/company-knowledge/{id}:
+ * /api/ai-train/company-knowledge/{id}:
  *   get:
  *     summary: Get company info by ID
  *     tags: [Company Knowledge]
@@ -75,7 +75,7 @@ export async function GET(
 
 /**
  * @swagger
- * /api/sales-agent/company-knowledge/{id}:
+ * /api/ai-train/company-knowledge/{id}:
  *   patch:
  *     summary: Update company info by ID
  *     tags: [Company Knowledge]
@@ -184,7 +184,7 @@ export async function PATCH(
 
 /**
  * @swagger
- * /api/sales-agent/company-knowledge/{id}:
+ * /api/ai-train/company-knowledge/{id}:
  *   delete:
  *     summary: Delete company info by ID
  *     tags: [Company Knowledge]

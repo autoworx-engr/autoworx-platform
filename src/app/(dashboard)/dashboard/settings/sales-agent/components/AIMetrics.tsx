@@ -12,7 +12,7 @@ interface SMSStats {
 
 async function fetchMetrics(companyId: number): Promise<SMSStats> {
   const res = await fetch(
-    `/api/sales-agent/sales-agent-metrics?companyId=${companyId}`,
+    `/api/ai-train/sales-agent-metrics?companyId=${companyId}`,
   );
 
   const data = await res.json();

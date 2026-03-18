@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 /**
  * @swagger
- * /api/sales-agent/knowledge-base-documents/{id}:
+ * /api/ai-train/knowledge-base-documents/{id}:
  *   get:
  *     summary: Get knowledge base document by ID
  *     tags: [Knowledge Base Documents]
@@ -51,7 +51,7 @@ export async function GET(
 
 /**
  * @swagger
- * /api/sales-agent/knowledge-base-documents/{id}:
+ * /api/ai-train/knowledge-base-documents/{id}:
  *   patch:
  *     summary: Update a knowledge base document
  *     tags: [Knowledge Base Documents]
@@ -146,7 +146,7 @@ export async function PATCH(
 
 /**
  * @swagger
- * /api/sales-agent/knowledge-base-documents/{id}:
+ * /api/ai-train/knowledge-base-documents/{id}:
  *   delete:
  *     summary: Delete a knowledge base document
  *     tags: [Knowledge Base Documents]

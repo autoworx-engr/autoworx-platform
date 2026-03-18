@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 /**
  * @swagger
- * /api/sales-agent/conversation-examples:
+ * /api/ai-train/conversation-examples:
  *   post:
  *     summary: Create conversation example
  *     tags: [Conversation Examples]
@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
 
 /**
  * @swagger
- * /api/sales-agent/conversation-examples:
+ * /api/ai-train/conversation-examples:
  *   get:
  *     summary: Get conversation examples by company
  *     tags: [Conversation Examples]

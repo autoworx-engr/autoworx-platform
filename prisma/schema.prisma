@@ -689,19 +689,19 @@ model Company {
 
 model Reviews {
   id            Int      @id @default(autoincrement())
-  rate          Int
+  rate          Decimal  @db.Decimal(2, 1)
   message       String
   companyId     Int
   sendUserId    Int
   sendCompanyId Int
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @default(now()) @updatedAt @map("updated_at")
-  company Company @relation(fields: [companyId], references: [id])
-  user    User    @relation(fields: [sendUserId], references: [id])
+  company       Company  @relation(fields: [companyId], references: [id])
+  user          User     @relation(fields: [sendUserId], references: [id])
 
+  @@unique([sendCompanyId, companyId])
   @@index([companyId])
   @@index([sendUserId])
-  @@unique([sendCompanyId, companyId])
 }
 
 enum TeamSize {
@@ -928,9 +928,9 @@ model TwilioCredentials {
   phoneNumberSid String  @map("phone_number_sid")
   companyId      Int     @unique @map("company_id")
 
-  // Per-subaccount Notify configuration
-  notifyServiceSid      String? @map("notify_service_sid")
-  voipPushCredentialSid String? @map("voip_push_credential_sid")
+  // Per-subaccount Voice Push credentials
+  fcmPushCredentialSid String? @map("fcm_push_credential_sid")
+  apnPushCredentialSid String? @map("apn_push_credential_sid")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
