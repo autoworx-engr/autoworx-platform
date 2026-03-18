@@ -16,7 +16,7 @@ import { NextResponse } from "next/server";
  *         name: shopId
  *         required: true
  *         schema:
- *           type: string
+ *           type: number
  *         description: The ID of the shop to fetch services for.
  *       - in: query
  *         name: category
@@ -168,7 +168,6 @@ export async function GET(req: Request) {
     const shopId = searchParams.get("shopId");
     const category = searchParams.get("category");
     const search = searchParams.get("search");
-
     // Default to 'desc' if not provided, strongly type the allowed values
     const sortOrder = (
       searchParams.get("sortOrder") === "asc" ? "asc" : "desc"
@@ -275,10 +274,14 @@ export async function GET(req: Request) {
  *             required:
  *               - shopId
  *               - title
+ *               - companyId
  *             properties:
  *               shopId:
- *                 type: string
- *                 example: "1"
+ *                 type: number
+ *                 example: 1
+ *               companyId:
+ *                 type: number
+ *                 example: 4
  *               title:
  *                 type: string
  *                 example: "Full Detail Package"

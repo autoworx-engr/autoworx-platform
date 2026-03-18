@@ -168,7 +168,8 @@ export async function GET(
 }
 
 type TUpdateShopServiceRequest = {
-  shopId: string;
+  shopId: number;
+  companyId: number;
   title: string;
   description?: string;
   items: {
@@ -212,13 +213,18 @@ type TUpdateShopServiceRequest = {
  *             type: object
  *             required:
  *               - shopId
+ *               - companyId
  *               - title
  *               - items
  *             properties:
  *               shopId:
- *                 type: string
+ *                 type: number
  *                 description: ID of the underlying shop.
- *                 example: "1"
+ *                 example: 1
+ *               companyId:
+ *                 type: number
+ *                 description: ID of the company owning the shop.
+ *                 example: 4
  *               title:
  *                 type: string
  *                 description: Title of the shop service.
@@ -256,6 +262,28 @@ type TUpdateShopServiceRequest = {
  *                 description: Nested array for rebuilding invoice configurations.
  *                 items:
  *                   type: object
+ *                   properties:
+ *                     service:
+ *                       type: object
+ *                       nullable: true
+ *                       example: { "id": 5, "name": "service name", "categoryId": 1, "description": "anything" }
+ *                     labor:
+ *                       type: object
+ *                       nullable: true
+ *                       example: { "name": "Deep Clean Labor", "hours": 5, "charge": 50, "discount": 0, "tags": [] }
+ *                     materials:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                       example: [{ "name": "Premium Wax", "quantity": 1, "cost": 15, "sell": 49, "discount": 0, "tags": [] }]
+ *                     tags:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                       example: []
+ *                     serviceDesc:
+ *                       type: string
+ *                       example: "Includes paint decontamination."
  *     responses:
  *       200:
  *         description: Successfully updated shop service.
@@ -286,23 +314,6 @@ export async function PUT(
   { params }: { params: { id: string } },
 ) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session || !session.user) {
-      return NextResponse.json(
-        { success: false, message: "Unauthorized" },
-        { status: 401 },
-      );
-    }
-
-    const companyId = session.user.companyId;
-    if (!companyId) {
-      return NextResponse.json(
-        { success: false, message: "Company ID not found" },
-        { status: 403 },
-      );
-    }
-
     const serviceId = parseInt(params.id, 10);
     if (isNaN(serviceId)) {
       return NextResponse.json(
@@ -312,12 +323,13 @@ export async function PUT(
     }
 
     const body = (await req.json()) as TUpdateShopServiceRequest;
-    await updateShopServiceSchema.parseAsync(body);
+    await updateShopServiceSchema.parseAsync({ id: serviceId, ...body });
 
     const {
       title,
       description,
       imageUrl,
+      companyId,
       items,
       modifierCoupe,
       modifierSedan,
@@ -325,6 +337,13 @@ export async function PUT(
       modifierTruck,
       isActive,
     } = body;
+
+    if (!companyId) {
+      return NextResponse.json(
+        { success: false, message: "Company ID not found" },
+        { status: 403 },
+      );
+    }
 
     // 1. Verify Ownership
     const existingService = await db.shopService.findUnique({
