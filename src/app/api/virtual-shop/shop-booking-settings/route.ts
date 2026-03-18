@@ -7,6 +7,22 @@ import { Prisma } from "@prisma/client";
 
 /**
  * @swagger
+ * components:
+ *   schemas:
+ *     ErrorResponse:
+ *       type: object
+ *       properties:
+ *         success:
+ *           type: boolean
+ *           example: false
+ *         message:
+ *           type: string
+ *         errorDetails:
+ *           type: object
+ */
+
+/**
+ * @swagger
  * /api/virtual-shop/shop-booking-settings:
  *   get:
  *     summary: Retrieve shop booking settings
@@ -70,10 +86,22 @@ import { Prisma } from "@prisma/client";
  *                             type: string
  *       400:
  *         description: Missing shopId.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       404:
  *         description: Settings not found.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       500:
  *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 export async function GET(req: Request) {
   try {
@@ -135,10 +163,22 @@ export async function GET(req: Request) {
  *         description: Successfully created default shop booking settings.
  *       400:
  *         description: Missing shopId or settings already exist.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       401:
  *         description: Unauthorized.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       500:
  *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 export async function POST(req: Request) {
   try {
@@ -288,10 +328,22 @@ export async function POST(req: Request) {
  *         description: Successfully updated shop booking settings.
  *       400:
  *         description: Missing shopId.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       401:
  *         description: Unauthorized.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       500:
  *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 export async function PUT(req: Request) {
   try {

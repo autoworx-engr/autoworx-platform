@@ -5,6 +5,22 @@ import { errorHandler } from "@/error-boundary/globalErrorHandler";
 
 /**
  * @swagger
+ * components:
+ *   schemas:
+ *     ErrorResponse:
+ *       type: object
+ *       properties:
+ *         success:
+ *           type: boolean
+ *           example: false
+ *         message:
+ *           type: string
+ *         errorDetails:
+ *           type: object
+ */
+
+/**
+ * @swagger
  * /api/virtual-shop/shop-services/categories:
  *   get:
  *     summary: Retrieve unique categories for a shop's active services
@@ -39,17 +55,13 @@ import { errorHandler } from "@/error-boundary/globalErrorHandler";
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 message:
- *                   type: string
- *                 errorDetails:
- *                   type: object
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       500:
  *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 export async function GET(req: Request) {
   try {
