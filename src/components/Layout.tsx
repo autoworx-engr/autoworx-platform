@@ -189,6 +189,7 @@ export default function Layout({
   session: Session | null;
   children: React.ReactNode;
 }) {
+  console.log({ session });
   const pathname = usePathname(); // Get the current route path
   const isSuperAdminRoute = pathname?.startsWith("/awx-dashboard");
   useSetPermissions(session); // Set user permissions based on session
