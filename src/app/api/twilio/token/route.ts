@@ -50,12 +50,12 @@ export async function POST(request: NextRequest) {
       { identity }
     );
 
-    let pushCredentialSid;
+    let pushCredentialSid: string | undefined;
 
     if (platform === "ios") {
-      pushCredentialSid = process.env.TWILIO_PUSH_CREDENTIAL_SID_APN;
+      pushCredentialSid = twilioCredentials.apnPushCredentialSid ?? undefined;
     } else if (platform === "android") {
-      pushCredentialSid = process.env.TWILIO_PUSH_CREDENTIAL_SID_FCM;
+      pushCredentialSid = twilioCredentials.fcmPushCredentialSid ?? undefined;
     }
 
     if (twilioCredentials.twimlAppSid) {
