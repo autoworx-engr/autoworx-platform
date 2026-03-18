@@ -1,9 +1,7 @@
 import { db } from "@/lib/db";
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/authOptions";
-import { Labor, Material, Service, Tag, Prisma } from "@prisma/client";
 import { createShopServiceSchema } from "@/validations/schemas/virtual-shop/shop-service.validation";
+import { Labor, Material, Prisma, Service, Tag } from "@prisma/client";
+import { NextResponse } from "next/server";
 
 /**
  * @swagger
