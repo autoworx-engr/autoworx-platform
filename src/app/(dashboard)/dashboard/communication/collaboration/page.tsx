@@ -214,7 +214,7 @@ export default async function CollaborationPage() {
                   isConnected: finalCompanies.some(
                     (c) => c.id === user.companyId,
                   ),
-                  companyStatus: joinStatus,
+                  companyStatus: joinStatus?.toLocaleLowerCase(),
                 }
               : null;
           } catch (error) {
