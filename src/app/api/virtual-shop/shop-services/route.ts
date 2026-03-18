@@ -370,7 +370,8 @@ export async function GET(req: Request) {
  *         description: Internal server error.
  */
 type TCreateShopServiceRequest = {
-  shopId: string;
+  shopId: number;
+  companyId: number;
   title: string;
   description?: string;
   items: {
@@ -391,30 +392,13 @@ type TCreateShopServiceRequest = {
 
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session || !session.user) {
-      return NextResponse.json(
-        { success: false, message: "Unauthorized" },
-        { status: 401 },
-      );
-    }
-
-    const companyId = session.user.companyId;
-
-    if (!companyId) {
-      return NextResponse.json(
-        { success: false, message: "Company ID not found" },
-        { status: 403 },
-      );
-    }
-
     const body = (await req.json()) as TCreateShopServiceRequest;
     await createShopServiceSchema.parseAsync(body);
 
     const {
       shopId,
       title,
+      companyId,
       description,
       imageUrl,
       items,
@@ -425,6 +409,13 @@ export async function POST(req: Request) {
       isActive,
     } = body;
 
+    if (!companyId) {
+      return NextResponse.json(
+        { success: false, message: "Company ID not found" },
+        { status: 403 },
+      );
+    }
+
     if (!shopId || !title) {
       return NextResponse.json(
         { success: false, message: "Missing required fields" },
@@ -434,7 +425,7 @@ export async function POST(req: Request) {
 
     // 1. Verify the shop belongs to the user's company
     const shop = await db.shop.findUnique({
-      where: { id: parseInt(shopId, 10) },
+      where: { id: shopId },
     });
 
     if (!shop || shop.companyId !== companyId) {
@@ -490,7 +481,7 @@ export async function POST(req: Request) {
       // No need to update it at the end of the transaction!
       const serviceRecord = await tx.shopService.create({
         data: {
-          shopId: parseInt(shopId, 10),
+          shopId,
           title,
           description,
           price: totalPrice,
@@ -547,7 +538,6 @@ export async function POST(req: Request) {
               await Promise.all(
                 item.materials.map(async material => {
                   if (!material || !material.name) return;
-
                   const newMat = await tx.material.create({
                     data: {
                       name: material.name,
