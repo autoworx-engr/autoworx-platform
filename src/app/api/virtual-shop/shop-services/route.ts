@@ -1,4 +1,6 @@
+import { AppError } from "@/error-boundary/error";
 import { db } from "@/lib/db";
+import { jwtVerifyToken } from "@/lib/jwtVerify";
 import { createShopServiceSchema } from "@/validations/schemas/virtual-shop/shop-service.validation";
 import { Labor, Material, Prisma, Service, Tag } from "@prisma/client";
 import { NextResponse } from "next/server";
@@ -274,14 +276,10 @@ export async function GET(req: Request) {
  *             required:
  *               - shopId
  *               - title
- *               - companyId
  *             properties:
  *               shopId:
  *                 type: number
  *                 example: 1
- *               companyId:
- *                 type: number
- *                 example: 4
  *               title:
  *                 type: string
  *                 example: "Full Detail Package"
@@ -437,10 +435,22 @@ export async function POST(req: Request) {
     const body = (await req.json()) as TCreateShopServiceRequest;
     await createShopServiceSchema.parseAsync(body);
 
+    const authHeader = req.headers.get("authorization") ?? "";
+    const accessToken = authHeader.startsWith("Bearer")
+      ? authHeader.split(" ")[1]
+      : authHeader;
+
+    const verifyToken = await jwtVerifyToken(accessToken);
+
+    if (!verifyToken?.payload) {
+      throw new AppError(401, "Unauthorized");
+    }
+
+    const companyId = verifyToken?.payload?.companyId as number;
+
     const {
       shopId,
       title,
-      companyId,
       description,
       imageUrl,
       items,
