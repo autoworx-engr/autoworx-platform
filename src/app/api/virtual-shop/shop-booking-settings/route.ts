@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 import { jwtVerifyToken } from "@/lib/jwtVerify";
 import { AppError } from "@/error-boundary/error";
+import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { Prisma } from "@prisma/client";
 
 /**
@@ -97,14 +98,15 @@ export async function GET(req: Request) {
       { status: 200 },
     );
   } catch (error: any) {
-    console.error("Error fetching shop booking settings:", error);
-    if (error instanceof AppError) {
-      return NextResponse.json(
-        { success: false, message: error.message },
-        { status: error.statusCode },
-      );
-    }
-    throw new AppError(500, "Internal server error");
+    const formattedError = errorHandler(error);
+    return NextResponse.json(
+      {
+        success: false,
+        message: formattedError.message,
+        errorDetails: formattedError,
+      },
+      { status: formattedError.statusCode },
+    );
   }
 }
 
@@ -185,7 +187,7 @@ export async function POST(req: Request) {
       "FRIDAY",
       "SATURDAY",
       "SUNDAY",
-    ].map((day) => ({
+    ].map(day => ({
       dayOfWeek: day as any,
       isOpen: true,
       startTime: defaultStartTime,
@@ -217,14 +219,15 @@ export async function POST(req: Request) {
       { status: 201 },
     );
   } catch (error: any) {
-    console.error("Error creating shop booking settings:", error);
-    if (error instanceof AppError) {
-      return NextResponse.json(
-        { success: false, message: error.message },
-        { status: error.statusCode },
-      );
-    }
-    throw new AppError(500, "Internal server error");
+    const formattedError = errorHandler(error);
+    return NextResponse.json(
+      {
+        success: false,
+        message: formattedError.message,
+        errorDetails: formattedError,
+      },
+      { status: formattedError.statusCode },
+    );
   }
 }
 
@@ -368,13 +371,14 @@ export async function PUT(req: Request) {
       { status: 200 },
     );
   } catch (error: any) {
-    console.error("Error updating shop booking settings:", error);
-    if (error instanceof AppError) {
-      return NextResponse.json(
-        { success: false, message: error.message },
-        { status: error.statusCode },
-      );
-    }
-    throw new AppError(500, "Internal server error");
+    const formattedError = errorHandler(error);
+    return NextResponse.json(
+      {
+        success: false,
+        message: formattedError.message,
+        errorDetails: formattedError,
+      },
+      { status: formattedError.statusCode },
+    );
   }
 }

@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 import { AppError } from "@/error-boundary/error";
+import { errorHandler } from "@/error-boundary/globalErrorHandler";
 
 /**
  * @swagger
@@ -34,7 +35,19 @@ import { AppError } from "@/error-boundary/error";
  *                     type: string
  *                   example: ["Detailing", "Paint Correction", "Ceramic Coating", "Maintenance"]
  *       400:
- *         description: Missing or invalid shopId parameter.
+ *         description: Error response
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                 errorDetails:
+ *                   type: object
  *       500:
  *         description: Internal server error.
  */
@@ -76,19 +89,14 @@ export async function GET(req: Request) {
       { status: 200 },
     );
   } catch (error: any) {
-    if (error instanceof AppError) {
-      return NextResponse.json(
-        { success: false, message: error.message },
-        { status: error.statusCode },
-      );
-    }
-    console.error("Error fetching shop service categories:", error);
+    const formattedError = errorHandler(error);
     return NextResponse.json(
       {
         success: false,
-        message: error.message || "Failed to fetch categories",
+        message: formattedError.message,
+        errorDetails: formattedError,
       },
-      { status: 500 },
+      { status: formattedError.statusCode },
     );
   }
 }

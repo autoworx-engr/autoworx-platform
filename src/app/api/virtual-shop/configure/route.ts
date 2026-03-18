@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { AppError } from "@/error-boundary/error";
+import { errorHandler } from "@/error-boundary/globalErrorHandler";
 
 /**
  * @swagger
@@ -132,12 +133,14 @@ export async function POST(req: NextRequest) {
       data: shop,
     });
   } catch (error: any) {
-    if (error instanceof AppError) {
-      return NextResponse.json(
-        { success: false, message: error.message },
-        { status: error.statusCode },
-      );
-    }
-    throw new AppError(500, "Server error");
+    const formattedError = errorHandler(error);
+    return NextResponse.json(
+      {
+        success: false,
+        message: formattedError.message,
+        errorDetails: formattedError,
+      },
+      { status: formattedError.statusCode },
+    );
   }
 }

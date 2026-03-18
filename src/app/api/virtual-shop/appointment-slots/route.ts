@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { AppError } from "@/error-boundary/error";
+import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import {
   getAvailableSlots,
   getNextAvailableAppointment,
@@ -57,7 +58,19 @@ import {
  *                     type: string
  *                     example: "08:30"
  *       400:
- *         description: Bad request (Missing shopId or date)
+ *         description: Error response
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                 errorDetails:
+ *                   type: object
  *       500:
  *         description: Internal server error
  */
@@ -103,15 +116,14 @@ export async function GET(request: Request) {
     const result = await getAvailableSlots(shopId, dateParam);
     return NextResponse.json(result);
   } catch (error: any) {
-    if (error instanceof AppError) {
-      return NextResponse.json(
-        { success: false, message: error.message },
-        { status: error.statusCode },
-      );
-    }
+    const formattedError = errorHandler(error);
     return NextResponse.json(
-      { success: false, error: error.message || "Internal Server Error" },
-      { status: 500 },
+      {
+        success: false,
+        message: formattedError.message,
+        errorDetails: formattedError,
+      },
+      { status: formattedError.statusCode },
     );
   }
 }
