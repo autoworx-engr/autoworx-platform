@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/authOptions";
+import { jwtVerifyToken } from "@/lib/jwtVerify";
+import { AppError } from "@/error-boundary/error";
 import { Prisma } from "@prisma/client";
 
 /**
@@ -143,11 +143,23 @@ export async function GET(req: Request) {
  */
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
+    const authHeader = req.headers.get("authorization") ?? "";
+    const accessToken = authHeader.startsWith("Bearer")
+      ? authHeader.split(" ")[1]
+      : authHeader;
+
+    const verifyToken = await jwtVerifyToken(accessToken);
+
+    if (!verifyToken?.payload) {
+      throw new AppError(401, "Unauthorized");
+    }
+
+    const companyId = verifyToken?.payload?.companyId as number;
+
+    if (!companyId) {
       return NextResponse.json(
-        { success: false, message: "Unauthorized" },
-        { status: 401 },
+        { success: false, message: "Company ID not found in session" },
+        { status: 403 },
       );
     }
 
@@ -175,7 +187,7 @@ export async function POST(req: Request) {
     }
 
     const companySettings = await db.calendarSettings.findUnique({
-      where: { companyId: (session.user as any).companyId },
+      where: { companyId },
     });
     const defaultStartTime = companySettings?.dayStart || "09:00";
     const defaultEndTime = companySettings?.dayEnd || "17:00";
@@ -292,11 +304,23 @@ export async function POST(req: Request) {
  */
 export async function PUT(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
+    const authHeader = req.headers.get("authorization") ?? "";
+    const accessToken = authHeader.startsWith("Bearer")
+      ? authHeader.split(" ")[1]
+      : authHeader;
+
+    const verifyToken = await jwtVerifyToken(accessToken);
+
+    if (!verifyToken?.payload) {
+      throw new AppError(401, "Unauthorized");
+    }
+
+    const companyId = verifyToken?.payload?.companyId as number;
+
+    if (!companyId) {
       return NextResponse.json(
-        { success: false, message: "Unauthorized" },
-        { status: 401 },
+        { success: false, message: "Company ID not found in session" },
+        { status: 403 },
       );
     }
 

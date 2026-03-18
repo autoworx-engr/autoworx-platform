@@ -1,10 +1,11 @@
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/authOptions";
+
 import { updateShopServiceSchema } from "@/validations/schemas/virtual-shop/shop-service.validation";
 
 import { Labor, Material, Service, Tag } from "@prisma/client";
+import { jwtVerifyToken } from "@/lib/jwtVerify";
+import { AppError } from "@/error-boundary/error";
 // Use your update schema if you have one, otherwise falling back to the create schema
 
 /**
@@ -213,7 +214,6 @@ type TUpdateShopServiceRequest = {
  *             type: object
  *             required:
  *               - shopId
- *               - companyId
  *               - title
  *               - items
  *             properties:
@@ -221,10 +221,6 @@ type TUpdateShopServiceRequest = {
  *                 type: number
  *                 description: ID of the underlying shop.
  *                 example: 1
- *               companyId:
- *                 type: number
- *                 description: ID of the company owning the shop.
- *                 example: 4
  *               title:
  *                 type: string
  *                 description: Title of the shop service.
@@ -366,11 +362,23 @@ export async function PUT(
     const body = (await req.json()) as TUpdateShopServiceRequest;
     await updateShopServiceSchema.parseAsync({ id: serviceId, ...body });
 
+    const authHeader = req.headers.get("authorization") ?? "";
+    const accessToken = authHeader.startsWith("Bearer")
+      ? authHeader.split(" ")[1]
+      : authHeader;
+
+    const verifyToken = await jwtVerifyToken(accessToken);
+
+    if (!verifyToken?.payload) {
+      throw new AppError(401, "Unauthorized");
+    }
+
+    const companyId = verifyToken?.payload?.companyId as number;
+
     const {
       title,
       description,
       imageUrl,
-      companyId,
       items,
       modifierCoupe,
       modifierSedan,
@@ -642,15 +650,19 @@ export async function DELETE(
   { params }: { params: { id: string } },
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || !session.user) {
-      return NextResponse.json(
-        { success: false, message: "Unauthorized" },
-        { status: 401 },
-      );
+    const authHeader = req.headers.get("authorization") ?? "";
+    const accessToken = authHeader.startsWith("Bearer")
+      ? authHeader.split(" ")[1]
+      : authHeader;
+
+    const verifyToken = await jwtVerifyToken(accessToken);
+
+    if (!verifyToken?.payload) {
+      throw new AppError(401, "Unauthorized");
     }
 
-    const companyId = session.user.companyId;
+    const companyId = verifyToken?.payload?.companyId as number;
+
     if (!companyId) {
       return NextResponse.json(
         { success: false, message: "Company ID not found in session" },

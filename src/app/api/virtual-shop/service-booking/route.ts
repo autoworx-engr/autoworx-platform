@@ -7,8 +7,7 @@ import { customAlphabet } from "nanoid";
 import { addVehicle } from "@/actions/vehicle/addVehicle";
 import { addAppointment } from "@/actions/appointment/addAppointment";
 import { AppError } from "@/error-boundary/error";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/authOptions";
+import { jwtVerifyToken } from "@/lib/jwtVerify";
 import { Prisma } from "@prisma/client";
 
 /**
@@ -195,19 +194,22 @@ import { Prisma } from "@prisma/client";
  */
 export async function GET(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    const authHeader = req.headers.get("authorization") ?? "";
+    const accessToken = authHeader.startsWith("Bearer")
+      ? authHeader.split(" ")[1]
+      : authHeader;
 
-    if (!session || !session.user) {
-      return NextResponse.json(
-        { success: false, message: "Unauthorized" },
-        { status: 401 },
-      );
+    const verifyToken = await jwtVerifyToken(accessToken);
+
+    if (!verifyToken?.payload) {
+      throw new AppError(401, "Unauthorized");
     }
 
-    const companyId = session.user.companyId;
+    const companyId = verifyToken?.payload?.companyId as number;
+
     if (!companyId) {
       return NextResponse.json(
-        { success: false, message: "Company ID not found" },
+        { success: false, message: "Company ID not found in session" },
         { status: 403 },
       );
     }

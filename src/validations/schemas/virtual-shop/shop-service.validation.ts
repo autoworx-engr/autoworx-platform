@@ -33,12 +33,6 @@ export const createShopServiceSchema = z.object({
       invalid_type_error: "Shop ID must be a number",
     })
     .min(1, "Shop ID is required"),
-  companyId: z
-    .number({
-      required_error: "Company ID is required",
-      invalid_type_error: "Company ID must be a number",
-    })
-    .min(1, "Company ID is required"),
   title: z
     .string({
       required_error: "Title is required",
@@ -77,12 +71,6 @@ export const updateShopServiceSchema = z.object({
       invalid_type_error: "Shop ID must be a number",
     })
     .min(1, "Shop ID is required"),
-  companyId: z
-    .number({
-      required_error: "Company ID is required",
-      invalid_type_error: "Company ID must be a number",
-    })
-    .min(1, "Company ID is required"),
   title: z
     .string({
       required_error: "Title is required",
