@@ -6,7 +6,24 @@ import { updateShopServiceSchema } from "@/validations/schemas/virtual-shop/shop
 import { Labor, Material, Service, Tag } from "@prisma/client";
 import { jwtVerifyToken } from "@/lib/jwtVerify";
 import { AppError } from "@/error-boundary/error";
+import { errorHandler } from "@/error-boundary/globalErrorHandler";
 // Use your update schema if you have one, otherwise falling back to the create schema
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     ErrorResponse:
+ *       type: object
+ *       properties:
+ *         success:
+ *           type: boolean
+ *           example: false
+ *         message:
+ *           type: string
+ *         errorDetails:
+ *           type: object
+ */
 
 /**
  * @swagger
@@ -107,10 +124,22 @@ import { AppError } from "@/error-boundary/error";
  *                             example: [{ "id": 50, "name": "Premium Wax", "cost": 10, "sell": 15 }]
  *       400:
  *         description: Invalid or missing parameter (id).
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       404:
  *         description: Shop service not found.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       500:
  *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 export async function GET(
   req: Request,
@@ -151,19 +180,14 @@ export async function GET(
       { status: 200 },
     );
   } catch (error: any) {
-    if (error instanceof AppError) {
-      return NextResponse.json(
-        { success: false, message: error.message },
-        { status: error.statusCode },
-      );
-    }
-    console.error("Error fetching shop service by ID:", error);
+    const formattedError = errorHandler(error);
     return NextResponse.json(
       {
         success: false,
-        message: error.message || "Failed to fetch shop service",
+        message: formattedError.message,
+        errorDetails: formattedError,
       },
-      { status: 500 },
+      { status: formattedError.statusCode },
     );
   }
 }
@@ -337,14 +361,34 @@ type TUpdateShopServiceRequest = {
  *                   description: Updated Shop Service object
  *       400:
  *         description: Invalid or missing data.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       401:
  *         description: Unauthorized.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       403:
  *         description: Company ID not found.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       404:
  *         description: Shop service not found or access denied.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       500:
  *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 export async function PUT(
   req: Request,
@@ -403,7 +447,7 @@ export async function PUT(
     let totalDuration = 0;
     const categoryIdsToFetch = new Set<number>();
 
-    items?.forEach((item) => {
+    items?.forEach(item => {
       if (item.service?.categoryId) {
         categoryIdsToFetch.add(item.service.categoryId);
       }
@@ -416,7 +460,7 @@ export async function PUT(
         totalDuration += (Number(item.labor.hours) || 0) * 60;
       }
 
-      item.materials?.forEach((mat) => {
+      item.materials?.forEach(mat => {
         if (!mat || !mat.name) return;
         const matQuantity = Number(mat.quantity) || 0;
         const matSell = Number(mat.sell) || 0;
@@ -430,10 +474,10 @@ export async function PUT(
       where: { id: { in: Array.from(categoryIdsToFetch) } },
       select: { name: true },
     });
-    const categories = fetchedCategories.map((c) => c.name);
+    const categories = fetchedCategories.map(c => c.name);
 
     // 3. DATABASE TRANSACTION
-    const updatedShopService = await db.$transaction(async (tx) => {
+    const updatedShopService = await db.$transaction(async tx => {
       // --- BULK CLEANUP PHASE ---
       // Fetch IDs needed for cascading manual deletes
       const oldInvoiceItems = await tx.invoiceItem.findMany({
@@ -441,9 +485,9 @@ export async function PUT(
         select: { id: true, laborId: true },
       });
 
-      const oldInvoiceItemIds = oldInvoiceItems.map((i) => i.id);
+      const oldInvoiceItemIds = oldInvoiceItems.map(i => i.id);
       const oldLaborIds = oldInvoiceItems
-        .map((i) => i.laborId)
+        .map(i => i.laborId)
         .filter(Boolean) as number[]; // Assuming Int
 
       if (oldInvoiceItemIds.length > 0) {
@@ -452,7 +496,7 @@ export async function PUT(
           where: { invoiceItemId: { in: oldInvoiceItemIds } },
           select: { id: true },
         });
-        const oldMaterialIds = oldMaterials.map((m) => m.id);
+        const oldMaterialIds = oldMaterials.map(m => m.id);
 
         if (oldMaterialIds.length > 0) {
           await tx.materialTag.deleteMany({
@@ -481,7 +525,7 @@ export async function PUT(
       // --- REBUILD PHASE ---
       if (items && items.length > 0) {
         await Promise.all(
-          items.map(async (item) => {
+          items.map(async item => {
             let newLaborId;
 
             if (item.labor) {
@@ -500,7 +544,7 @@ export async function PUT(
 
               if (item.labor.tags?.length) {
                 await tx.laborTag.createMany({
-                  data: item.labor.tags.map((tag) => ({
+                  data: item.labor.tags.map(tag => ({
                     laborId: newLabor.id,
                     tagId: tag.id,
                   })),
@@ -518,7 +562,7 @@ export async function PUT(
 
             if (item.materials?.length) {
               await Promise.all(
-                item.materials.map(async (material) => {
+                item.materials.map(async material => {
                   if (!material || !material.name) return;
 
                   const newMat = await tx.material.create({
@@ -539,7 +583,7 @@ export async function PUT(
 
                   if (material.tags?.length) {
                     await tx.materialTag.createMany({
-                      data: material.tags.map((tag) => ({
+                      data: material.tags.map(tag => ({
                         materialId: newMat.id,
                         tagId: tag.id,
                       })),
@@ -551,7 +595,7 @@ export async function PUT(
 
             if (item.tags?.length) {
               await tx.itemTag.createMany({
-                data: item.tags.map((tag) => ({
+                data: item.tags.map(tag => ({
                   itemId: invoiceItem.id,
                   tagId: tag.id,
                 })),
@@ -585,16 +629,14 @@ export async function PUT(
       { status: 200 },
     );
   } catch (error: any) {
-    if (error instanceof AppError) {
-      return NextResponse.json(
-        { success: false, message: error.message },
-        { status: error.statusCode },
-      );
-    }
-    console.error("Error updating shop service:", error);
+    const formattedError = errorHandler(error);
     return NextResponse.json(
-      { success: false, message: error.message || "Something went wrong" },
-      { status: 500 },
+      {
+        success: false,
+        message: formattedError.message,
+        errorDetails: formattedError,
+      },
+      { status: formattedError.statusCode },
     );
   }
 }
@@ -635,12 +677,28 @@ export async function PUT(
  *                   description: The raw response data for the deleted service.
  *       400:
  *         description: Missing required id or bad request.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       401:
  *         description: Unauthorized.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       403:
  *         description: Company ID not found in session.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       500:
  *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 export async function DELETE(
   req: Request,
@@ -680,16 +738,14 @@ export async function DELETE(
       data: deletedShopService,
     });
   } catch (error: any) {
-    if (error instanceof AppError) {
-      return NextResponse.json(
-        { success: false, message: error.message },
-        { status: error.statusCode },
-      );
-    }
-    console.error("Error deleting shop service:", error);
+    const formattedError = errorHandler(error);
     return NextResponse.json(
-      { success: false, message: error.message || "Something went wrong" },
-      { status: 500 },
+      {
+        success: false,
+        message: formattedError.message,
+        errorDetails: formattedError,
+      },
+      { status: formattedError.statusCode },
     );
   }
 }

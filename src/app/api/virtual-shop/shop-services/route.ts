@@ -1,9 +1,26 @@
 import { AppError } from "@/error-boundary/error";
+import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { db } from "@/lib/db";
 import { jwtVerifyToken } from "@/lib/jwtVerify";
 import { createShopServiceSchema } from "@/validations/schemas/virtual-shop/shop-service.validation";
 import { Labor, Material, Prisma, Service, Tag } from "@prisma/client";
 import { NextResponse } from "next/server";
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     ErrorResponse:
+ *       type: object
+ *       properties:
+ *         success:
+ *           type: boolean
+ *           example: false
+ *         message:
+ *           type: string
+ *         errorDetails:
+ *           type: object
+ */
 
 /**
  * @swagger
@@ -161,8 +178,16 @@ import { NextResponse } from "next/server";
  *                               example: [{ "id": 50, "name": "Premium Wax", "cost": 10, "sell": 15 }]
  *       400:
  *         description: Missing requires parameter (shopId).
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       500:
  *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 export async function GET(req: Request) {
   try {
@@ -243,19 +268,14 @@ export async function GET(req: Request) {
       { status: 200 },
     );
   } catch (error: any) {
-    if (error instanceof AppError) {
-      return NextResponse.json(
-        { success: false, message: error.message },
-        { status: error.statusCode },
-      );
-    }
-    console.error("Error fetching shop services:", error);
+    const formattedError = errorHandler(error);
     return NextResponse.json(
       {
         success: false,
-        message: error.message || "Failed to fetch shop services",
+        message: formattedError.message,
+        errorDetails: formattedError,
       },
-      { status: 500 },
+      { status: formattedError.statusCode },
     );
   }
 }
@@ -320,12 +340,12 @@ export async function GET(req: Request) {
  *                     labor:
  *                       type: object
  *                       nullable: true
- *                       example: { "name": "Deep Clean Labor", "hours": 5, "charge": 50, "discount": 0, "tags": [] }
+ *                       example: { "name": "Deep Clean Labor", "categoryId": 1, "notes": "Thoroughly clean", "hours": 5, "charge": 50, "discount": 0, "tags": [] }
  *                     materials:
  *                       type: array
  *                       items:
  *                         type: object
- *                       example: [{ "name": "Premium Wax", "quantity": 1, "cost": 15, "sell": 49, "discount": 0, "tags": [] }]
+ *                       example: [{ "name": "Premium Wax", "vendorId": 2, "categoryId": 3, "notes": "Carnauba", "quantity": 1, "cost": 15, "sell": 49, "discount": 0, "productId": 4, "tags": [] }]
  *                     tags:
  *                       type: array
  *                       items:
@@ -403,14 +423,34 @@ export async function GET(req: Request) {
  *                       example: 300
  *       400:
  *         description: Missing required fields or validation failure.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       401:
  *         description: Unauthorized.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       403:
  *         description: Company ID not found.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       404:
  *         description: Shop not found or access denied.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       500:
  *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 type TCreateShopServiceRequest = {
   shopId: number;
@@ -486,7 +526,7 @@ export async function POST(req: Request) {
     let totalDuration = 0;
     const categoryIdsToFetch = new Set<number>();
 
-    items?.forEach((item) => {
+    items?.forEach(item => {
       // Gather category IDs
       if (item.service?.categoryId) {
         categoryIdsToFetch.add(item.service.categoryId);
@@ -502,7 +542,7 @@ export async function POST(req: Request) {
       }
 
       // Calculate Materials
-      item.materials?.forEach((mat) => {
+      item.materials?.forEach(mat => {
         if (!mat || !mat.name) return;
         const matQuantity = Number(mat.quantity) || 0;
         const matSell = Number(mat.sell) || 0;
@@ -519,10 +559,10 @@ export async function POST(req: Request) {
       where: { id: { in: Array.from(categoryIdsToFetch) } },
       select: { name: true },
     });
-    const categories = fetchedCategories.map((c) => c.name);
+    const categories = fetchedCategories.map(c => c.name);
 
     // 3. DATABASE TRANSACTION
-    const newShopService = await db.$transaction(async (tx) => {
+    const newShopService = await db.$transaction(async tx => {
       // Because we pre-calculated everything, we can create the final record immediately.
       // No need to update it at the end of the transaction!
       const serviceRecord = await tx.shopService.create({
@@ -544,7 +584,7 @@ export async function POST(req: Request) {
 
       if (items && items.length > 0) {
         await Promise.all(
-          items.map(async (item) => {
+          items.map(async item => {
             let laborId;
 
             if (item.labor) {
@@ -564,7 +604,7 @@ export async function POST(req: Request) {
               // Use createMany instead of a loop for tags
               if (item.labor.tags?.length) {
                 await tx.laborTag.createMany({
-                  data: item.labor.tags.map((tag) => ({
+                  data: item.labor.tags.map(tag => ({
                     laborId: newLabor.id,
                     tagId: tag.id,
                   })),
@@ -582,7 +622,7 @@ export async function POST(req: Request) {
 
             if (item.materials?.length) {
               await Promise.all(
-                item.materials.map(async (material) => {
+                item.materials.map(async material => {
                   if (!material || !material.name) return;
                   const newMat = await tx.material.create({
                     data: {
@@ -603,7 +643,7 @@ export async function POST(req: Request) {
                   // Use createMany instead of a loop for tags
                   if (material.tags?.length) {
                     await tx.materialTag.createMany({
-                      data: material.tags.map((tag) => ({
+                      data: material.tags.map(tag => ({
                         materialId: newMat.id,
                         tagId: tag.id,
                       })),
@@ -616,7 +656,7 @@ export async function POST(req: Request) {
             // Use createMany instead of a loop for item tags
             if (item.tags?.length) {
               await tx.itemTag.createMany({
-                data: item.tags.map((tag) => ({
+                data: item.tags.map(tag => ({
                   itemId: invoiceItem.id,
                   tagId: tag.id,
                 })),
@@ -634,16 +674,14 @@ export async function POST(req: Request) {
       { status: 201 },
     );
   } catch (error: any) {
-    if (error instanceof AppError) {
-      return NextResponse.json(
-        { success: false, message: error.message },
-        { status: error.statusCode },
-      );
-    }
-    console.error("Error creating shop service:", error);
+    const formattedError = errorHandler(error);
     return NextResponse.json(
-      { success: false, message: error.message || "Something went wrong" },
-      { status: 500 },
+      {
+        success: false,
+        message: formattedError.message,
+        errorDetails: formattedError,
+      },
+      { status: formattedError.statusCode },
     );
   }
 }
