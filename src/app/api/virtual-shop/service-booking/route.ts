@@ -9,6 +9,7 @@ import { addAppointment } from "@/actions/appointment/addAppointment";
 import { AppError } from "@/error-boundary/error";
 import { jwtVerifyToken } from "@/lib/jwtVerify";
 import { Prisma } from "@prisma/client";
+import { errorHandler } from "@/error-boundary/globalErrorHandler";
 
 /**
  * @swagger
@@ -626,6 +627,8 @@ export async function POST(req: Request) {
         },
       });
 
+      console.log({ client });
+
       if (!client) {
         const clientResult = await addCustomer({
           firstName,
@@ -1029,19 +1032,14 @@ export async function POST(req: Request) {
       );
     });
   } catch (error: any) {
-    if (error instanceof AppError) {
-      return NextResponse.json(
-        { success: false, message: error.message },
-        { status: error.statusCode },
-      );
-    }
-    console.error("Error in POST /api/virtual-shop/service-booking:", error);
+    const formattedError = errorHandler(error);
     return NextResponse.json(
       {
         success: false,
-        message: error.message || "Failed to create shop service",
+        message: formattedError.message,
+        errorDetails: formattedError,
       },
-      { status: 200 },
+      { status: formattedError.statusCode },
     );
   }
 }

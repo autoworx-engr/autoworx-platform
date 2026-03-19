@@ -15,7 +15,8 @@
     "tsc": "tsc",
     "test": "jest",
     "test:watch": "jest --watchAll",
-    "prisma:merge": "cat prisma/schema/*.prisma > prisma/schema.prisma"
+    "prisma:merge": "cat prisma/schema/*.prisma > prisma/schema.prisma",
+    "db:sync-sequences": "ts-node prisma/syncSequences.ts"
   },
   "dependencies": {
     "@atlaskit/pragmatic-drag-and-drop": "^1.7.7",
