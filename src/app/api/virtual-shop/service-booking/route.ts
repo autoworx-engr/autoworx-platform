@@ -305,7 +305,7 @@ export async function GET(req: Request) {
           hasNextPage: page < totalPages,
           hasPrevPage: page > 1,
         },
-        data: shopBookings.map((sb) => ({
+        data: shopBookings.map(sb => ({
           ...sb,
           subtotal: Number(sb.subtotal),
           tax: Number(sb.tax),
@@ -313,7 +313,7 @@ export async function GET(req: Request) {
           depositRequired: Number(sb.depositRequired),
           depositPaid: Number(sb.depositPaid),
           balanceDue: Number(sb.balanceDue),
-          services: sb.services.map((srv) => ({
+          services: sb.services.map(srv => ({
             ...srv,
             price: Number(srv.price),
             modifierPrice: Number(srv.modifierPrice),
@@ -355,7 +355,7 @@ export async function GET(req: Request) {
  *           schema:
  *             type: object
  *             required:
- *               - slug
+ *               - shopId
  *               - shopServiceIds
  *               - appointmentDate
  *               - appointmentStartTime
@@ -364,10 +364,10 @@ export async function GET(req: Request) {
  *               - model
  *               - year
  *             properties:
- *               slug:
- *                 type: string
- *                 description: The unique slug for the virtual shop.
- *                 example: my-auto-shop
+ *               shopId:
+ *                 type: integer
+ *                 description: The unique ID for the virtual shop.
+ *                 example: 1
  *               shopServiceIds:
  *                 type: array
  *                 description: Array of selected shop service IDs.
@@ -529,7 +529,7 @@ export async function GET(req: Request) {
  *                   example: false
  *                 message:
  *                   type: string
- *                   example: "Shop not found with the provided slug."
+ *                   example: "Shop not found with the provided ID."
  *       500:
  *         description: Internal Server Error.
  *         content:
@@ -549,7 +549,7 @@ export async function POST(req: Request) {
     const body = await req.json();
 
     const {
-      slug,
+      shopId,
       shopServiceIds,
       appointmentDate,
       appointmentStartTime,
@@ -565,7 +565,7 @@ export async function POST(req: Request) {
 
     // 1. Validate required input
     if (
-      !slug ||
+      !shopId ||
       !shopServiceIds ||
       !Array.isArray(shopServiceIds) ||
       shopServiceIds.length === 0 ||
@@ -582,10 +582,10 @@ export async function POST(req: Request) {
     const firstName = fullName?.split(" ")[0] || "Guest";
     const lastName = fullName?.split(" ").slice(1).join(" ") || undefined;
 
-    return await db.$transaction(async (tx) => {
-      // 2. Validate Shop Slug
+    return await db.$transaction(async tx => {
+      // 2. Validate Shop
       const shop = await tx.shop.findUnique({
-        where: { slug },
+        where: { id: Number(shopId) },
         include: {
           company: {
             select: {
@@ -599,7 +599,7 @@ export async function POST(req: Request) {
       });
 
       if (!shop) {
-        throw new AppError(404, "Shop not found with the provided slug.");
+        throw new AppError(404, "Shop not found with the provided ID.");
       }
 
       const findCompanyAdminUser = await tx.user.findFirst({
@@ -661,7 +661,7 @@ export async function POST(req: Request) {
               companyId: shop.companyId,
               source: "Virtual Shop",
               vehicleInfo: `${year} ${make} ${model}`,
-              services: shopServiceIds.map((id) => id).join(", "),
+              services: shopServiceIds.map(id => id).join(", "),
               clientId: client.id,
               columnId: column?.id,
             },
@@ -723,7 +723,7 @@ export async function POST(req: Request) {
         | "SUNDAY";
 
       const availability = bookingSettings.availabilities.find(
-        (a) => a.dayOfWeek === dayOfWeekKey,
+        a => a.dayOfWeek === dayOfWeekKey,
       );
 
       if (!availability || !availability.isOpen) {
@@ -817,13 +817,13 @@ export async function POST(req: Request) {
         throw new AppError(400, "No valid services selected for this shop.");
       }
 
-      const allInvoiceItems = selectedServices.flatMap((srv) => {
+      const allInvoiceItems = selectedServices.flatMap(srv => {
         return srv.invoiceItems;
       });
 
       const items = allInvoiceItems.map(({ id, ...item }) => ({
         ...item,
-        materials: item.materials.map((material) => ({
+        materials: item.materials.map(material => ({
           ...material,
           tags: material.tags.map((mt: any) => mt.tag),
         })),
@@ -1013,7 +1013,7 @@ export async function POST(req: Request) {
               make: vehicle?.make,
               model: vehicle?.model,
             },
-            services: selectedServices.map((srv) => ({
+            services: selectedServices.map(srv => ({
               title: srv.title,
               price: srv.price,
             })),
