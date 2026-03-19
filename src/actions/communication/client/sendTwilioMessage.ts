@@ -5,6 +5,7 @@ import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import getUser from "@/lib/getUser";
 import { normalizeUSPhoneNumber } from "@/lib/normalizeUSPhoneNumber";
+import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-service";
 import { revalidatePath } from "next/cache";
 import Twilio from "twilio";
 import { updateNewEmailChatTrack, updateNewSMSChatTrack } from "./chat-track";
@@ -42,6 +43,7 @@ export async function sendTwilioMessage({
   attachments,
   isSalesAgent = false,
   userId,
+  systemCall = false,
 }: {
   companyId?: number;
   message: string;
@@ -49,8 +51,19 @@ export async function sendTwilioMessage({
   attachments: { url: string; name: string }[];
   userId?: number;
   isSalesAgent?: boolean;
+  /** Pass true when calling from a webhook/system context with no user session. */
+  systemCall?: boolean;
 }) {
   try {
+    const resolvedCompanyId = companyId ?? (await getCompanyId());
+    const entitlements = await getCompanyEntitlements(resolvedCompanyId);
+    if (!entitlements.canUseSms) {
+      return {
+        success: false,
+        error: "SMS is not enabled for this plan",
+      };
+    }
+
     console.log("companyId", companyId);
     let twilioCredentials = companyId
       ? await getTwilioCredentialsById(companyId)
@@ -89,11 +102,8 @@ export async function sendTwilioMessage({
       user = await db.user.findFirst({
         where: { id: userId },
       });
-      console.log("userId", userId);
-    } else {
-      console.log("user 23");
+    } else if (!systemCall) {
       user = await getUser();
-      console.log("userId", userId);
     }
 
     const client = await db.client.findFirst({

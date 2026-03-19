@@ -1,8 +1,11 @@
 import { db } from "@/lib/db";
+import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-service";
 import { NextResponse } from "next/server";
 import { twiml } from "twilio";
 import { v4 as uuidv4 } from "uuid";
 import { sendPushNotification } from "@/actions/notification/sendPushNotification";
+
+type DialAttributes = Parameters<twiml.VoiceResponse["dial"]>[0];
 
 /**
  * @swagger
@@ -81,6 +84,15 @@ export async function POST(request: Request) {
         { error: "Twilio credentials or company not found" },
         { status: 400 },
       );
+    }
+
+    const entitlements = await getCompanyEntitlements(company.id);
+    if (!entitlements.canUseVoice) {
+      const voiceResponse = new twiml.VoiceResponse();
+      voiceResponse.reject();
+      return new Response(voiceResponse.toString(), {
+        headers: { "Content-Type": "text/xml" },
+      });
     }
 
     const companyId = company?.id;
@@ -187,6 +199,13 @@ export async function POST(request: Request) {
     const voiceResponse = new twiml.VoiceResponse();
     console.log("🚀 ~ POST ~ voiceResponse:", voiceResponse);
 
+    const recordingOptions: Partial<DialAttributes> = entitlements.callRecording
+      ? {
+          record: "record-from-answer" as const,
+          recordingStatusCallback: `${process.env.NEXT_PUBLIC_APP_URL}/api/twilio/call-recording?callId=${callId}`,
+          recordingStatusCallbackMethod: "POST",
+        }
+      : {};
     // Inform the caller that the call may be recorded (only if whisper is enabled)
     if (company.callWhisperEnabled) {
       const companyName = company.name ?? "this company";
@@ -203,31 +222,32 @@ export async function POST(request: Request) {
       // Forward the call to the specified number
       voiceResponse.dial(
         {
-          record: "record-from-answer",
-          recordingStatusCallback: `${process.env.NEXT_PUBLIC_APP_URL}/api/twilio/call-recording?callId=${callId}`,
-          recordingStatusCallbackMethod: "POST",
           timeout: 30,
           answerOnBridge: true,
           action: `${process.env.NEXT_PUBLIC_APP_URL}/api/twilio/call-status`,
+          ...recordingOptions,
         },
         callForwardingNumber,
       );
     } else {
       // Dial to the client identity (the browser device) - original behavior
       const dial = voiceResponse.dial({
-        record: "record-from-answer",
-        recordingStatusCallback: `${process.env.NEXT_PUBLIC_APP_URL}/api/twilio/call-recording?callId=${callId}`,
-        recordingStatusCallbackMethod: "POST",
         timeout: 60, // Give 60 seconds for the call to be answered
         answerOnBridge: true, // Only answer when the call is bridged (connected)
         action: `${process.env.NEXT_PUBLIC_APP_URL}/api/twilio/call-status`,
+        ...recordingOptions,
       });
 
       // Connect to the user's device
-      // IMPORTANT: The identity here must match what was used when creating the token
-      // If you have multiple users, you need to determine which device to ring
-      // For now, using the Twilio phone number as the identity
-      const clientIdentity = twilioCredentials.phoneNumber;
+      // IMPORTANT: The identity here must match what was used when creating the token.
+      // Twilio Client identity cannot contain '+' or other special chars — normalize it.
+      const clientIdentity = twilioCredentials.phoneNumber.replace(
+        /[^a-zA-Z0-9_\-.~]/g,
+        "",
+      );
+      console.log(
+        `📞 [Incoming] Dialing client identity: "${clientIdentity}" (raw: "${twilioCredentials.phoneNumber}")`,
+      );
 
       // Pass client information as parameters
       const callerName =

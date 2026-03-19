@@ -25,7 +25,9 @@ import {
   Headset,
 } from "lucide-react";
 
-type Props = {};
+type Props = {
+  isLegacy?: boolean;
+};
 
 const accountSettings = [
   {
@@ -88,11 +90,11 @@ const businessSettings = [
   {
     link: "/dashboard/settings/sales-agent",
     label: "Sales Agent",
-    icon: Headset ,
+    icon: Headset,
   },
 ];
 
-const Sidebar = (props: Props) => {
+const Sidebar = ({ isLegacy = false }: Props) => {
   const path = usePathname();
   const { permissions } = usePermissionStore();
   const { companyFeaturePermission } = useCompanyFeaturePermissionStore();
@@ -102,6 +104,17 @@ const Sidebar = (props: Props) => {
     if (!companyFeaturePermission || companyFeaturePermission.length === 0)
       return true;
     const routeWithoutQuery = route.split("?")[0];
+
+    // In platform-plan mode, Sales Agent availability is controlled via
+    // plan entitlements at page/API level. In legacy mode, keep using
+    // feature-permission filtering.
+    if (
+      !isLegacy &&
+      routeWithoutQuery.startsWith("/dashboard/settings/sales-agent")
+    ) {
+      return true;
+    }
+
     const featureKey = FEATURE_PERMISSIONS_MAP[routeWithoutQuery];
     if (!featureKey) return true;
     if (Array.isArray(featureKey)) {
@@ -150,7 +163,9 @@ const Sidebar = (props: Props) => {
   );
   const filteredBusinessSettings = businessSettings.filter(
     (setting) =>
-      canAccessCompanyFeatureRoute(setting.link) && canAccessBusinessSettings(),
+      canAccessCompanyFeatureRoute(setting.link) &&
+      canAccessBusinessSettings() &&
+      !(isLegacy && setting.link === "/dashboard/settings/billing"),
   );
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
