@@ -210,7 +210,7 @@ export async function POST(req: Request) {
     });
 
     if (existingSettings) {
-      throw new AppError(400, "Settings already exist. Use PUT to update.");
+      throw new AppError(400, "Settings already exist. Use PATCH to update.");
     }
 
     const companySettings = await db.calendarSettings.findUnique({
@@ -274,7 +274,7 @@ export async function POST(req: Request) {
 /**
  * @swagger
  * /api/virtual-shop/shop-booking-settings:
- *   put:
+ *   patch:
  *     summary: Update shop booking settings
  *     description: Update the scheduling, deposits, and add-on settings for a specific shop.
  *     tags:
@@ -345,7 +345,7 @@ export async function POST(req: Request) {
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-export async function PUT(req: Request) {
+export async function PATCH(req: Request) {
   try {
     const authHeader = req.headers.get("authorization") ?? "";
     const accessToken = authHeader.startsWith("Bearer")
@@ -400,12 +400,13 @@ export async function PUT(req: Request) {
 
     if (availabilities && Array.isArray(availabilities)) {
       updateData.availabilities = {
-        deleteMany: {}, // Delete old to replace with new ones cleanly
-        create: availabilities.map((a: any) => ({
-          dayOfWeek: a.dayOfWeek,
-          isOpen: a.isOpen ?? true,
-          startTime: a.startTime ?? null,
-          endTime: a.endTime ?? null,
+        updateMany: availabilities.map((a: any) => ({
+          where: { dayOfWeek: a.dayOfWeek },
+          data: {
+            isOpen: a.isOpen ?? true,
+            startTime: a.startTime ?? null,
+            endTime: a.endTime ?? null,
+          },
         })),
       };
     }
