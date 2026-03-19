@@ -15,14 +15,25 @@ const getDayOfWeekEnum = (date: Date): DayOfWeek => {
     "FRIDAY",
     "SATURDAY",
   ];
-  return days[moment(date).day()];
+  return days[moment.utc(date).day()];
 };
 
 // 1. Get Available Slots For A Explicit Date
 export async function getAvailableSlots(shopId: number, dateString: string) {
   try {
-    const selectedDate = moment(dateString).toDate();
+    const requestMoment = moment.utc(dateString);
+    const selectedDate = requestMoment.toDate();
+
     const dayOfWeek = getDayOfWeekEnum(selectedDate);
+
+    const shop = await db.shop.findUnique({
+      where: {
+        id: shopId,
+      },
+      select: {
+        companyId: true,
+      },
+    });
 
     // Fetch shop settings (stacking Limit & intervals) and today's availability
     const shopSettings = await db.shopBookingSetting.findUnique({
@@ -51,38 +62,48 @@ export async function getAvailableSlots(shopId: number, dateString: string) {
       : 1;
 
     // Build the base slots array using moment
-    const selectedDateStr = moment(selectedDate).format("YYYY-MM-DD");
-    let currentSlotTime = moment(
+    const selectedDateStr = requestMoment.format("YYYY-MM-DD");
+    let currentSlotTime = moment.utc(
       `${selectedDateStr} ${todayAvailability.startTime}`,
       "YYYY-MM-DD HH:mm",
     );
-    const endSlotTime = moment(
+    const endSlotTime = moment.utc(
       `${selectedDateStr} ${todayAvailability.endTime}`,
       "YYYY-MM-DD HH:mm",
     );
 
     const baseSlots: string[] = [];
-    const now = moment();
-    const isToday = moment(selectedDate).isSame(now, "day");
+    // Compare time strictly - assuming server matches shop location
+    const now = moment(); // Keep current time check as local or whatever was expected
+    // isToday check should ideally not cross timezone boundaries maliciously, but requestMoment is UTC midnight.
+    // If we want to check if dateString is today locally:
+    const isToday =
+      requestMoment.format("YYYY-MM-DD") === now.format("YYYY-MM-DD");
 
     while (currentSlotTime.isBefore(endSlotTime)) {
       // Don't show past slots if booking for today
-      if (!isToday || currentSlotTime.isAfter(now)) {
+      if (
+        !isToday ||
+        currentSlotTime.isAfter(
+          moment.utc(now.format("YYYY-MM-DD HH:mm"), "YYYY-MM-DD HH:mm"),
+        )
+      ) {
         baseSlots.push(currentSlotTime.format("HH:mm"));
       }
       currentSlotTime.add(intervalMinutes, "minutes");
     }
 
     // Fetch existing appointments on this date
-    const startOfSelectedDay = moment(selectedDate).startOf("day").toDate();
-    const startOfNextDay = moment(selectedDate)
+    const startOfSelectedDay = requestMoment.clone().startOf("day").toDate();
+    const startOfNextDay = requestMoment
+      .clone()
       .add(1, "days")
       .startOf("day")
       .toDate();
 
     const existingAppointments = await db.appointment.findMany({
       where: {
-        companyId: shopId,
+        companyId: shop?.companyId,
         date: {
           gte: startOfSelectedDay,
           lt: startOfNextDay,
