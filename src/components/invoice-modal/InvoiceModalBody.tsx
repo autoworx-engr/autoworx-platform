@@ -178,7 +178,7 @@ export default function InvoiceModalBody({
   const handlePrint = useReactToPrint({
     content: () => printComponentRef.current,
     onBeforePrint: () => {
-      return new Promise((resolve) => {
+      return new Promise(resolve => {
         promiseResolveRef.current = resolve;
         setIsPrinting(true);
       });
@@ -222,7 +222,7 @@ export default function InvoiceModalBody({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ invoiceId }),
-      }).catch((error) => {
+      }).catch(error => {
         console.error("Failed to track invoice view:", error);
       });
     }
@@ -368,7 +368,7 @@ export default function InvoiceModalBody({
     <DialogPortal>
       <DialogOverlay />
       <DialogContentBlank
-        onPointerDownOutside={(e) => {
+        onPointerDownOutside={e => {
           // Prevent closing when clicking on elements inside the dialog
           const target = e.target as HTMLElement;
           if (
@@ -391,15 +391,13 @@ export default function InvoiceModalBody({
                 {/* Edit Link */}
                 {isShowEdit && (
                   <Tooltip title="Edit">
-
-                  
-                  <Link
-                    className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-4 py-2 text-sm font-medium text-white shadow-md shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 md:text-base"
-                    href={`/dashboard/estimate/edit/${invoice.id}?clientId=${invoice.clientId}`}
-                  >
-                    <SquarePen className="h-4 w-4 md:h-5 md:w-5" />
-                    {/* <span className="hidden md:inline">Edit</span> */}
-                  </Link>
+                    <Link
+                      className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-4 py-2 text-sm font-medium text-white shadow-md shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 md:text-base"
+                      href={`/dashboard/estimate/edit/${invoice.id}?clientId=${invoice.clientId}`}
+                    >
+                      <SquarePen className="h-4 w-4 md:h-5 md:w-5" />
+                      {/* <span className="hidden md:inline">Edit</span> */}
+                    </Link>
                   </Tooltip>
                 )}
 
@@ -418,7 +416,7 @@ export default function InvoiceModalBody({
                   <button
                     className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95"
                     onClick={() =>
-                      setOpenGroup((p) => (p === "export" ? null : "export"))
+                      setOpenGroup(p => (p === "export" ? null : "export"))
                     }
                   >
                     <FileDown className="h-4 w-4" />
@@ -480,7 +478,7 @@ export default function InvoiceModalBody({
                   <button
                     className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-slate-500 transition-colors hover:text-[#6571FF] dark:text-slate-400 md:text-xs"
                     onClick={() =>
-                      setOpenGroup((p) => (p === "share" ? null : "share"))
+                      setOpenGroup(p => (p === "share" ? null : "share"))
                     }
                   >
                     Share
@@ -556,10 +554,10 @@ export default function InvoiceModalBody({
                   draftEstimateId={invoice.id}
                   isModalOpen={isAppointmentModalOpen}
                   setIsModalOpen={setIsAppointmentModalOpen}
-                  onAppointmentCreated={(appointment) => {
+                  onAppointmentCreated={appointment => {
                     setIsAppointmentModalOpen(false);
                   }}
-                  onAppointmentUpdated={(appointment) => {
+                  onAppointmentUpdated={appointment => {
                     setIsAppointmentModalOpen(false);
                   }}
                 />
@@ -647,7 +645,7 @@ export default function InvoiceModalBody({
                   { key: "estimate", label: "Estimate" },
                   { key: "attachments", label: "Attachments" },
                   { key: "inspections", label: "Inspections" },
-                ].map((tab) => {
+                ].map(tab => {
                   const isActive = activeTab === tab.key;
                   return (
                     <button
@@ -802,7 +800,7 @@ export default function InvoiceModalBody({
                       <div className="grid w-full grid-cols-3 gap-4 px-2 sm:px-4 [@media(max-width:374px)]:grid-cols-2">
                         {invoice.photos.map((x, index) => {
                           const allImageUrls = invoice.photos.map(
-                            (photo) => photo.photo,
+                            photo => photo.photo,
                           );
                           const urlsParam = encodeURIComponent(
                             JSON.stringify(allImageUrls),
@@ -860,6 +858,7 @@ export default function InvoiceModalBody({
                   ["subtotal", invoice.subtotal],
                   ["discount", invoice.discount],
                   ["tax", invoice.tax],
+                  ["vehicle extra cost", invoice.vehicleExtraCost],
                   ["shop supplies", invoice?.serviceFee],
                   ["grand total", invoice.grandTotal],
                   ["deposit", invoice.deposit],
@@ -952,7 +951,7 @@ export default function InvoiceModalBody({
                       className="rounded-md border border-gray-300 px-2 py-1 text-sm"
                       placeholder="Your Name"
                       value={authorizedNameInput}
-                      onChange={(e) => setAuthorizedNameInput(e.target.value)}
+                      onChange={e => setAuthorizedNameInput(e.target.value)}
                     />
                     <button
                       className="absolute -right-[10px] -top-4 bg-red-700 rounded-full print:hidden"
@@ -1177,7 +1176,7 @@ export default function InvoiceModalBody({
               {[
                 { key: "attachments", label: "Attachments" },
                 { key: "inspections", label: "Inspections" },
-              ].map((tab) => {
+              ].map(tab => {
                 const isActive = desktopActiveTab === tab.key;
                 return (
                   <button
@@ -1210,7 +1209,7 @@ export default function InvoiceModalBody({
                 <div className="flex grid-cols-1 gap-4 overflow-x-auto md:grid">
                   {invoice.photos.map((x, index) => {
                     const allImageUrls = invoice.photos.map(
-                      (photo) => photo.photo,
+                      photo => photo.photo,
                     );
                     const urlsParam = encodeURIComponent(
                       JSON.stringify(allImageUrls),
@@ -1268,7 +1267,7 @@ export default function InvoiceModalBody({
                       const updatedInvoice = await getIsWorkorderCreated(
                         invoice.id,
                       );
-                      setInvoice((prevInvoice) => {
+                      setInvoice(prevInvoice => {
                         if (!prevInvoice) return prevInvoice;
                         return {
                           ...prevInvoice,

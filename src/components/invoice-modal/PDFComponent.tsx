@@ -518,6 +518,7 @@ const PDFComponent = function PDF({
     ["subtotal", invoice.subtotal],
     ["discount", invoice.discount],
     ["tax", invoice.tax],
+    ["vehicle extra cost", invoice.vehicleExtraCost],
     ["shop supplies", invoice?.serviceFee],
     ["grand total", invoice.grandTotal],
     ["deposit", invoice.deposit],
@@ -537,7 +538,7 @@ const PDFComponent = function PDF({
     totals.map(([k, v]) => [String(k), v]),
   );
 
-  const leftFields = ["subtotal", "discount", "tax", "shop supplies"];
+  const leftFields = ["subtotal", "discount", "tax", "vehicle extra cost", "shop supplies"];
   const rightFields = ["grand total", "deposit", "payment", "refunded", "due"];
 
   const formatTotalsValue = (field: string, value: unknown) => {
