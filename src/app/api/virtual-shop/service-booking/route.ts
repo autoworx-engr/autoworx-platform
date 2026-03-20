@@ -357,7 +357,7 @@ export async function GET(req: Request) {
  *             type: object
  *             required:
  *               - shopId
- *               - shopServiceIds
+ *               - shopServices
  *               - appointmentDate
  *               - appointmentStartTime
  *               - phone
@@ -369,12 +369,17 @@ export async function GET(req: Request) {
  *                 type: integer
  *                 description: The unique ID for the virtual shop.
  *                 example: 1
- *               shopServiceIds:
+ *               shopServices:
  *                 type: array
- *                 description: Array of selected shop service IDs.
+ *                 description: Array of selected shop services with optional vehicle type. The cost is calculated by the backend.
  *                 items:
- *                   type: integer
- *                 example: [1, 2, 3]
+ *                   type: object
+ *                   properties:
+ *                     shopServiceId:
+ *                       type: integer
+ *                     vehicleType:
+ *                       type: string
+ *                 example: [{ shopServiceId: 1, vehicleType: "SUV" }]
  *               appointmentDate:
  *                 type: string
  *                 format: date
@@ -556,7 +561,7 @@ export async function POST(req: Request) {
 
     const {
       shopId,
-      shopServiceIds,
+      shopServices,
       appointmentDate,
       appointmentStartTime,
       fullName,
@@ -572,9 +577,9 @@ export async function POST(req: Request) {
     // 1. Validate required input
     if (
       !shopId ||
-      !shopServiceIds ||
-      !Array.isArray(shopServiceIds) ||
-      shopServiceIds.length === 0 ||
+      !shopServices ||
+      !Array.isArray(shopServices) ||
+      shopServices.length === 0 ||
       !appointmentDate ||
       !appointmentStartTime ||
       !phone ||
@@ -584,6 +589,10 @@ export async function POST(req: Request) {
     ) {
       throw new AppError(400, "Missing required fields");
     }
+
+    const shopServiceIds = shopServices
+      .map((s: any) => s.shopServiceId)
+      .filter(Boolean);
 
     const firstName = fullName?.split(" ")[0] || "Guest";
     const lastName = fullName?.split(" ").slice(1).join(" ") || undefined;
@@ -852,13 +861,17 @@ export async function POST(req: Request) {
       }));
 
       const vehicleExtraCost = selectedServices.reduce((acc, srv) => {
-        const modifier =
-          srv.modifierTruck ||
-          srv.modifierSUV ||
-          srv.modifierSedan ||
-          srv.modifierCoupe ||
-          0;
-        return acc + Number(modifier);
+        const userInput = shopServices.find(
+          (s: any) => s.shopServiceId === srv.id,
+        );
+        if (userInput?.vehicleType) {
+          const vt = userInput.vehicleType.toLowerCase();
+          if (vt === "truck") return acc + Number(srv.modifierTruck || 0);
+          if (vt === "suv") return acc + Number(srv.modifierSUV || 0);
+          if (vt === "sedan") return acc + Number(srv.modifierSedan || 0);
+          if (vt === "coupe") return acc + Number(srv.modifierCoupe || 0);
+        }
+        return acc;
       }, 0);
 
       let totalServiceCost = selectedServices.reduce(
@@ -997,6 +1010,31 @@ export async function POST(req: Request) {
 
       // Create snapshot entries for the services in ShopBookingService
       for (const srv of selectedServices) {
+        const userInput = shopServices.find(
+          (s: any) => s.shopServiceId === srv.id,
+        );
+        let modifierPrice = 0;
+        let modifierType: string | null = null;
+
+        if (userInput?.vehicleType) {
+          const vt = userInput.vehicleType.toLowerCase();
+          if (vt === "truck") {
+            modifierType = "Truck";
+            modifierPrice = Number(srv.modifierTruck || 0);
+          } else if (vt === "suv") {
+            modifierType = "SUV";
+            modifierPrice = Number(srv.modifierSUV || 0);
+          } else if (vt === "sedan") {
+            modifierType = "Sedan";
+            modifierPrice = Number(srv.modifierSedan || 0);
+          } else if (vt === "coupe") {
+            modifierType = "Coupe";
+            modifierPrice = Number(srv.modifierCoupe || 0);
+          } else {
+            modifierType = userInput.vehicleType; // fallback just in case
+          }
+        }
+
         await tx.shopBookingService.create({
           data: {
             shopBookingId: shopBooking.id,
@@ -1004,6 +1042,8 @@ export async function POST(req: Request) {
             title: srv.title,
             price: srv.price,
             duration: srv.duration,
+            modifierType: modifierType as any,
+            modifierPrice,
           },
         });
       }
