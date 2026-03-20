@@ -890,8 +890,10 @@ export async function POST(req: Request) {
         ? Number(shop.company.serviceFee)
         : 0;
 
-      const taxAmount = (subtotal * taxRate) / 100;
-      const serviceFeeAmount = (subtotal * serviceFeeRate) / 100;
+      // tax and service fee is calculated on totalServiceCost
+      const taxAmount = (totalServiceCost * taxRate) / 100;
+      const serviceFeeAmount = (totalServiceCost * serviceFeeRate) / 100;
+
       const grandTotal = subtotal + taxAmount + serviceFeeAmount;
       const isDepositEnabled = bookingSettings.isDepositEnabled;
       const requiredDepositAmount = isDepositEnabled
@@ -915,7 +917,7 @@ export async function POST(req: Request) {
         vehicleId: vehicle?.id,
         subtotal,
         discount: 0,
-        tax: taxAmount,
+        tax: taxRate,
         serviceFee: serviceFeeAmount,
         vehicleExtraCost,
         deposit: depositAmountVal,
