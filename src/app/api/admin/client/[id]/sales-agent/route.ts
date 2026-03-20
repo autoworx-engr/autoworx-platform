@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-service";
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -106,6 +107,19 @@ export async function PATCH(
         { message: "Company not found" },
         { status: 404 },
       );
+    }
+
+    if (isSalesAgent === true) {
+      const entitlements = await getCompanyEntitlements(company.id);
+      if (!entitlements.awxSalesAgent) {
+        return NextResponse.json(
+          {
+            message:
+              "Sales Agent is not available on the current plan for this company",
+          },
+          { status: 403 },
+        );
+      }
     }
 
     // If turning ON client but company is OFF
