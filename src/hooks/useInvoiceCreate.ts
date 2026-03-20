@@ -36,7 +36,7 @@ export function useInvoiceCreate(type: InvoiceType) {
   const pathaname = usePathname();
 
   async function handleSubmit(
-    fromPayment?: boolean
+    fromPayment?: boolean,
   ): Promise<ServerAction | TErrorHandler> {
     const clientId = client?.id;
     const vehicleId = vehicle?.id;
@@ -72,16 +72,16 @@ export function useInvoiceCreate(type: InvoiceType) {
           customerComments,
           photos,
           //@ts-ignore
-          items: items.map((item) => ({
+          items: items.map(item => ({
             ...item,
             materials: item.materials.length
-              ? item.materials.map((material) => ({
+              ? item.materials.map(material => ({
                   ...material,
                   categoryId: Number(material?.categoryId) || null,
                   cost: Number(material?.cost) || 0,
                   sell: Number(material?.sell) || 0,
                   discount: Number(material?.discount) || 0,
-                  quantity: material?.quantity?.toString() || "0",
+                  quantity: Number(material?.quantity) || 0,
                 }))
               : null,
             labor: item.labor
@@ -98,7 +98,7 @@ export function useInvoiceCreate(type: InvoiceType) {
           inspections,
           damageNotes,
         },
-        fromPayment
+        fromPayment,
       );
 
       if (res.type === "success") {
@@ -130,13 +130,13 @@ export function useInvoiceCreate(type: InvoiceType) {
         //@ts-ignore
         items: items.map(({ id, ...item }) => ({
           ...item,
-          materials: item.materials.map((material) => ({
+          materials: item.materials.map(material => ({
             ...material,
             categoryId: Number(material?.categoryId) || null,
             cost: Number(material?.cost) || 0,
             sell: Number(material?.sell) || 0,
             discount: Number(material?.discount) || 0,
-            quantity: material?.quantity?.toString() || "0",
+            quantity: Number(material?.quantity) || 0,
           })),
           labor: item.labor
             ? {

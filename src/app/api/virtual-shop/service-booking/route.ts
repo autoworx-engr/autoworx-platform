@@ -627,8 +627,6 @@ export async function POST(req: Request) {
         },
       });
 
-      console.log({ client });
-
       if (!client) {
         const clientResult = await addCustomer({
           firstName,
@@ -828,11 +826,18 @@ export async function POST(req: Request) {
         ...item,
         materials: item.materials.map(material => ({
           ...material,
+          quantity: (Number(material.quantity) || 0) as any,
+          cost: (Number(material.cost) || 0) as any,
+          sell: (Number(material.sell) || 0) as any,
+          discount: (Number(material.discount) || 0) as any,
           tags: material.tags.map((mt: any) => mt.tag),
         })),
         labor: item.labor
           ? {
               ...item.labor,
+              hours: (Number(item.labor.hours) || 0) as any,
+              charge: (Number(item.labor.charge) || 0) as any,
+              discount: (Number(item.labor.discount) || 0) as any,
               tags: item.labor.tags.map((lt: any) => lt.tag),
             }
           : null,
@@ -881,6 +886,7 @@ export async function POST(req: Request) {
       }
 
       const dueAmount = grandTotal - depositAmountVal;
+
       // 8. Create Estimate using the refactored shared action
       const estimateResult = await createInvoice({
         invoiceId: estimateId,
@@ -905,7 +911,7 @@ export async function POST(req: Request) {
         items,
         tasks: [],
         inspections: [],
-        damageNotes: null,
+        damageNotes: "",
         forceCompanyId: companyId,
       });
 
@@ -1032,6 +1038,7 @@ export async function POST(req: Request) {
       );
     });
   } catch (error: any) {
+    console.log("error", error);
     const formattedError = errorHandler(error);
     return NextResponse.json(
       {

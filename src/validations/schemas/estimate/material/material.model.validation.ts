@@ -8,22 +8,24 @@ export const materialModelSchemaValidation = z
       .positive()
       .optional(),
     name: z
-      .string({ required_error: "Name is required", invalid_type_error: "Name must be a string" })
+      .string({
+        required_error: "Name is required",
+        invalid_type_error: "Name must be a string",
+      })
       .nullable()
       .optional(),
     vendorId: z.number().int().positive().nullable().optional(),
     categoryId: z.number().int().positive().nullable().optional(),
     notes: z.string().nullable().optional(),
     quantity: z
-      .string()
+      .number()
       .refine(
-        (val) => {
-          const num = Number(val);
-          return !isNaN(num) && num >= 0;
+        val => {
+          return !isNaN(val) && val >= 0;
         },
         {
           message: "Material Quantity must be a positive number",
-        }
+        },
       )
       .optional(),
     cost: z
@@ -36,7 +38,10 @@ export const materialModelSchemaValidation = z
       .nonnegative("Material sell price must be a positive value")
       .optional()
       .default(0), // For Decimal
-    discount: z.number({ invalid_type_error: "Discount must be a valid number" }).optional().default(0), // For Decimal
+    discount: z
+      .number({ invalid_type_error: "Discount must be a valid number" })
+      .optional()
+      .default(0), // For Decimal
     companyId: z
       .number({ message: "company Id must be required" })
       .int()
@@ -81,7 +86,7 @@ export const materialModelSchemaValidation = z
   //   },
   // )
   .refine(
-    (data) => {
+    data => {
       if (data.quantity) {
         const num = Number(data.quantity);
         return !isNaN(num) && num >= 0;
@@ -91,7 +96,7 @@ export const materialModelSchemaValidation = z
     {
       message: "Quantity must be zero or positive",
       path: ["quantity"],
-    }
+    },
   );
 
 export type TMaterialModelSchemaValidation = z.infer<
