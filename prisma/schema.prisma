@@ -1393,9 +1393,8 @@ model Invoice {
   discount                Decimal?                  @default(0) @db.Decimal(8, 2)
   tax                     Decimal?                  @default(0) @db.Decimal(8, 2)
   serviceFee              Decimal?                  @default(0) @db.Decimal(8, 2)
+  vehicleExtraCost        Decimal?                  @default(0) @map("vehicle_extra_cost") @db.Decimal(8, 2)
   grandTotal              Decimal?                  @default(0) @map("grand_total") @db.Decimal(8, 2)
-
-  vehicleExtraCost        Decimal?                  @default(0) @map("vehicle_extra_cost") @db.Decimal(8, 2) 
   deposit                 Decimal?                  @default(0) @db.Decimal(8, 2)
   due                     Decimal?                  @default(0) @db.Decimal(8, 2)
   statusId                Int?                      @map("status_id")

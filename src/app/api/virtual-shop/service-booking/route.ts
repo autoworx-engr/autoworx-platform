@@ -904,6 +904,7 @@ export async function POST(req: Request) {
         discount: 0,
         tax: taxAmount,
         serviceFee: serviceFeeAmount,
+        vehicleExtraCost,
         deposit: depositAmountVal,
         depositNotes: "",
         depositMethod: "",

@@ -41,6 +41,7 @@ type TCreateInvoiceProps = {
   discount: number;
   tax: number;
   serviceFee: number;
+  vehicleExtraCost?: number;
   deposit: number;
   depositNotes: string;
   depositMethod: string;
@@ -80,6 +81,7 @@ export async function createInvoice({
   discount,
   tax,
   serviceFee,
+  vehicleExtraCost,
   deposit,
   depositNotes,
   depositMethod,
@@ -116,6 +118,7 @@ export async function createInvoice({
       discount,
       tax,
       serviceFee,
+      vehicleExtraCost,
       deposit,
       depositNotes,
       depositMethod,
@@ -230,6 +233,7 @@ export async function createInvoice({
           discount,
           tax,
           serviceFee,
+          vehicleExtraCost,
           deposit,
           grandTotal,
           due,
