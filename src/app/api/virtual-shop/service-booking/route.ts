@@ -546,6 +546,11 @@ export async function GET(req: Request) {
  *                   example: "Internal Server Error"
  */
 export async function POST(req: Request) {
+  let createdClientId: number | null = null;
+  let createdVehicleId: number | null = null;
+  let createdEstimateId: string | null = null;
+  let createdAppointmentId: number | null = null;
+
   try {
     const body = await req.json();
 
@@ -645,6 +650,7 @@ export async function POST(req: Request) {
           );
         }
         client = clientResult.data;
+        createdClientId = client?.id ?? null;
 
         if (client) {
           const column = await tx.column.findFirst({
@@ -699,6 +705,7 @@ export async function POST(req: Request) {
         });
         if (vehicleResponse.type === "success") {
           vehicle = vehicleResponse.data;
+          createdVehicleId = vehicle?.id ?? null;
         }
       }
 
@@ -926,6 +933,7 @@ export async function POST(req: Request) {
       }
 
       const estimate = estimateResult.data;
+      createdEstimateId = estimate.id;
 
       // Mark lead as estimate created if exists
       if (client?.leadId) {
@@ -967,6 +975,7 @@ export async function POST(req: Request) {
       }
 
       const appointment = appointmentResult.data;
+      createdAppointmentId = appointment.id;
 
       // 10. Create ShopBooking History
       const shopBooking = await tx.shopBooking.create({
@@ -1038,7 +1047,33 @@ export async function POST(req: Request) {
       );
     });
   } catch (error: any) {
-    console.log("error", error);
+    console.log("error in service-booking", error);
+
+    // Fallback/Compensation for resources created via global db actions during the failed transaction
+    if (createdAppointmentId) {
+      await db.appointment
+        .delete({ where: { id: createdAppointmentId } })
+        .catch(e =>
+          console.error("Fallback deletion failed for Appointment:", e),
+        );
+    }
+    if (createdEstimateId) {
+      await db.invoice
+        .delete({ where: { id: createdEstimateId } })
+        .catch(e => console.error("Fallback deletion failed for Estimate:", e));
+    }
+    if (createdVehicleId) {
+      await db.vehicle
+        .delete({ where: { id: createdVehicleId } })
+        .catch(e => console.error("Fallback deletion failed for Vehicle:", e));
+    }
+    if (createdClientId) {
+      // The shared addCustomer action also creates a Lead, let's delete the client (which cascades or we can rely on lead being created in tx normally, but if addCustomer does it, it's global)
+      await db.client
+        .delete({ where: { id: createdClientId } })
+        .catch(e => console.error("Fallback deletion failed for Client:", e));
+    }
+
     const formattedError = errorHandler(error);
     return NextResponse.json(
       {
