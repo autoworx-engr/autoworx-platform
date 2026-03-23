@@ -13,15 +13,15 @@ import { useClientCommunicationStore } from "@/stores/client-store";
 import { useQueryClient } from "@tanstack/react-query";
 import { smsQueryKey } from "../../../_utils/queryKey";
 
-type TProps = { clientId: number };
+type TProps = { clientId: number; canUseSms?: boolean };
 
-export default function SmsContainer({ clientId }: TProps) {
+export default function SmsContainer({ clientId, canUseSms = true }: TProps) {
   const queryClient = useQueryClient();
   const [messages, setMessages] = useState();
   const user = useGetCurrentUser();
 
   const setClientConversationTrack = useClientCommunicationStore(
-    (state) => state.setClientConversationTrack
+    (state) => state.setClientConversationTrack,
   );
 
   // subscribe to pusher channel for realtime updates
@@ -34,7 +34,7 @@ export default function SmsContainer({ clientId }: TProps) {
             firstName: string;
             lastName: string | null;
           } | null;
-        } & { attachments?: ClientSmsAttachments[] }
+        } & { attachments?: ClientSmsAttachments[] },
       ) => {
         if (!data) return;
 
@@ -54,7 +54,7 @@ export default function SmsContainer({ clientId }: TProps) {
                   nextPage: number;
                   hasMore: boolean;
                 },
-                index: number
+                index: number,
               ) => {
                 if (index === 0) {
                   return {
@@ -63,16 +63,16 @@ export default function SmsContainer({ clientId }: TProps) {
                   };
                 }
                 return page;
-              }
+              },
             );
             return {
               ...oldData,
               pages: updatedPages,
             };
-          }
+          },
         );
         // setMessages(prevMessages => [...prevMessages, data]);
-      }
+      },
     );
     return () => {
       pusher.unbind("sms").unsubscribe(`sms-${user?.companyId}-${clientId}`);
@@ -101,7 +101,11 @@ export default function SmsContainer({ clientId }: TProps) {
       </div>
       {/* Input area - always stays at bottom */}
       <div className="flex-shrink-0">
-        <SendSms clientId={clientId} companyId={user?.companyId!} />
+        <SendSms
+          clientId={clientId}
+          companyId={user?.companyId!}
+          canUseSms={canUseSms}
+        />
       </div>
     </div>
   );

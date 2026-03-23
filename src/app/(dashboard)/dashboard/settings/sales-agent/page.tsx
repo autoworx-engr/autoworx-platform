@@ -13,9 +13,31 @@ import React from "react";
 import AIMetrics from "./components/AIMetrics";
 import SalesAgentPermissionPanel from "./components/SalesAgentPermissionPanel";
 import { getCompanyId } from "@/lib/companyId";
+import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-service";
+import UpgradePlanBanner from "@/components/UpgradePlanBanner";
 
 export default async function AiTrainOverview() {
   const companyId = await getCompanyId();
+  const entitlements = await getCompanyEntitlements(companyId);
+
+  if (!entitlements.awxSalesAgent) {
+    return (
+      <div className="mx-auto w-full max-w-2xl rounded-xl border border-slate-200 bg-white p-6">
+        <h2 className="mb-2 text-lg font-semibold text-slate-900">
+          AI Sales Agent is not available
+        </h2>
+        <p className="mb-4 text-sm text-slate-600">
+          Your current plan does not include AI Sales Agent. Upgrade to unlock
+          AI-driven lead handling and automated responses.
+        </p>
+        <UpgradePlanBanner
+          title="Unlock AI Sales Agent"
+          description="Upgrade your plan to configure and use AI Sales Agent features."
+          ctaLabel="Upgrade Plan"
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="grid gap-6 lg:grid-cols-3">
