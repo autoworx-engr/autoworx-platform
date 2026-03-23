@@ -26,6 +26,7 @@ export function BillSummary({
     grandTotal,
     tax,
     serviceFee,
+    vehicleExtraCost,
     due,
     deposit,
     coupon,
@@ -88,7 +89,7 @@ export function BillSummary({
     let newServicesTotal = 0;
     let newDiscountTotal = 0;
 
-    items.forEach((item) => {
+    items.forEach(item => {
       const { service, materials, labor } = item;
 
       if (!service) return;
@@ -143,12 +144,17 @@ export function BillSummary({
       suppliesFeeAdd = Number((netAmount * (serviceFee / 100)).toFixed(2));
     }
 
-    setGrandTotal(Number((newGrandTotal + taxAdd + suppliesFeeAdd).toFixed(2)));
+    setGrandTotal(
+      Number(
+        (newGrandTotal + taxAdd + suppliesFeeAdd + vehicleExtraCost).toFixed(2),
+      ),
+    );
   }, [
     subtotal,
     discount,
     tax,
     serviceFee,
+    vehicleExtraCost,
     isTaxEnabled,
     isSuppliesEnabled,
     setGrandTotal,
@@ -182,8 +188,8 @@ export function BillSummary({
         setCoupon(res.data);
         setDiscount(
           Number(discount) +
-          Number(res.data.discount) -
-          Number(coupon ? coupon.discount : 0)
+            Number(res.data.discount) -
+            Number(coupon ? coupon.discount : 0),
         );
       } else {
         errorToast(res.message!);
@@ -201,6 +207,7 @@ export function BillSummary({
           ["subtotal", subtotal.toFixed(2)],
           ["discount", discount.toFixed(2)],
           ["tax", tax.toFixed(2)],
+          ["vehicle extra cost", vehicleExtraCost.toFixed(2)],
           ["shop supplies", serviceFee.toFixed(2)],
           ["deposit", deposit.toFixed(2)],
           ["payment", totalPayment.toFixed(2)],
@@ -225,16 +232,16 @@ export function BillSummary({
 
               {isToggleItem && (
                 <div
-                  onClick={() => toggleSetter((prev) => !prev)}
+                  onClick={() => toggleSetter(prev => !prev)}
                   className={cn(
                     "relative flex h-5 w-9 cursor-pointer items-center rounded-full px-1 transition-all duration-200",
-                    toggleState ? "bg-[#6571FF]" : "bg-slate-200"
+                    toggleState ? "bg-[#6571FF]" : "bg-slate-200",
                   )}
                 >
                   <div
                     className={cn(
                       "h-3.5 w-3.5 transform rounded-full bg-white shadow-sm transition-transform duration-200 ease-in-out",
-                      toggleState ? "translate-x-3.5" : "translate-x-0"
+                      toggleState ? "translate-x-3.5" : "translate-x-0",
                     )}
                   />
                 </div>
@@ -245,10 +252,11 @@ export function BillSummary({
                 readOnly
                 value={
                   isToggleItem
-                    ? `${toggleState ? originalValue : 0}%${toggleState && originalValue > 0
-                      ? ` | $${(((subtotal - discount) * originalValue) / 100).toFixed(2)}`
-                      : ""
-                    }`
+                    ? `${toggleState ? originalValue : 0}%${
+                        toggleState && originalValue > 0
+                          ? ` | $${(((subtotal - discount) * originalValue) / 100).toFixed(2)}`
+                          : ""
+                      }`
                     : data
                 }
                 className="w-[200px] rounded-lg bg-gray-500 px-3 py-1 text-right text-sm font-bold text-white ring-1 ring-inset ring-slate-100 focus:outline-none"
@@ -273,7 +281,7 @@ export function BillSummary({
               placeholder="Add Coupon"
               className="w-full bg-transparent px-3 py-1.5 text-sm font-medium text-white placeholder:text-white/50 focus:outline-none"
               value={couponInput}
-              onChange={(e) => setCouponInput(e.target.value)}
+              onChange={e => setCouponInput(e.target.value)}
             />
             {couponLoading ? (
               <div className="px-3">

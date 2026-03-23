@@ -4,7 +4,7 @@ import { validateCompanyId } from "../../utils";
 
 /**
  * @swagger
- * /api/sales-agent/faq/{id}:
+ * /api/ai-train/faq/{id}:
  *   delete:
  *     summary: Delete a specific FAQ by index
  *     tags: [FAQ]

@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { MapPin, Users, Briefcase, Star, Trash2, Pencil } from "lucide-react";
+import { MapPin, Users, Briefcase, Trash2, Pencil } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useState } from "react";
 import { useCompanyDetails } from "@/hooks/communication/collaboration/useCompanyDetails ";
@@ -15,6 +15,7 @@ import AlreadyReviewed from "./AlreadyReviewed";
 import { useDeleteReview } from "../../../../../hooks/reviews/useDeleteReview";
 import { useUpdateReview } from "@/hooks/reviews/useUpdateReview";
 import { Popconfirm, Spin } from "antd";
+import { Rating } from "@mui/material";
 
 type TProfileCard = {
   companyId: number;
@@ -28,9 +29,9 @@ export default function CompanyProfileCard({
   userId,
 }: TProfileCard) {
   const [activeTab, setActiveTab] = useState<"reviews" | "write">("reviews");
-  const [ratingInput, setRatingInput] = useState(5);
+  const [ratingInput, setRatingInput] = useState<number | null>(5);
   const [editingReview, setEditingReview] = useState<any>(null);
-  const [editRating, setEditRating] = useState(5);
+  const [editRating, setEditRating] = useState<number | null>(5);
   const {
     data: details,
     isLoading,
@@ -136,19 +137,13 @@ export default function CompanyProfileCard({
         )}
 
         <div className="flex items-center gap-1 mt-2 text-sm">
-          <div className="flex text-yellow-500">
-            {[1, 2, 3, 4, 5].map((star) => (
-              <Star
-                key={star}
-                size={16}
-                className={
-                  star <= Math.round(rating)
-                    ? "fill-yellow-500 text-yellow-500"
-                    : "text-gray-300"
-                }
-              />
-            ))}
-          </div>
+          <Rating
+            name="half-rating-read"
+            defaultValue={rating.toFixed(1)}
+            precision={0.5}
+            size="medium"
+            readOnly
+          />
 
           <span className="text-gray-600">
             {rating.toFixed(1)} ({details?.totalReviews ?? 0})
@@ -297,22 +292,15 @@ export default function CompanyProfileCard({
                 {editingReview?.id === review.id ? (
                   <form onSubmit={handleUpdateReview} className="space-y-2">
                     <div className="flex gap-1">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <button
-                          key={star}
-                          type="button"
-                          onClick={() => setEditRating(star)}
-                        >
-                          <Star
-                            size={18}
-                            className={
-                              star <= editRating
-                                ? "fill-yellow-500 text-yellow-500"
-                                : "text-gray-300"
-                            }
-                          />
-                        </button>
-                      ))}
+                      <Rating
+                        name="size-small"
+                        defaultValue={editRating ?? 0}
+                        size="small"
+                        precision={0.5}
+                        onChange={(event, newValue) => {
+                          setEditRating(newValue);
+                        }}
+                      />
                     </div>
 
                     <textarea
@@ -341,19 +329,13 @@ export default function CompanyProfileCard({
                   </form>
                 ) : (
                   <div>
-                    <div className="flex items-center gap-1 mt-1">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Star
-                          key={star}
-                          size={16}
-                          className={
-                            star <= Math.round(review?.rate)
-                              ? "fill-yellow-500 text-yellow-500"
-                              : "text-gray-300"
-                          }
-                        />
-                      ))}
-                    </div>
+                    <Rating
+                      name="half-rating-read"
+                      defaultValue={review?.rate}
+                      precision={0.5}
+                      size="small"
+                      readOnly
+                    />
                     <p className="text-gray-700">{review.message}</p>
                   </div>
                 )}
@@ -374,23 +356,15 @@ export default function CompanyProfileCard({
           ) : (
             <form className="space-y-3" onSubmit={handleSubmit}>
               <div className="flex items-center gap-1">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    type="button"
-                    onClick={() => setRatingInput(star)}
-                  >
-                    <Star
-                      size={20}
-                      className={
-                        star <= ratingInput
-                          ? "fill-yellow-500 text-yellow-500"
-                          : "text-gray-300"
-                      }
-                    />
-                  </button>
-                ))}
-
+                <Rating
+                  name="size-small"
+                  defaultValue={ratingInput ?? 0}
+                  size="small"
+                  precision={0.5}
+                  onChange={(event, newValue) => {
+                    setRatingInput(newValue);
+                  }}
+                />
                 <span className="ml-2 text-sm text-gray-500">
                   {ratingInput} / 5
                 </span>

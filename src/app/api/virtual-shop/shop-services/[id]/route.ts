@@ -1,11 +1,29 @@
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/authOptions";
+
 import { updateShopServiceSchema } from "@/validations/schemas/virtual-shop/shop-service.validation";
 
 import { Labor, Material, Service, Tag } from "@prisma/client";
+import { jwtVerifyToken } from "@/lib/jwtVerify";
+import { AppError } from "@/error-boundary/error";
+import { errorHandler } from "@/error-boundary/globalErrorHandler";
 // Use your update schema if you have one, otherwise falling back to the create schema
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     ErrorResponse:
+ *       type: object
+ *       properties:
+ *         success:
+ *           type: boolean
+ *           example: false
+ *         message:
+ *           type: string
+ *         errorDetails:
+ *           type: object
+ */
 
 /**
  * @swagger
@@ -106,10 +124,22 @@ import { Labor, Material, Service, Tag } from "@prisma/client";
  *                             example: [{ "id": 50, "name": "Premium Wax", "cost": 10, "sell": 15 }]
  *       400:
  *         description: Invalid or missing parameter (id).
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       404:
  *         description: Shop service not found.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       500:
  *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 export async function GET(
   req: Request,
@@ -119,10 +149,7 @@ export async function GET(
     const { id } = params;
 
     if (!id || isNaN(Number(id))) {
-      return NextResponse.json(
-        { success: false, message: "Invalid or missing shop service ID" },
-        { status: 400 },
-      );
+      throw new AppError(400, "Invalid or missing shop service ID");
     }
 
     const shopService = await db.shopService.findUnique({
@@ -142,10 +169,7 @@ export async function GET(
     });
 
     if (!shopService) {
-      return NextResponse.json(
-        { success: false, message: "Shop service not found" },
-        { status: 404 },
-      );
+      throw new AppError(404, "Shop service not found");
     }
 
     return NextResponse.json(
@@ -156,19 +180,21 @@ export async function GET(
       { status: 200 },
     );
   } catch (error: any) {
-    console.error("Error fetching shop service by ID:", error);
+    const formattedError = errorHandler(error);
     return NextResponse.json(
       {
         success: false,
-        message: error.message || "Failed to fetch shop service",
+        message: formattedError.message,
+        errorDetails: formattedError,
       },
-      { status: 500 },
+      { status: formattedError.statusCode },
     );
   }
 }
 
 type TUpdateShopServiceRequest = {
-  shopId: string;
+  shopId: number;
+  companyId: number;
   title: string;
   description?: string;
   items: {
@@ -216,9 +242,9 @@ type TUpdateShopServiceRequest = {
  *               - items
  *             properties:
  *               shopId:
- *                 type: string
+ *                 type: number
  *                 description: ID of the underlying shop.
- *                 example: "1"
+ *                 example: 1
  *               title:
  *                 type: string
  *                 description: Title of the shop service.
@@ -256,6 +282,69 @@ type TUpdateShopServiceRequest = {
  *                 description: Nested array for rebuilding invoice configurations.
  *                 items:
  *                   type: object
+ *                   properties:
+ *                     service:
+ *                       type: object
+ *                       nullable: true
+ *                       example: { "id": 5, "name": "service name", "categoryId": 1, "description": "anything" }
+ *                     labor:
+ *                       type: object
+ *                       nullable: true
+ *                       example: { "name": "Deep Clean Labor", "hours": 5, "charge": 50, "discount": 0, "tags": [] }
+ *                     materials:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                       example: [{ "name": "Premium Wax", "quantity": 1, "cost": 15, "sell": 49, "discount": 0, "tags": [] }]
+ *                     tags:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                       example: []
+ *                     serviceDesc:
+ *                       type: string
+ *                       example: "Includes paint decontamination."
+ *           example:
+ *             shopId: 1
+ *             title: "Full Ceramic Coating & Detail"
+ *             companyId: 4
+ *             description: "Complete exterior paint correction and c..."
+ *             imageUrl: "https://example.com/ceramic-coating.jpg"
+ *             modifierCoupe: "0"
+ *             modifierSedan: "50"
+ *             modifierSUV: "100"
+ *             modifierTruck: "150"
+ *             isActive: true
+ *             items:
+ *               - service:
+ *                   id: 2526
+ *                   name: "Test Door Serffvice 6"
+ *                   description: "Full exterior paint correction service."
+ *                   companyId: 4
+ *                   categoryId: 421
+ *                   createdAt: "2024-01-15T08:00:00.000Z"
+ *                   updatedAt: "2024-06-10T12:00:00.000Z"
+ *                 labor:
+ *                   name: "Master Detailer"
+ *                   notes: "Apply carefully"
+ *                   tags: []
+ *                   hours: 2
+ *                   charge: 150
+ *                   discount: 0
+ *                   cannedLabor: false
+ *                 materials:
+ *                   - name: "ISO 70% ALC"
+ *                     notes: "Apply in shaded area only"
+ *                     quantity: "1"
+ *                     cost: 45
+ *                     sell: 150
+ *                     discount: 0
+ *                     companyId: 4
+ *                     productId: 1
+ *                     createdAt: "2024-01-15T08:00:00.000Z"
+ *                     updatedAt: "2024-06-10T12:00:00.000Z"
+ *                     tags: []
+ *                 tags: []
  *     responses:
  *       200:
  *         description: Successfully updated shop service.
@@ -272,47 +361,60 @@ type TUpdateShopServiceRequest = {
  *                   description: Updated Shop Service object
  *       400:
  *         description: Invalid or missing data.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       401:
  *         description: Unauthorized.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       403:
  *         description: Company ID not found.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       404:
  *         description: Shop service not found or access denied.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       500:
  *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 export async function PUT(
   req: Request,
   { params }: { params: { id: string } },
 ) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session || !session.user) {
-      return NextResponse.json(
-        { success: false, message: "Unauthorized" },
-        { status: 401 },
-      );
-    }
-
-    const companyId = session.user.companyId;
-    if (!companyId) {
-      return NextResponse.json(
-        { success: false, message: "Company ID not found" },
-        { status: 403 },
-      );
-    }
-
     const serviceId = parseInt(params.id, 10);
     if (isNaN(serviceId)) {
-      return NextResponse.json(
-        { success: false, message: "Invalid Shop Service ID" },
-        { status: 400 },
-      );
+      throw new AppError(400, "Invalid Shop Service ID");
     }
 
     const body = (await req.json()) as TUpdateShopServiceRequest;
-    await updateShopServiceSchema.parseAsync(body);
+    await updateShopServiceSchema.parseAsync({ id: serviceId, ...body });
+
+    const authHeader = req.headers.get("authorization") ?? "";
+    const accessToken = authHeader.startsWith("Bearer")
+      ? authHeader.split(" ")[1]
+      : authHeader;
+
+    const verifyToken = await jwtVerifyToken(accessToken);
+
+    if (!verifyToken?.payload) {
+      throw new AppError(401, "Unauthorized");
+    }
+
+    const companyId = verifyToken?.payload?.companyId as number;
 
     const {
       title,
@@ -326,6 +428,10 @@ export async function PUT(
       isActive,
     } = body;
 
+    if (!companyId) {
+      throw new AppError(403, "Company ID not found");
+    }
+
     // 1. Verify Ownership
     const existingService = await db.shopService.findUnique({
       where: { id: serviceId },
@@ -333,10 +439,7 @@ export async function PUT(
     });
 
     if (!existingService || existingService.shop.companyId !== companyId) {
-      return NextResponse.json(
-        { success: false, message: "Access denied" },
-        { status: 404 },
-      );
+      throw new AppError(404, "Access denied");
     }
 
     // 2. PRE-CALCULATE TOTALS & CATEGORIES (Keeps transaction fast)
@@ -526,10 +629,14 @@ export async function PUT(
       { status: 200 },
     );
   } catch (error: any) {
-    console.error("Error updating shop service:", error);
+    const formattedError = errorHandler(error);
     return NextResponse.json(
-      { success: false, message: error.message || "Something went wrong" },
-      { status: 500 },
+      {
+        success: false,
+        message: formattedError.message,
+        errorDetails: formattedError,
+      },
+      { status: formattedError.statusCode },
     );
   }
 }
@@ -570,41 +677,55 @@ export async function PUT(
  *                   description: The raw response data for the deleted service.
  *       400:
  *         description: Missing required id or bad request.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       401:
  *         description: Unauthorized.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       403:
  *         description: Company ID not found in session.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       500:
  *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 export async function DELETE(
   req: Request,
   { params }: { params: { id: string } },
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || !session.user) {
-      return NextResponse.json(
-        { success: false, message: "Unauthorized" },
-        { status: 401 },
-      );
+    const authHeader = req.headers.get("authorization") ?? "";
+    const accessToken = authHeader.startsWith("Bearer")
+      ? authHeader.split(" ")[1]
+      : authHeader;
+
+    const verifyToken = await jwtVerifyToken(accessToken);
+
+    if (!verifyToken?.payload) {
+      throw new AppError(401, "Unauthorized");
     }
 
-    const companyId = session.user.companyId;
+    const companyId = verifyToken?.payload?.companyId as number;
+
     if (!companyId) {
-      return NextResponse.json(
-        { success: false, message: "Company ID not found in session" },
-        { status: 403 },
-      );
+      throw new AppError(403, "Company ID not found in session");
     }
 
     const id = params.id;
 
     if (!id) {
-      return NextResponse.json(
-        { success: false, message: "Missing required id" },
-        { status: 400 },
-      );
+      throw new AppError(400, "Missing required id");
     }
 
     const deletedShopService = await db.shopService.delete({
@@ -617,10 +738,14 @@ export async function DELETE(
       data: deletedShopService,
     });
   } catch (error: any) {
-    console.error("Error deleting shop service:", error);
+    const formattedError = errorHandler(error);
     return NextResponse.json(
-      { success: false, message: error.message || "Something went wrong" },
-      { status: 500 },
+      {
+        success: false,
+        message: formattedError.message,
+        errorDetails: formattedError,
+      },
+      { status: formattedError.statusCode },
     );
   }
 }

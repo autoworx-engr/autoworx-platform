@@ -4,7 +4,7 @@ import { validateCompanyId } from "../utils";
 
 /**
  * @swagger
- * /api/sales-agent/faq:
+ * /api/ai-train/faq:
  *   get:
  *     summary: Get overall FAQs for company
  *     tags: [FAQ]
@@ -74,7 +74,7 @@ export async function GET(req: Request) {
 
 /**
  * @swagger
- * /api/sales-agent/faq:
+ * /api/ai-train/faq:
  *   post:
  *     summary: Create or update overall FAQs for company
  *     tags: [FAQ]

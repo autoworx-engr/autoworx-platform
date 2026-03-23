@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 
 const fetchCompanyKnowledge = async (companyId: number) => {
   const response = await fetch(
-    `/api/sales-agent/company-knowledge?companyId=${companyId}`,
+    `/api/ai-train/company-knowledge?companyId=${companyId}`,
   );
   if (!response.ok) {
     throw new Error("Failed to fetch company knowledge");
@@ -31,7 +31,7 @@ export function useSaveCompanyKnowledge() {
   return useMutation({
     mutationFn: async (payload: any) => {
       // Always use POST for upsert
-      const response = await fetch("/api/sales-agent/company-knowledge", {
+      const response = await fetch("/api/ai-train/company-knowledge", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ companyId, ...payload }),

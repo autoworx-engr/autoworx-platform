@@ -69,6 +69,7 @@ type AppointmentModalBodyProps = {
   fromLead?: boolean;
   clientId?: number | null;
   vehicleId?: number | null;
+  draftEstimateId?: string | null;
   date?: Date | string;
   startTime?: string;
   fromEdit?: boolean;
@@ -88,6 +89,7 @@ export default function AppointmentModalBody({
   fromLead = false,
   clientId,
   vehicleId,
+  draftEstimateId,
   date: selectedDate,
   startTime: selectedStartTime,
   onModalClose,
@@ -148,7 +150,7 @@ export default function AppointmentModalBody({
   const [endTime, setEndTime] = useState("00:00");
   const [allDay, setAllDay] = useState(false);
   const [vehicle, setVehicle] = useState<Partial<Vehicle> | null>(null);
-  const [draft, setDraft] = useState<string | null>(null);
+  const [draft, setDraft] = useState<string | null>(draftEstimateId || null);
   const [draftSearch, setDraftSearch] = useState("");
   const [assignedUsers, setAssignedUsers] = useState<User[]>([]);
 
@@ -291,7 +293,7 @@ export default function AppointmentModalBody({
         assignedUsers: [],
         client: null,
         vehicle: null,
-        draft: null,
+        draft: draftEstimateId || null,
         notes: "",
         confirmationTemplate: null,
         reminderTemplate: null,
@@ -597,7 +599,7 @@ export default function AppointmentModalBody({
       startTime !== originalValues.startTime ||
       endTime !== originalValues.endTime ||
       JSON.stringify(assignedUsers) !==
-      JSON.stringify(originalValues.assignedUsers) ||
+        JSON.stringify(originalValues.assignedUsers) ||
       client?.id !== originalValues.client?.id ||
       vehicle?.id !== originalValues.vehicle?.id ||
       draft !== originalValues.draft ||
@@ -605,7 +607,7 @@ export default function AppointmentModalBody({
       confirmationTemplate?.id !== originalValues.confirmationTemplate?.id ||
       reminderTemplate?.id !== originalValues.reminderTemplate?.id ||
       confirmationTemplateStatus !==
-      originalValues.confirmationTemplateStatus ||
+        originalValues.confirmationTemplateStatus ||
       reminderTemplateStatus !== originalValues.reminderTemplateStatus ||
       JSON.stringify(times) !== JSON.stringify(originalValues.times)
     ) {
@@ -803,7 +805,7 @@ export default function AppointmentModalBody({
 
   return (
     <DialogContent
-     onOpenAutoFocus={(e)=>e.preventDefault()}
+      onOpenAutoFocus={(e) => e.preventDefault()}
       className="grid max-w-5xl grid-rows-[auto,1fr,auto] sm:max-w-[80vw] lg:max-w-6xl"
       form
     >
@@ -1059,7 +1061,7 @@ export default function AppointmentModalBody({
                         "border border-slate-200 bg-white shadow-sm hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900",
                         "focus:outline-none focus:ring-2 focus:ring-[#6571FF]/40",
                         draftOpen &&
-                        "ring-2 ring-[#6571FF]/40 border-[#6571FF]",
+                          "ring-2 ring-[#6571FF]/40 border-[#6571FF]",
                       )}
                     >
                       <div className="flex flex-col items-start overflow-hidden text-left">
@@ -1149,7 +1151,7 @@ export default function AppointmentModalBody({
                             "flex w-full items-center justify-center gap-2 rounded-lg bg-[#6571FF] py-2.5 text-sm font-semibold text-white transition-opacity",
                             "hover:opacity-90 active:scale-[0.98]",
                             (!client || !vehicle) &&
-                            "cursor-not-allowed opacity-60",
+                              "cursor-not-allowed opacity-60",
                           )}
                         >
                           <Plus size={16} />
@@ -1362,9 +1364,10 @@ export default function AppointmentModalBody({
               className={`rounded-xl px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40
                 hover:-translate-y-0.5 hover:scale-[1.02]
                 active:translate-y-0 active:scale-100
-                transition-all duration-200 ${formChanged && !isSubmitting
-                  ? "bg-gradient-to-r from-[#6571FF] to-[#5a66ee] cursor-pointer"
-                  : "cursor-not-allowed bg-gray-400"
+                transition-all duration-200 ${
+                  formChanged && !isSubmitting
+                    ? "bg-gradient-to-r from-[#6571FF] to-[#5a66ee] cursor-pointer"
+                    : "cursor-not-allowed bg-gray-400"
                 }`}
               onClick={handleSubmit}
               disabled={

@@ -27,30 +27,75 @@ const updateItemValidationSchema = z.object({
 });
 
 export const createShopServiceSchema = z.object({
-  shopId: z.string().min(1, "Shop ID is required"),
-  title: z.string().min(1, "Title is required"),
-  description: z.string().optional(),
-  items: z.array(createItemValidationSchema).optional().default([]),
-  imageUrl: z.string().optional(),
+  shopId: z
+    .number({
+      required_error: "Shop ID is required",
+      invalid_type_error: "Shop ID must be a number",
+    })
+    .min(1, "Shop ID is required"),
+  title: z
+    .string({
+      required_error: "Title is required",
+      invalid_type_error: "Title must be a string",
+    })
+    .min(1, "Title is required"),
+  description: z
+    .string({ invalid_type_error: "Description must be a string" })
+    .optional(),
+  items: z
+    .array(createItemValidationSchema, {
+      invalid_type_error: "Items must be an array",
+    })
+    .optional()
+    .default([]),
+  imageUrl: z
+    .string({ invalid_type_error: "Image URL must be a string" })
+    .optional(),
   modifierCoupe: z.union([z.string(), z.number()]).optional(),
   modifierSedan: z.union([z.string(), z.number()]).optional(),
   modifierSUV: z.union([z.string(), z.number()]).optional(),
   modifierTruck: z.union([z.string(), z.number()]).optional(),
-  isActive: z.boolean().optional(),
+  isActive: z
+    .boolean({ invalid_type_error: "Active status must be a boolean value" })
+    .optional(),
 });
 
 export const updateShopServiceSchema = z.object({
-  id: z.number({ required_error: "Shop Service ID is required" }),
-  shopId: z.string().min(1, "Shop ID is required"),
-  title: z.string().min(1, "Title is required"),
-  description: z.string().optional(),
-  items: z.array(updateItemValidationSchema).optional().default([]),
-  imageUrl: z.string().optional(),
+  id: z.number({
+    required_error: "Shop Service ID is required",
+    invalid_type_error: "Shop Service ID must be a number",
+  }),
+  shopId: z
+    .number({
+      required_error: "Shop ID is required",
+      invalid_type_error: "Shop ID must be a number",
+    })
+    .min(1, "Shop ID is required"),
+  title: z
+    .string({
+      required_error: "Title is required",
+      invalid_type_error: "Title must be a string",
+    })
+    .min(1, "Title is required"),
+  description: z
+    .string({ invalid_type_error: "Description must be a string" })
+    .optional(),
+  items: z
+    .array(updateItemValidationSchema, {
+      invalid_type_error: "Items must be an array",
+    })
+    .optional()
+    .default([]),
+  imageUrl: z
+    .string({ invalid_type_error: "Image URL must be a string" })
+    .optional(),
   modifierCoupe: z.union([z.string(), z.number()]).optional(),
   modifierSedan: z.union([z.string(), z.number()]).optional(),
   modifierSUV: z.union([z.string(), z.number()]).optional(),
   modifierTruck: z.union([z.string(), z.number()]).optional(),
-  isActive: z.boolean().optional(),
+  isActive: z
+    .boolean({ invalid_type_error: "Active status must be a boolean value" })
+    .optional(),
 });
 
 export type TCreateShopServiceRequest = z.infer<typeof createShopServiceSchema>;

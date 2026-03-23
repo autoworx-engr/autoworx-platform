@@ -7,18 +7,18 @@ import { customAlphabet } from "nanoid";
 import { addVehicle } from "@/actions/vehicle/addVehicle";
 import { addAppointment } from "@/actions/appointment/addAppointment";
 import { AppError } from "@/error-boundary/error";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/authOptions";
+import { jwtVerifyToken } from "@/lib/jwtVerify";
 import { Prisma } from "@prisma/client";
+import { errorHandler } from "@/error-boundary/globalErrorHandler";
 
 /**
  * @swagger
- * /api/virtual-shop/service-bookings:
+ * /api/virtual-shop/service-booking:
  *   get:
  *     summary: Retrieve a paginated list of service bookings (estimates/appointments)
  *     description: Fetch service bookings associated with the current user's company, including their corresponding client, vehicle, appointment, invoice, and booked services details. Supports searching by client name and pagination.
  *     tags:
- *       - Virtual Service Booking
+ *       - Virtual Shop
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -195,21 +195,21 @@ import { Prisma } from "@prisma/client";
  */
 export async function GET(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    const authHeader = req.headers.get("authorization") ?? "";
+    const accessToken = authHeader.startsWith("Bearer")
+      ? authHeader.split(" ")[1]
+      : authHeader;
 
-    if (!session || !session.user) {
-      return NextResponse.json(
-        { success: false, message: "Unauthorized" },
-        { status: 401 },
-      );
+    const verifyToken = await jwtVerifyToken(accessToken);
+
+    if (!verifyToken?.payload) {
+      throw new AppError(401, "Unauthorized");
     }
 
-    const companyId = session.user.companyId;
+    const companyId = verifyToken?.payload?.companyId as number;
+
     if (!companyId) {
-      return NextResponse.json(
-        { success: false, message: "Company ID not found" },
-        { status: 403 },
-      );
+      throw new AppError(403, "Company ID not found in session");
     }
 
     const { searchParams } = new URL(req.url);
@@ -324,6 +324,12 @@ export async function GET(req: Request) {
       { status: 200 },
     );
   } catch (error: any) {
+    if (error instanceof AppError) {
+      return NextResponse.json(
+        { success: false, message: error.message },
+        { status: error.statusCode },
+      );
+    }
     console.error("Error fetching shop bookings:", error);
     return NextResponse.json(
       {
@@ -342,7 +348,7 @@ export async function GET(req: Request) {
  *     summary: Creates a new service booking via the virtual shop
  *     description: Handles customer service booking request. Creates or finds a client and vehicle, checks availability and stacking limits, creates an estimate (invoice) with the requested services, books an appointment, and records the shop booking history.
  *     tags:
- *       - Virtual Shop Booking
+ *       - Virtual Shop
  *     requestBody:
  *       required: true
  *       content:
@@ -350,8 +356,8 @@ export async function GET(req: Request) {
  *           schema:
  *             type: object
  *             required:
- *               - slug
- *               - shopServiceIds
+ *               - shopId
+ *               - shopServices
  *               - appointmentDate
  *               - appointmentStartTime
  *               - phone
@@ -359,16 +365,21 @@ export async function GET(req: Request) {
  *               - model
  *               - year
  *             properties:
- *               slug:
- *                 type: string
- *                 description: The unique slug for the virtual shop.
- *                 example: my-auto-shop
- *               shopServiceIds:
+ *               shopId:
+ *                 type: integer
+ *                 description: The unique ID for the virtual shop.
+ *                 example: 1
+ *               shopServices:
  *                 type: array
- *                 description: Array of selected shop service IDs.
+ *                 description: Array of selected shop services with optional vehicle type. The cost is calculated by the backend.
  *                 items:
- *                   type: integer
- *                 example: [1, 2, 3]
+ *                   type: object
+ *                   properties:
+ *                     shopServiceId:
+ *                       type: integer
+ *                     vehicleType:
+ *                       type: string
+ *                 example: [{ shopServiceId: 1, vehicleType: "SUV" }]
  *               appointmentDate:
  *                 type: string
  *                 format: date
@@ -524,7 +535,7 @@ export async function GET(req: Request) {
  *                   example: false
  *                 message:
  *                   type: string
- *                   example: "Shop not found with the provided slug."
+ *                   example: "Shop not found with the provided ID."
  *       500:
  *         description: Internal Server Error.
  *         content:
@@ -540,12 +551,17 @@ export async function GET(req: Request) {
  *                   example: "Internal Server Error"
  */
 export async function POST(req: Request) {
+  let createdClientId: number | null = null;
+  let createdVehicleId: number | null = null;
+  let createdEstimateId: string | null = null;
+  let createdAppointmentId: number | null = null;
+
   try {
     const body = await req.json();
 
     const {
-      slug,
-      shopServiceIds,
+      shopId,
+      shopServices,
       appointmentDate,
       appointmentStartTime,
       fullName,
@@ -560,10 +576,10 @@ export async function POST(req: Request) {
 
     // 1. Validate required input
     if (
-      !slug ||
-      !shopServiceIds ||
-      !Array.isArray(shopServiceIds) ||
-      shopServiceIds.length === 0 ||
+      !shopId ||
+      !shopServices ||
+      !Array.isArray(shopServices) ||
+      shopServices.length === 0 ||
       !appointmentDate ||
       !appointmentStartTime ||
       !phone ||
@@ -571,19 +587,20 @@ export async function POST(req: Request) {
       !model ||
       !year
     ) {
-      return NextResponse.json(
-        { success: false, message: "Missing required fields" },
-        { status: 400 },
-      );
+      throw new AppError(400, "Missing required fields");
     }
+
+    const shopServiceIds = shopServices
+      .map((s: any) => s.shopServiceId)
+      .filter(Boolean);
 
     const firstName = fullName?.split(" ")[0] || "Guest";
     const lastName = fullName?.split(" ").slice(1).join(" ") || undefined;
 
     return await db.$transaction(async tx => {
-      // 2. Validate Shop Slug
+      // 2. Validate Shop
       const shop = await tx.shop.findUnique({
-        where: { slug },
+        where: { id: Number(shopId) },
         include: {
           company: {
             select: {
@@ -597,7 +614,7 @@ export async function POST(req: Request) {
       });
 
       if (!shop) {
-        throw new AppError(404, "Shop not found with the provided slug.");
+        throw new AppError(404, "Shop not found with the provided ID.");
       }
 
       const findCompanyAdminUser = await tx.user.findFirst({
@@ -642,6 +659,7 @@ export async function POST(req: Request) {
           );
         }
         client = clientResult.data;
+        createdClientId = client?.id ?? null;
 
         if (client) {
           const column = await tx.column.findFirst({
@@ -696,6 +714,7 @@ export async function POST(req: Request) {
         });
         if (vehicleResponse.type === "success") {
           vehicle = vehicleResponse.data;
+          createdVehicleId = vehicle?.id ?? null;
         }
       }
 
@@ -823,11 +842,18 @@ export async function POST(req: Request) {
         ...item,
         materials: item.materials.map(material => ({
           ...material,
+          quantity: (Number(material.quantity) || 0) as any,
+          cost: (Number(material.cost) || 0) as any,
+          sell: (Number(material.sell) || 0) as any,
+          discount: (Number(material.discount) || 0) as any,
           tags: material.tags.map((mt: any) => mt.tag),
         })),
         labor: item.labor
           ? {
               ...item.labor,
+              hours: (Number(item.labor.hours) || 0) as any,
+              charge: (Number(item.labor.charge) || 0) as any,
+              discount: (Number(item.labor.discount) || 0) as any,
               tags: item.labor.tags.map((lt: any) => lt.tag),
             }
           : null,
@@ -835,13 +861,17 @@ export async function POST(req: Request) {
       }));
 
       const vehicleExtraCost = selectedServices.reduce((acc, srv) => {
-        const modifier =
-          srv.modifierTruck ||
-          srv.modifierSUV ||
-          srv.modifierSedan ||
-          srv.modifierCoupe ||
-          0;
-        return acc + Number(modifier);
+        const userInput = shopServices.find(
+          (s: any) => s.shopServiceId === srv.id,
+        );
+        if (userInput?.vehicleType) {
+          const vt = userInput.vehicleType.toLowerCase();
+          if (vt === "truck") return acc + Number(srv.modifierTruck || 0);
+          if (vt === "suv") return acc + Number(srv.modifierSUV || 0);
+          if (vt === "sedan") return acc + Number(srv.modifierSedan || 0);
+          if (vt === "coupe") return acc + Number(srv.modifierCoupe || 0);
+        }
+        return acc;
       }, 0);
 
       let totalServiceCost = selectedServices.reduce(
@@ -860,8 +890,10 @@ export async function POST(req: Request) {
         ? Number(shop.company.serviceFee)
         : 0;
 
-      const taxAmount = (subtotal * taxRate) / 100;
-      const serviceFeeAmount = (subtotal * serviceFeeRate) / 100;
+      // tax and service fee is calculated on totalServiceCost
+      const taxAmount = (totalServiceCost * taxRate) / 100;
+      const serviceFeeAmount = (totalServiceCost * serviceFeeRate) / 100;
+
       const grandTotal = subtotal + taxAmount + serviceFeeAmount;
       const isDepositEnabled = bookingSettings.isDepositEnabled;
       const requiredDepositAmount = isDepositEnabled
@@ -876,6 +908,7 @@ export async function POST(req: Request) {
       }
 
       const dueAmount = grandTotal - depositAmountVal;
+
       // 8. Create Estimate using the refactored shared action
       const estimateResult = await createInvoice({
         invoiceId: estimateId,
@@ -884,8 +917,9 @@ export async function POST(req: Request) {
         vehicleId: vehicle?.id,
         subtotal,
         discount: 0,
-        tax: taxAmount,
+        tax: taxRate,
         serviceFee: serviceFeeAmount,
+        vehicleExtraCost,
         deposit: depositAmountVal,
         depositNotes: "",
         depositMethod: "",
@@ -900,7 +934,7 @@ export async function POST(req: Request) {
         items,
         tasks: [],
         inspections: [],
-        damageNotes: null,
+        damageNotes: "",
         forceCompanyId: companyId,
       });
 
@@ -915,6 +949,7 @@ export async function POST(req: Request) {
       }
 
       const estimate = estimateResult.data;
+      createdEstimateId = estimate.id;
 
       // Mark lead as estimate created if exists
       if (client?.leadId) {
@@ -956,6 +991,7 @@ export async function POST(req: Request) {
       }
 
       const appointment = appointmentResult.data;
+      createdAppointmentId = appointment.id;
 
       // 10. Create ShopBooking History
       const shopBooking = await tx.shopBooking.create({
@@ -976,6 +1012,31 @@ export async function POST(req: Request) {
 
       // Create snapshot entries for the services in ShopBookingService
       for (const srv of selectedServices) {
+        const userInput = shopServices.find(
+          (s: any) => s.shopServiceId === srv.id,
+        );
+        let modifierPrice = 0;
+        let modifierType: string | null = null;
+
+        if (userInput?.vehicleType) {
+          const vt = userInput.vehicleType.toLowerCase();
+          if (vt === "truck") {
+            modifierType = "Truck";
+            modifierPrice = Number(srv.modifierTruck || 0);
+          } else if (vt === "suv") {
+            modifierType = "SUV";
+            modifierPrice = Number(srv.modifierSUV || 0);
+          } else if (vt === "sedan") {
+            modifierType = "Sedan";
+            modifierPrice = Number(srv.modifierSedan || 0);
+          } else if (vt === "coupe") {
+            modifierType = "Coupe";
+            modifierPrice = Number(srv.modifierCoupe || 0);
+          } else {
+            modifierType = userInput.vehicleType; // fallback just in case
+          }
+        }
+
         await tx.shopBookingService.create({
           data: {
             shopBookingId: shopBooking.id,
@@ -983,6 +1044,8 @@ export async function POST(req: Request) {
             title: srv.title,
             price: srv.price,
             duration: srv.duration,
+            modifierType: modifierType as any,
+            modifierPrice,
           },
         });
       }
@@ -1027,13 +1090,41 @@ export async function POST(req: Request) {
       );
     });
   } catch (error: any) {
-    console.error("Error in POST /api/virtual-shop/service-booking:", error);
+    console.log("error in service-booking", error);
+
+    // Fallback/Compensation for resources created via global db actions during the failed transaction
+    if (createdAppointmentId) {
+      await db.appointment
+        .delete({ where: { id: createdAppointmentId } })
+        .catch(e =>
+          console.error("Fallback deletion failed for Appointment:", e),
+        );
+    }
+    if (createdEstimateId) {
+      await db.invoice
+        .delete({ where: { id: createdEstimateId } })
+        .catch(e => console.error("Fallback deletion failed for Estimate:", e));
+    }
+    if (createdVehicleId) {
+      await db.vehicle
+        .delete({ where: { id: createdVehicleId } })
+        .catch(e => console.error("Fallback deletion failed for Vehicle:", e));
+    }
+    if (createdClientId) {
+      // The shared addCustomer action also creates a Lead, let's delete the client (which cascades or we can rely on lead being created in tx normally, but if addCustomer does it, it's global)
+      await db.client
+        .delete({ where: { id: createdClientId } })
+        .catch(e => console.error("Fallback deletion failed for Client:", e));
+    }
+
+    const formattedError = errorHandler(error);
     return NextResponse.json(
       {
         success: false,
-        message: error.message || "Failed to create shop service",
+        message: formattedError.message,
+        errorDetails: formattedError,
       },
-      { status: 200 },
+      { status: formattedError.statusCode },
     );
   }
 }

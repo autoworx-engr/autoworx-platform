@@ -46,61 +46,56 @@ export default function MobileNav({ navList, permissions }: TProps) {
     if (!companyFeaturePermission || companyFeaturePermission.length === 0)
       return true;
     const routeWithoutQuery = route.split("?")[0];
+
+    // Visualization visibility is controlled at route/page level (entitlements),
+    // not by company feature-permission filtering in nav.
+    if (routeWithoutQuery === "/dashboard/visualization") return true;
+
+    // Sales Agent route is controlled by plan entitlements at page/API level.
+    if (routeWithoutQuery.startsWith("/dashboard/settings/sales-agent")) {
+      return true;
+    }
+
     const featureKey = FEATURE_PERMISSIONS_MAP[routeWithoutQuery];
     if (!featureKey) return true;
     if (Array.isArray(featureKey)) {
-      return featureKey.some(key =>
+      return featureKey.some((key) =>
         companyFeaturePermission.some(
-          perm => perm.permission_name === key && perm.enabled,
+          (perm) => perm.permission_name === key && perm.enabled,
         ),
       );
     }
     return companyFeaturePermission.some(
-      perm => perm.permission_name === featureKey && perm.enabled,
+      (perm) => perm.permission_name === featureKey && perm.enabled,
     );
   }
 
-  // First filter by permissions, then by company feature permission
-  const [filteredNavList, setFilteredNavList] = useState(() => {
-    // Permission-based filtering
-    let permissionFiltered = filterNavList(navList, permissions);
-    // Company feature permission filtering
+  const buildFilteredNavList = (list: TProps["navList"]) => {
+    const permissionFiltered = filterNavList(list, permissions);
+
     return permissionFiltered
-      .filter(item => !item.link || canAccessCompanyFeatureRoute(item.link))
-      .map(item => {
-        if (item.subnav) {
-          const filteredSubnav = item.subnav.filter(sub =>
-            canAccessCompanyFeatureRoute(sub.link),
-          );
-          return {
-            ...item,
-            subnav: filteredSubnav.length > 0 ? filteredSubnav : null,
-          };
-        }
-        return item;
+      .filter((item) => !item.link || canAccessCompanyFeatureRoute(item.link))
+      .map((item) => {
+        if (!item.subnav) return item;
+
+        const filteredSubnav = item.subnav.filter((sub) =>
+          canAccessCompanyFeatureRoute(sub.link),
+        );
+
+        return {
+          ...item,
+          subnav: filteredSubnav.length > 0 ? filteredSubnav : null,
+        };
       });
-  });
+  };
+
+  // First filter by permissions, then by company feature permission
+  const [filteredNavList, setFilteredNavList] = useState(() =>
+    buildFilteredNavList(navList),
+  );
 
   useEffect(() => {
-    // Permission-based filtering
-    let permissionFiltered = filterNavList(navList, permissions);
-    // Company feature permission filtering
-    setFilteredNavList(
-      permissionFiltered
-        .filter(item => !item.link || canAccessCompanyFeatureRoute(item.link))
-        .map(item => {
-          if (item.subnav) {
-            const filteredSubnav = item.subnav.filter(sub =>
-              canAccessCompanyFeatureRoute(sub.link),
-            );
-            return {
-              ...item,
-              subnav: filteredSubnav.length > 0 ? filteredSubnav : null,
-            };
-          }
-          return item;
-        }),
-    );
+    setFilteredNavList(buildFilteredNavList(navList));
   }, [companyFeaturePermission, navList, permissions]);
   useEffect(() => {
     if (openNav) {
@@ -126,7 +121,7 @@ export default function MobileNav({ navList, permissions }: TProps) {
       <div className="fixed top-0 z-50 w-full bg-[#0C1427]">
         <div className="flex h-14 items-center justify-between bg-[#0C1427] p-1.5">
           <div
-            onClick={() => setOpenNav(prev => !prev)}
+            onClick={() => setOpenNav((prev) => !prev)}
             className="w-20 flex-shrink-0"
           >
             <Menu size={30} className="text-white" />

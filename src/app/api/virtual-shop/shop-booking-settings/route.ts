@@ -1,8 +1,25 @@
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/authOptions";
+import { jwtVerifyToken } from "@/lib/jwtVerify";
+import { AppError } from "@/error-boundary/error";
+import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { Prisma } from "@prisma/client";
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     ErrorResponse:
+ *       type: object
+ *       properties:
+ *         success:
+ *           type: boolean
+ *           example: false
+ *         message:
+ *           type: string
+ *         errorDetails:
+ *           type: object
+ */
 
 /**
  * @swagger
@@ -69,10 +86,22 @@ import { Prisma } from "@prisma/client";
  *                             type: string
  *       400:
  *         description: Missing shopId.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       404:
  *         description: Settings not found.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       500:
  *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 export async function GET(req: Request) {
   try {
@@ -80,10 +109,7 @@ export async function GET(req: Request) {
     const shopId = searchParams.get("shopId");
 
     if (!shopId) {
-      return NextResponse.json(
-        { success: false, message: "Missing shopId" },
-        { status: 400 },
-      );
+      throw new AppError(400, "Missing shopId");
     }
 
     const settings = await db.shopBookingSetting.findUnique({
@@ -92,21 +118,22 @@ export async function GET(req: Request) {
     });
 
     if (!settings) {
-      return NextResponse.json(
-        { success: false, message: "Settings not found" },
-        { status: 404 },
-      );
+      throw new AppError(404, "Settings not found");
     }
 
     return NextResponse.json(
       { success: true, data: settings },
       { status: 200 },
     );
-  } catch (error) {
-    console.error("Error fetching shop booking settings:", error);
+  } catch (error: any) {
+    const formattedError = errorHandler(error);
     return NextResponse.json(
-      { success: false, message: "Internal server error" },
-      { status: 500 },
+      {
+        success: false,
+        message: formattedError.message,
+        errorDetails: formattedError,
+      },
+      { status: formattedError.statusCode },
     );
   }
 }
@@ -136,28 +163,46 @@ export async function GET(req: Request) {
  *         description: Successfully created default shop booking settings.
  *       400:
  *         description: Missing shopId or settings already exist.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       401:
  *         description: Unauthorized.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       500:
  *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json(
-        { success: false, message: "Unauthorized" },
-        { status: 401 },
-      );
+    const authHeader = req.headers.get("authorization") ?? "";
+    const accessToken = authHeader.startsWith("Bearer")
+      ? authHeader.split(" ")[1]
+      : authHeader;
+
+    const verifyToken = await jwtVerifyToken(accessToken);
+
+    if (!verifyToken?.payload) {
+      throw new AppError(401, "Unauthorized");
+    }
+
+    const companyId = verifyToken?.payload?.companyId as number;
+
+    if (!companyId) {
+      throw new AppError(403, "Company ID not found in session");
     }
 
     const { shopId } = await req.json();
 
     if (!shopId) {
-      return NextResponse.json(
-        { success: false, message: "Missing shopId" },
-        { status: 400 },
-      );
+      throw new AppError(400, "Missing shopId");
     }
 
     const existingSettings = await db.shopBookingSetting.findUnique({
@@ -165,17 +210,11 @@ export async function POST(req: Request) {
     });
 
     if (existingSettings) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Settings already exist. Use PUT to update.",
-        },
-        { status: 400 },
-      );
+      throw new AppError(400, "Settings already exist. Use PATCH to update.");
     }
 
     const companySettings = await db.calendarSettings.findUnique({
-      where: { companyId: (session.user as any).companyId },
+      where: { companyId },
     });
     const defaultStartTime = companySettings?.dayStart || "09:00";
     const defaultEndTime = companySettings?.dayEnd || "17:00";
@@ -219,11 +258,15 @@ export async function POST(req: Request) {
       { success: true, data: newSettings },
       { status: 201 },
     );
-  } catch (error) {
-    console.error("Error creating shop booking settings:", error);
+  } catch (error: any) {
+    const formattedError = errorHandler(error);
     return NextResponse.json(
-      { success: false, message: "Internal server error" },
-      { status: 500 },
+      {
+        success: false,
+        message: formattedError.message,
+        errorDetails: formattedError,
+      },
+      { status: formattedError.statusCode },
     );
   }
 }
@@ -231,7 +274,7 @@ export async function POST(req: Request) {
 /**
  * @swagger
  * /api/virtual-shop/shop-booking-settings:
- *   put:
+ *   patch:
  *     summary: Update shop booking settings
  *     description: Update the scheduling, deposits, and add-on settings for a specific shop.
  *     tags:
@@ -285,19 +328,40 @@ export async function POST(req: Request) {
  *         description: Successfully updated shop booking settings.
  *       400:
  *         description: Missing shopId.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       401:
  *         description: Unauthorized.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       500:
  *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
-export async function PUT(req: Request) {
+export async function PATCH(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json(
-        { success: false, message: "Unauthorized" },
-        { status: 401 },
-      );
+    const authHeader = req.headers.get("authorization") ?? "";
+    const accessToken = authHeader.startsWith("Bearer")
+      ? authHeader.split(" ")[1]
+      : authHeader;
+
+    const verifyToken = await jwtVerifyToken(accessToken);
+
+    if (!verifyToken?.payload) {
+      throw new AppError(401, "Unauthorized");
+    }
+
+    const companyId = verifyToken?.payload?.companyId as number;
+
+    if (!companyId) {
+      throw new AppError(403, "Company ID not found in session");
     }
 
     const body = await req.json();
@@ -315,10 +379,7 @@ export async function PUT(req: Request) {
     } = body;
 
     if (!shopId) {
-      return NextResponse.json(
-        { success: false, message: "Missing shopId" },
-        { status: 400 },
-      );
+      throw new AppError(400, "Missing shopId");
     }
 
     const updateData: any = {};
@@ -339,12 +400,13 @@ export async function PUT(req: Request) {
 
     if (availabilities && Array.isArray(availabilities)) {
       updateData.availabilities = {
-        deleteMany: {}, // Delete old to replace with new ones cleanly
-        create: availabilities.map((a: any) => ({
-          dayOfWeek: a.dayOfWeek,
-          isOpen: a.isOpen ?? true,
-          startTime: a.startTime ?? null,
-          endTime: a.endTime ?? null,
+        updateMany: availabilities.map((a: any) => ({
+          where: { dayOfWeek: a.dayOfWeek },
+          data: {
+            isOpen: a.isOpen ?? true,
+            startTime: a.startTime ?? null,
+            endTime: a.endTime ?? null,
+          },
         })),
       };
     }
@@ -361,11 +423,15 @@ export async function PUT(req: Request) {
       { success: true, data: updatedSettings },
       { status: 200 },
     );
-  } catch (error) {
-    console.error("Error updating shop booking settings:", error);
+  } catch (error: any) {
+    const formattedError = errorHandler(error);
     return NextResponse.json(
-      { success: false, message: "Internal server error" },
-      { status: 500 },
+      {
+        success: false,
+        message: formattedError.message,
+        errorDetails: formattedError,
+      },
+      { status: formattedError.statusCode },
     );
   }
 }

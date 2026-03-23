@@ -1,5 +1,7 @@
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
+import { AppError } from "@/error-boundary/error";
+import { errorHandler } from "@/error-boundary/globalErrorHandler";
 
 /**
  * @swagger
@@ -104,31 +106,35 @@ export async function POST(req: NextRequest) {
       .replace(/[^a-z0-9-]/g, "");
 
     if (!storeName || !slug) {
-      return NextResponse.json(
-        { success: false, message: "storeName and slug are required" },
-        { status: 400 },
-      );
+      throw new AppError(400, "storeName and slug are required");
     }
 
     // Check if slug already exists
     const existing = await db.shop.findUnique({ where: { slug } });
     if (existing) {
-      return NextResponse.json(
-        { success: false, message: "Slug already exists" },
-        { status: 400 },
-      );
+      throw new AppError(400, "Slug already exists");
     }
 
-    const shop = await db.shop.create({
-      data: {
-        companyId,
-        storeName,
-        slug,
-        description: description ?? null,
-        logoUrl,
-        bannerUrl,
-        themeConfig: themeConfig ?? null,
-      },
+    const shop = await db.$transaction(async (tx) => {
+      const newShop = await tx.shop.create({
+        data: {
+          companyId,
+          storeName,
+          slug,
+          description: description ?? null,
+          logoUrl,
+          bannerUrl,
+          themeConfig: themeConfig ?? null,
+        },
+      });
+
+      await tx.shopBookingSetting.create({
+        data: {
+          shopId: newShop.id,
+        },
+      });
+
+      return newShop;
     });
 
     return NextResponse.json({
@@ -136,10 +142,15 @@ export async function POST(req: NextRequest) {
       message: "Shop created successfully",
       data: shop,
     });
-  } catch (error) {
+  } catch (error: any) {
+    const formattedError = errorHandler(error);
     return NextResponse.json(
-      { success: false, message: "Server error" },
-      { status: 500 },
+      {
+        success: false,
+        message: formattedError.message,
+        errorDetails: formattedError,
+      },
+      { status: formattedError.statusCode },
     );
   }
 }

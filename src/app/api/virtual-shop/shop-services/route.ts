@@ -1,9 +1,26 @@
+import { AppError } from "@/error-boundary/error";
+import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { db } from "@/lib/db";
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/authOptions";
-import { Labor, Material, Service, Tag, Prisma } from "@prisma/client";
+import { jwtVerifyToken } from "@/lib/jwtVerify";
 import { createShopServiceSchema } from "@/validations/schemas/virtual-shop/shop-service.validation";
+import { Labor, Material, Prisma, Service, Tag } from "@prisma/client";
+import { NextResponse } from "next/server";
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     ErrorResponse:
+ *       type: object
+ *       properties:
+ *         success:
+ *           type: boolean
+ *           example: false
+ *         message:
+ *           type: string
+ *         errorDetails:
+ *           type: object
+ */
 
 /**
  * @swagger
@@ -18,7 +35,7 @@ import { createShopServiceSchema } from "@/validations/schemas/virtual-shop/shop
  *         name: shopId
  *         required: true
  *         schema:
- *           type: string
+ *           type: number
  *         description: The ID of the shop to fetch services for.
  *       - in: query
  *         name: category
@@ -161,8 +178,16 @@ import { createShopServiceSchema } from "@/validations/schemas/virtual-shop/shop
  *                               example: [{ "id": 50, "name": "Premium Wax", "cost": 10, "sell": 15 }]
  *       400:
  *         description: Missing requires parameter (shopId).
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       500:
  *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 export async function GET(req: Request) {
   try {
@@ -170,7 +195,6 @@ export async function GET(req: Request) {
     const shopId = searchParams.get("shopId");
     const category = searchParams.get("category");
     const search = searchParams.get("search");
-
     // Default to 'desc' if not provided, strongly type the allowed values
     const sortOrder = (
       searchParams.get("sortOrder") === "asc" ? "asc" : "desc"
@@ -182,10 +206,7 @@ export async function GET(req: Request) {
     const skip = (page - 1) * limit;
 
     if (!shopId) {
-      return NextResponse.json(
-        { success: false, message: "Missing shopId" },
-        { status: 400 },
-      );
+      throw new AppError(400, "Missing shopId");
     }
 
     const whereClause: Prisma.ShopServiceWhereInput = {
@@ -247,13 +268,14 @@ export async function GET(req: Request) {
       { status: 200 },
     );
   } catch (error: any) {
-    console.error("Error fetching shop services:", error);
+    const formattedError = errorHandler(error);
     return NextResponse.json(
       {
         success: false,
-        message: error.message || "Failed to fetch shop services",
+        message: formattedError.message,
+        errorDetails: formattedError,
       },
-      { status: 500 },
+      { status: formattedError.statusCode },
     );
   }
 }
@@ -279,8 +301,8 @@ export async function GET(req: Request) {
  *               - title
  *             properties:
  *               shopId:
- *                 type: string
- *                 example: "1"
+ *                 type: number
+ *                 example: 1
  *               title:
  *                 type: string
  *                 example: "Full Detail Package"
@@ -318,12 +340,12 @@ export async function GET(req: Request) {
  *                     labor:
  *                       type: object
  *                       nullable: true
- *                       example: { "name": "Deep Clean Labor", "hours": 5, "charge": 50, "discount": 0, "tags": [] }
+ *                       example: { "name": "Deep Clean Labor", "categoryId": 1, "notes": "Thoroughly clean", "hours": 5, "charge": 50, "discount": 0, "tags": [] }
  *                     materials:
  *                       type: array
  *                       items:
  *                         type: object
- *                       example: [{ "name": "Premium Wax", "quantity": 1, "cost": 15, "sell": 49, "discount": 0, "tags": [] }]
+ *                       example: [{ "name": "Premium Wax", "vendorId": 2, "categoryId": 3, "notes": "Carnauba", "quantity": 1, "cost": 15, "sell": 49, "discount": 0, "productId": 4, "tags": [] }]
  *                     tags:
  *                       type: array
  *                       items:
@@ -332,6 +354,47 @@ export async function GET(req: Request) {
  *                     serviceDesc:
  *                       type: string
  *                       example: "Includes paint decontamination."
+ *           example:
+ *             shopId: 1
+ *             title: "Full Ceramic Coating & Detail"
+ *             companyId: 4
+ *             description: "Complete exterior paint correction and c..."
+ *             imageUrl: "https://example.com/ceramic-coating.jpg"
+ *             modifierCoupe: "0"
+ *             modifierSedan: "50"
+ *             modifierSUV: "100"
+ *             modifierTruck: "150"
+ *             isActive: true
+ *             items:
+ *               - service:
+ *                   id: 2526
+ *                   name: "Test Door Serffvice 6"
+ *                   description: "Full exterior paint correction service."
+ *                   companyId: 4
+ *                   categoryId: 421
+ *                   createdAt: "2024-01-15T08:00:00.000Z"
+ *                   updatedAt: "2024-06-10T12:00:00.000Z"
+ *                 labor:
+ *                   name: "Master Detailer"
+ *                   notes: "Apply carefully"
+ *                   tags: []
+ *                   hours: 2
+ *                   charge: 150
+ *                   discount: 0
+ *                   cannedLabor: false
+ *                 materials:
+ *                   - name: "ISO 70% ALC"
+ *                     notes: "Apply in shaded area only"
+ *                     quantity: "1"
+ *                     cost: 45
+ *                     sell: 150
+ *                     discount: 0
+ *                     companyId: 4
+ *                     productId: 1
+ *                     createdAt: "2024-01-15T08:00:00.000Z"
+ *                     updatedAt: "2024-06-10T12:00:00.000Z"
+ *                     tags: []
+ *                 tags: []
  *     responses:
  *       201:
  *         description: Shop service successfully created.
@@ -360,17 +423,38 @@ export async function GET(req: Request) {
  *                       example: 300
  *       400:
  *         description: Missing required fields or validation failure.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       401:
  *         description: Unauthorized.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       403:
  *         description: Company ID not found.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       404:
  *         description: Shop not found or access denied.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       500:
  *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 type TCreateShopServiceRequest = {
-  shopId: string;
+  shopId: number;
+  companyId: number;
   title: string;
   description?: string;
   items: {
@@ -391,26 +475,21 @@ type TCreateShopServiceRequest = {
 
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session || !session.user) {
-      return NextResponse.json(
-        { success: false, message: "Unauthorized" },
-        { status: 401 },
-      );
-    }
-
-    const companyId = session.user.companyId;
-
-    if (!companyId) {
-      return NextResponse.json(
-        { success: false, message: "Company ID not found" },
-        { status: 403 },
-      );
-    }
-
     const body = (await req.json()) as TCreateShopServiceRequest;
     await createShopServiceSchema.parseAsync(body);
+
+    const authHeader = req.headers.get("authorization") ?? "";
+    const accessToken = authHeader.startsWith("Bearer")
+      ? authHeader.split(" ")[1]
+      : authHeader;
+
+    const verifyToken = await jwtVerifyToken(accessToken);
+
+    if (!verifyToken?.payload) {
+      throw new AppError(401, "Unauthorized");
+    }
+
+    const companyId = verifyToken?.payload?.companyId as number;
 
     const {
       shopId,
@@ -425,23 +504,21 @@ export async function POST(req: Request) {
       isActive,
     } = body;
 
+    if (!companyId) {
+      throw new AppError(403, "Company ID not found");
+    }
+
     if (!shopId || !title) {
-      return NextResponse.json(
-        { success: false, message: "Missing required fields" },
-        { status: 400 },
-      );
+      throw new AppError(400, "Missing required fields");
     }
 
     // 1. Verify the shop belongs to the user's company
     const shop = await db.shop.findUnique({
-      where: { id: parseInt(shopId, 10) },
+      where: { id: shopId },
     });
 
     if (!shop || shop.companyId !== companyId) {
-      return NextResponse.json(
-        { success: false, message: "Shop not found or access denied" },
-        { status: 404 },
-      );
+      throw new AppError(404, "Shop not found or access denied");
     }
 
     // 2. PRE-CALCULATE TOTALS & CATEGORIES (Keeps transaction fast & fixes the category bug)
@@ -490,7 +567,7 @@ export async function POST(req: Request) {
       // No need to update it at the end of the transaction!
       const serviceRecord = await tx.shopService.create({
         data: {
-          shopId: parseInt(shopId, 10),
+          shopId,
           title,
           description,
           price: totalPrice,
@@ -547,7 +624,6 @@ export async function POST(req: Request) {
               await Promise.all(
                 item.materials.map(async material => {
                   if (!material || !material.name) return;
-
                   const newMat = await tx.material.create({
                     data: {
                       name: material.name,
@@ -598,10 +674,14 @@ export async function POST(req: Request) {
       { status: 201 },
     );
   } catch (error: any) {
-    console.error("Error creating shop service:", error);
+    const formattedError = errorHandler(error);
     return NextResponse.json(
-      { success: false, message: error.message || "Something went wrong" },
-      { status: 500 },
+      {
+        success: false,
+        message: formattedError.message,
+        errorDetails: formattedError,
+      },
+      { status: formattedError.statusCode },
     );
   }
 }

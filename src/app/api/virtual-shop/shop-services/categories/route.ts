@@ -1,5 +1,23 @@
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
+import { AppError } from "@/error-boundary/error";
+import { errorHandler } from "@/error-boundary/globalErrorHandler";
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     ErrorResponse:
+ *       type: object
+ *       properties:
+ *         success:
+ *           type: boolean
+ *           example: false
+ *         message:
+ *           type: string
+ *         errorDetails:
+ *           type: object
+ */
 
 /**
  * @swagger
@@ -33,9 +51,17 @@ import { NextResponse } from "next/server";
  *                     type: string
  *                   example: ["Detailing", "Paint Correction", "Ceramic Coating", "Maintenance"]
  *       400:
- *         description: Missing or invalid shopId parameter.
+ *         description: Error response
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       500:
  *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 export async function GET(req: Request) {
   try {
@@ -43,18 +69,12 @@ export async function GET(req: Request) {
     const shopIdParam = searchParams.get("shopId");
 
     if (!shopIdParam) {
-      return NextResponse.json(
-        { success: false, message: "Missing required parameter: shopId" },
-        { status: 400 },
-      );
+      throw new AppError(400, "Missing required parameter: shopId");
     }
 
     const shopId = parseInt(shopIdParam, 10);
     if (isNaN(shopId)) {
-      return NextResponse.json(
-        { success: false, message: "Invalid shopId parameter" },
-        { status: 400 },
-      );
+      throw new AppError(400, "Invalid shopId parameter");
     }
 
     // Fetch only the categories for active services of the specified shop
@@ -70,7 +90,7 @@ export async function GET(req: Request) {
 
     // Flatten the category arrays and extract unique values
     const uniqueCategories = Array.from(
-      new Set(services.flatMap(srv => srv.category || [])),
+      new Set(services.flatMap((srv) => srv.category || [])),
     ).filter(Boolean); // Filter out any accidentally empty or null values if applicable
 
     return NextResponse.json(
@@ -81,13 +101,14 @@ export async function GET(req: Request) {
       { status: 200 },
     );
   } catch (error: any) {
-    console.error("Error fetching shop service categories:", error);
+    const formattedError = errorHandler(error);
     return NextResponse.json(
       {
         success: false,
-        message: error.message || "Failed to fetch categories",
+        message: formattedError.message,
+        errorDetails: formattedError,
       },
-      { status: 500 },
+      { status: formattedError.statusCode },
     );
   }
 }

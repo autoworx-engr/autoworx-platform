@@ -39,6 +39,7 @@ interface UpdateEstimateInput {
   discount: number;
   tax: number;
   serviceFee: number;
+  vehicleExtraCost?: number;
   grandTotal: number;
   due: number;
 
@@ -521,6 +522,7 @@ export async function updateInvoice(
             discount: data.discount,
             tax: data.tax,
             serviceFee: data.serviceFee,
+            vehicleExtraCost: data.vehicleExtraCost,
             grandTotal: data.grandTotal,
             due: data.due,
             internalNotes: data.internalNotes,
