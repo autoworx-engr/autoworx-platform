@@ -3018,6 +3018,9 @@ model ShopBooking {
   depositPaid     Decimal @default(0) @map("deposit_paid") @db.Decimal(10, 2)
   balanceDue      Decimal @default(0) @map("balance_due") @db.Decimal(10, 2)
 
+  // Status
+  status          ShopBookingStatus @default(PENDING)
+
   // Notes
   customerNotes String? @map("customer_notes") @db.Text
   internalNotes String? @map("internal_notes") @db.Text

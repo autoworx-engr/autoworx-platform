@@ -448,6 +448,9 @@ export async function GET(req: Request) {
  *                     shopBookingId:
  *                       type: integer
  *                       example: 5
+ *                     status:
+ *                       type: string
+ *                       example: "PENDING"
  *                     appointment:
  *                       type: object
  *                       properties:
@@ -571,7 +574,6 @@ export async function POST(req: Request) {
       model,
       year,
       notes,
-      depositAmount,
     } = body;
 
     // 1. Validate required input
@@ -900,14 +902,7 @@ export async function POST(req: Request) {
         ? Number(bookingSettings.depositValue)
         : 0;
 
-      const depositAmountVal = Number(depositAmount || 0);
-      const isDepositPay = depositAmountVal >= requiredDepositAmount;
-
-      if (isDepositEnabled && !isDepositPay) {
-        throw new AppError(400, "Required Deposit amount is not sufficient.");
-      }
-
-      const dueAmount = grandTotal - depositAmountVal;
+      const shopBookingStatus = !isDepositEnabled ? "CONFIRMED" : "PENDING";
 
       // 8. Create Estimate using the refactored shared action
       const estimateResult = await createInvoice({
@@ -920,11 +915,11 @@ export async function POST(req: Request) {
         tax: taxRate,
         serviceFee: serviceFeeAmount,
         vehicleExtraCost,
-        deposit: depositAmountVal,
+        deposit: 0,
         depositNotes: "",
         depositMethod: "",
         grandTotal,
-        due: dueAmount,
+        due: grandTotal,
         internalNotes: "",
         terms: shop.company.terms || "",
         policy: shop.company.policy || "",
@@ -1004,8 +999,9 @@ export async function POST(req: Request) {
           tax: taxAmount + serviceFeeAmount,
           total: grandTotal,
           depositRequired: requiredDepositAmount,
-          depositPaid: depositAmountVal,
-          balanceDue: dueAmount,
+          depositPaid: 0,
+          balanceDue: grandTotal,
+          status: shopBookingStatus,
           customerNotes: notes || null,
         },
       });
@@ -1059,6 +1055,7 @@ export async function POST(req: Request) {
             appointmentId: appointment.id,
             estimateId: estimate.id,
             shopBookingId: shopBooking.id,
+            status: shopBooking.status,
             appointment: {
               date: appointment.date,
               startTime: appointment.startTime,
