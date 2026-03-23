@@ -2,18 +2,57 @@
 
 import { slimInputClassName } from "@/components/SlimInput";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { ChangeEvent, Dispatch, SetStateAction } from "react";
 
-export default function ServiceInfo() {
-  const [serviceTitle, setServiceTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [imageName, setImageName] = useState("");
-  const [vehicleTypeModifiers, setVehicleTypeModifiers] = useState({
-    coupe: "0",
-    sedan: "0",
-    suv: "0",
-    truck: "0",
-  });
+export type ServiceInfoState = {
+  serviceTitle: string;
+  description: string;
+  imageName: string;
+  imageUrl: string;
+  vehicleTypeModifiers: {
+    coupe: string;
+    sedan: string;
+    suv: string;
+    truck: string;
+  };
+};
+
+type ServiceInfoProps = {
+  value: ServiceInfoState;
+  onChange: Dispatch<SetStateAction<ServiceInfoState>>;
+  onImageSelect: (file: File | null) => void | Promise<void>;
+  isImageUploading?: boolean;
+};
+
+export default function ServiceInfo({
+  value,
+  onChange,
+  onImageSelect,
+  isImageUploading = false,
+}: ServiceInfoProps) {
+  const { serviceTitle, description, imageName, vehicleTypeModifiers } = value;
+
+  const setVehicleTypeModifiers = (
+    updater: (
+      prev: ServiceInfoState["vehicleTypeModifiers"],
+    ) => ServiceInfoState["vehicleTypeModifiers"],
+  ) => {
+    onChange((prev) => ({
+      ...prev,
+      vehicleTypeModifiers: updater(prev.vehicleTypeModifiers),
+    }));
+  };
+
+  const handleImageChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] || null;
+
+    onChange((prev) => ({
+      ...prev,
+      imageName: file?.name || "",
+    }));
+
+    await onImageSelect(file);
+  };
 
   return (
     <div className="h-full w-full space-y-4 rounded-md border border-slate-200 bg-white p-4">
@@ -22,9 +61,14 @@ export default function ServiceInfo() {
         <input
           type="text"
           value={serviceTitle}
-          onChange={(event) => setServiceTitle(event.target.value)}
+          onChange={(event) =>
+            onChange((prev) => ({ ...prev, serviceTitle: event.target.value }))
+          }
           placeholder="Enter service title"
-          className={cn("w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-400", slimInputClassName)}
+          className={cn(
+            "w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-400",
+            slimInputClassName,
+          )}
         />
       </div>
 
@@ -32,29 +76,42 @@ export default function ServiceInfo() {
         <label className="text-sm font-medium text-slate-700">Description</label>
         <textarea
           value={description}
-          onChange={(event) => setDescription(event.target.value)}
+          onChange={(event) =>
+            onChange((prev) => ({ ...prev, description: event.target.value }))
+          }
           placeholder="Enter service description"
           rows={4}
-          className={cn("w-full resize-none rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-400", slimInputClassName)}
+          className={cn(
+            "w-full resize-none rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-400",
+            slimInputClassName,
+          )}
         />
       </div>
 
       <div className="space-y-1">
         <label className="text-sm font-medium text-slate-700">Service Image</label>
         <label className="flex cursor-pointer items-center justify-between rounded-md border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-600">
-          <span className="truncate">{imageName || "Choose image (PNG, JPG, WEBP)"}</span>
-          <span className="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs">Browse</span>
+          <span className="truncate">
+            {isImageUploading
+              ? "Uploading image..."
+              : imageName || "Choose image (PNG, JPG, WEBP)"}
+          </span>
+          <span className="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs">
+            Browse
+          </span>
           <input
             type="file"
             accept="image/png,image/jpeg,image/webp"
             className="hidden"
-            onChange={(event) => setImageName(event.target.files?.[0]?.name || "")}
+            onChange={handleImageChange}
           />
         </label>
       </div>
 
       <div className="space-y-2">
-        <p className="text-sm font-medium text-slate-700">Vehicle Type Price Modifiers (+$)</p>
+        <p className="text-sm font-medium text-slate-700">
+          Vehicle Type Price Modifiers (+$)
+        </p>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           {[
             { key: "coupe", label: "Coupe" },
@@ -79,7 +136,10 @@ export default function ServiceInfo() {
                     [vehicleType.key]: event.target.value,
                   }))
                 }
-                className={cn("w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-400", slimInputClassName)}
+                className={cn(
+                  "w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-400",
+                  slimInputClassName,
+                )}
               />
             </div>
           ))}

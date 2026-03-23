@@ -1,4 +1,5 @@
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
+import { TCreateShopServiceRequest } from "@/validations/schemas/virtual-shop/shop-service.validation";
 import axios from "axios";
 
 export interface ThemeConfig {
@@ -16,13 +17,35 @@ export interface ShopData {
   themeConfig?: ThemeConfig;
 }
 
+export type CreateShopServicePayload = TCreateShopServiceRequest & {
+  companyId?: number;
+};
+
+export interface CreateShopServiceResponse {
+  success: boolean;
+  data: {
+    id: number;
+    shopId: number;
+    title: string;
+    description: string | null;
+    price: number;
+    duration: number;
+    imageUrl: string | null;
+    category: string[];
+    modifierCoupe: number;
+    modifierSedan: number;
+    modifierSUV: number;
+    modifierTruck: number;
+    isActive: boolean;
+  };
+}
+
 export const configureVirtualShop = async function (payload: ShopData) {
   try {
     const response = await axios.post(`/api/virtual-shop/configure`, payload);
 
     return response.data;
   } catch (error) {
-    console.log("error", error);
     const err = errorHandler(error);
     throw err;
   }
@@ -48,6 +71,22 @@ export const updateShopConfigure = async function (
   try {
     const response = await axios.patch(
       `/api/virtual-shop/configure/${companyId}`,
+      payload,
+    );
+
+    return response.data;
+  } catch (error) {
+    const err = errorHandler(error);
+    throw err;
+  }
+};
+
+export const createShopService = async function (
+  payload: CreateShopServicePayload,
+) {
+  try {
+    const response = await axios.post<CreateShopServiceResponse>(
+      "/api/virtual-shop/shop-services",
       payload,
     );
 
