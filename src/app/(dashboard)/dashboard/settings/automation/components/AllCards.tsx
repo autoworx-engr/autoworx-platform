@@ -17,6 +17,10 @@ import { useAllInvoiceAutomationRules } from "@/hooks/invoice-automation/useAllI
 import { useAllInventoryAutomationRules } from "../../../../../../hooks/inventory-automation/useAllInventoryAutomationRules";
 import { Inbox } from "lucide-react";
 import { useAllTagAutomationRules } from "@/hooks/tag-automation/useAllTagAutomationRules";
+import { useServerGet } from "@/hooks/useServerGet";
+import { getEntitlements } from "@/actions/platform-billing/entitlements";
+import { getAutomationLimitForModule } from "@/lib/platform-billing/automation-limits";
+import UpgradePlanBanner from "@/components/UpgradePlanBanner";
 const CommunicationRuleForm = dynamic(() => import("./CommunicationRuleForm"));
 const PipelineRuleForm = dynamic(() => import("./PipelineRuleForm"));
 const InventoryRuleForm = dynamic(() => import("./InventoryRulesForm"));
@@ -56,6 +60,11 @@ export default function AllCards({
   const [id, setId] = useState<string | null>(null);
   const [campaigns, setCampaigns] = useState<any>([]);
 
+  const { data: entitlementsRes } = useServerGet(
+    getEntitlements,
+    Number(companyId),
+  );
+
   // Only fetch rules for the currently selected automation type
   const {
     data: allPipelineRules,
@@ -78,7 +87,7 @@ export default function AllCards({
     isFetching: serviceAutomationIsFetching,
   } = useAllServiceMaintenanceAutomationRules(
     companyId,
-    type === "service-maintenance"
+    type === "service-maintenance",
   );
   const {
     data: allInvoiceAutomation,
@@ -153,12 +162,38 @@ export default function AllCards({
                   ? allTagAutomation?.data
                   : campaigns;
 
-  const allowedCompany = [4, 14, 1, 49];
+  const moduleKey =
+    type === "service-maintenance"
+      ? "service"
+      : type === "pipeline"
+        ? "pipeline"
+        : type === "communication"
+          ? "communication"
+          : type === "marketing"
+            ? "marketing"
+            : type === "invoice"
+              ? "invoice"
+              : type === "inventory"
+                ? "inventory"
+                : type === "tag"
+                  ? "tag"
+                  : "pipeline";
+
+  const entitlements = entitlementsRes?.success ? entitlementsRes.data : null;
+  const automationModules = entitlements?.automationModules || [];
+  const moduleEnabled = automationModules.includes(moduleKey);
+  const rawLimit = entitlements
+    ? getAutomationLimitForModule(entitlements, moduleKey as any)
+    : 3;
+  const moduleLimit = rawLimit ?? 0;
+  const limitReached =
+    moduleLimit !== -1 && (items?.length || 0) >= moduleLimit;
+
   useEffect(() => {
-    if (items?.length >= 3 && !allowedCompany.includes(companyId)) {
+    if (!moduleEnabled || limitReached) {
       setIsCreate(false);
     }
-  }, [items]);
+  }, [moduleEnabled, limitReached]);
 
   const FormComponent = formComponents[type];
 
@@ -229,18 +264,32 @@ export default function AllCards({
               </div>
             )}
 
+            {/* Restriction banners */}
+            {!moduleEnabled && (
+              <div className="mt-4">
+                <UpgradePlanBanner
+                  title="Module not available on your plan"
+                  description={`${type.charAt(0).toUpperCase() + type.slice(1)} automation is not included in your current subscription. Upgrade to unlock it.`}
+                  ctaLabel="Upgrade Plan"
+                />
+              </div>
+            )}
+            {moduleEnabled && limitReached && (
+              <div className="mt-4">
+                <UpgradePlanBanner
+                  title={`Rule limit reached (${moduleLimit} / ${moduleLimit})`}
+                  description="You've used all available automation rules for this module. Upgrade your plan to add more."
+                  ctaLabel="Upgrade Plan"
+                />
+              </div>
+            )}
+
             <button
               onClick={handleSetIsCreate}
-              disabled={
-                items?.length >= 3 && !allowedCompany.includes(companyId)
-              }
-              className={`mt-4 w-full rounded-md py-2 font-semibold text-white transition ${items?.length >= 3 && !allowedCompany.includes(companyId) ? "cursor-not-allowed bg-gray-500" : "bg-indigo-500 hover:bg-indigo-600"}`}
+              disabled={!moduleEnabled || limitReached}
+              className={`mt-4 w-full rounded-md py-2 font-semibold text-white transition ${!moduleEnabled || limitReached ? "cursor-not-allowed bg-gray-300 text-gray-400" : "bg-indigo-500 hover:bg-indigo-600"}`}
             >
-              {items?.length >= 3 && !allowedCompany.includes(companyId)
-                ? "You have already reached your limit!"
-                : type === "marketing"
-                  ? "+ Add New Campaign"
-                  : "+ Add New Rules"}
+              {type === "marketing" ? "+ Add New Campaign" : "+ Add New Rules"}
             </button>
           </div>
         </div>
