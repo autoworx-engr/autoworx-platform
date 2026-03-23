@@ -243,6 +243,11 @@ export async function GET(req: Request) {
       db.shopBooking.findMany({
         where: whereClause,
         include: {
+          shop: {
+            include: {
+              bookingSettings: true,
+            },
+          },
           client: {
             select: {
               firstName: true,
@@ -268,6 +273,13 @@ export async function GET(req: Request) {
           invoice: {
             select: {
               id: true,
+              subtotal: true,
+              tax: true,
+              serviceFee: true,
+              grandTotal: true,
+              vehicleExtraCost: true,
+              deposit: true,
+              due: true,
               status: {
                 select: {
                   name: true,
@@ -306,20 +318,33 @@ export async function GET(req: Request) {
           hasNextPage: page < totalPages,
           hasPrevPage: page > 1,
         },
-        data: shopBookings.map(sb => ({
-          ...sb,
-          subtotal: Number(sb.subtotal),
-          tax: Number(sb.tax),
-          total: Number(sb.total),
-          depositRequired: Number(sb.depositRequired),
-          depositPaid: Number(sb.depositPaid),
-          balanceDue: Number(sb.balanceDue),
-          services: sb.services.map(srv => ({
-            ...srv,
-            price: Number(srv.price),
-            modifierPrice: Number(srv.modifierPrice),
-          })),
-        })),
+        data: shopBookings.map(sb => {
+          const subtotal = Number(sb.invoice?.subtotal || 0);
+          const taxRate = Number(sb.invoice?.tax || 0);
+          const vehicleExtraCost = Number(sb.invoice?.vehicleExtraCost || 0);
+          const serviceFeeAmount = Number(sb.invoice?.serviceFee || 0);
+
+          const totalServiceCost = subtotal - vehicleExtraCost;
+          const taxAmount = (totalServiceCost * taxRate) / 100;
+
+          return {
+            ...sb,
+            subtotal: subtotal,
+            tax: taxAmount,
+            serviceFee: serviceFeeAmount,
+            total: Number(sb.invoice?.grandTotal || 0),
+            depositRequired: Number(
+              sb.shop?.bookingSettings?.depositValue || 0,
+            ),
+            depositPaid: Number(sb.invoice?.deposit || 0),
+            balanceDue: Number(sb.invoice?.due || 0),
+            services: sb.services.map(srv => ({
+              ...srv,
+              price: Number(srv.price),
+              modifierPrice: Number(srv.modifierPrice),
+            })),
+          };
+        }),
       },
       { status: 200 },
     );
@@ -995,12 +1020,6 @@ export async function POST(req: Request) {
           clientId: client?.id,
           appointmentId: appointment.id,
           invoiceId: estimate.id,
-          subtotal,
-          tax: taxAmount + serviceFeeAmount,
-          total: grandTotal,
-          depositRequired: requiredDepositAmount,
-          depositPaid: 0,
-          balanceDue: grandTotal,
           status: shopBookingStatus,
           customerNotes: notes || null,
         },
@@ -1076,10 +1095,13 @@ export async function POST(req: Request) {
               price: srv.price,
             })),
             totals: {
-              subtotal,
+              subtotal: Number(estimate.subtotal),
               tax: taxAmount,
               serviceFee: serviceFeeAmount,
-              grandTotal,
+              grandTotal: Number(estimate.grandTotal),
+              depositRequired: requiredDepositAmount,
+              depositPaid: 0,
+              balanceDue: Number(estimate.due),
             },
           },
         },

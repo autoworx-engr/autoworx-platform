@@ -79,7 +79,12 @@ export async function PUT(req: Request) {
       const booking = await tx.shopBooking.findUnique({
         where: { id: Number(shopBookingId) },
         include: {
-          shop: true,
+          shop: {
+            include: {
+              bookingSettings: true,
+            },
+          },
+          invoice: true,
         },
       });
 
@@ -87,24 +92,28 @@ export async function PUT(req: Request) {
         throw new AppError(404, "Shop booking not found");
       }
 
-      const total = Number(booking.total);
-      const depositRequired = Number(booking.depositRequired);
+      const total = Number(booking.invoice?.grandTotal || 0);
+      const depositRequired = Number(
+        booking.shop?.bookingSettings?.depositValue || 0,
+      );
       const newDepositPaid = Number(depositAmount);
 
       // Validate deposit Paid is not > total
       if (newDepositPaid > total) {
-        throw new AppError(400, "Deposit paid cannot exceed total booking amount");
+        throw new AppError(
+          400,
+          "Deposit paid cannot exceed total booking amount",
+        );
       }
 
       const newBalanceDue = total - newDepositPaid;
-      
-      const newStatus = (newDepositPaid >= depositRequired) ? "CONFIRMED" : "PENDING";
+
+      const newStatus =
+        newDepositPaid >= depositRequired ? "CONFIRMED" : "PENDING";
 
       const updatedBooking = await tx.shopBooking.update({
         where: { id: booking.id },
         data: {
-          depositPaid: newDepositPaid,
-          balanceDue: newBalanceDue,
           status: newStatus,
         },
       });
@@ -128,12 +137,12 @@ export async function PUT(req: Request) {
           message: "Deposit and booking status updated successfully",
           data: {
             id: updatedBooking.id,
-            depositPaid: Number(updatedBooking.depositPaid),
-            balanceDue: Number(updatedBooking.balanceDue),
+            depositPaid: newDepositPaid,
+            balanceDue: newBalanceDue,
             status: updatedBooking.status,
           },
         },
-        { status: 200 }
+        { status: 200 },
       );
     });
   } catch (error: any) {
