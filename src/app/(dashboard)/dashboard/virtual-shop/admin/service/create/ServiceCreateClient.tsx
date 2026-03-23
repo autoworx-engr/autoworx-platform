@@ -15,8 +15,17 @@ import { useEstimateCreateStore } from "@/stores/estimate-create";
 import { useEffect, useMemo, useState } from "react";
 import { errorToast } from "@/lib/toast";
 import { useGetVirtualShopConfigure } from "@/hooks/virtual-shop/configure/useVirtualShopConfigure";
-import { useCreateShopService } from "@/hooks/virtual-shop/service/useShopService";
+import {
+  useCreateShopService,
+  useUpdateShopService,
+} from "@/hooks/virtual-shop/service/useShopService";
 import { useRouter } from "next/navigation";
+
+type InitialServiceData = {
+  id: number;
+  serviceInfo: ServiceInfoState;
+  items: any[];
+};
 
 const INITIAL_SERVICE_INFO: ServiceInfoState = {
   serviceTitle: "",
@@ -47,11 +56,13 @@ function ServiceBillSummary({
   onSave,
   isSaving,
   isImageUploading,
+  isEditMode,
 }: {
   serviceInfo: ServiceInfoState;
   onSave: () => void;
   isSaving: boolean;
   isImageUploading: boolean;
+  isEditMode: boolean;
 }) {
   const {
     items,
@@ -202,21 +213,58 @@ function ServiceBillSummary({
           disabled={isSaveDisabled}
           onClick={onSave}
         >
-          {isSaving ? "Saving..." : isImageUploading ? "Uploading image..." : "Save Service"}
+          {isSaving
+            ? isEditMode
+              ? "Updating..."
+              : "Saving..."
+            : isImageUploading
+              ? "Uploading image..."
+              : isEditMode
+                ? "Update Service"
+                : "Save Service"}
         </button>
       </div>
     </>
   );
 }
 
-export default function ServiceCreateClient({ companyId }: { companyId: number }) {
+export default function ServiceCreateClient({
+  companyId,
+  initialServiceData,
+}: {
+  companyId: number;
+  initialServiceData?: InitialServiceData | null;
+}) {
   const router = useRouter();
+  const isEditMode = !!initialServiceData?.id;
   const { data: shopConfig } = useGetVirtualShopConfigure(companyId);
   const { mutateAsync: createShopService, isPending: isSaving } = useCreateShopService();
+  const { mutateAsync: updateShopService, isPending: isUpdating } =
+    useUpdateShopService();
 
   const { items, reset } = useEstimateCreateStore();
   const [serviceInfo, setServiceInfo] = useState<ServiceInfoState>(INITIAL_SERVICE_INFO);
   const [isImageUploading, setIsImageUploading] = useState(false);
+
+  useEffect(() => {
+    if (!initialServiceData) {
+      reset();
+      setServiceInfo(INITIAL_SERVICE_INFO);
+      return;
+    }
+
+    setServiceInfo(initialServiceData.serviceInfo);
+
+    useEstimateCreateStore.setState({
+      items: initialServiceData.items,
+      subtotal: 0,
+      discount: 0,
+      grandTotal: 0,
+      due: 0,
+      deposit: 0,
+      totalPayment: 0,
+    });
+  }, [initialServiceData, reset]);
 
   const uploadImage = async (file: File | null) => {
     if (!file) {
@@ -370,7 +418,7 @@ export default function ServiceCreateClient({ companyId }: { companyId: number }
       );
 
     try {
-      await createShopService({
+      const payload = {
         shopId: Number(shopConfig.id),
         companyId,
         title: serviceInfo.serviceTitle.trim(),
@@ -382,7 +430,16 @@ export default function ServiceCreateClient({ companyId }: { companyId: number }
         modifierTruck: serviceInfo.vehicleTypeModifiers.truck,
         isActive: true,
         items: payloadItems,
-      });
+      };
+
+      if (isEditMode && initialServiceData?.id) {
+        await updateShopService({
+          id: initialServiceData.id,
+          payload,
+        });
+      } else {
+        await createShopService(payload);
+      }
 
       reset();
       setServiceInfo(INITIAL_SERVICE_INFO);
@@ -391,7 +448,7 @@ export default function ServiceCreateClient({ companyId }: { companyId: number }
     } catch (error) {
       const message =
         (error as { message?: string })?.message ||
-        "Failed to create shop service";
+        `Failed to ${isEditMode ? "update" : "create"} shop service`;
       errorToast(message);
     }
   };
@@ -404,18 +461,6 @@ export default function ServiceCreateClient({ companyId }: { companyId: number }
           className="col-start-1 flex min-h-[40vh] flex-col overflow-clip lg:min-h-[69vh]"
         >
           <TabsList className="-ml-4 grid grid-cols-4 rounded-bl-none md:inline-flex">
-            <TabsTriggerCreate
-              value="inspections"
-              className="order-4 md:order-1"
-            >
-              Inspections
-            </TabsTriggerCreate>
-            <TabsTriggerCreate
-              value="attachment"
-              className="order-3 md:order-2"
-            >
-              Attachment
-            </TabsTriggerCreate>
             <TabsTriggerCreate value="create" className="order-2 md:order-3">
               Create
             </TabsTriggerCreate>
@@ -436,14 +481,6 @@ export default function ServiceCreateClient({ companyId }: { companyId: number }
           <TabsContent value="create" className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto thin-scrollbar p-2">
             <CreateTab />
           </TabsContent>
-
-          <TabsContent value="attachment" className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto thin-scrollbar p-2">
-            <TemplateAttachmentTab />
-          </TabsContent>
-
-          <TabsContent value="inspections" className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto thin-scrollbar p-2">
-            <TemplateInspectionTab />
-          </TabsContent>
         </Tabs>
       </div>
 
@@ -455,8 +492,9 @@ export default function ServiceCreateClient({ companyId }: { companyId: number }
         <ServiceBillSummary
           serviceInfo={serviceInfo}
           onSave={handleSaveService}
-          isSaving={isSaving}
+          isSaving={isSaving || isUpdating}
           isImageUploading={isImageUploading}
+          isEditMode={isEditMode}
         />
       </div>
     </div>

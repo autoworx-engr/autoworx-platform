@@ -3,10 +3,116 @@ import Title from "@/components/Title";
 import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import { Material, Tag } from "@prisma/client";
+import { notFound } from "next/navigation";
 import ServiceCreateClient from "./ServiceCreateClient";
 
-export default async function Page() {
+type InitialServiceData = {
+  id: number;
+  serviceInfo: {
+    serviceTitle: string;
+    description: string;
+    imageName: string;
+    imageUrl: string;
+    vehicleTypeModifiers: {
+      coupe: string;
+      sedan: string;
+      suv: string;
+      truck: string;
+    };
+  };
+  items: any[];
+};
+
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: { serviceId?: string };
+}) {
   const companyId = await getCompanyId();
+  const serviceId = searchParams?.serviceId ? Number(searchParams.serviceId) : null;
+
+  let initialServiceData: InitialServiceData | null = null;
+
+  if (serviceId !== null) {
+    if (!Number.isInteger(serviceId) || serviceId <= 0) {
+      return notFound();
+    }
+
+    const shopService = await db.shopService.findFirst({
+      where: {
+        id: serviceId,
+        shop: {
+          companyId,
+        },
+      },
+      include: {
+        invoiceItems: {
+          include: {
+            service: true,
+            labor: {
+              include: {
+                tags: {
+                  include: {
+                    tag: true,
+                  },
+                },
+              },
+            },
+            materials: {
+              include: {
+                tags: {
+                  include: {
+                    tag: true,
+                  },
+                },
+              },
+            },
+            tags: {
+              include: {
+                tag: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!shopService) {
+      return notFound();
+    }
+
+    initialServiceData = {
+      id: shopService.id,
+      serviceInfo: {
+        serviceTitle: shopService.title || "",
+        description: shopService.description || "",
+        imageName: "",
+        imageUrl: shopService.imageUrl || "",
+        vehicleTypeModifiers: {
+          coupe: String(shopService.modifierCoupe ?? 0),
+          sedan: String(shopService.modifierSedan ?? 0),
+          suv: String(shopService.modifierSUV ?? 0),
+          truck: String(shopService.modifierTruck ?? 0),
+        },
+      },
+      items: shopService.invoiceItems.map((item) => ({
+        id: item.id,
+        service: item.service,
+        materials: item.materials.map((material) => ({
+          ...material,
+          tags: material.tags.map((tag) => tag.tag),
+        })),
+        labor: item.labor
+          ? {
+            ...item.labor,
+            tags: item.labor.tags.map((tag) => tag.tag),
+          }
+          : null,
+        tags: item.tags.map((tag) => tag.tag),
+        serviceDesc: item.serviceDesc || "",
+      })),
+    };
+  }
 
   const categories = await db.category.findMany({ where: { companyId } });
   const services = await db.service.findMany({
@@ -68,7 +174,7 @@ export default async function Page() {
 
   return (
     <div className="w-full flex flex-col gap-3">
-      <Title>Service</Title>
+      <Title>{initialServiceData ? "Edit Service" : "Service"}</Title>
 
       <SyncLists
         customers={[]}
@@ -84,7 +190,10 @@ export default async function Page() {
         client={null}
       />
 
-      <ServiceCreateClient companyId={companyId} />
+      <ServiceCreateClient
+        companyId={companyId}
+        initialServiceData={initialServiceData}
+      />
     </div>
   );
 }

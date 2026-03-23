@@ -5,32 +5,12 @@ import { Plus, Search } from "lucide-react";
 import ServiceCard, { type Service } from "./ServiceCard";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
 import { Pagination } from "antd";
 import { useGetVirtualShopConfigure } from "@/hooks/virtual-shop/configure/useVirtualShopConfigure";
-
-type ShopServiceApi = {
-  id: number;
-  title: string;
-  category: string[];
-  price: number | string;
-  duration: number;
-  imageUrl?: string | null;
-};
-
-type ShopServicesResponse = {
-  success: boolean;
-  meta: {
-    totalRecords: number;
-    totalPages: number;
-    page: number;
-    limit: number;
-    hasNextPage: boolean;
-    hasPrevPage: boolean;
-  };
-  data: ShopServiceApi[];
-};
+import {
+  useDeleteShopService,
+  useGetShopServices,
+} from "@/hooks/virtual-shop/service/useShopService";
 
 export default function ServicesTab() {
   const router = useRouter();
@@ -54,26 +34,14 @@ export default function ServicesTab() {
     data: servicesResponse,
     isLoading: isServicesLoading,
     isError: isServicesError,
-  } = useQuery({
-    queryKey: ["virtual-shop-services", shopId, page, limit, search],
-    queryFn: async () => {
-      const response = await axios.get<ShopServicesResponse>(
-        "/api/virtual-shop/shop-services",
-        {
-          params: {
-            shopId,
-            page,
-            limit,
-            search: search || undefined,
-          },
-        },
-      );
-
-      return response.data;
-    },
-    enabled: !!shopId,
-    staleTime: 1000 * 30,
+  } = useGetShopServices({
+    shopId,
+    page,
+    limit,
+    search,
   });
+  const { mutateAsync: deleteService, isPending: isDeleting } =
+    useDeleteShopService();
 
   const meta = servicesResponse?.meta;
 
@@ -91,12 +59,18 @@ export default function ServicesTab() {
   );
 
   const handleEdit = (service: Service) => {
-    // TODO: open edit dialog
-    void service;
+    router.push(`/dashboard/virtual-shop/admin/service/create?serviceId=${service.id}`);
   };
 
-  const handleDelete = (service: Service) => {
-    void service;
+  const handleDelete = async (service: Service) => {
+    if (!shopId) return;
+
+    const shouldDelete = window.confirm(
+      `Are you sure you want to delete "${service.name}"?`,
+    );
+    if (!shouldDelete) return;
+
+    await deleteService({ id: service.id, shopId });
   };
 
   const handleAddService = () => {
@@ -138,9 +112,9 @@ export default function ServicesTab() {
       {/* Service list */}
       <div className="max-h-[60vh] overflow-y-auto thin-scrollbar pr-1">
         <div className="flex flex-col gap-2">
-          {isShopConfigLoading || isServicesLoading ? (
+          {isShopConfigLoading || isServicesLoading || isDeleting ? (
             <p className="py-8 text-center text-sm text-gray-400">
-              Loading services...
+              {isDeleting ? "Deleting service..." : "Loading services..."}
             </p>
           ) : !shopId ? (
             <p className="py-8 text-center text-sm text-gray-400">
