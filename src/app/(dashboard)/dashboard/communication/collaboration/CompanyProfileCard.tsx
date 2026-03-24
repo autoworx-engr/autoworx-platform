@@ -113,7 +113,7 @@ export default function CompanyProfileCard({
 
       {/* Avatar */}
       <div className="flex flex-col items-center text-center">
-        <div className="relative">
+        <div>
           <div className="flex items-center justify-center w-[150px] h-[150px] rounded-full overflow-hidden">
             <Image
               src={details?.image ?? "/icons/business.png"}
@@ -123,8 +123,6 @@ export default function CompanyProfileCard({
               className="object-cover w-full h-full"
             />
           </div>
-
-          <span className="absolute bottom-2 right-2 w-4 h-4 rounded-full bg-green-500 border-2 border-white" />
         </div>
 
         <h3 className="mt-3 text-xl font-bold">{details?.name}</h3>

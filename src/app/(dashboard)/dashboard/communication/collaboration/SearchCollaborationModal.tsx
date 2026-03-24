@@ -83,7 +83,7 @@ export default function SearchCollaborationModal({
                 ...user,
                 companyName: company.name,
                 isConnected: companies.some((c) => c.id === user.companyId),
-                companyStatus: joinStatus,
+                companyStatus: joinStatus?.toLocaleLowerCase(),
               };
             });
           })
@@ -191,12 +191,12 @@ export default function SearchCollaborationModal({
                             </div>
                           </div>
                           <div className="w-full flex-shrink-0 sm:w-auto">
-                            {user?.companyStatus === "ACCEPTED" ? (
+                            {user?.companyStatus === "accepted" ? (
                               <span className="block w-full rounded-lg bg-slate-100 px-3 py-1.5 text-center text-xs font-semibold text-slate-500 sm:inline sm:w-auto sm:text-left">
                                 Connected
                               </span>
                             ) : user?.companyStatus ? (
-                              <span className="block w-full rounded-lg bg-slate-100 px-3 py-1.5 text-center text-xs font-semibold text-slate-500 sm:inline sm:w-auto sm:text-left">
+                              <span className="block w-full rounded-lg bg-slate-100 px-3 py-1.5 text-center text-xs font-semibold text-slate-500 sm:inline sm:w-auto sm:text-left capitalize">
                                 {user?.companyStatus}
                               </span>
                             ) : (
