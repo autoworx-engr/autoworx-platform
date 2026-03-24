@@ -74,7 +74,7 @@ export async function PUT(req: Request) {
       throw new AppError(400, "shopBookingId and depositAmount are required");
     }
 
-    return await db.$transaction(async tx => {
+    return await db.$transaction(async (tx) => {
       // Find the booking
       const booking = await tx.shopBooking.findUnique({
         where: { id: Number(shopBookingId) },
@@ -93,9 +93,18 @@ export async function PUT(req: Request) {
       }
 
       const total = Number(booking.invoice?.grandTotal || 0);
-      const depositRequired = Number(
+      const isDepositEnabled = Boolean(
+        booking.shop?.bookingSettings?.isDepositEnabled,
+      );
+      const depositType = booking.shop?.bookingSettings?.depositType;
+      const depositValue = Number(
         booking.shop?.bookingSettings?.depositValue || 0,
       );
+      const depositRequired = !isDepositEnabled
+        ? 0
+        : depositType === "PERCENTAGE"
+          ? (total * depositValue) / 100
+          : depositValue;
       const newDepositPaid = Number(depositAmount);
 
       // Validate deposit Paid is not > total
@@ -117,7 +126,7 @@ export async function PUT(req: Request) {
           status: newStatus,
         },
       });
-      
+
       // Update Invoice Deposit Values as well!
       // Since ShopBooking is linked to an Estimate/Invoice
       // We should also update the invoice values so they sync.
@@ -127,7 +136,7 @@ export async function PUT(req: Request) {
           data: {
             deposit: newDepositPaid,
             due: newBalanceDue,
-          }
+          },
         });
       }
 
@@ -153,7 +162,7 @@ export async function PUT(req: Request) {
         message: formattedError.message,
         errorDetails: formattedError,
       },
-      { status: formattedError.statusCode }
+      { status: formattedError.statusCode },
     );
   }
 }
