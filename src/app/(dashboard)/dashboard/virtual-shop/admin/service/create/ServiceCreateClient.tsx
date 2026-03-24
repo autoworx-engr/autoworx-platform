@@ -19,7 +19,7 @@ import {
   useCreateShopService,
   useUpdateShopService,
 } from "@/hooks/virtual-shop/service/useShopService";
-import { useRouter } from "next/navigation";
+import { useRouter } from "nextjs-toploader/app";
 
 type InitialServiceData = {
   id: number;
@@ -171,18 +171,20 @@ function ServiceBillSummary({
           return (
             <div
               key={index}
-              className="relative flex items-center justify-between gap-4 rounded-md border border-solid border-slate-600 px-2 py-1"
+              className="group relative flex items-center justify-between gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 transition-all hover:border-slate-200 hover:shadow-sm"
             >
-              <div className="mr-auto text-xs uppercase">{title}</div>
+              <div className="mr-auto text-sm font-semibold capitalize text-slate-500">
+                {title}
+              </div>
 
               {isToggleItem && (
                 <div
                   onClick={() => toggleSetter((prev) => !prev)}
-                  className={`ml-2 flex h-5 w-10 cursor-pointer items-center rounded-full px-1 transition-colors ${toggleState ? "bg-[#6571FF]" : "bg-gray-400"
+                  className={`relative flex h-5 w-9 cursor-pointer items-center rounded-full px-1 transition-all duration-200 ${toggleState ? "bg-[#6571FF]" : "bg-slate-200"
                     }`}
                 >
                   <div
-                    className={`h-3 w-3 transform rounded-full bg-white transition-transform ${toggleState ? "translate-x-5" : "translate-x-0"
+                    className={`h-3.5 w-3.5 transform rounded-full bg-white shadow-sm transition-transform duration-200 ease-in-out ${toggleState ? "translate-x-3.5" : "translate-x-0"
                       }`}
                   />
                 </div>
@@ -199,17 +201,17 @@ function ServiceBillSummary({
                     }`
                     : data
                 }
-                className="w-[130px] rounded-md bg-slate-500 px-2 py-1 text-right text-xs text-white"
+                className="w-[200px] rounded-lg bg-gray-500 px-3 py-1 text-right text-sm font-bold text-white ring-1 ring-inset ring-slate-100 focus:outline-none"
               />
             </div>
           );
         })}
       </div>
 
-      <div className="space-y-2 rounded-md bg-[#006d77] p-2 px-4 py-4 text-sm text-white">
+      <div className="mt-4 flex flex-col gap-4 rounded-lg bg-[#006d77] p-5 text-white shadow-xl shadow-[#006d77]/20">
         <button
           type="button"
-          className="w-full rounded-md bg-[#6571FF] p-2 disabled:cursor-not-allowed disabled:bg-gray-500"
+          className="w-full rounded-xl bg-white py-3 text-sm font-bold text-[#6571FF] shadow-lg transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
           disabled={isSaveDisabled}
           onClick={onSave}
         >
@@ -454,11 +456,11 @@ export default function ServiceCreateClient({
   };
 
   return (
-    <div className="gap-3 space-y-4 overflow-clip py-2 md:-my-2 md:min-h-[93vh] xl:flex xl:space-y-0">
+    <div className="gap-3 space-y-4 overflow-clip py-2 md:-my-2 md:min-h-[83vh] xl:flex xl:space-y-0 xl:pt-20">
       <div className="flex w-full flex-col gap-3 xl:min-w-[68%]">
         <Tabs
           defaultValue="service-info"
-          className="col-start-1 flex min-h-[40vh] flex-col overflow-clip lg:min-h-[69vh]"
+          className="col-start-1 flex min-h-[40vh] flex-col overflow-clip lg:min-h-[72vh]"
         >
           <TabsList className="-ml-4 grid grid-cols-4 rounded-bl-none md:inline-flex">
             <TabsTriggerCreate value="create" className="order-2 md:order-3">
@@ -469,7 +471,7 @@ export default function ServiceCreateClient({
             </TabsTriggerCreate>
           </TabsList>
 
-          <TabsContent value="service-info" className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto thin-scrollbar p-2">
+          <TabsContent value="service-info" className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-14rem)] overflow-y-auto thin-scrollbar p-2">
             <ServiceInfo
               value={serviceInfo}
               onChange={setServiceInfo}
@@ -478,13 +480,13 @@ export default function ServiceCreateClient({
             />
           </TabsContent>
 
-          <TabsContent value="create" className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-19.5rem)] overflow-y-auto thin-scrollbar p-2">
+          <TabsContent value="create" className="h-full rounded-tl-none w-full xl:h-full xl:max-h-[calc(100vh-14rem)] overflow-y-auto thin-scrollbar p-2">
             <CreateTab />
           </TabsContent>
         </Tabs>
       </div>
 
-      <div className="app-shadow grid w-full flex-grow grid-rows-[1fr,auto,auto] divide-y rounded-md bg-slate-50 xl:max-w-[32%] xl:max-h-[calc(100vh-5rem)] overflow-y-auto thin-scrollbar">
+      <div className="flex-grow w-full xl:max-w-[32%]  app-shadow grid grid-rows-[1fr,auto,auto] divide-y rounded-md bg-slate-50 xl:max-h-[calc(100vh-16rem)] overflow-y-auto thin-scrollbar">
         <div>
           <Create />
         </div>
