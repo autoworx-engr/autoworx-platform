@@ -98,6 +98,57 @@ export type GetShopServicesParams = {
   search?: string;
 };
 
+export interface ShopBookingSettingsData {
+  id: number;
+  shopId: number;
+  isDepositEnabled: boolean;
+  depositType: "FIXED" | "PERCENTAGE" | null;
+  depositValue: number | string | null;
+  isStackingEnabled: boolean;
+  stackingLimit: number;
+  slotInterval: number;
+  isTaxEnabled: boolean;
+  isServiceFeeEnabled: boolean;
+  availabilities: Array<{
+    dayOfWeek:
+      | "MONDAY"
+      | "TUESDAY"
+      | "WEDNESDAY"
+      | "THURSDAY"
+      | "FRIDAY"
+      | "SATURDAY"
+      | "SUNDAY";
+    isOpen: boolean;
+    startTime: string | null;
+    endTime: string | null;
+  }>;
+}
+
+export interface UpdateShopBookingSettingsPayload {
+  shopId: number;
+  isDepositEnabled?: boolean;
+  depositType?: "FIXED" | "PERCENTAGE";
+  depositValue?: number | null;
+  isStackingEnabled?: boolean;
+  stackingLimit?: number;
+  slotInterval?: number;
+  isTaxEnabled?: boolean;
+  isServiceFeeEnabled?: boolean;
+  availabilities?: Array<{
+    dayOfWeek:
+      | "MONDAY"
+      | "TUESDAY"
+      | "WEDNESDAY"
+      | "THURSDAY"
+      | "FRIDAY"
+      | "SATURDAY"
+      | "SUNDAY";
+    isOpen?: boolean;
+    startTime?: string | null;
+    endTime?: string | null;
+  }>;
+}
+
 export const configureVirtualShop = async function (payload: ShopData) {
   try {
     const response = await axios.post(`/api/virtual-shop/configure`, payload);
@@ -205,6 +256,44 @@ export const updateShopService = async function (
     );
 
     return response.data;
+  } catch (error) {
+    const err = errorHandler(error);
+    throw err;
+  }
+};
+
+export const getShopBookingSettings = async function (shopId: number) {
+  try {
+    const response = await axios.get<{ success: boolean; data: ShopBookingSettingsData }>(
+      "/api/virtual-shop/shop-booking-settings",
+      {
+        params: { shopId },
+      },
+    );
+
+    return response.data?.data;
+  } catch (error) {
+    const err = errorHandler(error);
+    throw err;
+  }
+};
+
+export const updateShopBookingSettings = async function (
+  payload: UpdateShopBookingSettingsPayload,
+  accessToken: string,
+) {
+  try {
+    const response = await axios.patch<{ success: boolean; data: ShopBookingSettingsData }>(
+      "/api/virtual-shop/shop-booking-settings",
+      payload,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+    );
+
+    return response.data?.data;
   } catch (error) {
     const err = errorHandler(error);
     throw err;
