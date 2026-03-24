@@ -58,12 +58,18 @@ export const useDeleteShopService = () => {
   return useMutation({
     mutationFn: ({ id }: { id: number; shopId?: number }) =>
       deleteShopService(id),
-    onSuccess: (_response, variables) => {
+    onSuccess: (response, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["virtual-shop-services", variables?.shopId],
       });
 
-      toast.success("Shop service deleted successfully!");
+      toast.success(response?.message || "Shop service deleted successfully!");
+    },
+    onError: (error) => {
+      const message =
+        (error as { message?: string })?.message ||
+        "Failed to delete shop service";
+      toast.error(message);
     },
   });
 };

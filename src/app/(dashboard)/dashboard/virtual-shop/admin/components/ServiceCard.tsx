@@ -1,5 +1,6 @@
 import Image from "next/image";
-import { Pencil, SquarePen, Trash2 } from "lucide-react";
+import { SquarePen, Trash2 } from "lucide-react";
+import { Popconfirm } from "antd";
 
 export type Service = {
   id: number;
@@ -66,13 +67,22 @@ export default function ServiceCard({
         >
           <SquarePen size={18} color="#6571FF" />
         </button>
-        <button
-          onClick={() => onDelete?.(service)}
-          className="inline-flex min-h-9 min-w-9 items-center justify-center rounded-md border border-rose-200 bg-rose-50 px-2 text-rose-500 transition-colors hover:bg-rose-100 hover:text-rose-600 sm:border-0 sm:bg-transparent sm:p-1.5"
-          aria-label="Delete service"
+        <Popconfirm
+          title="Delete service"
+          description={`Are you sure you want to delete "${service.name}"?`}
+          okText="Delete"
+          cancelText="Cancel"
+          okButtonProps={{ danger: true }}
+          onConfirm={() => onDelete?.(service)}
         >
-          <Trash2 size={18} color="#EF4444" />
-        </button>
+          <button
+            type="button"
+            className="inline-flex min-h-9 min-w-9 items-center justify-center rounded-md border border-rose-200 bg-rose-50 px-2 text-rose-500 transition-colors hover:bg-rose-100 hover:text-rose-600 sm:border-0 sm:bg-transparent sm:p-1.5"
+            aria-label="Delete service"
+          >
+            <Trash2 size={18} color="#EF4444" />
+          </button>
+        </Popconfirm>
       </div>
     </div>
   );
