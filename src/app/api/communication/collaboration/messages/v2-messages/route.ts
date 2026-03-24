@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
+import { revalidatePath } from "next/cache";
 
 /**
  * @swagger
@@ -219,7 +220,7 @@ export async function GET(req: Request) {
       toCompanyId: msg.toCompanyId,
       isOwnMessage: msg.fromCompanyId === viewerCompanyId,
     }));
-
+    revalidatePath("/dashboard/communication/collaboration");
     return new Response(
       JSON.stringify({
         success: true,
