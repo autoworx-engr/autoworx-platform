@@ -292,7 +292,7 @@ const Sidebar = ({ isLegacy = false }: Props) => {
       {/* Desktop Sidebar (Sticky) - Added Glassmorphism here */}
       <div
         className={cn(
-          "hidden lg:block sticky top-8 min-h-[70vh] w-full rounded-2xl p-0 shadow-lg border",
+          "hidden lg:block w-full rounded-2xl p-0 shadow-lg border max-h-[calc(100vh-120px)] overflow-y-auto",
           // Glassmorphism effect for desktop
           "bg-white backdrop-blur-xl border-slate-100",
         )}
