@@ -185,7 +185,10 @@ export default function NewVendor({
     >
       <DialogTrigger asChild>{button}</DialogTrigger>
 
-      <DialogContent className="max-h-full max-w-xl grid-rows-[auto,1fr,auto]">
+      <DialogContent
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        className="max-h-full max-w-xl grid-rows-[auto,1fr,auto]"
+      >
         <DialogHeader>
           <DialogTitle className="text-slate-600">Add New Vendor</DialogTitle>
         </DialogHeader>
