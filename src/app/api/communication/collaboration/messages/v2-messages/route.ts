@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { revalidatePath } from "next/cache";
+import { getPusherInstance } from "@/lib/pusher/server";
 
 /**
  * @swagger
@@ -140,6 +141,8 @@ import { revalidatePath } from "next/cache";
  *                   example: Internal server error
  */
 
+const pusher = getPusherInstance();
+
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
@@ -185,7 +188,7 @@ export async function GET(req: Request) {
       },
     });
 
-    await db.companyChatTrack.updateMany({
+    const readMessages = await db.companyChatTrack.updateMany({
       where: {
         OR: [
           {
@@ -201,11 +204,19 @@ export async function GET(req: Request) {
             ],
           },
         ],
+        isRead: false,
       },
       data: {
         isRead: true,
       },
     });
+
+    if (readMessages) {
+      await pusher.trigger(`company-track-${companyA}`, "chat-read", {
+        senderCompanyId: companyB,
+        receiverCompanyId: companyA,
+      });
+    }
 
     /* ---------------- ADD UI FLAGS ---------------- */
 
