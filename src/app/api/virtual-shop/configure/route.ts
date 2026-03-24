@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { AppError } from "@/error-boundary/error";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
+import { Prisma } from "@prisma/client";
 
 /**
  * @swagger
@@ -128,11 +129,74 @@ export async function POST(req: NextRequest) {
         },
       });
 
+      const existingShopBookingSetting = await tx.shopBookingSetting.findUnique({
+        where: { shopId: newShop.id },
+      });
+
+      if (existingShopBookingSetting) {
+        throw new AppError(400, "Shop booking setting already exists");
+      }
+
+      const companySettings = await tx.calendarSettings.findUnique({
+        where: { companyId },
+      });
+      const defaultStartTime = companySettings?.dayStart || "09:00";
+      const defaultEndTime = companySettings?.dayEnd || "17:00";
+
+      const defaultAvailabilities = [
+        "MONDAY",
+        "TUESDAY",
+        "WEDNESDAY",
+        "THURSDAY",
+        "FRIDAY",
+        "SATURDAY",
+        "SUNDAY",
+      ].map(day => ({
+        dayOfWeek: day as any,
+        isOpen: true,
+        startTime: defaultStartTime,
+        endTime: defaultEndTime,
+      }));
+
       await tx.shopBookingSetting.create({
         data: {
           shopId: newShop.id,
+          isDepositEnabled: false,
+          depositType: "FIXED",
+          depositValue: null,
+          isStackingEnabled: false,
+          stackingLimit: 1,
+          slotInterval: 30,
+          isTaxEnabled: false,
+          isServiceFeeEnabled: false,
+          availabilities: {
+            create: defaultAvailabilities,
+          },
         },
       });
+
+      const existingGiftCardSetting = await tx.giftCardSetting.findUnique({
+        where: { companyId },
+      });
+
+      if (!existingGiftCardSetting) {
+        await tx.giftCardSetting.create({
+          data: {
+            companyId,
+            allowCustomAmount: true,
+            minCustomAmount: new Prisma.Decimal(10.0),
+            maxCustomAmount: new Prisma.Decimal(1000.0),
+            presetAmounts: [25, 50, 100, 200],
+            allowEmailDelivery: true,
+            allowSmsDelivery: false,
+            defaultDelivery: "EMAIL",
+            allowScheduledSend: true,
+            defaultExpiryDays: null,
+            termsAndConditions: "Gift cards are non-refundable and cannot be exchanged for cash.",
+            privacyPolicy: "We value your privacy. Your information is securely stored.",
+          },
+        });
+      }
 
       return newShop;
     });
