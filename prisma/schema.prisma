@@ -3010,13 +3010,8 @@ model ShopBooking {
   invoiceId String  @unique @map("invoice_id")
   invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 
-  // Financial Details
-  subtotal        Decimal @default(0) @db.Decimal(10, 2)
-  tax             Decimal @default(0) @db.Decimal(10, 2)
-  total           Decimal @default(0) @db.Decimal(10, 2)
-  depositRequired Decimal @default(0) @map("deposit_required") @db.Decimal(10, 2)
-  depositPaid     Decimal @default(0) @map("deposit_paid") @db.Decimal(10, 2)
-  balanceDue      Decimal @default(0) @map("balance_due") @db.Decimal(10, 2)
+  // Status
+  status          ShopBookingStatus @default(PENDING)
 
   // Notes
   customerNotes String? @map("customer_notes") @db.Text

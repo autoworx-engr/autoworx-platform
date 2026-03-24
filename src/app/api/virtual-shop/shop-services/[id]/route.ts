@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 import { updateShopServiceSchema } from "@/validations/schemas/virtual-shop/shop-service.validation";
 
@@ -7,6 +7,7 @@ import { Labor, Material, Service, Tag } from "@prisma/client";
 import { jwtVerifyToken } from "@/lib/jwtVerify";
 import { AppError } from "@/error-boundary/error";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
+import { getToken } from "next-auth/jwt";
 // Use your update schema if you have one, otherwise falling back to the create schema
 
 /**
@@ -391,7 +392,7 @@ type TUpdateShopServiceRequest = {
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 export async function PUT(
-  req: Request,
+  req: NextRequest,
   { params }: { params: { id: string } },
 ) {
   try {
@@ -404,17 +405,30 @@ export async function PUT(
     await updateShopServiceSchema.parseAsync({ id: serviceId, ...body });
 
     const authHeader = req.headers.get("authorization") ?? "";
-    const accessToken = authHeader.startsWith("Bearer")
+    const accessToken = authHeader.startsWith("Bearer ")
       ? authHeader.split(" ")[1]
       : authHeader;
 
-    const verifyToken = await jwtVerifyToken(accessToken);
+    let companyId: number | undefined;
 
-    if (!verifyToken?.payload) {
-      throw new AppError(401, "Unauthorized");
+    if (accessToken) {
+      try {
+        const verifyToken = await jwtVerifyToken(accessToken);
+        companyId = verifyToken?.payload?.companyId as number | undefined;
+      } catch {
+        throw new AppError(401, "Unauthorized");
+      }
+    } else {
+      const sessionToken = await getToken({
+        req,
+        secret: process.env.NEXTAUTH_SECRET,
+      });
+      companyId = sessionToken?.companyId as number | undefined;
     }
 
-    const companyId = verifyToken?.payload?.companyId as number;
+    if (!companyId) {
+      throw new AppError(401, "Unauthorized");
+    }
 
     const {
       title,
@@ -447,7 +461,7 @@ export async function PUT(
     let totalDuration = 0;
     const categoryIdsToFetch = new Set<number>();
 
-    items?.forEach(item => {
+    items?.forEach((item) => {
       if (item.service?.categoryId) {
         categoryIdsToFetch.add(item.service.categoryId);
       }
@@ -460,7 +474,7 @@ export async function PUT(
         totalDuration += (Number(item.labor.hours) || 0) * 60;
       }
 
-      item.materials?.forEach(mat => {
+      item.materials?.forEach((mat) => {
         if (!mat || !mat.name) return;
         const matQuantity = Number(mat.quantity) || 0;
         const matSell = Number(mat.sell) || 0;
@@ -474,10 +488,10 @@ export async function PUT(
       where: { id: { in: Array.from(categoryIdsToFetch) } },
       select: { name: true },
     });
-    const categories = fetchedCategories.map(c => c.name);
+    const categories = fetchedCategories.map((c) => c.name);
 
     // 3. DATABASE TRANSACTION
-    const updatedShopService = await db.$transaction(async tx => {
+    const updatedShopService = await db.$transaction(async (tx) => {
       // --- BULK CLEANUP PHASE ---
       // Fetch IDs needed for cascading manual deletes
       const oldInvoiceItems = await tx.invoiceItem.findMany({
@@ -485,9 +499,9 @@ export async function PUT(
         select: { id: true, laborId: true },
       });
 
-      const oldInvoiceItemIds = oldInvoiceItems.map(i => i.id);
+      const oldInvoiceItemIds = oldInvoiceItems.map((i) => i.id);
       const oldLaborIds = oldInvoiceItems
-        .map(i => i.laborId)
+        .map((i) => i.laborId)
         .filter(Boolean) as number[]; // Assuming Int
 
       if (oldInvoiceItemIds.length > 0) {
@@ -496,7 +510,7 @@ export async function PUT(
           where: { invoiceItemId: { in: oldInvoiceItemIds } },
           select: { id: true },
         });
-        const oldMaterialIds = oldMaterials.map(m => m.id);
+        const oldMaterialIds = oldMaterials.map((m) => m.id);
 
         if (oldMaterialIds.length > 0) {
           await tx.materialTag.deleteMany({
@@ -525,7 +539,7 @@ export async function PUT(
       // --- REBUILD PHASE ---
       if (items && items.length > 0) {
         await Promise.all(
-          items.map(async item => {
+          items.map(async (item) => {
             let newLaborId;
 
             if (item.labor) {
@@ -544,7 +558,7 @@ export async function PUT(
 
               if (item.labor.tags?.length) {
                 await tx.laborTag.createMany({
-                  data: item.labor.tags.map(tag => ({
+                  data: item.labor.tags.map((tag) => ({
                     laborId: newLabor.id,
                     tagId: tag.id,
                   })),
@@ -562,7 +576,7 @@ export async function PUT(
 
             if (item.materials?.length) {
               await Promise.all(
-                item.materials.map(async material => {
+                item.materials.map(async (material) => {
                   if (!material || !material.name) return;
 
                   const newMat = await tx.material.create({
@@ -583,7 +597,7 @@ export async function PUT(
 
                   if (material.tags?.length) {
                     await tx.materialTag.createMany({
-                      data: material.tags.map(tag => ({
+                      data: material.tags.map((tag) => ({
                         materialId: newMat.id,
                         tagId: tag.id,
                       })),
@@ -595,7 +609,7 @@ export async function PUT(
 
             if (item.tags?.length) {
               await tx.itemTag.createMany({
-                data: item.tags.map(tag => ({
+                data: item.tags.map((tag) => ({
                   itemId: invoiceItem.id,
                   tagId: tag.id,
                 })),

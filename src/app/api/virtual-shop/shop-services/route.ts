@@ -4,7 +4,8 @@ import { db } from "@/lib/db";
 import { jwtVerifyToken } from "@/lib/jwtVerify";
 import { createShopServiceSchema } from "@/validations/schemas/virtual-shop/shop-service.validation";
 import { Labor, Material, Prisma, Service, Tag } from "@prisma/client";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { getToken } from "next-auth/jwt";
 
 /**
  * @swagger
@@ -473,23 +474,36 @@ type TCreateShopServiceRequest = {
   isActive?: boolean;
 };
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as TCreateShopServiceRequest;
     await createShopServiceSchema.parseAsync(body);
 
     const authHeader = req.headers.get("authorization") ?? "";
-    const accessToken = authHeader.startsWith("Bearer")
+    const accessToken = authHeader.startsWith("Bearer ")
       ? authHeader.split(" ")[1]
       : authHeader;
 
-    const verifyToken = await jwtVerifyToken(accessToken);
+    let companyId: number | undefined;
 
-    if (!verifyToken?.payload) {
-      throw new AppError(401, "Unauthorized");
+    if (accessToken) {
+      try {
+        const verifyToken = await jwtVerifyToken(accessToken);
+        companyId = verifyToken?.payload?.companyId as number | undefined;
+      } catch {
+        throw new AppError(401, "Unauthorized");
+      }
+    } else {
+      const sessionToken = await getToken({
+        req,
+        secret: process.env.NEXTAUTH_SECRET,
+      });
+      companyId = sessionToken?.companyId as number | undefined;
     }
 
-    const companyId = verifyToken?.payload?.companyId as number;
+    if (!companyId) {
+      throw new AppError(401, "Unauthorized");
+    }
 
     const {
       shopId,
@@ -503,10 +517,6 @@ export async function POST(req: Request) {
       modifierTruck,
       isActive,
     } = body;
-
-    if (!companyId) {
-      throw new AppError(403, "Company ID not found");
-    }
 
     if (!shopId || !title) {
       throw new AppError(400, "Missing required fields");
@@ -526,7 +536,7 @@ export async function POST(req: Request) {
     let totalDuration = 0;
     const categoryIdsToFetch = new Set<number>();
 
-    items?.forEach(item => {
+    items?.forEach((item) => {
       // Gather category IDs
       if (item.service?.categoryId) {
         categoryIdsToFetch.add(item.service.categoryId);
@@ -542,7 +552,7 @@ export async function POST(req: Request) {
       }
 
       // Calculate Materials
-      item.materials?.forEach(mat => {
+      item.materials?.forEach((mat) => {
         if (!mat || !mat.name) return;
         const matQuantity = Number(mat.quantity) || 0;
         const matSell = Number(mat.sell) || 0;
@@ -559,10 +569,10 @@ export async function POST(req: Request) {
       where: { id: { in: Array.from(categoryIdsToFetch) } },
       select: { name: true },
     });
-    const categories = fetchedCategories.map(c => c.name);
+    const categories = fetchedCategories.map((c) => c.name);
 
     // 3. DATABASE TRANSACTION
-    const newShopService = await db.$transaction(async tx => {
+    const newShopService = await db.$transaction(async (tx) => {
       // Because we pre-calculated everything, we can create the final record immediately.
       // No need to update it at the end of the transaction!
       const serviceRecord = await tx.shopService.create({
@@ -584,7 +594,7 @@ export async function POST(req: Request) {
 
       if (items && items.length > 0) {
         await Promise.all(
-          items.map(async item => {
+          items.map(async (item) => {
             let laborId;
 
             if (item.labor) {
@@ -604,7 +614,7 @@ export async function POST(req: Request) {
               // Use createMany instead of a loop for tags
               if (item.labor.tags?.length) {
                 await tx.laborTag.createMany({
-                  data: item.labor.tags.map(tag => ({
+                  data: item.labor.tags.map((tag) => ({
                     laborId: newLabor.id,
                     tagId: tag.id,
                   })),
@@ -622,7 +632,7 @@ export async function POST(req: Request) {
 
             if (item.materials?.length) {
               await Promise.all(
-                item.materials.map(async material => {
+                item.materials.map(async (material) => {
                   if (!material || !material.name) return;
                   const newMat = await tx.material.create({
                     data: {
@@ -643,7 +653,7 @@ export async function POST(req: Request) {
                   // Use createMany instead of a loop for tags
                   if (material.tags?.length) {
                     await tx.materialTag.createMany({
-                      data: material.tags.map(tag => ({
+                      data: material.tags.map((tag) => ({
                         materialId: newMat.id,
                         tagId: tag.id,
                       })),
@@ -656,7 +666,7 @@ export async function POST(req: Request) {
             // Use createMany instead of a loop for item tags
             if (item.tags?.length) {
               await tx.itemTag.createMany({
-                data: item.tags.map(tag => ({
+                data: item.tags.map((tag) => ({
                   itemId: invoiceItem.id,
                   tagId: tag.id,
                 })),
