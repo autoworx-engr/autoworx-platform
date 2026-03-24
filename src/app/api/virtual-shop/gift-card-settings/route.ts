@@ -43,7 +43,7 @@ const updateGiftCardSettingsSchema = z.object({
  *     summary: Retrieve gift card settings
  *     description: Fetch the global gift card settings for an authenticated company.
  *     tags:
- *       - Virtual Shop
+ *       - Virtual Shop Gift
  *     security:
  *       - bearerAuth: []
  *     responses:
@@ -157,7 +157,7 @@ export async function GET(req: Request) {
  *     summary: Create default gift card settings
  *     description: Initializes the default gift card settings for an authenticated company if they don't already exist.
  *     tags:
- *       - Virtual Shop
+ *       - Virtual Shop Gift
  *     security:
  *       - bearerAuth: []
  *     responses:
