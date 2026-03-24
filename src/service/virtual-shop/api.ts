@@ -264,12 +264,12 @@ export const updateShopService = async function (
 
 export const getShopBookingSettings = async function (shopId: number) {
   try {
-    const response = await axios.get<{ success: boolean; data: ShopBookingSettingsData }>(
-      "/api/virtual-shop/shop-booking-settings",
-      {
-        params: { shopId },
-      },
-    );
+    const response = await axios.get<{
+      success: boolean;
+      data: ShopBookingSettingsData;
+    }>("/api/virtual-shop/shop-booking-settings", {
+      params: { shopId },
+    });
 
     return response.data?.data;
   } catch (error) {
@@ -283,15 +283,14 @@ export const updateShopBookingSettings = async function (
   accessToken: string,
 ) {
   try {
-    const response = await axios.patch<{ success: boolean; data: ShopBookingSettingsData }>(
-      "/api/virtual-shop/shop-booking-settings",
-      payload,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
+    const response = await axios.patch<{
+      success: boolean;
+      data: ShopBookingSettingsData;
+    }>("/api/virtual-shop/shop-booking-settings", payload, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
       },
-    );
+    });
 
     return response.data?.data;
   } catch (error) {
