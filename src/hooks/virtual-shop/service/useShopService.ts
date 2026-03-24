@@ -6,27 +6,61 @@ import {
   GetShopServicesParams,
   updateShopService,
   UpdateShopServicePayload,
+  getShopCategories,
 } from "@/service/virtual-shop/api";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+
+export const useGetShopCategories = (shopId?: number) => {
+  return useQuery({
+    queryKey: ["virtual-shop-categories", shopId],
+    queryFn: () => getShopCategories(Number(shopId)),
+    enabled: !!shopId,
+  });
+};
 
 export const useGetShopServices = ({
   shopId,
   page = 1,
   limit = 10,
   search,
+  category,
 }: Partial<GetShopServicesParams>) => {
   return useQuery({
-    queryKey: ["virtual-shop-services", shopId, page, limit, search],
+    queryKey: ["virtual-shop-services", shopId, page, limit, search, category],
     queryFn: () =>
       getShopServices({
         shopId: Number(shopId),
         page,
         limit,
         search,
+        category,
       }),
     enabled: !!shopId,
     staleTime: 1000 * 30,
+  });
+};
+
+export const useGetShopServicesInfinite = ({
+  shopId,
+  limit = 10,
+  search,
+  category,
+}: Partial<GetShopServicesParams>) => {
+  return useInfiniteQuery({
+    queryKey: ["virtual-shop-services-infinite", shopId, limit, search, category],
+    queryFn: ({ pageParam = 1 }) =>
+      getShopServices({
+        shopId: Number(shopId),
+        page: pageParam,
+        limit,
+        search,
+        category,
+      }),
+    getNextPageParam: (lastPage) =>
+      lastPage.meta.hasNextPage ? lastPage.meta.page + 1 : undefined,
+    initialPageParam: 1,
+    enabled: !!shopId,
   });
 };
 

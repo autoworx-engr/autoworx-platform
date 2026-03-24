@@ -96,6 +96,7 @@ export type GetShopServicesParams = {
   page?: number;
   limit?: number;
   search?: string;
+  category?: string;
 };
 
 export const configureVirtualShop = async function (payload: ShopData) {
@@ -155,11 +156,28 @@ export const createShopService = async function (
   }
 };
 
+export const getShopCategories = async function (shopId: number) {
+  try {
+    const response = await axios.get<{ success: boolean; data: string[] }>(
+      "/api/virtual-shop/shop-services/categories",
+      {
+        params: { shopId },
+      },
+    );
+
+    return response.data;
+  } catch (error) {
+    const err = errorHandler(error);
+    throw err;
+  }
+};
+
 export const getShopServices = async function ({
   shopId,
   page = 1,
   limit = 10,
   search,
+  category,
 }: GetShopServicesParams) {
   try {
     const response = await axios.get<ShopServicesResponse>(
@@ -170,6 +188,7 @@ export const getShopServices = async function ({
           page,
           limit,
           search: search || undefined,
+          category: category || undefined,
         },
       },
     );
