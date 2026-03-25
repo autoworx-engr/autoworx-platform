@@ -8,8 +8,14 @@ import {
   UpdateShopServicePayload,
   getShopCategories,
   getShopBySlug,
+  getAppointmentSlots,
 } from "@/service/virtual-shop/api";
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
 export const useGetShopCategories = (shopId?: number) => {
@@ -42,37 +48,16 @@ export const useGetShopServices = ({
   });
 };
 
-export const useGetShopServicesInfinite = ({
-  shopId,
-  limit = 10,
-  search,
-  category,
-}: Partial<GetShopServicesParams>) => {
-  return useInfiniteQuery({
-    queryKey: ["virtual-shop-services-infinite", shopId, limit, search, category],
-    queryFn: ({ pageParam = 1 }) =>
-      getShopServices({
-        shopId: Number(shopId),
-        page: pageParam,
-        limit,
-        search,
-        category,
-      }),
-    getNextPageParam: (lastPage) =>
-      lastPage.meta.hasNextPage ? lastPage.meta.page + 1 : undefined,
-    initialPageParam: 1,
-    enabled: !!shopId,
-  });
-};
+
 
 export const useGetShopBySlug = (slug?: string) => {
   return useQuery({
-    queryKey: ["virtual-shop-by-slug", slug], 
+    queryKey: ["virtual-shop-by-slug", slug],
     queryFn: () => getShopBySlug(String(slug)),
     enabled: !!slug,
     staleTime: 1000 * 60,
   });
-}
+};
 export const useCreateShopService = () => {
   const queryClient = useQueryClient();
 
@@ -141,5 +126,17 @@ export const useUpdateShopService = () => {
 
       toast.success("Shop service updated successfully!");
     },
+  });
+};
+
+export const useGetAppointmentSlots = (
+  shopId?: number,
+  date?: string,
+  nextAvailable?: boolean,
+) => {
+  return useQuery({
+    queryKey: ["appointment-slots", shopId, date, nextAvailable],
+    queryFn: () => getAppointmentSlots(Number(shopId), date, nextAvailable),
+    enabled: !!shopId && (!!date || !!nextAvailable),
   });
 };

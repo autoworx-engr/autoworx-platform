@@ -98,6 +98,24 @@ export interface ShopServicesResponse {
   data: ShopServiceApi[];
 }
 
+export interface AppointmentSlot {
+  time: string;
+  available: boolean;
+}
+
+export interface AppointmentSlotsResponse {
+  success: boolean;
+  date?: string;
+  data: AppointmentSlot[];
+}
+
+interface AppointmentSlotsApiResponse {
+  success: boolean;
+  date?: string;
+  availableSlots?: string[];
+  data?: AppointmentSlot[];
+}
+
 export type GetShopServicesParams = {
   shopId: number;
   page?: number;
@@ -267,8 +285,7 @@ export const getShopBySlug = async function (slug: string) {
 
     // React Query queryFn must not resolve to undefined.
     return response.data.data || null;
-
-  }  catch (error) {
+  } catch (error) {
     const err = errorHandler(error);
     throw err;
   }
@@ -334,6 +351,44 @@ export const updateShopBookingSettings = async function (
     });
 
     return response.data?.data;
+  } catch (error) {
+    const err = errorHandler(error);
+    throw err;
+  }
+};
+
+export const getAppointmentSlots = async function (
+  shopId: number,
+  date?: string,
+  nextAvailable?: boolean,
+) {
+  try {
+    const response = await axios.get<AppointmentSlotsApiResponse>(
+      "/api/virtual-shop/appointment-slots",
+      {
+        params: {
+          shopId,
+          date: date || undefined,
+          nextAvailable: nextAvailable || undefined,
+        },
+      },
+    );
+
+    const payload = response.data;
+    const normalizedData: AppointmentSlot[] = Array.isArray(payload.data)
+      ? payload.data
+      : Array.isArray(payload.availableSlots)
+        ? payload.availableSlots.map((time) => ({
+            time,
+            available: true,
+          }))
+        : [];
+
+    return {
+      success: payload.success,
+      date: payload.date,
+      data: normalizedData,
+    } satisfies AppointmentSlotsResponse;
   } catch (error) {
     const err = errorHandler(error);
     throw err;

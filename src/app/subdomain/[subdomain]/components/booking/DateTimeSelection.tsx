@@ -1,89 +1,87 @@
-import { useMemo, useState } from 'react';
+import {  useMemo, useState } from "react";
 
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 
-
-import { ArrowLeft, ArrowRight, CalendarDays, Clock, Zap } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { format, addDays, isSameDay, isAfter, startOfDay, getDay } from 'date-fns';
-import { useBooking } from '../../context/BookingContext';
-import { mockExistingBookings } from '../../data/mock-services';
-import { TimeSlot } from '../../data/types';
-import { Calendar } from '@/components/ui/calendar';
-
-const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+import { ArrowLeft, ArrowRight, CalendarDays, Clock, Zap } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { format, startOfDay } from "date-fns";
+import { useBooking } from "../../context/BookingContext";
+import { TimeSlot } from "../../data/types";
+import { Calendar } from "@/components/ui/calendar";
+import { useGetAppointmentSlots } from "@/hooks/virtual-shop/service/useShopService";
+import { useGetShopBySlug } from "@/hooks/virtual-shop/service/useShopService";
+import { useParams } from "next/navigation";
+import CarLoading from "@/components/common/CarLoading";
 
 export const DateTimeSelection = () => {
-  const { setStep, selectedDate, setSelectedDate, selectedSlot, setSelectedSlot, settings, cartDurationMinutes } = useBooking();
+  const {
+    setStep,
+    selectedDate,
+    setSelectedDate,
+    selectedSlot,
+    setSelectedSlot,
+  } = useBooking();
+  const params = useParams();
+  const slug = String(params?.subdomain || "");
   const [showSlots, setShowSlots] = useState(false);
 
+  // Get shop from slug
+  const { data: shop } = useGetShopBySlug(slug);
+
+  // Fetch all available slots for selected date
+  const { data: slotsResponse, isPending: isSlotsLoading } =
+    useGetAppointmentSlots(
+      shop?.id,
+      selectedDate ? format(selectedDate, "yyyy-MM-dd") : undefined,
+    );
+
+  // Fetch next available appointment info
+  const { data: nextAvailableResponse } = useGetAppointmentSlots(
+    shop?.id,
+    undefined,
+    true,
+  );
+
+ 
   const isDateDisabled = (date: Date) => {
     if (date < startOfDay(new Date())) return true;
-    const dayName = dayNames[getDay(date)];
-    const dayConfig = settings.dayAvailability.find(d => d.day === dayName);
-    if (!dayConfig || !dayConfig.enabled) return true;
-
-    // Check if fully booked
-    const dateStr = format(date, 'yyyy-MM-dd');
-    const existing = mockExistingBookings.find(b => b.date === dateStr);
-    if (existing) {
-      const totalSlots = generateTimeSlotsForDay(dayConfig.startTime, dayConfig.endTime);
-      const available = totalSlots.filter(s => !existing.slots.includes(s.time));
-      if (available.length === 0) return true;
-    }
+    // If we don't have slot data yet, we can't determine availability
+    // User will see availability once they select a date
     return false;
   };
 
   const findNextAvailable = () => {
-    let check = addDays(new Date(), 1);
-    for (let i = 0; i < 60; i++) {
-      if (!isDateDisabled(check)) {
-        setSelectedDate(check);
-        setShowSlots(true);
-        return;
-      }
-      check = addDays(check, 1);
+    if (nextAvailableResponse?.date) {
+      setSelectedDate(new Date(nextAvailableResponse.date));
+      setShowSlots(true);
     }
   };
 
-  const generateTimeSlotsForDay = (start: string, end: string): TimeSlot[] => {
-    const slots: TimeSlot[] = [];
-    const [sh, sm] = start.split(':').map(Number);
-    const [eh, em] = end.split(':').map(Number);
-    const startMin = sh * 60 + sm;
-    const endMin = eh * 60 + em;
-    const interval = settings.slotIntervalMinutes;
+  const timeSlots = useMemo<TimeSlot[]>(() => {
+    if (!slotsResponse?.data || slotsResponse.data.length === 0) return [];
 
-    for (let m = startMin; m + cartDurationMinutes <= endMin; m += interval) {
-      const h = Math.floor(m / 60);
-      const min = m % 60;
-      const time = `${h.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`;
-      const period = h < 12 ? 'Morning' : h < 17 ? 'Afternoon' : 'Evening';
-      const label = `${h > 12 ? h - 12 : h}:${min.toString().padStart(2, '0')} ${h >= 12 ? 'PM' : 'AM'}`;
-      slots.push({ time, label, period, available: true });
-    }
-    return slots;
-  };
+    return slotsResponse.data.map((slot) => {
+      const [hours, minutes] = slot.time.split(":").map(Number);
+      const period =
+        hours < 12 ? "Morning" : hours < 17 ? "Afternoon" : "Evening";
+      const label = `${hours > 12 ? hours - 12 : hours || 12}:${minutes.toString().padStart(2, "0")} ${hours >= 12 ? "PM" : "AM"}`;
 
-  const timeSlots = useMemo(() => {
-    if (!selectedDate) return [];
-    const dayName = dayNames[getDay(selectedDate)];
-    const dayConfig = settings.dayAvailability.find(d => d.day === dayName);
-    if (!dayConfig || !dayConfig.enabled) return [];
-    
-    const slots = generateTimeSlotsForDay(dayConfig.startTime, dayConfig.endTime);
-    const dateStr = format(selectedDate, 'yyyy-MM-dd');
-    const existing = mockExistingBookings.find(b => b.date === dateStr);
-    
-    return slots.map(s => ({
-      ...s,
-      available: existing ? !existing.slots.includes(s.time) : true,
-    }));
-  }, [selectedDate, settings, cartDurationMinutes]);
+      return {
+        time: slot.time,
+        label,
+        period,
+        available: slot.available,
+      };
+    });
+  }, [slotsResponse?.data]);
 
   const grouped = useMemo(() => {
-    const groups: Record<string, TimeSlot[]> = { Morning: [], Afternoon: [], Evening: [] };
-    timeSlots.forEach(s => groups[s.period].push(s));
+    const groups: Record<string, TimeSlot[]> = {
+      Morning: [],
+      Afternoon: [],
+      Evening: [],
+    };
+    timeSlots.forEach((s) => groups[s.period].push(s));
     return groups;
   }, [timeSlots]);
 
@@ -94,15 +92,30 @@ export const DateTimeSelection = () => {
     setShowSlots(true);
   };
 
+  if (isSlotsLoading && showSlots && selectedDate) {
+    return <CarLoading />;
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => { setStep('services'); setShowSlots(false); }}>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => {
+            setStep("services");
+            setShowSlots(false);
+          }}
+        >
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Pick a Date & Time</h2>
-          <p className="text-sm text-muted-foreground">Select when you'd like your appointment</p>
+          <h2 className="text-2xl font-bold tracking-tight">
+            Pick a Date & Time
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Select when you'd like your appointment
+          </p>
         </div>
       </div>
 
@@ -116,7 +129,12 @@ export const DateTimeSelection = () => {
             disabled={isDateDisabled}
             className="p-3 pointer-events-auto rounded-xl border bg-card"
           />
-          <Button variant="outline" size="sm" className="mt-3 gap-1.5 text-xs" onClick={findNextAvailable}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-3 gap-1.5 text-xs"
+            onClick={findNextAvailable}
+          >
             <Zap className="w-3.5 h-3.5" /> Next Available Appointment
           </Button>
         </div>
@@ -127,7 +145,7 @@ export const DateTimeSelection = () => {
             <>
               <div className="flex items-center gap-2 text-sm font-medium">
                 <CalendarDays className="w-4 h-4 text-primary" />
-                {format(selectedDate, 'EEEE, MMMM d, yyyy')}
+                {format(selectedDate, "EEEE, MMMM d, yyyy")}
               </div>
               {Object.entries(grouped).map(([period, slots]) => {
                 if (slots.length === 0) return null;
@@ -137,16 +155,20 @@ export const DateTimeSelection = () => {
                       <Clock className="w-3 h-3" /> {period}
                     </p>
                     <div className="grid grid-cols-3 gap-2">
-                      {slots.map(slot => (
+                      {slots.map((slot) => (
                         <button
                           key={slot.time}
                           disabled={!slot.available}
                           onClick={() => setSelectedSlot(slot)}
                           className={cn(
-                            'px-3 py-2 rounded-lg text-xs font-medium transition-all',
-                            slot.available && selectedSlot?.time !== slot.time && 'bg-muted hover:bg-secondary text-foreground',
-                            selectedSlot?.time === slot.time && 'bg-primary text-primary-foreground shadow-md',
-                            !slot.available && 'bg-muted/40 text-muted-foreground/40 cursor-not-allowed line-through',
+                            "px-3 py-2 rounded-lg text-xs font-medium transition-all",
+                            slot.available &&
+                              selectedSlot?.time !== slot.time &&
+                              "bg-muted hover:bg-secondary text-foreground",
+                            selectedSlot?.time === slot.time &&
+                              "bg-primary text-primary-foreground shadow-md",
+                            !slot.available &&
+                              "bg-muted/40 text-muted-foreground/40 cursor-not-allowed line-through",
                           )}
                         >
                           {slot.label}
@@ -156,10 +178,17 @@ export const DateTimeSelection = () => {
                   </div>
                 );
               })}
-              {timeSlots.filter(s => s.available).length === 0 && (
+              {timeSlots.filter((s) => s.available).length === 0 && (
                 <div className="text-center py-8 space-y-3">
-                  <p className="text-sm text-muted-foreground">No available slots on this day.</p>
-                  <Button variant="outline" size="sm" onClick={findNextAvailable} className="gap-1.5">
+                  <p className="text-sm text-muted-foreground">
+                    No available slots on this day.
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={findNextAvailable}
+                    className="gap-1.5"
+                  >
                     <Zap className="w-3.5 h-3.5" /> Find Next Available
                   </Button>
                 </div>
@@ -175,7 +204,11 @@ export const DateTimeSelection = () => {
 
       {selectedSlot && (
         <div className="flex justify-end">
-          <Button size="lg" className="gap-2" onClick={() => setStep('checkout')}>
+          <Button
+            size="lg"
+            className="gap-2"
+            onClick={() => setStep("checkout")}
+          >
             Continue to Checkout <ArrowRight className="w-4 h-4" />
           </Button>
         </div>
