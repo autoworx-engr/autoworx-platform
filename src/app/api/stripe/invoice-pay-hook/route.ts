@@ -1,12 +1,13 @@
 import { convertInvoicePublic } from "@/actions/estimate/invoice/convert";
 import { db } from "@/lib/db";
 import { sendPaymentReceivedNotification } from "@/lib/notification/payment-notify";
+import { updateVirtualShopDeposit } from "@/services/virtualShopDepositService";
 import { env } from "next-runtime-env";
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 
 const stripe = new Stripe(
-  (process.env.STRIPE_SECRET_KEY || env("STRIPE_SECRET_KEY")) as string
+  (process.env.STRIPE_SECRET_KEY || env("STRIPE_SECRET_KEY")) as string,
 );
 
 /**
@@ -50,7 +51,7 @@ export async function POST(req: NextRequest) {
       rawBody,
       signature,
       (process.env.STRIPE_WEBHOOK_SECRET ||
-        env("STRIPE_WEBHOOK_SECRET")) as string
+        env("STRIPE_WEBHOOK_SECRET")) as string,
     );
 
     // Handle specific event types
@@ -68,8 +69,54 @@ export async function POST(req: NextRequest) {
       if (alreadyProcessed) {
         return NextResponse.json(
           { message: "Already processed" },
-          { status: 200 }
+          { status: 200 },
         );
+      }
+
+      // Handle virtual shop deposits
+      if (
+        paymentData.payType === "virtual_shop_deposit" &&
+        paymentData.shopBookingId
+      ) {
+        const result = await updateVirtualShopDeposit(
+          paymentData.shopBookingId,
+          Number(paymentData.amount),
+        );
+
+        const shopBooking = await db.shopBooking.findUnique({
+          where: { id: Number(paymentData.shopBookingId) },
+        });
+
+        const invoiceId =
+          paymentData.invoiceId ?? shopBooking?.invoiceId ?? null;
+
+        // Try to record the payment in StripePayment for idempotency checking
+        const depositPayment = await db.payment.create({
+          data: {
+            companyId: paymentData.companyId,
+            invoiceId: invoiceId,
+            amount: paymentData.amount,
+            type: "DEPOSIT",
+            date: new Date(),
+            deposit: {
+              create: {
+                depositMethod: "Stripe",
+                depositNotes: "Virtual Shop Deposit",
+              },
+            },
+          },
+        });
+
+        await db.stripePayment.create({
+          data: {
+            stripePaymentIntentId: paymentIntent.id,
+            companyId: paymentData.companyId,
+            paymentId: depositPayment.id,
+            invoiceId: invoiceId,
+          },
+        });
+
+        return NextResponse.json({ success: true, ...result });
       }
 
       // Handle fleet statement payments
@@ -99,7 +146,7 @@ export async function POST(req: NextRequest) {
         if (!statement || !statement.invoice.length) {
           return NextResponse.json(
             { error: "Statement or invoices not found" },
-            { status: 400 }
+            { status: 400 },
           );
         }
 
@@ -123,7 +170,7 @@ export async function POST(req: NextRequest) {
         // Process payment for each invoice in the statement
         let totalPaid = 0;
         const invoicesWithDue = statement.invoice.filter(
-          (inv) => inv.due && Number(inv.due) > 0
+          (inv) => inv.due && Number(inv.due) > 0,
         );
 
         const paymentRecords = [];
@@ -131,7 +178,7 @@ export async function POST(req: NextRequest) {
         for (const invoice of invoicesWithDue) {
           const paymentAmount = Math.min(
             Number(invoice.due ?? 0),
-            Number(paymentData.amount) - totalPaid
+            Number(paymentData.amount) - totalPaid,
           );
 
           if (paymentAmount <= 0) break;
@@ -466,7 +513,7 @@ export async function POST(req: NextRequest) {
     console.error("🚀 ~ Webhook Error:", error);
     return NextResponse.json(
       { error: `Webhook Error: ${error?.message}` },
-      { status: 400 }
+      { status: 400 },
     );
   }
 }

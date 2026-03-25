@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { convertInvoicePublic } from "@/actions/estimate/invoice/convert";
 import { sendPaymentReceivedNotification } from "@/lib/notification/payment-notify";
+import { updateVirtualShopDeposit } from "@/services/virtualShopDepositService";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -26,7 +27,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     console.log(
       "Authorize.Net Webhook raw body:",
-      JSON.stringify(body, null, 2)
+      JSON.stringify(body, null, 2),
     );
 
     // Authorize.Net sends webhook notifications with event type
@@ -58,7 +59,7 @@ export async function POST(req: NextRequest) {
       if (alreadyProcessed) {
         return NextResponse.json(
           { message: "Already processed" },
-          { status: 200 }
+          { status: 200 },
         );
       }
 
@@ -68,7 +69,7 @@ export async function POST(req: NextRequest) {
         });
         return NextResponse.json(
           { message: "No invoice to process" },
-          { status: 200 }
+          { status: 200 },
         );
       }
 
@@ -77,10 +78,17 @@ export async function POST(req: NextRequest) {
       // payment. This mirrors how Stripe uses metadata.
       const rawInvoiceNumber = invoiceNumber;
       let targetId = rawInvoiceNumber;
-      let sourceType: "deposit" | "invoice" | "statement" | "unknown" =
-        "unknown";
+      let sourceType:
+        | "deposit"
+        | "invoice"
+        | "statement"
+        | "virtual_shop_deposit"
+        | "unknown" = "unknown";
 
-      if (rawInvoiceNumber.startsWith("DEP-")) {
+      if (rawInvoiceNumber.startsWith("VSB-DEP-")) {
+        sourceType = "virtual_shop_deposit";
+        targetId = rawInvoiceNumber.substring(8);
+      } else if (rawInvoiceNumber.startsWith("DEP-")) {
         sourceType = "deposit";
         targetId = rawInvoiceNumber.substring(4);
       } else if (rawInvoiceNumber.startsWith("INV-")) {
@@ -96,6 +104,50 @@ export async function POST(req: NextRequest) {
         sourceType,
         targetId,
       });
+
+      if (sourceType === "virtual_shop_deposit") {
+        const result = await updateVirtualShopDeposit(targetId, authAmount);
+
+        // Fetch the shop booking to get the companyId or related info
+        // The update function returns `{ id }` representing the shopBookingId
+        const shopBooking = await db.shopBooking.findUnique({
+          where: { id: Number(targetId) },
+          include: { shop: true },
+        });
+
+        const companyId = shopBooking?.shop?.companyId ?? 1;
+        const invoiceId = shopBooking?.invoiceId ?? null;
+
+        // Create a minimal payment record
+        const depositPayment = await db.payment.create({
+          data: {
+            companyId: companyId,
+            invoiceId: invoiceId,
+            amount: authAmount,
+            type: "DEPOSIT",
+            date: new Date(),
+            gateway: "AUTHORIZE_NET",
+            deposit: {
+              create: {
+                depositMethod: "Authorize.Net",
+                depositNotes: "Virtual Shop Deposit",
+              },
+            },
+          },
+        });
+
+        // We can just log it as an authorize net payment to avoid reprocessing
+        await db.authorizeNetPayment.create({
+          data: {
+            transactionId,
+            companyId: companyId,
+            paymentId: depositPayment.id,
+            invoiceId: invoiceId,
+          },
+        });
+
+        return NextResponse.json({ success: true, ...result });
+      }
 
       // First, try treating it as an invoice payment (Stripe individual invoice logic)
       const invoice = await db.invoice.findUnique({
@@ -287,7 +339,7 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json(
           { message: "Webhook processed" },
-          { status: 200 }
+          { status: 200 },
         );
       }
 
@@ -323,11 +375,11 @@ export async function POST(req: NextRequest) {
           {
             invoiceNumber,
             transactionId,
-          }
+          },
         );
         return NextResponse.json(
           { message: "No matching invoice/statement" },
-          { status: 200 }
+          { status: 200 },
         );
       }
 
@@ -352,7 +404,7 @@ export async function POST(req: NextRequest) {
 
       let totalPaid = 0;
       const invoicesWithDue = statement.invoice.filter(
-        (inv) => inv.due && Number(inv.due) > 0
+        (inv) => inv.due && Number(inv.due) > 0,
       );
 
       const paymentRecords: { paymentId: number; invoiceId: any }[] = [];
@@ -360,7 +412,7 @@ export async function POST(req: NextRequest) {
       for (const inv of invoicesWithDue) {
         const paymentAmount = Math.min(
           Number(inv.due ?? 0),
-          authAmount - totalPaid
+          authAmount - totalPaid,
         );
 
         if (paymentAmount <= 0) break;
@@ -430,7 +482,7 @@ export async function POST(req: NextRequest) {
 
       return NextResponse.json(
         { message: "Webhook processed" },
-        { status: 200 }
+        { status: 200 },
       );
     }
 
@@ -439,7 +491,7 @@ export async function POST(req: NextRequest) {
     console.error("Authorize.Net Webhook Error:", error?.message, error?.stack);
     return NextResponse.json(
       { error: `Webhook Error: ${error?.message}` },
-      { status: 400 }
+      { status: 400 },
     );
   }
 }
