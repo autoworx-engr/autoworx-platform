@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 import { AppError } from "@/error-boundary/error";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
+import { sendBookingConfirmation } from "@/actions/communication/client/sendBookingConfirmation";
 
 /**
  * @swagger
@@ -74,16 +75,23 @@ export async function PUT(req: Request) {
       throw new AppError(400, "shopBookingId and depositAmount are required");
     }
 
-    return await db.$transaction(async (tx) => {
+    return await db.$transaction(async tx => {
       // Find the booking
       const booking = await tx.shopBooking.findUnique({
         where: { id: Number(shopBookingId) },
         include: {
+          client: true,
           shop: {
             include: {
               bookingSettings: true,
+              company: {
+                select: { name: true, smsGateway: true },
+              },
             },
           },
+          appointment: true,
+          vehicle: true,
+          services: true,
           invoice: true,
         },
       });
@@ -137,6 +145,33 @@ export async function PUT(req: Request) {
             deposit: newDepositPaid,
             due: newBalanceDue,
           },
+        });
+      }
+
+      // Send Confirmation via reusable helper
+      if (newStatus === "CONFIRMED") {
+        await sendBookingConfirmation({
+          client: {
+            id: booking.client!.id,
+            firstName: booking.client!.firstName,
+            email: booking.client?.email,
+            mobile: booking.client?.mobile,
+          },
+          shop: {
+            companyId: booking.shop.companyId,
+            company: booking.shop.company,
+          },
+          appointment: {
+            date: booking.appointment?.date || null,
+            startTime: booking.appointment?.startTime || null,
+          },
+          vehicle: booking.vehicle ? {
+            year: booking.vehicle.year,
+            make: booking.vehicle.make,
+            model: booking.vehicle.model,
+          } : null,
+          services: booking.services?.map((s: any) => ({ title: s.title })) || null,
+          isDeposit: true,
         });
       }
 

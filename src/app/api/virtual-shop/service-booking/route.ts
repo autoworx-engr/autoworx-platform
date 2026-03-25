@@ -8,6 +8,7 @@ import { addVehicle } from "@/actions/vehicle/addVehicle";
 import { addAppointment } from "@/actions/appointment/addAppointment";
 import { AppError } from "@/error-boundary/error";
 import { jwtVerifyToken } from "@/lib/jwtVerify";
+import { sendBookingConfirmation } from "@/actions/communication/client/sendBookingConfirmation";
 import { Prisma } from "@prisma/client";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 
@@ -631,6 +632,8 @@ export async function POST(req: Request) {
         include: {
           company: {
             select: {
+              name: true,
+              smsGateway: true,
               terms: true,
               policy: true,
               tax: true,
@@ -1062,6 +1065,33 @@ export async function POST(req: Request) {
             modifierType: modifierType as any,
             modifierPrice,
           },
+        });
+      }
+
+      // Send Confirmation via reusable helper
+      if (shopBookingStatus === "CONFIRMED") {
+        await sendBookingConfirmation({
+          client: {
+            id: client!.id,
+            firstName: client!.firstName,
+            email: client?.email,
+            mobile: client?.mobile,
+          },
+          shop: {
+            companyId: shop.companyId,
+            company: shop.company,
+          },
+          appointment: {
+            date: appointmentDate,
+            startTime: appointmentStartTime,
+          },
+          vehicle: vehicle ? {
+            year: vehicle.year,
+            make: vehicle.make,
+            model: vehicle.model,
+          } : null,
+          services: selectedServices.map((s: any) => ({ title: s.title })),
+          isDeposit: false,
         });
       }
 

@@ -1,0 +1,154 @@
+"use client";
+
+import { useParams } from "next/navigation";
+import { useEffect } from "react";
+import { useBooking } from "../../context/BookingContext";
+import { ProgressBar } from "./ProgressBar";
+import { ServiceMenu } from "./ServiceMenu";
+import { DateTimeSelection } from "./DateTimeSelection";
+import { Checkout } from "./Checkout";
+import { Confirmation } from "./Confirmation";
+import { CartDrawer } from "./CartDrawer";
+import { BookingHeader } from "./BookingHeader";
+import {
+  useGetShopBySlug,
+  useGetShopCategories,
+} from "@/hooks/virtual-shop/service/useShopService";
+import { useGetShopServices } from "@/hooks/virtual-shop/service/useShopService";
+import CarLoading from "@/components/common/CarLoading";
+import { Service, ServiceCategory } from "../../data/types";
+
+const SERVICES_PER_PAGE = 10;
+
+const toNumber = (value: unknown) => {
+  const num = Number(value);
+  return Number.isFinite(num) ? num : 0;
+};
+
+const normalizeCategory = (raw: string[] = []): ServiceCategory => {
+  const defaultCategories: ServiceCategory[] = [
+    "Detailing",
+    "Paint Correction",
+    "Ceramic Coating",
+    "Maintenance",
+  ];
+
+  const found = raw.find((r) =>
+    defaultCategories.some((c) => c.toLowerCase() === r.toLowerCase()),
+  );
+
+  if (!found) return "Maintenance";
+  return (
+    defaultCategories.find((c) => c.toLowerCase() === found.toLowerCase()) ||
+    "Maintenance"
+  );
+};
+
+const BookingContent = () => {
+  const {
+    step,
+    setServices,
+    currentPage,
+    setCurrentPage,
+    setTotalPages,
+    setHasNextPage,
+    setHasPrevPage,
+    categories: contextCategories,
+    setCategories,
+    selectedCategory,
+  } = useBooking();
+  const params = useParams();
+  const slug = String(params?.subdomain || "");
+
+  const {
+    data: shop,
+    isPending: isShopLoading,
+    isError: isShopError,
+  } = useGetShopBySlug(slug);
+
+  // Fetch categories from API
+  const { data: categoriesData } = useGetShopCategories(shop?.id);
+
+  // Sync categories to context when they arrive (if empty, show All)
+  useEffect(() => {
+    if (categoriesData?.data && categoriesData.data.length > 0) {
+      setCategories(categoriesData.data);
+    }
+  }, [categoriesData, setCategories]);
+
+  const {
+    data: shopServices,
+    isPending: isServicesLoading,
+    isError: isServicesError,
+  } = useGetShopServices({
+    shopId: shop?.id,
+    page: currentPage,
+    limit: SERVICES_PER_PAGE,
+    category: selectedCategory === "All" ? undefined : selectedCategory,
+  });
+
+  // Sync pagination metadata to context
+  useEffect(() => {
+    if (shopServices?.meta) {
+      setTotalPages(shopServices.meta.totalPages);
+      setHasNextPage(shopServices.meta.hasNextPage);
+      setHasPrevPage(shopServices.meta.hasPrevPage);
+    }
+  }, [shopServices?.meta, setTotalPages, setHasNextPage, setHasPrevPage]);
+
+  // Map and sync services to context
+  useEffect(() => {
+    if (isShopError || isServicesError || !shop?.id) {
+      setServices([]);
+      return;
+    }
+
+    if (!shopServices?.data) {
+      return;
+    }
+
+    const mapped: Service[] = shopServices.data.map((svc) => ({
+      id: String(svc.id),
+      title: svc.title,
+      description: svc.description || "",
+      price: toNumber(svc.price),
+      estimatedMinutes: svc.duration,
+      category: normalizeCategory(svc.category),
+      images: svc.imageUrl ? [svc.imageUrl] : ["/icons/Logo.png"],
+      vehicleTypePricing: {
+        coupe: toNumber(svc.modifierCoupe),
+        sedan: toNumber(svc.modifierSedan),
+        suv: toNumber(svc.modifierSUV),
+        truck: toNumber(svc.modifierTruck),
+      },
+    }));
+
+    setServices(mapped);
+  }, [shopServices, setServices, isShopError, isServicesError, shop?.id]);
+
+  if (isShopLoading || (shop?.id && isServicesLoading)) {
+    return <CarLoading />;
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <BookingHeader rightElement="giftcard" shopName={shop?.storeName}>
+        <ProgressBar current={step} />
+      </BookingHeader>
+
+      {/* Content */}
+      <main className="container max-w-5xl mx-auto px-4 py-6">
+        {step === "services" && <ServiceMenu />}
+        {step === "datetime" && <DateTimeSelection />}
+        {step === "checkout" && <Checkout />}
+        {step === "confirmation" && <Confirmation />}
+      </main>
+
+      {/* Cart FAB */}
+      {step === "services" && <CartDrawer />}
+    </div>
+  );
+};
+
+export default BookingContent;

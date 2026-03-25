@@ -3165,15 +3165,18 @@ enum DeliveryMethod {
 
 // TODO: Gift card Transition history model
 model IssuedGiftCard {
-  id        String @id @default(cuid())
+  id        Int @id @default(autoincrement())
   companyId Int    @map("company_id")
   code      String @unique // Secure alphanumeric code
+  orderNumber String? @unique @map("order_number")
 
   // Balances
   initialBalance Decimal @map("initial_balance") @db.Decimal(10, 2)
   currentBalance Decimal @map("current_balance") @db.Decimal(10, 2)
 
   // Purchaser Snapshot
+  purchaseType    GiftCardPurchaseType @map("purchase_type")
+  // paymentStatus   PaymentStatus        @default(PENDING) @map("payment_status")
   purchaserName  String @map("purchaser_name")
   purchaserEmail String @map("purchaser_email")
 
@@ -3204,9 +3207,24 @@ model IssuedGiftCard {
   @@map("issued_gift_cards")
 }
 
+
+// enum PaymentStatus {
+//   PENDING
+//   PAID
+//   FAILED
+//   REFUNDED
+// }
+
+
+enum GiftCardPurchaseType {
+  INDIVIDUAL
+  MULTIPLE_RECIPIENTS
+  GROUP_GIFT
+}
+
 model GiftCardTransaction {
-  id         String @id @default(cuid())
-  giftCardId String @map("gift_card_id")
+  id         Int @id @default(autoincrement())
+  giftCardId Int @map("gift_card_id")
 
   // The Financial Math
   type         TransactionType
