@@ -1,4 +1,4 @@
-import { Users, UserX } from "lucide-react";
+import { Users} from "lucide-react";
 
 interface LeadsSummaryProps {
   data?: Array<{ source: string; count: number }>;
