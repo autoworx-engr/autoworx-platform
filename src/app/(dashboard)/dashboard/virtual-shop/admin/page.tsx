@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Tabs, TabsContent } from "@/components/Tabs";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
 import {
@@ -31,10 +32,38 @@ const TABS = [
 ] as const;
 
 type TabValue = (typeof TABS)[number]["value"];
+const DEFAULT_TAB: TabValue = "services";
+
+const isTabValue = (value: string | null): value is TabValue => {
+  if (!value) return false;
+  return TABS.some((tab) => tab.value === value);
+};
 
 export default function VirtualShopAdminPage() {
-  const [activeTab, setActiveTab] = useState<TabValue>("services");
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [activeTab, setActiveTab] = useState<TabValue>(DEFAULT_TAB);
   const tabsContainerRef = useRef<HTMLUListElement>(null);
+
+  useEffect(() => {
+    const tabFromUrl = searchParams.get("tab");
+    const nextTab = isTabValue(tabFromUrl) ? tabFromUrl : DEFAULT_TAB;
+
+    if (nextTab !== activeTab) {
+      setActiveTab(nextTab);
+    }
+  }, [activeTab, searchParams]);
+
+  const handleTabChange = (nextValue: string) => {
+    const nextTab = isTabValue(nextValue) ? nextValue : DEFAULT_TAB;
+    setActiveTab(nextTab);
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", nextTab);
+
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  };
 
   // Scroll active tab to center on mobile when it changes
   useEffect(() => {
@@ -58,7 +87,7 @@ export default function VirtualShopAdminPage() {
 
   return (
     <div className="p-6">
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabValue)} className="w-full">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         {/* Custom ul-based tab nav */}
         <TabsPrimitive.List asChild>
           <ul ref={tabsContainerRef} className="flex items-center gap-1.5 p-1.5 mb-6 overflow-x-auto thin-scrollbar rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/50 backdrop-blur-sm shadow-sm w-full md:w-auto md:inline-flex">
@@ -68,7 +97,6 @@ export default function VirtualShopAdminPage() {
                 <li key={value} className="shrink-0">
                   <TabsPrimitive.Trigger
                     value={value}
-                    onClick={() => setActiveTab(value)}
                     data-active={isActive}
                     className={`group relative flex items-center gap-2.5 rounded-xl px-3 py-2 text-base font-medium transition-all duration-300 ease-out focus-visible:outline-none ${isActive
                       ? "text-white shadow-md shadow-indigo-500/25 ring-1 ring-black/5 -translate-y-px"

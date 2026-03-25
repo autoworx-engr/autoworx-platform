@@ -715,25 +715,34 @@ export async function PUT(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 export async function DELETE(
-  req: Request,
+  req: NextRequest,
   { params }: { params: { id: string } },
 ) {
   try {
     const authHeader = req.headers.get("authorization") ?? "";
-    const accessToken = authHeader.startsWith("Bearer")
+    const accessToken = authHeader.startsWith("Bearer ")
       ? authHeader.split(" ")[1]
       : authHeader;
 
-    const verifyToken = await jwtVerifyToken(accessToken);
+    let companyId: number | undefined;
 
-    if (!verifyToken?.payload) {
-      throw new AppError(401, "Unauthorized");
+    if (accessToken) {
+      try {
+        const verifyToken = await jwtVerifyToken(accessToken);
+        companyId = verifyToken?.payload?.companyId as number | undefined;
+      } catch {
+        throw new AppError(401, "Unauthorized");
+      }
+    } else {
+      const sessionToken = await getToken({
+        req,
+        secret: process.env.NEXTAUTH_SECRET,
+      });
+      companyId = sessionToken?.companyId as number | undefined;
     }
 
-    const companyId = verifyToken?.payload?.companyId as number;
-
     if (!companyId) {
-      throw new AppError(403, "Company ID not found in session");
+      throw new AppError(401, "Unauthorized");
     }
 
     const id = params.id;
