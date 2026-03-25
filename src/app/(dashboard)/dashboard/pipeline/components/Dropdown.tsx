@@ -54,7 +54,7 @@ const DropdownMenuDemo = ({ pipelineType }: DropdownProps) => {
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
         <button
-          className="flex items-center gap-x-12 rounded-md border px-4 py-2"
+          className="flex items-center gap-x-12 rounded-xl border px-4 py-2"
           aria-label="Customise options"
         >
           <span>Filter</span>
