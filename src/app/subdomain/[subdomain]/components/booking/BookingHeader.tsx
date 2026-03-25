@@ -46,7 +46,7 @@ export const BookingHeader = ({
 
         {rightElement === "giftcard" && (
           <Link
-            href={`/dashboard/virtualization/gift-cards/${shopId || "demo"}`}
+            href={`/gift-cards`}
           >
             <Button variant="outline" size="sm" className="gap-1.5">
               <Gift className="w-3.5 h-3.5" /> Gift Cards
@@ -55,7 +55,7 @@ export const BookingHeader = ({
         )}
 
         {rightElement === "booking" && (
-          <Link href={`/dashboard/virtualization`}>
+          <Link href="/">
             <Button variant="outline" size="sm" className="gap-1.5">
               <ArrowLeft className="w-3.5 h-3.5" /> Booking
             </Button>

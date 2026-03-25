@@ -18,7 +18,7 @@ import { useGetShopServices } from "@/hooks/virtual-shop/service/useShopService"
 import CarLoading from "@/components/common/CarLoading";
 import { Service, ServiceCategory } from "../../data/types";
 
-const SERVICES_PER_PAGE = 2;
+const SERVICES_PER_PAGE = 10;
 
 const toNumber = (value: unknown) => {
   const num = Number(value);
