@@ -13,6 +13,7 @@ import { addCustomer } from "@/actions/client/add";
 import { sendTwilioMessage } from "@/actions/communication/client/sendTwilioMessage";
 import { sendInfobipMessage } from "@/actions/communication/client/sendInfobipMessage";
 import { sendInfobipEmail } from "@/actions/estimate/invoice/sendInfobipEmail";
+import { errorHandler } from "@/error-boundary/globalErrorHandler";
 
 const buyGiftCardSchema = z.object({
   shopId: z.number({ required_error: "shopId is required" }),
@@ -464,19 +465,14 @@ export async function POST(req: Request) {
       );
     });
   } catch (error: any) {
-    if (error instanceof AppError) {
-      return NextResponse.json(
-        { success: false, message: error.message },
-        { status: error.statusCode },
-      );
-    }
-    console.error("Error creating gift card:", error);
+    const formattedError = errorHandler(error);
     return NextResponse.json(
       {
         success: false,
-        message: error.message || "Failed to process gift card purchase",
+        message: formattedError.message,
+        errorDetails: formattedError,
       },
-      { status: 500 },
+      { status: formattedError.statusCode },
     );
   }
 }
