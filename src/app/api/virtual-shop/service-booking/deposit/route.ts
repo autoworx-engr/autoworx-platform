@@ -2,10 +2,7 @@ import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 import { AppError } from "@/error-boundary/error";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
-import moment from "moment";
-import { sendInfobipEmail } from "@/actions/estimate/invoice/sendInfobipEmail";
-import { sendTwilioMessage } from "@/actions/communication/client/sendTwilioMessage";
-import { sendInfobipMessage } from "@/actions/communication/client/sendInfobipMessage";
+import { sendBookingConfirmation } from "@/actions/communication/client/sendBookingConfirmation";
 
 /**
  * @swagger
@@ -78,7 +75,7 @@ export async function PUT(req: Request) {
       throw new AppError(400, "shopBookingId and depositAmount are required");
     }
 
-    return await db.$transaction(async (tx) => {
+    return await db.$transaction(async tx => {
       // Find the booking
       const booking = await tx.shopBooking.findUnique({
         where: { id: Number(shopBookingId) },
@@ -151,66 +148,31 @@ export async function PUT(req: Request) {
         });
       }
 
-      // Send Confirmation Email if Deposit meets criteria
-      if (newStatus === "CONFIRMED" && booking.client?.email) {
-        try {
-          const appointmentDateParsed = booking.appointment?.date
-            ? moment(booking.appointment.date).format("dddd, MMMM DD, YYYY")
-            : "TBD";
-          const appointmentStartTime = booking.appointment?.startTime || "TBD";
-          const emailHtml = `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
-              <div style="background-color: #2563eb; color: white; padding: 24px; text-align: center;">
-                <h1 style="margin: 0; font-size: 24px;">Booking Confirmed!</h1>
-                <p style="margin: 8px 0 0; opacity: 0.9;">${booking.shop?.company?.name || "Our Shop"}</p>
-              </div>
-              <div style="padding: 32px 24px;">
-                <p style="font-size: 16px; color: #374151; margin-top: 0;">Hi ${booking.client.firstName}, your appointment has been successfully scheduled.</p>
-                <div style="background-color: #f3f4f6; border-radius: 6px; padding: 24px; margin: 24px 0;">
-                  <p style="margin: 0 0 8px; color: #4b5563;"><strong>Date:</strong> ${appointmentDateParsed}</p>
-                  <p style="margin: 0 0 8px; color: #4b5563;"><strong>Time:</strong> ${appointmentStartTime}</p>
-                  <p style="margin: 0 0 8px; color: #4b5563;"><strong>Vehicle:</strong> ${booking.vehicle ? `${booking.vehicle.year} ${booking.vehicle.make} ${booking.vehicle.model}` : "N/A"}</p>
-                  <p style="margin: 0; color: #4b5563;"><strong>Services:</strong> ${booking.services?.map((s: any) => s.title).join(", ") || "N/A"}</p>
-                </div>
-                <p style="font-size: 14px; color: #6b7280; margin: 0; text-align: center;">We look forward to seeing you!</p>
-              </div>
-            </div>
-          `;
-
-          await sendInfobipEmail({
-            clientId: booking.client.id,
-            subject: `Booking Confirmation at ${booking.shop?.company?.name || "Our Shop"}`,
-            text: `Hi ${booking.client.firstName}, your appointment on ${appointmentDateParsed} at ${appointmentStartTime} has been successfully scheduled.`,
-            html: emailHtml,
-          });
-        } catch (emailError) {
-          console.error("Failed to send deposit booking confirmation Email:", emailError);
-        }
-      }
-
-      // Send Confirmation SMS if Deposit meets criteria
-      if (newStatus === "CONFIRMED" && booking.client?.mobile) {
-        try {
-          const appointmentDateParsed = booking.appointment?.date
-            ? moment(booking.appointment.date).format("dddd, MMMM DD, YYYY")
-            : "TBD";
-          const appointmentStartTime = booking.appointment?.startTime || "TBD";
-          const smsPayload = {
+      // Send Confirmation via reusable helper
+      if (newStatus === "CONFIRMED") {
+        await sendBookingConfirmation({
+          client: {
+            id: booking.client!.id,
+            firstName: booking.client!.firstName,
+            email: booking.client?.email,
+            mobile: booking.client?.mobile,
+          },
+          shop: {
             companyId: booking.shop.companyId,
-            clientId: booking.client.id,
-            message: `Booking Confirmed: Your deposit was received. Your appointment on ${appointmentDateParsed} at ${appointmentStartTime} at ${booking.shop?.company?.name || "Our Shop"} is confirmed.`,
-            attachments: [],
-            systemCall: true,
-          };
-
-          if (booking.shop?.company?.smsGateway === "TWILIO") {
-            await sendTwilioMessage(smsPayload);
-          } else if (booking.shop?.company?.smsGateway === "INFOBIP") {
-            await sendInfobipMessage(smsPayload);
-          }
-        } catch (smsError) {
-          console.error("Failed to send deposit booking confirmation SMS:", smsError);
-        }
+            company: booking.shop.company,
+          },
+          appointment: {
+            date: booking.appointment?.date || null,
+            startTime: booking.appointment?.startTime || null,
+          },
+          vehicle: booking.vehicle ? {
+            year: booking.vehicle.year,
+            make: booking.vehicle.make,
+            model: booking.vehicle.model,
+          } : null,
+          services: booking.services?.map((s: any) => ({ title: s.title })) || null,
+          isDeposit: true,
+        });
       }
 
       return NextResponse.json(

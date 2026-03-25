@@ -8,9 +8,7 @@ import { addVehicle } from "@/actions/vehicle/addVehicle";
 import { addAppointment } from "@/actions/appointment/addAppointment";
 import { AppError } from "@/error-boundary/error";
 import { jwtVerifyToken } from "@/lib/jwtVerify";
-import { sendInfobipEmail } from "@/actions/estimate/invoice/sendInfobipEmail";
-import { sendTwilioMessage } from "@/actions/communication/client/sendTwilioMessage";
-import { sendInfobipMessage } from "@/actions/communication/client/sendInfobipMessage";
+import { sendBookingConfirmation } from "@/actions/communication/client/sendBookingConfirmation";
 import { Prisma } from "@prisma/client";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 
@@ -1070,65 +1068,31 @@ export async function POST(req: Request) {
         });
       }
 
-      // Send Confirmation Email
-      if (client?.email && shopBookingStatus === "CONFIRMED") {
-        try {
-          const appointmentDateParsed = moment(appointmentDate).format(
-            "dddd, MMMM DD, YYYY",
-          );
-          const emailHtml = `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
-              <div style="background-color: #2563eb; color: white; padding: 24px; text-align: center;">
-                <h1 style="margin: 0; font-size: 24px;">Booking Confirmed!</h1>
-                <p style="margin: 8px 0 0; opacity: 0.9;">${shop.company?.name || "Our Shop"}</p>
-              </div>
-              <div style="padding: 32px 24px;">
-                <p style="font-size: 16px; color: #374151; margin-top: 0;">Hi ${client.firstName}, your appointment has been successfully scheduled.</p>
-                <div style="background-color: #f3f4f6; border-radius: 6px; padding: 24px; margin: 24px 0;">
-                  <p style="margin: 0 0 8px; color: #4b5563;"><strong>Date:</strong> ${appointmentDateParsed}</p>
-                  <p style="margin: 0 0 8px; color: #4b5563;"><strong>Time:</strong> ${appointmentStartTime}</p>
-                  <p style="margin: 0 0 8px; color: #4b5563;"><strong>Vehicle:</strong> ${vehicle?.year} ${vehicle?.make} ${vehicle?.model}</p>
-                  <p style="margin: 0; color: #4b5563;"><strong>Services:</strong> ${selectedServices.map((s: any) => s.title).join(", ")}</p>
-                </div>
-                <p style="font-size: 14px; color: #6b7280; margin: 0; text-align: center;">We look forward to seeing you!</p>
-              </div>
-            </div>
-          `;
-
-          await sendInfobipEmail({
-            clientId: client.id,
-            subject: `Booking Confirmation at ${shop.company?.name || "Our Shop"}`,
-            text: `Hi ${client.firstName}, your appointment on ${appointmentDateParsed} at ${appointmentStartTime} has been successfully scheduled.`,
-            html: emailHtml,
-          });
-        } catch (emailError) {
-          console.error(
-            "Failed to send booking confirmation Email:",
-            emailError,
-          );
-        }
-      }
-
-      // Send Confirmation SMS
-      if (client?.mobile) {
-        try {
-          const appointmentDateParsed = moment(appointmentDate).format("dddd, MMMM DD, YYYY");
-          const smsPayload = {
+      // Send Confirmation via reusable helper
+      if (shopBookingStatus === "CONFIRMED") {
+        await sendBookingConfirmation({
+          client: {
+            id: client!.id,
+            firstName: client!.firstName,
+            email: client?.email,
+            mobile: client?.mobile,
+          },
+          shop: {
             companyId: shop.companyId,
-            clientId: client.id,
-            message: `Booking Confirmed: Your appointment on ${appointmentDateParsed} at ${appointmentStartTime} at ${shop.company?.name || "Our Shop"} is confirmed.`,
-            attachments: [],
-            systemCall: true,
-          };
-
-          if (shop.company?.smsGateway === "TWILIO") {
-            await sendTwilioMessage(smsPayload);
-          } else if (shop.company?.smsGateway === "INFOBIP") {
-            await sendInfobipMessage(smsPayload);
-          }
-        } catch (smsError) {
-          console.error("Failed to send booking confirmation SMS:", smsError);
-        }
+            company: shop.company,
+          },
+          appointment: {
+            date: appointmentDate,
+            startTime: appointmentStartTime,
+          },
+          vehicle: vehicle ? {
+            year: vehicle.year,
+            make: vehicle.make,
+            model: vehicle.model,
+          } : null,
+          services: selectedServices.map((s: any) => ({ title: s.title })),
+          isDeposit: false,
+        });
       }
 
       // Return success response
