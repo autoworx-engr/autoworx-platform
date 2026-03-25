@@ -2,12 +2,7 @@ import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 import { AppError } from "@/error-boundary/error";
 import { z } from "zod";
-import {
-  GiftCardPurchaseType,
-  DeliveryMethod,
-  TransactionType,
-  Prisma,
-} from "@prisma/client";
+import { TransactionType, Prisma, DeliveryMethod } from "@prisma/client";
 import { nanoid } from "nanoid";
 import { addCustomer } from "@/actions/client/add";
 import { sendTwilioMessage } from "@/actions/communication/client/sendTwilioMessage";
@@ -18,7 +13,7 @@ import { errorHandler } from "@/error-boundary/globalErrorHandler";
 const buyGiftCardSchema = z.object({
   shopId: z.number({ required_error: "shopId is required" }),
   templateId: z.number({ required_error: "templateId is required" }),
-  purchaseType: z.nativeEnum(GiftCardPurchaseType, {
+  purchaseType: z.enum(["INDIVIDUAL", "MULTIPLE_RECIPIENTS", "GROUP_GIFT"], {
     required_error: "purchaseType is required",
   }),
   amount: z.number({ required_error: "amount is required" }).positive(),
@@ -31,7 +26,7 @@ const buyGiftCardSchema = z.object({
     .email(),
   purchaserPhone: z.string().optional(),
   isSendToMyself: z.boolean({ required_error: "isSendToMyself is required" }),
-  deliveryMethod: z.nativeEnum(DeliveryMethod, {
+  deliveryMethod: z.enum(["EMAIL", "SMS", "BOTH"], {
     required_error: "deliveryMethod is required",
   }),
   recipientName: z.string({ required_error: "recipientName is required" }),
