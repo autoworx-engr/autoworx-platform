@@ -7,6 +7,7 @@ import {
   updateShopService,
   UpdateShopServicePayload,
   getShopCategories,
+  getShopBySlug,
 } from "@/service/virtual-shop/api";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
@@ -64,6 +65,14 @@ export const useGetShopServicesInfinite = ({
   });
 };
 
+export const useGetShopBySlug = (slug?: string) => {
+  return useQuery({
+    queryKey: ["virtual-shop-by-slug", slug], 
+    queryFn: () => getShopBySlug(String(slug)),
+    enabled: !!slug,
+    staleTime: 1000 * 60,
+  });
+}
 export const useCreateShopService = () => {
   const queryClient = useQueryClient();
 

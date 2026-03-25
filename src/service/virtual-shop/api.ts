@@ -15,6 +15,8 @@ export interface ShopData {
   logoUrl?: string;
   bannerUrl?: string;
   themeConfig?: ThemeConfig;
+  companyId?: number;
+  isActive?: boolean;
 }
 
 export type CreateShopServicePayload = TCreateShopServiceRequest & {
@@ -75,7 +77,12 @@ export interface ShopServiceApi {
   category: string[];
   price: number | string;
   duration: number;
+  description?: string | null;
   imageUrl?: string | null;
+  modifierCoupe?: number | string;
+  modifierSedan?: number | string;
+  modifierSUV?: number | string;
+  modifierTruck?: number | string;
 }
 
 export interface ShopServicesResponse {
@@ -251,6 +258,21 @@ export const getShopServices = async function ({
   }
 };
 
+export const getShopBySlug = async function (slug: string) {
+  try {
+    const response = await axios.get<{
+      success: boolean;
+      data?: ShopData | null;
+    }>(`/api/virtual-shop/configure/subdomain/${slug}`);
+
+    // React Query queryFn must not resolve to undefined.
+    return response.data.data || null;
+
+  }  catch (error) {
+    const err = errorHandler(error);
+    throw err;
+  }
+};
 export const deleteShopService = async function (id: number) {
   try {
     const response = await axios.delete<DeleteShopServiceResponse>(
