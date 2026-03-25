@@ -17,7 +17,7 @@ import {
   TimeSlot,
   VehicleType,
 } from "../data/types";
-import { defaultSettings, mockServices } from "../data/mock-services";
+import { defaultSettings } from "../data/mock-services";
 
 interface BookingContextType {
   // Cart
@@ -50,6 +50,22 @@ interface BookingContextType {
   services: Service[];
   setServices: (services: Service[]) => void;
 
+  // Pagination (server-side)
+  currentPage: number;
+  setCurrentPage: (page: number) => void;
+  totalPages: number;
+  setTotalPages: (pages: number) => void;
+  hasNextPage: boolean;
+  setHasNextPage: (has: boolean) => void;
+  hasPrevPage: boolean;
+  setHasPrevPage: (has: boolean) => void;
+
+  // Categories (from API)
+  categories: string[];
+  setCategories: (categories: string[]) => void;
+  selectedCategory: string;
+  setSelectedCategory: (category: string) => void;
+
   // Mock OTP
   isReturningClient: boolean;
   setIsReturningClient: (v: boolean) => void;
@@ -75,8 +91,18 @@ export const BookingProvider: React.FC<{ children: React.ReactNode }> = ({
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null);
   const [settings, setSettings] = useState<ShopSettings>(defaultSettings);
-  const [services, setServices] = useState<Service[]>(mockServices);
+  const [services, setServices] = useState<Service[]>([]);
   const [isReturningClient, setIsReturningClient] = useState(false);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [hasNextPage, setHasNextPage] = useState(false);
+  const [hasPrevPage, setHasPrevPage] = useState(false);
+
+  // Categories state
+  const [categories, setCategories] = useState<string[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState("All");
 
   const addToCart = useCallback(
     (service: Service, vehicleType: VehicleType) => {
@@ -141,6 +167,18 @@ export const BookingProvider: React.FC<{ children: React.ReactNode }> = ({
         setSettings,
         services,
         setServices,
+        currentPage,
+        setCurrentPage,
+        totalPages,
+        setTotalPages,
+        hasNextPage,
+        setHasNextPage,
+        hasPrevPage,
+        setHasPrevPage,
+        categories,
+        setCategories,
+        selectedCategory,
+        setSelectedCategory,
         isReturningClient,
         setIsReturningClient,
         resetBooking,

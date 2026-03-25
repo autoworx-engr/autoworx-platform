@@ -15,6 +15,8 @@ export interface ShopData {
   logoUrl?: string;
   bannerUrl?: string;
   themeConfig?: ThemeConfig;
+  companyId?: number;
+  isActive?: boolean;
 }
 
 export type CreateShopServicePayload = TCreateShopServiceRequest & {
@@ -75,7 +77,12 @@ export interface ShopServiceApi {
   category: string[];
   price: number | string;
   duration: number;
+  description?: string | null;
   imageUrl?: string | null;
+  modifierCoupe?: number | string;
+  modifierSedan?: number | string;
+  modifierSUV?: number | string;
+  modifierTruck?: number | string;
 }
 
 export interface ShopServicesResponse {
@@ -91,11 +98,84 @@ export interface ShopServicesResponse {
   data: ShopServiceApi[];
 }
 
+export interface AppointmentSlot {
+  time: string;
+  available: boolean;
+}
+
+export interface AppointmentSlotsResponse {
+  success: boolean;
+  date?: string;
+  data: AppointmentSlot[];
+}
+
+export interface CreateVirtualShopServiceBookingPayload {
+  shopId: number;
+  shopServices: Array<{
+    shopServiceId: number;
+    vehicleType?: string;
+  }>;
+  appointmentDate: string;
+  appointmentStartTime: string;
+  fullName?: string;
+  email?: string;
+  phone: string;
+  make: string;
+  model: string;
+  year: number;
+  notes?: string;
+  depositAmount?: number;
+}
+
+export interface CreateVirtualShopServiceBookingResponse {
+  success: boolean;
+  message: string;
+  data: {
+    appointmentId: number;
+    estimateId: string;
+    shopBookingId: number;
+    status: string;
+    appointment: {
+      date: string;
+      startTime: string;
+    };
+    client: {
+      firstName: string;
+      lastName?: string;
+      email?: string;
+      mobile: string;
+    };
+    vehicle: {
+      year: number;
+      make: string;
+      model: string;
+    };
+    services: Array<{
+      title: string;
+      price: number;
+    }>;
+    totals: {
+      subtotal: number;
+      tax: number;
+      serviceFee: number;
+      grandTotal: number;
+    };
+  };
+}
+
+interface AppointmentSlotsApiResponse {
+  success: boolean;
+  date?: string;
+  availableSlots?: string[];
+  data?: AppointmentSlot[];
+}
+
 export type GetShopServicesParams = {
   shopId: number;
   page?: number;
   limit?: number;
   search?: string;
+  category?: string;
 };
 
 export interface ShopBookingSettingsData {
@@ -256,11 +336,28 @@ export const createShopService = async function (
   }
 };
 
+export const getShopCategories = async function (shopId: number) {
+  try {
+    const response = await axios.get<{ success: boolean; data: string[] }>(
+      "/api/virtual-shop/shop-services/categories",
+      {
+        params: { shopId },
+      },
+    );
+
+    return response.data;
+  } catch (error) {
+    const err = errorHandler(error);
+    throw err;
+  }
+};
+
 export const getShopServices = async function ({
   shopId,
   page = 1,
   limit = 10,
   search,
+  category,
 }: GetShopServicesParams) {
   try {
     const response = await axios.get<ShopServicesResponse>(
@@ -271,6 +368,7 @@ export const getShopServices = async function ({
           page,
           limit,
           search: search || undefined,
+          category: category || undefined,
         },
       },
     );
@@ -282,6 +380,20 @@ export const getShopServices = async function ({
   }
 };
 
+export const getShopBySlug = async function (slug: string) {
+  try {
+    const response = await axios.get<{
+      success: boolean;
+      data?: ShopData | null;
+    }>(`/api/virtual-shop/configure/subdomain/${slug}`);
+
+    // React Query queryFn must not resolve to undefined.
+    return response.data.data || null;
+  } catch (error) {
+    const err = errorHandler(error);
+    throw err;
+  }
+};
 export const deleteShopService = async function (id: number) {
   try {
     const response = await axios.delete<DeleteShopServiceResponse>(
@@ -343,6 +455,60 @@ export const updateShopBookingSettings = async function (
     });
 
     return response.data?.data;
+  } catch (error) {
+    const err = errorHandler(error);
+    throw err;
+  }
+};
+
+export const getAppointmentSlots = async function (
+  shopId: number,
+  date?: string,
+  nextAvailable?: boolean,
+) {
+  try {
+    const response = await axios.get<AppointmentSlotsApiResponse>(
+      "/api/virtual-shop/appointment-slots",
+      {
+        params: {
+          shopId,
+          date: date || undefined,
+          nextAvailable: nextAvailable || undefined,
+        },
+      },
+    );
+
+    const payload = response.data;
+    const normalizedData: AppointmentSlot[] = Array.isArray(payload.data)
+      ? payload.data
+      : Array.isArray(payload.availableSlots)
+        ? payload.availableSlots.map((time) => ({
+            time,
+            available: true,
+          }))
+        : [];
+
+    return {
+      success: payload.success,
+      date: payload.date,
+      data: normalizedData,
+    } satisfies AppointmentSlotsResponse;
+  } catch (error) {
+    const err = errorHandler(error);
+    throw err;
+  }
+};
+
+export const createVirtualShopServiceBooking = async function (
+  payload: CreateVirtualShopServiceBookingPayload,
+) {
+  try {
+    const response = await axios.post<CreateVirtualShopServiceBookingResponse>(
+      "/api/virtual-shop/service-booking",
+      payload,
+    );
+
+    return response.data;
   } catch (error) {
     const err = errorHandler(error);
     throw err;
