@@ -149,6 +149,56 @@ export interface UpdateShopBookingSettingsPayload {
   }>;
 }
 
+export type GiftCardDeliveryMethod = "EMAIL" | "SMS" | "BOTH";
+
+export interface GiftCardSettingsData {
+  id: number;
+  companyId: number;
+  allowCustomAmount: boolean;
+  minCustomAmount: number | string | null;
+  maxCustomAmount: number | string | null;
+  presetAmounts: number[] | null;
+  allowEmailDelivery: boolean;
+  allowSmsDelivery: boolean;
+  defaultDelivery: GiftCardDeliveryMethod;
+  allowScheduledSend: boolean;
+  defaultExpiryDays: number | null;
+  termsAndConditions: string | null;
+  privacyPolicy: string | null;
+}
+
+export interface UpdateGiftCardSettingsPayload {
+  allowCustomAmount?: boolean;
+  minCustomAmount?: number | null;
+  maxCustomAmount?: number | null;
+  presetAmounts?: number[] | null;
+  allowEmailDelivery?: boolean;
+  allowSmsDelivery?: boolean;
+  defaultDelivery?: GiftCardDeliveryMethod;
+  allowScheduledSend?: boolean;
+  defaultExpiryDays?: number | null;
+  termsAndConditions?: string | null;
+  privacyPolicy?: string | null;
+}
+
+export interface GiftCardTemplateData {
+  id: number;
+  companyId: number;
+  name: string;
+  imageUrl: string;
+  isActive: boolean;
+  isDefault: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateGiftCardTemplatePayload {
+  name: string;
+  imageUrl: string;
+  isActive?: boolean;
+  isDefault?: boolean;
+}
+
 export const configureVirtualShop = async function (payload: ShopData) {
   try {
     const response = await axios.post(`/api/virtual-shop/configure`, payload);
@@ -287,6 +337,106 @@ export const updateShopBookingSettings = async function (
       success: boolean;
       data: ShopBookingSettingsData;
     }>("/api/virtual-shop/shop-booking-settings", payload, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    return response.data?.data;
+  } catch (error) {
+    const err = errorHandler(error);
+    throw err;
+  }
+};
+
+export const getGiftCardSettings = async function (accessToken: string) {
+  try {
+    const response = await axios.get<{
+      success: boolean;
+      data: GiftCardSettingsData;
+    }>("/api/virtual-shop/gift-card-settings", {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    return response.data?.data;
+  } catch (error) {
+    const err = errorHandler(error);
+    throw err;
+  }
+};
+
+export const createGiftCardSettings = async function (accessToken: string) {
+  try {
+    const response = await axios.post<{
+      success: boolean;
+      data: GiftCardSettingsData;
+    }>(
+      "/api/virtual-shop/gift-card-settings",
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+    );
+
+    return response.data?.data;
+  } catch (error) {
+    const err = errorHandler(error);
+    throw err;
+  }
+};
+
+export const updateGiftCardSettings = async function (
+  payload: UpdateGiftCardSettingsPayload,
+  accessToken: string,
+) {
+  try {
+    const response = await axios.patch<{
+      success: boolean;
+      data: GiftCardSettingsData;
+    }>("/api/virtual-shop/gift-card-settings", payload, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    return response.data?.data;
+  } catch (error) {
+    const err = errorHandler(error);
+    throw err;
+  }
+};
+
+export const getGiftCardTemplates = async function (accessToken: string) {
+  try {
+    const response = await axios.get<{
+      success: boolean;
+      data: GiftCardTemplateData[];
+    }>("/api/virtual-shop/gift-card-templates", {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    return response.data?.data ?? [];
+  } catch (error) {
+    const err = errorHandler(error);
+    throw err;
+  }
+};
+
+export const createGiftCardTemplate = async function (
+  payload: CreateGiftCardTemplatePayload,
+  accessToken: string,
+) {
+  try {
+    const response = await axios.post<{
+      success: boolean;
+      data: GiftCardTemplateData;
+    }>("/api/virtual-shop/gift-card-templates", payload, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
