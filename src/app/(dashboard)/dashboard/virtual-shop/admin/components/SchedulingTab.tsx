@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useSession } from "next-auth/react";
+import { Loader2 } from "lucide-react";
 import { Switch } from "@/components/Switch";
 import { Button } from "@/components/ui/button";
 import { useGetVirtualShopConfigure } from "@/hooks/virtual-shop/configure/useVirtualShopConfigure";
@@ -119,12 +120,13 @@ export default function SchedulingTab() {
   const {
     data: bookingSettings,
     isLoading: isBookingSettingsLoading,
+    isFetched: hasFetchedBookingSettings,
   } = useGetShopBookingSettings(shopId);
   const { mutateAsync: updateBookingSettings, isPending: isSaving } =
     useUpdateShopBookingSettings(shopId);
 
-  const [stacking, setStacking] = useState(true);
-  const [stackingLimit, setStackingLimit] = useState("2");
+  const [stacking, setStacking] = useState(false);
+  const [stackingLimit, setStackingLimit] = useState("1");
   const [timeSlotInterval, setTimeSlotInterval] = useState("30");
   const [schedules, setSchedules] = useState<Record<Day, DaySchedule>>(DEFAULT_SCHEDULES);
 
@@ -133,6 +135,7 @@ export default function SchedulingTab() {
   };
 
   const isLoading = isShopConfigLoading || isBookingSettingsLoading || isCalendarSettingsLoading;
+  const isHydratingBookingSettings = isShopConfigLoading || (shopId > 0 && !hasFetchedBookingSettings);
 
   const parsedStackingLimit = useMemo(() => {
     const next = Number(stackingLimit);
@@ -246,101 +249,115 @@ export default function SchedulingTab() {
   };
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+    <div className="min-h-[560px] rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
       <h2 className="text-2xl font-bold text-gray-900">Appointment Logic</h2>
       <p className="mt-1 text-sm text-[#6571FF]">
         Configure scheduling rules and availability
       </p>
 
-      {/* Appointment Stacking */}
-      <div className="mt-6">
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="font-semibold text-gray-800">Appointment Stacking</p>
-            <p className="text-sm text-gray-400">Allow overlapping appointments</p>
+      {isHydratingBookingSettings && (
+        <div className="mt-6 flex min-h-[420px] items-center justify-center rounded-md border border-gray-200 bg-gray-50">
+          <div className="flex flex-col items-center gap-3 text-sm text-gray-600">
+            <Loader2 size={30} className="animate-spin text-[#6571FF]" />
+            <span>Loading scheduling settings...</span>
           </div>
-          <Switch checked={stacking} setChecked={setStacking} />
         </div>
+      )}
 
-        {stacking && (
-          <div className="mt-4 flex flex-col gap-1.5">
+      {!isHydratingBookingSettings && (
+        <>
+
+          {/* Appointment Stacking */}
+          <div className="mt-6">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="font-semibold text-gray-800">Appointment Stacking</p>
+                <p className="text-sm text-gray-400">Allow overlapping appointments</p>
+              </div>
+              <Switch checked={stacking} setChecked={setStacking} />
+            </div>
+
+            {stacking && (
+              <div className="mt-4 flex flex-col gap-1.5">
+                <label className="text-sm font-semibold text-gray-700">
+                  Stacking Limit
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  value={stackingLimit}
+                  onChange={(e) => setStackingLimit(e.target.value)}
+                  className="w-24 rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 outline-none focus:border-[#6571FF] focus:ring-1 focus:ring-[#6571FF]"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Time Slot Interval */}
+          <div className="mt-6 flex flex-col gap-1.5">
             <label className="text-sm font-semibold text-gray-700">
-              Stacking Limit
+              Time Slot Interval (minutes)
             </label>
             <input
               type="number"
-              min="1"
-              value={stackingLimit}
-              onChange={(e) => setStackingLimit(e.target.value)}
+              min="5"
+              step="5"
+              value={timeSlotInterval}
+              onChange={(e) => setTimeSlotInterval(e.target.value)}
               className="w-24 rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 outline-none focus:border-[#6571FF] focus:ring-1 focus:ring-[#6571FF]"
             />
           </div>
-        )}
-      </div>
 
-      {/* Time Slot Interval */}
-      <div className="mt-6 flex flex-col gap-1.5">
-        <label className="text-sm font-semibold text-gray-700">
-          Time Slot Interval (minutes)
-        </label>
-        <input
-          type="number"
-          min="5"
-          step="5"
-          value={timeSlotInterval}
-          onChange={(e) => setTimeSlotInterval(e.target.value)}
-          className="w-24 rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 outline-none focus:border-[#6571FF] focus:ring-1 focus:ring-[#6571FF]"
-        />
-      </div>
+          {/* Day Availability */}
+          <div className="mt-6 flex flex-col gap-3">
+            <p className="text-sm font-semibold text-gray-700">Day Availability</p>
 
-      {/* Day Availability */}
-      <div className="mt-6 flex flex-col gap-3">
-        <p className="text-sm font-semibold text-gray-700">Day Availability</p>
+            {DAYS.map((day) => {
+              const s = schedules[day];
+              return (
+                <div key={day} className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                  <div className="flex items-center gap-4 shrink-0">
+                    <Switch
+                      checked={s.enabled}
+                      setChecked={(v) => updateSchedule(day, { enabled: v })}
+                    />
+                    <span className="w-24 text-sm text-gray-700">{day}</span>
+                  </div>
 
-        {DAYS.map((day) => {
-          const s = schedules[day];
-          return (
-            <div key={day} className="flex flex-wrap items-center gap-x-4 gap-y-2">
-              <div className="flex items-center gap-4 shrink-0">
-                <Switch
-                  checked={s.enabled}
-                  setChecked={(v) => updateSchedule(day, { enabled: v })}
-                />
-                <span className="w-24 text-sm text-gray-700">{day}</span>
-              </div>
-
-              {s.enabled && (
-                <div className="flex items-center gap-2 flex-wrap">
-                  <input
-                    type="time"
-                    value={s.start}
-                    onChange={(e) => updateSchedule(day, { start: e.target.value })}
-                    className="rounded-md border border-gray-200 bg-gray-50 px-2 py-1.5 text-sm text-gray-700 outline-none focus:border-[#6571FF] focus:ring-1 focus:ring-[#6571FF]"
-                  />
-                  <span className="text-sm text-gray-400">to</span>
-                  <input
-                    type="time"
-                    value={s.end}
-                    onChange={(e) => updateSchedule(day, { end: e.target.value })}
-                    className="rounded-md border border-gray-200 bg-gray-50 px-2 py-1.5 text-sm text-gray-700 outline-none focus:border-[#6571FF] focus:ring-1 focus:ring-[#6571FF]"
-                  />
+                  {s.enabled && (
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <input
+                        type="time"
+                        value={s.start}
+                        onChange={(e) => updateSchedule(day, { start: e.target.value })}
+                        className="rounded-md border border-gray-200 bg-gray-50 px-2 py-1.5 text-sm text-gray-700 outline-none focus:border-[#6571FF] focus:ring-1 focus:ring-[#6571FF]"
+                      />
+                      <span className="text-sm text-gray-400">to</span>
+                      <input
+                        type="time"
+                        value={s.end}
+                        onChange={(e) => updateSchedule(day, { end: e.target.value })}
+                        className="rounded-md border border-gray-200 bg-gray-50 px-2 py-1.5 text-sm text-gray-700 outline-none focus:border-[#6571FF] focus:ring-1 focus:ring-[#6571FF]"
+                      />
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
+              );
+            })}
+          </div>
 
-      <div className="mt-6 flex justify-end">
-        <Button
-          type="button"
-          onClick={handleSave}
-          disabled={isLoading || isSaving || !shopId}
-          className="bg-[#6571FF] hover:bg-[#5a66ee]"
-        >
-          {isSaving ? "Saving..." : "Save Scheduling"}
-        </Button>
-      </div>
+          <div className="mt-6 flex justify-end">
+            <Button
+              type="button"
+              onClick={handleSave}
+              disabled={isLoading || isSaving || !shopId}
+              className="bg-[#6571FF] hover:bg-[#5a66ee]"
+            >
+              {isSaving ? "Saving..." : "Save Scheduling"}
+            </Button>
+          </div>
+        </>
+      )}
     </div>
   );
 }
