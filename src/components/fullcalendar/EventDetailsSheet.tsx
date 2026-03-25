@@ -1,7 +1,5 @@
 "use client";
 
-import { AppointmentCreateOrEdit } from "@/components/appointment/AppointmentCreateOrEdit";
-import TaskCreateOrEdit from "@/components/task/TaskCreateOrEdit";
 import { Button } from "@/components/ui/button";
 import { deleteTask } from "@/actions/task/deleteTask";
 import {
@@ -29,12 +27,16 @@ interface EventDetailsSheetProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   selectedEvent: any; // We can improve this type later if needed
+  onEditTask: () => void;
+  onEditAppointment: () => void;
 }
 
 export const EventDetailsSheet = ({
   isOpen,
   onOpenChange,
   selectedEvent,
+  onEditTask,
+  onEditAppointment,
 }: EventDetailsSheetProps) => {
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -207,51 +209,25 @@ export const EventDetailsSheet = ({
           <div className="p-4 border-t space-y-3 bg-white">
             <div className="flex gap-4">
               {eventType === "task" && taskId ? (
-                <TaskCreateOrEdit
-                  triggerIcon={
-                    <Button
-                      variant="outline"
-                      className="flex-1 justify-center h-11 border-gray-300 hover:bg-gray-50 font-medium"
-                    >
-                      <Edit className="mr-2 h-4 w-4" />
-                      Edit
-                    </Button>
-                  }
-                  taskId={taskId}
-                  fromEdit
-                  onTaskUpdated={() => {
-                    invalidateCalendarQueries();
-                    onOpenChange(false);
-                  }}
-                  onTaskDelete={() => {
-                    invalidateCalendarQueries();
-                    onOpenChange(false);
-                  }}
-                />
+                <Button
+                  variant="outline"
+                  className="flex-1 justify-center h-11 border-gray-300 hover:bg-gray-50 font-medium"
+                  onClick={onEditTask}
+                >
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit
+                </Button>
               ) : null}
 
               {eventType === "appointment" && appointmentId ? (
-                <AppointmentCreateOrEdit
-                  triggerIcon={
-                    <Button
-                      variant="outline"
-                      className="flex-1 justify-center h-11 border-gray-300 hover:bg-gray-50 font-medium"
-                    >
-                      <Edit className="mr-2 h-4 w-4" />
-                      Edit
-                    </Button>
-                  }
-                  fromEdit
-                  appointmentId={appointmentId}
-                  onAppointmentUpdated={() => {
-                    invalidateCalendarQueries();
-                    onOpenChange(false);
-                  }}
-                  onAppointmentDeleted={() => {
-                    invalidateCalendarQueries();
-                    onOpenChange(false);
-                  }}
-                />
+                <Button
+                  variant="outline"
+                  className="flex-1 justify-center h-11 border-gray-300 hover:bg-gray-50 font-medium"
+                  onClick={onEditAppointment}
+                >
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit
+                </Button>
               ) : null}
 
               {eventType === "task" ? (

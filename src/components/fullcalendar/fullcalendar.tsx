@@ -1,4 +1,6 @@
 "use client";
+import { AppointmentCreateOrEdit } from "@/components/appointment/AppointmentCreateOrEdit";
+import TaskCreateOrEdit from "@/components/task/TaskCreateOrEdit";
 import useAppointmentQueryByWeek from "@/app/(dashboard)/dashboard/task/_hook/appointment/query/useAppointmentQueryByWeek";
 import useTaskQueryByWeek from "@/app/(dashboard)/dashboard/task/_hook/task/query/useTaskQueryByWeek";
 import { getWeekStartNumber } from "@/app/(dashboard)/dashboard/task/_utils/utils.DateSelector";
@@ -38,6 +40,8 @@ import { errorToast } from "@/lib/toast";
 export default function Calendar({ type }: { type: CalendarType }) {
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [isTaskEditOpen, setIsTaskEditOpen] = useState(false);
+  const [isAppointmentEditOpen, setIsAppointmentEditOpen] = useState(false);
   const [isCalendarLoading, setIsCalendarLoading] = useState(false);
   const [dateRange, setDateRange] = useState({
     start: moment().startOf("month").format("YYYY-MM-DD"),
@@ -151,6 +155,31 @@ export default function Calendar({ type }: { type: CalendarType }) {
       holidays,
     });
   }, [tasks, appointments, holidays]);
+
+  const eventType = selectedEvent?.extendedProps?.type;
+  const originalData = selectedEvent?.extendedProps?.originalData;
+
+  const taskId =
+    eventType === "task"
+      ? Number(
+          originalData?.id ?? String(selectedEvent?.id).replace("task-", ""),
+        )
+      : undefined;
+
+  const appointmentId =
+    eventType === "appointment"
+      ? Number(
+          originalData?.id ?? String(selectedEvent?.id).replace("apt-", ""),
+        )
+      : undefined;
+
+  const invalidateCalendarQueries = () => {
+    queryClient.invalidateQueries({ queryKey: [taskQueryKey.allTasks] });
+    queryClient.invalidateQueries({
+      queryKey: [appointmentQueryKey.allAppointments],
+    });
+    queryClient.invalidateQueries({ queryKey: taskQueryKey.allTaskByScroll });
+  };
 
   useEffect(() => {
     if (calendarRef.current && date) {
@@ -345,7 +374,48 @@ export default function Calendar({ type }: { type: CalendarType }) {
         isOpen={isSheetOpen}
         onOpenChange={setIsSheetOpen}
         selectedEvent={selectedEvent}
+        onEditTask={() => {
+          setIsSheetOpen(false);
+          setIsTaskEditOpen(true);
+        }}
+        onEditAppointment={() => {
+          setIsSheetOpen(false);
+          setIsAppointmentEditOpen(true);
+        }}
       />
+      {isTaskEditOpen && taskId && (
+        <TaskCreateOrEdit
+          isModalOpen={isTaskEditOpen}
+          setIsModalOpen={setIsTaskEditOpen}
+          taskId={taskId}
+          fromEdit
+          onTaskUpdated={() => {
+            invalidateCalendarQueries();
+            setIsTaskEditOpen(false);
+          }}
+          onTaskDelete={() => {
+            invalidateCalendarQueries();
+            setIsTaskEditOpen(false);
+          }}
+        />
+      )}
+
+      {isAppointmentEditOpen && appointmentId && (
+        <AppointmentCreateOrEdit
+          isModalOpen={isAppointmentEditOpen}
+          setIsModalOpen={setIsAppointmentEditOpen}
+          appointmentId={appointmentId}
+          fromEdit
+          onAppointmentUpdated={() => {
+            invalidateCalendarQueries();
+            setIsAppointmentEditOpen(false);
+          }}
+          onAppointmentDeleted={() => {
+            invalidateCalendarQueries();
+            setIsAppointmentEditOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 }
