@@ -50,6 +50,7 @@ export async function GET(req: Request) {
 
     const giftCard = await db.issuedGiftCard.findFirst({
       where: {
+        status: "ACTIVE",
         OR: [
           ...(code ? [{ code }] : []),
           ...(orderNumber ? [{ orderNumber }] : []),
