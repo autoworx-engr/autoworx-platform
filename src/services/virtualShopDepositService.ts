@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { AppError } from "@/error-boundary/error";
+import { sendBookingConfirmation } from "@/actions/communication/client/sendBookingConfirmation";
 
 /**
  * Updates the deposit amount and status for a shop booking.
@@ -17,11 +18,18 @@ export async function updateVirtualShopDeposit(
     const booking = await tx.shopBooking.findUnique({
       where: { id: Number(shopBookingId) },
       include: {
+        client: true,
         shop: {
           include: {
             bookingSettings: true,
+            company: {
+              select: { name: true, smsGateway: true },
+            },
           },
         },
+        appointment: true,
+        vehicle: true,
+        services: true,
         invoice: true,
       },
     });
@@ -75,6 +83,36 @@ export async function updateVirtualShopDeposit(
           deposit: newDepositPaid,
           due: newBalanceDue,
         },
+      });
+    }
+
+    // Send Confirmation via reusable helper
+    if (newStatus === "CONFIRMED") {
+      await sendBookingConfirmation({
+        client: {
+          id: booking.client!.id,
+          firstName: booking.client!.firstName,
+          email: booking.client?.email,
+          mobile: booking.client?.mobile,
+        },
+        shop: {
+          companyId: booking.shop.companyId,
+          company: booking.shop.company,
+        },
+        appointment: {
+          date: booking.appointment?.date || null,
+          startTime: booking.appointment?.startTime || null,
+        },
+        vehicle: booking.vehicle
+          ? {
+              year: booking.vehicle.year,
+              make: booking.vehicle.make,
+              model: booking.vehicle.model,
+            }
+          : null,
+        services:
+          booking.services?.map((s: any) => ({ title: s.title })) || null,
+        isDeposit: true,
       });
     }
 
