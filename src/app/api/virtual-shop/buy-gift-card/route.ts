@@ -317,99 +317,99 @@ export async function POST(req: Request) {
         },
       });
 
-      // Return Mock success response
-      // Usually, a confirmation email or SMS job would be queued here.
-
       // Handle SMS Delivery
       if (
-        deliveryMethod === DeliveryMethod.SMS ||
-        deliveryMethod === DeliveryMethod.BOTH
+        (deliveryMethod === DeliveryMethod.SMS ||
+          deliveryMethod === DeliveryMethod.BOTH) &&
+        finalRecipientPhone
       ) {
-        if (finalRecipientPhone) {
-          try {
-            const firstName = finalRecipientName.split(" ")[0] || "Guest";
-            const lastName =
-              finalRecipientName.split(" ").slice(1).join(" ") || undefined;
+        try {
+          const firstName = finalRecipientName.split(" ")[0] || "Guest";
+          const lastName =
+            finalRecipientName.split(" ").slice(1).join(" ") || undefined;
 
-            let recipientClient = await tx.client.findFirst({
-              where: { mobile: finalRecipientPhone, companyId: shop.companyId },
+          let recipientClient = await tx.client.findFirst({
+            where: { mobile: finalRecipientPhone, companyId: shop.companyId },
+          });
+
+          if (!recipientClient) {
+            const clientResult = await addCustomer({
+              firstName,
+              lastName,
+              mobile: finalRecipientPhone,
+              email: finalRecipientEmail || undefined,
+              forceCompanyId: shop.companyId,
             });
-
-            if (!recipientClient) {
-              const clientResult = await addCustomer({
-                firstName,
-                lastName,
-                mobile: finalRecipientPhone,
-                email: finalRecipientEmail || undefined,
-                forceCompanyId: shop.companyId,
-              });
-              if (clientResult.type === "success" && clientResult.data) {
-                recipientClient = clientResult.data as any; // Assert type safely
-              }
+            if (clientResult.type === "success" && clientResult.data) {
+              recipientClient = clientResult.data as any; // Assert type safely
             }
-
-            if (recipientClient?.id) {
-              const senderName = isSendToMyself ? "You" : purchaserName;
-              const greeting = isSendToMyself ? "Here is your" : `Hi ${firstName}! ${senderName} just sent you a`;
-              const smsMessage = message
-                ? `${greeting} $${amount} Gift Card!\n\nMessage: "${message}"\n\nCode: ${code}\nValid at: ${shop.company?.name || "Our Shop"}`
-                : `${greeting} $${amount} Gift Card!\n\nCode: ${code}\nValid at: ${shop.company?.name || "Our Shop"}`;
-
-              const smsPayload = {
-                companyId: shop.companyId,
-                clientId: recipientClient.id,
-                message: smsMessage,
-                attachments: [],
-                systemCall: true,
-              };
-
-              if (shop.company.smsGateway === "TWILIO") {
-                await sendTwilioMessage(smsPayload);
-              } else if (shop.company.smsGateway === "INFOBIP") {
-                await sendInfobipMessage(smsPayload);
-              }
-            }
-          } catch (smsError) {
-            console.error("Failed to send gift card SMS:", smsError);
-            // We do not fail the transaction if SMS fails, just log it.
           }
+
+          if (recipientClient?.id) {
+            const senderName = isSendToMyself ? "You" : purchaserName;
+            const greeting = isSendToMyself
+              ? "Here is your"
+              : `Hi ${firstName}! ${senderName} just sent you a`;
+            const smsMessage = message
+              ? `${greeting} $${amount} Gift Card!\n\nMessage: "${message}"\n\nCode: ${code}\nValid at: ${shop.company?.name || "Our Shop"}`
+              : `${greeting} $${amount} Gift Card!\n\nCode: ${code}\nValid at: ${shop.company?.name || "Our Shop"}`;
+
+            const smsPayload = {
+              companyId: shop.companyId,
+              clientId: recipientClient.id,
+              message: smsMessage,
+              attachments: [],
+              systemCall: true,
+            };
+
+            if (shop.company.smsGateway === "TWILIO") {
+              await sendTwilioMessage(smsPayload);
+            } else if (shop.company.smsGateway === "INFOBIP") {
+              await sendInfobipMessage(smsPayload);
+            }
+          }
+        } catch (smsError) {
+          console.error("Failed to send gift card SMS:", smsError);
+          // We do not fail the transaction if SMS fails, just log it.
         }
       } else if (
-        deliveryMethod === DeliveryMethod.EMAIL ||
-        deliveryMethod === DeliveryMethod.BOTH
+        (deliveryMethod === DeliveryMethod.EMAIL ||
+          deliveryMethod === DeliveryMethod.BOTH) &&
+        finalRecipientEmail
       ) {
-        if (finalRecipientEmail) {
-          try {
-            const firstName = finalRecipientName.split(" ")[0] || "Guest";
-            const lastName =
-              finalRecipientName.split(" ").slice(1).join(" ") || undefined;
+        try {
+          const firstName = finalRecipientName.split(" ")[0] || "Guest";
+          const lastName =
+            finalRecipientName.split(" ").slice(1).join(" ") || undefined;
 
-            let recipientClient = await tx.client.findFirst({
-              where: { email: finalRecipientEmail, companyId: shop.companyId },
+          let recipientClient = await tx.client.findFirst({
+            where: { email: finalRecipientEmail, companyId: shop.companyId },
+          });
+
+          if (!recipientClient) {
+            const clientResult = await addCustomer({
+              firstName,
+              lastName,
+              mobile: finalRecipientPhone || "",
+              email: finalRecipientEmail,
+              forceCompanyId: shop.companyId,
             });
-
-            if (!recipientClient) {
-              const clientResult = await addCustomer({
-                firstName,
-                lastName,
-                mobile: finalRecipientPhone || "",
-                email: finalRecipientEmail,
-                forceCompanyId: shop.companyId,
-              });
-              if (clientResult.type === "success" && clientResult.data) {
-                recipientClient = clientResult.data as any; // Assert type safely
-              }
+            if (clientResult.type === "success" && clientResult.data) {
+              recipientClient = clientResult.data as any; // Assert type safely
             }
+          }
 
-            if (recipientClient?.id) {
-              const senderName = isSendToMyself ? "You" : purchaserName;
-              const greeting = isSendToMyself ? "Here is your" : `Hi ${firstName}! ${senderName} just sent you a`;
-              
-              const emailText = message
-                ? `${greeting} $${amount} Gift Card!\nMessage: "${message}"\nCode: ${code}\nValid at: ${shop.company?.name || "Our Shop"}`
-                : `${greeting} $${amount} Gift Card!\nCode: ${code}\nValid at: ${shop.company?.name || "Our Shop"}`;
+          if (recipientClient?.id) {
+            const senderName = isSendToMyself ? "You" : purchaserName;
+            const greeting = isSendToMyself
+              ? "Here is your"
+              : `Hi ${firstName}! ${senderName} just sent you a`;
 
-              const emailHtml = `
+            const emailText = message
+              ? `${greeting} $${amount} Gift Card!\nMessage: "${message}"\nCode: ${code}\nValid at: ${shop.company?.name || "Our Shop"}`
+              : `${greeting} $${amount} Gift Card!\nCode: ${code}\nValid at: ${shop.company?.name || "Our Shop"}`;
+
+            const emailHtml = `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
                   <div style="background-color: #2563eb; color: white; padding: 24px; text-align: center;">
                     <h1 style="margin: 0; font-size: 24px;">$${amount} Gift Card</h1>
@@ -427,17 +427,18 @@ export async function POST(req: Request) {
                 </div>
               `;
 
-              await sendInfobipEmail({
-                clientId: recipientClient.id,
-                subject: isSendToMyself ? `Your $${amount} Gift Card from ${shop.company?.name || "our shop"}` : `${purchaserName} sent you a $${amount} Gift Card!`,
-                text: emailText,
-                html: emailHtml,
-              });
-            }
-          } catch (emailError) {
-            console.error("Failed to send gift card Email:", emailError);
-            // We do not fail the transaction if Email fails, just log it.
+            await sendInfobipEmail({
+              clientId: recipientClient.id,
+              subject: isSendToMyself
+                ? `Your $${amount} Gift Card from ${shop.company?.name || "our shop"}`
+                : `${purchaserName} sent you a $${amount} Gift Card!`,
+              text: emailText,
+              html: emailHtml,
+            });
           }
+        } catch (emailError) {
+          console.error("Failed to send gift card Email:", emailError);
+          // We do not fail the transaction if Email fails, just log it.
         }
       }
 
