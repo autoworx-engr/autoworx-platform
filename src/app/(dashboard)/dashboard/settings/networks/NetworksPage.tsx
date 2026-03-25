@@ -104,13 +104,13 @@ const NetworksPage = ({
   ) => {
     const result = await connectWithCompany({ targetCompanyId: companyId });
     if (result.success) {
-      setNearbyCompanies(prevNearby =>
-        prevNearby.filter(company => company.id !== companyId),
+      setNearbyCompanies((prevNearby) =>
+        prevNearby.filter((company) => company.id !== companyId),
       );
-      setConnectedCompanies(prevConnected => [
+      setConnectedCompanies((prevConnected) => [
         ...prevConnected,
 
-        ...unconnectedCompanies.filter(company => company.id === companyId),
+        ...unconnectedCompanies.filter((company) => company.id === companyId),
       ]);
       successToast(`Connected with ${companyName}`);
     } else {
@@ -129,7 +129,7 @@ const NetworksPage = ({
         location.latitude,
         location.longitude,
         nearByCompanyRange,
-      ).then(res => {
+      ).then((res) => {
         setNearbyCompanies(res.data);
       });
     }
@@ -141,7 +141,7 @@ const NetworksPage = ({
 
   useEffect(() => {
     if (nearbyCompaniesSearch.length > 0) {
-      const filteredNearbyCompanies = nearbyCompanies.filter(company =>
+      const filteredNearbyCompanies = nearbyCompanies.filter((company) =>
         company.name
           .toLowerCase()
           .includes(nearbyCompaniesSearch.toLowerCase()),
@@ -266,8 +266,8 @@ const NetworksPage = ({
                           company={company}
                           rightSlot={
                             <div className="flex gap-2 pt-1">
-                              <Button
-                                className="bg-green-500"
+                              <button
+                                className="w-full disabled:bg-slate-200 bg-green-600 hover:bg-green-700 text-white font-medium py-0.5 px-3 rounded-lg shadow-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                                 onClick={() =>
                                   acceptCompanyJoin(
                                     joinId,
@@ -276,9 +276,9 @@ const NetworksPage = ({
                                 }
                               >
                                 Accept
-                              </Button>
-                              <Button
-                                className="bg-red-500"
+                              </button>
+                              <button
+                                className="w-full disabled:bg-slate-200 bg-red-600 hover:bg-red-700 text-white font-medium py-0.5 px-3 rounded-lg shadow-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                                 onClick={() =>
                                   rejectCompanyJoin(
                                     joinId,
@@ -287,7 +287,7 @@ const NetworksPage = ({
                                 }
                               >
                                 Reject
-                              </Button>
+                              </button>
                             </div>
                           }
                         />
@@ -354,8 +354,8 @@ const NetworksPage = ({
                           company={company}
                           rightSlot={
                             <div className="flex gap-2 pt-1">
-                              <Button
-                                className="bg-green-500"
+                              <button
+                                className="w-full disabled:bg-slate-200 bg-green-600 hover:bg-green-700 text-white font-medium py-0.5 px-3 rounded-lg shadow-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                                 onClick={() =>
                                   acceptCompanyJoin(
                                     joinId,
@@ -364,18 +364,7 @@ const NetworksPage = ({
                                 }
                               >
                                 Accept
-                              </Button>
-                              {/* <Button
-                                className="bg-red-500"
-                                onClick={() =>
-                                  rejectCompanyJoin(
-                                    joinId,
-                                    Number(currentCompany?.id)
-                                  )
-                                }
-                              >
-                                Reject
-                              </Button> */}
+                              </button>
                             </div>
                           }
                         />
@@ -412,7 +401,7 @@ const NetworksPage = ({
                   <span>
                     <Switch
                       checked={businessVisibility}
-                      setChecked={async value => {
+                      setChecked={async (value) => {
                         let res = await toggleBusinessVisibility();
                         if (res?.success) {
                           setBusinessVisibility(value);
@@ -433,7 +422,7 @@ const NetworksPage = ({
                   <span>
                     <Switch
                       checked={phoneVisibility}
-                      setChecked={async value => {
+                      setChecked={async (value) => {
                         let res = await togglePhoneVisibility();
                         if (res?.success) {
                           setPhoneVisibility(value);
@@ -456,7 +445,7 @@ const NetworksPage = ({
                   <span>
                     <Switch
                       checked={businessAddressVisibility}
-                      setChecked={async value => {
+                      setChecked={async (value) => {
                         let res = await toggleAddressVisibility();
                         if (res?.success) {
                           setBusinessAddressVisibility(value);
@@ -479,7 +468,7 @@ const NetworksPage = ({
                   <span>
                     <Switch
                       checked={locationAllow}
-                      setChecked={async value => {
+                      setChecked={async (value) => {
                         if (!value) {
                           setLocation({ latitude: null, longitude: null });
                           setNearbyCompanies([]);
@@ -488,7 +477,7 @@ const NetworksPage = ({
                         } else {
                           if (navigator.geolocation) {
                             navigator.geolocation.getCurrentPosition(
-                              position => {
+                              (position) => {
                                 setLocation({
                                   latitude: position.coords.latitude,
                                   longitude: position.coords.longitude,
@@ -583,7 +572,7 @@ const NetworksPage = ({
                   className="h-full w-full rounded-lg border border-gray-300 pl-10 pr-4 text-gray-700 transition duration-200 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                   placeholder="Search nearby companies by name..."
                   value={nearbyCompaniesSearch}
-                  onChange={e => setNearbyCompaniesSearch(e.target.value)}
+                  onChange={(e) => setNearbyCompaniesSearch(e.target.value)}
                 />
               </div>
               <div className="space-y-4 rounded-xl border border-gray-200 bg-white p-6 shadow-xl max-h-[400px] overflow-y-auto">

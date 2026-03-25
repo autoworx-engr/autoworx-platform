@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 
 export async function rejectCompanyJoin(
   joinId: number,
-  currentCompanyId: number
+  currentCompanyId: number,
 ) {
   const join = await db.companyJoin.findUnique({
     where: { id: joinId },
@@ -17,10 +17,6 @@ export async function rejectCompanyJoin(
 
   if (join.companyTwoId !== currentCompanyId) {
     throw new Error("You are not allowed to reject this request");
-  }
-
-  if (join.status !== "PENDING") {
-    throw new Error("This request is no longer pending");
   }
 
   await db.companyJoin.update({

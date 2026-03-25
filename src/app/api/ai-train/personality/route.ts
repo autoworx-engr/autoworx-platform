@@ -4,7 +4,7 @@ import { validateCompanyId } from "../utils";
 
 /**
  * @swagger
- * /api/sales-agent/personality:
+ * /api/ai-train/personality:
  *   get:
  *     summary: Get AI personality config for company
  *     tags: [Personality]
@@ -69,7 +69,7 @@ export async function GET(req: Request) {
 
 /**
  * @swagger
- * /api/sales-agent/personality:
+ * /api/ai-train/personality:
  *   post:
  *     summary: Update AI personality config for company
  *     tags: [Personality]

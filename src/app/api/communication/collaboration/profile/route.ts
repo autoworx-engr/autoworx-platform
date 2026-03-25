@@ -139,7 +139,7 @@ export async function GET(req: NextRequest) {
 
     const avgRate =
       totalReviews > 0
-        ? reviews.reduce((sum, r) => sum + r.rate, 0) / totalReviews
+        ? reviews.reduce((sum, r) => sum + Number(r.rate), 0) / totalReviews
         : 0;
 
     const connectedCompanies = await db.companyJoin.findMany({

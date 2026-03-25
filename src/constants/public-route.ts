@@ -12,7 +12,7 @@ export const PUBLIC_API_ROUTES = [
   "/api/auth/csrf",
   "/api/sales-agent",
   "/api/task",
-  "/api/sales-agent-company",
+  "/api/ai-train-company",
   "/api/notifications/client-abuse",
   // Webhook endpoints
   "/api/pusher/collaboration",
@@ -22,6 +22,7 @@ export const PUBLIC_API_ROUTES = [
   "/api/infobip",
   "/api/lead-generate",
   "/api/authorize-net/webhook",
+  "/api/platform/webhook",
   "/api/infobip/mms/receive",
   "/api/infobip/email/receive",
   "/api/twilio/call-recording",

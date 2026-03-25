@@ -30,11 +30,32 @@ export const searchCompanyQuery = async (searchTerm: string) => {
             image: true,
           },
         },
+        companyJoinsAsOne: {
+          where: {
+            OR: [{ companyOneId: companyId }, { companyTwoId: companyId }],
+          },
+          select: {
+            status: true,
+            companyOneId: true,
+            companyTwoId: true,
+          },
+        },
+        companyJoinsAsTwo: {
+          where: {
+            OR: [{ companyOneId: companyId }, { companyTwoId: companyId }],
+          },
+          select: {
+            status: true,
+            companyOneId: true,
+            companyTwoId: true,
+          },
+        },
       },
     });
     return {
       success: true,
       data: companies,
+      companyId,
     };
   } catch (err: any) {
     throw new Error(err);

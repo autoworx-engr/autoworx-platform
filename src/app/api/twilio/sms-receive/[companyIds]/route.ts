@@ -2,6 +2,7 @@
 import { updatePipelineAutomationTriggerWithToken } from "@/actions/automation/pipeline/triggerPipelineAutomation";
 import { updateNewSMSChatTrack } from "@/actions/communication/client/chat-track";
 import { db } from "@/lib/db";
+import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-service";
 import { sendClientMessageNotification } from "@/lib/notification/communication-notify";
 import sendClientMailOrSMSNotify from "@/lib/pusher/client-conversation-notify";
 import receiveTwiloMessage from "@/lib/pusher/receiveTwiloMessage";
@@ -112,6 +113,10 @@ export async function POST(
     const normalizedFrom = normalizePhoneNumber(body.From);
 
     for (const companyId of companyIds) {
+      const entitlements = await getCompanyEntitlements(companyId);
+      if (!entitlements.canUseSms) {
+        continue;
+      }
       const company = await db.company.findUnique({
         where: { id: companyId },
       });
@@ -194,11 +199,8 @@ export async function POST(
 
         const permissions = await allCompanyFeaturePermissions(companyId);
 
-        const salesAgentPermission = permissions?.data?.find(
-          (item: any) => item.permission_name === "sales-agent",
-        );
-
-        const isSalesAgentEnabled = salesAgentPermission?.enabled === true;
+        const entitlements = await getCompanyEntitlements(client.companyId);
+        const isSalesAgentEnabled = entitlements.awxSalesAgent;
 
         //sales agent
         const isCompanySalesAgent = company?.isSalesAgent === true;
