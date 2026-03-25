@@ -109,6 +109,60 @@ export interface AppointmentSlotsResponse {
   data: AppointmentSlot[];
 }
 
+export interface CreateVirtualShopServiceBookingPayload {
+  shopId: number;
+  shopServices: Array<{
+    shopServiceId: number;
+    vehicleType?: string;
+  }>;
+  appointmentDate: string;
+  appointmentStartTime: string;
+  fullName?: string;
+  email?: string;
+  phone: string;
+  make: string;
+  model: string;
+  year: number;
+  notes?: string;
+  depositAmount?: number;
+}
+
+export interface CreateVirtualShopServiceBookingResponse {
+  success: boolean;
+  message: string;
+  data: {
+    appointmentId: number;
+    estimateId: string;
+    shopBookingId: number;
+    status: string;
+    appointment: {
+      date: string;
+      startTime: string;
+    };
+    client: {
+      firstName: string;
+      lastName?: string;
+      email?: string;
+      mobile: string;
+    };
+    vehicle: {
+      year: number;
+      make: string;
+      model: string;
+    };
+    services: Array<{
+      title: string;
+      price: number;
+    }>;
+    totals: {
+      subtotal: number;
+      tax: number;
+      serviceFee: number;
+      grandTotal: number;
+    };
+  };
+}
+
 interface AppointmentSlotsApiResponse {
   success: boolean;
   date?: string;
@@ -389,6 +443,22 @@ export const getAppointmentSlots = async function (
       date: payload.date,
       data: normalizedData,
     } satisfies AppointmentSlotsResponse;
+  } catch (error) {
+    const err = errorHandler(error);
+    throw err;
+  }
+};
+
+export const createVirtualShopServiceBooking = async function (
+  payload: CreateVirtualShopServiceBookingPayload,
+) {
+  try {
+    const response = await axios.post<CreateVirtualShopServiceBookingResponse>(
+      "/api/virtual-shop/service-booking",
+      payload,
+    );
+
+    return response.data;
   } catch (error) {
     const err = errorHandler(error);
     throw err;

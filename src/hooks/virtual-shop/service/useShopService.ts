@@ -1,6 +1,8 @@
 import {
   createShopService,
+  createVirtualShopServiceBooking,
   CreateShopServicePayload,
+  CreateVirtualShopServiceBookingPayload,
   deleteShopService,
   getShopServices,
   GetShopServicesParams,
@@ -138,5 +140,12 @@ export const useGetAppointmentSlots = (
     queryKey: ["appointment-slots", shopId, date, nextAvailable],
     queryFn: () => getAppointmentSlots(Number(shopId), date, nextAvailable),
     enabled: !!shopId && (!!date || !!nextAvailable),
+  });
+};
+
+export const useCreateVirtualShopServiceBooking = () => {
+  return useMutation({
+    mutationFn: (payload: CreateVirtualShopServiceBookingPayload) =>
+      createVirtualShopServiceBooking(payload),
   });
 };
