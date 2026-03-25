@@ -177,7 +177,6 @@ export async function PATCH(
   try {
     const body = await req.json();
 
-
     if (body.pricingRules !== undefined) {
       await db.pricingRule.deleteMany({
         where: { playbookId: Number(params.id) },

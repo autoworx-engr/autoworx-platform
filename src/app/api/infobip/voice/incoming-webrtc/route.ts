@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-service";
 import { NextRequest, NextResponse } from "next/server";
 import { sendPushNotification } from "@/actions/notification/sendPushNotification";
 
@@ -60,6 +61,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Infobip configuration not found" },
         { status: 400 },
+      );
+    }
+
+    const entitlements = await getCompanyEntitlements(infobipConfig.companyId);
+    if (!entitlements.canUseVoice) {
+      return NextResponse.json(
+        { error: "Voice calling is not enabled for this plan." },
+        { status: 403 },
       );
     }
 

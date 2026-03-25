@@ -1,5 +1,7 @@
 import { db } from "@/lib/db";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
+import { revalidatePath } from "next/cache";
+import { getPusherInstance } from "@/lib/pusher/server";
 
 /**
  * @swagger
@@ -139,6 +141,8 @@ import { errorHandler } from "@/error-boundary/globalErrorHandler";
  *                   example: Internal server error
  */
 
+const pusher = getPusherInstance();
+
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
@@ -150,8 +154,6 @@ export async function GET(req: Request) {
     if (!companyA || !companyB || !viewerCompanyId) {
       throw new Error("Missing required company IDs");
     }
-
-    /* ---------------- FETCH MESSAGES ---------------- */
 
     const messages = await db.collaborationMessage.findMany({
       where: {
@@ -186,6 +188,36 @@ export async function GET(req: Request) {
       },
     });
 
+    const readMessages = await db.companyChatTrack.updateMany({
+      where: {
+        OR: [
+          {
+            AND: [
+              { senderCompanyId: companyA },
+              { receiverCompanyId: companyB },
+            ],
+          },
+          {
+            AND: [
+              { senderCompanyId: companyB },
+              { receiverCompanyId: companyA },
+            ],
+          },
+        ],
+        isRead: false,
+      },
+      data: {
+        isRead: true,
+      },
+    });
+
+    if (readMessages) {
+      await pusher.trigger(`company-track-${companyA}`, "chat-read", {
+        senderCompanyId: companyB,
+        receiverCompanyId: companyA,
+      });
+    }
+
     /* ---------------- ADD UI FLAGS ---------------- */
 
     const formattedMessages = messages.map((msg) => ({
@@ -199,7 +231,7 @@ export async function GET(req: Request) {
       toCompanyId: msg.toCompanyId,
       isOwnMessage: msg.fromCompanyId === viewerCompanyId,
     }));
-
+    revalidatePath("/dashboard/communication/collaboration");
     return new Response(
       JSON.stringify({
         success: true,

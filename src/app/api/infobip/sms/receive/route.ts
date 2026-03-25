@@ -1,6 +1,7 @@
 import { updateNewSMSChatTrack } from "@/actions/communication/client/chat-track";
 import { updatePipelineAutomationTriggerWithToken } from "@/actions/automation/pipeline/triggerPipelineAutomation";
 import { db } from "@/lib/db";
+import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-service";
 import { sendClientMessageNotification } from "@/lib/notification/communication-notify";
 import sendClientMailOrSMSNotify from "@/lib/pusher/client-conversation-notify";
 import receiveTwiloMessage from "@/lib/pusher/receiveTwiloMessage";
@@ -76,6 +77,9 @@ export async function POST(req: NextRequest) {
         continue;
       }
 
+      const normalizedFrom = normalizePhoneNumber(from);
+      const normalizedTo = normalizePhoneNumber(to);
+
       const messageText = message || cleanText || "";
 
       // Handle cross-platform MMS: Extract Twilio media URLs if present
@@ -98,9 +102,11 @@ export async function POST(req: NextRequest) {
       // The "to" field should match our Infobip phone number
       const infobipConfigs = await db.infobipConfig.findMany({
         where: {
-          phoneNumber: {
-            endsWith: to.replace("+", ""),
-          },
+          OR: normalizedTo.lookupValues.map((lookupValue) => ({
+            phoneNumber: {
+              endsWith: lookupValue,
+            },
+          })),
         },
       });
 
@@ -115,14 +121,23 @@ export async function POST(req: NextRequest) {
 
       // Process for each matching company
       for (const infobipConfig of infobipConfigs) {
+        const entitlements = await getCompanyEntitlements(
+          infobipConfig.companyId,
+        );
+        if (!entitlements.canUseSms) {
+          continue;
+        }
+
         console.log(`Processing for company ${infobipConfig.companyId}`);
 
         // Find client by the "from" phone number (client's phone)
         let client = await db.client.findFirst({
           where: {
-            mobile: {
-              endsWith: from.replace("+", ""),
-            },
+            OR: normalizedFrom.lookupValues.map((lookupValue) => ({
+              mobile: {
+                endsWith: lookupValue,
+              },
+            })),
             companyId: infobipConfig.companyId,
           },
         });
@@ -132,7 +147,7 @@ export async function POST(req: NextRequest) {
             data: {
               firstName: from,
               lastName: " ",
-              mobile: from,
+              mobile: normalizedFrom.storeValue,
               companyId: infobipConfig.companyId,
               isSalesAgent: true,
             },
@@ -238,15 +253,8 @@ export async function POST(req: NextRequest) {
             where: { id: infobipConfig?.companyId },
           });
 
-          const permissions = await allCompanyFeaturePermissions(
-            infobipConfig?.companyId,
-          );
-
-          const salesAgentPermission = permissions?.data?.find(
-            (item: any) => item.permission_name === "sales-agent",
-          );
-
-          const isSalesAgentEnabled = salesAgentPermission?.enabled === true;
+          const entitlements = await getCompanyEntitlements(client.companyId);
+          const isSalesAgentEnabled = entitlements.awxSalesAgent;
 
           const isCompanySalesAgent = company?.isSalesAgent === true;
           const isClientSalesAgent = client?.isSalesAgent === true;
@@ -389,6 +397,25 @@ async function fetchInfobipMedia(url: string, contentType: string) {
   const fileName = `infobip-media-${Date.now()}.${extension}`;
 
   return new File([blob], fileName, { type: contentType });
+}
+
+function normalizePhoneNumber(phone: string) {
+  const digits = (phone || "").replace(/\D/g, "");
+  const last10Digits = digits.length >= 10 ? digits.slice(-10) : digits;
+
+  const lookupValues = Array.from(
+    new Set([digits, last10Digits].filter((value) => value.length > 0)),
+  );
+
+  const storeValue =
+    digits.length === 11 && digits.startsWith("1")
+      ? last10Digits
+      : digits || phone;
+
+  return {
+    lookupValues,
+    storeValue,
+  };
 }
 
 // Optional: Add GET endpoint for testing webhook URL

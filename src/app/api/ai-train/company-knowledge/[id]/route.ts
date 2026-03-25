@@ -2,7 +2,6 @@ import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 import { validateCompanyId } from "../../utils";
 
-
 /**
  * @swagger
  * /api/ai-train/company-knowledge/{id}:
@@ -30,45 +29,48 @@ import { validateCompanyId } from "../../utils";
  *       500:
  *         description: Internal server error
  */
-export async function GET(req: Request, { params }: { params: { id: number } }) {
-    try {
-        const validation = validateCompanyId(req);
-        if (validation instanceof NextResponse) return validation;
-        const { companyId } = validation;
+export async function GET(
+  req: Request,
+  { params }: { params: { id: number } },
+) {
+  try {
+    const validation = validateCompanyId(req);
+    if (validation instanceof NextResponse) return validation;
+    const { companyId } = validation;
 
-        const companyInfo = await db.companyInfo.findFirst({
-            where: {
-                id: Number(params.id),
-            },
-            select: {
-                companyId: true,
-                shopName: true,
-                about: true,
-                address: true,
-                phone: true,
-                websiteUrl: true,
-                hours: true,
-                policies: true
-            }
-        })
+    const companyInfo = await db.companyInfo.findFirst({
+      where: {
+        id: Number(params.id),
+      },
+      select: {
+        companyId: true,
+        shopName: true,
+        about: true,
+        address: true,
+        phone: true,
+        websiteUrl: true,
+        hours: true,
+        policies: true,
+      },
+    });
 
-        if (!companyInfo) {
-            return NextResponse.json(
-                { success: false, message: "Company info not found" },
-                { status: 404 },
-            );
-        }
-        return NextResponse.json({
-            success: true,
-            message: "Company Info retrieved successfully",
-            data: companyInfo,
-        });
-    } catch (error) {
-        return NextResponse.json(
-            { success: false, message: "Internal server error" },
-            { status: 500 },
-        );
+    if (!companyInfo) {
+      return NextResponse.json(
+        { success: false, message: "Company info not found" },
+        { status: 404 },
+      );
     }
+    return NextResponse.json({
+      success: true,
+      message: "Company Info retrieved successfully",
+      data: companyInfo,
+    });
+  } catch (error) {
+    return NextResponse.json(
+      { success: false, message: "Internal server error" },
+      { status: 500 },
+    );
+  }
 }
 
 /**
@@ -126,56 +128,58 @@ export async function GET(req: Request, { params }: { params: { id: number } }) 
  *       500:
  *         description: Internal server error
  */
-export async function PATCH(req: Request, { params }: { params: { id: number } }) {
-    try {
-        const body = await req.json();
-        const validation = validateCompanyId(req);
-        if (validation instanceof NextResponse) return validation;
-        const { companyId } = validation;
+export async function PATCH(
+  req: Request,
+  { params }: { params: { id: number } },
+) {
+  try {
+    const body = await req.json();
+    const validation = validateCompanyId(req);
+    if (validation instanceof NextResponse) return validation;
+    const { companyId } = validation;
 
-        // Check if record exists and belongs to the company
-        const existingInfo = await db.companyInfo.findFirst({
-            where: {
-                id: Number(params.id),
-                companyId: companyId
-            }
-        });
+    // Check if record exists and belongs to the company
+    const existingInfo = await db.companyInfo.findFirst({
+      where: {
+        id: Number(params.id),
+        companyId: companyId,
+      },
+    });
 
-        if (!existingInfo) {
-            return NextResponse.json(
-                { success: false, message: "Company info not found" },
-                { status: 404 },
-            );
-        }
-
-        const updateData: any = {};
-
-        if (body.shopName !== undefined) updateData.shopName = body.shopName;
-        if (body.about !== undefined) updateData.about = body.about;
-        if (body.address !== undefined) updateData.address = body.address;
-        if (body.email !== undefined) updateData.email = body.email;
-        if (body.phone !== undefined) updateData.phone = body.phone;
-        if (body.websiteUrl !== undefined) updateData.websiteUrl = body.websiteUrl;
-        if (body.hours !== undefined) updateData.hours = body.hours;
-        if (body.policies !== undefined) updateData.policies = body.policies;
-        
-
-        const updatedInfo = await db.companyInfo.update({
-            where: { id: Number(params.id) },
-            data: updateData,
-        });
-
-        return NextResponse.json({
-            success: true,
-            message: "Company Info updated successfully",
-            data: updatedInfo,
-        });
-    } catch (error) {
-        return NextResponse.json(
-            { success: false, message: "Internal server error" },
-            { status: 500 },
-        );
+    if (!existingInfo) {
+      return NextResponse.json(
+        { success: false, message: "Company info not found" },
+        { status: 404 },
+      );
     }
+
+    const updateData: any = {};
+
+    if (body.shopName !== undefined) updateData.shopName = body.shopName;
+    if (body.about !== undefined) updateData.about = body.about;
+    if (body.address !== undefined) updateData.address = body.address;
+    if (body.email !== undefined) updateData.email = body.email;
+    if (body.phone !== undefined) updateData.phone = body.phone;
+    if (body.websiteUrl !== undefined) updateData.websiteUrl = body.websiteUrl;
+    if (body.hours !== undefined) updateData.hours = body.hours;
+    if (body.policies !== undefined) updateData.policies = body.policies;
+
+    const updatedInfo = await db.companyInfo.update({
+      where: { id: Number(params.id) },
+      data: updateData,
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "Company Info updated successfully",
+      data: updatedInfo,
+    });
+  } catch (error) {
+    return NextResponse.json(
+      { success: false, message: "Internal server error" },
+      { status: 500 },
+    );
+  }
 }
 
 /**
@@ -205,39 +209,42 @@ export async function PATCH(req: Request, { params }: { params: { id: number } }
  *       500:
  *         description: Internal server error
  */
-export async function DELETE(req: Request, { params }: { params: { id: number } }) {
-    try {
-        const validation = validateCompanyId(req);
-        if (validation instanceof NextResponse) return validation;
-        const { companyId } = validation;
+export async function DELETE(
+  req: Request,
+  { params }: { params: { id: number } },
+) {
+  try {
+    const validation = validateCompanyId(req);
+    if (validation instanceof NextResponse) return validation;
+    const { companyId } = validation;
 
-        // Check if record exists and belongs to the company
-        const existingInfo = await db.companyInfo.findFirst({
-            where: {
-                id: Number(params.id),
-                companyId: companyId
-            }
-        });
+    // Check if record exists and belongs to the company
+    const existingInfo = await db.companyInfo.findFirst({
+      where: {
+        id: Number(params.id),
+        companyId: companyId,
+      },
+    });
 
-        if (!existingInfo) {
-            return NextResponse.json(
-                { success: false, message: "Company info not found" },
-                { status: 404 },
-            );
-        }
-
-        await db.companyInfo.delete({
-            where: { id: Number(params.id) }
-        });
-
-        return NextResponse.json({
-            success: true,
-            message: "Company Info deleted successfully",
-        });
-    } catch (error) {
-        return NextResponse.json(
-            { success: false, message: "Internal server error" },
-            { status: 500 },
-        );
+    if (!existingInfo) {
+      return NextResponse.json(
+        { success: false, message: "Company info not found" },
+        { status: 404 },
+      );
     }
+
+    await db.companyInfo.delete({
+      where: { id: Number(params.id) },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "Company Info deleted successfully",
+    });
+  } catch (error) {
+    return NextResponse.json(
+      { success: false, message: "Internal server error" },
+      { status: 500 },
+    );
+  }
 }

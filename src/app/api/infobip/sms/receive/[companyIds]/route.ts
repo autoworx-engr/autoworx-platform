@@ -1,6 +1,7 @@
 import { updatePipelineAutomationTriggerWithToken } from "@/actions/automation/pipeline/triggerPipelineAutomation";
 import { updateNewSMSChatTrack } from "@/actions/communication/client/chat-track";
 import { db } from "@/lib/db";
+import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-service";
 import { sendClientMessageNotification } from "@/lib/notification/communication-notify";
 import sendClientMailOrSMSNotify from "@/lib/pusher/client-conversation-notify";
 import receiveTwiloMessage from "@/lib/pusher/receiveTwiloMessage";
@@ -111,6 +112,13 @@ export async function POST(
 
     // Process for each matching company configuration
     for (const infobipConfig of infobipConfigs) {
+      const entitlements = await getCompanyEntitlements(
+        infobipConfig.companyId,
+      );
+      if (!entitlements.canUseSms) {
+        continue;
+      }
+
       let client = await db.client.findFirst({
         where: {
           mobile: {

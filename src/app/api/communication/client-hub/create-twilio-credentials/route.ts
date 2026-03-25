@@ -35,9 +35,9 @@ import { createTwilioCredentials } from "@/actions/communication/client/createTw
  *                 type: string
  *               phoneNumberSid:
  *                 type: string
- *               notifyServiceSid:
+ *               fcmPushCredentialSid:
  *                 type: string
- *               voipPushCredentialSid:
+ *               apnPushCredentialSid:
  *                 type: string
  *     responses:
  *       200:
@@ -54,14 +54,14 @@ export async function POST(req: NextRequest) {
       apiKeySid: body.apiKeySid,
       apiKeySecret: body.apiKeySecret,
       phoneNumberSid: body.phoneNumberSid,
-      notifyServiceSid: body.notifyServiceSid,
-      voipPushCredentialSid: body.voipPushCredentialSid,
+      fcmPushCredentialSid: body.fcmPushCredentialSid,
+      apnPushCredentialSid: body.apnPushCredentialSid,
     });
 
     if (!data.success) {
       return NextResponse.json(
         { success: false, message: "Failed to create Twilio credentials" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     return NextResponse.json(
       { success: false, message: error.message },
-      { status: 400 }
+      { status: 400 },
     );
   }
 }

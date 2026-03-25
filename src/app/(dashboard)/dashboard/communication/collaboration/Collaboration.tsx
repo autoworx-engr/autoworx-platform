@@ -1,18 +1,17 @@
 "use client";
 
-import { cn } from "@/lib/cn";
 import {
   Attachment,
   Company,
-  Message as DbMessage,
+  CollaborationMessage as DbMessage,
   User,
 } from "@prisma/client";
 import { Session } from "next-auth";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import List from "./List";
-import UsersArea from "./UsersArea";
 import { useUnreadCollaborationMessages } from "./hooks/useUnreadCollaborationMessages";
 import CompanyArea from "./CompanyArea";
+import { useSearchParams } from "next/navigation";
 
 export default function Collaboration({
   companyWithAdmin,
@@ -21,21 +20,28 @@ export default function Collaboration({
   messages,
   isCollaborators,
 }: {
-  companyWithAdmin: Partial<User>[];
+  companyWithAdmin: any;
   companies: (Company & { users: User[] })[];
   currentUser: Session["user"];
   messages: (DbMessage & { attachment: Attachment[] | null })[];
   isCollaborators: boolean | null | undefined;
 }) {
+  const searchParams = useSearchParams();
+  const companyId = searchParams.get("companyId");
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
-  const [companyAdmins, setCompanyAdmins] = useState(companyWithAdmin);
+  const [companyAdmins, setCompanyAdmins] = useState<any[]>([]);
 
-  const unreadCounts = [
-    {
-      count: 0,
-      companyId: 1,
-    },
-  ];
+  useEffect(() => {
+    setCompanyAdmins(companyWithAdmin);
+  }, [companyWithAdmin]);
+
+  useEffect(() => {
+    if (companyId) {
+      const selected: any = companies.find((c) => c.id === Number(companyId));
+
+      setSelectedCompany(selected);
+    }
+  }, [companyId, companies]);
 
   return (
     <>
@@ -46,7 +52,6 @@ export default function Collaboration({
             companies={companies}
             selectedCompany={selectedCompany}
             setSelectedCompany={setSelectedCompany}
-            unreadCounts={unreadCounts}
             isCollaborators={isCollaborators}
             companyAdmins={companyAdmins}
             setCompanyAdmins={setCompanyAdmins}
@@ -70,7 +75,6 @@ export default function Collaboration({
           companies={companies}
           selectedCompany={selectedCompany}
           setSelectedCompany={setSelectedCompany}
-          unreadCounts={unreadCounts}
           isCollaborators={isCollaborators}
           companyAdmins={companyAdmins}
           setCompanyAdmins={setCompanyAdmins}

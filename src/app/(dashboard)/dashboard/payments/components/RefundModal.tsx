@@ -10,15 +10,15 @@ import {
 } from "@/components/Dialog";
 import { SlimInput } from "@/components/SlimInput";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
+import { queryKeys } from "@/lib/queryKeys";
 import { errorToast, successToast } from "@/lib/toast";
 import { PaymentType } from "@prisma/client";
 import * as Tabs from "@radix-ui/react-tabs";
+import { useQueryClient } from "@tanstack/react-query";
+import { Settings, Trash2 } from "lucide-react";
 import moment from "moment";
 import Image from "next/image";
-import React, { useState, useTransition, useEffect } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { queryKeys } from "@/lib/queryKeys";
-import { Settings, Trash2 } from "lucide-react";
+import React, { useEffect, useState, useTransition } from "react";
 
 function TabTrigger({
   value,
@@ -238,10 +238,11 @@ export default function RefundModal({
             className={`
                 flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5 active:translate-y-0
                 ${isDisabled ? "cursor-not-allowed opacity-50" : ""} 
-                ${hasRefund
-                ? "border border-slate-200 bg-white text-slate-700 hover:text-[#6571FF] hover:border-[#6571FF]"
-                : "bg-gradient-to-r from-[#6571FF] to-[#5a66ee] text-white shadow-[#6571FF]/20"
-              }
+                ${
+                  hasRefund
+                    ? "border border-slate-200 bg-white text-slate-700 hover:text-[#6571FF] hover:border-[#6571FF]"
+                    : "bg-gradient-to-r from-[#6571FF] to-[#5a66ee] text-white shadow-[#6571FF]/20"
+                }
             `}
             disabled={isDisabled}
           >
@@ -250,7 +251,10 @@ export default function RefundModal({
           </button>
         </DialogTrigger>
 
-        <DialogContent className="w-[95vw] max-w-xl max-h-[90vh] overflow-y-auto [&>button]:hidden p-4 sm:p-6">
+        <DialogContent
+          className="w-[95vw] max-w-xl max-h-[90vh] overflow-y-auto [&>button]:hidden p-4 sm:p-6"
+          onOpenAutoFocus={(e) => e.preventDefault()}
+        >
           <form>
             <DialogHeader>
               <DialogTitle className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-lg sm:text-xl text-gray-600">
@@ -280,6 +284,10 @@ export default function RefundModal({
                     name="date"
                     type="date"
                     label="Date"
+                    onFocus={(e) => {
+                      // Prevent the default focus behavior to avoid opening the calendar popup
+                      e.preventDefault();
+                    }}
                     value={moment(date).format("YYYY-MM-DD")}
                     onChange={(e) => setDate(new Date(e.target.value))}
                   />

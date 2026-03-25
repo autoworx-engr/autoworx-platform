@@ -271,7 +271,7 @@ export default function CreateGroupModal({
             <>
               {/* Header for open user list */}
               <div className="mb-1 px-2 font-medium text-slate-800 dark:text-white">
-                Select Contacts
+                Select Contacts <span className="text-red-500">*</span>
               </div>
               {/* User search and list container (Glassmorphism card effect) */}
               <div className="w-full space-y-4 rounded-xl border border-slate-300/50 bg-white/50 p-4 backdrop-blur-sm max-h-[50vh] overflow-y-auto ring-1 ring-slate-900/5 dark:border-slate-700/50 dark:bg-slate-800/50 dark:ring-white/10 sm:max-h-[60vh]">
@@ -324,7 +324,7 @@ export default function CreateGroupModal({
               </div>
             </>
           ) : (
-            <div className="relative" >
+            <div className="relative">
               {/* Contact List closed state - uses SlimInput for consistent form look */}
               <SlimInput
                 label={
@@ -359,11 +359,13 @@ export default function CreateGroupModal({
         {/* Footer with action buttons */}
         <DialogFooter className="gap-x-3">
           {/* Cancel Button: Secondary action, simple design */}
-          <DialogClose className="
+          <DialogClose
+            className="
                 rounded-xl mt-2 sm:mt-0 px-5 py-2.5 text-sm font-medium text-slate-500 
                 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800
                 transition-colors border
-              ">
+              "
+          >
             Cancel
           </DialogClose>
           {/* Create Group Button: Special action color with loading state and shimmer effect on hover */}
@@ -372,9 +374,10 @@ export default function CreateGroupModal({
             disabled={isLoading}
             className={`
               relative flex items-center justify-center gap-2 rounded-xl border border-[#6571FF] px-5 py-2 text-white transition-all duration-300 ease-in-out overflow-hidden
-              ${isLoading
-                ? "cursor-not-allowed bg-slate-400 border-slate-400"
-                : "bg-[#6571FF] hover:bg-[#5a67e8] hover:shadow-lg hover:shadow-indigo-500/50"
+              ${
+                isLoading
+                  ? "cursor-not-allowed bg-slate-400 border-slate-400"
+                  : "bg-[#6571FF] hover:bg-[#5a67e8] hover:shadow-lg hover:shadow-indigo-500/50"
               }
             `}
           >

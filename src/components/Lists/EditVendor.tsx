@@ -1,7 +1,6 @@
 "use client";
 
-import { Vendor } from "@prisma/client";
-import { useRef, useState } from "react";
+import { editVendor } from "@/actions/vendor/editVendor";
 import {
   Dialog,
   DialogClose,
@@ -11,23 +10,24 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/Dialog";
-import { SlimInput } from "../SlimInput";
-import { useListsStore } from "@/stores/lists";
-import { editVendor } from "@/actions/vendor/editVendor";
-import { SlimTextarea } from "../SlimTextarea";
 import FormError from "@/components/FormError";
-import { useFormErrorStore } from "@/stores/form-error";
 import { successToast } from "@/lib/toast";
+import { useFormErrorStore } from "@/stores/form-error";
+import { useListsStore } from "@/stores/lists";
+import { Vendor } from "@prisma/client";
+import { useRef, useState } from "react";
 import PhoneInput from "../PhoneInput";
+import { SlimInput } from "../SlimInput";
+import { SlimTextarea } from "../SlimTextarea";
 
 type ServerAction =
   | { type: "success"; data: Vendor }
   | { type: "error"; message: string }
   | {
-    type: "globalError";
-    errorSource?: { message: string }[];
-    message?: string;
-  };
+      type: "globalError";
+      errorSource?: { message: string }[];
+      message?: string;
+    };
 
 export default function EditVendor({
   button,
@@ -201,7 +201,10 @@ export default function EditVendor({
     >
       <DialogTrigger asChild>{button}</DialogTrigger>
 
-      <DialogContent className="max-h-full max-w-xl grid-rows-[auto,1fr,auto]">
+      <DialogContent
+        className="max-h-full max-w-xl grid-rows-[auto,1fr,auto]"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle>Edit Vendor</DialogTitle>
         </DialogHeader>
