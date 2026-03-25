@@ -23,28 +23,143 @@ import { ServicesPerformance } from "@/components/public-report/dashboard/Servic
 import { PaymentsFinancials } from "@/components/public-report/dashboard/PaymentsFinancials";
 import { TeamPerformance } from "@/components/public-report/dashboard/TeamPerformance";
 import { ReportPreview } from "@/components/public-report/dashboard/ReportPreview";
-import { useState } from "react";
+
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { errorToast, successToast } from "@/lib/toast";
 import toast from "react-hot-toast";
 import { notFound } from "next/navigation";
-import "../../report-styles.css";
+import { useState, useMemo } from "react";
+import { usePublicReportData } from "@/hooks/public-report/usePublicReportData";
+import { format, parseISO } from "date-fns";
+import "../report-styles.css";
 
 interface ReportPageProps {
   params: {
-    frequency: string;
-    id: string;
+    token: string;
   };
 }
 
 export default function ReportPage({ params }: ReportPageProps) {
-  const { frequency, id } = params;
+  const { token } = params;
   const [isGenerating, setIsGenerating] = useState(false);
 
+  const decodedParams = useMemo(() => {
+    try {
+      const base64 = token.replace(/-/g, "+").replace(/_/g, "/");
+      const decodedToken = atob(base64);
+      const parsed = JSON.parse(decodedToken);
+      console.log("Decoded params: ", parsed);
+      return parsed;
+    } catch (error) {
+      console.error("Token decoding error:", error);
+      return null;
+    }
+  }, [token]);
+
+  const {
+    data: reportData,
+    isLoading,
+    error,
+  } = usePublicReportData(
+    decodedParams?.companyId,
+    decodedParams?.startDate,
+    decodedParams?.endDate,
+    !!decodedParams,
+  );
+
+  console.log("Report data: ", reportData);
+  const frequency = (decodedParams?.frequency || "DAILY").toLowerCase();
+
+  const servicesFormatted = useMemo(() => {
+    if (!reportData?.servicesPerformance)
+      return { services: [], categories: [] };
+
+    const services = reportData.servicesPerformance.map((s) => ({
+      name: s.serviceName,
+      revenue: s.revenue,
+      jobs: s.jobCount,
+      category: s.categoryName,
+    }));
+
+    // Grouping by category
+    const catMap: Record<string, number> = {};
+    reportData.servicesPerformance.forEach((s) => {
+      catMap[s.categoryName] = (catMap[s.categoryName] || 0) + s.revenue;
+    });
+
+    const categories = Object.entries(catMap).map(([name, revenue]) => ({
+      name,
+      revenue,
+    }));
+
+    return { services, categories };
+  }, [reportData?.servicesPerformance]);
+
+  const teamFormatted = useMemo(() => {
+    if (!reportData?.teamPerformance) return [];
+
+    return reportData.teamPerformance.map((t) => ({
+      name: t.name,
+      type: "Staff", // API data doesn't have type, providing default
+      jobs: t.jobsCompleted,
+      revenue: t.revenue,
+      pay: 0, // API data doesn't have pay, providing default
+    }));
+  }, [reportData?.teamPerformance]);
+
+  const reportDateRange = useMemo(() => {
+    if (!decodedParams?.startDate || !decodedParams?.endDate) return "";
+
+    try {
+      const start = parseISO(decodedParams.startDate);
+      const end = parseISO(decodedParams.endDate);
+
+      switch (frequency) {
+        case "daily":
+          return format(start, "MMMM do, yyyy");
+        case "weekly":
+          return `${format(start, "MMM do")} - ${format(end, "MMM do, yyyy")}`;
+        case "monthly":
+          return format(start, "MMMM yyyy");
+        case "annual":
+          return format(start, "yyyy");
+        default:
+          return `${format(start, "PP")} - ${format(end, "PP")}`;
+      }
+    } catch (e) {
+      return "";
+    }
+  }, [decodedParams, frequency]);
+
   const validFrequencies = ["daily", "weekly", "monthly", "annual"];
-  if (!validFrequencies.includes(frequency.toLowerCase())) {
-    return notFound();
+
+  if (!validFrequencies.includes(frequency)) {
+    // Optional: handle cases where frequency isn't in our list,
+    // or just default to showing something.
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-10 h-10 text-primary animate-spin" />
+          <p className="text-muted-foreground font-medium">
+            Loading your report...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !reportData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
+        <p className="text-muted-foreground">
+          {error ? "Failed to load report data." : "No report data available."}
+        </p>
+      </div>
+    );
   }
 
   const handleDownloadReport = async (fullPage = true) => {
@@ -106,11 +221,11 @@ export default function ReportPage({ params }: ReportPageProps) {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8 animate-fade-in">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
-              Your {frequency.charAt(0).toUpperCase() + frequency.slice(1)} TC
-              Customs Report
+              Your {frequency.charAt(0).toUpperCase() + frequency.slice(1)}{" "}
+              Report
             </h1>
             <p className="text-muted-foreground mt-1 text-sm md:text-base">
-              Scheduled performance reports delivered as PDF
+              {reportDateRange}
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -151,76 +266,76 @@ export default function ReportPage({ params }: ReportPageProps) {
               <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 <KPICard
                   title="Total Revenue"
-                  value="$127,500"
+                  value={`$${(reportData?.kpis?.totalPayments ?? 0).toLocaleString()}`}
                   icon={DollarSign}
-                  trend="up"
-                  trendValue="12%"
+                  // trend="up"
+                  // trendValue="12%"
                   delay={0}
                 />
 
                 <KPICard
                   title="Jobs Completed"
-                  value="205"
+                  value={(reportData?.kpis?.totalJobs ?? 0).toString()}
                   icon={Briefcase}
-                  trend="up"
-                  trendValue="8%"
+                  // trend="up"
+                  // trendValue="8%"
                   delay={50}
                 />
 
                 <KPICard
                   title="Appointments"
-                  value="189"
+                  value={(reportData?.kpis?.appointments ?? 0).toString()}
                   icon={CalendarCheck}
                   delay={100}
                 />
 
                 <KPICard
                   title="Average Ticket"
-                  value="$621"
+                  value={`$${(reportData?.kpis?.averageTicket ?? 0).toLocaleString()}`}
                   icon={Receipt}
-                  trend="up"
-                  trendValue="5%"
+                  // trend="up"
+                  // trendValue="5%"
                   delay={150}
                 />
 
                 <KPICard
                   title="Total Leads"
-                  value="100"
+                  value={(reportData?.kpis?.totalLeads ?? 0).toString()}
                   icon={Users}
                   delay={200}
                 />
 
                 <KPICard
                   title="Conversion Rate"
-                  value="42%"
+                  value={`${reportData.kpis.conversionRate}%`}
                   subLabel="Lead → Booked"
                   icon={TrendingUp}
-                  trend="up"
-                  trendValue="3%"
+                  // trend="up"
+                  // trendValue="3%"
                   delay={250}
                 />
 
                 <KPICard
                   title="Estimates Sent"
-                  value="78"
-                  subLabel="$86,400 total"
+                  value={reportData.kpis.estimatesSent.toString()}
+                  // subLabel="$86,400 total"
                   icon={FileText}
                   delay={300}
                 />
 
                 <KPICard
                   title="Payments Collected"
-                  value="$98,750"
+                  value={`$${reportData.kpis.totalPayments.toLocaleString()}`}
                   subLabel="Payments + Deposits"
                   icon={CreditCard}
-                  trend="up"
-                  trendValue="15%"
+                  // trend="up"
+                  // trendValue="15%"
                   delay={350}
                 />
 
                 <KPICard
                   title="Payments Pending"
-                  value="$26,650"
+                  value={`$${reportData.kpis.paymentsPending.toLocaleString()}`}
                   subLabel="Unpaid invoices"
                   icon={Clock}
                   delay={400}
@@ -228,7 +343,7 @@ export default function ReportPage({ params }: ReportPageProps) {
 
                 <KPICard
                   title="Unqualified Leads"
-                  value="23"
+                  value={reportData.kpis.unqualifiedLeads.toString()}
                   icon={UserX}
                   delay={450}
                 />
@@ -241,24 +356,24 @@ export default function ReportPage({ params }: ReportPageProps) {
                 Leads & Sources
               </h2>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <LeadsSourceChart />
-                <LeadsSummary />
+                <LeadsSourceChart data={reportData.leadSources} />
+                <LeadsSummary data={reportData.leadSources} />
               </div>
             </section>
 
             {/* Services Performance */}
             <section>
-              <ServicesPerformance />
+              <ServicesPerformance data={servicesFormatted} />
             </section>
 
             {/* Payments & Financials */}
             <section>
-              <PaymentsFinancials />
+              <PaymentsFinancials data={reportData.paymentsFinancials} />
             </section>
 
             {/* Team Performance */}
             <section>
-              <TeamPerformance />
+              <TeamPerformance data={teamFormatted} />
             </section>
           </div>
 

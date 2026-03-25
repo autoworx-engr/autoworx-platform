@@ -1,30 +1,32 @@
 import { Wrench, TrendingUp, TrendingDown, BarChart3 } from "lucide-react";
 import { SectionHeader } from "./SectionHeader";
 
-const services = [
-  { name: "Oil Change", revenue: 12450, jobs: 156, category: "Maintenance" },
-  { name: "Brake Service", revenue: 28900, jobs: 89, category: "Repair" },
-  { name: "Tire Rotation", revenue: 8200, jobs: 205, category: "Maintenance" },
-  {
-    name: "Engine Diagnostic",
-    revenue: 15600,
-    jobs: 62,
-    category: "Diagnostic",
-  },
-  { name: "AC Repair", revenue: 22400, jobs: 48, category: "Repair" },
-];
+interface ServicesPerformanceProps {
+  data?: {
+    services: Array<{
+      name: string;
+      revenue: number;
+      jobs: number;
+      category: string;
+    }>;
+    categories: Array<{
+      name: string;
+      revenue: number;
+    }>;
+  };
+}
 
-const categories = [
-  { name: "Repair", revenue: 51300 },
-  { name: "Maintenance", revenue: 20650 },
-  { name: "Diagnostic", revenue: 15600 },
-];
+export const ServicesPerformance = ({ data }: ServicesPerformanceProps) => {
+  const services = data?.services || [];
+  const categories = data?.categories || [];
 
-export const ServicesPerformance = () => {
-  const topService = services.reduce((a, b) => (a.revenue > b.revenue ? a : b));
-  const lowestService = services.reduce((a, b) =>
-    a.revenue < b.revenue ? a : b,
-  );
+  const topService = services.length > 0 
+    ? services.reduce((a, b) => (a.revenue > b.revenue ? a : b))
+    : { name: "N/A", revenue: 0 };
+    
+  const lowestService = services.length > 0 
+    ? services.reduce((a, b) => (a.revenue < b.revenue ? a : b))
+    : { name: "N/A", revenue: 0 };
 
   return (
     <div className="bg-card rounded-xl p-6 shadow-sm border border-border/50">
@@ -58,6 +60,9 @@ export const ServicesPerformance = () => {
                 </span>
               </div>
             ))}
+            {services.length === 0 && (
+              <p className="text-sm text-muted-foreground italic">No service data available</p>
+            )}
           </div>
         </div>
 
@@ -84,36 +89,39 @@ export const ServicesPerformance = () => {
                   </span>
                 </div>
               ))}
+              {categories.length === 0 && (
+                <p className="text-sm text-muted-foreground italic">No category data available</p>
+              )}
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="p-5 bg-[#f0fdf4] border border-[#bbf7d0] rounded-2xl shadow-sm">
+            <div className="p-5 bg-emerald-50 border border-emerald-100 rounded-2xl shadow-sm">
               <div className="flex items-center gap-2 mb-3">
-                <TrendingUp className="w-4 h-4 text-[#10b981]" />
-                <span className="text-[11px] font-bold text-[#10b981] uppercase tracking-wider">
+                <TrendingUp className="w-4 h-4 text-emerald-600" />
+                <span className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider">
                   Top Performer
                 </span>
               </div>
-              <p className="text-lg font-bold text-[#111827] mb-1">
+              <p className="text-lg font-bold text-gray-900 mb-1">
                 {topService.name}
               </p>
-              <p className="text-2xl font-bold text-[#10b981]">
+              <p className="text-sm text-emerald-700 font-medium">
                 ${topService.revenue.toLocaleString()}
               </p>
             </div>
 
-            <div className="p-5 bg-[#fffaf0] border border-[#ffedca] rounded-2xl shadow-sm">
+            <div className="p-5 bg-rose-50 border border-rose-100 rounded-2xl shadow-sm">
               <div className="flex items-center gap-2 mb-3">
-                <TrendingDown className="w-4 h-4 text-[#f59e0b]" />
-                <span className="text-[11px] font-bold text-[#f59e0b] uppercase tracking-wider">
-                  Needs Attention
+                <TrendingDown className="w-4 h-4 text-rose-600" />
+                <span className="text-[11px] font-bold text-rose-600 uppercase tracking-wider">
+                  Lowest Revenue
                 </span>
               </div>
-              <p className="text-lg font-bold text-[#111827] mb-1">
+              <p className="text-lg font-bold text-gray-900 mb-1">
                 {lowestService.name}
               </p>
-              <p className="text-2xl font-bold text-[#f59e0b]">
+              <p className="text-sm text-rose-700 font-medium">
                 ${lowestService.revenue.toLocaleString()}
               </p>
             </div>
