@@ -1,58 +1,12 @@
 import { FileText, Calendar, Building2, Download, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
-import { errorToast, successToast } from "@/lib/toast";
-import toast from "react-hot-toast";
 
-export const ReportPreview = () => {
-  const [isGenerating, setIsGenerating] = useState(false);
+interface ReportPreviewProps {
+  isGenerating: boolean;
+  onDownload: () => void;
+}
 
-  const handleDownloadReport = async () => {
-    const reportElement = document.getElementById("report-content");
-    if (!reportElement) {
-      errorToast("Report content not found");
-      return;
-    }
-
-    try {
-      setIsGenerating(true);
-      toast.loading("Preparing your PDF report...");
-
-      // Optimization: hide sidebar and footer during PDF generation if needed
-      // or just capture the main content.
-
-      const canvas = await html2canvas(reportElement, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: "#ffffff",
-      });
-
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF({
-        orientation: "portrait",
-        unit: "px",
-        format: [canvas.width, canvas.height],
-      });
-
-      pdf.addImage(imgData, "PNG", 0, 0, canvas.width, canvas.height);
-      pdf.save(
-        `AutoWorx-Performance-Report-${new Date().toISOString().split("T")[0]}.pdf`,
-      );
-
-      toast.dismiss();
-      successToast("Report downloaded successfully!");
-    } catch (error) {
-      console.error("PDF generation error:", error);
-      toast.dismiss();
-      errorToast("Failed to generate PDF. Please try again.");
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
+export const ReportPreview = ({ isGenerating, onDownload }: ReportPreviewProps) => {
   return (
     <div className="bg-card rounded-xl p-6 shadow-sm border border-border/50 sticky top-6">
       <div className="flex items-center justify-between mb-6">
@@ -62,7 +16,7 @@ export const ReportPreview = () => {
         <Button
           size="sm"
           variant="outline"
-          onClick={handleDownloadReport}
+          onClick={onDownload}
           disabled={isGenerating}
         >
           {isGenerating ? (
@@ -78,7 +32,6 @@ export const ReportPreview = () => {
         className="bg-muted/30 rounded-xl p-6 border border-dashed border-border"
         id="pdf-preview-content"
       >
-        {/* Mock PDF Header */}
         <div className="bg-card rounded-lg p-5 shadow-sm mb-4 border border-border/50">
           <div className="flex items-center gap-4 mb-4">
             <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
@@ -98,7 +51,6 @@ export const ReportPreview = () => {
           </div>
         </div>
 
-        {/* Mock Sections */}
         <div className="space-y-3">
           {[
             "Executive Summary",
@@ -128,7 +80,7 @@ export const ReportPreview = () => {
       <Button
         variant="default"
         className="w-full mt-6 shadow-lg transition-all active:scale-[0.98] font-semibold py-6 text-base"
-        onClick={handleDownloadReport}
+        onClick={onDownload}
         disabled={isGenerating}
       >
         {isGenerating ? (
