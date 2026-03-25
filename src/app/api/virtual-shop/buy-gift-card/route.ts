@@ -43,7 +43,7 @@ const buyGiftCardSchema = z.object({
  *     summary: Purchase a new gift card via the virtual shop Public API
  *     description: Creates an issued gift card and necessary ledger transaction. Handles mock checkout logic.
  *     tags:
- *       - Virtual Shop
+ *       - Virtual Shop Gift
  *     requestBody:
  *       required: true
  *       content:
