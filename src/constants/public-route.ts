@@ -35,6 +35,10 @@ export const PUBLIC_API_ROUTES = [
   "/api/invoice/track-view",
   "/api/upload",
   "/api/communication/client-hub/send-twilio-message",
+  // Virtual shop public storefront read endpoints
+  "/api/virtual-shop/shop-services",
+  "/api/virtual-shop/shop-services/categories",
+  "/api/virtual-shop/appointment-slots",
   // virtual-shop public route
   "/api/virtual-shop/buy-gift-card",
   "/api/virtual-shop/service-booking",
@@ -46,4 +50,6 @@ export const PUBLIC_DYNAMIC_API_ROUTES = [
   "/api/twilio/sms-receive/:companyIds",
   "/api/twilio/call-recording/:recordingSid",
   "/api/admin/client/:id/sales-agent",
+  // Public shop resolve by subdomain slug
+  "/api/virtual-shop/configure/subdomain/:slug",
 ];
