@@ -317,6 +317,7 @@ export default function Calendar({ type }: { type: CalendarType }) {
           businessHours={businessHours}
           slotLaneClassNames={nonBusinessSlotClassNames}
           loading={setIsCalendarLoading}
+          // dayMinWidth={180}
           slotLabelFormat={{
             hour: "2-digit",
             minute: "2-digit",

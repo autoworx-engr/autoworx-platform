@@ -40,7 +40,7 @@ export const EventContent = ({
     if (serviceType === "Holiday")
       return (
         <div
-          className="flex items-center justify-between gap-1 text-xs truncate w-full h-full cursor-pointer overflow-hidden rounded-r-sm pl-1"
+          className="flex items-center justify-between text-xs truncate w-full h-full cursor-pointer overflow-hidden rounded-r-sm pl-1"
           style={{
             background: `linear-gradient(to bottom, ${colors.gradient.join(", ")})`,
             // border: `1px solid ${colors.borderColor}`,
@@ -49,7 +49,7 @@ export const EventContent = ({
           }}
         >
           <span
-            className="font-bold whitespace-nowrap text-[12px] uppercase"
+            className="font-bold whitespace-nowrap text-[8px] sm:text-[12px] uppercase"
             style={{ color: colors.accentColor }}
           >
             {event.title}
@@ -109,7 +109,7 @@ export const EventContent = ({
         }}
       >
         <span
-          className="font-bold whitespace-nowrap text-[12px] uppercase"
+          className="font-bold whitespace-nowrap text-[8px] sm:text-[10px] uppercase"
           style={{ color: colors.accentColor }}
         >
           {event.title}

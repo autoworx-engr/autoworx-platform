@@ -57,11 +57,10 @@ export default function HolidayDeleteConfirmation({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className={`rounded-full ${!isMonthly && "bg-red-200"} p-2`}
+        className={`rounded-full ${!isMonthly && "bg-red-200"} p-1`}
       >
         <Trash2
-          size={16}
-          className={`cursor-pointer ${!isMonthly && "text-red-500"} `}
+          className={`cursor-pointer size-3 sm:size-4 ${!isMonthly && "text-red-500"} `}
         />
       </button>
       <DialogContent>

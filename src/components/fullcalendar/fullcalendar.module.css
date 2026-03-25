@@ -51,6 +51,17 @@
   box-shadow: none !important;
 }
 
+@media (max-width: 768px) {
+  .calendarScope :global(.fc-timegrid-slot-label-cushion),
+  .calendarScope :global(.fc-timegrid-axis-cushion) {
+    font-size: 10px !important;
+    text-transform: uppercase;
+  }
+}
+
+.calendarScope :global(.fc-timegrid-event) {
+  min-width: 50px !important;
+}
 .calendarScope :global(.fc-header-toolbar) {
   display: none !important;
 }
