@@ -35,6 +35,9 @@ export const PUBLIC_API_ROUTES = [
   "/api/invoice/track-view",
   "/api/upload",
   "/api/communication/client-hub/send-twilio-message",
+  // virtual-shop public route
+  "/api/virtual-shop/buy-gift-card",
+  "/api/virtual-shop/service-booking",
 ];
 
 export const PUBLIC_DYNAMIC_API_ROUTES = [
