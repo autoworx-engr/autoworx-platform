@@ -258,6 +258,8 @@ export async function POST(req: Request) {
 
       // 6. Generate Card Code
       // Secure alphanumeric format (e.g., AWX-XXXX-XXXX)
+      // Generate unique codes
+      const orderNumber = `ORD-${nanoid(8).toUpperCase()}`;
       const generateCode = () =>
         `AWX-${nanoid(4).toUpperCase()}-${nanoid(4).toUpperCase()}`;
       let code = generateCode();
@@ -283,6 +285,7 @@ export async function POST(req: Request) {
         data: {
           companyId: shop.companyId,
           code,
+          orderNumber,
           initialBalance: amount, // The original face value
           currentBalance: amount,
           // New enum field added to schema:
@@ -443,13 +446,13 @@ export async function POST(req: Request) {
       // the card was created and partially visible as proof of purchase,
       // without exposing the secure code which could be stolen from their screen.
       const maskedCode = `${code.split("-")[0]}-****-${code.split("-")[2]}`;
-
+      // Return success response with orderNumber mapped to confirmationNumber
       return NextResponse.json(
         {
           success: true,
-          message: "Purchase complete!",
+          message: "Gift card purchased successfully",
           data: {
-            confirmationNumber: `ORD-${nanoid(8).toUpperCase()}`,
+            confirmationNumber: orderNumber,
             maskedCode,
             amount,
             recipientName: finalRecipientName,

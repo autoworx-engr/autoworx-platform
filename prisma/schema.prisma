@@ -3168,6 +3168,7 @@ model IssuedGiftCard {
   id        String @id @default(cuid())
   companyId Int    @map("company_id")
   code      String @unique // Secure alphanumeric code
+  orderNumber String? @unique @map("order_number")
 
   // Balances
   initialBalance Decimal @map("initial_balance") @db.Decimal(10, 2)
