@@ -1146,7 +1146,7 @@ export async function POST(req: Request) {
         endTime,
         clientId: client?.id,
         vehicleId: vehicle?.id,
-        notes: notes || null,
+        notes: notes || "",
         draftEstimate: estimate.id,
         timezone: "UTC", // Defaulting, you might obtain from shop.company.timezone
         assignedUsers: [], // Empty for guest bookings, unless specific logic is added
