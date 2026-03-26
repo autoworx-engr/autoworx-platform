@@ -69,6 +69,8 @@ export function Reminder({
   const [time, setTime] = useState<string>("");
   const [dateInput, setDateInput] = useState<string>("");
   const initializedClientIdRef = useRef<number | null>(null);
+  const previousConfirmationTemplateIdRef = useRef<number | null>(null);
+  const previousReminderTemplateIdRef = useRef<number | null>(null);
 
   const { data: templates = [] } = useTemplatesQuery();
 
@@ -109,13 +111,43 @@ export function Reminder({
 
     setConfirmationTemplate(firstConfirmationTemplate ?? null);
     setReminderTemplate(firstReminderTemplate ?? null);
+    setConfirmationTemplateStatus(Boolean(firstConfirmationTemplate));
+    setReminderTemplateStatus(Boolean(firstReminderTemplate));
     initializedClientIdRef.current = client.id;
   }, [
     client?.id,
     templates,
     setConfirmationTemplate,
     setReminderTemplate,
+    setConfirmationTemplateStatus,
+    setReminderTemplateStatus,
   ]);
+
+  useEffect(() => {
+    const currentTemplateId = confirmationTemplate?.id ?? null;
+
+    if (
+      currentTemplateId !== null
+      && currentTemplateId !== previousConfirmationTemplateIdRef.current
+    ) {
+      setConfirmationTemplateStatus(true);
+    }
+
+    previousConfirmationTemplateIdRef.current = currentTemplateId;
+  }, [confirmationTemplate?.id, setConfirmationTemplateStatus]);
+
+  useEffect(() => {
+    const currentTemplateId = reminderTemplate?.id ?? null;
+
+    if (
+      currentTemplateId !== null
+      && currentTemplateId !== previousReminderTemplateIdRef.current
+    ) {
+      setReminderTemplateStatus(true);
+    }
+
+    previousReminderTemplateIdRef.current = currentTemplateId;
+  }, [reminderTemplate?.id, setReminderTemplateStatus]);
 
   // Set minimum date to today
   useEffect(() => {
@@ -152,9 +184,11 @@ export function Reminder({
     if (type === "Confirmation") {
       // remove this template from the array
       setConfirmationTemplate(null);
+      setConfirmationTemplateStatus(false);
     } else {
       // remove this template from the array
       setReminderTemplate(null);
+      setReminderTemplateStatus(false);
     }
 
     queryClient.invalidateQueries({
@@ -317,6 +351,7 @@ export function Reminder({
           selectedItem={confirmationTemplate}
           onSelect={(template) => {
             setConfirmationTemplate(template);
+            setConfirmationTemplateStatus(Boolean(template));
             setOpenConfirmation(false);
           }}
           onSearch={(search: string) =>
@@ -400,6 +435,7 @@ export function Reminder({
           selectedItem={reminderTemplate}
           onSelect={(template) => {
             setReminderTemplate(template);
+            setReminderTemplateStatus(Boolean(template));
             setOpenReminder(false);
           }}
           onSearch={(search: string) =>
