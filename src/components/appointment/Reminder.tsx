@@ -216,7 +216,7 @@ export function Reminder({
 
   return (
     <>
-      <div className="min-w-[350px] mx-4 space-y-4 p-2 md:w-full">
+      <div className="min-w-[350px] space-y-4 p-2 md:w-full">
         <div className="flex items-center">
           <h2 className="text-lg font-semibold text-slate-600">Confirmation</h2>
           <Switch
@@ -299,7 +299,7 @@ export function Reminder({
         // openState={[openConfirmation, setOpenConfirmation]}
         />
       </div>
-      <div className="min-w-[350px] mx-4 space-y-4 p-2 md:w-full">
+      <div className="min-w-[350px] space-y-4 p-2 md:w-full">
         <div className="flex items-center">
           <h2 className="text-lg font-semibold text-slate-600">Reminder</h2>
           <Switch
