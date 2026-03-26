@@ -632,3 +632,51 @@ export const getGiftCardTemplatesPublic = async function (companyId: number) {
     throw err;
   }
 };
+
+export const getGiftCardSettingsByCompanyId = async function (companyId: number) {
+  try {
+    const response = await axios.get<{  
+      success: boolean;
+      data: GiftCardSettingsData;
+    }>("/api/virtual-shop/gift-card-settings", {
+      params: { companyId },
+    });
+    return response.data?.data;
+  } catch (error) {
+    const err = errorHandler(error);
+    throw err;
+  }
+};
+
+export interface BuyGiftCardPayload {
+  shopId: number;
+  templateId: number;
+  purchaseType: string;
+  amount: number;
+  promoCode?: string;
+  purchaserName: string;
+  purchaserEmail: string;
+  purchaserPhone?: string;
+  isSendToMyself: boolean;
+  deliveryMethod?: string;
+  recipientName?: string;
+  recipientEmail?: string;
+  recipientPhone?: string;
+  scheduledSendAt?: string;
+  message?: string;
+}
+
+export const buyGiftCard = async function (payload: BuyGiftCardPayload) {
+  try {
+    const response = await axios.post<{
+      success: boolean;
+      message?: string;
+      data: any;
+    }>("/api/virtual-shop/buy-gift-card", payload);
+    return response.data;
+  } catch (error) {
+    const err = errorHandler(error);
+    throw err;
+  }
+};
+

@@ -95,7 +95,7 @@ const RecipientDetails = ({ data, onChange, deliverySettings, shopName }: Props)
         </div>
 
         {/* Send Timing */}
-        {deliverySettings.scheduledSendEnabled && (
+        {/* {deliverySettings.scheduledSendEnabled && (
           <div className="space-y-3">
             <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">When to Send</Label>
             <div className="grid grid-cols-2 gap-3">
@@ -140,7 +140,7 @@ const RecipientDetails = ({ data, onChange, deliverySettings, shopName }: Props)
               </div>
             )}
           </div>
-        )}
+        )} */}
 
         {/* Personal Message */}
         <div className="space-y-1.5">
