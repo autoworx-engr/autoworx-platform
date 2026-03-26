@@ -25,6 +25,7 @@ const searchParamsValidation = z.object({
       invalid_type_error: "Date must be a string",
     })
     .refine(value => {
+      if (!value) return true;
       const date = moment(value, "YYYY-MM-DD");
       if (!date.isValid()) {
         throw new Error("Invalid date format");
@@ -53,26 +54,8 @@ const searchParamsValidation = z.object({
     ])
     .optional(),
   sortOrder: z.enum(["asc", "desc"]).optional(),
-  page: z
-    .string({ invalid_type_error: "Page must be a number" })
-    .refine(value => {
-      const page = parseInt(value);
-      if (isNaN(page) || page < 1) {
-        throw new Error("Page must be a positive number");
-      }
-      return page;
-    })
-    .optional(),
-  limit: z
-    .string({ invalid_type_error: "Limit must be a number" })
-    .refine(value => {
-      const limit = parseInt(value);
-      if (isNaN(limit) || limit < 1) {
-        throw new Error("Limit must be a positive number");
-      }
-      return limit;
-    })
-    .optional(),
+  page: z.number({ invalid_type_error: "Page must be a number" }).optional(),
+  limit: z.number({ invalid_type_error: "Limit must be a number" }).optional(),
 });
 
 /**
@@ -298,10 +281,10 @@ export async function GET(req: Request) {
     }
 
     const { searchParams } = new URL(req.url);
-    const search = searchParams.get("search");
-    const date = searchParams.get("date");
-    const month = searchParams.get("month");
-    const year = searchParams.get("year");
+    const search = searchParams.get("search") ?? "";
+    const date = searchParams.get("date") ?? "";
+    const month = searchParams.get("month") ?? "";
+    const year = searchParams.get("year") ?? "";
 
     const sortOrder = (
       searchParams.get("sortOrder") === "asc" ? "asc" : "desc"
@@ -376,7 +359,7 @@ export async function GET(req: Request) {
         where: whereClause,
         include: {
           shop: {
-            include: {
+            select: {
               bookingSettings: true,
             },
           },
@@ -459,15 +442,15 @@ export async function GET(req: Request) {
           const totalServiceCost = subtotal - vehicleExtraCost;
           const taxAmount = (totalServiceCost * taxRate) / 100;
 
+          const { shop, ...rest } = sb;
+
           return {
-            ...sb,
+            ...rest,
             subtotal: subtotal,
             tax: taxAmount,
             serviceFee: serviceFeeAmount,
             total: Number(sb.invoice?.grandTotal || 0),
-            depositRequired: Number(
-              sb.shop?.bookingSettings?.depositValue || 0,
-            ),
+            depositRequired: Number(shop?.bookingSettings?.depositValue || 0),
             depositPaid: Number(sb.invoice?.deposit || 0),
             balanceDue: Number(sb.invoice?.due || 0),
             services: sb.services.map(srv => ({
@@ -481,19 +464,14 @@ export async function GET(req: Request) {
       { status: 200 },
     );
   } catch (error: any) {
-    if (error instanceof AppError) {
-      return NextResponse.json(
-        { success: false, message: error.message },
-        { status: error.statusCode },
-      );
-    }
-    console.error("Error fetching shop bookings:", error);
+    const formattedError = errorHandler(error);
     return NextResponse.json(
       {
         success: false,
-        message: error.message || "Failed to fetch shop bookings",
+        message: formattedError.message,
+        errorDetails: formattedError,
       },
-      { status: 500 },
+      { status: formattedError.statusCode },
     );
   }
 }
