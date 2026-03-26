@@ -12,6 +12,151 @@ import { sendBookingConfirmation } from "@/actions/communication/client/sendBook
 import { Prisma } from "@prisma/client";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 
+import z from "zod";
+
+const searchParamsValidation = z.object({
+  search: z
+    .string({
+      invalid_type_error: "Search must be a string",
+    })
+    .optional(),
+  date: z
+    .string({
+      invalid_type_error: "Date must be a string",
+    })
+    .refine(value => {
+      if (!value) return true;
+      const date = moment(value, "YYYY-MM-DD");
+      if (!date.isValid()) {
+        throw new Error("Invalid date format");
+      }
+      return date.toDate();
+    }, "Invalid date format")
+    .optional(),
+  year: z
+    .string({ invalid_type_error: "Year must be a string" })
+    .refine(value => {
+      if (!value) return true;
+      const year = parseInt(value);
+      if (isNaN(year)) {
+        throw new Error("Invalid year format");
+      }
+      return year;
+    }, "Invalid year format")
+    .optional(),
+  month: z
+    .enum(
+      [
+        "january",
+        "february",
+        "march",
+        "april",
+        "may",
+        "june",
+        "july",
+        "august",
+        "september",
+        "october",
+        "november",
+        "december",
+      ],
+      {
+        invalid_type_error: "Month must be a valid month name",
+      },
+    )
+    .optional(),
+  status: z
+    .enum(["pending", "confirmed", "completed", "cancelled"], {
+      invalid_type_error: "Status must be pending, confirmed, completed, or cancelled",
+    })
+    .optional(),
+  sortOrder: z
+    .enum(["asc", "desc"], {
+      invalid_type_error: "Sort order must be asc or desc",
+    })
+    .optional(),
+  page: z.number({ invalid_type_error: "Page must be a number" }).optional(),
+  limit: z.number({ invalid_type_error: "Limit must be a number" }).optional(),
+});
+
+const createServiceBookingSchema = z.object({
+  shopId: z
+    .union([z.string(), z.number()], {
+      required_error: "Shop ID is required",
+      invalid_type_error: "Shop ID must be a string or number",
+    })
+    .transform(val => (typeof val === "string" ? parseInt(val, 10) : val)),
+  shopServices: z
+    .array(
+      z.object({
+        shopServiceId: z.number({
+          required_error: "Shop Service ID is required",
+          invalid_type_error: "Shop Service ID must be a number",
+        }),
+        vehicleType: z
+          .string({
+            invalid_type_error: "Vehicle type must be a string",
+          })
+          .optional(),
+      }),
+      {
+        required_error: "Shop services are required",
+        invalid_type_error: "Shop services must be an array",
+      },
+    )
+    .min(1, "At least one shop service must be selected"),
+  appointmentDate: z.string({
+    required_error: "Appointment date is required",
+    invalid_type_error: "Appointment date must be a string",
+  }),
+  appointmentStartTime: z.string({
+    required_error: "Appointment start time is required",
+    invalid_type_error: "Appointment start time must be a string",
+  }),
+  fullName: z
+    .string({
+      required_error: "Full name is required",
+      invalid_type_error: "Full name must be a string",
+    })
+    .min(1, "Full name is required"),
+  email: z
+    .string({
+      invalid_type_error: "Email must be a string",
+    })
+    .email("Invalid email format")
+    .optional()
+    .or(z.literal("")),
+  phone: z
+    .string({
+      required_error: "Phone number is required",
+      invalid_type_error: "Phone number must be a string",
+    })
+    .min(1, "Phone number is required"),
+  make: z
+    .string({
+      required_error: "Vehicle make is required",
+      invalid_type_error: "Vehicle make must be a string",
+    })
+    .min(1, "Vehicle make is required"),
+  model: z
+    .string({
+      required_error: "Vehicle model is required",
+      invalid_type_error: "Vehicle model must be a string",
+    })
+    .min(1, "Vehicle model is required"),
+  year: z
+    .union([z.string(), z.number()], {
+      required_error: "Vehicle year is required",
+      invalid_type_error: "Vehicle year must be a string or number",
+    })
+    .transform(val => val.toString()),
+  notes: z
+    .string({
+      invalid_type_error: "Notes must be a string",
+    })
+    .optional(),
+});
+
 /**
  * @swagger
  * /api/virtual-shop/service-booking:
@@ -28,7 +173,35 @@ import { errorHandler } from "@/error-boundary/globalErrorHandler";
  *         required: false
  *         schema:
  *           type: string
- *         description: Search keyword to filter bookings by client's first or last name (case-insensitive).
+ *         description: Search keyword to filter bookings by client's first/last name, vehicle make/model/year, or booked service title (case-insensitive).
+ *       - in: query
+ *         name: date
+ *         required: false
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filter bookings by appointment date (YYYY-MM-DD).
+ *       - in: query
+ *         name: year
+ *         required: false
+ *         schema:
+ *           type: string
+ *           example: "2026"
+ *         description: The year to filter bookings by (required if filtering by month).
+ *       - in: query
+ *         name: month
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [january, february, march, april, may, june, july, august, september, october, november, december]
+ *         description: Filter bookings by a specific month of the specified year.
+ *       - in: query
+ *         name: status
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [pending, confirmed, completed, cancelled]
+ *         description: Filter bookings by status.
  *       - in: query
  *         name: sortOrder
  *         required: false
@@ -214,7 +387,11 @@ export async function GET(req: Request) {
     }
 
     const { searchParams } = new URL(req.url);
-    const search = searchParams.get("search");
+    const search = searchParams.get("search") ?? undefined;
+    const date = searchParams.get("date") ?? undefined;
+    const month = searchParams.get("month") ?? undefined;
+    const year = searchParams.get("year") ?? undefined;
+    const status = searchParams.get("status") ?? undefined;
 
     const sortOrder = (
       searchParams.get("sortOrder") === "asc" ? "asc" : "desc"
@@ -224,19 +401,89 @@ export async function GET(req: Request) {
     const limit = parseInt(searchParams.get("limit") || "10", 10);
     const skip = (page - 1) * limit;
 
+    await searchParamsValidation.parseAsync({
+      search,
+      date,
+      year,
+      month,
+      sortOrder,
+      page,
+      limit,
+      status,
+    });
+
     const whereClause: Prisma.ShopBookingWhereInput = {
       shop: {
         companyId,
       },
     };
 
+    if (status) {
+      whereClause.status = status.toUpperCase() as any;
+    }
+
     if (search) {
-      whereClause.client = {
-        OR: [
-          { firstName: { contains: search, mode: "insensitive" } },
-          { lastName: { contains: search, mode: "insensitive" } },
-        ],
-      };
+      const searchNum = parseInt(search, 10);
+      whereClause.OR = [
+        {
+          client: {
+            OR: [
+              { firstName: { contains: search, mode: "insensitive" } },
+              { lastName: { contains: search, mode: "insensitive" } },
+            ],
+          },
+        },
+        {
+          vehicle: {
+            OR: [
+              { make: { contains: search, mode: "insensitive" } },
+              { model: { contains: search, mode: "insensitive" } },
+              ...(!isNaN(searchNum) ? [{ year: searchNum }] : []),
+            ],
+          },
+        },
+        {
+          services: {
+            some: {
+              title: { contains: search, mode: "insensitive" },
+            },
+          },
+        },
+      ];
+    }
+
+    if ((month && !year) || (year && !month)) {
+      throw new AppError(400, "Month and year are required together");
+    }
+
+    if (date || (month && year)) {
+      let gte: Date | undefined;
+      let lte: Date | undefined;
+
+      if (date) {
+        const targetDate = moment(date, "YYYY-MM-DD");
+        if (targetDate.isValid()) {
+          gte = targetDate.clone().startOf("day").toDate();
+          lte = targetDate.clone().endOf("day").toDate();
+        }
+      } else if (month && year) {
+        const targetDate = moment()
+          .year(parseInt(year, 10))
+          .month(parseInt(month, 10));
+        if (targetDate.isValid()) {
+          gte = targetDate.clone().startOf("month").toDate();
+          lte = targetDate.clone().endOf("month").toDate();
+        }
+      }
+
+      if (gte && lte) {
+        whereClause.appointment = {
+          date: {
+            gte,
+            lte,
+          },
+        };
+      }
     }
 
     const [totalRecords, shopBookings] = await Promise.all([
@@ -245,7 +492,7 @@ export async function GET(req: Request) {
         where: whereClause,
         include: {
           shop: {
-            include: {
+            select: {
               bookingSettings: true,
             },
           },
@@ -328,15 +575,15 @@ export async function GET(req: Request) {
           const totalServiceCost = subtotal - vehicleExtraCost;
           const taxAmount = (totalServiceCost * taxRate) / 100;
 
+          const { shop, ...rest } = sb;
+
           return {
-            ...sb,
+            ...rest,
             subtotal: subtotal,
             tax: taxAmount,
             serviceFee: serviceFeeAmount,
             total: Number(sb.invoice?.grandTotal || 0),
-            depositRequired: Number(
-              sb.shop?.bookingSettings?.depositValue || 0,
-            ),
+            depositRequired: Number(shop?.bookingSettings?.depositValue || 0),
             depositPaid: Number(sb.invoice?.deposit || 0),
             balanceDue: Number(sb.invoice?.due || 0),
             services: sb.services.map(srv => ({
@@ -350,19 +597,14 @@ export async function GET(req: Request) {
       { status: 200 },
     );
   } catch (error: any) {
-    if (error instanceof AppError) {
-      return NextResponse.json(
-        { success: false, message: error.message },
-        { status: error.statusCode },
-      );
-    }
-    console.error("Error fetching shop bookings:", error);
+    const formattedError = errorHandler(error);
     return NextResponse.json(
       {
         success: false,
-        message: error.message || "Failed to fetch shop bookings",
+        message: formattedError.message,
+        errorDetails: formattedError,
       },
-      { status: 500 },
+      { status: formattedError.statusCode },
     );
   }
 }
@@ -587,6 +829,7 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
+    const parsedBody = await createServiceBookingSchema.parseAsync(body);
 
     const {
       shopId,
@@ -600,23 +843,7 @@ export async function POST(req: Request) {
       model,
       year,
       notes,
-    } = body;
-
-    // 1. Validate required input
-    if (
-      !shopId ||
-      !shopServices ||
-      !Array.isArray(shopServices) ||
-      shopServices.length === 0 ||
-      !appointmentDate ||
-      !appointmentStartTime ||
-      !phone ||
-      !make ||
-      !model ||
-      !year
-    ) {
-      throw new AppError(400, "Missing required fields");
-    }
+    } = parsedBody;
 
     const shopServiceIds = shopServices
       .map((s: any) => s.shopServiceId)
@@ -719,7 +946,7 @@ export async function POST(req: Request) {
       let vehicle = await tx.vehicle.findFirst({
         where: {
           clientId: client?.id,
-          year: parseInt(year),
+          year: parseInt(year.toString()),
           make,
           model,
           companyId,
@@ -728,7 +955,7 @@ export async function POST(req: Request) {
 
       if (!vehicle) {
         const vehicleResponse = await addVehicle({
-          year: parseInt(year),
+          year: parseInt(year.toString()),
           make,
           model,
           submodel: "",
@@ -995,7 +1222,7 @@ export async function POST(req: Request) {
         endTime,
         clientId: client?.id,
         vehicleId: vehicle?.id,
-        notes: notes || null,
+        notes: notes || "",
         draftEstimate: estimate.id,
         timezone: "UTC", // Defaulting, you might obtain from shop.company.timezone
         assignedUsers: [], // Empty for guest bookings, unless specific logic is added
@@ -1085,11 +1312,13 @@ export async function POST(req: Request) {
             date: appointmentDate,
             startTime: appointmentStartTime,
           },
-          vehicle: vehicle ? {
-            year: vehicle.year,
-            make: vehicle.make,
-            model: vehicle.model,
-          } : null,
+          vehicle: vehicle
+            ? {
+                year: vehicle.year,
+                make: vehicle.make,
+                model: vehicle.model,
+              }
+            : null,
           services: selectedServices.map((s: any) => ({ title: s.title })),
           isDeposit: false,
         });

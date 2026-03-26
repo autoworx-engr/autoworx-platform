@@ -41,11 +41,16 @@ const updateGiftCardSettingsSchema = z.object({
  * /api/virtual-shop/gift-card-settings:
  *   get:
  *     summary: Retrieve gift card settings
- *     description: Fetch the global gift card settings for an authenticated company.
+ *     description: Fetch the global gift card settings for a specific company via its company ID.
  *     tags:
  *       - Virtual Shop Gift
- *     security:
- *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: companyId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the company to fetch settings for.
  *     responses:
  *       200:
  *         description: Successfully retrieved gift card settings.
@@ -108,21 +113,13 @@ const updateGiftCardSettingsSchema = z.object({
  */
 export async function GET(req: Request) {
   try {
-    const authHeader = req.headers.get("authorization") ?? "";
-    const accessToken = authHeader.startsWith("Bearer")
-      ? authHeader.split(" ")[1]
-      : authHeader;
+    const { searchParams } = new URL(req.url);
+    const queryCompanyId = searchParams.get("companyId") ?? "";
 
-    const verifyToken = await jwtVerifyToken(accessToken);
+    const companyId = parseInt(queryCompanyId, 10);
 
-    if (!verifyToken?.payload) {
-      throw new AppError(401, "Unauthorized");
-    }
-
-    const companyId = verifyToken?.payload?.companyId as number;
-
-    if (!companyId) {
-      throw new AppError(403, "Company ID not found in session");
+    if (isNaN(companyId)) {
+      throw new AppError(400, "Company ID is required");
     }
 
     const settings = await db.giftCardSetting.findUnique({
@@ -221,8 +218,10 @@ export async function POST(req: Request) {
         defaultDelivery: "EMAIL",
         allowScheduledSend: true,
         defaultExpiryDays: null,
-        termsAndConditions: "Gift cards are non-refundable and cannot be exchanged for cash.",
-        privacyPolicy: "We value your privacy. Your information is securely stored.",
+        termsAndConditions:
+          "Gift cards are non-refundable and cannot be exchanged for cash.",
+        privacyPolicy:
+          "We value your privacy. Your information is securely stored.",
       },
     });
 
@@ -327,7 +326,7 @@ export async function PATCH(req: Request) {
     if (!parsedBody.success) {
       throw new AppError(
         400,
-        `Validation Error: ${parsedBody.error.errors.map(e => e.message).join(", ")}`
+        `Validation Error: ${parsedBody.error.errors.map(e => e.message).join(", ")}`,
       );
     }
 
@@ -346,18 +345,29 @@ export async function PATCH(req: Request) {
     } = parsedBody.data;
 
     const updateData: any = {};
-    if (allowCustomAmount !== undefined) updateData.allowCustomAmount = allowCustomAmount;
+    if (allowCustomAmount !== undefined)
+      updateData.allowCustomAmount = allowCustomAmount;
     if (minCustomAmount !== undefined)
-      updateData.minCustomAmount = minCustomAmount ? new Prisma.Decimal(minCustomAmount) : null;
+      updateData.minCustomAmount = minCustomAmount
+        ? new Prisma.Decimal(minCustomAmount)
+        : null;
     if (maxCustomAmount !== undefined)
-      updateData.maxCustomAmount = maxCustomAmount ? new Prisma.Decimal(maxCustomAmount) : null;
+      updateData.maxCustomAmount = maxCustomAmount
+        ? new Prisma.Decimal(maxCustomAmount)
+        : null;
     if (presetAmounts !== undefined) updateData.presetAmounts = presetAmounts;
-    if (allowEmailDelivery !== undefined) updateData.allowEmailDelivery = allowEmailDelivery;
-    if (allowSmsDelivery !== undefined) updateData.allowSmsDelivery = allowSmsDelivery;
-    if (defaultDelivery !== undefined) updateData.defaultDelivery = defaultDelivery;
-    if (allowScheduledSend !== undefined) updateData.allowScheduledSend = allowScheduledSend;
-    if (defaultExpiryDays !== undefined) updateData.defaultExpiryDays = defaultExpiryDays;
-    if (termsAndConditions !== undefined) updateData.termsAndConditions = termsAndConditions;
+    if (allowEmailDelivery !== undefined)
+      updateData.allowEmailDelivery = allowEmailDelivery;
+    if (allowSmsDelivery !== undefined)
+      updateData.allowSmsDelivery = allowSmsDelivery;
+    if (defaultDelivery !== undefined)
+      updateData.defaultDelivery = defaultDelivery;
+    if (allowScheduledSend !== undefined)
+      updateData.allowScheduledSend = allowScheduledSend;
+    if (defaultExpiryDays !== undefined)
+      updateData.defaultExpiryDays = defaultExpiryDays;
+    if (termsAndConditions !== undefined)
+      updateData.termsAndConditions = termsAndConditions;
     if (privacyPolicy !== undefined) updateData.privacyPolicy = privacyPolicy;
 
     const updatedSettings = await db.giftCardSetting.update({
