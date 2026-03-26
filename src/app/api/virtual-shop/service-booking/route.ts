@@ -24,13 +24,17 @@ const searchParamsValidation = z.object({
     .string({
       invalid_type_error: "Date must be a string",
     })
-    .refine((value) => {
+    .refine(value => {
       const date = moment(value, "YYYY-MM-DD");
       if (!date.isValid()) {
         throw new Error("Invalid date format");
       }
       return date.toDate();
     })
+    .optional(),
+  year: z
+    .string({ invalid_type_error: "Year must be a string" })
+    .regex(/^\d{4}$/, "Year must be a 4-digit number")
     .optional(),
   month: z
     .enum([
@@ -51,7 +55,7 @@ const searchParamsValidation = z.object({
   sortOrder: z.enum(["asc", "desc"]).optional(),
   page: z
     .string({ invalid_type_error: "Page must be a number" })
-    .refine((value) => {
+    .refine(value => {
       const page = parseInt(value);
       if (isNaN(page) || page < 1) {
         throw new Error("Page must be a positive number");
@@ -61,7 +65,7 @@ const searchParamsValidation = z.object({
     .optional(),
   limit: z
     .string({ invalid_type_error: "Limit must be a number" })
-    .refine((value) => {
+    .refine(value => {
       const limit = parseInt(value);
       if (isNaN(limit) || limit < 1) {
         throw new Error("Limit must be a positive number");
@@ -96,12 +100,19 @@ const searchParamsValidation = z.object({
  *           format: date
  *         description: Filter bookings by appointment date (YYYY-MM-DD).
  *       - in: query
+ *         name: year
+ *         required: false
+ *         schema:
+ *           type: string
+ *           example: "2026"
+ *         description: The year to filter bookings by (required if filtering by month).
+ *       - in: query
  *         name: month
  *         required: false
  *         schema:
  *           type: string
  *           enum: [january, february, march, april, may, june, july, august, september, october, november, december]
- *         description: Filter bookings by a specific month of the current year.
+ *         description: Filter bookings by a specific month of the specified year.
  *       - in: query
  *         name: sortOrder
  *         required: false
@@ -290,6 +301,7 @@ export async function GET(req: Request) {
     const search = searchParams.get("search");
     const date = searchParams.get("date");
     const month = searchParams.get("month");
+    const year = searchParams.get("year");
 
     const sortOrder = (
       searchParams.get("sortOrder") === "asc" ? "asc" : "desc"
@@ -302,6 +314,7 @@ export async function GET(req: Request) {
     await searchParamsValidation.parseAsync({
       search,
       date,
+      year,
       month,
       sortOrder,
       page,
@@ -323,7 +336,11 @@ export async function GET(req: Request) {
       };
     }
 
-    if (date || month) {
+    if ((month && !year) || (year && !month)) {
+      throw new AppError(400, "Month and year are required together");
+    }
+
+    if (date || (month && year)) {
       let gte: Date | undefined;
       let lte: Date | undefined;
 
@@ -333,11 +350,13 @@ export async function GET(req: Request) {
           gte = targetDate.clone().startOf("day").toDate();
           lte = targetDate.clone().endOf("day").toDate();
         }
-      } else if (month) {
-        const targetMonth = moment().month(month);
-        if (targetMonth.isValid()) {
-          gte = targetMonth.clone().startOf("month").toDate();
-          lte = targetMonth.clone().endOf("month").toDate();
+      } else if (month && year) {
+        const targetDate = moment()
+          .year(parseInt(year, 10))
+          .month(parseInt(month, 10));
+        if (targetDate.isValid()) {
+          gte = targetDate.clone().startOf("month").toDate();
+          lte = targetDate.clone().endOf("month").toDate();
         }
       }
 
@@ -431,7 +450,7 @@ export async function GET(req: Request) {
           hasNextPage: page < totalPages,
           hasPrevPage: page > 1,
         },
-        data: shopBookings.map((sb) => {
+        data: shopBookings.map(sb => {
           const subtotal = Number(sb.invoice?.subtotal || 0);
           const taxRate = Number(sb.invoice?.tax || 0);
           const vehicleExtraCost = Number(sb.invoice?.vehicleExtraCost || 0);
@@ -451,7 +470,7 @@ export async function GET(req: Request) {
             ),
             depositPaid: Number(sb.invoice?.deposit || 0),
             balanceDue: Number(sb.invoice?.due || 0),
-            services: sb.services.map((srv) => ({
+            services: sb.services.map(srv => ({
               ...srv,
               price: Number(srv.price),
               modifierPrice: Number(srv.modifierPrice),
@@ -737,7 +756,7 @@ export async function POST(req: Request) {
     const firstName = fullName?.split(" ")[0] || "Guest";
     const lastName = fullName?.split(" ").slice(1).join(" ") || undefined;
 
-    return await db.$transaction(async (tx) => {
+    return await db.$transaction(async tx => {
       // 2. Validate Shop
       const shop = await tx.shop.findUnique({
         where: { id: Number(shopId) },
@@ -819,7 +838,7 @@ export async function POST(req: Request) {
               companyId: shop.companyId,
               source: "Virtual Shop",
               vehicleInfo: `${year} ${make} ${model}`,
-              services: shopServiceIds.map((id) => id).join(", "),
+              services: shopServiceIds.map(id => id).join(", "),
               clientId: client.id,
               columnId: column?.id,
             },
@@ -882,7 +901,7 @@ export async function POST(req: Request) {
         | "SUNDAY";
 
       const availability = bookingSettings.availabilities.find(
-        (a) => a.dayOfWeek === dayOfWeekKey,
+        a => a.dayOfWeek === dayOfWeekKey,
       );
 
       if (!availability || !availability.isOpen) {
@@ -976,13 +995,13 @@ export async function POST(req: Request) {
         throw new AppError(400, "No valid services selected for this shop.");
       }
 
-      const allInvoiceItems = selectedServices.flatMap((srv) => {
+      const allInvoiceItems = selectedServices.flatMap(srv => {
         return srv.invoiceItems;
       });
 
       const items = allInvoiceItems.map(({ id, ...item }) => ({
         ...item,
-        materials: item.materials.map((material) => ({
+        materials: item.materials.map(material => ({
           ...material,
           quantity: (Number(material.quantity) || 0) as any,
           cost: (Number(material.cost) || 0) as any,
@@ -1234,7 +1253,7 @@ export async function POST(req: Request) {
               make: vehicle?.make,
               model: vehicle?.model,
             },
-            services: selectedServices.map((srv) => ({
+            services: selectedServices.map(srv => ({
               title: srv.title,
               price: srv.price,
             })),
@@ -1259,29 +1278,25 @@ export async function POST(req: Request) {
     if (createdAppointmentId) {
       await db.appointment
         .delete({ where: { id: createdAppointmentId } })
-        .catch((e) =>
+        .catch(e =>
           console.error("Fallback deletion failed for Appointment:", e),
         );
     }
     if (createdEstimateId) {
       await db.invoice
         .delete({ where: { id: createdEstimateId } })
-        .catch((e) =>
-          console.error("Fallback deletion failed for Estimate:", e),
-        );
+        .catch(e => console.error("Fallback deletion failed for Estimate:", e));
     }
     if (createdVehicleId) {
       await db.vehicle
         .delete({ where: { id: createdVehicleId } })
-        .catch((e) =>
-          console.error("Fallback deletion failed for Vehicle:", e),
-        );
+        .catch(e => console.error("Fallback deletion failed for Vehicle:", e));
     }
     if (createdClientId) {
       // The shared addCustomer action also creates a Lead, let's delete the client (which cascades or we can rely on lead being created in tx normally, but if addCustomer does it, it's global)
       await db.client
         .delete({ where: { id: createdClientId } })
-        .catch((e) => console.error("Fallback deletion failed for Client:", e));
+        .catch(e => console.error("Fallback deletion failed for Client:", e));
     }
 
     const formattedError = errorHandler(error);
