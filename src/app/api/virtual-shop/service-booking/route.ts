@@ -89,6 +89,20 @@ const searchParamsValidation = z.object({
  *           type: string
  *         description: Search keyword to filter bookings by client's first or last name (case-insensitive).
  *       - in: query
+ *         name: date
+ *         required: false
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filter bookings by appointment date (YYYY-MM-DD).
+ *       - in: query
+ *         name: month
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [january, february, march, april, may, june, july, august, september, october, november, december]
+ *         description: Filter bookings by a specific month of the current year.
+ *       - in: query
  *         name: sortOrder
  *         required: false
  *         schema:
