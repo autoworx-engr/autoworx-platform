@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Search } from "lucide-react";
+import { Loader2, Plus, Search } from "lucide-react";
 import ServiceCard, { type Service } from "./ServiceCard";
 import { useRouter } from "nextjs-toploader/app";
 import { useSession } from "next-auth/react";
@@ -119,9 +119,12 @@ export default function ServicesTab() {
       <div className="min-h-[40vh] max-h-[60vh] overflow-y-auto thin-scrollbar pr-1">
         <div className="flex flex-col gap-2">
           {isShopConfigLoading || isServicesLoading ? (
-            <p className="py-8 text-center text-sm text-gray-400">
-              {"Loading services..."}
-            </p>
+            <div className="flex min-h-[320px] items-center justify-center rounded-lg border border-gray-200 bg-gray-50 px-4 py-6">
+              <div className="flex flex-col items-center gap-3 text-sm text-gray-600">
+                <Loader2 size={28} className="animate-spin text-[#6571FF]" />
+                <span>Loading services...</span>
+              </div>
+            </div>
           ) : !shopId ? (
             <p className="py-8 text-center text-sm text-gray-400">
               Configure your virtual shop first to manage services.
