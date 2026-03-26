@@ -35,7 +35,14 @@ const searchParamsValidation = z.object({
     .optional(),
   year: z
     .string({ invalid_type_error: "Year must be a string" })
-    .regex(/^\d{4}$/, "Year must be a 4-digit number")
+    .refine(value => {
+      if (!value) return true;
+      const year = parseInt(value);
+      if (isNaN(year)) {
+        throw new Error("Invalid year format");
+      }
+      return year;
+    })
     .optional(),
   month: z
     .enum([
@@ -53,6 +60,7 @@ const searchParamsValidation = z.object({
       "december",
     ])
     .optional(),
+  status: z.enum(["pending", "confirmed", "completed", "cancelled"]).optional(),
   sortOrder: z.enum(["asc", "desc"]).optional(),
   page: z.number({ invalid_type_error: "Page must be a number" }).optional(),
   limit: z.number({ invalid_type_error: "Limit must be a number" }).optional(),
@@ -96,6 +104,13 @@ const searchParamsValidation = z.object({
  *           type: string
  *           enum: [january, february, march, april, may, june, july, august, september, october, november, december]
  *         description: Filter bookings by a specific month of the specified year.
+ *       - in: query
+ *         name: status
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [pending, confirmed, completed, cancelled]
+ *         description: Filter bookings by status.
  *       - in: query
  *         name: sortOrder
  *         required: false
@@ -281,10 +296,11 @@ export async function GET(req: Request) {
     }
 
     const { searchParams } = new URL(req.url);
-    const search = searchParams.get("search") ?? "";
-    const date = searchParams.get("date") ?? "";
-    const month = searchParams.get("month") ?? "";
-    const year = searchParams.get("year") ?? "";
+    const search = searchParams.get("search") ?? undefined;
+    const date = searchParams.get("date") ?? undefined;
+    const month = searchParams.get("month") ?? undefined;
+    const year = searchParams.get("year") ?? undefined;
+    const status = searchParams.get("status") ?? undefined;
 
     const sortOrder = (
       searchParams.get("sortOrder") === "asc" ? "asc" : "desc"
@@ -302,6 +318,7 @@ export async function GET(req: Request) {
       sortOrder,
       page,
       limit,
+      status,
     });
 
     const whereClause: Prisma.ShopBookingWhereInput = {
@@ -309,6 +326,10 @@ export async function GET(req: Request) {
         companyId,
       },
     };
+
+    if (status) {
+      whereClause.status = status.toUpperCase() as any;
+    }
 
     if (search) {
       whereClause.client = {

@@ -4,12 +4,21 @@ import moment from "moment-timezone";
 import { AppError } from "@/error-boundary/error";
 import { jwtVerifyToken } from "@/lib/jwtVerify";
 import { Prisma } from "@prisma/client";
+import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import z from "zod";
 
 const searchParamsValidation = z.object({
   year: z
     .string({ invalid_type_error: "Year must be a string" })
-    .regex(/^\d{4}$/, "Year must be a 4-digit number"),
+    .refine(value => {
+      if (!value) return true;
+      const year = parseInt(value);
+      if (isNaN(year)) {
+        throw new Error("Invalid year format");
+      }
+      return year;
+    })
+    .optional(),
   month: z.enum([
     "january",
     "february",
@@ -116,8 +125,8 @@ export async function GET(req: Request) {
     }
 
     const { searchParams } = new URL(req.url);
-    const year = searchParams.get("year");
-    const month = searchParams.get("month");
+    const year = searchParams.get("year") ?? undefined;
+    const month = searchParams.get("month") ?? undefined;
 
     if (!year || !month) {
       throw new AppError(400, "Year and month are required");
@@ -180,19 +189,14 @@ export async function GET(req: Request) {
       { status: 200 },
     );
   } catch (error: any) {
-    if (error instanceof AppError) {
-      return NextResponse.json(
-        { success: false, message: error.message },
-        { status: error.statusCode },
-      );
-    }
-    console.error("Error fetching calendar shop bookings:", error);
+    const formattedError = errorHandler(error);
     return NextResponse.json(
       {
         success: false,
-        message: error.message || "Failed to fetch calendar shop bookings",
+        message: formattedError.message,
+        errorDetails: formattedError,
       },
-      { status: 500 },
+      { status: formattedError.statusCode },
     );
   }
 }
