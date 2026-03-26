@@ -82,7 +82,7 @@ const searchParamsValidation = z.object({
  *         required: false
  *         schema:
  *           type: string
- *         description: Search keyword to filter bookings by client's first or last name (case-insensitive).
+ *         description: Search keyword to filter bookings by client's first/last name, vehicle make/model/year, or booked service title (case-insensitive).
  *       - in: query
  *         name: date
  *         required: false
@@ -332,12 +332,33 @@ export async function GET(req: Request) {
     }
 
     if (search) {
-      whereClause.client = {
-        OR: [
-          { firstName: { contains: search, mode: "insensitive" } },
-          { lastName: { contains: search, mode: "insensitive" } },
-        ],
-      };
+      const searchNum = parseInt(search, 10);
+      whereClause.OR = [
+        {
+          client: {
+            OR: [
+              { firstName: { contains: search, mode: "insensitive" } },
+              { lastName: { contains: search, mode: "insensitive" } },
+            ],
+          },
+        },
+        {
+          vehicle: {
+            OR: [
+              { make: { contains: search, mode: "insensitive" } },
+              { model: { contains: search, mode: "insensitive" } },
+              ...(!isNaN(searchNum) ? [{ year: searchNum }] : []),
+            ],
+          },
+        },
+        {
+          services: {
+            some: {
+              title: { contains: search, mode: "insensitive" },
+            },
+          },
+        },
+      ];
     }
 
     if ((month && !year) || (year && !month)) {
