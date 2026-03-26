@@ -11,9 +11,8 @@ import { Confirmation } from "./Confirmation";
 import { CartDrawer } from "./CartDrawer";
 import { BookingHeader } from "./BookingHeader";
 import { useShopInfo } from "@/hooks/virtual-shop/useShopInfo";
-import {
-  useGetShopCategories,
-} from "@/hooks/virtual-shop/service/useShopService";
+import ShopNotFound from "../giftcards/ShopNotFound";
+import { useGetShopCategories } from "@/hooks/virtual-shop/service/useShopService";
 import { useGetShopServices } from "@/hooks/virtual-shop/service/useShopService";
 import CarLoading from "@/components/common/CarLoading";
 import { Service, ServiceCategory } from "../../data/types";
@@ -57,7 +56,12 @@ const BookingContent = () => {
     setCategories,
     selectedCategory,
   } = useBooking();
-  const { shop, shopName, isPending: isShopLoading, isError: isShopError } = useShopInfo();
+  const {
+    shop,
+    shopName,
+    isPending: isShopLoading,
+    isError: isShopError,
+  } = useShopInfo();
 
   // Fetch categories from API
   const { data: categoriesData } = useGetShopCategories(shop?.id);
@@ -120,13 +124,21 @@ const BookingContent = () => {
   }, [shopServices, setServices, isShopError, isServicesError, shop?.id]);
 
   if (isShopLoading || (shop?.id && isServicesLoading)) {
-    return <CarLoading />;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <CarLoading />
+      </div>
+    );
+  }
+
+  if (!shop && !isShopLoading) {
+    return <ShopNotFound />;
   }
 
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <BookingHeader rightElement="giftcard" >
+      <BookingHeader rightElement="giftcard">
         <ProgressBar current={step} />
       </BookingHeader>
 
