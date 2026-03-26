@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
-import { useSession } from "next-auth/react";
+import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
+import { cn } from "@/lib/cn";
+import { pusher } from "@/lib/pusher/client";
 import { format } from "date-fns";
 import {
   ArrowLeft,
@@ -10,14 +11,13 @@ import {
   MoreVertical,
   SendHorizontal,
 } from "lucide-react";
+import { useSession } from "next-auth/react";
 import Image from "next/image";
-import { pusher } from "@/lib/pusher/client";
-import { cn } from "@/lib/cn";
-import { usePathname, useSearchParams } from "next/navigation";
-import InvoiceEstimateModal from "./collaboration/InvoiceEstimateModal";
-import CompanyProfileCard from "./collaboration/CompanyProfileCard";
 import Link from "next/link";
-import InvoiceModal from "@/components/invoice-modal/InvoiceModal";
+import { usePathname, useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState, useTransition } from "react";
+import CompanyProfileCard from "./collaboration/CompanyProfileCard";
+import InvoiceEstimateModal from "./collaboration/InvoiceEstimateModal";
 
 type TMessage = {
   id?: number;
@@ -54,14 +54,14 @@ export default function CompanyMessageBox({
   const [pending, startTransition] = useTransition();
   const messageBoxRef = useRef<HTMLDivElement>(null);
   const [multiAttachmentFile, setMultiAttachmentFile] = useState<File[] | null>(
-    null,
+    null
   );
   const searchParams = useSearchParams();
   const companyId = searchParams.get("companyId");
   const [showAttachment, setShowAttachment] = useState(false);
   const currentCompanyId = session?.user?.companyId;
   const isEstimateAttachmentShow = pathname?.includes(
-    "/communication/collaboration",
+    "/communication/collaboration"
   );
 
   // 🔹 Load messages
@@ -71,7 +71,7 @@ export default function CompanyMessageBox({
     async function fetchMessages() {
       try {
         const res = await fetch(
-          `/api/communication/collaboration/messages/v2-messages?companyA=${currentCompanyId}&companyB=${companyId}&viewerCompanyId=${currentCompanyId}`,
+          `/api/communication/collaboration/messages/v2-messages?companyA=${currentCompanyId}&companyB=${companyId}&viewerCompanyId=${currentCompanyId}`
         );
 
         const data = await res.json();
@@ -212,7 +212,7 @@ export default function CompanyMessageBox({
   const handleRemoveAttachment = (fileName: string) => {
     setMultiAttachmentFile(
       (multiFiles) =>
-        multiFiles && multiFiles?.filter((file) => file?.name !== fileName),
+        multiFiles && multiFiles?.filter((file) => file?.name !== fileName)
     );
   };
 
@@ -281,7 +281,7 @@ export default function CompanyMessageBox({
               <div
                 className={cn(
                   "flex flex-col space-y-2",
-                  isOwn ? "items-end" : "items-start",
+                  isOwn ? "items-end" : "items-start"
                 )}
               >
                 {/* Attachments */}
@@ -292,7 +292,7 @@ export default function CompanyMessageBox({
                       key={attachment.fileUrl}
                       className={cn(
                         "flex items-center gap-2",
-                        isOwn ? "flex-row-reverse" : "flex-row",
+                        isOwn ? "flex-row-reverse" : "flex-row"
                       )}
                     >
                       {attachment.fileType?.includes("image") ? (
@@ -352,13 +352,13 @@ export default function CompanyMessageBox({
                         href={`/dashboard/estimate/edit/${msg?.requestEstimate.invoiceId}`}
                         className={cn(
                           "w-96 rounded-md bg-[#006D77] p-1",
-                          !msg?.isOwnMessage && "bg-[#D9D9D9]",
+                          !msg?.isOwnMessage && "bg-[#D9D9D9]"
                         )}
                       >
                         <div
                           className={cn(
                             "flex items-center justify-center gap-x-2 rounded-md border border-white p-5",
-                            !msg?.isOwnMessage && "border-[#006D77]",
+                            !msg?.isOwnMessage && "border-[#006D77]"
                           )}
                         >
                           <Image
@@ -370,7 +370,7 @@ export default function CompanyMessageBox({
                           <p
                             className={cn(
                               "font-semibold text-white",
-                              !msg?.isOwnMessage && "text-[#006D77]",
+                              !msg?.isOwnMessage && "text-[#006D77]"
                             )}
                           >
                             Requested an Estimate
@@ -388,7 +388,7 @@ export default function CompanyMessageBox({
                       "max-w-[75%] rounded-2xl px-4 py-2 text-sm shadow-sm break-words",
                       isOwn
                         ? "bg-[#006D77] text-white rounded-br-sm"
-                        : "bg-gray-100 text-gray-800 rounded-bl-sm",
+                        : "bg-gray-100 text-gray-800 rounded-bl-sm"
                     )}
                   >
                     {msg.message}
@@ -401,7 +401,7 @@ export default function CompanyMessageBox({
                     "text-[11px] mt-1",
                     isOwn
                       ? "text-gray-400 text-right"
-                      : "text-gray-500 text-left",
+                      : "text-gray-500 text-left"
                   )}
                 >
                   {format(new Date(msg?.createdAt), "p")} ·
@@ -419,7 +419,7 @@ export default function CompanyMessageBox({
         <div
           className={cn(
             "relative w-full rounded-lg border border-gray-200 bg-white shadow-md flex flex-col",
-            "max-h-64",
+            "max-h-64"
           )}
         >
           {/* Sticky header */}
@@ -505,7 +505,7 @@ export default function CompanyMessageBox({
           <div
             className={cn(
               "absolute z-50 -top-[55px] space-y-1",
-              isEstimateAttachmentShow ? "-top-[55px]" : "-top-[27px]",
+              isEstimateAttachmentShow ? "-top-[55px]" : "-top-[27px]"
             )}
           >
             <p
@@ -534,9 +534,12 @@ export default function CompanyMessageBox({
         />
         <input
           multiple
-          accept="*"
+          accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
           ref={attachmentRef}
           onChange={handleAttachment}
+          onClick={(e) => {
+            (e.target as HTMLInputElement).value = "";
+          }}
           hidden
           type="file"
         />

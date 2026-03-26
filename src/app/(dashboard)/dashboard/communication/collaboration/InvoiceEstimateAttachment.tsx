@@ -23,6 +23,9 @@ export default function InvoiceEstimateAttachment({
             if (!files?.length) return;
             setPhotos((prevPhotos) => [...prevPhotos, ...Array.from(files)]);
           }}
+          onClick={(e) => {
+            (e.target as HTMLInputElement).value = "";
+          }}
         />
         <svg
           width="50"
