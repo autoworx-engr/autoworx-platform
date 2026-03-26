@@ -279,6 +279,35 @@ export interface CreateGiftCardTemplatePayload {
   isDefault?: boolean;
 }
 
+export type GiftCardPromoType = "Percentage" | "Fixed";
+
+export interface GiftCardPromoData {
+  id: number;
+  companyId: number;
+  code: string;
+  type: GiftCardPromoType;
+  value: number | string;
+  startDate: string;
+  expireDate: string | null;
+  usageLimit: number | null;
+  timesUsed: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateGiftCardPromoPayload {
+  code: string;
+  type: GiftCardPromoType;
+  value: number;
+  startDate?: string | null;
+  expireDate?: string | null;
+  usageLimit?: number | null;
+  isActive?: boolean;
+}
+
+export type UpdateGiftCardPromoPayload = Partial<CreateGiftCardPromoPayload>;
+
 export const configureVirtualShop = async function (payload: ShopData) {
   try {
     const response = await axios.post(`/api/virtual-shop/configure`, payload);
@@ -609,6 +638,103 @@ export const createGiftCardTemplate = async function (
     });
 
     return response.data?.data;
+  } catch (error) {
+    const err = errorHandler(error);
+    throw err;
+  }
+};
+
+export const deleteGiftCardTemplate = async function (
+  id: number,
+  accessToken: string,
+) {
+  try {
+    await axios.delete(`/api/virtual-shop/gift-card-templates/${id}`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    return true;
+  } catch (error) {
+    const err = errorHandler(error);
+    throw err;
+  }
+};
+
+export const getGiftCardPromos = async function (accessToken: string) {
+  try {
+    const response = await axios.get<{
+      success: boolean;
+      data: GiftCardPromoData[];
+    }>("/api/virtual-shop/gift-card-promos", {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    return response.data?.data ?? [];
+  } catch (error) {
+    const err = errorHandler(error);
+    throw err;
+  }
+};
+
+export const createGiftCardPromo = async function (
+  payload: CreateGiftCardPromoPayload,
+  accessToken: string,
+) {
+  try {
+    const response = await axios.post<{
+      success: boolean;
+      data: GiftCardPromoData;
+    }>("/api/virtual-shop/gift-card-promos", payload, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    return response.data?.data;
+  } catch (error) {
+    const err = errorHandler(error);
+    throw err;
+  }
+};
+
+export const updateGiftCardPromo = async function (
+  id: number,
+  payload: UpdateGiftCardPromoPayload,
+  accessToken: string,
+) {
+  try {
+    const response = await axios.patch<{
+      success: boolean;
+      data: GiftCardPromoData;
+    }>(`/api/virtual-shop/gift-card-promos/${id}`, payload, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    return response.data?.data;
+  } catch (error) {
+    const err = errorHandler(error);
+    throw err;
+  }
+};
+
+export const deleteGiftCardPromo = async function (
+  id: number,
+  accessToken: string,
+) {
+  try {
+    await axios.delete(`/api/virtual-shop/gift-card-promos/${id}`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    return true;
   } catch (error) {
     const err = errorHandler(error);
     throw err;
