@@ -10,10 +10,10 @@ import BuyGiftCardFlow from "../components/giftcards/BuyGiftCardFlow";
 import ShopNotFound from "../components/giftcards/ShopNotFound";
 import CarLoading from "@/components/common/CarLoading";
 
-const GiftCardsPage = () => {
-  const { amountPresets, isLoading, shop } = useGiftCardPageData();
+const GiftCardsPage = ({ initialShop }: { initialShop?: any }) => {
+  const { amountPresets, isLoading, shop } = useGiftCardPageData(initialShop);
 
-  if (isLoading) {
+  if (isLoading && !shop) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <CarLoading />

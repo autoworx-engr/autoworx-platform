@@ -1,12 +1,16 @@
 import { useParams } from "next/navigation";
 import { useGetShopBySlug } from "./service/useShopService";
 
-export const useShopInfo = () => {
+export const useShopInfo = (initialData?: any) => {
   const params = useParams();
   const subdomain = params?.subdomain;
   const slug = String(subdomain || "");
 
-  const { data: shop, isPending, isError } = useGetShopBySlug(slug);
+  const {
+    data: shop,
+    isPending,
+    isError,
+  } = useGetShopBySlug(slug, initialData);
 
   return {
     shop,

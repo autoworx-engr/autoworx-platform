@@ -1,6 +1,5 @@
 "use client";
 
-import { useParams } from "next/navigation";
 import { useEffect } from "react";
 import { useBooking } from "../../context/BookingContext";
 import { ProgressBar } from "./ProgressBar";
@@ -43,7 +42,7 @@ const normalizeCategory = (raw: string[] = []): ServiceCategory => {
   );
 };
 
-const BookingContent = () => {
+const BookingContent = ({ initialShop }: { initialShop?: any }) => {
   const {
     step,
     setServices,
@@ -58,10 +57,9 @@ const BookingContent = () => {
   } = useBooking();
   const {
     shop,
-    shopName,
     isPending: isShopLoading,
     isError: isShopError,
-  } = useShopInfo();
+  } = useShopInfo(initialShop);
 
   // Fetch categories from API
   const { data: categoriesData } = useGetShopCategories(shop?.id);
@@ -123,7 +121,7 @@ const BookingContent = () => {
     setServices(mapped);
   }, [shopServices, setServices, isShopError, isServicesError, shop?.id]);
 
-  if (isShopLoading || (shop?.id && isServicesLoading)) {
+  if (isShopLoading && !shop) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <CarLoading />

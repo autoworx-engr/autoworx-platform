@@ -12,8 +12,13 @@ import {
   GiftCardDeliveryMethod,
 } from "../data/gift-card-types";
 
-export const useGiftCardPageData = () => {
-  const { shop, shopName, companyId, isPending: isShopLoading } = useShopInfo();
+export const useGiftCardPageData = (initialShop?: any) => {
+  const {
+    shop,
+    shopName,
+    companyId,
+    isPending: isShopLoading,
+  } = useShopInfo(initialShop);
   const { data: remoteTemplates, isLoading: isTemplatesLoading } =
     useGetGiftCardTemplatesPublic(companyId);
   const { data: remoteSettings, isLoading: isSettingsLoading } =
