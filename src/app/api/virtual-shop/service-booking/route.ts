@@ -31,7 +31,7 @@ const searchParamsValidation = z.object({
         throw new Error("Invalid date format");
       }
       return date.toDate();
-    })
+    }, "Invalid date format")
     .optional(),
   year: z
     .string({ invalid_type_error: "Year must be a string" })
@@ -42,28 +42,119 @@ const searchParamsValidation = z.object({
         throw new Error("Invalid year format");
       }
       return year;
-    })
+    }, "Invalid year format")
     .optional(),
   month: z
-    .enum([
-      "january",
-      "february",
-      "march",
-      "april",
-      "may",
-      "june",
-      "july",
-      "august",
-      "september",
-      "october",
-      "november",
-      "december",
-    ])
+    .enum(
+      [
+        "january",
+        "february",
+        "march",
+        "april",
+        "may",
+        "june",
+        "july",
+        "august",
+        "september",
+        "october",
+        "november",
+        "december",
+      ],
+      {
+        invalid_type_error: "Month must be a valid month name",
+      },
+    )
     .optional(),
-  status: z.enum(["pending", "confirmed", "completed", "cancelled"]).optional(),
-  sortOrder: z.enum(["asc", "desc"]).optional(),
+  status: z
+    .enum(["pending", "confirmed", "completed", "cancelled"], {
+      invalid_type_error: "Status must be pending, confirmed, completed, or cancelled",
+    })
+    .optional(),
+  sortOrder: z
+    .enum(["asc", "desc"], {
+      invalid_type_error: "Sort order must be asc or desc",
+    })
+    .optional(),
   page: z.number({ invalid_type_error: "Page must be a number" }).optional(),
   limit: z.number({ invalid_type_error: "Limit must be a number" }).optional(),
+});
+
+const createServiceBookingSchema = z.object({
+  shopId: z
+    .union([z.string(), z.number()], {
+      required_error: "Shop ID is required",
+      invalid_type_error: "Shop ID must be a string or number",
+    })
+    .transform(val => (typeof val === "string" ? parseInt(val, 10) : val)),
+  shopServices: z
+    .array(
+      z.object({
+        shopServiceId: z.number({
+          required_error: "Shop Service ID is required",
+          invalid_type_error: "Shop Service ID must be a number",
+        }),
+        vehicleType: z
+          .string({
+            invalid_type_error: "Vehicle type must be a string",
+          })
+          .optional(),
+      }),
+      {
+        required_error: "Shop services are required",
+        invalid_type_error: "Shop services must be an array",
+      },
+    )
+    .min(1, "At least one shop service must be selected"),
+  appointmentDate: z.string({
+    required_error: "Appointment date is required",
+    invalid_type_error: "Appointment date must be a string",
+  }),
+  appointmentStartTime: z.string({
+    required_error: "Appointment start time is required",
+    invalid_type_error: "Appointment start time must be a string",
+  }),
+  fullName: z
+    .string({
+      required_error: "Full name is required",
+      invalid_type_error: "Full name must be a string",
+    })
+    .min(1, "Full name is required"),
+  email: z
+    .string({
+      invalid_type_error: "Email must be a string",
+    })
+    .email("Invalid email format")
+    .optional()
+    .or(z.literal("")),
+  phone: z
+    .string({
+      required_error: "Phone number is required",
+      invalid_type_error: "Phone number must be a string",
+    })
+    .min(1, "Phone number is required"),
+  make: z
+    .string({
+      required_error: "Vehicle make is required",
+      invalid_type_error: "Vehicle make must be a string",
+    })
+    .min(1, "Vehicle make is required"),
+  model: z
+    .string({
+      required_error: "Vehicle model is required",
+      invalid_type_error: "Vehicle model must be a string",
+    })
+    .min(1, "Vehicle model is required"),
+  year: z
+    .union([z.string(), z.number()], {
+      required_error: "Vehicle year is required",
+      invalid_type_error: "Vehicle year must be a string or number",
+    })
+    .transform(val => val.toString()),
+  notes: z
+    .string({
+      invalid_type_error: "Notes must be a string",
+    })
+    .optional(),
 });
 
 /**
@@ -738,6 +829,7 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
+    const parsedBody = await createServiceBookingSchema.parseAsync(body);
 
     const {
       shopId,
@@ -751,23 +843,7 @@ export async function POST(req: Request) {
       model,
       year,
       notes,
-    } = body;
-
-    // 1. Validate required input
-    if (
-      !shopId ||
-      !shopServices ||
-      !Array.isArray(shopServices) ||
-      shopServices.length === 0 ||
-      !appointmentDate ||
-      !appointmentStartTime ||
-      !phone ||
-      !make ||
-      !model ||
-      !year
-    ) {
-      throw new AppError(400, "Missing required fields");
-    }
+    } = parsedBody;
 
     const shopServiceIds = shopServices
       .map((s: any) => s.shopServiceId)
@@ -870,7 +946,7 @@ export async function POST(req: Request) {
       let vehicle = await tx.vehicle.findFirst({
         where: {
           clientId: client?.id,
-          year: parseInt(year),
+          year: parseInt(year.toString()),
           make,
           model,
           companyId,
@@ -879,7 +955,7 @@ export async function POST(req: Request) {
 
       if (!vehicle) {
         const vehicleResponse = await addVehicle({
-          year: parseInt(year),
+          year: parseInt(year.toString()),
           make,
           model,
           submodel: "",
