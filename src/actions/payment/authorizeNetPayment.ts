@@ -14,12 +14,13 @@ export const createAuthorizeNetPaymentLink = async ({
   companyId,
   invoiceId,
   statementId,
+  shopBookingId,
   amount,
   payType,
 }: PaymentParams): Promise<PaymentLink> => {
   try {
-    if (!invoiceId && !statementId) {
-      throw new Error("Invoice or Statement ID is required");
+    if (!invoiceId && !statementId && !shopBookingId) {
+      throw new Error("Invoice, Statement or Booking ID is required");
     }
 
     const company = await db.company.findFirst({
@@ -73,6 +74,15 @@ export const createAuthorizeNetPaymentLink = async ({
         })
       : null;
 
+    const shopBooking = shopBookingId
+      ? await db.shopBooking.findUnique({
+          where: { id: Number(shopBookingId) },
+          select: {
+            invoiceId: true,
+          },
+        })
+      : null;
+
     // Validate amount
     const paymentAmount = parseFloat(amount);
     if (isNaN(paymentAmount) || paymentAmount <= 0) {
@@ -108,7 +118,9 @@ export const createAuthorizeNetPaymentLink = async ({
     const orderType = new ApiContracts.OrderType();
     const productName = invoiceId
       ? `INVOICE-${invoiceId}`
-      : `STATEMENT-${statementId}`;
+      : statementId
+        ? `STATEMENT-${statementId}`
+        : `BOOKING-${shopBookingId}`;
 
     // Encode payType into invoiceNumber so the webhook can
     // reliably distinguish deposits vs normal payments and
@@ -123,21 +135,25 @@ export const createAuthorizeNetPaymentLink = async ({
       }
     } else if (statementId) {
       invoiceNumberForGateway = `STM-${statementId}`;
+    } else if (shopBookingId) {
+      invoiceNumberForGateway = `VSB-DEP-${shopBookingId}`;
     }
 
     orderType.setInvoiceNumber(invoiceNumberForGateway);
     orderType.setDescription(
-      `${payType === "deposit" ? "Deposit" : "Payment"} for ${productName}`,
+      `${payType === "deposit" || payType === "virtual_shop_deposit" ? "Deposit" : "Payment"} for ${productName}`,
     );
     transactionRequestType.setOrder(orderType);
 
     // Add line items for the payment form to display properly
     const lineItemsArray = [];
     const lineItem = new ApiContracts.LineItemType();
-    lineItem.setItemId(invoiceId || statementId || "1");
+    lineItem.setItemId(invoiceId || statementId || shopBookingId || "1");
     lineItem.setName(productName);
     lineItem.setDescription(
-      payType === "deposit" ? "Deposit Payment" : "Payment",
+      payType === "deposit" || payType === "virtual_shop_deposit"
+        ? "Deposit Payment"
+        : "Payment",
     );
     lineItem.setQuantity("1");
     lineItem.setUnitPrice(paymentAmount.toString());
@@ -185,6 +201,17 @@ export const createAuthorizeNetPaymentLink = async ({
       customField3.setName("statementId");
       customField3.setValue(statementId);
       userFieldsArray.push(customField3);
+    } else if (shopBookingId) {
+      const customField3 = new ApiContracts.UserField();
+      customField3.setName("shopBookingId");
+      customField3.setValue(shopBookingId);
+      userFieldsArray.push(customField3);
+      if (shopBooking?.invoiceId) {
+        const customField4 = new ApiContracts.UserField();
+        customField4.setName("invoiceId");
+        customField4.setValue(shopBooking.invoiceId);
+        userFieldsArray.push(customField4);
+      }
     }
 
     // Set user fields with proper structure

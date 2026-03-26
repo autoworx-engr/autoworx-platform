@@ -144,6 +144,7 @@ export const BookingProvider: React.FC<{ children: React.ReactNode }> = ({
     setSelectedDate(null);
     setSelectedSlot(null);
     setCustomerInfo(null);
+    setIsReturningClient(false);
   }, []);
 
   return (

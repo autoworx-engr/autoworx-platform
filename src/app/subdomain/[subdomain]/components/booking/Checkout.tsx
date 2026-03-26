@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,7 +28,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/Dialog";
-import { useParams } from "next/navigation";
+import { PayNow } from "@/components/invoice-modal/PayNow";
+import { getPaymentGatewayInfo } from "@/app/(dashboard)/dashboard/settings/payments/getPaymentGatewayInfo";
+import { useServerGet } from "@/hooks/useServerGet";
+import { useParams, useSearchParams, useRouter } from "next/navigation";
 import {
   useCreateVirtualShopServiceBooking,
   useGetShopBySlug,
@@ -47,18 +50,27 @@ export const Checkout = () => {
   const {
     setStep,
     cart,
+    addToCart,
     cartTotal,
     cartDurationMinutes,
     selectedDate,
+    setSelectedDate,
     selectedSlot,
+    setSelectedSlot,
     setCustomerInfo,
     isReturningClient,
     setIsReturningClient,
     settings,
   } = useBooking();
   const params = useParams();
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const slug = String(params?.subdomain || "");
   const { data: shop } = useGetShopBySlug(slug);
+  const { data: gatewayInfo } = useServerGet(
+    getPaymentGatewayInfo,
+    Number(shop?.companyId),
+  );
   const { mutateAsync: createBooking, isPending: isBookingSubmitting } =
     useCreateVirtualShopServiceBooking();
   const [selectedCountryCode, setSelectedCountryCode] = useState("US");
@@ -67,7 +79,10 @@ export const Checkout = () => {
   const [otpValue, setOtpValue] = useState("");
   const [otpVerified, setOtpVerified] = useState(false);
   const [showOtp, setShowOtp] = useState(false);
-  const [phoneLookedUp, setPhoneLookedUp] = useState(false);
+  const [phoneLookedUp, setPhoneLookedUp] = useState(!isReturningClient);
+  const [showPayNowModal, setShowPayNowModal] = useState(false);
+  const [createdBookingId, setCreatedBookingId] = useState<string>("");
+  const hasHandledStripeReturn = useRef(false);
   const [form, setForm] = useState<CustomerInfo>({
     fullName: "",
     email: "",
@@ -116,6 +131,94 @@ export const Checkout = () => {
       }));
     }
   }, []);
+
+  const clearPaymentQueryParams = useCallback(() => {
+    const query = new URLSearchParams(searchParams.toString());
+    query.delete("success");
+    query.delete("cancel");
+    const queryString = query.toString();
+    const nextUrl = `${window.location.pathname}${queryString ? `?${queryString}` : ""}${window.location.hash}`;
+    router.replace(nextUrl);
+  }, [router, searchParams]);
+
+  useEffect(() => {
+    if (searchParams.get("cancel") !== "true") return;
+
+    toast.error("Payment was cancelled. Your booking is still pending.");
+    clearPaymentQueryParams();
+  }, [searchParams, clearPaymentQueryParams]);
+
+  useEffect(() => {
+    if (hasHandledStripeReturn.current) return;
+    if (searchParams.get("success") !== "true") return;
+
+    hasHandledStripeReturn.current = true;
+
+    const raw = sessionStorage.getItem("virtualShopPendingBooking");
+    if (!raw) {
+      setStep("confirmation");
+      toast.success("Payment successful!");
+      clearPaymentQueryParams();
+      return;
+    }
+
+    try {
+      const snapshot = JSON.parse(raw) as {
+        bookingId?: string;
+        selectedDate?: string;
+        selectedSlot?: any;
+        customerInfo?: CustomerInfo;
+        cart?: Array<{
+          service: any;
+          vehicleType: any;
+          quantity?: number;
+        }>;
+      };
+
+      if (snapshot.bookingId) {
+        setCreatedBookingId(snapshot.bookingId);
+      }
+
+      if (snapshot.selectedDate) {
+        setSelectedDate(new Date(snapshot.selectedDate));
+      }
+
+      if (snapshot.selectedSlot) {
+        setSelectedSlot(snapshot.selectedSlot);
+      }
+
+      if (snapshot.customerInfo) {
+        setCustomerInfo(snapshot.customerInfo);
+      }
+
+      if (Array.isArray(snapshot.cart) && cart.length === 0) {
+        snapshot.cart.forEach((item) => {
+          const qty = Number(item.quantity || 1);
+          for (let i = 0; i < qty; i += 1) {
+            addToCart(item.service, item.vehicleType);
+          }
+        });
+      }
+
+      setStep("confirmation");
+      toast.success("Deposit payment successful. Booking confirmed.");
+      sessionStorage.removeItem("virtualShopPendingBooking");
+      clearPaymentQueryParams();
+    } catch {
+      setStep("confirmation");
+      toast.success("Payment successful!");
+      clearPaymentQueryParams();
+    }
+  }, [
+    searchParams,
+    cart.length,
+    addToCart,
+    setSelectedDate,
+    setSelectedSlot,
+    setCustomerInfo,
+    setStep,
+    clearPaymentQueryParams,
+  ]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -209,6 +312,41 @@ export const Checkout = () => {
 
       setIsReturningClient(true);
       toast.success(response?.message || "Booking created successfully");
+
+      const newBookingId = response?.data?.shopBookingId;
+      if (depositAmount > 0 && newBookingId && shop?.companyId) {
+        sessionStorage.setItem(
+          "virtualShopPendingBooking",
+          JSON.stringify({
+            bookingId: newBookingId.toString(),
+            selectedDate: selectedDate?.toISOString(),
+            selectedSlot,
+            customerInfo: {
+              fullName:
+                client?.firstName || client?.lastName
+                  ? `${client?.firstName || ""} ${client?.lastName || ""}`.trim()
+                  : form.fullName,
+              email: client?.email || form.email,
+              phone: client?.mobile || form.phone,
+              vehicleYear: vehicle?.year
+                ? String(vehicle.year)
+                : form.vehicleYear,
+              vehicleMake: vehicle?.make || form.vehicleMake,
+              vehicleModel: vehicle?.model || form.vehicleModel,
+              notes: form.notes,
+            },
+            cart,
+          }),
+        );
+
+        setCreatedBookingId(newBookingId.toString());
+        setShowPayNowModal(true);
+        toast.success(
+          "Booking created. Please complete the deposit to confirm.",
+        );
+        return;
+      }
+
       setStep("confirmation");
     } catch (error) {
       const message =
@@ -220,10 +358,23 @@ export const Checkout = () => {
   const update = (field: keyof CustomerInfo, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }));
 
-  const depositAmount = settings.depositRequired
-    ? settings.depositType === "fixed"
-      ? settings.depositAmount
-      : Math.round((cartTotal * settings.depositAmount) / 100)
+  const bookingSettings = shop?.bookingSettings;
+  const isDepositEnabled =
+    bookingSettings?.isDepositEnabled ?? settings.depositRequired;
+  const depositType = bookingSettings?.depositType
+    ? bookingSettings.depositType.toLowerCase()
+    : settings.depositType;
+  const depositValueRaw =
+    bookingSettings?.depositValue !== undefined &&
+    bookingSettings?.depositValue !== null
+      ? Number(bookingSettings.depositValue)
+      : settings.depositAmount;
+  const depositValue = Number.isFinite(depositValueRaw) ? depositValueRaw : 0;
+
+  const depositAmount = isDepositEnabled
+    ? depositType === "fixed"
+      ? depositValue
+      : Number(((cartTotal * depositValue) / 100).toFixed(2))
     : 0;
 
   const shopFee = settings.shopFeeEnabled
@@ -325,6 +476,25 @@ export const Checkout = () => {
           </span>
         </div>
       </div>
+
+      {createdBookingId && depositAmount > 0 && (
+        <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 space-y-3">
+          <p className="text-sm font-semibold">Deposit payment required</p>
+          <p className="text-xs text-muted-foreground">
+            Your booking is saved as pending. Complete the deposit to confirm
+            your appointment.
+          </p>
+          <Button
+            type="button"
+            className="w-full"
+            onClick={() => setShowPayNowModal(true)}
+          >
+            {showPayNowModal
+              ? "Complete Payment in Open Modal"
+              : "Open Pay Now"}
+          </Button>
+        </div>
+      )}
 
       {/* Customer Form */}
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -548,6 +718,26 @@ export const Checkout = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {createdBookingId && shop?.companyId && (
+        <PayNow
+          due={depositAmount.toString()}
+          shopBookingId={createdBookingId}
+          companyId={shop.companyId}
+          mode="virtual_shop"
+          open={showPayNowModal}
+          setOpen={setShowPayNowModal}
+          onSuccess={() => {
+            sessionStorage.removeItem("virtualShopPendingBooking");
+            setStep("confirmation");
+          }}
+          gatewayInfo={{
+            paymentGateway: gatewayInfo?.paymentGateway || "BOTH",
+            hasStripe: gatewayInfo?.hasStripe ?? true,
+            hasAuthorizeNet: gatewayInfo?.hasAuthorizeNet ?? true,
+          }}
+        />
+      )}
     </div>
   );
 };

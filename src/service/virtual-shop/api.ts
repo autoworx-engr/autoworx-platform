@@ -17,6 +17,7 @@ export interface ShopData {
   themeConfig?: ThemeConfig;
   companyId?: number;
   isActive?: boolean;
+  bookingSettings?: ShopBookingSettingsData | null;
 }
 
 export type CreateShopServicePayload = TCreateShopServiceRequest & {
