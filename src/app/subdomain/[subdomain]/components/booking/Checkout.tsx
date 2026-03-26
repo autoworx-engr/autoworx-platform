@@ -371,12 +371,6 @@ export const Checkout = () => {
       : settings.depositAmount;
   const depositValue = Number.isFinite(depositValueRaw) ? depositValueRaw : 0;
 
-  const depositAmount = isDepositEnabled
-    ? depositType === "fixed"
-      ? depositValue
-      : Number(((cartTotal * depositValue) / 100).toFixed(2))
-    : 0;
-
   const shopFee = settings.shopFeeEnabled
     ? Math.round((cartTotal * settings.shopFeePercent) / 100)
     : 0;
@@ -384,6 +378,12 @@ export const Checkout = () => {
     ? Math.round(((cartTotal + shopFee) * settings.taxPercent) / 100)
     : 0;
   const grandTotal = cartTotal + shopFee + tax;
+
+  const depositAmount = isDepositEnabled
+    ? depositType === "fixed"
+      ? depositValue
+      : Number(((grandTotal * depositValue) / 100).toFixed(2))
+    : 0;
 
   return (
     <div className="space-y-6 max-w-2xl mx-auto">

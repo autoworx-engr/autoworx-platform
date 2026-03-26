@@ -1154,8 +1154,12 @@ export async function POST(req: Request) {
 
       const grandTotal = subtotal + taxAmount + serviceFeeAmount;
       const isDepositEnabled = bookingSettings.isDepositEnabled;
+      const depositType = bookingSettings.depositType;
+      const depositValue = Number(bookingSettings.depositValue || 0);
       const requiredDepositAmount = isDepositEnabled
-        ? Number(bookingSettings.depositValue)
+        ? depositType === "PERCENTAGE"
+          ? Number(((grandTotal * depositValue) / 100).toFixed(2))
+          : depositValue
         : 0;
 
       const shopBookingStatus = !isDepositEnabled ? "CONFIRMED" : "PENDING";
