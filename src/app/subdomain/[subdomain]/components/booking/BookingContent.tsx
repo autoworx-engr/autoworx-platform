@@ -10,8 +10,8 @@ import { Checkout } from "./Checkout";
 import { Confirmation } from "./Confirmation";
 import { CartDrawer } from "./CartDrawer";
 import { BookingHeader } from "./BookingHeader";
+import { useShopInfo } from "@/hooks/virtual-shop/useShopInfo";
 import {
-  useGetShopBySlug,
   useGetShopCategories,
 } from "@/hooks/virtual-shop/service/useShopService";
 import { useGetShopServices } from "@/hooks/virtual-shop/service/useShopService";
@@ -57,14 +57,7 @@ const BookingContent = () => {
     setCategories,
     selectedCategory,
   } = useBooking();
-  const params = useParams();
-  const slug = String(params?.subdomain || "");
-
-  const {
-    data: shop,
-    isPending: isShopLoading,
-    isError: isShopError,
-  } = useGetShopBySlug(slug);
+  const { shop, shopName, isPending: isShopLoading, isError: isShopError } = useShopInfo();
 
   // Fetch categories from API
   const { data: categoriesData } = useGetShopCategories(shop?.id);
@@ -133,7 +126,7 @@ const BookingContent = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <BookingHeader rightElement="giftcard" shopName={shop?.storeName}>
+      <BookingHeader rightElement="giftcard" >
         <ProgressBar current={step} />
       </BookingHeader>
 

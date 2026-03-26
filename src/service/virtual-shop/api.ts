@@ -614,3 +614,21 @@ export const createGiftCardTemplate = async function (
     throw err;
   }
 };
+
+
+
+export const getGiftCardTemplatesPublic = async function (companyId: number) {
+  try {
+    const response = await axios.get<{
+      success: boolean;
+      data: GiftCardTemplateData[];
+    }>("/api/virtual-shop/gift-card-templates/public", {
+      params: { companyId },
+    });
+
+    return response.data?.data ?? [];
+  } catch (error) {
+    const err = errorHandler(error);
+    throw err;
+  }
+};

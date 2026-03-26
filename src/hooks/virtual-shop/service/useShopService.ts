@@ -11,6 +11,7 @@ import {
   getShopCategories,
   getShopBySlug,
   getAppointmentSlots,
+  getGiftCardTemplatesPublic,
 } from "@/service/virtual-shop/api";
 import {
   useInfiniteQuery,
@@ -147,5 +148,12 @@ export const useCreateVirtualShopServiceBooking = () => {
   return useMutation({
     mutationFn: (payload: CreateVirtualShopServiceBookingPayload) =>
       createVirtualShopServiceBooking(payload),
+  });
+};
+export const useGetGiftCardTemplatesPublic = (companyId?: number) => {
+  return useQuery({
+    queryKey: ["gift-card-templates-public", companyId],
+    queryFn: () => getGiftCardTemplatesPublic(Number(companyId)),
+    enabled: !!companyId,
   });
 };

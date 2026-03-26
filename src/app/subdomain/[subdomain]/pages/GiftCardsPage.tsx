@@ -23,6 +23,7 @@ import GiftCardConfirmation from "../components/giftcards/GiftCardConfirmation";
 import ReloadGiftCard from "../components/giftcards/ReloadGiftCard";
 import CheckBalance from "../components/giftcards/CheckBalance";
 import { BookingHeader } from "../components/booking/BookingHeader";
+import { useShopInfo } from "@/hooks/virtual-shop/useShopInfo";
 
 type BuyStep =
   | "design"
@@ -33,10 +34,10 @@ type BuyStep =
   | "checkout"
   | "confirmation";
 
-const shopName = "ABC Business";
+
 
 const GiftCardsPage = () => {
-  const { shopId } = useParams();
+  const { shop, shopName, companyId, isPending: isShopLoading } = useShopInfo();
   const settings = defaultGiftCardSettings;
   const [buyStep, setBuyStep] = useState<BuyStep>("design");
   const [data, setData] = useState<GiftCardPurchaseData>({
@@ -126,7 +127,7 @@ const GiftCardsPage = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <BookingHeader rightElement="booking" />
+      <BookingHeader rightElement="booking"  />
 
       <main className="container max-w-5xl mx-auto px-4 py-6">
         <Tabs defaultValue="buy" onValueChange={() => resetBuy()}>
