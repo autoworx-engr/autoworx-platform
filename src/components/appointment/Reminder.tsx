@@ -9,7 +9,7 @@ import { useFormErrorStore } from "@/stores/form-error";
 import type { Client, EmailTemplate, Vehicle } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
 import moment from "moment";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import UpdateTemplate from "./UpdateTemplate";
 import {
   Bell,
@@ -68,6 +68,7 @@ export function Reminder({
 }: TReminderProps) {
   const [time, setTime] = useState<string>("");
   const [dateInput, setDateInput] = useState<string>("");
+  const initializedClientIdRef = useRef<number | null>(null);
 
   const { data: templates = [] } = useTemplatesQuery();
 
@@ -76,18 +77,45 @@ export function Reminder({
 
   useEffect(() => {
     return () => clearError();
-  }, []);
+  }, [clearError]);
 
   // Add state for minimum date and time validation
   const [minDate, setMinDate] = useState<string>("");
 
   useEffect(() => {
     setOpenConfirmation(false);
-  }, [openReminder]);
+  }, [openReminder, setOpenConfirmation]);
 
   useEffect(() => {
     setOpenReminder(false);
-  }, [openConfirmation]);
+  }, [openConfirmation, setOpenReminder]);
+
+  useEffect(() => {
+    if (!client?.id) {
+      initializedClientIdRef.current = null;
+      return;
+    }
+
+    if (initializedClientIdRef.current === client.id) {
+      return;
+    }
+
+    const firstConfirmationTemplate = templates.find(
+      (template: EmailTemplate) => template.type === "Confirmation",
+    );
+    const firstReminderTemplate = templates.find(
+      (template: EmailTemplate) => template.type === "Reminder",
+    );
+
+    setConfirmationTemplate(firstConfirmationTemplate ?? null);
+    setReminderTemplate(firstReminderTemplate ?? null);
+    initializedClientIdRef.current = client.id;
+  }, [
+    client?.id,
+    templates,
+    setConfirmationTemplate,
+    setReminderTemplate,
+  ]);
 
   // Set minimum date to today
   useEffect(() => {
