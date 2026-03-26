@@ -12,6 +12,60 @@ import { sendBookingConfirmation } from "@/actions/communication/client/sendBook
 import { Prisma } from "@prisma/client";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 
+import z from "zod";
+
+const searchParamsValidation = z.object({
+  search: z
+    .string({
+      invalid_type_error: "Search must be a string",
+    })
+    .optional(),
+  date: z
+    .string({
+      invalid_type_error: "Date must be a string",
+    })
+    .refine(value => {
+      if (!value) return true;
+      const date = moment(value, "YYYY-MM-DD");
+      if (!date.isValid()) {
+        throw new Error("Invalid date format");
+      }
+      return date.toDate();
+    })
+    .optional(),
+  year: z
+    .string({ invalid_type_error: "Year must be a string" })
+    .refine(value => {
+      if (!value) return true;
+      const year = parseInt(value);
+      if (isNaN(year)) {
+        throw new Error("Invalid year format");
+      }
+      return year;
+    })
+    .optional(),
+  month: z
+    .enum([
+      "january",
+      "february",
+      "march",
+      "april",
+      "may",
+      "june",
+      "july",
+      "august",
+      "september",
+      "october",
+      "november",
+      "december",
+    ])
+    .optional(),
+  status: z.enum(["pending", "confirmed", "completed", "cancelled"]).optional(),
+  sortOrder: z.enum(["asc", "desc"]).optional(),
+  page: z.number({ invalid_type_error: "Page must be a number" }).optional(),
+  limit: z.number({ invalid_type_error: "Limit must be a number" }).optional(),
+});
+
 /**
  * @swagger
  * /api/virtual-shop/service-booking:
@@ -28,7 +82,35 @@ import { errorHandler } from "@/error-boundary/globalErrorHandler";
  *         required: false
  *         schema:
  *           type: string
- *         description: Search keyword to filter bookings by client's first or last name (case-insensitive).
+ *         description: Search keyword to filter bookings by client's first/last name, vehicle make/model/year, or booked service title (case-insensitive).
+ *       - in: query
+ *         name: date
+ *         required: false
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filter bookings by appointment date (YYYY-MM-DD).
+ *       - in: query
+ *         name: year
+ *         required: false
+ *         schema:
+ *           type: string
+ *           example: "2026"
+ *         description: The year to filter bookings by (required if filtering by month).
+ *       - in: query
+ *         name: month
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [january, february, march, april, may, june, july, august, september, october, november, december]
+ *         description: Filter bookings by a specific month of the specified year.
+ *       - in: query
+ *         name: status
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [pending, confirmed, completed, cancelled]
+ *         description: Filter bookings by status.
  *       - in: query
  *         name: sortOrder
  *         required: false
@@ -214,7 +296,11 @@ export async function GET(req: Request) {
     }
 
     const { searchParams } = new URL(req.url);
-    const search = searchParams.get("search");
+    const search = searchParams.get("search") ?? undefined;
+    const date = searchParams.get("date") ?? undefined;
+    const month = searchParams.get("month") ?? undefined;
+    const year = searchParams.get("year") ?? undefined;
+    const status = searchParams.get("status") ?? undefined;
 
     const sortOrder = (
       searchParams.get("sortOrder") === "asc" ? "asc" : "desc"
@@ -224,19 +310,89 @@ export async function GET(req: Request) {
     const limit = parseInt(searchParams.get("limit") || "10", 10);
     const skip = (page - 1) * limit;
 
+    await searchParamsValidation.parseAsync({
+      search,
+      date,
+      year,
+      month,
+      sortOrder,
+      page,
+      limit,
+      status,
+    });
+
     const whereClause: Prisma.ShopBookingWhereInput = {
       shop: {
         companyId,
       },
     };
 
+    if (status) {
+      whereClause.status = status.toUpperCase() as any;
+    }
+
     if (search) {
-      whereClause.client = {
-        OR: [
-          { firstName: { contains: search, mode: "insensitive" } },
-          { lastName: { contains: search, mode: "insensitive" } },
-        ],
-      };
+      const searchNum = parseInt(search, 10);
+      whereClause.OR = [
+        {
+          client: {
+            OR: [
+              { firstName: { contains: search, mode: "insensitive" } },
+              { lastName: { contains: search, mode: "insensitive" } },
+            ],
+          },
+        },
+        {
+          vehicle: {
+            OR: [
+              { make: { contains: search, mode: "insensitive" } },
+              { model: { contains: search, mode: "insensitive" } },
+              ...(!isNaN(searchNum) ? [{ year: searchNum }] : []),
+            ],
+          },
+        },
+        {
+          services: {
+            some: {
+              title: { contains: search, mode: "insensitive" },
+            },
+          },
+        },
+      ];
+    }
+
+    if ((month && !year) || (year && !month)) {
+      throw new AppError(400, "Month and year are required together");
+    }
+
+    if (date || (month && year)) {
+      let gte: Date | undefined;
+      let lte: Date | undefined;
+
+      if (date) {
+        const targetDate = moment(date, "YYYY-MM-DD");
+        if (targetDate.isValid()) {
+          gte = targetDate.clone().startOf("day").toDate();
+          lte = targetDate.clone().endOf("day").toDate();
+        }
+      } else if (month && year) {
+        const targetDate = moment()
+          .year(parseInt(year, 10))
+          .month(parseInt(month, 10));
+        if (targetDate.isValid()) {
+          gte = targetDate.clone().startOf("month").toDate();
+          lte = targetDate.clone().endOf("month").toDate();
+        }
+      }
+
+      if (gte && lte) {
+        whereClause.appointment = {
+          date: {
+            gte,
+            lte,
+          },
+        };
+      }
     }
 
     const [totalRecords, shopBookings] = await Promise.all([
@@ -245,7 +401,7 @@ export async function GET(req: Request) {
         where: whereClause,
         include: {
           shop: {
-            include: {
+            select: {
               bookingSettings: true,
             },
           },
@@ -328,15 +484,15 @@ export async function GET(req: Request) {
           const totalServiceCost = subtotal - vehicleExtraCost;
           const taxAmount = (totalServiceCost * taxRate) / 100;
 
+          const { shop, ...rest } = sb;
+
           return {
-            ...sb,
+            ...rest,
             subtotal: subtotal,
             tax: taxAmount,
             serviceFee: serviceFeeAmount,
             total: Number(sb.invoice?.grandTotal || 0),
-            depositRequired: Number(
-              sb.shop?.bookingSettings?.depositValue || 0,
-            ),
+            depositRequired: Number(shop?.bookingSettings?.depositValue || 0),
             depositPaid: Number(sb.invoice?.deposit || 0),
             balanceDue: Number(sb.invoice?.due || 0),
             services: sb.services.map(srv => ({
@@ -350,19 +506,14 @@ export async function GET(req: Request) {
       { status: 200 },
     );
   } catch (error: any) {
-    if (error instanceof AppError) {
-      return NextResponse.json(
-        { success: false, message: error.message },
-        { status: error.statusCode },
-      );
-    }
-    console.error("Error fetching shop bookings:", error);
+    const formattedError = errorHandler(error);
     return NextResponse.json(
       {
         success: false,
-        message: error.message || "Failed to fetch shop bookings",
+        message: formattedError.message,
+        errorDetails: formattedError,
       },
-      { status: 500 },
+      { status: formattedError.statusCode },
     );
   }
 }
@@ -1085,11 +1236,13 @@ export async function POST(req: Request) {
             date: appointmentDate,
             startTime: appointmentStartTime,
           },
-          vehicle: vehicle ? {
-            year: vehicle.year,
-            make: vehicle.make,
-            model: vehicle.model,
-          } : null,
+          vehicle: vehicle
+            ? {
+                year: vehicle.year,
+                make: vehicle.make,
+                model: vehicle.model,
+              }
+            : null,
           services: selectedServices.map((s: any) => ({ title: s.title })),
           isDeposit: false,
         });
