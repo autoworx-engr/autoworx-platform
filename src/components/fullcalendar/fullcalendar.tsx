@@ -320,43 +320,53 @@ export default function Calendar({ type }: { type: CalendarType }) {
       <CalendarHeader calendarRef={calendarRef} type={getCalendarType(view)} />
 
       <div className={`flex-1 w-full relative ${styles.calendarBody}`}>
-        <FullCalendar
-          ref={calendarRef}
-          plugins={[
-            dayGridPlugin,
-            timeGridPlugin,
-            listPlugin,
-            interactionPlugin,
-          ]}
-          initialView={view}
-          headerToolbar={false}
-          firstDay={firstDay}
-          navLinks={true}
-          editable={true}
-          dayMaxEvents={5}
-          eventClick={handleEventClick}
-          eventDrop={handleEventDateTimeUpdate}
-          eventResize={handleEventDateTimeUpdate}
-          eventContent={(eventInfo) => renderEventContent(eventInfo, session)}
-          slotMinTime="00:00:00"
-          slotMaxTime="24:00:00"
-          scrollTime={settings?.dayStart}
-          allDaySlot={true}
-          expandRows={true}
-          businessHours={businessHours}
-          slotLaneClassNames={nonBusinessSlotClassNames}
-          loading={setIsCalendarLoading}
-          // dayMinWidth={180}
-          slotLabelFormat={{
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: true,
-          }}
-          slotDuration="00:15:00"
-          events={events}
-          datesSet={handleDatesSet}
-          height="100%"
-        />
+        <div className="w-full h-full overflow-x-auto">
+          <div
+            className={
+              view === "timeGridDay" ? "min-w-[1000px] h-full" : "w-full h-full"
+            }
+          >
+            <FullCalendar
+              ref={calendarRef}
+              plugins={[
+                dayGridPlugin,
+                timeGridPlugin,
+                listPlugin,
+                interactionPlugin,
+              ]}
+              initialView={view}
+              headerToolbar={false}
+              firstDay={firstDay}
+              navLinks={true}
+              editable={true}
+              dayMaxEvents={5}
+              eventClick={handleEventClick}
+              eventDrop={handleEventDateTimeUpdate}
+              eventResize={handleEventDateTimeUpdate}
+              eventContent={(eventInfo) =>
+                renderEventContent(eventInfo, session)
+              }
+              slotMinTime="00:00:00"
+              slotMaxTime="24:00:00"
+              scrollTime={settings?.dayStart}
+              allDaySlot={true}
+              expandRows={true}
+              businessHours={businessHours}
+              slotLaneClassNames={nonBusinessSlotClassNames}
+              loading={setIsCalendarLoading}
+              // dayMinWidth={180}
+              slotLabelFormat={{
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: true,
+              }}
+              slotDuration="00:15:00"
+              events={events}
+              datesSet={handleDatesSet}
+              height="100%"
+            />
+          </div>
+        </div>
 
         {loading && (
           <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/70 backdrop-blur-[1px]">
