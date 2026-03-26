@@ -157,3 +157,5 @@ export const useGetGiftCardTemplatesPublic = (companyId?: number) => {
     enabled: !!companyId,
   });
 };
+
+
