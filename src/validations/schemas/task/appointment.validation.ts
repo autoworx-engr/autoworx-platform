@@ -26,17 +26,16 @@ export const createAppointmentValidationSchema = z.object({
       invalid_type_error: "End time must be a string",
     })
     .optional(),
-  assignedUsers: z
-    .array(
-      z.number({
-        invalid_type_error: "Assigned user ID must be a number",
-      }),
-      {
-        required_error: "Assigned users are required",
-        invalid_type_error: "Assigned users must be an array of numbers",
-      },
-    )
-    .min(1, "At least one assigned user is required"),
+  assignedUsers: z.array(
+    z.number({
+      invalid_type_error: "Assigned user ID must be a number",
+    }),
+    {
+      required_error: "Assigned users are required",
+      invalid_type_error: "Assigned users must be an array of numbers",
+    },
+  ),
+  // .min(1, "At least one assigned user is required"),
   clientId: z
     .number({
       invalid_type_error: "Client ID must be a number",
