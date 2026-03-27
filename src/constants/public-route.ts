@@ -44,6 +44,8 @@ export const PUBLIC_API_ROUTES = [
   "/api/virtual-shop/service-booking",
   "/api/virtual-shop/issued-gift-card",
   "/api/virtual-shop/gift-card-settings",
+  // gift card public route
+  "/api/virtual-shop/issued-gift-card/check-balance",
 ];
 
 export const PUBLIC_DYNAMIC_API_ROUTES = [
