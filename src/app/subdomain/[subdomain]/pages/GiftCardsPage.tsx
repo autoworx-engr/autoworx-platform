@@ -2,27 +2,25 @@
 
 import { useState } from "react";
 
-import awxLogo from "@/assets/awx-logo.png";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Gift, RefreshCw, Search, ShoppingBag } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { RefreshCw, Search, ShoppingBag } from "lucide-react";
 import { useParams } from "next/navigation";
-import { defaultGiftCardSettings } from "../data/mock-gift-cards";
+import { BookingHeader } from "../components/booking/BookingHeader";
+import AmountSelector from "../components/giftcards/AmountSelector";
+import CheckBalance from "../components/giftcards/CheckBalance";
+import DesignPicker from "../components/giftcards/DesignPicker";
+import DiscountCode from "../components/giftcards/DiscountCode";
+import GiftCardCheckout from "../components/giftcards/GiftCardCheckout";
+import GiftCardConfirmation from "../components/giftcards/GiftCardConfirmation";
+import PurchaseTypeSelector from "../components/giftcards/PurchaseTypeSelector";
+import RecipientDetails from "../components/giftcards/RecipientDetails";
+import ReloadGiftCard from "../components/giftcards/ReloadGiftCard";
 import {
   GiftCardPurchaseData,
   initialPurchaseData,
 } from "../data/gift-card-types";
-import Link from "next/link";
-import DesignPicker from "../components/giftcards/DesignPicker";
-import PurchaseTypeSelector from "../components/giftcards/PurchaseTypeSelector";
-import AmountSelector from "../components/giftcards/AmountSelector";
-import DiscountCode from "../components/giftcards/DiscountCode";
-import RecipientDetails from "../components/giftcards/RecipientDetails";
-import GiftCardCheckout from "../components/giftcards/GiftCardCheckout";
-import GiftCardConfirmation from "../components/giftcards/GiftCardConfirmation";
-import ReloadGiftCard from "../components/giftcards/ReloadGiftCard";
-import CheckBalance from "../components/giftcards/CheckBalance";
-import { BookingHeader } from "../components/booking/BookingHeader";
+import { defaultGiftCardSettings } from "../data/mock-gift-cards";
 
 type BuyStep =
   | "design"
@@ -42,14 +40,14 @@ const GiftCardsPage = () => {
   const [data, setData] = useState<GiftCardPurchaseData>({
     ...initialPurchaseData,
     designId:
-      settings.designs.find((d) => d.isDefault)?.id ||
+      settings.designs.find(d => d.isDefault)?.id ||
       settings.designs[0]?.id ||
       "",
     deliveryMethod: settings.delivery.defaultMethod,
   });
 
   const update = (partial: Partial<GiftCardPurchaseData>) =>
-    setData((prev) => ({ ...prev, ...partial }));
+    setData(prev => ({ ...prev, ...partial }));
 
   const [confirmationData, setConfirmationData] = useState<{
     number: string;
@@ -71,7 +69,7 @@ const GiftCardsPage = () => {
     setData({
       ...initialPurchaseData,
       designId:
-        settings.designs.find((d) => d.isDefault)?.id ||
+        settings.designs.find(d => d.isDefault)?.id ||
         settings.designs[0]?.id ||
         "",
       deliveryMethod: settings.delivery.defaultMethod,
@@ -175,29 +173,29 @@ const GiftCardsPage = () => {
                   <DesignPicker
                     designs={settings.designs}
                     selected={data.designId}
-                    onSelect={(id) => update({ designId: id })}
+                    onSelect={id => update({ designId: id })}
                     shopName={shopName}
                   />
                 )}
                 {buyStep === "type" && (
                   <PurchaseTypeSelector
                     selected={data.purchaseType}
-                    onSelect={(t) => update({ purchaseType: t })}
+                    onSelect={t => update({ purchaseType: t })}
                   />
                 )}
                 {buyStep === "amount" && (
                   <AmountSelector
                     presets={settings.amountPresets}
                     amount={data.amount}
-                    onAmountChange={(a) => update({ amount: a })}
+                    onAmountChange={a => update({ amount: a })}
                   />
                 )}
                 {buyStep === "discount" && (
                   <DiscountCode
                     discounts={settings.discounts}
                     applied={data.discountApplied}
-                    onApply={(d) => update({ discountApplied: d })}
-                    onCodeChange={(c) => update({ discountCode: c })}
+                    onApply={d => update({ discountApplied: d })}
+                    onCodeChange={c => update({ discountCode: c })}
                     code={data.discountCode}
                   />
                 )}
@@ -212,12 +210,10 @@ const GiftCardsPage = () => {
                 {buyStep === "checkout" && (
                   <GiftCardCheckout
                     data={data}
-                    design={settings.designs.find(
-                      (d) => d.id === data.designId,
-                    )}
+                    design={settings.designs.find(d => d.id === data.designId)}
                     policies={settings.policies}
                     shopName={shopName}
-                    onConsentChange={(v) => update({ purchaseConsent: v })}
+                    onConsentChange={v => update({ purchaseConsent: v })}
                     onConfirm={handleConfirmPurchase}
                   />
                 )}
