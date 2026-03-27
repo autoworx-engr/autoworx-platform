@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
 
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RefreshCw, Search, ShoppingBag } from "lucide-react";
+import { RefreshCw, Search, ShoppingBag, Loader2 } from "lucide-react";
 import { useParams } from "next/navigation";
 import { BookingHeader } from "../components/booking/BookingHeader";
 import AmountSelector from "../components/giftcards/AmountSelector";
@@ -19,8 +20,8 @@ import ReloadGiftCard from "../components/giftcards/ReloadGiftCard";
 import {
   GiftCardPurchaseData,
   initialPurchaseData,
+  GiftCardSettings
 } from "../data/gift-card-types";
-import { defaultGiftCardSettings } from "../data/mock-gift-cards";
 
 type BuyStep =
   | "design"
@@ -31,20 +32,45 @@ type BuyStep =
   | "checkout"
   | "confirmation";
 
-const shopName = "ABC Business";
-
 const GiftCardsPage = () => {
-  const { shopId } = useParams();
-  const settings = defaultGiftCardSettings;
+  const { subdomain } = useParams();
+  const [settings, setSettings] = useState<GiftCardSettings | null>(null);
+  const [shopName, setShopName] = useState("Shop");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
   const [buyStep, setBuyStep] = useState<BuyStep>("design");
-  const [data, setData] = useState<GiftCardPurchaseData>({
-    ...initialPurchaseData,
-    designId:
-      settings.designs.find(d => d.isDefault)?.id ||
-      settings.designs[0]?.id ||
-      "",
-    deliveryMethod: settings.delivery.defaultMethod,
-  });
+  const [data, setData] = useState<GiftCardPurchaseData>(initialPurchaseData);
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      if (!subdomain) return;
+      try {
+        setLoading(true);
+        const res = await axios.get('/api/virtual-shop/gift-card-settings/public', {
+          params: { slug: subdomain }
+        });
+        if (res.data.success) {
+          const fetchedSettings = res.data.data;
+          setSettings(fetchedSettings);
+          setShopName(fetchedSettings.shop?.storeName || "Shop");
+          setData(prev => ({
+            ...prev,
+            designId:
+              fetchedSettings.designs.find((d: any) => d.isDefault)?.id ||
+              fetchedSettings.designs[0]?.id ||
+              "",
+            deliveryMethod: fetchedSettings.delivery.defaultMethod,
+          }));
+        }
+      } catch (err: any) {
+        setError(err.response?.data?.message || "Failed to load gift card configurations.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSettings();
+  }, [subdomain]);
 
   const update = (partial: Partial<GiftCardPurchaseData>) =>
     setData(prev => ({ ...prev, ...partial }));
@@ -69,10 +95,10 @@ const GiftCardsPage = () => {
     setData({
       ...initialPurchaseData,
       designId:
-        settings.designs.find(d => d.isDefault)?.id ||
-        settings.designs[0]?.id ||
+        settings?.designs.find(d => d.isDefault)?.id ||
+        settings?.designs[0]?.id ||
         "",
-      deliveryMethod: settings.delivery.defaultMethod,
+      deliveryMethod: settings?.delivery.defaultMethod || "email",
     });
     setConfirmationData(null);
   };
@@ -120,6 +146,29 @@ const GiftCardsPage = () => {
     checkout: "Pay",
     confirmation: "Done",
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center space-y-4">
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+        <p className="text-muted-foreground font-medium">Loading gift card configurations...</p>
+      </div>
+    );
+  }
+
+  if (error || !settings) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 text-center space-y-4">
+        <div className="w-12 h-12 bg-destructive/10 text-destructive flex flex-col items-center justify-center rounded-full">
+          <RefreshCw className="w-6 h-6" />
+        </div>
+        <p className="text-lg font-medium text-destructive">{error || "Gift cards not configured."}</p>
+        <p className="text-muted-foreground text-sm max-w-sm">
+          Please contact the shop owner to resolve configuration issues.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
