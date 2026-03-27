@@ -60,16 +60,6 @@ const API_TO_UI_DAY: Record<ApiDay, Day> = {
   SUNDAY: "Sunday",
 };
 
-const DEFAULT_SCHEDULES: Record<Day, DaySchedule> = {
-  Monday: { enabled: false, start: "08:00", end: "18:00" },
-  Tuesday: { enabled: true, start: "08:00", end: "18:00" },
-  Wednesday: { enabled: true, start: "08:00", end: "18:00" },
-  Thursday: { enabled: true, start: "08:00", end: "18:00" },
-  Friday: { enabled: true, start: "08:00", end: "18:00" },
-  Saturday: { enabled: true, start: "09:00", end: "16:00" },
-  Sunday: { enabled: false, start: "08:00", end: "18:00" },
-};
-
 function normalizeToDay(value?: string | null): Day | null {
   if (!value) return null;
   const normalized = `${value.charAt(0).toUpperCase()}${value.slice(1).toLowerCase()}`;
@@ -82,15 +72,13 @@ function getCompanyFallbackSchedules(calendarSettings: {
   weekend1?: string | null;
   weekend2?: string | null;
 } | null): Record<Day, DaySchedule> {
-  const fallback: Record<Day, DaySchedule> = { ...DEFAULT_SCHEDULES };
+  const fallback = {} as Record<Day, DaySchedule>;
 
-  if (!calendarSettings) return fallback;
+  const dayStart = calendarSettings?.dayStart || "09:00";
+  const dayEnd = calendarSettings?.dayEnd || "17:00";
 
-  const dayStart = calendarSettings.dayStart || "09:00";
-  const dayEnd = calendarSettings.dayEnd || "17:00";
-
-  const weekend1 = normalizeToDay(calendarSettings.weekend1);
-  const weekend2 = normalizeToDay(calendarSettings.weekend2);
+  const weekend1 = normalizeToDay(calendarSettings?.weekend1);
+  const weekend2 = normalizeToDay(calendarSettings?.weekend2);
   const weekendSet = new Set<Day>([weekend1, weekend2].filter(Boolean) as Day[]);
 
   for (const day of DAYS) {
@@ -128,7 +116,7 @@ export default function SchedulingTab() {
   const [stacking, setStacking] = useState(false);
   const [stackingLimit, setStackingLimit] = useState("1");
   const [timeSlotInterval, setTimeSlotInterval] = useState("30");
-  const [schedules, setSchedules] = useState<Record<Day, DaySchedule>>(DEFAULT_SCHEDULES);
+  const [schedules, setSchedules] = useState<Record<Day, DaySchedule>>(() => getCompanyFallbackSchedules(null));
 
   const updateSchedule = (day: Day, patch: Partial<DaySchedule>) => {
     setSchedules((prev) => ({ ...prev, [day]: { ...prev[day], ...patch } }));
