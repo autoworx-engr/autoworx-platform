@@ -106,11 +106,16 @@ export default function ReportPage({ params }: ReportPageProps) {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8 animate-fade-in">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
-              Your {frequency.charAt(0).toUpperCase() + frequency.slice(1)} TC
-              Customs Report
+              {frequency.charAt(0).toUpperCase() + frequency.slice(1)} Performance Report
             </h1>
             <p className="text-muted-foreground mt-1 text-sm md:text-base">
-              Scheduled performance reports delivered as PDF
+              {startDate && endDate ? (
+                <>
+                  Period: <strong>{startDate}</strong> to <strong>{endDate}</strong>
+                </>
+              ) : (
+                "Scheduled performance reports delivered as PDF"
+              )}
             </p>
           </div>
           <div className="flex items-center gap-3">
