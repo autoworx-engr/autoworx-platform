@@ -166,14 +166,14 @@ export function CalendarHeader({
       {/* <div className="mt-2 md:mt-0 md:mx-4 flex w-full md:w-auto flex-wrap items-center gap-2"></div> */}
 
       <div className="flex flex-wrap items-center gap-1 text-left lg:justify-end xl:gap-3 w-full md:w-auto">
-        <div className="flex items-center gap-2 rounded-md border bg-white px-3 py-1.5 text-sm text-slate-700">
+        <div className="flex flex-1 lg:flex-none items-center gap-2 rounded-md border bg-white px-3 py-1.5 text-sm text-slate-700">
           <CalendarDays size={14} className="text-slate-500" />
           <span>Appointments</span>
           <span className="font-semibold text-slate-900">
             {appointmentCount}
           </span>
         </div>
-        <div className="flex items-center gap-2 rounded-md border bg-white px-3 py-1.5 text-sm text-slate-700">
+        <div className="flex flex-1 lg:flex-none items-center gap-2 rounded-md border bg-white px-3 py-1.5 text-sm text-slate-700">
           <ClipboardList size={14} className="text-slate-500" />
           <span>Tasks</span>
           <span className="font-semibold text-slate-900">{taskCount}</span>
@@ -248,10 +248,10 @@ export function CalendarHeader({
         {ALLOWED_ROLES_FOR_NEW_APPOINTMENT.includes(
           user?.employeeType ?? "",
         ) && (
-          <AppointmentCreateOrEdit
-            onAppointmentCreated={handleAppointmentCreate}
-          />
-        )}
+            <AppointmentCreateOrEdit
+              onAppointmentCreated={handleAppointmentCreate}
+            />
+          )}
 
         <CalendarFilterDropdown
           users={users}

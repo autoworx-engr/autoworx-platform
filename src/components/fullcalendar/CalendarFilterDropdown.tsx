@@ -82,7 +82,7 @@ export function CalendarFilterDropdown({
       <DropdownMenuTrigger asChild>
         <Button
           variant="outline"
-          className="gap-2"
+          className="gap-2 flex-1 lg:flex-none w-full lg:w-auto"
           disabled={!users.length && !technicians.length}
         >
           <Filter size={14} />
@@ -94,22 +94,20 @@ export function CalendarFilterDropdown({
           <button
             type="button"
             onClick={() => setActiveFilterTab("user")}
-            className={`px-3 py-2 text-sm ${
-              activeFilterTab === "user"
-                ? "border-b-2 border-slate-900 font-medium text-slate-900"
-                : "text-slate-500"
-            }`}
+            className={`px-3 py-2 text-sm ${activeFilterTab === "user"
+              ? "border-b-2 border-slate-900 font-medium text-slate-900"
+              : "text-slate-500"
+              }`}
           >
             User
           </button>
           <button
             type="button"
             onClick={() => setActiveFilterTab("technician")}
-            className={`px-3 py-2 text-sm ${
-              activeFilterTab === "technician"
-                ? "border-b-2 border-slate-900 font-medium text-slate-900"
-                : "text-slate-500"
-            }`}
+            className={`px-3 py-2 text-sm ${activeFilterTab === "technician"
+              ? "border-b-2 border-slate-900 font-medium text-slate-900"
+              : "text-slate-500"
+              }`}
           >
             Technician
           </button>

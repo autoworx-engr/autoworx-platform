@@ -167,13 +167,14 @@ function DateSelector({ type, weekStart = 1 }: DateSelectorProps) {
   const iconStyle = "text-slate-400 dark:text-slate-500";
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative flex-1 lg:flex-none" ref={dropdownRef}>
       <Button
         type="button"
         variant="outline"
         onClick={() => setIsOpen(!isOpen)}
+        className="flex-1 lg:flex-none w-full lg:w-auto"
       >
-        <span className="flex items-center gap-2">
+        <span className="flex flex-1 lg:flex-none items-center gap-2">
           {/* Calendar Icon: Subtle coloring */}
           <CalendarDays size={18} className={iconStyle} />
           {/* Display Value: Core data using specified text color */}
@@ -185,9 +186,8 @@ function DateSelector({ type, weekStart = 1 }: DateSelectorProps) {
         {/* Chevron Icon: Rotates on open, smooth transition */}
         <ChevronDown
           size={16}
-          className={`${iconStyle} ${TRANSITION_UTILITY} ${
-            isOpen ? "rotate-180" : ""
-          }`}
+          className={`${iconStyle} ${TRANSITION_UTILITY} ${isOpen ? "rotate-180" : ""
+            }`}
         />
       </Button>
 
