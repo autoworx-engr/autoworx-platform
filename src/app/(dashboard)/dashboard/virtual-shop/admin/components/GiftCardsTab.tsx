@@ -635,15 +635,15 @@ export default function GiftCardsTab() {
                         Set Default
                       </button>
                     )}
+                    <Switch checked={design.enabled} setChecked={(v) => toggleDesign(design.id, v)} />
                     <button
                       type="button"
                       onClick={() => handleDeleteTemplate(design)}
                       disabled={isDeletingTemplate}
                       className="text-red-400 hover:text-red-600 transition-colors disabled:opacity-60"
                     >
-                      <Trash2 size={16} />
+                      <Trash2 size={18} />
                     </button>
-                    <Switch checked={design.enabled} setChecked={(v) => toggleDesign(design.id, v)} />
                   </div>
                 </div>
               ))}

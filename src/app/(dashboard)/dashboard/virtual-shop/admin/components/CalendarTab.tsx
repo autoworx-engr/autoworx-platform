@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState, type ElementType } from "react";
+import { useSession } from "next-auth/react";
+import { Pagination } from "antd";
 import {
   ChevronLeft,
   ChevronRight,
@@ -12,11 +14,20 @@ import {
   CheckCircle2,
   XCircle,
   AlertCircle,
+  Loader2,
 } from "lucide-react";
+import {
+  useGetVirtualShopServiceBookingCalendar,
+  useGetVirtualShopServiceBookings,
+} from "@/hooks/virtual-shop/service-booking/useShopServiceBooking";
+import type {
+  VirtualShopBookingCalendarItem,
+  VirtualShopServiceBookingItem,
+} from "@/service/virtual-shop/api";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type AppointmentStatus = "confirmed" | "pending" | "cancelled";
+type AppointmentStatus = "confirmed" | "pending" | "cancelled" | "completed";
 
 type AppointmentService = {
   name: string;
@@ -35,75 +46,11 @@ type Appointment = {
   services: AppointmentService[];
 };
 
-// ─── Mock Data ────────────────────────────────────────────────────────────────
-
-const APPOINTMENTS: Appointment[] = [
-  {
-    id: 1,
-    clientName: "John Doe",
-    status: "confirmed",
-    date: "2026-02-24",
-    startTime: "9:00 AM",
-    endTime: "6:00 PM",
-    vehicle: "2023 BMW M3",
-    services: [
-      { name: "Full Detail Package", vehicleType: "Sedan", price: 349 },
-      { name: "Ceramic Coating - 1 Year", vehicleType: "Sedan", price: 674 },
-    ],
-  },
-  {
-    id: 2,
-    clientName: "Sarah Miller",
-    status: "confirmed",
-    date: "2026-02-24",
-    startTime: "1:00 PM",
-    endTime: "3:15 PM",
-    vehicle: "2024 Ford F-150",
-    services: [
-      { name: "Express Wash & Wax", vehicleType: "Truck", price: 74 },
-      { name: "Wheel & Tire Package", vehicleType: "Truck", price: 189 },
-    ],
-  },
-  {
-    id: 3,
-    clientName: "Mike Chen",
-    status: "confirmed",
-    date: "2026-02-25",
-    startTime: "8:00 AM",
-    endTime: "12:00 PM",
-    vehicle: "2022 Tesla Model Y",
-    services: [
-      { name: "Multi-Stage Paint Correction", vehicleType: "SUV", price: 949 },
-      { name: "Ceramic Coating - 5 Year", vehicleType: "SUV", price: 1524 },
-    ],
-  },
-  {
-    id: 4,
-    clientName: "Emily Torres",
-    status: "pending",
-    date: "2026-02-26",
-    startTime: "10:00 AM",
-    endTime: "11:30 AM",
-    vehicle: "2021 Honda Civic",
-    services: [{ name: "Interior Deep Clean", vehicleType: "Sedan", price: 129 }],
-  },
-  {
-    id: 5,
-    clientName: "David Park",
-    status: "confirmed",
-    date: "2026-02-27",
-    startTime: "2:00 PM",
-    endTime: "3:00 PM",
-    vehicle: "2020 Toyota Tacoma",
-    services: [{ name: "Headlight Restoration", vehicleType: "Truck", price: 79 }],
-  },
-];
-
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const STATUS_CONFIG: Record<
   AppointmentStatus,
-  { label: string; bg: string; text: string; icon: React.ElementType }
+  { label: string; bg: string; text: string; icon: ElementType }
 > = {
   confirmed: {
     label: "Confirmed",
@@ -117,6 +64,12 @@ const STATUS_CONFIG: Record<
     text: "text-amber-600 dark:text-amber-400",
     icon: AlertCircle,
   },
+  completed: {
+    label: "Completed",
+    bg: "bg-sky-50 dark:bg-sky-900/30",
+    text: "text-sky-600 dark:text-sky-400",
+    icon: CheckCircle2,
+  },
   cancelled: {
     label: "Cancelled",
     bg: "bg-rose-50 dark:bg-rose-900/30",
@@ -128,8 +81,26 @@ const STATUS_CONFIG: Record<
 const STATUS_DOT: Record<AppointmentStatus, string> = {
   confirmed: "bg-emerald-500",
   pending: "bg-amber-400",
+  completed: "bg-sky-500",
   cancelled: "bg-rose-400",
 };
+
+const PAGE_SIZE = 10;
+
+const CALENDAR_MONTH_NAMES = [
+  "january",
+  "february",
+  "march",
+  "april",
+  "may",
+  "june",
+  "july",
+  "august",
+  "september",
+  "october",
+  "november",
+  "december",
+] as const;
 
 function formatDateKey(year: number, month: number, day: number) {
   return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
@@ -137,6 +108,75 @@ function formatDateKey(year: number, month: number, day: number) {
 
 function isSameDay(a: string, b: string) {
   return a === b;
+}
+
+function mapStatus(status?: string | null): AppointmentStatus {
+  const normalized = (status || "").toLowerCase();
+
+  if (normalized === "confirmed") return "confirmed";
+  if (normalized === "pending") return "pending";
+  if (normalized === "completed") return "completed";
+  if (normalized === "cancelled") return "cancelled";
+
+  return "pending";
+}
+
+function formatTime(value?: string | null) {
+  if (!value) return "-";
+
+  const [hourString, minuteString = "00"] = value.split(":");
+  const hour = Number(hourString);
+  const minute = Number(minuteString);
+
+  if (Number.isNaN(hour) || Number.isNaN(minute)) {
+    return value;
+  }
+
+  const suffix = hour >= 12 ? "PM" : "AM";
+  const twelveHour = hour % 12 || 12;
+  return `${twelveHour}:${String(minute).padStart(2, "0")} ${suffix}`;
+}
+
+function extractDateKey(value?: string | null) {
+  if (!value) return "";
+  return value.split("T")[0];
+}
+
+function mapVehicleLabel(vehicle?: {
+  year?: number | null;
+  make?: string | null;
+  model?: string | null;
+} | null) {
+  if (!vehicle) return "Vehicle not provided";
+
+  const segments = [vehicle.year, vehicle.make, vehicle.model]
+    .map(part => (part ?? "").toString().trim())
+    .filter(Boolean);
+
+  return segments.length > 0 ? segments.join(" ") : "Vehicle not provided";
+}
+
+function mapBookingToAppointment(item: VirtualShopServiceBookingItem): Appointment {
+  const firstName = item?.client?.firstName || "";
+  const lastName = item?.client?.lastName || "";
+  const clientName = `${firstName} ${lastName}`.trim() || "Unknown Client";
+
+  return {
+    id: Number(item?.id || 0),
+    clientName,
+    status: mapStatus(item?.status),
+    date: extractDateKey(item?.appointment?.date),
+    startTime: formatTime(item?.appointment?.startTime),
+    endTime: formatTime(item?.appointment?.endTime),
+    vehicle: mapVehicleLabel(item?.vehicle),
+    services: Array.isArray(item?.services)
+      ? item.services.map(service => ({
+        name: service?.title || "Service",
+        vehicleType: service?.modifierType || "Vehicle",
+        price: Number(service?.price || 0),
+      }))
+      : [],
+  };
 }
 
 function getTotalRevenue(appt: Appointment) {
@@ -333,6 +373,14 @@ function ListView({ appointments }: { appointments: Appointment[] }) {
   });
   const sortedDates = Object.keys(grouped).sort();
 
+  if (sortedDates.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/30 text-slate-400 dark:text-slate-500">
+        <p className="text-sm font-medium">No appointments found for this month</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {sortedDates.map((dateKey) => {
@@ -363,12 +411,103 @@ function ListView({ appointments }: { appointments: Appointment[] }) {
 
 export default function CalendarTab() {
   const now = new Date();
+  const { data: session } = useSession();
+  const accessToken = session?.accessToken || "";
+
   const [viewMonth, setViewMonth] = useState(now.getMonth());
   const [viewYear, setViewYear] = useState(now.getFullYear());
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [selectedDate, setSelectedDate] = useState(
     formatDateKey(now.getFullYear(), now.getMonth(), now.getDate())
   );
+  const [selectedDatePage, setSelectedDatePage] = useState(1);
+  const [listPage, setListPage] = useState(1);
+
+  const calendarMonthName = CALENDAR_MONTH_NAMES[viewMonth];
+
+  const {
+    data: monthCalendarResponse,
+    isLoading: isMonthCalendarLoading,
+  } = useGetVirtualShopServiceBookingCalendar(
+    {
+      year: viewYear,
+      month: calendarMonthName,
+      accessToken,
+    },
+    Boolean(accessToken && viewMode === "grid"),
+  );
+
+  const {
+    data: selectedDateResponse,
+    isLoading: isSelectedDateLoading,
+    isFetching: isSelectedDateFetching,
+  } = useGetVirtualShopServiceBookings(
+    {
+      accessToken,
+      date: selectedDate,
+      page: selectedDatePage,
+      limit: PAGE_SIZE,
+      sortOrder: "asc",
+    },
+    Boolean(accessToken && viewMode === "grid"),
+  );
+
+  const {
+    data: monthListResponse,
+    isLoading: isMonthListLoading,
+    isFetching: isMonthListFetching,
+  } = useGetVirtualShopServiceBookings(
+    {
+      accessToken,
+      year: String(viewYear),
+      month: String(viewMonth + 1),
+      page: listPage,
+      limit: PAGE_SIZE,
+      sortOrder: "asc",
+    },
+    Boolean(accessToken && viewMode === "list"),
+  );
+
+  useEffect(() => {
+    const today = new Date();
+    const isCurrentMonth =
+      viewYear === today.getFullYear() && viewMonth === today.getMonth();
+    const selectedDay = isCurrentMonth ? today.getDate() : 1;
+
+    setSelectedDate(formatDateKey(viewYear, viewMonth, selectedDay));
+    setSelectedDatePage(1);
+    setListPage(1);
+  }, [viewMonth, viewYear]);
+
+  const calendarAppointments = useMemo(
+    () =>
+      (monthCalendarResponse?.data || []).map((item: VirtualShopBookingCalendarItem) => ({
+        id: Number(item.id),
+        clientName:
+          `${item.client?.firstName || ""} ${item.client?.lastName || ""}`.trim() ||
+          "Unknown Client",
+        status: mapStatus(item.status),
+        date: extractDateKey(item.appointment?.date),
+        startTime: formatTime(item.appointment?.startTime),
+        endTime: formatTime(item.appointment?.endTime),
+        vehicle: "Vehicle not provided",
+        services: [],
+      })),
+    [monthCalendarResponse?.data],
+  );
+
+  const selectedAppts = useMemo(
+    () => (selectedDateResponse?.data || []).map(mapBookingToAppointment),
+    [selectedDateResponse?.data],
+  );
+
+  const listAppts = useMemo(
+    () => (monthListResponse?.data || []).map(mapBookingToAppointment),
+    [monthListResponse?.data],
+  );
+
+  const selectedDateTotal = selectedDateResponse?.meta?.totalRecords || 0;
+  const monthTotal = monthListResponse?.meta?.totalRecords || 0;
 
   const goToPrev = () => {
     if (viewMonth === 0) { setViewMonth(11); setViewYear((y) => y - 1); }
@@ -379,7 +518,6 @@ export default function CalendarTab() {
     else setViewMonth((m) => m + 1);
   };
 
-  const selectedAppts = APPOINTMENTS.filter((a) => a.date === selectedDate);
   const selectedDateLabel = (() => {
     const [y, m, d] = selectedDate.split("-").map(Number);
     return new Date(y, m - 1, d).toLocaleDateString("en-US", {
@@ -390,10 +528,9 @@ export default function CalendarTab() {
     });
   })();
 
-  const totalAppts = APPOINTMENTS.filter((a) => {
-    const [y, m] = a.date.split("-").map(Number);
-    return y === viewYear && m - 1 === viewMonth;
-  }).length;
+  const totalAppts = viewMode === "grid"
+    ? calendarAppointments.length
+    : monthTotal;
 
   return (
     <div className="flex flex-col gap-6">
@@ -449,20 +586,58 @@ export default function CalendarTab() {
 
       {/* Content */}
       {viewMode === "list" ? (
-        <ListView appointments={APPOINTMENTS} />
+        <>
+          {(isMonthListLoading || isMonthListFetching) && (
+            <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+              <Loader2 size={16} className="animate-spin" />
+              Loading appointments...
+            </div>
+          )}
+
+          <ListView appointments={listAppts} />
+
+          {monthTotal > 0 && (
+            <div className="flex justify-end">
+              <Pagination
+                current={listPage}
+                total={monthTotal}
+                pageSize={PAGE_SIZE}
+                showSizeChanger={false}
+                onChange={(page) => setListPage(page)}
+              />
+            </div>
+          )}
+        </>
       ) : (
         <>
+          {isMonthCalendarLoading && (
+            <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+              <Loader2 size={16} className="animate-spin" />
+              Loading calendar...
+            </div>
+          )}
+
           <CalendarGrid
             year={viewYear}
             month={viewMonth}
-            appointments={APPOINTMENTS}
+            appointments={calendarAppointments}
             selectedDate={selectedDate}
-            onSelectDate={setSelectedDate}
+            onSelectDate={(date) => {
+              setSelectedDate(date);
+              setSelectedDatePage(1);
+            }}
           />
 
           {/* Selected day panel */}
           <div>
             <p className="text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 mb-2 sm:mb-3">{selectedDateLabel}</p>
+            {(isSelectedDateLoading || isSelectedDateFetching) && (
+              <div className="mb-3 flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+                <Loader2 size={16} className="animate-spin" />
+                Loading appointments...
+              </div>
+            )}
+
             {selectedAppts.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/30 text-slate-400 dark:text-slate-500">
                 <p className="text-sm font-medium">No appointments on this day</p>
@@ -473,6 +648,18 @@ export default function CalendarTab() {
                 {selectedAppts.map((a) => (
                   <AppointmentCard key={a.id} appt={a} />
                 ))}
+              </div>
+            )}
+
+            {selectedDateTotal > 0 && (
+              <div className="mt-4 flex justify-end">
+                <Pagination
+                  current={selectedDatePage}
+                  total={selectedDateTotal}
+                  pageSize={PAGE_SIZE}
+                  showSizeChanger={false}
+                  onChange={(page) => setSelectedDatePage(page)}
+                />
               </div>
             )}
           </div>
