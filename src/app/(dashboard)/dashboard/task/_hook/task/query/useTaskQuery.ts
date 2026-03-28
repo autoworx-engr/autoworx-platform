@@ -14,6 +14,20 @@ export default function useTaskQuery(startDate: string, endDate: string) {
           },
           AND: [{ startTime: { not: null } }, { endTime: { not: null } }],
         },
+        include: {
+          taskUser: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                  employeeType: true,
+                },
+              },
+            },
+          },
+        },
       });
       return response.data;
     },

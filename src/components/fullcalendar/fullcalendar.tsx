@@ -1,8 +1,6 @@
 "use client";
 import { AppointmentCreateOrEdit } from "@/components/appointment/AppointmentCreateOrEdit";
 import TaskCreateOrEdit from "@/components/task/TaskCreateOrEdit";
-import useAppointmentQueryByWeek from "@/app/(dashboard)/dashboard/task/_hook/appointment/query/useAppointmentQueryByWeek";
-import useTaskQueryByWeek from "@/app/(dashboard)/dashboard/task/_hook/task/query/useTaskQueryByWeek";
 import { getWeekStartNumber } from "@/app/(dashboard)/dashboard/task/_utils/utils.DateSelector";
 import { getCalenderSettings } from "@/actions/task/getCalendarSettings";
 import { assignAppointmentDate } from "@/actions/appointment/assignAppointmentDate";
@@ -47,6 +45,11 @@ export default function Calendar({ type }: { type: CalendarType }) {
     start: moment().startOf("month").format("YYYY-MM-DD"),
     end: moment().endOf("month").format("YYYY-MM-DD"),
   });
+  const [selectedTaskUserIds, setSelectedTaskUserIds] = useState<number[]>([]);
+  const [
+    selectedAppointmentTechnicianIds,
+    setSelectedAppointmentTechnicianIds,
+  ] = useState<number[]>([]);
   const { data: session } = useSession();
   const queryClient = useQueryClient();
   const calendarRef = useRef<FullCalendar>(null);
@@ -63,11 +66,7 @@ export default function Calendar({ type }: { type: CalendarType }) {
   // Use calendar store to sync date with header controls
   const { date } = useCalendarStore();
 
-  const {
-    data: settings,
-    isLoading: isSettingsLoading,
-    isFetching: isSettingsFetching,
-  } = useQuery({
+  const { data: settings, isLoading: isSettingsLoading } = useQuery({
     queryKey: ["calendar-settings", "week-start"],
     queryFn: () => getCalenderSettings(),
   });
@@ -121,40 +120,111 @@ export default function Calendar({ type }: { type: CalendarType }) {
     [businessMinutes],
   );
 
-  const {
-    data: tasks = [],
-    isLoading: isTasksLoading,
-    isFetching: isTasksFetching,
-  } = useTaskQuery(dateRange.start, dateRange.end);
-  const {
-    data: appointments = [],
-    isLoading: isAppointmentsLoading,
-    isFetching: isAppointmentsFetching,
-  } = useAppointmentQuery(dateRange.start, dateRange.end);
-  const {
-    data: holidays = [],
-    isLoading: isHolidaysLoading,
-    isFetching: isHolidaysFetching,
-  } = useGetHolidays(session?.user?.companyId ?? 0);
-
+  const { data: tasks = [], isLoading: isTasksLoading } = useTaskQuery(
+    dateRange.start,
+    dateRange.end,
+  );
+  const { data: appointments = [], isLoading: isAppointmentsLoading } =
+    useAppointmentQuery(dateRange.start, dateRange.end);
+  const { data: holidays = [], isLoading: isHolidaysLoading } = useGetHolidays(
+    session?.user?.companyId ?? 0,
+  );
   const loading =
     isCalendarLoading ||
     isSettingsLoading ||
-    isSettingsFetching ||
     isTasksLoading ||
-    isTasksFetching ||
     isAppointmentsLoading ||
-    isAppointmentsFetching ||
-    isHolidaysLoading ||
-    isHolidaysFetching;
+    isHolidaysLoading;
+
+  const taskUserOptions = useMemo(() => {
+    const usersMap = new Map<number, { id: number; name: string }>();
+
+    tasks.forEach((task: any) => {
+      task?.taskUser?.forEach((taskUser: any) => {
+        const user = taskUser?.user;
+        const userId = Number(user?.id ?? taskUser?.userId);
+        if (!userId) {
+          return;
+        }
+
+        const fullName = [user?.firstName, user?.lastName]
+          .filter(Boolean)
+          .join(" ")
+          .trim();
+
+        usersMap.set(userId, {
+          id: userId,
+          name: fullName || `User ${userId}`,
+        });
+      });
+    });
+
+    return Array.from(usersMap.values()).sort((a, b) =>
+      a.name.localeCompare(b.name),
+    );
+  }, [tasks]);
+
+  const appointmentTechnicianOptions = useMemo(() => {
+    const techniciansMap = new Map<number, { id: number; name: string }>();
+
+    appointments.forEach((appointment: any) => {
+      appointment?.assignedUsers?.forEach((assignedUser: any) => {
+        const userId = Number(assignedUser?.id);
+        if (!userId) {
+          return;
+        }
+
+        const fullName = [assignedUser?.firstName, assignedUser?.lastName]
+          .filter(Boolean)
+          .join(" ")
+          .trim();
+
+        techniciansMap.set(userId, {
+          id: userId,
+          name: fullName || `Technician ${userId}`,
+        });
+      });
+    });
+
+    return Array.from(techniciansMap.values()).sort((a, b) =>
+      a.name.localeCompare(b.name),
+    );
+  }, [appointments]);
+
+  const filteredTasks = useMemo(() => {
+    if (selectedTaskUserIds.length === 0) {
+      return tasks;
+    }
+
+    const selectedSet = new Set(selectedTaskUserIds);
+    return tasks.filter((task: any) =>
+      task?.taskUser?.some((taskUser: any) => {
+        const id = Number(taskUser?.userId ?? taskUser?.user?.id);
+        return selectedSet.has(id);
+      }),
+    );
+  }, [tasks, selectedTaskUserIds]);
+
+  const filteredAppointments = useMemo(() => {
+    if (selectedAppointmentTechnicianIds.length === 0) {
+      return appointments;
+    }
+
+    const selectedSet = new Set(selectedAppointmentTechnicianIds);
+    return appointments.filter((appointment: any) =>
+      appointment?.assignedUsers?.some((user: any) =>
+        selectedSet.has(Number(user?.id)),
+      ),
+    );
+  }, [appointments, selectedAppointmentTechnicianIds]);
 
   const events = useMemo(() => {
     return buildCalendarEvents({
-      appointments,
-      tasks,
+      appointments: filteredAppointments,
+      tasks: filteredTasks,
       holidays,
     });
-  }, [tasks, appointments, holidays]);
+  }, [filteredTasks, filteredAppointments, holidays]);
 
   const eventType = selectedEvent?.extendedProps?.type;
   const originalData = selectedEvent?.extendedProps?.originalData;
@@ -317,7 +387,18 @@ export default function Calendar({ type }: { type: CalendarType }) {
     <div
       className={`w-full h-full calendar-wrapper flex flex-col bg-white rounded-lg shadow-sm border ${styles.calendarScope}`}
     >
-      <CalendarHeader calendarRef={calendarRef} type={getCalendarType(view)} />
+      <CalendarHeader
+        calendarRef={calendarRef}
+        type={getCalendarType(view)}
+        appointmentCount={filteredAppointments.length}
+        taskCount={filteredTasks.length}
+        users={taskUserOptions}
+        technicians={appointmentTechnicianOptions}
+        selectedUserIds={selectedTaskUserIds}
+        selectedTechnicianIds={selectedAppointmentTechnicianIds}
+        onSelectedUserIdsChange={setSelectedTaskUserIds}
+        onSelectedTechnicianIdsChange={setSelectedAppointmentTechnicianIds}
+      />
 
       <div className={`flex-1 w-full relative ${styles.calendarBody}`}>
         <div className="w-full h-full overflow-x-auto">

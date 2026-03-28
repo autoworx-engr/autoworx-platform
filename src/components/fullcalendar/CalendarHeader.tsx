@@ -6,7 +6,6 @@ import moment from "moment";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { RefObject } from "react";
-
 import { updatePipelineAutomationTrigger } from "@/actions/automation/pipeline/triggerPipelineAutomation";
 import { getCalenderSettings } from "@/actions/task/getCalendarSettings";
 import { AppointmentCreateOrEdit } from "@/components/appointment/AppointmentCreateOrEdit";
@@ -14,7 +13,6 @@ import { errorHandler } from "@/error-boundary/globalErrorHandler";
 import { useCalendarStore } from "@/stores/calendarStore";
 import { CalendarType } from "@/types/calendar";
 import { Appointment, Lead } from "@prisma/client";
-
 import CalendarSearch from "@/app/(dashboard)/dashboard/task/_component/calendar/CalendarSearch";
 import DateSelector from "@/app/(dashboard)/dashboard/task/_component/calendar/DateSelector";
 import DisplayDate from "@/app/(dashboard)/dashboard/task/_component/calendar/DisplayDate";
@@ -27,6 +25,7 @@ import { useDate } from "@/app/(dashboard)/dashboard/task/_hook/lib/useDate";
 import useMonth from "@/app/(dashboard)/dashboard/task/_hook/lib/useMonth";
 import useWeekStartEndDays from "@/app/(dashboard)/dashboard/task/_hook/lib/useWeekStartEndDays";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarDays, ClipboardList } from "lucide-react";
 import { Button } from "../ui/button";
 import {
   Select,
@@ -36,6 +35,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import { CalendarFilterDropdown } from "./CalendarFilterDropdown";
 
 const days = ["SUN", "MON", "TUE", "WED", "THUS", "FRI", "SAT"];
 
@@ -44,9 +44,28 @@ const ALLOWED_ROLES_FOR_NEW_APPOINTMENT = ["Admin", "Manager", "Sales"];
 interface CalendarHeaderProps {
   calendarRef: RefObject<FullCalendar | null>;
   type: CalendarType;
+  appointmentCount: number;
+  taskCount: number;
+  users: { id: number; name: string }[];
+  technicians: { id: number; name: string }[];
+  selectedUserIds: number[];
+  selectedTechnicianIds: number[];
+  onSelectedUserIdsChange: (ids: number[]) => void;
+  onSelectedTechnicianIdsChange: (ids: number[]) => void;
 }
 
-export function CalendarHeader({ calendarRef, type }: CalendarHeaderProps) {
+export function CalendarHeader({
+  calendarRef,
+  type,
+  appointmentCount,
+  taskCount,
+  users,
+  technicians,
+  selectedUserIds,
+  selectedTechnicianIds,
+  onSelectedUserIdsChange,
+  onSelectedTechnicianIdsChange,
+}: CalendarHeaderProps) {
   const date = useDate();
   const dateFormat = date.format("YYYY-MM-DD");
   const month = useMonth();
@@ -144,7 +163,21 @@ export function CalendarHeader({ calendarRef, type }: CalendarHeaderProps) {
         <DisplayDate type={type} />
       </h2>
 
-      <div className="flex flex-wrap items-center justify-between gap-1 text-left lg:justify-end xl:gap-3 w-full md:w-auto">
+      {/* <div className="mt-2 md:mt-0 md:mx-4 flex w-full md:w-auto flex-wrap items-center gap-2"></div> */}
+
+      <div className="flex flex-wrap items-center gap-1 text-left lg:justify-end xl:gap-3 w-full md:w-auto">
+        <div className="flex items-center gap-2 rounded-md border bg-white px-3 py-1.5 text-sm text-slate-700">
+          <CalendarDays size={14} className="text-slate-500" />
+          <span>Appointments</span>
+          <span className="font-semibold text-slate-900">
+            {appointmentCount}
+          </span>
+        </div>
+        <div className="flex items-center gap-2 rounded-md border bg-white px-3 py-1.5 text-sm text-slate-700">
+          <ClipboardList size={14} className="text-slate-500" />
+          <span>Tasks</span>
+          <span className="font-semibold text-slate-900">{taskCount}</span>
+        </div>
         {/* Desktop Search */}
         <div className="mb-2 hidden w-full md:mb-0 lg:block lg:w-64 xl:w-80">
           <CalendarSearch type={type} />
@@ -219,6 +252,15 @@ export function CalendarHeader({ calendarRef, type }: CalendarHeaderProps) {
             onAppointmentCreated={handleAppointmentCreate}
           />
         )}
+
+        <CalendarFilterDropdown
+          users={users}
+          technicians={technicians}
+          selectedUserIds={selectedUserIds}
+          selectedTechnicianIds={selectedTechnicianIds}
+          onSelectedUserIdsChange={onSelectedUserIdsChange}
+          onSelectedTechnicianIdsChange={onSelectedTechnicianIdsChange}
+        />
 
         {/* Settings Button */}
         <Settings />
