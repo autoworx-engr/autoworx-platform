@@ -170,6 +170,98 @@ interface AppointmentSlotsApiResponse {
   data?: AppointmentSlot[];
 }
 
+export interface VirtualShopBookingCalendarItem {
+  id: number;
+  status: string;
+  appointment: {
+    date: string;
+    startTime: string | null;
+    endTime: string | null;
+  } | null;
+  client: {
+    firstName: string;
+    lastName: string | null;
+  } | null;
+}
+
+export interface VirtualShopServiceBookingItem {
+  id: number;
+  status: string;
+  subtotal?: number;
+  tax?: number;
+  serviceFee?: number;
+  total?: number;
+  depositRequired?: number;
+  depositPaid?: number;
+  balanceDue?: number;
+  appointment: {
+    date: string;
+    startTime: string | null;
+    endTime: string | null;
+  } | null;
+  client: {
+    firstName: string;
+    lastName: string | null;
+    email: string | null;
+    mobile: string | null;
+  } | null;
+  vehicle: {
+    year: number | null;
+    make: string | null;
+    model: string | null;
+  } | null;
+  services: Array<{
+    title: string;
+    price: number;
+    duration: number;
+    modifierType: string | null;
+    modifierPrice: number;
+  }>;
+}
+
+export interface VirtualShopServiceBookingListResponse {
+  success: boolean;
+  meta: {
+    totalRecords: number;
+    totalPages: number;
+    page: number;
+    limit: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
+  data: VirtualShopServiceBookingItem[];
+}
+
+export type GetVirtualShopServiceBookingCalendarParams = {
+  year: number;
+  month:
+    | "january"
+    | "february"
+    | "march"
+    | "april"
+    | "may"
+    | "june"
+    | "july"
+    | "august"
+    | "september"
+    | "october"
+    | "november"
+    | "december";
+  accessToken: string;
+};
+
+export type GetVirtualShopServiceBookingsParams = {
+  accessToken: string;
+  page?: number;
+  limit?: number;
+  date?: string;
+  year?: string;
+  month?: string;
+  search?: string;
+  status?: "pending" | "confirmed" | "completed" | "cancelled";
+  sortOrder?: "asc" | "desc";
+};
+
 export type GetShopServicesParams = {
   shopId: number;
   page?: number;
@@ -278,6 +370,35 @@ export interface CreateGiftCardTemplatePayload {
   isActive?: boolean;
   isDefault?: boolean;
 }
+
+export type GiftCardPromoType = "Percentage" | "Fixed";
+
+export interface GiftCardPromoData {
+  id: number;
+  companyId: number;
+  code: string;
+  type: GiftCardPromoType;
+  value: number | string;
+  startDate: string;
+  expireDate: string | null;
+  usageLimit: number | null;
+  timesUsed: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateGiftCardPromoPayload {
+  code: string;
+  type: GiftCardPromoType;
+  value: number;
+  startDate?: string | null;
+  expireDate?: string | null;
+  usageLimit?: number | null;
+  isActive?: boolean;
+}
+
+export type UpdateGiftCardPromoPayload = Partial<CreateGiftCardPromoPayload>;
 
 export const configureVirtualShop = async function (payload: ShopData) {
   try {
@@ -515,6 +636,70 @@ export const createVirtualShopServiceBooking = async function (
   }
 };
 
+export const getVirtualShopServiceBookingCalendar = async function ({
+  year,
+  month,
+  accessToken,
+}: GetVirtualShopServiceBookingCalendarParams) {
+  try {
+    const response = await axios.get<{
+      success: boolean;
+      data: VirtualShopBookingCalendarItem[];
+    }>("/api/virtual-shop/service-booking/calendar", {
+      params: {
+        year,
+        month,
+      },
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    return response.data;
+  } catch (error) {
+    const err = errorHandler(error);
+    throw err;
+  }
+};
+
+export const getVirtualShopServiceBookings = async function ({
+  accessToken,
+  page = 1,
+  limit = 10,
+  date,
+  year,
+  month,
+  search,
+  status,
+  sortOrder = "desc",
+}: GetVirtualShopServiceBookingsParams) {
+  try {
+    const response = await axios.get<VirtualShopServiceBookingListResponse>(
+      "/api/virtual-shop/service-booking",
+      {
+        params: {
+          page,
+          limit,
+          date: date || undefined,
+          year: year || undefined,
+          month: month || undefined,
+          search: search || undefined,
+          status: status || undefined,
+          sortOrder,
+        },
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+    );
+
+    return response.data;
+  } catch (error) {
+    const err = errorHandler(error);
+    throw err;
+  }
+};
+
 export const getGiftCardSettings = async function (accessToken: string) {
   try {
     const response = await axios.get<{
@@ -680,3 +865,100 @@ export const buyGiftCard = async function (payload: BuyGiftCardPayload) {
   }
 };
 
+
+export const deleteGiftCardTemplate = async function (
+  id: number,
+  accessToken: string,
+) {
+  try {
+    await axios.delete(`/api/virtual-shop/gift-card-templates/${id}`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    return true;
+  } catch (error) {
+    const err = errorHandler(error);
+    throw err;
+  }
+};
+
+export const getGiftCardPromos = async function (accessToken: string) {
+  try {
+    const response = await axios.get<{
+      success: boolean;
+      data: GiftCardPromoData[];
+    }>("/api/virtual-shop/gift-card-promos", {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    return response.data?.data ?? [];
+  } catch (error) {
+    const err = errorHandler(error);
+    throw err;
+  }
+};
+
+export const createGiftCardPromo = async function (
+  payload: CreateGiftCardPromoPayload,
+  accessToken: string,
+) {
+  try {
+    const response = await axios.post<{
+      success: boolean;
+      data: GiftCardPromoData;
+    }>("/api/virtual-shop/gift-card-promos", payload, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    return response.data?.data;
+  } catch (error) {
+    const err = errorHandler(error);
+    throw err;
+  }
+};
+
+export const updateGiftCardPromo = async function (
+  id: number,
+  payload: UpdateGiftCardPromoPayload,
+  accessToken: string,
+) {
+  try {
+    const response = await axios.patch<{
+      success: boolean;
+      data: GiftCardPromoData;
+    }>(`/api/virtual-shop/gift-card-promos/${id}`, payload, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    return response.data?.data;
+  } catch (error) {
+    const err = errorHandler(error);
+    throw err;
+  }
+};
+
+export const deleteGiftCardPromo = async function (
+  id: number,
+  accessToken: string,
+) {
+  try {
+    await axios.delete(`/api/virtual-shop/gift-card-promos/${id}`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    return true;
+  } catch (error) {
+    const err = errorHandler(error);
+    throw err;
+  }
+};

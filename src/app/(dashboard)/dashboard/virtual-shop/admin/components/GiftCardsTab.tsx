@@ -7,13 +7,28 @@ import { Switch } from "@/components/Switch";
 import Selector from "@/components/Selector";
 import { Button } from "@/components/ui/button";
 import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/Dialog";
+import {
   useCreateGiftCardTemplate,
+  useDeleteGiftCardTemplate,
   useGetGiftCardTemplates,
 } from "@/hooks/virtual-shop/gift-card-templates/useGiftCardTemplates";
 import {
   useGetGiftCardSettings,
   useUpdateGiftCardSettings,
 } from "@/hooks/virtual-shop/gift-card-settings/useGiftCardSettings";
+import {
+  useCreateGiftCardPromo,
+  useDeleteGiftCardPromo,
+  useGetGiftCardPromos,
+  useUpdateGiftCardPromo,
+} from "@/hooks/virtual-shop/gift-card-promos/useGiftCardPromos";
+import type { GiftCardPromoData } from "@/service/virtual-shop/api";
 import {
   Image as ImageIcon,
   DollarSign,
@@ -25,6 +40,7 @@ import {
   Pencil,
   Trash2,
   Loader2,
+  SquarePen,
 } from "lucide-react";
 
 // ── Gift Card Designs ─────────────────────────────────────────────────────────
@@ -47,19 +63,7 @@ const INITIAL_DESIGNS: CardDesign[] = [
 
 // ── Discount Codes ────────────────────────────────────────────────────────────
 
-type DiscountCode = {
-  id: number;
-  code: string;
-  value: string;
-  expires: string;
-  used: number;
-  limit: number;
-};
-
-const INITIAL_CODES: DiscountCode[] = [
-  { id: 1, code: "GIFT10", value: "10%", expires: "2026-12-31", used: 12, limit: 100 },
-  { id: 2, code: "SAVE5", value: "$5", expires: "2026-06-30", used: 3, limit: 50 },
-];
+type DiscountCodeType = "Percentage" | "Fixed";
 
 const DELIVERY_METHODS = ["Email", "Text"] as const;
 type DeliveryMethod = (typeof DELIVERY_METHODS)[number];
@@ -158,6 +162,18 @@ export default function GiftCardsTab() {
   } = useGetGiftCardTemplates(accessToken);
   const { mutateAsync: createGiftCardTemplate, isPending: isCreatingTemplate } =
     useCreateGiftCardTemplate();
+  const { mutateAsync: deleteGiftCardTemplate, isPending: isDeletingTemplate } =
+    useDeleteGiftCardTemplate();
+  const {
+    data: promoCodes = [],
+    isLoading: isPromoCodesLoading,
+  } = useGetGiftCardPromos(accessToken);
+  const { mutateAsync: createGiftCardPromo, isPending: isCreatingPromo } =
+    useCreateGiftCardPromo();
+  const { mutateAsync: updateGiftCardPromo, isPending: isUpdatingPromo } =
+    useUpdateGiftCardPromo();
+  const { mutateAsync: deleteGiftCardPromo, isPending: isDeletingPromo } =
+    useDeleteGiftCardPromo();
 
   // Designs
   const [designs, setDesigns] = useState<CardDesign[]>(INITIAL_DESIGNS);
@@ -190,8 +206,136 @@ export default function GiftCardsTab() {
   const handleDeliveryMethod = (item: DeliveryMethod) => setDefaultMethod(item);
 
   // Discount codes
-  const [codes, setCodes] = useState<DiscountCode[]>(INITIAL_CODES);
-  const deleteCode = (id: number) => setCodes((prev) => prev.filter((c) => c.id !== id));
+  const [isPromoDialogOpen, setIsPromoDialogOpen] = useState(false);
+  const [editingPromo, setEditingPromo] = useState<GiftCardPromoData | null>(null);
+  const [promoCode, setPromoCode] = useState("");
+  const [promoType, setPromoType] = useState<DiscountCodeType>("Percentage");
+  const [promoValue, setPromoValue] = useState("10");
+  const [promoExpireDate, setPromoExpireDate] = useState("2026-12-31");
+  const [promoUsageLimit, setPromoUsageLimit] = useState("100");
+
+  const formatDateForInput = (value?: string | null) => {
+    if (!value) return "";
+    return new Date(value).toISOString().slice(0, 10);
+  };
+
+  const openCreatePromoDialog = () => {
+    setEditingPromo(null);
+    setPromoCode("");
+    setPromoType("Percentage");
+    setPromoValue("10");
+    setPromoExpireDate("2026-12-31");
+    setPromoUsageLimit("100");
+    setIsPromoDialogOpen(true);
+  };
+
+  const openEditPromoDialog = (promo: GiftCardPromoData) => {
+    setEditingPromo(promo);
+    setPromoCode(promo.code);
+    setPromoType(promo.type as DiscountCodeType);
+    setPromoValue(String(promo.value ?? ""));
+    setPromoExpireDate(formatDateForInput(promo.expireDate));
+    setPromoUsageLimit(
+      promo.usageLimit !== null && promo.usageLimit !== undefined
+        ? String(promo.usageLimit)
+        : "",
+    );
+    setIsPromoDialogOpen(true);
+  };
+
+  const formatPromoValue = (promo: GiftCardPromoData) => {
+    const numericValue = Number(promo.value);
+    if (promo.type === "Percentage") {
+      return `${numericValue}%`;
+    }
+    return `$${numericValue}`;
+  };
+
+  const formatPromoExpireDate = (value?: string | null) => {
+    if (!value) return "No expiry";
+    return new Date(value).toLocaleDateString();
+  };
+
+  const handleDeletePromoCode = async (id: number) => {
+    if (!accessToken) {
+      toast.error("Session expired. Please sign in again.");
+      return;
+    }
+
+    try {
+      await deleteGiftCardPromo({ id, accessToken });
+      toast.success("Promo code deleted successfully");
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.message ?? error?.message ?? "Failed to delete promo code";
+      toast.error(message);
+    }
+  };
+
+  const handleSubmitPromoCode = async () => {
+    if (!accessToken) {
+      toast.error("Session expired. Please sign in again.");
+      return;
+    }
+
+    if (promoCode.trim().length < 2) {
+      toast.error("Code must be at least 2 characters");
+      return;
+    }
+
+    const parsedValue = Number(promoValue);
+    if (!Number.isFinite(parsedValue) || parsedValue <= 0) {
+      toast.error("Value must be a positive number");
+      return;
+    }
+
+    if (promoType === "Percentage" && parsedValue > 100) {
+      toast.error("Percentage value cannot exceed 100");
+      return;
+    }
+
+    const parsedUsageLimit = promoUsageLimit.trim()
+      ? Number(promoUsageLimit)
+      : null;
+
+    if (
+      parsedUsageLimit !== null
+      && (!Number.isInteger(parsedUsageLimit) || parsedUsageLimit < 0)
+    ) {
+      toast.error("Usage limit must be a non-negative whole number");
+      return;
+    }
+
+    const payload = {
+      code: promoCode.trim().toUpperCase(),
+      type: promoType,
+      value: parsedValue,
+      expireDate: promoExpireDate ? new Date(promoExpireDate).toISOString() : null,
+      usageLimit: parsedUsageLimit,
+      isActive: true,
+    };
+
+    try {
+      if (editingPromo) {
+        await updateGiftCardPromo({
+          id: editingPromo.id,
+          payload,
+          accessToken,
+        });
+        toast.success("Promo code updated successfully");
+      } else {
+        await createGiftCardPromo({ payload, accessToken });
+        toast.success("Promo code created successfully");
+      }
+
+      setIsPromoDialogOpen(false);
+      setEditingPromo(null);
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.message ?? error?.message ?? "Failed to save promo code";
+      toast.error(message);
+    }
+  };
 
   // Policies
   const [termsUrl, setTermsUrl] = useState("#terms");
@@ -316,6 +460,30 @@ export default function GiftCardsTab() {
       toast.error(message);
     } finally {
       setIsUploadingTemplateImage(false);
+    }
+  };
+
+  const handleDeleteTemplate = async (template: CardDesign) => {
+    if (!accessToken) {
+      toast.error("Session expired. Please sign in again.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Delete template \"${template.name}\"? This cannot be undone.`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await deleteGiftCardTemplate({ id: template.id, accessToken });
+      toast.success("Gift card template deleted successfully");
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.message ?? error?.message ?? "Failed to delete template";
+      toast.error(message);
     }
   };
 
@@ -468,6 +636,14 @@ export default function GiftCardsTab() {
                       </button>
                     )}
                     <Switch checked={design.enabled} setChecked={(v) => toggleDesign(design.id, v)} />
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteTemplate(design)}
+                      disabled={isDeletingTemplate}
+                      className="text-red-400 hover:text-red-600 transition-colors disabled:opacity-60"
+                    >
+                      <Trash2 size={18} />
+                    </button>
                   </div>
                 </div>
               ))}
@@ -525,28 +701,53 @@ export default function GiftCardsTab() {
           {/* ── Discount Codes ── */}
           <Section icon={Tag} title="Discount Codes" subtitle="Create and manage gift card promo codes">
             <div className="flex flex-col gap-3">
-              <button className="flex w-fit items-center gap-1.5 rounded-md bg-[#6571FF] px-4 py-2 text-sm font-medium text-white hover:bg-[#5560ee] transition-colors">
+              <button
+                type="button"
+                onClick={openCreatePromoDialog}
+                className="flex w-fit items-center gap-1.5 rounded-md bg-[#6571FF] px-4 py-2 text-sm font-medium text-white hover:bg-[#5560ee] transition-colors"
+              >
                 <Plus size={15} />
                 Add Code
               </button>
 
               <div className="flex flex-col gap-2">
-                {codes.map((c) => (
-                  <div key={c.id} className="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3">
+                {isPromoCodesLoading && (
+                  <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+                    Loading promo codes...
+                  </div>
+                )}
+
+                {!isPromoCodesLoading && promoCodes.length === 0 && (
+                  <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-5 text-sm text-gray-500">
+                    No discount codes yet. Click <strong>Add Code</strong> to create one.
+                  </div>
+                )}
+
+                {promoCodes.map((promo) => (
+                  <div key={promo.id} className="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3">
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-semibold text-gray-800 text-sm">{c.code}</span>
-                        <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{c.value}</span>
+                        <span className="font-semibold text-gray-800 text-sm">{promo.code}</span>
+                        <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{formatPromoValue(promo)}</span>
                       </div>
                       <p className="mt-0.5 text-xs text-gray-400">
-                        Expires {c.expires} &bull; {c.used}/{c.limit} used
+                        Expires {formatPromoExpireDate(promo.expireDate)} &bull; {promo.timesUsed}/{promo.usageLimit ?? "∞"} used
                       </p>
                     </div>
                     <div className="flex items-center gap-3">
-                      <button className="text-gray-400 hover:text-gray-600 transition-colors">
-                        <Pencil size={16} />
+                      <button
+                        type="button"
+                        onClick={() => openEditPromoDialog(promo)}
+                        className="text-gray-400 hover:text-gray-600 transition-colors"
+                      >
+                        <SquarePen size={16} color={"#6571FF"} />
                       </button>
-                      <button onClick={() => deleteCode(c.id)} className="text-red-400 hover:text-red-600 transition-colors">
+                      <button
+                        type="button"
+                        onClick={() => handleDeletePromoCode(promo.id)}
+                        disabled={isDeletingPromo}
+                        className="text-red-400 hover:text-red-600 transition-colors disabled:opacity-60"
+                      >
                         <Trash2 size={16} />
                       </button>
                     </div>
@@ -555,6 +756,83 @@ export default function GiftCardsTab() {
               </div>
             </div>
           </Section>
+
+          <Dialog open={isPromoDialogOpen} onOpenChange={setIsPromoDialogOpen}>
+            <DialogContent className="max-w-lg overflow-hidden border border-gray-200 bg-white p-0 shadow-xl">
+              <div className="border-b border-gray-100 bg-gradient-to-r from-[#f7f8ff] to-[#f3f4f8] px-6 py-4">
+                <DialogHeader>
+                  <DialogTitle className="text-xl font-bold text-gray-900">
+                    {editingPromo ? "Edit Discount Code" : "New Discount Code"}
+                  </DialogTitle>
+                </DialogHeader>
+                <p className="mt-1 text-sm text-gray-500">
+                  Configure promo details for gift card checkout discounts.
+                </p>
+              </div>
+
+              <div className="space-y-4 bg-white px-6 py-5">
+                <SettingInput
+                  label="Code"
+                  value={promoCode}
+                  onChange={setPromoCode}
+                />
+
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-semibold text-gray-700">Type</label>
+                    <select
+                      value={promoType}
+                      onChange={(e) => setPromoType(e.target.value as DiscountCodeType)}
+                      className="w-full rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 outline-none focus:border-[#6571FF] focus:ring-1 focus:ring-[#6571FF]"
+                    >
+                      <option value="Percentage">Percentage (%)</option>
+                      <option value="Fixed">Fixed ($)</option>
+                    </select>
+                  </div>
+
+                  <SettingInput
+                    label="Value"
+                    value={promoValue}
+                    onChange={setPromoValue}
+                    type="number"
+                    min="0"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <SettingInput
+                    label="Expiry Date"
+                    value={promoExpireDate}
+                    onChange={setPromoExpireDate}
+                    type="date"
+                  />
+
+                  <SettingInput
+                    label="Usage Limit"
+                    value={promoUsageLimit}
+                    onChange={setPromoUsageLimit}
+                    type="number"
+                    min="0"
+                  />
+                </div>
+              </div>
+
+              <DialogFooter className="border-t border-gray-100 bg-gray-50 px-6 py-4">
+                <button
+                  type="button"
+                  onClick={handleSubmitPromoCode}
+                  disabled={isCreatingPromo || isUpdatingPromo}
+                  className="w-full rounded-md bg-[#6571FF] hover:bg-[#5560ee] px-4 py-2.5 text-sm font-semibold text-white transition-colors disabled:opacity-60"
+                >
+                  {isCreatingPromo || isUpdatingPromo
+                    ? "Saving..."
+                    : editingPromo
+                      ? "Update Code"
+                      : "Create Code"}
+                </button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
 
           {/* ── Policies & Links ── */}
           <Section icon={FileText} title="Policies & Links" subtitle="URLs shown at checkout">
