@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { convertInvoicePublic } from "@/actions/estimate/invoice/convert";
 import { sendPaymentReceivedNotification } from "@/lib/notification/payment-notify";
+import { settleGiftCardReloadPayment } from "@/services/giftCardReloadSettlementService";
 import { updateVirtualShopDeposit } from "@/services/virtualShopDepositService";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -204,8 +205,15 @@ export async function POST(req: NextRequest) {
           },
         });
 
+        const reloadSettlement = await settleGiftCardReloadPayment(
+          pendingPayment.id,
+        );
+
         return NextResponse.json(
-          { message: "Gift card payment recorded" },
+          {
+            message: "Gift card payment recorded",
+            reloadSettlement: reloadSettlement.status,
+          },
           { status: 200 },
         );
       }

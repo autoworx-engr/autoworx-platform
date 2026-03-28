@@ -260,6 +260,68 @@ const GiftCardsPage = () => {
     await initiatePayment();
   };
 
+  const resolvePurchaseConfirmation = async (paymentId: number) => {
+    setIsProcessingPayment(true);
+    try {
+      for (let attempt = 0; attempt < 8; attempt++) {
+        const response = await axios.post(
+          "/api/virtual-shop/gift-card-payment/confirmation",
+          {
+            paymentId,
+          },
+        );
+
+        if (!response.data?.success) {
+          throw new Error(
+            response.data?.message || "Failed to resolve purchase confirmation",
+          );
+        }
+
+        const confirmation = response.data.data;
+        if (confirmation?.status === "issued") {
+          setConfirmationData({
+            number: confirmation.confirmationNumber,
+            code: confirmation.maskedCode,
+          });
+          setData((prev) => ({
+            ...prev,
+            amount: Number(confirmation.amount || prev.amount),
+            recipientName: confirmation.recipientName || prev.recipientName,
+          }));
+          setBuyStep("confirmation");
+          clearPendingCheckout();
+          setShowPayNowModal(false);
+          successToast("Gift card purchase complete.");
+          return;
+        }
+
+        if (confirmation?.status === "pending_payment" && attempt < 7) {
+          await wait(1500);
+          continue;
+        }
+
+        if (confirmation?.status === "processing" && attempt < 7) {
+          await wait(1500);
+          continue;
+        }
+
+        break;
+      }
+
+      successToast(
+        "Payment succeeded. Gift card confirmation is still processing. Please refresh shortly.",
+      );
+    } catch (error: any) {
+      errorToast(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Payment succeeded, but we could not load confirmation yet.",
+      );
+    } finally {
+      setIsProcessingPayment(false);
+    }
+  };
+
   useEffect(() => {
     const fetchSettings = async () => {
       if (!subdomain) return;
@@ -319,12 +381,16 @@ const GiftCardsPage = () => {
     const currentUrl = new URL(window.location.href);
     const isSuccess = currentUrl.searchParams.get("success") === "true";
     const isCancelled = currentUrl.searchParams.get("cancel") === "true";
+    const paymentIdFromUrl = Number(currentUrl.searchParams.get("paymentId"));
+    const hasPaymentId =
+      Number.isInteger(paymentIdFromUrl) && paymentIdFromUrl > 0;
 
     if (!isSuccess && !isCancelled) return;
 
     currentUrl.searchParams.delete("success");
     currentUrl.searchParams.delete("cancel");
     currentUrl.searchParams.delete("session_id");
+    currentUrl.searchParams.delete("paymentId");
 
     const nextUrl = `${currentUrl.pathname}${
       currentUrl.searchParams.toString()
@@ -336,7 +402,13 @@ const GiftCardsPage = () => {
     const storedCheckout = sessionStorage.getItem(PENDING_CHECKOUT_STORAGE_KEY);
     if (!storedCheckout) {
       if (isSuccess) {
-        errorToast("Payment succeeded but checkout data was not found");
+        if (hasPaymentId) {
+          void resolvePurchaseConfirmation(paymentIdFromUrl);
+        } else {
+          successToast(
+            "Payment succeeded. Gift card confirmation is processing. Please refresh shortly.",
+          );
+        }
       }
       return;
     }
@@ -353,7 +425,11 @@ const GiftCardsPage = () => {
       }
 
       if (isSuccess) {
-        void finalizePurchase(parsed);
+        if (hasPaymentId) {
+          void resolvePurchaseConfirmation(paymentIdFromUrl);
+        } else {
+          void finalizePurchase(parsed);
+        }
       }
     } catch {
       clearPendingCheckout();
@@ -598,7 +674,13 @@ const GiftCardsPage = () => {
           setOpen={setShowPayNowModal}
           gatewayInfo={pendingCheckout.gatewayInfo}
           onSuccess={() => {
-            void finalizePurchase(pendingCheckout);
+            const currentUrl = new URL(window.location.href);
+            currentUrl.searchParams.set("success", "true");
+            currentUrl.searchParams.set(
+              "paymentId",
+              pendingCheckout.paymentId.toString(),
+            );
+            window.location.href = currentUrl.toString();
           }}
         />
       )}

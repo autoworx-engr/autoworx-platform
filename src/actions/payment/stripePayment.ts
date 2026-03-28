@@ -109,10 +109,19 @@ export const createStripePaymentLink = async ({
       process.env.NEXT_PUBLIC_APP_URL || env("NEXT_PUBLIC_APP_URL") || "";
     const appendQuery = (url: string, query: string) =>
       url.includes("?") ? `${url}&${query}` : `${url}?${query}`;
+    const isVirtualShopGiftCardPayment =
+      payType === "virtual_shop_gift_card" && Boolean(paymentId);
+    const successRedirectBase = redirectUrl
+      ? appendQuery(redirectUrl, "success=true")
+      : "";
+    const successRedirectWithPaymentId =
+      redirectUrl && isVirtualShopGiftCardPayment
+        ? appendQuery(successRedirectBase, `paymentId=${paymentId}`)
+        : successRedirectBase;
 
     const successUrl = redirectUrl
       ? appendQuery(
-          appendQuery(redirectUrl, "success=true"),
+          successRedirectWithPaymentId,
           "session_id={CHECKOUT_SESSION_ID}",
         )
       : shopBookingId
@@ -120,7 +129,12 @@ export const createStripePaymentLink = async ({
         : `${appUrl}/public-invoice/${invoiceId ?? statementId}?success=true&type=${payType}${statementId ? "&fleet=true" : ""}`;
 
     const cancelUrl = redirectUrl
-      ? appendQuery(redirectUrl, "cancel=true")
+      ? appendQuery(
+          redirectUrl,
+          isVirtualShopGiftCardPayment
+            ? `cancel=true&paymentId=${paymentId}`
+            : "cancel=true",
+        )
       : shopBookingId
         ? appendQuery(appUrl, "cancel=true")
         : `${appUrl}/public-invoice/${invoiceId ?? statementId}${statementId ? "?fleet=true" : ""}`;
