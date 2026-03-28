@@ -316,6 +316,7 @@ model ReportingAutomationRule {
   companyId   Int
   frequency   ReportingAutomationFrequency
   action      ReportingNotificationAction
+  day         DayOfWeek?
   isPaused    Boolean                         @default(false)
   createdBy   String?
   createdAt   DateTime                        @default(now())
@@ -488,7 +489,7 @@ enum ReportingAutomationFrequency {
   DAILY
   WEEKLY
   MONTHLY
-  EVERY_TWO_MONTHS
+  YEARLY
 }
 
 enum ReportingNotificationAction {
