@@ -1,11 +1,14 @@
 import { Button } from "@/components/ui/button";
-import { Eye, Download, Loader2 } from "lucide-react";
+import {  Download, Loader2, Building2 } from "lucide-react";
+import Image from "next/image";
 
 interface ReportHeaderProps {
   frequency: string;
   reportDateRange: string;
   isGenerating: boolean;
   onDownload: (fullPage: boolean) => void;
+  companyName?: string;
+  companyLogo?: string | null;
 }
 
 export const ReportHeader = ({
@@ -13,31 +16,42 @@ export const ReportHeader = ({
   reportDateRange,
   isGenerating,
   onDownload,
+  companyName,
+  companyLogo,
 }: ReportHeaderProps) => {
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8 animate-fade-in">
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
-          Your {frequency.charAt(0).toUpperCase() + frequency.slice(1)} Report
-        </h1>
-        <p className="text-muted-foreground mt-1 text-sm md:text-base">
-          {reportDateRange}
-        </p>
+    <div className="flex flex-col md:flex-row items-center justify-between w-full gap-6">
+      <div className="flex items-center gap-4">
+        {companyLogo ? (
+          <div className="relative w-16 h-16 rounded-xl overflow-hidden border border-border/50 shadow-sm bg-white">
+            <Image
+              src={companyLogo}
+              alt={companyName || "Company Logo"}
+              fill
+              className="object-contain p-2"
+            />
+          </div>
+        ) : (
+          <div className="w-16 h-16 rounded-xl bg-primary/5 flex items-center justify-center border border-primary/10 shadow-sm">
+            <Building2 className="w-8 h-8 text-primary/40" />
+          </div>
+        )}
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground leading-tight">
+            {companyName || "Your"}{" "}
+            {frequency.charAt(0).toUpperCase() + frequency.slice(1)} Report
+          </h1>
+          <p className="text-muted-foreground mt-1 text-sm">
+            {reportDateRange}
+          </p>
+        </div>
       </div>
-      <div className="flex items-center gap-3">
-        <Button
-          variant="outline"
-          size="sm"
-          className="border-primary/20 hover:border-primary/50 text-foreground shadow-sm"
-          onClick={() => onDownload(false)}
-        >
-          <Eye className="w-4 h-4 mr-2" />
-          Preview Report
-        </Button>
+
+      <div className="flex items-center gap-3 shrink-0">
         <Button
           variant="default"
           size="sm"
-          className="px-4 shadow-md transition-all hover:scale-[1.02]"
+          className="h-10 px-6 shadow-md shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98] font-semibold"
           onClick={() => onDownload(true)}
           disabled={isGenerating}
         >

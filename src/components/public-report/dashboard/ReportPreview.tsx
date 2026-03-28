@@ -1,5 +1,7 @@
 import { FileText, Calendar, Building2, Download, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
+import { useCompanyQuery } from "@/hooks/useCompanyQuery";
 
 interface ReportPreviewProps {
   isGenerating: boolean;
@@ -11,9 +13,10 @@ interface ReportPreviewProps {
 export const ReportPreview = ({
   isGenerating,
   onDownload,
-
+ 
   reportDateRange,
 }: ReportPreviewProps) => {
+    const { data: companyData } = useCompanyQuery();
   return (
     <div className="bg-card rounded-xl p-6 shadow-sm border border-border/50 sticky top-6">
       <div className="flex items-center justify-between mb-6">
@@ -42,10 +45,11 @@ export const ReportPreview = ({
         <div className="bg-card rounded-lg p-5 shadow-sm mb-4 border border-border/50">
           <div className="flex items-center gap-4 mb-4">
             <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
-              <Building2 className="w-6 h-6 text-accent" />
+              {/* <Building2 className="w-6 h-6 text-accent" /> */}
+              <Image src={companyData?.image || "/default-logo.png"} alt="Company Logo" width={48} height={48} className="rounded-lg" />
             </div>
             <div>
-              <h4 className="font-bold text-lg">{"AutoWorx"}</h4>
+              <h4 className="font-bold text-lg">{companyData?.name}</h4>
               <p className="text-sm text-muted-foreground">
                 Performance Report
               </p>
@@ -58,7 +62,7 @@ export const ReportPreview = ({
           </div>
         </div>
 
-        <div className="space-y-3">
+        {/* <div className="space-y-3">
           {[
             "Executive Summary",
             "Revenue Overview",
@@ -81,7 +85,7 @@ export const ReportPreview = ({
               </div>
             </div>
           ))}
-        </div>
+        </div> */}
       </div>
 
       <Button

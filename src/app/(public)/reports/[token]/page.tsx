@@ -1,6 +1,5 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
 import { LeadsSourceChart } from "@/components/public-report/dashboard/LeadsSourceChart";
 import { LeadsSummary } from "@/components/public-report/dashboard/LeadsSummary";
 import { ServicesPerformance } from "@/components/public-report/dashboard/ServicesPerformance";
@@ -14,11 +13,15 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { errorToast, successToast } from "@/lib/toast";
 import toast from "react-hot-toast";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { usePublicReportData } from "@/hooks/public-report/usePublicReportData";
 
 import { format, parseISO } from "date-fns";
 import "../report-styles.css";
+import { useRouter } from "next/navigation";
+import { getSession } from "next-auth/react";
+import { useCompanyQuery } from "@/hooks/useCompanyQuery";
+import CarLoading from "@/components/common/CarLoading";
 
 interface ReportPageProps {
   params: {
@@ -28,7 +31,21 @@ interface ReportPageProps {
 
 export default function ReportPage({ params }: ReportPageProps) {
   const { token } = params;
+  const router = useRouter();
   const [isGenerating, setIsGenerating] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+  const { data: companyData } = useCompanyQuery();
+  useEffect(() => {
+    const checkAuth = async () => {
+      const session = await getSession();
+      if (!session) {
+        router.push(`/login?callbackUrl=/reports/${token}`);
+      } else {
+        setCheckingAuth(false);
+      }
+    };
+    checkAuth();
+  }, [token, router]);
 
   const decodedParams = useMemo(() => {
     try {
@@ -52,7 +69,6 @@ export default function ReportPage({ params }: ReportPageProps) {
     decodedParams?.endDate,
     !!decodedParams,
   );
-
 
   const frequency = (decodedParams?.frequency || "DAILY").toLowerCase();
 
@@ -119,8 +135,8 @@ export default function ReportPage({ params }: ReportPageProps) {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-10 h-10 text-primary animate-spin" />
+        <div className="flex flex-col items-center gap-1">
+          <CarLoading />
           <p className="text-muted-foreground font-medium">
             Loading your report...
           </p>
@@ -197,66 +213,68 @@ export default function ReportPage({ params }: ReportPageProps) {
     }
   };
 
-  console.log("Report data loaded:", reportData);
   return (
     <div className="min-h-screen bg-[#F8FAFC] report-scope">
       <main
         id="report-content"
-        className="container mx-auto px-4 sm:px-6 lg:px-8 py-8"
+        className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col items-center"
       >
-        <ReportHeader
-          frequency={frequency}
-          reportDateRange={reportDateRange}
-          isGenerating={isGenerating}
-          onDownload={handleDownloadReport}
-        />
-
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
-          <div className="xl:col-span-3 space-y-8">
-            <KPIGrid kpis={reportData.kpis} />
-
-            <section>
-              <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-4">
-                Leads & Sources
-              </h2>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <LeadsSourceChart data={reportData.leadSources} />
-                <LeadsSummary data={reportData.leadSources} />
-              </div>
-            </section>
-
-            <section>
-              <ServicesPerformance data={servicesFormatted} />
-            </section>
-
-            <section>
-              <PaymentsFinancials data={reportData.paymentsFinancials} />
-            </section>
-
-            <section>
-              <TeamPerformance data={teamFormatted} />
-            </section>
-          </div>
-
-          <div className="xl:col-span-1">
-            <ReportPreview
-              isGenerating={isGenerating}
-              onDownload={() => handleDownloadReport(false)}
+        <div className="w-full max-w-5xl space-y-8">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-6 bg-card p-6 rounded-2xl border border-border/50 shadow-sm">
+            <ReportHeader
+              frequency={frequency}
               reportDateRange={reportDateRange}
+              isGenerating={isGenerating}
+              onDownload={handleDownloadReport}
+              companyName={companyData?.name}
+              companyLogo={companyData?.image}
             />
           </div>
+
+          <KPIGrid kpis={reportData.kpis} />
+
+          <section>
+            <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-4">
+              Leads & Sources
+            </h2>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <LeadsSourceChart data={reportData.leadSources} />
+              <LeadsSummary data={reportData.leadSources} />
+            </div>
+          </section>
+
+          <section>
+            <ServicesPerformance data={servicesFormatted} />
+          </section>
+
+          <section>
+            <PaymentsFinancials data={reportData.paymentsFinancials} />
+          </section>
+
+          <section>
+            <TeamPerformance data={teamFormatted} />
+          </section>
         </div>
       </main>
 
-      <footer className="bg-card border-t border-border mt-12">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-muted-foreground">
-              © {new Date().getFullYear()} AutoWorx. Admin reporting dashboard.
-            </p>
-            <div className="flex items-center gap-4">
+      <footer className="bg-card border-t border-border mt-12 py-8">
+        <div className="container mx-auto px-4 max-w-5xl">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
+            <div className="space-y-1">
+              <p className="text-sm font-semibold text-foreground">
+                {companyData?.name || "AutoWorx"} Performance Report
+              </p>
+              <p className="text-xs text-muted-foreground">
+                © {new Date().getFullYear()} All rights reserved. Generated via
+                AutoWorx Platform.
+              </p>
+            </div>
+            <div className="flex flex-col items-center md:items-end gap-1">
+              <span className="text-xs font-medium text-foreground">
+                Report Period
+              </span>
               <span className="text-xs text-muted-foreground">
-                Last updated: {new Date().toLocaleDateString()}
+                {reportDateRange}
               </span>
             </div>
           </div>
