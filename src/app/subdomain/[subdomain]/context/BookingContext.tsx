@@ -41,6 +41,8 @@ interface BookingContextType {
   // Customer
   customerInfo: CustomerInfo | null;
   setCustomerInfo: (info: CustomerInfo) => void;
+  estimateId: string | null;
+  setEstimateId: (id: string | null) => void;
 
   // Settings
   settings: ShopSettings;
@@ -90,6 +92,7 @@ export const BookingProvider: React.FC<{ children: React.ReactNode }> = ({
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null);
+  const [estimateId, setEstimateId] = useState<string | null>(null);
   const [settings, setSettings] = useState<ShopSettings>(defaultSettings);
   const [services, setServices] = useState<Service[]>([]);
   const [isReturningClient, setIsReturningClient] = useState(false);
@@ -144,6 +147,7 @@ export const BookingProvider: React.FC<{ children: React.ReactNode }> = ({
     setSelectedDate(null);
     setSelectedSlot(null);
     setCustomerInfo(null);
+    setEstimateId(null);
   }, []);
 
   return (
@@ -163,6 +167,8 @@ export const BookingProvider: React.FC<{ children: React.ReactNode }> = ({
         setSelectedSlot,
         customerInfo,
         setCustomerInfo,
+        estimateId,
+        setEstimateId,
         settings,
         setSettings,
         services,

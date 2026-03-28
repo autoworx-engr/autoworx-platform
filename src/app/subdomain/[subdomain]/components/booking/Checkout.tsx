@@ -53,6 +53,7 @@ export const Checkout = () => {
     selectedDate,
     selectedSlot,
     setCustomerInfo,
+    setEstimateId,
     isReturningClient,
     setIsReturningClient,
     settings,
@@ -207,6 +208,8 @@ export const Checkout = () => {
         vehicleModel: vehicle?.model || form.vehicleModel,
         notes: form.notes,
       });
+
+      setEstimateId(response?.data?.estimateId ?? null);
 
       setIsReturningClient(true);
       toast.success(response?.message || "Booking created successfully");
