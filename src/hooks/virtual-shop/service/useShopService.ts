@@ -11,6 +11,7 @@ import {
   getShopCategories,
   getShopBySlug,
   getAppointmentSlots,
+  getGiftCardTemplatesPublic,
 } from "@/service/virtual-shop/api";
 import {
   useInfiniteQuery,
@@ -50,13 +51,12 @@ export const useGetShopServices = ({
   });
 };
 
-
-
-export const useGetShopBySlug = (slug?: string) => {
+export const useGetShopBySlug = (slug?: string, initialData?: any) => {
   return useQuery({
     queryKey: ["virtual-shop-by-slug", slug],
     queryFn: () => getShopBySlug(String(slug)),
     enabled: !!slug,
+    initialData,
     staleTime: 1000 * 60,
   });
 };

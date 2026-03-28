@@ -83,7 +83,7 @@ const toApiDeliveryMethod = (
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const GiftCardsPage = () => {
+const GiftCardsPage = ({ initialShop: _initialShop }: { initialShop?: any }) => {
   const { subdomain } = useParams();
   const [settings, setSettings] = useState<GiftCardSettings | null>(null);
   const [shopName, setShopName] = useState("Shop");

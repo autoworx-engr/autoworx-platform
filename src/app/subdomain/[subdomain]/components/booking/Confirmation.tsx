@@ -3,6 +3,7 @@ import { CheckCircle2, CalendarPlus, FileText, RotateCcw } from "lucide-react";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
 import { useBooking } from "../../context/BookingContext";
+import toast from "react-hot-toast";
 
 export const Confirmation = () => {
   const {
@@ -13,6 +14,7 @@ export const Confirmation = () => {
     bookingTotals,
     settings,
     resetBooking,
+    estimateId,
   } = useBooking();
 
   const serviceBaseTotal = cart.reduce(
@@ -71,6 +73,20 @@ END:VCALENDAR`;
     a.download = "autoworx-appointment.ics";
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const handleViewEstimate = () => {
+    if (!estimateId) {
+      toast.error("Estimate is not ready yet. Please try again in a moment.");
+      return;
+    }
+
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
+    const publicInvoiceUrl = baseUrl
+      ? `${baseUrl}/public-invoice/${estimateId}`
+      : `/public-invoice/${estimateId}`;
+
+    window.location.assign(publicInvoiceUrl);
   };
 
   return (
@@ -203,7 +219,11 @@ END:VCALENDAR`;
         <Button variant="outline" onClick={generateICS} className="gap-2">
           <CalendarPlus className="w-4 h-4" /> Add to Calendar
         </Button>
-        <Button variant="outline" className="gap-2">
+        <Button
+          variant="outline"
+          className="gap-2"
+          onClick={handleViewEstimate}
+        >
           <FileText className="w-4 h-4" /> View Estimate
         </Button>
         <Button onClick={resetBooking} className="gap-2">

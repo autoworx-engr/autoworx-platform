@@ -39,6 +39,7 @@ import {
 import toast from "react-hot-toast";
 import PhoneInput from "@/components/PhoneInput";
 import { SlimInput } from "@/components/SlimInput";
+import { SlimTextarea } from "@/components/SlimTextarea";
 
 const TIMER_SECONDS = 600; // 10 min
 
@@ -58,6 +59,7 @@ export const Checkout = () => {
     setSelectedSlot,
     setCustomerInfo,
     setBookingTotals,
+    setEstimateId,
     isReturningClient,
     setIsReturningClient,
     settings,
@@ -339,6 +341,8 @@ export const Checkout = () => {
         notes: form.notes,
       });
 
+      setEstimateId(response?.data?.estimateId ?? null);
+
       setIsReturningClient(true);
       toast.success(response?.message || "Booking created successfully");
 
@@ -602,7 +606,7 @@ export const Checkout = () => {
         </div>
 
         {/* OTP for returning clients — shown right after phone lookup */}
-        {isReturningClient && showOtp && !otpVerified && (
+        {/* {isReturningClient && showOtp && !otpVerified && (
           <div className="rounded-xl border bg-card p-4 space-y-3 text-center">
             <Shield className="w-8 h-8 mx-auto text-primary" />
             <p className="text-sm font-medium">
@@ -633,10 +637,10 @@ export const Checkout = () => {
               </p>
             )}
           </div>
-        )}
+        )} */}
 
         {/* Remaining fields — shown after phone lookup (or OTP verified for returning) */}
-        {phoneLookedUp && (!isReturningClient || otpVerified) && (
+        {phoneLookedUp && (true || !isReturningClient || otpVerified) && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <SlimInput
@@ -668,7 +672,7 @@ export const Checkout = () => {
           </div>
         )}
 
-        {phoneLookedUp && (!isReturningClient || otpVerified) && (
+        {phoneLookedUp && (true || !isReturningClient || otpVerified) && (
           <>
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider pt-2">
               Vehicle Information
@@ -679,6 +683,7 @@ export const Checkout = () => {
                   id="year"
                   name="vehicleYear"
                   label="Year"
+                  required
                   labelClassName="text-xs font-medium"
                   className="h-10 text-sm font-normal rounded-md border-input bg-background px-3 py-2"
                   value={form.vehicleYear}
@@ -691,6 +696,7 @@ export const Checkout = () => {
                   id="make"
                   name="vehicleMake"
                   label="Make"
+                  required
                   labelClassName="text-xs font-medium"
                   className="h-10 text-sm font-normal rounded-md border-input bg-background px-3 py-2"
                   value={form.vehicleMake}
@@ -703,6 +709,7 @@ export const Checkout = () => {
                   id="model"
                   name="vehicleModel"
                   label="Model"
+                  required
                   labelClassName="text-xs font-medium"
                   className="h-10 text-sm font-normal rounded-md border-input bg-background px-3 py-2"
                   value={form.vehicleModel}
@@ -713,16 +720,16 @@ export const Checkout = () => {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="notes" className="text-xs">
-                Notes
-              </Label>
-              <Textarea
+              <SlimTextarea
                 id="notes"
+                name="notes"
+                label="Notes"
+                labelClassName="text-xs font-medium"
                 value={form.notes}
                 onChange={(e) => update("notes", e.target.value)}
                 placeholder="Any special requests..."
                 rows={3}
-                className="outline-none focus:border-[#6571FF]/60 focus:ring-2 focus:ring-[#6571FF]/40"
+                className="text-sm font-normal rounded-md"
               />
             </div>
 
