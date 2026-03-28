@@ -115,7 +115,14 @@ export async function POST(req: NextRequest) {
           include: { shop: true },
         });
 
-        const companyId = shopBooking?.shop?.companyId ?? 1;
+        if (!shopBooking || !shopBooking.shop?.companyId) {
+          return NextResponse.json(
+            { message: "No matching virtual shop booking" },
+            { status: 200 },
+          );
+        }
+
+        const companyId = shopBooking.shop.companyId;
         const invoiceId = shopBooking?.invoiceId ?? null;
 
         // Create a minimal payment record

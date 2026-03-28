@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { format, addMinutes, parse } from "date-fns";
 import { useBooking } from "../../context/BookingContext";
-import { CustomerInfo } from "../../data/types";
+import { BookingTotals, CustomerInfo } from "../../data/types";
 import {
   Dialog,
   DialogContent,
@@ -51,13 +51,13 @@ export const Checkout = () => {
     setStep,
     cart,
     addToCart,
-    cartTotal,
     cartDurationMinutes,
     selectedDate,
     setSelectedDate,
     selectedSlot,
     setSelectedSlot,
     setCustomerInfo,
+    setBookingTotals,
     isReturningClient,
     setIsReturningClient,
     settings,
@@ -82,6 +82,9 @@ export const Checkout = () => {
   const [phoneLookedUp, setPhoneLookedUp] = useState(!isReturningClient);
   const [showPayNowModal, setShowPayNowModal] = useState(false);
   const [createdBookingId, setCreatedBookingId] = useState<string>("");
+  const [serverDepositRequired, setServerDepositRequired] = useState<
+    number | null
+  >(null);
   const hasHandledStripeReturn = useRef(false);
   const [form, setForm] = useState<CustomerInfo>({
     fullName: "",
@@ -168,6 +171,8 @@ export const Checkout = () => {
         selectedDate?: string;
         selectedSlot?: any;
         customerInfo?: CustomerInfo;
+        bookingTotals?: BookingTotals;
+        depositRequired?: number;
         cart?: Array<{
           service: any;
           vehicleType: any;
@@ -189,6 +194,14 @@ export const Checkout = () => {
 
       if (snapshot.customerInfo) {
         setCustomerInfo(snapshot.customerInfo);
+      }
+
+      if (snapshot.bookingTotals) {
+        setBookingTotals(snapshot.bookingTotals);
+      }
+
+      if (typeof snapshot.depositRequired === "number") {
+        setServerDepositRequired(snapshot.depositRequired);
       }
 
       if (Array.isArray(snapshot.cart) && cart.length === 0) {
@@ -216,6 +229,7 @@ export const Checkout = () => {
     setSelectedDate,
     setSelectedSlot,
     setCustomerInfo,
+    setBookingTotals,
     setStep,
     clearPaymentQueryParams,
   ]);
@@ -291,11 +305,26 @@ export const Checkout = () => {
         model: normalizedModel,
         year: parsedYear,
         notes: form.notes.trim() || undefined,
-        depositAmount: depositAmount > 0 ? depositAmount : undefined,
       });
 
       const client = response?.data?.client;
       const vehicle = response?.data?.vehicle;
+      const apiTotals = response?.data?.totals;
+
+      let normalizedTotals: BookingTotals | null = null;
+      if (apiTotals) {
+        normalizedTotals = {
+          subtotal: Number(apiTotals.subtotal || 0),
+          tax: Number(apiTotals.tax || 0),
+          serviceFee: Number(apiTotals.serviceFee || 0),
+          grandTotal: Number(apiTotals.grandTotal || 0),
+          depositRequired: Number(apiTotals.depositRequired || 0),
+          depositPaid: Number(apiTotals.depositPaid || 0),
+          balanceDue: Number(apiTotals.balanceDue || 0),
+        };
+        setBookingTotals(normalizedTotals);
+        setServerDepositRequired(normalizedTotals.depositRequired ?? 0);
+      }
 
       setCustomerInfo({
         fullName:
@@ -314,13 +343,17 @@ export const Checkout = () => {
       toast.success(response?.message || "Booking created successfully");
 
       const newBookingId = response?.data?.shopBookingId;
-      if (depositAmount > 0 && newBookingId && shop?.companyId) {
+      const depositRequiredNow = Number(normalizedTotals?.depositRequired || 0);
+
+      if (depositRequiredNow > 0 && newBookingId && shop?.companyId) {
         sessionStorage.setItem(
           "virtualShopPendingBooking",
           JSON.stringify({
             bookingId: newBookingId.toString(),
+            depositRequired: depositRequiredNow,
             selectedDate: selectedDate?.toISOString(),
             selectedSlot,
+            bookingTotals: normalizedTotals,
             customerInfo: {
               fullName:
                 client?.firstName || client?.lastName
@@ -371,19 +404,47 @@ export const Checkout = () => {
       : settings.depositAmount;
   const depositValue = Number.isFinite(depositValueRaw) ? depositValueRaw : 0;
 
-  const shopFee = settings.shopFeeEnabled
-    ? Math.round((cartTotal * settings.shopFeePercent) / 100)
+  const serviceBaseTotal = cart.reduce(
+    (sum, item) => sum + Number(item.service.price || 0) * item.quantity,
+    0,
+  );
+  const vehicleExtraTotal = cart.reduce((sum, item) => {
+    const vehicleExtra = Number(
+      item.service.vehicleTypePricing[
+        item.vehicleType.toLowerCase() as keyof typeof item.service.vehicleTypePricing
+      ] || 0,
+    );
+    return sum + vehicleExtra * item.quantity;
+  }, 0);
+  const subtotal = Number((serviceBaseTotal + vehicleExtraTotal).toFixed(2));
+
+  const taxRateRaw = shop?.company?.tax ?? settings.taxPercent;
+  const serviceFeeRateRaw =
+    shop?.company?.serviceFee ?? settings.shopFeePercent;
+
+  const taxRate = Number.isFinite(Number(taxRateRaw)) ? Number(taxRateRaw) : 0;
+  const serviceFeeRate = Number.isFinite(Number(serviceFeeRateRaw))
+    ? Number(serviceFeeRateRaw)
     : 0;
-  const tax = settings.taxEnabled
-    ? Math.round(((cartTotal + shopFee) * settings.taxPercent) / 100)
+
+  const isServiceFeeEnabled =
+    bookingSettings?.isServiceFeeEnabled ?? settings.shopFeeEnabled;
+  const isTaxEnabled = bookingSettings?.isTaxEnabled ?? settings.taxEnabled;
+
+  const shopFee = isServiceFeeEnabled
+    ? Number(((serviceBaseTotal * serviceFeeRate) / 100).toFixed(2))
     : 0;
-  const grandTotal = cartTotal + shopFee + tax;
+  const tax = isTaxEnabled
+    ? Number(((serviceBaseTotal * taxRate) / 100).toFixed(2))
+    : 0;
+  const grandTotal = Number((subtotal + shopFee + tax).toFixed(2));
 
   const depositAmount = isDepositEnabled
     ? depositType === "fixed"
       ? depositValue
       : Number(((grandTotal * depositValue) / 100).toFixed(2))
     : 0;
+  const effectiveDepositDue = serverDepositRequired ?? depositAmount;
 
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
@@ -417,7 +478,7 @@ export const Checkout = () => {
             item.service.vehicleTypePricing[
               item.vehicleType.toLowerCase() as keyof typeof item.service.vehicleTypePricing
             ];
-          const itemPrice = item.service.price + vehicleExtra;
+          const itemPrice = (item.service.price + vehicleExtra) * item.quantity;
           return (
             <div key={item.service.id} className="flex justify-between text-sm">
               <span>
@@ -433,13 +494,13 @@ export const Checkout = () => {
         <div className="border-t pt-2 space-y-1">
           {shopFee > 0 && (
             <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Shop Fee ({settings.shopFeePercent}%)</span>
+              <span>Shop Fee ({serviceFeeRate}%)</span>
               <span>${shopFee}</span>
             </div>
           )}
           {tax > 0 && (
             <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Tax ({settings.taxPercent}%)</span>
+              <span>Tax ({taxRate}%)</span>
               <span>${tax}</span>
             </div>
           )}
@@ -447,10 +508,10 @@ export const Checkout = () => {
             <span>Total</span>
             <span>${grandTotal}</span>
           </div>
-          {depositAmount > 0 && (
+          {effectiveDepositDue > 0 && (
             <div className="flex justify-between text-xs text-primary">
               <span>Deposit Due Now</span>
-              <span>${depositAmount}</span>
+              <span>${effectiveDepositDue}</span>
             </div>
           )}
         </div>
@@ -477,7 +538,7 @@ export const Checkout = () => {
         </div>
       </div>
 
-      {createdBookingId && depositAmount > 0 && (
+      {createdBookingId && effectiveDepositDue > 0 && (
         <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 space-y-3">
           <p className="text-sm font-semibold">Deposit payment required</p>
           <p className="text-xs text-muted-foreground">
@@ -721,7 +782,7 @@ export const Checkout = () => {
 
       {createdBookingId && shop?.companyId && (
         <PayNow
-          due={depositAmount.toString()}
+          due={effectiveDepositDue.toString()}
           shopBookingId={createdBookingId}
           companyId={shop.companyId}
           mode="virtual_shop"

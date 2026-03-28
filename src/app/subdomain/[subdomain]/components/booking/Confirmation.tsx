@@ -1,84 +1,205 @@
-
-import { Button } from '@/components/ui/button';
-import { CheckCircle2, CalendarPlus, FileText, RotateCcw } from 'lucide-react';
-import { format } from 'date-fns';
-import { motion } from 'framer-motion';
-import { useBooking } from '../../context/BookingContext';
+import { Button } from "@/components/ui/button";
+import { CheckCircle2, CalendarPlus, FileText, RotateCcw } from "lucide-react";
+import { format } from "date-fns";
+import { motion } from "framer-motion";
+import { useBooking } from "../../context/BookingContext";
 
 export const Confirmation = () => {
-  const { cart, cartTotal, selectedDate, selectedSlot, customerInfo, settings, resetBooking } = useBooking();
+  const {
+    cart,
+    selectedDate,
+    selectedSlot,
+    customerInfo,
+    bookingTotals,
+    settings,
+    resetBooking,
+  } = useBooking();
 
-  const shopFee = settings.shopFeeEnabled ? Math.round(cartTotal * settings.shopFeePercent / 100) : 0;
-  const tax = settings.taxEnabled ? Math.round((cartTotal + shopFee) * settings.taxPercent / 100) : 0;
-  const grandTotal = cartTotal + shopFee + tax;
+  const serviceBaseTotal = cart.reduce(
+    (sum, item) => sum + Number(item.service.price || 0) * item.quantity,
+    0,
+  );
+  const vehicleExtraTotal = cart.reduce((sum, item) => {
+    const vehicleExtra = Number(
+      item.service.vehicleTypePricing[
+        item.vehicleType.toLowerCase() as keyof typeof item.service.vehicleTypePricing
+      ] || 0,
+    );
+    return sum + vehicleExtra * item.quantity;
+  }, 0);
+
+  const fallbackSubtotal = Number(
+    (serviceBaseTotal + vehicleExtraTotal).toFixed(2),
+  );
+  const fallbackServiceFee = settings.shopFeeEnabled
+    ? Number(((serviceBaseTotal * settings.shopFeePercent) / 100).toFixed(2))
+    : 0;
+  const fallbackTax = settings.taxEnabled
+    ? Number(((serviceBaseTotal * settings.taxPercent) / 100).toFixed(2))
+    : 0;
+
+  const subtotal = bookingTotals
+    ? Number(bookingTotals.subtotal || 0)
+    : fallbackSubtotal;
+  const shopFee = bookingTotals
+    ? Number(bookingTotals.serviceFee || 0)
+    : fallbackServiceFee;
+  const tax = bookingTotals ? Number(bookingTotals.tax || 0) : fallbackTax;
+  const grandTotal = bookingTotals
+    ? Number(bookingTotals.grandTotal || 0)
+    : Number((subtotal + shopFee + tax).toFixed(2));
 
   const generateICS = () => {
     if (!selectedDate || !selectedSlot) return;
-    const dtStart = format(selectedDate, 'yyyyMMdd') + 'T' + selectedSlot.time.replace(':', '') + '00';
+    const dtStart =
+      format(selectedDate, "yyyyMMdd") +
+      "T" +
+      selectedSlot.time.replace(":", "") +
+      "00";
     const ics = `BEGIN:VCALENDAR
 VERSION:2.0
 BEGIN:VEVENT
 DTSTART:${dtStart}
 SUMMARY:Autoworx Appointment
-DESCRIPTION:Services: ${cart.map(i => i.service.title).join(', ')}
+DESCRIPTION:Services: ${cart.map((i) => i.service.title).join(", ")}
 END:VEVENT
 END:VCALENDAR`;
-    const blob = new Blob([ics], { type: 'text/calendar' });
+    const blob = new Blob([ics], { type: "text/calendar" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
-    a.download = 'autoworx-appointment.ics';
+    a.download = "autoworx-appointment.ics";
     a.click();
     URL.revokeObjectURL(url);
   };
 
   return (
     <div className="max-w-lg mx-auto text-center space-y-6 py-8">
-      <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 200 }}>
-        <CheckCircle2 className="w-20 h-20 mx-auto text-primary" strokeWidth={1.5} />
+      <motion.div
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ type: "spring", stiffness: 200 }}
+      >
+        <CheckCircle2
+          className="w-20 h-20 mx-auto text-primary"
+          strokeWidth={1.5}
+        />
       </motion.div>
 
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-        <h2 className="text-3xl font-bold tracking-tight">Booking Confirmed!</h2>
-        <p className="text-muted-foreground mt-1">Your appointment has been scheduled</p>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+      >
+        <h2 className="text-3xl font-bold tracking-tight">
+          Booking Confirmed!
+        </h2>
+        <p className="text-muted-foreground mt-1">
+          Your appointment has been scheduled
+        </p>
       </motion.div>
 
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="rounded-xl border bg-card p-5 text-left space-y-4">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+        className="rounded-xl border bg-card p-5 text-left space-y-4"
+      >
         <div className="space-y-2">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Appointment Details</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            Appointment Details
+          </p>
           <div className="grid grid-cols-2 gap-2 text-sm">
-            <div><span className="text-muted-foreground">Date:</span> <strong>{selectedDate ? format(selectedDate, 'MMM d, yyyy') : ''}</strong></div>
-            <div><span className="text-muted-foreground">Time:</span> <strong>{selectedSlot?.label}</strong></div>
+            <div>
+              <span className="text-muted-foreground">Date:</span>{" "}
+              <strong>
+                {selectedDate ? format(selectedDate, "MMM d, yyyy") : ""}
+              </strong>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Time:</span>{" "}
+              <strong>{selectedSlot?.label}</strong>
+            </div>
           </div>
         </div>
 
         {customerInfo && (
           <div className="space-y-2">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Client</p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Client
+            </p>
             <div className="text-sm space-y-0.5">
               <p className="font-medium">{customerInfo.fullName}</p>
-              <p className="text-muted-foreground">{customerInfo.email} • {customerInfo.phone}</p>
-              {customerInfo.vehicleYear && <p className="text-muted-foreground">{customerInfo.vehicleYear} {customerInfo.vehicleMake} {customerInfo.vehicleModel}</p>}
+              <p className="text-muted-foreground">
+                {customerInfo.email} • {customerInfo.phone}
+              </p>
+              {customerInfo.vehicleYear && (
+                <p className="text-muted-foreground">
+                  {customerInfo.vehicleYear} {customerInfo.vehicleMake}{" "}
+                  {customerInfo.vehicleModel}
+                </p>
+              )}
             </div>
           </div>
         )}
 
         <div className="space-y-2">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Services</p>
-          {cart.map(item => (
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            Services
+          </p>
+          {cart.map((item) => (
             <div key={item.service.id} className="flex justify-between text-sm">
-              <span>{item.service.title}</span>
-              <span className="font-medium">${item.service.price}</span>
+              <span>
+                {item.service.title}{" "}
+                <span className="text-xs text-muted-foreground">
+                  ({item.vehicleType})
+                </span>
+              </span>
+              <span className="font-medium">
+                $
+                {(
+                  (item.service.price +
+                    Number(
+                      item.service.vehicleTypePricing[
+                        item.vehicleType.toLowerCase() as keyof typeof item.service.vehicleTypePricing
+                      ] || 0,
+                    )) *
+                  item.quantity
+                ).toFixed(2)}
+              </span>
             </div>
           ))}
+          <div className="border-t pt-2 space-y-1 text-sm">
+            <div className="flex justify-between text-muted-foreground">
+              <span>Subtotal</span>
+              <span>${subtotal.toFixed(2)}</span>
+            </div>
+            {shopFee > 0 && (
+              <div className="flex justify-between text-muted-foreground">
+                <span>Service Fee</span>
+                <span>${shopFee.toFixed(2)}</span>
+              </div>
+            )}
+            {tax > 0 && (
+              <div className="flex justify-between text-muted-foreground">
+                <span>Tax</span>
+                <span>${tax.toFixed(2)}</span>
+              </div>
+            )}
+          </div>
           <div className="border-t pt-2 flex justify-between font-bold text-sm">
             <span>Total</span>
-            <span>${grandTotal}</span>
+            <span>${grandTotal.toFixed(2)}</span>
           </div>
         </div>
       </motion.div>
 
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }} className="flex flex-col sm:flex-row gap-3 justify-center">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.6 }}
+        className="flex flex-col sm:flex-row gap-3 justify-center"
+      >
         <Button variant="outline" onClick={generateICS} className="gap-2">
           <CalendarPlus className="w-4 h-4" /> Add to Calendar
         </Button>

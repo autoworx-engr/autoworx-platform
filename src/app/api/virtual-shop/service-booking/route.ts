@@ -572,19 +572,30 @@ export async function GET(req: Request) {
           const taxRate = Number(sb.invoice?.tax || 0);
           const vehicleExtraCost = Number(sb.invoice?.vehicleExtraCost || 0);
           const serviceFeeAmount = Number(sb.invoice?.serviceFee || 0);
+          const grandTotal = Number(sb.invoice?.grandTotal || 0);
 
           const totalServiceCost = subtotal - vehicleExtraCost;
           const taxAmount = (totalServiceCost * taxRate) / 100;
 
           const { shop, ...rest } = sb;
+          const isDepositEnabled = Boolean(
+            shop?.bookingSettings?.isDepositEnabled,
+          );
+          const depositType = shop?.bookingSettings?.depositType;
+          const depositValue = Number(shop?.bookingSettings?.depositValue || 0);
+          const depositRequired = !isDepositEnabled
+            ? 0
+            : depositType === "PERCENTAGE"
+              ? Number(((grandTotal * depositValue) / 100).toFixed(2))
+              : depositValue;
 
           return {
             ...rest,
             subtotal: subtotal,
             tax: taxAmount,
             serviceFee: serviceFeeAmount,
-            total: Number(sb.invoice?.grandTotal || 0),
-            depositRequired: Number(shop?.bookingSettings?.depositValue || 0),
+            total: grandTotal,
+            depositRequired,
             depositPaid: Number(sb.invoice?.deposit || 0),
             balanceDue: Number(sb.invoice?.due || 0),
             services: sb.services.map((srv) => ({

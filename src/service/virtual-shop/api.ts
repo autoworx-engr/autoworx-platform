@@ -7,6 +7,11 @@ export interface ThemeConfig {
   fontFamily?: string;
 }
 
+export interface ShopCompanyPricing {
+  tax?: number | string | null;
+  serviceFee?: number | string | null;
+}
+
 export interface ShopData {
   id?: number;
   storeName: string;
@@ -17,6 +22,7 @@ export interface ShopData {
   themeConfig?: ThemeConfig;
   companyId?: number;
   isActive?: boolean;
+  company?: ShopCompanyPricing | null;
   bookingSettings?: ShopBookingSettingsData | null;
 }
 
@@ -160,6 +166,9 @@ export interface CreateVirtualShopServiceBookingResponse {
       tax: number;
       serviceFee: number;
       grandTotal: number;
+      depositRequired?: number;
+      depositPaid?: number;
+      balanceDue?: number;
     };
   };
 }

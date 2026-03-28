@@ -13,6 +13,11 @@ export async function updateVirtualShopDeposit(
     throw new AppError(400, "shopBookingId and depositAmount are required");
   }
 
+  const incomingDepositAmount = Number(depositAmount);
+  if (!Number.isFinite(incomingDepositAmount) || incomingDepositAmount <= 0) {
+    throw new AppError(400, "depositAmount must be greater than 0");
+  }
+
   return await db.$transaction(async (tx) => {
     // Find the booking
     const booking = await tx.shopBooking.findUnique({
@@ -51,7 +56,10 @@ export async function updateVirtualShopDeposit(
       : depositType === "PERCENTAGE"
         ? (total * depositValue) / 100
         : depositValue;
-    const newDepositPaid = Number(depositAmount);
+    const existingDepositPaid = Number(booking.invoice?.deposit || 0);
+    const newDepositPaid = Number(
+      (existingDepositPaid + incomingDepositAmount).toFixed(2),
+    );
 
     // Validate deposit Paid is not > total
     if (newDepositPaid > total) {
@@ -61,7 +69,8 @@ export async function updateVirtualShopDeposit(
       );
     }
 
-    const newBalanceDue = total - newDepositPaid;
+    const newBalanceDue = Number((total - newDepositPaid).toFixed(2));
+    const wasConfirmed = booking.status === "CONFIRMED";
 
     const newStatus =
       newDepositPaid >= depositRequired ? "CONFIRMED" : "PENDING";
@@ -87,7 +96,7 @@ export async function updateVirtualShopDeposit(
     }
 
     // Send Confirmation via reusable helper
-    if (newStatus === "CONFIRMED") {
+    if (!wasConfirmed && newStatus === "CONFIRMED") {
       await sendBookingConfirmation({
         client: {
           id: booking.client!.id,
