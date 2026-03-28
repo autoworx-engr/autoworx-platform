@@ -8,8 +8,14 @@ export interface PaymentParams {
   invoiceId?: string;
   statementId?: string;
   shopBookingId?: string;
+  paymentId?: string;
   amount: string;
-  payType: "payment" | "deposit" | "statement" | "virtual_shop_deposit";
+  payType:
+    | "payment"
+    | "deposit"
+    | "statement"
+    | "virtual_shop_deposit"
+    | "virtual_shop_gift_card";
   redirectUrl?: string;
 }
 

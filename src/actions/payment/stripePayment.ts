@@ -13,12 +13,13 @@ export const createStripePaymentLink = async ({
   invoiceId,
   statementId,
   shopBookingId,
+  paymentId,
   amount,
   payType,
   redirectUrl,
 }: PaymentParams) => {
   try {
-    if (!invoiceId && !statementId && !shopBookingId) {
+    if (!invoiceId && !statementId && !shopBookingId && !paymentId) {
       throw new Error("Invoice, statement, or booking ID is required");
     }
     const company = await db.company.findFirst({
@@ -56,6 +57,25 @@ export const createStripePaymentLink = async ({
         })
       : null;
 
+    const pendingPayment = paymentId
+      ? await db.payment.findUnique({
+          where: {
+            id: Number(paymentId),
+          },
+          select: {
+            id: true,
+            companyId: true,
+          },
+        })
+      : null;
+
+    if (
+      paymentId &&
+      (!pendingPayment || pendingPayment.companyId !== companyId)
+    ) {
+      throw new Error("Gift card payment session not found");
+    }
+
     // if (!statement) {
     //   throw new Error("Statement not found");
     // }
@@ -81,7 +101,9 @@ export const createStripePaymentLink = async ({
       ? `INVOICE-${invoiceId}`
       : statementId
         ? `STATEMENT-${statementId}`
-        : `BOOKING-${shopBookingId}`;
+        : shopBookingId
+          ? `BOOKING-${shopBookingId}`
+          : `GIFTCARD-${paymentId}`;
 
     const appUrl =
       process.env.NEXT_PUBLIC_APP_URL || env("NEXT_PUBLIC_APP_URL") || "";
@@ -89,7 +111,10 @@ export const createStripePaymentLink = async ({
       url.includes("?") ? `${url}&${query}` : `${url}?${query}`;
 
     const successUrl = redirectUrl
-      ? appendQuery(redirectUrl, "success=true")
+      ? appendQuery(
+          appendQuery(redirectUrl, "success=true"),
+          "session_id={CHECKOUT_SESSION_ID}",
+        )
       : shopBookingId
         ? appendQuery(appUrl, "success=true")
         : `${appUrl}/public-invoice/${invoiceId ?? statementId}?success=true&type=${payType}${statementId ? "&fleet=true" : ""}`;
@@ -126,19 +151,26 @@ export const createStripePaymentLink = async ({
                   amount,
                   payType: "virtual_shop_deposit",
                 })
-              : invoiceId
+              : paymentId
                 ? JSON.stringify({
                     companyId,
-                    invoiceId,
+                    paymentId,
                     amount,
-                    payType,
+                    payType: "virtual_shop_gift_card",
                   })
-                : JSON.stringify({
-                    companyId,
-                    statementId,
-                    amount,
-                    payType: "statement",
-                  }),
+                : invoiceId
+                  ? JSON.stringify({
+                      companyId,
+                      invoiceId,
+                      amount,
+                      payType,
+                    })
+                  : JSON.stringify({
+                      companyId,
+                      statementId,
+                      amount,
+                      payType: "statement",
+                    }),
           },
         },
         success_url: successUrl,

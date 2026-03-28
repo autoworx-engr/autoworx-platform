@@ -19,14 +19,14 @@ export interface GiftCardAmountPresets {
 export interface GiftCardDeliverySettings {
   textEnabled: boolean;
   emailEnabled: boolean;
-  defaultMethod: 'text' | 'email';
+  defaultMethod: "text" | "email";
   scheduledSendEnabled: boolean;
 }
 
 export interface GiftCardDiscount {
   id: string;
   code: string;
-  type: 'percent' | 'fixed';
+  type: "percent" | "fixed";
   value: number;
   expiryDate: string;
   usageLimit: number;
@@ -38,7 +38,29 @@ export interface GiftCardPolicies {
   privacyUrl: string;
 }
 
+export interface GiftCardGatewayInfo {
+  paymentGateway: "STRIPE" | "AUTHORIZE_NET" | "BOTH";
+  hasStripe: boolean;
+  hasAuthorizeNet: boolean;
+}
+
+export interface GiftCardShopInfo {
+  id: number;
+  companyId: number;
+  storeName: string;
+  logoUrl: string | null;
+  bannerUrl: string | null;
+  company: {
+    id: number;
+    name: string;
+    phone: string | null;
+    email: string | null;
+  };
+  gatewayInfo: GiftCardGatewayInfo;
+}
+
 export interface GiftCardSettings {
+  shop: GiftCardShopInfo;
   designs: GiftCardDesign[];
   amountPresets: GiftCardAmountPresets;
   delivery: GiftCardDeliverySettings;
@@ -46,9 +68,9 @@ export interface GiftCardSettings {
   policies: GiftCardPolicies;
 }
 
-export type GiftCardPurchaseType = 'individual' | 'multiple' | 'group';
-export type GiftCardDeliveryMethod = 'text' | 'email';
-export type GiftCardSendTiming = 'instant' | 'scheduled';
+export type GiftCardPurchaseType = "individual" | "multiple" | "group";
+export type GiftCardDeliveryMethod = "text" | "email";
+export type GiftCardSendTiming = "instant" | "scheduled";
 
 export interface GiftCardPurchaseData {
   designId: string;
@@ -82,28 +104,28 @@ export interface GiftCardRecord {
   buyerName: string;
   recipientName: string;
   deliveryMethod: GiftCardDeliveryMethod;
-  status: 'active' | 'delivered' | 'redeemed' | 'cancelled';
+  status: "active" | "delivered" | "redeemed" | "cancelled";
   purchasedAt: string;
   deliveredAt: string | null;
 }
 
 export const initialPurchaseData: GiftCardPurchaseData = {
-  designId: '',
-  purchaseType: 'individual',
+  designId: "",
+  purchaseType: "individual",
   amount: 0,
-  discountCode: '',
+  discountCode: "",
   discountApplied: null,
   sendToSelf: false,
-  deliveryMethod: 'email',
-  sendTiming: 'instant',
+  deliveryMethod: "email",
+  sendTiming: "instant",
   scheduledDate: null,
-  scheduledTime: '09:00',
-  recipientName: '',
-  recipientContact: '',
-  personalMessage: '',
+  scheduledTime: "09:00",
+  recipientName: "",
+  recipientContact: "",
+  personalMessage: "",
   a2pConsent: false,
   purchaseConsent: false,
-  buyerName: '',
-  buyerEmail: '',
-  buyerPhone: '',
+  buyerName: "",
+  buyerEmail: "",
+  buyerPhone: "",
 };

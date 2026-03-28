@@ -54,15 +54,28 @@ export async function getPayments(): Promise<ReturnPayment[]> {
   });
 
   return payments.map((payment) => {
+    const notes = parsePaymentNotes(payment.notes);
+
+    const invoiceClientName =
+      `${payment?.invoice?.client?.firstName || ""} ${payment?.invoice?.client?.lastName || ""}`.trim();
+    const fallbackClientName =
+      typeof notes?.purchaserName === "string"
+        ? notes.purchaserName
+        : typeof notes?.purchaseData?.purchaserName === "string"
+          ? notes.purchaseData.purchaserName
+          : undefined;
+
+    const clientName = invoiceClientName || fallbackClientName || undefined;
+    const fallbackClientId = Number(notes?.purchaserClientId);
+
     return {
       id: payment.id,
-      invoiceId: payment.invoiceId as string,
+      invoiceId: payment.invoiceId || "",
       client: {
-        id: payment?.invoice?.client?.id,
-        name:
-          payment?.invoice?.client?.firstName +
-          " " +
-          payment?.invoice?.client?.lastName,
+        id:
+          payment?.invoice?.client?.id ||
+          (Number.isInteger(fallbackClientId) ? fallbackClientId : undefined),
+        name: clientName,
       },
       vehicle: `${payment?.invoice?.vehicle?.year || ""} ${payment?.invoice?.vehicle?.make || ""} ${payment?.invoice?.vehicle?.model || ""} ${payment?.invoice?.vehicle?.other || ""}`,
       date: payment.date as Date,
@@ -72,11 +85,24 @@ export async function getPayments(): Promise<ReturnPayment[]> {
       refundReason: payment.refundReason ?? undefined,
       refundDate: payment.refundCreatedAt ?? undefined,
       method: getPaymentMethod(payment),
-      paid: Number(payment.invoice?.grandTotal) <= Number(payment.amount),
+      paid: payment.invoice
+        ? Number(payment.invoice?.grandTotal) <= Number(payment.amount)
+        : true,
       paymentType: payment.type,
       cashReceived: payment.cash?.receivedCash || null,
     };
   });
+}
+
+function parsePaymentNotes(
+  notes: string | null | undefined,
+): Record<string, any> {
+  if (!notes) return {};
+  try {
+    return JSON.parse(notes);
+  } catch {
+    return {};
+  }
 }
 
 function getPaymentMethod(payment: any) {

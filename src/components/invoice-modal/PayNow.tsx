@@ -38,6 +38,7 @@ export function PayNow({
   invoiceId,
   statementId,
   shopBookingId,
+  paymentId,
   mode = "invoice",
   companyId,
   open,
@@ -49,7 +50,8 @@ export function PayNow({
   invoiceId?: string;
   statementId?: string;
   shopBookingId?: string;
-  mode?: "invoice" | "statement" | "virtual_shop";
+  paymentId?: string;
+  mode?: "invoice" | "statement" | "virtual_shop" | "virtual_shop_gift_card";
   companyId: number;
   open: boolean;
   setOpen: any;
@@ -59,13 +61,19 @@ export function PayNow({
   const [amount, setAmount] = useState(due);
   const [isLoading, setIsLoading] = useState(false);
   const [payType, setPayType] = useState<
-    "payment" | "deposit" | "statement" | "virtual_shop_deposit"
+    | "payment"
+    | "deposit"
+    | "statement"
+    | "virtual_shop_deposit"
+    | "virtual_shop_gift_card"
   >(() =>
     mode === "statement"
       ? "statement"
       : mode === "virtual_shop"
         ? "virtual_shop_deposit"
-        : "payment",
+        : mode === "virtual_shop_gift_card"
+          ? "virtual_shop_gift_card"
+          : "payment",
   );
   const [selectedGateway, setSelectedGateway] = useState<
     "STRIPE" | "AUTHORIZE_NET"
@@ -87,6 +95,8 @@ export function PayNow({
       setPayType("statement");
     } else if (mode === "virtual_shop") {
       setPayType("virtual_shop_deposit");
+    } else if (mode === "virtual_shop_gift_card") {
+      setPayType("virtual_shop_gift_card");
     } else {
       setPayType("payment");
     }
@@ -229,6 +239,14 @@ export function PayNow({
             payType: "virtual_shop_deposit",
             redirectUrl: window.location.href,
           });
+        } else if (mode === "virtual_shop_gift_card") {
+          result = await createStripePaymentLink({
+            amount,
+            paymentId: paymentId!,
+            companyId,
+            payType: "virtual_shop_gift_card",
+            redirectUrl: window.location.href,
+          });
         } else {
           result = await createStripePaymentLink({
             amount,
@@ -257,6 +275,13 @@ export function PayNow({
             shopBookingId: shopBookingId!,
             companyId,
             payType: "virtual_shop_deposit",
+          });
+        } else if (mode === "virtual_shop_gift_card") {
+          result = await createAuthorizeNetPaymentLink({
+            amount,
+            paymentId: paymentId!,
+            companyId,
+            payType: "virtual_shop_gift_card",
           });
         } else {
           result = await createAuthorizeNetPaymentLink({
@@ -347,7 +372,9 @@ export function PayNow({
                 ? "Make Statement Payment"
                 : mode === "virtual_shop"
                   ? "Pay Booking Deposit"
-                  : `Make ${payType === "payment" ? "Payment" : "Deposit"}`}
+                  : mode === "virtual_shop_gift_card"
+                    ? "Pay Gift Card"
+                    : `Make ${payType === "payment" ? "Payment" : "Deposit"}`}
             </DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -396,9 +423,11 @@ export function PayNow({
                       ? "Statement amount"
                       : mode === "virtual_shop"
                         ? "Booking deposit amount"
-                        : payType === "deposit"
-                          ? "Enter deposit amount"
-                          : "Enter payment amount"
+                        : mode === "virtual_shop_gift_card"
+                          ? "Gift card amount"
+                          : payType === "deposit"
+                            ? "Enter deposit amount"
+                            : "Enter payment amount"
                   }
                   className="w-full rounded-lg border px-2 py-2"
                   onChange={(e) => {

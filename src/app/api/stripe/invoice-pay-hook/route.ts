@@ -119,6 +119,57 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: true, ...result });
       }
 
+      if (
+        paymentData.payType === "virtual_shop_gift_card" &&
+        paymentData.paymentId
+      ) {
+        const pendingPaymentId = Number(paymentData.paymentId);
+
+        if (!Number.isInteger(pendingPaymentId) || pendingPaymentId <= 0) {
+          return NextResponse.json(
+            { message: "Invalid payment session" },
+            { status: 200 },
+          );
+        }
+
+        const pendingPayment = await db.payment.findUnique({
+          where: { id: pendingPaymentId },
+          select: {
+            id: true,
+            companyId: true,
+          },
+        });
+
+        if (!pendingPayment) {
+          return NextResponse.json(
+            { message: "Payment session not found" },
+            { status: 200 },
+          );
+        }
+
+        await db.payment.update({
+          where: { id: pendingPaymentId },
+          data: {
+            date: new Date(),
+            gateway: "STRIPE",
+          },
+        });
+
+        await db.stripePayment.create({
+          data: {
+            stripePaymentIntentId: paymentIntent.id,
+            companyId: pendingPayment.companyId,
+            paymentId: pendingPayment.id,
+            invoiceId: null,
+          },
+        });
+
+        return NextResponse.json(
+          { message: "Gift card payment recorded" },
+          { status: 200 },
+        );
+      }
+
       // Handle fleet statement payments
       if (paymentData.payType === "statement" && paymentData.statementId) {
         // Get all invoices in the statement

@@ -80,7 +80,9 @@ export default function PaymentTable({
 
         const isSearchMatch = search
           ? item.vehicle?.toLowerCase().includes(search.toLowerCase()) ||
-            item.invoiceId.toLowerCase().includes(search.toLowerCase()) ||
+            (item.invoiceId || "")
+              .toLowerCase()
+              .includes(search.toLowerCase()) ||
             item.client.name?.toLowerCase().includes(search.toLowerCase())
           : true;
 
@@ -94,7 +96,7 @@ export default function PaymentTable({
           isSearchMatch &&
           (paymentMethod === "Refund" ? isRefundMatch : isPaymentMethodMatch)
         );
-      })
+      }),
     );
   }, [data, dateRange, amount, paidStatus, paymentMethod, search]);
 
@@ -115,7 +117,7 @@ export default function PaymentTable({
 
   const paginatedData = filteredData.slice(
     (currentPage - 1) * pageSize,
-    currentPage * pageSize
+    currentPage * pageSize,
   );
 
   return (
@@ -166,11 +168,15 @@ export default function PaymentTable({
                     }`}
                   >
                     <td className="border-b px-4 py-2">
-                      <InvoiceModal
-                        invoiceId={item.invoiceId}
-                        buttonChild={<button>{item.invoiceId}</button>}
-                        buttonChildClassName="text-blue-500"
-                      />
+                      {item.invoiceId ? (
+                        <InvoiceModal
+                          invoiceId={item.invoiceId}
+                          buttonChild={<button>{item.invoiceId}</button>}
+                          buttonChildClassName="text-blue-500"
+                        />
+                      ) : (
+                        <span className="text-slate-500">Gift Card</span>
+                      )}
                     </td>
                     <td className="border-b px-4 py-2">
                       <Link
@@ -236,12 +242,18 @@ export default function PaymentTable({
             >
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <Link
-                    href={`/dashboard/estimate/view/${item.invoiceId}`}
-                    className="text-lg font-semibold text-[#6571FF]"
-                  >
-                    {item.invoiceId}
-                  </Link>
+                  {item.invoiceId ? (
+                    <Link
+                      href={`/dashboard/estimate/view/${item.invoiceId}`}
+                      className="text-lg font-semibold text-[#6571FF]"
+                    >
+                      {item.invoiceId}
+                    </Link>
+                  ) : (
+                    <p className="text-lg font-semibold text-slate-500">
+                      Gift Card
+                    </p>
+                  )}
                   <p className="font-semibold text-[#66738C]">
                     {FormatUtcToTimezone(item.date, timezone, "MM/DD/YYYY")}
                   </p>

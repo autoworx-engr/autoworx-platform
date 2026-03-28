@@ -83,11 +83,15 @@ export async function POST(req: NextRequest) {
         | "invoice"
         | "statement"
         | "virtual_shop_deposit"
+        | "virtual_shop_gift_card"
         | "unknown" = "unknown";
 
       if (rawInvoiceNumber.startsWith("VSB-DEP-")) {
         sourceType = "virtual_shop_deposit";
         targetId = rawInvoiceNumber.substring(8);
+      } else if (rawInvoiceNumber.startsWith("VSGC-")) {
+        sourceType = "virtual_shop_gift_card";
+        targetId = rawInvoiceNumber.substring(5);
       } else if (rawInvoiceNumber.startsWith("DEP-")) {
         sourceType = "deposit";
         targetId = rawInvoiceNumber.substring(4);
@@ -154,6 +158,56 @@ export async function POST(req: NextRequest) {
         });
 
         return NextResponse.json({ success: true, ...result });
+      }
+
+      if (sourceType === "virtual_shop_gift_card") {
+        const pendingPaymentId = Number(targetId);
+
+        if (!Number.isInteger(pendingPaymentId) || pendingPaymentId <= 0) {
+          return NextResponse.json(
+            { message: "Invalid gift card payment reference" },
+            { status: 200 },
+          );
+        }
+
+        const pendingPayment = await db.payment.findUnique({
+          where: { id: pendingPaymentId },
+          select: {
+            id: true,
+            companyId: true,
+          },
+        });
+
+        if (!pendingPayment) {
+          return NextResponse.json(
+            { message: "Gift card payment session not found" },
+            { status: 200 },
+          );
+        }
+
+        await db.payment.update({
+          where: {
+            id: pendingPaymentId,
+          },
+          data: {
+            date: new Date(),
+            gateway: "AUTHORIZE_NET",
+          },
+        });
+
+        await db.authorizeNetPayment.create({
+          data: {
+            transactionId,
+            companyId: pendingPayment.companyId,
+            paymentId: pendingPayment.id,
+            invoiceId: null,
+          },
+        });
+
+        return NextResponse.json(
+          { message: "Gift card payment recorded" },
+          { status: 200 },
+        );
       }
 
       // First, try treating it as an invoice payment (Stripe individual invoice logic)
