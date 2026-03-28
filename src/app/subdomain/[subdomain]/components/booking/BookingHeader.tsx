@@ -4,23 +4,22 @@ import { Button } from "@/components/ui/button";
 import { Gift, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useShopInfo } from "@/hooks/virtual-shop/useShopInfo";
 
 interface BookingHeaderProps {
-  shopName?: string;
-  phone?: string;
-  address?: string;
+  
+ 
   rightElement?: "booking" | "giftcard";
   children?: React.ReactNode;
 }
 
 export const BookingHeader = ({
-  shopName = "ABC Business",
-  phone = "(555) 123-4567",
-  address = "123 Main St, Springfield",
+  
   rightElement,
   children,
 }: BookingHeaderProps) => {
-  const { shopId } = useParams();
+  const { shopName: hookShopName } = useShopInfo();
+  const shopName =  hookShopName;
 
   return (
     <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg border-b">
@@ -39,7 +38,7 @@ export const BookingHeader = ({
               {shopName}
             </span>
             <p className="text-[11px] text-muted-foreground leading-tight">
-              {phone} · {address}
+              phone . address
             </p>
           </div>
         </div>

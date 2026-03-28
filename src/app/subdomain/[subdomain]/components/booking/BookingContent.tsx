@@ -1,6 +1,5 @@
 "use client";
 
-import { useParams } from "next/navigation";
 import { useEffect } from "react";
 import { useBooking } from "../../context/BookingContext";
 import { ProgressBar } from "./ProgressBar";
@@ -10,10 +9,9 @@ import { Checkout } from "./Checkout";
 import { Confirmation } from "./Confirmation";
 import { CartDrawer } from "./CartDrawer";
 import { BookingHeader } from "./BookingHeader";
-import {
-  useGetShopBySlug,
-  useGetShopCategories,
-} from "@/hooks/virtual-shop/service/useShopService";
+import { useShopInfo } from "@/hooks/virtual-shop/useShopInfo";
+import ShopNotFound from "../giftcards/ShopNotFound";
+import { useGetShopCategories } from "@/hooks/virtual-shop/service/useShopService";
 import { useGetShopServices } from "@/hooks/virtual-shop/service/useShopService";
 import CarLoading from "@/components/common/CarLoading";
 import { Service, ServiceCategory } from "../../data/types";
@@ -44,7 +42,7 @@ const normalizeCategory = (raw: string[] = []): ServiceCategory => {
   );
 };
 
-const BookingContent = () => {
+const BookingContent = ({ initialShop }: { initialShop?: any }) => {
   const {
     step,
     setServices,
@@ -57,14 +55,11 @@ const BookingContent = () => {
     setCategories,
     selectedCategory,
   } = useBooking();
-  const params = useParams();
-  const slug = String(params?.subdomain || "");
-
   const {
-    data: shop,
+    shop,
     isPending: isShopLoading,
     isError: isShopError,
-  } = useGetShopBySlug(slug);
+  } = useShopInfo(initialShop);
 
   // Fetch categories from API
   const { data: categoriesData } = useGetShopCategories(shop?.id);
@@ -126,14 +121,22 @@ const BookingContent = () => {
     setServices(mapped);
   }, [shopServices, setServices, isShopError, isServicesError, shop?.id]);
 
-  if (isShopLoading || (shop?.id && isServicesLoading)) {
-    return <CarLoading />;
+  if (isShopLoading && !shop) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <CarLoading />
+      </div>
+    );
+  }
+
+  if (!shop && !isShopLoading) {
+    return <ShopNotFound />;
   }
 
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <BookingHeader rightElement="giftcard" shopName={shop?.storeName}>
+      <BookingHeader rightElement="giftcard">
         <ProgressBar current={step} />
       </BookingHeader>
 

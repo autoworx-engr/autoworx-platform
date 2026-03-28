@@ -10,11 +10,12 @@ interface Props {
   design: GiftCardDesign | undefined;
   policies: GiftCardPolicies;
   shopName: string;
+  isPending?: boolean;
   onConsentChange: (v: boolean) => void;
   onConfirm: () => void;
 }
 
-const GiftCardCheckout = ({ data, design, policies, shopName, onConsentChange, onConfirm }: Props) => {
+const GiftCardCheckout = ({ data, design, policies, shopName, isPending = false, onConsentChange, onConfirm }: Props) => {
   const discountAmount = data.discountApplied
     ? data.discountApplied.type === 'percent'
       ? data.amount * (data.discountApplied.value / 100)
@@ -115,10 +116,11 @@ const GiftCardCheckout = ({ data, design, policies, shopName, onConsentChange, o
       {/* Pay */}
       <Button
         className="w-full h-12 gap-2 text-base"
-        disabled={!data.purchaseConsent}
+        disabled={!data.purchaseConsent || isPending}
         onClick={onConfirm}
       >
-        <CreditCard className="w-4 h-4" /> Pay ${total.toFixed(2)}
+        <CreditCard className="w-4 h-4" /> 
+        {isPending ? 'Processing...' : `Pay $${total.toFixed(2)}`}
       </Button>
     </div>
   );
