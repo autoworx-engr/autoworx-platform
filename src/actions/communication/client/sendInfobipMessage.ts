@@ -5,6 +5,7 @@ import { getCompanyId } from "@/lib/companyId";
 import { db } from "@/lib/db";
 import getUser from "@/lib/getUser";
 import { normalizeUSPhoneNumber } from "@/lib/normalizeUSPhoneNumber";
+import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-service";
 import { revalidatePath } from "next/cache";
 import { updateNewSMSChatTrack } from "./chat-track";
 import { getInfobipConfig, getInfobipConfigById } from "./createInfobipConfig";
@@ -33,6 +34,7 @@ export async function sendInfobipMessage({
   attachments,
   isSalesAgent = false,
   userId,
+  systemCall = false,
 }: {
   companyId?: number;
   message: string;
@@ -40,8 +42,19 @@ export async function sendInfobipMessage({
   attachments: { url: string; name: string }[];
   isSalesAgent?: boolean;
   userId?: number;
+  /** Pass true when calling from a webhook/system context with no user session. */
+  systemCall?: boolean;
 }) {
   try {
+    const resolvedCompanyId = companyId ?? (await getCompanyId());
+    const entitlements = await getCompanyEntitlements(resolvedCompanyId);
+    if (!entitlements.canUseSms) {
+      return {
+        success: false,
+        error: "SMS is not enabled for this plan",
+      };
+    }
+
     let infobipConfig = companyId
       ? (await getInfobipConfigById(companyId)).data
       : (await getInfobipCredentials()).data;
@@ -71,7 +84,7 @@ export async function sendInfobipMessage({
       user = await db.user.findFirst({
         where: { id: userId },
       });
-    } else {
+    } else if (!systemCall) {
       user = await getUser();
     }
 
@@ -280,6 +293,17 @@ export async function sendInfobipMessage({
           isSalesAgent,
         },
       });
+
+      if (client && client?.isSalesAgent) {
+        await db.client.update({
+          where: {
+            id: clientId,
+          },
+          data: {
+            isSalesAgent: false,
+          },
+        });
+      }
 
       const processedAttachments = [];
       for (const file of attachments) {

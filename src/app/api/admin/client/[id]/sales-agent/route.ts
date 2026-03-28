@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-service";
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -108,6 +109,19 @@ export async function PATCH(
       );
     }
 
+    if (isSalesAgent === true) {
+      const entitlements = await getCompanyEntitlements(company.id);
+      if (!entitlements.awxSalesAgent) {
+        return NextResponse.json(
+          {
+            message:
+              "Sales Agent is not available on the current plan for this company",
+          },
+          { status: 403 },
+        );
+      }
+    }
+
     // If turning ON client but company is OFF
     if (isSalesAgent === true && company.isSalesAgent === false) {
       await db.$transaction([
@@ -127,7 +141,7 @@ export async function PATCH(
       });
     }
 
-    revalidatePath("/dashboard/settings/ai-train");
+    revalidatePath("/dashboard/settings/sales-agent");
     revalidatePath("/dashboard/communication/client");
     return NextResponse.json({
       message: "Client sales agent permission updated successfully",

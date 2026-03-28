@@ -88,8 +88,6 @@ export function ClientTagSelector({
       if (tag?.id === id) {
         setTag(undefined!);
       }
-
-      if (setOpen) setOpen(false);
     }
   }
 

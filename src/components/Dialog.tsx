@@ -51,6 +51,7 @@ const DialogContent = React.forwardRef<
           className,
         )}
         asChild={form}
+        onOpenAutoFocus={(e) => e.preventDefault()}
         {...props}
       >
         <Tag>

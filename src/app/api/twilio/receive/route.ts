@@ -1,7 +1,10 @@
 import { db } from "@/lib/db";
+import { getCompanyEntitlements } from "@/lib/platform-billing/entitlement-service";
 import { NextResponse } from "next/server";
 import { twiml } from "twilio";
 import { v4 as uuidv4 } from "uuid";
+
+type DialAttributes = Parameters<twiml.VoiceResponse["dial"]>[0];
 
 /**
  * @swagger
@@ -29,12 +32,9 @@ import { v4 as uuidv4 } from "uuid";
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
-    console.log("🚀 ~ POST ~ formData:", formData);
     const to = formData.get("To") as string;
-    console.log("🚀 ~ POST ~ to:", to);
     //@ts-ignore
     const from = (formData.get("From") ?? "")?.split(":")[1] as string; // Ensure correct retrieval
-    console.log("🚀 ~ POST ~ from:", from);
 
     if (!to || !from) {
       return NextResponse.json(
@@ -58,13 +58,23 @@ export async function POST(request: Request) {
         },
       },
     });
-    console.log("🚀 ~ POST ~ twilioCredentials:", twilioCredentials);
 
     if (!twilioCredentials) {
       return NextResponse.json(
         { error: "Twilio credentials not found" },
         { status: 400 },
       );
+    }
+
+    const entitlements = await getCompanyEntitlements(
+      twilioCredentials.companyId,
+    );
+    if (!entitlements.canUseVoice) {
+      const voiceResponse = new twiml.VoiceResponse();
+      voiceResponse.reject();
+      return new Response(voiceResponse.toString(), {
+        headers: { "Content-Type": "text/xml" },
+      });
     }
 
     const client = await db.client.findFirst({
@@ -75,10 +85,8 @@ export async function POST(request: Request) {
         },
       },
     });
-    console.log("🚀 ~ POST ~ client:", client);
 
     let callId = uuidv4();
-    console.log("🚀 ~ POST ~ callId:", callId);
     // Prepare database insert for ClientCall
     await db.clientCall.create({
       data: {
@@ -94,11 +102,17 @@ export async function POST(request: Request) {
     });
 
     const voiceResponse = new twiml.VoiceResponse();
+    const recordingOptions: Partial<DialAttributes> = entitlements.callRecording
+      ? {
+          record: "record-from-answer" as const,
+          recordingStatusCallback: `${process.env.NEXT_PUBLIC_APP_URL}/api/twilio/call-recording?callId=${callId}`,
+          recordingStatusCallbackMethod: "POST",
+        }
+      : {};
+
     const dial = voiceResponse.dial({
       callerId: twilioCredentials.phoneNumber,
-      record: "record-from-answer",
-      recordingStatusCallback: `${process.env.NEXT_PUBLIC_APP_URL}/api/twilio/call-recording?callId=${callId}`,
-      recordingStatusCallbackMethod: "POST",
+      ...recordingOptions,
       // Required for whisper: caller keeps hearing ringing while the whisper
       // message plays to the callee; call is only bridged after whisper finishes.
       answerOnBridge: true,

@@ -10,6 +10,7 @@ import {
   Column,
   Invoice,
   InvoiceTemplate,
+  RequestEstimate,
   Vehicle,
 } from "@prisma/client";
 import { customAlphabet } from "nanoid";
@@ -29,6 +30,7 @@ export default function Header({
   isAllServicesCompleted,
   isEdit = false,
   selectedTemplate,
+  requestEstimate,
 }: {
   id?: string;
   vehicle?: Vehicle;
@@ -38,6 +40,7 @@ export default function Header({
   isAllServicesCompleted?: boolean;
   isEdit?: boolean;
   selectedTemplate?: InvoiceTemplate | null;
+  requestEstimate?: any;
 }) {
   const {
     invoiceId,
@@ -69,15 +72,20 @@ export default function Header({
   useEffect(() => {
     if (client) {
       const params = new URLSearchParams(searchParams?.toString());
+      const existingClientId = params.get("clientId");
+      if (existingClientId === client.id.toString()) return;
       params.set("clientId", client.id.toString());
-      router.push(`${pathname}?${params.toString()}`);
+      router.replace(`${pathname}?${params.toString()}`);
     }
   }, []);
+
   useEffect(() => {
     if (template) {
       const params = new URLSearchParams(searchParams?.toString());
+      const existingTemplateId = params.get("templateId");
+      if (existingTemplateId === template.id) return;
       params.set("templateId", template?.id);
-      router.push(`${pathname}?${params.toString()}`);
+      router.replace(`${pathname}?${params.toString()}`);
     }
   }, [template]);
 
@@ -119,7 +127,10 @@ export default function Header({
       </div>
 
       {!isTemplate && (
-        <CreateEstimateActionsButtons status={status! || selectedStatus} />
+        <CreateEstimateActionsButtons
+          status={status! || selectedStatus}
+          requestEstimate={requestEstimate}
+        />
       )}
 
       <div className="flex basis-full flex-wrap items-end gap-3">

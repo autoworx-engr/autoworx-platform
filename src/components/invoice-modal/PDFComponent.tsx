@@ -155,7 +155,11 @@ const styles = StyleSheet.create({
   regular: { fontFamily: "Poppins" },
   italic: { fontFamily: "Poppins", fontStyle: "italic" },
   bold: { fontFamily: "Poppins", fontWeight: "bold" },
-  boldItalic: { fontFamily: "Poppins", fontWeight: "bold", fontStyle: "italic" },
+  boldItalic: {
+    fontFamily: "Poppins",
+    fontWeight: "bold",
+    fontStyle: "italic",
+  },
   extraBold: { fontFamily: "Poppins", fontWeight: 800 },
   lightItalic: { fontFamily: "Poppins", fontWeight: 300, fontStyle: "italic" },
   fontSize10: { fontSize: 9 },
@@ -471,7 +475,7 @@ const PDFComponent = function PDF({
   signImageUrl,
 }: PDFComponentProps) {
   const [damageNotes, setDamageNotes] = useState<string>(
-    "There is no damage notes"
+    "There is no damage notes",
   );
   const [inspectionData, setInspectionData] = useState<InvoiceInspection[]>([]);
 
@@ -542,7 +546,7 @@ const PDFComponent = function PDF({
       if (pct === 0) return "0%";
       const amount = formatCurrency(
         (Number((invoice.subtotal as any) - (invoice.discount as any)) * pct) /
-        100,
+          100,
       );
       return `${pct}% (${amount})`;
     }
@@ -626,8 +630,16 @@ const PDFComponent = function PDF({
             <Text style={styles.infoBlockContent}>
               {moment(invoice.createdAt).format("MMM DD, YYYY")}
             </Text>
-            <View style={{ flexDirection: "row", alignItems: "center", marginTop: 4 }}>
-              <Text style={[styles.infoBlockContent, { marginRight: 6 }]}>Bill Status:</Text>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                marginTop: 4,
+              }}
+            >
+              <Text style={[styles.infoBlockContent, { marginRight: 6 }]}>
+                Bill Status:
+              </Text>
               <View
                 style={[
                   styles.statusBadge,
@@ -637,7 +649,9 @@ const PDFComponent = function PDF({
                 <Text
                   style={[
                     { fontSize: 9, fontWeight: 700 },
-                    isPaid ? { color: colors.success } : { color: colors.primary },
+                    isPaid
+                      ? { color: colors.success }
+                      : { color: colors.primary },
                   ]}
                 >
                   {isPaid ? "PAID" : invoice.column?.title || "—"}
@@ -679,8 +693,7 @@ const PDFComponent = function PDF({
                 .filter((f) => totalsMap.has(f))
                 .map((field, idx, arr) => {
                   const value = totalsMap.get(field);
-                  const isEmphasis =
-                    field === "grand total" || field === "due";
+                  const isEmphasis = field === "grand total" || field === "due";
                   return (
                     <View
                       key={field}
@@ -745,9 +758,11 @@ const PDFComponent = function PDF({
           <View style={styles.footerBlock}>
             <Text style={styles.footerLabel}>Prepared by</Text>
             <Text style={styles.footerValue}>{invoice.company.name}</Text>
-            <Text style={[styles.footerValue, { fontWeight: 600 }]}>
-              {invoice.user.firstName} {invoice.user.lastName}
-            </Text>
+            {invoice?.user && (
+              <Text style={[styles.footerValue, { fontWeight: 600 }]}>
+                {invoice?.user?.firstName} {invoice?.user?.lastName}
+              </Text>
+            )}
           </View>
           <View style={styles.footerSignature}>
             {signImageUrl ? (
@@ -775,7 +790,7 @@ const PDFComponent = function PDF({
             color: colors.textLight,
           }}
         >
-          Thank you for your business · Powered by Autoworx
+          Thank you for your business · Powered by {companyDetails?.name}
         </Text>
       </Page>
     </Document>
@@ -800,14 +815,13 @@ const PDFInvoiceItems = ({
         acc +
         (material && material.sell
           ? parseFloat(material.sell.toString()) *
-          Number(material.quantity ?? 0)
+            Number(material.quantity ?? 0)
           : 0)
       );
     }, 0);
 
     const laborCost = item.labor?.charge
-      ? parseFloat(item.labor?.charge.toString()) *
-      (Number(item.labor.hours) || 0)
+      ? parseFloat(item.labor?.charge.toString()) * Number(item.labor?.hours)
       : 0;
     const totalDiscount =
       item.materials.reduce((acc, material) => {
@@ -840,11 +854,13 @@ const PDFInvoiceItems = ({
               if (!material) return null;
               const lineTotal = material.sell
                 ? parseFloat(material.sell.toString()) *
-                Number(material.quantity ?? 0)
+                  Number(material.quantity ?? 0)
                 : 0;
               return (
                 <View key={index} style={styles.lineItem}>
-                  <Text style={styles.lineItemText}>Material - {material.name}</Text>
+                  <Text style={styles.lineItemText}>
+                    Material - {material.name}
+                  </Text>
                   <Text style={styles.lineItemText}>
                     {formatCurrency(lineTotal)}
                   </Text>
@@ -854,16 +870,12 @@ const PDFInvoiceItems = ({
           </View>
         )}
 
-        {laborCost > 0 && (
-          <View style={styles.lineItem}>
-            <Text style={styles.lineItemText}>
-              Labor - {item.labor ? item.labor.name : "Labor"}
-            </Text>
-            <Text style={styles.lineItemText}>
-              {formatCurrency(laborCost)}
-            </Text>
-          </View>
-        )}
+        <View style={styles.lineItem}>
+          <Text style={styles.lineItemText}>
+            Labor {item.labor ? `-` + item.labor.name : ""}
+          </Text>
+          <Text style={styles.lineItemText}>{formatCurrency(laborCost)}</Text>
+        </View>
         {item.labor?.notes && (
           <Text style={[styles.inspectionNote, { marginTop: 2 }]}>
             Description - {item.labor.notes}

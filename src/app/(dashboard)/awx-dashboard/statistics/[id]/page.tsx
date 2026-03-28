@@ -1,10 +1,11 @@
-import ChartData from "@/app/(dashboard)/dashboard/components/ChartData";
 import Avatar from "@/components/Avatar";
 import { db } from "@/lib/db";
 import Link from "next/link";
 import CompanyReportSection from "../../components/CompanyReportSection";
 import FeaturePermission from "../../components/FeaturePermission";
 import { ConfigureCommunicationHub } from "./ConfigureCommunicationHub";
+import { CompanyPlanEditor } from "./CompanyPlanEditor";
+import { PlatformPlanToggle } from "./PlatformPlanToggle";
 import { ArrowLeft, Upload } from "lucide-react";
 import moment from "moment";
 import { CannedUploadModal } from "@/app/(dashboard)/dashboard/estimate/canned/CannedUploadModal";
@@ -35,6 +36,15 @@ const Page = async (props: propsType) => {
     include: {
       users: true,
       clients: true,
+    },
+  });
+
+  const subscription = await db.platformSubscription.findUnique({
+    where: { companyId: Number(id) },
+    include: {
+      plan: {
+        include: { features: true },
+      },
     },
   });
 
@@ -237,7 +247,7 @@ const Page = async (props: propsType) => {
                 Subscribed to{" "}
                 <b>
                   <i className="font-extrabold text-[#6571FF] dark:text-[#8b94ff]">
-                    Autoworx Basic Plan
+                    {subscription?.plan?.name ?? "No Platform Plan Assigned"}
                   </i>
                 </b>
               </p>
@@ -258,7 +268,12 @@ const Page = async (props: propsType) => {
               </div>
 
               <div className="mt-4 flex items-center gap-x-4 pt-2">
-                <button
+                <CompanyPlanEditor companyId={Number(id)} />
+                <PlatformPlanToggle
+                  companyId={Number(id)}
+                  initialEnabled={!!company?.enforcePlatformPlan}
+                />
+                {/* <button
                   className="rounded-xl px-4 py-2.5 text-sm font-semibold text-white
                 bg-gradient-to-r from-[#6571FF] to-[#5a66ee]
                 shadow-[0_4px_14px_0_rgba(101,113,255,0.39)]
@@ -271,7 +286,7 @@ const Page = async (props: propsType) => {
                 </button>
                 <button className="rounded-xl border border-slate-400 dark:border-slate-500 bg-white dark:bg-slate-700 px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 transition-all duration-300 hover:bg-slate-50 dark:hover:bg-slate-600">
                   Cancel
-                </button>
+                </button> */}
               </div>
             </div>
             <div className="flex flex-col md:flex-row justify-between">

@@ -44,7 +44,11 @@ const AutomationMain = ({
       {/* Sidebar */}
       <aside className="w-full md:w-1/4">
         <h1 className="mb-6 text-xl font-semibold text-gray-800">Automation</h1>
-        <AutomationSidebar setType={setType} type={type} />
+        <AutomationSidebar
+          setType={setType}
+          type={type}
+          companyId={Number(companyId)}
+        />
       </aside>
 
       <main className="w-full md:w-3/4">{RenderPage()}</main>

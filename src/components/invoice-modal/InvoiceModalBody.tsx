@@ -46,6 +46,7 @@ import {
   Eye,
   FileDown,
   Mail,
+  Calendar,
   MessageCircle,
   MessageCircleMore,
   Printer,
@@ -65,6 +66,7 @@ import WorkOrderModal from "../workorder-modal/WorkOrderModal";
 import { InspectionItems } from "./InspectionItems";
 import { InvoiceItems } from "./InvoiceItems";
 import { PayNow } from "./PayNow";
+import { AppointmentCreateOrEdit } from "../appointment/AppointmentCreateOrEdit";
 
 const DownloadPDF = dynamic(() => import("./DownloadInvoice"), {
   ssr: false,
@@ -88,9 +90,11 @@ type InvoiceData = Invoice & {
 export default function InvoiceModalBody({
   invoiceId,
   isPublic = false,
+  isShowEdit = true,
 }: {
   invoiceId?: string;
   isPublic?: boolean;
+  isShowEdit?: boolean;
 }) {
   const searchParams = useSearchParams();
 
@@ -100,8 +104,6 @@ export default function InvoiceModalBody({
     queryFn: () => getInvoiceModalData(invoiceId!),
     enabled: !!invoiceId,
   });
-
-  // console.log({ isError, error, data });
 
   const [twilioCredentials, setTwilioCredentials] = useState<
     TwilioCredentials | InfobipConfig | null
@@ -116,6 +118,7 @@ export default function InvoiceModalBody({
   const [authorizedNameInput, setAuthorizedNameInput] = useState("");
   const [sigImageURL, setSigImageURL] = useState(null);
   const [showSignaturePad, setShowSignaturePad] = useState(false);
+  const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<
     "estimate" | "attachments" | "inspections"
   >("estimate");
@@ -148,7 +151,7 @@ export default function InvoiceModalBody({
         data.invoice.Refund?.reduce(
           (total: number, refund: Refund) =>
             total + (Number(refund.amount) || 0),
-          0
+          0,
         ) || 0;
 
       setRefundAmount(refundAmount);
@@ -320,7 +323,7 @@ export default function InvoiceModalBody({
     try {
       const file = getFileFromCanvas(
         sigCanvas.current.getCanvas(),
-        `signature-${invoiceId}.png`
+        `signature-${invoiceId}.png`,
       );
 
       const formData = new FormData();
@@ -345,7 +348,7 @@ export default function InvoiceModalBody({
         invoice.id,
         authorizedNameInput,
         data[0],
-        invoice.type
+        invoice.type,
       );
 
       if (response?.type === "success") {
@@ -381,29 +384,34 @@ export default function InvoiceModalBody({
           className="#shadow-lg no-visible-scrollbar relative grid h-full w-full shrink grow-0 flex-col items-center justify-center gap-4 overflow-y-auto rounded-md border bg-background p-6 md:h-[95vh] md:w-[800px] md:flex-row print:block print:h-auto print:w-full print:border-none print:p-0 print:shadow-none"
         >
           {/* Action Buttons */}
-          {!isPublic && (
+          {!isPublic && isShowEdit && (
             <div className="mt-6 flex w-full flex-col items-center gap-3 print:hidden">
               {/* Row 1 — main actions */}
-              <div className="flex flex-wrap items-center justify-center gap-3">
+              <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3">
                 {/* Edit Link */}
-                <Link
-                  className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-5 py-1.5 text-sm font-medium text-white shadow-md shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 md:text-base"
-                  href={`/dashboard/estimate/edit/${invoice.id}?clientId=${invoice.clientId}`}
-                >
-                  <SquarePen className="h-4 w-4" />
-                  <span className="hidden md:inline">Edit</span>
-                </Link>
+                {isShowEdit && (
+                  <Tooltip title="Edit">
+
+                  
+                  <Link
+                    className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-4 py-2 text-sm font-medium text-white shadow-md shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 md:text-base"
+                    href={`/dashboard/estimate/edit/${invoice.id}?clientId=${invoice.clientId}`}
+                  >
+                    <SquarePen className="h-4 w-4 md:h-5 md:w-5" />
+                    {/* <span className="hidden md:inline">Edit</span> */}
+                  </Link>
+                  </Tooltip>
+                )}
 
                 {/* Communications Link */}
-                <Link
-                  href={`/dashboard/communication/client/${invoice.clientId}?chat=true`}
-                  className="group relative flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-5 py-2 text-sm font-medium text-white shadow-md shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 md:text-base"
-                >
-                  <MessageCircleMore className="h-4 w-4 md:h-5 md:w-5" />
-                  <span className="invisible absolute bottom-full left-1/2 mb-3 w-max -translate-x-1/2 transform rounded-lg bg-slate-800 px-3 py-1.5 text-xs text-white opacity-0 shadow-xl transition-all group-hover:visible group-hover:opacity-100">
-                    Communications
-                  </span>
-                </Link>
+                <Tooltip title="Communications" placement="top">
+                  <Link
+                    href={`/dashboard/communication/client/${invoice.clientId}?chat=true`}
+                    className="flex items-center justify-center rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-4 py-2 text-sm font-medium text-white shadow-md shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 md:text-base"
+                  >
+                    <MessageCircleMore className="h-4 w-4 md:h-5 md:w-5" />
+                  </Link>
+                </Tooltip>
 
                 {/* Export Group — Print/PDF */}
                 <div className="flex items-center gap-0 rounded-2xl border border-slate-200 bg-white/80 px-1 py-1 shadow-sm dark:border-slate-700 dark:bg-slate-900/60">
@@ -455,7 +463,7 @@ export default function InvoiceModalBody({
                                   (gatewayInfo?.hasStripe ||
                                     gatewayInfo?.hasAuthorizeNet) &&
                                   parseFloat(
-                                    Number(invoice?.due ?? 0).toFixed(2)
+                                    Number(invoice?.due ?? 0).toFixed(2),
                                   ) > 0) ??
                                 false
                               }
@@ -530,6 +538,31 @@ export default function InvoiceModalBody({
                     </div>
                   </div>
                 </div>
+
+                {/* Create Appointment Button */}
+                <Tooltip title="Create Appointment" placement="top">
+                  <button
+                    type="button"
+                    className="flex items-center justify-center rounded-xl bg-gradient-to-r from-[#6571FF] from-70% to-[#5a66ee] px-4 py-2 text-sm font-medium text-white shadow-md shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 md:text-base print:hidden"
+                    onClick={() => setIsAppointmentModalOpen(true)}
+                  >
+                    <Calendar className="h-4 w-4 md:h-5 md:w-5" />
+                  </button>
+                </Tooltip>
+
+                <AppointmentCreateOrEdit
+                  clientId={invoice.clientId}
+                  vehicleId={invoice.vehicleId}
+                  draftEstimateId={invoice.id}
+                  isModalOpen={isAppointmentModalOpen}
+                  setIsModalOpen={setIsAppointmentModalOpen}
+                  onAppointmentCreated={(appointment) => {
+                    setIsAppointmentModalOpen(false);
+                  }}
+                  onAppointmentUpdated={(appointment) => {
+                    setIsAppointmentModalOpen(false);
+                  }}
+                />
               </div>
             </div>
           )}
@@ -645,8 +678,8 @@ export default function InvoiceModalBody({
                       calculateDue(
                         Number(invoice.grandTotal),
                         Number(invoice.totalPayment),
-                        Number(invoice.deposit)
-                      ).toFixed(2)
+                        Number(invoice.deposit),
+                      ).toFixed(2),
                     ) === 0
                       ? "RECEIPT"
                       : invoice?.type?.toUpperCase()}
@@ -699,8 +732,12 @@ export default function InvoiceModalBody({
                     </div>
                     <p>{vehicle?.submodel}</p>
                     <p>{vehicle?.type}</p>
-                    <p>Vin Number</p>
-                    <p>{vehicle?.vin}</p>
+                    {vehicle?.vin && (
+                      <>
+                        <p>Vin Number</p>
+                        <p>{vehicle?.vin}</p>
+                      </>
+                    )}
                   </div>
 
                   {/* Estimate Details */}
@@ -726,8 +763,8 @@ export default function InvoiceModalBody({
                         calculateDue(
                           Number(invoice.grandTotal),
                           Number(invoice.totalPayment),
-                          Number(invoice.deposit)
-                        ).toFixed(2)
+                          Number(invoice.deposit),
+                        ).toFixed(2),
                       ) === 0 && <span>Payment Status</span>}
                     </p>
                     <p className="pt-1">
@@ -735,8 +772,8 @@ export default function InvoiceModalBody({
                         calculateDue(
                           Number(invoice.grandTotal),
                           Number(invoice.totalPayment),
-                          Number(invoice.deposit)
-                        ).toFixed(2)
+                          Number(invoice.deposit),
+                        ).toFixed(2),
                       ) === 0 && (
                         <span className="text-green-500 bg-green-200 rounded-md  px-4 py-[1px] text-xs font-semibold md:mt-1">
                           PAID
@@ -765,10 +802,10 @@ export default function InvoiceModalBody({
                       <div className="grid w-full grid-cols-3 gap-4 px-2 sm:px-4 [@media(max-width:374px)]:grid-cols-2">
                         {invoice.photos.map((x, index) => {
                           const allImageUrls = invoice.photos.map(
-                            (photo) => photo.photo
+                            (photo) => photo.photo,
                           );
                           const urlsParam = encodeURIComponent(
-                            JSON.stringify(allImageUrls)
+                            JSON.stringify(allImageUrls),
                           );
                           return (
                             <Link
@@ -832,7 +869,7 @@ export default function InvoiceModalBody({
                     calculateDue(
                       Number(invoice.grandTotal),
                       Number(invoice.totalPayment),
-                      Number(invoice.deposit)
+                      Number(invoice.deposit),
                     ),
                   ],
                   ["Refunded", refundAmount],
@@ -854,10 +891,10 @@ export default function InvoiceModalBody({
                               {formatCurrency(
                                 (Number(
                                   (invoice.subtotal as any) -
-                                    (invoice.discount as any)
+                                    (invoice.discount as any),
                                 ) *
                                   Number(value)) /
-                                  100
+                                  100,
                               )}
                             </span>
                           )}
@@ -901,9 +938,11 @@ export default function InvoiceModalBody({
           <div className="flex items-center justify-between gap-2">
             <div>
               <p className="font-bold text-slate-600">{invoice.company.name}</p>
-              <p className="font-medium">
-                {invoice.user.firstName} {invoice.user.lastName}
-              </p>
+              {invoice?.user && (
+                <p className="font-medium">
+                  {invoice?.user?.firstName} {invoice?.user?.lastName}
+                </p>
+              )}
             </div>
             <div className="mt-4 space-y-2 md:mt-0">
               {showAuthorizedName && (
@@ -1058,7 +1097,7 @@ export default function InvoiceModalBody({
                     onClick={() => {
                       if (!sigCanvas.current || sigCanvas.current.isEmpty()) {
                         errorToast(
-                          "Please provide your signature before saving."
+                          "Please provide your signature before saving.",
                         );
                         return;
                       }
@@ -1115,7 +1154,7 @@ export default function InvoiceModalBody({
                     invoiceId={invoice.id}
                     companyId={invoice.companyId}
                     due={parseFloat(
-                      Number(invoice?.due ?? 0).toFixed(2)
+                      Number(invoice?.due ?? 0).toFixed(2),
                     ).toString()}
                     open={isStripeDialogOpen}
                     setOpen={setIsStripeDialogOpen}
@@ -1171,10 +1210,10 @@ export default function InvoiceModalBody({
                 <div className="flex grid-cols-1 gap-4 overflow-x-auto md:grid">
                   {invoice.photos.map((x, index) => {
                     const allImageUrls = invoice.photos.map(
-                      (photo) => photo.photo
+                      (photo) => photo.photo,
                     );
                     const urlsParam = encodeURIComponent(
-                      JSON.stringify(allImageUrls)
+                      JSON.stringify(allImageUrls),
                     );
                     return (
                       <Link
@@ -1227,7 +1266,7 @@ export default function InvoiceModalBody({
                     invoiceId={invoice.id}
                     onWorkOrderCreated={async () => {
                       const updatedInvoice = await getIsWorkorderCreated(
-                        invoice.id
+                        invoice.id,
                       );
                       setInvoice((prevInvoice) => {
                         if (!prevInvoice) return prevInvoice;
