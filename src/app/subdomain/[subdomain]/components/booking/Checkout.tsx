@@ -532,11 +532,11 @@ export const Checkout = () => {
                 Continue
               </Button>
             )}
-            {phoneLookedUp && !isReturningClient && (
+            {/* {phoneLookedUp && !isReturningClient && (
               <span className="flex items-center  text-xs text-muted-foreground">
                 New client
               </span>
-            )}
+            )} */}
           </div>
         </div>
 
