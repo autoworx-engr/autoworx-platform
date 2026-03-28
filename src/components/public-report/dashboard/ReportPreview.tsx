@@ -4,9 +4,16 @@ import { Button } from "@/components/ui/button";
 interface ReportPreviewProps {
   isGenerating: boolean;
   onDownload: () => void;
+  
+  reportDateRange?: string;
 }
 
-export const ReportPreview = ({ isGenerating, onDownload }: ReportPreviewProps) => {
+export const ReportPreview = ({
+  isGenerating,
+  onDownload,
+
+  reportDateRange,
+}: ReportPreviewProps) => {
   return (
     <div className="bg-card rounded-xl p-6 shadow-sm border border-border/50 sticky top-6">
       <div className="flex items-center justify-between mb-6">
@@ -38,7 +45,7 @@ export const ReportPreview = ({ isGenerating, onDownload }: ReportPreviewProps) 
               <Building2 className="w-6 h-6 text-accent" />
             </div>
             <div>
-              <h4 className="font-bold text-lg">AutoWorx</h4>
+              <h4 className="font-bold text-lg">{"AutoWorx"}</h4>
               <p className="text-sm text-muted-foreground">
                 Performance Report
               </p>
@@ -47,7 +54,7 @@ export const ReportPreview = ({ isGenerating, onDownload }: ReportPreviewProps) 
 
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Calendar className="w-4 h-4" />
-            <span>Reporting Period: Jan 1 - Jan 31, 2026</span>
+            <span>Reporting Period: {reportDateRange || "N/A"}</span>
           </div>
         </div>
 

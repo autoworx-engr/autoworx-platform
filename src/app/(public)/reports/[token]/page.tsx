@@ -1,6 +1,6 @@
 "use client";
 
-import {  Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { LeadsSourceChart } from "@/components/public-report/dashboard/LeadsSourceChart";
 import { LeadsSummary } from "@/components/public-report/dashboard/LeadsSummary";
 import { ServicesPerformance } from "@/components/public-report/dashboard/ServicesPerformance";
@@ -16,6 +16,7 @@ import { errorToast, successToast } from "@/lib/toast";
 import toast from "react-hot-toast";
 import { useState, useMemo } from "react";
 import { usePublicReportData } from "@/hooks/public-report/usePublicReportData";
+
 import { format, parseISO } from "date-fns";
 import "../report-styles.css";
 
@@ -51,6 +52,7 @@ export default function ReportPage({ params }: ReportPageProps) {
     decodedParams?.endDate,
     !!decodedParams,
   );
+
 
   const frequency = (decodedParams?.frequency || "DAILY").toLowerCase();
 
@@ -172,7 +174,14 @@ export default function ReportPage({ params }: ReportPageProps) {
         format: [canvas.width * 0.75, canvas.height * 0.75], // Scale down PDF size
       });
 
-      pdf.addImage(imgData, "JPEG", 0, 0, canvas.width * 0.75, canvas.height * 0.75);
+      pdf.addImage(
+        imgData,
+        "JPEG",
+        0,
+        0,
+        canvas.width * 0.75,
+        canvas.height * 0.75,
+      );
       pdf.save(
         `AutoWorx-${frequency.charAt(0).toUpperCase() + frequency.slice(1)}-Performance-Report-${new Date().toISOString().split("T")[0]}.pdf`,
       );
@@ -188,6 +197,7 @@ export default function ReportPage({ params }: ReportPageProps) {
     }
   };
 
+  console.log("Report data loaded:", reportData);
   return (
     <div className="min-h-screen bg-[#F8FAFC] report-scope">
       <main
@@ -232,6 +242,7 @@ export default function ReportPage({ params }: ReportPageProps) {
             <ReportPreview
               isGenerating={isGenerating}
               onDownload={() => handleDownloadReport(false)}
+              reportDateRange={reportDateRange}
             />
           </div>
         </div>
