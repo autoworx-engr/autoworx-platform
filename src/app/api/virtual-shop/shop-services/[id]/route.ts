@@ -280,7 +280,7 @@ type TUpdateShopServiceRequest = {
  *                 example: true
  *               items:
  *                 type: array
- *                 description: Nested array for rebuilding invoice configurations.
+ *                 description: Nested array for rebuilding invoice configurations. At least one item is required, and each item must have materials or labor.
  *                 items:
  *                   type: object
  *                   properties:
