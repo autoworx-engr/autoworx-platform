@@ -31,7 +31,6 @@ export const PUBLIC_API_ROUTES = [
   "/api/twilio/incoming",
   "/api/twilio/receive",
   "/api/twilio/whisper",
-  "/api/twilio/token",
   "/api/invoice/track-view",
   "/api/upload",
   "/api/communication/client-hub/send-twilio-message",
@@ -47,9 +46,12 @@ export const PUBLIC_API_ROUTES = [
   // gift card public route
   "/api/virtual-shop/issued-gift-card/check-balance",
   "/api/virtual-shop/issued-gift-card/reload",
+  "/api/virtual-shop/issued-gift-card/reload/confirmation",
+  "/api/virtual-shop/issued-gift-card/reload-payment/initiate",
   "/api/virtual-shop/gift-card-settings/public",
+  "/api/virtual-shop/gift-card-payment/initiate",
+  "/api/virtual-shop/gift-card-payment/confirmation",
   "/api/virtual-shop/gift-card-templates/public",
-  "/api/virtual-shop/buy-gift-card",
 ];
 
 export const PUBLIC_DYNAMIC_API_ROUTES = [

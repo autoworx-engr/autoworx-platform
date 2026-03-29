@@ -8,22 +8,48 @@ import toast from "react-hot-toast";
 export const Confirmation = () => {
   const {
     cart,
-    cartTotal,
     selectedDate,
     selectedSlot,
     customerInfo,
+    bookingTotals,
     settings,
     resetBooking,
     estimateId,
   } = useBooking();
 
-  const shopFee = settings.shopFeeEnabled
-    ? Math.round((cartTotal * settings.shopFeePercent) / 100)
+  const serviceBaseTotal = cart.reduce(
+    (sum, item) => sum + Number(item.service.price || 0) * item.quantity,
+    0,
+  );
+  const vehicleExtraTotal = cart.reduce((sum, item) => {
+    const vehicleExtra = Number(
+      item.service.vehicleTypePricing[
+        item.vehicleType.toLowerCase() as keyof typeof item.service.vehicleTypePricing
+      ] || 0,
+    );
+    return sum + vehicleExtra * item.quantity;
+  }, 0);
+
+  const fallbackSubtotal = Number(
+    (serviceBaseTotal + vehicleExtraTotal).toFixed(2),
+  );
+  const fallbackServiceFee = settings.shopFeeEnabled
+    ? Number(((serviceBaseTotal * settings.shopFeePercent) / 100).toFixed(2))
     : 0;
-  const tax = settings.taxEnabled
-    ? Math.round(((cartTotal + shopFee) * settings.taxPercent) / 100)
+  const fallbackTax = settings.taxEnabled
+    ? Number(((serviceBaseTotal * settings.taxPercent) / 100).toFixed(2))
     : 0;
-  const grandTotal = cartTotal + shopFee + tax;
+
+  const subtotal = bookingTotals
+    ? Number(bookingTotals.subtotal || 0)
+    : fallbackSubtotal;
+  const shopFee = bookingTotals
+    ? Number(bookingTotals.serviceFee || 0)
+    : fallbackServiceFee;
+  const tax = bookingTotals ? Number(bookingTotals.tax || 0) : fallbackTax;
+  const grandTotal = bookingTotals
+    ? Number(bookingTotals.grandTotal || 0)
+    : Number((subtotal + shopFee + tax).toFixed(2));
 
   const generateICS = () => {
     if (!selectedDate || !selectedSlot) return;
@@ -139,13 +165,47 @@ END:VCALENDAR`;
           </p>
           {cart.map((item) => (
             <div key={item.service.id} className="flex justify-between text-sm">
-              <span>{item.service.title}</span>
-              <span className="font-medium">${item.service.price}</span>
+              <span>
+                {item.service.title}{" "}
+                <span className="text-xs text-muted-foreground">
+                  ({item.vehicleType})
+                </span>
+              </span>
+              <span className="font-medium">
+                $
+                {(
+                  (item.service.price +
+                    Number(
+                      item.service.vehicleTypePricing[
+                        item.vehicleType.toLowerCase() as keyof typeof item.service.vehicleTypePricing
+                      ] || 0,
+                    )) *
+                  item.quantity
+                ).toFixed(2)}
+              </span>
             </div>
           ))}
+          <div className="border-t pt-2 space-y-1 text-sm">
+            <div className="flex justify-between text-muted-foreground">
+              <span>Subtotal</span>
+              <span>${subtotal.toFixed(2)}</span>
+            </div>
+            {shopFee > 0 && (
+              <div className="flex justify-between text-muted-foreground">
+                <span>Service Fee</span>
+                <span>${shopFee.toFixed(2)}</span>
+              </div>
+            )}
+            {tax > 0 && (
+              <div className="flex justify-between text-muted-foreground">
+                <span>Tax</span>
+                <span>${tax.toFixed(2)}</span>
+              </div>
+            )}
+          </div>
           <div className="border-t pt-2 flex justify-between font-bold text-sm">
             <span>Total</span>
-            <span>${grandTotal}</span>
+            <span>${grandTotal.toFixed(2)}</span>
           </div>
         </div>
       </motion.div>

@@ -78,6 +78,12 @@ export async function GET(
       where: { slug },
       include: {
         bookingSettings: true,
+        company: {
+          select: {
+            tax: true,
+            serviceFee: true,
+          },
+        },
       },
     });
 

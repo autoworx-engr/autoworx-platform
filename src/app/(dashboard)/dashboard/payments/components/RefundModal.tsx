@@ -251,7 +251,10 @@ export default function RefundModal({
           </button>
         </DialogTrigger>
 
-        <DialogContent className="w-[95vw] max-w-xl max-h-[90vh] overflow-y-auto [&>button]:hidden p-4 sm:p-6">
+        <DialogContent
+          className="w-[95vw] max-w-xl max-h-[90vh] overflow-y-auto [&>button]:hidden p-4 sm:p-6"
+          onOpenAutoFocus={(e) => e.preventDefault()}
+        >
           <form>
             <DialogHeader>
               <DialogTitle className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-lg sm:text-xl text-gray-600">

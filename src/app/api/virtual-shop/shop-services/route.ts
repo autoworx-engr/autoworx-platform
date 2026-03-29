@@ -300,6 +300,7 @@ export async function GET(req: Request) {
  *             required:
  *               - shopId
  *               - title
+ *               - items
  *             properties:
  *               shopId:
  *                 type: number
@@ -330,7 +331,7 @@ export async function GET(req: Request) {
  *                 example: true
  *               items:
  *                 type: array
- *                 description: Includes materials and labor to auto-calculate the service base price.
+ *                 description: Includes materials and labor to auto-calculate the service base price. At least one item is required, and each item must have materials or labor.
  *                 items:
  *                   type: object
  *                   properties:
