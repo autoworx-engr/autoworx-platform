@@ -1,7 +1,6 @@
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 import { AppError } from "@/error-boundary/error";
-import { jwtVerifyToken } from "@/lib/jwtVerify";
 import { errorHandler } from "@/error-boundary/globalErrorHandler";
 
 /**
