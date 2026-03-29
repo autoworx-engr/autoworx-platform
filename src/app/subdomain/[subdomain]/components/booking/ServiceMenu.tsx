@@ -1,13 +1,12 @@
-
-
 import { ServiceCard } from "./ServiceCard";
 
 import { cn } from "@/lib/utils";
 
 import { useBooking } from "../../context/BookingContext";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Skeleton } from "../ui/Skeleton";
 
-export const ServiceMenu = () => {
+export const ServiceMenu = ({ isLoading }: { isLoading?: boolean }) => {
   const {
     services,
     categories,
@@ -51,28 +50,49 @@ export const ServiceMenu = () => {
 
       {/* Categories */}
       <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none -mx-1 px-1">
-        {displayCategories.map((cat) => (
-          <button
-            key={cat}
-            onClick={() => {
-              setSelectedCategory(cat);
-              setCurrentPage(1); // Reset to page 1 when changing category
-            }}
-            className={cn(
-              "px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors",
-              selectedCategory === cat
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground hover:bg-secondary",
-            )}
-          >
-            {cat}
-          </button>
-        ))}
+        {isLoading
+          ? Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton
+                key={i}
+                className="h-8 w-20 rounded-full flex-shrink-0"
+              />
+            ))
+          : displayCategories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => {
+                  setSelectedCategory(cat);
+                  setCurrentPage(1); // Reset to page 1 when changing category
+                }}
+                className={cn(
+                  "px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors",
+                  selectedCategory === cat
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground hover:bg-secondary",
+                )}
+              >
+                {cat}
+              </button>
+            ))}
       </div>
 
       {/* Services Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filtered.length > 0 ? (
+        {isLoading ? (
+          Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="rounded-2xl border p-4 space-y-4">
+              <Skeleton className="h-44 w-full rounded-xl" />
+              <div className="space-y-2">
+                <Skeleton className="h-5 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+              </div>
+              <div className="flex justify-between items-center pt-2">
+                <Skeleton className="h-6 w-16" />
+                <Skeleton className="h-9 w-24 rounded-lg" />
+              </div>
+            </div>
+          ))
+        ) : filtered.length > 0 ? (
           filtered.map((service) => (
             <ServiceCard key={service.id} service={service} />
           ))
@@ -84,7 +104,7 @@ export const ServiceMenu = () => {
       </div>
 
       {/* Pagination Controls */}
-      {totalPages > 1 && (
+      {!isLoading && totalPages > 1 && (
         <div className="flex items-center justify-between mt-8 pt-6 border-t">
           <button
             onClick={handlePreviousPage}

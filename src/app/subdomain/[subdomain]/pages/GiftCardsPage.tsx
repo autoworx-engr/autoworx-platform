@@ -8,8 +8,8 @@ import { BookingHeader } from "../components/booking/BookingHeader";
 import { useGiftCardPageData } from "../hooks/useGiftCardPageData";
 import BuyGiftCardFlow from "../components/giftcards/BuyGiftCardFlow";
 import ShopNotFound from "../components/giftcards/ShopNotFound";
-import CarLoading from "@/components/common/CarLoading";
 import { useShopBranding } from "../hooks/useShopBranding";
+import { Spinner } from "../components/ui/Spinner";
 
 const GiftCardsPage = ({ initialShop }: { initialShop?: any }) => {
   const { amountPresets, isLoading, shop } = useGiftCardPageData(initialShop);
@@ -19,8 +19,11 @@ const GiftCardsPage = ({ initialShop }: { initialShop?: any }) => {
 
   if (isLoading && !shop) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <CarLoading />
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background">
+        <Spinner size={40} />
+        <p className="mt-4 text-muted-foreground animate-pulse text-sm font-medium">
+          Loading Gift Card Shop...
+        </p>
       </div>
     );
   }

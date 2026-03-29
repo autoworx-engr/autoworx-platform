@@ -8,9 +8,9 @@ import { TimeSlot } from "../../data/types";
 import { useGetAppointmentSlots } from "@/hooks/virtual-shop/service/useShopService";
 import { useGetShopBySlug } from "@/hooks/virtual-shop/service/useShopService";
 import { useParams } from "next/navigation";
-import CarLoading from "@/components/common/CarLoading";
 import { Calendar, ConfigProvider, theme } from "antd";
 import dayjs from "dayjs";
+import { Spinner } from "../ui/Spinner";
 
 export const DateTimeSelection = () => {
   const {
@@ -92,7 +92,11 @@ export const DateTimeSelection = () => {
   }, [timeSlots]);
 
   if (isSlotsLoading && showSlots && selectedDate) {
-    return <CarLoading />;
+    return (
+      <div className="min-h-[300px] flex items-center justify-center">
+        <Spinner size={40} />
+      </div>
+    );
   }
 
   return (

@@ -11,11 +11,13 @@ import { CartDrawer } from "./CartDrawer";
 import { BookingHeader } from "./BookingHeader";
 import { useShopInfo } from "@/hooks/virtual-shop/useShopInfo";
 import ShopNotFound from "../giftcards/ShopNotFound";
-import { useGetShopCategories } from "@/hooks/virtual-shop/service/useShopService";
-import { useGetShopServices } from "@/hooks/virtual-shop/service/useShopService";
-import CarLoading from "@/components/common/CarLoading";
+import {
+  useGetShopCategories,
+  useGetShopServices,
+} from "@/hooks/virtual-shop/service/useShopService";
 import { Service } from "../../data/types";
 import { useShopBranding } from "../../hooks/useShopBranding";
+import { Spinner } from "../ui/Spinner";
 
 const SERVICES_PER_PAGE = 10;
 
@@ -44,80 +46,7 @@ const BookingContent = ({ initialShop }: { initialShop?: any }) => {
   } = useShopInfo(initialShop);
 
   // Apply dynamic shop branding (Colors & Fonts)
-    useShopBranding(initialShop);
-  // Apply Dynamic Styles from Shop Info
-  useEffect(() => {
-    if (shop) {
-      const { themeConfig } = shop;
-      const root = document.documentElement;
-
-      const hexToHsl = (hex: string) => {
-        let r = 0,
-          g = 0,
-          b = 0;
-        if (hex.length === 4) {
-          r = parseInt(hex[1] + hex[1], 16);
-          g = parseInt(hex[2] + hex[2], 16);
-          b = parseInt(hex[3] + hex[3], 16);
-        } else if (hex.length === 7) {
-          r = parseInt(hex.substring(1, 3), 16);
-          g = parseInt(hex.substring(3, 5), 16);
-          b = parseInt(hex.substring(5, 7), 16);
-        }
-        r /= 255;
-        g /= 255;
-        b /= 255;
-        const max = Math.max(r, g, b),
-          min = Math.min(r, g, b);
-        let h = 0,
-          s = 0,
-          l = (max + min) / 2;
-        if (max !== min) {
-          const d = max - min;
-          s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-          switch (max) {
-            case r:
-              h = (g - b) / d + (g < b ? 6 : 0);
-              break;
-            case g:
-              h = (b - r) / d + 2;
-              break;
-            case b:
-              h = (r - g) / d + 4;
-              break;
-          }
-          h /= 6;
-        }
-        return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
-      };
-
-      if (themeConfig?.primaryColor) {
-        const hslValue = hexToHsl(themeConfig.primaryColor);
-        root.style.setProperty("--primary", hslValue);
-      }
-
-      const banner = shop.bannerUrl || "/images/landing/booking-hero.png";
-      root.style.setProperty("--shop-banner", `url(${banner})`);
-
-      if (themeConfig?.fontFamily) {
-        const fontName = themeConfig.fontFamily;
-        const linkId = "dynamic-google-font";
-        let linkElement = document.getElementById(linkId) as HTMLLinkElement;
-
-        if (!linkElement) {
-          linkElement = document.createElement("link");
-          linkElement.id = linkId;
-          linkElement.rel = "stylesheet";
-          document.head.appendChild(linkElement);
-        }
-
-        const formattedFontName = fontName.replace(/\s+/g, "+");
-        linkElement.href = `https://fonts.googleapis.com/css2?family=${formattedFontName}:wght@300;400;500;700;900&display=swap`;
-
-        document.body.style.fontFamily = `"${fontName}", sans-serif`;
-      }
-    }
-  }, [shop]);
+  useShopBranding(initialShop);
 
   // Fetch categories from API
   const { data: categoriesData } = useGetShopCategories(shop?.id);
@@ -181,8 +110,11 @@ const BookingContent = ({ initialShop }: { initialShop?: any }) => {
 
   if (isShopLoading && !shop) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <CarLoading />
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background">
+        <Spinner size={40} />
+        <p className="mt-4 text-muted-foreground animate-pulse text-sm font-medium">
+          Loading Shop Information...
+        </p>
       </div>
     );
   }
@@ -200,17 +132,7 @@ const BookingContent = ({ initialShop }: { initialShop?: any }) => {
 
       {/* Content */}
       <main className="container max-w-5xl mx-auto px-4 py-8 relative">
-        {step === "services" &&
-          (isServicesLoading ? (
-            <div className="flex flex-col items-center justify-center py-20 animate-in fade-in duration-500">
-              <CarLoading />
-              <p className="text-muted-foreground mt-4 animate-pulse">
-                Loading available services...
-              </p>
-            </div>
-          ) : (
-            <ServiceMenu />
-          ))}
+        {step === "services" && <ServiceMenu isLoading={isServicesLoading} />}
         {step === "datetime" && <DateTimeSelection />}
         {step === "checkout" && <Checkout />}
         {step === "confirmation" && <Confirmation />}
