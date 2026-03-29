@@ -41,14 +41,24 @@ export async function GET(req: Request) {
 
     const shop = await db.shop.findUnique({
       where: { slug },
-      select: { 
-        companyId: true, 
+      select: {
+        id: true,
+        companyId: true,
         storeName: true,
         logoUrl: true,
         bannerUrl: true,
         company: {
-          select: { id: true, name: true, phone: true, email: true }
-        }
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+            email: true,
+            paymentGateway: true,
+            stripeAccountId: true,
+            authorizeNetApiLoginId: true,
+            authorizeNetTransactionKey: true,
+          },
+        },
       },
     });
 
@@ -69,7 +79,10 @@ export async function GET(req: Request) {
 
     if (!settings) {
       return NextResponse.json(
-        { success: false, message: "Gift card settings not found for this shop" },
+        {
+          success: false,
+          message: "Gift card settings not found for this shop",
+        },
         { status: 404 },
       );
     }
@@ -78,10 +91,25 @@ export async function GET(req: Request) {
 
     const aggregatedSettings = {
       shop: {
+        id: shop.id,
+        companyId: shop.companyId,
         storeName: shop.storeName,
         logoUrl: shop.logoUrl,
         bannerUrl: shop.bannerUrl,
-        company: shop.company,
+        company: {
+          id: shop.company.id,
+          name: shop.company.name,
+          phone: shop.company.phone,
+          email: shop.company.email,
+        },
+        gatewayInfo: {
+          paymentGateway: shop.company.paymentGateway,
+          hasStripe: Boolean(shop.company.stripeAccountId),
+          hasAuthorizeNet: Boolean(
+            shop.company.authorizeNetApiLoginId &&
+            shop.company.authorizeNetTransactionKey,
+          ),
+        },
       },
       designs: templates.map((t) => ({
         id: t.id.toString(),

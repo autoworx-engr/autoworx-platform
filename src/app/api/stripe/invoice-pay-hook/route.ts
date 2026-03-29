@@ -1,13 +1,25 @@
 import { convertInvoicePublic } from "@/actions/estimate/invoice/convert";
 import { db } from "@/lib/db";
 import { sendPaymentReceivedNotification } from "@/lib/notification/payment-notify";
+import { settleGiftCardReloadPayment } from "@/services/giftCardReloadSettlementService";
+import { updateVirtualShopDeposit } from "@/services/virtualShopDepositService";
 import { env } from "next-runtime-env";
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 
 const stripe = new Stripe(
-  (process.env.STRIPE_SECRET_KEY || env("STRIPE_SECRET_KEY")) as string
+  (process.env.STRIPE_SECRET_KEY || env("STRIPE_SECRET_KEY")) as string,
 );
+
+const parsePaymentNotes = (notes: string | null) => {
+  if (!notes) return {} as Record<string, any>;
+
+  try {
+    return JSON.parse(notes) as Record<string, any>;
+  } catch {
+    return {} as Record<string, any>;
+  }
+};
 
 /**
  * @swagger
@@ -50,7 +62,7 @@ export async function POST(req: NextRequest) {
       rawBody,
       signature,
       (process.env.STRIPE_WEBHOOK_SECRET ||
-        env("STRIPE_WEBHOOK_SECRET")) as string
+        env("STRIPE_WEBHOOK_SECRET")) as string,
     );
 
     // Handle specific event types
@@ -68,7 +80,206 @@ export async function POST(req: NextRequest) {
       if (alreadyProcessed) {
         return NextResponse.json(
           { message: "Already processed" },
-          { status: 200 }
+          { status: 200 },
+        );
+      }
+
+      // Handle virtual shop deposits
+      if (
+        paymentData.payType === "virtual_shop_deposit" &&
+        paymentData.shopBookingId
+      ) {
+        const result = await updateVirtualShopDeposit(
+          paymentData.shopBookingId,
+          Number(paymentData.amount),
+        );
+
+        const shopBooking = await db.shopBooking.findUnique({
+          where: { id: Number(paymentData.shopBookingId) },
+        });
+
+        const invoiceId =
+          paymentData.invoiceId ?? shopBooking?.invoiceId ?? null;
+
+        // Try to record the payment in StripePayment for idempotency checking
+        const depositPayment = await db.payment.create({
+          data: {
+            companyId: paymentData.companyId,
+            invoiceId: invoiceId,
+            amount: paymentData.amount,
+            type: "DEPOSIT",
+            date: new Date(),
+            deposit: {
+              create: {
+                depositMethod: "Stripe",
+                depositNotes: "Virtual Shop Deposit",
+              },
+            },
+          },
+        });
+
+        await db.stripePayment.create({
+          data: {
+            stripePaymentIntentId: paymentIntent.id,
+            companyId: paymentData.companyId,
+            paymentId: depositPayment.id,
+            invoiceId: invoiceId,
+          },
+        });
+
+        return NextResponse.json({ success: true, ...result });
+      }
+
+      if (
+        paymentData.payType === "virtual_shop_gift_card" &&
+        (paymentData.paymentRef || paymentData.paymentId)
+      ) {
+        const paymentRef = String(
+          paymentData.paymentRef || paymentData.paymentId || "",
+        ).trim();
+        const companyId = Number(paymentData.companyId);
+
+        if (!paymentRef) {
+          return NextResponse.json(
+            { message: "Invalid payment session" },
+            { status: 200 },
+          );
+        }
+
+        const giftCardSource =
+          paymentData.giftCardSource === "reload" ||
+          paymentData.giftCardSource === "virtual_shop_gift_card_reload"
+            ? "virtual_shop_gift_card_reload"
+            : "virtual_shop_gift_card";
+
+        const hasLegacyNumericId = /^\d+$/.test(paymentRef);
+        if (hasLegacyNumericId) {
+          const legacyPaymentId = Number(paymentRef);
+          const legacyPayment = await db.payment.findUnique({
+            where: { id: legacyPaymentId },
+            select: {
+              id: true,
+              companyId: true,
+              notes: true,
+            },
+          });
+
+          const legacyNotes = parsePaymentNotes(legacyPayment?.notes || null);
+          const isExpectedSource =
+            legacyNotes?.source === giftCardSource ||
+            (giftCardSource === "virtual_shop_gift_card" &&
+              legacyNotes?.source === "virtual_shop_gift_card_purchase");
+
+          if (legacyPayment && isExpectedSource) {
+            await db.stripePayment.create({
+              data: {
+                stripePaymentIntentId: paymentIntent.id,
+                companyId: legacyPayment.companyId,
+                paymentId: legacyPayment.id,
+                invoiceId: null,
+              },
+            });
+
+            const reloadSettlement =
+              giftCardSource === "virtual_shop_gift_card_reload"
+                ? await settleGiftCardReloadPayment(legacyPayment.id)
+                : { status: "not_reload_source" };
+
+            return NextResponse.json(
+              {
+                message: "Gift card payment recorded",
+                reloadSettlement: reloadSettlement.status,
+              },
+              { status: 200 },
+            );
+          }
+        }
+
+        if (!Number.isInteger(companyId) || companyId <= 0) {
+          return NextResponse.json(
+            { message: "Invalid company for payment session" },
+            { status: 200 },
+          );
+        }
+
+        const paymentMethodName =
+          giftCardSource === "virtual_shop_gift_card_reload"
+            ? "Virtual Shop Gift Card Reload"
+            : "Virtual Shop Gift Card";
+
+        let paymentMethod = await db.paymentMethod.findFirst({
+          where: {
+            companyId,
+            name: paymentMethodName,
+          },
+        });
+
+        if (!paymentMethod) {
+          paymentMethod = await db.paymentMethod.create({
+            data: {
+              companyId,
+              name: paymentMethodName,
+            },
+          });
+        }
+
+        const parsedGiftCardId = Number(paymentData.giftCardId);
+
+        const createdPayment = await db.payment.create({
+          data: {
+            companyId,
+            amount: Number(paymentData.amount),
+            type: "OTHER",
+            date: new Date(),
+            gateway: "STRIPE",
+            notes: JSON.stringify({
+              source: giftCardSource,
+              paymentRef,
+              ...(giftCardSource === "virtual_shop_gift_card_reload"
+                ? {
+                    reloadData: {
+                      giftCardId:
+                        Number.isInteger(parsedGiftCardId) &&
+                        parsedGiftCardId > 0
+                          ? parsedGiftCardId
+                          : undefined,
+                      code:
+                        typeof paymentData.giftCardCode === "string"
+                          ? paymentData.giftCardCode.trim().toUpperCase()
+                          : undefined,
+                      requestedAmount: Number(paymentData.amount),
+                    },
+                  }
+                : {}),
+            }),
+            other: {
+              create: {
+                paymentMethodId: paymentMethod.id,
+              },
+            },
+          },
+        });
+
+        await db.stripePayment.create({
+          data: {
+            stripePaymentIntentId: paymentIntent.id,
+            companyId,
+            paymentId: createdPayment.id,
+            invoiceId: null,
+          },
+        });
+
+        const reloadSettlement =
+          giftCardSource === "virtual_shop_gift_card_reload"
+            ? await settleGiftCardReloadPayment(createdPayment.id)
+            : { status: "not_reload_source" };
+
+        return NextResponse.json(
+          {
+            message: "Gift card payment recorded",
+            reloadSettlement: reloadSettlement.status,
+          },
+          { status: 200 },
         );
       }
 
@@ -99,7 +310,7 @@ export async function POST(req: NextRequest) {
         if (!statement || !statement.invoice.length) {
           return NextResponse.json(
             { error: "Statement or invoices not found" },
-            { status: 400 }
+            { status: 400 },
           );
         }
 
@@ -123,7 +334,7 @@ export async function POST(req: NextRequest) {
         // Process payment for each invoice in the statement
         let totalPaid = 0;
         const invoicesWithDue = statement.invoice.filter(
-          (inv) => inv.due && Number(inv.due) > 0
+          (inv) => inv.due && Number(inv.due) > 0,
         );
 
         const paymentRecords = [];
@@ -131,7 +342,7 @@ export async function POST(req: NextRequest) {
         for (const invoice of invoicesWithDue) {
           const paymentAmount = Math.min(
             Number(invoice.due ?? 0),
-            Number(paymentData.amount) - totalPaid
+            Number(paymentData.amount) - totalPaid,
           );
 
           if (paymentAmount <= 0) break;
@@ -466,7 +677,7 @@ export async function POST(req: NextRequest) {
     console.error("🚀 ~ Webhook Error:", error);
     return NextResponse.json(
       { error: `Webhook Error: ${error?.message}` },
-      { status: 400 }
+      { status: 400 },
     );
   }
 }
