@@ -43,6 +43,7 @@
 }
 
 .report-scope .animate-slide-up {
+  @apply opacity-100;
   animation: reportSlideUp 0.5s ease-out forwards;
 }
 
@@ -64,4 +65,12 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* Ensure opacity is 1 when generating PDF */
+body.is-generating-pdf .report-scope .animate-slide-up,
+body.is-generating-pdf .report-scope .animate-fade-in {
+  animation: none !important;
+  opacity: 1 !important;
+  transform: none !important;
 }

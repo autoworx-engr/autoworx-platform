@@ -17,7 +17,9 @@ export const TeamPerformance = ({ data = [] }: TeamPerformanceProps) => {
   const [includeInPdf, setIncludeInPdf] = useState(true);
 
   return (
-    <div className={`bg-card rounded-xl p-6 shadow-sm border border-border/50 ${!includeInPdf ? 'opacity-60 grayscale' : ''}`}>
+    <div
+      className={`bg-card rounded-xl p-6 shadow-sm border border-border/50 team-performance-section ${!includeInPdf ? "opacity-60 grayscale" : ""}`}
+    >
       <SectionHeader
         title="Team Performance"
         action={
@@ -71,7 +73,9 @@ export const TeamPerformance = ({ data = [] }: TeamPerformanceProps) => {
                     <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                       <Users className="w-4 h-4 text-primary" />
                     </div>
-                    <span className="font-medium truncate max-w-[120px]">{member.name}</span>
+                    <span className="font-medium truncate max-w-[120px]">
+                      {member.name}
+                    </span>
                   </div>
                 </td>
                 <td className="py-4 px-4 text-sm text-muted-foreground">
@@ -90,7 +94,10 @@ export const TeamPerformance = ({ data = [] }: TeamPerformanceProps) => {
             ))}
             {data.length === 0 && (
               <tr>
-                <td colSpan={5} className="py-8 text-center text-sm text-muted-foreground italic">
+                <td
+                  colSpan={5}
+                  className="py-8 text-center text-sm text-muted-foreground italic"
+                >
                   No team performance data available
                 </td>
               </tr>
@@ -107,15 +114,10 @@ export const TeamPerformance = ({ data = [] }: TeamPerformanceProps) => {
                 </td>
                 <td className="py-4 px-4 text-right font-bold">
                   $
-                  {data
-                    .reduce((acc, m) => acc + m.revenue, 0)
-                    .toLocaleString()}
+                  {data.reduce((acc, m) => acc + m.revenue, 0).toLocaleString()}
                 </td>
                 <td className="py-4 px-4 text-right font-bold text-muted-foreground">
-                  $
-                  {data
-                    .reduce((acc, m) => acc + m.pay, 0)
-                    .toLocaleString()}
+                  ${data.reduce((acc, m) => acc + m.pay, 0).toLocaleString()}
                 </td>
               </tr>
             </tfoot>

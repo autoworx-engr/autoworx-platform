@@ -166,6 +166,7 @@ export default function ReportPage({ params }: ReportPageProps) {
 
     try {
       setIsGenerating(true);
+      document.body.classList.add("is-generating-pdf");
       toast.loading("Preparing your PDF report...");
 
       const canvas = await html2canvas(reportElement, {
@@ -178,7 +179,9 @@ export default function ReportPage({ params }: ReportPageProps) {
         ignoreElements: (element) => {
           return (
             element.classList.contains("xl:col-span-1") ||
-            element.tagName === "BUTTON"
+            element.tagName === "BUTTON" ||
+            (element.classList.contains("opacity-60") &&
+              element.classList.contains("grayscale"))
           );
         },
       });
@@ -210,6 +213,7 @@ export default function ReportPage({ params }: ReportPageProps) {
       errorToast("Failed to generate PDF. Please try again.");
     } finally {
       setIsGenerating(false);
+      document.body.classList.remove("is-generating-pdf");
     }
   };
 
