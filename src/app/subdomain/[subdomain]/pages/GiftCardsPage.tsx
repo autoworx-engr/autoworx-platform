@@ -9,9 +9,13 @@ import { useGiftCardPageData } from "../hooks/useGiftCardPageData";
 import BuyGiftCardFlow from "../components/giftcards/BuyGiftCardFlow";
 import ShopNotFound from "../components/giftcards/ShopNotFound";
 import CarLoading from "@/components/common/CarLoading";
+import { useShopBranding } from "../hooks/useShopBranding";
 
 const GiftCardsPage = ({ initialShop }: { initialShop?: any }) => {
   const { amountPresets, isLoading, shop } = useGiftCardPageData(initialShop);
+
+  // Apply dynamic shop branding (Colors & Fonts)
+  useShopBranding(shop);
 
   if (isLoading && !shop) {
     return (

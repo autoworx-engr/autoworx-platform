@@ -15,6 +15,7 @@ import { useGetShopCategories } from "@/hooks/virtual-shop/service/useShopServic
 import { useGetShopServices } from "@/hooks/virtual-shop/service/useShopService";
 import CarLoading from "@/components/common/CarLoading";
 import { Service } from "../../data/types";
+import { useShopBranding } from "../../hooks/useShopBranding";
 
 const SERVICES_PER_PAGE = 10;
 
@@ -42,6 +43,8 @@ const BookingContent = ({ initialShop }: { initialShop?: any }) => {
     isError: isShopError,
   } = useShopInfo(initialShop);
 
+  // Apply dynamic shop branding (Colors & Fonts)
+    useShopBranding(initialShop);
   // Apply Dynamic Styles from Shop Info
   useEffect(() => {
     if (shop) {
