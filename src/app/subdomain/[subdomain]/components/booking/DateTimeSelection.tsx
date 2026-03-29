@@ -1,17 +1,16 @@
-import {  useMemo, useState } from "react";
-
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-
 import { ArrowLeft, ArrowRight, CalendarDays, Clock, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format, startOfDay } from "date-fns";
 import { useBooking } from "../../context/BookingContext";
 import { TimeSlot } from "../../data/types";
-import { Calendar } from "@/components/ui/calendar";
 import { useGetAppointmentSlots } from "@/hooks/virtual-shop/service/useShopService";
 import { useGetShopBySlug } from "@/hooks/virtual-shop/service/useShopService";
 import { useParams } from "next/navigation";
 import CarLoading from "@/components/common/CarLoading";
+import { Calendar, ConfigProvider, theme } from "antd";
+import dayjs from "dayjs";
 
 export const DateTimeSelection = () => {
   const {
@@ -43,11 +42,16 @@ export const DateTimeSelection = () => {
   );
 
  
-  const isDateDisabled = (date: Date) => {
-    if (date < startOfDay(new Date())) return true;
-    // If we don't have slot data yet, we can't determine availability
-    // User will see availability once they select a date
-    return false;
+  const handleDateSelect = (value: dayjs.Dayjs) => {
+    const date = value.toDate();
+    setSelectedDate(date);
+    setSelectedSlot(null);
+    setShowSlots(true);
+  };
+
+  // Disable dates in the past
+  const disabledDate = (current: dayjs.Dayjs) => {
+    return current && current < dayjs().startOf("day");
   };
 
   const findNextAvailable = () => {
@@ -85,13 +89,6 @@ export const DateTimeSelection = () => {
     return groups;
   }, [timeSlots]);
 
-  const handleDateSelect = (date: Date | undefined) => {
-    if (!date) return;
-    setSelectedDate(date);
-    setSelectedSlot(null);
-    setShowSlots(true);
-  };
-
   if (isSlotsLoading && showSlots && selectedDate) {
     return <CarLoading />;
   }
@@ -120,15 +117,51 @@ export const DateTimeSelection = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Calendar */}
-        <div className="flex flex-col items-center">
-          <Calendar
-            mode="single"
-            selected={selectedDate ?? undefined}
-            onSelect={handleDateSelect}
-            disabled={isDateDisabled}
-            className="p-3 pointer-events-auto rounded-xl border bg-card"
-          />
+        {/* Ant Design Calendar */}
+        <div className="flex flex-col items-center w-full">
+          <div className="w-full max-w-[350px] p-2 rounded-xl border bg-card shadow-sm">
+            <ConfigProvider
+              theme={{
+                algorithm: theme.defaultAlgorithm,
+                token: {
+                  colorPrimary: "#1677ff",
+                  borderRadius: 8,
+                },
+              }}
+            >
+              <Calendar
+                fullscreen={false}
+                value={selectedDate ? dayjs(selectedDate) : undefined}
+                onSelect={handleDateSelect}
+                disabledDate={disabledDate}
+                headerRender={({ value, onChange }) => {
+                  return (
+                    <div className="flex justify-between items-center p-2 font-semibold">
+                      {value.format("MMMM YYYY")}
+                      <div className="flex gap-1">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-7 w-7"
+                          onClick={() => onChange(value.month(value.month() - 1))}
+                        >
+                          <ArrowLeft className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-7 w-7"
+                          onClick={() => onChange(value.month(value.month() + 1))}
+                        >
+                          <ArrowRight className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                }}
+              />
+            </ConfigProvider>
+          </div>
           <Button
             variant="outline"
             size="sm"

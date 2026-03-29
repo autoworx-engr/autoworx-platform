@@ -1,9 +1,9 @@
-import { useState } from "react";
+
 
 import { ServiceCard } from "./ServiceCard";
 
 import { cn } from "@/lib/utils";
-import { ServiceCategory } from "../../data/types";
+
 import { useBooking } from "../../context/BookingContext";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -24,10 +24,7 @@ export const ServiceMenu = () => {
   const displayCategories =
     categories.length > 0 ? ["All", ...categories] : ["All"];
 
-  const filtered =
-    selectedCategory === "All"
-      ? services
-      : services.filter((s) => s.category === selectedCategory);
+  const filtered = services;
 
   const handlePreviousPage = () => {
     if (hasPrevPage) {

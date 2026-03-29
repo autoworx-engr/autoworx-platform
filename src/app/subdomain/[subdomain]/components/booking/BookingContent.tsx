@@ -14,7 +14,7 @@ import ShopNotFound from "../giftcards/ShopNotFound";
 import { useGetShopCategories } from "@/hooks/virtual-shop/service/useShopService";
 import { useGetShopServices } from "@/hooks/virtual-shop/service/useShopService";
 import CarLoading from "@/components/common/CarLoading";
-import { Service, ServiceCategory } from "../../data/types";
+import { Service } from "../../data/types";
 
 const SERVICES_PER_PAGE = 10;
 
@@ -23,24 +23,6 @@ const toNumber = (value: unknown) => {
   return Number.isFinite(num) ? num : 0;
 };
 
-const normalizeCategory = (raw: string[] = []): ServiceCategory => {
-  const defaultCategories: ServiceCategory[] = [
-    "Detailing",
-    "Paint Correction",
-    "Ceramic Coating",
-    "Maintenance",
-  ];
-
-  const found = raw.find((r) =>
-    defaultCategories.some((c) => c.toLowerCase() === r.toLowerCase()),
-  );
-
-  if (!found) return "Maintenance";
-  return (
-    defaultCategories.find((c) => c.toLowerCase() === found.toLowerCase()) ||
-    "Maintenance"
-  );
-};
 
 const BookingContent = ({ initialShop }: { initialShop?: any }) => {
   const {
@@ -108,8 +90,8 @@ const BookingContent = ({ initialShop }: { initialShop?: any }) => {
       description: svc.description || "",
       price: toNumber(svc.price),
       estimatedMinutes: svc.duration,
-      category: normalizeCategory(svc.category),
-      images: svc.imageUrl ? [svc.imageUrl] : ["/icons/Logo.png"],
+      category: svc.category && svc.category.length > 0 ? svc.category[0] : "",
+      images: svc.imageUrl ? [svc.imageUrl] : [""],
       vehicleTypePricing: {
         coupe: toNumber(svc.modifierCoupe),
         sedan: toNumber(svc.modifierSedan),
@@ -134,15 +116,25 @@ const BookingContent = ({ initialShop }: { initialShop?: any }) => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background text-sm">
       {/* Header */}
       <BookingHeader rightElement="giftcard">
         <ProgressBar current={step} />
       </BookingHeader>
 
       {/* Content */}
-      <main className="container max-w-5xl mx-auto px-4 py-6">
-        {step === "services" && <ServiceMenu />}
+      <main className="container max-w-5xl mx-auto px-4 py-8 relative">
+        {step === "services" &&
+          (isServicesLoading ? (
+            <div className="flex flex-col items-center justify-center py-20 animate-in fade-in duration-500">
+              <CarLoading />
+              <p className="text-muted-foreground mt-4 animate-pulse">
+                Loading available services...
+              </p>
+            </div>
+          ) : (
+            <ServiceMenu />
+          ))}
         {step === "datetime" && <DateTimeSelection />}
         {step === "checkout" && <Checkout />}
         {step === "confirmation" && <Confirmation />}
