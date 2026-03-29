@@ -381,6 +381,9 @@ export interface CreateGiftCardTemplatePayload {
   isDefault?: boolean;
 }
 
+export type UpdateGiftCardTemplatePayload =
+  Partial<CreateGiftCardTemplatePayload>;
+
 export type GiftCardPromoType = "Percentage" | "Fixed";
 
 export interface GiftCardPromoData {
@@ -810,7 +813,27 @@ export const createGiftCardTemplate = async function (
   }
 };
 
+export const updateGiftCardTemplate = async function (
+  id: number,
+  payload: UpdateGiftCardTemplatePayload,
+  accessToken: string,
+) {
+  try {
+    const response = await axios.patch<{
+      success: boolean;
+      data: GiftCardTemplateData;
+    }>(`/api/virtual-shop/gift-card-templates/${id}`, payload, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
 
+    return response.data?.data;
+  } catch (error) {
+    const err = errorHandler(error);
+    throw err;
+  }
+};
 
 export const getGiftCardTemplatesPublic = async function (companyId: number) {
   try {
@@ -828,9 +851,11 @@ export const getGiftCardTemplatesPublic = async function (companyId: number) {
   }
 };
 
-export const getGiftCardSettingsByCompanyId = async function (companyId: number) {
+export const getGiftCardSettingsByCompanyId = async function (
+  companyId: number,
+) {
   try {
-    const response = await axios.get<{  
+    const response = await axios.get<{
       success: boolean;
       data: GiftCardSettingsData;
     }>("/api/virtual-shop/gift-card-settings", {
@@ -874,7 +899,6 @@ export const buyGiftCard = async function (payload: BuyGiftCardPayload) {
     throw err;
   }
 };
-
 
 export const deleteGiftCardTemplate = async function (
   id: number,
