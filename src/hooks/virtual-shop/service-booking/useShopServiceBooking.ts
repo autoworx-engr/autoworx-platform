@@ -15,13 +15,14 @@ export const useGetVirtualShopServiceBookingCalendar = (
       "virtual-shop-service-booking-calendar",
       params.year,
       params.month,
-      params.accessToken,
     ],
     queryFn: () => getVirtualShopServiceBookingCalendar(params),
-    enabled: Boolean(
-      enabled && params.accessToken && params.year && params.month,
-    ),
-    staleTime: 1000 * 60,
+    enabled: Boolean(enabled && params.year && params.month),
+    placeholderData: (previousData) => previousData,
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 15,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 };
 
@@ -45,6 +46,9 @@ export const useGetVirtualShopServiceBookings = (
     queryFn: () => getVirtualShopServiceBookings(params),
     enabled: Boolean(enabled && params.accessToken),
     placeholderData: (previousData) => previousData,
-    staleTime: 1000 * 30,
+    staleTime: 1000 * 60 * 2,
+    gcTime: 1000 * 60 * 15,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 };
