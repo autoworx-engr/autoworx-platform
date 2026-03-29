@@ -20,9 +20,7 @@ import { useFindOneInventoryAutomationRule } from "@/hooks/inventory-automation/
 import CarLoading from "@/components/common/CarLoading";
 import TooltipLabel from "./ToolTipLabel";
 import InfoCard from "./InfoCard";
-import {
-  getInventoryActionHelp,
-} from "./InventoryAutomationHelper";
+import { getInventoryActionHelp } from "./InventoryAutomationHelper";
 import { TipBox } from "./TagautomationHelper";
 import { useCreateReportingAutomationRule } from "@/hooks/reporting-automation/useCreateInventoryAutomationRule";
 import { useUpdateReportingAutomationRule } from "@/hooks/reporting-automation/useUpdateInventoryAutomationRule";
@@ -60,7 +58,7 @@ const ReportingAutomationRuleForm: React.FC<RuleFormProps> = ({
 }) => {
   const [loading, setLoading] = useState(false);
   const [initialFormData, setInitialFormData] = useState<Rule | null>(
-    initialData || null
+    initialData || null,
   );
   // Default empty rule
   const [formData, setFormData] = useState<Rule>(
@@ -72,7 +70,7 @@ const ReportingAutomationRuleForm: React.FC<RuleFormProps> = ({
       day: "",
       // vendor: "",
       teamMemberUserIds: [],
-    }
+    },
   );
 
   const { mutate: createRule, isPending: isCreatePending } =
@@ -80,7 +78,7 @@ const ReportingAutomationRuleForm: React.FC<RuleFormProps> = ({
   const { mutate: updateRule, isPending: isUpdatePending } =
     useUpdateReportingAutomationRule();
   const { data, isLoading, isFetching } = useFindOneReportingAutomationRule(
-    Number(id)
+    Number(id),
   );
   const [error, setError] = useState<Record<string, string>>({});
 
@@ -94,7 +92,7 @@ const ReportingAutomationRuleForm: React.FC<RuleFormProps> = ({
           action: data?.data.action,
           day: data?.data.day,
           teamMemberUserIds: data?.data?.teamMembers?.map(
-            (item: any) => item.userId
+            (item: any) => item.userId,
           ),
         };
         setFormData(payload);
@@ -166,7 +164,6 @@ const ReportingAutomationRuleForm: React.FC<RuleFormProps> = ({
       if (!formData.day) newError.day = "Day is required";
     }
 
-
     if (!formData.action) newError.action = "Action is required";
 
     if (!formData.teamMemberUserIds || formData.teamMemberUserIds.length === 0)
@@ -197,7 +194,7 @@ const ReportingAutomationRuleForm: React.FC<RuleFormProps> = ({
           companyId: null,
           title: "",
           frequency: "",
-          
+
           action: "",
           day: "",
           teamMemberUserIds: [],
@@ -207,9 +204,10 @@ const ReportingAutomationRuleForm: React.FC<RuleFormProps> = ({
       errorToast("Something went wrong!");
     }
   };
-
-
-  const actionHelpContent = getInventoryActionHelp(formData?.action || "");
+  const actionHelpContent = getInventoryActionHelp(
+    formData?.action || "",
+    true,
+  );
   return (
     <>
       {loading || isLoading || isFetching ? (
@@ -285,8 +283,6 @@ const ReportingAutomationRuleForm: React.FC<RuleFormProps> = ({
                     error={error.day}
                   />
                 )}
-
-             
 
                 {/* Action */}
                 <div className="relative">
@@ -368,11 +364,14 @@ const ReportingAutomationRuleForm: React.FC<RuleFormProps> = ({
                 <div className="flex justify-end pt-4">
                   <button
                     type="submit"
-                    disabled={isCreatePending || isUpdatePending || isFormUnchanged}
-                    className={`rounded-md px-4 py-2 text-sm font-medium text-white ${isUpdatePending || isCreatePending || isFormUnchanged
-                      ? "cursor-not-allowed bg-indigo-300"
-                      : "bg-indigo-500 hover:bg-indigo-600"
-                      }`}
+                    disabled={
+                      isCreatePending || isUpdatePending || isFormUnchanged
+                    }
+                    className={`rounded-md px-4 py-2 text-sm font-medium text-white ${
+                      isUpdatePending || isCreatePending || isFormUnchanged
+                        ? "cursor-not-allowed bg-indigo-300"
+                        : "bg-indigo-500 hover:bg-indigo-600"
+                    }`}
                   >
                     {isUpdatePending || isCreatePending
                       ? isEdit && id
