@@ -37,6 +37,12 @@ import toast from "react-hot-toast";
 import PhoneInput from "@/components/PhoneInput";
 import { SlimInput } from "@/components/SlimInput";
 import { SlimTextarea } from "@/components/SlimTextarea";
+import {
+  useGetAllYears,
+  useGetMake,
+  useGetModelsByYearAndMake,
+} from "@/hooks/useCarData";
+import Selector from "@/app/(dashboard)/dashboard/settings/automation/components/Selector";
 
 const TIMER_SECONDS = 600; // 10 min
 
@@ -63,6 +69,10 @@ export const Checkout = () => {
   const { data: shop } = useGetShopBySlug(slug);
   const { mutateAsync: createBooking, isPending: isBookingSubmitting } =
     useCreateVirtualShopServiceBooking();
+
+  const { data: years }: any = useGetAllYears();
+  const { data: makes }: any = useGetMake();
+
   const [selectedCountryCode, setSelectedCountryCode] = useState("US");
   const [timeLeft, setTimeLeft] = useState(TIMER_SECONDS);
   const [timerExpired, setTimerExpired] = useState(false);
@@ -79,6 +89,11 @@ export const Checkout = () => {
     vehicleModel: "",
     notes: "",
   });
+
+  const { data: models }: any = useGetModelsByYearAndMake(
+    form.vehicleYear,
+    form.vehicleMake,
+  );
 
   // Timer
   useEffect(() => {
@@ -223,6 +238,27 @@ export const Checkout = () => {
 
   const update = (field: keyof CustomerInfo, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }));
+
+  const vehicleOptions =
+    makes?.data?.map((vehicle: any) => ({
+      title: vehicle.name ?? "Unknown",
+      name: vehicle.name ?? "Unknown",
+      id: vehicle.name,
+    })) || [];
+
+  const vehicleModelOptions =
+    models?.data?.map((vehicle: any) => ({
+      title: vehicle.name ?? "Unknown",
+      name: vehicle.name ?? "Unknown",
+      id: vehicle.name,
+    })) || [];
+
+  const yearOptions =
+    years?.data?.map((y: string | number) => ({
+      title: y.toString(),
+      name: y.toString(),
+      id: y.toString(),
+    })) || [];
 
   const depositAmount = settings.depositRequired
     ? settings.depositType === "fixed"
@@ -446,46 +482,44 @@ export const Checkout = () => {
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider pt-2">
               Vehicle Information
             </p>
-            <div className="grid grid-cols-3 gap-3">
-              <div className="space-y-1.5">
-                <SlimInput
-                  id="year"
-                  name="vehicleYear"
-                  label="Year"
-                  required
-                  labelClassName="text-xs font-medium"
-                  className="h-10 text-sm font-normal rounded-md border-input bg-background px-3 py-2"
-                  value={form.vehicleYear}
-                  onChange={(e) => update("vehicleYear", e.target.value)}
-                  placeholder="2024"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <SlimInput
-                  id="make"
-                  name="vehicleMake"
-                  label="Make"
-                  required
-                  labelClassName="text-xs font-medium"
-                  className="h-10 text-sm font-normal rounded-md border-input bg-background px-3 py-2"
-                  value={form.vehicleMake}
-                  onChange={(e) => update("vehicleMake", e.target.value)}
-                  placeholder="BMW"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <SlimInput
-                  id="model"
-                  name="vehicleModel"
-                  label="Model"
-                  required
-                  labelClassName="text-xs font-medium"
-                  className="h-10 text-sm font-normal rounded-md border-input bg-background px-3 py-2"
-                  value={form.vehicleModel}
-                  onChange={(e) => update("vehicleModel", e.target.value)}
-                  placeholder="M3"
-                />
-              </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <Selector
+                name="vehicleYear"
+                label="Year"
+                placeholder="Year"
+                options={years?.data || []}
+                value={form.vehicleYear || ""}
+                onChange={(value: string) => update("vehicleYear", value)}
+                isSearch={true}
+                isClear={true}
+                required={true}
+              />
+              <Selector
+                name="vehicleMake"
+                label="Make"
+                placeholder="Make"
+                options={vehicleOptions || []}
+                value={form.vehicleMake || ""}
+                onChange={(value: string) => {
+                  update("vehicleMake", value);
+                  update("vehicleModel", "");
+                }}
+                isSearch={true}
+                isClear={true}
+                required={true}
+              />
+              <Selector
+                name="vehicleModel"
+                label="Model"
+                placeholder="Model"
+                options={vehicleModelOptions || []}
+                value={form.vehicleModel || ""}
+                onChange={(value: string) => update("vehicleModel", value)}
+                isSearch={true}
+                isClear={true}
+                required={true}
+                disabled={!form.vehicleMake}
+              />
             </div>
 
             <div className="space-y-1.5">
