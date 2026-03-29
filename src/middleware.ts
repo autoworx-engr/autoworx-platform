@@ -29,6 +29,10 @@ function extractSubdomain(request: NextRequest): string | null {
   // Production environment
   const rootDomainFormatted = rootDomain.split(":")[0];
 
+  console.log(
+    `[Middleware] Incoming URL: ${url} | Hostname: ${hostname} | RootDomainFormatted: ${rootDomainFormatted}`,
+  );
+
   // Handle preview deployment URLs (tenant---branch-name.vercel.app)
   if (hostname.includes("---") && hostname.endsWith(".vercel.app")) {
     const parts = hostname.split("---");
@@ -58,21 +62,25 @@ export async function middleware(request: NextRequest) {
 
   const subdomain = extractSubdomain(request);
 
+  console.log(
+    `[Middleware] Pathname: ${pathname} | Extracted Subdomain: ${subdomain}`,
+  );
+
   if (subdomain) {
     // Block access to admin page from subdomains
     if (pathname.startsWith("/dashboard")) {
+      console.log(
+        `[Middleware] Redirecting from /dashboard to / on subdomain: ${subdomain}`,
+      );
       return NextResponse.redirect(new URL("/", request.url));
     }
 
     // Skip API routes so they can be handled by the main app API handlers
     if (!pathname.startsWith("/api/")) {
+      const rewriteUrl = `/subdomain/${subdomain}${pathname === "/" ? "" : pathname}`;
+      console.log(`[Middleware] Rewriting request to: ${rewriteUrl}`);
       // Rewrite all other paths to the subdomain folder
-      return NextResponse.rewrite(
-        new URL(
-          `/subdomain/${subdomain}${pathname === "/" ? "" : pathname}`,
-          request.url,
-        ),
-      );
+      return NextResponse.rewrite(new URL(rewriteUrl, request.url));
     }
   }
 
