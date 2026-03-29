@@ -78,6 +78,32 @@ const searchParamsValidation = z.object({
     .optional(),
   page: z.number({ invalid_type_error: "Page must be a number" }).optional(),
   limit: z.number({ invalid_type_error: "Limit must be a number" }).optional(),
+  startDate: z
+    .string({
+      invalid_type_error: "Start date must be a string",
+    })
+    .refine(value => {
+      if (!value) return true;
+      const date = moment(value, "YYYY-MM-DD");
+      if (!date.isValid()) {
+        throw new Error("Invalid start date format");
+      }
+      return date.toDate();
+    }, "Invalid start date format")
+    .optional(),
+  endDate: z
+    .string({
+      invalid_type_error: "End date must be a string",
+    })
+    .refine(value => {
+      if (!value) return true;
+      const date = moment(value, "YYYY-MM-DD");
+      if (!date.isValid()) {
+        throw new Error("Invalid end date format");
+      }
+      return date.toDate();
+    }, "Invalid end date format")
+    .optional(),
 });
 
 const createServiceBookingSchema = z.object({
@@ -203,6 +229,20 @@ const createServiceBookingSchema = z.object({
  *           type: string
  *           enum: [pending, confirmed, completed, cancelled]
  *         description: Filter bookings by status.
+ *       - in: query
+ *         name: startDate
+ *         required: false
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filter bookings from this start date (YYYY-MM-DD).
+ *       - in: query
+ *         name: endDate
+ *         required: false
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filter bookings until this end date (YYYY-MM-DD).
  *       - in: query
  *         name: sortOrder
  *         required: false
@@ -393,6 +433,8 @@ export async function GET(req: Request) {
     const month = searchParams.get("month") ?? undefined;
     const year = searchParams.get("year") ?? undefined;
     const status = searchParams.get("status") ?? undefined;
+    const startDate = searchParams.get("startDate") ?? undefined;
+    const endDate = searchParams.get("endDate") ?? undefined;
 
     const sortOrder = (
       searchParams.get("sortOrder") === "asc" ? "asc" : "desc"
@@ -411,6 +453,8 @@ export async function GET(req: Request) {
       page,
       limit,
       status,
+      startDate,
+      endDate,
     });
 
     const whereClause: Prisma.ShopBookingWhereInput = {
@@ -457,7 +501,11 @@ export async function GET(req: Request) {
       throw new AppError(400, "Month and year are required together");
     }
 
-    if (date || (month && year)) {
+    if ((startDate && !endDate) || (!startDate && endDate)) {
+      throw new AppError(400, "Start date and end date are required together for a range");
+    }
+
+    if (date || (month && year) || (startDate && endDate)) {
       let gte: Date | undefined;
       let lte: Date | undefined;
 
@@ -474,6 +522,13 @@ export async function GET(req: Request) {
         if (targetDate.isValid()) {
           gte = targetDate.clone().startOf("month").toDate();
           lte = targetDate.clone().endOf("month").toDate();
+        }
+      } else if (startDate && endDate) {
+        const start = moment(startDate, "YYYY-MM-DD");
+        const end = moment(endDate, "YYYY-MM-DD");
+        if (start.isValid() && end.isValid()) {
+          gte = start.clone().startOf("day").toDate();
+          lte = end.clone().endOf("day").toDate();
         }
       }
 
