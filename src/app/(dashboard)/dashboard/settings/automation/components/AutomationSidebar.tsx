@@ -52,8 +52,8 @@ const items = [
   {
     name: "reporting",
     path: "reporting",
-    // permissionName: companyPermissionModule.REPORTING_AUTOMATION,
-    permissionName: companyPermissionModule.TAG_AUTOMATION,
+    permissionName: companyPermissionModule.REPORTING_AUTOMATION,
+    moduleKey: "reporting" as AutomationModuleKey,
   },
 ];
 

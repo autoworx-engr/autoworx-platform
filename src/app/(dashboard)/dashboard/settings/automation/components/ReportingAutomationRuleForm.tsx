@@ -9,6 +9,7 @@ import {
   InventoryActions,
   InventoryConditions,
   ReportingActions,
+  ReportingAutomationFrequency,
 } from "./constants";
 import { errorToast } from "@/lib/toast";
 import { User } from "@prisma/client";
@@ -251,7 +252,7 @@ const ReportingAutomationRuleForm: React.FC<RuleFormProps> = ({
                           <strong>Monthly:</strong> Check once every month
                         </p>
                         <p>
-                          <strong>Every Two Months:</strong> Check every 60 days
+                          <strong>Yearly:</strong> Check once every year
                         </p>
                       </div>
                     }
@@ -262,7 +263,7 @@ const ReportingAutomationRuleForm: React.FC<RuleFormProps> = ({
                   <Selector
                     name="frequency"
                     // label="Frequency"
-                    options={Frequency}
+                    options={ReportingAutomationFrequency}
                     value={formData.frequency!}
                     onChange={(value) => handleChange("frequency", value)}
                     required

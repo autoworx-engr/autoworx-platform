@@ -129,6 +129,13 @@ export const Frequency = [
   { id: "MONTHLY", title: "Monthly" },
   { id: "EVERY_TWO_MONTHS", title: "Every Two Months" },
 ];
+export const ReportingAutomationFrequency = [
+  { id: "DAILY", title: "Daily" },
+  { id: "WEEKLY", title: "Weekly" },
+  { id: "MONTHLY", title: "Monthly" },
+  { id: "Yearly", title: "Yearly" },
+];
+
 export const DaysOfWeek = [
   { id: "MONDAY", title: "Monday" },
   { id: "TUESDAY", title: "Tuesday" },
