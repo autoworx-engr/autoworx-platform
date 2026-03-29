@@ -59,6 +59,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!twilioCredentials) {
+      console.error("🚀 ~ POST ~ twilioCredentials not found");
       return NextResponse.json(
         { error: "Twilio credentials not found" },
         { status: 400 },
@@ -73,11 +74,17 @@ export async function POST(request: NextRequest) {
     );
 
     let pushCredentialSid: string | undefined;
+    console.log(
+      "🚀 ~ POST ~ twilioCredentials APN_FCM_TEST:",
+      twilioCredentials,
+    );
 
     if (platform === "ios") {
       pushCredentialSid = twilioCredentials.apnPushCredentialSid ?? undefined;
+      console.log("🚀 ~ POST ~ ios pushCredentialSid:", pushCredentialSid);
     } else if (platform === "android") {
       pushCredentialSid = twilioCredentials.fcmPushCredentialSid ?? undefined;
+      console.log("🚀 ~ POST ~ android pushCredentialSid:", pushCredentialSid);
     }
 
     if (twilioCredentials.twimlAppSid) {

@@ -13,7 +13,6 @@ export function useCompanyUnreadCounts(
   useEffect(() => {
     if (!currentCompanyId || !senderCompanyId) return;
 
-    // Initial fetch
     const load = async () => {
       const data = await getCompanyUnreadCounts(
         currentCompanyId,
@@ -26,9 +25,7 @@ export function useCompanyUnreadCounts(
 
     const channel = pusher.subscribe(`company-track-${currentCompanyId}`);
 
-    // Listen for chat-track events
     const handleChatTrack = (chatTrack: any) => {
-      // যদি sender match করে
       if (
         chatTrack.senderCompanyId === senderCompanyId &&
         chatTrack.receiverCompanyId === currentCompanyId
@@ -37,10 +34,22 @@ export function useCompanyUnreadCounts(
       }
     };
 
+    // ✅ NEW: read event
+    const handleChatRead = (data: any) => {
+      if (
+        data.senderCompanyId === senderCompanyId &&
+        data.receiverCompanyId === currentCompanyId
+      ) {
+        setCount(0);
+      }
+    };
+
     channel.bind("chat-track", handleChatTrack);
+    channel.bind("chat-read", handleChatRead);
 
     return () => {
       channel.unbind("chat-track", handleChatTrack);
+      channel.unbind("chat-read", handleChatRead);
       pusher.unsubscribe(`company-track-${currentCompanyId}`);
     };
   }, [currentCompanyId, senderCompanyId]);

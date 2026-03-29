@@ -109,6 +109,7 @@ export default function UseProductForm({
 
       <DialogContent
         className="max-h-[80%] w-[96%] max-w-xl grid-rows-[auto,1fr,auto] thin-scrollbar"
+        onOpenAutoFocus={(e) => e.preventDefault()}
         form
       >
         <DialogHeader>
