@@ -51,7 +51,7 @@ export const BookingHeader = ({
               </h1>
               <p className="text-[10px] md:text-xs text-white/70 font-semibold uppercase tracking-wider flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
-                {shop?.address || "Auto Repair & Services"}
+                {shop?.description || "Auto Repair & Services"}
               </p>
             </div>
           </div>
