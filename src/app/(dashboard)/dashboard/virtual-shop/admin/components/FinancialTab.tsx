@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useSession } from "next-auth/react";
 import { Switch } from "@/components/Switch";
@@ -26,15 +26,6 @@ export default function FinancialTab() {
 
   const [shopFee, setShopFee] = useState(false);
   const [tax, setTax] = useState(false);
-  const companyTaxPercent = useMemo(() => {
-    const value = Number(shopConfig?.company?.tax ?? 0);
-    return Number.isFinite(value) ? value : 0;
-  }, [shopConfig?.company?.tax]);
-
-  const companyServiceFeePercent = useMemo(() => {
-    const value = Number(shopConfig?.company?.serviceFee ?? 0);
-    return Number.isFinite(value) ? value : 0;
-  }, [shopConfig?.company?.serviceFee]);
 
   const isLoading = isShopConfigLoading || isBookingSettingsLoading;
 
@@ -78,8 +69,7 @@ export default function FinancialTab() {
     <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
       <h2 className="text-2xl font-bold text-gray-900">Financial Add-ons</h2>
       <p className="mt-1 text-sm text-[#6571FF]">
-        Tax and shop fee rates are synced from company settings. Use this page
-        only to toggle whether they apply to virtual shop bookings.
+        Enable or disable tax and shop fee for virtual shop bookings.
       </p>
 
       {/* Shop Fee */}
@@ -93,19 +83,6 @@ export default function FinancialTab() {
           </div>
           <Switch checked={shopFee} setChecked={setShopFee} />
         </div>
-
-        <div className="mt-4 flex flex-col gap-1.5">
-          <label className="text-sm font-semibold text-gray-700">
-            Shop Fee Percentage (%)
-          </label>
-          <input
-            type="number"
-            value={companyServiceFeePercent}
-            readOnly
-            disabled
-            className="w-32 rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 outline-none focus:border-[#6571FF] focus:ring-1 focus:ring-[#6571FF] disabled:cursor-not-allowed disabled:opacity-60"
-          />
-        </div>
       </div>
 
       {/* Tax */}
@@ -118,19 +95,6 @@ export default function FinancialTab() {
             </p>
           </div>
           <Switch checked={tax} setChecked={setTax} />
-        </div>
-
-        <div className="mt-4 flex flex-col gap-1.5">
-          <label className="text-sm font-semibold text-gray-700">
-            Tax Percentage (%)
-          </label>
-          <input
-            type="number"
-            value={companyTaxPercent}
-            readOnly
-            disabled
-            className="w-32 rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 outline-none focus:border-[#6571FF] focus:ring-1 focus:ring-[#6571FF] disabled:cursor-not-allowed disabled:opacity-60"
-          />
         </div>
       </div>
 
