@@ -5,41 +5,35 @@ import { jwtVerifyToken } from "./lib/jwtVerify";
 import { isDynamicPublicApiRoute } from "./utils/isDynamicPublicApiRoute";
 import { rootDomain } from "./lib/subdomains";
 
+const isProduction = process.env.NODE_ENV === "production";
+
 function extractSubdomain(request: NextRequest): string | null {
   const url = request.url;
 
-  console.log(`[Middleware] Extracting subdomain from URL: ${url}`);
   const host = request.headers.get("host") || "";
-
-  console.log(`[Middleware] Host header: ${host}`);
   const hostname = host.split(":")[0];
 
-  console.log(`[Middleware] Hostname extracted: ${hostname}`);
-
   // Local development environment
-  // if (url.includes("localhost") || url.includes("127.0.0.1")) {
-  //   // Try to extract subdomain from the full URL
-  //   const fullUrlMatch = url.match(/http:\/\/([^.]+)\.localhost/);
-  //   console.log(`[Middleware] Full URL match for subdomain: ${fullUrlMatch}`);
-  //   if (fullUrlMatch && fullUrlMatch[1]) {
-  //     return fullUrlMatch[1];
-  //   }
+  if (
+    !isProduction &&
+    (url.includes("localhost") || url.includes("127.0.0.1"))
+  ) {
+    // Try to extract subdomain from the full URL
+    const fullUrlMatch = url.match(/http:\/\/([^.]+)\.localhost/);
+    if (fullUrlMatch && fullUrlMatch[1]) {
+      return fullUrlMatch[1];
+    }
 
-  //   // Fallback to host header approach
-  //   if (hostname.includes(".localhost")) {
-  //     return hostname.split(".")[0];
-  //   }
+    // Fallback to host header approach
+    if (hostname.includes(".localhost")) {
+      return hostname.split(".")[0];
+    }
 
-  //   return null;
-  // }
+    return null;
+  }
 
-  console.log(`[Middleware] Root domain from config: ${rootDomain}`);
   // Production environment
   const rootDomainFormatted = rootDomain.split(":")[0];
-
-  console.log(
-    `[Middleware] Incoming URL: ${url} | Hostname: ${hostname} | RootDomainFormatted: ${rootDomainFormatted}`,
-  );
 
   // Handle preview deployment URLs (tenant---branch-name.vercel.app)
   if (hostname.includes("---") && hostname.endsWith(".vercel.app")) {
@@ -52,8 +46,6 @@ function extractSubdomain(request: NextRequest): string | null {
     hostname !== rootDomainFormatted &&
     hostname !== `www.${rootDomainFormatted}` &&
     hostname.endsWith(`.${rootDomainFormatted}`);
-
-  console.log(`[Middleware] Is subdomain: ${isSubdomain}`);
 
   return isSubdomain ? hostname.replace(`.${rootDomainFormatted}`, "") : null;
 }
@@ -72,26 +64,15 @@ export async function middleware(request: NextRequest) {
 
   const subdomain = extractSubdomain(request);
 
-  console.log(
-    `[Middleware] Pathname: ${pathname} | Extracted Subdomain: ${subdomain}`,
-  );
-
   if (subdomain) {
     // Block access to admin page from subdomains
     if (pathname.startsWith("/dashboard")) {
-      console.log(
-        `[Middleware] Redirecting from /dashboard to / on subdomain: ${subdomain}`,
-      );
       return NextResponse.redirect(new URL("/", request.url));
     }
 
     // Skip API routes so they can be handled by the main app API handlers
     if (!pathname.startsWith("/api/")) {
-      console.log(
-        `[Middleware] Rewriting request for subdomain: ${subdomain} | Original Pathname: ${pathname}`,
-      );
       const rewriteUrl = `/subdomain/${subdomain}${pathname === "/" ? "" : pathname}`;
-      console.log(`[Middleware] Rewriting request to: ${rewriteUrl}`);
       // Rewrite all other paths to the subdomain folder
       return NextResponse.rewrite(new URL(rewriteUrl, request.url));
     }
