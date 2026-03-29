@@ -7,13 +7,20 @@ import { rootDomain } from "./lib/subdomains";
 
 function extractSubdomain(request: NextRequest): string | null {
   const url = request.url;
+
+  console.log(`[Middleware] Extracting subdomain from URL: ${url}`);
   const host = request.headers.get("host") || "";
+
+  console.log(`[Middleware] Host header: ${host}`);
   const hostname = host.split(":")[0];
+
+  console.log(`[Middleware] Hostname extracted: ${hostname}`);
 
   // Local development environment
   if (url.includes("localhost") || url.includes("127.0.0.1")) {
     // Try to extract subdomain from the full URL
     const fullUrlMatch = url.match(/http:\/\/([^.]+)\.localhost/);
+    console.log(`[Middleware] Full URL match for subdomain: ${fullUrlMatch}`);
     if (fullUrlMatch && fullUrlMatch[1]) {
       return fullUrlMatch[1];
     }
@@ -77,6 +84,9 @@ export async function middleware(request: NextRequest) {
 
     // Skip API routes so they can be handled by the main app API handlers
     if (!pathname.startsWith("/api/")) {
+      console.log(
+        `[Middleware] Rewriting request for subdomain: ${subdomain} | Original Pathname: ${pathname}`,
+      );
       const rewriteUrl = `/subdomain/${subdomain}${pathname === "/" ? "" : pathname}`;
       console.log(`[Middleware] Rewriting request to: ${rewriteUrl}`);
       // Rewrite all other paths to the subdomain folder
