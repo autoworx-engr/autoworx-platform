@@ -17,22 +17,23 @@ function extractSubdomain(request: NextRequest): string | null {
   console.log(`[Middleware] Hostname extracted: ${hostname}`);
 
   // Local development environment
-  if (url.includes("localhost") || url.includes("127.0.0.1")) {
-    // Try to extract subdomain from the full URL
-    const fullUrlMatch = url.match(/http:\/\/([^.]+)\.localhost/);
-    console.log(`[Middleware] Full URL match for subdomain: ${fullUrlMatch}`);
-    if (fullUrlMatch && fullUrlMatch[1]) {
-      return fullUrlMatch[1];
-    }
+  // if (url.includes("localhost") || url.includes("127.0.0.1")) {
+  //   // Try to extract subdomain from the full URL
+  //   const fullUrlMatch = url.match(/http:\/\/([^.]+)\.localhost/);
+  //   console.log(`[Middleware] Full URL match for subdomain: ${fullUrlMatch}`);
+  //   if (fullUrlMatch && fullUrlMatch[1]) {
+  //     return fullUrlMatch[1];
+  //   }
 
-    // Fallback to host header approach
-    if (hostname.includes(".localhost")) {
-      return hostname.split(".")[0];
-    }
+  //   // Fallback to host header approach
+  //   if (hostname.includes(".localhost")) {
+  //     return hostname.split(".")[0];
+  //   }
 
-    return null;
-  }
+  //   return null;
+  // }
 
+  console.log(`[Middleware] Root domain from config: ${rootDomain}`);
   // Production environment
   const rootDomainFormatted = rootDomain.split(":")[0];
 
@@ -51,6 +52,8 @@ function extractSubdomain(request: NextRequest): string | null {
     hostname !== rootDomainFormatted &&
     hostname !== `www.${rootDomainFormatted}` &&
     hostname.endsWith(`.${rootDomainFormatted}`);
+
+  console.log(`[Middleware] Is subdomain: ${isSubdomain}`);
 
   return isSubdomain ? hostname.replace(`.${rootDomainFormatted}`, "") : null;
 }
