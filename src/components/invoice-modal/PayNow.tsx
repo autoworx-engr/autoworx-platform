@@ -39,6 +39,9 @@ export function PayNow({
   statementId,
   shopBookingId,
   paymentId,
+  giftCardSource,
+  giftCardCode,
+  giftCardId,
   mode = "invoice",
   companyId,
   open,
@@ -51,6 +54,9 @@ export function PayNow({
   statementId?: string;
   shopBookingId?: string;
   paymentId?: string;
+  giftCardSource?: "purchase" | "reload";
+  giftCardCode?: string;
+  giftCardId?: number;
   mode?: "invoice" | "statement" | "virtual_shop" | "virtual_shop_gift_card";
   companyId: number;
   open: boolean;
@@ -243,6 +249,9 @@ export function PayNow({
           result = await createStripePaymentLink({
             amount,
             paymentId: paymentId!,
+            giftCardSource,
+            giftCardCode,
+            giftCardId,
             companyId,
             payType: "virtual_shop_gift_card",
             redirectUrl: window.location.href,
@@ -280,6 +289,9 @@ export function PayNow({
           result = await createAuthorizeNetPaymentLink({
             amount,
             paymentId: paymentId!,
+            giftCardSource,
+            giftCardCode,
+            giftCardId,
             companyId,
             payType: "virtual_shop_gift_card",
           });

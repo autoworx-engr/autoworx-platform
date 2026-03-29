@@ -17,6 +17,7 @@ import {
   AlertTriangle,
   Timer,
   CheckCircle2,
+  Loader2,
 } from "lucide-react";
 import { format, addMinutes, parse } from "date-fns";
 import { useBooking } from "../../context/BookingContext";
@@ -84,6 +85,8 @@ export const Checkout = () => {
   const [phoneLookedUp, setPhoneLookedUp] = useState(!isReturningClient);
   const [showPayNowModal, setShowPayNowModal] = useState(false);
   const [createdBookingId, setCreatedBookingId] = useState<string>("");
+  const [isResolvingBookingReturn, setIsResolvingBookingReturn] =
+    useState(false);
   const [serverDepositRequired, setServerDepositRequired] = useState<
     number | null
   >(null);
@@ -149,8 +152,10 @@ export const Checkout = () => {
   useEffect(() => {
     if (searchParams.get("cancel") !== "true") return;
 
+    setIsResolvingBookingReturn(true);
     toast.error("Payment was cancelled. Your booking is still pending.");
     clearPaymentQueryParams();
+    setIsResolvingBookingReturn(false);
   }, [searchParams, clearPaymentQueryParams]);
 
   useEffect(() => {
@@ -158,12 +163,14 @@ export const Checkout = () => {
     if (searchParams.get("success") !== "true") return;
 
     hasHandledStripeReturn.current = true;
+    setIsResolvingBookingReturn(true);
 
     const raw = sessionStorage.getItem("virtualShopPendingBooking");
     if (!raw) {
       setStep("confirmation");
       toast.success("Payment successful!");
       clearPaymentQueryParams();
+      setIsResolvingBookingReturn(false);
       return;
     }
 
@@ -219,10 +226,12 @@ export const Checkout = () => {
       toast.success("Deposit payment successful. Booking confirmed.");
       sessionStorage.removeItem("virtualShopPendingBooking");
       clearPaymentQueryParams();
+      setIsResolvingBookingReturn(false);
     } catch {
       setStep("confirmation");
       toast.success("Payment successful!");
       clearPaymentQueryParams();
+      setIsResolvingBookingReturn(false);
     }
   }, [
     searchParams,
@@ -449,6 +458,20 @@ export const Checkout = () => {
       : Number(((grandTotal * depositValue) / 100).toFixed(2))
     : 0;
   const effectiveDepositDue = serverDepositRequired ?? depositAmount;
+
+  if (isResolvingBookingReturn) {
+    return (
+      <div className="max-w-2xl mx-auto py-12">
+        <div className="rounded-xl border bg-card p-8 text-center space-y-3">
+          <Loader2 className="w-7 h-7 mx-auto text-primary animate-spin" />
+          <p className="text-base font-medium">Processing your payment...</p>
+          <p className="text-sm text-muted-foreground">
+            Please wait while we finalize your booking confirmation.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
@@ -796,6 +819,7 @@ export const Checkout = () => {
           open={showPayNowModal}
           setOpen={setShowPayNowModal}
           onSuccess={() => {
+            setIsResolvingBookingReturn(true);
             sessionStorage.removeItem("virtualShopPendingBooking");
             setStep("confirmation");
           }}

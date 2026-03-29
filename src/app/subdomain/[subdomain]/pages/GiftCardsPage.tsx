@@ -35,6 +35,8 @@ type BuyStep =
   | "checkout"
   | "confirmation";
 
+type GiftCardTab = "buy" | "reload" | "balance";
+
 type ApiPurchaseType = "INDIVIDUAL" | "MULTIPLE_RECIPIENTS" | "GROUP_GIFT";
 type ApiDeliveryMethod = "EMAIL" | "SMS" | "BOTH";
 
@@ -57,7 +59,7 @@ interface GiftCardCheckoutPayload {
 }
 
 interface PendingGiftCardCheckout {
-  paymentId: number;
+  paymentRef: string;
   companyId: number;
   amount: number;
   gatewayInfo: GiftCardGatewayInfo;
@@ -83,7 +85,14 @@ const toApiDeliveryMethod = (
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const GiftCardsPage = ({ initialShop: _initialShop }: { initialShop?: any }) => {
+const isGiftCardTab = (value: string | null): value is GiftCardTab =>
+  value === "buy" || value === "reload" || value === "balance";
+
+const GiftCardsPage = ({
+  initialShop: _initialShop,
+}: {
+  initialShop?: any;
+}) => {
   const { subdomain } = useParams();
   const [settings, setSettings] = useState<GiftCardSettings | null>(null);
   const [shopName, setShopName] = useState("Shop");
@@ -94,8 +103,11 @@ const GiftCardsPage = ({ initialShop: _initialShop }: { initialShop?: any }) => 
   const [data, setData] = useState<GiftCardPurchaseData>(initialPurchaseData);
   const [showPayNowModal, setShowPayNowModal] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [isResolvingPurchaseReturn, setIsResolvingPurchaseReturn] =
+    useState(false);
   const [pendingCheckout, setPendingCheckout] =
     useState<PendingGiftCardCheckout | null>(null);
+  const [activeTab, setActiveTab] = useState<GiftCardTab>("buy");
 
   const [confirmationData, setConfirmationData] = useState<{
     number: string;
@@ -120,6 +132,30 @@ const GiftCardsPage = ({ initialShop: _initialShop }: { initialShop?: any }) => 
   const clearPendingCheckout = () => {
     setPendingCheckout(null);
     persistPendingCheckout(null);
+  };
+
+  const updateReturnContext = (tab: GiftCardTab, flow?: "purchase") => {
+    if (typeof window === "undefined") return;
+
+    const url = new URL(window.location.href);
+    url.searchParams.set("tab", tab);
+
+    if (flow) {
+      url.searchParams.set("giftCardFlow", flow);
+    } else {
+      url.searchParams.delete("giftCardFlow");
+    }
+
+    window.history.replaceState({}, "", url.toString());
+  };
+
+  const handleTabChange = (value: string) => {
+    if (!isGiftCardTab(value)) return;
+    if (value === activeTab) return;
+
+    setActiveTab(value);
+    resetBuy();
+    updateReturnContext(value);
   };
 
   const buildCheckoutPayload = (): GiftCardCheckoutPayload | null => {
@@ -171,14 +207,17 @@ const GiftCardsPage = ({ initialShop: _initialShop }: { initialShop?: any }) => 
     };
   };
 
-  const finalizePurchase = async (checkout: PendingGiftCardCheckout) => {
+  const finalizePurchase = async (
+    checkout: PendingGiftCardCheckout,
+    paymentId: number,
+  ) => {
     setIsProcessingPayment(true);
     try {
       for (let attempt = 0; attempt < 8; attempt++) {
         try {
           const response = await axios.post("/api/virtual-shop/buy-gift-card", {
             ...checkout.payload,
-            paymentId: checkout.paymentId,
+            paymentId,
           });
 
           if (!response.data?.success) {
@@ -213,6 +252,7 @@ const GiftCardsPage = ({ initialShop: _initialShop }: { initialShop?: any }) => 
       );
     } finally {
       setIsProcessingPayment(false);
+      setIsResolvingPurchaseReturn(false);
     }
   };
 
@@ -235,7 +275,7 @@ const GiftCardsPage = ({ initialShop: _initialShop }: { initialShop?: any }) => 
       }
 
       const checkout: PendingGiftCardCheckout = {
-        paymentId: response.data.data.paymentId,
+        paymentRef: response.data.data.paymentRef,
         companyId: response.data.data.companyId,
         amount: Number(response.data.data.amount),
         gatewayInfo: response.data.data.gatewayInfo,
@@ -244,6 +284,7 @@ const GiftCardsPage = ({ initialShop: _initialShop }: { initialShop?: any }) => 
 
       setPendingCheckout(checkout);
       persistPendingCheckout(checkout);
+      updateReturnContext("buy", "purchase");
       setShowPayNowModal(true);
     } catch (error: any) {
       errorToast(
@@ -260,14 +301,17 @@ const GiftCardsPage = ({ initialShop: _initialShop }: { initialShop?: any }) => 
     await initiatePayment();
   };
 
-  const resolvePurchaseConfirmation = async (paymentId: number) => {
+  const resolvePurchaseConfirmation = async (
+    paymentRef: string,
+    checkout?: PendingGiftCardCheckout | null,
+  ) => {
     setIsProcessingPayment(true);
     try {
       for (let attempt = 0; attempt < 8; attempt++) {
         const response = await axios.post(
           "/api/virtual-shop/gift-card-payment/confirmation",
           {
-            paymentId,
+            paymentRef,
           },
         );
 
@@ -295,6 +339,16 @@ const GiftCardsPage = ({ initialShop: _initialShop }: { initialShop?: any }) => 
           return;
         }
 
+        if (
+          confirmation?.status === "paid" &&
+          Number.isInteger(confirmation?.paymentId) &&
+          Number(confirmation.paymentId) > 0 &&
+          checkout
+        ) {
+          await finalizePurchase(checkout, Number(confirmation.paymentId));
+          return;
+        }
+
         if (confirmation?.status === "pending_payment" && attempt < 7) {
           await wait(1500);
           continue;
@@ -319,8 +373,18 @@ const GiftCardsPage = ({ initialShop: _initialShop }: { initialShop?: any }) => 
       );
     } finally {
       setIsProcessingPayment(false);
+      setIsResolvingPurchaseReturn(false);
     }
   };
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const tabFromUrl = new URL(window.location.href).searchParams.get("tab");
+    if (isGiftCardTab(tabFromUrl)) {
+      setActiveTab(tabFromUrl);
+    }
+  }, []);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -381,16 +445,25 @@ const GiftCardsPage = ({ initialShop: _initialShop }: { initialShop?: any }) => 
     const currentUrl = new URL(window.location.href);
     const isSuccess = currentUrl.searchParams.get("success") === "true";
     const isCancelled = currentUrl.searchParams.get("cancel") === "true";
-    const paymentIdFromUrl = Number(currentUrl.searchParams.get("paymentId"));
-    const hasPaymentId =
-      Number.isInteger(paymentIdFromUrl) && paymentIdFromUrl > 0;
+    const flow = currentUrl.searchParams.get("giftCardFlow");
+    const paymentRefFromUrl =
+      currentUrl.searchParams.get("paymentRef") ||
+      currentUrl.searchParams.get("paymentId") ||
+      "";
+    const hasPaymentRef = Boolean(paymentRefFromUrl);
 
     if (!isSuccess && !isCancelled) return;
+    if (flow === "reload") return;
+    if (isSuccess) {
+      setIsResolvingPurchaseReturn(true);
+    }
 
     currentUrl.searchParams.delete("success");
     currentUrl.searchParams.delete("cancel");
     currentUrl.searchParams.delete("session_id");
+    currentUrl.searchParams.delete("paymentRef");
     currentUrl.searchParams.delete("paymentId");
+    currentUrl.searchParams.delete("giftCardFlow");
 
     const nextUrl = `${currentUrl.pathname}${
       currentUrl.searchParams.toString()
@@ -402,13 +475,16 @@ const GiftCardsPage = ({ initialShop: _initialShop }: { initialShop?: any }) => 
     const storedCheckout = sessionStorage.getItem(PENDING_CHECKOUT_STORAGE_KEY);
     if (!storedCheckout) {
       if (isSuccess) {
-        if (hasPaymentId) {
-          void resolvePurchaseConfirmation(paymentIdFromUrl);
+        if (hasPaymentRef) {
+          void resolvePurchaseConfirmation(paymentRefFromUrl, null);
         } else {
           successToast(
             "Payment succeeded. Gift card confirmation is processing. Please refresh shortly.",
           );
+          setIsResolvingPurchaseReturn(false);
         }
+      } else {
+        setIsResolvingPurchaseReturn(false);
       }
       return;
     }
@@ -421,19 +497,22 @@ const GiftCardsPage = ({ initialShop: _initialShop }: { initialShop?: any }) => 
         clearPendingCheckout();
         setShowPayNowModal(false);
         errorToast("Payment was cancelled");
+        setIsResolvingPurchaseReturn(false);
         return;
       }
 
       if (isSuccess) {
-        if (hasPaymentId) {
-          void resolvePurchaseConfirmation(paymentIdFromUrl);
+        if (hasPaymentRef) {
+          void resolvePurchaseConfirmation(paymentRefFromUrl, parsed);
         } else {
-          void finalizePurchase(parsed);
+          setIsResolvingPurchaseReturn(false);
+          errorToast("Payment reference was not found");
         }
       }
     } catch {
       clearPendingCheckout();
       errorToast("Unable to restore gift card checkout session");
+      setIsResolvingPurchaseReturn(false);
     }
   }, [settings]);
 
@@ -528,7 +607,7 @@ const GiftCardsPage = ({ initialShop: _initialShop }: { initialShop?: any }) => 
       <BookingHeader rightElement="booking" />
 
       <main className="container max-w-5xl mx-auto px-4 py-6">
-        <Tabs defaultValue="buy" onValueChange={() => resetBuy()}>
+        <Tabs value={activeTab} onValueChange={handleTabChange}>
           <TabsList className="grid w-full grid-cols-3 mb-8">
             <TabsTrigger value="buy" className="gap-1.5">
               <ShoppingBag className="w-3.5 h-3.5" /> Buy
@@ -542,7 +621,17 @@ const GiftCardsPage = ({ initialShop: _initialShop }: { initialShop?: any }) => 
           </TabsList>
 
           <TabsContent value="buy">
-            {buyStep !== "confirmation" && (
+            {isResolvingPurchaseReturn && buyStep !== "confirmation" && (
+              <div className="rounded-xl border bg-card p-8 text-center space-y-3">
+                <Loader2 className="w-7 h-7 mx-auto text-primary animate-spin" />
+                <p className="text-base font-medium">Processing payment...</p>
+                <p className="text-sm text-muted-foreground">
+                  Please wait while we finalize your gift card confirmation.
+                </p>
+              </div>
+            )}
+
+            {!isResolvingPurchaseReturn && buyStep !== "confirmation" && (
               <>
                 <div className="flex items-center gap-1 mb-6 overflow-x-auto pb-2">
                   {stepOrder.map((s, i) => (
@@ -667,7 +756,8 @@ const GiftCardsPage = ({ initialShop: _initialShop }: { initialShop?: any }) => 
       {pendingCheckout && (
         <PayNow
           due={pendingCheckout.amount.toFixed(2)}
-          paymentId={pendingCheckout.paymentId.toString()}
+          paymentId={pendingCheckout.paymentRef}
+          giftCardSource="purchase"
           companyId={pendingCheckout.companyId}
           mode="virtual_shop_gift_card"
           open={showPayNowModal}
@@ -675,10 +765,12 @@ const GiftCardsPage = ({ initialShop: _initialShop }: { initialShop?: any }) => 
           gatewayInfo={pendingCheckout.gatewayInfo}
           onSuccess={() => {
             const currentUrl = new URL(window.location.href);
+            currentUrl.searchParams.set("tab", "buy");
+            currentUrl.searchParams.set("giftCardFlow", "purchase");
             currentUrl.searchParams.set("success", "true");
             currentUrl.searchParams.set(
-              "paymentId",
-              pendingCheckout.paymentId.toString(),
+              "paymentRef",
+              pendingCheckout.paymentRef,
             );
             window.location.href = currentUrl.toString();
           }}

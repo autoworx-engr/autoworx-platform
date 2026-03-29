@@ -7,6 +7,23 @@ import {
 } from "@/services/giftCardPurchaseService";
 import { NextResponse } from "next/server";
 
+const toFixedBase36 = (value: number, width: number) => {
+  const encoded = Number(value).toString(36).toUpperCase();
+  if (!Number.isInteger(value) || value <= 0 || encoded.length > width) {
+    throw new AppError(500, "Unable to generate payment reference");
+  }
+
+  return encoded.padStart(width, "0");
+};
+
+const createPurchasePaymentRef = (companyId: number) => {
+  const companySegment = toFixedBase36(companyId, 4);
+  const timeSegment = Date.now().toString(36).toUpperCase().slice(-4);
+  const randomSegment = Math.random().toString(36).slice(2, 6).toUpperCase();
+
+  return `P${companySegment}${timeSegment}${randomSegment}`;
+};
+
 /**
  * @swagger
  * /api/virtual-shop/gift-card-payment/initiate:
@@ -37,6 +54,7 @@ export async function POST(req: Request) {
 
     return await db.$transaction(async (tx) => {
       const context = await buildGiftCardPurchaseContext(tx, parsed.data);
+      const paymentRef = createPurchasePaymentRef(context.shop.companyId);
 
       const hasStripe = Boolean(context.shop.company.stripeAccountId);
       const hasAuthorizeNet = Boolean(
@@ -48,44 +66,11 @@ export async function POST(req: Request) {
         throw new AppError(400, "No payment gateway configured for this shop");
       }
 
-      let paymentMethod = await tx.paymentMethod.findFirst({
-        where: {
-          companyId: context.shop.companyId,
-          name: "Virtual Shop Gift Card",
-        },
-      });
-
-      if (!paymentMethod) {
-        paymentMethod = await tx.paymentMethod.create({
-          data: {
-            companyId: context.shop.companyId,
-            name: "Virtual Shop Gift Card",
-          },
-        });
-      }
-
-      const payment = await tx.payment.create({
-        data: {
-          companyId: context.shop.companyId,
-          amount: context.finalAmount,
-          type: "OTHER",
-          notes: JSON.stringify({
-            source: "virtual_shop_gift_card",
-            purchaseData: parsed.data,
-          }),
-          other: {
-            create: {
-              paymentMethodId: paymentMethod.id,
-            },
-          },
-        },
-      });
-
       return NextResponse.json(
         {
           success: true,
           data: {
-            paymentId: payment.id,
+            paymentRef,
             companyId: context.shop.companyId,
             amount: context.finalAmount,
             gatewayInfo: {

@@ -11,6 +11,16 @@ const stripe = new Stripe(
   (process.env.STRIPE_SECRET_KEY || env("STRIPE_SECRET_KEY")) as string,
 );
 
+const parsePaymentNotes = (notes: string | null) => {
+  if (!notes) return {} as Record<string, any>;
+
+  try {
+    return JSON.parse(notes) as Record<string, any>;
+  } catch {
+    return {} as Record<string, any>;
+  }
+};
+
 /**
  * @swagger
  * /api/stripe/invoice-pay-hook:
@@ -122,52 +132,147 @@ export async function POST(req: NextRequest) {
 
       if (
         paymentData.payType === "virtual_shop_gift_card" &&
-        paymentData.paymentId
+        (paymentData.paymentRef || paymentData.paymentId)
       ) {
-        const pendingPaymentId = Number(paymentData.paymentId);
+        const paymentRef = String(
+          paymentData.paymentRef || paymentData.paymentId || "",
+        ).trim();
+        const companyId = Number(paymentData.companyId);
 
-        if (!Number.isInteger(pendingPaymentId) || pendingPaymentId <= 0) {
+        if (!paymentRef) {
           return NextResponse.json(
             { message: "Invalid payment session" },
             { status: 200 },
           );
         }
 
-        const pendingPayment = await db.payment.findUnique({
-          where: { id: pendingPaymentId },
-          select: {
-            id: true,
-            companyId: true,
-          },
-        });
+        const giftCardSource =
+          paymentData.giftCardSource === "reload" ||
+          paymentData.giftCardSource === "virtual_shop_gift_card_reload"
+            ? "virtual_shop_gift_card_reload"
+            : "virtual_shop_gift_card";
 
-        if (!pendingPayment) {
+        const hasLegacyNumericId = /^\d+$/.test(paymentRef);
+        if (hasLegacyNumericId) {
+          const legacyPaymentId = Number(paymentRef);
+          const legacyPayment = await db.payment.findUnique({
+            where: { id: legacyPaymentId },
+            select: {
+              id: true,
+              companyId: true,
+              notes: true,
+            },
+          });
+
+          const legacyNotes = parsePaymentNotes(legacyPayment?.notes || null);
+          const isExpectedSource =
+            legacyNotes?.source === giftCardSource ||
+            (giftCardSource === "virtual_shop_gift_card" &&
+              legacyNotes?.source === "virtual_shop_gift_card_purchase");
+
+          if (legacyPayment && isExpectedSource) {
+            await db.stripePayment.create({
+              data: {
+                stripePaymentIntentId: paymentIntent.id,
+                companyId: legacyPayment.companyId,
+                paymentId: legacyPayment.id,
+                invoiceId: null,
+              },
+            });
+
+            const reloadSettlement =
+              giftCardSource === "virtual_shop_gift_card_reload"
+                ? await settleGiftCardReloadPayment(legacyPayment.id)
+                : { status: "not_reload_source" };
+
+            return NextResponse.json(
+              {
+                message: "Gift card payment recorded",
+                reloadSettlement: reloadSettlement.status,
+              },
+              { status: 200 },
+            );
+          }
+        }
+
+        if (!Number.isInteger(companyId) || companyId <= 0) {
           return NextResponse.json(
-            { message: "Payment session not found" },
+            { message: "Invalid company for payment session" },
             { status: 200 },
           );
         }
 
-        await db.payment.update({
-          where: { id: pendingPaymentId },
+        const paymentMethodName =
+          giftCardSource === "virtual_shop_gift_card_reload"
+            ? "Virtual Shop Gift Card Reload"
+            : "Virtual Shop Gift Card";
+
+        let paymentMethod = await db.paymentMethod.findFirst({
+          where: {
+            companyId,
+            name: paymentMethodName,
+          },
+        });
+
+        if (!paymentMethod) {
+          paymentMethod = await db.paymentMethod.create({
+            data: {
+              companyId,
+              name: paymentMethodName,
+            },
+          });
+        }
+
+        const parsedGiftCardId = Number(paymentData.giftCardId);
+
+        const createdPayment = await db.payment.create({
           data: {
+            companyId,
+            amount: Number(paymentData.amount),
+            type: "OTHER",
             date: new Date(),
             gateway: "STRIPE",
+            notes: JSON.stringify({
+              source: giftCardSource,
+              paymentRef,
+              ...(giftCardSource === "virtual_shop_gift_card_reload"
+                ? {
+                    reloadData: {
+                      giftCardId:
+                        Number.isInteger(parsedGiftCardId) &&
+                        parsedGiftCardId > 0
+                          ? parsedGiftCardId
+                          : undefined,
+                      code:
+                        typeof paymentData.giftCardCode === "string"
+                          ? paymentData.giftCardCode.trim().toUpperCase()
+                          : undefined,
+                      requestedAmount: Number(paymentData.amount),
+                    },
+                  }
+                : {}),
+            }),
+            other: {
+              create: {
+                paymentMethodId: paymentMethod.id,
+              },
+            },
           },
         });
 
         await db.stripePayment.create({
           data: {
             stripePaymentIntentId: paymentIntent.id,
-            companyId: pendingPayment.companyId,
-            paymentId: pendingPayment.id,
+            companyId,
+            paymentId: createdPayment.id,
             invoiceId: null,
           },
         });
 
-        const reloadSettlement = await settleGiftCardReloadPayment(
-          pendingPayment.id,
-        );
+        const reloadSettlement =
+          giftCardSource === "virtual_shop_gift_card_reload"
+            ? await settleGiftCardReloadPayment(createdPayment.id)
+            : { status: "not_reload_source" };
 
         return NextResponse.json(
           {

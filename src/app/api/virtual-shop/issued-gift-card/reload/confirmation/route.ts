@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { settleGiftCardPurchasePayment } from "@/services/giftCardPurchaseSettlementService";
+import { settleGiftCardReloadPayment } from "@/services/giftCardReloadSettlementService";
 import { TransactionType } from "@prisma/client";
 import { NextResponse } from "next/server";
 
@@ -13,11 +13,17 @@ const parseNotes = (notes: string | null) => {
   }
 };
 
+const maskGiftCardCode = (code: string) => {
+  const visibleChars = Math.min(4, code.length);
+  const maskedPart = "*".repeat(Math.max(0, code.length - visibleChars));
+  return `${maskedPart}${code.slice(-visibleChars)}`;
+};
+
 /**
  * @swagger
- * /api/virtual-shop/gift-card-payment/confirmation:
+ * /api/virtual-shop/issued-gift-card/reload/confirmation:
  *   post:
- *     summary: Resolve gift card purchase confirmation by payment session
+ *     summary: Resolve gift card reload confirmation by payment session
  *     tags:
  *       - Virtual Shop Gift
  */
@@ -71,14 +77,13 @@ export async function POST(req: Request) {
 
       const paymentNotes = parseNotes(candidatePayment.notes);
       if (
-        (paymentNotes?.source !== "virtual_shop_gift_card" &&
-          paymentNotes?.source !== "virtual_shop_gift_card_purchase") ||
+        paymentNotes?.source !== "virtual_shop_gift_card_reload" ||
         paymentNotes?.paymentRef !== paymentRef
       ) {
         return NextResponse.json(
           {
             success: false,
-            message: "Invalid payment source for gift card purchase.",
+            message: "Invalid payment source for gift card reload.",
           },
           { status: 400 },
         );
@@ -97,45 +102,39 @@ export async function POST(req: Request) {
       );
     }
 
-    const settlement = await settleGiftCardPurchasePayment(resolvedPaymentId);
+    const settlement = await settleGiftCardReloadPayment(resolvedPaymentId);
     const referenceId = `PAYMENT-${resolvedPaymentId}`;
 
-    const issued = await db.giftCardTransaction.findFirst({
+    const reloadTransaction = await db.giftCardTransaction.findFirst({
       where: {
-        type: TransactionType.ISSUE,
+        type: TransactionType.RELOAD,
         referenceId,
       },
       include: {
         giftCard: {
           select: {
-            id: true,
-            orderNumber: true,
             code: true,
-            initialBalance: true,
-            recipientName: true,
-            scheduledSendAt: true,
+            currentBalance: true,
+            status: true,
           },
         },
       },
+      orderBy: {
+        id: "desc",
+      },
     });
 
-    if (issued?.giftCard?.orderNumber) {
-      const codeParts = issued.giftCard.code.split("-");
-      const maskedCode = `${codeParts[0]}-****-${codeParts[2] || "****"}`;
-
+    if (reloadTransaction?.giftCard?.code) {
       return NextResponse.json(
         {
           success: true,
           data: {
-            status: "issued",
+            status: "reloaded",
             settlementStatus: settlement.status,
-            confirmationNumber: issued.giftCard.orderNumber,
-            maskedCode,
-            amount: Number(issued.giftCard.initialBalance),
-            recipientName: issued.giftCard.recipientName,
-            deliveryInfo: issued.giftCard.scheduledSendAt
-              ? "Recipient • Scheduled"
-              : "Recipient • Instant",
+            maskedCode: maskGiftCardCode(reloadTransaction.giftCard.code),
+            addedAmount: Number(reloadTransaction.amount),
+            balance: Number(reloadTransaction.giftCard.currentBalance),
+            giftCardStatus: reloadTransaction.giftCard.status,
           },
         },
         { status: 200 },
@@ -146,6 +145,7 @@ export async function POST(req: Request) {
       where: { id: resolvedPaymentId },
       select: {
         id: true,
+        notes: true,
         stripePayment: {
           select: { id: true },
         },
@@ -162,6 +162,17 @@ export async function POST(req: Request) {
           message: "Payment session not found",
         },
         { status: 404 },
+      );
+    }
+
+    const paymentNotes = parseNotes(payment.notes);
+    if (paymentNotes?.source !== "virtual_shop_gift_card_reload") {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Invalid payment source for gift card reload.",
+        },
+        { status: 400 },
       );
     }
 
@@ -184,7 +195,7 @@ export async function POST(req: Request) {
     return NextResponse.json(
       {
         success: false,
-        message: error?.message || "Unable to resolve gift card confirmation",
+        message: error?.message || "Unable to resolve gift card reload",
       },
       { status: 500 },
     );

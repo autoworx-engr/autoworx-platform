@@ -16,6 +16,9 @@ export const createAuthorizeNetPaymentLink = async ({
   statementId,
   shopBookingId,
   paymentId,
+  giftCardSource,
+  giftCardCode,
+  giftCardId,
   amount,
   payType,
 }: PaymentParams): Promise<PaymentLink> => {
@@ -84,23 +87,6 @@ export const createAuthorizeNetPaymentLink = async ({
         })
       : null;
 
-    const pendingPayment = paymentId
-      ? await db.payment.findUnique({
-          where: { id: Number(paymentId) },
-          select: {
-            id: true,
-            companyId: true,
-          },
-        })
-      : null;
-
-    if (
-      paymentId &&
-      (!pendingPayment || pendingPayment.companyId !== companyId)
-    ) {
-      throw new Error("Gift card payment session not found");
-    }
-
     // Validate amount
     const paymentAmount = parseFloat(amount);
     if (isNaN(paymentAmount) || paymentAmount <= 0) {
@@ -158,7 +144,14 @@ export const createAuthorizeNetPaymentLink = async ({
     } else if (shopBookingId) {
       invoiceNumberForGateway = `VSB-DEP-${shopBookingId}`;
     } else if (paymentId) {
-      invoiceNumberForGateway = `VSGC-${paymentId}`;
+      invoiceNumberForGateway =
+        giftCardSource === "reload"
+          ? `VSGCR-${paymentId}`
+          : `VSGCP-${paymentId}`;
+    }
+
+    if (invoiceNumberForGateway.length > 20) {
+      throw new Error("Payment reference is too long for Authorize.Net");
     }
 
     const isDepositPayment =
@@ -233,9 +226,30 @@ export const createAuthorizeNetPaymentLink = async ({
       userFieldsArray.push(customField3);
     } else if (paymentId) {
       const customField3 = new ApiContracts.UserField();
-      customField3.setName("paymentId");
+      customField3.setName("paymentRef");
       customField3.setValue(paymentId);
       userFieldsArray.push(customField3);
+
+      if (giftCardSource) {
+        const customField4 = new ApiContracts.UserField();
+        customField4.setName("giftCardSource");
+        customField4.setValue(giftCardSource);
+        userFieldsArray.push(customField4);
+      }
+
+      if (giftCardCode) {
+        const customField5 = new ApiContracts.UserField();
+        customField5.setName("giftCardCode");
+        customField5.setValue(giftCardCode);
+        userFieldsArray.push(customField5);
+      }
+
+      if (Number.isInteger(giftCardId) && Number(giftCardId) > 0) {
+        const customField6 = new ApiContracts.UserField();
+        customField6.setName("giftCardId");
+        customField6.setValue(String(giftCardId));
+        userFieldsArray.push(customField6);
+      }
     } else if (shopBookingId) {
       const customField3 = new ApiContracts.UserField();
       customField3.setName("shopBookingId");

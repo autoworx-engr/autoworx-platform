@@ -60,11 +60,16 @@ export async function settleGiftCardPurchasePayment(
     }
 
     const paymentNotes = parseNotes(payment.notes);
-    if (paymentNotes?.source !== "virtual_shop_gift_card") {
+    if (
+      paymentNotes?.source !== "virtual_shop_gift_card" &&
+      paymentNotes?.source !== "virtual_shop_gift_card_purchase"
+    ) {
       return { status: "not_purchase_source" };
     }
 
-    const isPaid = Boolean(payment.stripePayment || payment.authorizeNetPayment);
+    const isPaid = Boolean(
+      payment.stripePayment || payment.authorizeNetPayment,
+    );
     if (!isPaid) {
       return { status: "pending_payment" };
     }
@@ -107,7 +112,8 @@ export async function settleGiftCardPurchasePayment(
       return { status: "missing_purchase_data" };
     }
 
-    const parsedPurchaseInput = giftCardPurchaseSchema.safeParse(purchaseDataRaw);
+    const parsedPurchaseInput =
+      giftCardPurchaseSchema.safeParse(purchaseDataRaw);
     if (!parsedPurchaseInput.success) {
       return { status: "invalid_purchase_data" };
     }

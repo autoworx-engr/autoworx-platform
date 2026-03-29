@@ -14,6 +14,9 @@ export const createStripePaymentLink = async ({
   statementId,
   shopBookingId,
   paymentId,
+  giftCardSource,
+  giftCardCode,
+  giftCardId,
   amount,
   payType,
   redirectUrl,
@@ -57,25 +60,6 @@ export const createStripePaymentLink = async ({
         })
       : null;
 
-    const pendingPayment = paymentId
-      ? await db.payment.findUnique({
-          where: {
-            id: Number(paymentId),
-          },
-          select: {
-            id: true,
-            companyId: true,
-          },
-        })
-      : null;
-
-    if (
-      paymentId &&
-      (!pendingPayment || pendingPayment.companyId !== companyId)
-    ) {
-      throw new Error("Gift card payment session not found");
-    }
-
     // if (!statement) {
     //   throw new Error("Statement not found");
     // }
@@ -114,14 +98,14 @@ export const createStripePaymentLink = async ({
     const successRedirectBase = redirectUrl
       ? appendQuery(redirectUrl, "success=true")
       : "";
-    const successRedirectWithPaymentId =
+    const successRedirectWithPaymentRef =
       redirectUrl && isVirtualShopGiftCardPayment
-        ? appendQuery(successRedirectBase, `paymentId=${paymentId}`)
+        ? appendQuery(successRedirectBase, `paymentRef=${paymentId}`)
         : successRedirectBase;
 
     const successUrl = redirectUrl
       ? appendQuery(
-          successRedirectWithPaymentId,
+          successRedirectWithPaymentRef,
           "session_id={CHECKOUT_SESSION_ID}",
         )
       : shopBookingId
@@ -132,7 +116,7 @@ export const createStripePaymentLink = async ({
       ? appendQuery(
           redirectUrl,
           isVirtualShopGiftCardPayment
-            ? `cancel=true&paymentId=${paymentId}`
+            ? `cancel=true&paymentRef=${paymentId}`
             : "cancel=true",
         )
       : shopBookingId
@@ -168,9 +152,12 @@ export const createStripePaymentLink = async ({
               : paymentId
                 ? JSON.stringify({
                     companyId,
-                    paymentId,
+                    paymentRef: paymentId,
                     amount,
                     payType: "virtual_shop_gift_card",
+                    giftCardSource,
+                    giftCardCode,
+                    giftCardId,
                   })
                 : invoiceId
                   ? JSON.stringify({

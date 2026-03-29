@@ -46,6 +46,7 @@ export const PUBLIC_API_ROUTES = [
   // gift card public route
   "/api/virtual-shop/issued-gift-card/check-balance",
   "/api/virtual-shop/issued-gift-card/reload",
+  "/api/virtual-shop/issued-gift-card/reload/confirmation",
   "/api/virtual-shop/issued-gift-card/reload-payment/initiate",
   "/api/virtual-shop/gift-card-settings/public",
   "/api/virtual-shop/gift-card-payment/initiate",

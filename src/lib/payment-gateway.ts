@@ -9,6 +9,9 @@ export interface PaymentParams {
   statementId?: string;
   shopBookingId?: string;
   paymentId?: string;
+  giftCardSource?: "purchase" | "reload";
+  giftCardCode?: string;
+  giftCardId?: number;
   amount: string;
   payType:
     | "payment"

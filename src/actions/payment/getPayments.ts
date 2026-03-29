@@ -47,13 +47,39 @@ export async function getPayments(): Promise<ReturnPayment[]> {
         },
       },
       deposit: true,
+      stripePayment: {
+        select: {
+          id: true,
+        },
+      },
+      authorizeNetPayment: {
+        select: {
+          id: true,
+        },
+      },
     },
     orderBy: {
       date: "desc",
     },
   });
 
-  return payments.map((payment) => {
+  const filteredPayments = payments.filter((payment) => {
+    const notes = parsePaymentNotes(payment.notes);
+    const source = notes?.source;
+
+    const isGiftCardSource =
+      source === "virtual_shop_gift_card" ||
+      source === "virtual_shop_gift_card_purchase" ||
+      source === "virtual_shop_gift_card_reload";
+
+    if (!isGiftCardSource) {
+      return true;
+    }
+
+    return Boolean(payment.stripePayment || payment.authorizeNetPayment);
+  });
+
+  return filteredPayments.map((payment) => {
     const notes = parsePaymentNotes(payment.notes);
 
     const invoiceClientName =
@@ -78,7 +104,7 @@ export async function getPayments(): Promise<ReturnPayment[]> {
         name: clientName,
       },
       vehicle: `${payment?.invoice?.vehicle?.year || ""} ${payment?.invoice?.vehicle?.make || ""} ${payment?.invoice?.vehicle?.model || ""} ${payment?.invoice?.vehicle?.other || ""}`,
-      date: payment.date as Date,
+      date: (payment.date || payment.createdAt) as Date,
       amount: Number(payment.amount),
       refundedAmount: Number(payment.refundedAmount) || 0,
       refundMethod: payment.refundMethod as string,

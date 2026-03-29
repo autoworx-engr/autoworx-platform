@@ -1,15 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useSession } from "next-auth/react";
 import { Switch } from "@/components/Switch";
 import { Button } from "@/components/ui/button";
 import { useGetVirtualShopConfigure } from "@/hooks/virtual-shop/configure/useVirtualShopConfigure";
-import {
-  getCompanyTermsAndPolicyTax,
-  updateTaxCurrency,
-} from "@/actions/settings/emailTemplates";
 import {
   useGetShopBookingSettings,
   useUpdateShopBookingSettings,
@@ -30,17 +26,17 @@ export default function FinancialTab() {
 
   const [shopFee, setShopFee] = useState(false);
   const [tax, setTax] = useState(false);
-  const [shopFeePercent, setShopFeePercent] = useState("0");
-  const [taxPercent, setTaxPercent] = useState("0");
-  const [currency, setCurrency] = useState("USD");
-  const [isFetchingFinancialDefaults, setIsFetchingFinancialDefaults] =
-    useState(false);
-  const hasInitializedFinancialValues = useRef(false);
+  const companyTaxPercent = useMemo(() => {
+    const value = Number(shopConfig?.company?.tax ?? 0);
+    return Number.isFinite(value) ? value : 0;
+  }, [shopConfig?.company?.tax]);
 
-  const isLoading =
-    isShopConfigLoading ||
-    isBookingSettingsLoading ||
-    isFetchingFinancialDefaults;
+  const companyServiceFeePercent = useMemo(() => {
+    const value = Number(shopConfig?.company?.serviceFee ?? 0);
+    return Number.isFinite(value) ? value : 0;
+  }, [shopConfig?.company?.serviceFee]);
+
+  const isLoading = isShopConfigLoading || isBookingSettingsLoading;
 
   useEffect(() => {
     if (!bookingSettings) return;
@@ -48,56 +44,6 @@ export default function FinancialTab() {
     setShopFee(Boolean(bookingSettings.isServiceFeeEnabled));
     setTax(Boolean(bookingSettings.isTaxEnabled));
   }, [bookingSettings]);
-
-  useEffect(() => {
-    if (hasInitializedFinancialValues.current) return;
-
-    const companyTax = shopConfig?.company?.tax;
-    const companyServiceFee = shopConfig?.company?.serviceFee;
-
-    if (companyTax !== undefined && companyTax !== null) {
-      setTaxPercent(String(companyTax));
-    }
-    if (companyServiceFee !== undefined && companyServiceFee !== null) {
-      setShopFeePercent(String(companyServiceFee));
-    }
-
-    if (companyTax !== undefined || companyServiceFee !== undefined) {
-      hasInitializedFinancialValues.current = true;
-    }
-  }, [shopConfig?.company?.tax, shopConfig?.company?.serviceFee]);
-
-  useEffect(() => {
-    if (hasInitializedFinancialValues.current) return;
-
-    let mounted = true;
-
-    const fetchCompanyFinancialDefaults = async () => {
-      try {
-        setIsFetchingFinancialDefaults(true);
-        const data = await getCompanyTermsAndPolicyTax();
-        if (!mounted) return;
-
-        setTaxPercent(String(data?.tax ?? 0));
-        setShopFeePercent(String(data?.serviceFee ?? 0));
-        setCurrency(data?.currency || "USD");
-        hasInitializedFinancialValues.current = true;
-      } catch {
-        if (!mounted) return;
-        setCurrency("USD");
-      } finally {
-        if (mounted) {
-          setIsFetchingFinancialDefaults(false);
-        }
-      }
-    };
-
-    fetchCompanyFinancialDefaults();
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
 
   const handleSave = async () => {
     if (!shopId) {
@@ -110,43 +56,15 @@ export default function FinancialTab() {
       return;
     }
 
-    if (
-      !/^\d*\.?\d*$/.test(taxPercent) ||
-      !/^\d*\.?\d*$/.test(shopFeePercent)
-    ) {
-      toast.error("Tax and shop fee must be valid numbers");
-      return;
-    }
-
-    const parsedTax = Number(taxPercent || "0");
-    const parsedServiceFee = Number(shopFeePercent || "0");
-
-    if (Number.isNaN(parsedTax) || parsedTax < 0) {
-      toast.error("Tax percentage must be 0 or greater");
-      return;
-    }
-
-    if (Number.isNaN(parsedServiceFee) || parsedServiceFee < 0) {
-      toast.error("Shop fee percentage must be 0 or greater");
-      return;
-    }
-
     try {
-      await Promise.all([
-        updateBookingSettings({
-          payload: {
-            shopId,
-            isTaxEnabled: tax,
-            isServiceFeeEnabled: shopFee,
-          },
-          accessToken: session.accessToken,
-        }),
-        updateTaxCurrency({
-          currency: currency || "USD",
-          tax: taxPercent || "0",
-          serviceFee: shopFeePercent || "0",
-        }),
-      ]);
+      await updateBookingSettings({
+        payload: {
+          shopId,
+          isTaxEnabled: tax,
+          isServiceFeeEnabled: shopFee,
+        },
+        accessToken: session.accessToken,
+      });
 
       toast.success("Financial settings saved successfully");
     } catch (error: any) {
@@ -160,7 +78,8 @@ export default function FinancialTab() {
     <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
       <h2 className="text-2xl font-bold text-gray-900">Financial Add-ons</h2>
       <p className="mt-1 text-sm text-[#6571FF]">
-        Configure fees and tax settings
+        Tax and shop fee rates are synced from company settings. Use this page
+        only to toggle whether they apply to virtual shop bookings.
       </p>
 
       {/* Shop Fee */}
@@ -181,14 +100,9 @@ export default function FinancialTab() {
           </label>
           <input
             type="number"
-            min="0"
-            step="0.01"
-            value={shopFeePercent}
-            disabled={!shopFee}
-            onChange={(e) =>
-              /^\d*\.?\d*$/.test(e.target.value) &&
-              setShopFeePercent(e.target.value)
-            }
+            value={companyServiceFeePercent}
+            readOnly
+            disabled
             className="w-32 rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 outline-none focus:border-[#6571FF] focus:ring-1 focus:ring-[#6571FF] disabled:cursor-not-allowed disabled:opacity-60"
           />
         </div>
@@ -212,14 +126,9 @@ export default function FinancialTab() {
           </label>
           <input
             type="number"
-            min="0"
-            step="0.01"
-            value={taxPercent}
-            disabled={!tax}
-            onChange={(e) =>
-              /^\d*\.?\d*$/.test(e.target.value) &&
-              setTaxPercent(e.target.value)
-            }
+            value={companyTaxPercent}
+            readOnly
+            disabled
             className="w-32 rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 outline-none focus:border-[#6571FF] focus:ring-1 focus:ring-[#6571FF] disabled:cursor-not-allowed disabled:opacity-60"
           />
         </div>
