@@ -27,6 +27,8 @@ export const DateTimeSelection = () => {
   // Get shop from slug
   const { data: shop } = useGetShopBySlug(slug);
 
+  const primaryColor = shop?.themeConfig?.primaryColor || "#1677ff";
+
   // Fetch all available slots for selected date
   const { data: slotsResponse, isPending: isSlotsLoading } =
     useGetAppointmentSlots(
@@ -124,7 +126,7 @@ export const DateTimeSelection = () => {
               theme={{
                 algorithm: theme.defaultAlgorithm,
                 token: {
-                  colorPrimary: "#1677ff",
+                  colorPrimary: primaryColor,
                   borderRadius: 8,
                 },
               }}
