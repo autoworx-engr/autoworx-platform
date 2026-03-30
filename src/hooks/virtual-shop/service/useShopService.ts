@@ -12,6 +12,7 @@ import {
   getShopBySlug,
   getAppointmentSlots,
   getGiftCardTemplatesPublic,
+  lookupClientByPhone,
   ShopServicesResponse,
 } from "@/service/virtual-shop/api";
 import {
@@ -157,5 +158,12 @@ export const useCreateVirtualShopServiceBooking = () => {
   return useMutation({
     mutationFn: (payload: CreateVirtualShopServiceBookingPayload) =>
       createVirtualShopServiceBooking(payload),
+  });
+};
+
+export const useLookupClientByPhone = () => {
+  return useMutation({
+    mutationFn: (payload: { phone: string; shopId: number }) =>
+      lookupClientByPhone(payload),
   });
 };

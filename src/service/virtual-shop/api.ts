@@ -651,6 +651,34 @@ export const createVirtualShopServiceBooking = async function (
   }
 };
 
+export const lookupClientByPhone = async function ({
+  phone,
+  shopId,
+}: {
+  phone: string;
+  shopId: number;
+}) {
+  try {
+    const response = await axios.get<{
+      success: boolean;
+      data: {
+        id: number;
+        firstName: string;
+        lastName: string;
+        email: string;
+        mobile: string;
+      } | null;
+    }>("/api/virtual-shop/client-lookup/by-phone", {
+      params: { phone, shopId },
+    });
+
+    return response.data;
+  } catch (error) {
+    const err = errorHandler(error);
+    throw err;
+  }
+};
+
 export const getVirtualShopServiceBookingCalendar = async function ({
   year,
   month,
