@@ -132,8 +132,8 @@ export default function VirtualShopConfigure({
     formData.append("file", file, key);
     const res = await fetch("/api/upload", { method: "POST", body: formData });
     if (res.ok) {
-      const urls = await res.json();
-      return urls[0];
+      const response = await res.json();
+      return response.data?.[0] || null;
     }
     return null;
   };
@@ -146,17 +146,25 @@ export default function VirtualShopConfigure({
       let logoUrl = form.logoUrl;
       let bannerUrl = form.bannerUrl;
 
-      if (files.logo) {
-        const uploadedLogo = await uploadFile(files.logo, "logoUrl");
+      const logoFile = files.logo;
+      const bannerFile = files.banner;
+
+      if (logoFile) {
+        const uploadedLogo = await uploadFile(logoFile, "logoUrl");
         if (uploadedLogo) logoUrl = uploadedLogo;
       }
 
-      if (files.banner) {
-        const uploadedBanner = await uploadFile(files.banner, "bannerUrl");
+      if (bannerFile) {
+        const uploadedBanner = await uploadFile(bannerFile, "bannerUrl");
         if (uploadedBanner) bannerUrl = uploadedBanner;
       }
 
-      const submissionData = { ...form, logoUrl, bannerUrl, slug };
+      const submissionData = {
+        ...form,
+        logoUrl,
+        bannerUrl,
+        slug,
+      };
 
       if (data?.id) {
         updateConfigure(submissionData);

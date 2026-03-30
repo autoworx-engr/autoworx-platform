@@ -138,12 +138,12 @@ const navbarList = [
     link: "/dashboard/visualization",
     path: "/dashboard/visualization",
   },
-  {
-    title: "Virtual Shop",
-    icon: <Store className="w-5 h-5" color="#fff" />,
-    link: "/dashboard/virtual-shop",
-    path: "/dashboard/virtual-shop",
-  },
+  // {
+  //   title: "Virtual Shop",
+  //   icon: <Store className="w-5 h-5" color="#fff" />,
+  //   link: "/dashboard/virtual-shop",
+  //   path: "/dashboard/virtual-shop",
+  // },
 ];
 
 const mobileNav = [

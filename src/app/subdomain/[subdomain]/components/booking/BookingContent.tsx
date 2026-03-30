@@ -132,7 +132,7 @@ const BookingContent = ({ initialShop }: { initialShop?: any }) => {
     );
   }
 
-  if (!shop && !isShopLoading) {
+  if (!shop && !isShopLoading || shop?.isActive === false) {
     return <ShopNotFound />;
   }
 
