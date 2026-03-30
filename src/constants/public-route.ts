@@ -23,6 +23,7 @@ export const PUBLIC_API_ROUTES = [
   "/api/lead-generate",
   "/api/authorize-net/webhook",
   "/api/infobip/mms/receive",
+  "/api/infobip/sms/receive",
   "/api/infobip/email/receive",
   "/api/twilio/call-recording",
   "/api/twilio/call-state",
