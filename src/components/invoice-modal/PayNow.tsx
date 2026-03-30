@@ -164,12 +164,7 @@ export function PayNow({
     if (defaultGateway) {
       setSelectedGateway(defaultGateway);
     }
-  }, [
-    gatewayInfo?.paymentGateway,
-    gatewayInfo?.hasStripe,
-    gatewayInfo?.hasAuthorizeNet,
-    selectedGateway,
-  ]);
+  }, [gatewayInfo, selectedGateway]);
 
   // Handle postMessage from Authorize.Net iframe / communicator
   useEffect(() => {
@@ -284,6 +279,7 @@ export function PayNow({
             shopBookingId: shopBookingId!,
             companyId,
             payType: "virtual_shop_deposit",
+            redirectUrl: window.location.href,
           });
         } else if (mode === "virtual_shop_gift_card") {
           result = await createAuthorizeNetPaymentLink({
@@ -294,6 +290,7 @@ export function PayNow({
             giftCardId,
             companyId,
             payType: "virtual_shop_gift_card",
+            redirectUrl: window.location.href,
           });
         } else {
           result = await createAuthorizeNetPaymentLink({
