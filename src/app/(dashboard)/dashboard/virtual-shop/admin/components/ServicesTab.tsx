@@ -1,77 +1,62 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, Plus, Search } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import ServiceCard, { type Service } from "./ServiceCard";
 import { useRouter } from "nextjs-toploader/app";
 import { Pagination } from "antd";
-import { useSession } from "next-auth/react";
+import { usePathname, useSearchParams } from "next/navigation";
 import { ShopData, ShopServicesResponse } from "@/service/virtual-shop/api";
-import { useGetVirtualShopConfigure } from "@/hooks/virtual-shop/configure/useVirtualShopConfigure";
-import {
-  useDeleteShopService,
-  useGetShopServices,
-} from "@/hooks/virtual-shop/service/useShopService";
+import { useDeleteShopService } from "@/hooks/virtual-shop/service/useShopService";
 
 type ServicesTabProps = {
-  initialShopConfig?: ShopData | null;
-  initialServicesResponse?: ShopServicesResponse;
+  shopConfig?: ShopData | null;
+  servicesResponse?: ShopServicesResponse;
+  currentSearch?: string;
 };
 
 export default function ServicesTab({
-  initialShopConfig,
-  initialServicesResponse,
+  shopConfig,
+  servicesResponse,
+  currentSearch = "",
 }: ServicesTabProps) {
-  const { data: session } = useSession();
   const router = useRouter();
-  const [searchInput, setSearchInput] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
-  const companyId = initialShopConfig?.companyId ?? session?.user?.companyId;
-  const normalizedCompanyId = companyId ?? 0;
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [searchInput, setSearchInput] = useState(currentSearch);
+
+  const shopId = shopConfig?.id;
+  const meta = servicesResponse?.meta;
+
+  useEffect(() => {
+    setSearchInput(currentSearch);
+  }, [currentSearch]);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
-      setDebouncedSearch(searchInput.trim());
+      const nextSearch = searchInput.trim();
+      if (nextSearch === currentSearch) {
+        return;
+      }
+
+      const params = new URLSearchParams(searchParams?.toString() ?? "");
+
+      if (nextSearch) {
+        params.set("search", nextSearch);
+      } else {
+        params.delete("search");
+      }
+
+      params.set("page", "1");
+
+      const nextQuery = params.toString();
+      router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname);
     }, 400);
 
     return () => clearTimeout(timeout);
-  }, [searchInput]);
+  }, [currentSearch, pathname, router, searchInput, searchParams]);
 
-  useEffect(() => {
-    setPage(1);
-  }, [debouncedSearch, limit]);
-
-  const { data: shopConfig, isLoading: isShopConfigLoading } =
-    useGetVirtualShopConfigure(normalizedCompanyId, {
-      enabled: !!normalizedCompanyId,
-      initialData: initialShopConfig,
-    });
-
-  const shopId = shopConfig?.id;
-
-  const {
-    data: servicesResponse,
-    isLoading: isServicesLoading,
-    isFetching: isServicesFetching,
-    isError: isServicesError,
-  } = useGetShopServices({
-    shopId,
-    page,
-    limit,
-    search: debouncedSearch,
-  },
-    {
-      enabled: !!shopId,
-      initialData:
-        page === 1 && limit === 10 && !debouncedSearch
-          ? initialServicesResponse
-          : undefined,
-    });
   const { mutateAsync: deleteService } = useDeleteShopService();
-
-  const meta = servicesResponse?.meta;
 
   const services: Service[] = useMemo(
     () =>
@@ -95,6 +80,7 @@ export default function ServicesTab({
 
     try {
       await deleteService({ id: service.id, shopId });
+      router.refresh();
     } catch {
     }
   };
@@ -104,8 +90,13 @@ export default function ServicesTab({
   };
 
   const handlePageChange = (nextPage: number, nextPageSize: number) => {
-    setPage(nextPage);
-    setLimit(nextPageSize);
+    const params = new URLSearchParams(searchParams?.toString() ?? "");
+
+    params.set("page", String(nextPage));
+    params.set("limit", String(nextPageSize));
+
+    const nextQuery = params.toString();
+    router.push(nextQuery ? `${pathname}?${nextQuery}` : pathname);
   };
 
   return (
@@ -146,21 +137,9 @@ export default function ServicesTab({
       {/* Service list */}
       <div className="min-h-[40vh] max-h-[65vh] overflow-y-auto thin-scrollbar pr-1">
         <div className="flex flex-col gap-2">
-          {((isShopConfigLoading && !shopConfig) ||
-            (isServicesLoading && !servicesResponse)) ? (
-            <div className="flex min-h-[320px] items-center justify-center rounded-lg border border-gray-200 bg-gray-50 px-4 py-6">
-              <div className="flex flex-col items-center gap-3 text-sm text-gray-600">
-                <Loader2 size={28} className="animate-spin text-[#6571FF]" />
-                <span>Loading services...</span>
-              </div>
-            </div>
-          ) : !shopId ? (
+          {!shopId ? (
             <p className="py-8 text-center text-sm text-gray-400">
               Configure your virtual shop first to manage services.
-            </p>
-          ) : isServicesError ? (
-            <p className="py-8 text-center text-sm text-red-400">
-              Failed to load services.
             </p>
           ) : services.length === 0 ? (
             <p className="py-8 text-center text-sm text-gray-400">
@@ -179,7 +158,7 @@ export default function ServicesTab({
         </div>
       </div>
 
-      {shopId && meta && !isServicesLoading && !isServicesError && (
+      {shopId && meta && (
         <div className="flex items-center justify-end border-t border-gray-200 pt-2">
           <Pagination
             className="custom-pagination"
@@ -191,9 +170,6 @@ export default function ServicesTab({
             pageSizeOptions={["10", "20", "50", "100"]}
             showTotal={(total) => `${total} total`}
           />
-          {isServicesFetching && (
-            <Loader2 size={16} className="ml-3 animate-spin text-[#6571FF]" />
-          )}
         </div>
       )}
     </div>
