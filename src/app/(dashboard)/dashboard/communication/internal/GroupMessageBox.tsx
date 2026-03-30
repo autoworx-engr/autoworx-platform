@@ -51,8 +51,10 @@ export default function GroupMessageBox({
           }),
         );
     };
-    fetchGroupMessages();
-  }, []);
+    if (session?.user?.id) {
+      fetchGroupMessages();
+    }
+  }, [group.id, session?.user?.id]);
 
   // for group real-time messages
   useEffect(() => {
@@ -99,7 +101,7 @@ export default function GroupMessageBox({
     return () => {
       channel.unbind("message");
     };
-  }, []);
+  }, [group.id, session?.user?.id, setGroupsList]);
 
   return (
     <MessageBox
