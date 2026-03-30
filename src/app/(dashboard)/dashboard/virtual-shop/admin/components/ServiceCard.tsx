@@ -46,9 +46,12 @@ export default function ServiceCard({
               <span className="line-clamp-2 text-sm font-semibold text-slate-700 sm:text-base sm:line-clamp-1">
                 {service.name}
               </span>
-              <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-500 sm:text-xs">
-                {service.category}
-              </span>
+              {
+                service.category &&
+                <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-500 sm:text-xs">
+                  {service.category}
+                </span>
+              }
             </div>
             <div className="flex items-center gap-2 text-xs sm:text-sm">
               <span className="font-semibold text-slate-700">${service.price}</span>
