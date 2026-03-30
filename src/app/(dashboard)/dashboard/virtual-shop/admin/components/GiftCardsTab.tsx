@@ -90,6 +90,7 @@ function SettingInput({
   onChange,
   type = "text",
   min,
+  required = false,
   className,
 }: {
   label: string;
@@ -97,14 +98,19 @@ function SettingInput({
   onChange: (v: string) => void;
   type?: string;
   min?: string;
+  required?: boolean;
   className?: string;
 }) {
   return (
     <div className={`flex flex-col gap-1.5 ${className ?? ""}`}>
-      <label className="text-sm font-semibold text-gray-700">{label}</label>
+      <label className="text-sm font-semibold text-gray-700">
+        {label}
+        {required && <span className="ml-1 text-red-500">*</span>}
+      </label>
       <input
         type={type}
         min={min}
+        required={required}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="w-full rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 outline-none focus:border-[#6571FF] focus:ring-1 focus:ring-[#6571FF]"
@@ -414,8 +420,8 @@ export default function GiftCardsTab() {
       return;
     }
 
-    if (newTemplateName.trim().length < 2) {
-      toast.error("Template name must be at least 2 characters");
+    if (!newTemplateName.trim()) {
+      toast.error("Template name is required");
       return;
     }
 
@@ -587,12 +593,14 @@ export default function GiftCardsTab() {
                   label="Template Name"
                   value={newTemplateName}
                   onChange={setNewTemplateName}
+                  required
                 />
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-gray-700">Template Image</label>
+                  <label className="text-sm font-semibold text-gray-700">Template Image<span className="ml-1 text-red-500">*</span></label>
                   <input
                     key={templateImageInputKey}
                     type="file"
+                    required
                     accept="image/*"
                     onChange={(e) => setNewTemplateImageFile(e.target.files?.[0] ?? null)}
                     className="w-full rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 outline-none file:mr-3 file:rounded-md file:border-0 file:bg-[#6571FF] file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-white hover:file:bg-[#5560ee]"
@@ -602,7 +610,12 @@ export default function GiftCardsTab() {
                   <button
                     type="button"
                     onClick={handleCreateTemplate}
-                    disabled={isCreatingTemplate || isUploadingTemplateImage || !accessToken}
+                    disabled={
+                      isCreatingTemplate
+                      || isUploadingTemplateImage
+                      || !newTemplateName.trim()
+                      || !newTemplateImageFile
+                    }
                     className="flex h-[42px] w-fit items-center gap-1.5 rounded-md bg-[#6571FF] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#5560ee] disabled:opacity-60"
                   >
                     {isCreatingTemplate || isUploadingTemplateImage ? (

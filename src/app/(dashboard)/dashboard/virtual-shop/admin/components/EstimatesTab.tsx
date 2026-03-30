@@ -1,11 +1,11 @@
 "use client";
 
-import { useMemo, useState, type ElementType } from "react";
-import { useSession } from "next-auth/react";
+import { useCallback, useEffect, useState, type ElementType } from "react";
 import { Pagination } from "antd";
+import FilterByDateRange from "@/app/(dashboard)/dashboard/reporting/components/filter/FilterByDateRange";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Search,
-  Filter,
   CalendarDays,
   Clock,
   Car,
@@ -16,12 +16,10 @@ import {
   ChevronDown,
   ChevronUp,
   Receipt,
-  Loader2,
 } from "lucide-react";
-import { useGetVirtualShopServiceBookings } from "@/hooks/virtual-shop/service-booking/useShopServiceBooking";
-import type { VirtualShopServiceBookingItem } from "@/service/virtual-shop/api";
 
-type AppointmentStatus = "confirmed" | "pending" | "cancelled" | "completed";
+export type AppointmentStatus = "confirmed" | "pending" | "cancelled" | "completed";
+export type FilterStatus = "all" | AppointmentStatus;
 
 type EstimateService = {
   name: string;
@@ -31,7 +29,7 @@ type EstimateService = {
   durationMinutes: number;
 };
 
-type Estimate = {
+export type Estimate = {
   id: number;
   clientName: string;
   status: AppointmentStatus;
@@ -75,135 +73,6 @@ const STATUS_CONFIG: Record<
     icon: XCircle,
   },
 };
-
-const PAGE_SIZE = 10;
-
-function mapStatus(status?: string | null): AppointmentStatus {
-  const normalized = (status || "").toLowerCase();
-
-  if (normalized === "confirmed") return "confirmed";
-  if (normalized === "pending") return "pending";
-  if (normalized === "completed") return "completed";
-  if (normalized === "cancelled") return "cancelled";
-
-  return "pending";
-}
-
-function formatDateLabel(value?: string | null) {
-  if (!value) return "-";
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "-";
-
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-function formatTime(value?: string | null) {
-  if (!value) return "-";
-
-  const [hourString, minuteString = "00"] = value.split(":");
-  const hour = Number(hourString);
-  const minute = Number(minuteString);
-
-  if (Number.isNaN(hour) || Number.isNaN(minute)) {
-    return value;
-  }
-
-  const suffix = hour >= 12 ? "PM" : "AM";
-  const twelveHour = hour % 12 || 12;
-  return `${twelveHour}:${String(minute).padStart(2, "0")} ${suffix}`;
-}
-
-function parseTimeToMinutes(value?: string | null) {
-  if (!value) return null;
-
-  const [hourString, minuteString = "00"] = value.split(":");
-  const hour = Number(hourString);
-  const minute = Number(minuteString);
-
-  if (Number.isNaN(hour) || Number.isNaN(minute)) {
-    return null;
-  }
-
-  return hour * 60 + minute;
-}
-
-function formatDuration(minutes: number) {
-  if (minutes <= 0) return "-";
-
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-
-  if (!hours) return `${mins}m`;
-  if (!mins) return `${hours}h`;
-
-  return `${hours}h ${mins}m`;
-}
-
-function getDurationLabel(item: VirtualShopServiceBookingItem) {
-  const startMinutes = parseTimeToMinutes(item.appointment?.startTime);
-  const endMinutes = parseTimeToMinutes(item.appointment?.endTime);
-
-  if (startMinutes !== null && endMinutes !== null && endMinutes > startMinutes) {
-    return formatDuration(endMinutes - startMinutes);
-  }
-
-  const servicesDuration = item.services.reduce((sum, svc) => {
-    const next = Number(svc.duration || 0);
-    return sum + (Number.isFinite(next) ? next : 0);
-  }, 0);
-
-  return formatDuration(servicesDuration);
-}
-
-function getVehicleLabel(item: VirtualShopServiceBookingItem) {
-  const segments = [item.vehicle?.year, item.vehicle?.make, item.vehicle?.model]
-    .map(part => (part ?? "").toString().trim())
-    .filter(Boolean);
-
-  return segments.length > 0 ? segments.join(" ") : "Vehicle not provided";
-}
-
-function mapBookingToEstimate(item: VirtualShopServiceBookingItem): Estimate {
-  const services = item.services.map(svc => ({
-    name: svc.title,
-    vehicleType: svc.modifierType || "Vehicle",
-    basePrice: Number(svc.price || 0),
-    adjustment: Number(svc.modifierPrice || 0),
-    durationMinutes: Number(svc.duration || 0),
-  }));
-
-  const fallbackSubtotal = services.reduce(
-    (sum, svc) => sum + svc.basePrice + svc.adjustment,
-    0,
-  );
-
-  const subtotal = Number(item.subtotal ?? fallbackSubtotal);
-  const taxAmount = Number(item.tax ?? 0);
-  const serviceFee = Number(item.serviceFee ?? 0);
-  const total = Number(item.total ?? subtotal + taxAmount + serviceFee);
-
-  const fullName = `${item.client?.firstName || ""} ${item.client?.lastName || ""}`.trim();
-
-  return {
-    id: item.id,
-    clientName: fullName || "Unknown Client",
-    status: mapStatus(item.status),
-    date: formatDateLabel(item.appointment?.date),
-    time: formatTime(item.appointment?.startTime),
-    duration: getDurationLabel(item),
-    vehicle: getVehicleLabel(item),
-    services,
-    subtotal,
-    taxAmount,
-    serviceFee,
-    total,
-  };
-}
 
 function getServiceTotal(svc: EstimateService) {
   return svc.basePrice + svc.adjustment;
@@ -316,103 +185,112 @@ function EstimateCard({ estimate }: { estimate: Estimate }) {
   );
 }
 
-type FilterStatus = "all" | AppointmentStatus;
+const STATUSES: FilterStatus[] = ["all", "confirmed", "pending", "completed", "cancelled"];
 
-export default function EstimatesTab() {
-  const { data: session } = useSession();
-  const accessToken = session?.accessToken || "";
+export type EstimatesTabProps = {
+  estimates: Estimate[];
+  totalRecords: number;
+  currentPage: number;
+  pageSize: number;
+  search: string;
+  status: FilterStatus;
+  startDate?: string;
+  endDate?: string;
+  statusCounts: {
+    all: number;
+    confirmed: number;
+    pending: number;
+    completed: number;
+    cancelled: number;
+  };
+};
 
-  const [search, setSearch] = useState("");
-  const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
-  const [showFilters, setShowFilters] = useState(false);
-  const [page, setPage] = useState(1);
+export default function EstimatesTab({
+  estimates,
+  totalRecords,
+  currentPage,
+  pageSize,
+  search,
+  status,
+  startDate,
+  endDate,
+  statusCounts,
+}: EstimatesTabProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [searchInput, setSearchInput] = useState(search);
 
-  const bookingStatus = filterStatus === "all" ? undefined : filterStatus;
-
-  const { data, isLoading, isFetching, isError } = useGetVirtualShopServiceBookings(
-    {
-      accessToken,
-      page,
-      limit: PAGE_SIZE,
-      search: search || undefined,
-      status: bookingStatus,
-      sortOrder: "desc",
-    },
-    Boolean(accessToken),
-  );
-
-  const { data: allCountData } = useGetVirtualShopServiceBookings(
-    {
-      accessToken,
-      page: 1,
-      limit: 1,
-      search: search || undefined,
-      sortOrder: "desc",
-    },
-    Boolean(accessToken),
-  );
-
-  const { data: confirmedCountData } = useGetVirtualShopServiceBookings(
-    {
-      accessToken,
-      page: 1,
-      limit: 1,
-      search: search || undefined,
-      status: "confirmed",
-      sortOrder: "desc",
-    },
-    Boolean(accessToken),
-  );
-
-  const { data: pendingCountData } = useGetVirtualShopServiceBookings(
-    {
-      accessToken,
-      page: 1,
-      limit: 1,
-      search: search || undefined,
-      status: "pending",
-      sortOrder: "desc",
-    },
-    Boolean(accessToken),
-  );
-
-  const { data: completedCountData } = useGetVirtualShopServiceBookings(
-    {
-      accessToken,
-      page: 1,
-      limit: 1,
-      search: search || undefined,
-      status: "completed",
-      sortOrder: "desc",
-    },
-    Boolean(accessToken),
-  );
-
-  const { data: cancelledCountData } = useGetVirtualShopServiceBookings(
-    {
-      accessToken,
-      page: 1,
-      limit: 1,
-      search: search || undefined,
-      status: "cancelled",
-      sortOrder: "desc",
-    },
-    Boolean(accessToken),
-  );
-
-  const estimates = useMemo(
-    () => (data?.data || []).map(mapBookingToEstimate),
-    [data?.data],
-  );
+  const [activeModal, setActiveModal] = useState<Record<string, boolean>>({
+    dateRange: false,
+  });
 
   const totalRevenue = estimates.reduce((sum, e) => sum + e.total, 0);
 
-  const statusCounts = {
-    all: allCountData?.meta?.totalRecords || 0,
-    confirmed: confirmedCountData?.meta?.totalRecords || 0,
-    pending: pendingCountData?.meta?.totalRecords || 0,
-    completed: completedCountData?.meta?.totalRecords || 0,
-    cancelled: cancelledCountData?.meta?.totalRecords || 0,
+  const updateQuery = useCallback((patch: Record<string, string | undefined>) => {
+    const next = new URLSearchParams(searchParams.toString());
+
+    Object.entries(patch).forEach(([key, value]) => {
+      if (!value) {
+        next.delete(key);
+        return;
+      }
+      next.set(key, value);
+    });
+
+    const query = next.toString();
+    router.push(query ? `${pathname}?${query}` : pathname);
+  }, [pathname, router, searchParams]);
+
+  useEffect(() => {
+    setSearchInput(search);
+  }, [search]);
+
+  useEffect(() => {
+    const normalizedInput = searchInput.trim();
+    const normalizedSearch = search.trim();
+
+    if (normalizedInput === normalizedSearch) return;
+
+    const timeout = setTimeout(() => {
+      updateQuery({
+        search: normalizedInput || undefined,
+        page: undefined,
+      });
+    }, 400);
+
+    return () => clearTimeout(timeout);
+  }, [searchInput, search, updateQuery]);
+
+  const onStatusChange = (nextStatus: FilterStatus) => {
+    updateQuery({
+      status: nextStatus === "all" ? undefined : nextStatus,
+      page: undefined,
+    });
+  };
+
+
+  const closeModal = (modalName: string) => {
+    setActiveModal((prev) => ({
+      ...prev,
+      [modalName]: false,
+    }));
+  };
+
+  const toggleModal = (modalName: string) => {
+    setActiveModal((prev) => ({
+      ...Object.keys(prev).reduce((acc, key) => {
+        acc[key] = false;
+        return acc;
+      }, {} as Record<string, boolean>),
+      [modalName]: !prev[modalName as keyof typeof prev],
+    }));
+  };
+
+  const onPageChange = (nextPage: number) => {
+    updateQuery({
+      page: nextPage > 1 ? String(nextPage) : undefined,
+    });
   };
 
   return (
@@ -421,8 +299,8 @@ export default function EstimatesTab() {
         <div className="min-w-0">
           <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">All Estimates</h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            {data?.meta?.totalRecords || 0} appointment{(data?.meta?.totalRecords || 0) !== 1 ? "s" : ""}
-            {filterStatus !== "all" && ` · ${filterStatus}`}
+            {totalRecords} appointment{totalRecords !== 1 ? "s" : ""}
+            {status !== "all" && ` · ${status}`}
           </p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
@@ -436,16 +314,13 @@ export default function EstimatesTab() {
       </div>
 
       <div className="flex flex-wrap gap-2">
-        {(["all", "confirmed", "pending", "completed", "cancelled"] as const).map(s => {
+        {STATUSES.map(s => {
           const count = statusCounts[s];
-          const isActive = filterStatus === s;
+          const isActive = status === s;
           return (
             <button
               key={s}
-              onClick={() => {
-                setFilterStatus(s);
-                setPage(1);
-              }}
+              onClick={() => onStatusChange(s)}
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all duration-200 ${isActive
                 ? s === "all"
                   ? "bg-[#6571FF] text-white border-[#6571FF] shadow-md shadow-indigo-200 dark:shadow-indigo-900/30"
@@ -472,46 +347,28 @@ export default function EstimatesTab() {
         })}
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <div className="relative flex-1 sm:max-w-sm">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
-            type="text"
-            value={search}
-            onChange={e => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
+            value={searchInput}
+            onChange={e => setSearchInput(e.target.value)}
             placeholder="Search client, vehicle or service..."
             className="w-full pl-9 pr-4 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30 focus:border-[#6571FF] transition"
           />
         </div>
-        <button
-          onClick={() => setShowFilters(v => !v)}
-          className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-medium transition-all ${showFilters
-            ? "border-[#6571FF] bg-[#6571FF]/10 text-[#6571FF]"
-            : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:border-slate-300"
-            }`}
-        >
-          <Filter size={13} />
-          Filter
-        </button>
+        <FilterByDateRange
+          startDate={startDate}
+          endDate={endDate}
+          modalName="dateRange"
+          activeModal={activeModal}
+          closeModal={closeModal}
+          toggleModal={toggleModal}
+          queryDateFormat="yyyy-MM-dd"
+        />
       </div>
 
-      {(isLoading || isFetching) && (
-        <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-          <Loader2 size={16} className="animate-spin" />
-          Loading estimates...
-        </div>
-      )}
-
-      {isError ? (
-        <div className="flex flex-col items-center justify-center py-16 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/30 text-slate-400 dark:text-slate-500">
-          <Receipt size={32} className="opacity-40 mb-3" />
-          <p className="text-sm font-medium">Failed to load estimates</p>
-          <p className="text-xs mt-1 opacity-70">Please try again in a moment</p>
-        </div>
-      ) : estimates.length === 0 ? (
+      {estimates.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/30 text-slate-400 dark:text-slate-500">
           <Receipt size={32} className="opacity-40 mb-3" />
           <p className="text-sm font-medium">No estimates found</p>
@@ -525,14 +382,14 @@ export default function EstimatesTab() {
             ))}
           </div>
 
-          {(data?.meta?.totalRecords || 0) > PAGE_SIZE && (
+          {totalRecords > pageSize && (
             <div className="flex justify-end">
               <Pagination
-                current={page}
-                total={data?.meta?.totalRecords || 0}
-                pageSize={PAGE_SIZE}
+                current={currentPage}
+                total={totalRecords}
+                pageSize={pageSize}
                 showSizeChanger={false}
-                onChange={nextPage => setPage(nextPage)}
+                onChange={onPageChange}
               />
             </div>
           )}

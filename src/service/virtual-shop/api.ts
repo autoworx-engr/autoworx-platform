@@ -265,6 +265,8 @@ export type GetVirtualShopServiceBookingsParams = {
   page?: number;
   limit?: number;
   date?: string;
+  startDate?: string;
+  endDate?: string;
   year?: string;
   month?: string;
   search?: string;
@@ -649,6 +651,34 @@ export const createVirtualShopServiceBooking = async function (
   }
 };
 
+export const lookupClientByPhone = async function ({
+  phone,
+  shopId,
+}: {
+  phone: string;
+  shopId: number;
+}) {
+  try {
+    const response = await axios.get<{
+      success: boolean;
+      data: {
+        id: number;
+        firstName: string;
+        lastName: string;
+        email: string;
+        mobile: string;
+      } | null;
+    }>("/api/virtual-shop/client-lookup/by-phone", {
+      params: { phone, shopId },
+    });
+
+    return response.data;
+  } catch (error) {
+    const err = errorHandler(error);
+    throw err;
+  }
+};
+
 export const getVirtualShopServiceBookingCalendar = async function ({
   year,
   month,
@@ -680,6 +710,8 @@ export const getVirtualShopServiceBookings = async function ({
   page = 1,
   limit = 10,
   date,
+  startDate,
+  endDate,
   year,
   month,
   search,
@@ -694,6 +726,8 @@ export const getVirtualShopServiceBookings = async function ({
           page,
           limit,
           date: date || undefined,
+          startDate: startDate || undefined,
+          endDate: endDate || undefined,
           year: year || undefined,
           month: month || undefined,
           search: search || undefined,

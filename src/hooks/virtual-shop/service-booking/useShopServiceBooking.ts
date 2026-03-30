@@ -1,6 +1,7 @@
 import {
   GetVirtualShopServiceBookingCalendarParams,
   GetVirtualShopServiceBookingsParams,
+  VirtualShopServiceBookingListResponse,
   getVirtualShopServiceBookingCalendar,
   getVirtualShopServiceBookings,
 } from "@/service/virtual-shop/api";
@@ -28,7 +29,10 @@ export const useGetVirtualShopServiceBookingCalendar = (
 
 export const useGetVirtualShopServiceBookings = (
   params: GetVirtualShopServiceBookingsParams,
-  enabled = true,
+  options?: {
+    enabled?: boolean;
+    initialData?: VirtualShopServiceBookingListResponse;
+  },
 ) => {
   return useQuery({
     queryKey: [
@@ -40,11 +44,14 @@ export const useGetVirtualShopServiceBookings = (
       params.limit,
       params.search,
       params.status,
+      params.startDate,
+      params.endDate,
       params.sortOrder,
       params.accessToken,
     ],
     queryFn: () => getVirtualShopServiceBookings(params),
-    enabled: Boolean(enabled && params.accessToken),
+    enabled: Boolean((options?.enabled ?? true) && params.accessToken),
+    initialData: options?.initialData,
     placeholderData: (previousData) => previousData,
     staleTime: 1000 * 60 * 2,
     gcTime: 1000 * 60 * 15,

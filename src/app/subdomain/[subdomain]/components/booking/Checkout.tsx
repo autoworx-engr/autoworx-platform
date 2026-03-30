@@ -36,11 +36,18 @@ import { useParams, useSearchParams, useRouter } from "next/navigation";
 import {
   useCreateVirtualShopServiceBooking,
   useGetShopBySlug,
+  useLookupClientByPhone,
 } from "@/hooks/virtual-shop/service/useShopService";
 import toast from "react-hot-toast";
 import PhoneInput from "@/components/PhoneInput";
 import { SlimInput } from "@/components/SlimInput";
 import { SlimTextarea } from "@/components/SlimTextarea";
+import {
+  useGetAllYears,
+  useGetMake,
+  useGetModelsByYearAndMake,
+} from "@/hooks/useCarData";
+import Selector from "@/app/(dashboard)/dashboard/settings/automation/components/Selector";
 
 const TIMER_SECONDS = 600; // 10 min
 
@@ -76,13 +83,20 @@ export const Checkout = () => {
   );
   const { mutateAsync: createBooking, isPending: isBookingSubmitting } =
     useCreateVirtualShopServiceBooking();
+  const { mutateAsync: lookupClient, isPending: isLookingUp } =
+    useLookupClientByPhone();
+
+  const { data: years }: any = useGetAllYears();
+  const { data: makes }: any = useGetMake();
+
+  console.log("years ", years);
   const [selectedCountryCode, setSelectedCountryCode] = useState("US");
   const [timeLeft, setTimeLeft] = useState(TIMER_SECONDS);
   const [timerExpired, setTimerExpired] = useState(false);
   const [otpValue, setOtpValue] = useState("");
   const [otpVerified, setOtpVerified] = useState(false);
   const [showOtp, setShowOtp] = useState(false);
-  const [phoneLookedUp, setPhoneLookedUp] = useState(!isReturningClient);
+  const [phoneLookedUp, setPhoneLookedUp] = useState(false);
   const [showPayNowModal, setShowPayNowModal] = useState(false);
   const [createdBookingId, setCreatedBookingId] = useState<string>("");
   const [isResolvingBookingReturn, setIsResolvingBookingReturn] =
@@ -100,6 +114,11 @@ export const Checkout = () => {
     vehicleModel: "",
     notes: "",
   });
+
+  const { data: models }: any = useGetModelsByYearAndMake(
+    form.vehicleYear,
+    form.vehicleMake,
+  );
 
   // Timer
   useEffect(() => {
@@ -119,13 +138,32 @@ export const Checkout = () => {
     setTimerExpired(false);
   };
 
-  const handlePhoneLookup = useCallback(() => {
-    // TODO: Call API to check if phone exists — mock: treat as returning if isReturningClient flag is set
-    setPhoneLookedUp(true);
-    if (isReturningClient) {
-      setShowOtp(true);
+  const handlePhoneLookup = useCallback(async () => {
+    if (!shop?.id) return;
+
+    try {
+      const response = await lookupClient({
+        phone: normalizePhone(form.phone),
+        shopId: shop.id,
+      });
+
+      if (response.success && response.data) {
+        const client = response.data;
+        setForm((prev) => ({
+          ...prev,
+          fullName: `${client.firstName} ${client.lastName}`.trim(),
+          email: client.email || "",
+        }));
+        setIsReturningClient(true);
+      } else {
+        setIsReturningClient(false);
+      }
+      setPhoneLookedUp(true);
+    } catch (error) {
+      console.error("Phone lookup failed:", error);
+      setPhoneLookedUp(true); 
     }
-  }, [isReturningClient]);
+  }, [form.phone, shop?.id, lookupClient, setIsReturningClient]);
 
   const handleOtpCheck = useCallback((val: string) => {
     setOtpValue(val);
@@ -404,6 +442,27 @@ export const Checkout = () => {
   const update = (field: keyof CustomerInfo, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }));
 
+  const vehicleOptions =
+    makes?.data?.map((vehicle: any) => ({
+      title: vehicle.name ?? "Unknown",
+      name: vehicle.name ?? "Unknown",
+      id: vehicle.name,
+    })) || [];
+
+  const vehicleModelOptions =
+    models?.data?.map((vehicle: any) => ({
+      title: vehicle.name ?? "Unknown",
+      name: vehicle.name ?? "Unknown",
+      id: vehicle.name,
+    })) || [];
+
+  const yearOptions =
+    years?.data?.map((y: string | number) => ({
+      title: y.toString(),
+      name: y.toString(),
+      id: y.toString(),
+    })) || [];
+
   const bookingSettings = shop?.bookingSettings;
   const isDepositEnabled =
     bookingSettings?.isDepositEnabled ?? settings.depositRequired;
@@ -616,8 +675,13 @@ export const Checkout = () => {
                 variant="secondary"
                 size="lg"
                 onClick={handlePhoneLookup}
+                disabled={isLookingUp}
               >
-                Continue
+                {isLookingUp ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  "Continue"
+                )}
               </Button>
             )}
             {/* {phoneLookedUp && !isReturningClient && (
@@ -700,46 +764,44 @@ export const Checkout = () => {
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider pt-2">
               Vehicle Information
             </p>
-            <div className="grid grid-cols-3 gap-3">
-              <div className="space-y-1.5">
-                <SlimInput
-                  id="year"
-                  name="vehicleYear"
-                  label="Year"
-                  required
-                  labelClassName="text-xs font-medium"
-                  className="h-10 text-sm font-normal rounded-md border-input bg-background px-3 py-2"
-                  value={form.vehicleYear}
-                  onChange={(e) => update("vehicleYear", e.target.value)}
-                  placeholder="2024"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <SlimInput
-                  id="make"
-                  name="vehicleMake"
-                  label="Make"
-                  required
-                  labelClassName="text-xs font-medium"
-                  className="h-10 text-sm font-normal rounded-md border-input bg-background px-3 py-2"
-                  value={form.vehicleMake}
-                  onChange={(e) => update("vehicleMake", e.target.value)}
-                  placeholder="BMW"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <SlimInput
-                  id="model"
-                  name="vehicleModel"
-                  label="Model"
-                  required
-                  labelClassName="text-xs font-medium"
-                  className="h-10 text-sm font-normal rounded-md border-input bg-background px-3 py-2"
-                  value={form.vehicleModel}
-                  onChange={(e) => update("vehicleModel", e.target.value)}
-                  placeholder="M3"
-                />
-              </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <Selector
+                name="vehicleYear"
+                label="Year"
+                placeholder="Year"
+                options={years?.data || []}
+                value={form.vehicleYear || ""}
+                onChange={(value: string) => update("vehicleYear", value)}
+                isSearch={true}
+                isClear={true}
+                required={true}
+              />
+              <Selector
+                name="vehicleMake"
+                label="Make"
+                placeholder="Make"
+                options={vehicleOptions || []}
+                value={form.vehicleMake || ""}
+                onChange={(value: string) => {
+                  update("vehicleMake", value);
+                  update("vehicleModel", "");
+                }}
+                isSearch={true}
+                isClear={true}
+                required={true}
+              />
+              <Selector
+                name="vehicleModel"
+                label="Model"
+                placeholder="Model"
+                options={vehicleModelOptions || []}
+                value={form.vehicleModel || ""}
+                onChange={(value: string) => update("vehicleModel", value)}
+                isSearch={true}
+                isClear={true}
+                required={true}
+                disabled={!form.vehicleMake}
+              />
             </div>
 
             <div className="space-y-1.5">

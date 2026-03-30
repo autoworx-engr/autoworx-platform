@@ -13,16 +13,12 @@ export interface Service {
   description: string;
   price: number;
   estimatedMinutes: number;
-  category: ServiceCategory;
+  category: string;
   images: string[];
   vehicleTypePricing: VehicleTypePricing;
 }
 
-export type ServiceCategory =
-  | "Detailing"
-  | "Paint Correction"
-  | "Ceramic Coating"
-  | "Maintenance";
+
 
 export interface CartItem {
   service: Service;
