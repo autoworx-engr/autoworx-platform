@@ -131,6 +131,7 @@ export interface CreateVirtualShopServiceBookingPayload {
   model: string;
   year: number;
   notes?: string;
+  giftCardCode?: string;
   depositAmount?: number;
 }
 
@@ -166,10 +167,16 @@ export interface CreateVirtualShopServiceBookingResponse {
       tax: number;
       serviceFee: number;
       grandTotal: number;
+      giftCardRedeemed?: number;
       depositRequired?: number;
       depositPaid?: number;
       balanceDue?: number;
     };
+    giftCardRedemption?: {
+      code: string;
+      redeemedAmount: number;
+      remainingBalance: number;
+    } | null;
   };
 }
 

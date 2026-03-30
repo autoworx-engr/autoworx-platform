@@ -38,6 +38,7 @@ import {
   useGetShopBySlug,
   useLookupClientByPhone,
 } from "@/hooks/virtual-shop/service/useShopService";
+import axios from "axios";
 import toast from "react-hot-toast";
 import PhoneInput from "@/components/PhoneInput";
 import { SlimInput } from "@/components/SlimInput";
@@ -101,6 +102,14 @@ export const Checkout = () => {
   const [createdBookingId, setCreatedBookingId] = useState<string>("");
   const [isResolvingBookingReturn, setIsResolvingBookingReturn] =
     useState(false);
+  const [giftCardCode, setGiftCardCode] = useState("");
+  const [isApplyingGiftCard, setIsApplyingGiftCard] = useState(false);
+  const [giftCardError, setGiftCardError] = useState("");
+  const [appliedGiftCard, setAppliedGiftCard] = useState<{
+    code: string;
+    maskedCode: string;
+    balance: number;
+  } | null>(null);
   const [serverDepositRequired, setServerDepositRequired] = useState<
     number | null
   >(null);
@@ -176,6 +185,71 @@ export const Checkout = () => {
         email: "john@example.com",
       }));
     }
+  }, []);
+
+  const handleApplyGiftCard = useCallback(async () => {
+    const normalizedCode = giftCardCode.trim().toUpperCase();
+    if (!normalizedCode) {
+      setGiftCardError("Please enter a gift card code");
+      return;
+    }
+
+    setIsApplyingGiftCard(true);
+    setGiftCardError("");
+
+    try {
+      const response = await axios.get(
+        "/api/virtual-shop/issued-gift-card/check-balance",
+        {
+          params: {
+            code: normalizedCode,
+          },
+        },
+      );
+
+      if (!response.data?.success) {
+        throw new Error(
+          response.data?.message || "Unable to validate gift card",
+        );
+      }
+
+      const card = response.data?.data;
+      const cardStatus = String(card?.status || "").toUpperCase();
+      const balance = Number(card?.balance || 0);
+
+      if (cardStatus !== "ACTIVE") {
+        throw new Error(
+          `Cannot redeem a ${cardStatus.toLowerCase()} gift card.`,
+        );
+      }
+
+      if (!Number.isFinite(balance) || balance <= 0) {
+        throw new Error("Gift card has no redeemable balance.");
+      }
+
+      setGiftCardCode(normalizedCode);
+      setAppliedGiftCard({
+        code: normalizedCode,
+        maskedCode: card?.maskedCode || normalizedCode,
+        balance,
+      });
+      setGiftCardError("");
+      toast.success("Gift card applied.");
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Failed to validate gift card";
+      setGiftCardError(message);
+      toast.error(message);
+    } finally {
+      setIsApplyingGiftCard(false);
+    }
+  }, [giftCardCode]);
+
+  const clearAppliedGiftCard = useCallback(() => {
+    setAppliedGiftCard(null);
+    setGiftCardError("");
   }, []);
 
   const clearPaymentQueryParams = useCallback(() => {
@@ -354,6 +428,7 @@ export const Checkout = () => {
         model: normalizedModel,
         year: parsedYear,
         notes: form.notes.trim() || undefined,
+        giftCardCode: appliedGiftCard?.code,
       });
 
       const client = response?.data?.client;
@@ -367,6 +442,7 @@ export const Checkout = () => {
           tax: Number(apiTotals.tax || 0),
           serviceFee: Number(apiTotals.serviceFee || 0),
           grandTotal: Number(apiTotals.grandTotal || 0),
+          giftCardRedeemed: Number(apiTotals.giftCardRedeemed || 0),
           depositRequired: Number(apiTotals.depositRequired || 0),
           depositPaid: Number(apiTotals.depositPaid || 0),
           balanceDue: Number(apiTotals.balanceDue || 0),
@@ -510,12 +586,23 @@ export const Checkout = () => {
     ? Number(((serviceBaseTotal * taxRate) / 100).toFixed(2))
     : 0;
   const grandTotal = Number((subtotal + shopFee + tax).toFixed(2));
+  const giftCardRedeemedPreview = appliedGiftCard
+    ? Number(Math.min(appliedGiftCard.balance, grandTotal).toFixed(2))
+    : 0;
+  const adjustedGrandTotal = Number(
+    Math.max(0, grandTotal - giftCardRedeemedPreview).toFixed(2),
+  );
 
-  const depositAmount = isDepositEnabled
+  const calculatedDepositAmount = isDepositEnabled
     ? depositType === "fixed"
       ? depositValue
-      : Number(((grandTotal * depositValue) / 100).toFixed(2))
+      : Number(((adjustedGrandTotal * depositValue) / 100).toFixed(2))
     : 0;
+  const depositAmount = Number(
+    Math.min(adjustedGrandTotal, Math.max(0, calculatedDepositAmount)).toFixed(
+      2,
+    ),
+  );
   const effectiveDepositDue = serverDepositRequired ?? depositAmount;
   const hasPendingBookingPayment =
     Boolean(createdBookingId) && effectiveDepositDue > 0;
@@ -592,14 +679,20 @@ export const Checkout = () => {
               <span>${tax}</span>
             </div>
           )}
+          {giftCardRedeemedPreview > 0 && (
+            <div className="flex justify-between text-xs text-emerald-600">
+              <span>Gift Card Applied</span>
+              <span>-${giftCardRedeemedPreview.toFixed(2)}</span>
+            </div>
+          )}
           <div className="flex justify-between font-bold">
             <span>Total</span>
-            <span>${grandTotal}</span>
+            <span>${adjustedGrandTotal.toFixed(2)}</span>
           </div>
           {effectiveDepositDue > 0 && (
             <div className="flex justify-between text-xs text-primary">
               <span>Deposit Due Now</span>
-              <span>${effectiveDepositDue}</span>
+              <span>${effectiveDepositDue.toFixed(2)}</span>
             </div>
           )}
         </div>
@@ -642,6 +735,56 @@ export const Checkout = () => {
               ? "Complete Payment in Open Modal"
               : "Open Pay Now"}
           </Button>
+        </div>
+      )}
+
+      {!hasPendingBookingPayment && (
+        <div className="rounded-xl border bg-card p-4 space-y-3">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            Gift Card Redemption (Optional)
+          </p>
+
+          <div className="flex gap-2">
+            <Input
+              value={giftCardCode}
+              onChange={(e) => {
+                setGiftCardCode(e.target.value.toUpperCase());
+                setGiftCardError("");
+              }}
+              placeholder="Enter gift card code"
+              className="uppercase"
+              disabled={isApplyingGiftCard}
+            />
+
+            {appliedGiftCard?.code ? (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={clearAppliedGiftCard}
+              >
+                Remove
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                onClick={handleApplyGiftCard}
+                disabled={!giftCardCode.trim() || isApplyingGiftCard}
+              >
+                {isApplyingGiftCard ? "Applying..." : "Apply"}
+              </Button>
+            )}
+          </div>
+
+          {appliedGiftCard && (
+            <p className="text-xs text-emerald-600">
+              {appliedGiftCard.maskedCode} applied. Available balance: $
+              {appliedGiftCard.balance.toFixed(2)}
+            </p>
+          )}
+
+          {giftCardError && (
+            <p className="text-xs text-destructive">{giftCardError}</p>
+          )}
         </div>
       )}
 
