@@ -89,7 +89,7 @@ export default function ChatHead({
         .unbind("client-notify")
         .unsubscribe(`client-notify-${user?.companyId}-${initialClient?.id}`);
     };
-  }, []);
+  }, [user?.companyId, initialClient?.id, clientConversationTrack]);
 
   return (
     <div

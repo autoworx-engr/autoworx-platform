@@ -10,9 +10,9 @@ export const searchCompanyQuery = async (searchTerm: string) => {
       where: {
         NOT: [{ id: companyId }],
         OR: [
-          { name: { contains: searchTerm } },
-          { website: { contains: searchTerm } },
-          { phone: { contains: searchTerm } },
+          { name: { contains: searchTerm, mode: "insensitive" } },
+          { website: { contains: searchTerm, mode: "insensitive" } },
+          { phone: { contains: searchTerm, mode: "insensitive" } },
         ],
         isCollaborators: true,
       },

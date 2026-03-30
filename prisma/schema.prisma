@@ -29,7 +29,7 @@ model Appointment {
   times                           Json? // { time: string; date: string }
   createdAt                       DateTime                        @default(now()) @map("created_at")
   updatedAt                       DateTime                        @default(now()) @updatedAt @map("updated_at")
-  user                            User                            @relation(fields: [userId], references: [id])
+  user                            User?                            @relation(fields: [userId], references: [id], onDelete: Cascade) 
   company                         Company                         @relation(fields: [companyId], references: [id], onDelete: Cascade)
   appointmentUsers                AppointmentUser[]
   client                          Client?                         @relation(fields: [clientId], references: [id])
@@ -310,6 +310,31 @@ model InventoryAutomationTeamMember {
   @@id([inventoryRuleId, userId])
 }
 
+model ReportingAutomationRule {
+  id          Int                             @id @default(autoincrement())
+  title       String
+  companyId   Int
+  frequency   ReportingAutomationFrequency
+  action      ReportingNotificationAction
+  day         DayOfWeek?
+  isPaused    Boolean                         @default(false)
+  createdBy   String?
+  createdAt   DateTime                        @default(now())
+  updatedAt   DateTime                        @updatedAt
+  company     Company                         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  teamMembers ReportingAutomationTeamMember[]
+
+  @@index([companyId])
+}
+model ReportingAutomationTeamMember {
+  reportingRuleId Int
+  userId          Int
+  reportingRule   ReportingAutomationRule @relation(fields: [reportingRuleId], references: [id], onDelete: Cascade)
+  user            User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([reportingRuleId, userId])
+}
+
 // TODO: Tag Automation Schema
 // tag automation rules
 model TagAutomationRule {
@@ -460,6 +485,18 @@ enum InventoryNotificationAction {
   BOTH
 }
 
+enum ReportingAutomationFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+enum ReportingNotificationAction {
+  EMAIL
+  SMS
+  BOTH
+}
 // Client of a company.
 // Client is just data, they can't login.
 model Client {
@@ -524,7 +561,7 @@ model Fleet {
 model FleetStatement {
   id        String    @id @default(cuid())
   fleetId   Int       @map("fleet_id")
-  Fleet     Fleet     @relation(fields: [fleetId], references: [id])
+  Fleet     Fleet     @relation(fields: [fleetId], references: [id], onDelete: Cascade )
   invoice   Invoice[]
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
@@ -671,6 +708,7 @@ model Company {
   Refund                           Refund[]
   InvoiceAutomationRule            InvoiceAutomationRule[]
   inventoryAutomationRule          InventoryAutomationRule[]
+  reportingAutomationRule          ReportingAutomationRule[]
   companyPermissionModules         CompanyPermissionModule[]
   BugReport                        BugReport[]
   salaryHistory                    SalaryHistory[]
@@ -2190,6 +2228,7 @@ model User {
   resetToken                     PasswordResetToken?
   Refund                         Refund[]
   inventoryAutomationTeamMembers InventoryAutomationTeamMember[]
+  reportingAutomationTeamMembers ReportingAutomationTeamMember[]
   salaryHistory                  SalaryHistory[]
   shortLinks                     ShortLink[] // Links created by this user
   twoFactorConfirmation          TwoFactorConfirmation?
