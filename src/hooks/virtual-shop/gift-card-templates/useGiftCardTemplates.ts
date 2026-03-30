@@ -3,6 +3,8 @@ import {
   CreateGiftCardTemplatePayload,
   deleteGiftCardTemplate,
   getGiftCardTemplates,
+  updateGiftCardTemplate,
+  UpdateGiftCardTemplatePayload,
 } from "@/service/virtual-shop/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -13,6 +15,12 @@ type CreateGiftCardTemplateParams = {
 
 type DeleteGiftCardTemplateParams = {
   id: number;
+  accessToken: string;
+};
+
+type UpdateGiftCardTemplateParams = {
+  id: number;
+  payload: UpdateGiftCardTemplatePayload;
   accessToken: string;
 };
 
@@ -51,6 +59,20 @@ export const useDeleteGiftCardTemplate = () => {
   return useMutation({
     mutationFn: ({ id, accessToken }: DeleteGiftCardTemplateParams) =>
       deleteGiftCardTemplate(id, accessToken),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["virtual-shop-gift-card-templates"],
+      });
+    },
+  });
+};
+
+export const useUpdateGiftCardTemplate = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, payload, accessToken }: UpdateGiftCardTemplateParams) =>
+      updateGiftCardTemplate(id, payload, accessToken),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["virtual-shop-gift-card-templates"],

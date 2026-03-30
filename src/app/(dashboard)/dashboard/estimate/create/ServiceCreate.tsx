@@ -35,7 +35,7 @@ export default function ServiceCreate() {
       setCategory(null);
       setDescription("");
     }
-  }, [data]);
+  }, [data, categories]);
 
   async function handleSubmit() {
     if (!category?.id) {
@@ -120,7 +120,7 @@ export default function ServiceCreate() {
 
       <div className="flex flex-col gap-1.5">
         <label className="text-xs font-bold uppercase tracking-wider text-slate-600 ml-1">
-          Service Name
+          Service Name <span className="text-red-500">*</span>
         </label>
         <input
           type="text"
@@ -130,7 +130,7 @@ export default function ServiceCreate() {
           className={cn(
             "h-11 rounded-xl bg-white px-4 text-sm font-medium ring-1 ring-inset ring-slate-200 transition-all focus:outline-none focus:ring-2 focus:ring-[#6571FF]/30",
             data.service?.canned &&
-              "bg-slate-50 text-slate-600 cursor-not-allowed shadow-inner"
+            "bg-slate-50 text-slate-600 cursor-not-allowed shadow-inner"
           )}
           readOnly={data.service?.canned}
         />
@@ -138,7 +138,7 @@ export default function ServiceCreate() {
 
       <div className="flex flex-col gap-1.5">
         <label className="text-xs font-bold uppercase tracking-wider text-slate-600 ml-1">
-          Category
+          Category <span className="text-red-500">*</span>
         </label>
         <SelectCategory
           onCategoryChange={setCategory}

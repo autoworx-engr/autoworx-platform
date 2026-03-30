@@ -12,35 +12,19 @@ import { CartDrawer } from "./CartDrawer";
 import { BookingHeader } from "./BookingHeader";
 import { useShopInfo } from "@/hooks/virtual-shop/useShopInfo";
 import ShopNotFound from "../giftcards/ShopNotFound";
-import { useGetShopCategories } from "@/hooks/virtual-shop/service/useShopService";
-import { useGetShopServices } from "@/hooks/virtual-shop/service/useShopService";
-import CarLoading from "@/components/common/CarLoading";
-import { Service, ServiceCategory } from "../../data/types";
+import {
+  useGetShopCategories,
+  useGetShopServices,
+} from "@/hooks/virtual-shop/service/useShopService";
+import { Service } from "../../data/types";
+import { useShopBranding } from "../../hooks/useShopBranding";
+import { Spinner } from "../ui/Spinner";
 
 const SERVICES_PER_PAGE = 10;
 
 const toNumber = (value: unknown) => {
   const num = Number(value);
   return Number.isFinite(num) ? num : 0;
-};
-
-const normalizeCategory = (raw: string[] = []): ServiceCategory => {
-  const defaultCategories: ServiceCategory[] = [
-    "Detailing",
-    "Paint Correction",
-    "Ceramic Coating",
-    "Maintenance",
-  ];
-
-  const found = raw.find((r) =>
-    defaultCategories.some((c) => c.toLowerCase() === r.toLowerCase()),
-  );
-
-  if (!found) return "Maintenance";
-  return (
-    defaultCategories.find((c) => c.toLowerCase() === found.toLowerCase()) ||
-    "Maintenance"
-  );
 };
 
 const BookingContent = ({ initialShop }: { initialShop?: any }) => {
@@ -73,6 +57,9 @@ const BookingContent = ({ initialShop }: { initialShop?: any }) => {
     isPending: isShopLoading,
     isError: isShopError,
   } = useShopInfo(initialShop);
+
+  // Apply dynamic shop branding (Colors & Fonts)
+  useShopBranding(initialShop);
 
   // Fetch categories from API
   const { data: categoriesData } = useGetShopCategories(shop?.id);
@@ -121,8 +108,8 @@ const BookingContent = ({ initialShop }: { initialShop?: any }) => {
       description: svc.description || "",
       price: toNumber(svc.price),
       estimatedMinutes: svc.duration,
-      category: normalizeCategory(svc.category),
-      images: svc.imageUrl ? [svc.imageUrl] : ["/icons/Logo.png"],
+      category: svc.category && svc.category.length > 0 ? svc.category[0] : "",
+      images: svc.imageUrl ? [svc.imageUrl] : [""],
       vehicleTypePricing: {
         coupe: toNumber(svc.modifierCoupe),
         sedan: toNumber(svc.modifierSedan),
@@ -136,26 +123,29 @@ const BookingContent = ({ initialShop }: { initialShop?: any }) => {
 
   if (isShopLoading && !shop) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <CarLoading />
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background">
+        <Spinner size={40} />
+        <p className="mt-4 text-muted-foreground animate-pulse text-sm font-medium">
+          Loading Shop Information...
+        </p>
       </div>
     );
   }
 
-  if (!shop && !isShopLoading) {
+  if (!shop && !isShopLoading || shop?.isActive === false) {
     return <ShopNotFound />;
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background text-sm">
       {/* Header */}
       <BookingHeader rightElement="giftcard">
         <ProgressBar current={step} />
       </BookingHeader>
 
       {/* Content */}
-      <main className="container max-w-5xl mx-auto px-4 py-6">
-        {step === "services" && <ServiceMenu />}
+      <main className="container max-w-5xl mx-auto px-4 py-8 relative">
+        {step === "services" && <ServiceMenu isLoading={isServicesLoading} />}
         {step === "datetime" && <DateTimeSelection />}
         {step === "checkout" && <Checkout />}
         {step === "confirmation" && <Confirmation />}

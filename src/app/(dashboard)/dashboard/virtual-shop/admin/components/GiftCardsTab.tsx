@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
+import { Popconfirm } from "antd";
 import { Switch } from "@/components/Switch";
 import Selector from "@/components/Selector";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ import {
   useCreateGiftCardTemplate,
   useDeleteGiftCardTemplate,
   useGetGiftCardTemplates,
+  useUpdateGiftCardTemplate,
 } from "@/hooks/virtual-shop/gift-card-templates/useGiftCardTemplates";
 import {
   useGetGiftCardSettings,
@@ -41,6 +43,7 @@ import {
   Trash2,
   Loader2,
   SquarePen,
+  Check,
 } from "lucide-react";
 
 // ── Gift Card Designs ─────────────────────────────────────────────────────────
@@ -87,6 +90,7 @@ function SettingInput({
   onChange,
   type = "text",
   min,
+  required = false,
   className,
 }: {
   label: string;
@@ -94,14 +98,19 @@ function SettingInput({
   onChange: (v: string) => void;
   type?: string;
   min?: string;
+  required?: boolean;
   className?: string;
 }) {
   return (
     <div className={`flex flex-col gap-1.5 ${className ?? ""}`}>
-      <label className="text-sm font-semibold text-gray-700">{label}</label>
+      <label className="text-sm font-semibold text-gray-700">
+        {label}
+        {required && <span className="ml-1 text-red-500">*</span>}
+      </label>
       <input
         type={type}
         min={min}
+        required={required}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="w-full rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 outline-none focus:border-[#6571FF] focus:ring-1 focus:ring-[#6571FF]"
@@ -164,6 +173,8 @@ export default function GiftCardsTab() {
     useCreateGiftCardTemplate();
   const { mutateAsync: deleteGiftCardTemplate, isPending: isDeletingTemplate } =
     useDeleteGiftCardTemplate();
+  const { mutateAsync: updateGiftCardTemplate, isPending: isUpdatingTemplate } =
+    useUpdateGiftCardTemplate();
   const {
     data: promoCodes = [],
     isLoading: isPromoCodesLoading,
@@ -180,9 +191,6 @@ export default function GiftCardsTab() {
 
   const toggleDesign = (id: number, enabled: boolean) =>
     setDesigns((prev) => prev.map((d) => (d.id === id ? { ...d, enabled } : d)));
-
-  const setDefault = (id: number) =>
-    setDesigns((prev) => prev.map((d) => ({ ...d, isDefault: d.id === id })));
 
   const [newTemplateName, setNewTemplateName] = useState("");
   const [newTemplateImageFile, setNewTemplateImageFile] = useState<File | null>(null);
@@ -412,8 +420,8 @@ export default function GiftCardsTab() {
       return;
     }
 
-    if (newTemplateName.trim().length < 2) {
-      toast.error("Template name must be at least 2 characters");
+    if (!newTemplateName.trim()) {
+      toast.error("Template name is required");
       return;
     }
 
@@ -469,20 +477,36 @@ export default function GiftCardsTab() {
       return;
     }
 
-    const confirmed = window.confirm(
-      `Delete template \"${template.name}\"? This cannot be undone.`,
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
     try {
       await deleteGiftCardTemplate({ id: template.id, accessToken });
       toast.success("Gift card template deleted successfully");
     } catch (error: any) {
       const message =
         error?.response?.data?.message ?? error?.message ?? "Failed to delete template";
+      toast.error(message);
+    }
+  };
+
+  const handleSetDefaultTemplate = async (template: CardDesign) => {
+    if (!accessToken) {
+      toast.error("Session expired. Please sign in again.");
+      return;
+    }
+
+    try {
+      await updateGiftCardTemplate({
+        id: template.id,
+        payload: {
+          isDefault: true,
+          isActive: true,
+        },
+        accessToken,
+      });
+
+      toast.success("Default template updated successfully");
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.message ?? error?.message ?? "Failed to set default template";
       toast.error(message);
     }
   };
@@ -569,12 +593,14 @@ export default function GiftCardsTab() {
                   label="Template Name"
                   value={newTemplateName}
                   onChange={setNewTemplateName}
+                  required
                 />
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-gray-700">Template Image</label>
+                  <label className="text-sm font-semibold text-gray-700">Template Image<span className="ml-1 text-red-500">*</span></label>
                   <input
                     key={templateImageInputKey}
                     type="file"
+                    required
                     accept="image/*"
                     onChange={(e) => setNewTemplateImageFile(e.target.files?.[0] ?? null)}
                     className="w-full rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 outline-none file:mr-3 file:rounded-md file:border-0 file:bg-[#6571FF] file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-white hover:file:bg-[#5560ee]"
@@ -584,7 +610,12 @@ export default function GiftCardsTab() {
                   <button
                     type="button"
                     onClick={handleCreateTemplate}
-                    disabled={isCreatingTemplate || isUploadingTemplateImage || !accessToken}
+                    disabled={
+                      isCreatingTemplate
+                      || isUploadingTemplateImage
+                      || !newTemplateName.trim()
+                      || !newTemplateImageFile
+                    }
                     className="flex h-[42px] w-fit items-center gap-1.5 rounded-md bg-[#6571FF] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#5560ee] disabled:opacity-60"
                   >
                     {isCreatingTemplate || isUploadingTemplateImage ? (
@@ -629,21 +660,34 @@ export default function GiftCardsTab() {
                   <div className="flex items-center gap-3">
                     {!design.isDefault && design.enabled && (
                       <button
-                        onClick={() => setDefault(design.id)}
-                        className="text-xs text-gray-400 hover:text-[#6571FF] transition-colors whitespace-nowrap"
+                        onClick={() => handleSetDefaultTemplate(design)}
+                        disabled={isUpdatingTemplate}
+                        className="inline-flex items-center gap-1 rounded-md border border-[#6571FF] px-2.5 py-1 text-xs font-semibold text-[#6571FF] transition-colors hover:bg-[#6571FF] hover:text-white disabled:opacity-60"
                       >
+                        <Check size={14} />
                         Set Default
                       </button>
                     )}
                     <Switch checked={design.enabled} setChecked={(v) => toggleDesign(design.id, v)} />
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteTemplate(design)}
-                      disabled={isDeletingTemplate}
-                      className="text-red-400 hover:text-red-600 transition-colors disabled:opacity-60"
+                    <Popconfirm
+                      title="Delete template"
+                      description={`Delete template "${design.name}"? This action cannot be undone.`}
+                      okText="Delete"
+                      cancelText="Cancel"
+                      okButtonProps={{
+                        danger: true,
+                        loading: isDeletingTemplate,
+                      }}
+                      onConfirm={() => handleDeleteTemplate(design)}
                     >
-                      <Trash2 size={18} />
-                    </button>
+                      <button
+                        type="button"
+                        disabled={isDeletingTemplate}
+                        className="text-red-400 hover:text-red-600 transition-colors disabled:opacity-60"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </Popconfirm>
                   </div>
                 </div>
               ))}
@@ -742,14 +786,25 @@ export default function GiftCardsTab() {
                       >
                         <SquarePen size={16} color={"#6571FF"} />
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeletePromoCode(promo.id)}
-                        disabled={isDeletingPromo}
-                        className="text-red-400 hover:text-red-600 transition-colors disabled:opacity-60"
+                      <Popconfirm
+                        title="Delete promo code"
+                        description={`Delete promo code "${promo.code}"? This action cannot be undone.`}
+                        okText="Delete"
+                        cancelText="Cancel"
+                        okButtonProps={{
+                          danger: true,
+                          loading: isDeletingPromo,
+                        }}
+                        onConfirm={() => handleDeletePromoCode(promo.id)}
                       >
-                        <Trash2 size={16} />
-                      </button>
+                        <button
+                          type="button"
+                          disabled={isDeletingPromo}
+                          className="text-red-400 hover:text-red-600 transition-colors disabled:opacity-60"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </Popconfirm>
                     </div>
                   </div>
                 ))}
@@ -771,11 +826,24 @@ export default function GiftCardsTab() {
               </div>
 
               <div className="space-y-4 bg-white px-6 py-5">
-                <SettingInput
-                  label="Code"
-                  value={promoCode}
-                  onChange={setPromoCode}
-                />
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-gray-700">Code</label>
+                  <input
+                    type="text"
+                    value={promoCode}
+                    onChange={(e) => setPromoCode(e.target.value.replace(/\s/g, ""))}
+                    onKeyDown={(e) => {
+                      if (e.key === " ") {
+                        e.preventDefault();
+                      }
+                    }}
+                    className="w-full rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 outline-none focus:border-[#6571FF] focus:ring-1 focus:ring-[#6571FF]"
+                  />
+                </div>
+
+                <p className="-mt-2 text-xs text-gray-400">
+                  Spaces are not allowed in discount codes.
+                </p>
 
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div className="flex flex-col gap-1.5">

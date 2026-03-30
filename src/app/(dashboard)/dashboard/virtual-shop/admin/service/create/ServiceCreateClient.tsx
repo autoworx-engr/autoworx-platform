@@ -52,31 +52,26 @@ const toSafeDate = (value: unknown) => {
 };
 
 function ServiceBillSummary({
-  serviceInfo,
   onSave,
   isSaving,
   isImageUploading,
   isEditMode,
+  validationError,
 }: {
-  serviceInfo: ServiceInfoState;
   onSave: () => void;
   isSaving: boolean;
   isImageUploading: boolean;
   isEditMode: boolean;
+  validationError?: string;
 }) {
   const {
     items,
     subtotal,
-    discount,
     grandTotal,
     tax,
     serviceFee,
-    deposit,
-    totalPayment,
     setSubtotal,
-    setDiscount,
     setGrandTotal,
-    setDue,
   } = useEstimateCreateStore();
 
   const [isTaxEnabled, setIsTaxEnabled] = useState(true);
@@ -87,7 +82,6 @@ function ServiceBillSummary({
 
   useEffect(() => {
     let newServicesTotal = 0;
-    let newDiscountTotal = 0;
 
     items.forEach((item) => {
       const { service, materials, labor } = item;
@@ -117,17 +111,13 @@ function ServiceBillSummary({
         : 0;
 
       newServicesTotal += materialCost + laborCost;
-      newDiscountTotal +=
-        materialDiscount +
-        (labor?.discount ? parseFloat(labor.discount.toString()) : 0);
     });
 
     setSubtotal(newServicesTotal);
-    setDiscount(newDiscountTotal);
-  }, [items, setDiscount, setSubtotal]);
+  }, [items, setSubtotal]);
 
   useEffect(() => {
-    const netAmount = subtotal - discount;
+    const netAmount = subtotal;
     const taxAdd =
       computedTax > 0 ? Number((netAmount * (computedTax / 100)).toFixed(2)) : 0;
     const suppliesFeeAdd =
@@ -136,28 +126,17 @@ function ServiceBillSummary({
         : 0;
 
     setGrandTotal(Number((netAmount + taxAdd + suppliesFeeAdd).toFixed(2)));
-  }, [computedServiceFee, computedTax, discount, setGrandTotal, subtotal]);
-
-  useEffect(() => {
-    setDue(grandTotal - (deposit + totalPayment));
-  }, [deposit, grandTotal, setDue, totalPayment]);
+  }, [computedServiceFee, computedTax, setGrandTotal, subtotal]);
 
   const summaryRows = useMemo(
     () => [
       ["subtotal", subtotal.toFixed(2)],
-      ["discount", discount.toFixed(2)],
-      ["deposit", deposit.toFixed(2)],
-      ["payment", totalPayment.toFixed(2)],
       ["grand total", grandTotal.toFixed(2)],
     ],
-    [deposit, discount, grandTotal, subtotal, totalPayment],
+    [grandTotal, subtotal],
   );
 
-  const isSaveDisabled =
-    isSaving ||
-    isImageUploading ||
-    !serviceInfo.serviceTitle.trim() ||
-    !serviceInfo.serviceTitle;
+  const isSaveDisabled = isSaving || isImageUploading;
 
   return (
     <>
@@ -196,7 +175,7 @@ function ServiceBillSummary({
                 value={
                   isToggleItem
                     ? `${toggleState ? Number(data).toFixed(2) : 0}%${toggleState && Number(data) > 0
-                      ? ` | ${(((subtotal - discount) * Number(data)) / 100).toFixed(2)}`
+                      ? ` | ${((subtotal * Number(data)) / 100).toFixed(2)}`
                       : ""
                     }`
                     : data
@@ -209,6 +188,11 @@ function ServiceBillSummary({
       </div>
 
       <div className="mt-4 flex flex-col gap-4 rounded-lg bg-[#006d77] p-5 text-white shadow-xl shadow-[#006d77]/20">
+        {validationError ? (
+          <p className="rounded-md bg-red-50 px-3 py-2 text-xs font-semibold text-red-600">
+            {validationError}
+          </p>
+        ) : null}
         <button
           type="button"
           className="w-full rounded-xl bg-white py-3 text-sm font-bold text-[#6571FF] shadow-lg transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
@@ -219,11 +203,9 @@ function ServiceBillSummary({
             ? isEditMode
               ? "Updating..."
               : "Saving..."
-            : isImageUploading
-              ? "Uploading image..."
-              : isEditMode
-                ? "Update Service"
-                : "Save Service"}
+            : isEditMode
+              ? "Update Service"
+              : "Save Service"}
         </button>
       </div>
     </>
@@ -246,12 +228,20 @@ export default function ServiceCreateClient({
 
   const { items, reset } = useEstimateCreateStore();
   const [serviceInfo, setServiceInfo] = useState<ServiceInfoState>(INITIAL_SERVICE_INFO);
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const [isImageUploading, setIsImageUploading] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<{
+    serviceTitle?: string;
+    description?: string;
+    items?: string;
+  }>({});
 
   useEffect(() => {
     if (!initialServiceData) {
       reset();
       setServiceInfo(INITIAL_SERVICE_INFO);
+      setSelectedImageFile(null);
+      setValidationErrors({});
       return;
     }
 
@@ -266,13 +256,26 @@ export default function ServiceCreateClient({
       deposit: 0,
       totalPayment: 0,
     });
+
+    setSelectedImageFile(null);
+    setValidationErrors({});
   }, [initialServiceData, reset]);
 
-  const uploadImage = async (file: File | null) => {
+  const handleImageSelect = (file: File | null) => {
+    setSelectedImageFile(file);
+
     if (!file) {
-      setServiceInfo((prev) => ({ ...prev, imageName: "", imageUrl: "" }));
+      setServiceInfo((prev) => ({ ...prev, imageName: "" }));
       return;
     }
+
+    setServiceInfo((prev) => ({
+      ...prev,
+      imageName: file.name,
+    }));
+  };
+
+  const uploadImage = async (file: File) => {
 
     setIsImageUploading(true);
     try {
@@ -295,24 +298,58 @@ export default function ServiceCreateClient({
         throw new Error("Image URL not found in upload response");
       }
 
-      setServiceInfo((prev) => ({
-        ...prev,
-        imageUrl: uploadedUrl,
-        imageName: file.name,
-      }));
+      return uploadedUrl;
     } catch (error) {
       errorToast("Failed to upload service image");
-      setServiceInfo((prev) => ({ ...prev, imageUrl: "", imageName: "" }));
+      throw error;
     } finally {
       setIsImageUploading(false);
     }
   };
 
   const handleSaveService = async () => {
+    const nextErrors: {
+      serviceTitle?: string;
+      description?: string;
+      items?: string;
+    } = {};
+
     if (!serviceInfo.serviceTitle.trim()) {
-      errorToast("Service title is required");
+      nextErrors.serviceTitle = "Service title is required";
+    }
+
+    if (!serviceInfo.description.trim()) {
+      nextErrors.description = "Description is required";
+    }
+
+    const hasRequiredRow = (items || []).some((item) => {
+      const hasService = Boolean(item?.service);
+      const hasLabor = Boolean(item?.labor && String(item.labor.name || "").trim());
+      const hasMaterial = Array.isArray(item?.materials)
+        ? item.materials.some(
+          (material) => Boolean(material && String(material.name || "").trim()),
+        )
+        : false;
+
+      return hasService && hasLabor && hasMaterial;
+    });
+
+    if (!hasRequiredRow) {
+      nextErrors.items =
+        "Service, material, and labor is required";
+    }
+
+    if (Object.keys(nextErrors).length > 0) {
+      setValidationErrors(nextErrors);
+      errorToast(
+        nextErrors.serviceTitle ||
+        nextErrors.description ||
+        "Please complete required fields",
+      );
       return;
     }
+
+    setValidationErrors({});
 
     if (!shopConfig?.id) {
       errorToast("Virtual shop is not configured yet");
@@ -420,12 +457,18 @@ export default function ServiceCreateClient({
       );
 
     try {
+      let imageUrl = serviceInfo.imageUrl || undefined;
+
+      if (selectedImageFile) {
+        imageUrl = await uploadImage(selectedImageFile);
+      }
+
       const payload = {
         shopId: Number(shopConfig.id),
         companyId,
         title: serviceInfo.serviceTitle.trim(),
-        description: serviceInfo.description?.trim() || undefined,
-        imageUrl: serviceInfo.imageUrl || undefined,
+        description: serviceInfo.description.trim(),
+        imageUrl,
         modifierCoupe: serviceInfo.vehicleTypeModifiers.coupe,
         modifierSedan: serviceInfo.vehicleTypeModifiers.sedan,
         modifierSUV: serviceInfo.vehicleTypeModifiers.suv,
@@ -445,6 +488,8 @@ export default function ServiceCreateClient({
 
       reset();
       setServiceInfo(INITIAL_SERVICE_INFO);
+      setSelectedImageFile(null);
+      setValidationErrors({});
       router.push("/dashboard/virtual-shop/admin");
       router.refresh();
     } catch (error) {
@@ -475,8 +520,8 @@ export default function ServiceCreateClient({
             <ServiceInfo
               value={serviceInfo}
               onChange={setServiceInfo}
-              onImageSelect={uploadImage}
-              isImageUploading={isImageUploading}
+              onImageSelect={handleImageSelect}
+              errors={validationErrors}
             />
           </TabsContent>
 
@@ -492,11 +537,11 @@ export default function ServiceCreateClient({
         </div>
 
         <ServiceBillSummary
-          serviceInfo={serviceInfo}
           onSave={handleSaveService}
           isSaving={isSaving || isUpdating}
           isImageUploading={isImageUploading}
           isEditMode={isEditMode}
+          validationError={validationErrors.items}
         />
       </div>
     </div>

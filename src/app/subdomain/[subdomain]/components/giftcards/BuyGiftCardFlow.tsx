@@ -17,7 +17,6 @@ import { useGiftCardPageData } from "../../hooks/useGiftCardPageData";
 import { useBuyGiftCard } from "@/hooks/virtual-shop/gift-card-settings/useGiftCardSettings";
 import toast from "react-hot-toast";
 
-
 type BuyStep =
   | "design"
   | "type"
@@ -36,6 +35,7 @@ const BuyGiftCardFlow = () => {
     shopName,
     companyId,
     shop,
+    isLoading,
   } = useGiftCardPageData();
 
   const buyGiftCardMutation = useBuyGiftCard();
@@ -100,7 +100,8 @@ const BuyGiftCardFlow = () => {
 
       if (result.success) {
         setConfirmationData({
-          number: result.data.id || `AWX-${Date.now().toString(36).toUpperCase()}`,
+          number:
+            result.data.id || `AWX-${Date.now().toString(36).toUpperCase()}`,
           code:
             result.data.maskedCode ||
             `AWX-****-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
@@ -201,6 +202,7 @@ const BuyGiftCardFlow = () => {
           selected={data.designId}
           onSelect={(id) => update({ designId: id })}
           shopName={shopName}
+          isLoading={isLoading}
         />
       )}
       {buyStep === "type" && (

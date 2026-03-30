@@ -7,11 +7,20 @@ import {
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
-export const useGetVirtualShopConfigure = (companyId: number) => {
+type UseGetVirtualShopConfigureOptions = {
+  enabled?: boolean;
+  initialData?: ShopData | null;
+};
+
+export const useGetVirtualShopConfigure = (
+  companyId: number,
+  options?: UseGetVirtualShopConfigureOptions,
+) => {
   return useQuery({
     queryKey: ["virtual-shop", companyId],
     queryFn: () => getShopByCompanyId(companyId),
-    enabled: !!companyId || companyId === undefined,
+    enabled: options?.enabled ?? (!!companyId || companyId === undefined),
+    initialData: options?.initialData,
     staleTime: 1000 * 60,
   });
 };

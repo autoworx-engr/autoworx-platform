@@ -7,6 +7,7 @@ import ZapForm from "@/components/ZapForm";
 import { Spin } from "antd";
 import { errorToast } from "@/lib/toast";
 import CarLoading from "@/components/common/CarLoading";
+import Link from "next/link";
 
 interface CompanyInfo {
   name: string;
@@ -91,12 +92,12 @@ const LeadService = () => {
           <p className="text-gray-600">
             The link you followed may be this company invalid, or deleted.
           </p>
-          <a
+          <Link
             href="/"
             className="mt-4 inline-block rounded-md bg-[#6571FF] px-4 py-2 text-white transition hover:bg-[#4e5bff] focus:outline-none focus:ring-2 focus:ring-[#6571FF] focus:ring-offset-2"
           >
             Go Back Home
-          </a>
+          </Link>
         </div>
       </div>
     );

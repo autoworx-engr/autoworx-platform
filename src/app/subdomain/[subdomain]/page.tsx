@@ -9,7 +9,7 @@ type Props = {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const shop = await getShopBySlugServer(params.subdomain);
 
-  if (!shop) {
+  if (!shop || shop.isActive === false) {
     return {
       title: "Shop Not Found | Autoworx",
     };

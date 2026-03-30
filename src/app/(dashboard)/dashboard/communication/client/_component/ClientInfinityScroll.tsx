@@ -84,7 +84,7 @@ export default function ClientInfinityScroll({
     return () => {
       pusher.unbind("client-notify").unsubscribe(`client-notify-${companyId}`);
     };
-  }, [pathname]);
+  }, [companyId, clientIdParams]);
 
   useEffect(() => {
     // Only refetch when user is actively filtering/searching

@@ -12,8 +12,11 @@ import {
   getShopBySlug,
   getAppointmentSlots,
   getGiftCardTemplatesPublic,
+  lookupClientByPhone,
+  ShopServicesResponse,
 } from "@/service/virtual-shop/api";
 import {
+  keepPreviousData,
   useInfiniteQuery,
   useMutation,
   useQuery,
@@ -29,13 +32,19 @@ export const useGetShopCategories = (shopId?: number) => {
   });
 };
 
-export const useGetShopServices = ({
-  shopId,
-  page = 1,
-  limit = 10,
-  search,
-  category,
-}: Partial<GetShopServicesParams>) => {
+export const useGetShopServices = (
+  {
+    shopId,
+    page = 1,
+    limit = 10,
+    search,
+    category,
+  }: Partial<GetShopServicesParams>,
+  options?: {
+    enabled?: boolean;
+    initialData?: ShopServicesResponse;
+  },
+) => {
   return useQuery({
     queryKey: ["virtual-shop-services", shopId, page, limit, search, category],
     queryFn: () =>
@@ -46,7 +55,9 @@ export const useGetShopServices = ({
         search,
         category,
       }),
-    enabled: !!shopId,
+    enabled: options?.enabled ?? !!shopId,
+    initialData: options?.initialData,
+    placeholderData: keepPreviousData,
     staleTime: 1000 * 30,
   });
 };
@@ -147,5 +158,12 @@ export const useCreateVirtualShopServiceBooking = () => {
   return useMutation({
     mutationFn: (payload: CreateVirtualShopServiceBookingPayload) =>
       createVirtualShopServiceBooking(payload),
+  });
+};
+
+export const useLookupClientByPhone = () => {
+  return useMutation({
+    mutationFn: (payload: { phone: string; shopId: number }) =>
+      lookupClientByPhone(payload),
   });
 };
