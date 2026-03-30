@@ -36,6 +36,7 @@ import { useParams, useSearchParams, useRouter } from "next/navigation";
 import {
   useCreateVirtualShopServiceBooking,
   useGetShopBySlug,
+  useLookupClientByPhone,
 } from "@/hooks/virtual-shop/service/useShopService";
 import toast from "react-hot-toast";
 import PhoneInput from "@/components/PhoneInput";
@@ -82,17 +83,20 @@ export const Checkout = () => {
   );
   const { mutateAsync: createBooking, isPending: isBookingSubmitting } =
     useCreateVirtualShopServiceBooking();
+  const { mutateAsync: lookupClient, isPending: isLookingUp } =
+    useLookupClientByPhone();
 
   const { data: years }: any = useGetAllYears();
   const { data: makes }: any = useGetMake();
 
+  console.log("years ", years);
   const [selectedCountryCode, setSelectedCountryCode] = useState("US");
   const [timeLeft, setTimeLeft] = useState(TIMER_SECONDS);
   const [timerExpired, setTimerExpired] = useState(false);
   const [otpValue, setOtpValue] = useState("");
   const [otpVerified, setOtpVerified] = useState(false);
   const [showOtp, setShowOtp] = useState(false);
-  const [phoneLookedUp, setPhoneLookedUp] = useState(!isReturningClient);
+  const [phoneLookedUp, setPhoneLookedUp] = useState(false);
   const [showPayNowModal, setShowPayNowModal] = useState(false);
   const [createdBookingId, setCreatedBookingId] = useState<string>("");
   const [isResolvingBookingReturn, setIsResolvingBookingReturn] =
@@ -134,13 +138,32 @@ export const Checkout = () => {
     setTimerExpired(false);
   };
 
-  const handlePhoneLookup = useCallback(() => {
-    // TODO: Call API to check if phone exists — mock: treat as returning if isReturningClient flag is set
-    setPhoneLookedUp(true);
-    if (isReturningClient) {
-      setShowOtp(true);
+  const handlePhoneLookup = useCallback(async () => {
+    if (!shop?.id) return;
+
+    try {
+      const response = await lookupClient({
+        phone: normalizePhone(form.phone),
+        shopId: shop.id,
+      });
+
+      if (response.success && response.data) {
+        const client = response.data;
+        setForm((prev) => ({
+          ...prev,
+          fullName: `${client.firstName} ${client.lastName}`.trim(),
+          email: client.email || "",
+        }));
+        setIsReturningClient(true);
+      } else {
+        setIsReturningClient(false);
+      }
+      setPhoneLookedUp(true);
+    } catch (error) {
+      console.error("Phone lookup failed:", error);
+      setPhoneLookedUp(true); 
     }
-  }, [isReturningClient]);
+  }, [form.phone, shop?.id, lookupClient, setIsReturningClient]);
 
   const handleOtpCheck = useCallback((val: string) => {
     setOtpValue(val);
@@ -652,8 +675,13 @@ export const Checkout = () => {
                 variant="secondary"
                 size="lg"
                 onClick={handlePhoneLookup}
+                disabled={isLookingUp}
               >
-                Continue
+                {isLookingUp ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  "Continue"
+                )}
               </Button>
             )}
             {/* {phoneLookedUp && !isReturningClient && (
