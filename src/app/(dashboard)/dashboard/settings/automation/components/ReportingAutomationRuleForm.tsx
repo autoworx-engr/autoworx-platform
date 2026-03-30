@@ -5,18 +5,13 @@ import { Paper } from "@mui/material";
 import { SlimInput } from "@/components/SlimInput";
 import {
   DaysOfWeek,
-  Frequency,
-  InventoryActions,
-  InventoryConditions,
   ReportingActions,
   ReportingAutomationFrequency,
 } from "./constants";
 import { errorToast } from "@/lib/toast";
 import { User } from "@prisma/client";
 import MultiSelect from "./MultiSelect";
-import { useCreateInventoryAutomationRule } from "@/hooks/inventory-automation/useCreateInventoryAutomationRule";
-import { useUpdateInventoryAutomationRule } from "@/hooks/inventory-automation/useUpdateInventoryAutomationRule";
-import { useFindOneInventoryAutomationRule } from "@/hooks/inventory-automation/useFindOneInventoryAutomationRule";
+
 import CarLoading from "@/components/common/CarLoading";
 import TooltipLabel from "./ToolTipLabel";
 import InfoCard from "./InfoCard";
@@ -43,7 +38,6 @@ export type Rule = {
   frequency: string;
   day: string;
   action: string;
-  // vendor: string;
   teamMemberUserIds: number[];
 };
 
@@ -68,7 +62,6 @@ const ReportingAutomationRuleForm: React.FC<RuleFormProps> = ({
       frequency: "",
       action: "",
       day: "",
-      // vendor: "",
       teamMemberUserIds: [],
     },
   );
@@ -321,22 +314,6 @@ const ReportingAutomationRuleForm: React.FC<RuleFormProps> = ({
                   )}
                 </div>
 
-                {/* Vendor */}
-                {/* <Selector
-              name="vendor"
-              label="Vendor"
-              options={["Vendor1", "Vendor2"]}
-              value={formData.vendor}
-              onChange={(value) => handleChange("vendor", value)}
-            /> */}
-                {/* Action */}
-                {/* <Selector
-              name="teamMemberUserIds"
-              label="Send To Team"
-              options={["Action1", "Action2"]}
-              value={formData.teamMemberUserIds}
-              onChange={(value) => handleChange("teamMemberUserIds", value)}
-            /> */}
 
                 <div className="relative">
                   <TooltipLabel
