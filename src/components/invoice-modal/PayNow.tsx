@@ -168,43 +168,78 @@ export function PayNow({
 
   // Handle postMessage from Authorize.Net iframe / communicator
   useEffect(() => {
-    const handleMessage = async (event: MessageEvent) => {
+    const handleMessage = (event: MessageEvent) => {
       // Accept messages from Authorize.Net and from our own
       // iframe communicator (same-origin). This is needed
       // because Authorize.Net posts to the communicator, and
       // the communicator relays the message to window.top.
-      const allowedOrigins = [
-        "https://test.authorize.net",
-        "https://accept.authorize.net",
-        window.location.origin,
-      ];
+      const isAuthorizeNetOrigin =
+        event.origin === "https://test.authorize.net" ||
+        event.origin === "https://accept.authorize.net";
 
-      if (!allowedOrigins.includes(event.origin)) return;
+      let isTrustedAppOrigin = false;
+      try {
+        const eventHost = new URL(event.origin).hostname.toLowerCase();
+        const currentHost = window.location.hostname.toLowerCase();
+        isTrustedAppOrigin =
+          eventHost === currentHost || eventHost.endsWith(".autoworx.tech");
+      } catch {
+        isTrustedAppOrigin = false;
+      }
 
-      // Check if the message contains a payment response
-      if (typeof event.data === "string" && event.data.includes("response=")) {
-        const responseData = event.data.split("response=")[1];
-        try {
-          const jsonObject = JSON.parse(responseData);
+      if (!isAuthorizeNetOrigin && !isTrustedAppOrigin) return;
 
-          const transId = jsonObject?.transId;
-          if (transId) {
-            successToast("Payment successful!");
-            setShowPaymentIframe(false);
-            setOpen(false);
-            if (onSuccess) {
-              onSuccess();
-            } else {
-              // Reload page to show updated payment status
-              hardReload();
-            }
-          } else if (jsonObject?.error) {
-            errorToast(jsonObject.error.message || "Payment failed");
-            setShowPaymentIframe(false);
-          }
-        } catch {
-          errorToast("Unable to verify payment response");
+      let rawResponse = "";
+
+      if (typeof event.data === "string") {
+        const payload = event.data.trim();
+        if (!payload) return;
+
+        const params = new URLSearchParams(payload);
+        rawResponse = params.get("response") || "";
+
+        if (!rawResponse && payload.includes("response=")) {
+          rawResponse = payload.split("response=")[1] || "";
         }
+      } else if (event.data && typeof event.data === "object") {
+        rawResponse =
+          typeof (event.data as any).response === "string"
+            ? (event.data as any).response
+            : "";
+      }
+
+      if (!rawResponse) return;
+
+      try {
+        let decodedResponse = rawResponse;
+        try {
+          decodedResponse = decodeURIComponent(rawResponse);
+        } catch {
+          decodedResponse = rawResponse;
+        }
+
+        const jsonObject = JSON.parse(decodedResponse);
+        const transId = jsonObject?.transId;
+
+        if (transId) {
+          successToast("Payment successful!");
+          setShowPaymentIframe(false);
+          setOpen(false);
+          if (onSuccess) {
+            onSuccess();
+          } else {
+            // Reload page to show updated payment status
+            hardReload();
+          }
+          return;
+        }
+
+        if (jsonObject?.error) {
+          errorToast(jsonObject.error.message || "Payment failed");
+          setShowPaymentIframe(false);
+        }
+      } catch {
+        errorToast("Unable to verify payment response");
       }
     };
 
