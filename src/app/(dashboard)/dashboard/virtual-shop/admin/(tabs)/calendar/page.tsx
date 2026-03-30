@@ -120,25 +120,25 @@ function mapShopBookingsToResponseData(
       balanceDue: Number(sb.invoice?.due || 0),
       appointment: sb.appointment
         ? {
-            date: sb.appointment.date ? sb.appointment.date.toISOString() : "",
-            startTime: sb.appointment.startTime,
-            endTime: sb.appointment.endTime,
-          }
+          date: sb.appointment.date ? sb.appointment.date.toISOString() : "",
+          startTime: sb.appointment.startTime,
+          endTime: sb.appointment.endTime,
+        }
         : null,
       client: sb.client
         ? {
-            firstName: sb.client.firstName,
-            lastName: sb.client.lastName,
-            email: sb.client.email,
-            mobile: sb.client.mobile,
-          }
+          firstName: sb.client.firstName,
+          lastName: sb.client.lastName,
+          email: sb.client.email,
+          mobile: sb.client.mobile,
+        }
         : null,
       vehicle: sb.vehicle
         ? {
-            year: sb.vehicle.year,
-            make: sb.vehicle.make,
-            model: sb.vehicle.model,
-          }
+          year: sb.vehicle.year,
+          make: sb.vehicle.make,
+          model: sb.vehicle.model,
+        }
         : null,
       services: sb.services.map((srv) => ({
         title: srv.title,
@@ -335,16 +335,16 @@ export default async function VirtualShopCalendarPage({
           status: row.status.toLowerCase(),
           appointment: row.appointment
             ? {
-                date: row.appointment.date ? row.appointment.date.toISOString() : "",
-                startTime: row.appointment.startTime,
-                endTime: row.appointment.endTime,
-              }
+              date: row.appointment.date ? row.appointment.date.toISOString() : "",
+              startTime: row.appointment.startTime,
+              endTime: row.appointment.endTime,
+            }
             : null,
           client: row.client
             ? {
-                firstName: row.client.firstName,
-                lastName: row.client.lastName,
-              }
+              firstName: row.client.firstName,
+              lastName: row.client.lastName,
+            }
             : null,
         })),
       };
